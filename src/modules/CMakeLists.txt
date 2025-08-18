@@ -126,7 +126,9 @@ function(add_module_group group_name group_modules)
         endif()
 
       else()
-        message(FATAL_ERROR "Module directory ${module_path} does not exist.")
+        message(
+          FATAL_ERROR "Module directory ${module_path} does not exist or CMakeLists.txt is missing."
+        )
       endif()
     endif()
   endforeach()
