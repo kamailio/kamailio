@@ -168,8 +168,10 @@ foreach(group IN LISTS FULL_MODULE_GROUP_NAMES)
   # message(WARNING "Adding module group: ${group_name}")
   add_module_group("${group_name}" "${MODULES_IN_GROUP}")
 endforeach()
-# Empty name to add user specified modules otherwise function will error
-add_module_group(" " "${USER_MODULES_LIST}")
+
+# Function need first argument to be a string (empty string is fine)
+# Name of group_name (cmake component name) to add user specified modules
+add_module_group("user_specified_list" "${USER_MODULES_LIST}")
 
 get_property(ADDED_MODULES_LIST GLOBAL PROPERTY ADDED_MODULES_LIST)
 message(STATUS "Modules to be built: ${ADDED_MODULES_LIST}")
