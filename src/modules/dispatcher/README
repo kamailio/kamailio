@@ -1995,8 +1995,9 @@ kamcli dispatcher.oclist 1
 
    Optionally, these fields can be followed by:
      * flags - control the mode of using the destination address and
-       sending keepalives. It is a bitwise value that can be built using
-       the following flags:
+       sending keepalives. The value is a decimal number (inside the text
+       file it can be also provided as hexadecimal number). It is a
+       bitwise value that can be built using the following flags:
           + 1 (bit at index 0 - 1 <<0) - inactive destination
           + 2 (bit at index 1 - 1 <<1) - temporary trying destination (in
             the way to become inactive if it does not reply to keepalives
@@ -2064,10 +2065,11 @@ kamcli dispatcher.oclist 1
 setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 ...
 
-   Full line example:
+   Full line examples:
 ...
-1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:192.168.0.125:5060;my=xyz;ping_from
-=sip:myproxy.com
+1 sip:127.0.0.1:5080 0 0 duid=abc;socket=udp:127.0.0.1:5060;my=xyz;ping_from=sip
+:myproxy.com
+1 sip:127.0.0.1:5090 0x8 0 socket=udp:127.0.0.1:5060;prefix=49
 ...
 
    For database, each element of a line resides in a different column.
