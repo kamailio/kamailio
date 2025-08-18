@@ -39,7 +39,7 @@
  * On alpine linux musl library it is also not defined. There is no
  * musl feature test macro, so we look for glibc instead.
  */
-#if(defined __GLIBC__ && __GLIBC__ == 2 && __GLIBC_MINOR__ < 25) \
+#if (defined __GLIBC__ && __GLIBC__ == 2 && __GLIBC_MINOR__ < 25) \
 		|| !defined __GLIBC__
 #ifndef T_OPT
 #define T_OPT ns_t_opt
@@ -720,8 +720,12 @@ int match_search_list(const struct __res_state *res, char *name)
 }
 #endif
 
+#ifndef SR_DNS_MAX_QNO
 #define SR_DNS_MAX_QNO 10
+#endif
+#ifndef SR_DNS_MAX_ANO
 #define SR_DNS_MAX_ANO 100
+#endif
 
 /** gets the DNS records for name:type
  * returns a dyn. alloc'ed struct rdata linked list with the parsed responses
