@@ -53,6 +53,7 @@ unsigned int cryptorand(void)
 	return result;
 }
 
-unsigned int cryptorand_init(void) {
+unsigned int cryptorand_init(void)
+{
 	return sr_init_cryptorand();
 }

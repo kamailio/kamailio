@@ -296,16 +296,17 @@ int fork_process(int child_id, char *desc, int make_sock)
 		close_extra_socks(child_id, process_no);
 #endif /* USE_TCP */
 
-		if (cryptorand_init() != 0) {
-			LM_ERR("Could not initalized cryptographic random number generator\n");
+		if(cryptorand_init() != 0) {
+			LM_ERR("Could not initalized cryptographic random number "
+				   "generator\n");
 			return -1;
 		}
 		kam_srand(cryptorand());
 		fastrand_seed(cryptorand());
 		srandom(cryptorand());
 		LM_DBG("test random number generators - kam_rand: %u, random: %lu, "
-			"fastrand %u, cryptorand %u\n",
-			kam_rand(), random(), fastrand(), cryptorand());
+			   "fastrand %u, cryptorand %u\n",
+				kam_rand(), random(), fastrand(), cryptorand());
 
 		shm_malloc_on_fork();
 #ifdef PROFILING
