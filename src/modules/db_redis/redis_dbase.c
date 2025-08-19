@@ -873,9 +873,16 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 				goto err;
 			}
 		} else {
-			if(db_redis_key_add_string(&query_v, "SSCAN", 5) != 0) {
-				LM_ERR("Failed to add scan command to scan query\n");
-				goto err;
+			if(mapping_struct_type == MS_HASH) {
+				if(db_redis_key_add_string(&query_v, "HSCAN", 5) != 0) {
+					LM_ERR("Failed to add hscan command to scan query\n");
+					goto err;
+				}
+			} else {
+				if(db_redis_key_add_string(&query_v, "SSCAN", 5) != 0) {
+					LM_ERR("Failed to add sscan command to scan query\n");
+					goto err;
+				}
 			}
 			if(db_redis_key_add_string(&query_v, index_key->s, index_key->len)
 					!= 0) {
