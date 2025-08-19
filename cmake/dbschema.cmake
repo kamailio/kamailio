@@ -200,7 +200,7 @@ if(TARGET dbschema_db_mongodb)
     TARGET dbschema_db_mongodb
     POST_BUILD
     COMMAND
-      bash generate_version_create_mongo.sh
+      sh generate_version_create_mongo.sh
       "${CMAKE_BINARY_DIR}/utils/kamctl/db_mongodb/kamailio/version-create.mongo"
       "${CMAKE_BINARY_DIR}/utils/kamctl/db_mongodb/kamailio"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/utils/kamctl

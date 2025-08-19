@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # This script is executed by CMake after db_berkeley and db_text schema files are generated.
 # It appends the last line of each generated file (except 'version')

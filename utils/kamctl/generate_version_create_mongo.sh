@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
 OUTPUT_FILE="$1"
 JSON_DIR="$2"

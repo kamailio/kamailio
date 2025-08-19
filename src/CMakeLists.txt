@@ -38,7 +38,7 @@ if(USE_GIT
   )
 
   execute_process(
-    COMMAND bash -c "${GIT_EXECUTABLE} diff-index --name-only HEAD"
+    COMMAND sh -c "${GIT_EXECUTABLE} diff-index --name-only HEAD"
             " | grep -vE 'Makefile|CMakeLists.txt'"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_DIFF_OUTPUT
