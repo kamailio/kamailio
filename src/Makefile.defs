@@ -365,8 +365,8 @@ sparc_macros= __sparc__ __sparc __sparcv8
 sparc64_macros= __sparcv9 __sparc_v9__
 
 arm_macros= __arm__ __thumb__
-arm8_macros= __ARM_ARCH_8__
-arm8a_macros= __ARM_ARCH_8A__
+arm8_macros= __ARM_ARCH_8__ __ARM_ARCH_8
+arm8a_macros= __ARM_ARCH_8A__ __ARM_ARCH_8A
 arm7_macros= __ARM_ARCH_7__
 arm6_macros= __ARM_ARCH_6__
 
