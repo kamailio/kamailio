@@ -1,21 +1,13 @@
 #
-# http_client module makefile
+# TLS tracker module makefile
 #
 #
 # WARNING: do not run this directly, it should be run by the main Makefile
 
 include ../../Makefile.defs
 auto_gen=
-NAME=http_client.so
-
-ifeq ($(CROSS_COMPILE),)
-CURL_BUILDER=$(shell \
-	if pkg-config --exists libcurl; then \
-		echo 'pkg-config libcurl'; \
-	else \
-		which curl-config; \
-	fi)
-endif
+NAME=tls_tracker.so
+LIBS=
 
 # set to yes when wanting to link with static libraries
 LIBSSL_STATIC ?= no
@@ -70,15 +62,14 @@ else # ifneq ($(SSL_BUILDER),)
         LIBS += -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \
                         -L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
                         -lssl -lcrypto
+        # NOTE: depending on the way in which libssl was compiled you might
+        #       have to add -lz -lkrb5   (zlib and kerberos5).
+        #       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
 
 endif # ifneq ($(SSL_BUILDER),)
 
-ifneq ($(CURL_BUILDER),)
-	DEFS += $(shell $(CURL_BUILDER) --cflags )
-	LIBS += $(shell $(CURL_BUILDER) --libs)
-else
-	DEFS+=-I$(LOCALBASE)/include
-	LIBS+=-L$(LOCALBASE)/lib -lcurl
-endif
+LIBS+= $(TLS_EXTRA_LIBS)
 
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 include ../../Makefile.modules
