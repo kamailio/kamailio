@@ -26,6 +26,7 @@
 #define _REDIS_DBASE_H_
 
 #include "db_redis_mod.h"
+#include "../../core/parser/parse_param.h"
 
 #define SREM_KEY_LUA                                                         \
 	"redis.call('SREM', KEYS[1], KEYS[3]); if redis.call('SCARD', KEYS[1]) " \
@@ -34,6 +35,24 @@
 	"redis.call('HDEL', KEYS[1], KEYS[3]); if redis.call('HLEN', KEYS[1]) " \
 	"== 0 then redis.call('HDEL', KEYS[2], KEYS[1]) end"
 
+typedef struct redis_sentinel
+{
+	char *host;
+	unsigned int port;
+	struct redis_sentinel *next;
+} redis_sentinel_t;
+
+typedef struct
+{
+	char *user;
+	char *password;
+	param_t *attrs;
+	char *spec;
+	redis_sentinel_t *sentinel_list;
+	redis_sentinel_t *sentinel_list_tail;
+} sentinel_config_t;
+
+extern sentinel_config_t sc;
 
 /*
  * Initialize database connection
@@ -44,6 +63,16 @@ db1_con_t *db_redis_init(const str *_sqlurl);
  * Close a database connection
  */
 void db_redis_close(db1_con_t *_h);
+
+/*
+ * Add sentinels in case of sentinel mode
+ */
+int db_redis_add_sentinels(char *spec);
+
+/*
+ * Parse sentinels_config in case of sentinel mode
+ */
+int parse_sentinel_config(char *spec);
 
 /*
  * Free all memory allocated by get_result
