@@ -8,7 +8,7 @@ set(KAMCMD_CUSTOM_NAME
 
 if(NOT KAMCMD_CUSTOM_NAME)
   set(NAME "kamcmd") # Hardcoded name if empty
-elseif()
+else()
   set(NAME "${KAMCMD_CUSTOM_NAME}")
 endif()
 
