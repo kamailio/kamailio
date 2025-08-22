@@ -100,4 +100,50 @@ elseif(TARGET_ARCH MATCHES "ppc64$")
     # else()
     #   message(FATAL_ERROR "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for ppc64. Try GCC.")
   endif()
+elseif(TARGET_ARCH STREQUAL "arm7")
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+
+    # ARM specific flags
+    target_compile_options(
+      common_compiler_flags INTERFACE -march=armv7-a -funroll-loops -fsigned-char
+    )
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
+      target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize -fno-strict-overflow)
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
+      target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize)
+    else()
+      message(
+        WARNING "GCC version ${CMAKE_C_COMPILER_VERSION} is too old for arm7. Try GCC 4.0 or newer."
+      )
+    endif()
+  else()
+    message(FATAL_ERROR "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for arm7. Try GCC.")
+  endif()
+elseif(TARGET_ARCH STREQUAL "arm")
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+
+    # ARM specific flags
+    target_compile_options(
+      common_compiler_flags INTERFACE -marm -march=armv5t -funroll-loops -fsigned-char
+    )
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
+      target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize -fno-strict-overflow)
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
+      target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize)
+    else()
+      message(
+        WARNING "GCC version ${CMAKE_C_COMPILER_VERSION} is too old for arm. Try GCC 4.0 or newer."
+      )
+    endif()
+  else()
+    message(FATAL_ERROR "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for arm. Try GCC.")
+  endif()
+else()
+  message(
+    WARNING
+      "Architecture ${TARGET_ARCH} not directly supported by project. Proceeding with generic flags. \
+       Define any compile options you might need with env variables like CFLAGS."
+  )
 endif()
