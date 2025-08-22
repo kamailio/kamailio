@@ -6,7 +6,7 @@ option(PROFILE "Enable profiling" OFF)
 add_library(common_compiler_flags INTERFACE)
 
 # Define the flags for the C compiler
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+if(TARGET_ARCH MATCHES "x86_64")
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
@@ -30,7 +30,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
     target_link_options(common_compiler_flags INTERFACE -m64)
   endif()
 
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
+elseif(TARGET_ARCH MATCHES "i386")
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
@@ -53,7 +53,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
     target_link_options(common_compiler_flags INTERFACE -m32)
   endif()
 
-elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+elseif(TARGET_ARCH MATCHES "aarch64")
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
@@ -69,7 +69,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
 
   endif()
 
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64$")
+elseif(TARGET_ARCH MATCHES "ppc64$")
   # PowerPC 64-bit specific flags
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
