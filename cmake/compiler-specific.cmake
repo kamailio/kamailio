@@ -50,22 +50,40 @@ elseif(TARGET_ARCH MATCHES "i386")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
 
-    target_compile_options(
-      common_compiler_flags INTERFACE -Wall -funroll-loops -Wcast-align
-                                      -Werror=implicit-function-declaration -Werror=implicit-int
-    )
+    target_compile_options(common_compiler_flags INTERFACE -Wall -funroll-loops -Wcast-align)
 
     # If GCC version is greater than 4.2.0, enable the following flags
-    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2)
+      set_if_empty(CPUTYPE "generic")
       target_compile_options(
         common_compiler_flags INTERFACE -m32 -minline-all-stringops -falign-loops -ftree-vectorize
-                                        -fno-strict-overflow -mtune=generic
+                                        -fno-strict-overflow -mtune=${CPUTYPE}
+      )
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
+      set_if_empty(CPUTYPE "athlon64")
+      target_compile_options(
+        common_compiler_flags INTERFACE -m32 -minline-all-stringops -falign-loops -ftree-vectorize
+                                        -mtune=${CPUTYPE}
+      )
+    else()
+      message(
+        WARNING
+          "You are using an old and unsupported gcc version ${CMAKE_C_COMPILER_VERSION}, compile at your own risk!"
       )
     endif()
   elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    set_if_empty(CPUTYPE "athlon64")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
-    target_compile_options(common_compiler_flags INTERFACE -m32)
+    target_compile_options(common_compiler_flags INTERFACE -m32 -mtune=${CPUTYPE})
     target_link_options(common_compiler_flags INTERFACE -m32)
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    # ICC- Intel classic specific flags
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+    target_compile_options(common_compiler_flags INTERFACE -O3 -ipo -ipo_obj -unroll -tpp6 -xK)
+  else()
+    message(
+      WARNING "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for i386. Try GCC, Clang, or ICC."
+    )
   endif()
 
 elseif(TARGET_ARCH MATCHES "aarch64")
