@@ -23,10 +23,26 @@ set(OSREL ${CMAKE_SYSTEM_VERSION})
 message(STATUS "OS version: ${OSREL}")
 # set(HOST_ARCH "__CPU_${CMAKE_HOST_SYSTEM_PROCESSOR}")
 
+# Set the target architecture alias based on the system processor
+# Currently known used archs
+# i386, x86_64, aarch64, arm7, arm6, ppc64, mips, alpha
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i486|i586|i686")
   set(TARGET_ARCH "i386")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
   set(TARGET_ARCH "x86_64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64$")
+  set(TARGET_ARCH "aarch64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv8|armv7")
+  # Match any variant like v7l
+  # armv8 is the 64-bit ARM architecture, uname -a will report it as aarch64 probably
+  # if not retarget it to arm7
+  # arm8 not supported yet from core atomic operations, fallback to arm7
+  set(TARGET_ARCH "arm7")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
+  set(TARGET_ARCH "arm6")
+  # Other older arm arch versions shall report as arm to kamailio
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+  set(TARGET_ARCH "arm")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le$")
   set(TARGET_ARCH "ppc64")
 else()
@@ -167,21 +183,24 @@ option(USE_FAST_LOCK "Use fast locking if available" ON)
 # Fast-lock not available for all platforms like mips
 # Check the system processor type and set USE_FAST_LOCK accordingly
 if(USE_FAST_LOCK)
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES
-     "i386|i486|i586|i686|x86_64|amd64|sparc64|sparc|ppc$|ppc64$|alpha|mips2|mips64"
-  )
+  if(TARGET_ARCH MATCHES "i386$|x86_64$|sparc64$|sparc$|ppc$|ppc64$|mips2$|mips64$")
     set(USE_FAST_LOCK YES)
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-    set(USE_FAST_LOCK NO)
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm6|arm7")
-    set(USE_FAST_LOCK YES)
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm|aarch64")
+  elseif(TARGET_ARCH MATCHES "aarch64$")
     set(USE_FAST_LOCK YES)
     target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
                                                        # implemented for arm
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
+  elseif(TARGET_ARCH MATCHES "arm6$|arm7$")
+    set(USE_FAST_LOCK YES)
+  elseif(TARGET_ARCH MATCHES "arm$")
+    set(USE_FAST_LOCK YES)
+    target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
+                                                       # implemented for arm
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips$")
     set(USE_FAST_LOCK NO)
     target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
+    target_compile_definitions(common INTERFACE NOSMP) # very likely
+  elseif(TARGET_ARCH MATCHES "alpha$")
+    set(USE_FAST_LOCK YES)
     target_compile_definitions(common INTERFACE NOSMP) # very likely
   else()
     message(STATUS "Fast locking not available for this platform, disabling USE_FAST_LOCK")
