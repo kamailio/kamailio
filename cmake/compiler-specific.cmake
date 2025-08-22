@@ -5,6 +5,21 @@
 option(PROFILE "Enable profiling" OFF)
 add_library(common_compiler_flags INTERFACE)
 
+function(set_if_empty var value)
+  if(DEFINED ENV{${var}} AND NOT "$ENV{${var}}" STREQUAL "")
+    set(${var}
+        ${value}
+        PARENT_SCOPE
+    )
+    set(${var} "$ENV{${var}}")
+  else()
+    set(${var}
+        ${value}
+        PARENT_SCOPE
+    )
+  endif()
+endfunction()
+
 # Define the flags for the C compiler
 if(TARGET_ARCH MATCHES "x86_64")
 
