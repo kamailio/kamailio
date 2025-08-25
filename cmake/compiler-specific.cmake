@@ -246,6 +246,29 @@ elseif(TARGET_ARCH STREQUAL "sparc64")
       FATAL_ERROR "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for sparc64. Try GCC or Sun."
     )
   endif()
+elseif(TARGET_ARCH STREQUAL "sparc")
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+    target_compile_options(common_compiler_flags INTERFACE -funroll-loops)
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2)
+      set_if_empty(CPUTYPE "v8")
+      target_compile_options(
+        common_compiler_flags INTERFACE -mtune=${CPUTYPE} -fno-strict-overflow -ftree-vectorize
+      )
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
+      set_if_empty(CPUTYPE "v8")
+      target_compile_options(common_compiler_flags INTERFACE -mtune=${CPUTYPE} -ftree-vectorize)
+    endif()
+    # The following CMAKE_C_COMPILER_ID is not available per cmake docs
+    # TODO: Use some other variable to check like CC
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "Sun")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+    target_compile_options(
+      common_compiler_flags INTERFACE -xO3 -xtarget=native -xmemalign=4i -fma=fused -fns=yes -xc99
+    )
+  else()
+    message(FATAL_ERROR "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for sparc. Try GCC or Sun.")
+  endif()
 else()
   message(
     WARNING
