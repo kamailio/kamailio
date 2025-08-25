@@ -37,7 +37,11 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv8|armv7")
   # armv8 is the 64-bit ARM architecture, uname -a will report it as aarch64 probably
   # if not retarget it to arm7
   # arm8 not supported yet from core atomic operations, fallback to arm7
-  set(TARGET_ARCH "arm7")
+
+  # *** TODO: NOTE***
+  # Old Makefile detected armv7 as an arm, for compatibility reasons we apply this as well.
+  # See https://github.com/kamailio/kamailio/issues/4333#issuecomment-3210890740
+  set(TARGET_ARCH "arm")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
   set(TARGET_ARCH "arm6")
   # Other older arm arch versions shall report as arm to kamailio
