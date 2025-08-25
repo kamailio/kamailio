@@ -288,7 +288,26 @@ elseif(TARGET_ARCH STREQUAL "mips")
   else()
     message(WARNING "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for mips. Try GCC.")
   endif()
-
+elseif(TARGET_ARCH STREQUAL "mips2")
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+    target_compile_options(common_compiler_flags INTERFACE -funroll-loops)
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2)
+      target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize -fno-strict-overflow)
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
+      target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize)
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_LESS 3.0)
+      message(
+        WARNING
+          "You are using an old and unsupported gcc version ${CMAKE_C_COMPILER_VERSION}, compile at your own risk!"
+      )
+    endif()
+  else()
+    message(
+      WARNING
+        "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for ${TARGET_ARCH}. Try GCC. Compile at your own risk!"
+    )
+  endif()
 else()
   message(
     WARNING
