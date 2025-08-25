@@ -152,6 +152,33 @@ elseif(TARGET_ARCH MATCHES "ppc64$")
     # else()
     #   message(FATAL_ERROR "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for ppc64. Try GCC.")
   endif()
+elseif(TARGET_ARCH STREQUAL "ppc")
+  # PowerPC 32-bit specific flags
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 4.2)
+      set_if_empty(CPUTYPE "powerpc")
+      target_compile_options(
+        common_compiler_flags INTERFACE -funroll-loops -fsigned-char -ftree-vectorize -maltivec
+                                        -fno-strict-overflow -mtune=${CPUTYPE}
+      )
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 4.0)
+      set_if_empty(CPUTYPE "powerpc")
+      target_compile_options(
+        common_compiler_flags INTERFACE -funroll-loops -fsigned-char -ftree-vectorize -maltivec
+                                        -mtune=${CPUTYPE}
+      )
+    else()
+      message(
+        WARNING "GCC version ${CMAKE_C_COMPILER_VERSION} is too old for ppc. Try GCC 4.0 or newer."
+      )
+    endif()
+  else()
+    message(
+      WARNING
+        "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for ${TARGET_ARCH}. Try GCC. Compile at your own risk!"
+    )
+  endif()
 elseif(TARGET_ARCH STREQUAL "arm7")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
