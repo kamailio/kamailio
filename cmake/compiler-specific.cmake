@@ -269,6 +269,26 @@ elseif(TARGET_ARCH STREQUAL "sparc")
   else()
     message(FATAL_ERROR "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for sparc. Try GCC or Sun.")
   endif()
+elseif(TARGET_ARCH STREQUAL "mips")
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+    target_compile_options(common_compiler_flags INTERFACE -funroll-loops)
+    if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2)
+      target_compile_options(
+        common_compiler_flags INTERFACE -mfp32 -march=r3000 -ftree-vectorize -fno-strict-overflow
+      )
+    elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
+      target_compile_options(common_compiler_flags INTERFACE -march=r3000 -ftree-vectorize)
+    else()
+      message(
+        WARNING "GCC version ${CMAKE_C_COMPILER_VERSION} is too old for mips. Try GCC 4.0 or newer."
+      )
+    endif()
+
+  else()
+    message(WARNING "Unsupported compiler (${CMAKE_C_COMPILER_ID}) for mips. Try GCC.")
+  endif()
+
 else()
   message(
     WARNING
