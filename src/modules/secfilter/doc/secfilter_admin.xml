@@ -350,16 +350,29 @@
 		<listitem>-2 = the value is blacklisted</listitem>
 		</itemizedlist>
  		</para>
+ 		<para>
+ 		You can filter by blocking the IPs of messages coming from countries that are on the blacklist. Alternatively, you can block everything that is not explicitly on the whitelist.
+ 		</para>
 
        <example>
          <title><function>secf_check_country</function> usage</title>
 
          <programlisting format="linespecific">
 		...
+	if (geoip2_match("$si", "src")) {
+                secf_check_country($gip2(src=>cc));
+                if ($? == -2) {
+                        xdbg("$rm from $si blocked because Country '$gip2(src=>cc)' is blacklisted");
+                        exit;
+                }
+        }
+
+		...
+
         if (geoip2_match("$si", "src")) {
                 secf_check_country($gip2(src=>cc));
-                if ($avp(secfilter) == -2) {
-                        xlog("L_ALERT", "$rm from $si blocked because Country '$gip2(src=>cc)' is blacklisted");
+                if ($avp(secfilter) != 2) {
+                        xlog("L_ALERT", "$rm from $si blocked because Country '$gip2(src=>cc)' is not whitelisted");
                         exit;
                 }
         }
