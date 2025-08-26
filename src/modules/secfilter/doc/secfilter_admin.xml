@@ -371,8 +371,8 @@
 
         if (geoip2_match("$si", "src")) {
                 secf_check_country($gip2(src=>cc));
-                if ($avp(secfilter) != 2) {
-                        xlog("L_ALERT", "$rm from $si blocked because Country '$gip2(src=>cc)' is not whitelisted");
+                if ($? != 2) {
+                        xdbg("$rm from $si blocked because Country '$gip2(src=>cc)' is not whitelisted");
                         exit;
                 }
         }
