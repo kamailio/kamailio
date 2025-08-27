@@ -24,9 +24,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - distribution: bookworm
+          - distribution: trixie
             compilier: gcc
-          - distribution: bookworm
+          - distribution: trixie
             compilier: clang
           - distribution: sid
             compilier: gcc

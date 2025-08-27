@@ -86,9 +86,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - distribution: bookworm
+          - distribution: trixie
             compilier: gcc
-          - distribution: bookworm
+          - distribution: trixie
             compilier: clang
     steps:
       - name: Check out the repository to the runner

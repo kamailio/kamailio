@@ -42,7 +42,7 @@ jobs:
         language: [ javascript, cpp, python ]
 
     container:
-      image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-bookworm
+      image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-trixie
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}

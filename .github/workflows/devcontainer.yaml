@@ -14,7 +14,7 @@ name: build devcontainer image
         default: false
 
 env:
-  DIST: bookworm
+  DIST: trixie
 
 jobs:
   build:
