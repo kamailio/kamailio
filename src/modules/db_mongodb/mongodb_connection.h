@@ -25,8 +25,13 @@
 #ifndef _MONGODB_CONNECTION_H_
 #define _MONGODB_CONNECTION_H_
 
+#ifdef HAVE_LIBMONGOC1
 #include <mongoc.h>
 #include <bson.h>
+#else
+#include <mongoc/mongoc.h>
+#include <bson/bson.h>
+#endif
 
 #include "../../lib/srdb1/db_pool.h"
 #include "../../lib/srdb1/db_id.h"
