@@ -24,8 +24,13 @@
 #ifndef _MONGODB_CLIENT_H_
 #define _MONGODB_CLIENT_H_
 
+#ifdef HAVE_LIBMONGOC1
 #include <mongoc.h>
 #include <bson.h>
+#else
+#include <mongoc/mongoc.h>
+#include <bson/bson.h>
+#endif
 
 #include "../../core/str.h"
 #include "../../core/parser/parse_param.h"
