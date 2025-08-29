@@ -44,6 +44,7 @@
 #include "../../core/kemi.h"
 #include "../../core/counters.h"
 #include "../../core/tcp_info.h"
+#include "../../modules/tls_tracker/api.h"
 
 #include "tls_init.h"
 #include "tls_server.h"
@@ -235,6 +236,8 @@ tls_domain_t cli_defaults = {
 };
 /* clang-format on */
 
+tls_tracker_ops_api_t t_tls_tracker_ops;
+int tls_tracker_loaded = 0;
 
 /* Current TLS configuration */
 tls_domains_cfg_t **tls_domains_cfg = NULL;
@@ -444,6 +447,12 @@ static int mod_init(void)
 	if(method < 0) {
 		LM_ERR("Invalid tls_method parameter value\n");
 		return -1;
+	}
+	if(load_tls_tracker_ops_api(&t_tls_tracker_ops) < 0) {
+		LM_WARN("can't load tls_tracker API\n");
+	} else {
+		tls_tracker_loaded = 1;
+		LM_DBG("loaded tls_tracker api\n");
 	}
 	/* fill mod_params */
 	mod_params.method = method;
