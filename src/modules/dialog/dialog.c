@@ -1064,6 +1064,28 @@ static int w_get_profile_size2(struct sip_msg *msg, char *profile, char *result)
 }
 
 
+/*!
+ * \brief Update dialog sflags and trigger database persistence
+ * \param d dialog cell
+ *
+ * This function handles the database update logic for sflags changes.
+ * In REALTIME mode, it immediately triggers a database update.
+ * In DELAYED/SHUTDOWN modes, it sets flags that will be processed
+ * by the timer or shutdown handler.
+ */
+static void dlg_update_sflags_db(dlg_cell_t *d)
+{
+	d->dflags |= DLG_FLAG_CHANGED_SFLAGS;
+	if(dlg_db_mode == DB_MODE_REALTIME) {
+		d->dflags |= DLG_FLAG_CHANGED;
+		update_dialog_dbinfo(d);
+	} else if(dlg_db_mode == DB_MODE_DELAYED
+			  || dlg_db_mode == DB_MODE_SHUTDOWN) {
+		/* Flag will be processed by timer or shutdown handler */
+		d->dflags |= DLG_FLAG_CHANGED;
+	}
+}
+
 static int ki_dlg_setflag(struct sip_msg *msg, int val)
 {
 	dlg_ctx_t *dctx;
@@ -1078,6 +1100,7 @@ static int ki_dlg_setflag(struct sip_msg *msg, int val)
 	d = dlg_get_by_iuid(&dctx->iuid);
 	if(d != NULL) {
 		d->sflags |= 1 << val;
+		dlg_update_sflags_db(d);
 		dlg_release(d);
 	}
 	return 1;
@@ -1110,6 +1133,7 @@ static int ki_dlg_resetflag(struct sip_msg *msg, int val)
 	d = dlg_get_by_iuid(&dctx->iuid);
 	if(d != NULL) {
 		d->sflags &= ~(1 << val);
+		dlg_update_sflags_db(d);
 		dlg_release(d);
 	}
 	return 1;
