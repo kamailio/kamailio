@@ -184,7 +184,7 @@ set(MOD_LIST_XMPP xmpp)
 set(MOD_LIST_BERKELEY db_berkeley)
 
 # * modules depending on curl library
-set(MOD_LIST_UTILS utils http_client lost slack)
+set(MOD_LIST_UTILS utils http_client lost slack auth_web3)
 
 # * modules depending on curl and libevent2 library
 set(MOD_LIST_HTTP_ASYNC http_async_client)
@@ -754,7 +754,7 @@ set(MODULE_GROUP_PACKAGE_GROUPS
 
 # Add group names to available group and provide "ALL_PACKAGED" as well
 # for easier packaging using components
-list(APPEND AVAILABLE_GROUPS ALL_PACKAGED KMINI ${MODULE_GROUP_PACKAGE_GROUPS})
+list(APPEND AVAILABLE_GROUPS ALL_PACKAGED ${MODULE_GROUP_PACKAGE_GROUPS})
 
 # Find the group name for the target by checking if the module is in the
 # list of modules to be built and if so, use the group name of that module
@@ -764,20 +764,28 @@ function(find_group_name module)
       ""
       PARENT_SCOPE
   )
-  separate_arguments(groups_to_search_in UNIX_COMMAND ${MODULE_GROUP_NAME})
-  list(FIND groups_to_search_in "ALL_PACKAGED" group_index)
-  if(group_index GREATER -1)
-    # Remove it from the list and append the package groups
-    list(REMOVE_AT groups_to_search_in ${group_index})
-    list(APPEND groups_to_search_in ${MODULE_GROUP_PACKAGE_GROUPS})
+  # This was need due to the dbschema.cmake
+  # If one select one of these option as group
+  # we want the group name to match instead of the actual group it belongs to
+  if(MODULE_GROUP_NAME STREQUAL "ALL"
+     OR MODULE_GROUP_NAME STREQUAL "DEFAULT"
+     OR MODULE_GROUP_NAME STREQUAL "STANDARD"
+     OR MODULE_GROUP_NAME STREQUAL "COMMON"
+  )
+    set(group_name
+        "${MODULE_GROUP_NAME}"
+        PARENT_SCOPE
+    )
+    return()
   endif()
-  # message(WARNING "Groups provided by the user ${groups_to_search_in}")
-  # message(WARNING "Looking for group for db ${module}")
-  foreach(group IN LISTS groups_to_search_in)
-    get_property(MODULES_IN_GROUP VARIABLE PROPERTY "MODULE_GROUP_${group}")
+  #   message(WARNING "groups to search in" ${MODULE_GROUP_PACKAGE_GROUPS})
+  # Get all variable names in the current CMake context
+  foreach(group IN LISTS MODULE_GROUP_PACKAGE_GROUPS)
     # message(WARNING "Modules in group ${group}: ${MODULES_IN_GROUP}")
+    # message(WARNING "Checking group ${group} for db ${module}")
+    get_property(MODULES_IN_GROUP VARIABLE PROPERTY "MODULE_GROUP_${group}")
     if("${module}" IN_LIST MODULES_IN_GROUP)
-      # message(WARNING "Found group ${group} for db ${module}")
+      #   message(WARNING "Found group ${group} for db ${module}")
       set(group_name
           "${group}"
           PARENT_SCOPE
@@ -785,12 +793,5 @@ function(find_group_name module)
       return()
     endif()
   endforeach()
-  message(STATUS "module ${module} not found in any group")
-  # if not found in any group, it's probably in include_modules list
-  # Use the group name "user_specified_list" associated with include_modules
-  # list, otherwise it will generate Unknown group component
-  set(group_name
-      "user_specified_list"
-      PARENT_SCOPE
-  )
+  message((STATUS "module ${module} not found in any group"))
 endfunction()
