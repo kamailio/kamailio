@@ -622,7 +622,7 @@ int cscf_reply_transactional_async(
  * @returns the tmb.t_reply() result
  */
 
-void ims_icscf_timer_routine()
+void ims_icscf_timer_routine(unsigned int ticks, void *param)
 {
 	//run through scscf_list and decide if they should be removed!
 	scscf_list *l, *tmp;
