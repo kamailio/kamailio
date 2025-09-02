@@ -85,15 +85,18 @@ static int sqlops_connect_mode = 0;
 
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
-	{{"dbr", sizeof("dbr") - 1}, PVT_OTHER, pv_get_dbr, 0, pv_parse_dbr_name, 0, 0, 0},
-	{{"sqlrows", sizeof("sqlrows") - 1}, PVT_OTHER, pv_get_sqlrows, 0, pv_parse_con_name, 0, 0, 0},
+	{{"dbr", sizeof("dbr") - 1}, PVT_OTHER, pv_get_dbr, 0, pv_parse_dbr_name,
+		0, 0, 0},
+	{{"sqlrows", sizeof("sqlrows") - 1}, PVT_OTHER, pv_get_sqlrows, 0,
+		pv_parse_con_name, 0, 0, 0},
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
 static cmd_export_t cmds[] = {
 	{"sql_query", (cmd_function)sql_query, 3, fixup_sql_query, 0, ANY_ROUTE},
 	{"sql_query", (cmd_function)sql_query2, 2, fixup_sql_query, 0, ANY_ROUTE},
-	{"sql_query_async", (cmd_function)sql_query_async, 2, fixup_sql_query, 0, ANY_ROUTE},
+	{"sql_query_async", (cmd_function)sql_query_async, 2, fixup_sql_query, 0,
+		ANY_ROUTE},
 	{"sql_xquery", (cmd_function)sql_xquery, 3, fixup_sql_xquery, 0, ANY_ROUTE},
 	{"sql_pvquery", (cmd_function)sql_pvquery, 3, fixup_sql_pvquery, 0,	ANY_ROUTE},
 	{"sql_result_free", (cmd_function)sql_rfree, 1, fixup_sql_rfree, 0, ANY_ROUTE},
