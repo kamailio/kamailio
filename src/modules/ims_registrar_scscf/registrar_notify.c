@@ -1517,6 +1517,13 @@ int aor_to_contact(str *aor, str *contact)
 		contact->len = p - contact->s;
 	}
 
+	// remove default port 5060
+	if((p = memchr(contact->s, ':', contact->len))) {
+		if(contact->len - (p - contact->s) == 5 && !memcmp(p, ":5060", 5)) {
+			contact->len -= 5;
+		}
+	}
+
 	return ret;
 }
 
