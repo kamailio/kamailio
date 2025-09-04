@@ -1394,11 +1394,21 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 			Trans->uac[branch].last_received = new_code;
 			*should_relay = branch;
 			return RPS_PUSHED_AFTER_COMPLETION;
-		} else {
-			LM_DBG("final reply already sent\n");
 		}
-		/* except the exception above, too late  messages will be discarded */
-		goto discard;
+		/* Do not discard negative replies for forked REGISTER messages
+		 * if 200 status for initial trasaction already been set.
+		 * In case of REGISTER request is forked to multiple Registrars
+		 * some of registrars may reply with AUTH response later than others. 
+		 * Without this code negative replies will be just discarded silently.
+		 * This part lests late negative replies for forked REGISTERs being treated
+		 * the same way negative replies for INVITE requests are treated 
+		 * However it won't be propagated to UAC, as transacton status already 200.
+		 */
+		if(!(strncmp(Trans->method.s, "REGISTER", 8) == 0 && new_code >= 300)) {
+			/*Except the exceptions above, too late  messages will be discarded */
+			LM_DBG("final reply already sent\n");
+			goto discard;
+		}
 	}
 
 	/* if final response received at this branch, allow only INVITE 2xx */
