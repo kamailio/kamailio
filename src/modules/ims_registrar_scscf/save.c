@@ -804,6 +804,55 @@ int store_explicit_dereg_contact(struct sip_msg *msg,
 	return 1;
 }
 
+void clean_watchers(udomain_t *_d, str *public_identity, contact_t *chi,
+		ucontact_t *contact)
+{
+	impurecord_t *impu_rec = NULL;
+	struct ucontact *ucontact = NULL;
+	str callid = STR_NULL;
+	str path = STR_NULL;
+	reg_subscriber *s;
+
+	if(public_identity == NULL || (chi == NULL && contact == NULL))
+		return;
+
+	if(ul.get_impurecord(_d, public_identity, &impu_rec) != 0) {
+		LM_ERR("Error, no public identity exists for <%.*s>\n",
+				STR_FMT(public_identity));
+		return;
+	}
+
+	if(contact) {
+		ucontact = contact;
+	} else {
+		if(ul.get_ucontact(&chi->uri, &callid, &path, 0 /*cseq*/, &ucontact)
+				!= 0) {
+			LM_DBG("contact does not exist <%.*s>\n", STR_FMT(&chi->uri));
+			return;
+		}
+	}
+	s = impu_rec->shead;
+
+	LM_DBG("Checking if there is a subscription to this IMPU that has same "
+		   "watcher contact as this contact\n");
+	while(s) {
+		LM_DBG("Subscription for this impurecord: watcher uri [%.*s] "
+			   "presentity uri [%.*s] watcher contact [%.*s]\n",
+				STR_FMT(&s->watcher_uri), STR_FMT(&s->presentity_uri),
+				STR_FMT(&s->watcher_contact));
+		if(contact_port_ip_match(&s->watcher_contact, &ucontact->c)) {
+			LM_DBG("Contact[%.*s] has a subscription to its own status - so "
+				   "going to delete the subscription\n",
+					STR_FMT(&ucontact->c));
+			ul.external_delete_subscriber(s, _d, 0 /*domain is locked*/);
+		}
+		s = s->next;
+	}
+	if(contact == NULL) {
+		ul.release_ucontact(ucontact);
+	}
+}
+
 /**
  *
  * @param msg
@@ -1083,6 +1132,11 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 							goto error;
 						}
 						calc_contact_expires(chi, expires_hdr, sos);
+						if(!ue_unsubscribe_on_dereg) {
+							ul.lock_udomain(_d, public_identity);
+							clean_watchers(_d, public_identity, chi, NULL);
+							ul.unlock_udomain(_d, public_identity);
+						}
 						if(unregister_contact(chi, CONTACT_DELETE_PENDING)
 								!= 0) {
 							LM_DBG("Unable to remove contact <%.*s\n",
@@ -1168,6 +1222,10 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 											   "<%.*s>\n",
 												chi->uri.len, chi->uri.s);
 										goto error;
+									}
+									if(!ue_unsubscribe_on_dereg) {
+										clean_watchers(_d, &pi->public_identity,
+												NULL, ucontact);
 									}
 									notify_subscribers(tmp_impu_rec, ucontact,
 											(str *)explicit_dereg_contact,
