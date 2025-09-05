@@ -902,12 +902,12 @@ void free_ims_subscription_data(ims_subscription *s)
 		for(j = 0; j < s->service_profiles[i].public_identities_cnt; j++) {
 			if(s->service_profiles[i].public_identities[j].public_identity.s)
 				shm_free(s->service_profiles[i]
-								 .public_identities[j]
-								 .public_identity.s);
+								.public_identities[j]
+								.public_identity.s);
 			if(s->service_profiles[i].public_identities[j].wildcarded_psi.s)
 				shm_free(s->service_profiles[i]
-								 .public_identities[j]
-								 .wildcarded_psi.s);
+								.public_identities[j]
+								.wildcarded_psi.s);
 		}
 		if(s->service_profiles[i].public_identities)
 			shm_free(s->service_profiles[i].public_identities);
@@ -915,8 +915,8 @@ void free_ims_subscription_data(ims_subscription *s)
 		for(j = 0; j < s->service_profiles[i].filter_criteria_cnt; j++) {
 			if(s->service_profiles[i].filter_criteria[j].trigger_point) {
 				for(k = 0; k < s->service_profiles[i]
-									   .filter_criteria[j]
-									   .trigger_point->spt_cnt;
+								   .filter_criteria[j]
+								   .trigger_point->spt_cnt;
 						k++) {
 					switch(s->service_profiles[i]
 									.filter_criteria[j]
@@ -928,9 +928,9 @@ void free_ims_subscription_data(ims_subscription *s)
 											.trigger_point->spt[k]
 											.request_uri.s)
 								shm_free(s->service_profiles[i]
-												 .filter_criteria[j]
-												 .trigger_point->spt[k]
-												 .request_uri.s);
+												.filter_criteria[j]
+												.trigger_point->spt[k]
+												.request_uri.s);
 							break;
 						case IFC_METHOD:
 							if(s->service_profiles[i]
@@ -938,9 +938,9 @@ void free_ims_subscription_data(ims_subscription *s)
 											.trigger_point->spt[k]
 											.method.s)
 								shm_free(s->service_profiles[i]
-												 .filter_criteria[j]
-												 .trigger_point->spt[k]
-												 .method.s);
+												.filter_criteria[j]
+												.trigger_point->spt[k]
+												.method.s);
 							break;
 						case IFC_SIP_HEADER:
 							if(s->service_profiles[i]
@@ -948,17 +948,17 @@ void free_ims_subscription_data(ims_subscription *s)
 											.trigger_point->spt[k]
 											.sip_header.header.s)
 								shm_free(s->service_profiles[i]
-												 .filter_criteria[j]
-												 .trigger_point->spt[k]
-												 .sip_header.header.s);
+												.filter_criteria[j]
+												.trigger_point->spt[k]
+												.sip_header.header.s);
 							if(s->service_profiles[i]
 											.filter_criteria[j]
 											.trigger_point->spt[k]
 											.sip_header.content.s)
 								shm_free(s->service_profiles[i]
-												 .filter_criteria[j]
-												 .trigger_point->spt[k]
-												 .sip_header.content.s);
+												.filter_criteria[j]
+												.trigger_point->spt[k]
+												.sip_header.content.s);
 							break;
 						case IFC_SESSION_CASE:
 							break;
@@ -968,44 +968,44 @@ void free_ims_subscription_data(ims_subscription *s)
 											.trigger_point->spt[k]
 											.session_desc.line.s)
 								shm_free(s->service_profiles[i]
-												 .filter_criteria[j]
-												 .trigger_point->spt[k]
-												 .session_desc.line.s);
+												.filter_criteria[j]
+												.trigger_point->spt[k]
+												.session_desc.line.s);
 							if(s->service_profiles[i]
 											.filter_criteria[j]
 											.trigger_point->spt[k]
 											.session_desc.content.s)
 								shm_free(s->service_profiles[i]
-												 .filter_criteria[j]
-												 .trigger_point->spt[k]
-												 .session_desc.content.s);
+												.filter_criteria[j]
+												.trigger_point->spt[k]
+												.session_desc.content.s);
 							break;
 					}
 				}
 				if(s->service_profiles[i].filter_criteria[j].trigger_point->spt)
 					shm_free(s->service_profiles[i]
-									 .filter_criteria[j]
-									 .trigger_point->spt);
+									.filter_criteria[j]
+									.trigger_point->spt);
 				shm_free(s->service_profiles[i]
-								 .filter_criteria[j]
-								 .trigger_point);
+								.filter_criteria[j]
+								.trigger_point);
 			}
 			if(s->service_profiles[i]
 							.filter_criteria[j]
 							.application_server.server_name.s)
 				shm_free(s->service_profiles[i]
-								 .filter_criteria[j]
-								 .application_server.server_name.s);
+								.filter_criteria[j]
+								.application_server.server_name.s);
 			if(s->service_profiles[i]
 							.filter_criteria[j]
 							.application_server.service_info.s)
 				shm_free(s->service_profiles[i]
-								 .filter_criteria[j]
-								 .application_server.service_info.s);
+								.filter_criteria[j]
+								.application_server.service_info.s);
 			if(s->service_profiles[i].filter_criteria[j].profile_part_indicator)
 				shm_free(s->service_profiles[i]
-								 .filter_criteria[j]
-								 .profile_part_indicator);
+								.filter_criteria[j]
+								.profile_part_indicator);
 		}
 		if(s->service_profiles[i].filter_criteria)
 			shm_free(s->service_profiles[i].filter_criteria);
@@ -1020,7 +1020,7 @@ void free_ims_subscription_data(ims_subscription *s)
 		shm_free(s->service_profiles);
 	if(s->private_identity.s)
 		shm_free(s->private_identity.s);
-		// ul.unlock_subscription(s);
+	// ul.unlock_subscription(s);
 #ifdef EXTRA_DEBUG
 	LM_DBG("SUBSCRIPTION LOCK %p destroyed\n", s->lock);
 #endif
@@ -1064,8 +1064,8 @@ int compare_subscription(ims_subscription *new, ims_subscription *orig)
 									.public_identities[j]
 									.public_identity.len
 							== new->service_profiles[k]
-									   .public_identities[l]
-									   .public_identity.len) {
+									.public_identities[l]
+									.public_identity.len) {
 						if(memcmp(orig->service_profiles[i]
 										   .public_identities[j]
 										   .public_identity.s,
@@ -1394,8 +1394,7 @@ int link_contact_to_impu(
 			locked = lock_try(impu_contact_ptr->contact->lock);
 			if(locked == 0) {
 				//                found_contact->state = CONTACT_DELAYED_DELETE;
-				unref_contact_unsafe(
-						impu_contact_ptr
+				unref_contact_unsafe(impu_contact_ptr
 								->contact); //we don't unref because we don't have the lock on this particular contacts contact slot and we can't take it coz of deadlock. - so let
 				//a housekeeper thread do it
 				locked = 1;
@@ -1441,8 +1440,7 @@ int link_contact_to_impu(
 		locked = lock_try(impu_contact_ptr->contact->lock);
 		if(locked == 0) {
 			//                found_contact->state = CONTACT_DELAYED_DELETE;
-			unref_contact_unsafe(
-					impu_contact_ptr
+			unref_contact_unsafe(impu_contact_ptr
 							->contact); //we don't unref because we don't have the lock on this particular contacts contact slot and we can't take it coz of deadlock. - so let
 			//a housekeeper thread do it
 			locked = 1;
