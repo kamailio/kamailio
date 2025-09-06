@@ -154,8 +154,8 @@ static void ul_rpc_show_impu(rpc_t *rpc, void *ctx)
 			sprintf(numstr, "%d", j + 1);
 			if(rpc->struct_add(spi, "S", numstr,
 					   &subscription->service_profiles[i]
-							   .public_identities[j]
-							   .public_identity)
+								.public_identities[j]
+								.public_identity)
 					< 0) {
 				rpc->fault(ctx, 500,
 						"Internal error adding impu subscription detail data");
