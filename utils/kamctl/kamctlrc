@@ -63,6 +63,12 @@
 ## option to ask confirmation for all database creation steps
 # DBINITASK=yes
 
+## database client command
+# DBCLI="mysql"
+
+## additional parameters to database client command
+# DBCLIPARAMS=""
+
 ## database character set (used by MySQL when creating database)
 #CHARSET="latin1"
 

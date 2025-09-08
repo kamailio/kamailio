@@ -5,17 +5,17 @@
 # 2006-05-16  added ability to specify MD5 from a configuration file
 #             FreeBSD does not have the md5sum function (norm)
 # 2006-07-14  Corrected syntax from MySQL to Postgres (norm)
-#             moved INDEX creation out of CREATE table statement into 
+#             moved INDEX creation out of CREATE table statement into
 #                  CREATE INDEX (usr_preferences, trusted)
-#             auto_increment isn't valid in Postgres, replaced with 
+#             auto_increment isn't valid in Postgres, replaced with
 #                  local AUTO_INCREMENT
-#             datetime isn't valid in Postgres, replaced with local DATETIME 
-#             split GRANTs for SERWeb tables so that it is only executed 
+#             datetime isn't valid in Postgres, replaced with local DATETIME
+#             split GRANTs for SERWeb tables so that it is only executed
 #                  if SERWeb tables are created
 #             added GRANTs for re_grp table
 #             added CREATE pdt table (from PDT module)
 #             corrected comments to indicate Postgres as opposed to MySQL
-#             made last_modified/created stamps consistent to now() using 
+#             made last_modified/created stamps consistent to now() using
 #                  local TIMESTAMP
 # 2006-10-19  Added address table (bogdan)
 # 2006-10-27  subscriber table cleanup; some columns are created only if
@@ -50,12 +50,15 @@ if [ -z "$DBROOTUSER" ]; then
 		exit 1
 	fi
 fi
+if [ -z "$DBCLI" ] ; then
+	DBCMD="psql"
+fi
 
 if [ -z "$DBROOTPORT" ] ; then
-	CMD="psql -q -h $DBROOTHOST -U $DBROOTUSER "
+	CMD="$DBCLI $DBCLIPARAMS -q -h $DBROOTHOST -U $DBROOTUSER "
 	DUMP_CMD="pg_dump -h $DBROOTHOST -U $DBROOTUSER -c"
 else
-	CMD="psql -q -h $DBROOTHOST -p $DBROOTPORT -U $DBROOTUSER "
+	CMD="$DBCLI $DBCLIPARAMS -q -h $DBROOTHOST -p $DBROOTPORT -U $DBROOTUSER "
 	DUMP_CMD="pg_dump -h $DBROOTHOST -p $DBROOTPORT -U $DBROOTUSER -c"
 fi
 
@@ -97,7 +100,7 @@ sql_query "template1" "drop user \"$DBRWUSER\"; drop user \"$DBROUSER\";"
 
 if [ $? -ne 0 ] ; then
 	mwarn "Could not drop $DBRWUSER or $DBROUSER users, try to continue.."
-else 
+else
 	minfo "Database user deleted"
 fi
 

@@ -34,7 +34,10 @@ fi
 
 # build the client base commands one param at a time
 # let the client choose defaults where not specified
-CMD="mysql -h $DBROOTHOST"
+if [ -z "$DBCLI" ] ; then
+	DBCLI="mysql"
+fi
+CMD="$DBCLI $DBCLIPARAMS -h $DBROOTHOST"
 DUMP_CMD="mysqldump -c -t -h $DBROOTHOST"
 if [ -n "$DBROOTPORT" ] ; then
 	CMD="$CMD -P $DBROOTPORT"

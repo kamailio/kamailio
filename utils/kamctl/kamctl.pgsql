@@ -21,12 +21,16 @@ fi
 ##### ----------------------------------------------- #####
 ### binaries
 if [ -z "$PGSQL" ] ; then
-	locate_tool psql
-	if [ -z "$TOOLPATH" ] ; then
-		echo "error: 'psql' tool not found: set PGSQL variable to correct tool path"
-		exit
+	if [ -z "$DBCLI" ] ; then
+		locate_tool psql
+		if [ -z "$TOOLPATH" ] ; then
+			echo "error: 'psql' tool not found: set PGSQL variable to correct tool path"
+			exit
+		fi
+		PGSQL="$TOOLPATH"
+	else
+		PGSQL="$DBCLI"
 	fi
-	PGSQL="$TOOLPATH"
 fi
 
 
@@ -36,7 +40,7 @@ pgsql_query() {
 	prompt_pw "PgSQL password for user '$DBRWUSER@$DBHOST'"
 	mecho "pgsql_query: $PGSQL $2 -A -q -t -P fieldsep='	' -h $DBHOST -U $DBRWUSER $DBNAME -c '$1'"
 	if [ -z "$DBPORT" ] ; then
-		PGPASSWORD="$DBRWPW" $PGSQL $2 \
+		PGPASSWORD="$DBRWPW" $PGSQL $DBCLIPARAMS $2 \
 			-A -q -t \
 			-P fieldsep="	" \
 			-h $DBHOST \
@@ -44,7 +48,7 @@ pgsql_query() {
 			$DBNAME \
 			-c "$1"
 	else
-		PGPASSWORD="$DBRWPW" $PGSQL $2 \
+		PGPASSWORD="$DBRWPW" $PGSQL $DBCLIPARAMS $2 \
 			-A -q -t \
 			-P fieldsep="	" \
 			-h $DBHOST \
@@ -59,14 +63,14 @@ pgsql_query() {
 pgsql_ro_query() {
 	mdbg "pgsql_ro_query: $PGSQL $2 -A -q -t -h $DBHOST -U $DBROUSER $DBNAME -c '$1'"
 	if [ -z "$DBPORT" ] ; then
-		PGPASSWORD="$DBROPW" $PGSQL $2 \
+		PGPASSWORD="$DBROPW" $PGSQL $DBCLIPARAMS $2 \
 			-A -q -t \
 			-h $DBHOST \
 			-U $DBROUSER \
 			$DBNAME \
 			-c "$1"
 	else
-		PGPASSWORD="$DBROPW" $PGSQL $2 \
+		PGPASSWORD="$DBROPW" $PGSQL $DBCLIPARAMS $2 \
 			-A -q -t \
 			-h $DBHOST \
 			-p $DBPORT \
@@ -79,4 +83,3 @@ pgsql_ro_query() {
 DBCMD=pgsql_query
 DBROCMD=pgsql_ro_query
 DBRAWPARAMS="-A -q -t"
-
