@@ -103,30 +103,6 @@ kamailio_drop()  # pars: <database name>
 }
 
 
-db_charset_test()
-{
-	if [ -n "$DBROOTPW" ]; then
-		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$DBROOTPW" | $AWK '{print $2}' | $SED -e 1d`
-		ALLCHARSETS=`echo "show character set" | $CMD "-p$DBROOTPW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
-	else
-		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD | $AWK '{print $2}' | $SED -e 1d`
-		ALLCHARSETS=`echo "show character set" | $CMD | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
-	fi
-
-	while [ `echo "$ALLCHARSETS" | $GREP -icw $CURRCHARSET`  = "0" ]
-	do
-		mwarn "Your current default mysql characters set cannot be used to create DB. Please choice another one from the following list:"
-		mecho "$ALLCHARSETS"
-		mecho "Enter character set name: "
-		read CURRCHARSET
-		if [ `echo $CURRCHARSET | $GREP -cE "\w+"` = "0" ]; then
-			merr "can't continue: user break"
-			exit 1
-		fi
-	done
-	CHARSET=$CURRCHARSET
-}
-
 kamailio_db_create () # pars: <database name>
 {
 	if [ $# -ne 1 ] ; then
@@ -134,14 +110,17 @@ kamailio_db_create () # pars: <database name>
 		exit 1
 	fi
 
+	SQLQUERY="CREATE DATABASE $1"
 	if [ "$CHARSET" = "" ]; then
-		minfo "test server charset"
-		db_charset_test
+		minfo "using default database charset"
+	else
+		minfo "using database charset: $CHARSET"
+		SQLQUERY="CREATE DATABASE $1 CHARACTER SET $CHARSET"
 	fi
 
 	minfo "creating database $1 ..."
 
-	sql_query "" "CREATE DATABASE $1 CHARACTER SET $CHARSET;"
+	sql_query "" "$SQLQUERY;"
 
 	if [ $? -ne 0 ] ; then
 		merr "Creating database $1 failed!"
