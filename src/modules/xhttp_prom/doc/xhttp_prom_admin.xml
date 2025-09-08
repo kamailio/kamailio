@@ -601,6 +601,49 @@ kamailio_cnt02 {method="push", IP="192.168.0.1"} 15 1234567890
 		</programlisting>
 	  </example>
 	</section>
+	<section id="xhttp_prom.f.prom_gauge_inc">
+	  <title>
+		<function moreinfo="none">prom_gauge_inc(name, number, l0, l1, l2)</function>
+	  </title>
+	  <para>
+		Get a gauge identified by its name and labels and increase (or decrease, if amount is negative) its value by a given amount.
+		If gauge does not exist it creates the gauge and assigns the value to it.
+	  </para>
+	  <para>
+		Name and number are mandatory.
+		Number is a string that will be parsed as a float.
+		l0, l1, l2 are values of labels and are optional.
+	  </para>
+	  <para>
+		name value and number of labels have to match a previous gauge definition with prom_gauge.
+	  </para>
+	  <para>
+		This function accepts pseudovariables on its parameters.
+	  </para>
+	  <para>
+		Available via KEMI framework as <emphasis>gauge_set_l0</emphasis>,
+		<emphasis>gauge_set_l1</emphasis>,
+		<emphasis>gauge_set_l2</emphasis> and
+		<emphasis>gauge_set_l3</emphasis>.
+	  </para>
+	  <example>
+		<title><function>prom_gauge_inc</function> usage</title>
+		<programlisting format="linespecific">
+...
+# Definition of gg01 gauge with no labels.
+modparam("xhttp_prom", "prom_gauge", "name=gg01;");
+...
+# Increase the value of gg01 by 12.5 (with no labels).
+# Gauges start at zero and after the update gg01 will have value 12.5.
+prom_gauge_inc("gg01", "12.5");
+...
+# Decrease the value of gg01 by 22.5.
+# After the update gg01 will have value -10.
+prom_gauge_inc("gg01", "-22.5");
+...
+		</programlisting>
+	  </example>
+	</section>
 	<section id="xhttp_prom.f.prom_gauge_set">
 	  <title>
 		<function moreinfo="none">prom_gauge_set(name, number, l0, l1, l2)</function>
@@ -921,6 +964,31 @@ event_route[xhttp:request] {
 		<programlisting format="linespecific">
 		  ...
 		  &kamcmd; xhttp_prom.gauge_reset "gg01" "push" "192.168.0.1"
+		  ...
+		</programlisting>
+	  </example>
+    </section>
+	<section  id="xhttp_prom.rpc.gauge_inc">
+	  <title><function moreinfo="none">xhttp_prom.gauge_inc</function></title>
+	  <para>
+		Increase (or decrease) a gauge by a number. Select the gauge by its name and labels.
+	  </para>
+      <para>
+        Name: <emphasis>xhttp_prom.gauge_inc</emphasis>
+      </para>
+      <para>Parameters:</para>
+	  <itemizedlist>
+				<listitem><para><emphasis>name</emphasis>: name of the gauge (mandatory)</para></listitem>
+		<listitem><para><emphasis>number</emphasis>: float value to add to the gauge value (mandatory)</para></listitem>
+		<listitem><para><emphasis>l0</emphasis>: value of the first label (optional)</para></listitem>
+		<listitem><para><emphasis>l1</emphasis>: value of second label (optional)</para></listitem>
+		<listitem><para><emphasis>l2</emphasis>: value of the third label (optional)</para></listitem>
+	  </itemizedlist>
+	  <example>
+		<title><function>xhttp_prom.gauge_inc</function> usage</title>
+		<programlisting format="linespecific">
+		  ...
+		  &kamcmd; xhttp_prom.gauge_inc "gg01" -- -5.2
 		  ...
 		</programlisting>
 	  </example>

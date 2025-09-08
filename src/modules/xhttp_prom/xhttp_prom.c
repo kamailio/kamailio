@@ -40,6 +40,7 @@
 #include "xhttp_prom.h"
 #include "prom.h"
 #include "prom_metric.h"
+#include "bind_prom.h"
 
 /**
  * @file
@@ -88,6 +89,13 @@ static int w_prom_counter_inc_l2(
 		struct sip_msg *msg, char *pname, char *pnumber, char *l1, char *l2);
 static int w_prom_counter_inc_l3(struct sip_msg *msg, char *pname,
 		char *pnumber, char *l1, char *l2, char *l3);
+static int w_prom_gauge_inc_l0(struct sip_msg *msg, char *pname, char *pnumber);
+static int w_prom_gauge_inc_l1(
+		struct sip_msg *msg, char *pname, char *pnumber, char *l1);
+static int w_prom_gauge_inc_l2(
+		struct sip_msg *msg, char *pname, char *pnumber, char *l1, char *l2);
+static int w_prom_gauge_inc_l3(struct sip_msg *msg, char *pname, char *pnumber,
+		char *l1, char *l2, char *l3);
 static int w_prom_gauge_set_l0(struct sip_msg *msg, char *pname, char *pnumber);
 static int w_prom_gauge_set_l1(
 		struct sip_msg *msg, char *pname, char *pnumber, char *l1);
@@ -195,6 +203,10 @@ static cmd_export_t cmds[] = {
 	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l1, 3, fixup_counter_inc, fixup_free_counter_inc, ANY_ROUTE},
 	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l2, 4, fixup_counter_inc, fixup_free_counter_inc, ANY_ROUTE},
 	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l3, 5, fixup_counter_inc, fixup_free_counter_inc, ANY_ROUTE},
+	{"prom_gauge_inc", (cmd_function)w_prom_gauge_inc_l0, 2, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_inc", (cmd_function)w_prom_gauge_inc_l1, 3, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_inc", (cmd_function)w_prom_gauge_inc_l2, 4, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"prom_gauge_inc", (cmd_function)w_prom_gauge_inc_l3, 5, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
 	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l0, 2, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
 	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l1, 3, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
 	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l2, 4, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
@@ -203,6 +215,7 @@ static cmd_export_t cmds[] = {
 	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l1, 3, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
 	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l2, 4, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
 	{"prom_histogram_observe", (cmd_function)w_prom_histogram_observe_l3, 5, fixup_metric_reset, fixup_free_metric_reset, ANY_ROUTE},
+	{"bind_prom", (cmd_function)bind_prom, NO_SCRIPT, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1293,10 +1306,12 @@ static int w_prom_counter_inc_l3(struct sip_msg *msg, char *pname,
 }
 
 /**
- * @brief Set a number to a gauge (No labels).
+ * @brief Auxiliary function to be used by gauge set and gauge
+ * increase KEMI functions.
  */
-static int ki_xhttp_prom_gauge_set_l0(
-		struct sip_msg *msg, str *s_name, str *s_number)
+static int ki_xhttp_prom_gauge_apply(struct sip_msg *msg, str *s_name,
+		str *s_number, str *l1, str *l2, str *l3, int label_no,
+		int (*update_func)(str *, double, str *, str *, str *))
 {
 	if(s_name == NULL || s_name->s == NULL || s_name->len == 0) {
 		LM_ERR("Invalid name string\n");
@@ -1314,14 +1329,99 @@ static int ki_xhttp_prom_gauge_set_l0(
 		return -1;
 	}
 
-	if(prom_gauge_set(s_name, number, NULL, NULL, NULL)) {
-		LM_ERR("Cannot assign number: %f to gauge: %.*s\n", number, s_name->len,
-				s_name->s);
+	if(label_no > 0) {
+		if(l1 == NULL || l1->s == NULL || l1->len == 0) {
+			LM_ERR("Invalid l1 string\n");
+			return -1;
+		}
+	} else {
+		l1 = NULL;
+	}
+
+	if(label_no > 1) {
+		if(l2 == NULL || l2->s == NULL || l2->len == 0) {
+			LM_ERR("Invalid l2 string\n");
+			return -1;
+		}
+	} else {
+		l2 = NULL;
+	}
+
+	if(label_no > 2) {
+		if(l3 == NULL || l3->s == NULL || l3->len == 0) {
+			LM_ERR("Invalid l3 string\n");
+			return -1;
+		}
+	} else {
+		l3 = NULL;
+	}
+
+	const char *action_descr = (update_func == prom_gauge_set	? "assign"
+								: update_func == prom_gauge_inc ? "add"
+																: "apply");
+
+	if(update_func(s_name, number, l1, l2, l3)) {
+		LM_ERR("Cannot %s number: %f to gauge: %.*s (%.*s, %.*s, %.*s)\n",
+				action_descr, number, s_name->len, s_name->s, l1->len, l1->s,
+				l2->len, l2->s, l3->len, l3->s);
 		return -1;
 	}
 
-	LM_DBG("Assigned %f to gauge %.*s\n", number, s_name->len, s_name->s);
+	LM_DBG("Update gauge %.*s (%.*s, %.*s, %.*s): %s %f\n", s_name->len,
+			s_name->s, l1->len, l1->s, l2->len, l2->s, l3->len, l3->s,
+			action_descr, number);
+
 	return 1;
+}
+
+/**
+ * @brief Increase gauge by a given number (no labels).
+ */
+static int ki_xhttp_prom_gauge_inc_l0(
+		struct sip_msg *msg, str *s_name, str *s_number)
+{
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, NULL, NULL, NULL, 0, prom_gauge_inc);
+}
+
+/**
+ * @brief Increase gauge by a given number (1 label).
+ */
+static int ki_xhttp_prom_gauge_inc_l1(
+		struct sip_msg *msg, str *s_name, str *s_number, str *l1)
+{
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, l1, NULL, NULL, 1, prom_gauge_inc);
+}
+
+/**
+ * @brief Increase gauge by a given number (2 labels).
+ */
+static int ki_xhttp_prom_gauge_inc_l2(
+		struct sip_msg *msg, str *s_name, str *s_number, str *l1, str *l2)
+{
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, l1, l2, NULL, 2, prom_gauge_inc);
+}
+
+/**
+ * @brief Increase gauge by a given number (3 labels).
+ */
+static int ki_xhttp_prom_gauge_inc_l3(struct sip_msg *msg, str *s_name,
+		str *s_number, str *l1, str *l2, str *l3)
+{
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, l1, l2, l3, 3, prom_gauge_inc);
+}
+
+/**
+ * @brief Set a number to a gauge (No labels).
+ */
+static int ki_xhttp_prom_gauge_set_l0(
+		struct sip_msg *msg, str *s_name, str *s_number)
+{
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, NULL, NULL, NULL, 0, prom_gauge_set);
 }
 
 /**
@@ -1330,36 +1430,8 @@ static int ki_xhttp_prom_gauge_set_l0(
 static int ki_xhttp_prom_gauge_set_l1(
 		struct sip_msg *msg, str *s_name, str *s_number, str *l1)
 {
-	if(s_name == NULL || s_name->s == NULL || s_name->len == 0) {
-		LM_ERR("Invalid name string\n");
-		return -1;
-	}
-
-	if(s_number == NULL || s_number->s == NULL || s_number->len == 0) {
-		LM_ERR("Invalid number string\n");
-		return -1;
-	}
-
-	double number;
-	if(double_parse_str(s_number, &number)) {
-		LM_ERR("Cannot parse double\n");
-		return -1;
-	}
-
-	if(l1 == NULL || l1->s == NULL || l1->len == 0) {
-		LM_ERR("Invalid l1 string\n");
-		return -1;
-	}
-
-	if(prom_gauge_set(s_name, number, l1, NULL, NULL)) {
-		LM_ERR("Cannot assign number: %f to gauge: %.*s (%.*s)\n", number,
-				s_name->len, s_name->s, l1->len, l1->s);
-		return -1;
-	}
-
-	LM_DBG("Assign %f to gauge %.*s (%.*s)\n", number, s_name->len, s_name->s,
-			l1->len, l1->s);
-	return 1;
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, l1, NULL, NULL, 1, prom_gauge_set);
 }
 
 /**
@@ -1368,42 +1440,8 @@ static int ki_xhttp_prom_gauge_set_l1(
 static int ki_xhttp_prom_gauge_set_l2(
 		struct sip_msg *msg, str *s_name, str *s_number, str *l1, str *l2)
 {
-	if(s_name == NULL || s_name->s == NULL || s_name->len == 0) {
-		LM_ERR("Invalid name string\n");
-		return -1;
-	}
-
-	if(s_number == NULL || s_number->s == NULL || s_number->len == 0) {
-		LM_ERR("Invalid number string\n");
-		return -1;
-	}
-
-	double number;
-	if(double_parse_str(s_number, &number)) {
-		LM_ERR("Cannot parse double\n");
-		return -1;
-	}
-
-	if(l1 == NULL || l1->s == NULL || l1->len == 0) {
-		LM_ERR("Invalid l1 string\n");
-		return -1;
-	}
-
-	if(l2 == NULL || l2->s == NULL || l2->len == 0) {
-		LM_ERR("Invalid l2 string\n");
-		return -1;
-	}
-
-	if(prom_gauge_set(s_name, number, l1, l2, NULL)) {
-		LM_ERR("Cannot assign number: %f to gauge: %.*s (%.*s, %.*s)\n", number,
-				s_name->len, s_name->s, l1->len, l1->s, l2->len, l2->s);
-		return -1;
-	}
-
-	LM_DBG("Assign %f to gauge %.*s (%.*s, %.*s)\n", number, s_name->len,
-			s_name->s, l1->len, l1->s, l2->len, l2->s);
-
-	return 1;
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, l1, l2, NULL, 2, prom_gauge_set);
 }
 
 /**
@@ -1412,55 +1450,16 @@ static int ki_xhttp_prom_gauge_set_l2(
 static int ki_xhttp_prom_gauge_set_l3(struct sip_msg *msg, str *s_name,
 		str *s_number, str *l1, str *l2, str *l3)
 {
-	if(s_name == NULL || s_name->s == NULL || s_name->len == 0) {
-		LM_ERR("Invalid name string\n");
-		return -1;
-	}
-
-	if(s_number == NULL || s_number->s == NULL || s_number->len == 0) {
-		LM_ERR("Invalid number string\n");
-		return -1;
-	}
-
-	double number;
-	if(double_parse_str(s_number, &number)) {
-		LM_ERR("Cannot parse double\n");
-		return -1;
-	}
-
-	if(l1 == NULL || l1->s == NULL || l1->len == 0) {
-		LM_ERR("Invalid l1 string\n");
-		return -1;
-	}
-
-	if(l2 == NULL || l2->s == NULL || l2->len == 0) {
-		LM_ERR("Invalid l2 string\n");
-		return -1;
-	}
-
-	if(l3 == NULL || l3->s == NULL || l3->len == 0) {
-		LM_ERR("Invalid l3 string\n");
-		return -1;
-	}
-
-	if(prom_gauge_set(s_name, number, l1, l2, l3)) {
-		LM_ERR("Cannot assign number: %f to gauge: %.*s (%.*s, %.*s, %.*s)\n",
-				number, s_name->len, s_name->s, l1->len, l1->s, l2->len, l2->s,
-				l3->len, l3->s);
-		return -1;
-	}
-
-	LM_DBG("Assign %f to gauge %.*s (%.*s, %.*s, %.*s)\n", number, s_name->len,
-			s_name->s, l1->len, l1->s, l2->len, l2->s, l3->len, l3->s);
-
-	return 1;
+	return ki_xhttp_prom_gauge_apply(
+			msg, s_name, s_number, l1, l2, l3, 3, prom_gauge_set);
 }
 
 /**
- * @brief Assign a number to a gauge.
+ * @brief Update gauge value.
  */
-static int w_prom_gauge_set(struct sip_msg *msg, char *pname, char *pnumber,
-		char *l1, char *l2, char *l3)
+static int w_prom_gauge_apply(struct sip_msg *msg, char *pname, char *pnumber,
+		char *l1, char *l2, char *l3,
+		int (*update_func)(str *, double, str *, str *, str *))
 {
 	str s_number;
 	str s_name;
@@ -1535,15 +1534,58 @@ static int w_prom_gauge_set(struct sip_msg *msg, char *pname, char *pnumber,
 		l3 = NULL;
 	} /* if l1 != NULL */
 
-	if(prom_gauge_set(&s_name, number, (l1 != NULL) ? &l1_str : NULL,
+	const char *action_descr = (update_func == prom_gauge_set	? "assign"
+								: update_func == prom_gauge_inc ? "add"
+																: "apply");
+
+	if(update_func(&s_name, number, (l1 != NULL) ? &l1_str : NULL,
 			   (l2 != NULL) ? &l2_str : NULL, (l3 != NULL) ? &l3_str : NULL)) {
-		LM_ERR("Cannot assign number: %f to gauge: %.*s\n", number, s_name.len,
-				s_name.s);
+		LM_ERR("Cannot %s number: %f to gauge: %.*s\n", action_descr, number,
+				s_name.len, s_name.s);
 		return -1;
 	}
 
-	LM_DBG("Assign %f to gauge %.*s\n", number, s_name.len, s_name.s);
+	LM_DBG("Update gauge %.*s: %s %f\n", s_name.len, s_name.s, action_descr,
+			number);
 	return 1;
+}
+
+/**
+ * @brief Increase/decrease a gauge (no labels)
+ */
+static int w_prom_gauge_inc_l0(struct sip_msg *msg, char *pname, char *pnumber)
+{
+	return w_prom_gauge_apply(
+			msg, pname, pnumber, NULL, NULL, NULL, prom_gauge_inc);
+}
+
+/**
+ * @brief Increase/decrease a gauge (1 label)
+ */
+static int w_prom_gauge_inc_l1(
+		struct sip_msg *msg, char *pname, char *pnumber, char *l1)
+{
+	return w_prom_gauge_apply(
+			msg, pname, pnumber, l1, NULL, NULL, prom_gauge_inc);
+}
+
+/**
+ * @brief Increase/decrease a gauge (2 labels)
+ */
+static int w_prom_gauge_inc_l2(
+		struct sip_msg *msg, char *pname, char *pnumber, char *l1, char *l2)
+{
+	return w_prom_gauge_apply(
+			msg, pname, pnumber, l1, l2, NULL, prom_gauge_inc);
+}
+
+/**
+ * @brief Increase/decrease a gauge (3 labels)
+ */
+static int w_prom_gauge_inc_l3(struct sip_msg *msg, char *pname, char *pnumber,
+		char *l1, char *l2, char *l3)
+{
+	return w_prom_gauge_apply(msg, pname, pnumber, l1, l2, l3, prom_gauge_inc);
 }
 
 /**
@@ -1551,7 +1593,8 @@ static int w_prom_gauge_set(struct sip_msg *msg, char *pname, char *pnumber,
  */
 static int w_prom_gauge_set_l0(struct sip_msg *msg, char *pname, char *pnumber)
 {
-	return w_prom_gauge_set(msg, pname, pnumber, NULL, NULL, NULL);
+	return w_prom_gauge_apply(
+			msg, pname, pnumber, NULL, NULL, NULL, prom_gauge_set);
 }
 
 /**
@@ -1560,7 +1603,8 @@ static int w_prom_gauge_set_l0(struct sip_msg *msg, char *pname, char *pnumber)
 static int w_prom_gauge_set_l1(
 		struct sip_msg *msg, char *pname, char *pnumber, char *l1)
 {
-	return w_prom_gauge_set(msg, pname, pnumber, l1, NULL, NULL);
+	return w_prom_gauge_apply(
+			msg, pname, pnumber, l1, NULL, NULL, prom_gauge_set);
 }
 
 /**
@@ -1569,7 +1613,8 @@ static int w_prom_gauge_set_l1(
 static int w_prom_gauge_set_l2(
 		struct sip_msg *msg, char *pname, char *pnumber, char *l1, char *l2)
 {
-	return w_prom_gauge_set(msg, pname, pnumber, l1, l2, NULL);
+	return w_prom_gauge_apply(
+			msg, pname, pnumber, l1, l2, NULL, prom_gauge_set);
 }
 
 /**
@@ -1578,7 +1623,7 @@ static int w_prom_gauge_set_l2(
 static int w_prom_gauge_set_l3(struct sip_msg *msg, char *pname, char *pnumber,
 		char *l1, char *l2, char *l3)
 {
-	return w_prom_gauge_set(msg, pname, pnumber, l1, l2, l3);
+	return w_prom_gauge_apply(msg, pname, pnumber, l1, l2, l3, prom_gauge_set);
 }
 
 /**
@@ -1948,6 +1993,26 @@ static sr_kemi_t sr_kemi_xhttp_prom_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
+	{ str_init("xhttp_prom"), str_init("gauge_inc_l0"),
+	    SR_KEMIP_INT, ki_xhttp_prom_gauge_inc_l0,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("gauge_inc_l1"),
+	    SR_KEMIP_INT, ki_xhttp_prom_gauge_inc_l1,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("gauge_inc_l2"),
+	    SR_KEMIP_INT, ki_xhttp_prom_gauge_inc_l2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("gauge_inc_l3"),
+	    SR_KEMIP_INT, ki_xhttp_prom_gauge_inc_l3,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
 	{ str_init("xhttp_prom"), str_init("gauge_set_l0"),
 	    SR_KEMIP_INT, ki_xhttp_prom_gauge_set_l0,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
@@ -2233,7 +2298,12 @@ static void rpc_prom_gauge_reset(rpc_t *rpc, void *ct)
 	return;
 }
 
-static void rpc_prom_gauge_set(rpc_t *rpc, void *ct)
+/**
+ * @brief Auxiliary function to be used by gauge set and gauge
+ * increase RPC commands.
+ */
+static void rpc_prom_gauge_apply(rpc_t *rpc, void *ct,
+		int (*update_func)(str *, double, str *, str *, str *))
 {
 	str s_name;
 
@@ -2253,56 +2323,62 @@ static void rpc_prom_gauge_set(rpc_t *rpc, void *ct)
 		return;
 	}
 
+	const char *action_descr = (update_func == prom_gauge_set	? "assign"
+								: update_func == prom_gauge_inc ? "add"
+																: "apply");
+
 	str l1, l2, l3;
 	int res;
 	res = rpc->scan(ct, "*SSS", &l1, &l2, &l3);
 	if(res == 0) {
 		/* No labels */
-		if(prom_gauge_set(&s_name, number, NULL, NULL, NULL)) {
-			LM_ERR("Cannot assign %f to gauge %.*s\n", number, s_name.len,
-					s_name.s);
-			rpc->fault(ct, 500, "Failed to assign %f gauge: %.*s", number,
+		if(update_func(&s_name, number, NULL, NULL, NULL)) {
+			LM_ERR("Cannot %s %f to gauge %.*s\n", action_descr, number,
 					s_name.len, s_name.s);
+			rpc->fault(ct, 500, "Failed to %s %f gauge: %.*s", action_descr,
+					number, s_name.len, s_name.s);
 			return;
 		}
-		LM_DBG("Assigned %f to gauge (%.*s)\n", number, s_name.len, s_name.s);
+		LM_DBG("Update gauge (%.*s): %s %f\n", s_name.len, s_name.s,
+				action_descr, number);
 
 	} else if(res == 1) {
-		if(prom_gauge_set(&s_name, number, &l1, NULL, NULL)) {
-			LM_ERR("Cannot assign %f to gauge %.*s (%.*s)\n", number,
+		if(update_func(&s_name, number, &l1, NULL, NULL)) {
+			LM_ERR("Cannot %s %f to gauge %.*s (%.*s)\n", action_descr, number,
 					s_name.len, s_name.s, l1.len, l1.s);
-			rpc->fault(ct, 500, "Failed to assign %f to gauge: %.*s (%.*s)",
-					number, s_name.len, s_name.s, l1.len, l1.s);
+			rpc->fault(ct, 500, "Failed to %s %f to gauge: %.*s (%.*s)",
+					action_descr, number, s_name.len, s_name.s, l1.len, l1.s);
 			return;
 		}
-		LM_DBG("Assigned %f to gauge: %.*s (%.*s)\n", number, s_name.len,
-				s_name.s, l1.len, l1.s);
+		LM_DBG("Update gauge %.*s (%.*s): %s %f\n", s_name.len, s_name.s,
+				l1.len, l1.s, action_descr, number);
 
 	} else if(res == 2) {
-		if(prom_gauge_set(&s_name, number, &l1, &l2, NULL)) {
-			LM_ERR("Cannot assign %f to gauge: %.*s (%.*s, %.*s)\n", number,
-					s_name.len, s_name.s, l1.len, l1.s, l2.len, l2.s);
-			rpc->fault(ct, 500,
-					"Failed to assign %f to gauge: %.*s (%.*s, %.*s)", number,
-					s_name.len, s_name.s, l1.len, l1.s, l2.len, l2.s);
+		if(update_func(&s_name, number, &l1, &l2, NULL)) {
+			LM_ERR("Cannot %s %f to gauge: %.*s (%.*s, %.*s)\n", action_descr,
+					number, s_name.len, s_name.s, l1.len, l1.s, l2.len, l2.s);
+			rpc->fault(ct, 500, "Failed to %s %f to gauge: %.*s (%.*s, %.*s)",
+					action_descr, number, s_name.len, s_name.s, l1.len, l1.s,
+					l2.len, l2.s);
 			return;
 		}
-		LM_DBG("Assigned %f to gauge: %.*s (%.*s, %.*s)\n", number, s_name.len,
-				s_name.s, l1.len, l1.s, l2.len, l2.s);
+		LM_DBG("Update gauge %.*s (%.*s, %.*s): %s %f\n", s_name.len, s_name.s,
+				l1.len, l1.s, l2.len, l2.s, action_descr, number);
 
 	} else if(res == 3) {
-		if(prom_gauge_set(&s_name, number, &l1, &l2, &l3)) {
-			LM_ERR("Cannot assign %f to gauge: %.*s (%.*s, %.*s, %.*s)\n",
-					number, s_name.len, s_name.s, l1.len, l1.s, l2.len, l2.s,
-					l3.len, l3.s);
+		if(update_func(&s_name, number, &l1, &l2, &l3)) {
+			LM_ERR("Cannot %s %f to gauge: %.*s (%.*s, %.*s, %.*s)\n",
+					action_descr, number, s_name.len, s_name.s, l1.len, l1.s,
+					l2.len, l2.s, l3.len, l3.s);
 			rpc->fault(ct, 500,
-					"Failed to assign %f to gauge: %.*s (%.*s, %.*s, %.*s)",
-					number, s_name.len, s_name.s, l1.len, l1.s, l2.len, l2.s,
-					l3.len, l3.s);
+					"Failed to %s %f to gauge: %.*s (%.*s, %.*s, %.*s)",
+					action_descr, number, s_name.len, s_name.s, l1.len, l1.s,
+					l2.len, l2.s, l3.len, l3.s);
 			return;
 		}
-		LM_DBG("Assigned %f to gauge: %.*s (%.*s, %.*s, %.*s)\n", number,
-				s_name.len, s_name.s, l1.len, l1.s, l2.len, l2.s, l3.len, l3.s);
+		LM_DBG("Update gauge %.*s (%.*s, %.*s, %.*s): %s %f\n", s_name.len,
+				s_name.s, l1.len, l1.s, l2.len, l2.s, l3.len, l3.s,
+				action_descr, number);
 
 	} else {
 		LM_ERR("Strange return value: %d\n", res);
@@ -2311,6 +2387,16 @@ static void rpc_prom_gauge_set(rpc_t *rpc, void *ct)
 	} /* if res == 0 */
 
 	return;
+}
+
+static void rpc_prom_gauge_inc(rpc_t *rpc, void *ct)
+{
+	rpc_prom_gauge_apply(rpc, ct, prom_gauge_inc);
+}
+
+static void rpc_prom_gauge_set(rpc_t *rpc, void *ct)
+{
+	rpc_prom_gauge_apply(rpc, ct, prom_gauge_set);
 }
 
 /**
@@ -2440,6 +2526,11 @@ static const char *rpc_prom_counter_inc_doc[2] = {
 static const char *rpc_prom_gauge_reset_doc[2] = {
 		"Reset a gauge based on its identifier", 0};
 
+static const char *rpc_prom_gauge_inc_doc[2] = {
+		"Increase or decrease a gauge by a given number based on its "
+		"identifier",
+		0};
+
 static const char *rpc_prom_gauge_set_doc[2] = {
 		"Set a gauge to a number based on its identifier", 0};
 
@@ -2456,6 +2547,7 @@ static rpc_export_t rpc_cmds[] = {
 				rpc_prom_counter_inc_doc, 0},
 		{"xhttp_prom.gauge_reset", rpc_prom_gauge_reset,
 				rpc_prom_gauge_reset_doc, 0},
+		{"xhttp_prom.gauge_inc", rpc_prom_gauge_inc, rpc_prom_gauge_inc_doc, 0},
 		{"xhttp_prom.gauge_set", rpc_prom_gauge_set, rpc_prom_gauge_set_doc, 0},
 		{"xhttp_prom.histogram_observe", rpc_prom_histogram_observe,
 				rpc_prom_histogram_observe_doc, 0},
