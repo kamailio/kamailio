@@ -120,6 +120,7 @@ struct prom_metric_s
 {
 	metric_type_t type;		   /**< Metric type. */
 	str name;				   /**< Name of the metric. */
+	str help;				   /**< Help metadata string for the metric. */
 	struct prom_lb_s *lb_name; /**< Names of labels. */
 	struct prom_buckets_upper_s
 			*buckets_upper; /**< Upper bounds for buckets. */
@@ -291,6 +292,10 @@ static void prom_counter_free(prom_metric_t *m_cnt)
 	assert(m_cnt);
 
 	assert(m_cnt->type == M_COUNTER);
+
+	if(m_cnt->help.s) {
+		shm_free(m_cnt->help.s);
+	}
 
 	if(m_cnt->name.s) {
 		shm_free(m_cnt->name.s);
@@ -1017,6 +1022,15 @@ int prom_counter_create(char *spec)
 			}
 			LM_DBG("name = %.*s\n", m_cnt->name.len, m_cnt->name.s);
 
+		} else if(p->name.len == 4 && strncmp(p->name.s, "help", 4) == 0) {
+			/* Fill counter help metadata. */
+			if(shm_str_dup(&m_cnt->help, &p->body)) {
+				LM_ERR("Error creating counter help: %.*s\n", p->body.len,
+						p->body.s);
+				goto error;
+			}
+			LM_DBG("help = %.*s\n", m_cnt->help.len, m_cnt->help.s);
+
 		} else {
 			LM_ERR("Unknown field: %.*s (%.*s)\n", p->name.len, p->name.s,
 					p->body.len, p->body.s);
@@ -1058,6 +1072,10 @@ static void prom_gauge_free(prom_metric_t *m_gg)
 	assert(m_gg);
 
 	assert(m_gg->type == M_GAUGE);
+
+	if(m_gg->help.s) {
+		shm_free(m_gg->help.s);
+	}
 
 	if(m_gg->name.s) {
 		shm_free(m_gg->name.s);
@@ -1114,6 +1132,15 @@ int prom_gauge_create(char *spec)
 				goto error;
 			}
 			LM_DBG("name = %.*s\n", m_gg->name.len, m_gg->name.s);
+
+		} else if(p->name.len == 4 && strncmp(p->name.s, "help", 4) == 0) {
+			/* Fill gauge help metadata. */
+			if(shm_str_dup(&m_gg->help, &p->body)) {
+				LM_ERR("Error creating gauge help: %.*s\n", p->body.len,
+						p->body.s);
+				goto error;
+			}
+			LM_DBG("help = %.*s\n", m_gg->help.len, m_gg->help.s);
 
 		} else {
 			LM_ERR("Unknown field: %.*s (%.*s)\n", p->name.len, p->name.s,
@@ -1418,6 +1445,10 @@ static void prom_histogram_free(prom_metric_t *m_hist)
 
 	assert(m_hist->type == M_HISTOGRAM);
 
+	if(m_hist->help.s) {
+		shm_free(m_hist->help.s);
+	}
+
 	if(m_hist->name.s) {
 		shm_free(m_hist->name.s);
 	}
@@ -1492,6 +1523,15 @@ int prom_histogram_create(char *spec)
 				goto error;
 			}
 			LM_DBG("buckets = %.*s\n", p->body.len, p->body.s);
+
+		} else if(p->name.len == 4 && strncmp(p->name.s, "help", 4) == 0) {
+			/* Fill histogram help metadata. */
+			if(shm_str_dup(&m_hist->help, &p->body)) {
+				LM_ERR("Error creating histogram help: %.*s\n", p->body.len,
+						p->body.s);
+				goto error;
+			}
+			LM_DBG("help = %.*s\n", m_hist->help.len, m_hist->help.s);
 
 		} else {
 			LM_ERR("Unknown field: %.*s (%.*s)\n", p->name.len, p->name.s,
@@ -2023,6 +2063,50 @@ error:
 	return -1;
 }
 
+static int prom_metric_metadata_print(
+		prom_ctx_t *ctx, prom_metric_t *p, int flags)
+{
+	if(!ctx) {
+		LM_ERR("No context\n");
+		return -1;
+	}
+
+	if(!p) {
+		LM_ERR("No metric\n");
+		return -1;
+	}
+
+	if((flags & METADATA_FLAGS_HELP) && STR_WITHVAL(&p->help)) {
+		if(prom_body_printf(ctx, "# HELP %.*s%.*s %.*s\n",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
+				   p->name.len, p->name.s, p->help.len, p->help.s)
+				== -1) {
+			LM_ERR("Fail to print\n");
+			return -1;
+		}
+	}
+
+	if(flags & METADATA_FLAGS_TYPE) {
+		const char *type_descr = (p->type == M_COUNTER)		? "counter"
+								 : (p->type == M_GAUGE)		? "gauge"
+								 : (p->type == M_HISTOGRAM) ? "histogram"
+															: NULL;
+		if(type_descr) {
+			if(prom_body_printf(ctx, "# TYPE %.*s%.*s %s\n",
+					   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
+					   p->name.len, p->name.s, type_descr)
+					== -1) {
+				LM_ERR("Fail to print\n");
+				return -1;
+			}
+		} else {
+			LM_DBG("Unknown metric type: %d\n", p->type);
+		}
+	}
+
+	return 0;
+}
+
 /**
  * @brief Print user defined metrics.
  *
@@ -2048,6 +2132,13 @@ int prom_metric_list_print(prom_ctx_t *ctx)
 	while(p) {
 
 		prom_lvalue_t *pvl = p->lval_list;
+
+		if(metadata_flags) {
+			if(prom_metric_metadata_print(ctx, p, metadata_flags)) {
+				LM_ERR("Failed to print metric metadata\n");
+				goto error;
+			}
+		}
 
 		while(pvl) {
 			if(prom_metric_lvalue_print(ctx, p, pvl)) {

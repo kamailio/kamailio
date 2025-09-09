@@ -255,6 +255,91 @@ modparam("xhttp_prom", "xhttp_prom_beginning", "");
 		</programlisting>
 	  </example>
 	</section>
+	<section id="xhttp_prom.p.xhttp_prom_metadata_flags">
+	  <title><varname>xhttp_prom_metadata_flags</varname> (integer)</title>
+	  <para>
+		Flags to enable Prometheus metadata lines in the output. The
+		flags are defined as a bitmask on an integer value. Bits have the
+		following meaning:
+	  </para>
+	  <itemizedlist>
+		<listitem>
+		  <para>
+			<emphasis>1</emphasis> - include TYPE metadata string for
+			user defined metrics. Metrics generated from Kamailio statistics are
+			untyped and can't have TYPE metadata.
+			<example><title><varname>xhttp_prom_metadata_flags</varname> TYPE example</title>
+			<programlisting format="linespecific">
+# Enable TYPE metadata and define some metrics.
+modparam("xhttp_prom", "xhttp_prom_beginning", "my_metric_")
+modparam("xhttp_prom", "xhttp_prom_metadata_flags", 1)
+modparam("xhttp_prom", "prom_counter", "name=cnt01")
+modparam("xhttp_prom", "prom_gauge", "name=gg01")
+modparam("xhttp_prom", "prom_histogram", "name=histo01")
+
+In this case the generated Prometheus output may look something like this:
+
+# TYPE my_metric_cnt01 counter
+my_metric_cnt01 0
+# TYPE my_metric_gg01 gauge
+my_metric_gg01 0
+# TYPE my_metric_hist01 histogram
+my_metric_hist01_sum 0.0
+my_metric_hist01_count 0
+			</programlisting>
+			</example>
+		  </para>
+		</listitem>
+		<listitem>
+		  <para>
+			<emphasis>2</emphasis> - include HELP metadata string for
+			user defined metrics. HELP metadata for a metric will only be
+			generated if the help string is defined in metric specification. See
+			description of the help attribute in <varname>prom_counter</varname>.
+			<example><title><varname>xhttp_prom_metadata_flags</varname> HELP example</title>
+			<programlisting format="linespecific">
+# Enable TYPE and HELP metadata and define some metrics (with and without HELP).
+modparam("xhttp_prom", "xhttp_prom_beginning", "my_metric_")
+modparam("xhttp_prom", "xhttp_prom_metadata_flags", 3)
+modparam("xhttp_prom", "prom_counter", "name=cnt01")
+modparam("xhttp_prom", "prom_gauge", "name=gg01; help='Some help string for the gauge'")
+
+In this case the generated Prometheus output may look something like this:
+
+# TYPE my_metric_cnt01 counter
+my_metric_cnt01 0
+# HELP my_metric_gg01 Some help string for the gauge
+# TYPE my_metric_gg01 gauge
+my_metric_gg01 0
+			</programlisting>
+			</example>
+		  </para>
+		</listitem>
+	  </itemizedlist>
+	  <para>
+		<emphasis>
+		  Default value is 0 (no metadata in the output).
+		</emphasis>
+	  </para>
+	  <example>
+		<title>Set <varname>xhttp_prom_metadata_flags</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# There will be no metadata in the output (it's the default)
+modparam("xhttp_prom", "xhttp_prom_metadata_flags", 0)
+
+# Only the TYPE metadata entry will be included in the output.
+modparam("xhttp_prom", "xhttp_prom_metadata_flags", 1)
+
+# If there's HELP metadata defined for the metric, it will be included in the output.
+modparam("xhttp_prom", "xhttp_prom_metadata_flags", 2)
+
+# Both TYPE and HELP metadata lines are allowed in the output.
+modparam("xhttp_prom", "xhttp_prom_metadata_flags", 3)
+...
+		</programlisting>
+	  </example>
+	</section>
 	<section id="xhttp_prom.p.xhttp_prom_tags">
 	  <title><varname>xhttp_prom_tags</varname> (str)</title>
 	  <para>
@@ -317,6 +402,18 @@ the metric.
 			</example>
 		  </para>
 		</listitem>
+		<listitem>
+		  <para>
+			<emphasis>help</emphasis> - HELP metadata string for the counter. Optional.
+			If HELP string is defined for the metric and metadata
+			generation is enabled (see <varname>xhttp_prom_metadata_flags</varname> parameter),
+			then it will be included in the generated output. Be careful using special
+			characters in the help string. Prometheus requires some characters in
+			the HELP to be quoted, but this module doesn't process the provided
+			HELP string in any way. The provided HELP string will be included in
+			the output as is.
+		  </para>
+		</listitem>
 	  </itemizedlist>
 	  <example>
 		<title>Set <varname>prom_counter</varname> parameter</title>
@@ -332,6 +429,9 @@ modparam("xhttp_prom", "prom_counter", "name=cnt_second;");
 
 # Create cnt_third counter with label method
 modparam("xhttp_prom", "prom_counter", "name=cnt_third; label=method");
+
+# Create cnt_fourth counter with label method and HELP string
+modparam("xhttp_prom", "prom_counter", "name=cnt_fourth; label=method; help='Total number of SIP requests'");
 
 These lines declare the counter but the actual metric will be created when
 using it by prom_counter_inc or prom_counter_reset functions.
@@ -375,6 +475,13 @@ This would generate  {method="whatever", handler="whatever2"} when building
 the metric.
 			</programlisting>
 			</example>
+		  </para>
+		</listitem>
+		<listitem>
+		  <para>
+			<emphasis>help</emphasis> - HELP metadata string for the gauge. Optional.
+			See description for the help attribute in <varname>prom_counter</varname> parameter.
+			Everything is the same for <varname>prom_gauge</varname> help.
 		  </para>
 		</listitem>
 	  </itemizedlist>
@@ -450,6 +557,13 @@ the metric.
 		  <para>
 			If no buckets specified, default bucket list is set to these values:
 			<para>[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]</para>
+		  </para>
+		</listitem>
+		<listitem>
+		  <para>
+			<emphasis>help</emphasis> - HELP metadata string for the histogram. Optional.
+			See description for the help attribute in <varname>prom_counter</varname> parameter.
+			Everything is the same for <varname>prom_histogram</varname> help.
 		  </para>
 		</listitem>
 	  </itemizedlist>
