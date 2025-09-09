@@ -791,15 +791,14 @@ modparam("dispatcher", "ds_retain_latency_stats", 1)
 	<section id="dispatcher.p.ds_latency_estimator_alpha">
 		<title><varname>ds_latency_estimator_alpha</varname> (int)</title>
 		<para>
-		The value to be used to control the memory of the estimator EWMA "exponential weighted moving average" or
-		"the speed at which the older samples are dampened"
-		a good explanation can be found here : http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm
+		The parameter decides how important each latency ping observation is in the calculation of the EWMA.
+		The higher the value of alpha, the more closely the EWMA tracks the original time series.
 		Because Kamailio doesn't support float parameter types, the value in the parameter is divided by 1000 and stored as float.
-		For example, if you want to set the alpha to be 0.75, use value 750 here.
+		For example, if you want to set the alpha to be 0.25, use value 250 here.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>900 => 0.9</quote>.
+			Default value is <quote>100 => 0.1</quote>.
 		</emphasis>
 		</para>
 		<example>

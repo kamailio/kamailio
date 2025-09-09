@@ -104,8 +104,8 @@ str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
 int ds_ping_latency_stats = 0;
 int ds_retain_latency_stats = 0;
-int ds_latency_estimator_alpha_i = 900;
-float ds_latency_estimator_alpha = 0.9f;
+int ds_latency_estimator_alpha_i = 100;
+float ds_latency_estimator_alpha = 0.1f;
 int ds_probing_mode = DS_PROBE_NONE;
 
 static str ds_ping_reply_codes_str= STR_NULL;
