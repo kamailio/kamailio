@@ -313,6 +313,16 @@ int tr_eval_string(
 			val->rs.s = _tr_buffer;
 			val->rs.len = MD5_LEN;
 			break;
+		case TR_S_SHA1:
+			if(!(val->flags & PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			compute_sha1(_tr_buffer, (u_int8_t *)val->rs.s, val->rs.len);
+			_tr_buffer[SHA1_DIGEST_STRING_LENGTH - 1] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = SHA1_DIGEST_STRING_LENGTH - 1;
+			break;
 		case TR_S_SHA256:
 			if(!(val->flags & PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2945,6 +2955,9 @@ char *tr_parse_string(str *in, trans_t *t)
 		goto done;
 	} else if(name.len == 6 && strncasecmp(name.s, "rmhlws", 6) == 0) {
 		t->subtype = TR_S_RMHLWS;
+		goto done;
+	} else if(name.len == 1 && strncasecmp(name.s, "sha1", 1) == 0) {
+		t->subtype = TR_S_SHA1;
 		goto done;
 	} else if(name.len == 6 && strncasecmp(name.s, "sha256", 6) == 0) {
 		t->subtype = TR_S_SHA256;

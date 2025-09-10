@@ -50,6 +50,7 @@ enum _tr_s_subtype
 	TR_S_LEN,
 	TR_S_INT,
 	TR_S_MD5,
+	TR_S_SHA1,
 	TR_S_SHA256,
 	TR_S_SHA384,
 	TR_S_SHA512,
