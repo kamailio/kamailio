@@ -1436,8 +1436,9 @@ modparam("dispatcher", "ds_interval_mode", 7200)
 				</para>
 				<para>
 				The congestion estimation is done using an Exponentially Weighted Moving Average (EWMA).
-				More information about the algorithm can be found for example
-				<ulink url="http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm">here</ulink>.
+				More information about the algorithm can be found at
+				<ulink url="http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm">
+				http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm</ulink>.
 				If all the gateways in a set are above their congestion threshold(weight), the
 				load distribution is instead done using the ratio of estimated congestion ms.
 				</para>
