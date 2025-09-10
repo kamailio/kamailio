@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.10)
 # Set the project name
 project(
   kamailio
-  VERSION 6.0.2
+  VERSION 6.0.3
   DESCRIPTION "Kamailio SIP Server"
   HOMEPAGE_URL "https://www.kamailio.org")
 
