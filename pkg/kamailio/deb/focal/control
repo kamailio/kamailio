@@ -5,12 +5,12 @@ Maintainer: Kamailio Admin Group <kadmin.hq@lists.kamailio.org>
 Uploaders:
  Victor Seva <vseva@debian.org>,
 Build-Depends:
- bison,
  debhelper (>= 9),
- default-libmysqlclient-dev,
  dh-systemd (>= 1.5),
- docbook-xml,
  dpkg-dev (>= 1.16.1.1),
+ bison,
+ default-libmysqlclient-dev,
+ docbook-xml,
  erlang-dev,
  flex,
  libcurl4-openssl-dev,

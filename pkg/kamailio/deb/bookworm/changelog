@@ -1,3 +1,9 @@
+kamailio (6.0.3) unstable; urgency=medium
+
+  * version set 6.0.3
+
+ -- Victor Seva <vseva@debian.org>  Wed, 10 Sep 2025 09:04:56 +0200
+
 kamailio (6.0.2) unstable; urgency=medium
 
   * version set 6.0.2
@@ -8,7 +14,7 @@ kamailio (6.0.1) unstable; urgency=medium
 
   * version set 6.0.1
 
- -- Victor Seva <vseva@debian.org>  Mon, 10 Mar 2025 08:18:43 +0100
+ -- Victor Seva <vseva@debian.org>  Mon, 10 Mar 2025 08:18:44 +0100
 
 kamailio (6.0.0) unstable; urgency=medium
 
