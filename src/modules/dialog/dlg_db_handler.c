@@ -1009,8 +1009,39 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 		jdoc.free_fn(jdoc.buf.s);
 		jdoc.buf.s = NULL;
 	}
-	srjson_DestroyDoc(&jdoc);
+	/* Handle sflags updates separately after main dialog updates
+	 * This ensures sflags changes are persisted to database when
+	 * dlg_setflag() or dlg_resetflag() are called */
+	if((cell->dflags & DLG_FLAG_CHANGED_SFLAGS) != 0) {
+		LM_DBG("updating sflags for dialog [%d:%d], sflags=%u\n", cell->h_entry,
+				cell->h_id, cell->sflags);
 
+		if(use_dialog_table() != 0) {
+			goto error;
+		}
+
+		VAL_TYPE(values) = VAL_TYPE(values + 1) = DB1_INT;
+		VAL_TYPE(values + 18) = DB1_INT;
+
+		VAL_NULL(values) = VAL_NULL(values + 1) = VAL_NULL(values + 18) = 0;
+		VAL_INT(values) = cell->h_entry;
+		VAL_INT(values + 1) = cell->h_id;
+		VAL_INT(values + 18) = cell->sflags;
+
+		if((dialog_dbf.update(dialog_db_handle, (insert_keys), 0, (values),
+				   (insert_keys + 18), (values + 18), 2, 1))
+				!= 0) {
+			LM_ERR("could not update sflags in database for dialog [%d:%d]\n",
+					cell->h_entry, cell->h_id);
+			goto error;
+		}
+
+		LM_DBG("sflags successfully updated in database for dialog [%d:%d]\n",
+				cell->h_entry, cell->h_id);
+		cell->dflags &= ~(DLG_FLAG_CHANGED_SFLAGS);
+	}
+
+	srjson_DestroyDoc(&jdoc);
 	return 0;
 
 error:
