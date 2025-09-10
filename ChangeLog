@@ -1,3 +1,715 @@
+===================== 2025-09-10 Version 6.0.3 Released =====================
+
+===================== Changes Since Version 6.0.2 ===========================
+
+commit 37d5d89e421e966d9f5c5df52bd0c1450006a57a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 10 09:49:18 2025 +0200
+
+    Makefile.defs: version set to 6.0.3
+
+commit 2e35476b03e0a25838e16035e8be5e4f12f538ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 10 09:49:00 2025 +0200
+
+    CMakeLists.txt: version set to 6.0.3
+
+commit ffa5d81dda8fd6a17e729697fd8a4101349e1a7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 10 09:47:19 2025 +0200
+
+    pkg/kamailio: version set 6.0.3 for rpms and alpine
+
+commit d93edf5d842f8cb865d513a83dd57b7419198908
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Sep 10 09:05:39 2025 +0200
+
+    pkg/kamailio/deb: version set 6.0.3 [skip ci]
+    
+    * add trixie support
+
+commit 69056b37e032ad085005cef99e4b6519361fc90f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Sep 10 09:01:36 2025 +0200
+
+    pkg/kamailio/deb: add support for trixie [skip ci]
+
+commit 095ee3de59f7b5de289bec5375a1307bfa4ae2ae
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Sep 9 14:01:32 2025 +0200
+
+    ims_icscf: sync ims_icscf_timer_routine() declaration
+    
+    (cherry picked from commit 7905312a183eac8c9338ccd4ff12c5667de974b2)
+
+commit 626c99b66a1ed7e0c7bc25d89a724db586cf68dc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 2 16:04:13 2025 +0200
+
+    sqlops: small formatting of exported pvs
+    
+    (cherry picked from commit c98c32b48bcd2cdf4b883ff46cb939b80351fb20)
+
+commit 4d99c9cecb2db32933a170e143b6435a4fb5d001
+Author: vsaranov <vadim.saranov@gmail.com>
+Date:   Tue Aug 12 21:24:11 2025 +0300
+
+    rtp_media_server: fix incorrect function return value
+    
+    (cherry picked from commit 604771b4da34a5512fc65143297dbeb8a40db3f7)
+
+commit bccf6add61234b454f3ae034a728fc65d3a789e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 18 07:39:15 2025 +0200
+
+    core: resolve - SR_DNS_MAX_QNO and SR_DNS_MAX_ANO can be defined via compiler options
+    
+    - compiler -D or makefile variable CC_EXTRA_OPTS
+    - #4359
+    
+    (cherry picked from commit 1525b613357cbd1bcd5dbc3555603c57fa5dddcb)
+
+commit 32b69f52c427aae526f7e67d5f3d1a7141e98bb5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 16 08:00:22 2025 +0200
+
+    microhttpd: clone header name for search
+    
+    - GH #4369
+    
+    (cherry picked from commit 18bd172382f927a771b3b6ef05d614a3562c0202)
+
+commit 89418b3e525e6ed32281aaa604d7b1bcc74180f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 15 17:01:37 2025 +0200
+
+    microhttps: detect header name variables before the rest
+    
+    (cherry picked from commit e1fda6025e058ea44203541f70b48d800019609d)
+
+commit 66aeb54d861523892e255ff9140dc18c3b7e742a
+Author: Matteo Brancaleoni <matteo.brancaleoni@voismart.it>
+Date:   Thu Aug 7 17:11:49 2025 +0200
+
+    pua_reginfo: use expires from contact for publish rq
+    
+    (cherry picked from commit 0e284b0632f5c1ca9d82b87e0b158e2858d1de5d)
+
+commit f9a7562bb85ce82861551cbcf83be455340feab0
+Author: Stefan Mititelu <stefan.mititelu@net2phone.com>
+Date:   Tue Aug 5 11:02:52 2025 +0300
+
+    tm: add NULL check for transaction uac
+    
+    (cherry picked from commit 4e2a93074476a3e1747eb46cb197cd8f492d5902)
+
+commit 86eb79f1f6bc78dd42a7a0ede7d60d9785a9e910
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Aug 27 12:03:01 2025 +0200
+
+    ndb_mongodb: support mongo-c-driver version 2
+    
+    related #4378
+    
+    (cherry picked from commit 5182f261562c8882b9468f5209b21c9863e659bc)
+
+commit 6b3756ef8d44996742ffb24f4ffe6b4fc929599a
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Aug 28 09:48:18 2025 +0000
+
+    ndb_mongodb: Adopte cmake for mongoc2
+    
+    (cherry picked from commit 58b33d348db678bdda9c119aaa6074ff2cb752c9)
+
+commit 9668f46abdbe1c551138e81a19eca13e320f69cb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Aug 27 11:59:25 2025 +0200
+
+    db_mongodb: support mongo-c-driver version 2
+    
+    related #4378
+    
+    (cherry picked from commit 0bb166deb7fcbc5f0c7aa1bf12fba24ca1d34cf8)
+
+commit 006edde1876d3817b1296bb6135bf55859c4bea6
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Aug 28 09:48:06 2025 +0000
+
+    db_mongodb: Adopt cmake for mongoc2
+    
+    (cherry picked from commit 41198c512c199501468d8b2a93914adae1b32d15)
+
+commit 688ace0835dff05d8653b1573aaf672e7a793bf4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Sep 1 15:07:17 2025 +0200
+
+    ims_icscf: use proper timer_function parameters
+    
+    fix #4370
+    
+    (cherry picked from commit bf24361bb02677cebba275a60ba289700d285c61)
+
+commit 86bb6fee439b3d149c67196f7fd2a0b7c1c15728
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Wed Jun 18 08:03:04 2025 +0200
+
+    http_async_client: free cell->reply when curl handler is reused for http challenge
+
+commit 015efa305c2c7822e64383c6a98de9addd41add7
+Author: Stefan Mititelu <stefan.mititelu@net2phone.com>
+Date:   Tue Jun 24 12:28:43 2025 +0300
+
+    rtpengine: don't ping manually disabled nodes
+    
+    Fix for original commit: 3202dc9d8e26620fe642e474e5cf8632ab6bc3a7
+    
+    (cherry picked from commit d48011199c1c262271efa63430f6e4a982b6052c)
+
+commit ea8e68340a7ff3c65d6df9389472d176f41332b6
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Aug 14 14:56:26 2025 +0000
+
+    cmake: Add futex definition to linux.
+    
+    - Match existing behavior with makefiles
+    - This has the side effect that both fast_lock and use_futex are defined.
+    - code selects use_futex
+    
+    (cherry picked from commit 9d6d4f66c586396def5bbf9b8cf59d277983c72e)
+
+commit 2a28715a32a9b2ca0fc29b43b772576a57938b0c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 12 08:54:04 2025 +0200
+
+    dispatcher: load tm api earlier than records loading not to reset the probing flag
+    
+    (cherry picked from commit fc366962cf6142fd7614baee9ace854ac661d698)
+
+commit 650739064d27f10bb19b4d811d1c5545e1a49690
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 11 20:49:17 2025 +0200
+
+    dispatcher: print the flags and priority in the debug message
+    
+    (cherry picked from commit 533324e21ee48c680ebf7505ce37b2503810d874)
+
+commit ec76d674e688c20255322e6b77e2f0e823960e6d
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Aug 6 07:40:14 2025 -0400
+
+    rtpengine: enlarge cookie buffer
+    
+    With `server_id` being a signed int, it may be negative, taking up 11
+    characters instead of 10.
+    
+    Add explicit type casts to ensure future consistency.
+    
+    Closes #4350
+    
+    (cherry picked from commit 6281f71476dfd1f71c824029b1970100cc150d7d)
+
+commit b6d6aa24d6cdf526a29469155d3cb7c6856bd31c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Aug 3 16:16:21 2025 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 3e64cf44eb6e01147cd18a6a8b73f47b6e4e1481
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Aug 3 16:08:07 2025 +0200
+
+    dispatcher: removed exports to config propagated by backporting
+    
+    - removed param event_callback_mode and function ds_mark_addr()
+
+commit 3fa9a83342b70c296cd10856d64711b370f8fb15
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 20 06:53:44 2025 +0200
+
+    core: mod fixup - helper function for s-i-s parameters
+    
+    (cherry picked from commit 62b18cdfb62721304e5f82fd71063303cff06641)
+
+commit 2e98f882b09f8c3adc82631fddbf36b101afc1c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 23 19:40:31 2025 +0200
+
+    topos: docs updated for event routes
+    
+    (cherry picked from commit 913d60bed99eee7dd212831e9153e5a3c39ab4be)
+
+commit 7b02ee5a57c657e96cfea9e47689d758f4d1c37b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 23 19:17:37 2025 +0200
+
+    sipdump: made the received info available via the faked message in event route
+    
+    (cherry picked from commit c6c25e43c8a24b50b73bf0772d58686cf8944020)
+
+commit eb518c35b2aa76c58967f5d5985e40b3891118ee
+Author: Stefan Mititelu <stefan.mititelu@net2phone.com>
+Date:   Thu Jul 17 11:50:27 2025 +0300
+
+    topos: expose rcv data in event routes
+    
+    Updated documentation.
+    
+    (cherry picked from commit 90b350a2815bc2ca4c69fda75194322416ced328)
+
+commit 5c31ba6baec200177aeadcf40da1af8bdb16322a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 23 17:19:06 2025 +0200
+
+    dispatcher: use always the internal faked message for event routes
+    
+    - being executed on state change, the config message does not provide
+      useful data (e.g., on ds_mark_dst() inside failure route, the UAS
+      request is used, not having uri where it was sent)
+    - the r-uri of the internal faked message is set to the destination uri
+      from the dispatcher record
+    
+    (cherry picked from commit e7bf487cfcde699fbcd6fd4a6233ef2113570545)
+
+commit e212f1ff7747906fd6deeb7f74b7a07e99f3355e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 23 16:06:25 2025 +0200
+
+    dispatcher: use faked message also for tm faked-reply on event routes
+    
+    (cherry picked from commit 97d5a13b9f2c6cd84e6ce62e0c779a5118b3dfb1)
+
+commit 41478779d55b158ddd8c3b177de5309afa4485cf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 18 09:11:20 2025 +0200
+
+    core: extended log messages for lumps_len()
+    
+    (cherry picked from commit c53b5345e6101c6fe1771e3d64c25e6f7671c479)
+
+commit 169387ffcfca99e251bbde250dca66dd7025d1e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 17 17:41:05 2025 +0200
+
+    core: more details in the log for checking msg_recv_max_size
+    
+    (cherry picked from commit 30331861c6d10ba04352448f10ce6b912ebe0515)
+
+commit 29302f9838922ac1c130e36c3573d362d57a9e05
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 17 09:16:23 2025 +0200
+
+    usrloc: use proto from socket for keepalive via header
+    
+    (cherry picked from commit 3322bea764036deba6340e435c257244d511a11f)
+
+commit 9f53a495f0d6a09f56c872958e18f712afef31da
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 16 11:28:13 2025 +0200
+
+    crypto: init call-id rand seeding with the first usage
+    
+    - randomization per process
+    
+    (cherry picked from commit a07b845cffe0a6a5fb6410d735aee6c510f8ff8e)
+
+commit 816040c333c068d54438a56658dd6554f42568b1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 16 08:23:00 2025 +0200
+
+    dispatcher: added parameter event_callback_mode
+    
+    - control when event route and KEMI callback functions are executed
+    
+    (cherry picked from commit 77805bc1f028f4cca956d4f05dd9dc3c0d534d0f)
+
+commit 10093edb2b69d1bc1773c0449d2e2314228982c1
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Sun Jul 13 14:10:27 2025 +0200
+
+    tls_wolfssl: Fix typo
+    
+    (cherry picked from commit 157f0ea6eb570226bcbf52c6ebb706f2e81b3c8e)
+
+commit 0dba33ddc9fa64df4dd1df2c9658636f796d076b
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Sun Jul 13 14:08:58 2025 +0200
+
+    tls: Fix typo
+    
+    (cherry picked from commit 982a1a676a84142a511e4f095f8d19161f3c34ee)
+
+commit 0b543ae073653af9fe27b35fcbd327c2b509d3ea
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Sun Jul 13 14:03:36 2025 +0200
+
+    pv: Fix typo
+    
+    (cherry picked from commit a426a2e113c4b41af36ee4240cc10460a6cb537a)
+
+commit 165b19e4a8f684350529a87823cae41f6f5802d6
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Sun Jul 13 14:02:27 2025 +0200
+
+    core: Fix typos
+    
+    (cherry picked from commit 6b92933080230f9546c9559aba9ecdfad7759a15)
+
+commit 8818cd8fc6d37a395a4e8b15675eba6f7ebb0776
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Sun Jul 13 14:00:43 2025 +0200
+
+    htable: Fix typo
+    
+    (cherry picked from commit 93586580259fe2d71899a3a4d83868f89362f695)
+
+commit 00def1b816472d7eff9ecb22654ecea58e865fb1
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Sun Jul 13 12:50:04 2025 +0300
+
+    dialog: use capital letter at start of sentence
+    
+    (cherry picked from commit cc22bfc5199855f990156fb6a533c67dbc9049e9)
+
+commit c58ac37fced3a0d0a6ae95107d3733eb727ec431
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jul 12 11:40:12 2025 +0200
+
+    dispatcher: check rewrite_uri() return code
+    
+    (cherry picked from commit 34c903a6a4658852bfef0edfb78614b83700a5e9)
+
+commit d8453e714abe2d80f8953d40b67a0ec4440ecd8c
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Mon Jun 30 09:55:31 2025 +0200
+
+    uac: Fix From/To header restore with dialog store
+    
+    When replacing From/To header and using dialog module to store original
+    URIs (modparam restore_dlg=1), restoring of headers does not work for
+    replies to in-dialog requests sent upstream.
+    Add in-dialog request's direction to TM callback parameter, so correct
+    URIs are restored for replies to upstream in-dialog requests.
+    
+    (cherry picked from commit 0d4ffb74a949ae6e390d334b30ec51cedb001226)
+
+commit c2f382afb529cdbd0dbd16c73680794ca1e92b87
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 8 11:53:07 2025 +0200
+
+    cplc: update main process variable after the internal fork()
+    
+    - probably module should be updated to use internal API fork_process()
+    
+    (cherry picked from commit 508e59090960322d1709b7e56a41300d0e948600)
+
+commit cc09f81443946be5948356eff4ddc298044b8efe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 8 11:52:37 2025 +0200
+
+    sms: update main process variable after the internal fork()
+    
+    - probably module should be updated to use internal API fork_process()
+    
+    (cherry picked from commit 92949eb21a3ce6869fce01f9b080d9502f61edf8)
+
+commit 183f71fba0b0a948816a03d1d690e1f68c4e3524
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 8 11:51:30 2025 +0200
+
+    seas: update main process variable after the internal fork()
+    
+    - probably module should be updated to use internal API fork_process()
+    
+    (cherry picked from commit d18f7189a9664f3c2cca65c76e068ad1951a0c19)
+
+commit c648866f63c6aabcc058aa49439e6c6033ac8494
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 4 10:25:13 2025 +0200
+
+    kex: formatted pkg rpc export structure
+    
+    (cherry picked from commit e153560eec82787c92c7bb6522dfa7a106781bfd)
+
+commit 12b46a0e8fe7f904834f6a4c0ae29911c32de97e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 1 13:05:43 2025 +0200
+
+    microhttpd: rework resetting the data field
+    
+    (cherry picked from commit 4083714575e2cb7500c67fb8a0b99ff371bf8576)
+
+commit 6a2516c12094d375ba63ef5b9cd021bfa1d620bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Jun 29 20:33:34 2025 +0200
+
+    secsipid: docs update to reflect better the use of private/public key
+    
+    (cherry picked from commit 64635de552896fbf354e52656ec4ee93f1d87e6f)
+
+commit 40db3cacd06952f47f90311a04f6c98ffc45790c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 27 10:01:18 2025 +0200
+
+    uac: small reformatting for reg_copy_shm() macro
+    
+    (cherry picked from commit 9187303af7689d435112f69fdbec45b7c5687351)
+
+commit ef4a1349470bb05fbf52f78103310a6c7123e6b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 27 09:22:28 2025 +0200
+
+    rtpengine: docs section for rtpengine_destroy()
+    
+    (cherry picked from commit 3020ddd9ad832a51cb04aef9d717935bcae5405f)
+
+commit 3d9bf7d271fa9f01014600c34083f21b0a0de5a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 27 09:09:53 2025 +0200
+
+    rtpengine: aliased rtpengine_destroy() to rtpengine_delete()
+    
+    - make it easier to migrate from rtp proxy by replacing the module name
+      inside routing blocks
+    
+    (cherry picked from commit 32db0297d27093181ff4eb0530cc1a67d680e99f)
+
+commit 97c904c02ad797473a82d41d815a8e8bcb729135
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 26 09:05:10 2025 +0200
+
+    nghttp2: docs updated to use the proper $nghttp2(path) variable
+    
+    (cherry picked from commit b513666f76d2220d8914fadcc4968845efbf170f)
+
+commit 6e36d3fdb0f0794ec3f57c7265d283916d79c46c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 25 20:33:45 2025 +0200
+
+    core: print ip and port in log message
+    
+    (cherry picked from commit 092ad634a2741ad21fd29586a30bd2bcb9ac653b)
+
+commit 9d07b43816658b6e2683dedfcab655bdb792cd3b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 25 17:03:58 2025 +0200
+
+    dispatcher: clone dispatcher uri for event route variable
+    
+    (cherry picked from commit db65368108b0de14e40cbbd7c92561e5c8740dac)
+
+commit 00fcc56fdb11d1bbb14291aaf4b348e6d0222a93
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 25 13:22:17 2025 +0200
+
+    dispatcher: $dsv(name) extended to return setid and uri
+    
+    (cherry picked from commit 0e914414e48637168ab9ab682a9463412cf8f3fe)
+
+commit 30893f0027363e0ca83ac1b50a5ffcf3bb521abb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 24 19:18:52 2025 +0200
+
+    dispatcher: renamed field to reflect better the purpose and print in rpc result
+    
+    (cherry picked from commit deb8405b403a5a8da4f2aac3aa167e2a84d15d91)
+
+commit 499e886f265f02d87124e71f1a53a1de89b23d07
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 24 13:30:13 2025 +0200
+
+    dispatcher: set state from config without depending on keepalive thresholds
+    
+    (cherry picked from commit a70a55df0dbe5fc9231329327e3d6acf6a37c5c4)
+
+commit 8d2a9aa3748d0a5ee2f0dec588f4821d26154580
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 24 12:20:20 2025 +0200
+
+    dispatcher: use rewrite/reset uri for event route with faked msg
+    
+    (cherry picked from commit a878e7f2ec015015f53b1ad152554a81c9422674)
+
+commit 9ed2e519dfb5933afd4a151b8bece0f5af55abbb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 24 12:15:37 2025 +0200
+
+    core: dset - wrapper function to reset request uri
+    
+    (cherry picked from commit e01f50fa3de5b0eb24ba0852917d682fe1d83ea1)
+
+commit 716e89dd5a86fd17c3c60a7815796a08f230d4cf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 20 08:10:45 2025 +0200
+
+    dispatcher: added ds_mark_addr(state, group, uri)
+    
+    - set the state of a target by group and address
+    
+    (cherry picked from commit d85e63e7c5fb422151ba0d8a08b47cedc4929d8d)
+
+commit 483d7190cdd193b56570cb6b8bfef9235351f663
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 18 19:19:37 2025 +0200
+
+    dispatcher: docs - more details about using algorithm 12
+    
+    (cherry picked from commit 1b62f165d541cf88fe37778f0e23232e45e86b3d)
+
+commit 87f60d2b4429b4858dabd9fa5be5fe19418cfade
+Author: amnapa <marvelousvip@live.com>
+Date:   Sat Apr 5 13:08:18 2025 +0000
+
+    ims_auth: replaced t_continue_skip_timer with t_continue in cxdx_mar.c
+    
+    - fixed log message in MAR Async CDP callback
+    - fixed executing cfg_action after sending MAR Diameter request
+    - cfg_action is the callback parameter of the ims_www_challenge function
+    
+    (cherry picked from commit 7470967790a78ba67ef7acb7c87d94482fbea0cb)
+
+commit 4c6485235ab6a66e45ab20be731dd4f220e36e44
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 29 11:25:22 2025 +0200
+
+    ims_ipsec_pcscf: ipsec_reconfig() fix logic
+    
+    reconfig should only happen once. Before, if more than one
+    REGISTER was processed when there are no contacts, the process
+    could be triggered more than once.
+    
+    (cherry picked from commit c362531c5dccc3ed674247c18bac65c224385108)
+
+commit 959ccfb762f1643ebfc9a57b12e8e7e0df2e7aba
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jul 24 17:54:43 2025 +0200
+
+    Makefile: fix dependency of core/cfg.tab.c rule
+    
+    * don't call bison twice
+    
+    Fix #4337
+    
+    (cherry picked from commit d3e71874cf39c9ab50af293d647754bb589d0612)
+
+commit b9b39e53a53dffade4b0102e6dec6f75928e3a92
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 23 17:13:12 2025 +0200
+
+    ims_usrloc_scscf: update SUBSCRIBER_TABLE to "subscriber_scscf"
+    
+    * schema was changed at 283a77887c88c38a240567a7b165478775662d81
+    
+    (cherry picked from commit 359e0df42d3e1c5880c9f465c6898fedd5bdead1)
+
+commit 5993ec85431f5d23dcc2aac12a5e98eb6f7de989
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 22 11:16:32 2025 +0200
+
+    ims_icscf: cxdx_send_lir() return error on fail send message
+    
+    (cherry picked from commit 73119407a0999ca32eed75e56e412f3087a37800)
+
+commit 9bc482d9e859473621b5a4bebb3bf7e11e9bdd96
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 22 11:09:02 2025 +0200
+
+    ims_icscf: cxdx_send_uar() return error on fail send message
+    
+    (cherry picked from commit 8a30b015e5d8da263cd6f91cc659813cc6c9946a)
+
+commit c52a6b5a9ce6e328f327d1abc0aaf52443ae298d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jul 21 13:27:30 2025 +0200
+
+    ims_dialog: dlg_onroute() use proper tag depending on direction
+    
+    * needed for correctly updating cseq
+    
+    (cherry picked from commit a3fdf6dc8f9bf74f937ccde6becb64afd74910a8)
+
+commit bad15277b3bf35e727397ad727fb6cb4e14992ae
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jul 21 10:59:54 2025 +0200
+
+    ims_isc: build_p_associated_uri() fix tel uri build
+    
+    (cherry picked from commit a93b6f5831a9e0a86d468f91bbdba9590868dec9)
+
+commit 9bdcb7f3bb304c2f0824006542bd613c20d39f0d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 15 18:10:38 2025 +0200
+
+    ims_isc: remove function names from log messages
+    
+    * use generic PKG_MEM_ERROR messages on pkg_malloc errors
+    
+    (cherry picked from commit 48d3fdb3cfa3e5eec777853e1a4d32d844e94e8f)
+
+commit 681c76b21103045aa09db8bf79a6abc818581094
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 15 18:03:07 2025 +0200
+
+    ims_isc: fix wrong log level messages
+    
+    this are clearly debug log messages, not errors
+    
+    (cherry picked from commit db7c46d97cf2d3f47024dbf9583aad575dd14b35)
+
+commit 9c6fbd3b139d9e48b7cc2323f3b902773f181c83
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 15 08:53:38 2025 +0200
+
+    cdp: cdp_rpc_list_peers() release lock on errors
+    
+    (cherry picked from commit 7f078931d3d684822e90485024672632be29741c)
+
+commit 567a0e75e3ee780641365b9a3fb2747d57b3e4ab
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sat Jun 28 04:46:18 2025 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 27f09f6ee73b1eb65db839e213069511a2e8434c
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Jun 28 07:42:41 2025 +0800
+
+    tls: document provider_quirks parameter
+    
+    (cherry picked from commit e93de1d71513b444054bac0b9b668205655bf268)
+
+commit 4e8f34cf5eca5f0a6c6dc2a32d9e521d2c3df135
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Jun 26 10:46:44 2025 +0000
+
+    rtpengine: Remove unnessecary log
+    
+    (cherry picked from commit bd8f7b4e749f2b4d5525d5864c36252823926351)
+
+commit 830a9f349f0356bc695b8744b4c96218e690d9e8
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Jun 18 11:10:02 2025 +0000
+
+    lrkproxy: improve randomness of cookie by using PNRG and random sequence numbers
+    
+    (cherry picked from commit 4935196ee8ce1d99e77c614aaa0131a1972580ed)
+
+commit 898bfc89fde04bb5f3d0fda059c58b0c9378d15a
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Jun 18 11:09:38 2025 +0000
+
+    rtpproxy: improve randomness of cookie by using PNRG and random sequence numbers
+    
+    (cherry picked from commit 04686c40d380e16e55c359cbc6bfc28f644a4c0b)
+
+commit 46702d80d76f6b70b63d2fca4e884def18b20385
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Jun 18 11:08:12 2025 +0000
+
+    rtpengine: improve randomness of cookie by using PNRG and random sequence numbers
+    
+    (cherry picked from commit 33b80fcc4d84f955b29bd65bccee9ef2a62e7000)
+
+
 ===================== 2025-06-25 Version 6.0.2 Released =====================
 
 ===================== Changes Since Version 6.0.1 ===========================
