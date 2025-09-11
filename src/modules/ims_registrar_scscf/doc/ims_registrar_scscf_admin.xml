@@ -230,6 +230,25 @@
     </section>
 
     <section>
+      <title>ue_unsubscribe_on_dereg (int)</title>
+
+      <para>Many UEs do not unsubscribe on de-register, therefor if the
+      parameter is set to 0, the default, any subscription of that subscriber
+      will be removed and NOTIFY will be not sent. To disable this behaviour set this
+      parameter to 1.</para>
+
+      <para><emphasis> Default value is 0 (disabled)</emphasis></para>
+
+      <example>
+        <title>Set <varname>user_data_dtd</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "ue_unsubscribe_on_dereg", 1)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
       <title>user_data_dtd (string)</title>
 
       <para>DTD to check the user data received in SAA (Server Assignment
