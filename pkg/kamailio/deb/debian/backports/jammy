@@ -29,6 +29,10 @@ sed -i -e '/^ python,/d' -e '/python-dev/d' \
 sed -i -e '/^PACKAGE_GROUPS += python$/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += python' ${DIST}/rules
 
+# libjwt < 1.12
+sed -i -e '/libjwt-dev/d' -e 's/, JWT (JSON Web Token)//' ${DIST}/control
+sed -i -e '/^EXTRA_GROUPS += jwt$/d' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

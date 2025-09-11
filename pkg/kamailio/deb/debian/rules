@@ -97,6 +97,7 @@ EXTRA_GROUPS += gzcompress
 EXTRA_GROUPS += jansson
 EXTRA_GROUPS += uuid
 EXTRA_GROUPS += http_async
+EXTRA_GROUPS += jwt
 
 .PHONY: skip-modules
 skip-modules:
