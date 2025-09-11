@@ -1114,36 +1114,106 @@ static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
  * @param d initialized TLS domain
  * @param def default TLS domains
  */
-static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
+static int ksr_tls_create_ctx_shared(tls_domain_t *d, int procs_no)
 {
-	int i;
-	int procs_no;
+	/* Initialize context only once and share it between processes */
+	int i = 0;
+	SSL_CTX *ctx = NULL;
 
-	if(ksr_tls_fill_missing(d, def) < 0)
-		return -1;
-
-	if(d->type & TLS_DOMAIN_ANY) {
-		if(d->server_name.s == NULL || d->server_name.len < 0) {
-			LM_ERR("%s: tls domain for any address but no server name\n",
-					tls_domain_str(d));
-			return -1;
-		}
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	/* libssl < 1.1.0 */
+	if(d->method > TLS_USE_TLSvRANGE) {
+		ctx = SSL_CTX_new(SSLv23_method());
+	} else {
+		ctx = SSL_CTX_new((SSL_METHOD *)ssl_methods[d->method - 1]);
 	}
-
-	procs_no = get_max_procs();
-	d->ctx = (SSL_CTX **)shm_malloc(sizeof(SSL_CTX *) * procs_no);
-	if(!d->ctx) {
-		ERR("%s: Cannot allocate shared memory\n", tls_domain_str(d));
+	if(ctx == NULL) {
+		unsigned long e = 0;
+		e = ERR_peek_last_error();
+		ERR("%s: Cannot create SSL context [%d] (%lu: %s / %s)\n",
+				tls_domain_str(d), i, e, ERR_error_string(e, NULL),
+				ERR_reason_error_string(e));
 		return -1;
 	}
 	if(d->method > TLS_USE_TLSvRANGE) {
-		LM_DBG("using tls methods range: %d\n", d->method);
-	} else {
-		LM_DBG("using one tls method version: %d\n", d->method);
+		SSL_CTX_set_options(ctx, (long)ssl_methods[d->method - 1]);
 	}
-	memset(d->ctx, 0, sizeof(SSL_CTX *) * procs_no);
-	for(i = 0; i < procs_no; i++) {
+#else
+	/* libssl >= 1.1.0 */
+	ctx = SSL_CTX_new(sr_tls_methods[d->method - 1].TLSMethod);
 
+	if(ctx == NULL) {
+		unsigned long e = 0;
+		e = ERR_peek_last_error();
+		ERR("%s: Cannot create SSL context [%d] (%lu: %s / %s)\n",
+				tls_domain_str(d), i, e, ERR_error_string(e, NULL),
+				ERR_reason_error_string(e));
+		return -1;
+	}
+	if(d->method > TLS_USE_TLSvRANGE) {
+		if(sr_tls_methods[d->method - 1].TLSMethodMin) {
+			SSL_CTX_set_min_proto_version(
+					ctx, sr_tls_methods[d->method - 1].TLSMethodMin);
+		}
+	} else {
+		if(sr_tls_methods[d->method - 1].TLSMethodMin) {
+			SSL_CTX_set_min_proto_version(
+					ctx, sr_tls_methods[d->method - 1].TLSMethodMin);
+		}
+		if(sr_tls_methods[d->method - 1].TLSMethodMax) {
+			SSL_CTX_set_max_proto_version(
+					ctx, sr_tls_methods[d->method - 1].TLSMethodMax);
+		}
+	}
+#endif
+
+#ifndef OPENSSL_NO_TLSEXT
+	/*
+	* check server domains for server_name extension and register
+	* callback function
+	*/
+	if((d->type & TLS_DOMAIN_SRV)
+			&& (d->server_name.len > 0 || (d->type & TLS_DOMAIN_DEF))) {
+		if(!SSL_CTX_set_tlsext_servername_callback(ctx, tls_server_name_cb)) {
+			LM_ERR("register server_name callback handler for socket "
+				   "[%s:%d], server_name='%s' failed for proc %d\n",
+					ip_addr2a(&d->ip), d->port,
+					(d->server_name.s) ? d->server_name.s : "<default>", i);
+			return -1;
+		}
+		if(!SSL_CTX_set_tlsext_servername_arg(ctx, d)) {
+			LM_ERR("register server_name callback handler data for socket "
+				   "[%s:%d], server_name='%s' failed for proc %d\n",
+					ip_addr2a(&d->ip), d->port,
+					(d->server_name.s) ? d->server_name.s : "<default>", i);
+			return -1;
+		}
+	}
+#endif
+
+#ifndef OPENSSL_NO_TLSEXT
+	if((d->type & TLS_DOMAIN_SRV)
+			&& (d->server_name.len > 0 || (d->type & TLS_DOMAIN_DEF))) {
+		LM_NOTICE("registered server_name callback handler for socket "
+				  "[%s:%d], server_name='%s' ...\n",
+				(d->ip.af > 0) ? ip_addr2a(&d->ip) : "0.0.0.0", d->port,
+				(d->server_name.s) ? d->server_name.s : "<default>");
+	}
+#endif
+
+	for(i = 0; i < procs_no; i++) {
+		SSL_CTX_up_ref(ctx);
+		d->ctx[i] = ctx;
+	}
+
+	SSL_CTX_free(ctx);
+	return 0;
+}
+
+static int ksr_tls_create_ctx_unshared(tls_domain_t *d, int procs_no)
+{
+	int i;
+	for(i = 0; i < procs_no; i++) {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 		/* libssl < 1.1.0 */
 		if(d->method > TLS_USE_TLSvRANGE) {
@@ -1229,6 +1299,64 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 				(d->server_name.s) ? d->server_name.s : "<default>");
 	}
 #endif
+	return 0;
+}
+
+/* Context creation based on config variable tls_shared_ctx */
+static int ksr_tls_create_ctx(tls_domain_t *d, int shared, int procs_no)
+{
+	if(shared == 1) {
+		if(ksr_tls_create_ctx_shared(d, procs_no) < 0) {
+			LM_ERR("failed to create shared context for domain\n");
+			return -1;
+		}
+	} else {
+		if(ksr_tls_create_ctx_unshared(d, procs_no) < 0) {
+			LM_ERR("failed to create unshared context for domain\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/**
+ * @brief Initialize all domain attributes from default domains if necessary
+ * @param d initialized TLS domain
+ * @param def default TLS domains
+ */
+static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
+{
+	int procs_no;
+
+	if(ksr_tls_fill_missing(d, def) < 0)
+		return -1;
+
+	if(d->type & TLS_DOMAIN_ANY) {
+		if(d->server_name.s == NULL || d->server_name.len < 0) {
+			LM_ERR("%s: tls domain for any address but no server name\n",
+					tls_domain_str(d));
+			return -1;
+		}
+	}
+
+	procs_no = get_max_procs();
+	// LM_ALERT("Max procs %d",procs_no);
+	d->ctx = (SSL_CTX **)shm_malloc(sizeof(SSL_CTX *) * procs_no);
+	if(!d->ctx) {
+		ERR("%s: Cannot allocate shared memory\n", tls_domain_str(d));
+		return -1;
+	}
+	if(d->method > TLS_USE_TLSvRANGE) {
+		LM_DBG("using tls methods range: %d\n", d->method);
+	} else {
+		LM_DBG("using one tls method version: %d\n", d->method);
+	}
+	memset(d->ctx, 0, sizeof(SSL_CTX *) * procs_no);
+
+	if(ksr_tls_create_ctx(d, ksr_tls_enable_shared_ctx, procs_no) < 0) {
+		LM_ALERT("ksr_tls_create_ctx failed");
+		return -1;
+	}
 
 	if(load_cert(d) < 0)
 		return -1;
