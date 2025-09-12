@@ -101,7 +101,10 @@ void xavp_free_unsafe(sr_xavp_t *xa)
 	shm_free_unsafe(xa);
 }
 
-static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
+/* Like xavp_new_value(), but allows NULL data in SR_XTYPE_STR
+ * value. In that case, it only reserves memory for the string and
+ * doesn't try to initialize string data. */
+static sr_xavp_t *xavp_new_value_reserve(str *name, sr_xval_t *val)
 {
 	sr_xavp_t *avp;
 	int size;
@@ -128,12 +131,24 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 	memcpy(&avp->val, val, sizeof(sr_xval_t));
 	if(val->type == SR_XTYPE_STR) {
 		avp->val.v.s.s = avp->name.s + avp->name.len + 1;
-		memcpy(avp->val.v.s.s, val->v.s.s, val->v.s.len);
+		/* Leave the string uninitialized if no data is provided, it
+		 * should be filled in-place later. */
+		if(val->v.s.s) {
+			memcpy(avp->val.v.s.s, val->v.s.s, val->v.s.len);
+		}
 		avp->val.v.s.s[val->v.s.len] = '\0';
 		avp->val.v.s.len = val->v.s.len;
 	}
 
 	return avp;
+}
+
+/* Like xavp_new_value_reserve(), but requires non-NULL data pointer
+ * in SR_XTYPE_STR value. */
+static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
+{
+	assert(val->type != SR_XTYPE_STR || val->v.s.s);
+	return xavp_new_value_reserve(name, val);
 }
 
 int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list)
@@ -210,6 +225,30 @@ sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 	sr_xavp_t *avp = 0;
 
 	avp = xavp_new_value(name, val);
+	if(avp == NULL)
+		return NULL;
+
+	/* Prepend new value to the list */
+	if(list) {
+		avp->next = *list;
+		*list = avp;
+	} else {
+		avp->next = *_xavp_list_crt;
+		*_xavp_list_crt = avp;
+	}
+
+	return avp;
+}
+
+/* Like xavp_add_value(), but allows NULL data in a SR_XTYPE_STR
+ * value. In that case, the string data will be allocated but will not be
+ * initialized. It must then be filled in-place through the XAVP pointer
+ * returned from this function. */
+sr_xavp_t *xavp_add_value_reserve(str *name, sr_xval_t *val, sr_xavp_t **list)
+{
+	sr_xavp_t *avp = 0;
+
+	avp = xavp_new_value_reserve(name, val);
 	if(avp == NULL)
 		return NULL;
 
