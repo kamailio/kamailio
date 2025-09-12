@@ -176,6 +176,8 @@ int uptime_stat_enabled = 0; /**< enable or disable uptime statistic. */
 
 int pkgmem_stats_enabled = 0; /**< enable or disable pkgmem statistics. */
 
+int metadata_flags = 0; /**< include metrics metadata in text output. */
+
 char error_buf[ERROR_REASON_BUF_LEN];
 
 /* clang-format off */
@@ -217,6 +219,7 @@ static param_export_t params[] = {
 	{"xhttp_prom_timeout", PARAM_INT, &timeout_minutes},
 	{"xhttp_prom_uptime_stat", PARAM_INT, &uptime_stat_enabled},
 	{"xhttp_prom_pkg_stats", PARAM_INT, &pkgmem_stats_enabled},
+	{"xhttp_prom_metadata_flags", PARAM_INT, &metadata_flags},
 	{0, 0, 0}
 };
 
