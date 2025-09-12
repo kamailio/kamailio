@@ -83,6 +83,11 @@ int prom_gauge_reset(str *s_name, str *l1, str *l2, str *l3);
 int prom_counter_inc(str *s_name, int number, str *l1, str *l2, str *l3);
 
 /**
+ * @brief Increase (or decrease, if amount is negative) a gauge by the given amount.
+ */
+int prom_gauge_inc(str *s_name, double number, str *l1, str *l2, str *l3);
+
+/**
  * @brief Set a value in a gauge.
  */
 int prom_gauge_set(str *s_name, double number, str *l1, str *l2, str *l3);
