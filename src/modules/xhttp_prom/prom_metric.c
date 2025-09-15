@@ -1195,6 +1195,29 @@ int prom_counter_reset(str *s_name, str *l1, str *l2, str *l3)
 }
 
 /**
+ * @brief Increase (or decrease, if amount is negative) a gauge by the given amount.
+ */
+int prom_gauge_inc(str *s_name, double number, str *l1, str *l2, str *l3)
+{
+	lock_get(prom_lock);
+
+	/* Find a lvalue based on its metric name and labels. */
+	prom_lvalue_t *p = NULL;
+	p = prom_metric_lvalue_get(s_name, M_GAUGE, l1, l2, l3);
+	if(!p) {
+		LM_ERR("Cannot find gauge: %.*s\n", s_name->len, s_name->s);
+		lock_release(prom_lock);
+		return -1;
+	}
+
+	/* Increase/decrease gauge value. */
+	p->m.gval += number;
+
+	lock_release(prom_lock);
+	return 0;
+}
+
+/**
  * @brief Set a value in a gauge.
  */
 int prom_gauge_set(str *s_name, double number, str *l1, str *l2, str *l3)
