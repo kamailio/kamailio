@@ -121,4 +121,15 @@ extern pkg_proc_stats_t *pkg_proc_stats;
  */
 extern int pkg_proc_stats_no;
 
+/**
+ * @brief include metrics metadata in text output.
+ */
+extern int metadata_flags;
+
+enum
+{
+	METADATA_FLAGS_TYPE = (1 << 0),
+	METADATA_FLAGS_HELP = (1 << 1)
+};
+
 #endif /* _XHTTP_PROM_H */
