@@ -24,9 +24,9 @@ License: GPL-2+
  License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
 
 
-Files: src/code/atomic/* src/code/atomic_ops.* src/code/basex.* src/code/bit_*.c
- src/code/char_msg_val.h src/code/compiler_opt.h src/code/core_stats.h src/code/counters.*
- src/code/endianness.* src/code/futexlock.h src/code/hashes.h src/code/io_wait.*
+Files: src/core/atomic/* src/core/atomic_ops.* src/core/basex.* src/core/bit_*.c
+ src/core/char_msg_val.h src/core/compiler_opt.h src/core/core_stats.h src/core/counters.*
+ src/core/endianness.* src/core/futexlock.h src/core/hashes.h src/core/io_wait.*
  src/core/lock_ops.c src/core/lock_ops_init.h src/core/lvalue.* src/core/mem/ll_malloc.*
  src/core/mem/memdbg.h src/core/mem/sf_malloc.* src/core/mod_fix.* src/modules/tm/rpc_uac.*
  src/modules/counters/counters.c src/modules/tls/sbufq.h
@@ -112,7 +112,7 @@ License: Apache-1.0
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Files: src/code/list.h
+Files: src/core/list.h
 Copyright: 1991, 1993 The Regents of the University of California
 License: BSD-3-clause
 
