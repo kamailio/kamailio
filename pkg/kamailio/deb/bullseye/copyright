@@ -233,7 +233,7 @@ License: ISC
  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-Files: src/lib/srutils/srjson.*
+Files: src/core/utils/srjson.*
 Copyright: 2009 Dave Gamble
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy
