@@ -33,7 +33,7 @@ Files: src/core/atomic/* src/core/atomic_ops.* src/core/basex.* src/core/bit_*.c
  src/modules/tls/tls_bio.* src/modules/tls/tls_cfg.* src/modules/tls/tls_cfg.h
  src/modules/tls/tls_ct_wrq.* src/modules/tls/tls_ct_q.h src/modules/tls/tls_domain.*
  src/modules/tls/tls_server.* src/modules/tls/tls_locking.* src/modules/tls/tls_rpc.*
- src/modules/malloc_test/malloc_test.c src/modules/blst/blst.c
+ src/modules/misctest/misctest_mod.c src/modules/blst/blst.c
  src/core/parser/case_p_* src/core/parser/case_reas.h src/core/pvapi.h
  src/core/pv_core.* src/core/rand/fastrand.* src/core/raw_*
  src/core/rpc_lookup.* src/core/rvalue.* src/core/sctp_* src/core/ser_time.h
