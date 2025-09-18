@@ -55,8 +55,8 @@ License: GPL-2+ with OpenSSL exception
 
 Files: src/core/daemonize.* src/core/fastlock.h src/core/lock_ops.h
  src/core/mem/mem.* src/core/mem/f_malloc.h
- src/core/mem/meminfo.h src/core/mem/memtest.c src/core/mem/shm_mem.c
- src/core/mem/q_malloc.* src/core/mem/shm_mem.h
+ src/core/mem/meminfo.h src/core/mem/memtest.c
+ src/core/mem/q_malloc.*
  src/core/mem/f_malloc.c src/core/pt.* src/core/sched_yield.h src/core/ut.*
 Copyright: 2001-2003 FhG Fokus
 License: ISC
