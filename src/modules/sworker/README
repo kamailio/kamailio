@@ -30,7 +30,7 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. sworker_active()
-              4.2. swork_task(gname)
+              4.2. sworker_task(gname)
 
    List of Examples
 
@@ -55,7 +55,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. sworker_active()
-        4.2. swork_task(gname)
+        4.2. sworker_task(gname)
 
 1. Overview
 
@@ -113,7 +113,7 @@ modparam("sworker", "xdata", "$var(xdata)")
 4. Functions
 
    4.1. sworker_active()
-   4.2. swork_task(gname)
+   4.2. sworker_task(gname)
 
 4.1.  sworker_active()
 
@@ -132,7 +132,7 @@ request_route {
 }
 ...
 
-4.2.  swork_task(gname)
+4.2.  sworker_task(gname)
 
    Delegate the processing of SIP message to a group of async workers. The
    function is restricted to be used inside event_route[core:pre-routing].
