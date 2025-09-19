@@ -128,7 +128,11 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 	memcpy(&avp->val, val, sizeof(sr_xval_t));
 	if(val->type == SR_XTYPE_STR) {
 		avp->val.v.s.s = avp->name.s + avp->name.len + 1;
-		memcpy(avp->val.v.s.s, val->v.s.s, val->v.s.len);
+		/* Leave the string uninitialized if no data is provided, it
+		 * should be filled in-place later. */
+		if(val->v.s.s) {
+			memcpy(avp->val.v.s.s, val->v.s.s, val->v.s.len);
+		}
 		avp->val.v.s.s[val->v.s.len] = '\0';
 		avp->val.v.s.len = val->v.s.len;
 	}
@@ -1731,7 +1735,11 @@ static sr_xavp_t *xavi_new_value(str *name, sr_xval_t *val)
 	memcpy(&avi->val, val, sizeof(sr_xval_t));
 	if(val->type == SR_XTYPE_STR) {
 		avi->val.v.s.s = avi->name.s + avi->name.len + 1;
-		memcpy(avi->val.v.s.s, val->v.s.s, val->v.s.len);
+		/* Leave the string uninitialized if no data is provided, it
+		 * should be filled in-place later. */
+		if(val->v.s.s) {
+			memcpy(avi->val.v.s.s, val->v.s.s, val->v.s.len);
+		}
 		avi->val.v.s.s[val->v.s.len] = '\0';
 		avi->val.v.s.len = val->v.s.len;
 	}
