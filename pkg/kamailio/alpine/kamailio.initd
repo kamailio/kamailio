@@ -1,35 +1,16 @@
 #!/sbin/openrc-run
 
-daemon=/usr/sbin/kamailio
-pidfile=/run/kamailio/kamailio.pid
-
-extra_started_commands="reload"
+command="/usr/sbin/kamailio"
+command_args="$KAMAILIO_OPTS -DD -u ${KAMAILIO_USER:-kamailio} -g ${KAMAILIO_GROUP:-kamailio}"
+command_background="true"
+pidfile="/run/kamailio.pid"
 
 depend() {
 	need net
 	after firewall mariadb postgresql
 }
 
-start() {
-	ebegin "Starting Kamailio"
-	checkpath -d -o kamailio:kamailio /run/kamailio
-	start-stop-daemon --start --quiet --pidfile $pidfile --exec $daemon \
-		-- \
-		-u ${KAMAILIO_USER:-kamailio} \
-		-g ${KAMAILIO_GROUP:-kamailio} \
-		-P $pidfile \
-		${KAMAILIO_OPTS:-}
-	eend $?
-}
-
-stop() {
-	ebegin "Stopping Kamailio"
-	start-stop-daemon --stop --quiet --pidfile $pidfile
-	eend $?
-}
-
-reload() {
-	ebegin "Reloading Kamailio"
-	echo mi_dg dp_reload | kamcmd 2>/dev/null
-	eend $?
+start_pre() {
+	checkpath -d -o kamailio:kamailio /var/run/kamailio
+	kamailio -c
 }
