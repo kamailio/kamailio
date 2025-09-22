@@ -26,6 +26,8 @@
  *
  */
 
+#include <openssl/sha.h>
+
 #include "../../core/basex.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/dprint.h"
@@ -34,7 +36,6 @@
 #include "../../core/tcp_conn.h"
 #include "../../core/counters.h"
 #include "../../core/strutils.h"
-#include "../../core/crypto/shautils.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/msg_parser.h"
 #include "../sl/sl.h"
@@ -92,7 +93,7 @@ static str str_status_service_unavailable = str_init("Service Unavailable");
 #define HDR_BUF_LEN (512)
 static char headers_buf[HDR_BUF_LEN];
 
-static char key_buf[base64_enc_len(SHA1_DIGEST_LENGTH)];
+static char key_buf[base64_enc_len(SHA_DIGEST_LENGTH)];
 
 static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 {
@@ -119,7 +120,7 @@ static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 int ws_handle_handshake(struct sip_msg *msg)
 {
 	str key = {0, 0}, headers = {0, 0}, reply_key = {0, 0}, origin = {0, 0};
-	unsigned char sha1[SHA1_DIGEST_LENGTH];
+	unsigned char sha1[SHA_DIGEST_LENGTH];
 	unsigned int hdr_flags = 0, sub_protocol = 0;
 	int version = 0;
 	struct hdr_field *hdr = msg->headers;
@@ -304,11 +305,11 @@ int ws_handle_handshake(struct sip_msg *msg)
 	memcpy(reply_key.s, key.s, key.len);
 	memcpy(reply_key.s + key.len, str_ws_guid.s, str_ws_guid.len);
 	reply_key.len = key.len + str_ws_guid.len;
-	compute_sha1_raw(sha1, (u_int8_t *)reply_key.s, reply_key.len);
+	SHA1((const unsigned char *)reply_key.s, reply_key.len, sha1);
 	pkg_free(reply_key.s);
 	reply_key.s = key_buf;
-	reply_key.len = base64_enc(sha1, SHA1_DIGEST_LENGTH,
-			(unsigned char *)reply_key.s, base64_enc_len(SHA1_DIGEST_LENGTH));
+	reply_key.len = base64_enc(sha1, SHA_DIGEST_LENGTH,
+			(unsigned char *)reply_key.s, base64_enc_len(SHA_DIGEST_LENGTH));
 
 	/* Add the connection to the WebSocket connection table */
 	wsconn_add(&msg->rcv, sub_protocol);
