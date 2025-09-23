@@ -670,7 +670,7 @@ int pv_set_dlg_ctx(
 				if(val->rs.len < DLG_TOROUTE_SIZE
 						&& val->rs.s[val->rs.len] == '\0') {
 					_dlg_ctx.to_route = route_lookup(&main_rt, val->rs.s);
-					strcpy(_dlg_ctx.to_route_name, val->rs.s);
+					memcpy(_dlg_ctx.to_route_name, val->rs.s, val->rs.len);
 				} else {
 					_dlg_ctx.to_route = 0;
 				}
@@ -679,7 +679,7 @@ int pv_set_dlg_ctx(
 					rtp = int2str(n, &rlen);
 					if(rlen < DLG_TOROUTE_SIZE) {
 						_dlg_ctx.to_route = route_lookup(&main_rt, rtp);
-						strcpy(_dlg_ctx.to_route_name, rtp);
+						memcpy(_dlg_ctx.to_route_name, rtp, rlen);
 					} else {
 						_dlg_ctx.to_route = 0;
 					}
