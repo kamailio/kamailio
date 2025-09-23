@@ -105,7 +105,7 @@ int dpl_dyn_printf_s(sip_msg_t *msg, const pv_elem_p elem,
 		PKG_MEM_ERROR;
 		goto clean;
 	}
-	strcpy(vexpr->s, v.s);
+	memcpy(vexpr->s, v.s, v.len);
 	ret = 0;
 clean:
 	if(s.s)
