@@ -892,18 +892,36 @@ inline static void timer_list_expire(ticks_t t, struct timer_head *h
 	first = h->next;
 #endif
 
-	// check if timer circular double linked list has broken links
-	// try to recover if so, otherwise abort execution
 	LM_DBG("ksr_timer_sanity_check = %ld\n", ksr_timer_sanity_check);
-	if(ksr_timer_sanity_check != 0 && !timer_list_sanity_check(h)) {
-		abort();
-	}
-
 	/*LM_DBG("@ ticks = %lu, list =%p\n",
 			(unsigned long) *ticks, h);
 	*/
 	while(h->next != (struct timer_ln *)h) {
-		tl = h->next;
+		if(ksr_timer_sanity_check != 0) {
+			if(h->next == NULL || h->prev == NULL) {
+				// check if timer circular double linked list has broken links
+				// try to recover if so, otherwise abort execution
+				if(!timer_list_sanity_check(h)) {
+					LM_CRIT("timer_list_expire: h=%p {%p, %p}\n", h, h->next,
+							h->prev);
+					abort();
+				}
+			}
+
+			tl = h->next;
+			if(tl->next == NULL || tl->prev == NULL) {
+				// check if timer circular double linked list has broken links
+				// try to recover if so, otherwise abort execution
+				if(!timer_list_sanity_check(h)) {
+					LM_CRIT("timer_list_expire: tl=%p, h=%p {%p, %p}\n", tl, h,
+							h->next, h->prev);
+					abort();
+				}
+			}
+		} else {
+			tl = h->next;
+		}
+
 #ifdef TIMER_DEBUG
 		if(tl == 0) {
 			LM_CRIT("timer_list_expire: tl=%p, h=%p {%p, %p}\n", tl, h, h->next,
