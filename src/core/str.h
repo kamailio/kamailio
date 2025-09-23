@@ -83,10 +83,7 @@ typedef struct _str str;
  * @param v is a string literal
  * @sa STR_NULL
  */
-#define STR_STATIC_INIT(v) \
-	{                      \
-		(v), sizeof(v) - 1 \
-	}
+#define STR_STATIC_INIT(v) {(v), sizeof(v) - 1}
 
 /* kamailio compatibility macro (same thing as above) */
 #define str_init(v) STR_STATIC_INIT(v)
@@ -97,10 +94,7 @@ typedef struct _str str;
  * \code str var = STR_NULL; \endcode
  * @sa STR_STATIC_INIT
  */
-#define STR_NULL \
-	{            \
-		0, 0     \
-	}
+#define STR_NULL {0, 0}
 
 /** Formats ::str string for use in printf-like functions.
  * This is a macro that prepares a ::str string for use in functions which
@@ -115,6 +109,13 @@ typedef struct _str str;
 #define STR_FMT(_pstr_)                         \
 	((_pstr_ != (str *)0) ? (_pstr_)->len : 0), \
 			((_pstr_ != (str *)0) ? (_pstr_)->s : "")
+
+/** Formats ::str string for use in printf-like functions with default value.
+ * Same as STR_FMT but will use v if str is empty
+ */
+#define STR_FMT_VAL(_pstr_, v)                  \
+	((_pstr_ != (str *)0) ? (_pstr_)->len : 0), \
+			((_pstr_ != (str *)0) ? (_pstr_)->s : v)
 
 
 /** Compares two ::str strings.
