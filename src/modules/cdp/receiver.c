@@ -979,8 +979,9 @@ int peer_connect(peer *p)
 	error = getaddrinfo(p->fqdn.s, buf, &hints, &res);
 
 	if(error != 0) {
-		LM_WARN("Error opening connection to %.*s:%d >%s\n", p->fqdn.len,
-				p->fqdn.s, p->port, gai_strerror(error));
+		LM_WARN("Error opening connection to %.*s:%d [%.*s]>%s\n",
+				STR_FMT(&p->fqdn), p->port, STR_FMT_VAL(&p->proto, "tcp"),
+				gai_strerror(error));
 		goto error;
 	}
 
@@ -988,37 +989,37 @@ int peer_connect(peer *p)
 		if(getnameinfo(ainfo->ai_addr, ainfo->ai_addrlen, host, 256, serv, 256,
 				   NI_NUMERICHOST | NI_NUMERICSERV)
 				== 0) {
-			LM_INFO("Trying to connect to %s port %s\n", host, serv);
+			LM_INFO("Trying to connect to %s port %s proto %.*s\n", host, serv,
+					STR_FMT_VAL(&p->proto, "tcp"));
 		}
 
 		if((sock = socket(
 					ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol))
 				== -1) {
-			LM_ERR("error creating client socket to %s port %s "
-				   ">"
-				   " %s\n",
-					host, serv, strerror(errno));
+			LM_ERR("error creating client socket to %s port %s proto %.*s > "
+				   "%s\n",
+					host, serv, STR_FMT_VAL(&p->proto, "tcp"), strerror(errno));
 			continue;
 		}
 
 		/* try to set the local socket used to connect to the peer */
 		if(p->src_addr.s && p->src_addr.len > 0) {
-			LM_DBG("connecting to peer via src addr=%.*s\n", p->src_addr.len,
-					p->src_addr.s);
+			LM_DBG("connecting to peer via src addr=%.*s proto=%.*s\n",
+					STR_FMT(&p->src_addr), STR_FMT_VAL(&p->proto, "tcp"));
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_flags = AI_NUMERICHOST;
 			hints.ai_socktype = SOCK_STREAM;
 			error = getaddrinfo(p->src_addr.s, NULL, &hints, &sainfo);
 
 			if(error != 0) {
-				LM_ERR("error getting client socket on "
-					   "%.*s:%s\n",
-						p->src_addr.len, p->src_addr.s, gai_strerror(error));
+				LM_ERR("error getting client socket on %.*s[%.*s]:%s\n",
+						STR_FMT(&p->src_addr), STR_FMT_VAL(&p->proto, "tcp"),
+						gai_strerror(error));
 			} else {
 				if(bind(sock, sainfo->ai_addr, sainfo->ai_addrlen)) {
-					LM_ERR("error opening client socket on "
-						   "%.*s:%s\n",
-							p->src_addr.len, p->src_addr.s, strerror(errno));
+					LM_ERR("error opening client socket on %.*s[%.*s]:%s\n",
+							STR_FMT(&p->src_addr),
+							STR_FMT_VAL(&p->proto, "tcp"), strerror(errno));
 				}
 			}
 		}
@@ -1045,26 +1046,29 @@ int peer_connect(peer *p)
 						getsockopt(sock, SOL_SOCKET, SO_ERROR,
 								(void *)(&valopt), &lon);
 						if(valopt) {
-							LM_ERR("Error opening connection "
-								   "to to %s port %s >%s\n",
-									host, serv, strerror(valopt));
+							LM_ERR("Error opening connection to to %s port %s "
+								   "proto %.*s >%s\n",
+									host, serv, STR_FMT_VAL(&p->proto, "tcp"),
+									strerror(valopt));
 							close(sock);
 							sock = -1;
 							continue;
 						}
 					} else {
-						LM_ERR("Timeout or error opening "
-							   "connection to to %s port %s >%s\n",
-								host, serv, strerror(errno));
+						LM_ERR("Timeout or error opening connection to to %s "
+							   "port %s proto %.*s >%s\n",
+								host, serv, STR_FMT_VAL(&p->proto, "tcp"),
+								strerror(errno));
 						close(sock);
 						sock = -1;
 						continue;
 					}
 				}
 			} else {
-				LM_ERR("Error opening connection to to %s port "
-					   "%s >%s\n",
-						host, serv, strerror(errno));
+				LM_ERR("Error opening connection to to %s port %s proto %.*s "
+					   ">%s\n",
+						host, serv, STR_FMT_VAL(&p->proto, "tcp"),
+						strerror(errno));
 				close(sock);
 				sock = -1;
 				continue;
@@ -1087,12 +1091,12 @@ int peer_connect(peer *p)
 			LM_ERR("could not set socket options\n");
 			goto error;
 		}
-		LM_INFO("Peer %.*s:%d connected\n", p->fqdn.len, p->fqdn.s, p->port);
+		LM_INFO("Peer %.*s:%d [%.*s] connected\n", STR_FMT(&p->fqdn), p->port,
+				STR_FMT_VAL(&p->proto, "tcp"));
 
 		if(!send_fd(p->fd_exchange_pipe, sock, p)) {
-			LM_ERR("[%.*s] Error sending fd to respective "
-				   "receiver\n",
-					p->fqdn.len, p->fqdn.s);
+			LM_ERR("[%.*s] Error sending fd to respective receiver\n",
+					STR_FMT(&p->fqdn));
 			goto error;
 		}
 
