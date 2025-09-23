@@ -126,18 +126,16 @@ int create_socket(
 		if(getnameinfo(ainfo->ai_addr, ainfo->ai_addrlen, host, 256, serv, 256,
 				   NI_NUMERICHOST | NI_NUMERICSERV)
 				== 0) {
-			LM_WARN("Trying to open/bind/listen on %s port "
-					"%s\n",
-					host, serv);
+			LM_WARN("Trying to open/bind/listen on %s port %s proto %.*s\n",
+					host, serv, STR_FMT_VAL(&ip_proto, "tcp"));
 		}
 
 		if((server_sock = socket(
 					ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol))
 				== -1) {
-			LM_ERR("error creating server socket on %s port "
-				   "%s >"
-				   " %s\n",
-					host, serv, strerror(errno));
+			LM_ERR("error creating server socket on %s port %s proto %.*s > "
+				   "%s\n",
+					host, serv, STR_FMT_VAL(&ip_proto, "tcp"), strerror(errno));
 			goto error;
 		}
 		option = 1;
@@ -148,9 +146,8 @@ int create_socket(
 		}
 
 		if(bind(server_sock, ainfo->ai_addr, ainfo->ai_addrlen) == -1) {
-			LM_ERR("error binding on %s port %s >"
-				   " %s\n",
-					host, serv, strerror(errno));
+			LM_ERR("error binding on %s port %s proto %.*s > %s\n", host, serv,
+					STR_FMT_VAL(&ip_proto, "tcp"), strerror(errno));
 			goto error;
 		}
 
@@ -162,9 +159,8 @@ int create_socket(
 
 		*sock = server_sock;
 
-		LM_WARN("Successful socket open/bind/listen on %s "
-				"port %s\n",
-				host, serv);
+		LM_WARN("Successful socket open/bind/listen on %s port %s proto %.*s\n",
+				host, serv, STR_FMT_VAL(&ip_proto, "tcp"));
 	}
 	if(res)
 		freeaddrinfo(res);
