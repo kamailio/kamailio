@@ -77,7 +77,9 @@ add_custom_target(tls_cfg_sample ALL DEPENDS tls.cfg.sample)
 
 add_custom_target(
   tls-install-cfg
-  COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --component tls-cfg
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/tls.cfg.sample
+          $ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMENT "Installing tls.cfg.sample to ${MAIN_NAME} config directory"
 )
 add_dependencies(tls-install-cfg tls_cfg_sample)
