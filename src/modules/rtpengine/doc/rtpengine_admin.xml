@@ -19,14 +19,35 @@
 	<para>
 		This is a module that enables media streams to be proxied
 		via an &rtp; proxy. The only &rtp; proxy currently known to work
-		with this module is the Sipwise rtpengine
-		<ulink url="https://github.com/sipwise/rtpengine"></ulink>.
+		with this module is
+		<ulink url="https://github.com/sipwise/rtpengine">Sipwise rtpengine</ulink>.
 		The rtpengine module is a modified version of the original
 		rtpproxy module using a new control protocol. The module is
 		designed to be a drop-in replacement for the old module from
 		a configuration file point of view, however due to the
 		incompatible control protocol, it only works with &rtp; proxies
 		which specifically support it.
+	</para>
+	</section>
+
+	<section>
+	<title>Recommended Version</title>
+	<para>
+		This control module is compatible with a wide range of versions
+		of Sipwise rtpengine. The version numbers follow the schema
+		<quote>mrXX.Y.ZZZ</quote>, with <quote>XX</quote> being the major
+		release number, <quote>Y</quote> the minor release number, and
+		<quote>ZZZ</quote> the patch level suffix. Releases with
+		<quote>Y</quote> equalling 5 are LTS releases and receive bug
+		fixes for several years. The recommended version therefore is
+		either the latest LTS release on the latest patch level (e.g.
+		<quote>mr12.5.1.46</quote>), or the latest non-LTS release if
+		newer features are desired (e.g. <quote>mr13.4.1.5</quote>).
+
+		This version of &kamailio; includes a field in the control
+		protocol which is not supported by versions of rtpengine older
+		than <quote>mr12.4</quote> and will trigger a warning log message
+		in these older versions. This is purely cosmetic.
 	</para>
 	</section>
 
