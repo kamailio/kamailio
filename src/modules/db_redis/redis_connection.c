@@ -122,7 +122,7 @@ static redis_key_t *db_redis_shift_query(km_redis_con_t *con)
 	return query;
 }
 
-inline int redis_supports_expires(int major, int minor, int patch)
+static inline int redis_supports_expires(int major, int minor, int patch)
 {
 	if(!(major > 7 || (major == 7 && minor >= 4)))
 		return 0;
