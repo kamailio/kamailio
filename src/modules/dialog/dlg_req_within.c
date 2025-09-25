@@ -872,9 +872,7 @@ int dlg_bye_all(struct dlg_cell *dlg, str *hdrs)
 	}
 
 	ret = send_bye(dlg, DLG_CALLER_LEG, &all_hdrs, 0);
-	if(ret == 0) {
-		ret |= send_bye(dlg, DLG_CALLEE_LEG, &all_hdrs, 1);
-	}
+	ret |= send_bye(dlg, DLG_CALLEE_LEG, &all_hdrs, 1);
 
 	pkg_free(all_hdrs.s);
 
