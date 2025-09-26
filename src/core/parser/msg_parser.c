@@ -419,6 +419,15 @@ int parse_headers(
 					}
 				}
 				msg->parsed_flag |= HDR_FROM_F;
+				if(IS_SIP(msg)) {
+					if(parse_from_header(msg) < 0) {
+						LOG(cfg_get(core, core_cfg, sip_parser_log),
+								"invalid From header field [%.*s]\n",
+								(end - tmp > 100) ? 100 : (int)(end - tmp),
+								tmp);
+						goto error;
+					}
+				}
 				break;
 			case HDR_CONTACT_T:
 				if(msg->contact == 0)
