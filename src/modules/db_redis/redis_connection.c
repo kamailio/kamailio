@@ -39,6 +39,8 @@ static unsigned int MAX_URL_LENGTH = 1023;
 extern int db_redis_verbosity;
 extern int mapping_struct_type;
 extern str db_redis_hash_expires_str;
+extern int db_redis_with_sentinels;
+extern char *db_redis_master_name;
 #ifdef WITH_SSL
 extern int db_redis_opt_tls;
 extern char *db_redis_ca_path;
@@ -129,18 +131,51 @@ static inline int redis_supports_expires(int major, int minor, int patch)
 	return 1;
 }
 
+/* Authenticate to Redis if a password was provided */
+static int db_redis_authenticate(redisContext *ctx, const char *password)
+{
+	redisReply *reply = NULL;
+
+	if(!ctx) {
+		LM_ERR("No Redis context");
+		goto err;
+	}
+	if(!password) {
+		password = db_redis_db_pass;
+	}
+	if(!password) {
+		return 0;
+	}
+
+	reply = redisCommand(ctx, "AUTH %s", password);
+	if(!reply) {
+		LM_ERR("AUTH error: %s\n", ctx->errstr);
+		goto err;
+	}
+	if(reply->type == REDIS_REPLY_ERROR) {
+		LM_ERR("AUTH failed: %s\n", reply->str);
+		goto err;
+	}
+	freeReplyObject(reply);
+	return 0;
+
+err:
+	if(reply)
+		freeReplyObject(reply);
+	return -1;
+}
+
 int db_redis_connect(km_redis_con_t *con)
 {
 	struct timeval tv;
 	redisReply *reply;
+	redisContext *sentinel_con = NULL;
 #ifndef WITH_HIREDIS_CLUSTER
 	int db;
 #endif
 #ifdef WITH_SSL
 	redisSSLContext *ssl = NULL;
 #endif
-	char *password = NULL;
-
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 #ifndef WITH_HIREDIS_CLUSTER
@@ -214,6 +249,69 @@ int db_redis_connect(km_redis_con_t *con)
 		goto err;
 	}
 #else
+	if(db_redis_with_sentinels) {
+		redis_sentinel_t *sentinel;
+
+		for(sentinel = sc.sentinel_list; sentinel != NULL;
+				sentinel = sentinel->next) {
+			sentinel_con =
+					redisConnectWithTimeout(sentinel->host, sentinel->port, tv);
+			if(sentinel_con && !sentinel_con->err) {
+				LM_DBG("Connected to sentinel %s:%d\n", sentinel->host,
+						sentinel->port);
+				break;
+			}
+			if(sentinel_con) {
+				redisFree(sentinel_con);
+				sentinel_con = NULL;
+			}
+		}
+
+		if(!sentinel_con) {
+			LM_ERR("Failed to connect to any sentinel\n");
+			goto err;
+		}
+
+		if(db_redis_authenticate(sentinel_con, sc.password) != 0) {
+			LM_ERR("Authentication error\n");
+			goto err;
+		}
+		reply = redisCommand(sentinel_con,
+				"SENTINEL get-master-addr-by-name %s", db_redis_master_name);
+		if(!reply) {
+			LM_ERR("Failed to run SENTINEL get-master-addr-by-name.\n");
+			goto err;
+		}
+		// The reply should be an array with two elements: the master IP and port.
+		if(reply->type == REDIS_REPLY_ARRAY && reply->elements == 2) {
+			if(con->id->host)
+				pkg_free(con->id->host);
+
+			con->id->host = pkg_malloc(strlen(reply->element[0]->str) + 1);
+			if(!con->id->host) {
+				LM_ERR("Failed to allocate memory for master host\n");
+				goto err;
+			}
+			strcpy(con->id->host, reply->element[0]->str);
+			con->id->port = atoi(reply->element[1]->str);
+			LM_DBG("Current master address: %s:%d\n", con->id->host,
+					con->id->port);
+		} else {
+			LM_ERR("Unexpected reply format or number of elements from "
+				   "Sentinel.\n");
+			goto err;
+		}
+		if(reply) {
+			freeReplyObject(reply);
+			reply = NULL;
+		}
+		if(sentinel_con) {
+			redisFree(sentinel_con);
+			sentinel_con = NULL;
+		}
+		LM_INFO("Using master %s:%d from Sentinel\n", con->id->host,
+				con->id->port);
+	}
 	LM_DBG("connecting to redis at %s:%d\n", con->id->host, con->id->port);
 
 #ifdef WITH_SSL
@@ -246,27 +344,11 @@ int db_redis_connect(km_redis_con_t *con)
 	}
 #endif
 #endif
-
-	password = con->id->password;
-	if(!password) {
-		password = db_redis_db_pass;
+	// Authenticate if needed
+	if(db_redis_authenticate(con->con, con->id->password) != 0) {
+		LM_ERR("Authentication error\n");
+		goto err;
 	}
-	if(password) {
-		reply = redisCommand(con->con, "AUTH %s", password);
-		if(!reply) {
-			LM_ERR("cannot authenticate connection %.*s: %s\n",
-					con->id->url.len, con->id->url.s, con->con->errstr);
-			goto err;
-		}
-		if(reply->type == REDIS_REPLY_ERROR) {
-			LM_ERR("cannot authenticate connection %.*s: %s\n",
-					con->id->url.len, con->id->url.s, reply->str);
-			goto err;
-		}
-		freeReplyObject(reply);
-		reply = NULL;
-	}
-
 #ifndef WITH_HIREDIS_CLUSTER
 	reply = redisCommand(con->con, "PING");
 	if(!reply) {
@@ -374,6 +456,8 @@ err:
 		redisFree(con->con);
 		con->con = NULL;
 	}
+	if(sentinel_con)
+		redisFree(sentinel_con);
 	return -1;
 }
 
