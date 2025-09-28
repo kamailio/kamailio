@@ -409,20 +409,22 @@ int parse_headers(
 			case HDR_FROM_T:
 				if(msg->from == 0) {
 					msg->from = hf;
+					msg->parsed_flag |= HDR_FROM_F;
+					if(IS_SIP(msg)) {
+						if(parse_from_header(msg) < 0) {
+							LOG(cfg_get(core, core_cfg, sip_parser_log),
+									"invalid From header field [%.*s]\n",
+									(end - tmp > 100) ? 100 : (int)(end - tmp),
+									tmp);
+							msg->parsed_flag &= ~HDR_FROM_F;
+							msg->from = NULL;
+							goto error;
+						}
+					}
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate From header field [%.*s]\n",
-								(end - tmp > 100) ? 100 : (int)(end - tmp),
-								tmp);
-						goto error;
-					}
-				}
-				msg->parsed_flag |= HDR_FROM_F;
-				if(IS_SIP(msg)) {
-					if(parse_from_header(msg) < 0) {
-						LOG(cfg_get(core, core_cfg, sip_parser_log),
-								"invalid From header field [%.*s]\n",
 								(end - tmp > 100) ? 100 : (int)(end - tmp),
 								tmp);
 						goto error;
