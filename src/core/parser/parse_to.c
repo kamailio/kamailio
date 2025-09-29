@@ -37,12 +37,38 @@
 #include "../mem/mem.h"
 
 
+char *parse_to_body(
+		char *const buffer, const char *const end, struct hdr_field *const hdr)
+{
+	char *tmp = NULL;
+	struct to_body *to_b = NULL;
+
+	tmp = buffer;
+	to_b = pkg_malloc(sizeof(struct to_body));
+	if(to_b == 0) {
+		PKG_MEM_ERROR;
+		goto error;
+	}
+	memset(to_b, 0, sizeof(struct to_body));
+	hdr->body.s = tmp;
+	tmp = parse_to(tmp, end, to_b);
+	if(to_b->error == PARSE_ERROR) {
+		ERR("bad to header\n");
+		free_to(to_b);
+		goto error;
+	}
+	hdr->parsed = to_b;
+	hdr->body.len = tmp - hdr->body.s;
+	return tmp;
+error:
+	return NULL;
+}
+
 char *parse_to(
 		char *const buffer, const char *const end, struct to_body *const to_b)
 {
 	return parse_addr_spec(buffer, end, to_b, 0);
 }
-
 
 int parse_to_header(struct sip_msg *const msg)
 {

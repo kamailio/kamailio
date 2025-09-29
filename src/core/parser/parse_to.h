@@ -39,6 +39,9 @@
 #define GET_TO_PURI(p_msg) \
 	(&((struct to_body *)(p_msg)->to->parsed)->parsed_uri)
 
+char *parse_to_body(
+		char *const buffer, const char *const end, struct hdr_field *const hdr);
+
 /*! \brief
  * To header field parser
  */

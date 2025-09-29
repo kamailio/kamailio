@@ -52,7 +52,7 @@
 #include "parse_hname2.h"
 #include "parse_uri.h"
 #include "parse_content.h"
-#include "parse_from.h"
+#include "parse_to.h"
 #include "../compiler_opt.h"
 
 #ifdef DEBUG_DMALLOC
@@ -155,22 +155,24 @@ char *get_hdr_field(
 					cseq_b->number.len, ZSW(cseq_b->number.s),
 					cseq_b->method.len, cseq_b->method.s);
 			break;
+		case HDR_FROM_T:
+			tmp = parse_to_body(tmp, end, hdr);
+			if(tmp == NULL) {
+				goto error;
+			}
+			to_b = (struct to_body *)hdr->parsed;
+			DBG("<%.*s> [%d]; uri=[%.*s]\n", hdr->name.len, ZSW(hdr->name.s),
+					hdr->body.len, to_b->uri.len, ZSW(to_b->uri.s));
+			DBG("from body (%d)[%.*s], from tag (%d)[%.*s]\n", to_b->body.len,
+					to_b->body.len, ZSW(to_b->body.s), to_b->tag_value.len,
+					to_b->tag_value.len, ZSW(to_b->tag_value.s));
+			break;
 		case HDR_TO_T:
-			to_b = pkg_malloc(sizeof(struct to_body));
-			if(to_b == 0) {
-				PKG_MEM_ERROR;
+			tmp = parse_to_body(tmp, end, hdr);
+			if(tmp == NULL) {
 				goto error;
 			}
-			memset(to_b, 0, sizeof(struct to_body));
-			hdr->body.s = tmp;
-			tmp = parse_to(tmp, end, to_b);
-			if(to_b->error == PARSE_ERROR) {
-				ERR("bad to header\n");
-				free_to(to_b);
-				goto error;
-			}
-			hdr->parsed = to_b;
-			hdr->body.len = tmp - hdr->body.s;
+			to_b = (struct to_body *)hdr->parsed;
 			DBG("<%.*s> [%d]; uri=[%.*s]\n", hdr->name.len, ZSW(hdr->name.s),
 					hdr->body.len, to_b->uri.len, ZSW(to_b->uri.s));
 			DBG("to body (%d)[%.*s], to tag (%d)[%.*s]\n", to_b->body.len,
@@ -205,7 +207,6 @@ char *get_hdr_field(
 		case HDR_SUPPORTED_T:
 		case HDR_REQUIRE_T:
 		case HDR_CONTENTTYPE_T:
-		case HDR_FROM_T:
 		case HDR_CALLID_T:
 		case HDR_CONTACT_T:
 		case HDR_ROUTE_T:
@@ -409,18 +410,6 @@ int parse_headers(
 			case HDR_FROM_T:
 				if(msg->from == 0) {
 					msg->from = hf;
-					msg->parsed_flag |= HDR_FROM_F;
-					if(IS_SIP(msg)) {
-						if(parse_from_header(msg) < 0) {
-							LOG(cfg_get(core, core_cfg, sip_parser_log),
-									"invalid From header field [%.*s]\n",
-									(end - tmp > 100) ? 100 : (int)(end - tmp),
-									tmp);
-							msg->parsed_flag &= ~HDR_FROM_F;
-							msg->from = NULL;
-							goto error;
-						}
-					}
 				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
@@ -430,6 +419,7 @@ int parse_headers(
 						goto error;
 					}
 				}
+				msg->parsed_flag |= HDR_FROM_F;
 				break;
 			case HDR_CONTACT_T:
 				if(msg->contact == 0)
