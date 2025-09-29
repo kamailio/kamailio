@@ -749,6 +749,7 @@ static inline int send_prepared_request_impl(
 	struct ua_client *uac;
 	struct ip_addr ip; /* logging */
 	int ret;
+	int osnd;
 
 	t = request->my_T;
 	uac = &t->uac[branch];
@@ -765,9 +766,11 @@ static inline int send_prepared_request_impl(
 	LM_DBG("uac: %p  branch: %d  to %s:%d\n", uac, branch, ip_addr2a(&ip),
 			su_getport(&uac->request.dst.to));
 
-	if(run_onsend(p_msg, &uac->request.dst, uac->request.buffer,
-			   uac->request.buffer_len)
-			== 0) {
+	osnd = run_onsend(p_msg, &uac->request.dst, uac->request.buffer,
+			uac->request.buffer_len);
+	t_uas_request_clean_parsed(t);
+
+	if(osnd == 0) {
 		uac->last_received = _tm_reply_408_code;
 		su2ip_addr(&ip, &uac->request.dst.to);
 		LM_DBG("onsend_route dropped msg. to %s:%d (%d)\n", ip_addr2a(&ip),
