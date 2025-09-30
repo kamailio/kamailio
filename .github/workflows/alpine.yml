@@ -35,11 +35,11 @@ jobs:
         run: |
           echo "Last daily build: ${{ fromJson(steps.check_last_run.outputs.data).workflow_runs[0].head_sha }}"
           if [ ${{ github.ref_name }} == "master" ]; then
-            echo "image_tag=alpine-latest" >> "$GITHUB_OUTPUT"
-            echo "alpine_tag"="alpine:3.21.3" >> "$GITHUB_OUTPUT"
+            echo "image_tag=alpine-edge" >> "$GITHUB_OUTPUT"
+            echo "alpine_tag"="alpine:edge" >> "$GITHUB_OUTPUT"
           else
             echo "image_tag=alpine-latest" >> "$GITHUB_OUTPUT"
-            echo "alpine_tag"="alpine:3.21.3" >> "$GITHUB_OUTPUT"
+            echo "alpine_tag"="alpine:latest" >> "$GITHUB_OUTPUT"
           fi
 
     outputs:
