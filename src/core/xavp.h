@@ -80,6 +80,7 @@ int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list);
 int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
 int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp);
 sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavp_add_value_reserve(str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp);
 sr_xavp_t *xavp_add_xavp_value(
 		str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
