@@ -919,7 +919,7 @@ static int pv_ssl_cert(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 }
 
 
-#if(OPENSSL_VERSION_NUMBER >= 0x10100001L)
+#if (OPENSSL_VERSION_NUMBER >= 0x10100001L)
 /* NB: SSL_get0_verified_chain() was introduced in OpenSSL 1.1.0 */
 static int get_verified_cert_chain(
 		STACK_OF(X509) * *chain, struct tcp_connection **c, struct sip_msg *msg)
@@ -1777,7 +1777,7 @@ select_row_t tls_sel[] = {
 		{sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urlencoded_cert"),
 				sel_ssl_cert, DIVERSION | CERT_URLENCODED},
 
-#if(OPENSSL_VERSION_NUMBER >= 0x10100001L)
+#if (OPENSSL_VERSION_NUMBER >= 0x10100001L)
 		{sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("verified_cert_chain"),
 				sel_ssl_verified_cert_chain, CONSUME_NEXT_INT},
 #endif
