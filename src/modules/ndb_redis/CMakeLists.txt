@@ -14,7 +14,6 @@ pkg_check_modules(hiredis_ssl IMPORTED_TARGET hiredis_ssl)
 if(hiredis_ssl_FOUND)
   find_package(OpenSSL REQUIRED)
   # hiredis_ssl found via pkg-config
-  message(STATUS "hiredis_ssl found via pkg-config")
   add_library(hiredis_ssl::hiredis_ssl ALIAS PkgConfig::hiredis_ssl)
   target_compile_definitions(${module_name} PRIVATE WITH_SSL)
   target_link_libraries(${module_name} PRIVATE hiredis_ssl::hiredis_ssl)
