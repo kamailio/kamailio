@@ -36,6 +36,8 @@
 extern int mapping_struct_type;
 extern str db_redis_hash_expires_str;
 
+sentinel_config_t sc;
+
 static void db_redis_dump_reply(redisReply *reply)
 {
 	int i;
@@ -73,6 +75,121 @@ void db_redis_close(db1_con_t *_h)
 {
 	LM_DBG("closing redis db connection\n");
 	db_do_close(_h, db_redis_free_connection);
+}
+
+int db_redis_add_sentinels(char *spec)
+{
+	char *sentinel = strtok(spec, "|");
+	unsigned int port = 0;
+	str port_str;
+	redis_sentinel_t *elem = NULL;
+
+	while(sentinel) {
+		char *colon = strchr(sentinel, ':');
+
+		if(!colon) {
+			LM_ERR("Invalid sentinel format, expected 'host:port', got: %s\n",
+					sentinel);
+			goto error;
+		}
+		*colon = '\0'; // Split in-place
+		port_str.s = colon + 1;
+		port_str.len = strlen(port_str.s);
+		if(str2int(&port_str, &port) != 0) {
+			LM_ERR("Invalid port: %s\n", port_str.s);
+			goto error;
+		}
+
+		elem = shm_malloc(sizeof(redis_sentinel_t));
+		if(!elem) {
+			LM_ERR("Failed to allocate memory for sentinel element\n");
+			goto error;
+		}
+		elem->host = shm_malloc(strlen(sentinel) + 1);
+		if(!elem->host) {
+			LM_ERR("Failed to allocate memory for sentinel host\n");
+			shm_free(elem);
+			goto error;
+		}
+
+		strcpy(elem->host, sentinel);
+		elem->port = port;
+		elem->next = NULL;
+
+		if(sc.sentinel_list == NULL) {
+			sc.sentinel_list = elem;
+			sc.sentinel_list_tail = elem;
+		} else {
+			sc.sentinel_list_tail->next = elem;
+			sc.sentinel_list_tail = elem;
+		}
+
+		sentinel = strtok(NULL, "|");
+	}
+
+	for(elem = sc.sentinel_list; elem; elem = elem->next) {
+		LM_DBG("Sentinel: %s:%u\n", elem->host, elem->port);
+	}
+
+	return 0;
+error:
+	return -1;
+}
+
+// "user=user;password=password;sentinels=host1:port1|host2:port2")
+int parse_sentinel_config(char *spec)
+{
+	param_t *pit = NULL;
+	param_hooks_t phooks;
+	char *sentinels;
+	str s;
+
+	LM_DBG("Parsing sentinels config: %s\n", spec);
+	s.s = spec;
+	s.len = strlen(spec);
+	if(s.s[s.len - 1] == ';')
+		s.len--;
+
+	if(parse_params(&s, CLASS_ANY, &phooks, &pit) < 0) {
+		LM_ERR("Failed parsing params value\n");
+		goto error;
+	}
+
+	sc.attrs = pit;
+	sc.spec = spec;
+	for(pit = sc.attrs; pit; pit = pit->next) {
+		if(pit->name.len == 4 && strncmp(pit->name.s, "user", 4) == 0) {
+			sc.user = shm_malloc(pit->body.len + 1);
+			snprintf(sc.user, pit->body.len + 1, "%.*s", pit->body.len,
+					pit->body.s);
+		} else if(pit->name.len == 8
+				  && strncmp(pit->name.s, "password", 8) == 0) {
+			sc.password = shm_malloc(pit->body.len + 1);
+			snprintf(sc.password, pit->body.len + 1, "%.*s", pit->body.len,
+					pit->body.s);
+		} else if(pit->name.len == 9
+				  && strncmp(pit->name.s, "sentinels", 9) == 0) {
+			sentinels = shm_malloc(pit->body.len + 1);
+			snprintf(sentinels, pit->body.len + 1, "%.*s", pit->body.len,
+					pit->body.s);
+			if(db_redis_add_sentinels(sentinels) < 0) {
+				LM_ERR("Failed to add sentinels\n");
+				shm_free(sentinels);
+				goto error;
+			}
+			shm_free(sentinels);
+		}
+	}
+
+	return 0;
+error:
+	if(sc.user)
+		shm_free(sc.user);
+	if(sc.password)
+		shm_free(sc.password);
+	if(pit != NULL)
+		free_params(pit);
+	return -1;
 }
 
 
