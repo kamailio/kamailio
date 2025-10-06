@@ -240,7 +240,6 @@ int pres_process_body(
 	doc = NULL;
 
 	*fin_body = body;
-	xmlMemoryDump();
 	xmlCleanupParser();
 	return 1;
 
@@ -301,7 +300,6 @@ int bla_process_body(publ_info_t *publ, str **fin_body, int ver, str **tuple)
 	if(*fin_body == NULL)
 		LM_DBG("NULL fin_body\n");
 
-	xmlMemoryDump();
 	xmlCleanupParser();
 	LM_DBG("successful\n");
 	return 1;
@@ -312,7 +310,6 @@ error:
 	if(body)
 		pkg_free(body);
 
-	xmlMemoryDump();
 	xmlCleanupParser();
 	return -1;
 }
@@ -362,7 +359,6 @@ int reginfo_process_body(
 	if(*fin_body == NULL)
 		LM_DBG("NULL fin_body\n");
 
-	xmlMemoryDump();
 	xmlCleanupParser();
 	LM_DBG("successful\n");
 	return 1;
@@ -373,7 +369,6 @@ error:
 	if(body)
 		pkg_free(body);
 
-	xmlMemoryDump();
 	xmlCleanupParser();
 	return -1;
 }
