@@ -166,12 +166,10 @@ int xml_publ_handl(struct sip_msg *msg)
 	}
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 	return 1;
 
 error:
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 	return -1;
 }

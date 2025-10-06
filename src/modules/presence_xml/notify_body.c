@@ -131,7 +131,6 @@ str *pres_agg_nbody_empty(str *pres_user, str *pres_domain)
 
 
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return n_body;
 }
@@ -175,7 +174,6 @@ str *pres_agg_nbody(str *pres_user, str *pres_domain, str **body_array, int n,
 	}
 
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return n_body;
 }
@@ -217,7 +215,6 @@ int pres_apply_auth(str *notify_body, subs_t *subs, str **final_nbody)
 
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	*final_nbody = n_body;
 	return 1;
@@ -500,7 +497,6 @@ done:
 	xmlFree(deviceID);
 	xmlFree(service_uri);
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return new_body;
 
@@ -628,7 +624,6 @@ str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n)
 		pkg_free(xml_array);
 
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return body;
 
@@ -736,7 +731,6 @@ str *aggregate_xmls_priority(
 		pkg_free(xml_array);
 
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return body;
 
@@ -827,7 +821,6 @@ str *offline_nbody(str *body)
 	xmlFreeDoc(doc);
 	xmlFreeDoc(new_doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return new_body;
 
