@@ -338,6 +338,7 @@ extern char *default_routename;
 %token VIRTUAL
 %token STRNAME
 %token AGNAME
+%token VRF
 %token ALIAS
 %token SR_AUTO_ALIASES
 %token DOMAIN
@@ -897,6 +898,10 @@ socket_lattr:
 	| WORKERS EQUAL error { yyerror("number expected"); }
 	| VIRTUAL EQUAL NUMBER { if($3!=0) { tmp_sa.sflags |= SI_IS_VIRTUAL; } }
 	| VIRTUAL EQUAL error { yyerror("number expected"); }
+	| VRF EQUAL STRING {
+			tmp_sa.vrf.s = $3;
+			tmp_sa.vrf.len = strlen(tmp_sa.vrf.s);
+	}
 	| SEMICOLON {}
 	;
 socket_lattrs:
