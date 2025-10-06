@@ -48,8 +48,8 @@
 
 extern unsigned int debug_heavy;
 
-int create_socket(
-		str ip_proto, int listen_port, str bind_to, unsigned int *sock);
+int create_socket(str ip_proto, int listen_port, str bind_to, str vrf,
+		unsigned int *sock);
 
 void accept_loop();
 

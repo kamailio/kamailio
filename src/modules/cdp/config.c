@@ -152,6 +152,8 @@ inline void free_dp_config(dp_config *x)
 				shm_free(x->peers[i].fqdn.s);
 			if(x->peers[i].realm.s)
 				shm_free(x->peers[i].realm.s);
+			if(x->peers[i].vrf.s)
+				shm_free(x->peers[i].vrf.s);
 		}
 		shm_free(x->peers);
 	}
@@ -159,6 +161,8 @@ inline void free_dp_config(dp_config *x)
 		for(i = 0; i < x->acceptors_cnt; i++) {
 			if(x->acceptors[i].bind.s)
 				shm_free(x->acceptors[i].bind.s);
+			if(x->acceptors[i].vrf.s)
+				shm_free(x->acceptors[i].vrf.s);
 		}
 		shm_free(x->acceptors);
 	}
@@ -207,12 +211,14 @@ void log_dp_config(dp_config *x)
 	LM_DBG("\tMaxAuthT: %d\n", x->max_auth_session_timeout);
 	LM_DBG("\tPeers   : %d\n", x->peers_cnt);
 	for(i = 0; i < x->peers_cnt; i++)
-		LM_DBG("\t\tFQDN:  %.*s \t Realm: %.*s \t Port: %d\n",
+		LM_DBG("\t\tFQDN:  %.*s \t Realm: %.*s \t Port: %d \t VRF: %.*s\n",
 				x->peers[i].fqdn.len, x->peers[i].fqdn.s, x->peers[i].realm.len,
-				x->peers[i].realm.s, x->peers[i].port);
+				x->peers[i].realm.s, x->peers[i].port, x->peers[i].vrf.len,
+				x->peers[i].vrf.s);
 	LM_DBG("\tAcceptors : %d\n", x->acceptors_cnt);
 	for(i = 0; i < x->acceptors_cnt; i++)
-		LM_DBG("\t\tPort:  %d \t Bind: %.*s \n", x->acceptors[i].port,
+		LM_DBG("\t\tVrf: %.*s \tPort:  %d \t Bind: %.*s \n",
+				STR_FMT(&x->acceptors[i].vrf), x->acceptors[i].port,
 				x->acceptors[i].bind.len, x->acceptors[i].bind.s);
 	LM_DBG("\tApplications : %d\n", x->applications_cnt);
 	for(i = 0; i < x->applications_cnt; i++)

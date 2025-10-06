@@ -79,11 +79,12 @@ extern int h_errno;
  * Creates a socket and binds it.
  * @param listen_port - port to listen to
  * @param bind_to - IP address to bind to - if empty, will bind to :: (0.0.0.0) (all)
+ * @param vrf - VRF iface name that bind_to is assigned
  * @param sock - socket to be update with the identifier of the opened one
  * @returns 1 on success, 0 on error
  */
 int create_socket(
-		str ip_proto, int listen_port, str bind_to, unsigned int *sock)
+		str ip_proto, int listen_port, str bind_to, str vrf, unsigned int *sock)
 {
 	unsigned int server_sock = -1;
 	struct addrinfo *ainfo = 0, *res = 0, hints;
@@ -145,9 +146,25 @@ int create_socket(
 			LM_WARN("failed to set SO_REUSEADDR option for server socket\n");
 		}
 
+		if(vrf.s != NULL && vrf.len > 0) {
+#ifdef __OS_linux
+			if(setsockopt(
+					   server_sock, SOL_SOCKET, SO_BINDTODEVICE, vrf.s, vrf.len)
+					< 0) {
+				LM_WARN("failed to set SO_BINDTODEVICE on %.*s failed: %s\n",
+						STR_FMT(&vrf), strerror(errno));
+			}
+#else
+			LM_WARN("SO_BINDTODEVICE only supported on linux, vrf %.*s "
+					"ignored\n",
+					STR_FMT(&vrf));
+#endif
+		}
+
 		if(bind(server_sock, ainfo->ai_addr, ainfo->ai_addrlen) == -1) {
-			LM_ERR("error binding on %s port %s proto %.*s > %s\n", host, serv,
-					STR_FMT_VAL(&ip_proto, "tcp"), strerror(errno));
+			LM_ERR("error binding on %s port %s proto %.*s vrf %.*s > %s\n",
+					host, serv, STR_FMT_VAL(&ip_proto, "tcp"), STR_FMT(&vrf),
+					strerror(errno));
 			goto error;
 		}
 
@@ -159,8 +176,9 @@ int create_socket(
 
 		*sock = server_sock;
 
-		LM_WARN("Successful socket open/bind/listen on %s port %s proto %.*s\n",
-				host, serv, STR_FMT_VAL(&ip_proto, "tcp"));
+		LM_WARN("Successful socket open/bind/listen on %s port %s proto %.*s "
+				"vrf %.*s\n",
+				host, serv, STR_FMT_VAL(&ip_proto, "tcp"), STR_FMT(&vrf));
 	}
 	if(res)
 		freeaddrinfo(res);

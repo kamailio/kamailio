@@ -57,6 +57,7 @@ typedef struct
 	int port; /**< TCP port of the peer; the Diameter uri is then aaa://fqdn:port. */
 	str src_addr; /**< IP address used to connect to the peer */
 	str proto;	  /**< IP Protocol (SCTP|TCP) */
+	str vrf;	  /**< VRF iface name */
 } peer_config;
 
 
@@ -66,6 +67,7 @@ typedef struct
 	int port;  /**< TCP port number to listen on */
 	str bind;  /**< IP address to bind to (if null, then :: (0.0.0.0) - all) */
 	str proto; /**< IP Protocol (SCTP|TCP) */
+	str vrf;   /**< VRF iface name */
 } acceptor_config;
 
 typedef enum
