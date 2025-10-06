@@ -117,7 +117,6 @@ void pres_Xmpp2Sip(char *msg, int type, void *param)
 
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 	return;
 
 error:
@@ -125,7 +124,6 @@ error:
 	if(doc)
 		xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return;
 }
