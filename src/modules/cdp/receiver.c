@@ -1016,6 +1016,21 @@ int peer_connect(peer *p)
 						STR_FMT(&p->src_addr), STR_FMT_VAL(&p->proto, "tcp"),
 						gai_strerror(error));
 			} else {
+				if(p->vrf.s != NULL && p->vrf.len > 0) {
+#ifdef __OS_linux
+					if(setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, p->vrf.s,
+							   p->vrf.len)
+							< 0) {
+						LM_WARN("failed to set SO_BINDTODEVICE on %.*s failed: "
+								"%s\n",
+								STR_FMT(&p->vrf), strerror(errno));
+					}
+#else
+					LM_WARN("SO_BINDTODEVICE only supported on linux, vrf %.*s "
+							"ignored\n",
+							STR_FMT(&p->vrf));
+#endif
+				}
 				if(bind(sock, sainfo->ai_addr, sainfo->ai_addrlen)) {
 					LM_ERR("error opening client socket on %.*s[%.*s]:%s\n",
 							STR_FMT(&p->src_addr),

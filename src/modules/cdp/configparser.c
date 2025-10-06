@@ -384,6 +384,11 @@ dp_config *parse_dp_config(xmlDocPtr doc)
 					quote_trim_dup(&(x->peers[x->peers_cnt].proto), (char *)xc);
 					xmlFree(xc);
 				}
+				xc = xmlGetProp(child, (xmlChar *)"vrf");
+				if(xc) {
+					quote_trim_dup(&(x->peers[x->peers_cnt].vrf), (char *)xc);
+					xmlFree(xc);
+				}
 				x->peers_cnt++;
 			} else if(xmlStrlen(child->name) == 8
 					  && strncasecmp((char *)child->name, "Acceptor", 8) == 0) {
@@ -403,6 +408,12 @@ dp_config *parse_dp_config(xmlDocPtr doc)
 				if(xc) {
 					quote_trim_dup(&(x->acceptors[x->acceptors_cnt].proto),
 							(char *)xc);
+					xmlFree(xc);
+				}
+				xc = xmlGetProp(child, (xmlChar *)"vrf");
+				if(xc) {
+					quote_trim_dup(
+							&(x->acceptors[x->acceptors_cnt].vrf), (char *)xc);
 					xmlFree(xc);
 				}
 				x->acceptors_cnt++;
