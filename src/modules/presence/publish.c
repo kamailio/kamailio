@@ -671,12 +671,10 @@ int update_hard_presentity(
 			LM_ERR("bad body format\n");
 			xmlFreeDoc(doc);
 			xmlCleanupParser();
-			xmlMemoryDump();
 			goto done;
 		}
 		xmlFreeDoc(doc);
 		xmlCleanupParser();
-		xmlMemoryDump();
 
 		new_t = 1;
 	} else {
