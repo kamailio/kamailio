@@ -47,7 +47,7 @@ MODULE_VERSION
 
 
 static int dnssec_init(void);
-static int dnssec_exit(void);
+static void dnssec_exit(void);
 
 
 /* parameters */
@@ -108,8 +108,7 @@ static int dnssec_init(void)
 }
 
 
-static int dnssec_exit(void)
+static void dnssec_exit(void)
 {
 	(void)dnssec_res_destroy();
-	return 0;
 }
