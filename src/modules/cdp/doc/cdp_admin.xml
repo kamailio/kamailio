@@ -502,6 +502,7 @@ if(!cdp_has_app("16777216")) {
         &lt;Peer FQDN="pcrf4.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
         &lt;Peer FQDN="pcrf5.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
         &lt;Peer FQDN="pcrf6.ims.smilecoms.com" Realm="ims.smilecoms.com" port="3868"/&gt;
+        &lt;Peer FQDN="pcrf7.ims.smilecoms.com" Realm="ims.smilecoms.com" src_addr="192.168.2.1" port="3868" vrf="blue"/&gt;
 
         &lt;!--
                 Definition of incoming connection acceptors. If no bind is specified, the acceptor will bind
@@ -510,6 +511,7 @@ if(!cdp_has_app("16777216")) {
         &lt;Acceptor port="3868"  /&gt;
         &lt;Acceptor port="3869" bind="127.0.0.1" /&gt;
         &lt;Acceptor port="3870" bind="192.168.1.1" /&gt;
+        &lt;Acceptor port="3870" bind="192.168.2.1" vrf="blue" /&gt;
 
         &lt;!--
                 Definition of Auth (authorization) and Acct (accounting) supported applications. This
