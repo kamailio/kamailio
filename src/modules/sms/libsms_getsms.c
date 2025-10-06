@@ -187,9 +187,9 @@ static int fetchsms(struct modem *mdm, int sim, char *pdu)
 		memcpy(pdu, beginning, clen);
 		pdu[clen] = '\0';
 	} else {
-		/* truncate */
-		memcpy(pdu, beginning, SMS_BUF_SIZE - 1);
-		pdu[SMS_BUF_SIZE - 1] = '\0';
+		/* unsuppported length */
+		LM_ERR("failed storing message for sim %i (len: %d)\n", sim, clen);
+		return 0;
 	}
 
 	return sim;
@@ -248,7 +248,7 @@ int check_memory(struct modem *mdm, int flag)
 					}
 				}
 			} /* if(strstr) */
-		}	  /* if(put_command) */
+		} /* if(put_command) */
 		/* if we are here ->  some error happened */
 		if(checkmodem(mdm) != 0) {
 			LM_WARN("something happened with the modem -> was reinit -> let's "
