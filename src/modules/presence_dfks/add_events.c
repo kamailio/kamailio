@@ -104,13 +104,11 @@ int dfks_publ_handler(struct sip_msg *msg)
 	}
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 	return 1;
 
 error:
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 	return -1;
 }
 
@@ -328,12 +326,10 @@ int dfks_subs_handler(struct sip_msg *msg)
 
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 	return 1;
 
 error:
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 	return -1;
 }
