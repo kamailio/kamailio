@@ -189,7 +189,7 @@ int build_str_hdr(subs_t *subs, int is_body, str *hdr)
 			+ (subs->reason.len > expires.len ? subs->reason.len : expires.len)
 			+ CRLF_LEN
 			+ (is_body ? (14 /*Content-Type: */ + subs->event->content_type.len
-						  + CRLF_LEN)
+								 + CRLF_LEN)
 					   : 0)
 			+ 1;
 
@@ -2149,8 +2149,6 @@ str *create_winfo_xml(watcher_t *watchers, char *version, str resource,
 	xmlFreeDoc(doc);
 
 	xmlCleanupParser();
-
-	xmlMemoryDump();
 
 	return body;
 
