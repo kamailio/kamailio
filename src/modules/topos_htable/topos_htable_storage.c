@@ -213,7 +213,7 @@ static int tps_htable_insert_initial_method_branch(
 	return 0;
 }
 
-static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
+static int tps_htable_load_initial_method_branch(sip_msg_t* msg, tps_data_t *md, tps_data_t *sd)
 {
 	str hkey;
 	ht_cell_t *hval;
@@ -264,9 +264,32 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 		xuuid.len = sd->b_uuid.len - 1;
 	}
 
-	if(md->s_method_id & (METHOD_SUBSCRIBE | METHOD_NOTIFY)) {
+	if(md->s_method_id == METHOD_SUBSCRIBE) {
 		smethod.s = "SUBSCRIBE";
 		smethod.len = 9;
+	} else if(md->s_method_id == METHOD_NOTIFY) {
+		hdr_field_t *event_hdr = msg->event;
+		int is_talk_event = 0;
+		// Check if the direct pointer to the Event header exists
+		if(event_hdr) {
+			str body = event_hdr->body;
+			// Trim leading whitespace from the header body
+			while(body.len > 0 && (*body.s == ' ' || *body.s == '\t')) {
+				body.s++;
+				body.len--;
+			}
+			// Check if the event type is "talk"
+			if(body.len >= 4 && strncasecmp(body.s, "talk", 4) == 0) {
+				is_talk_event = 1;
+			}
+		}
+
+		if(!is_talk_event) {
+			smethod.s = "SUBSCRIBE";
+			smethod.len = 9;
+		}
+
+		// If it IS a talk event, smethod remains the default "INVITE".
 	}
 
 	ptr = _tps_htable_key_buf;
@@ -511,7 +534,7 @@ int tps_htable_load_branch(
 		xvbranch1 = &md->x_vbranch1;
 	} else {
 		/* load corresponding INVITE or SUBSCRIBE transaction using call-id + to-tag */
-		if(tps_htable_load_initial_method_branch(md, &id) < 0) {
+		if(tps_htable_load_initial_method_branch(msg, md, &id) < 0) {
 			LM_ERR("failed to load the %.*s branch value\n", md->s_method.len,
 					md->s_method.s);
 			return -1;
