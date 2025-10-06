@@ -55,6 +55,7 @@
 		receiver.
 	-->
 	<Peer FQDN="hss.open-ims.test" Realm="open-ims.test" port="3868" src_addr="192.168.1.1" ip_proto="SCTP"/>
+	<Peer FQDN="hss2.open-ims.test" Realm="open-ims.test" port="3868" src_addr="192.168.2.1" vrf="blue"/>
 
 	<!--
 		Definition of incoming connection acceptors. If no bind is specified, the acceptor will bind
@@ -64,6 +65,7 @@
 	<Acceptor port="3868" ip_proto="SCTP" />
 	<Acceptor port="3869" bind="127.0.0.1" />
 	<Acceptor port="3870" bind="192.168.1.1" />
+	<Acceptor port="3870" bind="192.168.2.1" vrf="blue" />
 
 	<!--
 		Definition of Auth (authorization) and Acct (accounting) supported applications. This
