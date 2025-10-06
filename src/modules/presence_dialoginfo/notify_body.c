@@ -115,7 +115,6 @@ str *dlginfo_agg_nbody_empty(str *pres_user, str *pres_domain)
 
 
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return n_body;
 }
@@ -144,7 +143,6 @@ str *dlginfo_agg_nbody(str *pres_user, str *pres_domain, str **body_array,
 	}
 
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return n_body;
 }
@@ -423,7 +421,6 @@ str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n)
 		pkg_free(xml_array);
 
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return body;
 
@@ -617,7 +614,6 @@ str *dlginfo_body_setversion(subs_t *subs, str *body)
 			doc, (xmlChar **)(void *)&aux_body->s, &aux_body->len, 1);
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
-	xmlMemoryDump();
 
 	return aux_body;
 }
