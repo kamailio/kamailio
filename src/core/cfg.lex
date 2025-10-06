@@ -313,6 +313,7 @@ ADVERTISE	advertise|ADVERTISE
 VIRTUAL		virtual
 STRNAME		name|NAME
 AGNAME		agname|AGNAME
+VRF		vrf|VRF
 ALIAS		alias
 DOMAIN		domain
 SR_AUTO_ALIASES	auto_aliases
@@ -779,6 +780,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{VIRTUAL}	{ count(); yylval.strval=yytext; return VIRTUAL; }
 <INITIAL>{STRNAME}	{ count(); yylval.strval=yytext; return STRNAME; }
 <INITIAL>{AGNAME}	{ count(); yylval.strval=yytext; return AGNAME; }
+<INITIAL>{VRF}	{ count(); yylval.strval=yytext; return VRF; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{DOMAIN}	{ count(); yylval.strval=yytext; return DOMAIN; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;

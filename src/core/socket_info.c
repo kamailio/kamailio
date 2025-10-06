@@ -417,6 +417,8 @@ static void free_sock_info(struct socket_info *si)
 			pkg_free(si->useinfo.port_no_str.s);
 		if(si->useinfo.sock_str.s)
 			pkg_free(si->useinfo.sock_str.s);
+		if(si->vrfinfo.name.s)
+			pkg_free(si->vrfinfo.name.s);
 	}
 }
 
@@ -1256,6 +1258,29 @@ int add_listen_iface_name(char *name, struct name_lst *addr_l,
 			name, addr_l, port, proto, 0, 0, 0, sockname, flags);
 }
 
+static int add_listen_socket_extras(socket_info_t *newsi, socket_attrs_t *sa)
+{
+	if(sa->agname.len > 0) {
+		if(sa->agname.len >= KSR_AGROUP_NAME_SIZE - 1) {
+			LM_ERR("action group too long (%.*s / %d)\n", sa->agname.len,
+					sa->agname.s, sa->agname.len);
+			return -1;
+		}
+		memcpy(newsi->agroup.agname, sa->agname.s, sa->agname.len);
+		newsi->agroup.agname[sa->agname.len] = '\0';
+	}
+	if(sa->vrf.len > 0) {
+		newsi->vrfinfo.name.len = sa->vrf.len;
+		newsi->vrfinfo.name.s = (char *)pkg_malloc(sa->vrf.len);
+		if(newsi->vrfinfo.name.s == 0) {
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		memcpy(newsi->vrfinfo.name.s, sa->vrf.s, sa->vrf.len);
+	}
+	return 0;
+}
+
 int add_listen_socket(socket_attrs_t *sa)
 {
 	socket_info_t *newsi;
@@ -1279,14 +1304,8 @@ int add_listen_socket(socket_attrs_t *sa)
 		if(newsi == NULL) {
 			return -1;
 		}
-		if(sa->agname.len > 0) {
-			if(sa->agname.len >= KSR_AGROUP_NAME_SIZE - 1) {
-				LM_ERR("action group too long (%.*s / %d)\n", sa->agname.len,
-						sa->agname.s, sa->agname.len);
-				return -1;
-			}
-			memcpy(newsi->agroup.agname, sa->agname.s, sa->agname.len);
-			newsi->agroup.agname[sa->agname.len] = '\0';
+		if(add_listen_socket_extras(newsi, sa) != 0) {
+			return -1;
 		}
 		return 0;
 	}
@@ -1306,14 +1325,8 @@ int add_listen_socket(socket_attrs_t *sa)
 		if(newsi == NULL) {
 			return -1;
 		}
-		if(sa->agname.len > 0) {
-			if(sa->agname.len >= KSR_AGROUP_NAME_SIZE - 1) {
-				LM_ERR("action group too long (%.*s / %d)\n", sa->agname.len,
-						sa->agname.s, sa->agname.len);
-				return -1;
-			}
-			memcpy(newsi->agroup.agname, sa->agname.s, sa->agname.len);
-			newsi->agroup.agname[sa->agname.len] = '\0';
+		if(add_listen_socket_extras(newsi, sa) != 0) {
+			return -1;
 		}
 	}
 	return 0;

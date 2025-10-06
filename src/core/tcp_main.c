@@ -696,7 +696,7 @@ inline static int _wbufq_add(
 		q->wr_timeout = get_ticks_raw()
 						+ ((c->state == S_CONN_CONNECT)
 										? S_TO_TICKS(cfg_get(tcp, tcp_cfg,
-												connect_timeout_s))
+												  connect_timeout_s))
 										: cfg_get(tcp, tcp_cfg, send_timeout));
 	} else {
 		wb = q->last;
@@ -3243,6 +3243,23 @@ int tcp_init(struct socket_info *sock_info)
 				== -1) {
 			LM_ERR("setsockopt %s\n", strerror(errno));
 		}
+	}
+#endif
+
+#if defined(__OS_linux)
+	if(sock_info->vrfinfo.name.s != NULL && sock_info->vrfinfo.name.len > 0) {
+		if(setsockopt(sock_info->socket, SOL_SOCKET, SO_BINDTODEVICE,
+				   sock_info->vrfinfo.name.s, sock_info->vrfinfo.name.len)
+				== -1) {
+			LM_ERR("setsockopt SO_BINDTODEVICE on %.*s failed: %s\n",
+					STR_FMT(&sock_info->vrfinfo.name), strerror(errno));
+			goto error;
+		}
+	}
+#else
+	if(sock_info->vrfinfo.name.s != NULL && sock_info->vrfinfo.name.len > 0) {
+		LM_WARN("VRF only supported on linux, skip SO_BINDTODEVICE for %.*s\n",
+				STR_FMT(&sock_info->vrfinfo.name));
 	}
 #endif
 
