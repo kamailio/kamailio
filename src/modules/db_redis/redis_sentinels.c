@@ -496,6 +496,7 @@ int db_redis_select_replica(redisContext *sentinel_ctx, km_redis_con_t *con)
 
 		if(validate_role(con, host, port, REDIS_ROLE_REPLICA) == 0) {
 			replica_found = 1;
+			using_master_read_only = 0;
 			// Successfully validated a replica, set connection details
 			if(set_con_details(con, host, port) != 0)
 				goto err;
@@ -506,9 +507,17 @@ int db_redis_select_replica(redisContext *sentinel_ctx, km_redis_con_t *con)
 	}
 
 	if(!replica_found) {
-		LM_ERR("Could not validate any replica server\n");
-		goto err;
+		LM_ERR("Could not validate any replica server, defaulting to master\n");
+		if(db_redis_select_master(sentinel_ctx, con) != 0) {
+			goto err;
+		} else {
+			LM_INFO("Successfully connected to master as no valid replicas "
+					"found\n");
+			using_master_read_only = 1;
+			last_seen_time = time(NULL);
+		}
 	}
+
 	if(reply)
 		freeReplyObject(reply);
 	return 0;
