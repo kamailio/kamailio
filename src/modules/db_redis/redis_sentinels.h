@@ -66,8 +66,13 @@ typedef struct
 	redis_sentinel_t *sentinel_list_tail;
 } sentinel_config_t;
 
-extern sentinel_config_t sc;
+extern sentinel_config_t db_redis_sc;
 extern struct reply_list replica_list;
+extern time_t last_seen_time;
+extern time_t *db_redis_shared_time;
+extern int using_master_read_only;
+extern int recheck_replicas_interval;
+extern int min_recheck_interval;
 
 // Utility functions
 int replica_list_free(struct reply_list *list);

@@ -23,7 +23,7 @@
 #include "redis_sentinels.h"
 #include "db_redis_mod.h"
 
-sentinel_config_t sc;
+sentinel_config_t db_redis_sc;
 struct reply_list replica_list = {NULL, NULL, 0};
 
 
@@ -287,18 +287,18 @@ int parse_sentinel_config(char *spec)
 		goto error;
 	}
 
-	sc.attrs = pit;
-	sc.spec = spec;
-	for(pit = sc.attrs; pit; pit = pit->next) {
+	db_redis_sc.attrs = pit;
+	db_redis_sc.spec = spec;
+	for(pit = db_redis_sc.attrs; pit; pit = pit->next) {
 		if(pit->name.len == 4 && strncmp(pit->name.s, "user", 4) == 0) {
-			sc.user = shm_malloc(pit->body.len + 1);
-			snprintf(sc.user, pit->body.len + 1, "%.*s", pit->body.len,
+			db_redis_sc.user = shm_malloc(pit->body.len + 1);
+			snprintf(db_redis_sc.user, pit->body.len + 1, "%.*s", pit->body.len,
 					pit->body.s);
 		} else if(pit->name.len == 8
 				  && strncmp(pit->name.s, "password", 8) == 0) {
-			sc.password = shm_malloc(pit->body.len + 1);
-			snprintf(sc.password, pit->body.len + 1, "%.*s", pit->body.len,
-					pit->body.s);
+			db_redis_sc.password = shm_malloc(pit->body.len + 1);
+			snprintf(db_redis_sc.password, pit->body.len + 1, "%.*s",
+					pit->body.len, pit->body.s);
 		} else if(pit->name.len == 9
 				  && strncmp(pit->name.s, "sentinels", 9) == 0) {
 			sentinels = shm_malloc(pit->body.len + 1);
@@ -315,10 +315,10 @@ int parse_sentinel_config(char *spec)
 
 	return 0;
 error:
-	if(sc.user)
-		shm_free(sc.user);
-	if(sc.password)
-		shm_free(sc.password);
+	if(db_redis_sc.user)
+		shm_free(db_redis_sc.user);
+	if(db_redis_sc.password)
+		shm_free(db_redis_sc.password);
 	if(pit != NULL)
 		free_params(pit);
 	return -1;
@@ -363,20 +363,20 @@ int db_redis_add_sentinels(char *spec)
 		elem->port = port;
 		elem->next = NULL;
 
-		if(sc.sentinel_list == NULL) {
-			sc.sentinel_list = elem;
-			sc.sentinel_list_tail = elem;
+		if(db_redis_sc.sentinel_list == NULL) {
+			db_redis_sc.sentinel_list = elem;
+			db_redis_sc.sentinel_list_tail = elem;
 		} else {
-			sc.sentinel_list_tail->next = elem;
-			sc.sentinel_list_tail = elem;
+			db_redis_sc.sentinel_list_tail->next = elem;
+			db_redis_sc.sentinel_list_tail = elem;
 		}
 
 		sentinel = strtok(NULL, "|");
 	}
 
-	LM_INFO("Adding usrloc dburl sentinels:\n");
+	LM_DBG("Adding dburl sentinels:\n");
 
-	for(elem = sc.sentinel_list; elem; elem = elem->next) {
+	for(elem = db_redis_sc.sentinel_list; elem; elem = elem->next) {
 		LM_DBG("Sentinel: %s:%u\n", elem->host, elem->port);
 	}
 
@@ -496,6 +496,7 @@ int db_redis_select_replica(redisContext *sentinel_ctx, km_redis_con_t *con)
 
 		if(validate_role(con, host, port, REDIS_ROLE_REPLICA) == 0) {
 			replica_found = 1;
+			using_master_read_only = 0;
 			// Successfully validated a replica, set connection details
 			if(set_con_details(con, host, port) != 0)
 				goto err;
@@ -506,9 +507,17 @@ int db_redis_select_replica(redisContext *sentinel_ctx, km_redis_con_t *con)
 	}
 
 	if(!replica_found) {
-		LM_ERR("Could not validate any replica server\n");
-		goto err;
+		LM_ERR("Could not validate any replica server, defaulting to master\n");
+		if(db_redis_select_master(sentinel_ctx, con) != 0) {
+			goto err;
+		} else {
+			LM_INFO("Successfully connected to master as no valid replicas "
+					"found\n");
+			using_master_read_only = 1;
+			last_seen_time = time(NULL);
+		}
 	}
+
 	if(reply)
 		freeReplyObject(reply);
 	return 0;
