@@ -367,6 +367,85 @@ modparam("db_redis", "ca_path", "/etc/ssl/certs")
 			</example>
 		</section>
 
+		<section id="db_redis.p.with_sentinels">
+			<title><varname>with_sentinels</varname> (int)</title>
+			<para>
+				Enables the use of Redis sentinels for high availability.
+				If set to 1, the module will connect to the Redis server using
+				the sentinels defined in the "sentinels_config" modparam.
+			</para>
+			<para>
+				Default value: 0.
+			</para>
+			<example>
+				<title>Enabling sentinels</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "with_sentinels", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_redis.p.sentinels_config">
+			<title><varname>sentinels_config</varname> (string)</title>
+			<para>
+				Sets the sentinels to connect to the Redis server.
+				The format is semi-colon separated list of key-value pairs: password, sentinels.
+				Sentinels is a pipe separated list of host:port pairs. Password applies to all sentinels.
+			</para>
+			<para>
+				Default value: "" (empty).
+			</para>
+			<example>
+				<title>Setting sentinels</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "sentinels_config", "password=password;sentinels=host1:port1|host2:port2|host3:port3")
+...
+				</programlisting>
+			</example>
+		</section>
+
+	<section id="db_redis.p.redis_master_name">
+			<title><varname>redis_master_name</varname> (string)</title>
+			<para>
+				Sets the name of the Redis master. This is needed when building the
+				SENTINEL get-master-addr-by-name command.
+				The name should match the name used in the Redis Sentinel configuration.
+			</para>
+			<para>
+				Default value: "mymaster" (empty).
+			</para>
+			<example>
+				<title>Setting Redis master name</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "redis_master_name", "mymaster")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_redis.p.use_replicas">
+			<title><varname>use_replicas</varname> (int)</title>
+			<para>
+				Enables connecting to Redis replicas instead of the master when using sentinels.
+				This helps distribute load across the Redis setup.
+			</para>
+			<para>
+				Default value: 0 (connect to master).
+			</para>
+			<example>
+				<title>Setting use_replicas</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "use_replicas", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section id="db_redis.sec.usage">
