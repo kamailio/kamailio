@@ -861,6 +861,12 @@ void sr_SHA512_Update(SHA512_CTX *context, const sha2_byte *data, size_t len)
 	usedspace = freespace = 0;
 }
 
+void sr_SHA512_256_Update(
+		SHA512_CTX *context, const sha2_byte *data, size_t len)
+{
+	sr_SHA512_Update(context, data, len);
+}
+
 void SHA512_Last(SHA512_CTX *context)
 {
 	unsigned int usedspace;
@@ -907,6 +913,11 @@ void SHA512_Last(SHA512_CTX *context)
 	SHA512_Transform(context, (sha2_word64 *)context->buffer);
 }
 
+void SHA512_256_Last(SHA512_CTX *context)
+{
+	SHA512_Last(context);
+}
+
 void sr_SHA512_Final(
 		sha2_byte digest[SHA512_DIGEST_LENGTH], SHA512_CTX *context)
 {
@@ -938,6 +949,15 @@ void sr_SHA512_Final(
 	MEMSET_BZERO(context, sizeof(*context));
 }
 
+void sr_SHA512_256_Final(
+		sha2_byte digest[SHA512_256_DIGEST_LENGTH], SHA512_CTX *context)
+{
+	sha2_byte temp[SHA512_DIGEST_LENGTH];
+
+	sr_SHA512_Final(temp, context);
+	memcpy(digest, temp, SHA512_256_DIGEST_LENGTH);
+}
+
 char *sr_SHA512_End(
 		SHA512_CTX *context, char buffer[SHA512_DIGEST_STRING_LENGTH])
 {
@@ -963,6 +983,31 @@ char *sr_SHA512_End(
 	return buffer;
 }
 
+char *sr_SHA512_256_End(
+		SHA512_CTX *context, char buffer[SHA512_256_DIGEST_STRING_LENGTH])
+{
+	sha2_byte digest[SHA512_256_DIGEST_LENGTH], *d = digest;
+	int i;
+
+	/* Sanity check: */
+	assert(context != (SHA512_CTX *)0);
+
+	if(buffer != (char *)0) {
+		sr_SHA512_256_Final(digest, context);
+
+		for(i = 0; i < SHA512_256_DIGEST_LENGTH; i++) {
+			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
+			*buffer++ = sha2_hex_digits[*d & 0x0f];
+			d++;
+		}
+		*buffer = (char)0;
+	} else {
+		MEMSET_BZERO(context, sizeof(*context));
+	}
+	MEMSET_BZERO(digest, SHA512_256_DIGEST_LENGTH);
+	return buffer;
+}
+
 char *sr_SHA512_Data(const sha2_byte *data, size_t len,
 		char digest[SHA512_DIGEST_STRING_LENGTH])
 {
@@ -973,6 +1018,15 @@ char *sr_SHA512_Data(const sha2_byte *data, size_t len,
 	return sr_SHA512_End(&context, digest);
 }
 
+char *sr_SHA512_256_Data(const sha2_byte *data, size_t len,
+		char digest[SHA512_256_DIGEST_STRING_LENGTH])
+{
+	SHA512_CTX context;
+
+	sr_SHA512_256_Init(&context);
+	sr_SHA512_256_Update(&context, data, len);
+	return sr_SHA512_256_End(&context, digest);
+}
 
 /*** SHA-384: *********************************************************/
 void sr_SHA384_Init(SHA384_CTX *context)

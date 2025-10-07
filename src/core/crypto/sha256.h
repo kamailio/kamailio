@@ -55,6 +55,9 @@ extern "C"
 #define SHA512_BLOCK_LENGTH 128
 #define SHA512_DIGEST_LENGTH 64
 #define SHA512_DIGEST_STRING_LENGTH (SHA512_DIGEST_LENGTH * 2 + 1)
+#define SHA512_256_BLOCK_LENGTH 128
+#define SHA512_256_DIGEST_LENGTH 32
+#define SHA512_256_DIGEST_STRING_LENGTH (SHA512_256_DIGEST_LENGTH * 2 + 1)
 
 
 /*** SHA-1/256/384/512 Context Structures *******************************/
@@ -123,10 +126,16 @@ typedef unsigned long long u_int64_t;	/* 8-bytes (64-bits) */
 	void sr_SHA512_Init(SHA512_CTX *);
 	void sr_SHA512_256_Init(SHA512_CTX *);
 	void sr_SHA512_Update(SHA512_CTX *, const uint8_t *, size_t);
+	void sr_SHA512_256_Update(SHA512_CTX *, const uint8_t *, size_t);
 	void sr_SHA512_Final(sha2_byte[SHA512_DIGEST_LENGTH], SHA512_CTX *);
+	void sr_SHA512_256_Final(sha2_byte[SHA512_256_DIGEST_LENGTH], SHA512_CTX *);
 	char *sr_SHA512_End(SHA512_CTX *, char[SHA512_DIGEST_STRING_LENGTH]);
+	char *sr_SHA512_256_End(
+			SHA512_CTX *, char[SHA512_256_DIGEST_STRING_LENGTH]);
 	char *sr_SHA512_Data(
 			const uint8_t *, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
+	char *sr_SHA512_256_Data(
+			const uint8_t *, size_t, char[SHA512_256_DIGEST_STRING_LENGTH]);
 
 #else /* NOPROTO */
 
