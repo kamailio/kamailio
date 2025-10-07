@@ -30,6 +30,7 @@
 #include "db_redis_mod.h"
 #include "redis_dbase.h"
 #include "redis_table.h"
+#include "redis_sentinels.h"
 
 #ifdef WITH_SSL
 int db_redis_opt_tls = 0;
@@ -44,6 +45,8 @@ str redis_schema_path = str_init(SHARE_DIR "db_redis/kamailio");
 int db_redis_verbosity = 1;
 int mapping_struct_type = 0;
 str db_redis_hash_value = str_init("DUMMY");
+int db_redis_with_sentinels = 0;
+char *db_redis_master_name = "mymaster";
 
 int db_redis_hash_expires = 0;
 str db_redis_hash_expires_str = str_init("");
@@ -52,7 +55,9 @@ char db_redis_hash_expires_buf[20] = {0};
 static int db_redis_bind_api(db_func_t *dbb);
 static int mod_init(void);
 static void mod_destroy(void);
+int use_replicas = 0; // 0 master/RW, 1 replica/RO
 int keys_param(modparam_t type, void *val);
+int sentinels_param(modparam_t type, void *val);
 
 static cmd_export_t cmds[] = {
 		{"db_bind_api", (cmd_function)db_redis_bind_api, 0, 0, 0, 0},
@@ -69,6 +74,11 @@ static param_export_t params[] = {
 		{"mapping_struct_type", PARAM_INT, &mapping_struct_type},
 		{"hash_value", PARAM_STRING, &db_redis_hash_value},
 		{"hash_expires", PARAM_INT, &db_redis_hash_expires},
+		{"with_sentinels", PARAM_INT, &db_redis_with_sentinels},
+		{"sentinels_config", PARAM_STRING | PARAM_USE_FUNC,
+				(void *)sentinels_param},
+		{"use_replicas", PARAM_INT, &use_replicas}, // 0 master/RW, 1 replica/RO
+		{"redis_master_name", PARAM_STR, &db_redis_master_name},
 #ifdef WITH_SSL
 		{"opt_tls", PARAM_INT, &db_redis_opt_tls},
 		{"ca_path", PARAM_STRING, &db_redis_ca_path},
@@ -119,6 +129,11 @@ int keys_param(modparam_t type, void *val)
 		return db_redis_keys_spec((char *)val);
 }
 
+int sentinels_param(modparam_t type, void *val)
+{
+	return parse_sentinel_config((char *)val);
+}
+
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	if(db_api_init() < 0)
@@ -140,6 +155,11 @@ static int mod_init(void)
 		db_redis_hash_expires_str.s = db_redis_hash_expires_buf;
 		db_redis_hash_expires_str.len = snprintf(
 				db_redis_hash_expires_str.s, 20, "%d", db_redis_hash_expires);
+	}
+
+	if(db_redis_with_sentinels && sc.sentinel_list == NULL) {
+		LM_ERR("sentinels_config parameter is required when using sentinels\n");
+		return -1;
 	}
 	return 0;
 }
