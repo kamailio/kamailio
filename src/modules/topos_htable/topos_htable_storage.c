@@ -143,23 +143,20 @@ static int tps_htable_insert_initial_method_branch(
 
 	// base64 encode key values
 	if(_tps_base64) {
-		base64url_enc(md->s_method.s, md->s_method.len, _tps_base64_buf[0],
+		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
 				TPS_BASE64_SIZE - 1);
-		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[1],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[2],
+		base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[1],
 				TPS_BASE64_SIZE - 1);
 		base64url_enc(
-				xuuid.s, xuuid.len, _tps_base64_buf[3], TPS_BASE64_SIZE - 1);
+				xuuid.s, xuuid.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
 
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|%s|x%s",
-				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2],
-				_tps_base64_buf[3]);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|x%s",
+				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2]);
 
 	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|%.*s|x%.*s",
-				md->s_method.len, md->s_method.s, md->a_callid.len,
-				md->a_callid.s, md->b_tag.len, md->b_tag.s, xuuid.len, xuuid.s);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|x%.*s",
+				md->a_callid.len, md->a_callid.s, md->b_tag.len, md->b_tag.s,
+				xuuid.len, xuuid.s);
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
@@ -222,7 +219,6 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 	int i = 0;
 	str xuuid = str_init("");
 	str xtag = str_init("");
-	str smethod = str_init("INVITE");
 
 	// checks
 	if(md == NULL || sd == NULL) {
@@ -264,31 +260,23 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 		xuuid.len = sd->b_uuid.len - 1;
 	}
 
-	if(md->s_method_id & (METHOD_SUBSCRIBE | METHOD_NOTIFY)) {
-		smethod.s = "SUBSCRIBE";
-		smethod.len = 9;
-	}
-
 	ptr = _tps_htable_key_buf;
 
 	// base64 encode key values
 	if(_tps_base64) {
-		base64url_enc(md->s_method.s, md->s_method.len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[1],
+		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
 				TPS_BASE64_SIZE - 1);
 		base64url_enc(
-				xtag.s, xtag.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
+				xtag.s, xtag.len, _tps_base64_buf[1], TPS_BASE64_SIZE - 1);
 		base64url_enc(
-				xuuid.s, xuuid.len, _tps_base64_buf[3], TPS_BASE64_SIZE - 1);
+				xuuid.s, xuuid.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
 
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|%s|x%s",
-				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2],
-				_tps_base64_buf[3]);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|x%s",
+				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2]);
 	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|%.*s|x%.*s",
-				smethod.len, smethod.s, md->a_callid.len, md->a_callid.s,
-				xtag.len, xtag.s, xuuid.len, xuuid.s);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|x%.*s",
+				md->a_callid.len, md->a_callid.s, xtag.len, xtag.s, xuuid.len,
+				xuuid.s);
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
