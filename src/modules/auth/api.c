@@ -305,6 +305,33 @@ int auth_check_response(dig_cred_t *cred, str *method, char *ha1)
 }
 
 
+/*
+ * wrapper to calculate H(A1) as per spec
+ */
+void auth_calc_HA1(ha_alg_t _alg, str *_username, str *_realm, str *_password,
+		str *_nonce, str *_cnonce, HASHHEX _sess_key)
+{
+	calc_HA1(_alg, _username, _realm, _password, _nonce, _cnonce, _sess_key);
+}
+
+/*
+ * wrapper to calculate request-digest/response-digest as per HTTP Digest spec
+ */
+void auth_calc_response(HASHHEX _ha1, /* H(A1) */
+		str *_nonce,				  /* nonce from server */
+		str *_nc,					  /* 8 hex digits */
+		str *_cnonce,				  /* client nonce */
+		str *_qop,					  /* qop-value: "", "auth", "auth-int" */
+		int _auth_int,				  /* 1 if auth-int is used */
+		str *_method,				  /* method from the request */
+		str *_uri,					  /* requested URL */
+		HASHHEX _hentity,			  /* H(entity body) if qop="auth-int" */
+		HASHHEX _response)			  /* request-digest or response-digest */
+{
+	calc_response(_ha1, _nonce, _nc, _cnonce, _qop, _auth_int, _method, _uri,
+			_hentity, _response);
+}
+
 int bind_auth_s(auth_api_s_t *api)
 {
 	if(!api) {
@@ -316,8 +343,8 @@ int bind_auth_s(auth_api_s_t *api)
 	api->post_auth = post_auth;
 	api->build_challenge = build_challenge_hf;
 	api->qop = &auth_qop;
-	api->calc_HA1 = calc_HA1;
-	api->calc_response = calc_response;
+	api->calc_HA1 = auth_calc_HA1;
+	api->calc_response = auth_calc_response;
 	api->check_response = auth_check_response;
 	api->auth_challenge_hftype = auth_challenge_hftype;
 	api->pv_authenticate = pv_authenticate;
