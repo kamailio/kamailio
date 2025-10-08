@@ -397,6 +397,11 @@ static int mod_init(void)
 		hash_hex_len = HASHHEXLEN_SHA256;
 		calc_HA1 = calc_HA1_sha256;
 		calc_response = calc_response_sha256;
+	} else if(strcmp(auth_algorithm.s, "SHA-512") == 0) {
+		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_IDX];
+		hash_hex_len = HASHHEXLEN_SHA512;
+		calc_HA1 = calc_HA1_sha512;
+		calc_response = calc_response_sha512;
 	} else {
 		LM_ERR("Invalid algorithm provided."
 			   " Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
