@@ -101,7 +101,13 @@ void xavp_free_unsafe(sr_xavp_t *xa)
 	shm_free_unsafe(xa);
 }
 
-static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
+/**
+ * create a new value
+ * - mode:
+ *   - 0 allocate (val->v.s.len + 1) for value and copy over val->v.s.s
+ *   - 1 allocate (val->v.s.len + 1) for value, but set it to empty string
+ */
+static sr_xavp_t *xavp_new_value_mode(str *name, sr_xval_t *val, int mode)
 {
 	sr_xavp_t *avp;
 	int size;
@@ -128,12 +134,21 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 	memcpy(&avp->val, val, sizeof(sr_xval_t));
 	if(val->type == SR_XTYPE_STR) {
 		avp->val.v.s.s = avp->name.s + avp->name.len + 1;
-		memcpy(avp->val.v.s.s, val->v.s.s, val->v.s.len);
+		if(mode == 1) {
+			avp->val.v.s.s[0] = '\0';
+		} else {
+			memcpy(avp->val.v.s.s, val->v.s.s, val->v.s.len);
+		}
 		avp->val.v.s.s[val->v.s.len] = '\0';
 		avp->val.v.s.len = val->v.s.len;
 	}
 
 	return avp;
+}
+
+static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
+{
+	return xavp_new_value_mode(name, val, 0);
 }
 
 int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list)
@@ -205,11 +220,12 @@ int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp)
 	return 0;
 }
 
-sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
+sr_xavp_t *xavp_add_value_mode(
+		str *name, sr_xval_t *val, int mode, sr_xavp_t **list)
 {
 	sr_xavp_t *avp = 0;
 
-	avp = xavp_new_value(name, val);
+	avp = xavp_new_value_mode(name, val, mode);
 	if(avp == NULL)
 		return NULL;
 
@@ -223,6 +239,11 @@ sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 	}
 
 	return avp;
+}
+
+sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
+{
+	return xavp_add_value_mode(name, val, 0, list);
 }
 
 sr_xavp_t *xavp_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp)
