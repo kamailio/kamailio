@@ -892,10 +892,8 @@ inline static void timer_list_expire(ticks_t t, struct timer_head *h
 	first = h->next;
 #endif
 
-	LM_DBG("ksr_timer_sanity_check = %ld\n", ksr_timer_sanity_check);
-	/*LM_DBG("@ ticks = %lu, list =%p\n",
-			(unsigned long) *ticks, h);
-	*/
+	/* LM_DBG("ksr_timer_sanity_check = %ld\n", ksr_timer_sanity_check); */
+	/* LM_DBG("@ ticks = %lu, list =%p\n", (unsigned long) *ticks, h); */
 	while(h->next != (struct timer_ln *)h) {
 		if(ksr_timer_sanity_check != 0) {
 			if(h->next == NULL || h->prev == NULL) {
