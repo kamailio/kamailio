@@ -705,9 +705,10 @@ modparam("auth", "use_domain", 1)
 		<title><varname>algorithm</varname> (string)</title>
 		<para>
 			Configure hash algorithm used for digest authentication.
-			Possible values are "MD5", "SHA-256" or "SHA-512". If left empty MD5 is
-			used. If specified, the specified algorithm is used and is also put in
-			the 'algorithm' field of the challenge header.
+			Possible values are "MD5", "SHA-256", "SHA-512" or  "SHA-512-256".
+			If left empty MD5 is used. If specified, the specified algorithm
+			is used and is also put in the 'algorithm' field of the challenge
+			header.
 		</para>
 		<para>
 			Warning: SHA-256/512 hash values take twice or more the space of MD5 hash
