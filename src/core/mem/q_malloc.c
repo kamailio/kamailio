@@ -552,7 +552,7 @@ void qm_free(void *qmp, void *p)
 					p, file, func, line, f->file, f->func, f->line);
 			abort();
 		} else {
-			LM_CRIT("BUG: freeing already freed pointer (%p),"
+			LM_WARN("BUG: freeing already freed pointer (%p),"
 					" called from %s: %s(%d), first free %s: %s(%ld) - "
 					"ignoring\n",
 					p, file, func, line, f->file, f->func, f->line);
