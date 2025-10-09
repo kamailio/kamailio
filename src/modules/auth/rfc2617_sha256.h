@@ -48,6 +48,14 @@ typedef unsigned char HASH_SHA512[HASHLEN_SHA512];
 typedef char HASHHEX_SHA512[HASHHEXLEN_SHA512 + 1];
 
 
+#define HASHLEN_SHA512_256 32
+typedef unsigned char HASH_SHA512_256[HASHLEN_SHA512_256];
+
+
+#define HASHHEXLEN_SHA512_256 64
+typedef char HASHHEX_SHA512_256[HASHHEXLEN_SHA512_256 + 1];
+
+
 /*
  * Convert to hex form
  */
@@ -58,6 +66,12 @@ void cvt_hex_sha256(HASH_SHA256 Bin, HASHHEX_SHA256 Hex);
  * Convert to hex form
  */
 void cvt_hex_sha512(HASH_SHA512 Bin, HASHHEX_SHA512 Hex);
+
+
+/*
+ * Convert to hex form
+ */
+void cvt_hex_sha512_256(HASH_SHA512_256 Bin, HASHHEX_SHA512_256 Hex);
 
 
 /*
@@ -107,5 +121,29 @@ void calc_response_sha512(HASHHEX_SHA512 _ha1, /* H(A1) */
 		str *_uri,				   /* requested URL */
 		HASHHEX_SHA512 _hentity,   /* H(entity body) if qop="auth-int" */
 		HASHHEX_SHA512 _response); /* request-digest or response-digest */
+
+/*
+ * calculate H(A1) as per HTTP Digest spec
+ */
+void calc_HA1_sha512_256(ha_alg_t _alg, /* Type of algorithm */
+		str *_username,					/* username */
+		str *_realm,					/* realm */
+		str *_password,					/* password */
+		str *_nonce,					/* nonce string */
+		str *_cnonce,					/* cnonce */
+		HASHHEX_SHA512_256 _sess_key);	/* Result will be stored here */
+
+
+/* calculate request-digest/response-digest as per HTTP Digest spec */
+void calc_response_sha512_256(HASHHEX_SHA512_256 _ha1, /* H(A1) */
+		str *_nonce,								   /* nonce from server */
+		str *_nc,									   /* 8 hex digits */
+		str *_cnonce,								   /* client nonce */
+		str *_qop,					   /* qop-value: "", "auth", "auth-int" */
+		int _auth_int,				   /* 1 if auth-int is used */
+		str *_method,				   /* method from the request */
+		str *_uri,					   /* requested URL */
+		HASHHEX_SHA512_256 _hentity,   /* H(entity body) if qop="auth-int" */
+		HASHHEX_SHA512_256 _response); /* request-digest or response-digest */
 
 #endif /* RFC2617_SHA256_H */

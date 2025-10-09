@@ -141,11 +141,14 @@ str auth_algorithm = {"", 0};
 #define AUTH_ALG_MD5_IDX 0
 #define AUTH_ALG_SHA256_IDX 1
 #define AUTH_ALG_SHA512_IDX 2
+#define AUTH_ALG_SHA512_256_IDX 3
+
 /* clang-format off */
 static str auth_algorithm_list[] = {
 	{"MD5", 3},
 	{"SHA-256", 7},
 	{"SHA-512", 7},
+	{"SHA-512-256", 11},
 	{NULL, 0}
 };
 /* clang-format on */
@@ -397,6 +400,11 @@ static int mod_init(void)
 		hash_hex_len = HASHHEXLEN_SHA256;
 		calc_HA1 = calc_HA1_sha256;
 		calc_response = calc_response_sha256;
+	} else if(strcmp(auth_algorithm.s, "SHA-512-256") == 0) {
+		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_256_IDX];
+		hash_hex_len = HASHHEXLEN_SHA512_256;
+		calc_HA1 = calc_HA1_sha512_256;
+		calc_response = calc_response_sha512_256;
 	} else if(strcmp(auth_algorithm.s, "SHA-512") == 0) {
 		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_IDX];
 		hash_hex_len = HASHHEXLEN_SHA512;
@@ -524,6 +532,11 @@ static int ki_auth_algorithm(sip_msg_t *msg, str *alg)
 		hash_hex_len = HASHHEXLEN_SHA256;
 		calc_HA1 = calc_HA1_sha256;
 		calc_response = calc_response_sha256;
+	} else if(strcmp(auth_algorithm.s, "SHA-512-256") == 0) {
+		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_256_IDX];
+		hash_hex_len = HASHHEXLEN_SHA512_256;
+		calc_HA1 = calc_HA1_sha512_256;
+		calc_response = calc_response_sha512_256;
 	} else if(strcmp(auth_algorithm.s, "SHA-512") == 0) {
 		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_IDX];
 		hash_hex_len = HASHHEXLEN_SHA512;
