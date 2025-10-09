@@ -781,7 +781,7 @@ sdp_iterator_end("s1");
 				</para></listitem>
 				<listitem><para>
 					<emphasis>$sdp(c:ip)</emphasis> - connection IP (read only)
-					- taken from first media strea if specified, otherwise from
+					- taken from first media stream if specified, otherwise from
 					first session.
 				</para></listitem>
 				</itemizedlist>
