@@ -22,9 +22,11 @@
 
 #include "dprint.h"
 #include "rand/ksrxrand.h"
+#include "mem/pkg.h"
 #include "coreparam.h"
 
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam);
+int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam);
 long ksr_timer_sanity_check = 0;
 
 /* clang-format off */
@@ -91,5 +93,30 @@ int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval)
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam)
 {
 	*(long *)eparam = pval->v.nval;
+	return 0;
+}
+
+/**
+ * store the value in a str* variable, with v->s field allocated in pkg
+ * - target v->s has to be initially null or pkg-alloced to cope properly
+ *   with setting the parameters many times
+ */
+int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam)
+{
+	str *v;
+
+	v = (str *)eparam;
+	if(v == NULL) {
+		LM_ERR("store parameter not provided\n");
+		return -1;
+	}
+	if(v->s != NULL) {
+		pkg_free(v->s);
+	}
+	v->len = strlen(pval->v.sval);
+	v->s = (char *)pkg_malloc(v->len + 1);
+	memcpy(v->s, pval->v.sval, v->len);
+	v->s[v->len] = '\0';
+
 	return 0;
 }
