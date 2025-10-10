@@ -21,16 +21,21 @@
 #include <stdlib.h>
 
 #include "dprint.h"
+#include "str.h"
 #include "rand/ksrxrand.h"
 #include "mem/pkg.h"
 #include "coreparam.h"
 
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam);
 int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam);
+
 long ksr_timer_sanity_check = 0;
+str _ksr_iuid = STR_NULL;
 
 /* clang-format off */
 static ksr_cpexport_t _ksr_cpexports[] = {
+	{ str_init("iuid"), KSR_CPTYPE_STR,
+		ksr_coreparam_store_sval_pkg, &_ksr_iuid },
 	{ str_init("random_engine"), KSR_CPTYPE_STR,
 		ksr_xrand_cp, NULL },
 	{ str_init("timer_sanity_check"), KSR_CPTYPE_NUM,
