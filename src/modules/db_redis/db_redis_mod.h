@@ -51,6 +51,10 @@
 
 extern str redis_keys;
 extern str redis_schema_path;
+extern int db_redis_with_sentinels;
+extern int use_replicas;
+extern char *db_redis_master_name;
+extern char *db_redis_db_pass;
 typedef enum
 {
 	MS_SET = 0,
