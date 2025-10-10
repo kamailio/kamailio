@@ -43,6 +43,15 @@ static int pv_get_retcode(struct sip_msg *msg, pv_param_t *p, pv_value_t *res)
 	return pv_get_sintval(msg, p, res, _last_returned_code);
 }
 
+extern str _ksr_iuid;
+
+static int pv_get_iuid(struct sip_msg *msg, pv_param_t *p, pv_value_t *res)
+{
+	if(_ksr_iuid.s == NULL) {
+		return pv_get_null(msg, p, res);
+	}
+	return pv_get_strval(msg, p, res, &_ksr_iuid);
+}
 
 static int pv_parse_env_name(pv_spec_p sp, str *in)
 {
@@ -278,6 +287,7 @@ static pv_export_t core_pvs[] = {
 			0, 0, 0},
 	{STR_STATIC_INIT("defs"), PVT_OTHER, pv_get_defs, 0, pv_parse_defs_name,
 			0, 0, 0},
+	{STR_STATIC_INIT("iuid"), PVT_OTHER, pv_get_iuid, 0, 0, 0, 0, 0},
 
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
