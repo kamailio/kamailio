@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="tls_tracker" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<bookinfo>
+		<title>TLS Tracker Module</title>
+		<copyright>
+			<year>2023</year>
+			<holder>NGA911</holder>
+		</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<chapter>
+		<title>Admin Guide</title>
+		<section id="tls_tracker.overview">
+			<title>Overview</title>
+			<para>
+				This module implements the TLS tracking functionality for &kamailio;
+				It allows to store session keys for TLS connections into the
+				database
+			</para>
+		</section>
+
+		<section id="tls_tracker.compile">
+			<title>Compiling the TLS Tracker Module</title>
+			<para>
+				In most case compiling the TLS tracker module is as simple as:
+				<programlisting>
+					make -C modules/tls_tracker
+				</programlisting>
+				or
+				<programlisting>
+					make modules modules=modules/tls_tracker
+				</programlisting>
+				or (compiling whole Kamailio and the tls_tracker module)
+				<programlisting>
+					make all include_modules=tls_tracker
+				</programlisting>
+			</para>
+		</section>
+		<section id="tls_tracker.parameters"
+			xmlns:xi="http://www.w3.org/2001/XInclude">
+
+			<sectioninfo>
+			</sectioninfo>
+
+			<title>Parameters</title>
+
+			<section id="tls_tracker.p.db_url">
+				<title>
+					<varname>db_url</varname>
+					(string)
+				</title>
+				<para>
+					This parameter determines the URL for the database.
+				</para>
+
+				<para>
+					Default value is
+					<quote>mysql://kamailio:pass@127.0.0.1/kamailio</quote>
+					.
+				</para>
+
+				<example>
+					<title>
+						Set
+						<varname>db_url</varname>
+						parameter
+					</title>
+					<programlisting>
+						...
+						modparam("tls_tracker", "db_url", "mysql://kamailio:pass@127.0.0.1/kamailio")
+						...
+					</programlisting>
+				</example>
+			</section>
+
+			<section id="tls_tracker.p.query_timeout">
+				<title>
+					<varname>query_timeout</varname>
+					(integer)
+				</title>
+
+				<para>
+					This parameter determines timeout, which is used in the middle of
+					database queries.
+					The timeout is pointed in milliseconds.
+				</para>
+
+				<para>
+					Default value is 20 milliseconds.
+				</para>
+
+				<example>
+					<title>
+						Set
+						<varname>query_timeout</varname>
+						parameter
+					</title>
+					<programlisting>
+						...
+						modparam("tls_tracker", "query_timeout", 0)
+						...
+					</programlisting>
+				</example>
+			</section>
+		</section>
+	</chapter>
+</book>
