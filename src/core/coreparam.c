@@ -29,13 +29,15 @@
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam);
 int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam);
 
+int ksr_iuid_cp(str *pname, ksr_cpval_t *pval, void *eparam);
+
 long ksr_timer_sanity_check = 0;
 str _ksr_iuid = STR_NULL;
 
 /* clang-format off */
 static ksr_cpexport_t _ksr_cpexports[] = {
 	{ str_init("iuid"), KSR_CPTYPE_STR,
-		ksr_coreparam_store_sval_pkg, &_ksr_iuid },
+		ksr_iuid_cp, NULL },
 	{ str_init("random_engine"), KSR_CPTYPE_STR,
 		ksr_xrand_cp, NULL },
 	{ str_init("timer_sanity_check"), KSR_CPTYPE_NUM,
@@ -120,8 +122,46 @@ int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam)
 	}
 	v->len = strlen(pval->v.sval);
 	v->s = (char *)pkg_malloc(v->len + 1);
+	if(v->s == NULL) {
+		v->len = 0;
+		PKG_MEM_ERROR;
+		return -1;
+	}
 	memcpy(v->s, pval->v.sval, v->len);
 	v->s[v->len] = '\0';
 
 	return 0;
+}
+
+/**
+ *
+ */
+int ksr_iuid_set(char *viuid, int mode)
+{
+	if(_ksr_iuid.s != NULL && mode == 0) {
+		/* already set - do not overwrite */
+		return 0;
+	}
+	if(_ksr_iuid.s != NULL) {
+		pkg_free(_ksr_iuid.s);
+	}
+	_ksr_iuid.len = strlen(viuid);
+	_ksr_iuid.s = (char *)pkg_malloc(_ksr_iuid.len + 1);
+	if(_ksr_iuid.s == NULL) {
+		_ksr_iuid.len = 0;
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memcpy(_ksr_iuid.s, viuid, _ksr_iuid.len);
+	_ksr_iuid.s[_ksr_iuid.len] = '\0';
+
+	return 0;
+}
+
+/**
+ *
+ */
+int ksr_iuid_cp(str *pname, ksr_cpval_t *pval, void *eparam)
+{
+	return ksr_iuid_set(pval->v.sval, 0);
 }

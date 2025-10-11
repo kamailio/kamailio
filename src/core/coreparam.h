@@ -49,4 +49,6 @@ int ksr_coreparam_set_nval(char *name, long nval);
 int ksr_coreparam_set_sval(char *name, char *sval);
 int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval);
 
+int ksr_iuid_set(char *viuid, int mode);
+
 #endif
