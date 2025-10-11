@@ -496,6 +496,8 @@ subpackages="\
 	xmpp
 	"
 
+. ${startdir}/APKBUILD-kamailio
+
 _modules="$_module_group_kstandard"
 for _i in $subpackages; do
 	eval "_modules=\"\$_modules \$_mod_list_$_i\""
