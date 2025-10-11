@@ -1,0 +1,90 @@
+#!/bin/sh
+
+git_archive(){
+	cd ../../.. && git archive --format=tar.gz --prefix=${pkgname}-${_gitcommit}/ -o "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz ${_gitcommit} && cd pkg/kamailio/alpine || return 1
+	echo Created dist archive "$SRCDEST"/${pkgname}-${pkgver}${_suffix}.tar.gz
+}
+
+dnssec() {
+	_generic_pkg "DNSSEC implementation for SIP routing" \
+		"$_mod_list_dnssec"
+}
+
+jwt() {
+	_generic_pkg "provides JWT (JSON Web Token) functions" \
+		"$_mod_list_jwt"
+}
+
+kafka() {
+	_generic_pkg "Produce and send messages to a Kafka server" \
+		"$_mod_list_kafka"
+}
+
+microhttpd() {
+	_generic_pkg "embedded HTTP server using libmicrohttpd" \
+		"$_mod_list_microhttpd"
+}
+
+mongodb() {
+	_generic_pkg "connector for MongoDB NoSQL server" \
+		"$_mod_list_mongodb"
+}
+
+phonenum() {
+	_generic_pkg "module to get normalize and get details about a phone number" \
+		"$_mod_list_phonenum"
+}
+
+secsipid() {
+	_generic_pkg "This module implements STIR (Secure Telephony Identity Revisited) and SHAKEN (Signature-based Handling of Asserted information using toKENs)" \
+		"$_mod_list_secsipid"
+}
+
+_makedepends_community="\
+	libjwt2-dev
+	libmicrohttpd-dev
+	libphonenumber-dev
+	librdkafka-dev
+	mongo-c-driver-dev
+	"
+
+_makedepends_testing="\
+	dnssec-tools-dev
+	secsipidx
+	"
+
+[ -n "$use_community" ] && makedepends="$makedepends $_makedepends_community"
+[ -n "$use_testing" ] && makedepends="$makedepends $_makedepends_testing"
+
+# - modules depending on libmicrohttpd library
+_mod_list_microhttpd="microhttpd"
+
+# - modules depending on dnssec-tools-dev
+_mod_list_dnssec="dnssec"
+
+# - modules depending on phonenum
+_mod_list_phonenum="phonenum"
+
+# - modules depending on rdkafka library
+_mod_list_kafka="kafka"
+
+# - modules depending on libjwt2 library
+_mod_list_jwt="jwt"
+
+# - modules depending on secsipidx
+_mod_list_secsipid="secsipid"
+
+
+_subpackages_community="\
+	jwt
+	kafka
+	microhttpd
+	mongodb
+	phonenum
+	"
+
+_subpackages_testing="dnssec secsipid"
+
+[ -n "$use_community" ] && subpackages="$subpackages $_subpackages_community"
+[ -n "$use_testing" ] && subpackages="$subpackages $_subpackages_testing"
+return 0
