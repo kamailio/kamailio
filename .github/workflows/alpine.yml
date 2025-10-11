@@ -120,10 +120,29 @@ jobs:
         image: ${{ env.BUILDER_IMAGE }}:${{ matrix.build_image_tag }}
         options: --platform ${{ matrix.platform }} -v ${{ github.workspace }}:/usr/src/kamailio -v ${{ runner.temp }}/context:/mnt/context
         run: |
+          function toolchain_file_x86() {
+          cat << EOF > cmake/x86-toolchain.cmake
+          set(CMAKE_SYSTEM_NAME Linux)
+          set(CMAKE_SYSTEM_PROCESSOR i386)
+          EOF
+          }
+
           set -eux
           apkArch="$(apk --print-arch)"
           cp -R /usr/src/kamailio ~
           cd ~/kamailio
+
+          if [ ${apkArch} == "x86" ]; then
+            toolchain_file_${apkArch}
+            export TOOLCHAIN_OPTIONS="-DCMAKE_TOOLCHAIN_FILE=~/kamailio/cmake/${apkArch}-toolchain.cmake"
+          fi
+
+          # enable build modules with community and testing deps
+          export use_community=true
+          if grep -q edge /etc/os-release; then
+            export use_testing=true
+          fi
+
           make cfg
           make -C pkg/kamailio apk
           abuild -C pkg/kamailio/alpine -r
