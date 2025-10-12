@@ -148,6 +148,7 @@
 #include "core/timer_proc.h"
 #include "core/srapi.h"
 #include "core/receive.h"
+#include "core/coreparam.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -195,6 +196,7 @@ Options:\n\
     -G file      Create a pgid file\n\
     -h           This help message\n\
     --help       Long option for `-h`\n\
+    --iuid=val   Instance unique id\n\
     -I           Print more internal compile flags and options\n\
     -K           Turn on \"via:\" host checking when forwarding replies\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
@@ -2233,7 +2235,8 @@ int main(int argc, char **argv)
 			{"debug", required_argument, 0, KARGOPTVAL + 8},
 			{"cfg-print", no_argument, 0, KARGOPTVAL + 9},
 			{"atexit", required_argument, 0, KARGOPTVAL + 10},
-			{"all-errors", no_argument, 0, KARGOPTVAL + 11}, {0, 0, 0, 0}};
+			{"all-errors", no_argument, 0, KARGOPTVAL + 11},
+			{"iuid", required_argument, 0, KARGOPTVAL + 12}, {0, 0, 0, 0}};
 
 	if(argc > 1) {
 		/* checks for common wrong arguments */
@@ -2610,6 +2613,16 @@ int main(int argc, char **argv)
 				server_id = (int)strtol(optarg, &tmp, 10);
 				if((tmp == 0) || (*tmp)) {
 					LM_ERR("bad server_id value: %s\n", optarg);
+					goto error;
+				}
+				break;
+			case KARGOPTVAL + 12:
+				if(optarg == NULL) {
+					fprintf(stderr, "bad instance unique id parameter\n");
+					goto error;
+				}
+				if(ksr_iuid_set(optarg, 0) < 0) {
+					fprintf(stderr, "failed to set instance unique id\n");
 					goto error;
 				}
 				break;
@@ -3166,12 +3179,12 @@ int main(int argc, char **argv)
 
 	if(dont_fork) {
 		fprintf(stderr, "WARNING: no fork mode %s\n",
-				(udp_listen) ? (
-						(udp_listen->next)
-								? "and more than one listen address found "
-								  "(will use only the first one)"
-								: "")
-							 : "and no udp listen address found");
+				(udp_listen)
+						? ((udp_listen->next) ? "and more than one listen "
+												"address found "
+												"(will use only the first one)"
+											  : "")
+						: "and no udp listen address found");
 	}
 	if(config_check) {
 		fprintf(stderr, "config file ok, exiting...\n");
@@ -3445,7 +3458,7 @@ error:
 int SYMBOL_EXPORT pthread_mutex_init(
 		pthread_mutex_t *__mutex, const pthread_mutexattr_t *__mutexattr)
 {
-	static int (*real_pthread_mutex_init)(pthread_mutex_t * __mutex,
+	static int (*real_pthread_mutex_init)(pthread_mutex_t *__mutex,
 			const pthread_mutexattr_t *__mutexattr) = 0;
 	pthread_mutexattr_t attr;
 	int ret;
