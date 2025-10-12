@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding='ISO-8859-1'?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 <!-- Include general documentation entities -->
@@ -74,7 +74,6 @@
 		a little greater than the Registrar flow timer interval and a
 		little less than the <quote>tcp_connection_lifetime</quote>.
 		</para>
-	</section>
 	<example>
 	<title>Edge Proxy Configuration</title>
 	<programlisting><![CDATA[
@@ -449,6 +448,7 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 }
 ]]></programlisting>
 	</example>
+	</section>
 	</section>
 
 	<section>
