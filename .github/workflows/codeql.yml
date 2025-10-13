@@ -64,13 +64,13 @@ jobs:
         run: export PKG_CONFIG_PATH=$RUNNER_TEMP/usr/lib/pkgconfig:$PKG_CONFIG_PATH && echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
         if: ${{ matrix.language == 'javascript' || matrix.language == 'python' }}
 
       - name: Build cpp
@@ -78,6 +78,6 @@ jobs:
         run: make -j$(nproc) all
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
