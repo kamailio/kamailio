@@ -2221,8 +2221,11 @@ int main(int argc, char **argv)
 	int option_index = 0;
 
 #define KARGOPTVAL 1024
-	static struct option long_options[] = {/* long options with short variant */
-			{"help", no_argument, 0, 'h'}, {"version", no_argument, 0, 'v'},
+	/* clang-format off */
+	static struct option long_options[] = {
+			/* long options with short variant */
+			{"help", no_argument, 0, 'h'},
+			{"version", no_argument, 0, 'v'},
 			/* long options without short variant */
 			{"alias", required_argument, 0, KARGOPTVAL},
 			{"subst", required_argument, 0, KARGOPTVAL + 1},
@@ -2236,7 +2239,10 @@ int main(int argc, char **argv)
 			{"cfg-print", no_argument, 0, KARGOPTVAL + 9},
 			{"atexit", required_argument, 0, KARGOPTVAL + 10},
 			{"all-errors", no_argument, 0, KARGOPTVAL + 11},
-			{"iuid", required_argument, 0, KARGOPTVAL + 12}, {0, 0, 0, 0}};
+			{"iuid", required_argument, 0, KARGOPTVAL + 12},
+			{0, 0, 0, 0}
+		};
+	/* clang-format on */
 
 	if(argc > 1) {
 		/* checks for common wrong arguments */
