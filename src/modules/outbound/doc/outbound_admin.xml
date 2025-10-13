@@ -488,7 +488,85 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 	</section>
 	</section>
 
-
+	<section>
+		<title>Functions</title>
+		<section id="outbound.f.check_flow_token">
+			<title><function moreinfo="none">check_flow_token()</function></title>
+			<para>This function search flow token for the current
+				message and make checks:</para>
+			<orderedlist>
+				<listitem><para>headers can be parsed;</para></listitem>
+				<listitem><para><emphasis>Route</emphasis> header can be parsed;</para></listitem>
+				<listitem><para>top route header is myself;</para></listitem>
+				<listitem><para>flow token present in the <emphasis>Route</emphasis> header;</para></listitem>
+				<listitem><para>flow token can be decoded;</para></listitem>
+				<listitem><para>TCP/TLS or WS/WSS connection present;</para></listitem>
+				<listitem><para>flow token is not expired;</para></listitem>
+			</orderedlist>
+			<para>Return codes:</para>
+			<orderedlist>
+				<listitem><para><emphasis>1</emphasis> - flow token is
+					valid and can be used to route message to the next hop</para></listitem>
+				<listitem><para><emphasis>-1</emphasis> - no <emphasis>Route</emphasis> header present</para></listitem>
+				<listitem><para><emphasis>-2</emphasis> - host in the first <emphasis>Route</emphasis> value is not current host</para></listitem>
+				<listitem><para><emphasis>-3</emphasis> - no flow token present</para></listitem>
+				<listitem><para><emphasis>-4</emphasis> - cannot decode flow token</para></listitem>
+				<listitem><para><emphasis>-5</emphasis> - connection associated with this token does not exist </para></listitem>
+				<listitem><para><emphasis>-6</emphasis> - flow token expired</para></listitem>
+				<listitem><para><emphasis>-7</emphasis> - cannot parse <emphasis>Route</emphasis> header</para></listitem>
+				<listitem><para><emphasis>-8</emphasis> - cannot parse headers</para></listitem>
+			</orderedlist>
+			<example>
+				<title><function>check_flow_token</function> usage</title>
+				<programlisting>
+...
+	check_flow_token();
+	switch $rc {
+		case -8:
+			xlog("cannot parse headers\n");
+			sl_send_reply("403", "Forbidden");
+			break;
+		case -7:
+			xlog("cannot parse Route header\n");
+			sl_send_reply("403", "Forbidden");
+			break;
+		case -6:
+			xlog("expired flow token\n");
+			sl_send_reply("430", "Flow Failed");
+			break;
+		case -5:
+			xlog("no TCP conection\n");
+			sl_send_reply("430", "Flow Failed");
+			break;
+		case -4:
+			xlog("cannot decode flowtoken\n");
+			sl_send_reply("403", "Forbidden");
+			break;
+		case -3:
+			xlog("no flow token\n");
+			loose_route();
+			break;
+		case -2:
+			xlog("Route is not my self\n");
+			sl_send_reply("403", "Forbidden");
+			break;
+		case -1:
+			xlog("no Route header\n");
+			break;
+		case 1:
+			xlog("correct flow token\n");
+			loose_route();
+			break;
+		default:
+			xlog("not supported return code: $rc\n");
+			sl_send_reply("403", "Forbidden");
+			break;
+	}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
 	<section>
 	<title>Parameters</title>
 	<section>
