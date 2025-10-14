@@ -169,8 +169,8 @@ Usage: " NAME " [options]\n\
 Options:\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
-    --alias=val  Add an alias, the value has to be '[proto:]hostname[:port]'\n\
-                  (like for 'alias' global parameter)\n\
+    --alias=val  Add a domain alias, the value has to be '[proto:]hostname[:port]'\n\
+                  (like for 'alias'/'domain' global parameter)\n\
     --atexit=val Control atexit callbacks execution from external libraries\n\
                   which may access destroyed shm memory causing crash on shutdown.\n\
                   Can be y[es] or 1 to enable atexit callbacks, n[o] or 0 to disable,\n\
@@ -189,6 +189,8 @@ Options:\n\
                   -D..do not fork (almost) anyway;\n\
                   -DD..do not daemonize creator;\n\
                   -DDD..daemonize (default)\n\
+    --domain=val Add a domain alias, the value has to be '[proto:]hostname[:port]'\n\
+                  (like for 'alias'/'domain' global parameter)\n\
     -e           Log messages printed in terminal colors (requires -E)\n\
     -E           Log to stderr\n\
     -f file      Configuration file (default: " CFG_FILE ")\n\
@@ -2228,6 +2230,7 @@ int main(int argc, char **argv)
 			{"version", no_argument, 0, 'v'},
 			/* long options without short variant */
 			{"alias", required_argument, 0, KARGOPTVAL},
+			{"domain", required_argument, 0, KARGOPTVAL},
 			{"subst", required_argument, 0, KARGOPTVAL + 1},
 			{"substdef", required_argument, 0, KARGOPTVAL + 2},
 			{"substdefs", required_argument, 0, KARGOPTVAL + 3},
