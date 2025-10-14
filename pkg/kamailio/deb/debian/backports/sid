@@ -35,6 +35,15 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 # libncurses
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
+# no db5.3
+rm ${DIST}/kamailio-berkeley-bin.dirs
+sed -i -e '/libdb-dev/d' \
+  -e '/^Package: kamailio-berkeley-modules/,/^$/d' \
+  -e '/^Package: kamailio-berkeley-bin/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += berkeley$/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += berkeley' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
