@@ -132,6 +132,7 @@ DECLARE_STAT_VARS(message);
 DECLARE_STAT_VARS(prack);
 DECLARE_STAT_VARS(update);
 DECLARE_STAT_VARS(refer);
+DECLARE_STAT_VARS(options);
 
 /* clang-format off */
 /*! exported core statistics */
@@ -205,6 +206,7 @@ stat_export_t core_stats[] = {
 	DECLARE_STATS(prack),
 	DECLARE_STATS(update),
 	DECLARE_STATS(refer),
+	DECLARE_STATS(options),
 	{0, 0, 0}
 };
 /* clang-format on */
@@ -329,6 +331,9 @@ static int km_cb_rpl_stats_by_method(
 				break;
 			case METHOD_REFER:
 				update_stat(VAR_NAME(refer)[group], 1);
+				break;
+			case METHOD_OPTIONS:
+				update_stat(VAR_NAME(options)[group], 1);
 				break;
 		}
 	}
