@@ -700,7 +700,7 @@ static int parse_sdp_session(
 									HOLD_PORT_ICE_TRICKLE_LEN)
 									== 0)
 						LM_DBG("Not a zeroed on-hold (RFC2543), because is ICE "
-							   "re-negotiaion (RFC8840)\n");
+							   "re-negotiation (RFC8840)\n");
 					else
 						stream->is_on_hold = RFC2543_HOLD;
 				}
@@ -719,7 +719,7 @@ static int parse_sdp_session(
 									HOLD_PORT_ICE_TRICKLE_LEN)
 									== 0)
 						LM_DBG("Not a zeroed on-hold (RFC2543), because is ICE "
-							   "re-negotiaion (RFC8840)\n");
+							   "re-negotiation (RFC8840)\n");
 					else
 						stream->is_on_hold = RFC2543_HOLD;
 				}
