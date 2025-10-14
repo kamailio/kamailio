@@ -2077,6 +2077,51 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 		</example>
 	</section>
 
+	<section id="dialog.f.dlg_refer_did">
+		<title>
+		<function moreinfo="none">dlg_refer_did(h_entry, h_id, side, address)</function>
+		</title>
+		<para>
+		Refer the 'side' of the identified dialog to a new SIP 'address'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>h_entry</emphasis> - hash entry of the dialog in the
+			internal dialog table
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>h_id</emphasis> - hash id of the dialog on the hash
+			entry
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>side</emphasis> - which side of the dialog to REFER. It can be:
+				'caller' or 'callee'.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>address</emphasis> - SIP address to refer to.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_refer_did</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_refer_did("246","468", "caller", "sip:announcement@kamailio.org");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dialog.f.dlg_manage">
 		<title>
 		<function moreinfo="none">dlg_manage()</function>
