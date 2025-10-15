@@ -420,6 +420,10 @@ dlg_cell_t *get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
  */
 dlg_cell_t *dlg_search(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
+/*!
+ * \brief Search first dialog that matches CallId
+ */
+dlg_cell_t *dlg_search_cid(str *callid, int mode);
 
 /*!
  * \brief Lock hash table slot by call-id

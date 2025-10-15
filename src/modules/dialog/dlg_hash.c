@@ -980,6 +980,48 @@ dlg_cell_t *dlg_search(str *callid, str *ftag, str *ttag, unsigned int *dir)
 	return dlg;
 }
 
+/*!
+ * \brief Search first dialog that matches CallId
+ *
+ * Get dialog that matches CallId
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * Important: the hash slot is left locked (e.g., needed to allow
+ * linking the structure of a new dialog).
+ * \param callid callid
+ * \param mode let hash table slot locked or not, when dlg is found
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t *dlg_search_cid(str *callid, int mode)
+{
+	dlg_cell_t *dlg;
+	unsigned int he;
+	struct dlg_entry *d_entry;
+
+	he = core_hash(callid, 0, d_table->size);
+
+	d_entry = &(d_table->entries[he]);
+
+	dlg_lock(d_table, d_entry);
+
+	for(dlg = d_entry->first; dlg; dlg = dlg->next) {
+		/* match callid */
+		if(dlg->callid.len == callid->len
+				&& strncmp(dlg->callid.s, callid->s, callid->len) == 0) {
+			ref_dlg_unsafe(dlg, 1);
+			if(likely(mode == 0)) {
+				dlg_unlock(d_table, d_entry);
+			}
+			LM_DBG("dialog with callid='%.*s' found on entry %u\n", callid->len,
+					callid->s, he);
+			return dlg;
+		}
+	}
+
+	LM_DBG("dialog with callid='%.*s' not found\n", callid->len, callid->s);
+
+	return NULL;
+}
 
 /*!
  * \brief Lock hash table slot by call-id
