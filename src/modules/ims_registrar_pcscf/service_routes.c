@@ -915,7 +915,7 @@ int pcscf_unregister(
 	memset(&ci, 0, sizeof(struct pcontact_info));
 
 	pcontact_info_t search_ci;
-	memset(&ci, 0, sizeof(struct pcontact_info));
+	memset(&search_ci, 0, sizeof(struct pcontact_info));
 
 	sip_uri_t contact_uri;
 	if(parse_uri(uri->s, uri->len, &contact_uri) != 0) {
