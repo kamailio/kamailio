@@ -42,4 +42,13 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode);
 int ht_db_save_table(ht_t *ht, str *dbtable);
 int ht_db_delete_records(str *dbtable);
 
+// 10 digits + \0
+#define UINT32_MAX_STR_BYTES 11
+// sign + 10 digits + \0
+#define INT32_MAX_STR_BYTES 12
+// 20 digits + \0
+#define UINT64_MAX_STR_BYTES 21
+// sign + 20 digits + \0
+#define INT64_MAX_STR_BYTES 22
+
 #endif
