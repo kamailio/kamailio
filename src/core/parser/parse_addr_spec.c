@@ -784,6 +784,8 @@ char *parse_addr_spec(char *const buffer, const char *const end,
 						to_b->display.s = tmp;
 						status = DISPLAY_QUOTED;
 						break;
+					case URI_ENCLOSED:
+						break;
 					case DISPLAY_QUOTED:
 						status = E_DISPLAY_QUOTED;
 						to_b->display.len = tmp - to_b->display.s + 1;
