@@ -56,7 +56,8 @@ Implements: (see also locking.h)
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 
-#if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
+#if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM) \
+		|| defined(USE_FUTEX)
 /* simple locks*/
 #define lock_alloc() shm_malloc(sizeof(gen_lock_t))
 #define lock_dealloc(lock) shm_free((void *)lock)
