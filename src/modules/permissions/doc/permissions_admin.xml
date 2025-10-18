@@ -748,6 +748,11 @@ modparam("permissions", "ruri_col", "regexp")
 		has been defined and if the address or peer matches.
 		</para>
 		<para>
+		The tag_col field will be implicitly converted to a string
+		when the database field is loaded into <quote>peer_tag</quote>
+		AVP if the field type is supported.
+		</para>
+		<para>
 		<emphasis>
 		Default value is <quote>tag</quote>.
 		</emphasis>

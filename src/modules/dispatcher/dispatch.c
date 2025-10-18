@@ -1334,7 +1334,7 @@ int ds_load_db(void)
 	int nc;
 	int plen;
 #define DS_ATTRS_MAXSIZE 1024
-	char ds_attrs_buf[DS_ATTRS_MAXSIZE];
+	char ds_attrs_buf[DS_ATTRS_MAXSIZE] = {0};
 	ds_latency_stats_t *latency_stats;
 
 	query_cols[0] = &ds_set_id_col;
@@ -1424,18 +1424,96 @@ int ds_load_db(void)
 				attrs.s = ds_attrs_buf;
 				pit = ds_db_extra_attrs_list;
 				for(nc = 5; nc < nrcols && pit != NULL; nc++) {
-					if(!VAL_NULL(values + nc)
-							&& strlen(VAL_STRING(values + nc)) > 0) {
-						plen = snprintf(attrs.s + attrs.len,
-								DS_ATTRS_MAXSIZE - attrs.len - 1, "%.*s=%s;",
+					// NULL DB field values are ignored
+					if(VAL_NULL(values + nc)) {
+						pit = pit->next;
+						continue;
+					}
+					// implicit DB type conversion if supported type
+					switch(VAL_TYPE(values + nc)) {
+						case DB1_STR:
+						case DB1_STRING:
+							if(strlen(VAL_STRING(values + nc)) > 0) {
+								plen = snprintf(
+									attrs.s + attrs.len,
+									DS_ATTRS_MAXSIZE - attrs.len - 1, "%.*s=%s;",
+									pit->name.len, pit->name.s,
+									VAL_STRING(values + nc));
+								if(
+									plen <= 0 ||
+									plen >= DS_ATTRS_MAXSIZE - attrs.len - 1
+								) {
+									LM_ERR("cannot build attrs buffer\n");
+									goto err2;
+								}
+								attrs.len += plen;
+							}
+							break;
+						case DB1_INT:
+							plen = snprintf(
+								attrs.s + attrs.len,
+								DS_ATTRS_MAXSIZE - attrs.len - 1, "%.*s=%d;",
 								pit->name.len, pit->name.s,
-								VAL_STRING(values + nc));
-						if(plen <= 0
-								|| plen >= DS_ATTRS_MAXSIZE - attrs.len - 1) {
-							LM_ERR("cannot build attrs buffer\n");
+								VAL_INT(values + nc));
+							if(
+								plen <= 0 ||
+								plen >= DS_ATTRS_MAXSIZE - attrs.len - 1
+							) {
+								LM_ERR("cannot build attrs buffer\n");
+								goto err2;
+							}
+							attrs.len += plen;
+							break;
+						case DB1_UINT:
+							plen = snprintf(
+								attrs.s + attrs.len,
+								DS_ATTRS_MAXSIZE - attrs.len - 1, "%.*s=%u;",
+								pit->name.len, pit->name.s,
+								VAL_UINT(values + nc));
+							if(
+								plen <= 0 ||
+								plen >= DS_ATTRS_MAXSIZE - attrs.len - 1
+							) {
+								LM_ERR("cannot build attrs buffer\n");
+								goto err2;
+							}
+							attrs.len += plen;
+							break;
+						case DB1_BIGINT:
+							plen = snprintf(
+								attrs.s + attrs.len,
+								DS_ATTRS_MAXSIZE - attrs.len - 1, "%.*s=%lld;",
+								pit->name.len, pit->name.s,
+								VAL_BIGINT(values + nc));
+							if(
+								plen <= 0 ||
+								plen >= DS_ATTRS_MAXSIZE - attrs.len - 1
+							) {
+								LM_ERR("cannot build attrs buffer\n");
+								goto err2;
+							}
+							attrs.len += plen;
+							break;
+						case DB1_UBIGINT:
+							plen = snprintf(
+								attrs.s + attrs.len,
+								DS_ATTRS_MAXSIZE - attrs.len - 1, "%.*s=%llu;",
+								pit->name.len, pit->name.s,
+								VAL_UBIGINT(values + nc));
+							if(
+								plen <= 0 ||
+								plen >= DS_ATTRS_MAXSIZE - attrs.len - 1
+							) {
+								LM_ERR("cannot build attrs buffer\n");
+								goto err2;
+							}
+							attrs.len += plen;
+							break;
+						default:
+							LM_DBG("failure during checks of database field "
+								   "(%s) in dispatcher table\n",
+								   query_cols[nc]->s);
 							goto err2;
-						}
-						attrs.len += plen;
 					}
 					pit = pit->next;
 				}

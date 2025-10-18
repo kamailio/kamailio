@@ -25,6 +25,7 @@
 #include "../../core/usr_avp.h"
 #include "../../core/ut.h"
 #include "../../lib/srdb1/db.h"
+#include "../../lib/srdb1/db_ut.h"
 
 #include "ht_db.h"
 
@@ -317,8 +318,60 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 					}
 					kname.len = strlen(kname.s);
 					break;
+				case DB1_INT:
+					if(RES_ROWS(db_res)[i].values[0].nul) {
+						LM_ERR("htable [%.*s] row [%d] has NULL key\n",
+								ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					kname.len = INT32_MAX_STR_BYTES;
+					if(db_int2str(RES_ROWS(db_res)[i].values[0].val.int_val, kname.s, &kname.len) < 0) {
+						LM_ERR("htable [%.*s] row [%d]: error while converting DB int to string\n",
+							ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					break;
+				case DB1_UINT:
+					if(RES_ROWS(db_res)[i].values[0].nul) {
+						LM_ERR("htable [%.*s] row [%d] has NULL key\n",
+								ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					kname.len = UINT32_MAX_STR_BYTES;
+					if(db_uint2str(RES_ROWS(db_res)[i].values[0].val.uint_val, kname.s, &kname.len) < 0) {
+						LM_ERR("htable [%.*s] row [%d]: error while converting DB unsigned int to string\n",
+							ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					break;
+				case DB1_BIGINT:
+					if(RES_ROWS(db_res)[i].values[0].nul) {
+						LM_ERR("htable [%.*s] row [%d] has NULL key\n",
+								ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					kname.len = INT64_MAX_STR_BYTES;
+					if(db_longlong2str(RES_ROWS(db_res)[i].values[0].val.ll_val, kname.s, &kname.len) < 0) {
+						LM_ERR("htable [%.*s] row [%d]: error while converting DB big signed int to string\n",
+							ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					break;
+				case DB1_UBIGINT:
+					if(RES_ROWS(db_res)[i].values[0].nul) {
+						LM_ERR("htable [%.*s] row [%d] has NULL key\n",
+								ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					kname.len = UINT64_MAX_STR_BYTES;
+					if(db_ulonglong2str(RES_ROWS(db_res)[i].values[0].val.ull_val, kname.s, &kname.len) < 0) {
+						LM_ERR("htable [%.*s] row [%d]: error while converting DB big unsigned int to string\n",
+							ht->name.len, ht->name.s, i);
+						goto error;
+					}
+					break;
 				default:
-					LM_ERR("key type must be string (type=%d)\n",
+					LM_ERR("key type unsupported (type=%d)\n",
 							RES_ROWS(db_res)[i].values[0].type);
 					goto error;
 			}
