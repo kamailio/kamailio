@@ -192,6 +192,7 @@ Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-http_client < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-jwt < %ver
+Conflicts:  kamailio-kafka < %ver
 Conflicts:  kamailio-kazoo < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-nats < %ver
@@ -514,6 +515,17 @@ BuildRequires:  libjwt-devel
 %description    jwt
 This module provides JWT (JSON Web Token) functions to be used in Kamailio configuration file.
 It relies on libjwt (at least v1.12.0) library (https://github.com/benmcollins/libjwt).
+
+
+%package    kafka
+Summary:    Module produces and sends messages to a Kafka server
+Group:      %{PKGGROUP}
+Requires:   librdkafka, kamailio = %ver
+BuildRequires:  librdkafka-devel
+
+%description    kafka
+Kafka module for Kamailio.
+Module produces and sends messages to a Kafka server.
 
 
 %if %{with kazoo}
@@ -1162,6 +1174,7 @@ json \
 %endif
 jsonrpcc \
 jwt \
+kafka \
 %if %{with kazoo}
 kazoo \
 %endif
@@ -1827,6 +1840,12 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.jwt
 %{_libdir}/kamailio/modules/jwt.so
+
+
+%files      kafka
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.kafka
+%{_libdir}/kamailio/modules/kafka.so
 
 
 %if %{with kazoo}
