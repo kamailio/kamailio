@@ -196,6 +196,7 @@ Conflicts:  kamailio-jwt < %ver
 Conflicts:  kamailio-kafka < %ver
 Conflicts:  kamailio-kazoo < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
+Conflicts:  kamailio-mqtt < %ver
 Conflicts:  kamailio-nats < %ver
 Conflicts:  kamailio-nghttp2 < %ver
 Conflicts:  kamailio-rabbitmq < %ver
@@ -635,6 +636,16 @@ BuildRequires:  mongo-c-driver-devel
 %description    mongodb
 MongoDB database connectivity for Kamailio.
 %endif
+
+
+%package    mqtt
+Summary:    Module allows bidirectional publish/subscribe communication by connecting Kamailio to a MQTT Broker
+Group:      %{PKGGROUP}
+Requires:   mosquitto, kamailio = %ver
+BuildRequires:  mosquitto-devel 
+
+%description    mqtt
+Module allows bidirectional publish/subscribe communication by connecting Kamailio to a MQTT Broker.
 
 
 %package    mysql
@@ -1214,6 +1225,7 @@ lwsc \
 memcached \
 %endif
 misc_radius \
+mqtt \
 %if %{with nats}
 nats \
 %endif
@@ -2021,6 +2033,12 @@ fi
 %{_datadir}/kamailio/mongodb/kamailio/watchers.json
 %{_datadir}/kamailio/mongodb/kamailio/xcap.json
 %endif
+
+
+%files      mqtt
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.mqtt
+%{_libdir}/kamailio/modules/mqtt.so
 
 
 %files      mysql
