@@ -217,6 +217,7 @@ Conflicts:  kamailio-uuid < %ver
 Requires:  systemd
 BuildRequires:  systemd-devel
 BuildRequires: bison
+BuildRequires: cmake
 BuildRequires: flex
 BuildRequires: which
 BuildRequires: make
