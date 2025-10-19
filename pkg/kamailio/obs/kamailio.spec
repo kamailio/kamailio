@@ -188,6 +188,7 @@ Conflicts:  kamailio-acc_json < %ver
 Conflicts:  kamailio-auth-ephemeral < %ver, kamailio-bdb < %ver
 Conflicts:  kamailio-carrierroute < %ver, kamailio-cpl < %ver
 Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
+Conflicts:  kamailio-gcrypt < %ver
 Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-http_client < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
@@ -397,6 +398,16 @@ There is no protocol definition, it is all up to the author of the routing scrip
 Events can be generated for any event in Kamailio. For 3rd party transaction control, a transaction can be automatically
 suspended when sending the event, to be resumed at a later point, maybe triggered by an incoming message on the event socket.
 %endif
+
+
+%package    gcrypt
+Summary:    Module provides various cryptography tools for use in Kamailio
+Group:      %{PKGGROUP}
+Requires:   libgcrypt, kamailio = %ver
+BuildRequires:  libgcrypt-devel
+
+%description    gcrypt
+Module provides various cryptography tools for use in Kamailio.
 
 
 %package    geoip
@@ -1142,6 +1153,7 @@ dnssec \
 %if %{with evapi}
 evapi \
 %endif
+gcrypt \
 geoip2 \
 gzcompress \
 h350 \
@@ -1752,6 +1764,12 @@ fi
 %doc %{_docdir}/kamailio/modules/README.evapi
 %{_libdir}/kamailio/modules/evapi.so
 %endif
+
+
+%files      gcrypt
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.gcrypt
+%{_libdir}/kamailio/modules/gcrypt.so
 
 
 %files      geoip
