@@ -197,6 +197,7 @@ Conflicts:  kamailio-kafka < %ver
 Conflicts:  kamailio-kazoo < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-nats < %ver
+Conflicts:  kamailio-nghttp2 < %ver
 Conflicts:  kamailio-rabbitmq < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mongodb < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
@@ -662,6 +663,16 @@ BuildRequires:    libnats-devel
 %description    nats
 The module provides an NATS consumer for Kamailio. NATS is a real time distributed messaging platform, more details about it can be found at nats.io.
 %endif
+
+
+%package    nghttp2
+Summary:    Module implements an embedded HTTP/2 server using nghttpd2 library
+Group:      %{PKGGROUP}
+Requires:   libnghttp2, kamailio = %ver
+BuildRequires:    libnghttp2-devel
+
+%description    nghttp2
+Module implements an embedded HTTP/2 server using nghttpd2 library
 
 
 %package    outbound
@@ -1212,6 +1223,7 @@ ndb_mongodb \
 %if %{with redis}
 ndb_redis \
 %endif
+nghttp2 \
 outbound \
 peering \
 %if %{with phonenum}
@@ -2027,6 +2039,12 @@ fi
 %doc %{_docdir}/kamailio/modules/README.nats
 %{_libdir}/kamailio/modules/nats.so
 %endif
+
+
+%files      nghttp2
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.nghttp2
+%{_libdir}/kamailio/modules/nghttp2.so
 
 
 %files      outbound
