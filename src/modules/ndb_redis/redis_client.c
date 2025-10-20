@@ -69,7 +69,7 @@ extern char *ndb_redis_ca_path;
 #endif
 
 /* backwards compatibility with hiredis < 0.12 */
-#if(HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
+#if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
 typedef char *sds;
 sds sdscatlen(sds s, const void *t, size_t len);
 int redis_append_formatted_command(
@@ -153,9 +153,9 @@ int redisc_init(void)
 #ifdef WITH_SSL
 			} else if(pit->name.len == 3
 					  && strncmp(pit->name.s, "tls", 3) == 0) {
-                /* parse tls flag only; do not overwrite password buffer */
-                if(str2int(&pit->body, &enable_ssl) < 0)
-                    enable_ssl = 0;
+				/* parse tls flag only; do not overwrite password buffer */
+				if(str2int(&pit->body, &enable_ssl) < 0)
+					enable_ssl = 0;
 #endif
 			} else if(pit->name.len == 14
 					  && strncmp(pit->name.s, "sentinel_group", 14) == 0) {
@@ -202,14 +202,15 @@ int redisc_init(void)
 						res = redisCommand(redis,
 								"SENTINEL get-master-addr-by-name %s",
 								sentinel_group);
-                        if(res && (res->type == REDIS_REPLY_ARRAY)
-                                && (res->elements == 2)) {
-                            /* safe-bounded copy of address */
-                            size_t alen = (size_t)res->element[0]->len;
-                            if(alen >= sizeof(addr)) alen = sizeof(addr) - 1;
-                            memcpy(addr, res->element[0]->str, alen);
-                            addr[alen] = '\0';
-                            port = atoi(res->element[1]->str);
+						if(res && (res->type == REDIS_REPLY_ARRAY)
+								&& (res->elements == 2)) {
+							/* safe-bounded copy of address */
+							size_t alen = (size_t)res->element[0]->len;
+							if(alen >= sizeof(addr))
+								alen = sizeof(addr) - 1;
+							memcpy(addr, res->element[0]->str, alen);
+							addr[alen] = '\0';
+							port = atoi(res->element[1]->str);
 							LM_DBG("sentinel replied: %s:%d\n", addr, port);
 							srvfound = 1;
 						}
@@ -290,15 +291,15 @@ int redisc_init(void)
 					rsrv->ctxRedis->errstr);
 			goto err2;
 		}
-        /* set command timeout before any command including AUTH */
-        if(redisSetTimeout(rsrv->ctxRedis, tv_cmd)) {
+		/* set command timeout before any command including AUTH */
+		if(redisSetTimeout(rsrv->ctxRedis, tv_cmd)) {
 			LM_ERR("Failed to set timeout.\n");
 			goto err2;
 		}
-        if((haspass != 0) && redisc_check_auth(rsrv, pass)) {
-            LM_ERR("Authentication failed.\n");
-            goto err2;
-        }
+		if((haspass != 0) && redisc_check_auth(rsrv, pass)) {
+			LM_ERR("Authentication failed.\n");
+			goto err2;
+		}
 		if(redisCommandNR(rsrv->ctxRedis, "PING")) {
 			LM_ERR("Failed to send PING (REDIS returned %s).\n",
 					rsrv->ctxRedis->errstr);
@@ -526,10 +527,10 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 					pass, sizeof(pass) - 1, "%.*s", pit->body.len, pit->body.s);
 			haspass = 1;
 #ifdef WITH_SSL
-        } else if(pit->name.len == 3 && strncmp(pit->name.s, "tls", 3) == 0) {
-            /* parse tls flag only; do not overwrite password buffer */
-            if(str2int(&pit->body, &enable_ssl) < 0)
-                enable_ssl = 0;
+		} else if(pit->name.len == 3 && strncmp(pit->name.s, "tls", 3) == 0) {
+			/* parse tls flag only; do not overwrite password buffer */
+			if(str2int(&pit->body, &enable_ssl) < 0)
+				enable_ssl = 0;
 #endif
 		} else if(pit->name.len == 14
 				  && strncmp(pit->name.s, "sentinel_group", 14) == 0) {
@@ -651,15 +652,15 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	}
 #endif
 	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
-    if(!rsrv->ctxRedis)
-        goto err;
-    if(rsrv->ctxRedis->err)
-        goto err2;
-    /* set command timeout before any command including AUTH */
-    if(redisSetTimeout(rsrv->ctxRedis, tv_cmd))
-        goto err2;
-    if((haspass) && redisc_check_auth(rsrv, pass))
-        goto err2;
+	if(!rsrv->ctxRedis)
+		goto err;
+	if(rsrv->ctxRedis->err)
+		goto err2;
+	/* set command timeout before any command including AUTH */
+	if(redisSetTimeout(rsrv->ctxRedis, tv_cmd))
+		goto err2;
+	if((haspass) && redisc_check_auth(rsrv, pass))
+		goto err2;
 	if(redisCommandNR(rsrv->ctxRedis, "PING"))
 		goto err2;
 	if((redis_cluster_param == 0)
@@ -964,10 +965,10 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 				char *server_new;
 
 				memset(spec_new, 0, sizeof(spec_new));
-                /* For now, also include db=0 to prepare attribute inheritance */
-                server_len = snprintf(spec_new, sizeof(spec_new) - 1,
-                        "name=%.*s;addr=%.*s;port=%i;db=%d", name.len, name.s,
-                        addr.len, addr.s, port, 0);
+				/* For now, also include db=0 to prepare attribute inheritance */
+				server_len = snprintf(spec_new, sizeof(spec_new) - 1,
+						"name=%.*s;addr=%.*s;port=%i;db=%d", name.len, name.s,
+						addr.len, addr.s, port, 0);
 
 				if(server_len < 0 || server_len > sizeof(spec_new) - 1) {
 					LM_ERR("failed to print server spec string (%d)\n",
@@ -1341,7 +1342,7 @@ int redisc_check_auth(redisc_server_t *rsrv, char *pass)
 }
 
 /* backwards compatibility with hiredis < 0.12 */
-#if(HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
+#if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
 int redis_append_formatted_command(redisContext *c, const char *cmd, size_t len)
 {
 	sds newbuf;
