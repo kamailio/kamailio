@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="auth_web3" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>The Web3 Auth Module</title>
+        <authorgroup>
+            <author>
+                <firstname>Jonathan</firstname>
+                <surname>Kandel</surname>
+                <affiliation><orgname>Cellact B.V.</orgname></affiliation>
+                <email>jonathan@cellact.com</email>
+            </author>
+        </authorgroup>
+
+        <copyright>
+            <year>2025</year>
+            <holder>Cellact B.V.</holder>
+        </copyright>
+
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+        <title>Admin Guide</title>
+
+    <section id="auth_web3.overview">
+		<title>Overview</title>
+		<para>
+			The Web3 Auth module provides blockchain-based authentication for Kamailio
+			with integrated ENS (Ethereum Name Service) support. This module replaces 
+			traditional password-based verification with Web3 smart contract calls while 
+			maintaining full SIP digest authentication compatibility.
+		</para>
+		<para>
+			The module maintains full compatibility with standard <emphasis>SIP</emphasis> 
+			digest authentication while using blockchain smart contracts to verify user 
+			credentials. It supports all standard auth functions including 
+			<emphasis>WWW-Authenticate</emphasis>, <emphasis>Proxy-Authenticate</emphasis>, 
+			and various authentication challenges.
+		</para>
+		<para>
+			Key features:
+			<itemizedlist>
+				<listitem><para>Blockchain authentication via Oasis Sapphire smart contracts</para></listitem>
+				<listitem><para>ENS domain support (alice.eth authentication)</para></listitem>
+				<listitem><para>Multi-network support (ENS on Ethereum, auth on Oasis)</para></listitem>
+				<listitem><para>RFC2617/7616 digest authentication compliance</para></listitem>
+				<listitem><para>Environment variable configuration for containers</para></listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section id="auth_web3.ens_technical">
+		<title>ENS Technical Details</title>
+		<para>
+			The module implements comprehensive ENS integration with the following technical features:
+		</para>
+		
+		<section id="auth_web3.ens_namehash">
+			<title>Namehash Calculation</title>
+			<para>
+				Implements proper ENS namehash calculation according to EIP-137 for converting 
+				human-readable names like "alice.eth" into bytes32 hashes used by ENS contracts.
+			</para>
+		</section>
+		
+		<section id="auth_web3.ens_ownership">
+			<title>Address Resolution</title>
+			<para>
+				Implements comprehensive ENS address resolution following EIP-137 standards:
+				<itemizedlist>
+					<listitem><para>Direct ownership resolution via ENS Registry owner() function</para></listitem>
+					<listitem><para>Dynamic Name Wrapper detection by calling name() on owner contract</para></listitem>
+					<listitem><para>Resolver-based address resolution for wrapped domains (resolver() → addr())</para></listitem>
+					<listitem><para>Fallback to registry owner for non-wrapped domains</para></listitem>
+					<listitem><para>Zero address detection for unregistered domains</para></listitem>
+					<listitem><para>Custom resolver support (respects domain owner's resolver configuration)</para></listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				For wrapped ENS domains, the module uses the standard ENS resolver pattern instead of 
+				directly querying the Name Wrapper contract. This ensures consistent behavior with 
+				other ENS-enabled applications and respects the resolver configuration set by the domain owner.
+			</para>
+		</section>
+		
+		<section id="auth_web3.multi_network">
+			<title>Multi-Network Support</title>
+			<para>
+				<itemizedlist>
+					<listitem><para>ENS queries on Ethereum mainnet/testnet</para></listitem>
+					<listitem><para>Authentication contracts on Oasis Sapphire (required)</para></listitem>
+					<listitem><para>Automatic RPC endpoint selection</para></listitem>
+					<listitem><para>Fallback to single-network mode when ens_rpc_url not configured</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		
+		<section id="auth_web3.smart_contract_req">
+			<title>Smart Contract Requirements</title>
+			<para>
+				To use this module, you must deploy and configure a smart contract on Oasis Sapphire:
+				<itemizedlist>
+					<listitem><para>Deploy authentication contract on Oasis Sapphire network</para></listitem>
+					<listitem><para>Implement required interface functions (see Functions section for details)</para></listitem>
+					<listitem><para>Configure contract address in Kamailio parameters</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section id="auth_web3.dep">
+		<title>Dependencies</title>
+		<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+				<listitem><para>none</para></listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			External dependencies:
+			<itemizedlist>
+				<listitem><para><emphasis>libcurl</emphasis> - HTTP client library for blockchain RPC calls</para></listitem>
+				<listitem><para><emphasis>OpenSSL</emphasis> - cryptographic library for digest calculations</para></listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<xi:include href="auth_web3_params.xml"/>
+	<xi:include href="auth_web3_functions.xml"/>
+	<xi:include href="auth_web3_faq.xml"/>
+
+    </chapter>
+</book> 
