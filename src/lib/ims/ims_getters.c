@@ -648,7 +648,7 @@ str cscf_get_asserted_identity(struct sip_msg *msg, int is_shm)
 	int len;
 	str uri = {0, 0};
 
-	if(!msg || !msg->pai)
+	if(!msg)
 		return uri;
 
 	if((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
