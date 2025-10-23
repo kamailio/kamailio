@@ -2571,11 +2571,18 @@ kamctl rpc dlg.briefing "ft"
 10.6. $dlg_var(key)
 
    This is a read/write variable that can be used to store custom values
-   assigned with a dialog (e.g. the URI of a billing-server, an assigned
-   emergency-server). This pseudo-variable will be available only for
-   subsequential requests after doing loose_route().
+   associated to a dialog (e.g. the URI of a billing-server, an assigned
+   emergency-server). The value has to be a string. This pseudo-variable
+   will be available for subsequential requests only after loose_route()
+   or dlg_manage().
 
-   Note: You will receive "NULL", if there is no dialog for this request.
+   Note: "NULL" is returned, if there is no dialog for this request.
+
+   Note: dialog variables set before the dialog is created for the initial
+   INVITE can be associated to the dialog only when the dialog is created
+   by the same Kamailio process. They are lost if the variables are set in
+   a process that calls an asynchronous function that resumes the
+   processing in another process, which then creates the dialog.
 
 11. Event Routes
 
