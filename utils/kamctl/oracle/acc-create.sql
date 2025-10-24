@@ -25,7 +25,7 @@ CREATE TABLE acc_cdrs (
     id NUMBER(10) PRIMARY KEY,
     start_time DATE DEFAULT '2000-01-01 00:00:00',
     end_time DATE DEFAULT '2000-01-01 00:00:00',
-    duration NUMBER(10,3) DEFAULT 0 NOT NULL
+    duration NUMBER(13,6) DEFAULT 0 NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER acc_cdrs_tr
@@ -38,7 +38,7 @@ BEGIN map2users('acc_cdrs'); END;
 /
 CREATE INDEX acc_cdrs_start_time_idx  ON acc_cdrs (start_time);
 
-INSERT INTO version (table_name, table_version) values ('acc_cdrs','2');
+INSERT INTO version (table_name, table_version) values ('acc_cdrs','3');
 
 CREATE TABLE missed_calls (
     id NUMBER(10) PRIMARY KEY,
