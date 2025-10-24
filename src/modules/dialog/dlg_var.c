@@ -43,7 +43,7 @@ extern int spiral_detected;
 /*! global variable table, in case the dialog does not exist yet */
 static struct dlg_var *_dlg_var_table = 0;
 /*! ID of the current message */
-int msg_id;
+static int _dlg_var_msg_id = 0;
 
 int dlg_cfg_cb(sip_msg_t *msg, unsigned int flags, void *cbp)
 {
@@ -158,9 +158,9 @@ struct dlg_var *get_local_varlist_pointer(
 {
 	struct dlg_var *var;
 	/* New list, delete the old one */
-	if(msg->id != msg_id) {
+	if(msg->id != _dlg_var_msg_id) {
 		free_local_varlist();
-		msg_id = msg->id;
+		_dlg_var_msg_id = msg->id;
 	}
 	var = _dlg_var_table;
 	if(clear_pointer)
