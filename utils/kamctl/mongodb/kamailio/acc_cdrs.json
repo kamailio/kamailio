@@ -1,6 +1,6 @@
 {
   "name": "acc_cdrs",
-  "version": 2,
+  "version": 3,
   "columns": [
     "id": {
       "type": "int",
