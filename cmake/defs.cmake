@@ -167,61 +167,10 @@ if(NOT ${LIBSSL_SET_MUTEX_SHARED})
 endif()
 
 # -----------------------
-# Locking mechanism macro
+# Locking mechanism
 # -----------------------
 
-option(USE_FAST_LOCK "Use fast locking if available" ON)
-
-# TODO: Discuss if we need to expose this to the user to choose between
-# different locking methods
-
-# set(locking_methods FAST_LOCK USE_FUTEX USE_PTHREAD_MUTEX USE_POSIX_SEM
-#                     USE_SYSV_SEM)
-# set(LOCK_METHOD
-#     ""
-#     CACHE STRING "Locking method to use. Fast-lock if available is default")
-# # List of locking methods in option
-# set_property(CACHE LOCK_METHOD PROPERTY STRINGS ${locking_methods})
-# mark_as_advanced(LOCK_METHOD)
-
-# Fast-lock not available for all platforms like mips
-# Check the system processor type and set USE_FAST_LOCK accordingly
-if(USE_FAST_LOCK)
-  if(TARGET_ARCH MATCHES "i386$|x86_64$|sparc64$|sparc$|ppc$|ppc64$|mips2$|mips64$")
-    set(USE_FAST_LOCK YES)
-  elseif(TARGET_ARCH MATCHES "aarch64$")
-    set(USE_FAST_LOCK YES)
-    target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
-                                                       # implemented for arm
-  elseif(TARGET_ARCH MATCHES "arm6$|arm7$")
-    set(USE_FAST_LOCK YES)
-  elseif(TARGET_ARCH MATCHES "arm$")
-    set(USE_FAST_LOCK YES)
-    target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
-                                                       # implemented for arm
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips$")
-    set(USE_FAST_LOCK NO)
-    target_compile_definitions(common INTERFACE MIPS_HAS_LLSC) # likely
-    target_compile_definitions(common INTERFACE NOSMP) # very likely
-  elseif(TARGET_ARCH MATCHES "alpha$")
-    set(USE_FAST_LOCK YES)
-    target_compile_definitions(common INTERFACE NOSMP) # very likely
-  else()
-    message(STATUS "Fast locking not available for this platform, disabling USE_FAST_LOCK")
-    set(USE_FAST_LOCK NO)
-  endif()
-endif()
-
-# Add definitions if USE_FAST_LOCK is YES
-message(STATUS "Fast lock available: USE_FAST_LOCK=${USE_FAST_LOCK}")
-if(USE_FAST_LOCK)
-  # If fast lock is available, add the definitions for it, else each OS will
-  # have its own locking method
-  target_compile_definitions(common INTERFACE FAST_LOCK ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024)
-endif()
-
-# set(LOCKING_DEFINITION "${locking_method}")
-# message(STATUS "Locking method: ${LOCK_METHOD}")
+include(${CMAKE_SOURCE_DIR}/cmake/lock_methods.cmake)
 
 # -----------------------
 # Setting all the flags from options
