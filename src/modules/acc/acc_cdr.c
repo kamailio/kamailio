@@ -63,7 +63,7 @@
 	} while(0)
 #endif // __OS_solaris
 
-#define TIME_STR_BUFFER_SIZE 20
+#define TIME_STR_BUFFER_SIZE 27
 #define TIME_BUFFER_LENGTH 256
 #define TIME_STRING_FORMAT "%Y-%m-%d %H:%M:%S"
 
@@ -145,7 +145,7 @@ int cdr_core2strar(struct dlg_cell *dlg, str *values, int *unused, char *types)
 static db_key_t *db_cdr_keys = NULL;
 static db_val_t *db_cdr_vals = NULL;
 
-/* collect all crd data and write it to a syslog */
+/* collect all cdr data and write it to a database */
 static int db_write_cdr(struct dlg_cell *dialog, struct sip_msg *message)
 {
 	int attr_cnt = 0;
@@ -450,12 +450,14 @@ static int string2time(str *time_str, struct timeval *time_value)
 	}
 
 	time_value->tv_sec = strtol(zero_terminated_value, (char **)NULL, 10);
-	time_value->tv_usec = strtol(dot_address + 1, (char **)NULL, 10)
-						  * 1000; // restore usec precision
+	time_value->tv_usec = strtol(dot_address + 1, (char **)NULL, 10);
 	return 0;
 }
 
-/* convert a timeval struct into a string */
+/*
+ * convert a timeval struct into a string
+ * supports up to microsecond precision
+ */
 static int time2string(struct timeval *time_value, str *time_str)
 {
 	int buffer_length;
@@ -465,9 +467,9 @@ static int time2string(struct timeval *time_value, str *time_str)
 		return -1;
 	}
 
-	buffer_length = snprintf(time_buffer, TIME_BUFFER_LENGTH, "%ld%c%03d",
+	buffer_length = snprintf(time_buffer, TIME_BUFFER_LENGTH, "%ld%c%06ld",
 			(long int)time_value->tv_sec, time_separator,
-			(int)(time_value->tv_usec / 1000));
+			(long int)time_value->tv_usec);
 
 	if(buffer_length < 0) {
 		LM_ERR("failed to write to buffer.\n");

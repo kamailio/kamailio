@@ -1290,7 +1290,7 @@ modparam("acc", "cdrs_table", "acc_cdrs")
 				microseconds in time_exten.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>2</emphasis> - save seconds.milliseconds
+			<para><emphasis>2</emphasis> - save seconds.microseconds
 				in time_attr.</para>
 		</listitem>
 		<listitem>
