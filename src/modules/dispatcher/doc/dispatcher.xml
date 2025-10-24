@@ -62,6 +62,11 @@
 				<surname>Cabiddu</surname>
 				<email>federico.cabiddu@gmail.com</email>
 			</editor>
+			<editor>
+				<firstname>Tyler</firstname>
+				<surname>Moore</surname>
+				<email>tmoore@dopensource.com</email>
+			</editor>
 		</authorgroup>
 		<copyright>
 			<year>2004</year>
@@ -90,6 +95,10 @@
 		<copyright>
 			<year>2020</year>
 			<holder>Federico Cabiddu, Libon</holder>
+		</copyright>
+		<copyright>
+			<year>2025</year>
+			<holder>Tyler Moore, dOpenSource</holder>
 		</copyright>
 	</bookinfo>
 	<toc/>
