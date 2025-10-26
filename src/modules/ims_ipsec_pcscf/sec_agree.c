@@ -115,6 +115,32 @@ static int process_sec_agree_param(
 	return 0;
 }
 
+/**
+ * @brief Check whether UE IPsec parameters have been selected/populated.
+ *
+ * Verifies that all required fields of the provided ipsec_t structure are
+ * present (non-zero for integer fields and non-zero length for length-bearing
+ * fields). This function is used to decide if the UE has provided IPsec
+ * parameters for use in the session.
+ *
+ * @param params Pointer to an ipsec_t structure to inspect. Must be non-NULL;
+ *               passing NULL yields undefined behavior.
+ *
+ * @return 1 if all required parameters are present:
+ *         0 if any of the above checks fail.
+ */
+static int is_ue_ipsec_params_selected(ipsec_t *params)
+{
+	if(params->spi_uc == 0 || params->spi_us == 0 || params->port_uc == 0
+			|| params->port_us == 0 || params->prot.len == 0
+			|| params->mod.len == 0 || params->r_alg.len == 0
+			|| params->r_ealg.len == 0) {
+		return 0;
+	}
+
+	return 1;
+}
+
 static security_t *parse_sec_agree(struct hdr_field *h)
 {
 	int i = 0;
@@ -195,11 +221,29 @@ static security_t *parse_sec_agree(struct hdr_field *h)
 			i = 0;
 
 			if(name.len && value.len) {
-				if(strncasecmp(name.s, "alg", name.len) == 0) {
-					if(preferred_alg_found && preferred_ealg_found) {
+				if(ipsec_preferred_alg.len && ipsec_preferred_ealg.len) {
+					if(preferred_alg_found && preferred_ealg_found
+							&& is_ue_ipsec_params_selected(
+									params->data.ipsec)) {
 						break;
 					}
 					preferred_alg_found = 0;
+					preferred_ealg_found = 0;
+				}
+				if(ipsec_preferred_alg.len && !ipsec_preferred_ealg.len) {
+					if(preferred_alg_found
+							&& is_ue_ipsec_params_selected(
+									params->data.ipsec)) {
+						break;
+					}
+					preferred_alg_found = 0;
+				}
+				if(!ipsec_preferred_alg.len && ipsec_preferred_ealg.len) {
+					if(preferred_ealg_found
+							&& is_ue_ipsec_params_selected(
+									params->data.ipsec)) {
+						break;
+					}
 					preferred_ealg_found = 0;
 				}
 
