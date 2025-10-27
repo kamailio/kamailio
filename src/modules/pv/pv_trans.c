@@ -223,8 +223,8 @@ int tr_eval_string(
 				if(str2slong(&val->rs, &val->ri) != 0)
 					return -1;
 			} else {
-				if(!(val->flags & PV_VAL_STR))
-					val->rs.s = int2str(val->ri, &val->rs.len);
+				// Replace string as an existing string value may not be equal to the int
+				val->rs.s = int2str(val->ri, &val->rs.len);
 			}
 
 			val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
