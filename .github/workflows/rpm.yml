@@ -140,7 +140,7 @@ jobs:
           mv ~/rpmbuild/RPMS/*/* RPMS/${os_folder}/${ref_folder}/${{ github.ref_name }}/${{ matrix.arch }}
 
     - name: Push artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: kamailio-${{ matrix.os }}-${{ github.ref_name }}-${{ matrix.arch }}.rpm
         path: |
