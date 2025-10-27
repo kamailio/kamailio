@@ -43,6 +43,11 @@ Joel Centelles Martin
               4.7. hash_expires (int)
               4.8. db_pass (string)
               4.9. ca_path (string)
+              4.10. with_sentinels (int)
+              4.11. sentinels_config (string)
+              4.12. redis_master_name (string)
+              4.13. use_replicas (int)
+              4.14. recheck_replicas_interval (int)
 
         5. Usage
         6. Module Specific Considerations
@@ -60,8 +65,13 @@ Joel Centelles Martin
    1.7. Setting hash expires
    1.8. Setting a password
    1.9. Setting CA path
-   1.10. Usage
-   1.11. Usage
+   1.10. Enabling sentinels
+   1.11. Setting sentinels
+   1.12. Setting Redis master name
+   1.13. Setting use_replicas
+   1.14. Setting use_replicas
+   1.15. Usage
+   1.16. Usage
 
 Chapter 1. Admin Guide
 
@@ -85,6 +95,11 @@ Chapter 1. Admin Guide
         4.7. hash_expires (int)
         4.8. db_pass (string)
         4.9. ca_path (string)
+        4.10. with_sentinels (int)
+        4.11. sentinels_config (string)
+        4.12. redis_master_name (string)
+        4.13. use_replicas (int)
+        4.14. recheck_replicas_interval (int)
 
    5. Usage
    6. Module Specific Considerations
@@ -244,6 +259,11 @@ key:"location:entry::example-ruid-1", value:"hash_value")
    4.7. hash_expires (int)
    4.8. db_pass (string)
    4.9. ca_path (string)
+   4.10. with_sentinels (int)
+   4.11. sentinels_config (string)
+   4.12. redis_master_name (string)
+   4.13. use_replicas (int)
+   4.14. recheck_replicas_interval (int)
 
 4.1. schema_path (string)
 
@@ -369,6 +389,78 @@ modparam("db_redis", "db_pass", "r3d1sPass")
 modparam("db_redis", "ca_path", "/etc/ssl/certs")
 ...
 
+4.10. with_sentinels (int)
+
+   Enables the use of Redis sentinels for high availability. If set to 1,
+   the module will connect to the Redis server using the sentinels defined
+   in the "sentinels_config" modparam.
+
+   Default value: 0.
+
+   Example 1.10. Enabling sentinels
+...
+modparam("db_redis", "with_sentinels", 1)
+...
+
+4.11. sentinels_config (string)
+
+   Sets the sentinels to connect to the Redis server. The format is
+   semi-colon separated list of key-value pairs: password, sentinels.
+   Sentinels is a pipe separated list of host:port pairs. Password applies
+   to all sentinels.
+
+   Default value: "" (empty).
+
+   Example 1.11. Setting sentinels
+...
+modparam("db_redis", "sentinels_config", "password=password;sentinels=host1:port
+1|host2:port2|host3:port3")
+...
+
+4.12. redis_master_name (string)
+
+   Sets the name of the Redis master. This is needed when building the
+   SENTINEL get-master-addr-by-name command. The name should match the
+   name used in the Redis Sentinel configuration.
+
+   Default value: "mymaster" (empty).
+
+   Example 1.12. Setting Redis master name
+...
+modparam("db_redis", "redis_master_name", "mymaster")
+...
+
+4.13. use_replicas (int)
+
+   Enables connecting to Redis replicas instead of the master when using
+   sentinels. Replicas are selected randomly. This helps distribute load
+   across the Redis setup (i.e.: read from replicas instead of master). If
+   for whatever reason no replicas are available, the module will fall
+   back to connecting to the master (this cannot be toggled off).
+
+   Default value: 0 (connect to master).
+
+   Example 1.13. Setting use_replicas
+...
+modparam("db_redis", "use_replicas", 1)
+...
+
+4.14. recheck_replicas_interval (int)
+
+   The parameter sets the interval in seconds to recheck for available
+   replicas so that we don't remain connected to the master. Because of
+   implementation details, the first check can exceptionally happen after
+   half of this interval. If set to 0, no rechecks will be performed and
+   the module will remain connected to the master until a new connection
+   is established (i.e.: Redis server goes down and comes back up).
+
+   Default value: 120 seconds.
+
+   Example 1.14. Setting use_replicas
+...
+modparam("db_redis", "recheck_replicas_interval", 120)
+...
+
 5. Usage
 
    Load the module and set the "db_url" modparam for specific modules to:
@@ -383,7 +475,7 @@ modparam("db_redis", "ca_path", "/etc/ssl/certs")
    setting the "opt_tls" parameter to 1. In case the DB requires a
    password, that should be set using the "db_pass" parameter.
 
-   Example 1.10. Usage
+   Example 1.15. Usage
 ...
 loadmodule "db_redis.so"
 ...
@@ -416,7 +508,7 @@ modparam("dialog", "db_url", DBURL_DLG)
 
    Samples adding records for address table using 'redis-cli':
 
-   Example 1.11. Usage
+   Example 1.16. Usage
 ...
 SELECT 8
 HMSET address:entry::1 id 1 grp 1 ip_addr "127.0.0.1" mask 32 port 0
