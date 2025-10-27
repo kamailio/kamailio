@@ -44,6 +44,34 @@ void contact_dlg_create_handler(
 	LM_DBG("Successfully registered contact dialog handler\n");
 }
 
+
+/** removes the default port ':5060' from the string in order compare later
+ *  returns:
+ *  0 => found
+ *  1 => not found
+ *  < 0 => error
+ */
+static int filter_default_port(str *src, str *dst)
+{
+	str default_port = str_init(":5060");
+	char *port;
+
+	if((port = str_search(src, &default_port))) {
+		dst->len = port - src->s;
+		memcpy(dst->s, src->s, dst->len);
+		memcpy(dst->s + dst->len, port + 5, src->len - dst->len - 5);
+		dst->len = src->len - 5;
+		return 0;
+	}
+	if(dst->len < src->len) {
+		LM_BUG("dst len < src len\n");
+		return -1;
+	}
+	dst->len = src->len;
+	memcpy(dst->s, src->s, src->len);
+	return 1;
+}
+
 /**
  * Search for a contact related to an IMPU based on an original contact string (uri)
  * @param impu impurecord we will search through
@@ -58,24 +86,29 @@ static inline int find_contact_from_impu(
 	char *s_term;
 	char *c_term;
 	char *alias_term;
-
+	char sbuf[512], cbuf[512];
+	str str_aor = {sbuf, 512}, str_c = {cbuf, 512};
 	if(!search_aor)
 		return 1;
 
-	LM_DBG("Looking for contact [%.*s] for IMPU [%.*s]\n", search_aor->len,
-			search_aor->s, impu->public_identity.len, impu->public_identity.s);
+	if(filter_default_port(search_aor, &str_aor) < 0) {
+		return 1;
+	}
+
+	LM_DBG("Looking for contact [%.*s] for IMPU [%.*s]\n", STR_FMT(&str_aor),
+			STR_FMT(&impu->public_identity));
 
 
 	/* Filter out sip: and anything before @ from search URI */
-	s_term = strstr(search_aor->s, "@");
+	s_term = strstr(str_aor.s, "@");
 	if(!s_term) {
-		s_term = strstr(search_aor->s, ":");
+		s_term = strstr(str_aor.s, ":");
 	}
 	s_term += 1;
-	if(s_term - search_aor->s >= search_aor->len) {
+	if(s_term - str_aor.s >= str_aor.len) {
 		goto error;
 	}
-	i_searchlen = search_aor->len - (s_term - search_aor->s);
+	i_searchlen = str_aor.len - (s_term - str_aor.s);
 
 	/* Compare the entire contact including alias, if not until alias IP */
 	alias_term = strstr(s_term, "~");
@@ -90,28 +123,37 @@ static inline int find_contact_from_impu(
 
 	while(impucontact) {
 		if(impucontact->contact) {
+			// clean up previous contact
+			str_c.len = 512;
+			memset(str_c.s, 0, 512);
 
-			c_term = strstr(impucontact->contact->c.s, "@");
+			if(filter_default_port(&impucontact->contact->c, &str_c) < 0) {
+				LM_DBG("Skipping %.*s\n", STR_FMT(&impucontact->contact->c));
+				impucontact = impucontact->next;
+				continue;
+			}
+			c_term = strstr(str_c.s, "@");
 			if(!c_term) {
-				c_term = strstr(impucontact->contact->c.s, ":");
+				c_term = strstr(str_c.s, ":");
 			}
 			c_term += 1;
-			c_searchlen = impucontact->contact->c.len
-						  - (c_term - impucontact->contact->c.s);
-
+			c_searchlen = str_c.len - (c_term - str_c.s);
 			LM_DBG("Comparing [%.*s] and [%.*s]\n", i_searchlen, s_term,
 					c_searchlen, c_term);
-			LM_DBG("Comparing [%.*s] and [%.*s]\n", alias_searchlen, s_term,
-					c_searchlen, c_term);
-			if((strncmp(c_term, s_term, i_searchlen) == 0)
-					|| (strncmp(c_term, s_term, alias_searchlen) == 0)) {
+			if(strncmp(c_term, s_term, i_searchlen) == 0) {
 				*scontact = impucontact->contact;
 				return 0;
 			}
+			if(alias_term) {
+				LM_DBG("Comparing [%.*s] and [%.*s]\n", alias_searchlen, s_term,
+						c_searchlen, c_term);
+				if(strncmp(c_term, s_term, alias_searchlen) == 0) {
+					*scontact = impucontact->contact;
+					return 0;
+				}
+			}
+			LM_DBG("Skipping %.*s\n", STR_FMT(&impucontact->contact->c));
 		}
-		if(impucontact->contact)
-			LM_DBG("Skipping %.*s\n", impucontact->contact->c.len,
-					impucontact->contact->c.s);
 		impucontact = impucontact->next;
 	}
 error:
