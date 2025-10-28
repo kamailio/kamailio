@@ -2453,11 +2453,75 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 
 		db_redis_key_free(&query_v);
 
+		if(db_redis_hash_expires_str.len) {
+			if(db_redis_key_add_string(&query_v, "EXPIRE", 6) != 0) {
+				LM_ERR("Failed to add expire command to update query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, &key->key) != 0) {
+				LM_ERR("Failed to add key to update query\n");
+				goto error;
+			}
+			if(db_redis_key_add_str(&query_v, &db_redis_hash_expires_str)
+					!= 0) {
+				LM_ERR("Failed to add expiry time to post-update query\n");
+				goto error;
+			}
+			update_queries++;
+			if(db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
+				LM_ERR("Failed to append redis command\n");
+				goto error;
+			}
+
+			db_redis_key_free(&query_v);
+		}
+
 		for(type_key = type_keys, set_key = set_keys; type_key;
 				type_key = type_key->next, set_key = set_key->next) {
 
 			LM_DBG("checking for update of type key '%.*s'\n",
 					type_key->key.len, type_key->key.s);
+
+			if(db_redis_hash_expires_str.len) {
+				LM_DBG("Redis expiry is used - TTLs needs to be updated for "
+					   "type key '%.*s', key '%.*s'\n",
+						type_key->key.len, type_key->key.s, key->key.len,
+						key->key.s);
+				if(db_redis_key_add_string(&query_v, "HEXPIRE", 7) != 0) {
+					LM_ERR("Failed to add expire command to update query\n");
+					goto error;
+				}
+				if(db_redis_key_add_str(&query_v, &type_key->key) != 0) {
+					LM_ERR("Failed to add key to post-update query\n");
+					goto error;
+				}
+				if(db_redis_key_add_str(&query_v, &db_redis_hash_expires_str)
+						!= 0) {
+					LM_ERR("Failed to add expiry time to post-update query\n");
+					goto error;
+				}
+				if(db_redis_key_add_string(&query_v, "FIELDS", 6) != 0) {
+					LM_ERR("Failed to add fields suffix to query\n");
+					goto error;
+				}
+				if(db_redis_key_add_string(&query_v, "1", 1) != 0) {
+					LM_ERR("Failed to add fields suffix to query\n");
+					goto error;
+				}
+				if(db_redis_key_add_str(&query_v, &key->key) != 0) {
+					LM_ERR("Failed to set entry key to post-update "
+						   "query\n");
+					goto error;
+				}
+				update_queries++;
+				if(db_redis_append_command_argv(con, query_v, 1) != REDIS_OK) {
+					LM_ERR("Failed to append redis command\n");
+					goto error;
+				}
+
+				db_redis_key_free(&query_v);
+			}
+
 			char *prefix =
 					ser_memmem(type_key->key.s, "::", type_key->key.len, 2);
 			if(!prefix || prefix == type_key->key.s) {
