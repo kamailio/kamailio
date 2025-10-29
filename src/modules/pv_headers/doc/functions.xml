@@ -142,7 +142,7 @@
 	</section>
 	<section id="pv_headers.f.pvh_header_param_exists">
 		<title>
-			<function moreinfo="none">pvh_value_exists(hname, hparameter)</function>
+			<function moreinfo="none">pvh_header_param_exists(hname, hparameter)</function>
 		</title>
 		<para>
 			Checks if the parameter <quote>hparameter</quote> is present in the header <quote>hname</quote> from XAVP.
