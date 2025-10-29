@@ -523,7 +523,7 @@ int parse_record_route_headers(sip_msg_t *msg)
 	hf = msg->record_route;
 	while(hf) {
 		if(parse_rr(hf) < 0) {
-			LM_ERR("failed to parse Record-Route\n");
+			LM_ERR("failed to parse Record-Route headers\n");
 			return -1;
 		}
 
@@ -546,7 +546,7 @@ int parse_route_headers(sip_msg_t *msg)
 	hf = msg->route;
 	while(hf) {
 		if(parse_rr(hf) < 0) {
-			LM_ERR("failed to parse Record-Route\n");
+			LM_ERR("failed to parse Route headers\n");
 			return -1;
 		}
 
