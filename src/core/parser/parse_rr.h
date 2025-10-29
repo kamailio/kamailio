@@ -220,5 +220,6 @@ int get_path_dst_uri(str *_p, str *_dst);
 
 int parse_record_route_headers(sip_msg_t *msg);
 int parse_route_headers(sip_msg_t *msg);
+int has_route_header(sip_msg_t *msg);
 
 #endif /* PARSE_RR_H */
