@@ -80,6 +80,8 @@ typedef int (*check_self_f)(
 int register_check_self_func(check_self_f f);
 int check_self(str *host, unsigned short port, unsigned short proto);
 int check_self_port(unsigned short port, unsigned short proto);
+int check_self_uri(sip_uri_t *puri);
+int check_self_iuser(sip_uri_t *puri, str *iuser);
 int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 		struct dest_info *send_info);
 int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,

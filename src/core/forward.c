@@ -469,6 +469,52 @@ int check_self_port(unsigned short port, unsigned short proto)
 	}
 }
 
+/*!
+ * \brief Check if URI is myself
+ * \param puri SIP URI
+ * \param iuser user name to ignore
+ * \return 0 if the URI is not myself, 1 otherwise
+ */
+int check_self_iuser(sip_uri_t *puri, str *iuser)
+{
+	int ret;
+
+	if(puri->host.len == 0) {
+		/* catch uri without host (e.g., tel uri) */
+		return 0;
+	}
+
+	ret = check_self(&puri->host, puri->port_no ? puri->port_no : SIP_PORT,
+			0); /* match all protos*/
+	if(ret < 0) {
+		return 0;
+	}
+
+	if(ret == 1) {
+		if(iuser != NULL && iuser->len > 0 && iuser->len == puri->user.len
+				&& strncmp(iuser->s, puri->user.s, puri->user.len) == 0) {
+			LM_DBG("ignore user matched - URI is not to the server itself\n");
+			return 0;
+		}
+
+		/* match on host:port, but if gruu, then fail */
+		if(puri->gr.s != NULL) {
+			return 0;
+		}
+	}
+
+	return ret;
+}
+
+/*!
+ * \brief Check if URI is myself
+ * \param puri SIP URI
+ * \return 0 if the URI is not myself, 1 otherwise
+ */
+int check_self_uri(sip_uri_t *puri)
+{
+	return check_self_iuser(puri, NULL);
+}
 
 /** forwards a request to dst
  * parameters:
