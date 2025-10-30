@@ -54,8 +54,7 @@
 		<title>Overview</title>
 		<para>
 			This module implements the TLS transport for &kamailio;
-			using the <ulink url="http://www.openssl.org">OpenSSL library</ulink>
-			(http://www.openssl.org). To enable the &kamailio; TLS support this
+			using the &openssl; library. To enable the &kamailio; TLS support this
 			module must be loaded and <emphasis>enable_tls=yes</emphasis> core setting
 			must be added to the Kamailio config file.
 		</para>
@@ -68,7 +67,7 @@
 	<section id="tls.quick_start">
 		<title>Quick Start</title>
 		<para>
-		The default kamailio.cfg file has basic tls support included, it has to
+		The default &kamailioconfig; file has basic tls support included, it has to
 		be enabled with "#!define WITH_TLS" directive.
 		</para>
 		<para>
@@ -173,7 +172,7 @@ request_route {
 		<para>
 			Note 1: the tls module must be loaded before any other &kamailio; module
 			that uses libssl (OpenSSL library). A safe option is to have the tls module
-			loaded first (be in the first "loadmodule" in &kamailio;.cfg).
+			loaded first (be in the first "loadmodule" in &kamailioconfig;).
 		</para>
 		<para>
 			Note 2: for libssl v3.x, the core parameter "tls_threads_mode"
