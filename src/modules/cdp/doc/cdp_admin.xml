@@ -56,7 +56,7 @@
     transaction.c.</para>
 
     <para>There are 2 configuration areas for CDP. Firstly it must be loaded
-    and configured in the Kamailio.cfg file (this is the normal task
+    and configured in the &kamailioconfig; file (this is the normal task
     associated with Kamailio modules). Then, an XML file is required to
     configure various Diameter parameters and all related peers and the
     associated routes.</para>
