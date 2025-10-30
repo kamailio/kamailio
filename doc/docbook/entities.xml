@@ -1,7 +1,7 @@
 <!-- Entities often used in the documentation -->
 
 <!ENTITY fhg "FhG FOKUS">
-<!ENTITY iptel "<ulink url='http://iptel.org'>iptel.org</ulink>">
+<!ENTITY iptel "<ulink url='http://iptel.org/'>iptel.org</ulink>">
 
 <!-- Kamailio specific attributes -->
 
@@ -52,7 +52,7 @@
 <!ENTITY sercmd "kamcmd">
 <!ENTITY ctlsocket "kamailio_ctl">
 
-<!ENTITY serhome "https://www.kamailio.org">
+<!ENTITY serhome "https://www.kamailio.org/">
 <!ENTITY serbugs "https://github.com/kamailio/kamailio/issues">
 <!ENTITY serusers "https://lists.kamailio.org/mailman3/postorius/lists/sr-users.lists.kamailio.org/">
 <!ENTITY serdev "https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.kamailio.org/">
@@ -86,12 +86,12 @@
 <!ENTITY nat "<acronym>NAT</acronym>">
 <!ENTITY ip "<acronym>IP</acronym>">
 <!ENTITY udp "<acronym>UDP</acronym>">
-<!ENTITY ietf "<ulink url='https://www.ietf.org'>IETF</ulink>">
+<!ENTITY ietf "<ulink url='https://www.ietf.org/'>IETF</ulink>">
 <!ENTITY im "<acronym>IM</acronym>">
 <!ENTITY smtp "<acronym>SMTP</acronym>">
 <!ENTITY tls "<acronym>TLS</acronym>">
 <!ENTITY xmpp "<acronym>XMPP</acronym>">
-<!ENTITY gnu "<ulink url='https://www.gnu.org'>GNU</ulink>">
+<!ENTITY gnu "<ulink url='https://www.gnu.org/'>GNU</ulink>">
 <!ENTITY gpl "<ulink url='https://www.gnu.org/licenses/licenses.html#GPL'>GPL</ulink>">
 <!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
 
@@ -103,5 +103,6 @@
 <!ENTITY rfc5626 "<ulink url='https://www.ietf.org/rfc/rfc5626.txt'>RFC5626</ulink>">
 
 <!-- Often used 3rd party libraries  -->
-<!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
-<!ENTITY libcurl "<ulink url='https://curl.haxx.se'>libcurl</ulink>">
+
+<!ENTITY openssl "<ulink url='https://www.openssl.org/'>OpenSSL</ulink>">
+<!ENTITY libcurl "<ulink url='https://curl.haxx.se/'>libcurl</ulink>">
