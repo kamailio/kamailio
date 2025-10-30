@@ -109,15 +109,15 @@ Setting &kamailio; to use the TLS certificate
 	intended machine (preferably in your &kamailio; configuration directory,
 	 this is the default place &kamailio; searches for).
 
-3. Set up &kamailio;.cfg to use the certificate
+3. Set up &kamailioconfig; to use the certificate
 	if your &kamailio; certificate name is different from cert.pem or it is not
-	placed in &kamailio; cfg. directory, add to your kamailio.cfg:
+	placed in &kamailio; config directory, add to your &kamailioconfig;:
 		modparam("tls", "certificate", "/path/cert_file_name")
 
 4. Set up &kamailio; to use the private key
 	if your private key is not contained in the same file as the certificate
 	(or the certificate name is not the default cert.pem), add to your
-	 &kamailio;.cfg:
+	 &kamailioconfig;:
 		modparam("tls", "private_key", "/path/private_key_file")
 
 5. Set up &kamailio; to use the CA list (optional)
@@ -141,9 +141,9 @@ Revoking a certificate and using a CRL
 2. Generate/update the certificate revocation list:
 	openssl ca -gencrl -out my_crl.pem
 
-3. Copy my_crl.pem to your &kamailio; config. dir
+3. Copy my_crl.pem to your &kamailio; config directory.
 
-4. Set up &kamailio; to use the CRL:
+4. Set up &kamailioconfig; to use the CRL:
 		modparam("tls", "crl", "path/my_crl.pem")
 
 
