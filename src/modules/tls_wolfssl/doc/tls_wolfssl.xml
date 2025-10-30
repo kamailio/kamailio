@@ -56,7 +56,7 @@
 	<section id="tls_wolfssl.quick_start">
 		<title>Quick Start</title>
 		<para>
-		The default kamailio.cfg file has basic tls support included, it has to
+		The default &kamailioconfig; file has basic TLS support included, it has to
 		be enabled with "#!define WITH_TLS" directive.
 		</para>
 		<example>
