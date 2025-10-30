@@ -198,7 +198,7 @@ modparam("db_unixodbc", "quote_char", "`")
 	<section>
 	<title>Configuring and Running</title>
 	<para>
-	In the &kamailio;.cfg file, add the line:
+	In the &kamailioconfig; file, add the line:
 	</para>
 	<programlisting format="linespecific">
 ....
