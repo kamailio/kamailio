@@ -91,7 +91,7 @@ modparam("phonenum", "smode", 0)
 	    <title><varname>resid</varname> (str)</title>
 	    <para>
 		Preregister result container id during initialization, enabling the use
-		of the module in KEMI scripts. In native &kamailio;.cfg file, registration
+		of the module in KEMI scripts. In native &kamailioconfig; file, registration
 		is done when parsing config and finding variables.
 	    </para>
 	    <para>
