@@ -463,7 +463,7 @@ modparam("permissions", "deny_suffix", ".deny")
 		This is the name of full path to the file that store rules used by
 		<function moreinfo="none">allow_address</function> function (and
 		its variants). If it is only the file name, it is expected to be in the
-		same folder as &kamailio;.cfg file.
+		same folder as &kamailioconfig; file.
 		</para>
 		<para>
 		If set, this parameter has priority over the database backend, so the
