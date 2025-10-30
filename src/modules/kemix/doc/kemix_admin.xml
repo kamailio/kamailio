@@ -23,7 +23,7 @@
 		of the application.
 	</para>
 	<para>
-		It does not provide functions for the native &kamailio;.cfg.
+		It does not provide functions for the native &kamailioconfig;.
 	</para>
 	<para>
 		To see the KEMI functions exported by this module, see:
