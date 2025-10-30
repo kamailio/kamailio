@@ -177,7 +177,7 @@
 				The module tries to find out if the entity is a local user. Only PUBLISH to
 				local user are sent. Therefore, the module needs to find out if the domain is
 				a local one or not. It uses the same mechanism as the "==myself" mechanism. Thus,
-				all domains have to be declared with the "alias=..." option in &kamailio;.cfg.
+				all domains have to be declared with the "alias=..." option in &kamailioconfig;.
 				DB-based multidomain support as offered by "domain" module is not supported yet.
 				Conclusion: The module has the same "domain" problems as the "rr" module.
 			</para></listitem>
