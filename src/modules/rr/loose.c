@@ -133,14 +133,6 @@ static inline int is_myself(sip_uri_t *_puri)
 	if(ret < 0)
 		return 0;
 
-#ifdef ENABLE_USER_CHECK
-	if(ret == 1 && i_user.len && i_user.len == _puri->user.len
-			&& strncmp(i_user.s, _puri->user.s, _puri->user.len) == 0) {
-		LM_DBG("ignore user matched - URI is not to the server itself\n");
-		return 0;
-	}
-#endif
-
 	if(ret == 1) {
 		/* match on host:port, but if gruu, then fail */
 		if(_puri->gr.s != NULL)
@@ -968,11 +960,6 @@ static inline int after_loose(struct sip_msg *_m, int _mode, int preloaded)
 		}
 		_m->msg_flags |= FL_ROUTE_ADDR;
 	} else {
-#ifdef ENABLE_USER_CHECK
-		/* check if it the ignored user */
-		if(uri_is_myself < 0)
-			return RR_NOT_DRIVEN;
-#endif
 		LM_DBG("Topmost URI is NOT myself\n");
 		routed_params.s = NULL;
 		routed_params.len = 0;
