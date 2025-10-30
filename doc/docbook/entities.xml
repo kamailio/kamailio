@@ -93,7 +93,6 @@
 <!ENTITY xmpp "<acronym>XMPP</acronym>">
 <!ENTITY gnu "<ulink url='https://www.gnu.org/'>GNU</ulink>">
 <!ENTITY gpl "<ulink url='https://www.gnu.org/licenses/licenses.html#GPL'>GPL</ulink>">
-<!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
 
 <!-- Often used RFCs -->
 
