@@ -59,7 +59,7 @@
 			</para>
 			<para>
 				Note that some SIP registrars may check if header Supported includes 'path'. It
-				can be added in &kamailio;.cfg using append_hf() from textops module.
+				can be added in &kamailioconfig; using append_hf() from textops module.
 			</para>
 		<example>
 		<title>Add Supported header</title>
