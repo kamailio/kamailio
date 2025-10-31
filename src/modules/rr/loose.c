@@ -114,36 +114,6 @@ static inline int find_first_route(struct sip_msg *_m)
 
 
 /*!
- * \brief Check if URI is myself
- * \param _host host
- * \param _port port
- * \return 0 if the URI is not myself, 1 otherwise
- */
-static inline int is_myself(sip_uri_t *_puri)
-{
-	int ret;
-
-	if(_puri->host.len == 0) {
-		/* catch uri without host (e.g., tel uri) */
-		return 0;
-	}
-
-	ret = check_self(&_puri->host, _puri->port_no ? _puri->port_no : SIP_PORT,
-			0); /* match all protos*/
-	if(ret < 0)
-		return 0;
-
-	if(ret == 1) {
-		/* match on host:port, but if gruu, then fail */
-		if(_puri->gr.s != NULL)
-			return 0;
-	}
-
-	return ret;
-}
-
-
-/*!
  * \brief Find and parse next Route header field
  * \param _m SIP message
  * \param _hdr SIP header
@@ -618,7 +588,7 @@ static inline int after_strict(struct sip_msg *_m)
 		return RR_ERROR;
 	}
 
-	if(enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
+	if(enable_double_rr && is_2rr(&puri.params) && check_self_uri(&puri)) {
 		/* double route may occur due different IP and port, so force as
 		 * send interface the one advertise in second Route */
 		si = grep_sock_info(&puri.host, puri.port_no, puri.proto);
@@ -829,7 +799,7 @@ static inline void rr_do_force_send_socket(
 		if(enable_socket_mismatch_warning && rr2on) {
 			LM_WARN("no socket found to match second RR (%.*s)\n",
 					rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
-			if(!is_myself(puri)) {
+			if(!check_self_uri(puri)) {
 				LM_WARN("second RR uri is not myself (%.*s)\n",
 						rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 			}
@@ -873,7 +843,7 @@ static inline int after_loose(struct sip_msg *_m, int _mode, int preloaded)
 	}
 
 	routed_params = puri.params;
-	uri_is_myself = is_myself(&puri);
+	uri_is_myself = check_self_uri(&puri);
 
 	/* IF the URI was added by me, remove it */
 	if(uri_is_myself > 0) {
@@ -1041,7 +1011,8 @@ int loose_route_mode(sip_msg_t *_m, int _mode)
 	} else if(ret == 1) {
 		return after_loose(_m, _mode, 1);
 	} else {
-		if((!(_mode & RR_LR_MODE_LOOSE_ONLY)) && (is_myself(&_m->parsed_uri))) {
+		if((!(_mode & RR_LR_MODE_LOOSE_ONLY))
+				&& (check_self_uri(&_m->parsed_uri))) {
 			return after_strict(_m);
 		} else {
 			return after_loose(_m, _mode, 0);
@@ -1119,7 +1090,7 @@ int redo_route_params(sip_msg_t *msg)
 			return -1;
 		}
 
-		uri_is_myself = is_myself(&puri);
+		uri_is_myself = check_self_uri(&puri);
 
 		/* if the URI was added by me, remove it */
 		if(uri_is_myself > 0) {
