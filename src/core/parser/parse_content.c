@@ -299,7 +299,8 @@ char *decode_mime_type(
 	/* search the beginning of the type */
 	while(p < end
 			&& (*p == ' ' || *p == '\t'
-					|| (*p == '\n' && (*(p + 1) == ' ' || *(p + 1) == '\t'))))
+					|| (*p == '\n' && p + 1 < end
+							&& (*(p + 1) == ' ' || *(p + 1) == '\t'))))
 		p++;
 	if(p == end)
 		goto error;
@@ -338,7 +339,8 @@ char *decode_mime_type(
 	/* search the '/' separator */
 	while(p < end
 			&& (*p == ' ' || *p == '\t'
-					|| (*p == '\n' && (*(p + 1) == ' ' || *(p + 1) == '\t'))))
+					|| (*p == '\n' && p + 1 < end
+							&& (*(p + 1) == ' ' || *(p + 1) == '\t'))))
 		p++;
 	if(p == end || *(p++) != '/')
 		goto error;
@@ -346,7 +348,8 @@ char *decode_mime_type(
 	/* search the beginning of the sub-type */
 	while(p < end
 			&& (*p == ' ' || *p == '\t'
-					|| (*p == '\n' && (*(p + 1) == ' ' || *(p + 1) == '\t'))))
+					|| (*p == '\n' && p + 1 < end
+							&& (*(p + 1) == ' ' || *(p + 1) == '\t'))))
 		p++;
 	if(p == end)
 		goto error;
@@ -385,7 +388,8 @@ char *decode_mime_type(
 	/* now it is possible to have some spaces */
 	while(p < end
 			&& (*p == ' ' || *p == '\t'
-					|| (*p == '\n' && (*(p + 1) == ' ' || *(p + 1) == '\t'))))
+					|| (*p == '\n' && p + 1 < end
+							&& (*(p + 1) == ' ' || *(p + 1) == '\t'))))
 		p++;
 
 	/* if there are params, ignore them!! -> eat everything to
