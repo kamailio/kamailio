@@ -1582,6 +1582,37 @@ error:
 	return -1;
 }
 
+static int ki_dlg_refer_did(
+		sip_msg_t *msg, int h_entry, int h_id, str *side, str *to)
+{
+	dlg_cell_t *dlg = NULL;
+	if(to->s == NULL || to->len == 0) {
+		LM_ERR("invalid To parameter\n");
+		goto error;
+	}
+	dlg = dlg_lookup((unsigned int)h_entry, (unsigned int)h_id);
+	if(dlg == NULL) {
+		LM_DBG("dialog not found (%d:%d)\n", h_entry, h_id);
+		goto error;
+	}
+	if(side->len == 6 && strncasecmp(side->s, "caller", 6) == 0) {
+		if(dlg_transfer(dlg, to, DLG_CALLER_LEG) != 0)
+			goto error;
+	} else {
+		if(dlg_transfer(dlg, to, DLG_CALLEE_LEG) != 0)
+			goto error;
+	}
+
+	dlg_release(dlg);
+	return 1;
+
+error:
+	if(dlg != NULL) {
+		dlg_release(dlg);
+	}
+	return -1;
+}
+
 static int w_dlg_refer_did(
 		sip_msg_t *msg, char *entry, char *id, char *side, char *to)
 {
@@ -1621,6 +1652,37 @@ static int w_dlg_refer_did(
 			goto error;
 	} else {
 		if(dlg_transfer(dlg, &sto, DLG_CALLEE_LEG) != 0)
+			goto error;
+	}
+
+	dlg_release(dlg);
+	return 1;
+
+error:
+	if(dlg != NULL) {
+		dlg_release(dlg);
+	}
+	return -1;
+}
+
+static int ki_dlg_refer_cid(sip_msg_t *msg, str *callid, str *side, str *to)
+{
+	dlg_cell_t *dlg = NULL;
+
+	if(to->s == NULL || to->len == 0) {
+		LM_ERR("invalid To parameter\n");
+		goto error;
+	}
+	dlg = dlg_search_cid(callid, 0);
+	if(dlg == NULL) {
+		LM_DBG("dialog not found (%.*s)\n", callid->len, callid->s);
+		goto error;
+	}
+	if(side->len == 6 && strncasecmp(side->s, "caller", 6) == 0) {
+		if(dlg_transfer(dlg, to, DLG_CALLER_LEG) != 0)
+			goto error;
+	} else {
+		if(dlg_transfer(dlg, to, DLG_CALLEE_LEG) != 0)
 			goto error;
 	}
 
@@ -2926,6 +2988,16 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 	},
 	{ str_init("dialog"), str_init("dlg_bridge"),
 		SR_KEMIP_INT, ki_dlg_bridge,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_refer_did"),
+		SR_KEMIP_INT, ki_dlg_refer_did,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_refer_cid"),
+		SR_KEMIP_INT, ki_dlg_refer_cid,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
