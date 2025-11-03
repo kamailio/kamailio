@@ -846,15 +846,14 @@ modparam("dispatcher", "ds_retain_latency_stats", 1)
 
 3.28. ds_latency_estimator_alpha (int)
 
-   The value to be used to control the memory of the estimator EWMA
-   "exponential weighted moving average" or "the speed at which the older
-   samples are dampened" a good explanation can be found here :
-   http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.htm Because
-   Kamailio doesn't support float parameter types, the value in the
-   parameter is divided by 1000 and stored as float. For example, if you
-   want to set the alpha to be 0.75, use value 750 here.
+   The parameter decides how important each latency ping observation is in
+   the calculation of the EWMA. The higher the value of alpha, the more
+   closely the EWMA tracks the original time series. Because Kamailio
+   doesn't support float parameter types, the value in the parameter is
+   divided by 1000 and stored as float. For example, if you want to set
+   the alpha to be 0.25, use value 250 here.
 
-   Default value is “900 => 0.9”.
+   Default value is “100 => 0.1”.
 
    Example 1.30. Set the “ds_latency_estimator_alpha” parameter
 ...
@@ -1198,11 +1197,13 @@ modparam("dispatcher", "ds_interval_mode", 7200)
             lowered by 1 for every ms of estimated congestion, a 'rweight'
             value of 50 is recommended. See the example "configuring load
             balancing with congestion detection" below.
-            The congestion estimation is done using an EWMA (see
-            ds_latency_estimator_alpha). If all the gateways in a set are
-            above their congestion threshold(weight), the load
-            distribution is instead done using the ratio of estimated
-            congestion ms.
+            The congestion estimation is done using an Exponentially
+            Weighted Moving Average (EWMA). More information about the
+            algorithm can be found at
+            http://www.itl.nist.gov/div898/handbook/pmc/section3/pmc324.ht
+            m. If all the gateways in a set are above their congestion
+            threshold(weight), the load distribution is instead done using
+            the ratio of estimated congestion ms.
             See also the description of the 'rweight' attribute in the
             'Special Attributes' section.
           + “12” - dispatch to all destinations in setid at once (parallel
@@ -2302,7 +2303,7 @@ route[DISPATCH] {
         exit;
 }
 
-# Try next destionations in failure route
+# Try next destinations in failure route
 failure_route[RTF_DISPATCH] {
         if (t_is_canceled()) {
                 exit;
