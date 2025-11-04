@@ -154,12 +154,14 @@ int replica_list_free(struct reply_list *list)
 
 static redisReply *replica_list_pop(struct reply_list *list, size_t idx)
 {
-	struct reply_node *current = list->head;
+	struct reply_node *current = NULL;
 	struct reply_node *prev = NULL;
 	size_t current_idx = 0;
 	if(!list || idx >= list->count) {
 		return NULL;
 	}
+
+	current = list->head;
 
 	//traverse the list to the idx-th node and remove it from the list also return it
 	while(current && current_idx < idx) {
