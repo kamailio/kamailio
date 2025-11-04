@@ -29,10 +29,10 @@
 
 #include "fmsg.h"
 
-#define FAKED_SIP_MSG                                           \
-	"OPTIONS sip:you@kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP " \
-	"127.0.0.1\r\nFrom: <sip:you@kamailio.org>;tag=123\r\nTo: " \
-	"<sip:you@kamailio.org>\r\nCall-ID: 123\r\nCSeq: 1 "        \
+#define FAKED_SIP_MSG                                                   \
+	"OPTIONS sip:kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP "             \
+	"127.0.0.1\r\nFrom: <sip:server@kamailio.org>;tag=xyz\r\nTo: "      \
+	"<sip:server@kamailio.org>\r\nCall-ID: aaa-bbb-ccc-ddd\r\nCSeq: 1 " \
 	"OPTIONS\r\nContent-Length: 0\r\n\r\n"
 #define FAKED_SIP_MSG_LEN (sizeof(FAKED_SIP_MSG) - 1)
 static char _faked_sip_buf[BUF_SIZE];
