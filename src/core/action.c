@@ -1614,12 +1614,12 @@ int run_actions(struct run_act_ctx *h, struct action *a, struct sip_msg *msg)
 			gettimeofday(&tvb, &tz);
 		}
 		_cfg_crt_action = t;
-		if(unlikely(log_prefix_mode == 1)) {
+		if(unlikely(log_prefix_mode & LOG_PREFIX_MODE_REFRESH)) {
 			log_prefix_set(msg);
 		}
 		ret = do_action(h, t, msg);
 		_cfg_crt_action = 0;
-		if(unlikely(log_prefix_mode == 1)) {
+		if(unlikely(log_prefix_mode & LOG_PREFIX_MODE_REFRESH)) {
 			log_prefix_set(msg);
 		}
 		if(unlikely(cfg_get(core, core_cfg, latency_limit_action) > 0)
