@@ -1489,6 +1489,51 @@ static int ki_ht_dec(sip_msg_t *msg, str *htname, str *itname)
 	return ki_ht_add_op(msg, htname, itname, -1);
 }
 
+static int ki_sht_cn(sip_msg_t *msg, str *table, str *op, str *pattern)
+{
+	ht_t *ht;
+	char *pat_buf;
+	str pat;
+	int cnt;
+
+	ht = ht_get_table(table);
+	if(!ht) {
+		LM_ERR("cannot get hash table [%.*s]\n", table->len, table->s);
+		return -1;
+	}
+
+	if(op->len != 0 && op->len != 2) {
+		LM_ERR("invalid operator [%.*s]\n", op->len, op->s);
+		return -1;
+	}
+
+	/* Build pattern with operator prefix */
+	pat_buf = pkg_malloc(pattern->len + 3);
+	if(!pat_buf) {
+		LM_ERR("no pkg memory\n");
+		return -1;
+	}
+
+	pat.s = pat_buf;
+	pat.len = pattern->len + 2;
+	pat.s[pat.len] = '\0';
+
+	/* Prepend operator prefix to pattern */
+	if(op->len == 0) {
+		pat.s[0] = '~';
+		pat.s[1] = '~';
+	} else {
+		pat.s[0] = op->s[0];
+		pat.s[1] = op->s[1];
+	}
+
+	memcpy(pat.s + 2, pattern->s, pattern->len);
+	cnt = ht_count_cells_re(&pat, ht, 0);
+
+	pkg_free(pat_buf);
+	return cnt;
+}
+
 #define RPC_DATE_BUF_LEN 21
 
 /* clang-format off */
@@ -2355,6 +2400,11 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_dec"),
 		SR_KEMIP_INT, ki_ht_dec,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("shtcn_match"),
+		SR_KEMIP_INT, ki_sht_cn,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
