@@ -162,6 +162,7 @@ extern int my_pid(void);
 extern int log_stderr;
 
 #define LOG_PREFIX_MODE_REFRESH 1
+#define LOG_PREFIX_MODE_FMSG 2
 
 extern int log_color;
 extern int log_cee;

@@ -1490,6 +1490,7 @@ int main_loop(void)
 
 		/* init log prefix format */
 		log_prefix_init();
+		log_prefix_set(NULL);
 
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
@@ -1766,6 +1767,7 @@ int main_loop(void)
 
 		/* init log prefix format */
 		log_prefix_init();
+		log_prefix_set(NULL);
 
 		/* init childs with rank==PROC_INIT before forking any process,
 		 * this is a place for delayed (after mod_init) initializations
@@ -3072,8 +3074,9 @@ int main(int argc, char **argv)
 		dont_fork = dont_fork == 1;
 	}
 	/* init locks first */
-	if(init_lock_ops() != 0)
+	if(init_lock_ops() != 0) {
 		goto error;
+	}
 #ifdef USE_TCP
 #ifdef USE_TLS
 	if(tcp_disable)
