@@ -114,7 +114,7 @@ modparam("phonenum", "smode", 0)
 3.2. resid (str)
 
    Preregister result container id during initialization, enabling the use
-   of the module in KEMI scripts. In native Kamailio.cfg file,
+   of the module in KEMI scripts. In native kamailio.cfg file,
    registration is done when parsing config and finding variables.
 
    Default value is “” (empty).

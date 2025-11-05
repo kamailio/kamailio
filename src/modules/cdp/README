@@ -221,7 +221,7 @@ Chapter 1. Admin Guide
    transactions are implemented in transaction.c.
 
    There are 2 configuration areas for CDP. Firstly it must be loaded and
-   configured in the Kamailio.cfg file (this is the normal task associated
+   configured in the kamailio.cfg file (this is the normal task associated
    with Kamailio modules). Then, an XML file is required to configure
    various Diameter parameters and all related peers and the associated
    routes.

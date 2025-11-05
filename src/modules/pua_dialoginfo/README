@@ -273,7 +273,7 @@ Chapter 1. Admin Guide
        PUBLISH to local user are sent. Therefore, the module needs to find
        out if the domain is a local one or not. It uses the same mechanism
        as the "==myself" mechanism. Thus, all domains have to be declared
-       with the "alias=..." option in Kamailio.cfg. DB-based multidomain
+       with the "alias=..." option in kamailio.cfg. DB-based multidomain
        support as offered by "domain" module is not supported yet.
        Conclusion: The module has the same "domain" problems as the "rr"
        module.

@@ -122,7 +122,7 @@ Chapter 1. Admin Guide
        Path URI too.
 
    Note that some SIP registrars may check if header Supported includes
-   'path'. It can be added in Kamailio.cfg using append_hf() from textops
+   'path'. It can be added in kamailio.cfg using append_hf() from textops
    module.
 
    Example 1.1. Add Supported header

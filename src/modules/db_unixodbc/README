@@ -186,7 +186,7 @@ modparam("db_unixodbc", "quote_char", "`")
 
 5.2. Configuring and Running
 
-   In the Kamailio.cfg file, add the line:
+   In the kamailio.cfg file, add the line:
 ....
 loadmodule "/usr/local/lib/kamailio/modules/db_unixodbc.so"
 ....

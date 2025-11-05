@@ -49,7 +49,7 @@ Chapter 1. Admin Guide
 
 2. Quick Start
 
-   The default kamailio.cfg file has basic tls support included, it has to
+   The default kamailio.cfg file has basic TLS support included, it has to
    be enabled with "#!define WITH_TLS" directive.
 
    Example 1.1. Quick Start Basic Config

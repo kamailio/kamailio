@@ -41,7 +41,7 @@ Chapter 1. Admin Guide
    keywords and core conditions) without pushing code in the core of the
    application.
 
-   It does not provide functions for the native Kamailio.cfg.
+   It does not provide functions for the native kamailio.cfg.
 
    To see the KEMI functions exported by this module, see:
      * https://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/

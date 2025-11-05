@@ -525,7 +525,7 @@ modparam("permissions", "deny_suffix", ".deny")
 
    This is the name of full path to the file that store rules used by
    allow_address function (and its variants). If it is only the file name,
-   it is expected to be in the same folder as Kamailio.cfg file.
+   it is expected to be in the same folder as kamailio.cfg file.
 
    If set, this parameter has priority over the database backend, so the
    address matching records are loaded from the file, not from database.
