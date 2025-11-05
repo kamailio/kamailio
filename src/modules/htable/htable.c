@@ -1489,6 +1489,83 @@ static int ki_ht_dec(sip_msg_t *msg, str *htname, str *itname)
 	return ki_ht_add_op(msg, htname, itname, -1);
 }
 
+static int ki_shtcn_match(sip_msg_t *msg, str *table, str *pattern, int mode)
+{
+	ht_t *ht;
+	char *pat_buf;
+	str pat;
+	int cnt;
+
+	ht = ht_get_table(table);
+	if(!ht) {
+		LM_ERR("cannot get hash table [%.*s]\n", table->len, table->s);
+		return -1;
+	}
+
+	pat_buf = pkg_malloc(pattern->len + 3);
+	if(!pat_buf) {
+		LM_ERR("no pkg memory\n");
+		return -1;
+	}
+
+	pat.s = pat_buf;
+	switch(mode) {
+		case 0: /* exact */
+			pat.s[0] = '=';
+			pat.s[1] = '=';
+			memcpy(pat.s + 2, pattern->s, pattern->len);
+			pat.len = pattern->len + 2;
+			break;
+		case 1: /* prefix */
+			pat.s[0] = '%';
+			pat.s[1] = '~';
+			memcpy(pat.s + 2, pattern->s, pattern->len);
+			pat.len = pattern->len + 2;
+			break;
+		case 2: /* suffix */
+			pat.s[0] = '~';
+			pat.s[1] = '%';
+			memcpy(pat.s + 2, pattern->s, pattern->len);
+			pat.len = pattern->len + 2;
+			break;
+		case 3: /* regex */
+			pat.s[0] = '~';
+			pat.s[1] = '~';
+			memcpy(pat.s + 2, pattern->s, pattern->len);
+			pat.len = pattern->len + 2;
+			break;
+		default:
+			pkg_free(pat_buf);
+			return -1;
+	}
+	pat.s[pat.len] = '\0';
+
+	cnt = ht_count_cells_re(&pat, ht, 0); /* mode 0: count by name */
+
+	pkg_free(pat_buf);
+	return cnt;
+}
+
+static int ki_shtcn_exact(sip_msg_t *msg, str *table, str *key)
+{
+	return ki_shtcn_match(msg, table, key, 0);
+}
+
+static int ki_shtcn_prefix(sip_msg_t *msg, str *table, str *prefix)
+{
+	return ki_shtcn_match(msg, table, prefix, 1);
+}
+
+static int ki_shtcn_suffix(sip_msg_t *msg, str *table, str *suffix)
+{
+	return ki_shtcn_match(msg, table, suffix, 2);
+}
+
+static int ki_shtcn_regex(sip_msg_t *msg, str *table, str *pattern)
+{
+	return ki_shtcn_match(msg, table, pattern, 3);
+}
+
 #define RPC_DATE_BUF_LEN 21
 
 /* clang-format off */
@@ -2354,6 +2431,31 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	},
 	{ str_init("htable"), str_init("sht_dec"),
 		SR_KEMIP_INT, ki_ht_dec,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("shtcn_match"),
+		SR_KEMIP_INT, ki_shtcn_match,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("shtcn_exact"),
+		SR_KEMIP_INT, ki_shtcn_exact,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("shtcn_prefix"),
+		SR_KEMIP_INT, ki_shtcn_prefix,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("shtcn_suffix"),
+		SR_KEMIP_INT, ki_shtcn_suffix,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("shtcn_regex"),
+		SR_KEMIP_INT, ki_shtcn_regex,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
