@@ -3531,12 +3531,16 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 
 			if((ds_event_callback_mode == 0)
 					|| ((mode & DS_STATE_MODE_FUNC) == 0)) {
-				if(!ds_skip_dst(old_state)
-						&& ds_skip_dst(idx->dlist[i].flags)) {
-					ds_run_route(msg, address, "dispatcher:dst-down", rctx);
+				if((!ds_skip_dst(old_state) && ds_skip_dst(idx->dlist[i].flags))
+						|| (old_state == 0
+								&& ds_skip_dst(idx->dlist[i].flags))) {
 
-				} else if(ds_skip_dst(old_state)
-						  && !ds_skip_dst(idx->dlist[i].flags)) {
+					ds_run_route(msg, address, "dispatcher:dst-down", rctx);
+				} else if((ds_skip_dst(old_state)
+								  && !ds_skip_dst(idx->dlist[i].flags))
+						  || (old_state == 0
+								  && !ds_skip_dst(idx->dlist[i].flags))) {
+
 					ds_run_route(msg, address, "dispatcher:dst-up", rctx);
 				}
 			}
