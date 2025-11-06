@@ -3354,9 +3354,6 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 	/* initialize some basic bencode items */
 	if(!extra_dict) {
 		ng_flags.dict = bencode_dictionary(bencbuf);
-		if(parse_by_module) {
-			ng_flags.flags = bencode_list(bencbuf);
-		}
 	} else {
 		ng_flags.dict = extra_dict;
 		ng_flags.flags = bencode_dictionary_get(ng_flags.dict, "flags");
@@ -3365,6 +3362,9 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 			ng_flags.call_id = tmp_callid;
 		}
 	}
+
+	if (!ng_flags.flags)
+		ng_flags.flags = bencode_list(bencbuf);
 
 	if(parse_by_module) {
 		ng_flags.received_from = bencode_list(bencbuf);
@@ -3440,9 +3440,6 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 		if(ng_flags.direction && ng_flags.direction->child)
 			bencode_dictionary_add(
 					ng_flags.dict, "direction", ng_flags.direction);
-		/* flags */
-		if(ng_flags.flags && ng_flags.flags->child)
-			bencode_dictionary_add(ng_flags.dict, "flags", ng_flags.flags);
 		/* replace */
 		if(ng_flags.replace && ng_flags.replace->child)
 			bencode_dictionary_add(ng_flags.dict, "replace", ng_flags.replace);
@@ -3521,6 +3518,10 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 		bencode_dictionary_add_string(ng_flags.dict, "sip-message-type",
 				sip_type_strings[msg->first_line.type]);
 	}
+
+	/* flags */
+	if(ng_flags.flags && ng_flags.flags->child)
+		bencode_dictionary_add(ng_flags.dict, "flags", ng_flags.flags);
 
 	/* add rtpp flags, if parsed by daemon */
 	if(!parse_by_module && flags)
