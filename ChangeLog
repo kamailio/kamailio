@@ -1,3 +1,1052 @@
+===================== 2025-11-06 Version 6.0.4 Released =====================
+
+===================== Changes Since Version 6.0.3 ===========================
+
+commit 457cfe43b6cf60497e730f2064988c1729b40434
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 6 09:17:01 2025 +0100
+
+    pkg/kamailio: version set 6.0.4 for rpms and alpine
+
+commit 28bcf795484d36a84cf52906674c4a35e7d850f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 6 07:36:59 2025 +0100
+
+    Makefile.defs: version set to 6.0.4
+
+commit 0f56a4378adcca1de23d8a23610869651f87cfd3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 6 07:36:35 2025 +0100
+
+    CMakeLists.txt: version set to 6.0.4
+
+commit c0a10988fd462852865463c244c556dd796ced3b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Nov 6 08:33:39 2025 +0100
+
+    pkg/kamailio/deb: version set 6.0.4
+
+commit ad52fc16f3b625577dac06e21f5d91a0b54f036b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 14 08:52:57 2025 +0200
+
+    pkg/kamailio/deb: remove berkeley modules from sid [skip ci]
+    
+    db5.3 is going away https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1117120
+    
+    > db5.3 underwent a license change upstream, and thus newer versions
+    > are unsuitable for Debian
+    
+    (cherry picked from commit cc4c036efa2bb1c468fff2101de9914ca0ef5580)
+
+commit 7f54e36191d08c929bfba5f3af130bf60b09c3ba
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Sep 18 12:13:13 2025 +0300
+
+    pkg/kamailio/deb: Update changed module path in copyright statement
+    
+    Module malloc_test is renamed to misctest.
+    Warning by lintian check "superfluous-file-pattern".
+    
+    (cherry picked from commit 6ecbde0455699548d8a538b30df6ade8a485ddcd)
+
+commit 082e3ac9a16d395b1d818d0d6acf15b19c20b488
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Sep 18 12:13:13 2025 +0300
+
+    pkg/kamailio/deb: Remove obsolete reference in copyright statement
+    
+    Memory manager "shm_mem" was removed in 2018.
+    Warning by lintian check "superfluous-file-pattern".
+    
+    (cherry picked from commit 364b371d75faff61acfa6cc621a82cf689356e81)
+
+commit 215b1f667036d7ce8734842d16ab24635fdf4ad5
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Sep 18 12:13:13 2025 +0300
+
+    pkg/kamailio/deb: Update changed file path in copyright statement
+    
+    s!lib/srutils!core/utils!
+    Warning by lintian check "superfluous-file-pattern".
+    
+    (cherry picked from commit e449840baf1112a7ca4f264153c7c0bc10bb3414)
+
+commit 0337a47af30609c1fc8ebe0a0ba002f9cb705b83
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Sep 18 12:13:13 2025 +0300
+
+    pkg/kamailio/deb: Fix incorrect file path in copyright statement
+    
+    s/code/core/
+    Warning by lintian check "superfluous-file-pattern".
+    
+    (cherry picked from commit a1581421685914c6f732a938cc11350cb909784b)
+
+commit f3dd68d2f8795937f9cb6d68bdac692e72a0429e
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Sep 18 12:13:13 2025 +0300
+
+    pkg/kamailio/deb: Adjust named license in copyright statement
+    
+    Adjust license name in License -field.
+    Warning by lintian check "space-in-std-shortname-in-dep5-copyright".
+    
+    (cherry picked from commit 857cb1af73b3ff84de50d200a369ae9488478b0d)
+
+commit b6dc1b185e48b49ddd3e9a2af5efed4b6174dc50
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Nov 3 10:46:18 2025 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 2f0b14803e8c60f3f617b8c26f491044fe82abc6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 8 09:19:22 2025 +0200
+
+    auth: export wrappers to the functions to calcupate HA1 and response
+    
+    - the function pointers can change based on the hashing algorithm
+    
+    (cherry picked from commit 3c16b81a363b15116ef1f3a480f1184fd2eb3d14)
+
+commit 296c5766c87d8d23cc0d86102951f427b01fe762
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 6 15:05:57 2025 +0200
+
+    sms: handle case of unsupported length
+    
+    - GH #4413
+    
+    (cherry picked from commit 42b24debb47edfef9229ada6fc7fafe293f530a9)
+
+commit 461dc36494711ed3b8db39e4eef7ce82340900a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 29 14:40:19 2025 +0200
+
+    tm: clean up locally parsed headers in onsend route
+    
+    - GH #4399
+    
+    (cherry picked from commit e9d143f7890cae3c629c82df2c281d528d1499d9)
+
+commit cf1c796c549616e84bfb9eb84e793ee1ce9f693e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 29 09:43:39 2025 +0200
+
+    core: parser - rework parsing From body on getting headers
+    
+    - reuse code for parsing To-body header on getting headers
+    
+    (cherry picked from commit 7ddba9d07a938299cb50f6dde354d8f691c307cf)
+
+commit c2dae566a61bca1e828c13ae30330b06b4c929f7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 28 09:02:21 2025 +0200
+
+    core: parse - parse from body on first iteration
+    
+    (cherry picked from commit 4fef850efb73aa063ae4f920e0f86f2bf085956c)
+
+commit 316610383101db55742dc85dc5b6cda3a648f97f
+Author: Lyubomir Yatanski <lyubomir.yatanski@flolive.net>
+Date:   Sat Sep 27 14:34:37 2025 +0300
+
+    core parser: fix after 316ea8925edd0c401c121e9dc0f21dde3a2c6598
+    
+    > Error: core/parser/msg_parser.c:423:9: error: call to undeclared function 'parse_from_header'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+    >  423 |                                         if(parse_from_header(msg) < 0) {
+    >       |                                            ^
+    > core/parser/msg_parser.c:423:9: note: did you mean 'parse_to_header'?
+    > core/parser/parse_to.h:48:5: note: 'parse_to_header' declared here
+    >    48 | int parse_to_header(struct sip_msg *const msg);
+    >       |     ^
+    > 1 error generated.
+    
+    (cherry picked from commit d8715c16fb79365a26fb75990565be4fea701ae6)
+
+commit d4d9b1b6be3baf6374def56d5e6bc189988e7469
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 26 11:25:21 2025 +0200
+
+    core: parser - parse From header on initial headers parsing
+    
+    (cherry picked from commit 316ea8925edd0c401c121e9dc0f21dde3a2c6598)
+
+commit e359c100cbf0f18b2cb3eb049a54d43c24132d21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 25 12:31:38 2025 +0200
+
+    dialog: try sending bye to callee no matter of the return code for caller
+    
+    - GH #4404
+    
+    (cherry picked from commit 25fa214154ede1907b20b0bf3d6c8e2ed8055512)
+
+commit 60dc2c93359b3e0baaa200b524e2b518ce628a20
+Author: dmsf100 <diogo.figueiredo@glia.com>
+Date:   Sat Aug 9 18:28:57 2025 +0100
+
+    dialog: fix sflags database persistence for dlg_setflag/dlg_resetflag
+    
+    Dialog script flags (sflags) were not being saved to database when
+    dlg_setflag() or dlg_resetflag() functions were called. The functions
+    updated flags in memory but didn't trigger database updates.
+    
+    - Add DLG_FLAG_CHANGED_SFLAGS flag to track sflags changes
+    - Trigger immediate DB updates in realtime mode
+    - Support delayed and shutdown database modes
+    - Fix database update parameters to target sflags column correctly
+    
+    (cherry picked from commit 9dcba806093ef48962379a64770c2b71b8b74232)
+
+commit 9b0e8116e37cde82f1017d964dd57fa564e7f788
+Author: Tim Anderson <tim@claritynetworks.com.au>
+Date:   Thu Aug 7 12:37:59 2025 +1000
+
+    xhttp_rpc: add handling of null strings in `print_value`
+    
+    - reported by GH #4351
+    
+    (cherry picked from commit b32894f85485ba5cc9b4f4fa9cb706144e70d0e7)
+
+commit 548649a236dc5177cf9d2941856bfe380f5394b8
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon Jul 3 07:23:34 2017 +0300
+
+    dispatcher: fix typo in documentation and code comments
+    
+    (cherry picked from commit 46ee44af4f1d9ae4fccc6178142ca602ef689943)
+
+commit 392f02f85127b93e5f21d50aac70283dc5c943ec
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon Jul 3 07:23:34 2017 +0300
+
+    core: socket_info - fix typo in log message
+    
+    (cherry picked from commit ef53fdeb33a6158801c52f522a1398abd3777324)
+
+commit 78e65311ffcdec1f6c7149ff80fa454cb3132654
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Sat Apr 20 18:42:07 2024 +0300
+
+    sworker: fix function name in documentation
+    
+    (cherry picked from commit bf8a605bbf843d184c1f4d94bb7e1bf6697ef0d2)
+
+commit 697572e40c783ed9537b17fd290c88a5c31e7105
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 10 13:21:52 2025 +0000
+
+    dispatcher: show link in README file as well
+    
+    (cherry picked from commit 616c4c77db531feaf0ce3ea13962b9bb41bf2160)
+
+commit c748b55c0c8db016ce24a811534106a2e26edc3a
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 10 12:18:58 2025 +0000
+
+    dispatcher: add link to algorithm definition to main section
+    
+    (cherry picked from commit 0933cb319aa2e114b35cfac8383dd88855125b83)
+
+commit aba4d8149836264224bc0b6f371db524314443ea
+Author: Julien Chavanton <jchavanton@gmail.com>
+Date:   Tue Sep 9 13:45:56 2025 -0400
+
+    dispatcher: update the default value and docs of ds_latency_estimator_alpha
+    
+    This is to match the recent adjustement made in "dispatcher: fix ds_latency_estimator_alpha meaning"
+    
+    (cherry picked from commit 02c0e0b1b0f84754c468e97ae7f2c09e7c13e8ee)
+
+commit aded821760d2b0be1e4fadb97d79fa163ebbc52e
+Author: Michael Furmur <furmur@pm.me>
+Date:   Mon Aug 11 12:24:08 2025 +0300
+
+    dispatcher: fix ds_latency_estimator_alpha meaning
+    
+    swap 'latency' and 'latency_stats->estimate' in the EWMA formula
+    to ensure ds_latency_estimator_alpha rates new values over the old average estimate
+    
+    (cherry picked from commit d789b6c1fec4cd1743a51c87b8f01af7ddee03d7)
+
+commit 6949f6970786d737daa88b05b014725ba81147f5
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Sun Oct 26 17:00:07 2025 +0100
+
+    ims_ipsec_pcscf: fix selection of encryption algorithm selection
+    
+    (cherry picked from commit 1bdafed8d4bb97f1f9a7654155decbf9625b0504)
+
+commit 1a2ab319458637e219bd43a4b2db9c8a38fd0b34
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Oct 27 16:22:17 2025 +0100
+
+    ims_usrloc_scscf: improve find_contact_from_impu()
+    
+    * remove ':5060' from comparation
+    * don't compare twice if there's no alias_term
+    
+    > ims_dialog [dlg_cb.c:271]: run_dlg_callbacks(): dialog=0x7fa0f03b9da0, type=16
+    > ims_usrloc_scscf [contact_dlg_handlers.c:65]: find_contact_from_impu(): Looking for contact [sip:1d5c5384e21d0969@10.17.10.37:5060;transport=udp] for IMPU [sip:+3910010008912@ims.mnc001.mcc001.3gppnetwork.org]
+    > ims_usrloc_scscf [contact_dlg_handlers.c:102]: find_contact_from_impu(): Comparing [10.17.10.37:5060;transport=udp] and [10.17.10.37;transport=udp]
+    > ims_usrloc_scscf [contact_dlg_handlers.c:104]: find_contact_from_impu(): Comparing [10.17.10.37:5060;transport=udp] and [10.17.10.37;transport=udp]
+    > ims_usrloc_scscf [contact_dlg_handlers.c:113]: find_contact_from_impu(): Skipping sip:1d5c5384e21d0969@10.17.10.37;transport=udp
+    > ims_usrloc_scscf [contact_dlg_handlers.c:118]: find_contact_from_impu(): malformed contact, bailing search
+    > ims_usrloc_scscf [contact_dlg_handlers.c:163]: contact_dlg_handler(): Unable to find caller contact from dialog.... continuing
+    > ims_usrloc_scscf [contact_dlg_handlers.c:65]: find_contact_from_impu(): Looking for contact [sip:527478AC-68FF7C1E0004017B-BD55A700@10.17.10.37:5060] for IMPU [tel:+3910010008913]
+    > ims_usrloc_scscf [contact_dlg_handlers.c:102]: find_contact_from_impu(): Comparing [10.17.10.37:5060] and [10.17.10.37;transport=udp]
+    > ims_usrloc_scscf [contact_dlg_handlers.c:104]: find_contact_from_impu(): Comparing [10.17.10.37:5060] and [10.17.10.37;transport=udp]
+    > ims_usrloc_scscf [contact_dlg_handlers.c:113]: find_contact_from_impu(): Skipping sip:1cecbffd628fa83f@10.17.10.37;transport=udp
+    > ims_usrloc_scscf [contact_dlg_handlers.c:118]: find_contact_from_impu(): malformed contact, bailing search
+    > ims_usrloc_scscf [contact_dlg_handlers.c:189]: contact_dlg_handler(): Unable to find callee contact from dialog.... continuing
+    > ims_usrloc_scscf [contact_dlg_handlers.c:204]: contact_dlg_handler(): No Contacts found for both caller && callee ... bailing
+    
+    (cherry picked from commit 6ce335298da14211716209b8b8c12efedc86f53f)
+
+commit d56fd00cc6850b0e2130bb8e03f0aa53488ff3bb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Sep 6 11:47:35 2025 +0200
+
+    ims_usrloc_scscf: fix contact_port_ip_match()
+    
+    * same logic as in 22db60c1e29c26caacf4356849d2d1d550d68617
+    
+    (cherry picked from commit 0cae5fa009ce1385a3a131523685f74bef5514b6)
+
+commit dfc590313be56564a924bd190ae89f8cf1b1f4fb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Sep 4 14:00:57 2025 +0200
+
+    ims_registrar_scscf: fix contact_port_ip_match()
+    
+    It was not matching comparation when default port was omitted
+    
+    > ims_registrar_scscf [registrar_notify.c:1556]: contact_port_ip_match(): Matching contact using only port and ip - comparing [127.169.7.104] and [127.169.7.104:5060]
+    
+    (cherry picked from commit f57f4045ac8a08585c573dcc1eb257102be1a2a9)
+
+commit a8ebcb84827a5ddceceebd98c8dbce8e89447f67
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Oct 21 15:32:46 2025 +0200
+
+    ims_qos: cscf_get_asserted_identity() not properly parsing PAI header
+    
+    > ims_qos [ims_qos_mod.c:1035]: w_rx_aar(): No P-Asserted-Identity hdr found in request. Using From hdr in req - we shouldn't have to do this
+
+commit 28d718c8caeff0e1780c553d5364246207e1420d
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Oct 3 11:42:35 2025 +0000
+
+    topos_redis: cmake: Use consistent naming across modules
+    
+    (cherry picked from commit 5d73826c9b3b7ececf01358a7396e5e395f15872)
+
+commit 9731c735d59e07f82c578b6910e37ae109e539f2
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Oct 3 11:39:56 2025 +0000
+
+    db_redis: cmake: Add ssl support
+    
+    (cherry picked from commit 4f436ee4881e954fa6fc152c02ac5ddc52ff936c)
+
+commit 6970be9c0036c5af3b123c89beee5f32af861309
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Oct 3 11:38:52 2025 +0000
+
+    ndb_redis: cmake: Remove message for hiredis_ssl
+    
+    - pkg-config alreadys does
+    
+    (cherry picked from commit d4a955e1f04fe6b109556b43c2e682b105f2fb95)
+
+commit 1a93503ba82bd0227e774938bcf0d706cd8513a7
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Sep 25 11:28:22 2025 +0000
+
+    ndb_redis: cmake: Update for hiredis_ssl
+    
+    (cherry picked from commit 829dce8e9de586f1269be2f58f9a7f58cc81e2b1)
+
+commit 97fda22d4a3184fabf8889cbd0e72d621c523c96
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Sep 24 21:31:19 2025 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 2314adbc98deb8172f10d87ae8647dbd45d8bf8f
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Sep 24 15:22:09 2025 -0400
+
+    rtpengine: add recommended version to docs
+    
+    Closes #4407
+
+commit f5f3e9f63c62f12746d282eea29c1a77d6da456b
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Fri Sep 12 14:41:14 2025 +0300
+
+    CMakeLists.txt: drop EXTRAVERSION
+
+commit de4b07c3a4962afb167bf80e2e673ad0fe88f25c
+Author: Xenofon Karamanos <22965395+xkaraman@users.noreply.github.com>
+Date:   Mon Sep 22 13:53:25 2025 +0000
+
+    Revert "websocket: use core sha1 instead of libssl for the handshake key"
+    
+    This reverts commit 24643eb80d8206098a17dd8073523157766a5a04.
+
+commit 24643eb80d8206098a17dd8073523157766a5a04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 7 06:01:05 2025 +0200
+
+    websocket: use core sha1 instead of libssl for the handshake key
+    
+    - avoid the libssl crypto rwlock use
+    
+    (cherry picked from commit e0c04615bb6a9f4a2077012481d4cbb5c669ecf0)
+
+commit aad27e1536ed46bd86d8ca36758a176c250334e8
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 14:52:09 2025 +0000
+
+    cmake: Detect armv8 and armv7 as arm
+    
+    - for compatibility reasons for make
+    
+    (cherry picked from commit 70ee233bf9a0cdf88be23d5e58e5df47f09926f2)
+
+commit 883b6720c9652d92b3e41debc07b535bfd8477e9
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 14:48:16 2025 +0000
+
+    cmake: Add ppc compile options
+    
+    (cherry picked from commit 91e8565c32754229c124f99a25377142184fdb79)
+
+commit b371e1827c6190a8d26e2d1e32c7798302e241b1
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 14:42:26 2025 +0000
+
+    cmake: Add alpha compile options
+    
+    (cherry picked from commit d32ce5536d19092dbc86637243c79d95c23ae24a)
+
+commit 1b6fd33901a259237e15a803286a420c4d0ab844
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 14:40:17 2025 +0000
+
+    cmake: Add mips64 compile options
+    
+    (cherry picked from commit 2938e32cf53c1a31357577f55be5150745eb916d)
+
+commit c1826c49170f22533001477045405075db1463d8
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 14:37:12 2025 +0000
+
+    cmake: Add mips2 compile options
+    
+    (cherry picked from commit b8baa3a1533fc38ac8960c655e41743fe1461e21)
+
+commit 3281b6c0c975ace1930e83bed3ac96c91e7dead1
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 14:33:27 2025 +0000
+
+    cmake: Add mips compile options
+    
+    (cherry picked from commit f5d4c6095c91c54d29ba2dc3276ec08906813fbc)
+
+commit 58592f061e4e42f44ec2941d8461baa0c6060713
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 13:32:37 2025 +0000
+
+    cmake: Add sparc compile options
+    
+    (cherry picked from commit 84db8b6c0c2ba289429ab36d054d677e2c16c8e0)
+
+commit 14919f1e35579d4406d79cd7e6361dbdb481aead
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 13:32:06 2025 +0000
+
+    cmake: Add sparc64 compile options
+    
+    (cherry picked from commit 97d453665f74edc9d0e8174c46c37ae7f57fee06)
+
+commit cce34a150f8ee7b77d314dd3d2c6f5ce3a7e2f0d
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 22 09:40:30 2025 +0000
+
+    cmake: Adopt x86_64 options from make
+    
+    (cherry picked from commit 0b7c938c3c2c652ee1fa8d55ce28135c6ab4b777)
+
+commit 29df7958433c25d51a02a33de5388e271c673d19
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 22 09:30:25 2025 +0000
+
+    cmake: Adopt x86 options from make
+    
+    (cherry picked from commit cd46307a9c542eb74e69498b8fbcd35d70bb62c5)
+
+commit 4b6b739dbe6a4bf58a41060f3fbdaa717076fe05
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 22 09:21:47 2025 +0000
+
+    cmake: Add set_if_empty function
+    
+    (cherry picked from commit bcbeb86443e1a058e1439572c93bc043517bdefd)
+
+commit 241f9737adf9f1e8e52ffbdbca68063b2a9e1587
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 25 13:37:24 2025 +0000
+
+    cmake: Add arm6 compile options
+    
+    (cherry picked from commit 2bd61fc1b13af0e05b3060257f89a884433370bd)
+
+commit 6f4ad68c19b0d6c36d0d97fd96a75491a311f238
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 22 09:08:43 2025 +0000
+
+    cmake: Add arm and arm7 options
+    
+    (cherry picked from commit bfd7596f0fcfe6127bea92c6de175ff0b6facf8a)
+
+commit 5f514798e97578602b9eac29be36629c8be35229
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 22 09:07:42 2025 +0000
+
+    cmake: Use TARGET_ARCH var for detecting and aliasing target arch
+    
+    (cherry picked from commit 74c1c3fc919637491b22cbae11872da288990b5a)
+
+commit 247309893ef0d8b6189f122bf3f4e07d0eaaead9
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Aug 20 16:07:09 2025 +0000
+
+    cmake: Fix elseif() without conditions
+    
+    (cherry picked from commit 758af7cf202d3545bf2e68019dfadb0ea56219a3)
+
+commit e6ae9d1430290591b83e35aa8515206c0f6bb78c
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Aug 19 17:18:40 2025 +0000
+
+    cmake: Fix bash specific result code to sh
+    
+    (cherry picked from commit 44bd165d101eb56ccb1189c77d98878f20a094b2)
+
+commit 068a67ee85f82feb7ab3a513051571274895a8a8
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Aug 19 17:11:38 2025 +0000
+
+    cmake: Use `sh` instead of `bash
+    
+    (cherry picked from commit b21f14b3fb1d4d553f6c07496a09003c049493fe)
+
+commit 13f2aff02192a71d86db931a4e4a0ff323c85698
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 18 10:12:28 2025 +0000
+
+    cmake: Add prtint-modules target
+    
+    - Print a summary for included and excluded modules
+    - Print a summary of all module to be built
+    - Sort them
+    
+    (cherry picked from commit 916e9911bf9b06e5677975ca82d72618d1df9af8)
+
+commit ad276703aaedef50450e87731ea7a62163e46ce7
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 18 10:10:50 2025 +0000
+
+    cmake: Add a component name for user-specified modules
+    
+    (cherry picked from commit 47892a13b4c9c2c6a4e100ecad250d1d23b2c9a1)
+
+commit f1b718ca70a840ab9b6c1e7397640e4ddf29df9a
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 18 10:10:19 2025 +0000
+
+    cmake: Provide a clear error
+    
+    - No folder with module_name found
+    - No CMakeLists.txt file found in said folder
+    
+    (cherry picked from commit ba693314e43d4c20263a6b1f7dc937052cb6c604)
+
+commit 775a5ee671400e2f15167c2c3d8617cd275c1419
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 8 15:08:58 2025 +0000
+
+    cmake: Add missing defintion
+    
+    (cherry picked from commit 3ca03821e6920fe57b15a0a46c22c6e9e9299aa3)
+
+commit 7f4a4012b129fdf28273f17a077dfad07ad1511b
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 8 15:08:36 2025 +0000
+
+    cmake: Remove duplicate definition
+    
+    - Used in os specific cmake like linux.cmake
+    
+    (cherry picked from commit b4fbab81f35984cf3369cd97142f49ee4c622877)
+
+commit a8328c46994e816b36ddc9ed53e57d2dba4ecac7
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Aug 8 15:07:17 2025 +0000
+
+    cmake: Fix FMSTATS and KMSTATS compile defs
+    
+    - Removed relevant unnessecary option
+    
+    (cherry picked from commit 8728cb4de4ba27287b1f43f9d96179ff4df08b84)
+
+commit 8c1ed877e5d57e437c9600aca9c53f4e34334a50
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Aug 6 09:57:27 2025 +0000
+
+    cmake: Fix typo for 6738b9e
+    
+    - Alias ppc64le to ppc64
+    
+    (cherry picked from commit 41241ec4c7210d2db1195715afc0c84a6959b45f)
+
+commit 7d43c2ecacb60d4d7f91180b33a1ff024188235f
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Aug 5 13:01:48 2025 +0000
+
+    cmake: Alias ppc64le to ppc64
+    
+    - Match Makefile behaviour
+    
+    (cherry picked from commit 6738b9e64e04ba029e1c207c2dc76b10d8493df0)
+
+commit 3afd2aab843f1ad7cc338ff9a58cb1fade465417
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Jul 7 16:41:33 2025 +0000
+
+    cmake: Update and add options
+    
+    - Add dependent options
+    - Add EXTRA_DEFS for undeclared options found in the code as a convenience
+    
+    (cherry picked from commit 848ef810c05d8969968e04752d333ffdfb754551)
+
+commit 377e902eccea79ad79a7e3e4af4acd9f36638510
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Jul 24 14:07:52 2025 +0000
+
+    cmake: Up min version to 3.13
+    
+    - As discussed in https://github.com/kamailio/kamailio/issues/4078#issuecomment-2553148148
+    
+    (cherry picked from commit 8cf64efffe08a6fdbb8365e463a63bad30b7a3d7)
+
+commit a21ec3ab7812852744aa56a3a66b0ed04c8d062e
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jul 22 13:39:03 2025 +0000
+
+    cmake: Add ppc64 arch compile options
+    
+    (cherry picked from commit 26b8bd414ba4cef25c8d5bcfd5a5d97cecf759d2)
+
+commit 5fe5dd3cf95c5395a03df99637f15646c17e8f41
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jul 22 12:27:42 2025 +0000
+
+    cmake: Adopt regex to match only ppc and ppc64 and nothing more.
+    
+    (cherry picked from commit 25810b126740e741698d5067bca0e79c5cb12b16)
+
+commit 949075ab76e60cfb2798ec43794ff8a040c797f8
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jul 22 11:51:05 2025 +0000
+
+    cmake: Fix condition for fast_lock on unknown archs
+    
+    (cherry picked from commit 053eb87f5338b0fc94dcb3e0d6b4c7416c854140)
+
+commit 57af62677c3c1056540748ad02053ec80ce3c826
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Jul 21 21:35:05 2025 +0000
+
+    cmake: Fix component group names for dbshema generation
+    
+    - dbshema modules generated components that were not provided by user
+    - if a module with dbschema is included in the include_modules list, it will now be in "user_specified_list" component instead of the actual KGROUP component that might be not included.
+    
+    (cherry picked from commit 97345507045bee739b006298a586dfaedc2b09e8)
+
+commit 8874b2f64db9d5d1d7a6d83d260dd9b42838fbca
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Jul 21 19:04:45 2025 +0000
+
+    cmake: Fix help string and allow mutliple values from gui
+    
+    - Allow providing multiple space seperated groups in guis like ccmake instead of the single option
+    
+    - ALL_PACKAGED option refined to be allowed with other groups as well.
+    - Providing ALL_PACKAGED with another group will append the another group to the list of groups comprising the ALL_PACKAGED option.
+    - Remove duplicates in the group list if any
+    
+    (cherry picked from commit 78dbbda4ca74e18c4a99c87520abd5d7906af4d3)
+
+commit a4f20cff3e41182515254249c4d2e5578386109b
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Jul 21 17:45:27 2025 +0000
+
+    cmake: Remove Flavour options
+    
+    (cherry picked from commit ae28e39830f79ee2abf34518678749678e7d14bb)
+
+commit f44ce861660a9e436bedf274566c334771bbcebf
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 23 13:34:06 2025 +0000
+
+    cmake: dbschema Coorect install folder of pi_framework
+    
+    (cherry picked from commit 57bd37c54390fdb70520834b0c2eb29fbb79510e)
+
+commit 494a45af3eee3ae67307ab54e4696ce2cedba1af
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 23 11:03:00 2025 +0000
+
+    cmake:  Add some check for finding group name if using non K-variants of group names
+    
+    (cherry picked from commit c7fcdfdb13aeec9aeae726a9cc1ccaeda557e7bb)
+
+commit 6b56aca2cf7dd8629b2779f263225c6535f7c6f2
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 23 11:01:10 2025 +0000
+
+    cmake: Add missing package KSTANDARD
+    
+    - When `ALL_PACKAGED` is used, KSTANDARD should be built as well, but not KMINI which is a subset of it.
+    - Fix RTP_MEDIA group name
+    
+    (cherry picked from commit 0fb182720428b276793899debb210279a0b5ec97)
+
+commit 03f4f7070d25f3cecacabe1dd66a71e1d074b12a
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Apr 24 12:47:31 2025 +0000
+
+    cmake: Refactor packaging setup and improve installation paths
+    
+    - Moved packaging configuration to a new deb-packaging.cmake file for better organization.
+    - Updated installation paths in CMakeLists to use DESTDIR for flexibility.
+    - Enhanced group handling for module packaging, allowing for "ALL_PACKAGED" option.
+    
+    (cherry picked from commit cdf9a4716db3762b172df059d7366983216fd48c)
+
+commit 344bdcfa597bd0ae36a478a507f003ad605c3705
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 23 10:56:11 2025 +0000
+
+    cmake: Move prefix/suffix calculation back.
+    
+    - Prefix depends on each table name..
+    - Fix postgress with correct install folder.....
+    
+    (cherry picked from commit 2ec8ddba5eeaeea1c7292d1aa56ed90dc834341e)
+
+commit fbd6875072963a55b613a0d359d871f4ed0315c4
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon May 19 14:18:13 2025 +0000
+
+    cmake: snmpstats Remove warning message
+    
+    (cherry picked from commit 201a2bdee6a8b78787908b296824cd282b78eef5)
+
+commit 76d6fea3874ce1ea3dd91fb7845586e19f2d9a2e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jun 10 16:20:30 2025 +0200
+
+    lib/srdb1: align schema Makefile after e0dd39618fae2004cd1ab44758ca323376935e2e
+    
+    (cherry picked from commit 4de3270830c08641e3bc3e5858513244083b106e)
+
+commit 3bb15cfd44f562ac054d480d7ef2053a9d144850
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jun 10 13:50:17 2025 +0200
+
+    lib/srdb1: fix schema Makefile after e0dd39618fae2004cd1ab44758ca323376935e2e
+    
+    > diff --git a/doc/stylesheets/dbschema_k/xsl/mongodb.xsl b/doc/stylesheets/dbschema_k/xsl/db_mongodb.xsl
+    > similarity index 100%
+    > rename from doc/stylesheets/dbschema_k/xsl/mongodb.xsl
+    > rename to doc/stylesheets/dbschema_k/xsl/db_mongodb.xsl
+    > diff --git a/doc/stylesheets/dbschema_k/xsl/mysql.xsl b/doc/stylesheets/dbschema_k/xsl/db_mysql.xsl
+    > similarity index 100%
+    > rename from doc/stylesheets/dbschema_k/xsl/mysql.xsl
+    > rename to doc/stylesheets/dbschema_k/xsl/db_mysql.xsl
+    > diff --git a/doc/stylesheets/dbschema_k/xsl/oracle.xsl b/doc/stylesheets/dbschema_k/xsl/db_oracle.xsl
+    > similarity index 100%
+    > rename from doc/stylesheets/dbschema_k/xsl/oracle.xsl
+    > rename to doc/stylesheets/dbschema_k/xsl/db_oracle.xsl
+    > diff --git a/doc/stylesheets/dbschema_k/xsl/postgres.xsl b/doc/stylesheets/dbschema_k/xsl/db_postgres.xsl
+    > similarity index 100%
+    > rename from doc/stylesheets/dbschema_k/xsl/postgres.xsl
+    > rename to doc/stylesheets/dbschema_k/xsl/db_postgres.xsl
+    > diff --git a/doc/stylesheets/dbschema_k/xsl/dbtext.xsl b/doc/stylesheets/dbschema_k/xsl/db_text.xsl
+    > similarity index 100%
+    > rename from doc/stylesheets/dbschema_k/xsl/dbtext.xsl
+    > rename to doc/stylesheets/dbschema_k/xsl/db_text.xsl
+    
+    (cherry picked from commit 58057e9c78971ee215b508f912e94f79bc57f247)
+
+commit 01d2ae51947898806b1d2ba67bea0eca539848bc
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue May 20 15:05:56 2025 +0000
+
+    cmake: Fix dbschema generation to match older makefile structure
+    
+    (cherry picked from commit e0dd39618fae2004cd1ab44758ca323376935e2e)
+
+commit 1421ade7732f8bdb4535e16a951dd3710325fedb
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon May 19 17:42:03 2025 +0000
+
+    cmake: Fix dbschema generation with group names
+    
+    - Add function to find group of module
+    - Some targets and destinations folders have changed due to changing to more consistency naming.
+    - dbschema_{db_module_name) targets
+    - stringparam db set to module name
+    
+    (cherry picked from commit ccad04cc13b1c5695aded8ee02181f10c8ed7d11)
+
+commit 48ab6ef07162f73aed6708b3a8704696bfcf1997
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 16 14:31:08 2025 +0000
+
+    cmake: Centralize dbschema generation
+    
+    - Do not define the targets if xsltproc is missing
+    
+    (cherry picked from commit 6753acd06859e5e5e34a7981765c4bcdbeb66897)
+
+commit c0d2b9eb08cd55e043d4df65dfb902ee6597e133
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 16 11:08:52 2025 +0000
+
+    cmake: Fix wrong name of option
+    
+    (cherry picked from commit f9bbac5167e98952ef5b1764c3f2c4b6939fd25d)
+
+commit d6673422df4b6ae2ea50831a657458b708da14c5
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 16 11:07:27 2025 +0000
+
+    cmake: Add some comments
+    
+    (cherry picked from commit 497b7d94b8d3575cf7399c8537e96297bcd4062b)
+
+commit 17c2fd25e353187297dcc09e456a97a302451d39
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon May 12 09:27:44 2025 +0000
+
+    cmake: Add check and warning for module docs
+    
+    (cherry picked from commit 782d93197c928f8856a7026c93aebd223c6cb682)
+
+commit ebd6d2765161f2e8a228be3792c3e3012856e262
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Apr 24 13:26:45 2025 +0000
+
+    cmake: Fix build paths for dbschema.
+    
+    - Build artifcats of dbschema should be in utils folder
+    
+    (cherry picked from commit 478ddb1f38817ac4730d0f499c73046be26b6907)
+
+commit ded3889d606bd1d396e4a482ee61a91aa42bac40
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Mar 26 16:00:23 2025 +0000
+
+    cmake: Fix formatting and add some comments.
+    
+    - Remove unused replacement SRC_NAME to MAIN_NAME
+    
+    (cherry picked from commit 0550b6300703ec5536a033e1d4ba4d70ec53f83a)
+
+commit f5771a3ed1b397d5b76f5f50b27a3422f9040a29
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Feb 18 15:05:45 2025 +0000
+
+    cmake: Better handling of doc generation dependencies
+    
+    (cherry picked from commit 08bfcad2c34855dbadd3c9eafda72b38a6e65a1c)
+
+commit 1bc336122c6aa1adc259efb48882fe4f4ae5a0cf
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Feb 18 14:50:31 2025 +0000
+
+    cmake: quote variables for expansion
+    
+    (cherry picked from commit d3f85d8a3b13a444ac66b440056aee8232cbae54)
+
+commit 23c578ba73833fa49f7d2807ecfc1c95e603a86b
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 28 14:41:37 2025 +0000
+
+    cmake: Use components to install groups
+    
+    - kamailio-core for anything related to core
+    - group_name as defined in groups.cmake
+    - Preferably use K-variants instead of DEFAULT,STANDARD
+    - Refactor kamctl and dbschema CMakLists for component based installation
+    
+    (cherry picked from commit 3c9f60772e04edbc853d8162543b3b0af7f46217)
+
+commit 407433da72418f080ef79640cb04ca0e2951d1da
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Feb 6 12:57:45 2025 +0000
+
+    cmake: If BUILD_DOC options is set to ON, include doc and man targets to default target!
+    
+    (cherry picked from commit 8cc60c03a25a2a9b1f7fbe93e08c21165336ad0a)
+
+commit 0c3cfeea45aadafba8f5b8ece814bd219a5911e2
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 16 11:12:23 2025 +0000
+
+    cmake: Remove find_package for ORTP and Mediastreamer2 libraries
+    
+    - Use pkg-config instead because their cmake configs are not up to standard and complicates things
+    
+    (cherry picked from commit 42e1a9c3c5df65cae8a5f559f6fe47a6de5f6fac)
+
+commit 48de1c533d38ecd3c4cb6563bbbbb43bf559aa14
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 16 11:11:18 2025 +0000
+
+    cmake: Quiet fail for rabbit-mq
+    
+    - Remove extra find_package(pkgconfig)
+    - Remove required version
+    
+    (cherry picked from commit 1c4de2410f8f5d3f600c96ac823c88911c58ae22)
+
+commit 3dcfd9321d9ca9f9e8c107f8f81ec89cc558d19b
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 16 11:09:30 2025 +0000
+
+    cmake: Remove unnessecary components to be consistent
+    
+    (cherry picked from commit 898f680d85b3e558038b41a14fa6f2ebca05bc94)
+
+commit e3ea2f56791ae8d953ab5e8fc46a61a6037d37b8
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri May 16 11:08:19 2025 +0000
+
+    cmake: Remove unused groups
+    
+    (cherry picked from commit 85b821b4b6e6cfaa5495d39bcd3ef2e1b939b499)
+
+commit 8edfda3952eb0c0b339a9822aaf06e182ce56fc5
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon May 12 09:29:56 2025 +0000
+
+    cmake: Add missing defintion
+    
+    (cherry picked from commit 165f2cd3c2e1197b8d1986cbc2784a24c02e06e9)
+
+commit 35772f6fb527e9ce2fb131729203639de479c397
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Apr 24 13:27:08 2025 +0000
+
+    cmake: Remove warning message
+    
+    (cherry picked from commit 549643ec1e283b07e9fae274b6ed923065ba46e0)
+
+commit 287679f8dbff6114d6113bf38d3e02d211045a35
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Feb 6 12:55:43 2025 +0000
+
+    cmake: Warning if no modules/group were selected
+    
+    (cherry picked from commit cf8cdb99355e19a30460229633eaf087717ee44d)
+
+commit c19544c6af100ae86514d924a8c60e88fd855d90
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Jan 30 15:48:26 2025 +0000
+
+    cmake: Forbid in-source builds
+    
+    (cherry picked from commit 0afea1fd170a79d3f260c18a293bac1ce8fd8527)
+
+commit f34264ad78fd547e64db081ca2738b7fda385cd8
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Mar 27 13:50:51 2025 +0000
+
+    cmake: Fix formatting according to cmake-format config file.
+    
+    (cherry picked from commit 7c58b8a7fca0a72b360669ba297e0902cceeb4b0)
+
+commit bc5e6b864663891505191fbb74b54d66f4a03c99
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Mar 24 16:42:30 2025 +0000
+
+    cmake: Alter some of cmake-format options
+    
+    (cherry picked from commit b102e3f38a554f65a55424a728821d68cc386015)
+
+commit 0f58b8f0b304c72f2b42576b4ccf97989c2a8393
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Jan 30 15:09:21 2025 +0000
+
+    cmake: Generate version-create.mongo file and install it
+    
+    (cherry picked from commit b70ade3e636cec8c38f40c92ec6bab5e7486feee)
+
+commit 728776a3ad75d1d8f67b3f452d02c956a6f2da8e
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Sep 15 15:56:45 2025 +0200
+
+    cdp: don't try to cleanup_ssl when no there's no tls info
+    
+    > Program terminated with signal SIGSEGV, Segmentation fault.
+    > #0  0x00007fa6326b3a95 in SSL_shutdown () from /lib/x86_64-linux-gnu/libssl.so.3
+    > (gdb) bt
+    > #0  0x00007fa6326b3a95 in SSL_shutdown () from /lib/x86_64-linux-gnu/libssl.so.3
+    > #1  0x00007fa6327582d5 in cleanup_ssl (tls_ctx=0x0, tls_conn=0x0) at cdp_tls.c:259
+    > #2  0x00007fa6327a30a7 in receive_loop (original_peer=0x7fa612199860) at receiver.c:890
+    > #3  0x00007fa63279b5cb in receiver_process (p=0x7fa612199860) at receiver.c:485
+    > #4  0x00007fa63277e2b1 in diameter_peer_start (blocking=0) at diameter_peer.c:294
+    > #5  0x00007fa63274ea8f in cdp_child_init (rank=0) at cdp_mod.c:275
+    > ...
+    > (gdb) p sp->tls_conn
+    > $5 = (SSL *) 0x0
+    > (gdb) p sp->tls_ctx
+    > $6 = (SSL_CTX *) 0x0
+    
+    (cherry picked from commit cb0f9a9ac493201bad29e7f393e1c1b193bdd4b9)
+
+commit 4e53db36e65f4d97c09b9daf67abd4e56e623107
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Sep 11 09:45:00 2025 +0200
+
+    pkg/kamailio/deb: refresh [skip ci]
+    
+    (cherry picked from commit 618874aeb817400ea53c0529c7cc856878c560a4)
+
+commit 886652cb20dcec45968e3cc0c052076b193d7734
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Sep 11 09:39:14 2025 +0200
+
+    pkg/kamailio/deb: add jwt to extra modules [skip ci]
+    
+    libjwt-dev > 1.12:
+    * trixie
+    * sid
+    * noble
+    
+    (cherry picked from commit 6e756e7d6193e955298a1cb407b827f0538de190)
+
+
 ===================== 2025-09-10 Version 6.0.3 Released =====================
 
 ===================== Changes Since Version 6.0.2 ===========================
