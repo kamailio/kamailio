@@ -9,7 +9,7 @@
 
 <table id="acc_cdrs" xmlns:db="http://docbook.org/ns/docbook">
     <name>acc_cdrs</name>
-    <version>2</version>
+    <version>3</version>
     <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>This table is used by the ACC module to report on CDRs relying
@@ -49,7 +49,7 @@
     <column>
         <name>duration</name>
         <type>float</type>
-        <size>10,3</size>
+        <size>13,6</size>
         <description>Duration</description>
         <default>0</default>
     </column>
