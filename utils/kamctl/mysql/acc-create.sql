@@ -17,12 +17,12 @@ CREATE TABLE `acc_cdrs` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `start_time` DATETIME DEFAULT '2000-01-01 00:00:00' NOT NULL,
     `end_time` DATETIME DEFAULT '2000-01-01 00:00:00' NOT NULL,
-    `duration` FLOAT(10,3) DEFAULT 0 NOT NULL
+    `duration` FLOAT(13,6) DEFAULT 0 NOT NULL
 );
 
 CREATE INDEX start_time_idx ON acc_cdrs (`start_time`);
 
-INSERT INTO version (table_name, table_version) values ('acc_cdrs','2');
+INSERT INTO version (table_name, table_version) values ('acc_cdrs','3');
 
 CREATE TABLE `missed_calls` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
