@@ -53,17 +53,20 @@ extern int log_missed_flag;
 extern int cdr_enable;
 extern int cdr_extra_nullable;
 extern int cdr_start_on_confirmed;
+extern int cdr_duration_mode;
 extern int cdr_log_facility;
 extern int cdr_expired_dlg_enable;
 extern str cdr_skip;
 
 extern int db_flag;
 extern int db_missed_flag;
+extern int db_ver_check;
 
 extern str db_table_acc;
 extern void *db_table_acc_data;
 extern str db_table_mc;
 extern void *db_table_mc_data;
+extern str acc_cdrs_table;
 
 extern str acc_method_col;
 extern str acc_fromuri_col;
