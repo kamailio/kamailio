@@ -10,7 +10,7 @@
 <table id="subscriber_scscf" xmlns:db="http://docbook.org/ns/docbook">
     <name>subscriber_scscf</name>
     <version>6</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for storage engine for SCSCF contacts. More information at:
             <itemizedlist>
@@ -27,7 +27,7 @@
       <size>&table_id_len;</size>
       <autoincrement/>
       <primary/>
-      <type db="dbtext">int,auto</type>
+      <type db="db_text">int,auto</type>
       <description>Unique ID</description>
     </column>
 

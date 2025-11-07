@@ -10,7 +10,7 @@
 <table id="s_cscf_capabilities" xmlns:db="http://docbook.org/ns/docbook">
     <name>s_cscf_capabilities</name>
     <version>1</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for SCF capabilities in IMS. More information at:
             <itemizedlist>
@@ -27,7 +27,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>Unique ID for the capability</description>
     </column>
 
