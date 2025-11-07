@@ -3541,7 +3541,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 					} else if(was_down && !is_down) {
 						ds_run_route(msg, address, "dispatcher:dst-up", rctx);
 					}
-				} else if(ds_event_callback_mode == 1) {
+				} else if(ds_event_callback_mode == 2) {
 
 					if((!was_down && is_down) || (old_state == 0 && is_down)) {
 						ds_run_route(msg, address, "dispatcher:dst-down", rctx);
