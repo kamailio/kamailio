@@ -9,7 +9,7 @@
 <table xmlns:db="http://docbook.org/ns/docbook">
   <name>uid_global_attrs</name>
   <version>1</version>
-  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+  <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
   <description>
 	The table contains value for global attributes. Global attributes are
 	often used to implement default value for attributes that are not present
@@ -22,7 +22,7 @@
     <size>&table_id_len;</size>
     <autoincrement/>
     <primary/>
-    <type db="dbtext">int,auto</type>
+    <type db="db_text">int,auto</type>
     <description>Unique ID</description>
   </column>
 

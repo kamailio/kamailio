@@ -10,7 +10,7 @@
 <table>
   <name>uid_uri_attrs</name>
   <version>2</version>
-  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+  <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
 
   <column id="id">
     <name>id</name>
@@ -18,7 +18,7 @@
     <size>&table_id_len;</size>
     <autoincrement/>
     <primary/>
-    <type db="dbtext">int,auto</type>
+    <type db="db_text">int,auto</type>
     <description>Unique ID</description>
   </column>
 

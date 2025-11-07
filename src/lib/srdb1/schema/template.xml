@@ -10,7 +10,7 @@
 <table id="table_name" xmlns:db="http://docbook.org/ns/docbook"> <!-- set id for colref links and namespace for "db:para" nodes -->
     <name>table_name</name>
     <version>1</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type><!-- specify the table type for mysql -->
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type><!-- specify the table type for mysql -->
     <description>
         <db:para>table documentation</db:para>
     </description>
@@ -21,7 +21,7 @@
         <size>&table_id_len;</size> <!-- use a value from entities.xml -->
         <primary/><!-- primary key -->
         <autoincrement/><!-- auto increment the id -->
-        <type db="dbtext">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->
+        <type db="db_text">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->
         <description>unique ID</description>
     </column>
 

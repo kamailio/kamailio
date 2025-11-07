@@ -10,7 +10,7 @@
 <table id="pl_pipes" xmlns:db="http://docbook.org/ns/docbook">
     <name>pl_pipes</name>
     <version>1</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>This table us used by the pipelimit module to keep the
 			definition of pipes. More information about the pipelimit module
@@ -29,7 +29,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>unique ID</description>
     </column>
 

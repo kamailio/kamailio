@@ -84,7 +84,7 @@
   <!-- Customers -->
   <xi:include href="customers.xml"/>
 
-  <verbatim db="mysql" id="func.active">
+  <verbatim db="db_mysql" id="func.active">
 	<create>
 	  <![CDATA[
 drop function if exists active;
@@ -97,7 +97,7 @@ create function active (flags int unsigned) returns bool DETERMINISTIC
 	</destroy>
   </verbatim>
 
-  <verbatim db="mysql" id="func.canonical">
+  <verbatim db="db_mysql" id="func.canonical">
 	<create>
 	  <![CDATA[
 drop function if exists canonical;
@@ -110,7 +110,7 @@ create function canonical (flags int unsigned) returns bool DETERMINISTIC
 	</destroy>
   </verbatim>
 
-  <verbatim db="mysql" id="func.tostr">
+  <verbatim db="db_mysql" id="func.tostr">
 	<create>
 	  <![CDATA[
 drop function if exists tostr;

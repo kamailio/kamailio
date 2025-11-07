@@ -10,7 +10,7 @@
 <table>
   <name>uid_uri</name>
   <version>3</version>
-  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+  <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
 
   <column id="id">
     <name>id</name>
@@ -18,13 +18,13 @@
     <size>&table_id_len;</size>
     <autoincrement/>
     <primary/>
-    <type db="dbtext">int,auto</type>
+    <type db="db_text">int,auto</type>
     <description>Unique ID</description>
   </column>
 
   <column id="uri.uid">
 	<name>uid</name>
-	<name db="oracle">uuid</name>
+	<name db="db_oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
   </column>
@@ -77,7 +77,7 @@
 	<colref linkend="uri.uid"/>
   </index>
 
-  <verbatim db="mysql" id="func.touri">
+  <verbatim db="db_mysql" id="func.touri">
 	<create>
 	  <![CDATA[
 drop function if exists touri;
@@ -101,7 +101,7 @@ delimiter ;
 	</destroy>
   </verbatim>
 
-  <verbatim db="mysql" id="func.touid">
+  <verbatim db="db_mysql" id="func.touid">
 	<create>
 	  <![CDATA[
 drop function if exists touid;

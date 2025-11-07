@@ -10,7 +10,7 @@
 <table id="pcscf_location" xmlns:db="http://docbook.org/ns/docbook">
     <name>pcscf_location</name>
     <version>7</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>Persistent user location information for the ims_usrloc_pcscf module.
 			More information can be found at:
@@ -28,7 +28,7 @@
       <size>&table_id_len;</size>
       <autoincrement/>
       <primary/>
-      <type db="dbtext">int,auto</type>
+      <type db="db_text">int,auto</type>
       <description>unique ID</description>
     </column>
 
@@ -129,7 +129,7 @@
       <type db="db_redis">time</type>
       <null/>
       <default>&DEFAULT_LOCATION_EXPIRES;</default>
-      <default db="oracle">to_date('&DEFAULT_LOCATION_EXPIRES;','yyyy-mm-dd hh24:mi:ss')</default>
+      <default db="db_oracle">to_date('&DEFAULT_LOCATION_EXPIRES;','yyyy-mm-dd hh24:mi:ss')</default>
       <description>Date and time when this entry expires.</description>
     </column>
 

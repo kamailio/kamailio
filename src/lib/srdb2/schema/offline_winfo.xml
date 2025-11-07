@@ -22,7 +22,7 @@
 
   <column id="offline_winfo.uid">
 	<name>uid</name>
-	<name db="oracle">uuid</name>
+	<name db="db_oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
 	<description>UID of presentity.</description>
@@ -80,9 +80,9 @@
 	<name>dbid</name>
 	<type>unsigned int</type>
 	<size>10</size>
-	<type db="mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
-	<type db="postgres">SERIAL</type>
-	<type db="dbtext">int,auto</type>
+	<type db="db_mysql">INT(10) UNSIGNED AUTO_INCREMENT</type>
+	<type db="db_postgres">SERIAL</type>
+	<type db="db_text">int,auto</type>
 	<description>Auto-generated key.</description>
   </column>
 

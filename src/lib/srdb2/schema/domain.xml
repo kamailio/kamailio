@@ -197,7 +197,7 @@
 	<colref linkend="domain.did"/>
   </index>
 
-  <verbatim db="mysql" id="func.todomain">
+  <verbatim db="db_mysql" id="func.todomain">
 	<create>
 	  <![CDATA[
 drop function if exists todomain;
@@ -219,7 +219,7 @@ delimiter ;
 	</destroy>
   </verbatim>
 
-  <verbatim db="mysql" id="func.todid">
+  <verbatim db="db_mysql" id="func.todid">
 	<create>
 	  <![CDATA[
 drop function if exists todid;

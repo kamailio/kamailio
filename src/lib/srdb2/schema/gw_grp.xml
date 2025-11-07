@@ -14,9 +14,9 @@
   <column id="gw_grp.id">
 	<name>grp_id</name>
 	<type>int</type>
-	<type db="mysql">INT AUTO_INCREMENT</type>
-	<type db="postgres">SERIAL</type>
-	<type db="dbtext">int,auto</type>
+	<type db="db_mysql">INT AUTO_INCREMENT</type>
+	<type db="db_postgres">SERIAL</type>
+	<type db="db_text">int,auto</type>
   </column>
 
   <column>

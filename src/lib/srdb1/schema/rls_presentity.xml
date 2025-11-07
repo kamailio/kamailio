@@ -10,7 +10,7 @@
 <table id="rls_presentity" xmlns:db="http://docbook.org/ns/docbook">
     <name>rls_presentity</name>
     <version>1</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
 			Table for the RLS module:
@@ -28,7 +28,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>Unique ID</description>
     </column>
 

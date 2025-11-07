@@ -10,7 +10,7 @@
 <table id="acc_cdrs" xmlns:db="http://docbook.org/ns/docbook">
     <name>acc_cdrs</name>
     <version>2</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>This table is used by the ACC module to report on CDRs relying
 			on dialog callbacks. More information is available at:
@@ -28,7 +28,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>unique ID</description>
     </column>
 
