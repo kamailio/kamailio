@@ -1,7 +1,7 @@
-id(int,auto) table_name(string) table_version(int)
+id(int,auto) table_name(string) table_version(int) 
 0:version:1
 0:acc:5
-0:acc_cdrs:2
+0:acc_cdrs:3
 0:active_watchers:12
 0:address:6
 0:aliases:8
