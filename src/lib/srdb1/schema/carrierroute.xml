@@ -10,7 +10,7 @@
 	  <table id="carrierroute" xmlns:db="http://docbook.org/ns/docbook">
 		  <name>carrierroute</name>
 		  <version>3</version>
-		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+		  <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
 		  <description>
 			  <db:para>
 				  This table is used by the carrierroute module to provides
@@ -30,7 +30,7 @@
 			  <size>&table_id_len;</size>
 			  <autoincrement/>
 			  <primary/>
-			  <type db="dbtext">int,auto</type>
+			  <type db="db_text">int,auto</type>
 			  <description>Name of the column contains the unique identifier of a route.</description>
 		  </column>
 

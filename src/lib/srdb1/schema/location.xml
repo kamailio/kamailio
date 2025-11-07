@@ -10,7 +10,7 @@
 <table id="location" xmlns:db="http://docbook.org/ns/docbook">
     <name>location</name>
     <version>9</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>Persistent user location information for the usrloc module.
 			More information can be found at:
@@ -28,7 +28,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>unique ID</description>
     </column>
 
@@ -91,7 +91,7 @@
         <type>datetime</type>
         <type db="db_redis">time</type>
         <default>&DEFAULT_ALIASES_EXPIRES;</default>
-        <default db="oracle">to_date('&DEFAULT_ALIASES_EXPIRES;','yyyy-mm-dd hh24:mi:ss')</default>
+        <default db="db_oracle">to_date('&DEFAULT_ALIASES_EXPIRES;','yyyy-mm-dd hh24:mi:ss')</default>
         <description>Date and time when this entry expires.</description>
     </column>
 
@@ -124,7 +124,7 @@
         <type>datetime</type>
         <type db="db_redis">time</type>
         <default>&DEFAULT_DATETIME;</default>
-        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <default db="db_oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
         <description>Date and time when this entry was last modified.</description>
     </column>
 

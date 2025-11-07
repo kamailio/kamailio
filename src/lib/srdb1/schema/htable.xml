@@ -10,7 +10,7 @@
 <table id="htable" xmlns:db="http://docbook.org/ns/docbook">
     <name>htable</name>
     <version>2</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>This table us used by the htable module to load values in the
 			hash table at start up. More information about the htable module
@@ -29,7 +29,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>Unique ID</description>
     </column>
 

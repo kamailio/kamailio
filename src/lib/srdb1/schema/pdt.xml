@@ -10,7 +10,7 @@
 <table id="pdt" xmlns:db="http://docbook.org/ns/docbook">
     <name>pdt</name>
     <version>1</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>Prefix-Domain Translation means to change the host and port
 			in R-URI, based on the prefix found in R-URI and source domain
@@ -29,7 +29,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>Unique ID</description>
     </column>
 

@@ -10,7 +10,7 @@
 <table id="lcr_rule_target" xmlns:db="http://docbook.org/ns/docbook">
     <name>lcr_rule_target</name>
     <version>1</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the lcr (Least Cost Routing)
 			module to store routing rule targets.
@@ -29,7 +29,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
     </column>
 
     <column id="lcr_id">

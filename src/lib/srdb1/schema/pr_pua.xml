@@ -10,7 +10,7 @@
 <table id="pua" xmlns:db="http://docbook.org/ns/docbook">
     <name>pua</name>
     <version>7</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
 			Table for the presence related pua module. More information can be
@@ -29,7 +29,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>Unique ID</description>
     </column>
 

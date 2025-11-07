@@ -10,7 +10,7 @@
 <table id="sip_trace" xmlns:db="http://docbook.org/ns/docbook">
     <name>sip_trace</name>
     <version>4</version>
-    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
 			This table is used to store incoming/outgoing SIP messages in
@@ -30,7 +30,7 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="dbtext">int,auto</type>
+        <type db="db_text">int,auto</type>
         <description>unique ID</description>
     </column>
 
@@ -38,7 +38,7 @@
         <name>time_stamp</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
-        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
+        <default db="db_oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
         <description>Time stamp of processing the SIP message</description>
     </column>
 
