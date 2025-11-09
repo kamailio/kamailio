@@ -659,6 +659,29 @@ modparam("ims_qos", "af_signaling_port_ps", "5063")
       </example>
     </section>
 
+    <section>
+      <title><varname>rx_add_alloc_result_indications</varname> (int)</title>
+
+      <para>When set to 1, the module adds the following Specific-Action AVPs to AAR:
+              - 8  (INDICATION_OF_SUCCESSFUL_RESOURCES_ALLOCATION)
+              - 9  (INDICATION_OF_FAILED_RESOURCES_ALLOCATION)
+            This enables the PCRF to report resource allocation success/failure back to the AF.</para>
+
+      <para><emphasis> Default value is 0</emphasis></para>
+
+      <example>
+        <title><varname>af_signaling_port_pc</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "rx_add_alloc_result_indications", "1")
+...
+        </programlisting>
+      </example>
+    </section>
+
+
   </section>
 
   <section>
