@@ -124,6 +124,10 @@ int trust_bottom_via = 0;
 int cdp_event_list_size_threshold =
 		0; /**Threshold for size of cdp event list after which a warning is logged */
 
+int rx_include_alloc_result_indications =
+		0; /* When set to 1, adds Specific-Action AVPs 8 (successful) and 9 (failed) to AAR so the PCRF
+			reports resource-allocation results to the AF.*/
+
 stat_var *aars;
 stat_var *strs;
 stat_var *asrs;
@@ -297,6 +301,8 @@ static param_export_t params[] = {
 		{"af_signaling_ip6", PARAM_STR, &af_signaling_ip6},
 		{"af_signaling_port_pc", PARAM_STR, &af_signaling_port_pc},
 		{"af_signaling_port_ps", PARAM_STR, &af_signaling_port_ps},
+		{"rx_include_alloc_result_indications", PARAM_INT,
+				&rx_include_alloc_result_indications},
 		{0, 0, 0},
 };
 
@@ -759,10 +765,19 @@ static int get_identifier(str *src)
 uint16_t check_ip_version(str ip)
 {
 	struct addrinfo hint, *res = NULL;
+	char *s = shm_malloc(ip.len + 1);
+	if(!s) {
+		LM_ERR("Memory allocation failed!\n");
+		return 0;
+	}
+	memcpy(s, ip.s, ip.len);
+	s[ip.len] = '\0';
+
 	memset(&hint, '\0', sizeof(hint));
 	hint.ai_family = AF_UNSPEC;
 	hint.ai_flags = AI_NUMERICHOST;
-	int getaddrret = getaddrinfo(ip.s, NULL, &hint, &res);
+	int getaddrret = getaddrinfo(s, NULL, &hint, &res);
+	shm_free(s);
 	if(getaddrret) {
 		LM_ERR("GetAddrInfo returned an error !\n");
 		return 0;
@@ -1249,6 +1264,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 					LM_ERR("Reply SDP IP information could not be retrieved");
 					goto error;
 				}
+				LM_DBG("IP retrieved from Reply sdp_stream: [%.*s]", ip.len,
+						ip.s);
 				ip_version = check_ip_version(ip);
 				if(!ip_version) {
 					LM_ERR("check_ip_version returned 0 \n");
