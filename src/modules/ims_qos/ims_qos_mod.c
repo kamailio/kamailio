@@ -124,6 +124,10 @@ int trust_bottom_via = 0;
 int cdp_event_list_size_threshold =
 		0; /**Threshold for size of cdp event list after which a warning is logged */
 
+int rx_include_alloc_result_indications =
+		0; /* When set to 1, adds Specific-Action AVPs 8 (successful) and 9 (failed) to AAR so the PCRF
+			reports resource-allocation results to the AF.*/
+
 stat_var *aars;
 stat_var *strs;
 stat_var *asrs;
@@ -257,6 +261,7 @@ static param_export_t params[] = {
 	{"recv_mode", PARAM_INT, &_imsqos_params.recv_mode},
 	{"dialog_direction", PARAM_INT, &_imsqos_params.dlg_direction},
 	{"trust_bottom_via", PARAM_INT, &trust_bottom_via},
+	{"rx_include_alloc_result_indications", PARAM_INT, &rx_include_alloc_result_indications},
 	{0, 0, 0},
 };
 
@@ -1198,6 +1203,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 					LM_ERR("Reply SDP IP information could not be retrieved");
 					goto error;
 				}
+				LM_DBG("IP retrieved from Reply sdp_stream: [%.*s]", ip.len,
+						ip.s);
 				ip_version = check_ip_version(ip);
 				if(!ip_version) {
 					LM_ERR("check_ip_version returned 0 \n");

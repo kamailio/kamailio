@@ -79,6 +79,7 @@ extern struct ims_qos_counters_h ims_qos_cnts_h;
 
 extern int authorize_video_flow;
 extern int _ims_qos_suspend_transaction;
+extern int rx_include_alloc_result_indications;
 
 extern str af_signaling_ip;
 extern str af_signaling_ip6;
@@ -1000,9 +1001,13 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
 	rx_add_specific_action_avp(aar, 2); // INDICATION_OF_LOSS_OF_BEARER
 	rx_add_specific_action_avp(aar, 3); // INDICATION_RECOVERY_OF_BEARER
 	rx_add_specific_action_avp(aar, 4); // INDICATION_RELEASE_OF_BEARER
-	rx_add_specific_action_avp(
-			aar, 5); // INDICATION_ESTABLISHMENT_OF_BEARER (now void)
 	rx_add_specific_action_avp(aar, 6);	 // IP-CAN_CHANGE
+	if(rx_include_alloc_result_indications) {
+		rx_add_specific_action_avp(
+				aar, 8); // INDICATION_OF_SUCCESSFUL_RESOURCES_ALLOCATION
+		rx_add_specific_action_avp(
+				aar, 9); // INDICATION_OF_FAILED_RESOURCES_ALLOCATION
+	}
 	rx_add_specific_action_avp(aar, 12); // ACCESS_NETWORK_INFO_REPORT
 
 	show_callsessiondata(p_session_data);
@@ -1139,9 +1144,13 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession *auth,
 	rx_add_specific_action_avp(aar, 2); // INDICATION_OF_LOSS_OF_BEARER
 	rx_add_specific_action_avp(aar, 3); // INDICATION_RECOVERY_OF_BEARER
 	rx_add_specific_action_avp(aar, 4); // INDICATION_RELEASE_OF_BEARER
-	rx_add_specific_action_avp(
-			aar, 5); // INDICATION_ESTABLISHMENT_OF_BEARER (now void)
 	rx_add_specific_action_avp(aar, 6);	 // IP-CAN_CHANGE
+	if(rx_include_alloc_result_indications) {
+		rx_add_specific_action_avp(
+				aar, 8); // INDICATION_OF_SUCCESSFUL_RESOURCES_ALLOCATION
+		rx_add_specific_action_avp(
+				aar, 9); // INDICATION_OF_FAILED_RESOURCES_ALLOCATION
+	}
 	rx_add_specific_action_avp(aar, 12); // ACCESS_NETWORK_INFO_REPORT
 
 	/* Add Framed IP address AVP*/
