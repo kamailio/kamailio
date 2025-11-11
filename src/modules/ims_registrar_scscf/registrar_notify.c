@@ -1709,7 +1709,9 @@ void create_notifications(udomain_t *_t, impurecord_t *r_passed,
 
 		create_notification = 0;
 
-		if(r->reg_state == IMPU_REGISTERED && s->expires > act_time) {
+		if((event_type != IMS_REGISTRAR_CONTACT_EXPIRED
+				   && event_type != IMS_REGISTRAR_CONTACT_UNREGISTERED)
+				&& s->expires > act_time) {
 			subscription_state.s = (char *)pkg_malloc(32 * sizeof(char *));
 			subscription_state.len = 0;
 			if(subscription_state.s) {
@@ -1726,8 +1728,8 @@ void create_notifications(udomain_t *_t, impurecord_t *r_passed,
 
 		} else {
 			STR_PKG_DUP(subscription_state, subs_terminated, "pkg subs state");
-			LM_DBG("Expires is past than current time or impu is not registered! Subscription state: "
-				   "[%.*s]\n",
+			LM_DBG("Expires is past than current time or UE deregistered! "
+				   "Subscription state: [%.*s]\n",
 					subscription_state.len, subscription_state.s);
 		}
 
