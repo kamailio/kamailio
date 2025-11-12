@@ -363,6 +363,7 @@ static int __bencode_iovec_dump(struct iovec *out, bencode_item_t *item)
 	else if(item->iov[1].iov_base)
 		out += __bencode_iovec_cpy(out, &item->iov[1], 1);
 
+	(void)orig; // suppress warning
 	assert((out - orig) == item->iov_cnt);
 	return item->iov_cnt;
 }
@@ -387,6 +388,7 @@ static int __bencode_str_dump(char *out, bencode_item_t *item)
 	else if(item->iov[1].iov_base)
 		out += __bencode_str_cpy(out, &item->iov[1], 1);
 
+	(void)orig; // suppress warning
 	assert((out - orig) == item->str_len);
 	*out = '\0';
 	return item->str_len;
