@@ -1367,7 +1367,7 @@ retry:
 			/* Try to enable if it's time to try. */
 			node->ln_enable = lrkp_test(node);
 			if(node->ln_enable) //get lrk proxy config if it is enable.
-								//                lrkp_get_config(node);
+					//                lrkp_get_config(node);
 				lrkp_keep_alive(node);
 		}
 
@@ -1406,7 +1406,7 @@ retry:
 			/* Try to enable if it's time to try. */
 			node->ln_enable = lrkp_test(node);
 			if(node->ln_enable) //get lrk proxy config if it is enable.
-								//                lrkp_get_config(node);
+					//                lrkp_get_config(node);
 				lrkp_keep_alive(node);
 		}
 
@@ -1556,21 +1556,21 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 			//            snprintf(sdp_new_o, 128, "o=lrkproxy %s %s IN IP4 %s\r", SUP_CPROTOVER, REQ_CPROTOVER, ip_selected);
 			snprintf(sdp_new_o, 128, "o=lrkproxy %ld %ld IN IP4 %s\r", seconds,
 					seconds, ip_selected);
-			strncat(newbody.s, sdp_new_o, strlen(sdp_new_o));
+			strcat(newbody.s, sdp_new_o);
 			off += len + 1;
 			continue;
 		}
 		if((int)(start_sdp_s - off) == 0) {
 			memset(sdp_new_s, 0, 128);
 			snprintf(sdp_new_s, 128, "s=lrkproxy Support only Audio Call\r");
-			strncat(newbody.s, sdp_new_s, strlen(sdp_new_s));
+			strcat(newbody.s, sdp_new_s);
 			off += len + 1;
 			continue;
 		}
 		if((int)(start_sdp_c - off) == 0) {
 			memset(sdp_new_c, 0, 128);
 			snprintf(sdp_new_c, 128, "c=IN IP4 %s\r", ip_selected);
-			strncat(newbody.s, sdp_new_c, strlen(sdp_new_c));
+			strcat(newbody.s, sdp_new_c);
 			off += len + 1;
 			continue;
 		}
@@ -1594,7 +1594,7 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 						(int)(len - (avp_flags - off)), avp_flags);
 			//               snprintf(sdp_new_m, 128, "m=audio %d %.*s\r",e->node->lrkp_n_c->current_port, (int)(len - (avp_flags-off)), avp_flags);
 			//            printf("%.*s\n\n", len - (avp_flags-off), avp_flags);
-			strncat(newbody.s, sdp_new_m, strlen(sdp_new_m));
+			strcat(newbody.s, sdp_new_m);
 			off += len + 1;
 			continue;
 		}
