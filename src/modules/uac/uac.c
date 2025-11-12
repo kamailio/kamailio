@@ -420,6 +420,7 @@ static int child_init(int rank)
 		if(cfg_child_init())
 			return -1;
 
+		cfg_update();
 		uac_reg_load_db();
 		LM_DBG("run initial uac registration routine\n");
 		uac_reg_timer(0);
