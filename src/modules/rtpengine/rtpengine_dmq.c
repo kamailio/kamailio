@@ -79,7 +79,7 @@ int rtpengine_dmq_handle_msg(
 
 	rtpengine_dmq_action_t action = RTPENGINE_DMQ_NONE;
 	struct rtpp_set *rtpp_list;
-	unsigned int setid;
+	unsigned int setid = -1;
 	struct rtpp_node *rtpp_node;
 	str rtpengine_url = STR_NULL;
 	str viabranch = STR_NULL;
