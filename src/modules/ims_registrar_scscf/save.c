@@ -399,126 +399,73 @@ error:
 void free_ims_subscription_data(ims_subscription *s)
 {
 	int i, j, k;
+	ims_service_profile *profile = NULL;
+	ims_filter_criteria *filter = NULL;
+	ims_spt *spt = NULL;
+
 	if(!s)
 		return;
 	/*	lock_get(s->lock); - must be called with the lock got */
 	for(i = 0; i < s->service_profiles_cnt; i++) {
-		for(j = 0; j < s->service_profiles[i].public_identities_cnt; j++) {
-			if(s->service_profiles[i].public_identities[j].public_identity.s)
-				shm_free(s->service_profiles[i]
-								.public_identities[j]
-								.public_identity.s);
-			if(s->service_profiles[i].public_identities[j].wildcarded_psi.s)
-				shm_free(s->service_profiles[i]
-								.public_identities[j]
-								.wildcarded_psi.s);
+		profile = &s->service_profiles[i];
+		for(j = 0; j < profile->public_identities_cnt; j++) {
+			if(profile->public_identities[j].public_identity.s)
+				shm_free(profile->public_identities[j].public_identity.s);
+			if(profile->public_identities[j].wildcarded_psi.s)
+				shm_free(profile->public_identities[j].wildcarded_psi.s);
 		}
-		if(s->service_profiles[i].public_identities)
-			shm_free(s->service_profiles[i].public_identities);
+		if(profile->public_identities)
+			shm_free(profile->public_identities);
 
-		for(j = 0; j < s->service_profiles[i].filter_criteria_cnt; j++) {
-			if(s->service_profiles[i].filter_criteria[j].trigger_point) {
-				for(k = 0; k < s->service_profiles[i]
-								   .filter_criteria[j]
-								   .trigger_point->spt_cnt;
-						k++) {
-					switch(s->service_profiles[i]
-									.filter_criteria[j]
-									.trigger_point->spt[k]
-									.type) {
+		for(j = 0; j < profile->filter_criteria_cnt; j++) {
+			filter = &profile->filter_criteria[j];
+			if(filter->trigger_point) {
+				for(k = 0; k < filter->trigger_point->spt_cnt; k++) {
+					spt = &filter->trigger_point->spt[k];
+					switch(spt->type) {
 						case IFC_REQUEST_URI:
-							if(s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.request_uri.s)
-								shm_free(s->service_profiles[i]
-												.filter_criteria[j]
-												.trigger_point->spt[k]
-												.request_uri.s);
+							if(spt->request_uri.s)
+								shm_free(spt->request_uri.s);
 							break;
 						case IFC_METHOD:
-							if(s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.method.s)
-								shm_free(s->service_profiles[i]
-												.filter_criteria[j]
-												.trigger_point->spt[k]
-												.method.s);
+							if(spt->method.s)
+								shm_free(spt->method.s);
 							break;
 						case IFC_SIP_HEADER:
-							if(s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.sip_header.header.s)
-								shm_free(s->service_profiles[i]
-												.filter_criteria[j]
-												.trigger_point->spt[k]
-												.sip_header.header.s);
-							if(s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.sip_header.content.s)
-								shm_free(s->service_profiles[i]
-												.filter_criteria[j]
-												.trigger_point->spt[k]
-												.sip_header.content.s);
+							if(spt->sip_header.header.s)
+								shm_free(spt->sip_header.header.s);
+							if(spt->sip_header.content.s)
+								shm_free(spt->sip_header.content.s);
 							break;
 						case IFC_SESSION_CASE:
 							break;
 						case IFC_SESSION_DESC:
-							if(s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.session_desc.line.s)
-								shm_free(s->service_profiles[i]
-												.filter_criteria[j]
-												.trigger_point->spt[k]
-												.session_desc.line.s);
-							if(s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.session_desc.content.s)
-								shm_free(s->service_profiles[i]
-												.filter_criteria[j]
-												.trigger_point->spt[k]
-												.session_desc.content.s);
+							if(spt->session_desc.line.s)
+								shm_free(spt->session_desc.line.s);
+							if(spt->session_desc.content.s)
+								shm_free(spt->session_desc.content.s);
 							break;
 					}
 				}
-				if(s->service_profiles[i].filter_criteria[j].trigger_point->spt)
-					shm_free(s->service_profiles[i]
-									.filter_criteria[j]
-									.trigger_point->spt);
-				shm_free(s->service_profiles[i]
-								.filter_criteria[j]
-								.trigger_point);
+				if(filter->trigger_point->spt)
+					shm_free(filter->trigger_point->spt);
+				shm_free(filter->trigger_point);
 			}
-			if(s->service_profiles[i]
-							.filter_criteria[j]
-							.application_server.server_name.s)
-				shm_free(s->service_profiles[i]
-								.filter_criteria[j]
-								.application_server.server_name.s);
-			if(s->service_profiles[i]
-							.filter_criteria[j]
-							.application_server.service_info.s)
-				shm_free(s->service_profiles[i]
-								.filter_criteria[j]
-								.application_server.service_info.s);
-			if(s->service_profiles[i].filter_criteria[j].profile_part_indicator)
-				shm_free(s->service_profiles[i]
-								.filter_criteria[j]
-								.profile_part_indicator);
+			if(filter->application_server.server_name.s)
+				shm_free(filter->application_server.server_name.s);
+			if(filter->application_server.service_info.s)
+				shm_free(filter->application_server.service_info.s);
+			if(filter->profile_part_indicator)
+				shm_free(filter->profile_part_indicator);
 		}
-		if(s->service_profiles[i].filter_criteria)
-			shm_free(s->service_profiles[i].filter_criteria);
+		if(profile->filter_criteria)
+			shm_free(profile->filter_criteria);
 
-		if(s->service_profiles[i].cn_service_auth)
-			shm_free(s->service_profiles[i].cn_service_auth);
+		if(profile->cn_service_auth)
+			shm_free(profile->cn_service_auth);
 
-		if(s->service_profiles[i].shared_ifc_set)
-			shm_free(s->service_profiles[i].shared_ifc_set);
+		if(profile->shared_ifc_set)
+			shm_free(profile->shared_ifc_set);
 	}
 	if(s->service_profiles)
 		shm_free(s->service_profiles);
@@ -875,6 +822,7 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 		str *ecf1, str *ecf2, contact_for_header_t **contact_header)
 {
 	int reg_state, i, j, k;
+	ims_service_profile *profile = NULL;
 	ims_public_identity *pi = 0;
 	impurecord_t *impu_rec, *tmp_impu_rec;
 	int expires_hdr = -1; //by default registration doesn't expire
@@ -909,9 +857,9 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 			}
 
 			for(i = 0; i < (*s)->service_profiles_cnt; i++) {
-				for(j = 0; j < (*s)->service_profiles[i].public_identities_cnt;
-						j++) {
-					pi = &((*s)->service_profiles[i].public_identities[j]);
+				profile = &(*s)->service_profiles[i];
+				for(j = 0; j < profile->public_identities_cnt; j++) {
+					pi = &(profile->public_identities[j]);
 					ul.lock_udomain(_d, &pi->public_identity);
 					if(first_unbarred_impu && !pi->barring) {
 						is_primary_impu = 1;
@@ -1032,7 +980,7 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 			//now update the implicit set
 			for(i = 0; i < subscription->service_profiles_cnt; i++) {
 				for(j = 0; j < subscription->service_profiles[i]
-								   .public_identities_cnt;
+									   .public_identities_cnt;
 						j++) {
 					pi = &(subscription->service_profiles[i]
 									.public_identities[j]);
@@ -1194,11 +1142,9 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 
 			if(subscription) {
 				for(i = 0; i < subscription->service_profiles_cnt; i++) {
-					for(j = 0; j < subscription->service_profiles[i]
-									   .public_identities_cnt;
-							j++) {
-						pi = &(subscription->service_profiles[i]
-										.public_identities[j]);
+					profile = &subscription->service_profiles[i];
+					for(j = 0; j < profile->public_identities_cnt; j++) {
+						pi = &(profile->public_identities[j]);
 						ul.lock_udomain(_d, &pi->public_identity);
 						if(ul.get_impurecord(
 								   _d, &pi->public_identity, &tmp_impu_rec)
@@ -1213,7 +1159,7 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 						for(h = msg->contact; h; h = h->next) {
 							if(h->type == HDR_CONTACT_T && h->parsed) {
 								for(chi = ((contact_body_t *)h->parsed)
-												->contacts;
+												  ->contacts;
 										chi; chi = chi->next) {
 									if(ul.get_ucontact(&chi->uri, &callid,
 											   &path, 0, &ucontact)
@@ -1476,10 +1422,10 @@ int assign_server_unreg(
 		goto error;
 	}
 
-	if(public_identity.s && dir == CSCF_MOBILE_TERMINATING)
-		shm_free(public_identity
-						.s); // shm_malloc in cscf_get_public_identity_from_requri
-
+	if(public_identity.s && dir == CSCF_MOBILE_TERMINATING) {
+		// shm_malloc in cscf_get_public_identity_from_requri
+		shm_free(public_identity.s);
+	}
 	return CSCF_RETURN_BREAK;
 
 

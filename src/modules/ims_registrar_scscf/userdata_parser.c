@@ -914,8 +914,8 @@ static int parse_service_profile(
 				case 'P':
 				case 'p':
 					returncode = parse_public_identity(doc, child,
-							&(sp->public_identities[sp
-											->public_identities_cnt]));
+							&(sp->public_identities
+											[sp->public_identities_cnt]));
 					if(returncode)
 						sp->public_identities_cnt++;
 					break;
@@ -1145,6 +1145,10 @@ int parser_init(char *dtd_filename, char *xsd_filename)
 void print_user_data(ims_subscription *s)
 {
 	int i, j, k;
+	ims_service_profile *profile = NULL;
+	ims_filter_criteria *filter = NULL;
+	ims_spt *spt = NULL;
+
 
 	LM_DBG("IMSSubscription:\n");
 	if(!s)
@@ -1154,160 +1158,68 @@ void print_user_data(ims_subscription *s)
 			s->private_identity.s);
 	for(i = 0; i < s->service_profiles_cnt; i++) {
 		LM_DBG("\tService Profile:\n");
-		for(j = 0; j < s->service_profiles[i].public_identities_cnt; j++) {
+		profile = &s->service_profiles[i];
+		for(j = 0; j < profile->public_identities_cnt; j++) {
 			LM_DBG("\t\tPublic Identity: Barring [%d] <%.*s> \n",
-					s->service_profiles[i].public_identities[j].barring,
-					s->service_profiles[i]
-							.public_identities[j]
-							.public_identity.len,
-					s->service_profiles[i]
-							.public_identities[j]
-							.public_identity.s);
+					profile->public_identities[j].barring,
+					STR_FMT(&profile->public_identities[j].public_identity));
 		}
-		for(j = 0; j < s->service_profiles[i].filter_criteria_cnt; j++) {
+		for(j = 0; j < profile->filter_criteria_cnt; j++) {
+			filter = &profile->filter_criteria[j];
 			LM_DBG("\t\tFilter Criteria: Priority [%d]ProfilePartInd [%d]\n",
-					s->service_profiles[i].filter_criteria[j].priority,
-					s->service_profiles[i]
-									.filter_criteria[j]
-									.profile_part_indicator
-							? *(s->service_profiles[i]
-											  .filter_criteria[j]
-											  .profile_part_indicator)
+					filter->priority,
+					filter->profile_part_indicator
+							? *(filter->profile_part_indicator)
 							: -1);
-			if(s->service_profiles[i].filter_criteria[j].trigger_point) {
+			if(filter->trigger_point) {
 				LM_DBG("\t\t\tTrigger Point: CNF [%c] %s\n",
-						s->service_profiles[i]
-										.filter_criteria[j]
-										.trigger_point->condition_type_cnf
-								? 'X'
-								: ' ',
-						s->service_profiles[i]
-										.filter_criteria[j]
-										.trigger_point->condition_type_cnf
+						filter->trigger_point->condition_type_cnf ? 'X' : ' ',
+						filter->trigger_point->condition_type_cnf
 								? "(_|_)&(_|_)"
 								: "(_&_)|(_&_)");
-				for(k = 0; k < s->service_profiles[i]
-								   .filter_criteria[j]
-								   .trigger_point->spt_cnt;
-						k++) {
+				for(k = 0; k < filter->trigger_point->spt_cnt; k++) {
+					spt = &filter->trigger_point->spt[k];
 					LM_DBG("\t\t\t\tSPT: Grp[%d] NOT[%c] RegType[%d]\n",
-							s->service_profiles[i]
-									.filter_criteria[j]
-									.trigger_point->spt[k]
-									.group,
-							s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.condition_negated
-									? 'X'
-									: ' ',
-							s->service_profiles[i]
-									.filter_criteria[j]
-									.trigger_point->spt[k]
-									.registration_type);
-					switch(s->service_profiles[i]
-									.filter_criteria[j]
-									.trigger_point->spt[k]
-									.type) {
+							spt->group, spt->condition_negated ? 'X' : ' ',
+							spt->registration_type);
+					switch(spt->type) {
 						case 1:
 							LM_DBG("\t\t\t\t\t Request-URI == <%.*s>\n",
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.request_uri.len,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.request_uri.s);
+									STR_FMT(&spt->request_uri));
 							break;
 						case 2:
 							LM_DBG("\t\t\t\t\t Method == <%.*s>\n",
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.method.len,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.method.s);
+									STR_FMT(&spt->method));
 							break;
 						case 3:
 							LM_DBG("\t\t\t\t\t Hdr(%.*s(%d)) == <%.*s>\n",
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.sip_header.header.len,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.sip_header.header.s,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.sip_header.type,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.sip_header.content.len,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.sip_header.content.s);
+									STR_FMT(&spt->sip_header.header),
+									spt->sip_header.type,
+									STR_FMT(&spt->sip_header.content));
 							break;
 						case 4:
 							LM_DBG("\t\t\t\t\t SessionCase [%d]\n",
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.session_case);
+									spt->session_case);
 							break;
 						case 5:
 							LM_DBG("\t\t\t\t\t SDP(%.*s) == <%.*s>\n",
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.session_desc.line.len,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.session_desc.line.s,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.session_desc.content.len,
-									s->service_profiles[i]
-											.filter_criteria[j]
-											.trigger_point->spt[k]
-											.session_desc.content.s);
+									STR_FMT(&spt->session_desc.line),
+									STR_FMT(&spt->session_desc.content));
 							break;
 					}
 				}
 			}
 			LM_DBG("\t\t\tAS: <%.*s> Handling [%d] SrvInfo: <%.*s>\n",
-					s->service_profiles[i]
-							.filter_criteria[j]
-							.application_server.server_name.len,
-					s->service_profiles[i]
-							.filter_criteria[j]
-							.application_server.server_name.s,
-					s->service_profiles[i]
-							.filter_criteria[j]
-							.application_server.default_handling,
-					s->service_profiles[i]
-							.filter_criteria[j]
-							.application_server.service_info.len,
-					s->service_profiles[i]
-							.filter_criteria[j]
-							.application_server.service_info.s);
+					STR_FMT(&filter->application_server.server_name),
+					filter->application_server.default_handling,
+					STR_FMT(&filter->application_server.service_info));
 		}
-		if(s->service_profiles[i].cn_service_auth) {
+		if(profile->cn_service_auth) {
 			LM_DBG("\t\tCN Serv Auth: Subs Media Profile ID [%d]\n",
-					s->service_profiles[i]
-							.cn_service_auth->subscribed_media_profile_id);
+					profile->cn_service_auth->subscribed_media_profile_id);
 		}
-		for(j = 0; j < s->service_profiles[i].shared_ifc_set_cnt; j++) {
-			LM_DBG("\t\tShared IFC Set: [%d]\n",
-					s->service_profiles[i].shared_ifc_set[j]);
+		for(j = 0; j < profile->shared_ifc_set_cnt; j++) {
+			LM_DBG("\t\tShared IFC Set: [%d]\n", profile->shared_ifc_set[j]);
 		}
 	}
 }
