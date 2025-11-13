@@ -18,6 +18,7 @@ jobs:
         uses: wolletd/clang-format-checker@v1.12
         with:
           target-ref: master
+          clang-version: 18
   check-cmake-format:
     runs-on: ubuntu-latest
     permissions:
