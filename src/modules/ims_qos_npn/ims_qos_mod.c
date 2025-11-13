@@ -758,26 +758,35 @@ static int get_identifier(str *src)
 
 uint16_t check_ip_version(str ip)
 {
+	int getaddrret;
+	uint16_t ret = 0;
 	struct addrinfo hint, *res = NULL;
+	char *s = pkg_malloc(ip.len + 1);
+
+	if(!s) {
+		PKG_MEM_ERROR;
+		return ret;
+	}
+	memcpy(s, ip.s, ip.len);
+	s[ip.len] = '\0';
 	memset(&hint, '\0', sizeof(hint));
 	hint.ai_family = AF_UNSPEC;
 	hint.ai_flags = AI_NUMERICHOST;
-	int getaddrret = getaddrinfo(ip.s, NULL, &hint, &res);
+	getaddrret = getaddrinfo(s, NULL, &hint, &res);
+	pkg_free(s);
 	if(getaddrret) {
 		LM_ERR("GetAddrInfo returned an error !\n");
-		return 0;
+		return ret;
 	}
 	if(res->ai_family == AF_INET) {
-		freeaddrinfo(res);
-		return AF_INET;
+		ret = AF_INET;
 	} else if(res->ai_family == AF_INET6) {
-		freeaddrinfo(res);
-		return AF_INET6;
+		ret = AF_INET6;
 	} else {
-		freeaddrinfo(res);
-		LM_ERR("unknown IP format \n");
-		return 0;
+		LM_ERR("unknown IP format\n");
 	}
+	freeaddrinfo(res);
+	return ret;
 }
 
 /* Wrapper to send AAR from config file - this only allows for AAR for calls - not register, which uses r_rx_aar_register
@@ -1570,8 +1579,8 @@ static int w_rx_aar_register(
 	LM_DBG("Message via is [%d://%.*s:%d]\n", vb->proto, vb->host.len,
 			vb->host.s, via_port);
 
-	lock_get(saved_t_data
-					->lock); //we lock here to make sure we send all requests before processing replies asynchronously
+	//we lock here to make sure we send all requests before processing replies asynchronously
+	lock_get(saved_t_data->lock);
 	for(h = msg->contact; h; h = h->next) {
 		if(h->type == HDR_CONTACT_T && h->parsed) {
 			for(c = ((contact_body_t *)h->parsed)->contacts; c; c = c->next) {
