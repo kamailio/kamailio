@@ -67,7 +67,7 @@ static inline int extract_avp(
 	char *p, *q, *r;
 
 	LM_DBG("vp->name '%.*s'\n", (int)strlen(vp->name), vp->name);
-	LM_DBG("vp->attribute '%d'\n", vp->attribute);
+	LM_DBG("vp->attribute '%d'\n", (int)vp->attribute);
 	LM_DBG("vp->type '%d'\n", vp->type);
 	LM_DBG("vp->lvalue '%d'\n", vp->lvalue);
 	if(vp->type == PW_TYPE_STRING)
@@ -152,7 +152,7 @@ static int generate_avps(VALUE_PAIR *received)
 		vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0);
 	for(; vp; vp = ((ar_radius_avps_mode) ? vp->next
 										  : rc_avpair_get(vp->next,
-												  attrs[A_SIP_AVP].v, 0))) {
+													attrs[A_SIP_AVP].v, 0))) {
 		flags = 0;
 		if(!extract_avp(vp, &flags, &name, &val)) {
 			LM_ERR("error while extracting AVP '%.*s'\n", (int)strlen(vp->name),
