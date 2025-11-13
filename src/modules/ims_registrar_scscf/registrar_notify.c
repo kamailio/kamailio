@@ -281,14 +281,16 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2)
 	LM_DBG("Publish forbidden\n");
 
 done:
-	if(presentity_uri.s)
-		shm_free(presentity_uri
-						.s); // shm_malloc in cscf_get_public_identity_from_requri
+	if(presentity_uri.s) {
+		// shm_malloc in cscf_get_public_identity_from_requri
+		shm_free(presentity_uri.s);
+	}
 	return ret;
 error:
-	if(presentity_uri.s)
-		shm_free(presentity_uri
-						.s); // shm_malloc in cscf_get_public_identity_from_requri
+	if(presentity_uri.s) {
+		// shm_malloc in cscf_get_public_identity_from_requri
+		shm_free(presentity_uri.s);
+	}
 	ret = CSCF_RETURN_ERROR;
 	return ret;
 }
@@ -458,15 +460,17 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 	LM_DBG("Subscribe forbidden\n");
 
 done:
-	if(presentity_uri.s)
-		shm_free(presentity_uri
-						.s); // shm_malloc in cscf_get_public_identity_from_requri or get_presentity_from_subscriber_dialog
+	if(presentity_uri.s) {
+		// shm_malloc in cscf_get_public_identity_from_requri or get_presentity_from_subscriber_dialog
+		shm_free(presentity_uri.s);
+	}
 	return ret;
 error:
 	ret = CSCF_RETURN_ERROR;
-	if(presentity_uri.s)
-		shm_free(presentity_uri
-						.s); // shm_malloc in cscf_get_public_identity_from_requri or get_presentity_from_subscriber_dialog
+	if(presentity_uri.s) {
+		// shm_malloc in cscf_get_public_identity_from_requri or get_presentity_from_subscriber_dialog
+		shm_free(presentity_uri.s);
+	}
 	return ret;
 }
 
