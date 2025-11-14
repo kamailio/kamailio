@@ -216,6 +216,7 @@ Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
 Requires:  systemd
 BuildRequires:  systemd-devel
+BuildRequires:  systemd-rpm-macros
 BuildRequires: bison
 BuildRequires: cmake
 BuildRequires: flex
@@ -1215,9 +1216,7 @@ kazoo \
 %endif
 lcr \
 ldap \
-%if "%{?_unitdir}" != ""
 log_systemd \
-%endif
 lost \
 %if %{with lwsc}
 lwsc \
@@ -1271,9 +1270,7 @@ sctp \
 siprepo \
 slack \
 snmpstats \
-%if "%{?_unitdir}" != ""
 systemdops \
-%endif
 tls \
 %if %{with wolfssl}
 tls_wolfssl \
@@ -1314,6 +1311,7 @@ rm -f %{buildroot}%{_sysconfdir}/kamailio/pi_framework.xml.sample
 install -d %{buildroot}%{_sharedstatedir}/kamailio
 
 install -d %{buildroot}%{_unitdir}
+install -Dpm 0644 pkg/kamailio/obs/kamailio.preset %{buildroot}%{_presetdir}/kamailio.preset
 install -Dpm 0644 pkg/kamailio/obs/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
@@ -1355,28 +1353,15 @@ rm -rf %{buildroot}
 
 
 %post
-%if "%{?_unitdir}" == ""
-/sbin/chkconfig --add kamailio
-%else
-%tmpfiles_create kamailio.conf
-/usr/bin/systemctl -q enable kamailio.service
-%endif
+%tmpfiles_create %{name}.conf
+%systemd_post %{name}.service
 
 
 %preun
-if [ $1 = 0 ]; then
-%if "%{?_unitdir}" == ""
-    /sbin/service kamailio stop > /dev/null 2>&1
-    /sbin/chkconfig --del kamailio
-%else
-    %{?systemd_preun kamailio.service}
-%endif
-fi
+%systemd_preun %{name}.service
 
-%if "%{?_unitdir}" == ""
 %postun
-%{?systemd_postun kamailio.service}
-%endif
+%systemd_postun %{name}.service
 
 %files
 %defattr(-,root,root)
@@ -1513,10 +1498,8 @@ fi
 %doc %{_docdir}/kamailio/modules/README.statsc
 %doc %{_docdir}/kamailio/modules/README.topos
 %doc %{_docdir}/kamailio/modules/README.cfgt
-%if "%{?_unitdir}" != ""
 %doc %{_docdir}/kamailio/modules/README.log_systemd
 %doc %{_docdir}/kamailio/modules/README.systemdops
-%endif
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
@@ -1530,14 +1513,10 @@ fi
 %else
 %config %{_sysconfdir}/sysconfig/kamailio
 %endif
-%if "%{?_unitdir}" == ""
-%config %{_sysconfdir}/rc.d/init.d/*
-%dir %attr(-,kamailio,kamailio) %{_var}/run/kamailio
-%else
 %{_unitdir}/kamailio.service
 %{_unitdir}/kamailio@.service
+%{_presetdir}/kamailio.preset
 %{_tmpfilesdir}/kamailio.conf
-%endif
 
 %dir %{_libdir}/kamailio
 
@@ -1670,10 +1649,8 @@ fi
 %{_libdir}/kamailio/modules/topos.so
 %{_libdir}/kamailio/modules/topos_htable.so
 %{_libdir}/kamailio/modules/cfgt.so
-%if "%{?_unitdir}" != ""
 %{_libdir}/kamailio/modules/log_systemd.so
 %{_libdir}/kamailio/modules/systemdops.so
-%endif
 
 %{_sbindir}/kamailio
 %{_sbindir}/kamctl
