@@ -50,9 +50,9 @@ extern struct rr_binds uac_rrb;
 
 extern str restore_from_avp;
 extern str restore_to_avp;
-extern unsigned short restore_from_avp_type;
+extern avp_flags_t restore_from_avp_type;
 extern int_str restore_from_avp_name;
-extern unsigned short restore_to_avp_type;
+extern avp_flags_t restore_to_avp_type;
 extern int_str restore_to_avp_name;
 
 struct dlg_binds dlg_api;
