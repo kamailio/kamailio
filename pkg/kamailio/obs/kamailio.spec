@@ -1316,6 +1316,7 @@ install -Dpm 0644 pkg/kamailio/obs/kamailio.service %{buildroot}%{_unitdir}/kama
 install -Dpm 0644 pkg/kamailio/obs/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio.sysusers %{buildroot}%{_sysusersdir}/kamailio.conf
 install -Dpm 0644 pkg/kamailio/obs/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
+install -Dpm 0644 pkg/kamailio/obs/kamailio-local.cfg %{buildroot}%{_sysconfdir}/kamailio/kamailio-local.cfg
 
 %if 0%{?suse_version}
 install -d %{buildroot}%{_fillupdir}
@@ -1495,6 +1496,7 @@ rm -rf %{buildroot}
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/kamailio.cfg
+%config(noreplace) %{_sysconfdir}/kamailio/kamailio-local.cfg
 %config(noreplace) %{_sysconfdir}/kamailio/kamctlrc
 %config(noreplace) %{_sysconfdir}/kamailio/pi_framework.xml
 %config(noreplace) %{_sysconfdir}/kamailio/tls.cfg
