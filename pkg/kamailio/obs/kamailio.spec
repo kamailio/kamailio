@@ -1314,6 +1314,7 @@ install -d %{buildroot}%{_unitdir}
 install -Dpm 0644 pkg/kamailio/obs/kamailio.preset %{buildroot}%{_presetdir}/kamailio.preset
 install -Dpm 0644 pkg/kamailio/obs/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
 install -Dpm 0644 pkg/kamailio/obs/kamailio@.service %{buildroot}%{_unitdir}/kamailio@.service
+install -Dpm 0644 pkg/kamailio/obs/kamailio.sysusers %{buildroot}%{_sysusersdir}/kamailio.conf
 install -Dpm 0644 pkg/kamailio/obs/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
 
 %if 0%{?suse_version}
@@ -1337,25 +1338,15 @@ install -m644 pkg/kamailio/obs/kamailio.sysconfig \
 # Removing devel files
 rm -f %{buildroot}%{_libdir}/kamailio/lib*.so
 
-%pre
-if ! /usr/bin/id kamailio &>/dev/null; then
-       /usr/sbin/useradd --system \
-                         --user-group \
-                         --shell /bin/false \
-                         --comment "Kamailio SIP Server" \
-                         --home-dir %{_rundir}/kamailio kamailio || \
-                %logmsg "Unexpected error adding user \"kamailio\". Aborting installation."
-fi
-
-
 %clean
 rm -rf %{buildroot}
 
+%pre
+%sysusers_create_package %{name} pkg/kamailio/obs/kamailio.sysusers
 
 %post
 %tmpfiles_create %{name}.conf
 %systemd_post %{name}.service
-
 
 %preun
 %systemd_preun %{name}.service
@@ -1517,6 +1508,7 @@ rm -rf %{buildroot}
 %{_unitdir}/kamailio@.service
 %{_presetdir}/kamailio.preset
 %{_tmpfilesdir}/kamailio.conf
+%{_sysusersdir}/kamailio.conf
 
 %dir %{_libdir}/kamailio
 
