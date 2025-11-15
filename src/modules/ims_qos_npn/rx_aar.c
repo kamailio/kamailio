@@ -555,15 +555,15 @@ int add_media_components_using_current_flow_description(
 int add_media_components(AAAMessage *aar, struct sip_msg *req,
 		struct sip_msg *rpl, enum dialog_direction direction, AAASession *auth)
 {
-	int sdp_session_num;
-	int sdp_stream_num;
-	sdp_session_cell_t *req_sdp_session, *rpl_sdp_session;
-	sdp_stream_cell_t *req_sdp_stream, *rpl_sdp_stream;
+	int sdp_session_num = 0;
+	int sdp_stream_num = 0;
+	sdp_session_cell_t *req_sdp_session = NULL, *rpl_sdp_session = NULL;
+	sdp_stream_cell_t *req_sdp_stream = NULL, *rpl_sdp_stream = NULL;
 	int add_flow = 1;
 	str ttag = {0, 0};
 	str ftag = {0, 0};
 	int request_originated_from_callee = 0;
-	str ipA, ipB, portA, portB;
+	str ipA = {0, 0}, ipB = {0, 0}, portA = {0, 0}, portB = {0, 0};
 	int intportB = 0, intportA = 0;
 
 	rx_authsessiondata_t *p_session_data = 0;
