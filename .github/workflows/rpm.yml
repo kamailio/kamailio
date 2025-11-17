@@ -170,7 +170,7 @@ jobs:
     - build
     steps:
     - name: Download artifact images
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         pattern: kamailio-${{ matrix.os }}-${{ github.ref_name }}-*.rpm
         path: ${{ runner.temp }}/repo
