@@ -100,9 +100,6 @@ int rtpengine_hash_table_init(int size)
 			rtpengine_hash_table_destroy();
 			return 0;
 		}
-
-		// init hashtable row_totals[i]
-		rtpengine_hash_table->row_totals[i] = 0;
 	}
 
 	return 1;
