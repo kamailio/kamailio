@@ -335,7 +335,7 @@ event_route[tcp:closed] {
 		<itemizedlist>
 			<listitem>
 				<para><emphasis>conid</emphasis> - the value of tcp connection id.
-				It can be an integer number or a variable holding an interver value.
+				It can be an integer number or a variable holding an integer value.
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -366,8 +366,8 @@ event_route[tcp:closed] {
 			Set or reset the internal flag for using or not the outbound tcp
 			connection id for sending out. The outbound connection id can be
 			set by module or by config using tcp_set_otcpid(...) function. An
-			example of a module setting the otcpid is register via lookup location
-			function, which sets the filed to the connection id used to receive
+			example of a module setting the otcpid is registrar via lookup location
+			function, which sets the field to the connection id used to receive
 			the registration request.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -417,7 +417,7 @@ event_route[tcp:closed] {
 		<itemizedlist>
 			<listitem>
 				<para><emphasis>conid</emphasis> - the value of tcp connection id.
-				It can be an integer number or a variable holding an interver value.
+				It can be an integer number or a variable holding an integer value.
 				</para>
 			</listitem>
 		</itemizedlist>
