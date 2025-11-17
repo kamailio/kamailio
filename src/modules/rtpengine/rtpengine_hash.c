@@ -125,14 +125,6 @@ int rtpengine_hash_table_destroy()
 
 	// destroy hashtable content
 	for(i = 0; i < rtpengine_hash_table->size; i++) {
-		// lock
-		if(!rtpengine_hash_table->row_locks[i]) {
-			LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", i);
-			continue;
-		} else {
-			lock_get(rtpengine_hash_table->row_locks[i]);
-		}
-
 		// check rtpengine hashtable->row_entry_list
 		if(rtpengine_hash_table->row_entry_list) {
 			// destroy hashtable row_entry_list[i]
@@ -141,8 +133,6 @@ int rtpengine_hash_table_destroy()
 			rtpengine_hash_table->row_entry_list[i] = NULL;
 		}
 
-		// unlock
-		lock_release(rtpengine_hash_table->row_locks[i]);
 
 		// destroy hashtable row_locks[i]
 		rtpengine_hash_table_free_row_lock(rtpengine_hash_table->row_locks[i]);
