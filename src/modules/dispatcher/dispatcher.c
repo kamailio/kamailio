@@ -149,7 +149,7 @@ str ds_attrs_pvname   = STR_NULL;
 pv_spec_t ds_attrs_pv;
 
 str ds_event_callback = STR_NULL;
-int ds_event_callback_mode = 0;
+int ds_event_callback_mode = DS_EVRTMODE_RUNTIME;
 str ds_db_extra_attrs = STR_NULL;
 param_t *ds_db_extra_attrs_list = NULL;
 

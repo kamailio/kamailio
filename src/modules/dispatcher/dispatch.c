@@ -3439,6 +3439,8 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 	ds_set_t *idx = NULL;
 	str *fmatch;
 	str *vmatch;
+	int was_down = 0;
+	int is_down = 0;
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
 		LM_ERR("the list is null\n");
@@ -3530,23 +3532,22 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 			}
 
 
-			if((mode & DS_STATE_MODE_FUNC) == 0) {
-				int was_down = ds_skip_dst(old_state);
-				int is_down = ds_skip_dst(idx->dlist[i].flags);
-
-				if(ds_event_callback_mode == 0) {
-
-					if(!was_down && is_down) {
-						ds_run_route(msg, address, "dispatcher:dst-down", rctx);
-					} else if(was_down && !is_down) {
-						ds_run_route(msg, address, "dispatcher:dst-up", rctx);
-					}
-				} else if(ds_event_callback_mode == 2) {
-
+			if((ds_event_callback_mode == DS_EVRTMODE_RUNTIME)
+					|| (ds_event_callback_mode == DS_EVRTMODE_INIT)
+					|| ((mode & DS_STATE_MODE_FUNC) == 0)) {
+				was_down = ds_skip_dst(old_state);
+				is_down = ds_skip_dst(idx->dlist[i].flags);
+				if(ds_event_callback_mode == DS_EVRTMODE_INIT) {
 					if((!was_down && is_down) || (old_state == 0 && is_down)) {
 						ds_run_route(msg, address, "dispatcher:dst-down", rctx);
 					} else if((was_down && !is_down)
 							  || (old_state == 0 && !is_down)) {
+						ds_run_route(msg, address, "dispatcher:dst-up", rctx);
+					}
+				} else {
+					if(!was_down && is_down) {
+						ds_run_route(msg, address, "dispatcher:dst-down", rctx);
+					} else if(was_down && !is_down) {
 						ds_run_route(msg, address, "dispatcher:dst-up", rctx);
 					}
 				}
