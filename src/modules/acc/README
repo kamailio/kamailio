@@ -27,11 +27,18 @@ Sven Knoblich
    1&1 Internet AG
    <sven.knoblich@1und1.de>
 
+Tyler Moore
+
+   dOpenSource
+   <tmoore@dopensource.com>
+
    Copyright © 2002, 2003 FhG FOKUS
 
    Copyright © 2004, 2006 Voice Sistem SRL
 
    Copyright © 2011 1&1 Internet AG
+
+   Copyright © 2025 Tyler Moore, dOpenSource
      __________________________________________________________________
 
    Table of Contents
@@ -97,36 +104,38 @@ Sven Knoblich
               6.18. db_table_acc (string)
               6.19. db_table_missed_calls (string)
               6.20. db_url (string)
-              6.21. acc_method_column (string)
-              6.22. acc_from_tag_column (string)
-              6.23. acc_to_tag_column (string)
-              6.24. acc_callid_column (string)
-              6.25. acc_sip_code_column (string)
-              6.26. acc_sip_reason_column (string)
-              6.27. acc_time_column (string)
-              6.28. db_extra (string)
-              6.29. db_insert_mode (integer)
-              6.30. cdr_enable (integer)
-              6.31. cdr_skip (string)
-              6.32. cdr_expired_dlg_enable (integer)
-              6.33. cdr_start_on_confirmed (integer)
-              6.34. cdr_facility (integer)
-              6.35. cdr_extra (string)
-              6.36. cdr_extra_nullable (integer)
-              6.37. cdr_start_id (string)
-              6.38. cdr_end_id (string)
-              6.39. cdr_duration_id (string)
-              6.40. cdr_log_enable (int)
-              6.41. cdrs_table (str)
-              6.42. time_mode (int)
-              6.43. time_attr (str)
-              6.44. time_exten (str)
-              6.45. time_format (str)
-              6.46. reason_from_hf (int)
-              6.47. clone_msg (int)
-              6.48. cdr_on_failed (int)
-              6.49. acc_extra_size (int)
-              6.50. cdr_extra_size (int)
+              6.21. db_version_check (integer)
+              6.22. acc_method_column (string)
+              6.23. acc_from_tag_column (string)
+              6.24. acc_to_tag_column (string)
+              6.25. acc_callid_column (string)
+              6.26. acc_sip_code_column (string)
+              6.27. acc_sip_reason_column (string)
+              6.28. acc_time_column (string)
+              6.29. db_extra (string)
+              6.30. db_insert_mode (integer)
+              6.31. cdr_enable (integer)
+              6.32. cdr_skip (string)
+              6.33. cdr_expired_dlg_enable (integer)
+              6.34. cdr_start_on_confirmed (integer)
+              6.35. cdr_facility (integer)
+              6.36. cdr_extra (string)
+              6.37. cdr_extra_nullable (integer)
+              6.38. cdr_start_id (string)
+              6.39. cdr_end_id (string)
+              6.40. cdr_duration_id (string)
+              6.41. cdr_duration_mode (integer)
+              6.42. cdr_log_enable (int)
+              6.43. cdrs_table (str)
+              6.44. time_mode (int)
+              6.45. time_attr (str)
+              6.46. time_exten (str)
+              6.47. time_format (str)
+              6.48. reason_from_hf (int)
+              6.49. clone_msg (int)
+              6.50. cdr_on_failed (int)
+              6.51. acc_extra_size (int)
+              6.52. cdr_extra_size (int)
 
         7. Functions
 
@@ -158,39 +167,41 @@ Sven Knoblich
    1.18. db_table_acc example
    1.19. db_table_missed_calls example
    1.20. db_url example
-   1.21. acc_method_column example
-   1.22. acc_from_tag_column example
-   1.23. acc_to_tag_column example
-   1.24. acc_callid_column example
-   1.25. acc_sip_code_column example
-   1.26. acc_sip_reason_column example
-   1.27. acc_time_column example
-   1.28. db_extra example
-   1.29. db_insert_mode example
-   1.30. cdr_enable example
-   1.31. cdr_skip example
-   1.32. cdr_expired_dlg_enable example
-   1.33. cdr_start_on_confirmed example
-   1.34. cdr_facility example
-   1.35. cdr_extra example
-   1.36. cdr_extra_nullable example
-   1.37. cdr_start_id example
-   1.38. cdr_end_id example
-   1.39. cdr_duration_id example
-   1.40. cdr_log_enable example
-   1.41. cdrs_table example
-   1.42. time_mode example
-   1.43. time_attr example
-   1.44. time_exten example
-   1.45. time_format example
-   1.46. reason_from_hf
-   1.47. clone_msg
-   1.48. cdr_on_failed
-   1.49. acc_extra_size
-   1.50. cdr_extra_size
-   1.51. acc_log_request usage
-   1.52. acc_db_request usage
-   1.53. acc_db_request usage
+   1.21. db_version_check example
+   1.22. acc_method_column example
+   1.23. acc_from_tag_column example
+   1.24. acc_to_tag_column example
+   1.25. acc_callid_column example
+   1.26. acc_sip_code_column example
+   1.27. acc_sip_reason_column example
+   1.28. acc_time_column example
+   1.29. db_extra example
+   1.30. db_insert_mode example
+   1.31. cdr_enable example
+   1.32. cdr_skip example
+   1.33. cdr_expired_dlg_enable example
+   1.34. cdr_start_on_confirmed example
+   1.35. cdr_facility example
+   1.36. cdr_extra example
+   1.37. cdr_extra_nullable example
+   1.38. cdr_start_id example
+   1.39. cdr_end_id example
+   1.40. cdr_duration_id example
+   1.41. cdr_duration_mode example
+   1.42. cdr_log_enable example
+   1.43. cdrs_table example
+   1.44. time_mode example
+   1.45. time_attr example
+   1.46. time_exten example
+   1.47. time_format example
+   1.48. reason_from_hf
+   1.49. clone_msg
+   1.50. cdr_on_failed
+   1.51. acc_extra_size
+   1.52. cdr_extra_size
+   1.53. acc_log_request usage
+   1.54. acc_db_request usage
+   1.55. acc_db_request usage
 
 Chapter 1. Admin Guide
 
@@ -255,36 +266,38 @@ Chapter 1. Admin Guide
         6.18. db_table_acc (string)
         6.19. db_table_missed_calls (string)
         6.20. db_url (string)
-        6.21. acc_method_column (string)
-        6.22. acc_from_tag_column (string)
-        6.23. acc_to_tag_column (string)
-        6.24. acc_callid_column (string)
-        6.25. acc_sip_code_column (string)
-        6.26. acc_sip_reason_column (string)
-        6.27. acc_time_column (string)
-        6.28. db_extra (string)
-        6.29. db_insert_mode (integer)
-        6.30. cdr_enable (integer)
-        6.31. cdr_skip (string)
-        6.32. cdr_expired_dlg_enable (integer)
-        6.33. cdr_start_on_confirmed (integer)
-        6.34. cdr_facility (integer)
-        6.35. cdr_extra (string)
-        6.36. cdr_extra_nullable (integer)
-        6.37. cdr_start_id (string)
-        6.38. cdr_end_id (string)
-        6.39. cdr_duration_id (string)
-        6.40. cdr_log_enable (int)
-        6.41. cdrs_table (str)
-        6.42. time_mode (int)
-        6.43. time_attr (str)
-        6.44. time_exten (str)
-        6.45. time_format (str)
-        6.46. reason_from_hf (int)
-        6.47. clone_msg (int)
-        6.48. cdr_on_failed (int)
-        6.49. acc_extra_size (int)
-        6.50. cdr_extra_size (int)
+        6.21. db_version_check (integer)
+        6.22. acc_method_column (string)
+        6.23. acc_from_tag_column (string)
+        6.24. acc_to_tag_column (string)
+        6.25. acc_callid_column (string)
+        6.26. acc_sip_code_column (string)
+        6.27. acc_sip_reason_column (string)
+        6.28. acc_time_column (string)
+        6.29. db_extra (string)
+        6.30. db_insert_mode (integer)
+        6.31. cdr_enable (integer)
+        6.32. cdr_skip (string)
+        6.33. cdr_expired_dlg_enable (integer)
+        6.34. cdr_start_on_confirmed (integer)
+        6.35. cdr_facility (integer)
+        6.36. cdr_extra (string)
+        6.37. cdr_extra_nullable (integer)
+        6.38. cdr_start_id (string)
+        6.39. cdr_end_id (string)
+        6.40. cdr_duration_id (string)
+        6.41. cdr_duration_mode (integer)
+        6.42. cdr_log_enable (int)
+        6.43. cdrs_table (str)
+        6.44. time_mode (int)
+        6.45. time_attr (str)
+        6.46. time_exten (str)
+        6.47. time_format (str)
+        6.48. reason_from_hf (int)
+        6.49. clone_msg (int)
+        6.50. cdr_on_failed (int)
+        6.51. acc_extra_size (int)
+        6.52. cdr_extra_size (int)
 
    7. Functions
 
@@ -345,7 +358,7 @@ Chapter 1. Admin Guide
        status (including media status and PSTN status in case of the
        gateway). However, CDR-based logging has the option to log existing
        information from expired dialogs (the dlg_vars in cdr_extra) Please
-       see cdr_expired_dlg_enable parameter - Section 6.32,
+       see cdr_expired_dlg_enable parameter - Section 6.33,
        “cdr_expired_dlg_enable (integer)”.
 
    The SQL backend support is compiled in the module.
@@ -536,7 +549,7 @@ Note
    Sometimes, dialogs expire because the UA has a problem and a final
    message is never transmitted. You can toggle on/off the generation of
    CDR-based logging in such cases with only the dlg_vars showing by using
-   the cdr_expired_dlg_enable parameter - Section 6.32,
+   the cdr_expired_dlg_enable parameter - Section 6.33,
    “cdr_expired_dlg_enable (integer)”. Default behavior is not logging.
 
 4.2. CDR Extra
@@ -551,7 +564,7 @@ Note
      * cdr_extra = cdr_extra_definition (';'cdr_extra_definition)*
      * cdr_extra_definition = cdr_log_name '=' pseudo_variable
 
-   See also Section 6.35, “cdr_extra (string)”.
+   See also Section 6.36, “cdr_extra (string)”.
 
    The list with all pseudo-variables in Kamailio can be found at:
    https://www.kamailio.org/wikidocs/.
@@ -656,36 +669,38 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.18. db_table_acc (string)
    6.19. db_table_missed_calls (string)
    6.20. db_url (string)
-   6.21. acc_method_column (string)
-   6.22. acc_from_tag_column (string)
-   6.23. acc_to_tag_column (string)
-   6.24. acc_callid_column (string)
-   6.25. acc_sip_code_column (string)
-   6.26. acc_sip_reason_column (string)
-   6.27. acc_time_column (string)
-   6.28. db_extra (string)
-   6.29. db_insert_mode (integer)
-   6.30. cdr_enable (integer)
-   6.31. cdr_skip (string)
-   6.32. cdr_expired_dlg_enable (integer)
-   6.33. cdr_start_on_confirmed (integer)
-   6.34. cdr_facility (integer)
-   6.35. cdr_extra (string)
-   6.36. cdr_extra_nullable (integer)
-   6.37. cdr_start_id (string)
-   6.38. cdr_end_id (string)
-   6.39. cdr_duration_id (string)
-   6.40. cdr_log_enable (int)
-   6.41. cdrs_table (str)
-   6.42. time_mode (int)
-   6.43. time_attr (str)
-   6.44. time_exten (str)
-   6.45. time_format (str)
-   6.46. reason_from_hf (int)
-   6.47. clone_msg (int)
-   6.48. cdr_on_failed (int)
-   6.49. acc_extra_size (int)
-   6.50. cdr_extra_size (int)
+   6.21. db_version_check (integer)
+   6.22. acc_method_column (string)
+   6.23. acc_from_tag_column (string)
+   6.24. acc_to_tag_column (string)
+   6.25. acc_callid_column (string)
+   6.26. acc_sip_code_column (string)
+   6.27. acc_sip_reason_column (string)
+   6.28. acc_time_column (string)
+   6.29. db_extra (string)
+   6.30. db_insert_mode (integer)
+   6.31. cdr_enable (integer)
+   6.32. cdr_skip (string)
+   6.33. cdr_expired_dlg_enable (integer)
+   6.34. cdr_start_on_confirmed (integer)
+   6.35. cdr_facility (integer)
+   6.36. cdr_extra (string)
+   6.37. cdr_extra_nullable (integer)
+   6.38. cdr_start_id (string)
+   6.39. cdr_end_id (string)
+   6.40. cdr_duration_id (string)
+   6.41. cdr_duration_mode (integer)
+   6.42. cdr_log_enable (int)
+   6.43. cdrs_table (str)
+   6.44. time_mode (int)
+   6.45. time_attr (str)
+   6.46. time_exten (str)
+   6.47. time_format (str)
+   6.48. reason_from_hf (int)
+   6.49. clone_msg (int)
+   6.50. cdr_on_failed (int)
+   6.51. acc_extra_size (int)
+   6.52. cdr_extra_size (int)
 
 6.1. early_media (integer)
 
@@ -969,100 +984,112 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
 ...
 
-6.21. acc_method_column (string)
+6.21. db_version_check (integer)
+
+   Whether to validate database schema versions when the module
+   initializes or not.
+
+   Default value is 1 (perform version checks).
+
+   Example 1.21. db_version_check example
+...
+modparam("acc", "db_version_check", 0)
+...
+
+6.22. acc_method_column (string)
 
    Column name in accounting table to store the request's method name as
    string.
 
    Default value is “method”.
 
-   Example 1.21. acc_method_column example
+   Example 1.22. acc_method_column example
 ...
 modparam("acc", "acc_method_column", "method")
 ...
 
-6.22. acc_from_tag_column (string)
+6.23. acc_from_tag_column (string)
 
    Column name in accounting table to store the From header TAG parameter.
 
    Default value is “from_tag”.
 
-   Example 1.22. acc_from_tag_column example
+   Example 1.23. acc_from_tag_column example
 ...
 modparam("acc", "acc_from_tag_column", "from_tag")
 ...
 
-6.23. acc_to_tag_column (string)
+6.24. acc_to_tag_column (string)
 
    Column name in accounting table to store the To header TAG parameter.
 
    Default value is “to_tag”.
 
-   Example 1.23. acc_to_tag_column example
+   Example 1.24. acc_to_tag_column example
 ...
 modparam("acc", "acc_to_tag_column", "to_tag")
 ...
 
-6.24. acc_callid_column (string)
+6.25. acc_callid_column (string)
 
    Column name in accounting table to store the request's Callid value.
 
    Default value is “callid”.
 
-   Example 1.24. acc_callid_column example
+   Example 1.25. acc_callid_column example
 ...
 modparam("acc", "acc_callid_column", "callid")
 ...
 
-6.25. acc_sip_code_column (string)
+6.26. acc_sip_code_column (string)
 
    Column name in accounting table to store the final reply's numeric code
    value in string format.
 
    Default value is “sip_code”.
 
-   Example 1.25. acc_sip_code_column example
+   Example 1.26. acc_sip_code_column example
 ...
 modparam("acc", "acc_sip_code_column", "sip_code")
 ...
 
-6.26. acc_sip_reason_column (string)
+6.27. acc_sip_reason_column (string)
 
    Column name in accounting table to store the final reply's reason
    phrase value.
 
    Default value is “sip_reason”.
 
-   Example 1.26. acc_sip_reason_column example
+   Example 1.27. acc_sip_reason_column example
 ...
 modparam("acc", "acc_sip_reason_column", "sip_reason")
 ...
 
-6.27. acc_time_column (string)
+6.28. acc_time_column (string)
 
    Column name in accounting table to store the time stamp of the
    transaction completion in date-time format.
 
    Default value is “time”.
 
-   Example 1.27. acc_time_column example
+   Example 1.28. acc_time_column example
 ...
 modparam("acc", "acc_time_column", "time")
 ...
 
-6.28. db_extra (string)
+6.29. db_extra (string)
 
    Extra values to be logged into database - DB specific. See section
    Section 2, “Extra accounting” for more details.
 
    Default value is NULL.
 
-   Example 1.28. db_extra example
+   Example 1.29. db_extra example
 ...
 modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
 ...
 
-6.29. db_insert_mode (integer)
+6.30. db_insert_mode (integer)
 
    If set to 1, use INSERT DELAYED to add records to accounting tables
    when the DB driver has support for it. If no INSERT DELAYED support is
@@ -1076,12 +1103,12 @@ modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)")
 
    Default value is 0 (no INSERT DELAYED nor async insert).
 
-   Example 1.29. db_insert_mode example
+   Example 1.30. db_insert_mode example
 ...
 modparam("acc", "db_insert_mode", 1)
 ...
 
-6.30. cdr_enable (integer)
+6.31. cdr_enable (integer)
 
    Enable CDR reporting - one record per call reported to "acc_cdrs"
    table, relying on dialog module.
@@ -1090,70 +1117,70 @@ modparam("acc", "db_insert_mode", 1)
      * 0 - off (default).
      * 1 - on.
 
-   Example 1.30. cdr_enable example
+   Example 1.31. cdr_enable example
 ...
 modparam("acc", "cdr_enable", 1)
 ...
 
-6.31. cdr_skip (string)
+6.32. cdr_skip (string)
 
    Skip cdr generation for dialogs with this dlg_var set.
 
    Default value is NULL.
 
-   Example 1.31. cdr_skip example
+   Example 1.32. cdr_skip example
 ...
 modparam("acc", "cdr_skip", "nocdr")
 ...
 
-6.32. cdr_expired_dlg_enable (integer)
+6.33. cdr_expired_dlg_enable (integer)
 
    Should CDR-based logging be enabled in case of expired dialogs?
      * 0 - off (default).
      * 1 - on.
 
-   Example 1.32. cdr_expired_dlg_enable example
+   Example 1.33. cdr_expired_dlg_enable example
 ...
 modparam("acc", "cdr_expired_dlg_enable", 1)
 ...
 
-6.33. cdr_start_on_confirmed (integer)
+6.34. cdr_start_on_confirmed (integer)
 
    Should the start time be taken from the time when the dialog is
    created, or when the dialog is confirmed?
      * 0 - use time of dialog creation (default).
      * 1 - use time of dialog confirmation.
 
-   Example 1.33. cdr_start_on_confirmed example
+   Example 1.34. cdr_start_on_confirmed example
 ...
 modparam("acc", "cdr_start_on_confirmed", 1)
 ...
 
-6.34. cdr_facility (integer)
+6.35. cdr_facility (integer)
 
    Log facility to which CDR messages are issued to syslog. This allows to
    easily separate CDR-specific logging from the other log messages.
 
    Default value is LOG_DAEMON.
 
-   Example 1.34. cdr_facility example
+   Example 1.35. cdr_facility example
 ...
 modparam("acc", "cdr_facility", "LOG_DAEMON")
 ...
 
-6.35. cdr_extra (string)
+6.36. cdr_extra (string)
 
    Set of pseudo-variables defining custom CDR fields. See Section 4.2,
    “CDR Extra” for more details.
 
    Default value is NULL.
 
-   Example 1.35. cdr_extra example
+   Example 1.36. cdr_extra example
 ...
 modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)")
 ...
 
-6.36. cdr_extra_nullable (integer)
+6.37. cdr_extra_nullable (integer)
 
    Should custom CDR fields be saved as NULL?
 
@@ -1167,67 +1194,81 @@ modparam("acc", "cdr_extra", "c1=$dlg_var(caller);c2=$dlg_var(callee)")
 
    Default value is 0.
 
-   Example 1.36. cdr_extra_nullable example
+   Example 1.37. cdr_extra_nullable example
 ...
 modparam("acc", "cdr_extra_nullable", 1)
 ...
 
-6.37. cdr_start_id (string)
+6.38. cdr_start_id (string)
 
    Modifying the id which is used to store the start time.
 
    Default value is 'start_time'
 
-   Example 1.37. cdr_start_id example
+   Example 1.38. cdr_start_id example
 ...
 modparam("acc", "cdr_start_id", "start")
 ...
 
-6.38. cdr_end_id (string)
+6.39. cdr_end_id (string)
 
    Modifying the id which is used to store the end time.
 
    Default value is 'end_time'
 
-   Example 1.38. cdr_end_id example
+   Example 1.39. cdr_end_id example
 ...
 modparam("acc", "cdr_end_id", "end")
 ...
 
-6.39. cdr_duration_id (string)
+6.40. cdr_duration_id (string)
 
    Modify the id which is used to store the duration.
 
    Default value is 'duration'
 
-   Example 1.39. cdr_duration_id example
+   Example 1.40. cdr_duration_id example
 ...
 modparam("acc", "cdr_duration_id", "d")
 ...
 
-6.40. cdr_log_enable (int)
+6.41. cdr_duration_mode (integer)
+
+   Modify the precision of the duration stored for the call.
+
+   Values can be:
+     * 0 - save the cdr duration as seconds.
+     * 1 - (default), save the cdr duration as seconds.milliseconds.
+     * 2 - save the cdr duration as seconds.microseconds.
+
+   Example 1.41. cdr_duration_mode example
+...
+modparam("acc", "cdr_duration_mode", 2)
+...
+
+6.42. cdr_log_enable (int)
 
    Control if CDR-based accounting should be written to syslog.
 
    0 - off. 1 - on (default).
 
-   Example 1.40. cdr_log_enable example
+   Example 1.42. cdr_log_enable example
 ...
 modparam("acc", "cdr_log_enable", 0)
 ...
 
-6.41. cdrs_table (str)
+6.43. cdrs_table (str)
 
    Name of db table to store dialog-based CDRs.
 
    Default value is "" (no db storage for dialog-based CDRs).
 
-   Example 1.41. cdrs_table example
+   Example 1.43. cdrs_table example
 ...
 modparam("acc", "cdrs_table", "acc_cdrs")
 ...
 
-6.42. time_mode (int)
+6.44. time_mode (int)
 
    Store additional value related to the time of event.
 
@@ -1241,12 +1282,12 @@ modparam("acc", "cdrs_table", "acc_cdrs")
      * 4 - save formatted time according to time_format parameter, using
        the output of gmtime(). Used for cdr entries too.
 
-   Example 1.42. time_mode example
+   Example 1.44. time_mode example
 ...
 modparam("acc", "time_mode", 1)
 ...
 
-6.43. time_attr (str)
+6.45. time_attr (str)
 
    Name of the syslog attribute or database column where to store
    additional value related to the time of event.
@@ -1262,35 +1303,35 @@ modparam("acc", "time_mode", 1)
    value is already unix timestamp, but in db accounting time value is
    datetime and requires a function to get the timestamp.
 
-   Example 1.43. time_attr example
+   Example 1.45. time_attr example
 ...
 modparam("acc", "time_attr", "seconds")
 ...
 
-6.44. time_exten (str)
+6.46. time_exten (str)
 
    Name of the syslog attribute or database column where to store extended
    value related to the time of event.
 
    It is used now only for time_mode=1 and database column has to be int:
 
-   Example 1.44. time_exten example
+   Example 1.46. time_exten example
 ...
 modparam("acc", "time_exten", "microsecs")
 ...
 
-6.45. time_format (str)
+6.47. time_format (str)
 
    Specify the format to print the time for time_mode 3 or 4.
 
    Default value is %Y-%m-%d %H:%M:%S".
 
-   Example 1.45. time_format example
+   Example 1.47. time_format example
 ...
 modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 ...
 
-6.46. reason_from_hf (int)
+6.48. reason_from_hf (int)
 
    Tells where to take sip_reason from. If value is 0, sip_reason is taken
    from status line. Otherwise, sip_reason is taken from Reason header
@@ -1298,12 +1339,12 @@ modparam("acc", "time_format", "%Y/%m/%d %H:%M:%S")
 
    Default value is 0.
 
-   Example 1.46. reason_from_hf
+   Example 1.48. reason_from_hf
 ...
 modparam("acc", "reason_from_hf", 1)
 ...
 
-6.47. clone_msg (int)
+6.49. clone_msg (int)
 
    If set to 1, request structure from transaction is cloned temporarily
    in the callback to get acc attributes. It is required if you account
@@ -1314,12 +1355,12 @@ modparam("acc", "reason_from_hf", 1)
 
    Default value is 1.
 
-   Example 1.47. clone_msg
+   Example 1.49. clone_msg
 ...
 modparam("acc", "clone_msg", 0)
 ...
 
-6.48. cdr_on_failed (int)
+6.50. cdr_on_failed (int)
 
    If set to 1, the module stores the CDR for a failed dialog (calls not
    answered). If set to 0, those records are not stored, only those for
@@ -1327,12 +1368,12 @@ modparam("acc", "clone_msg", 0)
 
    Default value is 1.
 
-   Example 1.48. cdr_on_failed
+   Example 1.50. cdr_on_failed
 ...
 modparam("acc", "cdr_on_failed", 0)
 ...
 
-6.49. acc_extra_size (int)
+6.51. acc_extra_size (int)
 
    Set the maximum number of extra attributes that can be stored in the
    accounting record (event accounting record). It is related to log_extra
@@ -1340,12 +1381,12 @@ modparam("acc", "cdr_on_failed", 0)
 
    Default value is 64.
 
-   Example 1.49. acc_extra_size
+   Example 1.51. acc_extra_size
 ...
 modparam("acc", "acc_extra_size", 100)
 ...
 
-6.50. cdr_extra_size (int)
+6.52. cdr_extra_size (int)
 
    Set the maximum number of extra attributes that can be stored in the
    call data record (cdr by dialog module). It is related to cdr_extra
@@ -1353,7 +1394,7 @@ modparam("acc", "acc_extra_size", 100)
 
    Default value is 64.
 
-   Example 1.50. cdr_extra_size
+   Example 1.52. cdr_extra_size
 ...
 modparam("acc", "cdr_extra_size", 100)
 ...
@@ -1377,7 +1418,7 @@ modparam("acc", "cdr_extra_size", 100)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. acc_log_request usage
+   Example 1.53. acc_log_request usage
 ...
 acc_log_request("Some comment");
 $var(code) = 404;
@@ -1399,7 +1440,7 @@ acc_log_request("$var(code) Error: $avp(reason)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.52. acc_db_request usage
+   Example 1.54. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
@@ -1423,7 +1464,7 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.53. acc_db_request usage
+   Example 1.55. acc_db_request usage
 ...
 acc_request("100 Received", "acc");
 acc_request("100 Received", "acc_$time(year)_$time(mon)");
