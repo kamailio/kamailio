@@ -210,7 +210,7 @@ int rtpengine_hash_table_destroy()
 int rtpengine_hash_table_insert(
 		str callid, str viabranch, struct rtpengine_hash_entry *value)
 {
-	struct rtpengine_hash_entry *entry, *last_entry;
+	struct rtpengine_hash_entry *entry, **last_next;
 	struct rtpengine_hash_entry *new_entry =
 			(struct rtpengine_hash_entry *)value;
 	unsigned int hash_index;
@@ -223,18 +223,18 @@ int rtpengine_hash_table_insert(
 
 	// get entry list
 	hash_index = str_hash(callid);
-	entry = rtpengine_hash_table->row_entry_list[hash_index];
 
-	if(entry == NULL || rtpengine_hash_table->row_locks[hash_index] == NULL) {
-		LM_ERR("NULL entry or lock for hash table slot[%d]\n", hash_index);
+	if(rtpengine_hash_table->row_locks[hash_index] == NULL) {
+		LM_ERR("NULL lock for hash table slot[%d]\n", hash_index);
 		return 0;
 	}
 
-	last_entry = entry;
 	// lock
 	lock_get(rtpengine_hash_table->row_locks[hash_index]);
 
-	while(entry) {
+	last_next = &rtpengine_hash_table->row_entry_list[hash_index];
+
+	while((entry = *last_next)) {
 		// if found, don't add new entry
 		if(STR_EQ(entry->callid, new_entry->callid)
 				&& STR_EQ(entry->viabranch, new_entry->viabranch)) {
@@ -250,24 +250,22 @@ int rtpengine_hash_table_insert(
 		// if expired entry discovered, delete it
 		if(entry->tout < get_ticks()) {
 			// set pointers; exclude entry
-			last_entry->next = entry->next;
+			*last_next = entry->next;
 
 			// free current entry; entry points to unknown
 			rtpengine_hash_table_free_entry(entry);
 
-			// set pointers
-			entry = last_entry;
-
 			// update total
 			rtpengine_hash_table->row_totals[hash_index]--;
+
+			continue;
 		}
 
 		// next entry in the list
-		last_entry = entry;
-		entry = entry->next;
+		last_next = &entry->next;
 	}
 
-	last_entry->next = new_entry;
+	*last_next = new_entry;
 
 	// update total
 	rtpengine_hash_table->row_totals[hash_index]++;
@@ -281,7 +279,7 @@ int rtpengine_hash_table_insert(
 int rtpengine_hash_table_remove(
 		str callid, str viabranch, enum rtpe_operation op)
 {
-	struct rtpengine_hash_entry *entry, *last_entry;
+	struct rtpengine_hash_entry *entry, **last_next;
 	unsigned int hash_index;
 	int found = 0;
 
@@ -291,33 +289,29 @@ int rtpengine_hash_table_remove(
 		return 0;
 	}
 
-	// get first entry from entry list; jump over unused list head
 	hash_index = str_hash(callid);
-	entry = rtpengine_hash_table->row_entry_list[hash_index];
-	last_entry = entry;
 
 	// lock
-	if(rtpengine_hash_table->row_locks[hash_index]) {
-		lock_get(rtpengine_hash_table->row_locks[hash_index]);
-	} else {
+	if(!rtpengine_hash_table->row_locks[hash_index]) {
 		LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", hash_index);
 		return 0;
 	}
+	lock_get(rtpengine_hash_table->row_locks[hash_index]);
 
-	while(entry) {
+	// get first entry from entry list
+	last_next = &rtpengine_hash_table->row_entry_list[hash_index];
+
+	while((entry = *last_next)) {
 		// if callid found, delete entry
 		if((STR_EQ(entry->callid, callid)
 				   && STR_EQ(entry->viabranch, viabranch))
 				|| (STR_EQ(entry->callid, callid) && viabranch.len == 0
 						&& op == OP_DELETE)) {
 			// set pointers; exclude entry
-			last_entry->next = entry->next;
+			*last_next = entry->next;
 
 			// free current entry; entry points to unknown
 			rtpengine_hash_table_free_entry(entry);
-
-			// set pointers
-			entry = last_entry;
 
 			// update total
 			rtpengine_hash_table->row_totals[hash_index]--;
@@ -331,28 +325,24 @@ int rtpengine_hash_table_remove(
 			}
 
 			// try to also delete other viabranch entries for callid
-			last_entry = entry;
-			entry = entry->next;
 			continue;
 		}
 
 		// if expired entry discovered, delete it
 		if(entry->tout < get_ticks()) {
 			// set pointers; exclude entry
-			last_entry->next = entry->next;
+			*last_next = entry->next;
 
 			// free current entry; entry points to unknown
 			rtpengine_hash_table_free_entry(entry);
 
-			// set pointers
-			entry = last_entry;
-
 			// update total
 			rtpengine_hash_table->row_totals[hash_index]--;
+
+			continue;
 		}
 
-		last_entry = entry;
-		entry = entry->next;
+		last_next = &entry->next;
 	}
 
 	// unlock
@@ -364,7 +354,7 @@ int rtpengine_hash_table_remove(
 struct rtpp_node *rtpengine_hash_table_lookup(
 		str callid, str viabranch, enum rtpe_operation op)
 {
-	struct rtpengine_hash_entry *entry, *last_entry;
+	struct rtpengine_hash_entry *entry, **last_next;
 	unsigned int hash_index;
 	struct rtpp_node *node;
 
@@ -374,20 +364,19 @@ struct rtpp_node *rtpengine_hash_table_lookup(
 		return 0;
 	}
 
-	// get first entry from entry list; jump over unused list head
 	hash_index = str_hash(callid);
-	entry = rtpengine_hash_table->row_entry_list[hash_index];
-	last_entry = entry;
 
 	// lock
-	if(rtpengine_hash_table->row_locks[hash_index]) {
-		lock_get(rtpengine_hash_table->row_locks[hash_index]);
-	} else {
+	if(!rtpengine_hash_table->row_locks[hash_index]) {
 		LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", hash_index);
 		return 0;
 	}
+	lock_get(rtpengine_hash_table->row_locks[hash_index]);
 
-	while(entry) {
+	// get first entry from entry list
+	last_next = &rtpengine_hash_table->row_entry_list[hash_index];
+
+	while((entry = *last_next)) {
 		// if callid found, return entry
 		if((STR_EQ(entry->callid, callid)
 				   && STR_EQ(entry->viabranch, viabranch))
@@ -404,20 +393,18 @@ struct rtpp_node *rtpengine_hash_table_lookup(
 		// if expired entry discovered, delete it
 		if(entry->tout < get_ticks()) {
 			// set pointers; exclude entry
-			last_entry->next = entry->next;
+			*last_next = entry->next;
 
 			// free current entry; entry points to unknown
 			rtpengine_hash_table_free_entry(entry);
 
-			// set pointers
-			entry = last_entry;
-
 			// update total
 			rtpengine_hash_table->row_totals[hash_index]--;
+
+			continue;
 		}
 
-		last_entry = entry;
-		entry = entry->next;
+		last_next = &entry->next;
 	}
 
 	// unlock
@@ -430,7 +417,7 @@ struct rtpp_node *rtpengine_hash_table_lookup(
 void rtpengine_hash_table_print()
 {
 	int i;
-	struct rtpengine_hash_entry *entry, *last_entry;
+	struct rtpengine_hash_entry *entry, **last_next;
 
 	// sanity checks
 	if(!rtpengine_hash_table_sanity_checks()) {
@@ -441,38 +428,34 @@ void rtpengine_hash_table_print()
 	// print hashtable
 	for(i = 0; i < rtpengine_hash_table->size; i++) {
 		// lock
-		if(rtpengine_hash_table->row_locks[i]) {
-			lock_get(rtpengine_hash_table->row_locks[i]);
-		} else {
+		if(!rtpengine_hash_table->row_locks[i]) {
 			LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", i);
 			return;
 		}
+		lock_get(rtpengine_hash_table->row_locks[i]);
 
-		entry = rtpengine_hash_table->row_entry_list[i];
-		last_entry = entry;
+		last_next = &rtpengine_hash_table->row_entry_list[i];
 
-		while(entry) {
+		while((entry = *last_next)) {
 			// if expired entry discovered, delete it
 			if(entry->tout < get_ticks()) {
 				// set pointers; exclude entry
-				last_entry->next = entry->next;
+				*last_next = entry->next;
 
 				// free current entry; entry points to unknown
 				rtpengine_hash_table_free_entry(entry);
 
-				// set pointers
-				entry = last_entry;
-
 				// update total
 				rtpengine_hash_table->row_totals[i]--;
+
+				continue;
 			} else {
 				LM_DBG("hash_index=%d callid=%.*s tout=%u\n", i,
 						entry->callid.len, entry->callid.s,
 						entry->tout - get_ticks());
 			}
 
-			last_entry = entry;
-			entry = entry->next;
+			last_next = &entry->next;
 		}
 
 		// unlock
