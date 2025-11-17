@@ -158,6 +158,7 @@ static const char *command_strings[] = {
 	[OP_SUBSCRIBE_REQUEST]= "subscribe request",
 	[OP_SUBSCRIBE_ANSWER] = "subscribe answer",
 	[OP_UNSUBSCRIBE]    = "unsubscribe",
+	[OP_CONNECT]        = "connect",
 };
 
 static const char *sip_type_strings[] = {
@@ -234,6 +235,7 @@ static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
 static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 static int rtpengine_query1_f(struct sip_msg *, char *, char *);
 static int rtpengine_info1_f(struct sip_msg *, char *, char *);
+static int rtpengine_connect1_f(struct sip_msg *, char *, char *);
 static void rtpengine_ping_check_timer(unsigned int ticks, void *);
 
 static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar);
@@ -524,6 +526,11 @@ static cmd_export_t cmds[] = {
 		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"rtpengine_query_v", (cmd_function)w_rtpengine_query_v, 2,
 		fixup_rtpengine_query_v, fixup_free_rtpengine_query_v, ANY_ROUTE},
+	{"rtpengine_connect", (cmd_function)rtpengine_connect1_f, 0, 0, 0, ANY_ROUTE},
+	{"rtpengine_connect", (cmd_function)rtpengine_connect1_f, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"rtpengine_connect", (cmd_function)rtpengine_connect1_f, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"bind_rtpengine", (cmd_function)bind_rtpengine, 0, 0, 0, 0},
 	{"rtpengine_subscribe_request", (cmd_function)rtpengine_subscribe_request_wrap_f, 4,
 	fixup_rtpengine_subscribe_request_v, fixup_free_rtpengine_subscribe_request_v, ANY_ROUTE},
@@ -3335,6 +3342,7 @@ static int parse_from_to_tags(struct ng_flags_parse *ng_flags,
 	} else if((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 			  || (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
 			  || (msg->first_line.type == SIP_REPLY && op == OP_ANSWER)
+			  || op == OP_CONNECT
 			  || ng_flags->directional) /* set if from-tag was set manually */
 	{
 		bencode_dictionary_add_str(
@@ -5218,6 +5226,38 @@ static int rtpengine_query1_f(struct sip_msg *msg, char *str1, char *str2)
 			msg, rtpengine_query_wrap, str1, str2, 1, OP_QUERY);
 }
 
+static int rtpengine_connect(struct sip_msg *msg, void *d)
+{
+	void **parms;
+	str *flags = NULL;
+	str *viabranch = NULL;
+	bencode_buffer_t bencbuf;
+
+	parms = d;
+	flags = parms[0];
+	viabranch = parms[1];
+
+	bencode_item_t *ret = rtpp_function_call_ok(
+			&bencbuf, msg, OP_CONNECT, flags, viabranch, NULL, NULL, NULL);
+	if(!ret)
+		return -1;
+	parse_call_stats(ret, msg);
+	bencode_buffer_free(&bencbuf);
+	return 1;
+}
+
+static int rtpengine_connect_wrap(
+		struct sip_msg *msg, void *d, int more, enum rtpe_operation op)
+{
+	return rtpengine_connect(msg, d);
+}
+
+static int rtpengine_connect1_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	return rtpengine_rtpp_set_wrap_fparam(
+			msg, rtpengine_connect_wrap, str1, str2, 1, OP_CONNECT);
+}
+
 
 /* This function assumes p points to a line of requested type. */
 
@@ -6332,6 +6372,23 @@ static int ki_rtpengine_query2(sip_msg_t *msg, str *flags, str *viabranch)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_wrap, parms, 1, OP_ANY);
 }
 
+/* KI - rtpengine connect */
+static int ki_rtpengine_connect0(sip_msg_t *msg)
+{
+	void *parms[2] = {NULL, NULL};
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
+}
+static int ki_rtpengine_connect(sip_msg_t *msg, str *flags)
+{
+	void *parms[2] = {flags, NULL};
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
+}
+static int ki_rtpengine_connect2(sip_msg_t *msg, str *flags, str *viabranch)
+{
+	void *parms[2] = {flags, viabranch};
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
+}
+
 /* KI - start recording */
 static int ki_start_recording(sip_msg_t *msg)
 {
@@ -6810,6 +6867,21 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+	{ str_init("rtpengine"), str_init("rtpengine_connect0"),
+		SR_KEMIP_INT, ki_rtpengine_connect0,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rtpengine"), str_init("rtpengine_connect"),
+		SR_KEMIP_INT, ki_rtpengine_connect,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rtpengine"), str_init("rtpengine_connect2"),
+		SR_KEMIP_INT, ki_rtpengine_connect2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("rtpengine"), str_init("rtpengine_subscribe_request"),
 		SR_KEMIP_INT, ki_subscribe_request,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
