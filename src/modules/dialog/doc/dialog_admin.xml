@@ -2891,7 +2891,7 @@ dlg_set_state("early");
 		<section id="dlg.r.list_match">
 		<title>dlg.list_match</title>
 		<para>
-		Lists the details of matching dialogs. The paramters specify the matching
+		Lists the details of matching dialogs. The parameters specify the matching
 		key, operator, value and optionally a limit of matched dialogs.
 		</para>
 		<para>Name: <emphasis>dlg.list_match</emphasis></para>
