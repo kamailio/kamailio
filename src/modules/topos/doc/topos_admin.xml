@@ -573,7 +573,7 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 		<title><varname>header_mode</varname> (int)</title>
 		<para>
 			List of headers to disable multiple comma separated values inserted in compact form.
-			Altough compact form is RFC compliant this paramter gives possibilty to disable
+			Altough compact form is RFC compliant this parameter gives possibilty to disable
 			compact form header values for UA that don't support or can't handle it.
 
 			The following options are available:
@@ -643,7 +643,7 @@ modparam("topos", "version_table", 0)
 		<function moreinfo="none">tps_set_context(ctx)</function>
 		</title>
 		<para>
-			Update the context at runtime. If the value is emtpy string, then
+			Update the context at runtime. If the value is empty string, then
 			the runtime context is reset.
 		</para>
 		<para>
