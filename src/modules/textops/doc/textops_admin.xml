@@ -1989,7 +1989,7 @@ if (str_ifind("$rU", "Alice")) {
 		</title>
 		<para>
 			Return 1 (true) if any character in "clist" is found inside "txt".
-			Both paramters can contain variables.
+			Both parameters can contain variables.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
