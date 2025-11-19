@@ -320,7 +320,7 @@ int find_credentials(struct sip_msg *msg, str *realm, hdr_types_t hftype,
 	while(ptr) {
 		res = parse_credentials(ptr);
 		if(res < 0) {
-			LM_ERR("error while parsing credentials\n");
+			LM_ERR("error while parsing credentials (%d)\n", res);
 			return (res == -1) ? -2 : -3;
 		} else if(res == 0) {
 			r = &(((auth_body_t *)(ptr->parsed))->digest.realm);
