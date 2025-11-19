@@ -176,6 +176,7 @@ static inline int parse_digest_param(str *_s, dig_cred_t *_c)
 	trim_leading(_s);
 
 	if(_s->len == 0) {
+		LM_ERR("no value for parameter type: %d\n", t);
 		return -2;
 	}
 
