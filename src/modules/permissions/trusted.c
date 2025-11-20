@@ -64,8 +64,11 @@ int reload_trusted_table(void)
 	struct trusted_list **new_hash_table;
 	int i;
 	int priority;
+	int ret;
 
 	char *pattern, *ruri_pattern, *tag;
+#define TAG_BUF_SIZE 32
+	char tag_buf[TAG_BUF_SIZE];
 
 	if(perm_trust_table == 0) {
 		LM_ERR("in-memory hash table not initialized\n");
@@ -108,63 +111,159 @@ int reload_trusted_table(void)
 
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		val = ROW_VALUES(row + i);
-		if((ROW_N(row + i) == 6)
-				&& ((VAL_TYPE(val) == DB1_STRING) || (VAL_TYPE(val) == DB1_STR))
-				&& !VAL_NULL(val)
-				&& ((VAL_TYPE(val + 1) == DB1_STRING)
-						|| (VAL_TYPE(val + 1) == DB1_STR))
-				&& !VAL_NULL(val + 1)
-				&& (VAL_NULL(val + 2)
-						|| (((VAL_TYPE(val + 2) == DB1_STRING)
-									|| (VAL_TYPE(val + 2) == DB1_STR))
-								&& !VAL_NULL(val + 2)))
-				&& (VAL_NULL(val + 3)
-						|| (((VAL_TYPE(val + 3) == DB1_STRING)
-									|| (VAL_TYPE(val + 3) == DB1_STR))
-								&& !VAL_NULL(val + 3)))
-				&& (VAL_NULL(val + 4)
-						|| (((VAL_TYPE(val + 4) == DB1_STRING)
-									|| (VAL_TYPE(val + 4) == DB1_STR))
-								&& !VAL_NULL(val + 4)))) {
-			if(VAL_NULL(val + 2)) {
-				pattern = 0;
-			} else {
-				pattern = (char *)VAL_STRING(val + 2);
-			}
-			if(VAL_NULL(val + 3)) {
-				ruri_pattern = 0;
-			} else {
-				ruri_pattern = (char *)VAL_STRING(val + 3);
-			}
-			if(VAL_NULL(val + 4)) {
-				tag = 0;
-			} else {
-				tag = (char *)VAL_STRING(val + 4);
-			}
-			if(VAL_NULL(val + 5)) {
-				priority = 0;
-			} else {
-				priority = (int)VAL_INT(val + 5);
-			}
-			if(hash_table_insert(new_hash_table, (char *)VAL_STRING(val),
-					   (char *)VAL_STRING(val + 1), pattern, ruri_pattern, tag,
-					   priority)
-					== -1) {
-				LM_ERR("hash table problem\n");
-				perm_dbf.free_result(perm_db_handle, res);
-				empty_hash_table(new_hash_table);
-				return -1;
-			}
-			LM_DBG("tuple <%s, %s, %s, %s, %s> inserted into trusted hash "
-				   "table\n",
-					VAL_STRING(val), VAL_STRING(val + 1), pattern, ruri_pattern,
-					tag);
+		if(ROW_N(row + i) != 6) {
+			LM_DBG("failure during checks of db trusted table: Columns %d - "
+				   "expected 6\n",
+					ROW_N(row + i));
+			goto dberror;
+		}
+		if(VAL_NULL(val)
+				|| !(VAL_TYPE(val) == DB1_STRING || VAL_TYPE(val) == DB1_STR)) {
+			LM_DBG("failure during checks of database field (%s) in "
+				   "trusted table\n",
+					perm_source_col.s);
+			goto dberror;
+		}
+		if(VAL_NULL(val + 1)
+				|| !(VAL_TYPE(val + 1) == DB1_STRING
+						|| VAL_TYPE(val + 1) == DB1_STR)) {
+			LM_DBG("failure during checks of database field (%s) in "
+				   "trusted table\n",
+					perm_proto_col.s);
+			goto dberror;
+		}
+		if(!VAL_NULL(val + 2)
+				&& !(VAL_TYPE(val + 2) == DB1_STRING
+						|| VAL_TYPE(val + 2) == DB1_STR)) {
+			LM_DBG("failure during checks of database field (%s) "
+				   "in trusted table\n",
+					perm_from_col.s);
+			goto dberror;
+		}
+		if(!VAL_NULL(val + 3)
+				&& !(VAL_TYPE(val + 3) == DB1_STRING
+						|| VAL_TYPE(val + 3) == DB1_STR)) {
+			LM_DBG("failure during checks of database field (%s) "
+				   "in trusted table\n",
+					perm_ruri_col.s);
+			goto dberror;
+		}
+
+		memset(tag_buf, 0, TAG_BUF_SIZE);
+
+		// convert tag DB field value to char* for supported DB field types
+		switch(VAL_TYPE(val + 4)) {
+			case DB1_STR:
+			case DB1_STRING:
+				if(VAL_NULL(val + 4)) {
+					tag = NULL;
+				} else {
+					tag = (char *)VAL_STRING(val + 4);
+				}
+				break;
+			case DB1_INT:
+				if(VAL_NULL(val + 4)) {
+					tag = NULL;
+				} else {
+					ret = snprintf(
+							tag_buf, TAG_BUF_SIZE, "%-d", VAL_INT(val + 4));
+					if(ret < 0 || ret >= TAG_BUF_SIZE) {
+						LM_ERR("address table row [%d]: error while converting "
+							   "DB int to string\n",
+								i);
+						goto dberror;
+					}
+					tag = tag_buf;
+				}
+				break;
+			case DB1_UINT:
+				if(VAL_NULL(val + 4)) {
+					tag = NULL;
+				} else {
+					ret = snprintf(
+							tag_buf, TAG_BUF_SIZE, "%u", VAL_UINT(val + 4));
+					if(ret < 0 || ret >= TAG_BUF_SIZE) {
+						LM_ERR("address table row [%d]: error while converting "
+							   "DB unsigned int to string\n",
+								i);
+						goto dberror;
+					}
+					tag = tag_buf;
+				}
+				break;
+			case DB1_BIGINT:
+				if(VAL_NULL(val + 4)) {
+					tag = NULL;
+				} else {
+					ret = snprintf(tag_buf, TAG_BUF_SIZE, "%-lld",
+							VAL_BIGINT(val + 4));
+					if(ret < 0 || ret >= TAG_BUF_SIZE) {
+						LM_ERR("address table row [%d]: error while converting "
+							   "DB big int to string\n",
+								i);
+						goto dberror;
+					}
+					tag = tag_buf;
+				}
+				break;
+			case DB1_UBIGINT:
+				if(VAL_NULL(val + 4)) {
+					tag = NULL;
+				} else {
+					ret = snprintf(tag_buf, TAG_BUF_SIZE, "%llu",
+							VAL_UBIGINT(val + 4));
+					if(ret < 0 || ret >= TAG_BUF_SIZE) {
+						LM_ERR("address table row [%d]: error while converting "
+							   "DB big unsigned int to string\n",
+								i);
+						goto dberror;
+					}
+					tag = tag_buf;
+				}
+				break;
+			default:
+				LM_DBG("failure during checks of database field (%s) in "
+					   "trusted table\n",
+						perm_tag_col.s);
+				goto dberror;
+		}
+		if(!VAL_NULL(val + 5)
+				&& !(VAL_TYPE(val + 5) == DB1_INT
+						|| VAL_TYPE(val + 5) == DB1_UINT)) {
+			LM_DBG("failure during checks of database field (%s) "
+				   "in trusted table\n",
+					perm_priority_col.s);
+			goto dberror;
+		}
+
+		if(VAL_NULL(val + 2)) {
+			pattern = 0;
 		} else {
-			LM_ERR("database problem\n");
+			pattern = (char *)VAL_STRING(val + 2);
+		}
+		if(VAL_NULL(val + 3)) {
+			ruri_pattern = 0;
+		} else {
+			ruri_pattern = (char *)VAL_STRING(val + 3);
+		}
+		if(VAL_NULL(val + 5)) {
+			priority = 0;
+		} else {
+			priority = (int)VAL_INT(val + 5);
+		}
+		if(hash_table_insert(new_hash_table, (char *)VAL_STRING(val),
+				   (char *)VAL_STRING(val + 1), pattern, ruri_pattern, tag,
+				   priority)
+				== -1) {
+			LM_ERR("hash table problem\n");
 			perm_dbf.free_result(perm_db_handle, res);
 			empty_hash_table(new_hash_table);
 			return -1;
 		}
+		LM_DBG("tuple <%s, %s, %s, %s, %s> inserted into trusted hash "
+			   "table\n",
+				VAL_STRING(val), VAL_STRING(val + 1), pattern, ruri_pattern,
+				tag);
 	}
 
 	perm_dbf.free_result(perm_db_handle, res);
@@ -174,6 +273,12 @@ int reload_trusted_table(void)
 	LM_DBG("trusted table reloaded successfully.\n");
 
 	return 1;
+
+dberror:
+	LM_ERR("database problem - invalid record\n");
+	perm_dbf.free_result(perm_db_handle, res);
+	empty_hash_table(new_hash_table);
+	return -1;
 }
 
 void perm_ht_timer(unsigned int ticks, void *);
