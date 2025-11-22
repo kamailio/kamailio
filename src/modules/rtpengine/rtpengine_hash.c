@@ -55,7 +55,7 @@ int rtpengine_hash_table_init(int size)
 		rtpengine_hash_table_destroy();
 		return 0;
 	}
-	memset(rtpengine_hash_table->row_locks, 0,
+	memset((void *)rtpengine_hash_table->row_locks, 0,
 			hash_table_size * sizeof(gen_lock_t));
 
 	// init hashtable row_entry_list
@@ -141,7 +141,7 @@ int rtpengine_hash_table_destroy()
 	}
 
 	// destroy hashtable row_locks
-	shm_free(rtpengine_hash_table->row_locks);
+	shm_free((void *)rtpengine_hash_table->row_locks);
 	rtpengine_hash_table->row_locks = NULL;
 
 	// destroy hashtable
