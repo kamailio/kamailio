@@ -1,7 +1,7 @@
 use kamailio;
 db.createCollection("version");
 db.getCollection("version").insert({ table_name: "acc", table_version: NumberInt(5) });
-db.getCollection("version").insert({ table_name: "acc_cdrs", table_version: NumberInt(2) });
+db.getCollection("version").insert({ table_name: "acc_cdrs", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "active_watchers", table_version: NumberInt(12) });
 db.getCollection("version").insert({ table_name: "address", table_version: NumberInt(6) });
 db.getCollection("version").insert({ table_name: "aliases", table_version: NumberInt(8) });

@@ -21,7 +21,7 @@ struct rtpengine_hash_table
 {
 	struct rtpengine_hash_entry *
 			*row_entry_list; // vector of size pointers to entry
-	gen_lock_t **row_locks;	 // vector of size pointers to locks
+	gen_lock_t *row_locks;	 // vector of locks
 	unsigned int *
 			row_totals; // vector of size numbers of entries in the hashtable rows
 	unsigned int size; // hash table size

@@ -137,6 +137,7 @@ str cdr_skip = {NULL, 0};
 str cdr_start_str = str_init("start_time");
 str cdr_end_str = str_init("end_time");
 str cdr_duration_str = str_init("duration");
+int cdr_duration_mode = 1;
 /* name for db table to store dialog-based cdrs */
 str acc_cdrs_table = str_init("");
 
@@ -148,6 +149,7 @@ str acc_cdrs_table = str_init("");
 
 int db_flag = -1;
 int db_missed_flag = -1;
+int db_ver_check = 1;
 static char *db_extra_str = 0; /*!< db extra variables */
 struct acc_extra *db_extra = 0;
 static str db_url = {NULL, 0};		/*!< Database url */
@@ -228,6 +230,7 @@ static param_export_t params[] = {
 	{"cdr_start_id",	 PARAM_STR, &cdr_start_str		},
 	{"cdr_end_id",		 PARAM_STR, &cdr_end_str		},
 	{"cdr_duration_id",	 PARAM_STR, &cdr_duration_str	},
+	{"cdr_duration_mode",	 PARAM_INT, &cdr_duration_mode	},
 	{"cdr_expired_dlg_enable", PARAM_INT, &cdr_expired_dlg_enable   },
 	/* db-specific */
 	{"db_flag",              PARAM_INT, &db_flag            },
@@ -236,6 +239,7 @@ static param_export_t params[] = {
 	{"db_url",               PARAM_STR, &db_url             },
 	{"db_table_acc",         PARAM_STR, &db_table_acc       },
 	{"db_table_missed_calls",PARAM_STR, &db_table_mc        },
+	{"db_version_check",PARAM_INT, &db_ver_check        },
 	{"acc_method_column",    PARAM_STR, &acc_method_col     },
 	{"acc_from_tag_column",  PARAM_STR, &acc_fromtag_col    },
 	{"acc_to_tag_column",    PARAM_STR, &acc_totag_col      },
@@ -511,6 +515,11 @@ static int mod_init(void)
 
 	if(cdr_expired_dlg_enable < 0 || cdr_expired_dlg_enable > 1) {
 		LM_ERR("cdr_expired_dlg_enable is out of range\n");
+		return -1;
+	}
+
+	if(cdr_duration_mode < 0 || cdr_duration_mode > 2) {
+		LM_ERR("cdr_duration_mode is out of range\n");
 		return -1;
 	}
 

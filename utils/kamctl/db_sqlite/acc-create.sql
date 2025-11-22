@@ -22,7 +22,7 @@ CREATE TABLE acc_cdrs (
 
 CREATE INDEX acc_cdrs_start_time_idx ON acc_cdrs (start_time);
 
-INSERT INTO version (table_name, table_version) values ('acc_cdrs','2');
+INSERT INTO version (table_name, table_version) values ('acc_cdrs','3');
 
 CREATE TABLE missed_calls (
     id INTEGER PRIMARY KEY NOT NULL,

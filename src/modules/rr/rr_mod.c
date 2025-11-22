@@ -567,19 +567,19 @@ static int pv_get_route_uri_f(
 	/* Parse the message until the First-Route-Header: */
 	if(parse_headers(msg, HDR_ROUTE_F, 0) == -1) {
 		LM_ERR("while parsing message\n");
-		return -1;
+		return pv_get_null(msg, param, res);
 	}
 
 	if(!msg->route) {
 		LM_INFO("No route header present.\n");
-		return -1;
+		return pv_get_null(msg, param, res);
 	}
 	hdr = msg->route;
 
 	/* Parse the contents of the header: */
 	if(parse_rr(hdr) == -1) {
 		LM_ERR("Error while parsing Route header\n");
-		return -1;
+		return pv_get_null(msg, param, res);
 	}
 
 

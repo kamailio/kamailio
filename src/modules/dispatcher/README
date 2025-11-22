@@ -1041,7 +1041,9 @@ end
    executed. If set to 0, they are executed when the destination state
    changes based on OPTIONS keepalives or the use of config functions to
    set the state (e.g., ds_mark_dst(...)). If set to 1, they are executed
-   only on state change due to OPTIONS keepalives.
+   only on state change due to OPTIONS keepalives. If set to 2, the event
+   routes will always be executed when a state change occurs, even if no
+   previous state exists (for example, on startup or reload).
 
    Note that event routes are not executed on RPC commands setting the
    destination state.

@@ -887,7 +887,7 @@ static int update_contacts_sar_registration(struct sip_msg *msg, udomain_t *_d,
 	}
 
 	ul.unlock_udomain(_d, public_identity);
-	return 0;
+	return 1;
 }
 
 static int update_contacts_sar_user_deregistration(struct sip_msg *msg,
@@ -1098,7 +1098,7 @@ static int update_contacts_sar_user_deregistration(struct sip_msg *msg,
 		shm_free(explicit_dereg_contact);
 	}
 
-	return 0;
+	return ret;
 }
 
 static int update_contacts_sar_re_registration(struct sip_msg *msg,
@@ -1236,7 +1236,7 @@ static int update_contacts_sar_re_registration(struct sip_msg *msg,
 	}
 done:
 	ul.unlock_udomain(_d, public_identity);
-	return 0;
+	return 1;
 }
 
 static int update_contacts_sar_unregistered_user(udomain_t *_d,
@@ -1266,7 +1266,7 @@ static int update_contacts_sar_unregistered_user(udomain_t *_d,
 	/* if we were successful up to this point, then we need to copy the contacts
 	 * from main impu record (asserted IMPU) into the register response
 	 */
-	return 0;
+	return 1;
 }
 
 /**
@@ -1291,7 +1291,7 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 		str *ecf1, str *ecf2, contact_for_header_t **contact_header)
 {
 	int expires_hdr = -1; //by default registration doesn't expire
-	int ret = 1;
+	int ret = -1;
 
 	if(msg) {
 		//get the expires from the main body of the sip message (global)

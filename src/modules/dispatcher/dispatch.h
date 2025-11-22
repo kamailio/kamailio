@@ -88,6 +88,10 @@
 #define DS_STATE_MODE_SET  1
 #define DS_STATE_MODE_FUNC (1<<1)
 
+#define DS_EVRTMODE_RUNTIME 0
+#define DS_EVRTMODE_OPTIONS 1
+#define DS_EVRTMODE_INIT 2
+
 /* clang-format on */
 typedef struct ds_rctx
 {

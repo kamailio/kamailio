@@ -1365,14 +1365,16 @@ static int ki_xhttp_prom_gauge_apply(struct sip_msg *msg, str *s_name,
 
 	if(update_func(s_name, number, l1, l2, l3)) {
 		LM_ERR("Cannot %s number: %f to gauge: %.*s (%.*s, %.*s, %.*s)\n",
-				action_descr, number, s_name->len, s_name->s, l1->len, l1->s,
-				l2->len, l2->s, l3->len, l3->s);
+				action_descr, number, s_name->len, s_name->s,
+				(l1) ? l1->len : 0, (l1) ? l1->s : "", (l2) ? l2->len : 0,
+				(l2) ? l2->s : "", (l3) ? l3->len : 0, (l3) ? l3->s : "");
 		return -1;
 	}
 
 	LM_DBG("Update gauge %.*s (%.*s, %.*s, %.*s): %s %f\n", s_name->len,
-			s_name->s, l1->len, l1->s, l2->len, l2->s, l3->len, l3->s,
-			action_descr, number);
+			s_name->s, (l1) ? l1->len : 0, (l1) ? l1->s : "",
+			(l2) ? l2->len : 0, (l2) ? l2->s : "", (l3) ? l3->len : 0,
+			(l3) ? l3->s : "", action_descr, number);
 
 	return 1;
 }
