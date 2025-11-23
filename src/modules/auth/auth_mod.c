@@ -493,7 +493,7 @@ static int auth_check_hdr_md5_noupdate(
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
 int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
-		int hftype, str *method)
+		int hftype, hdr_field_t **hdr, str *method)
 {
 	struct hdr_field *h;
 	auth_body_t *cred;
@@ -592,6 +592,9 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 #endif
 
 end:
+	if(hdr != NULL) {
+		*hdr = h;
+	}
 	if(ret < 0) {
 		/* check if required to add challenge header as avp */
 		if(!(flags & 14))
@@ -628,7 +631,7 @@ end:
 static int ki_pv_proxy_authenticate(
 		sip_msg_t *msg, str *realm, str *passwd, int flags)
 {
-	return pv_authenticate(msg, realm, passwd, flags, HDR_PROXYAUTH_T,
+	return pv_authenticate(msg, realm, passwd, flags, HDR_PROXYAUTH_T, NULL,
 			&msg->first_line.u.request.method);
 }
 
@@ -667,7 +670,7 @@ static int pv_proxy_authenticate(
 		goto error;
 	}
 	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
-			&msg->first_line.u.request.method);
+			NULL, &msg->first_line.u.request.method);
 
 error:
 	return AUTH_ERROR;
@@ -679,7 +682,7 @@ error:
 static int ki_pv_www_authenticate(
 		sip_msg_t *msg, str *realm, str *passwd, int flags)
 {
-	return pv_authenticate(msg, realm, passwd, flags, HDR_AUTHORIZATION_T,
+	return pv_authenticate(msg, realm, passwd, flags, HDR_AUTHORIZATION_T, NULL,
 			&msg->first_line.u.request.method);
 }
 
@@ -690,7 +693,7 @@ static int ki_pv_www_authenticate_method(
 		sip_msg_t *msg, str *realm, str *passwd, int flags, str *method)
 {
 	return pv_authenticate(
-			msg, realm, passwd, flags, HDR_AUTHORIZATION_T, method);
+			msg, realm, passwd, flags, HDR_AUTHORIZATION_T, NULL, method);
 }
 
 /**
@@ -728,7 +731,7 @@ static int pv_www_authenticate(
 		goto error;
 	}
 	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
-			&msg->first_line.u.request.method);
+			NULL, &msg->first_line.u.request.method);
 
 error:
 	return AUTH_ERROR;
@@ -777,8 +780,8 @@ static int pv_www_authenticate2(struct sip_msg *msg, char *realm, char *passwd,
 		goto error;
 	}
 
-	return pv_authenticate(
-			msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T, &smethod);
+	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+			NULL, &smethod);
 
 error:
 	return AUTH_ERROR;
@@ -797,15 +800,14 @@ static int pv_auth_check(
 	sip_uri_t *furi = NULL;
 	str suser;
 
-	if(msg->REQ_METHOD == METHOD_REGISTER)
+	if(msg->REQ_METHOD == METHOD_REGISTER) {
 		ret = pv_authenticate(msg, srealm, spasswd, vflags, HDR_AUTHORIZATION_T,
-				&msg->first_line.u.request.method);
-	else
+				&hdr, &msg->first_line.u.request.method);
+	} else {
 		ret = pv_authenticate(msg, srealm, spasswd, vflags, HDR_PROXYAUTH_T,
-				&msg->first_line.u.request.method);
-
+				&hdr, &msg->first_line.u.request.method);
+	}
 	if(ret == AUTH_OK && (vchecks & AUTH_CHECK_ID_F)) {
-		hdr = (msg->proxy_auth == 0) ? msg->authorization : msg->proxy_auth;
 		if(hdr == NULL) {
 			if(msg->REQ_METHOD & (METHOD_ACK | METHOD_CANCEL | METHOD_PRACK)) {
 				return AUTH_OK;
