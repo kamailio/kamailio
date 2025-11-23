@@ -119,9 +119,9 @@ int auth_challenge_hftype(
 		struct sip_msg *msg, str *realm, int flags, int hftype);
 
 typedef int (*pv_authenticate_f)(struct sip_msg *msg, str *realm, str *passwd,
-		int flags, int hftype, str *method);
+		int flags, int hftype, hdr_field_t **hdr, str *method);
 int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
-		int hftype, str *method);
+		int hftype, hdr_field_t **hdr, str *method);
 
 typedef int (*consume_credentials_f)(struct sip_msg *msg);
 int consume_credentials(struct sip_msg *msg);
