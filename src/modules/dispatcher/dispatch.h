@@ -92,6 +92,8 @@
 #define DS_EVRTMODE_OPTIONS 1
 #define DS_EVRTMODE_INIT 2
 
+#define HRES_FAILED (ds_hres_t){-1, 0}
+
 /* clang-format on */
 typedef struct ds_rctx
 {
@@ -101,6 +103,13 @@ typedef struct ds_rctx
 	str uri;
 	int setid;
 } ds_rctx_t;
+
+/** result of a hashing operation */
+typedef struct ds_hres
+{
+	int ret;
+	unsigned int hash;
+} ds_hres_t;
 
 extern str ds_db_url;
 extern str ds_table_name;
@@ -120,6 +129,7 @@ extern int ds_xavp_ctx_mode;
 
 extern str ds_xavp_dst_addr;
 extern str ds_xavp_dst_grp;
+extern str ds_xavp_dst_dstidx;
 extern str ds_xavp_dst_dstid;
 extern str ds_xavp_dst_attrs;
 extern str ds_xavp_dst_sock;
@@ -158,8 +168,10 @@ void ds_disconnect_db(void);
 int ds_load_db(void);
 int ds_reload_db(void);
 int ds_destroy_list(void);
-int ds_select_dst_limit(
+ds_hres_t ds_select_dst_limit(
 		sip_msg_t *msg, int set, int alg, uint32_t limit, int mode);
+ds_hres_t ds_select_routes_limit(
+		sip_msg_t *msg, str *srules, str *smode, int rlimit);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
 int ds_add_dst(int group, str *address, int flags, int priority, str *attrs);
@@ -323,7 +335,7 @@ ds_set_t *ds_avl_insert(ds_set_t **root, int id, int *setn);
 ds_set_t *ds_avl_find(ds_set_t *node, int id);
 void ds_avl_destroy(ds_set_t **node);
 
-int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate);
+ds_hres_t ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate);
 
 ds_rctx_t *ds_get_rctx(void);
 unsigned int ds_get_hash(str *x, str *y);
