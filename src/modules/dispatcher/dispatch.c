@@ -2276,6 +2276,16 @@ int ds_add_xavp_record(
 		return -1;
 	}
 
+	/* add dstidx field */
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_LONG;
+	nxval.v.l = pos;
+	if(xavp_add_value(&ds_xavp_dst_dstidx, &nxval, &nxavp) == NULL) {
+		xavp_destroy_list(&nxavp);
+		LM_ERR("failed to add destination dstidx xavp field\n");
+		return -1;
+	}
+
 	if(((ds_xavp_dst_mode & DS_XAVP_DST_SKIP_ATTRS) == 0)
 			&& (dsidx->dlist[pos].attrs.body.len > 0)) {
 		memset(&nxval, 0, sizeof(sr_xval_t));
@@ -2356,7 +2366,7 @@ int ds_add_xavp_record(
  */
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 {
-	return ds_select_dst_limit(msg, set, alg, 0, mode);
+	return ds_select_dst_limit(msg, set, alg, 0, mode).ret;
 }
 
 /**
@@ -2366,10 +2376,10 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
  * - mode specify to set address in R-URI or outbound proxy
  *
  */
-int ds_select_dst_limit(
+ds_hres_t ds_select_dst_limit(
 		sip_msg_t *msg, int set, int alg, uint32_t limit, int mode)
 {
-	int ret;
+	ds_hres_t hres;
 	sr_xval_t nxval;
 	ds_select_state_t vstate;
 
@@ -2384,9 +2394,9 @@ int ds_select_dst_limit(
 		vstate.limit = 0xffffffff;
 	}
 
-	ret = ds_manage_routes(msg, &vstate);
-	if(ret < 0) {
-		return ret;
+	hres = ds_manage_routes(msg, &vstate);
+	if(hres.ret < 0) {
+		return hres;
 	}
 
 	/* add cnt value to xavp */
@@ -2399,13 +2409,126 @@ int ds_select_dst_limit(
 		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)
 				== NULL) {
 			LM_ERR("failed to add cnt value to xavp\n");
-			return -1;
+			return HRES_FAILED;
 		}
 	}
 
 	LM_DBG("selected target destinations: %d\n", vstate.cnt);
 
-	return ret;
+	return hres;
+}
+
+ds_hres_t ds_select_routes_limit(
+		sip_msg_t *msg, str *srules, str *smode, int rlimit)
+{
+	int i;
+	ds_hres_t v_hres = {-1, 0};
+	ds_hres_t g_hres = {-1, 0};
+
+	sr_xval_t nxval;
+	ds_select_state_t vstate;
+
+	memset(&vstate, 0, sizeof(ds_select_state_t));
+	vstate.limit = (uint32_t)rlimit;
+	if(vstate.limit == 0) {
+		LM_DBG("Limit set to 0 - forcing to unlimited\n");
+		vstate.limit = 0xffffffff;
+	}
+	i = 0;
+	while(i < srules->len) {
+		vstate.setid = 0;
+		for(; i < srules->len; i++) {
+			if(srules->s[i] < '0' || srules->s[i] > '9') {
+				if(srules->s[i] == '=') {
+					i++;
+					break;
+				} else {
+					LM_ERR("invalid character in [%.*s] at [%d]\n", srules->len,
+							srules->s, i);
+					return HRES_FAILED;
+				}
+			}
+			vstate.setid = (vstate.setid * 10) + (srules->s[i] - '0');
+		}
+		vstate.alg = 0;
+		for(; i < srules->len; i++) {
+			if(srules->s[i] < '0' || srules->s[i] > '9') {
+				if(srules->s[i] == ';') {
+					i++;
+					break;
+				} else {
+					LM_ERR("invalid character in [%.*s] at [%d]\n", srules->len,
+							srules->s, i);
+					return HRES_FAILED;
+				}
+			}
+			vstate.alg = (vstate.alg * 10) + (srules->s[i] - '0');
+		}
+		LM_DBG("routing with setid=%d alg=%d cnt=%d limit=0x%x (%u)\n",
+				vstate.setid, vstate.alg, vstate.cnt, vstate.limit,
+				vstate.limit);
+
+		vstate.umode = DS_SETOP_XAVP;
+		/* if no r-uri/d-uri was set already, keep using the update mode
+		 * specified by the param, then just add to xavps list */
+		if(vstate.emode == 0) {
+			switch(smode->s[0]) {
+				case '0':
+				case 'd':
+				case 'D':
+					vstate.umode = DS_SETOP_DSTURI;
+					break;
+				case '1':
+				case 'r':
+				case 'R':
+					vstate.umode = DS_SETOP_RURI;
+					break;
+				case '2':
+				case 'x':
+				case 'X':
+					break;
+				default:
+					LM_ERR("invalid routing mode parameter: %.*s\n", smode->len,
+							smode->s);
+					return HRES_FAILED;
+			}
+		}
+		v_hres = ds_manage_routes(msg, &vstate);
+		if(v_hres.ret < 0) {
+			LM_DBG("failed to select target destinations from %d=%d [%.*s]\n",
+					vstate.setid, vstate.alg, srules->len, srules->s);
+			/* continue to try other target groups */
+		} else {
+			if(v_hres.ret > 0) {
+				g_hres = v_hres;
+			}
+		}
+	}
+
+	if(g_hres.ret < 0) {
+		/* no selection of a target address */
+		LM_DBG("failed to select any target destinations from [%.*s]\n",
+				srules->len, srules->s);
+		/* return last failure code when trying to select target addresses */
+		return v_hres;
+	}
+
+	/* add cnt value to xavp */
+	if(((ds_xavp_ctx_mode & DS_XAVP_CTX_SKIP_CNT) == 0)
+			&& (ds_xavp_ctx.len >= 0)) {
+		/* add to xavp the number of selected dst records */
+		memset(&nxval, 0, sizeof(sr_xval_t));
+		nxval.type = SR_XTYPE_LONG;
+		nxval.v.l = vstate.cnt;
+		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)
+				== NULL) {
+			LM_ERR("failed to add cnt value to xavp\n");
+			return HRES_FAILED;
+		}
+	}
+
+	LM_DBG("selected target destinations: %d\n", vstate.cnt);
+	return g_hres;
 }
 
 typedef struct sorted_ds
@@ -2600,7 +2723,7 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate)
 /**
  *
  */
-int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
+ds_hres_t ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 {
 	int i;
 	unsigned int hash;
@@ -2609,29 +2732,30 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 	int vlast = 0;
 	int valg = 0;
 	int xavp_filled = 0;
+	ds_hres_t hres = {-1, 0};
 
 	if(msg == NULL) {
 		LM_ERR("bad parameters\n");
-		return -1;
+		return HRES_FAILED;
 	}
 
 	if(_ds_list == NULL || _ds_list_nr <= 0) {
 		LM_ERR("no destination sets\n");
-		return -1;
+		return HRES_FAILED;
 	}
 
 	if((rstate->umode == DS_SETOP_DSTURI) && (ds_force_dst == 0)
 			&& (msg->dst_uri.s != NULL || msg->dst_uri.len > 0)) {
 		LM_ERR("destination already set [%.*s]\n", msg->dst_uri.len,
 				msg->dst_uri.s);
-		return -1;
+		return HRES_FAILED;
 	}
 
 
 	/* get the index of the set */
 	if(ds_get_index(rstate->setid, *ds_crt_idx, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", rstate->setid);
-		return -1;
+		return HRES_FAILED;
 	}
 
 	if(rstate->alg == DS_ALG_RRSERIAL) {
@@ -2651,25 +2775,25 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		case DS_ALG_HASHCALLID: /* 0 - hash call-id */
 			if(ds_hash_callid(msg, &hash) != 0) {
 				LM_ERR("can't get callid hash\n");
-				return -1;
+				return HRES_FAILED;
 			}
 			break;
 		case DS_ALG_HASHFROMURI: /* 1 - hash from-uri */
 			if(ds_hash_fromuri(msg, &hash) != 0) {
 				LM_ERR("can't get From uri hash\n");
-				return -1;
+				return HRES_FAILED;
 			}
 			break;
 		case DS_ALG_HASHTOURI: /* 2 - hash to-uri */
 			if(ds_hash_touri(msg, &hash) != 0) {
 				LM_ERR("can't get To uri hash\n");
-				return -1;
+				return HRES_FAILED;
 			}
 			break;
 		case DS_ALG_HASHRURI: /* 3 - hash r-uri */
 			if(ds_hash_ruri(msg, &hash) != 0) {
 				LM_ERR("can't get ruri hash\n");
-				return -1;
+				return HRES_FAILED;
 			}
 			break;
 		case DS_ALG_ROUNDROBIN: /* 4 - round robin */
@@ -2697,7 +2821,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 					break;
 				default:
 					LM_ERR("can't get authorization hash\n");
-					return -1;
+					return HRES_FAILED;
 			}
 			break;
 		case DS_ALG_RANDOM: /* 6 - random selection */
@@ -2706,7 +2830,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		case DS_ALG_HASHPV: /* 7 - hash on PV value */
 			if(ds_hash_pvar(msg, &hash) != 0) {
 				LM_ERR("can't get PV hash\n");
-				return -1;
+				return HRES_FAILED;
 			}
 			break;
 		case DS_ALG_SERIAL: /* 8 - use always first entry */
@@ -2735,7 +2859,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				i = ds_get_leastloaded(idx);
 				if(i < 0) {
 					/* no address selected */
-					return -1;
+					return HRES_FAILED;
 				}
 				hash = i;
 				if(ds_load_add(msg, idx, rstate->setid, hash) < 0) {
@@ -2758,8 +2882,9 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			lock_get(&idx->lock);
 			hash = ds_manage_route_algo13(idx, rstate);
 			lock_release(&idx->lock);
-			if(hash == -1)
-				return -1;
+			if(hash == -1) {
+				return HRES_FAILED;
+			}
 			xavp_filled = 1;
 			break;
 		/* case DS_ALG_RRSERIAL: // 14 - round-robin or serial decided above */
@@ -2798,12 +2923,12 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 			if(ds_use_default != 0) {
 				i = idx->nr - 1;
 				if(ds_skip_dst(idx->dlist[i].flags)
-						|| ds_oc_skip(idx, rstate->alg, i))
-					return -1;
+						|| ds_oc_skip(idx, rstate->alg, i)) {
+					return HRES_FAILED;
+				}
 				break;
-			} else {
-				return -1;
 			}
+			return HRES_FAILED;
 		}
 	}
 
@@ -2815,7 +2940,7 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				!= 0) {
 			LM_ERR("cannot set next hop address with: %.*s\n",
 					idx->dlist[hash].uri.len, idx->dlist[hash].uri.s);
-			return -1;
+			return HRES_FAILED;
 		}
 		rstate->emode = 1;
 	}
@@ -2836,22 +2961,27 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 		if(ds_add_branches(msg, idx, hash, rstate->umode) < 0) {
 			LM_ERR("failed to add additional branches\n");
 			/* one destination was already set - return success anyhow */
-			return 2;
+			hres.ret = 2, hres.hash = hash;
+			return hres;
 		}
-		return 1;
+		hres.ret = 1, hres.hash = hash;
+		return hres;
 	}
 
-	if(!(ds_flags & DS_FAILOVER_ON))
-		return 1;
+	if(!(ds_flags & DS_FAILOVER_ON)) {
+		hres.ret = 1, hres.hash = hash;
+		return hres;
+	}
 
 	if(ds_xavp_dst.len <= 0) {
 		/* no xavp name to store the rest of the records */
-		return 1;
+		hres.ret = 1, hres.hash = hash;
+		return hres;
 	}
 
 	if(!xavp_filled) {
 		if(ds_manage_routes_fill_xavp(hash, idx, rstate) == -1) {
-			return -1;
+			return HRES_FAILED;
 		}
 	}
 
@@ -2863,12 +2993,13 @@ int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate)
 				   idx, idx->nr - 1, rstate->setid, rstate->alg, &rstate->lxavp)
 				< 0) {
 			LM_ERR("failed to add default destination in the xavp\n");
-			return -1;
+			return HRES_FAILED;
 		}
 		rstate->cnt++;
 	}
 
-	return 1;
+	hres.ret = 1, hres.hash = hash;
+	return hres;
 }
 
 int ds_update_dst(struct sip_msg *msg, int upos, int mode)
