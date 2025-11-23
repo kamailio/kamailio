@@ -61,6 +61,22 @@ typedef enum auth_cfg_result
 #define AUTH_CHECK_SKIPFWD_F 1 << 1
 
 /**
+ * flags to control auth functions
+ */
+/* password parameter is HA1 format */
+#define AUTH_FLAG_PASSWDHA1 1
+/* challenge header with no qop and add it to avp */
+#define AUTH_FLAG_HDRQOPNONE 2
+/* challenge header with qop=auth and add it to avp */
+#define AUTH_FLAG_HDRQOPAUTH 4
+/* challenge header with qop=auth-int and add it to avp */
+#define AUTH_FLAG_HDRQOPAUTHINT 8
+/* challenge header with stale=true */
+#define AUTH_FLAG_CLGSTALE 16
+/* do not invalidate nc on authentication failure */
+#define AUTH_FLAG_NOINVNC 32
+
+/**
  * return codes to auth API functions
  */
 typedef enum auth_result

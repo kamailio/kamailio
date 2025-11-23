@@ -617,7 +617,7 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 	cred = (auth_body_t *)h->parsed;
 
 	/* compute HA1 if needed */
-	if((flags & 1) == 0) {
+	if((flags & AUTH_FLAG_PASSWDHA1) == 0) {
 		/* Plaintext password is stored in PV, calculate HA1 */
 		calc_HA1(
 				HA_MD5, &cred->digest.username.whole, realm, passwd, 0, 0, ha1);
@@ -647,7 +647,7 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 
 #ifdef USE_NC
 	/* On success we need to update the nonce if flag 32 is set */
-	if(nc_enabled && ret == AUTH_OK && (flags & 32)) {
+	if(nc_enabled && ret == AUTH_OK && (flags & AUTH_FLAG_NOINVNC)) {
 		if(check_nonce(cred, &secret1, &secret2, msg, 1) < 0) {
 			LM_ERR("check_nonce failed after post_auth");
 			ret = AUTH_ERROR;
@@ -663,9 +663,9 @@ end:
 		/* check if required to add challenge header as avp */
 		if(!(flags & 14))
 			return ret;
-		if(flags & 8) {
+		if(flags & AUTH_FLAG_HDRQOPAUTHINT) {
 			qop = &auth_qauthint;
-		} else if(flags & 4) {
+		} else if(flags & AUTH_FLAG_HDRQOPAUTH) {
 			qop = &auth_qauth;
 		}
 		if(get_challenge_hf(msg, (cred ? cred->stale : 0), realm, NULL,
