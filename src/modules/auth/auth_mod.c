@@ -584,7 +584,7 @@ static int auth_check_hdr_md5_noupdate(
 int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 		int hftype, hdr_field_t **hdr, str *method)
 {
-	struct hdr_field *h;
+	struct hdr_field *h = NULL;
 	auth_body_t *cred;
 	auth_cfg_result_t ret;
 	auth_result_t rauth;
