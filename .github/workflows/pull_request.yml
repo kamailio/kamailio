@@ -13,7 +13,7 @@ jobs:
       contents: read # to fetch code (actions/checkout)
     steps:
       - name: Check out the repository to the runner
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Run clang-format check
         uses: wolletd/clang-format-checker@v1.12
         with:
@@ -25,7 +25,7 @@ jobs:
       contents: read # to fetch code (actions/checkout)
     steps:
       - name: Check out scripts folder to the runner
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: master
           path: actions
@@ -33,7 +33,7 @@ jobs:
             .github/scripts/check-cmake-format.sh
           sparse-checkout-cone-mode: false
       - name: Check out the repository to the runner
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: source
           ref: ${{ github.event.pull_request.head.sha }}
@@ -52,7 +52,7 @@ jobs:
       contents: read # to fetch code (actions/checkout)
     steps:
       - name: Check out scripts folder to the runner
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: master
           path: actions
@@ -60,7 +60,7 @@ jobs:
             .github/scripts/check-commit.sh
           sparse-checkout-cone-mode: false
       - name: Check out the repository to the runner
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: source
           ref: ${{ github.event.pull_request.head.sha }}
@@ -93,7 +93,7 @@ jobs:
             compilier: clang
     steps:
       - name: Check out the repository to the runner
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: ammaraskar/gcc-problem-matcher@0.3.0
       - name: build
         run: |

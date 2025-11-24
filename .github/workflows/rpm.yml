@@ -104,7 +104,7 @@ jobs:
       contents: write
     steps:
     - name: checkout sources
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: print commit info
       id: init
