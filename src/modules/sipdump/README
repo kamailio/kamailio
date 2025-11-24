@@ -259,7 +259,7 @@ modparam("sipdump", "fage", 172800)
 3.9. fagex (str)
 
    Age as a time expression for the created files to be removed if they
-   become older. It overwirtes the 'fage' parameter. The value can be
+   become older. It overwrites the 'fage' parameter. The value can be
    numbers followed by time units: d - days; h - hours; m - minutes; s -
    seconds.
 
