@@ -243,6 +243,32 @@ modparam("sipdump", "fage", 172800)
 </programlisting>
 		</example>
 	</section>
+	<section id="sipdump.p.fagex">
+		<title><varname>fagex</varname> (str)</title>
+		<para>
+			Age as a time expression for the created files to be removed if they
+			become older. It overwirtes the 'fage' parameter. The value can be
+			numbers followed by time units: d - days; h - hours; m - minutes;
+			s - seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty (no cleanup of created files).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fagex</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# cleanup files older than 2 days
+modparam("sipdump", "fagex", "2d")
+
+# cleanup files older than 2 days, 6 hours, 40 minutes and 30 seconds
+modparam("sipdump", "fagex", "2d6h40m30s")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="sipdump.p.event_callback">
 		<title><varname>event_callback</varname> (str)</title>
 		<para>
