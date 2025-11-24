@@ -58,6 +58,7 @@ static str sipdump_fprefix = str_init("kamailio-sipdump-");
 int sipdump_mode = SIPDUMP_MODE_WTEXT;
 static str sipdump_event_callback = STR_NULL;
 static int sipdump_fage = 0;
+static str sipdump_fagex = STR_NULL;
 
 static int sipdump_event_route_idx = -1;
 
@@ -90,6 +91,7 @@ static param_export_t params[]={
 	{"folder",         PARAM_STR,   &sipdump_folder},
 	{"fprefix",        PARAM_STR,   &sipdump_fprefix},
 	{"fage",           PARAM_INT,   &sipdump_fage},
+	{"fagex",          PARAM_STR,   &sipdump_fagex},
 	{"mode",           PARAM_INT,   &sipdump_mode},
 	{"event_callback", PARAM_STR,   &sipdump_event_callback},
 
@@ -124,6 +126,9 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	int i;
+	int n;
+
 	if(!(sipdump_mode
 			   & (SIPDUMP_MODE_WTEXT | SIPDUMP_MODE_WPCAP
 					   | SIPDUMP_MODE_EVROUTE))) {
@@ -167,6 +172,36 @@ static int mod_init(void)
 			register_procs(1);
 		} else {
 			register_basic_timers(1);
+		}
+	}
+
+	if(sipdump_fagex.len > 0) {
+		n = 0;
+		sipdump_fage = 0;
+		for(i = 0; i < sipdump_fagex.len; i++) {
+			if(sipdump_fagex.s[i] >= 0 && sipdump_fagex.s[i] <= 9) {
+				n = 10 * n + (sipdump_fagex.s[i] - '0');
+			} else {
+				if(sipdump_fagex.s[i] == 'h' || sipdump_fagex.s[i] == 'H') {
+					sipdump_fage += 3600 * n;
+					n = 0;
+				} else if(sipdump_fagex.s[i] == 'd'
+						  || sipdump_fagex.s[i] == 'D') {
+					sipdump_fage += 24 * 3600 * n;
+					n = 0;
+				} else if(sipdump_fagex.s[i] == 'm'
+						  || sipdump_fagex.s[i] == 'M') {
+					sipdump_fage += 60 * n;
+					n = 0;
+				} else if(sipdump_fagex.s[i] == 's'
+						  || sipdump_fagex.s[i] == 'S') {
+					sipdump_fage += n;
+					n = 0;
+				} else {
+					LM_ERR("unexpected file age char '%c' at position %d\n",
+							sipdump_fagex.s[i], i);
+				}
+			}
 		}
 	}
 
