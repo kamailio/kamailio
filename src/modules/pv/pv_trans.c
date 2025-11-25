@@ -229,6 +229,16 @@ int tr_eval_string(
 
 			val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
 			break;
+		case TR_S_INTV:
+			if(!(val->flags & PV_VAL_INT)) {
+				if(str2slong(&val->rs, &val->ri) != 0)
+					return -1;
+			} else {
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			}
+
+			val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
+			break;
 		case TR_S_RMWS:
 			if(!(val->flags & PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2943,6 +2953,9 @@ char *tr_parse_string(str *in, trans_t *t)
 		goto done;
 	} else if(name.len == 3 && strncasecmp(name.s, "int", 3) == 0) {
 		t->subtype = TR_S_INT;
+		goto done;
+	} else if(name.len == 4 && strncasecmp(name.s, "intv", 4) == 0) {
+		t->subtype = TR_S_INTV;
 		goto done;
 	} else if(name.len == 3 && strncasecmp(name.s, "md5", 3) == 0) {
 		t->subtype = TR_S_MD5;
