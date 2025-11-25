@@ -79,6 +79,23 @@ int redis_append_formatted_command(
 #endif
 
 /**
+ * Cleanup Redis connection and free resources
+ */
+static inline void cleanup_redis_context(redisc_server_t *rsrv)
+{
+	if(rsrv->ctxRedis) {
+		redisFree(rsrv->ctxRedis);
+		rsrv->ctxRedis = NULL;
+	}
+#ifdef WITH_SSL
+	if(rsrv->sslCtxRedis != NULL) {
+		redisFreeSSLContext(rsrv->sslCtxRedis);
+		rsrv->sslCtxRedis = NULL;
+	}
+#endif
+}
+
+/**
  *
  */
 int redisc_init(void)
@@ -312,43 +329,71 @@ int redisc_init(void)
 					db, rsrv->ctxRedis->errstr);
 			goto err2;
 		}
-	}
+		LM_INFO("successfully initialized redis server [%.*s] ctxRedis=%p\n",
+				rsrv->sname->len, rsrv->sname->s, rsrv->ctxRedis);
+		continue;
 
+	err2:
+		if(sock != 0) {
+			LM_ERR("error communicating with redis server [%.*s]"
+				   " (unix:%s db:%d): %s\n",
+					rsrv->sname->len, rsrv->sname->s, unix_sock_path, db,
+					rsrv->ctxRedis->errstr);
+		} else {
+			LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): "
+				   "%s\n",
+					rsrv->sname->len, rsrv->sname->s, addr, port, db,
+					rsrv->ctxRedis->errstr);
+		}
+		if(init_without_redis == 1) {
+			/* Clean up resources once before deciding what to do */
+			cleanup_redis_context(rsrv);
+
+			/* Now decide whether to continue or return */
+			if(rsrv->next != NULL) {
+				LM_WARN("failed to connect to redis server [%.*s], trying next "
+						"server\n",
+						rsrv->sname->len, rsrv->sname->s);
+				continue;
+			} else {
+				LM_WARN("failed to initialize redis connections, but "
+						"initializing"
+						" module anyway.\n");
+				return 0;
+			}
+		}
+
+		return -1;
+
+	err:
+		if(sock != 0) {
+			LM_ERR("failed to connect to redis server [%.*s] (unix:%s db:%d)\n",
+					rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
+		} else {
+			LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
+					rsrv->sname->len, rsrv->sname->s, addr, port, db);
+		}
+		if(init_without_redis == 1) {
+			/* Clean up resources once before deciding what to do */
+			cleanup_redis_context(rsrv);
+
+			/* Now decide whether to continue or return */
+			if(rsrv->next != NULL) {
+				LM_WARN("failed to connect to redis server [%.*s], trying next "
+						"server\n",
+						rsrv->sname->len, rsrv->sname->s);
+				continue;
+			} else {
+				LM_WARN("failed to initialize redis connections, but "
+						"initializing"
+						" module anyway.\n");
+				return 0;
+			}
+		}
+
+		return -1;
+	}
 	return 0;
-
-err2:
-	if(sock != 0) {
-		LM_ERR("error communicating with redis server [%.*s]"
-			   " (unix:%s db:%d): %s\n",
-				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db,
-				rsrv->ctxRedis->errstr);
-	} else {
-		LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
-				rsrv->sname->len, rsrv->sname->s, addr, port, db,
-				rsrv->ctxRedis->errstr);
-	}
-	if(init_without_redis == 1) {
-		LM_WARN("failed to initialize redis connections, but initializing"
-				" module anyway.\n");
-		return 0;
-	}
-
-	return -1;
-err:
-	if(sock != 0) {
-		LM_ERR("failed to connect to redis server [%.*s] (unix:%s db:%d)\n",
-				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
-	} else {
-		LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
-				rsrv->sname->len, rsrv->sname->s, addr, port, db);
-	}
-	if(init_without_redis == 1) {
-		LM_WARN("failed to initialize redis connections, but initializing"
-				" module anyway.\n");
-		return 0;
-	}
-
-	return -1;
 }
 
 /**
