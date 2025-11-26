@@ -573,7 +573,7 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 	ret = AUTH_ERROR;
 
 #ifdef USE_NC
-	if(nc_enabled && (flags & 32))
+	if(nc_enabled && (flags & AUTH_FLAG_NOINVNC))
 		check_auth_hdr = auth_check_hdr_md5_noupdate;
 #endif
 
