@@ -685,7 +685,7 @@ int tps_htable_update_branch(
 			do_update = 1;
 
 			if(md->b_rr.len > 0) {
-				hval.b_rr = md->b_rr;
+				hval.y_rr = md->b_rr;
 			}
 			if(md->b_tag.len > 0) {
 				hval.b_tag = md->b_tag;
