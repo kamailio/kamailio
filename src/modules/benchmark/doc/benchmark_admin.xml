@@ -22,9 +22,18 @@
 		can log profiling information for every function.
 	</para>
 	<para>
-		The duration between calls to start_timer and log_timer is stored and logged
+		The duration between calls to bm_start_timer() and bm_log_timer() is stored and logged
 		via &kamailio;'s logging facility. Please note that all durations are given as
-		microseconds (don't confuse with milliseconds!).
+		microseconds (do not confuse with milliseconds). Support for nanosecond
+		precission can be enabled by compiling with librt (see the Makefile of
+		the module).
+	</para>
+	<para>
+		Note: the measurement can be done only in the context of the same application
+		process. It does not work to measure the duration of execution between
+		actions before suspending the transaction in one process and after resuming
+		the processing in another process (e.g., functions from async or http_async_client
+		modules).
 	</para>
 	</section>
 	<section>
@@ -431,4 +440,3 @@ bm_log_timer("usrloc-lookup");
 		</example>
 	</section>
 </chapter>
-
