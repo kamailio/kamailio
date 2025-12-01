@@ -331,8 +331,13 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 			return 1;
 		}
 		/* find the r-uri parameter */
-		ret = tps_get_param_value(
-				&msg->parsed_uri.params, &_tps_cparam_name, &tuuid);
+		if(msg->parsed_uri.sip_params.len > 0) {
+			ret = tps_get_param_value(
+					&msg->parsed_uri.sip_params, &_tps_cparam_name, &tuuid);
+		} else {
+			ret = tps_get_param_value(
+					&msg->parsed_uri.params, &_tps_cparam_name, &tuuid);
+		}
 		if(ret < 0) {
 			LM_ERR("failed to parse param\n");
 			return -1;
