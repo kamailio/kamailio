@@ -16,14 +16,16 @@
     <section>
         <title>Overview</title>
 		<para>
-			The module provides the ability to send commands to statsd
-			(you can use InfluxDB too) with different types of information.
-			It provides native integration with statsd (https://github.com/etsy/statsd/)
-			and graphite (http://graphite.wikidot.com/).
+			The module implements the <ulink url="https://github.com/statsd/statsd">statsd</ulink>
+			text protocol, allowing Kamailio to emit counters, gauges, histograms and
+			timers to any server that understands statsd semantics. Typical
+			destinations include the reference Etsy/Graphite daemon, InfluxDB via
+			Telegraf listeners, or any other statsd-compatible collector.
 		</para>
 		<para>
-			The module does not have any special dependency, it does a direct
-			socket connection to Graphite.
+			The implementation has no special external dependencies; it opens a UDP
+			socket to the configured host and sends the raw statsd datagrams, so any
+			standards-compliant server can receive them.
 		</para>
     </section>
 
@@ -68,21 +70,25 @@ modparam("statsd", "port", "8125")
 
     <section>
         <title>Functions</title>
-        <section id="statsd.f.statsd_set">
-            <title>
-                <function moreinfo="none">statsd_set(key, value)</function>
-            </title>
-            <para>
-                Sets count the number of unique values passed to a key.
-            </para>
-            <para>
-                If this method is called multiple times with the same userid in the same sample period, that userid will only be counted once.
-            </para>
-            <para>
-                This function can be used in ALL ROUTES.
-            </para>
-            <example>
-                <title><function>statsd_set</function> usage</title>
+        		<section id="statsd.f.statsd_set">
+			<title>
+				<function moreinfo="none">statsd_set(key, value[, labels])</function>
+			</title>
+			<para>
+				Sets count the number of unique values passed to a key.
+			</para>
+			<para>
+				If this method is called multiple times with the same userid in the same sample period, that userid will only be counted once.
+			</para>
+			<para>
+				Optional labels supply a comma-separated list of key:value tags; omit
+				the argument to emit the metric untagged.
+			</para>
+			<para>
+				This function can be used in ALL ROUTES.
+			</para>
+			<example>
+				<title><function>statsd_set</function> usage</title>
                 <programlisting format="linespecific">
 ...
 failure_route[tryagain] {
@@ -93,12 +99,20 @@ failure_route[tryagain] {
 ...
                 </programlisting>
             </example>
+			<example>
+				<title><function>statsd_set</function> usage with labels</title>
+				<programlisting format="linespecific">
+...
+statsd_set("active_users", $var(count), "cluster:a,region:$var(region)");
+...
+				</programlisting>
+			</example>
         </section>
 
-        <section id="statsd.f.statsd_gauge">
-            <title>
-                <function moreinfo="none">statsd_gauge(key, value)</function>
-            </title>
+        		<section id="statsd.f.statsd_gauge">
+			<title>
+				<function moreinfo="none">statsd_gauge(key, value[, labels])</function>
+			</title>
             <para>
                 Gauges are a constant data type. They are not subject to averaging
 		and they don't change unless you change them. That is, once you set
@@ -111,10 +125,12 @@ failure_route[tryagain] {
                 This function can be used in ALL ROUTES.
             </para>
             <para>
-                The statsd server collects gauges under the stats.gauges prefix.
-            </para>
-            <example>
-                <title><function>statsd_gauge</function> usage</title>
+                The statsd server collects gauges under the stats.gauges prefix. Optional
+				labels supply a comma-separated list of key:value tags; omit the argument
+				to emit the metric untagged.
+			</para>
+			<example>
+				<title><function>statsd_gauge</function> usage</title>
                 <programlisting format="linespecific">
 ...
 route [gauge_method]{
@@ -124,12 +140,20 @@ route [gauge_method]{
 ...
                 </programlisting>
             </example>
+			<example>
+				<title><function>statsd_gauge</function> usage with labels</title>
+				<programlisting format="linespecific">
+...
+statsd_gauge("method"+$rm, "+1", "node:$si");
+...
+				</programlisting>
+			</example>
         </section>
 
-        <section id="statsd.f.statsd_histogram">
-            <title>
-                <function moreinfo="none">statsd_histogram(key, value)</function>
-            </title>
+        		<section id="statsd.f.statsd_histogram">
+			<title>
+				<function moreinfo="none">statsd_histogram(key, value[, labels])</function>
+			</title>
             <para>
 		    The histograms are a measure of time, but they are calculated at the server side.
 		    As the data exported by the client is the same, this is just an alias for the Timer type.
@@ -139,19 +163,29 @@ route [gauge_method]{
             </para>
             <para>
                 The statsd server collects histograms under the stats.histograms prefix.
-            </para>
-            <example>
-                <title><function>statsd_histogram</function> usage</title>
+				Optional labels supply a comma-separated list of key:value tags; omit
+				the argument to emit the metric untagged.
+			</para>
+			<example>
+				<title><function>statsd_histogram</function> usage</title>
                 <programlisting format="linespecific">
 ...
     statsd_histogram("latency", 1000);
 ...
                 </programlisting>
             </example>
+			<example>
+				<title><function>statsd_histogram</function> usage with labels</title>
+				<programlisting format="linespecific">
+...
+statsd_histogram("latency", 1000, "method:"+$rm+",peer:"+$si);
+...
+				</programlisting>
+			</example>
         </section>
-        <section id="statsd.f.statsd_start">
-            <title>
-                <function moreinfo="none">statsd_start(key)</function>
+        		<section id="statsd.f.statsd_start">
+			<title>
+				<function moreinfo="none">statsd_start(key)</function>
             </title>
             <para>
 		statsd_start set an avp with the key name, and when
@@ -167,7 +201,7 @@ route [gauge_method]{
 		timer for each period (by the time it can be seen in graphite, that's usually per minute).
             </para>
             <example>
-                <title><function>statsd_start</function> usage</title>
+				<title><function>statsd_start</function> usage</title>
                 <programlisting format="linespecific">
 ...
 statsd_start("long_mysql_query");
@@ -179,19 +213,23 @@ statsd_stop("long_mysql_query");
         </section>
 
 
-        <section id="statsd.f.statsd_stop">
-            <title>
-                <function moreinfo="none">statsd_stop(key)</function>
-            </title>
-            <para>
-                statsd_stop(key) get the avp string with the key and calculate the
-		difference from the start time. When finished the milliseconds used will be sent to statsd.
-            </para>
+        		<section id="statsd.f.statsd_stop">
+			<title>
+				<function moreinfo="none">statsd_stop(key[, labels])</function>
+			</title>
+			<para>
+				statsd_stop(key) get the avp string with the key and calculate the
+				difference from the start time. When finished the milliseconds used will be sent to statsd.
+			</para>
+			<para>
+				Optional labels supply a comma-separated list of key:value tags; omit the
+				argument to emit the metric untagged.
+			</para>
             <para>
                 This function can be used in all routes.
             </para>
             <example>
-                <title><function>statsd_stop</function> usage</title>
+				<title><function>statsd_stop</function> usage</title>
                 <programlisting format="linespecific">
 ...
 statsd_start("long_mysql_query");
@@ -200,20 +238,34 @@ statsd_stop("long_mysql_query");
 ...
                 </programlisting>
             </example>
+			<example>
+				<title><function>statsd_stop</function> usage with labels</title>
+				<programlisting format="linespecific">
+...
+statsd_start("long_mysql_query");
+sql_query("ca", "select sleep(0.2)", "ra");
+statsd_stop("long_mysql_query", "db:replica,shard:$var(shard)");
+...
+				</programlisting>
+			</example>
         </section>
 
-        <section id="statsd.f.statsd_incr">
-            <title>
-                <function moreinfo="none">statsd_incr(key)</function>
-            </title>
+        		<section id="statsd.f.statsd_incr">
+			<title>
+				<function moreinfo="none">statsd_incr(key[, labels])</function>
+			</title>
             <para>
             Increment a statsd counter
             </para>
             <para>
                 This function can be used in all routes.
             </para>
+            <para>
+				Optional labels supply a comma-separated list of key:value tags; omit the
+				argument to emit the metric untagged.
+			</para>
             <example>
-                <title><function>statsd_incr</function> usage</title>
+				<title><function>statsd_incr</function> usage</title>
                 <programlisting format="linespecific">
 ...
 if(geoip_match("$si", "src")){
@@ -222,12 +274,22 @@ if(geoip_match("$si", "src")){
 ...
                 </programlisting>
             </example>
-        </section>
+			<example>
+				<title><function>statsd_incr</function> usage with labels</title>
+				<programlisting format="linespecific">
+...
+if(geoip_match("$si", "src")){
+	statsd_incr("country."+$(gip(src=>cc)), "asn:"+$(gip(src=>asn)));
+}
+...
+				</programlisting>
+			</example>
+		</section>
 
-        <section id="statsd.f.statsd_decr">
-            <title>
-                <function moreinfo="none">statsd_decr(key)</function>
-            </title>
+        		<section id="statsd.f.statsd_decr">
+			<title>
+				<function moreinfo="none">statsd_decr(key[, labels])</function>
+			</title>
             <para>
                 Decrement a counter
             </para>
@@ -235,7 +297,7 @@ if(geoip_match("$si", "src")){
                 This function can be used in all routes.
             </para>
             <example>
-                <title><function>statsd_decr</function> usage</title>
+				<title><function>statsd_decr</function> usage</title>
                 <programlisting format="linespecific">
 ...
 if (t_check_status("408")) {
@@ -245,7 +307,35 @@ if (t_check_status("408")) {
 ...
                 </programlisting>
             </example>
-        </section>
-    </section>
-</chapter>
+			<example>
+				<title><function>statsd_decr</function> usage with labels</title>
+				<programlisting format="linespecific">
+...
+if (t_check_status("408")) {
+	statsd_decr("kamailio.successfulCalls", "response:timeout");
+	statsd_incr("kamailio.reply.timeout", "response:timeout");
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
 
+	<section>
+		<title>KEMI bindings</title>
+		<para>
+			All of the functionality above is also exported to Kamailio's scripting
+			interfaces (Lua, Python, JS, etc.) via the statsd KEMI module. For every
+			function that accepts labels there is a companion name suffixed with
+			_labels. For example,
+			<function>statsd_gauge</function> and <function>statsd_labels_gauge</function>,
+			<function>statsd_histogram</function> and
+			<function>statsd_labels_histogram</function>,
+			<function>statsd_set</function> and <function>statsd_labels_set</function>,
+			<function>statsd_incr</function> and <function>statsd_labels_incr</function>,
+			and so on. Timers are exposed as <function>statsd_start</function>,
+			<function>statsd_stop</function> and <function>statsd_labels_stop</function>.
+		</para>
+	</section>
+
+</chapter>
