@@ -828,7 +828,6 @@ int th_update_hdr_replaces(sip_msg_t *msg)
 	struct lump *l;
 	str out;
 
-	LM_DBG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	if(th_param_mask_callid == 0)
 		return 0;
 
@@ -843,6 +842,7 @@ int th_update_hdr_replaces(sip_msg_t *msg)
 	if(hf == NULL)
 		return 0;
 
+	LM_DBG("preparing to update the Replaces header\n");
 	replaces = hf->body;
 	trim(&replaces);
 	rcallid.s = replaces.s;
