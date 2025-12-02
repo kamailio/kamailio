@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="auth_web3.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>Parameters</title>
+    
+    <section id="auth_web3.p.authentication_rpc_url">
+        <title><varname>authentication_rpc_url</varname> (string)</title>
+        <para>
+            RPC URL for the Oasis Sapphire network endpoint. Used for authentication 
+            contract calls via eth_call method.
+        </para>
+        <para>
+            Supported Networks:
+            <itemizedlist>
+                <listitem><para>Oasis Sapphire Testnet: https://testnet.sapphire.oasis.dev</para></listitem>
+                <listitem><para>Oasis Sapphire Mainnet: https://sapphire.oasis.io</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Environment Variable:</emphasis> AUTHENTICATION_RPC_URL
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> "https://testnet.sapphire.oasis.dev"
+        </para>
+        <example>
+            <title>Setting the <varname>authentication_rpc_url</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_web3", "authentication_rpc_url", "https://sapphire.oasis.io")
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_web3.p.authentication_contract_address">
+        <title><varname>authentication_contract_address</varname> (string)</title>
+        <para>
+            Smart contract address on Oasis Sapphire that handles authentication.
+            Must implement authenticateUser() and getWalletAddress() functions.
+        </para>
+        <para>
+            <emphasis>Required Contract Interface:</emphasis>
+            <programlisting>
+function authenticateUser(
+    string memory username,
+    string memory realm, 
+    string memory method,
+    string memory uri,
+    string memory nonce,
+    uint8 algorithm,
+    bytes memory response
+) public view returns (bool)
+
+function getWalletAddress(
+    string memory username
+) public view returns (address)
+            </programlisting>
+        </para>
+        <para>
+            <emphasis>Environment Variable:</emphasis> AUTHENTICATION_CONTRACT_ADDRESS
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> "0xE773BB79689379d32Ad1Db839868b6756B493aea"
+        </para>
+        <example>
+            <title>Setting the <varname>authentication_contract_address</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_web3", "authentication_contract_address", "0x1234567890abcdef1234567890abcdef12345678")
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_web3.p.ens_rpc_url">
+        <title><varname>ens_rpc_url</varname> (string)</title>
+        <para>
+            RPC URL for ENS queries. Enables multi-network authentication where 
+            ENS is on Ethereum while authentication contracts are on Oasis Sapphire.
+            If not set, uses authentication_rpc_url for ENS queries.
+        </para>
+        <para>
+            <emphasis>Common Endpoints:</emphasis>
+            <itemizedlist>
+                <listitem><para>Ethereum Mainnet: https://eth.drpc.org</para></listitem>
+                <listitem><para>Ethereum Sepolia: https://ethereum-sepolia-rpc.publicnode.com</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Environment Variable:</emphasis> ENS_RPC_URL
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> "https://ethereum-sepolia-rpc.publicnode.com"
+        </para>
+        <example>
+            <title>Setting the <varname>ens_rpc_url</varname> parameter</title>
+            <programlisting>
+...			
+modparam("auth_web3", "ens_rpc_url", "https://eth.drpc.org")
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_web3.p.ens_registry_address">
+        <title><varname>ens_registry_address</varname> (string)</title>
+        <para>
+            ENS Registry contract address. Standard address on Ethereum mainnet and testnets.
+        </para>
+        <para>
+            <emphasis>Environment Variable:</emphasis> ENS_REGISTRY_ADDRESS
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
+        </para>
+        <example>
+            <title>Setting the <varname>ens_registry_address</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_web3", "ens_registry_address", "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e")
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_web3.p.contract_debug_mode">
+        <title><varname>contract_debug_mode</varname> (integer)</title>
+        <para>
+            Enable debug logging for authentication and ENS operations.
+            <emphasis>Warning:</emphasis> May log sensitive authentication data.
+        </para>
+        <para>
+            <emphasis>Values:</emphasis>
+            <itemizedlist>
+                <listitem><para>0 - Debug disabled</para></listitem>
+                <listitem><para>1 - Debug enabled</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Environment Variable:</emphasis> CONTRACT_DEBUG_MODE
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> 1
+        </para>
+        <example>
+            <title>Setting the <varname>contract_debug_mode</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_web3", "contract_debug_mode", 0)
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_web3.p.rpc_timeout">
+        <title><varname>rpc_timeout</varname> (integer)</title>
+        <para>
+            Timeout in seconds for RPC calls to blockchain networks. 
+            Includes both authentication and ENS queries.
+        </para>
+        <para>
+            <emphasis>Recommended Values:</emphasis>
+            <itemizedlist>
+                <listitem><para>5-10s - Development/testing</para></listitem>
+                <listitem><para>15-30s - Production</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Environment Variable:</emphasis> RPC_TIMEOUT
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> 10
+        </para>
+        <example>
+            <title>Setting the <varname>rpc_timeout</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_web3", "rpc_timeout", 15)
+...
+            </programlisting>
+        </example>
+    </section>
+
+</section> 
