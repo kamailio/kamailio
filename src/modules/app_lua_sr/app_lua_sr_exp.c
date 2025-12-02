@@ -1105,7 +1105,7 @@ static int lua_sr_auth_pv_authenticate(lua_State *L, int hftype)
 	realm.len = strlen(realm.s);
 	passwd.len = strlen(passwd.s);
 	ret = _lua_authb.pv_authenticate(env_L->msg, &realm, &passwd, flags, hftype,
-			&env_L->msg->first_line.u.request.method);
+			NULL, &env_L->msg->first_line.u.request.method);
 
 	return app_lua_return_int(L, ret);
 }
