@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+
+<chapter>
+    <title>Frequently Asked Questions</title>
+
+    <qandaset defaultlabel="number">
+        <qandaentry>
+            <question>
+                <para>How does ENS integration work?</para>
+            </question>
+            <answer>
+                <para>
+                    ENS integration allows authentication using domain names like "alice.eth". 
+                    The module detects ENS names (containing "."), queries ENS Registry for 
+                    ownership, handles wrapped domains, and validates that the ENS owner 
+                    matches the wallet address in your authentication contract.
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>Which networks are supported?</para>
+            </question>
+            <answer>
+                <para>
+                    <emphasis>Authentication:</emphasis> Only Oasis Sapphire (testnet/mainnet) 
+                    due to confidential smart contract requirements.
+                </para>
+                <para>
+                    <emphasis>ENS:</emphasis> Ethereum mainnet, Sepolia testnet, or any network 
+                    with ENS contracts deployed.
+                </para>
+                <para>
+                    <emphasis>Network Configuration Options:</emphasis>
+                </para>
+                <para>
+                    <emphasis>Production (Mainnet) Configuration:</emphasis> Use Oasis Sapphire Mainnet for 
+                    authentication contracts and Ethereum Mainnet for ENS queries. This setup is ideal for 
+                    production deployments with real ENS domains.
+                </para>
+                <para>
+                    <emphasis>Testing (Testnet) Configuration:</emphasis> Use Oasis Sapphire Testnet for 
+                    authentication contracts and Ethereum Sepolia for ENS queries. This setup is perfect for 
+                    development and testing with test ENS domains.
+                </para>
+                <para>
+                    <emphasis>Single Network Configuration:</emphasis> Use the same network for both 
+                    authentication and ENS queries. This simplified setup is suitable when you don't need 
+                    cross-chain ENS functionality.
+                </para>
+                <para>
+                    <emphasis>Custom Network Configuration:</emphasis> Use custom RPC endpoints for both 
+                    authentication and ENS queries. This setup is useful for private networks or alternative providers.
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>What smart contract interface is required?</para>
+            </question>
+            <answer>
+                <para>
+                    Your contract must implement:
+                    <programlisting>
+...                    
+function authenticateUser(
+    string memory username, string memory realm, string memory method,
+    string memory uri, string memory nonce, uint8 algorithm,
+    bytes memory response
+) public view returns (bool)
+...
+
+...
+function getWalletAddress(string memory username) 
+    public view returns (address)
+...
+                    </programlisting>
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>What happens if networks are down?</para>
+            </question>
+            <answer>
+                <para>
+                    Authentication fails after the configured timeout. Use reliable RPC providers, 
+                    appropriate timeout values, and implement fallback authentication for high 
+                    availability production environments.
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>Do SIP clients need modifications?</para>
+            </question>
+            <answer>
+                <para>
+                    No. The module maintains full RFC 2617/7616 compatibility. Clients use 
+                    standard digest authentication. ENS validation happens transparently 
+                    on the server side.
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>How do I troubleshoot authentication failures?</para>
+            </question>
+            <answer>
+                <para>
+                    <orderedlist>
+                        <listitem><para>Enable debug mode: modparam("auth_web3", "contract_debug_mode", 1)</para></listitem>
+                        <listitem><para>Check Kamailio logs for detailed error information</para></listitem>
+                        <listitem><para>Verify ENS domain ownership on etherscan.io</para></listitem>
+                        <listitem><para>Test RPC endpoints manually</para></listitem>
+                        <listitem><para>Verify contract addresses and function signatures</para></listitem>
+                    </orderedlist>
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>Is this suitable for production?</para>
+            </question>
+            <answer>
+                <para>
+                    Yes, but consider: network reliability (use reliable RPC providers), 
+                    latency (blockchain calls add 100-1000ms), security (audit smart contracts), 
+                    and monitoring (implement comprehensive network status monitoring).
+                </para>
+                <para>
+                    <emphasis>Security Considerations:</emphasis> Smart contract audits should be conducted thoroughly 
+                    for authentication contracts. Leverage Oasis Sapphire's confidential computing capabilities 
+                    for enhanced security. Use HTTPS for all RPC endpoints to ensure network security. 
+                    Verify that ENS ownership matches wallet addresses during validation. Implement backup 
+                    authentication mechanisms for emergency situations.
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>Are there any known limitations with blockchain authentication?</para>
+            </question>
+            <answer>
+                <para>
+                    Yes, the main limitation is dependency on external blockchain network availability and response times.
+                    Authentication will fail if the blockchain RPC endpoint is unreachable or if the smart contract
+                    is not properly deployed.
+                </para>
+                <para>
+                    Blockchain calls add 100-1000ms latency compared to traditional database queries.
+                    Set appropriate RPC timeouts (10-30s recommended) to handle network delays. 
+                    Furthermore, ENS resolution may require 2 RPC calls, adding additional overhead. 
+                    Use reliable RPC providers for production environments to minimize performance impact.
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>How do I configure for containers?</para>
+            </question>
+            <answer>
+                <para>
+                    All parameters can be configured via environment variables for containerized deployments. 
+                    Environment variables take precedence over modparam configurations.
+                    Use environment variables for all parameters:
+                    <programlisting>
+...
+# Environment variables
+AUTHENTICATION_RPC_URL="https://testnet.sapphire.oasis.dev"
+AUTHENTICATION_CONTRACT_ADDRESS="0xYourContract"
+ENS_RPC_URL="https://ethereum-sepolia-rpc.publicnode.com"
+CONTRACT_DEBUG_MODE="0"
+RPC_TIMEOUT="15"
+...
+
+...
+# Minimal Kamailio config
+loadmodule "auth_web3.so"
+...
+                    </programlisting>
+                </para>
+            </answer>
+        </qandaentry>
+
+        <qandaentry>
+            <question>
+                <para>Can I use free RPC providers?</para>
+            </question>
+            <answer>
+                <para>
+                    Free providers work for development and low-volume production but have 
+                    rate limits and no SLA. For production, use paid providers (Infura, Alchemy) 
+                    for better reliability. For Oasis Sapphire, use official endpoints.
+                </para>
+                <para>
+                    The following RPC endpoints are commonly used with the auth_web3 module:
+                </para>
+                <para>
+                    <emphasis>Oasis Sapphire Mainnet:</emphasis> https://sapphire.oasis.io (Production network)
+                </para>
+                <para>
+                    <emphasis>Oasis Sapphire Testnet:</emphasis> https://testnet.sapphire.oasis.dev (Testing network)
+                </para>
+                <para>
+                    <emphasis>Ethereum Mainnet:</emphasis> https://mainnet.infura.io/v3/YOUR_KEY OR https://eth.drpc.org (Production network)
+                </para>
+                <para>
+                    <emphasis>Ethereum Sepolia:</emphasis> https://ethereum-sepolia-rpc.publicnode.com (Testing network)
+                </para>
+            </answer>
+        </qandaentry>
+
+
+    </qandaset>
+
+</chapter> 
