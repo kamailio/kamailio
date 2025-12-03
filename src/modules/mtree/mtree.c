@@ -784,9 +784,8 @@ int mt_table_spec(char *val)
 		goto error;
 	}
 	if(tmp.dbtable.s == NULL) {
-		LM_INFO("no table name - default mtree\n");
-		tmp.dbtable.s = "mtree";
-		tmp.dbtable.len = 5;
+		LM_ERR("no db table provided\n");
+		goto error;
 	}
 	if((tmp.type != 0) && (tmp.type != 1) && (tmp.type != 2)) {
 		LM_ERR("unknown tree type <%d>\n", tmp.type);
