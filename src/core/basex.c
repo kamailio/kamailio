@@ -497,6 +497,36 @@ int base64url_enc(char *in, int ilen, char *out, int osize)
 	unsigned int block;
 	int olen;
 
+
+	/* 	Add input validation */
+	if(!in || !out) {
+		LM_ERR("null pointer parameter\n");
+		return -1;
+	}
+
+	if(ilen < 0) {
+		LM_ERR("invalid input length %d\n", ilen);
+		return -1;
+	}
+
+	if(osize < 1) {
+		LM_ERR("invalid output size %d\n", osize);
+		return -1;
+	}
+
+	if(ilen == 0) {
+		out[0] = '\0';
+		return 0;
+	}
+
+	/* 	Protect against integer overflow
+    	Max safe ilen: (INT_MAX >> 2) to avoid overflow
+	*/
+	if(ilen > (INT_MAX >> 2)) {
+		LM_ERR("input length too large %d\n", ilen);
+		return -1;
+	}
+
 	olen = (((ilen + 2) / 3) << 2);
 	if(olen >= osize) {
 		LM_ERR("not enough output buffer size %d - need %d\n", osize, olen + 1);
@@ -533,7 +563,27 @@ int base64url_dec(char *in, int ilen, char *out, int osize)
 	char c;
 	int olen;
 
-	for(n = 0, i = ilen - 1; in[i] == '='; i--)
+	/* Early error and input validation */
+	if(!in || !out) {
+		LM_ERR("invalid input parameters\n");
+		return -1;
+	}
+
+	if(ilen < 0) {
+		LM_ERR("invalid input length %d\n", ilen);
+		return -1;
+	}
+	if(osize < 1) {
+		LM_ERR("invalid output size %d\n", osize);
+		return -1;
+	}
+
+	if(ilen == 0) {
+		out[0] = '\0';
+		return 0;
+	}
+
+	for(n = 0, i = ilen - 1; i >= 0 && in[i] == '='; i--)
 		n++;
 
 	olen = ((ilen * 6) >> 3) - n;
