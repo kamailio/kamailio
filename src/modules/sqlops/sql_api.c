@@ -431,7 +431,7 @@ int sql_do_query_async(sql_con_t *con, str *query)
 		LM_ERR("the db driver module doesn't support async query\n");
 		return -1;
 	}
-	if(con->dbf.raw_query_async(con->dbh, query) != 0) {
+	if(con->dbf.raw_query_async(&con->db_url, query) != 0) {
 		LM_ERR("cannot do the query\n");
 		return -1;
 	}

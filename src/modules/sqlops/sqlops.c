@@ -258,10 +258,6 @@ static int sql_query2(struct sip_msg *msg, char *dbl, char *query)
 static int sql_query_async(struct sip_msg *msg, char *dbl, char *query)
 {
 	str sq;
-	if(sql_check_connection((sql_con_t *)dbl) < 0) {
-		LM_ERR("invalid connection to database\n");
-		return -2;
-	}
 	if(pv_printf_s(msg, (pv_elem_t *)query, &sq) != 0) {
 		LM_ERR("cannot print the sql query\n");
 		return -1;
