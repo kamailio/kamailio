@@ -100,7 +100,7 @@ void mt_free_tree(m_tree_t *pt);
 int mt_print_tree(m_tree_t *pt);
 void mt_free_node(mt_node_t *pn, int type);
 
-void mt_char_table_init(void);
+int mt_char_table_init(int nset);
 int mt_node_set_payload(mt_node_t *node, int type);
 int mt_node_unset_payload(mt_node_t *node, int type);
 

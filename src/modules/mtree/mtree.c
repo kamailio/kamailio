@@ -39,7 +39,6 @@
 
 #include "mtree.h"
 
-//extern str mt_char_list = {"1234567890*",11};
 extern str mt_char_list;
 extern pv_spec_t pv_value;
 extern pv_spec_t pv_values;
@@ -58,12 +57,23 @@ static m_tree_t **_ptree = NULL;
 #define MT_CHAR_TABLE_NOTSET 255
 static unsigned char _mt_char_table[MT_CHAR_TABLE_SIZE];
 
+static int _mt_char_table_ready = 0;
+
 /**
  *
  */
-void mt_char_table_init(void)
+int mt_char_table_init(int nset)
 {
 	unsigned int i;
+
+	if(_mt_char_table_ready == 1) {
+		if(nset == 1) {
+			LM_ERR("prefix char table already initialized\n");
+			return -1;
+		}
+		return 0;
+	}
+
 	for(i = 0; i < MT_CHAR_TABLE_SIZE; i++) {
 		_mt_char_table[i] = MT_CHAR_TABLE_NOTSET;
 	}
@@ -71,6 +81,9 @@ void mt_char_table_init(void)
 		unsigned char ch = mt_char_list.s[i];
 		_mt_char_table[ch] = (unsigned char)i;
 	}
+	_mt_char_table_ready = 1;
+
+	return 0;
 }
 
 
@@ -211,6 +224,8 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 		LM_ERR("max prefix len exceeded\n");
 		return -1;
 	}
+
+	mt_char_table_init(0);
 
 	LM_DBG("adding to tree <%.*s> of type <%d>\n", pt->tname.len, pt->tname.s,
 			pt->type);
