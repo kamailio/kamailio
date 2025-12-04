@@ -107,6 +107,7 @@ static volatile int mt_tree_refcnt = 0;
 static volatile int mt_reload_flag = 0;
 
 int mt_param(modparam_t type, void *val);
+int mt_item(modparam_t type, void *val);
 static int fixup_mt_match(void **param, int param_no);
 static int fixup_free_mt_match(void **param, int param_no);
 static int w_mt_match(struct sip_msg *msg, char *str1, char *str2, char *str3);
@@ -133,6 +134,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"mtree", PARAM_STRING | PARAM_USE_FUNC, (void *)mt_param},
+	{"item", PARAM_STRING | PARAM_USE_FUNC, (void *)mt_item},
 	{"db_url", PARAM_STR, &db_url},
 	{"db_table", PARAM_STR, &db_table},
 	{"tname_column", PARAM_STR, &tname_column},
@@ -426,6 +428,16 @@ int mt_param(modparam_t type, void *val)
 		goto error;
 
 	return mt_table_spec((char *)val);
+error:
+	return -1;
+}
+
+int mt_item(modparam_t type, void *val)
+{
+	if(val == NULL)
+		goto error;
+
+	return mt_table_item((char *)val);
 error:
 	return -1;
 }

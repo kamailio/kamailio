@@ -32,6 +32,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/pvar.h"
 #include "../../core/lvalue.h"
 #include "../../core/shm_init.h"
@@ -902,6 +903,79 @@ int mt_defined_trees(void)
 {
 	if(_ptree != NULL && *_ptree != NULL)
 		return 1;
+	return 0;
+}
+
+int mt_table_item(char *val)
+{
+	m_tree_t *mt = NULL;
+	str s = STR_NULL;
+	char *p = NULL;
+	str tname = STR_NULL;
+	str tprefix = STR_NULL;
+	str tvalue = STR_NULL;
+
+	if(val == NULL) {
+		return -1;
+	}
+
+	if(!shm_initialized()) {
+		LM_ERR("shm not initialized - cannot add items to mtree\n");
+		return 0;
+	}
+
+	s.s = val;
+	s.len = strlen(s.s);
+	if(s.len < 5) {
+		LM_ERR("parameter value is too small (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	LM_DBG("adding a new item [%.*s] (%d)\n", s.len, s.s, s.len);
+
+	p = s.s + 1;
+	tname.s = p;
+	while(p < s.s + s.len) {
+		if(*p == s.s[0]) {
+			tname.len = (int)(p - tname.s);
+			break;
+		}
+		p++;
+	}
+	trim(&tname);
+	if(tname.len == 0) {
+		LM_ERR("invalid tname (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	mt = mt_get_tree(&tname);
+	if(mt == NULL) {
+		LM_ERR("mtree not found (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	p = p + 1;
+	tprefix.s = p;
+	while(p < s.s + s.len) {
+		if(*p == s.s[0]) {
+			tprefix.len = (int)(p - tprefix.s);
+			break;
+		}
+		p++;
+	}
+	if(tprefix.len == 0) {
+		LM_ERR("invalid tprefix (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	tvalue.s = p + 1;
+	tvalue.len = s.s + s.len - p;
+
+	if(mt_add_to_tree(mt, &tprefix, &tvalue) < 0) {
+		LM_ERR("failed to add to mtree (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
 	return 0;
 }
 

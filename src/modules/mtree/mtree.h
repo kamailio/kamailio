@@ -108,6 +108,8 @@ int mt_table_spec(char *val);
 void mt_destroy_trees(void);
 int mt_defined_trees(void);
 
+int mt_table_item(char *val);
+
 m_tree_t *mt_swap_list_head(m_tree_t *ntree);
 int mt_init_list_head(void);
 m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, str *cols,
