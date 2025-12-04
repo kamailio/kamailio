@@ -1233,7 +1233,7 @@ sdp_ice_attr_t *clone_sdp_ice_attr(sdp_ice_attr_t *ice_attr)
 	}
 	memset(clone_ice_attr, 0, len);
 
-	p = (char *)(clone_ice_attr); /* beginning of the struct */
+	p = (char *)(clone_ice_attr + 1);
 
 	/* foundation */
 	if(ice_attr->foundation.len) {
@@ -1301,7 +1301,7 @@ sdp_ice_opt_t *clone_sdp_opt_attr(sdp_ice_opt_t *ice_opt)
 		return NULL;
 	}
 	memset(clone_ice_opt, 0, len);
-	p = (char *)(clone_ice_opt); /* beginning of the struct */
+	p = (char *)(clone_ice_opt + 1);
 
 	/* ice option */
 	if(ice_opt->option.len) {
