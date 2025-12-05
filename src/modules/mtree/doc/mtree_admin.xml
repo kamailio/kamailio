@@ -119,6 +119,13 @@ modparam("mtree", "db_table", "mtrees")
 		</listitem>
 		<listitem>
 			<para>
+				mode - the mode of items management. If set to 0 (default), the
+				items are (re)loaded from database. If set to 1, it is an
+				in-memory only tree, the items can be added with modparam 'item'.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
 				dbtable - the name of the database table from where to
 				load the records stored in the tree.
 			</para>
