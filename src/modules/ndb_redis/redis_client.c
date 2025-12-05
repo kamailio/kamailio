@@ -64,12 +64,10 @@ extern int redis_allowed_timeouts_param;
 extern int redis_flush_on_reconnect_param;
 extern int redis_allow_dynamic_nodes_param;
 extern int ndb_redis_debug;
-#ifdef WITH_SSL
 extern char *ndb_redis_ca_path;
-#endif
 
 /* backwards compatibility with hiredis < 0.12 */
-#if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
+#if(HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
 typedef char *sds;
 sds sdscatlen(sds s, const void *t, size_t len);
 int redis_append_formatted_command(
@@ -103,9 +101,7 @@ int redisc_init(void)
 	char addr[256], pass[256], unix_sock_path[256], sentinel_group[256];
 
 	unsigned int port, db, sock = 0, haspass = 0, sentinel_master = 1;
-#ifdef WITH_SSL
 	unsigned int enable_ssl = 0;
-#endif
 	int i, row;
 	redisc_server_t *rsrv = NULL;
 	param_t *pit = NULL;
@@ -167,12 +163,17 @@ int redisc_init(void)
 				snprintf(pass, sizeof(pass) - 1, "%.*s", pit->body.len,
 						pit->body.s);
 				haspass = 1;
-#ifdef WITH_SSL
 			} else if(pit->name.len == 3
 					  && strncmp(pit->name.s, "tls", 3) == 0) {
 				/* parse tls flag only; do not overwrite password buffer */
-				if(str2int(&pit->body, &enable_ssl) < 0)
+				if(str2int(&pit->body, &enable_ssl) < 0) {
 					enable_ssl = 0;
+				}
+#ifndef WITH_SSL
+				if(enable_ssl) {
+					LM_WARN("tls connection set, but the module is not "
+							"compiled with SSL/TLS support\n");
+				}
 #endif
 			} else if(pit->name.len == 14
 					  && strncmp(pit->name.s, "sentinel_group", 14) == 0) {
@@ -1387,7 +1388,7 @@ int redisc_check_auth(redisc_server_t *rsrv, char *pass)
 }
 
 /* backwards compatibility with hiredis < 0.12 */
-#if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
+#if(HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
 int redis_append_formatted_command(redisContext *c, const char *cmd, size_t len)
 {
 	sds newbuf;
