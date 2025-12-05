@@ -120,7 +120,7 @@ int mt_init_list_head(void)
  *
  */
 m_tree_t *mt_init_tree(
-		str *tname, str *dbtable, str *scols, int type, int multi)
+		str *tname, str *dbtable, str *scols, int type, int multi, int mode)
 {
 	m_tree_t *pt = NULL;
 	int i;
@@ -133,6 +133,7 @@ m_tree_t *mt_init_tree(
 	}
 	memset(pt, 0, sizeof(m_tree_t));
 
+	pt->mode = mode;
 	pt->type = type;
 	pt->multi = multi;
 	pt->reload_time = (uint64_t)time(NULL);
@@ -154,7 +155,9 @@ m_tree_t *mt_init_tree(
 		return NULL;
 	}
 	memset(pt->dbtable.s, 0, 1 + dbtable->len);
-	memcpy(pt->dbtable.s, dbtable->s, dbtable->len);
+	if(dbtable->len > 0) {
+		memcpy(pt->dbtable.s, dbtable->s, dbtable->len);
+	}
 	pt->dbtable.len = dbtable->len;
 
 	if(scols != NULL && scols->s != NULL && scols->len > 0) {
@@ -781,6 +784,9 @@ int mt_table_spec(char *val)
 		if(pit->name.len == 4 && strncasecmp(pit->name.s, "name", 4) == 0) {
 			tmp.tname = pit->body;
 		} else if(pit->name.len == 4
+				  && strncasecmp(pit->name.s, "mode", 4) == 0) {
+			str2sint(&pit->body, &tmp.mode);
+		} else if(pit->name.len == 4
 				  && strncasecmp(pit->name.s, "type", 4) == 0) {
 			str2sint(&pit->body, &tmp.type);
 		} else if(pit->name.len == 5
@@ -799,9 +805,11 @@ int mt_table_spec(char *val)
 		LM_ERR("invalid mtree name\n");
 		goto error;
 	}
-	if(tmp.dbtable.s == NULL) {
-		LM_ERR("no db table provided\n");
-		goto error;
+	if(tmp.mode == 0) {
+		if(tmp.dbtable.s == NULL) {
+			LM_ERR("no db table provided\n");
+			goto error;
+		}
 	}
 	if((tmp.type != 0) && (tmp.type != 1) && (tmp.type != 2)) {
 		LM_ERR("unknown tree type <%d>\n", tmp.type);
@@ -839,8 +847,8 @@ int mt_table_spec(char *val)
 	if(it == NULL || str_strcmp(&it->tname, &tmp.tname) > 0) {
 		LM_DBG("adding new tname [%s]\n", tmp.tname.s);
 
-		ndl = mt_init_tree(
-				&tmp.tname, &tmp.dbtable, &tmp.scols[0], tmp.type, tmp.multi);
+		ndl = mt_init_tree(&tmp.tname, &tmp.dbtable, &tmp.scols[0], tmp.type,
+				tmp.multi, tmp.mode);
 		if(ndl == NULL) {
 			LM_ERR("cannot init the tree [%.*s]\n", tmp.tname.len, tmp.tname.s);
 			goto error;
@@ -887,7 +895,7 @@ m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, str *cols,
 	if(it == NULL || str_strcmp(&it->tname, tname) > 0) {
 		LM_DBG("adding new tname [%s]\n", tname->s);
 
-		ndl = mt_init_tree(tname, dbtable, cols, type, multi);
+		ndl = mt_init_tree(tname, dbtable, cols, type, multi, 0);
 		if(ndl == NULL) {
 			LM_ERR("no more shm memory\n");
 			return NULL;

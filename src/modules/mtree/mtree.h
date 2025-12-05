@@ -70,6 +70,7 @@ typedef struct _m_tree
 {
 	str tname;
 	str dbtable;
+	int mode;
 	int type;
 	int multi;
 	int ncols;
@@ -95,7 +96,7 @@ is_t *mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len);
 int mt_match_prefix(struct sip_msg *msg, m_tree_t *pt, str *tomatch, int mode);
 
 m_tree_t *mt_init_tree(
-		str *tname, str *dbtable, str *scols, int type, int multi);
+		str *tname, str *dbtable, str *scols, int type, int multi, int mode);
 void mt_free_tree(m_tree_t *pt);
 int mt_print_tree(m_tree_t *pt);
 void mt_free_node(mt_node_t *pn, int type);

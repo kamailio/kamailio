@@ -529,6 +529,11 @@ static int mt_load_db(m_tree_t *pt)
 	m_tree_t *old_tree = NULL;
 	mt_node_t *bk_head = NULL;
 
+	if(pt->mode == 1) {
+		LM_DBG("skip loading db records - in-memory only tree: [%.*s]\n",
+				pt->tname.len, pt->tname.s);
+		return 0;
+	}
 	if(pt->ncols > 0) {
 		for(c = 0; c < pt->ncols; c++) {
 			db_cols[c] = &pt->scols[c];
