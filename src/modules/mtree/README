@@ -213,6 +213,9 @@ modparam("mtree", "db_table", "mtrees")
    parameter names can be:
      * name - the name of the tree to be used for referencing inside
        configuration file.
+     * mode - the mode of items management. If set to 0 (default), the
+       items are (re)loaded from database. If set to 1, it is an in-memory
+       only tree, the items can be added with modparam 'item'.
      * dbtable - the name of the database table from where to load the
        records stored in the tree.
      * cols - the column names of the database table. They must be
