@@ -1141,7 +1141,9 @@ modparam("dispatcher", "ds_attrs_none", 1)
 		<para>
 		The 'anameX' is the attribute name and 'cnameX' is column name. The
 		additional columns must be added to database dispatcher table and their
-		type must be VARCHAR (string).
+		type must be a string type (VARCHAR, etc..) or integer type (UNSIGNED INT,
+		BIGINT, etc..). These fields can be a convenient way of loading IDs, or
+		additional related info into the 'attrs' XAVP when matching a dispatcher set.
 		</para>
 		<para>
 		<emphasis>
