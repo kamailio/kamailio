@@ -101,7 +101,7 @@ int db_postgres_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r);
 /*
  * Raw SQL query via async framework
  */
-int db_postgres_raw_query_async(const db1_con_t *_h, const str *_s);
+int db_postgres_raw_query_async(const str *_u, const str *_s);
 
 /*
  * Insert a row into table
