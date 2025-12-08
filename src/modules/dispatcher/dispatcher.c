@@ -683,7 +683,7 @@ static int w_ds_select_addr(
 		l = -1; /* will be casted to a rather big unsigned value */
 	}
 
-	return ds_select_dst_limit(msg, s, a, (unsigned int)l, mode).ret;
+	return ds_select_dst_limit(msg, s, a, (unsigned int)l, mode, NULL);
 }
 
 /**
@@ -749,7 +749,7 @@ static int w_ds_select_domain_limit(
 static int ki_ds_select_routes_limit(
 		sip_msg_t *msg, str *srules, str *smode, int rlimit)
 {
-	return ds_select_routes_limit(msg, srules, smode, rlimit).ret;
+	return ds_select_routes_limit(msg, srules, smode, rlimit, NULL);
 }
 
 /**
@@ -1596,8 +1596,7 @@ error:
 static int ki_ds_select(sip_msg_t *msg, int set, int alg)
 {
 	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
-			2 /*set no dst/uri*/)
-			.ret;
+			2 /*set no dst/uri*/, NULL);
 }
 
 /**
@@ -1605,9 +1604,8 @@ static int ki_ds_select(sip_msg_t *msg, int set, int alg)
  */
 static int ki_ds_select_limit(sip_msg_t *msg, int set, int alg, int limit)
 {
-	return ds_select_dst_limit(
-			msg, set, alg, limit /* limit number of dst*/, 2 /*set no dst/uri*/)
-			.ret;
+	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
+			2 /*set no dst/uri*/, NULL);
 }
 
 /**
@@ -1615,9 +1613,8 @@ static int ki_ds_select_limit(sip_msg_t *msg, int set, int alg, int limit)
  */
 static int ki_ds_select_dst(sip_msg_t *msg, int set, int alg)
 {
-	return ds_select_dst_limit(
-			msg, set, alg, 0xffff /* limit number of dst*/, 0 /*set dst uri*/)
-			.ret;
+	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
+			0 /*set dst uri*/, NULL);
 }
 
 /**
@@ -1625,9 +1622,8 @@ static int ki_ds_select_dst(sip_msg_t *msg, int set, int alg)
  */
 static int ki_ds_select_dst_limit(sip_msg_t *msg, int set, int alg, int limit)
 {
-	return ds_select_dst_limit(
-			msg, set, alg, limit /* limit number of dst*/, 0 /*set dst uri*/)
-			.ret;
+	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
+			0 /*set dst uri*/, NULL);
 }
 
 /**
@@ -1635,9 +1631,8 @@ static int ki_ds_select_dst_limit(sip_msg_t *msg, int set, int alg, int limit)
  */
 static int ki_ds_select_domain(sip_msg_t *msg, int set, int alg)
 {
-	return ds_select_dst_limit(
-			msg, set, alg, 0xffff /* limit number of dst*/, 1 /*set host port*/)
-			.ret;
+	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
+			1 /*set host port*/, NULL);
 }
 
 /**
@@ -1646,9 +1641,8 @@ static int ki_ds_select_domain(sip_msg_t *msg, int set, int alg)
 static int ki_ds_select_domain_limit(
 		sip_msg_t *msg, int set, int alg, int limit)
 {
-	return ds_select_dst_limit(
-			msg, set, alg, limit /* limit number of dst*/, 1 /*set host port*/)
-			.ret;
+	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
+			1 /*set host port*/, NULL);
 }
 
 /**
