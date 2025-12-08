@@ -40,6 +40,11 @@ typedef int (*ht_api_get_cell_expire_f)(
 typedef int (*ht_api_rm_cell_re_f)(str *hname, str *sre, int mode);
 typedef int (*ht_api_count_cells_re_f)(str *hname, str *sre, int mode);
 
+typedef int (*ht_api_db_open_con_f)(void);
+typedef int (*ht_api_db_close_con_f)(void);
+typedef int (*ht_api_db_load_tables_f)(void);
+typedef int (*ht_api_db_sync_tables_f)(void);
+
 typedef struct htable_api
 {
 	ht_api_table_spec_f table_spec;
@@ -51,6 +56,10 @@ typedef struct htable_api
 	ht_api_get_cell_expire_f get_expire;
 	ht_api_rm_cell_re_f rm_re;
 	ht_api_count_cells_re_f count_re;
+	ht_api_db_open_con_f db_open_con;
+	ht_api_db_close_con_f db_close_con;
+	ht_api_db_load_tables_f db_load_tables;
+	ht_api_db_sync_tables_f db_sync_tables;
 } htable_api_t;
 
 typedef int (*bind_htable_f)(htable_api_t *api);

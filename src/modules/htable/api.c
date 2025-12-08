@@ -26,8 +26,9 @@
 #include "../../core/dprint.h"
 
 #include "ht_api.h"
-#include "api.h"
+#include "ht_db.h"
 #include "ht_dmq.h"
+#include "api.h"
 
 /**
  *
@@ -166,6 +167,7 @@ int bind_htable(htable_api_t *api)
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
+
 	api->table_spec = ht_api_table_spec;
 	api->init_tables = ht_api_init_tables;
 	api->set = ht_api_set_cell;
@@ -175,5 +177,10 @@ int bind_htable(htable_api_t *api)
 	api->get_expire = ht_api_get_cell_expire;
 	api->rm_re = ht_api_rm_cell_re;
 	api->count_re = ht_api_count_cells_re;
+	api->db_open_con = ht_db_open_con;
+	api->db_close_con = ht_db_close_con;
+	api->db_load_tables = ht_db_load_tables;
+	api->db_sync_tables = ht_db_sync_tables;
+
 	return 0;
 }
