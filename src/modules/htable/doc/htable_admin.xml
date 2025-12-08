@@ -1423,7 +1423,117 @@ if(sht_match_str_value("ha", "eq", "alice")) {
 			Alias for sht_match_str_value().
 		</para>
 	</section>
-	</section>
+    <section id="htable.f.sht_is_null">
+        <title>
+            <function moreinfo="none">sht_is_null(htname, itname)</function>
+        </title>
+        <para>
+            Check if the item with the name 'itname' from hash table 'htname' exists.
+            This API function is equivalent to '($sht(htname=&gt;itname) == $null)'.
+        </para>
+        <para>
+            This function returns:
+        </para>
+		<itemizedlist>
+            <listitem>
+                <para>
+                    <emphasis>3</emphasis> - if parameters could not be parsed
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    <emphasis>2</emphasis> - if hash table is null
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    <emphasis>1</emphasis> - if the value is null
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    <emphasis>-1</emphasis> - if hash table default is non null
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    <emphasis>-2</emphasis> - if the value is not null
+                </para>
+            </listitem>
+		</itemizedlist>
+		<para>
+			All parameters can be static strings or contain variables.
+		</para>
+        <para>
+            This function can be used from ANY_ROUTE.
+        </para>
+        <example>
+            <title><function>sht_is_null</function> usage</title>
+            <programlisting format="linespecific">
+...
+if (sht_is_null("my_ht", "my_key")) {
+    xlog("L_ERR", "could not find my_key in my_ht\n");
+}
+...
+</programlisting>
+        </example>
+    </section>
+    <section id="htable.f.sht_inc">
+        <title>
+            <function moreinfo="none">sht_inc(htname, itname)</function>
+        </title>
+        <para>
+            Atomically increment the value of 'itname' in hash table 'htname'.
+            This API function is similar to '$shtinc(htname=&gt;itname)', without returning the value.
+        </para>
+        <para>
+            This function returns 1 on successful increment or -1 otherwise.
+        </para>
+        <para>
+            All parameters can be static strings or contain variables.
+        </para>
+        <para>
+            This function can be used from ANY_ROUTE.
+        </para>
+        <example>
+            <title><function>sht_inc</function> usage</title>
+            <programlisting format="linespecific">
+...
+if (!sht_inc("my_ht", "my_key")) {
+    xlog("L_ERR", "could not increment my_key\n");
+}
+...
+</programlisting>
+        </example>
+    </section>
+    <section id="htable.f.sht_dec">
+        <title>
+            <function moreinfo="none">sht_dec(htname, itname)</function>
+        </title>
+        <para>
+            Atomically decrement the value of 'itname' in hash table 'htname'.
+            This API function is similar to '$sht_dec(htname=&gt;itname)', without returning the value.
+        </para>
+        <para>
+            This function returns 1 on successful decrement or -1 otherwise.
+        </para>
+        <para>
+            All parameters can be static strings or contain variables.
+        </para>
+        <para>
+            This function can be used from ANY_ROUTE.
+        </para>
+        <example>
+            <title><function>sht_dec</function> usage</title>
+            <programlisting format="linespecific">
+...
+if (!sht_dec("my_ht", "my_key")) {
+    xlog("L_ERR", "could not decrement my_key\n");
+}
+...
+</programlisting>
+        </example>
+    </section>
 		<section>
 		<title>Exported pseudo-variables</title>
 		<itemizedlist>
@@ -1442,6 +1552,9 @@ if(sht_match_str_value("ha", "eq", "alice")) {
 			<listitem><para>
 				<emphasis>$shtinc(htable=>key)</emphasis>
 			</para></listitem>
+            <listitem><para>
+                <emphasis>$shtdec(htable=>key)</emphasis>
+            </para></listitem>
 			<listitem><para>
 				<emphasis>$shtitkey(iname)</emphasis>
 			</para></listitem>

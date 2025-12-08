@@ -93,6 +93,9 @@ static int w_ht_setxs(
 		sip_msg_t *msg, char *htname, char *itname, char *itval, char *exval);
 static int w_ht_setxi(
 		sip_msg_t *msg, char *htname, char *itname, char *itval, char *exval);
+static int w_ht_is_null(sip_msg_t *msg, char *htname, char *itname);
+static int w_ht_inc(sip_msg_t *msg, char *htname, char *itname);
+static int w_ht_dec(sip_msg_t *msg, char *htname, char *itname);
 
 int ht_param(modparam_t type, void *val);
 
@@ -164,6 +167,12 @@ static cmd_export_t cmds[] = {
 			ANY_ROUTE},
 
 	{"bind_htable", (cmd_function)bind_htable, 0, 0, 0, ANY_ROUTE},
+	{"sht_is_null", (cmd_function)w_ht_is_null, 2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE},
+	{"sht_inc", (cmd_function)w_ht_inc, 2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE},
+	{"sht_dec", (cmd_function)w_ht_dec, 2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1185,6 +1194,25 @@ static int ki_ht_is_null(sip_msg_t *msg, str *htname, str *itname)
 	return 1;
 }
 
+static int w_ht_is_null(sip_msg_t *msg, char *htname, char *itname)
+{
+	str shtname;
+	str sitname;
+
+	if(fixup_get_svalue(msg, (gparam_t *)htname, &shtname) < 0
+			|| shtname.len <= 0) {
+		LM_ERR("cannot get the hash table name\n");
+		return 3;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)itname, &sitname) < 0
+			|| sitname.len <= 0) {
+		LM_ERR("cannot get the item table name\n");
+		return 3;
+	}
+
+	return ki_ht_is_null(msg, &shtname, &sitname);
+}
+
 /**
  *
  */
@@ -1443,7 +1471,65 @@ static int w_ht_setxi(
 }
 
 #define KSR_HT_KEMI_NOINTVAL -255
-static ht_cell_t *_htc_ki_local = NULL;
+static ht_cell_t *_htc_mod_local = NULL;
+
+static int w_ht_add_opp(sip_msg_t *msg, char *htname, char *itname, int ival)
+{
+	str shtname;
+	str sitname;
+	ht_t *ht;
+	ht_cell_t *htc = NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)htname, &shtname) < 0
+			|| shtname.len <= 0) {
+		LM_ERR("cannot get the hash table name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)itname, &sitname) < 0
+			|| sitname.len <= 0) {
+		LM_ERR("cannot get the item table name\n");
+		return -1;
+	}
+
+	ht = ht_get_table(&shtname);
+	if(ht == NULL) {
+		LM_ERR("cannot get htable %s\n", shtname.s);
+		return -1;
+	}
+
+	htc = ht_cell_value_add(ht, &sitname, ival, _htc_mod_local);
+	if(_htc_mod_local != htc) {
+		ht_cell_pkg_free(_htc_mod_local);
+		_htc_mod_local = htc;
+	}
+	if(htc == NULL) {
+		LM_ERR("failed updating $sht(%s=>%s)\n", shtname.s, sitname.s);
+		return -1;
+	}
+	if(htc->flags & AVP_VAL_STR) {
+		LM_ERR("$sht(%s=>%s) is not an integer\n", shtname.s, sitname.s);
+		return -1;
+	}
+
+	if(ht->dmqreplicate > 0) {
+		if(ht_dmq_replicate_action(
+				   HT_DMQ_SET_CELL, &shtname, &sitname, 0, &htc->value, 1)
+				!= 0) {
+			LM_ERR("dmq replication failed\n");
+		}
+	}
+	return 1;
+}
+
+static int w_ht_inc(sip_msg_t *msg, char *htname, char *itname)
+{
+	return w_ht_add_opp(msg, htname, itname, 1);
+}
+
+static int w_ht_dec(sip_msg_t *msg, char *htname, char *itname)
+{
+	return w_ht_add_opp(msg, htname, itname, -1);
+}
 
 static int ki_ht_add_op(sip_msg_t *msg, str *htname, str *itname, int itval)
 {
@@ -1455,10 +1541,10 @@ static int ki_ht_add_op(sip_msg_t *msg, str *htname, str *itname, int itval)
 		return KSR_HT_KEMI_NOINTVAL;
 	}
 
-	htc = ht_cell_value_add(ht, itname, itval, _htc_ki_local);
-	if(_htc_ki_local != htc) {
-		ht_cell_pkg_free(_htc_ki_local);
-		_htc_ki_local = htc;
+	htc = ht_cell_value_add(ht, itname, itval, _htc_mod_local);
+	if(_htc_mod_local != htc) {
+		ht_cell_pkg_free(_htc_mod_local);
+		_htc_mod_local = htc;
 	}
 	if(htc == NULL) {
 		return KSR_HT_KEMI_NOINTVAL;
