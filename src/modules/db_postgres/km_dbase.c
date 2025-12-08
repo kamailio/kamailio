@@ -292,24 +292,21 @@ void db_postgres_async_exec_task(void *param)
 		LM_ERR("failed to execute query [%.*s] on async worker\n", p[1].len,
 				p[1].s);
 	}
-	db_postgres_close(dbc);
+	pkg_free(dbc);
 }
 /**
  * Execute a raw SQL query via core async framework.
- * \param _h handle for the database
+ * \param _u database URL
  * \param _s raw query string
  * \return zero on success, negative value on failure
  */
-int db_postgres_submit_query_async(const db1_con_t *_h, const str *_s)
+int db_postgres_submit_query_async(const str *_u, const str *_s)
 {
-	struct db_id *di;
 	async_task_t *atask;
 	int asize;
 	str *p;
 
-	di = ((struct pool_con *)_h->tail)->id;
-
-	asize = sizeof(async_task_t) + 2 * sizeof(str) + di->url.len + _s->len + 2;
+	asize = sizeof(async_task_t) + 2 * sizeof(str) + _u->len + _s->len + 2;
 	atask = shm_malloc(asize);
 	if(atask == NULL) {
 		LM_ERR("no more shared memory to allocate %d\n", asize);
@@ -321,8 +318,8 @@ int db_postgres_submit_query_async(const db1_con_t *_h, const str *_s)
 
 	p = (str *)((char *)atask + sizeof(async_task_t));
 	p[0].s = (char *)p + 2 * sizeof(str);
-	p[0].len = di->url.len;
-	strncpy(p[0].s, di->url.s, di->url.len);
+	p[0].len = _u->len;
+	strncpy(p[0].s, _u->s, _u->len);
 	p[1].s = p[0].s + p[0].len + 1;
 	p[1].len = _s->len;
 	strncpy(p[1].s, _s->s, _s->len);
@@ -334,6 +331,13 @@ int db_postgres_submit_query_async(const db1_con_t *_h, const str *_s)
 	}
 
 	return 0;
+}
+
+int db_postgres_submit_insert_async(const db1_con_t *_h, const str *_s)
+{
+	struct db_id *di;
+	di = ((struct pool_con *)_h->tail)->id;
+	return db_postgres_submit_query_async(&di->url, _s);
 }
 
 /*!
@@ -567,13 +571,13 @@ int db_postgres_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r)
 
 /**
  * Execute a raw SQL query via core async framework.
- * \param _h handle for the database
+ * \param _u database URL
  * \param _s raw query string
  * \return zero on success, negative value on failure
  */
-int db_postgres_raw_query_async(const db1_con_t *_h, const str *_s)
+int db_postgres_raw_query_async(const str *_u, const str *_s)
 {
-	return db_postgres_submit_query_async(_h, _s);
+	return db_postgres_submit_query_async(_u, _s);
 }
 
 /*!
@@ -704,7 +708,7 @@ int db_postgres_insert_async(const db1_con_t *_h, const db_key_t *_k,
 		const db_val_t *_v, const int _n)
 {
 	return db_do_insert(_h, _k, _v, _n, db_postgres_val2str,
-			db_postgres_submit_query_async);
+			db_postgres_submit_insert_async);
 }
 /*
  * Delete a row from the specified table
@@ -1234,13 +1238,13 @@ int db_postgres_replace(const db1_con_t *_h, const db_key_t *_k,
 					case DB1_STR:
 						pos += ((VAL_STR(&_v[i])).s)
 									   ? get_hash1_raw((VAL_STR(&_v[i])).s,
-											   (VAL_STR(&_v[i])).len)
+												 (VAL_STR(&_v[i])).len)
 									   : 0;
 						break;
 					case DB1_STRING:
 						pos += (VAL_STRING(&_v[i]))
 									   ? get_hash1_raw(VAL_STRING(&_v[i]),
-											   strlen(VAL_STRING(&_v[i])))
+												 strlen(VAL_STRING(&_v[i])))
 									   : 0;
 						break;
 					default:
