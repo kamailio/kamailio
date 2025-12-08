@@ -1534,6 +1534,7 @@ if (!sht_dec("my_ht", "my_key")) {
 </programlisting>
         </example>
     </section>
+    </section>
 		<section>
 		<title>Exported pseudo-variables</title>
 		<itemizedlist>
