@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="auth_arnacon" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+        <title>The Arnacon Authentication Module</title>
+        <authorgroup>
+            <author>
+                <firstname>Jonathan</firstname>
+                <surname>Kandel</surname>
+                <affiliation><orgname>Cellact B.V.</orgname></affiliation>
+                <email>jonathan@cellact.com</email>
+            </author>
+        </authorgroup>
+
+        <copyright>
+            <year>2025</year>
+            <holder>Cellact B.V.</holder>
+        </copyright>
+
+    </bookinfo>
+    <toc></toc>
+
+    <chapter>
+        <title>Admin Guide</title>
+
+    <section id="auth_arnacon.overview">
+		<title>Overview</title>
+		<para>
+			The Arnacon Authentication module provides ENS-based authentication for Kamailio
+			by verifying ENS domain ownership through cryptographic signature validation. This
+			module enables users to authenticate using their ENS domains (e.g., user.cellact.global)
+			instead of traditional username/password combinations.
+		</para>
+		<para>
+			The module implements a secure authentication flow where clients sign a message
+			containing a UUID and timestamp, and the module verifies that the signature comes
+			from the current owner of the specified ENS domain. This provides strong cryptographic
+			authentication while maintaining compatibility with existing SIP infrastructure.
+		</para>
+		<para>
+			Key features:
+			<itemizedlist>
+				<listitem><para>ENS domain-based authentication</para></listitem>
+				<listitem><para>ECDSA signature verification using secp256k1</para></listitem>
+				<listitem><para>Support for both traditional and wrapped ENS domains</para></listitem>
+				<listitem><para>Automatic ENS Name Wrapper detection and handling</para></listitem>
+				<listitem><para>Configurable signature timeout for replay attack prevention</para></listitem>
+				<listitem><para>Multi-network support (Polygon, Ethereum, custom networks)</para></listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section id="auth_arnacon.technical_details">
+		<title>Technical Details</title>
+		<para>
+			The module implements a comprehensive ENS-based authentication system with the following
+			technical features:
+		</para>
+		
+		<section id="auth_arnacon.ens_resolution">
+			<title>ENS Resolution</title>
+			<para>
+				The module supports both traditional ENS ownership and wrapped domain ownership:
+				<itemizedlist>
+					<listitem><para>Direct ownership via ENS Registry contract</para></listitem>
+					<listitem><para>Wrapped domain ownership via ENS Name Wrapper contract</para></listitem>
+					<listitem><para>Automatic detection of wrapped vs traditional domains</para></listitem>
+					<listitem><para>Zero address detection for unregistered domains</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		
+		<section id="auth_arnacon.signature_verification">
+			<title>Signature Verification</title>
+			<para>
+				Implements Ethereum-style message signing and verification:
+				<itemizedlist>
+					<listitem><para>Ethereum message prefix handling (\x19Ethereum Signed Message:\n)</para></listitem>
+					<listitem><para>ECDSA signature recovery using secp256k1</para></listitem>
+					<listitem><para>Address recovery from signature for ownership verification</para></listitem>
+					<listitem><para>Timestamp validation to prevent replay attacks</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		
+		<section id="auth_arnacon.multi_network">
+			<title>Multi-Network Support</title>
+			<para>
+				<itemizedlist>
+					<listitem><para>Primary support for Polygon network</para></listitem>
+					<listitem><para>Configurable for Ethereum mainnet, testnets, or custom networks</para></listitem>
+					<listitem><para>Custom RPC endpoint configuration</para></listitem>
+					<listitem><para>Flexible contract address configuration for different networks</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		
+		<section id="auth_arnacon.security_features">
+			<title>Security Features</title>
+			<para>
+				Comprehensive security measures to ensure authentication integrity:
+				<itemizedlist>
+					<listitem><para>Replay attack protection via timestamp validation</para></listitem>
+					<listitem><para>Cryptographic signature verification</para></listitem>
+					<listitem><para>ENS ownership verification against blockchain state</para></listitem>
+					<listitem><para>Configurable signature timeout (default 30 seconds)</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section id="auth_arnacon.dep">
+		<title>Dependencies</title>
+		<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+				<listitem><para>none</para></listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			External dependencies:
+			<itemizedlist>
+				<listitem><para><emphasis>libcurl</emphasis> - HTTP client library for blockchain RPC calls</para></listitem>
+				<listitem><para><emphasis>libsecp256k1</emphasis> - cryptographic library for ECDSA signature operations</para></listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<xi:include href="auth_arnacon_params.xml"/>
+	<xi:include href="auth_arnacon_functions.xml"/>
+	<xi:include href="auth_arnacon_faq.xml"/>
+
+    </chapter>
+</book> 
+
+

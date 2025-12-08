@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+	"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="auth_arnacon.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>Parameters</title>
+    
+    <section id="auth_arnacon.p.ens_registry_address">
+        <title><varname>ens_registry_address</varname> (string)</title>
+        <para>
+            ENS Registry contract address for the target blockchain network. This contract
+            is used to resolve ENS domain ownership and handle the initial ownership lookup.
+        </para>
+        <para>
+            <emphasis>Common Addresses:</emphasis>
+            <itemizedlist>
+                <listitem><para>Polygon: 0x16742E546bF92118F7dfdbEF5170E44C47ae254b</para></listitem>
+                <listitem><para>Ethereum Mainnet: 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e</para></listitem>
+                <listitem><para>Ethereum Sepolia: 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> "0x16742E546bF92118F7dfdbEF5170E44C47ae254b" (Polygon)
+        </para>
+        <example>
+            <title>Setting the <varname>ens_registry_address</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_arnacon", "ens_registry_address", "0x16742E546bF92118F7dfdbEF5170E44C47ae254b")
+...
+            </programlisting>
+        </example>
+    </section>
+
+
+    <section id="auth_arnacon.p.rpc_url">
+        <title><varname>rpc_url</varname> (string)</title>
+        <para>
+            RPC endpoint URL for blockchain network communication. Used for all ENS registry
+            and contract calls via JSON-RPC eth_call method. The module automatically detects
+            and interacts with Name Wrapper contracts when needed.
+        </para>
+        <para>
+            <emphasis>Common Endpoints:</emphasis>
+            <itemizedlist>
+                <listitem><para>Polygon Mainnet: https://polygon-rpc.com</para></listitem>
+                <listitem><para>Ethereum Mainnet: https://eth.drpc.org</para></listitem>
+                <listitem><para>Ethereum Sepolia: https://ethereum-sepolia-rpc.publicnode.com</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> "https://polygon-rpc.com"
+        </para>
+        <example>
+            <title>Setting the <varname>rpc_url</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_arnacon", "rpc_url", "https://polygon-rpc.com")
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_arnacon.p.signature_timeout">
+        <title><varname>signature_timeout</varname> (integer)</title>
+        <para>
+            Timeout in seconds for signature validation. Signatures older than this timeout
+            will be rejected to prevent replay attacks. The timestamp is extracted from the
+            X-Data header and compared against the current system time.
+        </para>
+        <para>
+            <emphasis>Recommended Values:</emphasis>
+            <itemizedlist>
+                <listitem><para>30s - Default, balanced security and usability</para></listitem>
+                <listitem><para>60s - More lenient for slower networks</para></listitem>
+                <listitem><para>15s - Stricter security for high-security environments</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> 30
+        </para>
+        <example>
+            <title>Setting the <varname>signature_timeout</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_arnacon", "signature_timeout", 30)
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_arnacon.p.debug_mode">
+        <title><varname>debug_mode</varname> (integer)</title>
+        <para>
+            Enable debug logging for authentication operations. When enabled, detailed
+            information about ENS resolution, signature verification, and authentication
+            steps will be logged. <emphasis>Warning:</emphasis> May log sensitive authentication data.
+        </para>
+        <para>
+            <emphasis>Values:</emphasis>
+            <itemizedlist>
+                <listitem><para>0 - Debug disabled</para></listitem>
+                <listitem><para>1 - Debug enabled</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Default:</emphasis> 0
+        </para>
+        <example>
+            <title>Setting the <varname>debug_mode</varname> parameter</title>
+            <programlisting>
+...
+modparam("auth_arnacon", "debug_mode", 1)
+...
+            </programlisting>
+        </example>
+    </section>
+
+</section> 
