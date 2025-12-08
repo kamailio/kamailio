@@ -165,14 +165,15 @@ static cmd_export_t cmds[] = {
 			ANY_ROUTE},
 	{"sht_setxi", (cmd_function)w_ht_setxi, 4, fixup_ssii, fixup_free_ssii,
 			ANY_ROUTE},
-
-	{"bind_htable", (cmd_function)bind_htable, 0, 0, 0, ANY_ROUTE},
 	{"sht_is_null", (cmd_function)w_ht_is_null, 2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE},
 	{"sht_inc", (cmd_function)w_ht_inc, 2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE},
 	{"sht_dec", (cmd_function)w_ht_dec, 2, fixup_spve_spve,
 		fixup_free_spve_spve, ANY_ROUTE},
+
+	{"bind_htable", (cmd_function)bind_htable, 0, 0, 0, ANY_ROUTE},
+
 	{0, 0, 0, 0, 0, 0}
 };
 
