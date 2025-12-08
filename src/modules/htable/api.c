@@ -148,16 +148,6 @@ int ht_api_count_cells_re(str *hname, str *sre, int mode)
 	return 0;
 }
 
-int ht_api_table_spec(char *spec)
-{
-	return ht_table_spec(spec);
-}
-
-int ht_api_init_tables(void)
-{
-	return ht_init_tables();
-}
-
 /**
  *
  */
@@ -168,8 +158,8 @@ int bind_htable(htable_api_t *api)
 		return -1;
 	}
 
-	api->table_spec = ht_api_table_spec;
-	api->init_tables = ht_api_init_tables;
+	api->table_spec = ht_table_spec;
+	api->init_tables = ht_init_tables;
 	api->set = ht_api_set_cell;
 	api->get_clone = ht_api_get_cell_clone;
 	api->rm = ht_api_del_cell;
