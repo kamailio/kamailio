@@ -41,7 +41,9 @@ char tr_json_escape_char = '%';
 /* clang-format off */
 /* Exported functions */
 static tr_export_t mod_trans[] = {
-	{{"json", sizeof("json") - 1}, json_tr_parse}, {{0, 0}, 0}};
+	{{"json", sizeof("json") - 1}, json_tr_parse},
+	{{0, 0}, 0}
+};
 
 static cmd_export_t cmds[] = {
 	{"json_get_field", (cmd_function)json_get_field, 3, fixup_get_field,
@@ -49,10 +51,13 @@ static cmd_export_t cmds[] = {
 	{"json_get_string", (cmd_function)json_get_string, 3, fixup_get_field,
 			fixup_get_field_free, ANY_ROUTE},
 	{"bind_json", (cmd_function)bind_json, 0, 0, 0, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}};
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"json_escape_char", PARAM_STR, &tr_json_escape_str}, {0, 0, 0}};
+	{"json_escape_char", PARAM_STR, &tr_json_escape_str},
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
 	"json",			 /* module name */
