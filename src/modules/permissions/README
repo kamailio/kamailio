@@ -14,9 +14,13 @@ Emmanuel Schmidbauer
 
 Donat Zenichev
 
+Tyler Moore
+
    Copyright © 2003 Miklos Tirpak
 
    Copyright © 2006-2008 Juha Heinanen
+
+   Copyright © 2025 Tyler Moore, dOpenSource
      __________________________________________________________________
 
    Table of Contents
@@ -692,6 +696,10 @@ modparam("permissions", "ruri_col", "regexp")
    Name of the column in the “address” or “trusted” table containing a
    string that is added as value to peer_tag AVP if peer_tag AVP has been
    defined and if the address or peer matches.
+
+   The tag_col field will be implicitly converted to a string when the
+   database field is loaded into “peer_tag” AVP if the field type is
+   supported.
 
    Default value is “tag”.
 
