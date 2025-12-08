@@ -82,6 +82,9 @@ Tyler Moore
               4.20. sht_has_name(htable, op, mval)
               4.21. sht_match_str_value(htable, op, mval)
               4.22. sht_has_str_value(htable, op, mval)
+              4.23. sht_is_null(htname, itname)
+              4.24. sht_inc(htname, itname)
+              4.25. sht_dec(htname, itname)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -148,6 +151,9 @@ Tyler Moore
    1.37. sht_iterator_setex usage
    1.38. sht_match_name usage
    1.39. sht_match_name usage
+   1.40. sht_is_null usage
+   1.41. sht_inc usage
+   1.42. sht_dec usage
 
 Chapter 1. Admin Guide
 
@@ -203,6 +209,9 @@ Chapter 1. Admin Guide
         4.20. sht_has_name(htable, op, mval)
         4.21. sht_match_str_value(htable, op, mval)
         4.22. sht_has_str_value(htable, op, mval)
+        4.23. sht_is_null(htname, itname)
+        4.24. sht_inc(htname, itname)
+        4.25. sht_dec(htname, itname)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -791,6 +800,9 @@ modparam("htable", "event_callback_mode", 1)
    4.20. sht_has_name(htable, op, mval)
    4.21. sht_match_str_value(htable, op, mval)
    4.22. sht_has_str_value(htable, op, mval)
+   4.23. sht_is_null(htname, itname)
+   4.24. sht_inc(htname, itname)
+   4.25. sht_dec(htname, itname)
 
 4.1.  sht_print()
 
@@ -1137,6 +1149,68 @@ if(sht_match_str_value("ha", "eq", "alice")) {
 
    Alias for sht_match_str_value().
 
+4.23.  sht_is_null(htname, itname)
+
+   Check if the item with the name 'itname' from hash table 'htname'
+   exists. This API function is equivalent to '($sht(htname=>itname) ==
+   $null)'.
+
+   This function returns:
+     * 3 - if parameters could not be parsed
+     * 2 - if hash table is null
+     * 1 - if the value is null
+     * -1 - if hash table default is non null
+     * -2 - if the value is not null
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.40. sht_is_null usage
+...
+if (sht_is_null("my_ht", "my_key")) {
+    xlog("L_ERR", "could not find my_key in my_ht\n");
+}
+...
+
+4.24.  sht_inc(htname, itname)
+
+   Atomically increment the value of 'itname' in hash table 'htname'. This
+   API function is similar to '$shtinc(htname=>itname)', without returning
+   the value.
+
+   This function returns 1 on successful increment or -1 otherwise.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.41. sht_inc usage
+...
+if (!sht_inc("my_ht", "my_key")) {
+    xlog("L_ERR", "could not increment my_key\n");
+}
+...
+
+4.25.  sht_dec(htname, itname)
+
+   Atomically decrement the value of 'itname' in hash table 'htname'. This
+   API function is similar to '$sht_dec(htname=>itname)', without
+   returning the value.
+
+   This function returns 1 on successful decrement or -1 otherwise.
+
+   All parameters can be static strings or contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.42. sht_dec usage
+...
+if (!sht_dec("my_ht", "my_key")) {
+    xlog("L_ERR", "could not decrement my_key\n");
+}
+...
+
 5. Exported pseudo-variables
 
      * $sht(htable=>key)
@@ -1144,6 +1218,7 @@ if(sht_match_str_value("ha", "eq", "alice")) {
      * $shtcn(htable=>key)
      * $shtcv(htable=>key)
      * $shtinc(htable=>key)
+     * $shtdec(htable=>key)
      * $shtitkey(iname)
      * $shtitval(iname)
      * $shtrecord(attribute)
