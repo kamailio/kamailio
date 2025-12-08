@@ -50,6 +50,19 @@ MODULE_VERSION
 
 #define OB_KEY_LEN 20
 
+typedef enum check_flow_retcode
+{
+	CHECK_FLOW_ERROR_HEADERS_PARSE = -8,
+	CHECK_FLOW_ERROR_ROUTE_PARSE = -7,
+	CHECK_FLOW_EXPIRED = -6,
+	CHECK_FLOW_NO_TCP_CONNECTION = -5,
+	CHECK_FLOW_ERROR_DECODE = -4,
+	CHECK_FLOW_ERROR_NO_FLOW_TOKEN = -3,
+	CHECK_FLOW_ERROR_URI_NOT_MYSELF = -2,
+	CHECK_FLOW_NO_ROUTE_HEADER = -1,
+	CHECK_FLOW_SUCCESS = 1
+} check_flow_retcode_t;
+
 static int mod_init(void);
 static void destroy(void);
 
@@ -58,9 +71,12 @@ static unsigned int ob_force_no_flag = (unsigned int)-1;
 static str ob_key = {0, 0};
 static str flow_token_secret = {0, 0};
 
+static int w_check_flow_token(struct sip_msg *msg, char *p1, char *p2);
+
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"bind_ob", (cmd_function)bind_ob, 1, 0, 0, 0},
+	{"check_flow_token", (cmd_function)w_check_flow_token, 0, 0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -502,4 +518,78 @@ int bind_ob(struct ob_binds *pxb)
 	pxb->use_outbound = use_outbound;
 
 	return 0;
+}
+
+int check_flow_token(struct sip_msg *msg)
+{
+	struct hdr_field *hdr;
+	struct sip_uri puri;
+	rr_t *rt;
+	str uri;
+	int ret;
+	struct receive_info *rcv = NULL;
+	tcp_connection_t *con = NULL;
+
+	switch(has_route_header(msg)) {
+		case 1:
+			LM_DBG("there is no Route HF\n");
+			return CHECK_FLOW_NO_ROUTE_HEADER;
+		case -1:
+			LM_DBG("cannot parse headers\n");
+			return CHECK_FLOW_ERROR_HEADERS_PARSE;
+		case -2:
+			LM_DBG("cannot parse Route HF\n");
+			return CHECK_FLOW_ERROR_ROUTE_PARSE;
+	}
+
+	hdr = msg->route;
+	rt = (rr_t *)hdr->parsed;
+	uri = rt->nameaddr.uri;
+
+	if(parse_uri(uri.s, uri.len, &puri) < 0) {
+		LM_ERR("failed to parse the first route URI (%.*s)\n", uri.len,
+				ZSW(uri.s));
+		return CHECK_FLOW_ERROR_ROUTE_PARSE;
+	}
+
+	if(!check_self_iuser(&puri, NULL)) {
+		LM_DBG("Route header uri is not my self\n");
+		return CHECK_FLOW_ERROR_URI_NOT_MYSELF;
+	}
+
+
+	LM_DBG("topmost route URI: '%.*s' is me\n", uri.len, ZSW(uri.s));
+	ret = decode_flow_token(msg, &rcv, puri.user);
+
+	if(ret == -2) {
+		LM_DBG("no flow token found\n");
+		return CHECK_FLOW_ERROR_NO_FLOW_TOKEN;
+	} else if(ret == -1) {
+		LM_DBG("failed to decode flow token\n");
+		return CHECK_FLOW_ERROR_DECODE;
+	} else if(rcv->proto == PROTO_TCP || rcv->proto == PROTO_TLS
+			  || rcv->proto == PROTO_WS || rcv->proto == PROTO_WSS) {
+		con = tcpconn_get(0, &rcv->src_ip, rcv->src_port, NULL, 0);
+
+		if(!con) {
+			LM_DBG("TCP connection to %s:%d does not exists\n",
+					ip_addr2a(&rcv->src_ip), rcv->src_port);
+			return CHECK_FLOW_NO_TCP_CONNECTION;
+		}
+		tcpconn_put(con);
+		return CHECK_FLOW_SUCCESS;
+	} else if(rcv->proto == PROTO_UDP) {
+		return CHECK_FLOW_SUCCESS;
+	} else {
+		LM_DBG("not supported proto: %d\n", rcv->proto);
+		return CHECK_FLOW_ERROR_DECODE;
+	}
+}
+
+/**
+ * wrapper for check_flow_token(msg)
+ */
+static int w_check_flow_token(struct sip_msg *msg, char *p1, char *p2)
+{
+	return check_flow_token(msg);
 }
