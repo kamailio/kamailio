@@ -1233,7 +1233,7 @@ sdp_ice_attr_t *clone_sdp_ice_attr(sdp_ice_attr_t *ice_attr)
 	}
 	memset(clone_ice_attr, 0, len);
 
-	p = (char *)(clone_ice_attr); /* beginning of the struct */
+	p = (char *)(clone_ice_attr + 1);
 
 	/* foundation */
 	if(ice_attr->foundation.len) {
@@ -1301,7 +1301,7 @@ sdp_ice_opt_t *clone_sdp_opt_attr(sdp_ice_opt_t *ice_opt)
 		return NULL;
 	}
 	memset(clone_ice_opt, 0, len);
-	p = (char *)(clone_ice_opt); /* beginning of the struct */
+	p = (char *)(clone_ice_opt + 1);
 
 	/* ice option */
 	if(ice_opt->option.len) {
@@ -1600,7 +1600,7 @@ error:
 
 sdp_info_t *clone_sdp_info(struct sip_msg *_m)
 {
-	sdp_info_t *clone_sdp_info, *sdp_info = (sdp_info_t *)_m->body;
+	sdp_info_t *cloned_sdp_info, *sdp_info = (sdp_info_t *)_m->body;
 	sdp_session_cell_t *clone_session, *prev_clone_session, *session;
 	int i, len;
 
@@ -1618,23 +1618,23 @@ sdp_info_t *clone_sdp_info(struct sip_msg *_m)
 	}
 
 	len = sizeof(sdp_info_t);
-	clone_sdp_info = (sdp_info_t *)shm_malloc(len);
-	if(clone_sdp_info == NULL) {
+	cloned_sdp_info = (sdp_info_t *)shm_malloc(len);
+	if(cloned_sdp_info == NULL) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
-	LM_DBG("clone_sdp_info: %p\n", clone_sdp_info);
-	memset(clone_sdp_info, 0, len);
+	LM_DBG("cloned_sdp_info: %p\n", cloned_sdp_info);
+	memset(cloned_sdp_info, 0, len);
 	LM_DBG("we have %d sessions\n", sdp_info->sessions_num);
-	clone_sdp_info->sessions_num = sdp_info->sessions_num;
-	clone_sdp_info->streams_num = sdp_info->streams_num;
+	cloned_sdp_info->sessions_num = sdp_info->sessions_num;
+	cloned_sdp_info->streams_num = sdp_info->streams_num;
 
 	session = sdp_info->sessions;
 	clone_session = clone_sdp_session_cell(session);
 	if(clone_session == NULL) {
 		goto error;
 	}
-	clone_sdp_info->sessions = clone_session;
+	cloned_sdp_info->sessions = clone_session;
 	prev_clone_session = clone_session;
 	session = session->next;
 	for(i = 1; i < sdp_info->sessions_num; i++) {
@@ -1647,9 +1647,9 @@ sdp_info_t *clone_sdp_info(struct sip_msg *_m)
 		session = session->next;
 	}
 
-	return clone_sdp_info;
+	return cloned_sdp_info;
 error:
-	free_cloned_sdp(clone_sdp_info);
+	free_cloned_sdp(cloned_sdp_info);
 	return NULL;
 }
 

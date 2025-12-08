@@ -56,9 +56,7 @@ int redis_allowed_timeouts_param = -1;
 int redis_flush_on_reconnect_param = 0;
 int redis_allow_dynamic_nodes_param = 0;
 int ndb_redis_debug = L_DBG;
-#ifdef WITH_SSL
 char *ndb_redis_ca_path = 0;
-#endif
 
 static int w_redis_cmd3(
 		struct sip_msg *msg, char *ssrv, char *scmd, char *sres);
@@ -142,9 +140,8 @@ static param_export_t params[] = {
 	{"flush_on_reconnect", PARAM_INT, &redis_flush_on_reconnect_param},
 	{"allow_dynamic_nodes", PARAM_INT, &redis_allow_dynamic_nodes_param},
 	{"debug", PARAM_INT, &ndb_redis_debug},
-#ifdef WITH_SSL
 	{"ca_path", PARAM_STRING, &ndb_redis_ca_path},
-#endif
+
 	{0, 0, 0}
 };
 
@@ -172,6 +169,12 @@ static int mod_init(void)
 	 * with the special rank PROC_POSTCHILDINIT by main attendant
 	 */
 	ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
+#ifndef WITH_SSL
+	if(ndb_redis_ca_path != NULL) {
+		LM_WARN("CA path parameter is set, but the module is not compiled with "
+				"SSL/TLS support\n");
+	}
+#endif
 	return 0;
 }
 

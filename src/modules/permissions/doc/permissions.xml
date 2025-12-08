@@ -55,6 +55,13 @@
 			<email>dzenichev@sipwise.com</email>
 		</address>
 		</editor>
+		<editor>
+			<firstname>Tyler</firstname>
+			<surname>Moore</surname>
+			<address>
+				<email>tmoore@dopensource.com</email>
+			</address>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2003</year>
@@ -63,6 +70,10 @@
 	<copyright>
 		<year>2006-2008</year>
 		<holder>Juha Heinanen</holder>
+	</copyright>
+	<copyright>
+		<year>2025</year>
+		<holder>Tyler Moore, dOpenSource</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>

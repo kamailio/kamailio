@@ -107,6 +107,8 @@ static volatile int mt_tree_refcnt = 0;
 static volatile int mt_reload_flag = 0;
 
 int mt_param(modparam_t type, void *val);
+int mt_item(modparam_t type, void *val);
+int mt_set_char_list(modparam_t type, void *val);
 static int fixup_mt_match(void **param, int param_no);
 static int fixup_free_mt_match(void **param, int param_no);
 static int w_mt_match(struct sip_msg *msg, char *str1, char *str2, char *str3);
@@ -133,12 +135,13 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"mtree", PARAM_STRING | PARAM_USE_FUNC, (void *)mt_param},
+	{"item", PARAM_STRING | PARAM_USE_FUNC, (void *)mt_item},
 	{"db_url", PARAM_STR, &db_url},
 	{"db_table", PARAM_STR, &db_table},
 	{"tname_column", PARAM_STR, &tname_column},
 	{"tprefix_column", PARAM_STR, &tprefix_column},
 	{"tvalue_column", PARAM_STR, &tvalue_column},
-	{"char_list", PARAM_STR, &mt_char_list},
+	{"char_list", PARAM_STRING | PARAM_USE_FUNC, &mt_set_char_list},
 	{"fetch_rows", PARAM_INT, &mt_fetch_rows},
 	{"pv_value", PARAM_STR, &value_param},
 	{"pv_values", PARAM_STR, &values_param},
@@ -206,13 +209,6 @@ static int mod_init(void)
 
 	if(mt_fetch_rows <= 0)
 		mt_fetch_rows = 1000;
-
-	if(mt_char_list.len <= 0) {
-		LM_ERR("invalid prefix char list\n");
-		return -1;
-	}
-	LM_DBG("mt_char_list=%s \n", mt_char_list.s);
-	mt_char_table_init();
 
 	/* binding to database module */
 	if(db_bind_mod(&db_url, &mt_dbf)) {
@@ -430,6 +426,39 @@ error:
 	return -1;
 }
 
+int mt_item(modparam_t type, void *val)
+{
+	if(val == NULL)
+		goto error;
+
+	return mt_table_item((char *)val);
+error:
+	return -1;
+}
+
+int mt_set_char_list(modparam_t type, void *val)
+{
+	if(val == NULL)
+		goto error;
+
+	mt_char_list.s = val;
+	mt_char_list.len = strlen(mt_char_list.s);
+
+	if(mt_char_list.len <= 0) {
+		LM_ERR("invalid prefix char list\n");
+		return -1;
+	}
+	LM_DBG("mt_char_list=%s \n", mt_char_list.s);
+	if(mt_char_table_init(1) < 0) {
+		LM_ERR("failed to set prefix char list\n");
+		return -1;
+	}
+	return 0;
+
+error:
+	return -1;
+}
+
 static int mt_pack_values(
 		m_tree_t *pt, db1_res_t *db_res, int row, int cols, str *tvalue)
 {
@@ -500,6 +529,11 @@ static int mt_load_db(m_tree_t *pt)
 	m_tree_t *old_tree = NULL;
 	mt_node_t *bk_head = NULL;
 
+	if(pt->mode == 1) {
+		LM_DBG("skip loading db records - in-memory only tree: [%.*s]\n",
+				pt->tname.len, pt->tname.s);
+		return 0;
+	}
 	if(pt->ncols > 0) {
 		for(c = 0; c < pt->ncols; c++) {
 			db_cols[c] = &pt->scols[c];

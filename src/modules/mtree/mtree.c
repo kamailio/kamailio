@@ -32,13 +32,13 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/pvar.h"
 #include "../../core/lvalue.h"
 #include "../../core/shm_init.h"
 
 #include "mtree.h"
 
-//extern str mt_char_list = {"1234567890*",11};
 extern str mt_char_list;
 extern pv_spec_t pv_value;
 extern pv_spec_t pv_values;
@@ -57,12 +57,23 @@ static m_tree_t **_ptree = NULL;
 #define MT_CHAR_TABLE_NOTSET 255
 static unsigned char _mt_char_table[MT_CHAR_TABLE_SIZE];
 
+static int _mt_char_table_ready = 0;
+
 /**
  *
  */
-void mt_char_table_init(void)
+int mt_char_table_init(int nset)
 {
 	unsigned int i;
+
+	if(_mt_char_table_ready == 1) {
+		if(nset == 1) {
+			LM_ERR("prefix char table already initialized\n");
+			return -1;
+		}
+		return 0;
+	}
+
 	for(i = 0; i < MT_CHAR_TABLE_SIZE; i++) {
 		_mt_char_table[i] = MT_CHAR_TABLE_NOTSET;
 	}
@@ -70,6 +81,9 @@ void mt_char_table_init(void)
 		unsigned char ch = mt_char_list.s[i];
 		_mt_char_table[ch] = (unsigned char)i;
 	}
+	_mt_char_table_ready = 1;
+
+	return 0;
 }
 
 
@@ -106,7 +120,7 @@ int mt_init_list_head(void)
  *
  */
 m_tree_t *mt_init_tree(
-		str *tname, str *dbtable, str *scols, int type, int multi)
+		str *tname, str *dbtable, str *scols, int type, int multi, int mode)
 {
 	m_tree_t *pt = NULL;
 	int i;
@@ -119,6 +133,7 @@ m_tree_t *mt_init_tree(
 	}
 	memset(pt, 0, sizeof(m_tree_t));
 
+	pt->mode = mode;
 	pt->type = type;
 	pt->multi = multi;
 	pt->reload_time = (uint64_t)time(NULL);
@@ -140,7 +155,9 @@ m_tree_t *mt_init_tree(
 		return NULL;
 	}
 	memset(pt->dbtable.s, 0, 1 + dbtable->len);
-	memcpy(pt->dbtable.s, dbtable->s, dbtable->len);
+	if(dbtable->len > 0) {
+		memcpy(pt->dbtable.s, dbtable->s, dbtable->len);
+	}
 	pt->dbtable.len = dbtable->len;
 
 	if(scols != NULL && scols->s != NULL && scols->len > 0) {
@@ -210,6 +227,8 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 		LM_ERR("max prefix len exceeded\n");
 		return -1;
 	}
+
+	mt_char_table_init(0);
 
 	LM_DBG("adding to tree <%.*s> of type <%d>\n", pt->tname.len, pt->tname.s,
 			pt->type);
@@ -765,6 +784,9 @@ int mt_table_spec(char *val)
 		if(pit->name.len == 4 && strncasecmp(pit->name.s, "name", 4) == 0) {
 			tmp.tname = pit->body;
 		} else if(pit->name.len == 4
+				  && strncasecmp(pit->name.s, "mode", 4) == 0) {
+			str2sint(&pit->body, &tmp.mode);
+		} else if(pit->name.len == 4
 				  && strncasecmp(pit->name.s, "type", 4) == 0) {
 			str2sint(&pit->body, &tmp.type);
 		} else if(pit->name.len == 5
@@ -783,10 +805,11 @@ int mt_table_spec(char *val)
 		LM_ERR("invalid mtree name\n");
 		goto error;
 	}
-	if(tmp.dbtable.s == NULL) {
-		LM_INFO("no table name - default mtree\n");
-		tmp.dbtable.s = "mtree";
-		tmp.dbtable.len = 5;
+	if(tmp.mode == 0) {
+		if(tmp.dbtable.s == NULL) {
+			LM_ERR("no db table provided\n");
+			goto error;
+		}
 	}
 	if((tmp.type != 0) && (tmp.type != 1) && (tmp.type != 2)) {
 		LM_ERR("unknown tree type <%d>\n", tmp.type);
@@ -824,8 +847,8 @@ int mt_table_spec(char *val)
 	if(it == NULL || str_strcmp(&it->tname, &tmp.tname) > 0) {
 		LM_DBG("adding new tname [%s]\n", tmp.tname.s);
 
-		ndl = mt_init_tree(
-				&tmp.tname, &tmp.dbtable, &tmp.scols[0], tmp.type, tmp.multi);
+		ndl = mt_init_tree(&tmp.tname, &tmp.dbtable, &tmp.scols[0], tmp.type,
+				tmp.multi, tmp.mode);
 		if(ndl == NULL) {
 			LM_ERR("cannot init the tree [%.*s]\n", tmp.tname.len, tmp.tname.s);
 			goto error;
@@ -872,7 +895,7 @@ m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, str *cols,
 	if(it == NULL || str_strcmp(&it->tname, tname) > 0) {
 		LM_DBG("adding new tname [%s]\n", tname->s);
 
-		ndl = mt_init_tree(tname, dbtable, cols, type, multi);
+		ndl = mt_init_tree(tname, dbtable, cols, type, multi, 0);
 		if(ndl == NULL) {
 			LM_ERR("no more shm memory\n");
 			return NULL;
@@ -903,6 +926,79 @@ int mt_defined_trees(void)
 {
 	if(_ptree != NULL && *_ptree != NULL)
 		return 1;
+	return 0;
+}
+
+int mt_table_item(char *val)
+{
+	m_tree_t *mt = NULL;
+	str s = STR_NULL;
+	char *p = NULL;
+	str tname = STR_NULL;
+	str tprefix = STR_NULL;
+	str tvalue = STR_NULL;
+
+	if(val == NULL) {
+		return -1;
+	}
+
+	if(!shm_initialized()) {
+		LM_ERR("shm not initialized - cannot add items to mtree\n");
+		return 0;
+	}
+
+	s.s = val;
+	s.len = strlen(s.s);
+	if(s.len < 5) {
+		LM_ERR("parameter value is too small (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	LM_DBG("adding a new item [%.*s] (%d)\n", s.len, s.s, s.len);
+
+	p = s.s + 1;
+	tname.s = p;
+	while(p < s.s + s.len) {
+		if(*p == s.s[0]) {
+			tname.len = (int)(p - tname.s);
+			break;
+		}
+		p++;
+	}
+	trim(&tname);
+	if(tname.len == 0) {
+		LM_ERR("invalid tname (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	mt = mt_get_tree(&tname);
+	if(mt == NULL) {
+		LM_ERR("mtree not found (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	p = p + 1;
+	tprefix.s = p;
+	while(p < s.s + s.len) {
+		if(*p == s.s[0]) {
+			tprefix.len = (int)(p - tprefix.s);
+			break;
+		}
+		p++;
+	}
+	if(tprefix.len == 0) {
+		LM_ERR("invalid tprefix (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
+	tvalue.s = p + 1;
+	tvalue.len = s.s + s.len - p;
+
+	if(mt_add_to_tree(mt, &tprefix, &tvalue) < 0) {
+		LM_ERR("failed to add to mtree (%d / %.*s)\n", s.len, s.len, s.s);
+		return -1;
+	}
+
 	return 0;
 }
 

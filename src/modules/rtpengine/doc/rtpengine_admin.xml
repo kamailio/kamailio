@@ -3194,7 +3194,37 @@ if(rtpengine_query_v("j", "$var(rdata)")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.f.rtpengine_connect">
+	<title>
+		<function moreinfo="none">rtpengine_connect([flags][,via-branch])</function>
+	</title>
+		<para>
+		Connects the media of two call parties directly without the need for a full
+		offer/answer exchange. The media will be connected in the same way as it would
+		through an offer/answer exchange. Transcoding will automatically be engaged if needed.
+		</para>
+		<para>
+		See rtpengine_query() function description above for the meaning of the
+		parameters. The function requires call-id, from-tag, and to-tag to identify
+		the two call parties to connect. Optionally, to-call-id can be specified in
+		flags to connect parties from different calls (different call IDs).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>rtpengine_connect</function> usage</title>
+		<programlisting format="linespecific">
+...
+# Connect two parties from the same call (using tags from current SIP message)
+rtpengine_connect();
 
+# Connect two parties from different calls, specifying all parameters
+rtpengine_connect("call-id=abc123def456@192.168.1.100 from-tag=a1b2c3d4 to-tag=e5f6g7h8 to-call-id=xyz789ghi012@192.168.1.200");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.f.rtpengine_manage">
 	<title>
 		<function moreinfo="none">rtpengine_manage([flags][,via-branch])</function>

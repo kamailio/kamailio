@@ -32,6 +32,10 @@ Federico Cabiddu
 
    <federico.cabiddu@gmail.com>
 
+Tyler Moore
+
+   <tmoore@dopensource.com>
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
@@ -45,6 +49,8 @@ Federico Cabiddu
    Copyright © 2017, 2018 Julien chavanton, Flowroute
 
    Copyright © 2020 Federico Cabiddu, Libon
+
+   Copyright © 2025 Tyler Moore, dOpenSource
      __________________________________________________________________
 
    Table of Contents
@@ -1082,7 +1088,10 @@ modparam("dispatcher", "ds_attrs_none", 1)
 
    The 'anameX' is the attribute name and 'cnameX' is column name. The
    additional columns must be added to database dispatcher table and their
-   type must be VARCHAR (string).
+   type must be a string type (VARCHAR, etc..) or integer type (UNSIGNED
+   INT, BIGINT, etc..). These fields can be a convenient way of loading
+   IDs, or additional related info into the 'attrs' XAVP when matching a
+   dispatcher set.
 
    Default value is “empty”.
 

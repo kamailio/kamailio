@@ -25,25 +25,33 @@ Eloy Coto Pereiro
 
         3. Functions
 
-              3.1. statsd_set(key, value)
-              3.2. statsd_gauge(key, value)
-              3.3. statsd_histogram(key, value)
+              3.1. statsd_set(key, value[, labels])
+              3.2. statsd_gauge(key, value[, labels])
+              3.3. statsd_histogram(key, value[, labels])
               3.4. statsd_start(key)
-              3.5. statsd_stop(key)
-              3.6. statsd_incr(key)
-              3.7. statsd_decr(key)
+              3.5. statsd_stop(key[, labels])
+              3.6. statsd_incr(key[, labels])
+              3.7. statsd_decr(key[, labels])
+
+        4. KEMI bindings
 
    List of Examples
 
    1.1. Set ip parameter
    1.2. Set port parameter
    1.3. statsd_set usage
-   1.4. statsd_gauge usage
-   1.5. statsd_histogram usage
-   1.6. statsd_start usage
-   1.7. statsd_stop usage
-   1.8. statsd_incr usage
-   1.9. statsd_decr usage
+   1.4. statsd_set usage with labels
+   1.5. statsd_gauge usage
+   1.6. statsd_gauge usage with labels
+   1.7. statsd_histogram usage
+   1.8. statsd_histogram usage with labels
+   1.9. statsd_start usage
+   1.10. statsd_stop usage
+   1.11. statsd_stop usage with labels
+   1.12. statsd_incr usage
+   1.13. statsd_incr usage with labels
+   1.14. statsd_decr usage
+   1.15. statsd_decr usage with labels
 
 Chapter 1. Admin Guide
 
@@ -57,23 +65,27 @@ Chapter 1. Admin Guide
 
    3. Functions
 
-        3.1. statsd_set(key, value)
-        3.2. statsd_gauge(key, value)
-        3.3. statsd_histogram(key, value)
+        3.1. statsd_set(key, value[, labels])
+        3.2. statsd_gauge(key, value[, labels])
+        3.3. statsd_histogram(key, value[, labels])
         3.4. statsd_start(key)
-        3.5. statsd_stop(key)
-        3.6. statsd_incr(key)
-        3.7. statsd_decr(key)
+        3.5. statsd_stop(key[, labels])
+        3.6. statsd_incr(key[, labels])
+        3.7. statsd_decr(key[, labels])
+
+   4. KEMI bindings
 
 1. Overview
 
-   The module provides the ability to send commands to statsd (you can use
-   InfluxDB too) with different types of information. It provides native
-   integration with statsd (https://github.com/etsy/statsd/) and graphite
-   (http://graphite.wikidot.com/).
+   The module implements the statsd text protocol, allowing Kamailio to
+   emit counters, gauges, histograms and timers to any server that
+   understands statsd semantics. Typical destinations include the
+   reference Etsy/Graphite daemon, InfluxDB via Telegraf listeners, or any
+   other statsd-compatible collector.
 
-   The module does not have any special dependency, it does a direct
-   socket connection to Graphite.
+   The implementation has no special external dependencies; it opens a UDP
+   socket to the configured host and sends the raw statsd datagrams, so
+   any standards-compliant server can receive them.
 
 2. Parameters
 
@@ -104,20 +116,23 @@ modparam("statsd", "port", "8125")
 
 3. Functions
 
-   3.1. statsd_set(key, value)
-   3.2. statsd_gauge(key, value)
-   3.3. statsd_histogram(key, value)
+   3.1. statsd_set(key, value[, labels])
+   3.2. statsd_gauge(key, value[, labels])
+   3.3. statsd_histogram(key, value[, labels])
    3.4. statsd_start(key)
-   3.5. statsd_stop(key)
-   3.6. statsd_incr(key)
-   3.7. statsd_decr(key)
+   3.5. statsd_stop(key[, labels])
+   3.6. statsd_incr(key[, labels])
+   3.7. statsd_decr(key[, labels])
 
-3.1.  statsd_set(key, value)
+3.1.  statsd_set(key, value[, labels])
 
    Sets count the number of unique values passed to a key.
 
    If this method is called multiple times with the same userid in the
    same sample period, that userid will only be counted once.
+
+   Optional labels supply a comma-separated list of key:value tags; omit
+   the argument to emit the metric untagged.
 
    This function can be used in ALL ROUTES.
 
@@ -130,7 +145,12 @@ failure_route[tryagain] {
 }
 ...
 
-3.2.  statsd_gauge(key, value)
+   Example 1.4. statsd_set usage with labels
+...
+statsd_set("active_users", $var(count), "cluster:a,region:$var(region)");
+...
+
+3.2.  statsd_gauge(key, value[, labels])
 
    Gauges are a constant data type. They are not subject to averaging and
    they don't change unless you change them. That is, once you set a gauge
@@ -142,8 +162,10 @@ failure_route[tryagain] {
    This function can be used in ALL ROUTES.
 
    The statsd server collects gauges under the stats.gauges prefix.
+   Optional labels supply a comma-separated list of key:value tags; omit
+   the argument to emit the metric untagged.
 
-   Example 1.4. statsd_gauge usage
+   Example 1.5. statsd_gauge usage
 ...
 route [gauge_method]{
     statsd_gauge("method"+$rm, "+1");
@@ -151,7 +173,12 @@ route [gauge_method]{
 }
 ...
 
-3.3.  statsd_histogram(key, value)
+   Example 1.6. statsd_gauge usage with labels
+...
+statsd_gauge("method"+$rm, "+1", "node:$si");
+...
+
+3.3.  statsd_histogram(key, value[, labels])
 
    The histograms are a measure of time, but they are calculated at the
    server side. As the data exported by the client is the same, this is
@@ -160,11 +187,17 @@ route [gauge_method]{
    This function can be used in ALL ROUTES.
 
    The statsd server collects histograms under the stats.histograms
-   prefix.
+   prefix. Optional labels supply a comma-separated list of key:value
+   tags; omit the argument to emit the metric untagged.
 
-   Example 1.5. statsd_histogram usage
+   Example 1.7. statsd_histogram usage
 ...
     statsd_histogram("latency", 1000);
+...
+
+   Example 1.8. statsd_histogram usage with labels
+...
+statsd_histogram("latency", 1000, "method:"+$rm+",peer:"+$si);
 ...
 
 3.4.  statsd_start(key)
@@ -181,51 +214,89 @@ route [gauge_method]{
    count of each timer for each period (by the time it can be seen in
    graphite, that's usually per minute).
 
-   Example 1.6. statsd_start usage
+   Example 1.9. statsd_start usage
 ...
 statsd_start("long_mysql_query");
 sql_query("ca", "select sleep(0.2)", "ra");
 statsd_stop("long_mysql_query");
 ...
 
-3.5.  statsd_stop(key)
+3.5.  statsd_stop(key[, labels])
 
    statsd_stop(key) get the avp string with the key and calculate the
    difference from the start time. When finished the milliseconds used
    will be sent to statsd.
 
+   Optional labels supply a comma-separated list of key:value tags; omit
+   the argument to emit the metric untagged.
+
    This function can be used in all routes.
 
-   Example 1.7. statsd_stop usage
+   Example 1.10. statsd_stop usage
 ...
 statsd_start("long_mysql_query");
 sql_query("ca", "select sleep(0.2)", "ra");
 statsd_stop("long_mysql_query");
 ...
 
-3.6.  statsd_incr(key)
+   Example 1.11. statsd_stop usage with labels
+...
+statsd_start("long_mysql_query");
+sql_query("ca", "select sleep(0.2)", "ra");
+statsd_stop("long_mysql_query", "db:replica,shard:$var(shard)");
+...
+
+3.6.  statsd_incr(key[, labels])
 
    Increment a statsd counter
 
    This function can be used in all routes.
 
-   Example 1.8. statsd_incr usage
+   Optional labels supply a comma-separated list of key:value tags; omit
+   the argument to emit the metric untagged.
+
+   Example 1.12. statsd_incr usage
 ...
 if(geoip_match("$si", "src")){
     statsd_incr("country."+$(gip(src=>cc)));
 }
 ...
 
-3.7.  statsd_decr(key)
+   Example 1.13. statsd_incr usage with labels
+...
+if(geoip_match("$si", "src")){
+        statsd_incr("country."+$(gip(src=>cc)), "asn:"+$(gip(src=>asn)));
+}
+...
+
+3.7.  statsd_decr(key[, labels])
 
    Decrement a counter
 
    This function can be used in all routes.
 
-   Example 1.9. statsd_decr usage
+   Example 1.14. statsd_decr usage
 ...
 if (t_check_status("408")) {
     statsd_decr("kamailio.successfulCalls");
     statsd_incr("kamailio.reply.timeout");
 }
 ...
+
+   Example 1.15. statsd_decr usage with labels
+...
+if (t_check_status("408")) {
+        statsd_decr("kamailio.successfulCalls", "response:timeout");
+        statsd_incr("kamailio.reply.timeout", "response:timeout");
+}
+...
+
+4. KEMI bindings
+
+   All of the functionality above is also exported to Kamailio's scripting
+   interfaces (Lua, Python, JS, etc.) via the statsd KEMI module. For
+   every function that accepts labels there is a companion name suffixed
+   with _labels. For example, statsd_gauge and statsd_labels_gauge,
+   statsd_histogram and statsd_labels_histogram, statsd_set and
+   statsd_labels_set, statsd_incr and statsd_labels_incr, and so on.
+   Timers are exposed as statsd_start, statsd_stop and statsd_labels_stop.

@@ -675,11 +675,12 @@ static inline int t_uac_prepare(
 #ifdef DIALOG_CALLBACKS
 	run_trans_dlg_callbacks(uac_r->dialog, new_cell, request);
 #endif /* DIALOG_CALLBACKS */
-	if(dst_req)
+	if(dst_req != NULL) {
 		*dst_req = request;
-	if(dst_cell)
+	}
+	if(dst_cell != NULL) {
 		*dst_cell = new_cell;
-	else if(is_ack && dst_req == 0) {
+	} else if(is_ack && dst_req == NULL) {
 		free_cell(new_cell);
 	}
 

@@ -146,10 +146,7 @@
 # ALIASES_TYPE="DB"
 
 ## control engine: RPCFIFO
-## - default RPCFIFO
-# CTLENGINE="RPCFIFO"
-
-## path to FIFO file for engine RPCFIFO
+## path to FIFO file for control engine RPCFIFO
 # RPCFIFOPATH="/run/kamailio/kamailio_rpc.fifo"
 
 ## check ACL names; default on (1); off (0)
