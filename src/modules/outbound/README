@@ -22,19 +22,24 @@ Peter Dunkley
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Parameters
+        3. Functions
 
-              3.1. force_outbound_flag (integer)
-              3.2. force_no_outbound_flag (integer)
-              3.3. flow_token_secret (string)
+              3.1. check_flow_token()
+
+        4. Parameters
+
+              4.1. force_outbound_flag (integer)
+              4.2. force_no_outbound_flag (integer)
+              4.3. flow_token_secret (string)
 
    List of Examples
 
    1.1. Edge Proxy Configuration
    1.2. Registrar Configuration
-   1.3. Set force_outbound_flag parameter
-   1.4. Set force_no_outbound_flag parameter
-   1.5. Set flow_token_secret parameter
+   1.3. check_flow_token usage
+   1.4. Set force_outbound_flag parameter
+   1.5. Set force_no_outbound_flag parameter
+   1.6. Set flow_token_secret parameter
 
 Chapter 1. Admin Guide
 
@@ -51,11 +56,15 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Parameters
+   3. Functions
 
-        3.1. force_outbound_flag (integer)
-        3.2. force_no_outbound_flag (integer)
-        3.3. flow_token_secret (string)
+        3.1. check_flow_token()
+
+   4. Parameters
+
+        4.1. force_outbound_flag (integer)
+        4.2. force_no_outbound_flag (integer)
+        4.3. flow_token_secret (string)
 
 1. Overview
 
@@ -498,13 +507,87 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
    this module loaded:
      * OpenSSL.
 
-3. Parameters
+3. Functions
 
-   3.1. force_outbound_flag (integer)
-   3.2. force_no_outbound_flag (integer)
-   3.3. flow_token_secret (string)
+   3.1. check_flow_token()
 
-3.1. force_outbound_flag (integer)
+3.1. check_flow_token()
+
+   This function search flow token for the current message and make
+   checks:
+    1. headers can be parsed;
+    2. Route header can be parsed;
+    3. top route header is myself;
+    4. flow token present in the Route header;
+    5. flow token can be decoded;
+    6. TCP/TLS or WS/WSS connection present;
+    7. flow token is not expired;
+
+   Return codes:
+    1. 1 - flow token is valid and can be used to route message to the
+       next hop
+    2. -1 - no Route header present
+    3. -2 - host in the first Route value is not current host
+    4. -3 - no flow token present
+    5. -4 - cannot decode flow token
+    6. -5 - connection associated with this token does not exist
+    7. -6 - flow token expired
+    8. -7 - cannot parse Route header
+    9. -8 - cannot parse headers
+
+   Example 1.3. check_flow_token usage
+...
+        check_flow_token();
+        switch $rc {
+                case -8:
+                        xlog("cannot parse headers\n");
+                        sl_send_reply("403", "Forbidden");
+                        break;
+                case -7:
+                        xlog("cannot parse Route header\n");
+                        sl_send_reply("403", "Forbidden");
+                        break;
+                case -6:
+                        xlog("expired flow token\n");
+                        sl_send_reply("430", "Flow Failed");
+                        break;
+                case -5:
+                        xlog("no TCP conection\n");
+                        sl_send_reply("430", "Flow Failed");
+                        break;
+                case -4:
+                        xlog("cannot decode flowtoken\n");
+                        sl_send_reply("403", "Forbidden");
+                        break;
+                case -3:
+                        xlog("no flow token\n");
+                        loose_route();
+                        break;
+                case -2:
+                        xlog("Route is not my self\n");
+                        sl_send_reply("403", "Forbidden");
+                        break;
+                case -1:
+                        xlog("no Route header\n");
+                        break;
+                case 1:
+                        xlog("correct flow token\n");
+                        loose_route();
+                        break;
+                default:
+                        xlog("not supported return code: $rc\n");
+                        sl_send_reply("403", "Forbidden");
+                        break;
+        }
+...
+
+4. Parameters
+
+   4.1. force_outbound_flag (integer)
+   4.2. force_no_outbound_flag (integer)
+   4.3. flow_token_secret (string)
+
+4.1. force_outbound_flag (integer)
 
    A flag which, if set for a request, will force path and rr to add flow
    tokens to Path: and Record-Route: headers regardless of the request
@@ -512,12 +595,12 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 
    Default value is -1.
 
-   Example 1.3. Set force_outbound_flag parameter
+   Example 1.4. Set force_outbound_flag parameter
 ...
 modparam("outbound", "force_outbound_flag", 1)
 ...
 
-3.2. force_no_outbound_flag (integer)
+4.2. force_no_outbound_flag (integer)
 
    A flag which, if set for a request, will force path and rr not to add
    flow tokens to Path: and Record-Route: headers regardless of the
@@ -525,19 +608,19 @@ modparam("outbound", "force_outbound_flag", 1)
 
    Default value is -1.
 
-   Example 1.4. Set force_no_outbound_flag parameter
+   Example 1.5. Set force_no_outbound_flag parameter
 ...
 modparam("outbound", "force_no_outbound_flag", 2)
 ...
 
-3.3. flow_token_secret (string)
+4.3. flow_token_secret (string)
 
    Secret phrase used to calculate the outbound key value used for flow
    tokens validation. Allows to set persistent outbound key.
 
    If not specified, outbound will use randomly generated outbound key
 
-   Example 1.5.  Set flow_token_secret parameter
+   Example 1.6.  Set flow_token_secret parameter
 ...
 modparam("outbound", "flow_token_secret", "johndoessecretphrase")
 ...
