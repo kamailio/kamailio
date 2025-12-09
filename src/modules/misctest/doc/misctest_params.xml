@@ -59,11 +59,11 @@ modparam("misctest", "mem_check_content", 1)
 		</example>
 		<example>
 			<title>
-				Set <varname>mem_check_content</varname> at runtime via kamcmd
+				Set <varname>mem_check_content</varname> at runtime via kamctl
 			</title>
 			<programlisting>
 ...
-$ &kamcmd; cfg.seti misctest mem_check_content 1
+$ &kamctl; rpc cfg.seti misctest mem_check_content 1
 ...
 			</programlisting>
 		</example>
