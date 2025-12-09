@@ -242,7 +242,7 @@ set(MOD_LIST_PRESENCE
 set(MOD_LIST_LUA app_lua)
 
 # * modules depending on perl library
-set(MOD_LIST_PERLDEPS app_perl db_perlvdb)
+set(MOD_LIST_PERLDEPS app_perl)
 
 # * modules depending on python library
 set(MOD_LIST_PYTHON app_python)
