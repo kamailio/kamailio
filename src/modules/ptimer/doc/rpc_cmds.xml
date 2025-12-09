@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ptimer.rpc_cmds" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>RPC Commands</title>
+    <section>
+        <title><function moreinfo="none">ptimer.list</function></title>
+        <para>List the loaded timers and their current state.</para>
+    </section>
+    <section>
+        <title><function moreinfo="none">ptimer.pause</function></title>
+        <para>Pause execution of timer worker(s).</para>
+    </section>
+    <section>
+        <title><function moreinfo="none">ptimer.continue</function></title>
+        <para>Continue execution of timer worker(s).</para>
+    </section>
+    <section>
+        <title><function moreinfo="none">ptimer.start</function></title>
+        <para>
+        Jump execution of timer worker(s) to the start route.
+        This will inherently continue execution if the worker was paused.
+        </para>
+    </section>
+    <section>
+        <title><function moreinfo="none">ptimer.loop</function></title>
+        <para>
+        Jump execution of timer worker(s) to the loop route.
+        This will inherently continue execution if the worker was paused.
+        </para>
+    </section>
+    <section>
+        <title><function moreinfo="none">ptimer.end</function></title>
+        <para>
+        Jump execution of timer worker(s) to the end route.
+        This will inherently continue execution if the worker was paused.
+        </para>
+    </section>
+</section>

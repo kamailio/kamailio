@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ptimer.mod_pvs" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Pseudo Variables</title>
+    <section>
+        <title><varname>$ptimer(...)</varname></title>
+        <para>Access to timer / worker attributes.</para>
+        <para>This PV is only available within ptimer executed routes.</para>
+        <para>The following attributes are available:</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+        <emphasis>name</emphasis> - name of the timer executing this route.
+        This attribute is read-only.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>type</emphasis> - type of timer executing this route.
+        This attribute is read-only.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>interval</emphasis> - interval for this timer.
+        This attribute is r/w inside the start route, and r/o elsewhere.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>nworkers</emphasis> - number of workers spawned for this timer.
+        This attribute is read-only.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>worker</emphasis> - current worker processing this route.
+        This attribute is read-only.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>pid</emphasis> - pid of current worker processing this route.
+        This attribute is read-only.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>ntasks</emphasis> - total number of tasks assigned to this timer.
+        This attribute is r/w inside the start route, and r/o elsewhere.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>tasks</emphasis> - number of tasks assigned to this worker.
+        This attribute is r/w inside the start route, and r/o elsewhere.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>nslices</emphasis> - number of slices this timer will slice tasks into.
+        This attribute is r/w inside the start route, and r/o elsewhere.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+        <emphasis>slice</emphasis> - current slice this worker is processing.
+        This attribute is r/w inside the start route, and r/o elsewhere.
+		</para>
+		</listitem>
+		</itemizedlist>
+    </section>
+</section>
