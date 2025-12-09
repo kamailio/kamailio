@@ -42,7 +42,6 @@
  * - \ref auth
  *
  * Implemented modules
- * - \ref ../modules/db_berkeley
  * - \ref ../modules/db_flatstore
  * - \ref ../modules/db_text
  * - \ref ../modules/db_mysql

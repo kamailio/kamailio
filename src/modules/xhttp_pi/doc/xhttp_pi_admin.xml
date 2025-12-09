@@ -98,7 +98,6 @@ kamdbctl pframework create
 	<para>
 		Supported databases:
 		<itemizedlist>
-			<listitem><para>berkeley</para></listitem>
 			<listitem><para>cassandra</para></listitem>
 			<listitem><para>cluster</para></listitem>
 			<listitem><para>flatstore</para></listitem>
@@ -392,4 +391,3 @@ event_route[xhttp:request] {
 	</section>
 
 </chapter>
-

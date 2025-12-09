@@ -80,7 +80,7 @@
               <emphasis>a database module</emphasis>,
               when a database is used as configuration data source.
               Only SQL based databases are supported, as this module needs the capability to
-              issue raw queries. It is not possible to use the dbtext or db_berkeley module at the moment.
+              issue raw queries. It is not possible to use the dbtext module at the moment.
             </para>
           </listitem>
           <listitem>

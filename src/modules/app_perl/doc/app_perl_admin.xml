@@ -23,7 +23,7 @@
 		<para>
 		With this Perl module, you can easily implement your own &kamailio; extensions in Perl. This allows
 		for simple access to the full world of CPAN modules. SIP URI rewriting could be implemented
-		based on regular expressions; accessing arbitrary data backends, e.g. LDAP or Berkeley DB files,
+		based on regular expressions; accessing arbitrary data backends, e.g. LDAP files,
 		is now extremely simple.
 		</para>
 	</section>
