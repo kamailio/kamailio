@@ -180,7 +180,7 @@ void db_unixodbc_async_exec_task(void *param)
 		LM_ERR("failed to execute query [%.*s] on async worker\n", p[1].len,
 				p[1].s);
 	}
-	pkg_free(dbc);
+	db_do_con_free(dbc);
 }
 /**
  * Execute a raw SQL query via core async framework.
