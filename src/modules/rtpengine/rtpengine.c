@@ -3096,81 +3096,6 @@ static int child_init(int rank)
 
 static void mod_destroy(void)
 {
-	struct rtpp_set *crt_list, *last_list;
-	struct rtpp_node *crt_rtpp, *last_rtpp;
-
-	/*free the shared memory*/
-	if(rtpp_no) {
-		shm_free(rtpp_no);
-		rtpp_no = NULL;
-	}
-
-	if(rtpp_no_lock) {
-		lock_destroy(rtpp_no_lock);
-		lock_dealloc(rtpp_no_lock);
-		rtpp_no_lock = NULL;
-	}
-
-	if(!rtpp_set_list) {
-		return;
-	}
-
-	if(!rtpp_set_list->rset_head_lock) {
-		shm_free(rtpp_set_list);
-		rtpp_set_list = NULL;
-		return;
-	}
-
-	lock_get(rtpp_set_list->rset_head_lock);
-	for(crt_list = rtpp_set_list->rset_first; crt_list != NULL;) {
-		last_list = crt_list;
-
-		if(!crt_list->rset_lock) {
-			crt_list = last_list->rset_next;
-			shm_free(last_list);
-			last_list = NULL;
-			continue;
-		}
-
-		lock_get(last_list->rset_lock);
-		for(crt_rtpp = crt_list->rn_first; crt_rtpp != NULL;) {
-
-			if(crt_rtpp->rn_url.s)
-				shm_free(crt_rtpp->rn_url.s);
-
-			last_rtpp = crt_rtpp;
-			crt_rtpp = last_rtpp->rn_next;
-			shm_free(last_rtpp);
-		}
-		crt_list = last_list->rset_next;
-		lock_release(last_list->rset_lock);
-
-		lock_destroy(last_list->rset_lock);
-		lock_dealloc((void *)last_list->rset_lock);
-		last_list->rset_lock = NULL;
-
-		shm_free(last_list);
-		last_list = NULL;
-	}
-	lock_release(rtpp_set_list->rset_head_lock);
-
-	lock_destroy(rtpp_set_list->rset_head_lock);
-	lock_dealloc((void *)rtpp_set_list->rset_head_lock);
-	rtpp_set_list->rset_head_lock = NULL;
-
-	shm_free(rtpp_set_list);
-	rtpp_set_list = NULL;
-
-	/* destroy the hastable which keeps the call-id <-> selected_node relation */
-	if(!rtpengine_hash_table_destroy()) {
-		LM_ERR("rtpengine_hash_table_destroy() failed!\n");
-	} else {
-		LM_DBG("rtpengine_hash_table_destroy() success!\n");
-	}
-	if(_rtpe_list_version != NULL) {
-		shm_free(_rtpe_list_version);
-		_rtpe_list_version = NULL;
-	}
 }
 
 
@@ -3717,7 +3642,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf,
 		}
 	}
 
-	if (!ng_flags.flags)
+	if(!ng_flags.flags)
 		ng_flags.flags = bencode_list(bencbuf);
 
 	if(parse_by_module) {
@@ -6376,17 +6301,20 @@ static int ki_rtpengine_query2(sip_msg_t *msg, str *flags, str *viabranch)
 static int ki_rtpengine_connect0(sip_msg_t *msg)
 {
 	void *parms[2] = {NULL, NULL};
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
 }
 static int ki_rtpengine_connect(sip_msg_t *msg, str *flags)
 {
 	void *parms[2] = {flags, NULL};
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
 }
 static int ki_rtpengine_connect2(sip_msg_t *msg, str *flags, str *viabranch)
 {
 	void *parms[2] = {flags, viabranch};
-	return rtpengine_rtpp_set_wrap(msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_connect_wrap, parms, 1, OP_ANY);
 }
 
 /* KI - start recording */
