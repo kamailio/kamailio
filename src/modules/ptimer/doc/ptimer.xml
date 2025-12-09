@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+
+<book id="ptimer" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <?dbhtml generate-toc="toc,title,figure,table"?>
+    <?dbfo-need toc?>
+    <bookinfo>
+    <title>Ptimer Module</title>
+    <authorgroup>
+        <author>
+            <firstname>Tyler</firstname>
+            <surname>Moore</surname>
+            <affiliation><orgname>dOpenSource</orgname></affiliation>
+            <email>tmoore@dopensource.com</email>
+            <address>
+            <otheraddr>
+            <ulink url="https://dopensource.com/">dopensource.com</ulink>
+            </otheraddr>
+            </address>
+        </author>
+        <editor>
+            <firstname>Tyler</firstname>
+            <surname>Moore</surname>
+            <affiliation><orgname>dOpenSource</orgname></affiliation>
+            <email>tmoore@dopensource.com</email>
+        </editor>
+    </authorgroup>
+    <copyright>
+        <year>2025</year>
+        <holder>Tyler Moore, dOpenSource</holder>
+    </copyright>
+    </bookinfo>
+
+    <toc></toc>
+
+<!-- TODO: not supported by internal docs tooling
+    <chapter>
+    <title>Admin Guide</title>
+    <xi:include href="overview.xml"/>
+    <xi:include href="dependencies.xml"/>
+    <xi:include href="mod_params.xml"/>
+    <xi:include href="mod_funcs.xml"/>
+    <xi:include href="mod_pvs.xml"/>
+    <xi:include href="rpc_cmds.xml"/>
+    <xi:include href="examples.xml"/>
+    </chapter>
+-->
+    <xi:include href="ptimer_admin.xml"/>
+</book>

@@ -1,0 +1,898 @@
+Ptimer Module
+
+Tyler Moore
+
+   dOpenSource
+   <tmoore@dopensource.com>
+
+Edited by
+
+Tyler Moore
+
+   dOpenSource
+   <tmoore@dopensource.com>
+
+   Copyright © 2025 Tyler Moore, dOpenSource
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Module Dependencies
+              2.2. External Dependencies
+
+        3. Parameters
+
+              3.1. default_type (int)
+              3.2. default_interval (str)
+              3.3. default_nworkers (int)
+              3.4. timer (str)
+              3.5. start (str)
+              3.6. loop (str)
+              3.7. end (str)
+
+        4. Pseudo Variables
+
+              4.1. $ptimer(...)
+
+        5. RPC Commands
+
+              5.1. ptimer.list
+              5.2. ptimer.pause
+              5.3. ptimer.continue
+              5.4. ptimer.start
+              5.5. ptimer.loop
+              5.6. ptimer.end
+
+        6. Example Usages
+
+              6.1. Call Rate Shaping
+
+                    6.1.1. Global Traffic Shaping
+                    6.1.2. Per Customer Traffic Shaping
+
+              6.2. Adaptive Routing
+              6.3. Dynamic Timers
+
+                    6.3.1. Queue Control
+                    6.3.2. Hot-Reload Tasks
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Module Dependencies
+        2.2. External Dependencies
+
+   3. Parameters
+
+        3.1. default_type (int)
+        3.2. default_interval (str)
+        3.3. default_nworkers (int)
+        3.4. timer (str)
+        3.5. start (str)
+        3.6. loop (str)
+        3.7. end (str)
+
+   4. Pseudo Variables
+
+        4.1. $ptimer(...)
+
+   5. RPC Commands
+
+        5.1. ptimer.list
+        5.2. ptimer.pause
+        5.3. ptimer.continue
+        5.4. ptimer.start
+        5.5. ptimer.loop
+        5.6. ptimer.end
+
+   6. Example Usages
+
+        6.1. Call Rate Shaping
+
+              6.1.1. Global Traffic Shaping
+              6.1.2. Per Customer Traffic Shaping
+
+        6.2. Adaptive Routing
+        6.3. Dynamic Timers
+
+              6.3.1. Queue Control
+              6.3.2. Hot-Reload Tasks
+
+1. Overview
+
+   This module implements precise timers, which are not limited in
+   precision by the kamailio tick frequency.
+
+   All timers in this module are implemented as background processes,
+   using system time for synchronization.
+
+   Each timer can have 3 config routes associated with it:
+     * start - the route to execute when the timer starts
+     * loop - the route to execute continuously (every interval)
+     * end - the route to execute when the timer ends
+
+   A faked SIP message is given as parameter to called functions, so all
+   functions available for REQUEST_ROUTE can be used. Additionally, the
+   message state is preserved from start to end of the timer.
+
+2. Dependencies
+
+   2.1. Module Dependencies
+   2.2. External Dependencies
+
+2.1. Module Dependencies
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Dependencies
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. default_type (int)
+   3.2. default_interval (str)
+   3.3. default_nworkers (int)
+   3.4. timer (str)
+   3.5. start (str)
+   3.6. loop (str)
+   3.7. end (str)
+
+3.1. default_type (int)
+
+   The default timer type (if not present on the "timer" parameter).
+
+   If not set, defaults to 1, basic timers.
+
+   Can be one of:
+     * 0 - basic timer A simple sleep / execute timer.
+     * 1 - sync timer Synchronizes time each loop, accounting for
+       execution time drift. This type of timer will use a nanosecond
+       precision time functions when sleeping / syncing, and the interval
+       will be scaled for you.
+     * 2 - slice timer A basic timer that slices given tasks into chunks
+       for each loop iteration. The current slice and number of tasks are
+       available via the pseudo variables. Tasks are split using an
+       interval splitting algorithm:
+tasks(i) = ⌊((i + 1) * n) / k⌋ − ⌊(i * n) / k⌋
+       Where, n = total tasks, k = number of slices, and i = current slice
+       index. For simplicity, the number of tasks assigned to each worker
+       is roughly:
+tasks = n / k
+       with the integer remainder evenly distributed. Further slicing per
+       worker is possible within the start the route.
+     * 3 - synced slice timer This type of timer combines the
+       functionality of a sync timer and slice timer.
+
+   Example: set default_type parameter
+...
+
+# set the default type to basic timers
+modparam("ptimer", "default_type", 0)
+# set the default type to sync timers
+modparam("ptimer", "default_type", 1)
+# set the default type to slice timers
+modparam("ptimer", "default_type", 2)
+# set the default type to synced slice timers
+modparam("ptimer", "default_type", 3)
+
+...
+
+3.2. default_interval (str)
+
+   The default interval to execute loop route for timers (if not present
+   on the "timer" parameter). Suffix with "s", "ms", or "us" for an
+   interval in seconds, milliseconds, or microseconds. If a number is
+   given without a suffix, the number will be treated as seconds. Defaults
+   to default_interval.
+
+   If not set, defaults to 1s.
+
+   Example: set default_interval parameter
+...
+
+# set the default interval to 300 seconds
+modparam("ptimer", "default_interval", "300")
+# set the default interval to 10 seconds
+modparam("ptimer", "default_interval", "10s")
+# set the default interval to 10 milliseconds
+modparam("ptimer", "default_interval", 100ms)
+# set the default interval to 100 microseconds
+modparam("ptimer", "default_interval", 10ous)
+
+...
+
+3.3. default_nworkers (int)
+
+   The default number of workers to run per timer (if not present on the
+   "timer" parameter).
+
+   Example: set default_nworkers parameter
+...
+
+# set the default number of timer workers to 8
+modparam("ptimer", "default_nworkers", 8)
+
+...
+
+3.4. timer (str)
+
+   The definition of a timer. The value of the parameter must have the
+   following format:
+     * "name=_str_;type=_int_;interval=_str_;nworkers=_int_;ntasks=_int_;n
+       slices=_int_"
+
+   The parameter can be set multiple times to define more timers in same
+   configuration file.
+     * name - name of the timer. This attribute is required.
+     * type - type of timer to use (see default_type for more info). This
+       attribute is optional, defaults to default_type.
+     * interval - interval at which the timer workers will execute the
+       loop route. See default_interval for more information.
+     * nworkers - the number of worker processes to spawn for this timer.
+       Defaults to default_nworkers.
+     * ntasks - number of tasks each worker will process. If static, you
+       can use this parameter, otherwise you can set it within the start
+       route. This attribute is optional.
+     * nslices - number of slices to split ntasks into. This attribute,
+       although set on other timers, only effects tasks when used on a
+       slice timer.
+
+   Example: set timer parameter
+...
+
+# basic timer looping every 1 sec
+modparam("ptimer", "timer", "name=t1;interval=1s;type=0")
+# sync timer that processes 25 tasks every 100 ms
+modparam("ptimer", "timer", "name=t2;interval=100ms;type=1;ntasks=25")
+# slice timer that processes 10% of the tasks from queue of 2500 every 10 sec
+modparam("ptimer", "timer", "name=t3;interval=10s;type=2;nslices=10;ntasks=2500"
+)
+# basic timer that runs the loop route on 8 different worker processes every 100
+us
+modparam("ptimer", "timer", "name=t4;interval=100us;type=1;nworkers=8")
+
+...
+
+3.5. start (str)
+
+   Route to be executed when timer stars. The value of the parameter must
+   have the following format:
+     * "timer=_str_;route=_str_"
+
+   The start route is optional, only one start route can be set per timer.
+     * timer - name of the timer.
+     * route - the name of the route block to be executed, or the name of
+       the function from kemi script. The kemi function receives a string
+       parameter with the value being the name of the module.
+
+   The start route is the typical place to put code that sets up for the
+   loop route. One can modify some of the pseudo variables in this route,
+   such as ntasks. Dynamic or external values can be obtained and stored
+   here, i.e. from an htable, database, etc... Variables and AVPs set here
+   will remain in-tact in the subsequent loop and end routes. If the start
+   route returns -1 the timer will jump execution to the end route.
+
+   Example: set start parameter
+...
+
+modparam("ptimer", "timer", "name=t1;interval=10")
+modparam("ptimer", "start", "timer=t1;route=TIMER_START")
+modparam("ptimer", "loop", "timer=t1;route=TIMER_LOOP")
+
+route[TIMER_START] {
+    $ptimer(ntasks) = 1000;
+}
+
+...
+
+route[TIMER_LOOP] {
+    $var(i) = 0;
+    while($var(i) < $ptimer(ntasks)) {
+        xlog("L_INFO", "handled task $var(i)\n");
+        $var(i) = $var(i) + 1;
+    }
+}
+
+...
+
+3.6. loop (str)
+
+   Route to be executed on timer interval. The value of the parameter must
+   have the following format:
+     * "timer=_str_;route=_str_"
+
+   Each timer requires a loop route, only one loop route can be set per
+   timer.
+     * timer - name of the timer.
+     * route - the name of the route block to be executed, or the name of
+       the function from kemi script. The kemi function receives a string
+       parameter with the value being the name of the module.
+
+   The loop route is executed every interval, continuously. This is
+   typically where you would process the tasks. If the loop route returns
+   -1 the timer will jump execution to the end route.
+
+   Example: set loop parameter
+...
+
+modparam("ptimer", "timer", "name=t1;interval=10")
+modparam("ptimer", "loop", "timer=t1;route=TIMER_LOOP")
+
+...
+
+route[TIMER_LOOP] {
+    xlog("L_INFO", "timer $ptimer(name) executed at $TF\n");
+}
+
+...
+
+   Example: use loop parameter with Kemi engine
+...
+
+modparam("ptimer", "timer", "name=t1;interval=10")
+modparam("ptimer", "loop", "timer=t1;route=timer_loop")
+
+...
+
+-- ptimer event callback function implemented in Lua
+function timer_loop(evname)
+    KSR.info("===== ptimer module triggered event\n");
+    return 1;
+end
+
+...
+
+3.7. end (str)
+
+   Route to be executed when timer ends. The value of the parameter must
+   have the following format:
+     * "timer=_str_;route=_str_"
+
+   The end route is optional, only one end route can be set per timer.
+     * timer - name of the timer.
+     * route - the name of the route block to be executed, or the name of
+       the function from kemi script. The kemi function receives a string
+       parameter with the value being the name of the module.
+
+   The end route runs after the timer ends. Typically this would the place
+   to lgog or store data about the tasks processed. After the end route
+   completes, the environment is cleared, and the worker is paused.
+
+   Example: set end parameter
+...
+
+modparam("ptimer", "timer", "name=t1;interval=100ms")
+modparam("ptimer", "start", "timer=t1;route=TIMER_START")
+modparam("ptimer", "loop", "timer=t1;route=TIMER_LOOP")
+modparam("ptimer", "end", "timer=t1;route=TIMER_END")
+
+...
+
+route[TIMER_START] {
+    $var(tasks_done) = 0;
+}
+
+route[TIMER_LOOP] {
+    $var(tasks_done) = $var(tasks_done) + 1;
+}
+
+route[TIMER_END] {
+    xlog("L_INFO", "tasks handled $var(tasks_done)\n");
+}
+
+...
+
+4. Pseudo Variables
+
+   4.1. $ptimer(...)
+
+4.1. $ptimer(...)
+
+   Access to timer / worker attributes.
+
+   This PV is only available within ptimer executed routes.
+
+   The following attributes are available:
+     * name - name of the timer executing this route. This attribute is
+       read-only.
+     * type - type of timer executing this route. This attribute is
+       read-only.
+     * interval - interval for this timer. This attribute is r/w inside
+       the start route, and r/o elsewhere.
+     * nworkers - number of workers spawned for this timer. This attribute
+       is read-only.
+     * worker - current worker processing this route. This attribute is
+       read-only.
+     * pid - pid of current worker processing this route. This attribute
+       is read-only.
+     * ntasks - total number of tasks assigned to this timer. This
+       attribute is r/w inside the start route, and r/o elsewhere.
+     * tasks - number of tasks assigned to this worker. This attribute is
+       r/w inside the start route, and r/o elsewhere.
+     * nslices - number of slices this timer will slice tasks into. This
+       attribute is r/w inside the start route, and r/o elsewhere.
+     * slice - current slice this worker is processing. This attribute is
+       r/w inside the start route, and r/o elsewhere.
+
+5. RPC Commands
+
+   5.1. ptimer.list
+   5.2. ptimer.pause
+   5.3. ptimer.continue
+   5.4. ptimer.start
+   5.5. ptimer.loop
+   5.6. ptimer.end
+
+5.1. ptimer.list
+
+   List the loaded timers and their current state.
+
+5.2. ptimer.pause
+
+   Pause execution of timer worker(s).
+
+5.3. ptimer.continue
+
+   Continue execution of timer worker(s).
+
+5.4. ptimer.start
+
+   Jump execution of timer worker(s) to the start route. This will
+   inherently continue execution if the worker was paused.
+
+5.5. ptimer.loop
+
+   Jump execution of timer worker(s) to the loop route. This will
+   inherently continue execution if the worker was paused.
+
+5.6. ptimer.end
+
+   Jump execution of timer worker(s) to the end route. This will
+   inherently continue execution if the worker was paused.
+
+6. Example Usages
+
+   6.1. Call Rate Shaping
+
+        6.1.1. Global Traffic Shaping
+        6.1.2. Per Customer Traffic Shaping
+
+   6.2. Adaptive Routing
+   6.3. Dynamic Timers
+
+        6.3.1. Queue Control
+        6.3.2. Hot-Reload Tasks
+
+6.1. Call Rate Shaping
+
+   These examples use the ptimer module to limit a customer's CPS (calls
+   per second), while smoothing out CPS spikes from the customer's SIP
+   server. "Call rate shaping" and "traffic shaping" will be used
+   interchangeably in this section.
+
+   Traffic shaping can be useful in cases where a customer has temporary
+   CPS spikes, or the customer has an under-performing queueing solution
+   they can not change. This is most apparent when the rate limiting
+   solution your upstream provider uses does not average CPS (common from
+   my experience, typically 1s sliding window). Short bursts in CPS from
+   one of your customers will therefore be blocked, and could even block
+   your other customers calls from being delivered.
+
+   The solution to short CPS bursts is queueing your customers calls, and
+   throttling call delivery within the CPS limit allocated to you by your
+   upstream provider. When a CPS spike occurs, calls that went over the
+   limit will stay in the queue until the next iteration, and relayed to
+   your upstream, spaced in time to stay within the limit. If a CPS burst
+   lasts for an extended period of time, calls continue to enqueue and
+   continue to process at the rate limit, until stale calls in the queue
+   hit the transaction timeout, typically configured via fr_timer modparam
+   in the tm module. You can tune the timeout of queued calls by changing
+   transaction timeouts.
+
+   The hard part with call rate shaping is timing precisely when requests
+   from the queue are processed, in order to stay within the CPS limit,
+   and spread out network congestion. Hence, ptimer is a good fit to time
+   the call queue processing (or any time sensitive tasks).
+
+6.1.1. Global Traffic Shaping
+
+   In this example we want to set a global rate limit of 1000 CPS, and
+   throttle short CPS bursts so our customers get a higher delivery rate.
+
+   We will split the tasks in the queue such that our timer processes 10%
+   of the queue across 8 workers, every 100ms (1/10 the measurement
+   period). Resulting in calls from the queue being smoothed out over that
+   1sec, and staying within our constraint of 1K CPS at any point in time.
+
+   Example Implementation:
+...
+
+loadmodule "mqueue.so"
+loadmodule "ptimer.so"
+
+...
+
+# global call queue
+modparam("mqueue", "mqueue", "name=call_queue")
+# synced slice timer
+# each worker processes 12-13 calls every 100ms (during max load)
+modparam("ptimer", "timer", "name=queue_timer;type=3;interval=100ms;nworkers=8;n
+tasks=1000;nslices=80")
+modparam("ptimer", "start", "timer=queue_timer;route=QUEUE_START")
+modparam("ptimer", "loop", "timer=queue_timer;route=QUEUE_LOOP")
+
+...
+
+request_route {
+    ...
+
+    # routing choices / message changes here
+
+    route(QUEUE_CALL);
+}
+
+route[QUEUE_CALL] {
+    if(t_suspend()) {
+        xlog("L_INFO", "queued call for transaction [$T(id_index):$T(id_label)]\
+n");
+        mq_add("call_queue", "T(id_index)", "$T(id_label)");
+        exit;
+    }
+
+    xlog("L_ERR", "failed queuing call $ci\n");
+    sl_reply_error();
+        exit;
+}
+
+route[RELAY] {
+    ...
+
+        if(!t_relay()) {
+        send_reply_error();
+        }
+}
+
+route[QUEUE_START] {
+    # start each worker on a different slice
+    $ptimer(slice) = $ptimer(worker) * 10;
+}
+
+route[QUEUE_LOOP] {
+    $var(i) = 0;
+    while($var(i) < $ptimer(tasks)) {
+        if(mq_fetch("call_queue")) {
+            if(!t_continue("$mqk(call_queue)", "$mqv(call_queue)", "RELAY")) {
+                xlog("L_ERR", "failed resuming transaction [$mqk(myq):$mqv(myq)]
+\n");
+            }
+        }
+        $var(i) = $var(i) + 1;
+    }
+}
+
+...
+
+6.1.2. Per Customer Traffic Shaping
+
+   In this example we want to set a different rate limit for each of our
+   customers. Customer 0-2 we sold 8,20,50 CPS respectively. Again, we
+   will throttle short CPS bursts so our customers get a higher delivery
+   rate.
+
+   To achieve this we will allocate each customer a queue and worker of
+   their own. Similar to the global example, we will split the queue tasks
+   into 10% chunks to evenlu distribute within each second (100ms
+   interval).
+
+   Example Implementation:
+...
+
+loadmodule "mqueue.so"
+loadmodule "ptimer.so"
+
+...
+
+# customer call queues
+# we could alternative have another data source to look up this queue in start r
+oute
+modparam("mqueue", "mqueue", "name=customer_0")
+modparam("mqueue", "mqueue", "name=customer_1")
+modparam("mqueue", "mqueue", "name=customer_2")
+# synced slice timers for each customer
+# we could allocate more workers per customer if needed
+# if we wanted to lookup the quueue with a different identifier
+# we would also define a start route here
+modparam("ptimer", "timer", "name=customer_0;type=3;interval=100ms;nworkers=1;nt
+asks=8;nslices=10")
+modparam("ptimer", "loop", "timer=customer_0;route=QUEUE_LOOP")
+modparam("ptimer", "timer", "name=customer_1;type=3;interval=100ms;nworkers=1;nt
+asks=8;nslices=10")
+modparam("ptimer", "loop", "timer=customer_1;route=QUEUE_LOOP")
+modparam("ptimer", "timer", "name=customer_2;type=3;interval=100ms;nworkers=1;nt
+asks=8;nslices=10")
+modparam("ptimer", "loop", "timer=customer_2;route=QUEUE_LOOP")
+
+...
+
+request_route {
+    ...
+
+    # routing choices / message changes here
+
+    route(QUEUE_CALL);
+}
+
+route[QUEUE_CALL] {
+    if(t_suspend()) {
+        xlog("L_INFO", "queued call for transaction [$T(id_index):$T(id_label)]\
+n");
+        mq_add("call_queue", "T(id_index)", "$T(id_label)");
+        exit;
+    }
+
+    xlog("L_ERR", "failed queuing call $ci\n");
+    sl_reply_error();
+        exit;
+}
+
+route[RELAY] {
+    ...
+
+        if(!t_relay()) {
+        send_reply_error();
+        }
+}
+
+route[QUEUE_LOOP] {
+    $var(i) = 0;
+    while($var(i) < $ptimer(tasks)) {
+        if(mq_fetch("$ptimer(name)")) {
+            if(!t_continue("$mqk(call_queue)", "$mqv(call_queue)", "RELAY")) {
+                xlog("L_ERR", "failed resuming transaction [$mqk(myq):$mqv(myq)]
+\n");
+            }
+        }
+        $var(i) = $var(i) + 1;
+    }
+}
+
+...
+
+6.2. Adaptive Routing
+
+   In this example we demonstrate how ptimer can be used to dynamically
+   update destinations in a route set based on admin defined metrics. The
+   end goal is to guarantee we are providing the level of service we
+   promised the customer.
+
+   We will use the following metrics (they could be anything you want):
+     * MOS - Mean Opinion Score
+     * CCR - Call Completion Ratio
+     * NER - Network Effectiveness Ratio
+
+   For brevity, assume updating the metrics is done elsewhere.
+
+   Example Implementation:
+...
+
+loadmodule "dispatcher.so"
+loadmodule "htable.so"
+loadmodule "ptimer.so"
+
+...
+
+# how we will grab the dst info
+modparam("dispatcher", "flags", 2)
+modparam("dispatcher", "xavp_dst", "ds_dst")
+modparam("dispatcher", "xavp_ctx", "ds_ctx")
+# where the metrics are stored (could be anywhere w/ fast access)
+# key format: setid-uri-metric
+modparam("htable", "htable", "dst_kpi=>size=8")
+# where the customer SLA are stored (what we promised the customer)
+modparam("htable", "htable", "min_kpi=>size=8")
+# basic timer, each worker is handling one destination set (setid 0-2)
+# we use the timer worker number to associate the dst set (0-2)
+# that association could be mapped elsewhere and looked up in start route
+modparam("ptimer", "timer", "name=route_optimizer;type=0;interval=500ms;nworkers
+=3")
+modparam("ptimer", "start", "timer=route_optimizer;route=OPTIMIZE_ROUTES_START")
+modparam("ptimer", "loop", "timer=route_optimizer;route=OPTIMIZE_ROUTES_LOOP")
+
+...
+
+route[OPTIMIZE_ROUTES_START] {
+    # grab the metric minimums when starting timer
+    $var(min_mos) = (int)$sht(min_kpi=>mos);
+    $var(min_ccr) = (int)$sht(min_kpi=>ccr);
+    $var(min_ner) = (int)$sht(min_kpi=>ner);
+    # sanity check
+    if(!ds_list_exists("$ptimer(worker)")) {
+        return -1;
+    }
+    # store all the destinations prior to modifying their state
+    # this is our local copy used in the loop route
+    ds_select("$ptimer(worker)", "8");
+}
+
+route[OPTIMIZE_ROUTES_LOOP] {
+    # remove / add from dst set based on metrics
+    $var(i) = 0;
+        while($var(i) < $xavp(ds_ctx=>cnt)) {
+            $var(prefix) = "$ptimer(worker)-$xavp(ds_dst[$var(i)]=>uri)";
+        if (
+            $sht(dst_kpi=>$var(prefix)-mos) < $var(min_mos) ||
+            $sht(dst_kpi=>$var(prefix)-ccr) < $var(min_ccr) ||
+            $sht(dst_kpi=>$var(prefix)-ner) < $var(min_ner)
+        ) {
+            ds_mark_addr("i", "$ptimer(worker)", "$xavp(ds_dst[$var(i)]=>uri)");
+        } else {
+            ds_mark_addr("a", "$ptimer(worker)", "$xavp(ds_dst[$var(i)]=>uri)");
+        }
+        $var(i) = $var(i) + 1;
+        }
+}
+
+...
+
+6.3. Dynamic Timers
+
+   These examples use the execution jumping features of ptimer to handle
+   common management use cases.
+
+6.3.1. Queue Control
+
+   In this example we demonstrate how we can hot-swap the worker
+   processing a queue. This could be used to change routing to an IVR
+   during holiday, pause during maintenance, to revert new routing logic.
+
+   Example Implementation:
+...
+
+loadmodule "mqueue.so"
+loadmodule "ptimer.so"
+
+...
+
+# call queue
+modparam("mqueue", "mqueue", "name=call_queue")
+# basic timer handling normal business hours
+modparam("ptimer", "timer", "name=normal_timer;type=1;interval=100ms")
+modparam("ptimer", "loop", "timer=normal_timer;route=NORMAL_QUEUE_START")
+modparam("ptimer", "loop", "timer=normal_timer;route=HANDLE_QUEUE")
+# basic timer handling holiday / after hours
+modparam("ptimer", "timer", "name=holiday_timer;type=1;interval=100ms")
+modparam("ptimer", "loop", "timer=holiday_timer;route=HOLIDAY_QUEUE_START")
+modparam("ptimer", "loop", "timer=holiday_timer;route=HANDLE_QUEUE")
+
+...
+
+request_route {
+    ...
+
+    route(QUEUE_CALL);
+}
+
+route[QUEUE_CALL] {
+    if(t_suspend()) {
+        xlog("L_INFO", "queued call for transaction [$T(id_index):$T(id_label)]\
+n");
+        mq_add("call_queue", "T(id_index)", "$T(id_label)");
+        exit;
+    }
+
+    xlog("L_ERR", "failed queuing call $ci\n");
+    sl_reply_error();
+        exit;
+}
+
+route[RELAY_PSTN] {
+    $du = "sip:1.1.1.1:5060";
+
+        if(!t_relay()) {
+        send_reply_error();
+        }
+}
+
+route[RELAY_IVR] {
+    $du = "sip:9.9.9.9:5060";
+
+        if(!t_relay()) {
+        send_reply_error();
+        }
+}
+
+route[NORMAL_QUEUE_START] {
+    $var(relay) = "RELAY_PSTN";
+}
+
+route[HOLIDAY_QUEUE_START] {
+    $var(relay) = "RELAY_IVR";
+    # by default do not loop
+    return -1;
+}
+
+route[HANDLE_QUEUE] {
+    $var(c) = mq_size("$ptimer(name)");
+    $var(i) = 0;
+    while($var(i) < $var(c)) {
+        if (mq_fetch("call_queue")) {
+            if (!t_continue("$mqk(call_queue)", "$mqv(call_queue)", "$var(relay)
+")) {
+                xlog("L_ERR", "failed resuming transaction [$mqk(myq):$mqv(myq)]
+\n");
+            }
+        }
+        $var(i) = $var(i) + 1;
+    }
+}
+
+...
+
+   External Program:
+# holiday starts
+kamcmd ptimer.pause normal_timer
+kamcmd ptimer.continue holiday_timer
+
+# holiday ends
+kamcmd ptimer.pause holiday_timer
+kamcmd ptimer.continue normal_timer
+
+6.3.2. Hot-Reload Tasks
+
+   In this example we demonstrate how we can load new data for the timer
+   to process without reloading. This flexibility means we can load new
+   tasks from any data source directly into the background worker process.
+
+   Example Implementation:
+...
+
+loadmodule "http_client.so"
+loadmodule "jansson.so"
+loadmodule "ptimer.so"
+
+...
+
+# synced slice timer that pulls data from an HTTP API
+modparam("ptimer", "timer", "name=t1;type=3;interval=100ms;nslices=10")
+modparam("ptimer", "loop", "timer=t1;route=GET_DATA")
+modparam("ptimer", "loop", "timer=t1;route=HANDLE_DATA")
+
+...
+
+route[GET_DATA] {
+    # data pulled for this example: {"data":[{"a":100},{"a":200}], "len", 2}
+    http_client_get("http://api.example.com/data", "$var(res)");
+    # "ntasks" will be sliced by the timer into "tasks" available in loop
+    jansson_get("len", "$var(res)", "$ptimer(ntasks)");
+    jansson_get("data", "$var(res)", "$var(data)");
+    jansson_xdecode("$var(data)", "worker_data");
+}
+
+route[HANDLE_DATA] {
+    $var(i) = 0;
+    while($var(i) < $ptimer(tasks)) {
+        # do something with the data
+        xlog("L_INFO", "a = $xavp(worker_data[$var(i)]=>a)\n");
+        $var(i) = $var(i) + 1;
+    }
+}
+
+...
+
+   Another Program:
+# could be within xhttp (as postback) or some other program
+# when the data is updated we jump the timer back to start route
+kamcmd ptimer.start t1
