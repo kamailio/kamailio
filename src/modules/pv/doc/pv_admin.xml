@@ -1183,7 +1183,7 @@ pv_evalx("$var(z)", "$var(y) one");
 			<title><function moreinfo="none">pv.shvSet</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; pv.shvSet debug int 3
+$ &kamctl; rpc pv.shvSet debug int 3
 ...
 </programlisting>
 			</example>
@@ -1202,7 +1202,7 @@ $ &kamcmd; pv.shvSet debug int 3
 			<title><function moreinfo="none">pv.shvGet</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; pv.shvGet debug
+$ &kamctl; rpc pv.shvGet debug
 ...
 </programlisting>
 			</example>
