@@ -419,7 +419,7 @@ if(method=="NOTIFY")
 	  </para>
 	  <programlisting  format="linespecific">
 ...
-&kamcmd; pua.cleanup
+&kamctl; rpc pua.cleanup
 ...
 	  </programlisting>
 	</section>
@@ -438,4 +438,3 @@ if(method=="NOTIFY")
 
 
 </chapter>
-
