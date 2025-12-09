@@ -524,7 +524,7 @@ pd_translate("*", "$var(a)");
 		</para>
 		<programlisting format="linespecific">
 ...
-&kamcmd; pdt.list kamailio.org 123
+&kamctl; rpc pdt.list kamailio.org 123
 ...
 		</programlisting>
 		<para>
@@ -564,10 +564,9 @@ pd_translate("*", "$var(a)");
 		</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; pdt.reload
+&kamctl; rpc pdt.reload
 ...
 		</programlisting>
     </section>
     </section>
 </chapter>
-
