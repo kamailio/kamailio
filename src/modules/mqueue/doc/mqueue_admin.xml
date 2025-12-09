@@ -406,7 +406,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 		<title><function>mqueue.get_size</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&kamcmd; mqueue.get_size xyz
+&kamctl; rpc mqueue.get_size xyz
 ...
 </programlisting>
 	    </example>
@@ -428,7 +428,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 		<title><function>mqueue.fetch</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&kamcmd; mqueue.fetch xyz
+&kamctl; rpc mqueue.fetch xyz
 ...
 </programlisting>
 	    </example>
@@ -446,7 +446,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 		<title><function>mqueue.get_sizes</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&kamcmd; mqueue.get_sizes
+&kamctl; rpc mqueue.get_sizes
 ...
 </programlisting>
 	    </example>
@@ -454,4 +454,3 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
     </section>
 
 </chapter>
-
