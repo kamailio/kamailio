@@ -67,7 +67,7 @@
 			<para>Example:</para>
 			<itemizedlist>
 				<listitem><para>
-					<emphasis>kamcmd cr.add_host -- '-h test.domain.com:5060 -d proxy -p null -w 0.1'</emphasis>
+					<emphasis>kamctl rpc cr.add_host -- '-h test.domain.com:5060 -d proxy -p null -w 0.1'</emphasis>
 				</para></listitem>
 			</itemizedlist>
 	</section>
@@ -92,7 +92,7 @@
 			<para>Example:</para>
 			<itemizedlist>
 				<listitem><para>
-					<emphasis>kamcmd cr.delete_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
+					<emphasis>kamctl rpc cr.delete_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
 				</para></listitem>
 			</itemizedlist>
 	</section>
@@ -117,7 +117,7 @@
 			<para>Example:</para>
 			<itemizedlist>
 				<listitem><para>
-					<emphasis>kamcmd cr.activate_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
+					<emphasis>kamctl rpc cr.activate_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
 				</para></listitem>
 			</itemizedlist>
 	</section>
@@ -142,7 +142,7 @@
 			<para>Example:</para>
 			<itemizedlist>
 				<listitem><para>
-					<emphasis>kamcmd cr.deactivate_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
+					<emphasis>kamctl rpc cr.deactivate_host -- '-h test.domain.com:5060 -d proxy -p null'</emphasis>
 				</para></listitem>
 			</itemizedlist>
 	</section>
@@ -167,7 +167,7 @@
 			<para>Example:</para>
 			<itemizedlist>
 				<listitem><para>
-					<emphasis>kamcmd cr.replace_host -- '-h test1.domain.com:5060 -d proxy -t test2.domain.com:5060'</emphasis>
+					<emphasis>kamctl rpc cr.replace_host -- '-h test1.domain.com:5060 -d proxy -t test2.domain.com:5060'</emphasis>
 				</para></listitem>
 			</itemizedlist>
 	</section>
