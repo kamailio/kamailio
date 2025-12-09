@@ -137,7 +137,7 @@ $ cat /usr/local/etc/kamailio/dbtext/htable
 3:key:1:0:value1:0
 
 # The array key will be loaded in memory in the following format:
-$ kamcmd htable.dump htable
+$ kamctl rpc htable.dump htable
 {
         entry: 35
         size: 1
@@ -180,10 +180,10 @@ $ kamcmd htable.dump htable
 }
 
 # Now let's delete a particular entry in the array: key[0].
-$ kamcmd htable.delete htable key[0]
+$ kamctl rpc htable.delete htable key[0]
 
 # The array key will look like this after a key was deleted:
-$ kamcmd htable.dump htable
+$ kamctl rpc htable.dump htable
 {
         entry: 50
         size: 1
@@ -1595,13 +1595,13 @@ if (!sht_dec("my_ht", "my_key")) {
 <programlisting  format="linespecific">
 ...
 # Dump $sht(students=>alice)
-kamcmd htable.get students alice
+kamctl rpc htable.get students alice
 
 # Dump $sht(students=>15)
-kamcmd htable.get students s:15
+kamctl rpc htable.get students s:15
 
 # Dump first entry in array key course $sht(students=>course[0])
-kamcmd htable.get students course[0]
+kamctl rpc htable.get students course[0]
 ...
 </programlisting>
 	</section>
@@ -1628,13 +1628,13 @@ kamcmd htable.get students course[0]
 <programlisting  format="linespecific">
 ...
 # Delete $sht(students=>alice)
-kamcmd htable.delete students alice
+kamctl rpc htable.delete students alice
 
 # Delete $sht(students=>15)
-kamcmd htable.delete students s:15
+kamctl rpc htable.delete students s:15
 
 # Delete first entry in array key course $sht(students=>course[0])
-kamcmd htable.delete students course[0]
+kamctl rpc htable.delete students course[0]
 ...
 </programlisting>
 	</section>
@@ -1663,13 +1663,13 @@ kamcmd htable.delete students course[0]
 <programlisting  format="linespecific">
 ...
 # Set $sht(test=>x) as string
-kamcmd htable.sets test x abc
+kamctl rpc htable.sets test x abc
 
 # Set $sht(test=>5) as string
-kamcmd htable.sets test s:5 abc
+kamctl rpc htable.sets test s:5 abc
 
 # Set firsti entry in array key x $sht(test=>x[0]) as string
-kamcmd htable.sets test x[0] abc
+kamctl rpc htable.sets test x[0] abc
 ...
 </programlisting>
 	</section>
@@ -1698,13 +1698,13 @@ kamcmd htable.sets test x[0] abc
 <programlisting  format="linespecific">
 ...
 # Set $sht(test=>x) as integer
-kamcmd htable.seti test x 123
+kamctl rpc htable.seti test x 123
 
 # Set $sht(test=>5) as integer
-kamcmd htable.seti test s:5 123
+kamctl rpc htable.seti test s:5 123
 
 # Set first entry in array key x $sht(test=>x[0]) as integer
-kamcmd htable.seti test x[0] 123
+kamctl rpc htable.seti test x[0] 123
 ...
 </programlisting>
 	</section>
@@ -1828,7 +1828,7 @@ kamctl rpc htable.setxi test s:5 10 120
                 </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.dump ipban
+kamctl rpc htable.dump ipban
 ...
 </programlisting>
 	</section>
@@ -1852,7 +1852,7 @@ kamcmd htable.dump ipban
                 </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.reload ipban
+kamctl rpc htable.reload ipban
 ...
 </programlisting>
 	</section>
@@ -1876,7 +1876,7 @@ kamcmd htable.reload ipban
                 </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.store ipban
+kamctl rpc htable.store ipban
 ...
 </programlisting>
 	</section>
@@ -1899,7 +1899,7 @@ kamcmd htable.store ipban
           </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.flush ipban
+kamctl rpc htable.flush ipban
 ...
 </programlisting>
 	</section>
@@ -1923,7 +1923,7 @@ kamcmd htable.flush ipban
                 </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.listTables
+kamctl rpc htable.listTables
 ...
 </programlisting>
 	</section>
@@ -1949,7 +1949,7 @@ kamcmd htable.listTables
                 </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.stats
+kamctl rpc htable.stats
 ...
 </programlisting>
 	</section>
@@ -1974,8 +1974,8 @@ kamcmd htable.stats
           </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.dmqsync
-kamcmd htable.dmqsync ipban
+kamctl rpc htable.dmqsync
+kamctl rpc htable.dmqsync ipban
 ...
 </programlisting>
 	</section>
@@ -1999,7 +1999,7 @@ kamcmd htable.dmqsync ipban
           </para>
 <programlisting  format="linespecific">
 ...
-kamcmd htable.dmqresync ipban
+kamctl rpc htable.dmqresync ipban
 ...
 </programlisting>
 	</section>
