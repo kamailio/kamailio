@@ -34,6 +34,11 @@ endif()
 find_path(FUTEX_HEADER_DIR linux/futex.h)
 if(FUTEX_HEADER_DIR)
   set(_HAVE_FUTEX TRUE)
+  # Unfortunately, arm64 and aarch64 does not have yet implemented the nessecary defines
+  # and operations in atomic_arm.h needed for the futexlock.h
+  if("${TARGET_ARCH}" MATCHES "aarch64$|arm64$")
+    set(_HAVE_FUTEX FALSE)
+  endif()
 else()
   set(_HAVE_FUTEX FALSE)
 endif()
