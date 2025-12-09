@@ -122,7 +122,7 @@ mod_list_presence=presence presence_conference presence_dialoginfo \
 mod_list_lua=app_lua
 
 # - modules depending on perl library
-mod_list_perldeps=app_perl db_perlvdb
+mod_list_perldeps=app_perl
 
 # - modules depending on python library
 mod_list_python=app_python
