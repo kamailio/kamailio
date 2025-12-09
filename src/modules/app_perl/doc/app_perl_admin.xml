@@ -358,7 +358,7 @@ if (perl_exec("ldapalias")) {
 			<title><function>app_perl.set_reset_cycles</function> usage</title>
 			<programlisting format="linespecific">
 ...
-kamcmd app_perl.set_reset_cycles 20000
+kamctl rpc app_perl.set_reset_cycles 20000
 ...
 </programlisting>
 			</example>
@@ -374,7 +374,7 @@ kamcmd app_perl.set_reset_cycles 20000
 			<title><function>app_perl.get_reset_cycles</function> usage</title>
 			<programlisting format="linespecific">
 ...
-kamcmd app_perl.get_reset_cycles
+kamctl rpc app_perl.get_reset_cycles
 ...
 </programlisting>
 			</example>
@@ -382,4 +382,3 @@ kamcmd app_perl.get_reset_cycles
 	</section>
 
 </chapter>
-
