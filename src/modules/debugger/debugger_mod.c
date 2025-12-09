@@ -232,7 +232,6 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	dbg_cfg = NULL;
-	dbg_destroy_mod_levels();
 }
 
 /**
