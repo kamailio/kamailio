@@ -162,7 +162,7 @@ cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 				<title><function>pdb.status</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; pdb.status
+&kamctl; rpc pdb.status
 ...
 				</programlisting>
 	    </example>
@@ -178,9 +178,9 @@ cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 				<programlisting format="linespecific">
 ...
 # get the PDB query timeout
-&kamcmd; pdb.timeout
+&kamctl; rpc pdb.timeout
 # set the PDB query timeout to 10ms
-&kamcmd; pdb.timeout 10
+&kamctl; rpc pdb.timeout 10
 ...
 				</programlisting>
 	    </example>
@@ -194,7 +194,7 @@ cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 				<title><function>pdb.activate</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; pdb.activate
+&kamctl; rpc pdb.activate
 ...
 				</programlisting>
 	    </example>
@@ -212,7 +212,7 @@ cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 				<title><function>pdb.deactivate</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; pdb.deactivate
+&kamctl; rpc pdb.deactivate
 ...
 				</programlisting>
 	    </example>
