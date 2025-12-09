@@ -1072,8 +1072,8 @@ route[reply] {
 		Example:
 		</para>
         <programlisting  format="linespecific">
-		&kamcmd; corex.debug
-		&kamcmd; corex.debug 2
+		&kamctl; rpc corex.debug
+		&kamctl; rpc corex.debug 2
 		</programlisting>
 	</section>
 	<section id="corex.rpc.list_sockets">
