@@ -396,7 +396,7 @@ if (!check_allowlist("globalblocklist")) {
 				<title><function>userblocklist.reload_blocklist</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; userblocklist.reload_blocklist
+&kamctl; rpc userblocklist.reload_blocklist
 ...
 				</programlisting>
 			</example>
@@ -415,8 +415,8 @@ if (!check_allowlist("globalblocklist")) {
 				<title><function>userblocklist.dump_blocklist</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; userblocklist.reload_blocklist
-&kamcmd; userblocklist.dump_blocklist
+&kamctl; rpc userblocklist.reload_blocklist
+&kamctl; rpc userblocklist.dump_blocklist
 ...
 				</programlisting>
 	    		</example>
@@ -438,7 +438,7 @@ if (!check_allowlist("globalblocklist")) {
 				<title><function>userblocklist.check_blocklist</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; userblocklist.check_blocklist s:1234
+&kamctl; rpc userblocklist.check_blocklist s:1234
 ...
 				</programlisting>
 	    		</example>
@@ -461,7 +461,7 @@ if (!check_allowlist("globalblocklist")) {
 				<title><function>userblocklist.check_allowlist</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; userblocklist.check_allowlist s:1234
+&kamctl; rpc userblocklist.check_allowlist s:1234
 ...
 				</programlisting>
 	    		</example>
@@ -483,7 +483,7 @@ if (!check_allowlist("globalblocklist")) {
 				<title><function>userblocklist.check_userblocklist</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; userblocklist.check_userblocklist s:1234 s:49721123456788
+&kamctl; rpc userblocklist.check_userblocklist s:1234 s:49721123456788
 ...
 				</programlisting>
 	    		</example>
@@ -506,7 +506,7 @@ if (!check_allowlist("globalblocklist")) {
 				<title><function>userblocklist.check_userallowlist</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; userblocklist.check_userallowlist s:1234 s:49721123456788
+&kamctl; rpc userblocklist.check_userallowlist s:1234 s:49721123456788
 ...
 				</programlisting>
 	    		</example>
