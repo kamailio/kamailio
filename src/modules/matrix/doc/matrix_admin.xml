@@ -198,7 +198,7 @@ cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
 				<title><function>matrix.reload</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; matrix.reload
+&kamctl; rpc matrix.reload
 ...
 				</programlisting>
 	    </example>
