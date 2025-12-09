@@ -507,7 +507,7 @@ jsonrpc_exec('{"jsonrpc": "2.0", "method": "corex.debug", "params": [ 2 ], "id":
 	<title>JSONRPC Commands</title>
 	<para>
 	Here are some examples of RPC commands with the equivalent of running them
-	with &kamcmd; and the corresponding JSON document for them. It is important
+	with &kamctl; and the corresponding JSON document for them. It is important
 	to be aware that the name of the parameters doesn't matter, only the order
 	of the values must be the one expected by &kamailio; RPC command.
 	</para>
@@ -515,7 +515,7 @@ jsonrpc_exec('{"jsonrpc": "2.0", "method": "corex.debug", "params": [ 2 ], "id":
 	<title>JSONRPC Commands - Examples</title>
 	<programlisting format="linespecific">
 ...
-# kamcmd core.psx
+# kamctl rpc core.psx
 
 {
  "jsonrpc": "2.0",
@@ -523,8 +523,8 @@ jsonrpc_exec('{"jsonrpc": "2.0", "method": "corex.debug", "params": [ 2 ], "id":
   "id": 1
 }
 ...
-## - prototype: kamcmd dispatcher.set_state _state_ _group_ _address_
-# kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+## - prototype: kamctl rpc dispatcher.set_state _state_ _group_ _address_
+# kamctl rpc dispatcher.set_state ip 2 sip:127.0.0.1:5080
 
 {
   "jsonrpc": "2.0",
