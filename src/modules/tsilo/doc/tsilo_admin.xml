@@ -344,7 +344,7 @@ if (is_method("REGISTER")) {
 			<para>Name: <emphasis>ts.dump</emphasis></para>
 			<para>RPC Command Format:</para>
 			<programlisting  format="linespecific">
-			kamcmd ts.dump
+			kamctl rpc ts.dump
 			</programlisting>
 		</section>
 		<section id="tsilo.rpc.ts.lookup">
@@ -353,7 +353,7 @@ if (is_method("REGISTER")) {
 			<para>Name: <emphasis>ts.lookup</emphasis></para>
 			<para>RPC Command Format:</para>
 			<programlisting  format="linespecific">
-			kamcmd ts.lookup sip:abcd@example.com
+			kamctl rpc ts.lookup sip:abcd@example.com
 			</programlisting>
 		</section>
 	</section>
