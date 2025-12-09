@@ -676,7 +676,7 @@ Within event_route[xhttp:request]:
 
    RPC Command Format:
 ...
-kamcmd rls.cleanup
+kamctl rpc rls.cleanup
 ...
 
 5.2. rls.update_subs
@@ -693,7 +693,7 @@ kamcmd rls.cleanup
 
    RPC Command Format:
 ...
-kamcmd rls.update_subs sip:alice@domain.com presence
+kamctl rpc rls.update_subs sip:alice@domain.com presence
 ...
 
 6. Installation

@@ -419,7 +419,7 @@ pd_translate("*", "$var(a)");
 
    RPC Command Example:
 ...
-kamcmd pdt.list kamailio.org 123
+kamctl rpc pdt.list kamailio.org 123
 ...
 
    Examples:
@@ -441,5 +441,5 @@ kamcmd pdt.list kamailio.org 123
 
    RPC Command Example:
 ...
-kamcmd pdt.reload
+kamctl rpc pdt.reload
 ...

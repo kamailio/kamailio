@@ -669,9 +669,9 @@ event_route[sipcapture:request] {
 
    RPC Command Format:
 ...
-kamcmd sipcapture.status on
-kamcmd sipcapture.status off
-kamcmd sipcapture.status check
+kamctl rpc sipcapture.status on
+kamctl rpc sipcapture.status off
+kamctl rpc sipcapture.status check
 ...
 
 7. Database setup

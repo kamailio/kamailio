@@ -1192,7 +1192,7 @@ event_route[uac:reply] {
 
    Example 1.45. uac.reg_dump usage
 ...
-   kamcmd uac.reg_dump
+   kamctl rpc uac.reg_dump
 ...
 
 8.2.  uac.reg_info
@@ -1213,8 +1213,8 @@ event_route[uac:reply] {
 
    Example 1.46. uac.reg_info usage
 ...
-   kamcmd uac.reg_info l_uuid account123
-   kamcmd uac.reg_info l_uuid s:12345678
+   kamctl rpc uac.reg_info l_uuid account123
+   kamctl rpc uac.reg_info l_uuid s:12345678
 ...
 
 8.3.  uac.reg_enable
@@ -1227,8 +1227,8 @@ event_route[uac:reply] {
 
    Example 1.47. uac.reg_enable usage
 ...
-   kamcmd uac.reg_enable l_uuid account123
-   kamcmd uac.reg_enable l_uuid s:12345678
+   kamctl rpc uac.reg_enable l_uuid account123
+   kamctl rpc uac.reg_enable l_uuid s:12345678
 ...
 
 8.4.  uac.reg_disable
@@ -1241,8 +1241,8 @@ event_route[uac:reply] {
 
    Example 1.48. uac.reg_disable usage
 ...
-   kamcmd uac.reg_disable l_uuid account123
-   kamcmd uac.reg_disable l_uuid s:12345678
+   kamctl rpc uac.reg_disable l_uuid account123
+   kamctl rpc uac.reg_disable l_uuid s:12345678
 ...
 
 8.5.  uac.reg_register
@@ -1255,8 +1255,8 @@ event_route[uac:reply] {
 
    Example 1.49. uac.reg_register usage
 ...
-   kamcmd uac.reg_register l_uuid account123
-   kamcmd uac.reg_register l_uuid s:12345678
+   kamctl rpc uac.reg_register l_uuid account123
+   kamctl rpc uac.reg_register l_uuid s:12345678
 ...
 
 8.6.  uac.reg_unregister
@@ -1269,8 +1269,8 @@ event_route[uac:reply] {
 
    Example 1.50. uac.reg_unregister usage
 ...
-   kamcmd uac.reg_unregister l_uuid account123
-   kamcmd uac.reg_unregister l_uuid s:12345678
+   kamctl rpc uac.reg_unregister l_uuid account123
+   kamctl rpc uac.reg_unregister l_uuid s:12345678
 ...
 
 8.7.  uac.reg_reload
@@ -1282,7 +1282,7 @@ event_route[uac:reply] {
 
    Example 1.51. uac.reg_reload usage
 ...
-   kamcmd uac.reg_reload
+   kamctl rpc uac.reg_reload
 ...
 
 8.8.  uac.reg_refresh
@@ -1293,8 +1293,8 @@ event_route[uac:reply] {
 
    Example 1.52. uac.reg_refresh usage
 ...
-   kamcmd uac.reg_refresh account123
-   kamcmd uac.reg_refresh s:12345678
+   kamctl rpc uac.reg_refresh account123
+   kamctl rpc uac.reg_refresh s:12345678
 ...
 
 8.9.  uac.reg_active
@@ -1336,7 +1336,7 @@ event_route[uac:reply] {
 
    Example 1.54. uac.reg_add usage
 ...
-   kamcmd uac.reg_add ...
+   kamctl rpc uac.reg_add ...
 ...
 
 8.11.  uac.reg_remove
@@ -1345,7 +1345,7 @@ event_route[uac:reply] {
 
    Example 1.55. uac.reg_remove usage
 ...
-   kamcmd uac.reg_remove my_l_uuid
+   kamctl rpc uac.reg_remove my_l_uuid
 ...
 
 9. Remote Registration

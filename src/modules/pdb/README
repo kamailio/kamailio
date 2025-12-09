@@ -197,7 +197,7 @@ cr_route("$avp(routing)", "$rd", "$rU", "$rU", "call_id");
 
    Example 1.5. pdb.status usage
 ...
-kamcmd pdb.status
+kamctl rpc pdb.status
 ...
 
 5.2. pdb.timeout
@@ -208,9 +208,9 @@ kamcmd pdb.status
    Example 1.6. pdb.timeout usage
 ...
 # get the PDB query timeout
-kamcmd pdb.timeout
+kamctl rpc pdb.timeout
 # set the PDB query timeout to 10ms
-kamcmd pdb.timeout 10
+kamctl rpc pdb.timeout 10
 ...
 
 5.3. pdb.activate
@@ -219,7 +219,7 @@ kamcmd pdb.timeout 10
 
    Example 1.7. pdb.activate usage
 ...
-kamcmd pdb.activate
+kamctl rpc pdb.activate
 ...
 
 5.4.  pdb.deactivate
@@ -230,5 +230,5 @@ kamcmd pdb.activate
 
    Example 1.8. pdb.deactivate usage
 ...
-kamcmd pdb.deactivate
+kamctl rpc pdb.deactivate
 ...

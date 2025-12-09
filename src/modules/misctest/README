@@ -49,7 +49,7 @@ Andrei Pelinescu-Onciul
 
    1.1. Set memory in the config file
    1.2. Set mem_check_content in the config file
-   1.3. Set mem_check_content at runtime via kamcmd
+   1.3. Set mem_check_content at runtime via kamctl
    1.4. Set message in the config file
    1.5. Set message_data in the config file
    1.6. Set message_file in the config file
@@ -154,9 +154,9 @@ modparam("misctest", "memory", 1)
 modparam("misctest", "mem_check_content", 1)
 ...
 
-   Example 1.3.  Set mem_check_content at runtime via kamcmd
+   Example 1.3.  Set mem_check_content at runtime via kamctl
 ...
-$ kamcmd cfg.seti misctest mem_check_content 1
+$ kamctl rpc cfg.seti misctest mem_check_content 1
 ...
 
 2.3. message (int)
@@ -321,7 +321,7 @@ mt_unlock_threads("4");
      * g - GB
 
    Example 1.14.  mt.mem_alloc usage
- $ kamcmd mt.mem_alloc 10 k
+ $ kamctl rpc mt.mem_alloc 10 k
 
 4.2.  mt.mem_free [size] [unit]
 
@@ -337,7 +337,7 @@ mt_unlock_threads("4");
      * g - GB
 
    Example 1.15.  mt.mem_free usage
- $ kamcmd mt.mem_free 1 m
+ $ kamctl rpc mt.mem_free 1 m
 
 4.3.  mt.mem_used [unit]
 
@@ -351,7 +351,7 @@ mt_unlock_threads("4");
      * g - GB
 
    Example 1.16.  mt.mem_used usage
- $ kamcmd mt.mem_used
+ $ kamctl rpc mt.mem_used
 9221460
 
 4.4.  mt.mem_rnd_alloc min max total [unit]
@@ -361,7 +361,7 @@ mt_unlock_threads("4");
    given sizes (see above).
 
    Example 1.17.  mt.mem_rnd_alloc usage
- $ kamcmd mt.mem_rnd_alloc 1 64 10240 k
+ $ kamctl rpc mt.mem_rnd_alloc 1 64 10240 k
 
 4.5.  mt.mem_test_start min max total min_int max_int total_time [unit]
 
@@ -378,7 +378,7 @@ mt_unlock_threads("4");
    Returns the test id.
 
    Example 1.18.  mt.mem_test_start usage
- $ kamcmd mt.mem_test_start 15 64 25000 128 1500 3600000 k
+ $ kamctl rpc mt.mem_test_start 15 64 25000 128 1500 3600000 k
 1
 
 4.6.  mt.mem_test_stop id
@@ -386,7 +386,7 @@ mt_unlock_threads("4");
    Stops the test identified by id.
 
    Example 1.19.  mt.mem_test_stop usage
- $ kamcmd mt.mem_test_stop 1
+ $ kamctl rpc mt.mem_test_stop 1
 
 4.7.  mt.mem_test_destroy id
 
@@ -445,7 +445,7 @@ mt_unlock_threads("4");
    testing of the locking subsystem.
 
    Usage:
-        kamcmd mt.lock_test [executions]
+        kamctl rpc mt.lock_test [executions]
 
      * executions (integer): Number of times to lock and unlock.
 
@@ -453,6 +453,6 @@ mt_unlock_threads("4");
    argument is not a positive integer, the command will return an error.
 
    Example:
-        kamcmd mt.lock_test 10000
+        kamctl rpc mt.lock_test 10000
 
    This will perform 10,000 lock/unlock operations.

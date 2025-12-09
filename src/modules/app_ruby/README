@@ -195,7 +195,7 @@ ruby_run("rb_funcx", "$rU", "2");
 
    Example:
 ...
-kamcmd app_ruby.reload
+kamctl rpc app_ruby.reload
 ...
 
 5.2.  app_ruby.api_list
@@ -208,7 +208,7 @@ kamcmd app_ruby.reload
 
    Example:
 ...
-kamcmd app_ruby.api_list
+kamctl rpc app_ruby.api_list
 ...
 
 6. Example of usage

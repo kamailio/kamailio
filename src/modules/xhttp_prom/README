@@ -904,7 +904,8 @@ event_route[xhttp:request] {
 
    Example 1.26. xhttp_prom.counter_reset usage
                   ...
-                  kamcmd xhttp_prom.counter_reset "cnt01" "push" "192.168.0.1"
+                  kamctl rpc xhttp_prom.counter_reset "cnt01" "push" "192.168.0.
+1"
                   ...
 
 5.2. xhttp_prom.counter_inc
@@ -923,7 +924,8 @@ event_route[xhttp:request] {
 
    Example 1.27. xhttp_prom.counter_inc usage
                   ...
-                  kamcmd xhttp_prom.counter_inc "cnt01" 15 "push" "192.168.0.1"
+                  kamctl rpc xhttp_prom.counter_inc "cnt01" 15 "push" "192.168.0
+.1"
                   ...
 
 5.3. xhttp_prom.gauge_reset
@@ -940,7 +942,7 @@ event_route[xhttp:request] {
 
    Example 1.28. xhttp_prom.gauge_reset usage
                   ...
-                  kamcmd xhttp_prom.gauge_reset "gg01" "push" "192.168.0.1"
+                  kamctl rpc xhttp_prom.gauge_reset "gg01" "push" "192.168.0.1"
                   ...
 
 5.4. xhttp_prom.gauge_inc
@@ -959,7 +961,7 @@ event_route[xhttp:request] {
 
    Example 1.29. xhttp_prom.gauge_inc usage
                   ...
-                  kamcmd xhttp_prom.gauge_inc "gg01" -- -5.2
+                  kamctl rpc xhttp_prom.gauge_inc "gg01" -- -5.2
                   ...
 
 5.5. xhttp_prom.gauge_set
@@ -977,7 +979,7 @@ event_route[xhttp:request] {
 
    Example 1.30. xhttp_prom.gauge_set usage
                   ...
-                  kamcmd xhttp_prom.gauge_set "gg01" -- -5.2
+                  kamctl rpc xhttp_prom.gauge_set "gg01" -- -5.2
                   ...
 
 5.6. xhttp_prom.histogram_observe
@@ -996,7 +998,7 @@ event_route[xhttp:request] {
 
    Example 1.31. xhttp_prom.histogram_observe usage
                   ...
-                  kamcmd xhttp_prom.histogram_observe "hist01" -- -5.2
+                  kamctl rpc xhttp_prom.histogram_observe "hist01" -- -5.2
                   ...
 
 5.7. xhttp_prom.metric_list_print
@@ -1012,5 +1014,5 @@ event_route[xhttp:request] {
 
    Example 1.32. xhttp_prom.metric_list_print usage
                   ...
-                  kamcmd xhttp_prom.metric_list_print
+                  kamctl rpc xhttp_prom.metric_list_print
                   ...

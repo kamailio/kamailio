@@ -982,8 +982,8 @@ request_route {
 modparam("registrar", "use_expired_contacts", 1)
 ...
 
-kamcmd cfg.set_now_int registrar use_expired_contacts 1
-kamcmd cfg.set_now_int registrar use_expired_contacts 0
+kamctl rpc cfg.set_now_int registrar use_expired_contacts 1
+kamctl rpc cfg.set_now_int registrar use_expired_contacts 0
 
 4. Functions
 

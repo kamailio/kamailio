@@ -237,7 +237,7 @@ modparam("sqlops", "sqlcon", "ca=>cluster://k1")
 
    RPC Command Format:
 ...
-kamcmd dbcl.list_clusters
+kamctl rpc dbcl.list_clusters
 ...
 
 5.2. dbcl.list_connections
@@ -248,7 +248,7 @@ kamcmd dbcl.list_clusters
 
    RPC Command Format:
 ...
-kamcmd dbcl.list_connections clustername
+kamctl rpc dbcl.list_connections clustername
 ...
 
 5.3. dbcl.disable_connection
@@ -263,7 +263,7 @@ kamcmd dbcl.list_connections clustername
 
    RPC Command Format:
 ...
-kamcmd dbcl.disable_connection clustername connectionname period
+kamctl rpc dbcl.disable_connection clustername connectionname period
 ...
 
 5.4. dbcl.enable_connection
@@ -274,5 +274,5 @@ kamcmd dbcl.disable_connection clustername connectionname period
 
    RPC Command Format:
 ...
-kamcmd dbcl.enable_connection clustername connectionname
+kamctl rpc dbcl.enable_connection clustername connectionname
 ...

@@ -263,7 +263,7 @@ if(!lua_runstring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
 
    Example:
 ...
-    kamcmd app_lua.list
+    kamctl rpc app_lua.list
 ...
 
 5.2.  app_lua.reload
@@ -279,7 +279,7 @@ if(!lua_runstring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
 
    Example:
 ...
-    kamcmd app_lua.reload 0
+    kamctl rpc app_lua.reload 0
 ...
 
 5.3.  app_lua.api_list
@@ -292,7 +292,7 @@ if(!lua_runstring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
 
    Example:
 ...
-    kamcmd app_lua.api_list
+    kamctl rpc app_lua.api_list
 ...
 
 6. Example of usage

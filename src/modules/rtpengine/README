@@ -3333,7 +3333,7 @@ ackets, 0 errors
 
    Example 1.119.  rtpengine.reload usage
 ...
-$ kamcmd rtpengine.reload
+$ kamctl rpc rtpengine.reload
 ...
 
 17.2. rtpengine.enable proxy_url/all 0/1
@@ -3364,9 +3364,9 @@ $ kamcmd rtpengine.reload
 
    Example 1.120.  rtpengine.enable usage
 ...
-$ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
-$ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
-$ kamcmd rtpengine.enable all 1
+$ kamctl rpc rtpengine.enable udp:192.168.2.133:8081 0
+$ kamctl rpc rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
+$ kamctl rpc rtpengine.enable all 1
 ...
 
 17.3. rtpengine.show proxy_url/all
@@ -3387,9 +3387,9 @@ $ kamcmd rtpengine.enable all 1
 
    Example 1.121.  rtpengine.show usage
 ...
-$ kamcmd rtpengine.show udp:192.168.2.133:8081
-$ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ kamcmd rtpengine.show all
+$ kamctl rpc rtpengine.show udp:192.168.2.133:8081
+$ kamctl rpc rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ kamctl rpc rtpengine.show all
 ...
 
 17.4. rtpengine.ping proxy_url/all
@@ -3407,9 +3407,9 @@ $ kamcmd rtpengine.show all
 
    Example 1.122.  rtpengine.ping usage
 ...
-$ kamcmd rtpengine.ping udp:192.168.2.133:8081
-$ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ kamcmd rtpengine.ping all
+$ kamctl rpc rtpengine.ping udp:192.168.2.133:8081
+$ kamctl rpc rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ kamctl rpc rtpengine.ping all
 ...
 
 17.5. rtpengine.get_hash_total
@@ -3419,7 +3419,7 @@ $ kamcmd rtpengine.ping all
 
    Example 1.123.  rtpengine.get_hash_total usage
 ...
-$ kamcmd rtpengine.get_hash_total
+$ kamctl rpc rtpengine.get_hash_total
 ...
 
 18. Event routes

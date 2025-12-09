@@ -1190,7 +1190,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 
    RPC Command Format:
 ...
-kamcmd presence.cleanup
+kamctl rpc presence.cleanup
 ...
 
 5.2. presence.publish_cache_sync
@@ -1204,7 +1204,7 @@ kamcmd presence.cleanup
 
    RPC Command Format:
 ...
-kamcmd presence.publish_cache_sync
+kamctl rpc presence.publish_cache_sync
 ...
 
 5.3. presence.refreshWatchers
@@ -1232,7 +1232,7 @@ kamcmd presence.publish_cache_sync
 
    RPC Command Format:
 ...
-kamcmd presence.refreshWatchers sip:test@kamailio.org presence 1
+kamctl rpc presence.refreshWatchers sip:test@kamailio.org presence 1
 ...
 
 5.4. presence.updateWatchers
@@ -1249,7 +1249,7 @@ kamcmd presence.refreshWatchers sip:test@kamailio.org presence 1
 
    RPC Command Format:
 ...
-kamcmd presence.updateWatchers sip:alice@domain.com presence
+kamctl rpc presence.updateWatchers sip:alice@domain.com presence
 ...
 
 5.5. presence.presentity_list

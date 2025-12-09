@@ -546,7 +546,7 @@ xlog("translated to var $var(y) \n");
    Parameters: Dialplan ID
 
    Example:
-                kamcmd dialplan.dump 100
+                kamctl rpc dialplan.dump 100
 
 7.2. dialplan.reload
 
@@ -559,7 +559,7 @@ xlog("translated to var $var(y) \n");
    Parameters: none
 
    Example:
-                kamcmd dialplan.reload
+                kamctl rpc dialplan.reload
 
 7.3. dialplan.translate
 
@@ -572,11 +572,11 @@ xlog("translated to var $var(y) \n");
      * Dial plan ID (number)
      * Input string (string) - it can be prefixed with 's:' to avoid
        auto-conversion when the command is executed with CLI apps such as
-       kamcmd.
+       kamctl.
 
    Example:
-                kamcmd dialplan.translate 1 "abcdxyz"
-                kamcmd dialplan.translate 1 s:123456789
+                kamctl rpc dialplan.translate 1 "abcdxyz"
+                kamctl rpc dialplan.translate 1 s:123456789
 
 8. Installation
 

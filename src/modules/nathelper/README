@@ -832,7 +832,7 @@ if(is_rfc1918("$rd")) {
 
    Example 1.31. nathelper.enable_ping usage
 ...
-$ kamcmd nathelper.enable_ping 1
+$ kamctl rpc nathelper.enable_ping 1
 ...
 
 8. Selects

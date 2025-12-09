@@ -582,7 +582,7 @@ ext/plain");
 
    Example 1.20. dmq.list_nodes usage
 ...
-kamcmd dmq.list_nodes
+kamctl rpc dmq.list_nodes
 ...
 
 5.2. dmq.remove

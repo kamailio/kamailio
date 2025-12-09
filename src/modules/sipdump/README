@@ -325,9 +325,9 @@ sipdump_send("cfg");
 
    Example 1.12. sipdump.enable usage
 ...
-kamcmd sipdump.enable
-kamcmd sipdump.enable 1
-kamcmd sipdump.enable 0
+kamctl rpc sipdump.enable
+kamctl rpc sipdump.enable 1
+kamctl rpc sipdump.enable 0
 ...
 
 6. Event Routes

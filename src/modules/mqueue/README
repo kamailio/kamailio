@@ -338,7 +338,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 
    Example 1.10. mqueue.get_size usage
 ...
-kamcmd mqueue.get_size xyz
+kamctl rpc mqueue.get_size xyz
 ...
 
 6.2. mqueue.fetch
@@ -350,7 +350,7 @@ kamcmd mqueue.get_size xyz
 
    Example 1.11. mqueue.fetch usage
 ...
-kamcmd mqueue.fetch xyz
+kamctl rpc mqueue.fetch xyz
 ...
 
 6.3. mqueue.get_sizes
@@ -361,5 +361,5 @@ kamcmd mqueue.fetch xyz
 
    Example 1.12. mqueue.get_sizes usage
 ...
-kamcmd mqueue.get_sizes
+kamctl rpc mqueue.get_sizes
 ...

@@ -247,7 +247,7 @@ if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
 
    Example:
 ...
-kamcmd app_jsdt.reload
+kamctl rpc app_jsdt.reload
 ...
 
 5.2.  app_jsdt.api_list
@@ -260,7 +260,7 @@ kamcmd app_jsdt.reload
 
    Example:
 ...
-kamcmd app_jsdt.api_list
+kamctl rpc app_jsdt.api_list
 ...
 
 6. Example of usage

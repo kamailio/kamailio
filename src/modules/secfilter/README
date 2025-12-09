@@ -93,8 +93,8 @@ Jose Luis Verdeguer
    1.26. secfilter.add_wl usage
    1.27. secfilter.del_wl usage
    1.28. Example database content - secfilter table
-   1.29. kamcmd secfilter.print ua
-   1.30. kamcmd secfilter.stats
+   1.29. kamctl rpc secfilter.print ua
+   1.30. kamctl rpc secfilter.stats
 
 Chapter 1. Admin Guide
 
@@ -578,7 +578,7 @@ d in the user-agent header ($ua)");
 
    Example 1.18. secfilter.reload usage
                 ...
-                kamcmd secfilter.reload
+                kamctl rpc secfilter.reload
                 ...
 
 5.2.  secfilter.print
@@ -598,10 +598,10 @@ d in the user-agent header ($ua)");
 
    Example 1.19. secfilter.print usage
                 ...
-                kamcmd secfilter.print
-                kamcmd secfilter.print ua
-                kamcmd secfilter.print country
-                kamcmd secfilter.print dst
+                kamctl rpc secfilter.print
+                kamctl rpc secfilter.print ua
+                kamctl rpc secfilter.print country
+                kamctl rpc secfilter.print dst
                 ...
 
 5.3.  secfilter.stats
@@ -610,7 +610,7 @@ d in the user-agent header ($ua)");
 
    Example 1.20. secfilter.stats usage
                 ...
-                kamcmd secfilter.stats
+                kamctl rpc secfilter.stats
                 ...
 
 5.4.  secfilter.stats_reset
@@ -619,7 +619,7 @@ d in the user-agent header ($ua)");
 
    Example 1.21. secfilter.stats_reset usage
                 ...
-                kamcmd secfilter.stats_reset
+                kamctl rpc secfilter.stats_reset
                 ...
 
 5.5.  secfilter.add_dst
@@ -633,7 +633,7 @@ d in the user-agent header ($ua)");
 
    Example 1.22. secfilter.add_dst usage
                 ...
-                kamcmd secfilter.add_dst 555123123
+                kamctl rpc secfilter.add_dst 555123123
                 ...
 
 5.6.  secfilter.del_dst
@@ -645,7 +645,7 @@ d in the user-agent header ($ua)");
 
    Example 1.23. secfilter.del_dst usage
                 ...
-                kamcmd secfilter.del_dst 555123123
+                kamctl rpc secfilter.del_dst 555123123
                 ...
 
 5.7.  secfilter.add_bl
@@ -658,8 +658,8 @@ d in the user-agent header ($ua)");
 
    Example 1.24. secfilter.add_bl usage
                 ...
-                kamcmd secfilter.add_bl ua friendly-scanner
-                kamcmd secfilter.add_bl user sipvicious
+                kamctl rpc secfilter.add_bl ua friendly-scanner
+                kamctl rpc secfilter.add_bl user sipvicious
                 ...
 
 5.8.  secfilter.del_bl
@@ -672,8 +672,8 @@ d in the user-agent header ($ua)");
 
    Example 1.25. secfilter.del_bl usage
                 ...
-                kamcmd secfilter.del_bl ua friendly-scanner
-                kamcmd secfilter.del_bl user sipvicious
+                kamctl rpc secfilter.del_bl ua friendly-scanner
+                kamctl rpc secfilter.del_bl user sipvicious
                 ...
 
 5.9.  secfilter.add_wl
@@ -686,8 +686,8 @@ d in the user-agent header ($ua)");
 
    Example 1.26. secfilter.add_wl usage
                 ...
-                kamcmd secfilter.add_wl country es
-                kamcmd secfilter.add_wl user trusted_user
+                kamctl rpc secfilter.add_wl country es
+                kamctl rpc secfilter.add_wl user trusted_user
                 ...
 
 5.10.  secfilter.del_wl
@@ -700,8 +700,8 @@ d in the user-agent header ($ua)");
 
    Example 1.27. secfilter.del_wl usage
                 ...
-                kamcmd secfilter.del_wl country es
-                kamcmd secfilter.del_wl user trusted_user
+                kamctl rpc secfilter.del_wl country es
+                kamctl rpc secfilter.del_wl user trusted_user
                 ...
 
 6. Installation
@@ -759,7 +759,7 @@ d in the user-agent header ($ua)");
 
 7.1. Print data
 
-   Example 1.29. kamcmd secfilter.print ua
+   Example 1.29. kamctl rpc secfilter.print ua
                 ...
 {
         User-Agent: {
@@ -793,7 +793,7 @@ d in the user-agent header ($ua)");
 
 7.2. Statistics
 
-   Example 1.30. kamcmd secfilter.stats
+   Example 1.30. kamctl rpc secfilter.stats
                 ...
 {
         Blacklist: {

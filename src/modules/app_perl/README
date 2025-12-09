@@ -492,7 +492,7 @@ if (perl_exec("ldapalias")) {
 
    Example 1.9. app_perl.set_reset_cycles usage
 ...
-kamcmd app_perl.set_reset_cycles 20000
+kamctl rpc app_perl.set_reset_cycles 20000
 ...
 
 7.2.  app_perl.get_reset_cycles
@@ -501,7 +501,7 @@ kamcmd app_perl.set_reset_cycles 20000
 
    Example 1.10. app_perl.get_reset_cycles usage
 ...
-kamcmd app_perl.get_reset_cycles
+kamctl rpc app_perl.get_reset_cycles
 ...
 
 Chapter 2. Kamailio Perl API

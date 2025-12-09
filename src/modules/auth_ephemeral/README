@@ -484,7 +484,7 @@ Note
 
    RPC Command Example:
 ...
-kamcmd autheph.add_secret mysecret
+kamctl rpc autheph.add_secret mysecret
 
 5.2. autheph.dump_secrets
 
@@ -497,7 +497,7 @@ kamcmd autheph.add_secret mysecret
 
    RPC Command Example:
 ...
-kamcmd autheph.dump_secrets
+kamctl rpc autheph.dump_secrets
 ...
 
 5.3. autheph.rm_secret
@@ -518,5 +518,5 @@ Note
 
    RPC Command Example:
 ...
-kamcmd autheph.rm_secret 0
+kamctl rpc autheph.rm_secret 0
 ...

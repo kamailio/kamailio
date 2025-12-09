@@ -298,7 +298,7 @@ kafka_send_key("my_topic", "test message", "my_key");
 
    Example 1.9. kafka.stats usage
 ...
-kamcmd kafka.stats
+kamctl rpc kafka.stats
 Total messages: 26  Errors: 0
 ...
 
@@ -312,6 +312,6 @@ Total messages: 26  Errors: 0
    Example 1.10. kafka.stats usage
 ...
 # Show statistics for my_topic.
-kamcmd kafka.stats_topic "my_topic"
+kamctl rpc kafka.stats_topic "my_topic"
 Topic: my_topic  Total messages: 17  Errors: 0
 ...

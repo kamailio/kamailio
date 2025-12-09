@@ -198,7 +198,7 @@ s));
 
    Example 1.5. geoip2.reload usage
 ...
-kamcmd geoip2.reload
+kamctl rpc geoip2.reload
 ...
 
 6. Exported pseudo-variables

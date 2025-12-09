@@ -527,7 +527,7 @@ resetdebug();
 
    RPC Command Format:
 ...
-kamcmd core.arg
+kamctl rpc core.arg
 ...
 
 4.3.  core.echo
@@ -557,7 +557,7 @@ kamcmd core.arg
 
    RPC Command Format:
 ...
-kamcmd core.kill
+kamctl rpc core.kill
 ...
 
 4.8.  core.printi
@@ -586,7 +586,7 @@ kamcmd core.kill
 
    RPC Command Format:
 ...
-kamcmd core.pwd
+kamctl rpc core.pwd
 ...
 
 4.13.  core.shmmem
@@ -626,7 +626,7 @@ kamcmd core.pwd
 
    RPC Command Format:
 ...
-kamcmd core.uptime
+kamctl rpc core.uptime
 ...
 
 4.20.  core.version
@@ -639,7 +639,7 @@ kamcmd core.uptime
 
    RPC Command Format:
 ...
-kamcmd core.version
+kamctl rpc core.version
 ...
 
 4.21.  core.ppdefines
@@ -652,7 +652,7 @@ kamcmd core.version
 
    RPC Command Format:
 ...
-kamcmd core.ppdefines
+kamctl rpc core.ppdefines
 ...
 
 4.22.  core.modules
@@ -665,7 +665,7 @@ kamcmd core.ppdefines
 
    RPC Command Format:
 ...
-kamcmd core.modules
+kamctl rpc core.modules
 ...
 
 4.23.  modparam.getn
@@ -735,10 +735,10 @@ kamcli rpc modparam.list tls
      * index value - print statistics for specific index in process table.
 
    Examples:
-                kamcmd pkg.stats
-                kamcmd pkg.stats pid 1234
-                kamcmd pkg.stats rank 1
-                kamcmd pkg.stats index 10
+                kamctl rpc pkg.stats
+                kamctl rpc pkg.stats pid 1234
+                kamctl rpc pkg.stats rank 1
+                kamctl rpc pkg.stats index 10
 
 4.28.  pkg.info
 
@@ -762,10 +762,10 @@ kamcli rpc modparam.list tls
    statistics identified by the name is printed.
 
    Examples:
-                kamcmd stats.get_statistics all
-                kamcmd stats.get_statistics core:
-                kamcmd stats.get_statistics unsupported_methods
-                kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
+                kamctl rpc stats.get_statistics all
+                kamctl rpc stats.get_statistics core:
+                kamctl rpc stats.get_statistics unsupported_methods
+                kamctl rpc stats.get_statistics shmem: fwd_requests fwd_replies
 
 4.30.  stats.fetch
 
@@ -781,11 +781,11 @@ kamcli rpc modparam.list tls
    'statsgroup.stastname' or 'statsgroup:statsname').
 
    Examples:
-                kamcmd stats.fetch all
-                kamcmd stats.fetch core:
-                kamcmd stats.fetch unsupported_methods
-                kamcmd stats.fetch shmem.free_size
-                kamcmd stats.fetch shmem: fwd_requests fwd_replies
+                kamctl rpc stats.fetch all
+                kamctl rpc stats.fetch core:
+                kamctl rpc stats.fetch unsupported_methods
+                kamctl rpc stats.fetch shmem.free_size
+                kamctl rpc stats.fetch shmem: fwd_requests fwd_replies
 
 4.31.  stats.fetchn
 
@@ -801,11 +801,11 @@ kamcli rpc modparam.list tls
    'statsgroup.stastname' or 'statsgroup:statsname').
 
    Examples:
-                kamcmd stats.fetchn all
-                kamcmd stats.fetchn core:
-                kamcmd stats.fetchn unsupported_methods
-                kamcmd stats.fetchn shmem.free_size
-                kamcmd stats.fetchn shmem: fwd_requests fwd_replies
+                kamctl rpc stats.fetchn all
+                kamctl rpc stats.fetchn core:
+                kamctl rpc stats.fetchn unsupported_methods
+                kamctl rpc stats.fetchn shmem.free_size
+                kamctl rpc stats.fetchn shmem: fwd_requests fwd_replies
 
 4.32.  stats.reset_statistics
 
@@ -814,10 +814,11 @@ kamcli rpc modparam.list tls
    Parameters: statsid - same as for get_statistics.
 
    Examples:
-                kamcmd stats.reset_statistics all
-                kamcmd stats.reset_statistics core:
-                kamcmd stats.reset_statistics unsupported_methods
-                kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
+                kamctl rpc stats.reset_statistics all
+                kamctl rpc stats.reset_statistics core:
+                kamctl rpc stats.reset_statistics unsupported_methods
+                kamctl rpc stats.reset_statistics shmem: fwd_requests fwd_replie
+s
 
 4.33.  stats.clear_statistics
 
@@ -826,10 +827,11 @@ kamcli rpc modparam.list tls
    Parameters: statsid - same as for get_statistics.
 
    Examples:
-                kamcmd stats.reset_statistics all
-                kamcmd stats.reset_statistics core:
-                kamcmd stats.reset_statistics unsupported_methods
-                kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
+                kamctl rpc stats.reset_statistics all
+                kamctl rpc stats.reset_statistics core:
+                kamctl rpc stats.reset_statistics unsupported_methods
+                kamctl rpc stats.reset_statistics shmem: fwd_requests fwd_replie
+s
 
 4.34.  system.listMethods
 
@@ -841,7 +843,7 @@ kamcli rpc modparam.list tls
 
    RPC Command Format:
 ...
-kamcmd system.listMethods
+kamctl rpc system.listMethods
 ...
 
 4.35.  system.methodHelp
@@ -875,10 +877,10 @@ kamcmd system.listMethods
      * all - print both private and shared memory statistics.
 
    Examples:
-                kamcmd mod.stats core all
-                kamcmd mod.stats tm shm
-                kamcmd mod.stats kex pkg
-                kamcmd mod.stats all all
+                kamctl rpc mod.stats core all
+                kamctl rpc mod.stats tm shm
+                kamctl rpc mod.stats kex pkg
+                kamctl rpc mod.stats all all
 
    Output:
 Module: kex

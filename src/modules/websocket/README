@@ -595,7 +595,7 @@ Note
 
    RPC Command Usage:
 ...
-kamcmd ws.dump used_asc
+kamctl rpc ws.dump used_asc
 ...
 
 6.2. ws.close
@@ -609,7 +609,7 @@ kamcmd ws.dump used_asc
 
    RPC Command Usage:
 ...
-kamcmd ws.close: 1
+kamctl rpc ws.close: 1
 ...
 
 6.3. ws.ping
@@ -623,7 +623,7 @@ kamcmd ws.close: 1
 
    RPC Command Usage:
 ...
-kamcmd ws.ping 1
+kamctl rpc ws.ping 1
 ...
 
 6.4. ws.pong
@@ -637,7 +637,7 @@ kamcmd ws.ping 1
 
    RPC Command Usage:
 ...
-kamcmd ws.pong 1
+kamctl rpc ws.pong 1
 ...
 
 6.5. ws.disable
@@ -650,7 +650,7 @@ kamcmd ws.pong 1
 
    RPC Command Usage:
 ...
-kamcmd ws.disable
+kamctl rpc ws.disable
 ...
 
 6.6. ws.enable
@@ -667,7 +667,7 @@ Note
 
    RPC Command Format:
 ...
-kamcmd ws.enable
+kamctl rpc ws.enable
 ...
 
 7. Event routes

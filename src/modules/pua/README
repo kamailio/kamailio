@@ -387,7 +387,7 @@ if(method=="NOTIFY")
 
    RPC Command Format:
 ...
-kamcmd pua.cleanup
+kamctl rpc pua.cleanup
 ...
 
 6. Installation

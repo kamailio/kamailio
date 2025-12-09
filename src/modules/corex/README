@@ -889,8 +889,8 @@ route[reply] {
    parameter is provided, then the current value is returned.
 
    Example:
-                kamcmd corex.debug
-                kamcmd corex.debug 2
+                kamctl rpc corex.debug
+                kamctl rpc corex.debug 2
 
 5.2.  corex.list_sockets
 

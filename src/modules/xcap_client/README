@@ -187,7 +187,7 @@ modparam("xcap_client", "query_period", 50)
    RPC Command Example:
 ...
 # execute in a single line command
-kamcmd xcap_client.refreshXcapDoc
+kamctl rpc xcap_client.refreshXcapDoc
      /xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml 8000
 ...
 

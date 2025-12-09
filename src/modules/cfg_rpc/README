@@ -167,7 +167,7 @@ Chapter 1. Admin Guide
 
    Example 1.3. Use cfg.seti RPC command
 ...
-# kamcmd cfg.seti core debug 1
+# kamctl rpc cfg.seti core debug 1
 ...
 
 3.4. cfg.set_now_int
@@ -183,7 +183,7 @@ Chapter 1. Admin Guide
 
    Example 1.4. Use cfg.sets RPC command
 ...
-# kamcmd cfg.sets voicemail srv_ip "1.2.3.4"
+# kamctl rpc cfg.sets voicemail srv_ip "1.2.3.4"
 ...
 
 3.6. cfg.reset

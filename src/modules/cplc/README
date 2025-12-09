@@ -557,7 +557,7 @@ if (method=="REGISTER") {
 
    RPC Command format:
 ...
-kamcmd cpl.load username cpl_filename
+kamctl rpc cpl.load username cpl_filename
 ...
 
 5.2. cpl.remove
@@ -572,7 +572,7 @@ kamcmd cpl.load username cpl_filename
 
    RPC Command format:
 ...
-kamcmd cpl.remove username
+kamctl rpc cpl.remove username
 ...
 
 5.3. cpl.get
@@ -586,7 +586,7 @@ kamcmd cpl.remove username
 
    RPC Command format:
 ...
-kamcmd cpl.get username
+kamctl rpc cpl.get username
 ...
 
 6. Installation and Running

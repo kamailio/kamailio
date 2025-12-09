@@ -256,7 +256,7 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
    The bitmask with internal SIP method ids to be ignored by xlogm()
    function. The value can be changed at runtime via cfg reload framework:
 ...
-kamcmd cfg.set_now_int xlog methods_filter 15
+kamctl rpc cfg.set_now_int xlog methods_filter 15
 ...
 
    To see the associated internal ids for SIP requests, look in source

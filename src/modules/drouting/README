@@ -817,7 +817,7 @@ if (is_from_gw("3","1") {
    It takes no parameter.
 
    RPC Command Format:
-        kamcmd drouting.reload
+        kamctl rpc drouting.reload
 
 6. Installation
 

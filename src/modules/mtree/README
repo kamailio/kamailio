@@ -462,8 +462,8 @@ mt_match("mytree", "$rU", "0");
 
    Example 1.19. mtree.list rpc usage
 ...
-kamcmd mtree.list
-kamcmd mtree.list mytree
+kamctl rpc mtree.list
+kamctl rpc mtree.list mytree
 ...
 
 5.2.  mtree.summary

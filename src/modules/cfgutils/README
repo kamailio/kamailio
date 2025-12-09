@@ -651,7 +651,7 @@ core_hash("$ci", "", 4);
 
    Example 1.25. cfgutils.rand_set_prob usage
 ...
-$ kamcmd cfgutils.rand_set_prob 10
+$ kamctl rpc cfgutils.rand_set_prob 10
 ...
 
 5.2. cfgutils.rand_reset_prob
@@ -662,7 +662,7 @@ $ kamcmd cfgutils.rand_set_prob 10
 
    Example 1.26.  cfgutils.rand_reset_prob usage
 ...
-$ kamcmd cfgutils.rand_reset_prob
+$ kamctl rpc cfgutils.rand_reset_prob
 ...
 
 5.3. cfgutils.rand_get_prob
@@ -673,7 +673,7 @@ $ kamcmd cfgutils.rand_reset_prob
 
    Example 1.27. cfgutils.rand_get_prob usage
 ...
-$ kamcmd cfgutils.rand_get_prob
+$ kamctl rpc cfgutils.rand_get_prob
 ...
 
 5.4. cfgutils.check_config_hash
@@ -686,7 +686,7 @@ $ kamcmd cfgutils.rand_get_prob
 
    Example 1.28. cfgutils.check_config_hash usage
 ...
-$ kamcmd cfgutils.check_config_hash
+$ kamctl rpc cfgutils.check_config_hash
 ...
 
 5.5. cfgutils.get_config_hash
@@ -698,7 +698,7 @@ $ kamcmd cfgutils.check_config_hash
 
    Example 1.29. cfgutils.get_config_hash usage
 ...
-$ kamcmd cfgutils.get_config_hash
+$ kamctl rpc cfgutils.get_config_hash
 ...
 
 5.6. cfgutils.set_gflag
@@ -710,7 +710,7 @@ $ kamcmd cfgutils.get_config_hash
 
    Example 1.30. cfgutils.set_gflag usage
 ...
-$ kamcmd cfgutils.set_gflag 1
+$ kamctl rpc cfgutils.set_gflag 1
 ...
 
 5.7. cfgutils.reset_gflag
@@ -722,7 +722,7 @@ $ kamcmd cfgutils.set_gflag 1
 
    Example 1.31.  cfgutils.reset_gflag usage
 ...
-$ kamcmd cfgutils.reset_gflag 1
+$ kamctl rpc cfgutils.reset_gflag 1
 ...
 
 5.8. cfgutils.is_gflag
@@ -737,8 +737,8 @@ $ kamcmd cfgutils.reset_gflag 1
 
    Example 1.32. cfgutils.is_gflag usage
 ...
-$ kamcmd cfgutils.set_gflag 1024
-$ kamcmd cfgutils.is_gflag 1024
+$ kamctl rpc cfgutils.set_gflag 1024
+$ kamctl rpc cfgutils.is_gflag 1024
 TRUE
 ...
 
@@ -749,7 +749,7 @@ TRUE
 
    Example 1.33.  cfgutils.get_gflags usage
 ...
-$ kamcmd cfgutils.get_gflags
+$ kamctl rpc cfgutils.get_gflags
 ...
 
 6. Exported pseudo-variables

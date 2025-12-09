@@ -993,7 +993,7 @@ pv_evalx("$var(z)", "$var(y) one");
 
    Example 1.39. pv.shvSet usage
 ...
-$ kamcmd pv.shvSet debug int 3
+$ kamctl rpc pv.shvSet debug int 3
 ...
 
 5.2. pv.shvGet
@@ -1007,5 +1007,5 @@ $ kamcmd pv.shvSet debug int 3
 
    Example 1.40. pv.shvGet usage
 ...
-$ kamcmd pv.shvGet debug
+$ kamctl rpc pv.shvGet debug
 ...

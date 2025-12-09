@@ -686,8 +686,8 @@ modparam("p_usrloc", "matching_mode", 1)
 modparam("p_usrloc", "matching_mode", 2)
 ...
 
-kamcmd cfg.set_now_int p_usrloc matching_mode 2
-kamcmd cfg.get p_usrloc matching_mode
+kamctl rpc cfg.set_now_int p_usrloc matching_mode 2
+kamctl rpc cfg.get p_usrloc matching_mode
 
 3.29. UTC_timestamps(int)
 

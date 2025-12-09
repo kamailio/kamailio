@@ -451,7 +451,7 @@ if (!check_allowlist("globalblocklist")) {
 
    Example 1.19. userblocklist.reload_blocklist usage
 ...
-kamcmd userblocklist.reload_blocklist
+kamctl rpc userblocklist.reload_blocklist
 ...
 
 5.2.  userblocklist.dump_blocklist
@@ -462,8 +462,8 @@ kamcmd userblocklist.reload_blocklist
 
    Example 1.20. userblocklist.dump_blocklist usage
 ...
-kamcmd userblocklist.reload_blocklist
-kamcmd userblocklist.dump_blocklist
+kamctl rpc userblocklist.reload_blocklist
+kamctl rpc userblocklist.dump_blocklist
 ...
 
 5.3.  userblocklist.check_blocklist prefix
@@ -477,7 +477,7 @@ kamcmd userblocklist.dump_blocklist
 
    Example 1.21. userblocklist.check_blocklist usage
 ...
-kamcmd userblocklist.check_blocklist s:1234
+kamctl rpc userblocklist.check_blocklist s:1234
 ...
 
 5.4.  userblocklist.check_allowlist prefix
@@ -491,7 +491,7 @@ kamcmd userblocklist.check_blocklist s:1234
 
    Example 1.22. userblocklist.check_allowlist usage
 ...
-kamcmd userblocklist.check_allowlist s:1234
+kamctl rpc userblocklist.check_allowlist s:1234
 ...
 
 5.5.  userblocklist.check_userblocklist prefix user [domain]
@@ -505,7 +505,7 @@ kamcmd userblocklist.check_allowlist s:1234
 
    Example 1.23. userblocklist.check_userblocklist usage
 ...
-kamcmd userblocklist.check_userblocklist s:1234 s:49721123456788
+kamctl rpc userblocklist.check_userblocklist s:1234 s:49721123456788
 ...
 
 5.6.  userblocklist.check_userallowlist prefix user [domain]
@@ -519,7 +519,7 @@ kamcmd userblocklist.check_userblocklist s:1234 s:49721123456788
 
    Example 1.24. userblocklist.check_userallowlist usage
 ...
-kamcmd userblocklist.check_userallowlist s:1234 s:49721123456788
+kamctl rpc userblocklist.check_userallowlist s:1234 s:49721123456788
 ...
 
 6. Installation and Running

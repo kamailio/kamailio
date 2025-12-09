@@ -363,7 +363,7 @@ if(is_method("MESSAGE)
 
    RPC Command Format:
 ...
-kamcmd imc_list_rooms
+kamctl rpc imc_list_rooms
 ...
 
 5.2. imc.list_members
@@ -377,7 +377,7 @@ kamcmd imc_list_rooms
 
    RPC Command Format:
 ...
-kamcmd imc_list_members _room_
+kamctl rpc imc_list_members _room_
 ...
 
 6. Statistics

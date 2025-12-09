@@ -343,7 +343,7 @@ $ cat /usr/local/etc/kamailio/dbtext/htable
 3:key:1:0:value1:0
 
 # The array key will be loaded in memory in the following format:
-$ kamcmd htable.dump htable
+$ kamctl rpc htable.dump htable
 {
         entry: 35
         size: 1
@@ -386,10 +386,10 @@ $ kamcmd htable.dump htable
 }
 
 # Now let's delete a particular entry in the array: key[0].
-$ kamcmd htable.delete htable key[0]
+$ kamctl rpc htable.delete htable key[0]
 
 # The array key will look like this after a key was deleted:
-$ kamcmd htable.dump htable
+$ kamctl rpc htable.dump htable
 {
         entry: 50
         size: 1
@@ -1258,13 +1258,13 @@ if (!sht_dec("my_ht", "my_key")) {
    Example:
 ...
 # Dump $sht(students=>alice)
-kamcmd htable.get students alice
+kamctl rpc htable.get students alice
 
 # Dump $sht(students=>15)
-kamcmd htable.get students s:15
+kamctl rpc htable.get students s:15
 
 # Dump first entry in array key course $sht(students=>course[0])
-kamcmd htable.get students course[0]
+kamctl rpc htable.get students course[0]
 ...
 
 6.2.  htable.delete htable key
@@ -1281,13 +1281,13 @@ kamcmd htable.get students course[0]
    Example:
 ...
 # Delete $sht(students=>alice)
-kamcmd htable.delete students alice
+kamctl rpc htable.delete students alice
 
 # Delete $sht(students=>15)
-kamcmd htable.delete students s:15
+kamctl rpc htable.delete students s:15
 
 # Delete first entry in array key course $sht(students=>course[0])
-kamcmd htable.delete students course[0]
+kamctl rpc htable.delete students course[0]
 ...
 
 6.3.  htable.sets htable key value
@@ -1305,13 +1305,13 @@ kamcmd htable.delete students course[0]
    Example:
 ...
 # Set $sht(test=>x) as string
-kamcmd htable.sets test x abc
+kamctl rpc htable.sets test x abc
 
 # Set $sht(test=>5) as string
-kamcmd htable.sets test s:5 abc
+kamctl rpc htable.sets test s:5 abc
 
 # Set firsti entry in array key x $sht(test=>x[0]) as string
-kamcmd htable.sets test x[0] abc
+kamctl rpc htable.sets test x[0] abc
 ...
 
 6.4.  htable.seti htable key value
@@ -1329,13 +1329,13 @@ kamcmd htable.sets test x[0] abc
    Example:
 ...
 # Set $sht(test=>x) as integer
-kamcmd htable.seti test x 123
+kamctl rpc htable.seti test x 123
 
 # Set $sht(test=>5) as integer
-kamcmd htable.seti test s:5 123
+kamctl rpc htable.seti test s:5 123
 
 # Set first entry in array key x $sht(test=>x[0]) as integer
-kamcmd htable.seti test x[0] 123
+kamctl rpc htable.seti test x[0] 123
 ...
 
 6.5.  htable.setex htable key expire
@@ -1414,7 +1414,7 @@ kamctl rpc htable.setxi test s:5 10 120
 
    Example:
 ...
-kamcmd htable.dump ipban
+kamctl rpc htable.dump ipban
 ...
 
 6.9.  htable.reload htable
@@ -1428,7 +1428,7 @@ kamcmd htable.dump ipban
 
    Example:
 ...
-kamcmd htable.reload ipban
+kamctl rpc htable.reload ipban
 ...
 
 6.10.  htable.store htable
@@ -1442,7 +1442,7 @@ kamcmd htable.reload ipban
 
    Example:
 ...
-kamcmd htable.store ipban
+kamctl rpc htable.store ipban
 ...
 
 6.11.  htable.flush htable
@@ -1456,7 +1456,7 @@ kamcmd htable.store ipban
 
    Example:
 ...
-kamcmd htable.flush ipban
+kamctl rpc htable.flush ipban
 ...
 
 6.12.  htable.listTables
@@ -1470,7 +1470,7 @@ kamcmd htable.flush ipban
 
    Example:
 ...
-kamcmd htable.listTables
+kamctl rpc htable.listTables
 ...
 
 6.13.  htable.stats
@@ -1485,7 +1485,7 @@ kamcmd htable.listTables
 
    Example:
 ...
-kamcmd htable.stats
+kamctl rpc htable.stats
 ...
 
 6.14.  htable.dmqsync [htable]
@@ -1501,8 +1501,8 @@ kamcmd htable.stats
 
    Example:
 ...
-kamcmd htable.dmqsync
-kamcmd htable.dmqsync ipban
+kamctl rpc htable.dmqsync
+kamctl rpc htable.dmqsync ipban
 ...
 
 6.15.  htable.dmqresync htable
@@ -1516,7 +1516,7 @@ kamcmd htable.dmqsync ipban
 
    Example:
 ...
-kamcmd htable.dmqresync ipban
+kamctl rpc htable.dmqresync ipban
 ...
 
 7. Event routes

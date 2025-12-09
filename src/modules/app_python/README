@@ -180,7 +180,7 @@ python_exec("my_python_function", "$rU");
 
    Example:
 ...
-kamcmd app_python.reload
+kamctl rpc app_python.reload
 ...
 
 5.2.  app_python.api_list
@@ -193,5 +193,5 @@ kamcmd app_python.reload
 
    Example:
 ...
-kamcmd app_python.api_list
+kamctl rpc app_python.api_list
 ...

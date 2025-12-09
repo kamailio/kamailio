@@ -548,7 +548,7 @@ kamctl rpc pl.list testid
 
    RPC Command Format:
 ...
-kamcmd pl.stats
+kamctl rpc pl.stats
 ...
 
 6.3.  pl.set_pipe
@@ -564,7 +564,7 @@ kamcmd pl.stats
 
    RPC Command Format:
 ...
-kamcmd pl.set_pipe 2 RED 10
+kamctl rpc pl.set_pipe 2 RED 10
 ...
 
 6.4.  pl.reset_pipe
@@ -578,7 +578,7 @@ kamcmd pl.set_pipe 2 RED 10
 
    RPC Command Format:
 ...
-kamcmd pl.reset_pipe p01
+kamctl rpc pl.reset_pipe p01
 ...
 
 6.5.  pl.rm_pipe
@@ -592,7 +592,7 @@ kamcmd pl.reset_pipe p01
 
    RPC Command Format:
 ...
-kamcmd pl.rm_pipe p01
+kamctl rpc pl.rm_pipe p01
 ...
 
 6.6.  pl.get_pipes
@@ -605,7 +605,7 @@ kamcmd pl.rm_pipe p01
 
    RPC Command Format:
 ...
-kamcmd pl.get_pipes
+kamctl rpc pl.get_pipes
 ...
 
 6.7.  pl.set_pid
@@ -621,7 +621,7 @@ kamcmd pl.get_pipes
 
    RPC Command Format:
 ...
-kamcmd pl.set_pid 0.5 0.5 0.5
+kamctl rpc pl.set_pid 0.5 0.5 0.5
 ...
 
 6.8.  pl.get_pid
@@ -634,7 +634,7 @@ kamcmd pl.set_pid 0.5 0.5 0.5
 
    RPC Command Format:
 ...
-kamcmd pl.get_pid
+kamctl rpc pl.get_pid
 ...
 
 6.9.  pl.push_load
@@ -650,5 +650,5 @@ kamcmd pl.get_pid
 
    RPC Command Format:
 ...
-kamcmd pl.push_load 0.85
+kamctl rpc pl.push_load 0.85
 ...

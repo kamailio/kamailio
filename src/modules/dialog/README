@@ -2210,7 +2210,7 @@ dlg_set_state("early");
 
    RPC Command Format:
 ...
-kamcmd dlg.list
+kamctl rpc dlg.list
 ...
 
 9.2. dlg.list_ctx
@@ -2222,7 +2222,7 @@ kamcmd dlg.list
 
    RPC Command Format:
 ...
-kamcmd dlg.list_ctx
+kamctl rpc dlg.list_ctx
 ...
 
 9.3. dlg.list_match
@@ -2249,11 +2249,11 @@ kamcmd dlg.list_ctx
 
    RPC Command Format:
 ...
-kamcmd dlg.list_match furi eq sip:alice@test.com 2
+kamctl rpc dlg.list_match furi eq sip:alice@test.com 2
 ...
-kamcmd dlg.list_match furi sw sip:alice@
+kamctl rpc dlg.list_match furi sw sip:alice@
 ...
-kamcmd dlg.list_match start_ts gt s:1641550904
+kamctl rpc dlg.list_match start_ts gt s:1641550904
 ...
 
 9.4. dlg.list_match_ctx
@@ -2266,7 +2266,7 @@ kamcmd dlg.list_match start_ts gt s:1641550904
 
    RPC Command Format:
 ...
-kamcmd dlg.list_match_ctx furi sw sip:alice@
+kamctl rpc dlg.list_match_ctx furi sw sip:alice@
 ...
 
 9.5. dlg.dump_file
@@ -2280,7 +2280,7 @@ kamcmd dlg.list_match_ctx furi sw sip:alice@
 
    RPC Command Format:
 ...
-kamcmd dlg.dump_file "/tmp/dlg.json"
+kamctl rpc dlg.dump_file "/tmp/dlg.json"
 ...
 
 9.6. dlg.dlg_list
@@ -2297,9 +2297,9 @@ kamcmd dlg.dump_file "/tmp/dlg.json"
 
    RPC Command Format:
 ...
-kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+kamctl rpc dlg.dlg_list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 ...
-kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1
+kamctl rpc dlg.dlg_list abcdrssfrs122444@192.168.1.1
 ...
 
 9.7. dlg.dlg_list_ctx
@@ -2314,9 +2314,9 @@ kamcmd dlg.dlg_list abcdrssfrs122444@192.168.1.1
 
    RPC Command Format:
 ...
-kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+kamctl rpc dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 ...
-kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
+kamctl rpc dlg.list_ctx abcdrssfrs122444@192.168.1.1
 ...
 
 9.8. dlg.terminate_dlg
@@ -2334,7 +2334,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
    The command works only for confirmed dialogs.
 
    RPC Command Format:
-                kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
+                kamctl rpc dlg.terminate_dlg callid12345 fromtag123 totag123
 
 9.9. dlg.end_dlg
 
@@ -2353,7 +2353,7 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
 
    RPC Command Format:
 ...
-kamcmd dlg.end_dlg 342 56
+kamctl rpc dlg.end_dlg 342 56
 ...
 
 9.10. dlg.set_state
@@ -2381,7 +2381,7 @@ kamcmd dlg.end_dlg 342 56
 
    RPC Command Format:
 ...
-kamcmd dlg.set_state callid12345 fromtag123 totag123 5
+kamctl rpc dlg.set_state callid12345 fromtag123 totag123 5
 ...
 
 9.11. dlg.profile_get_size
@@ -2401,7 +2401,7 @@ kamcmd dlg.set_state callid12345 fromtag123 totag123 5
 
    RPC Command Format:
 ...
-kamcmd dlg.dlg.profile_get_size inbound_calls
+kamctl rpc dlg.dlg.profile_get_size inbound_calls
 ...
 
 9.12. dlg.profile_list
@@ -2421,7 +2421,7 @@ kamcmd dlg.dlg.profile_get_size inbound_calls
 
    RPC Command Format:
 ...
-kamcmd dlg.profile_list inbound_calls
+kamctl rpc dlg.profile_list inbound_calls
 ...
 
 9.13. dlg.bridge_dlg
@@ -2446,7 +2446,7 @@ kamcmd dlg.profile_list inbound_calls
 
    RPC Command Format:
 ...
-kamcmd dlg.bridge_dlg _from_ _to_ _op_
+kamctl rpc dlg.bridge_dlg _from_ _to_ _op_
 ...
 
 9.14. dlg.stats_active
@@ -2473,7 +2473,7 @@ kamcmd dlg.bridge_dlg _from_ _to_ _op_
 
    RPC Command Format:
 ...
-kamcmd dlg.stats_active
+kamctl rpc dlg.stats_active
 ...
 
 9.15. dlg.is_alive
@@ -2493,7 +2493,7 @@ kamcmd dlg.stats_active
 
    RPC Command Format:
 ...
-kamcmd dlg.is_alive callid123 fromtag123 totag123
+kamctl rpc dlg.is_alive callid123 fromtag123 totag123
 ...
 
 9.16. dlg.briefing

@@ -234,7 +234,7 @@ if (!pike_check_ip("$si")) { exit; };
 
    RPC Command Example:
 ...
-kamcmd pike.top
+kamctl rpc pike.top
 ...
 
 Chapter 2. RPC calls

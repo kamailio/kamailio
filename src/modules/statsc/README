@@ -156,8 +156,8 @@ modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
 
    Example:
 ...
-# prototype: kamcmd statsc.report _type_ _name_ _limit_
-kamcmd statsc.report list
-kamcmd statsc.report list all 10
-kamcmd statsc.report diff
+# prototype: kamctl rpc statsc.report _type_ _name_ _limit_
+kamctl rpc statsc.report list
+kamctl rpc statsc.report list all 10
+kamctl rpc statsc.report diff
 ...

@@ -733,9 +733,9 @@ hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 
    RPC Command Format:
 ...
-kamcmd siptrace.status on
-kamcmd siptrace.status off
-kamcmd siptrace.status check
+kamctl rpc siptrace.status on
+kamctl rpc siptrace.status off
+kamctl rpc siptrace.status check
 ...
 
 6. Event Routes

@@ -220,7 +220,7 @@ cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
 
    Example 1.7. matrix.reload usage
 ...
-kamcmd matrix.reload
+kamctl rpc matrix.reload
 ...
 
 6. Installation and Running

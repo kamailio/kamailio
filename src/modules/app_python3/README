@@ -231,7 +231,7 @@ python_exec("my_python_function", "$rU");
 
    Example:
 ...
-kamcmd app_python.reload
+kamctl rpc app_python.reload
 ...
 
    Note that reload is done for the Python script provided as parameter to
@@ -262,7 +262,7 @@ def mod_init():
 
    Example:
 ...
-kamcmd app_python.api_list
+kamctl rpc app_python.api_list
 ...
 
 6. KEMI Usage

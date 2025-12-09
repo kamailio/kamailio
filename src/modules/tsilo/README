@@ -306,7 +306,7 @@ if (is_method("REGISTER")) {
    Name: ts.dump
 
    RPC Command Format:
-                        kamcmd ts.dump
+                        kamctl rpc ts.dump
 
 5.2. ts.lookup
 
@@ -315,7 +315,7 @@ if (is_method("REGISTER")) {
    Name: ts.lookup
 
    RPC Command Format:
-                        kamcmd ts.lookup sip:abcd@example.com
+                        kamctl rpc ts.lookup sip:abcd@example.com
 
 6. Statistics
 

@@ -65,8 +65,8 @@ Andrei Pelinescu-Onciul
    1.17. Set sctp_sack_delay parameter
    1.18. Set sctp_sack_freq parameter
    1.19. Set sctp_max_burst parameter
-   1.20. Use sctp.info with kamcmd
-   1.21. Use sctp.options with kamcmd
+   1.20. Use sctp.info with kamctl
+   1.21. Use sctp.options with kamctl
 
 Chapter 1. Admin Guide
 
@@ -193,7 +193,7 @@ modparam("sctp", "sctp_socket_sndbuf", 14096)
 
    Example 1.3. Set sctp_autoclose parameter
 ...
-# kamcmd cfg.set_now_int sctp autoclose 120
+# kamctl rpc cfg.set_now_int sctp autoclose 120
 ...
 modparam("sctp", "sctp_autoclose", 300)
 ...
@@ -207,7 +207,7 @@ modparam("sctp", "sctp_autoclose", 300)
 
    Example 1.4. Set sctp_send_ttl parameter
 ...
-# kamcmd cfg.set_now_int sctp send_ttl 180000
+# kamctl rpc cfg.set_now_int sctp send_ttl 180000
 ...
 modparam("sctp", "sctp_send_ttl", 10000)
 ...
@@ -281,8 +281,8 @@ modparam("sctp", "sctp_assoc_reuse", 0)
 3.8. sctp_max_assocs (int)
 
    Maximum number of allowed open sctp associations. -1 means maximum
-   allowed by the OS. Default: -1. Can be changed at runtime (e.g.: kamcmd
-   cfg.set_now_int sctp max_assocs 10 ). When the maximum associations
+   allowed by the OS. Default: -1. Can be changed at runtime (e.g.: kamctl
+   rpc cfg.set_now_int sctp max_assocs 10). When the maximum associations
    number is exceeded and a new associations is opened by a remote host,
    the association will be immediately closed. However it is possible that
    some sip packets get through (especially if they are sent early, as
@@ -489,9 +489,9 @@ modparam("sctp", "sctp_max_burst", 3)
 
    Print information about SCTP transport.
 
-   Example 1.20. Use sctp.info with kamcmd
+   Example 1.20. Use sctp.info with kamctl
 ...
-kamcmd sctp.info
+kamctl rpc sctp.info
 ...
 
 4.2. sctp.options
@@ -499,7 +499,7 @@ kamcmd sctp.info
    Print the options of SCTP sockets. It can take an optional parameter
    that specifies the listen address of SCTP socket.
 
-   Example 1.21. Use sctp.options with kamcmd
+   Example 1.21. Use sctp.options with kamctl
 ...
-kamcmd sctp.options
+kamctl rpc sctp.options
 ...

@@ -798,7 +798,7 @@ start_recording();
 
    Example 1.23.  rtpproxy.enable usage
 ...
-$ kamcmd rtpproxy.enable udp:192.168.2.133:8081 0
+$ kamctl rpc rtpproxy.enable udp:192.168.2.133:8081 0
 ...
 
 7.2. rtpproxy.list
@@ -810,7 +810,7 @@ $ kamcmd rtpproxy.enable udp:192.168.2.133:8081 0
 
    Example 1.24.  rtpproxy.list usage
 ...
-$ kamcmd rtpproxy.list
+$ kamctl rpc rtpproxy.list
 ...
 
 Chapter 2. Frequently Asked Questions

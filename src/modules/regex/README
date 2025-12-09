@@ -322,7 +322,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 
    RPC Command Example:
 ...
-kamcmd regex.reload
+kamctl rpc regex.reload
 ...
 
 6. Installation and Running
