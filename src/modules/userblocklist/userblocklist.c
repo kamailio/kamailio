@@ -837,7 +837,7 @@ static int init_source_list(void)
 }
 
 
-static void destroy_source_list(void)
+void ubl_destroy_source_list(void)
 {
 	if(sources) {
 		while(sources->head) {
@@ -872,7 +872,7 @@ static int init_shmlock(void)
 }
 
 
-static void destroy_shmlock(void)
+void ubl_destroy_shmlock(void)
 {
 	if(lock) {
 		lock_destroy(lock);
@@ -1696,10 +1696,6 @@ static int rpc_child_init(void)
 
 static void mod_destroy(void)
 {
-	destroy_source_list();
-	destroy_shmlock();
-	userblocklist_db_close();
-	dtrie_destroy(&dtrie_root, NULL, match_mode);
 }
 
 /**
