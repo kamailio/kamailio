@@ -251,7 +251,7 @@ if (!pike_check_ip("$si")) { exit; };
 		</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; pike.top
+&kamctl; rpc pike.top
 ...
 		</programlisting>
 	</section>
@@ -259,4 +259,3 @@ if (!pike_check_ip("$si")) { exit; };
 
 
 </chapter>
-
