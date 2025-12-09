@@ -299,7 +299,7 @@ kafka_send_key("my_topic", "test message", "my_key");
 		  <title><function>kafka.stats</function> usage</title>
 		  <programlisting format="linespecific">
 ...
-&kamcmd; kafka.stats
+&kamctl; rpc kafka.stats
 Total messages: 26  Errors: 0
 ...
 		  </programlisting>
@@ -318,7 +318,7 @@ Total messages: 26  Errors: 0
 		  <programlisting format="linespecific">
 ...
 # Show statistics for my_topic.
-&kamcmd; kafka.stats_topic "my_topic"
+&kamctl; rpc kafka.stats_topic "my_topic"
 Topic: my_topic  Total messages: 17  Errors: 0
 ...
 		  </programlisting>
