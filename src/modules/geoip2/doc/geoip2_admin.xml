@@ -188,7 +188,7 @@ if(geoip2_match("$si", "src"))
 		<title><function>geoip2.reload</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&kamcmd; geoip2.reload
+&kamctl; rpc geoip2.reload
 ...
 		</programlisting>
 		</example>
@@ -247,4 +247,3 @@ if(geoip2_match("$si", "src"))
 	</section>
 
 </chapter>
-
