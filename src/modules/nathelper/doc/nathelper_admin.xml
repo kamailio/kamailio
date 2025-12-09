@@ -1016,7 +1016,7 @@ if(is_rfc1918("$rd")) {
 			<title><function moreinfo="none">nathelper.enable_ping</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; nathelper.enable_ping 1
+$ &kamctl; rpc nathelper.enable_ping 1
 ...
 			</programlisting>
 			</example>
@@ -1047,4 +1047,3 @@ $c2 = @nathelper.rewrite_contact[1].nameaddr.uri;
 	</section>
 
 </chapter>
-
