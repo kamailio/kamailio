@@ -749,7 +749,7 @@ modparam("dispatcher", "ds_probing_mode", 1)
 		<title>accessing the metrics</title>
 <programlisting format="linespecific">
 # using the command :
-kamcmd dispatcher.list
+kamctl rpc dispatcher.list
 ...
 DEST: {
 	URI: sip:1.2.3.4
@@ -1565,7 +1565,7 @@ modparam("dispatcher", "ds_latency_estimator_alpha", 900)
 ...
 if (!ds_select_dst("1", "11")) { # use relative weight based load distribution
 ...
-# sample of output from 'kamcmd dispatcher.list'
+# sample of output from 'kamctl rpc dispatcher.list'
 DEST: {
 	URI: sip:192.168.0.1:5060
 	FLAGS: AP
@@ -2357,8 +2357,8 @@ DEST: {
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: &kamcmd; dispatcher.ping_active _state_
-&kamcmd; dispatcher.ping_active 0
+# prototype: &kamctl; rpc dispatcher.ping_active _state_
+&kamctl; rpc dispatcher.ping_active 0
 ...
 </programlisting>
 	</section>
