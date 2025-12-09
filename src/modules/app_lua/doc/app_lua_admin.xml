@@ -291,7 +291,7 @@ if(!lua_runstring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
             </para>
             <programlisting  format="linespecific">
 ...
-    &kamcmd; app_lua.list
+    &kamctl; rpc app_lua.list
 ...
             </programlisting>
         </section>
@@ -314,7 +314,7 @@ if(!lua_runstring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
             </para>
 			<programlisting  format="linespecific">
 ...
-    &kamcmd; app_lua.reload 0
+    &kamctl; rpc app_lua.reload 0
 ...
             </programlisting>
         </section>
@@ -335,7 +335,7 @@ if(!lua_runstring("KSR.log([[err]], [[----------- Hello World from $fU\n]])"))
             </para>
             <programlisting  format="linespecific">
 ...
-    &kamcmd; app_lua.api_list
+    &kamctl; rpc app_lua.api_list
 ...
             </programlisting>
         </section>
@@ -374,4 +374,3 @@ route {
 </programlisting>
     </section>
 </chapter>
-
