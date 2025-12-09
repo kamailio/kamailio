@@ -25,9 +25,6 @@ POSTGRES_XSL = $(STYLESHEETS)/db_postgres.xsl
 # Stylesheet used to generate dbtext database schema
 DBTEXT_XSL = $(STYLESHEETS)/db_text.xsl
 
-# Stylesheet used to generate berkeley database schema
-DB_BERKELEY_XSL = $(STYLESHEETS)/db_berkeley.xsl
-
 # Stylesheet used to generate sqlite database schema
 DB_SQLITE_XSL = $(STYLESHEETS)/db_sqlite.xsl
 
@@ -72,7 +69,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley db_sqlite oracle mongodb db_redis pi_framework
+all: mysql postgres dbtext db_sqlite oracle mongodb db_redis pi_framework
 
 .PHONY: pi_framework pi_framework_clean
 pi_framework:
@@ -162,32 +159,6 @@ dbtext:
 
 dbtext_clean:
 	-@rm -f $(SCHEME)/dbtext/kamailio/*
-
-.PHONY: db_berkeley db_berkeley_clean
-db_berkeley:
-	for FILE in $(TABLES); do \
-		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(SCHEME)/db_berkeley/kamailio" \
-		--stringparam prefix "" \
-		--stringparam db "db_berkeley" \
-		$(DB_BERKELEY_XSL) kamailio-"$$FILE".xml ; \
-	done
-	TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
-	# small hack to create the version table entries, this is here easier as with XSL
-	for FILE in $(sort $(wildcard $(SCHEME)/db_berkeley/kamailio/*)) ; do \
-		if [ -f "$$FILE" ]; then \
-			if [  "$$FILE" != "$(SCHEME)/db_berkeley/kamailio/version" ]; then \
-				tail -n 2 "$$FILE" >> "$(SCHEME)/db_berkeley/kamailio/version" ; \
- 				head -n 10 "$$FILE" > $TMPFILE ; \
-				cp $TMPFILE "$$FILE" ; \
-			fi ; \
-		fi ; \
-	done ; \
-	rm -f $TMPFILE
-
-db_berkeley_clean:
-	-@rm -f $(SCHEME)/db_berkeley/kamailio/*
-
 
 .PHONY: db_sqlite db_sqlite_clean
 db_sqlite:
@@ -365,4 +336,4 @@ dbdoc_clean:
 	done
 
 .PHONY: clean
-clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean db_sqlite_clean mongodb_clean db_redis_clean pi_framework_clean docbook_clean # modules_clean dbdoc_clean
+clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_sqlite_clean mongodb_clean db_redis_clean pi_framework_clean docbook_clean # modules_clean dbdoc_clean
