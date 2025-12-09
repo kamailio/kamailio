@@ -621,7 +621,7 @@ kamctl rpc pl.list testid
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.stats
+kamctl rpc pl.stats
 ...
 		</programlisting>
 	</section>
@@ -654,7 +654,7 @@ kamcmd pl.stats
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.set_pipe 2 RED 10
+kamctl rpc pl.set_pipe 2 RED 10
 ...
 		</programlisting>
 	</section>
@@ -679,7 +679,7 @@ kamcmd pl.set_pipe 2 RED 10
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.reset_pipe p01
+kamctl rpc pl.reset_pipe p01
 ...
 		</programlisting>
 	</section>
@@ -704,7 +704,7 @@ kamcmd pl.reset_pipe p01
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.rm_pipe p01
+kamctl rpc pl.rm_pipe p01
 ...
 		</programlisting>
 	</section>
@@ -724,7 +724,7 @@ kamcmd pl.rm_pipe p01
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.get_pipes
+kamctl rpc pl.get_pipes
 ...
 		</programlisting>
 	</section>
@@ -755,7 +755,7 @@ kamcmd pl.get_pipes
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.set_pid 0.5 0.5 0.5
+kamctl rpc pl.set_pid 0.5 0.5 0.5
 ...
 		</programlisting>
 	</section>
@@ -775,7 +775,7 @@ kamcmd pl.set_pid 0.5 0.5 0.5
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.get_pid
+kamctl rpc pl.get_pid
 ...
 		</programlisting>
 	</section>
@@ -802,7 +802,7 @@ kamcmd pl.get_pid
 		</para>
 		<programlisting  format="linespecific">
 ...
-kamcmd pl.push_load 0.85
+kamctl rpc pl.push_load 0.85
 ...
 		</programlisting>
 	</section>
