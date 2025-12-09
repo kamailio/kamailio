@@ -65,6 +65,10 @@
 
 #include "atomic_arm.h"
 
+#elif defined __CPU_aarch64
+
+#include "atomic_stdatomic.h"
+
 #elif defined __CPU_alpha
 
 #include "atomic_alpha.h"
