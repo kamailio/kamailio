@@ -324,7 +324,7 @@ bm_log_timer("test");
 				<title>Enabling a timer</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; benchmark.enable_timer test 1
+&kamctl; rpc benchmark.enable_timer test 1
 ...
 </programlisting>
 			</example>
@@ -353,7 +353,7 @@ bm_log_timer("test");
 				<title>List all timers</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; benchmark.timer_list
+&kamctl; rpc benchmark.timer_list
 {
 	name: test
 	state: enabled
@@ -400,7 +400,7 @@ bm_log_timer("test");
 				<title>List one timer</title>
 				<programlisting format="linespecific">
 ...
-&kamcmd; benchmark.timer_name_list test
+&kamctl; rpc benchmark.timer_name_list test
 {
 	name: test
 	state: enabled
