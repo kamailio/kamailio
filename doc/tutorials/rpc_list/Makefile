@@ -40,7 +40,6 @@ files_list= \
 		$(COREPATH)/modules/counters/counters.c:counters \
 		$(COREPATH)/modules/cplc/cpl_loader.c:cplc \
 		$(COREPATH)/modules/ctl/ctl.c:ctl \
-		$(COREPATH)/modules/db_berkeley/db_berkeley.c:db_berkeley \
 		$(COREPATH)/modules/db_flatstore/flat_rpc.c:db_flatstore \
 		$(COREPATH)/modules/db_flatstore/km_flatstore_mod.c:db_flatstore \
 		$(COREPATH)/modules/db_text/db_text.c:db_text \
