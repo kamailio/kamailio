@@ -180,9 +180,6 @@ set(MOD_LIST_SNMPSTATS snmpstats)
 # * modules depending on expat library
 set(MOD_LIST_XMPP xmpp)
 
-# * modules depending on bdb (db4) library
-set(MOD_LIST_BERKELEY db_berkeley)
-
 # * modules depending on curl library
 set(MOD_LIST_UTILS utils http_client lost slack auth_web3)
 
@@ -391,7 +388,6 @@ set(MOD_LIST_ALL
     ${MOD_LIST_PERLDEPS}
     ${MOD_LIST_CPL}
     ${MOD_LIST_XMPP}
-    ${MOD_LIST_BERKELEY}
     ${MOD_LIST_UTILS}
     ${MOD_LIST_MEMCACHED}
     ${MOD_LIST_TLSDEPS}
@@ -525,9 +521,6 @@ set(MODULE_GROUP_KSNMPSTATS ${MOD_LIST_SNMPSTATS})
 
 # pkg xmpp module
 set(MODULE_GROUP_KXMPP ${MOD_LIST_XMPP})
-
-# pkg berkeley module
-set(MODULE_GROUP_KBERKELEY ${MOD_LIST_BERKELEY})
 
 # pkg ldap modules
 set(MODULE_GROUP_KLDAP ${MOD_LIST_LDAP})
@@ -699,7 +692,6 @@ set(MODULE_GROUP_PACKAGE_GROUPS
     KPERL
     KSNMPSTATS
     KXMPP
-    KBERKELEY
     KLDAP
     KUTILS
     KHTTP_ASYNC
