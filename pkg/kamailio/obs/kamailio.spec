@@ -284,22 +284,6 @@ Requires:   kamailio = %ver
 Functions for authentication using shared keys.
 
 
-%package    bdb
-Summary:    Berkeley database connectivity for Kamailio
-Group:      %{PKGGROUP}
-Requires:   kamailio = %ver
-%if 0%{?suse_version}
-Requires:   libdb-4_8
-BuildRequires:  libdb-4_8-devel
-%else
-Requires:   libdb
-BuildRequires:  libdb-devel
-%endif
-
-%description    bdb
-Berkeley database connectivity for Kamailio.
-
-
 %package    carrierroute
 Summary:    The carrierroute module for Kamailio
 Group:      %{PKGGROUP}
@@ -643,7 +627,7 @@ MongoDB database connectivity for Kamailio.
 Summary:    Module allows bidirectional publish/subscribe communication by connecting Kamailio to a MQTT Broker
 Group:      %{PKGGROUP}
 Requires:   mosquitto, kamailio = %ver
-BuildRequires:  mosquitto-devel 
+BuildRequires:  mosquitto-devel
 
 %description    mqtt
 Module allows bidirectional publish/subscribe communication by connecting Kamailio to a MQTT Broker.
@@ -1201,7 +1185,7 @@ ims_usrloc_pcscf \
 ims_usrloc_scscf \
 %endif
 %if %{with jansson}
-jansson db_berkeley \
+jansson \
 janssonrpcc \
 %endif
 %if %{with json}
@@ -1724,17 +1708,6 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.auth_xkeys
 %{_libdir}/kamailio/modules/auth_xkeys.so
-
-
-%files      bdb
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.db_berkeley
-%{_sbindir}/kamdb_recover
-%{_libdir}/kamailio/modules/db_berkeley.so
-%{_libdir}/kamailio/kamctl/kamctl.db_berkeley
-%{_libdir}/kamailio/kamctl/kamdbctl.db_berkeley
-%dir %{_datadir}/kamailio/db_berkeley
-%{_datadir}/kamailio/db_berkeley/*
 
 
 %files      carrierroute
