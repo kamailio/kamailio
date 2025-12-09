@@ -1037,7 +1037,7 @@ modparam("tm", "callid_matching", 1)
 modparam("tm", "callid_cseq_matching", 0)
 ...
 
-kamcmd cfg.set_now_int tm callid_cseq_matching 1
+kamctl rpc cfg.set_now_int tm callid_cseq_matching 1
 		</programlisting>
 		</example>
 	</section>
