@@ -183,7 +183,7 @@ python_exec("my_python_function", "$rU");
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_python.reload
+&kamctl; rpc app_python.reload
 ...
             </programlisting>
 		</section>
@@ -203,11 +203,10 @@ python_exec("my_python_function", "$rU");
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_python.api_list
+&kamctl; rpc app_python.api_list
 ...
             </programlisting>
         </section>
 	</section>
 
 </chapter>
-
