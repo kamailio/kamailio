@@ -210,8 +210,6 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
-	async_destroy_timer_list();
-	async_destroy_ms_timer_list();
 }
 
 /**
