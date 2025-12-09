@@ -597,7 +597,7 @@ ws_close(4000, "Because I say so");
 		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; ws.dump used_asc
+&kamctl; rpc ws.dump used_asc
 ...
 </programlisting>
 	</section>
@@ -616,7 +616,7 @@ ws_close(4000, "Because I say so");
 		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; ws.close: 1
+&kamctl; rpc ws.close: 1
 ...
 </programlisting>
 	</section>
@@ -635,7 +635,7 @@ ws_close(4000, "Because I say so");
 		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; ws.ping 1
+&kamctl; rpc ws.ping 1
 ...
 </programlisting>
 	</section>
@@ -654,7 +654,7 @@ ws_close(4000, "Because I say so");
 		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; ws.pong 1
+&kamctl; rpc ws.pong 1
 ...
 </programlisting>
 	</section>
@@ -668,7 +668,7 @@ ws_close(4000, "Because I say so");
 		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; ws.disable
+&kamctl; rpc ws.disable
 ...
 </programlisting>
 	</section>
@@ -683,7 +683,7 @@ ws_close(4000, "Because I say so");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; ws.enable
+&kamctl; rpc ws.enable
 ...
 </programlisting>
 	</section>
@@ -739,4 +739,3 @@ event_route[websocket:closed] {
 	</section>
 
 </chapter>
-
