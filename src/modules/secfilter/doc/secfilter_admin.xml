@@ -620,7 +620,7 @@
 
          <programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.reload
+		&kamctl; rpc secfilter.reload
 		...
 		</programlisting>
        </example>
@@ -654,10 +654,10 @@
 
          <programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.print
-		&kamcmd; secfilter.print ua
-		&kamcmd; secfilter.print country
-		&kamcmd; secfilter.print dst
+		&kamctl; rpc secfilter.print
+		&kamctl; rpc secfilter.print ua
+		&kamctl; rpc secfilter.print country
+		&kamctl; rpc secfilter.print dst
 		...
 		</programlisting>
        </example>
@@ -677,7 +677,7 @@
 
          <programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.stats
+		&kamctl; rpc secfilter.stats
 		...
 		</programlisting>
        </example>
@@ -697,7 +697,7 @@
 
          <programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.stats_reset
+		&kamctl; rpc secfilter.stats_reset
 		...
 		</programlisting>
        </example>
@@ -725,7 +725,7 @@
 
          <programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.add_dst 555123123
+		&kamctl; rpc secfilter.add_dst 555123123
 		...
 		</programlisting>
        </example>
@@ -750,7 +750,7 @@
 
 		<programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.del_dst 555123123
+		&kamctl; rpc secfilter.del_dst 555123123
 		...
 		</programlisting>
 		</example>
@@ -778,8 +778,8 @@
 
          <programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.add_bl ua friendly-scanner
-		&kamcmd; secfilter.add_bl user sipvicious
+		&kamctl; rpc secfilter.add_bl ua friendly-scanner
+		&kamctl; rpc secfilter.add_bl user sipvicious
 		...
 		</programlisting>
        </example>
@@ -805,8 +805,8 @@
 
 		<programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.del_bl ua friendly-scanner
-		&kamcmd; secfilter.del_bl user sipvicious
+		&kamctl; rpc secfilter.del_bl ua friendly-scanner
+		&kamctl; rpc secfilter.del_bl user sipvicious
 		...
 		</programlisting>
 		</example>
@@ -834,8 +834,8 @@
 
          <programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.add_wl country es
-		&kamcmd; secfilter.add_wl user trusted_user
+		&kamctl; rpc secfilter.add_wl country es
+		&kamctl; rpc secfilter.add_wl user trusted_user
 		...
 		</programlisting>
        </example>
@@ -861,8 +861,8 @@
 
 		<programlisting format="linespecific">
 		...
-		&kamcmd; secfilter.del_wl country es
-		&kamcmd; secfilter.del_wl user trusted_user
+		&kamctl; rpc secfilter.del_wl country es
+		&kamctl; rpc secfilter.del_wl user trusted_user
 		...
 		</programlisting>
 		</example>
@@ -941,7 +941,7 @@
        <title>Print data</title>
 
        <example>
-         <title>kamcmd secfilter.print ua</title>
+         <title>kamctl rpc secfilter.print ua</title>
 
          <programlisting format="linespecific">
 		...
@@ -982,7 +982,7 @@
        <title>Statistics</title>
 
        <example>
-         <title>kamcmd secfilter.stats</title>
+         <title>kamctl rpc secfilter.stats</title>
 
          <programlisting format="linespecific">
 		...
