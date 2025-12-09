@@ -2867,7 +2867,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list
+&kamctl; rpc dlg.list
 ...
 		</programlisting>
 		</section>
@@ -2883,7 +2883,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list_ctx
+&kamctl; rpc dlg.list_ctx
 ...
 		</programlisting>
 		</section>
@@ -2922,11 +2922,11 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list_match furi eq sip:alice@test.com 2
+&kamctl; rpc dlg.list_match furi eq sip:alice@test.com 2
 ...
-&kamcmd; dlg.list_match furi sw sip:alice@
+&kamctl; rpc dlg.list_match furi sw sip:alice@
 ...
-&kamcmd; dlg.list_match start_ts gt s:1641550904
+&kamctl; rpc dlg.list_match start_ts gt s:1641550904
 ...
 		</programlisting>
 		</section>
@@ -2942,7 +2942,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list_match_ctx furi sw sip:alice@
+&kamctl; rpc dlg.list_match_ctx furi sw sip:alice@
 ...
 		</programlisting>
 		</section>
@@ -2960,7 +2960,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.dump_file "/tmp/dlg.json"
+&kamctl; rpc dlg.dump_file "/tmp/dlg.json"
 ...
 		</programlisting>
 		</section>
@@ -2985,9 +2985,9 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.dlg_list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+&kamctl; rpc dlg.dlg_list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 ...
-&kamcmd; dlg.dlg_list abcdrssfrs122444@192.168.1.1
+&kamctl; rpc dlg.dlg_list abcdrssfrs122444@192.168.1.1
 ...
 		</programlisting>
 		</section>
@@ -3004,9 +3004,9 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+&kamctl; rpc dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 ...
-&kamcmd; dlg.list_ctx abcdrssfrs122444@192.168.1.1
+&kamctl; rpc dlg.list_ctx abcdrssfrs122444@192.168.1.1
 ...
 		</programlisting>
 		</section>
@@ -3034,7 +3034,7 @@ dlg_set_state("early");
 		</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.terminate_dlg callid12345 fromtag123 totag123
+		kamctl rpc dlg.terminate_dlg callid12345 fromtag123 totag123
 		</programlisting>
 		</section>
 		<section>
@@ -3065,7 +3065,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.end_dlg 342 56
+&kamctl; rpc dlg.end_dlg 342 56
 ...
 		</programlisting>
 		</section>
@@ -3103,7 +3103,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.set_state callid12345 fromtag123 totag123 5
+&kamctl; rpc dlg.set_state callid12345 fromtag123 totag123 5
 ...
 		</programlisting>
 		</section>
@@ -3132,7 +3132,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.dlg.profile_get_size inbound_calls
+&kamctl; rpc dlg.dlg.profile_get_size inbound_calls
 ...
 		</programlisting>
 		</section>
@@ -3162,7 +3162,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.profile_list inbound_calls
+&kamctl; rpc dlg.profile_list inbound_calls
 ...
 		</programlisting>
 		</section>
@@ -3199,7 +3199,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.bridge_dlg _from_ _to_ _op_
+&kamctl; rpc dlg.bridge_dlg _from_ _to_ _op_
 ...
 		</programlisting>
 		</section>
@@ -3245,7 +3245,7 @@ dlg_set_state("early");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg.stats_active
+&kamctl; rpc dlg.stats_active
 ...
 		</programlisting>
 		</section>
@@ -3275,7 +3275,7 @@ dlg_set_state("early");
 			<para>RPC Command Format:</para>
 			<programlisting format="linespecific">
 ...
-&kamcmd; dlg.is_alive callid123 fromtag123 totag123
+&kamctl; rpc dlg.is_alive callid123 fromtag123 totag123
 ...
 			</programlisting>
 		</section>
