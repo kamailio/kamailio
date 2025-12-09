@@ -240,7 +240,7 @@ modparam("xlog", "log_colors", "L_ERR=cr;L_WARN=px")
 		</para>
 		<programlisting format="linespecific">
 ...
-kamcmd cfg.set_now_int xlog methods_filter 15
+kamctl rpc cfg.set_now_int xlog methods_filter 15
 ...
 </programlisting>
 		<para>
@@ -622,4 +622,3 @@ xalert("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 	</section>
 	</section>
 </chapter>
-
