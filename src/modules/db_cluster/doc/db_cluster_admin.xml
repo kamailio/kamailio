@@ -227,7 +227,7 @@ modparam("sqlops", "sqlcon", "ca=&gt;cluster://k1")
         <para>RPC Command Format:</para>
         <programlisting  format="linespecific">
 ...
-&kamcmd; dbcl.list_clusters
+&kamctl; rpc dbcl.list_clusters
 ...
         </programlisting>
         </section>
@@ -239,7 +239,7 @@ modparam("sqlops", "sqlcon", "ca=&gt;cluster://k1")
         <para>RPC Command Format:</para>
         <programlisting  format="linespecific">
 ...
-&kamcmd; dbcl.list_connections clustername
+&kamctl; rpc dbcl.list_connections clustername
 ...
         </programlisting>
         </section>
@@ -256,7 +256,7 @@ modparam("sqlops", "sqlcon", "ca=&gt;cluster://k1")
         <para>RPC Command Format:</para>
         <programlisting  format="linespecific">
 ...
-&kamcmd; dbcl.disable_connection clustername connectionname period
+&kamctl; rpc dbcl.disable_connection clustername connectionname period
 ...
         </programlisting>
         </section>
@@ -270,7 +270,7 @@ modparam("sqlops", "sqlcon", "ca=&gt;cluster://k1")
         <para>RPC Command Format:</para>
         <programlisting  format="linespecific">
 ...
-&kamcmd; dbcl.enable_connection clustername connectionname
+&kamctl; rpc dbcl.enable_connection clustername connectionname
 ...
         </programlisting>
         </section>
@@ -279,4 +279,3 @@ modparam("sqlops", "sqlcon", "ca=&gt;cluster://k1")
 	</section>
 
 </chapter>
-
