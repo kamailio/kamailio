@@ -34,7 +34,7 @@ INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
 INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
 INSTALL_DBUID_TABLES=${INSTALL_DBUID_TABLES:-ask}
 
-# Used by dbtext and db_berkeley to define tables to be created, used by
+# Used by dbtext to define tables to be created, used by
 # postgres to do the grants
 STANDARD_TABLES=${STANDARD_TABLES:-'version acc dbaliases domain domain_attrs
 		grp uri speed_dial lcr_gw lcr_rule lcr_rule_target pdt subscriber

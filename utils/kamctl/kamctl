@@ -147,12 +147,6 @@ case $DBENGINE in
 			DBENGINELOADED=1
 		fi
 		;;
-	DB_BERKELEY|db_berkeley|BERKELEY|berkeley)
-		if [ -f "$MYLIBDIR/kamctl.db_berkeley" ]; then
-			. "$MYLIBDIR/kamctl.db_berkeley"
-			DBENGINELOADED=1
-		fi
-		;;
 	SQLITE|sqlite)
 		if [ -f "$MYLIBDIR/kamctl.sqlite" ]; then
 			. "$MYLIBDIR/kamctl.sqlite"

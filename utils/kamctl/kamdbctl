@@ -118,15 +118,6 @@ case $DBENGINE in
 			merr "could not load the script in $MYLIBDIR/kamdbctl.dbtext for database engine $DBENGINE"
 		fi
 		;;
-	DB_BERKELEY|db_berkeley|BERKELEY|berkeley)
-		if [ -f "$MYLIBDIR/kamdbctl.db_berkeley" ]; then
-			. "$MYLIBDIR/kamdbctl.db_berkeley"
-			USED_DBENGINE="berkeley"
-			DBNAME=$DB_PATH
-		else
-			merr "could not load the script in $MYLIBDIR/kamdbctl.db_berkeley for database engine $DBENGINE"
-		fi
-		;;
 	SQLITE|sqlite)
 		if [ -f "$MYLIBDIR/kamdbctl.sqlite" ]; then
 			. "$MYLIBDIR/kamdbctl.sqlite"
@@ -290,7 +281,7 @@ kamailio_pframework() #pars: <action>
 case $1 in
 	copy)
 		# copy database to some other name
-		if [ "$USED_DBENGINE" = "berkeley" -o "$USED_DBENGINE" = "dbtext" ] ; then
+		if [ "$USED_DBENGINE" = "dbtext" ] ; then
 			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
@@ -323,7 +314,7 @@ case $1 in
 		exit $ret
 		;;
 	backup)
-		if [ "$USED_DBENGINE" = "berkeley" -o "$USED_DBENGINE" = "dbtext" ] ; then
+		if [ "$USED_DBENGINE" = "dbtext" ] ; then
 			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
@@ -337,7 +328,7 @@ case $1 in
 		exit $?
 		;;
 	restore)
-		if [ "$USED_DBENGINE" = "berkeley" -o "$USED_DBENGINE" = "dbtext" ] ; then
+		if [ "$USED_DBENGINE" = "dbtext" ] ; then
 			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
@@ -471,11 +462,6 @@ case $1 in
 		fi
 
 		kamailio_add_tables $DBNAME $2
-		exit $?
-		;;
-	bdb|db_berkeley)
-		shift
-		kamailio_berkeley "$@"
 		exit $?
 		;;
 	pframework)

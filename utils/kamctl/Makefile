@@ -190,31 +190,6 @@ install-modules: $(bin_prefix)/$(bin_dir)
 			$(MAKE) -C ../db_oracle/ ; \
 			$(INSTALL_BIN) ../db_oracle/kamailio_orasel $(bin_prefix)/$(bin_dir) ; \
 		fi
-		# install Berkeley database stuff
-		if [ "$(BERKELEYDBON)" = "yes" ]; then \
-			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
-			sed -e "s#/usr/local/share/kamailio/#$(data_target)#g" \
-				< kamctl.db_berkeley > $(kamctltmpdir)/kamctl.db_berkeley ; \
-			$(INSTALL_CFG) $(kamctltmpdir)/kamctl.db_berkeley \
-				$(modules_prefix)/$(lib_dir)/kamctl/kamctl.db_berkeley ; \
-			rm -fr $(kamctltmpdir)/kamctl.db_berkeley ; \
-			sed -e "s#/usr/local/share/kamailio#$(data_target)#g" \
-				< kamdbctl.db_berkeley > $(kamctltmpdir)/kamdbctl.db_berkeley ; \
-			$(INSTALL_TOUCH) $(modules_prefix)/$(lib_dir)/kamctl/kamdbctl.db_berkeley ; \
-			$(INSTALL_CFG) $(kamctltmpdir)/kamdbctl.db_berkeley $(modules_prefix)/$(lib_dir)/kamctl/ ; \
-			rm -fr $(kamctltmpdir)/kamdbctl.db_berkeley ; \
-			mkdir -p $(data_prefix)/$(data_dir)/db_berkeley/kamailio ; \
-			for FILE in $(wildcard db_berkeley/kamailio/*) ; do \
-				if [ -f $$FILE ] ; then \
-				$(INSTALL_TOUCH) $$FILE \
-					$(data_prefix)/$(data_dir)/db_berkeley/kamailio/`basename "$$FILE"` ; \
-				$(INSTALL_CFG) $$FILE \
-					$(data_prefix)/$(data_dir)/db_berkeley/kamailio/`basename "$$FILE"` ; \
-				fi ;\
-			done ; \
-			$(MAKE) -C ../db_berkeley/ ; \
-			$(INSTALL_BIN) ../db_berkeley/kambdb_recover $(bin_prefix)/$(bin_dir) ; \
-		fi
 		# install dbtext stuff
 		if [ "$(DBTEXTON)" = "yes" ]; then \
 			mkdir -p $(modules_prefix)/$(lib_dir)/kamctl ; \
