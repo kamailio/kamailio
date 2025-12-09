@@ -245,8 +245,8 @@ Chapter 1. Admin Guide
    With this Perl module, you can easily implement your own Kamailio
    extensions in Perl. This allows for simple access to the full world of
    CPAN modules. SIP URI rewriting could be implemented based on regular
-   expressions; accessing arbitrary data backends, e.g. LDAP or Berkeley
-   DB files, is now extremely simple.
+   expressions; accessing arbitrary data backends, e.g. LDAP files, is now
+   extremely simple.
 
 2. Installing the module
 

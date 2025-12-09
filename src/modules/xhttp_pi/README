@@ -136,7 +136,6 @@ kamdbctl pframework create
    using a database.
 
    Supported databases:
-     * berkeley
      * cassandra
      * cluster
      * flatstore

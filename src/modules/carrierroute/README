@@ -286,7 +286,7 @@ Chapter 1. Admin Guide
      * a database module, when a database is used as configuration data
        source. Only SQL based databases are supported, as this module
        needs the capability to issue raw queries. It is not possible to
-       use the dbtext or db_berkeley module at the moment.
+       use the dbtext module at the moment.
      * The tm module, when you want to use the $T_reply_code
        pseudo-variable in the “cr_next_domain” function.
 
