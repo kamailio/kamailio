@@ -1332,7 +1332,7 @@ if (is_from_gw("3","1") {
 		<para>It takes no parameter.</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-	kamcmd drouting.reload
+	kamctl rpc drouting.reload
 		</programlisting>
 	</section>
 </section>
@@ -1349,4 +1349,3 @@ if (is_from_gw("3","1") {
 </section>
 
 </chapter>
-
