@@ -651,7 +651,7 @@ modparam("dmq", "fail_count_threshold_disabled", 105)
                 <title>dmq.list_nodes usage</title>
                 <programlisting format="linespecific">
 ...
-&kamcmd; dmq.list_nodes
+&kamctl; rpc dmq.list_nodes
 ...
                 </programlisting>
                 </example>
@@ -682,4 +682,3 @@ modparam("dmq", "fail_count_threshold_disabled", 105)
         </section>
 	</section>
 </chapter>
-
