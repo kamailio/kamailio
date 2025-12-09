@@ -3,10 +3,10 @@
 Kamailio  modules
 ==================
 
-This is a major release of the merged SIP Server - Kamailio and SER. 
+This is a major release of the merged SIP Server - Kamailio and SER.
 
 In  previous releases (v3.x) some modules where provided in two versions, in Kamailio
-and SER flavours. These are now merged. In some cases, the functionality has 
+and SER flavours. These are now merged. In some cases, the functionality has
 changed. You can still do the same operation, but how you do it may be different.
 
 Modules are found in the "modules" directory. After installation that can
@@ -64,7 +64,6 @@ corex			Core extensions
 counters		Internal counter API for configuration
 cpl-c			Implementation of SIP Call Processing Language (RFC 3880)
 ctl			Control connector for RPC interface (fifo, unixsock, tcp, udp)
-db_berkeley		Database :: Berkeley DB (Oracle)
 db_cluster		Generic database connectors clustering and failover
 db_cassandra		Database :: Cassandra database server connector
 db_flatstore		Database :: Flatstore
@@ -166,7 +165,7 @@ pua_usrloc		Presence :: USRLOC integration
 pua_xmpp		Presence :: XMPP/Jabber gateway
 purple			Presence :: Libpurple support
 pv			Pseudo-variable implementation
-qos			Dialogs :: SDP management 
+qos			Dialogs :: SDP management
 ratelimit		Traffic shaping module
 regex			Regular expression support
 registrar		Registrar/location server support
@@ -221,4 +220,3 @@ xmlops			XML operations using XPath
 xmlrpc			HTTP :: XMLrpc support
 xmpp			Presence/IM :: XMPP/jabber gateway
 xprint			Functions for printing messages with specifiers (from SER)
-

@@ -41,7 +41,6 @@
 		<xi:include href="rpc_counters.xml"/>
 		<xi:include href="rpc_cplc.xml"/>
 		<xi:include href="rpc_ctl.xml"/>
-		<xi:include href="rpc_db_berkeley.xml"/>
 		<xi:include href="rpc_db_flatstore.xml"/>
 		<xi:include href="rpc_db_flatstore.xml"/>
 		<xi:include href="rpc_db_text.xml"/>
