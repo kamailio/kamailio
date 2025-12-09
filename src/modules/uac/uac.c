@@ -457,7 +457,6 @@ static int child_init(int rank)
 
 static void mod_destroy(void)
 {
-	destroy_credentials();
 }
 
 
