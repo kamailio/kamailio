@@ -1376,7 +1376,7 @@ event_route[uac:reply] {
 		<title><function>uac.reg_dump</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_dump
+   kamctl rpc uac.reg_dump
 ...
 			</programlisting>
 		</example>
@@ -1418,8 +1418,8 @@ event_route[uac:reply] {
 		<title><function>uac.reg_info</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_info l_uuid account123
-   kamcmd uac.reg_info l_uuid s:12345678
+   kamctl rpc uac.reg_info l_uuid account123
+   kamctl rpc uac.reg_info l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1440,8 +1440,8 @@ event_route[uac:reply] {
 		<title><function>uac.reg_enable</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_enable l_uuid account123
-   kamcmd uac.reg_enable l_uuid s:12345678
+   kamctl rpc uac.reg_enable l_uuid account123
+   kamctl rpc uac.reg_enable l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1462,8 +1462,8 @@ event_route[uac:reply] {
 		<title><function>uac.reg_disable</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_disable l_uuid account123
-   kamcmd uac.reg_disable l_uuid s:12345678
+   kamctl rpc uac.reg_disable l_uuid account123
+   kamctl rpc uac.reg_disable l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1484,8 +1484,8 @@ event_route[uac:reply] {
 		<title><function>uac.reg_register</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_register l_uuid account123
-   kamcmd uac.reg_register l_uuid s:12345678
+   kamctl rpc uac.reg_register l_uuid account123
+   kamctl rpc uac.reg_register l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1506,8 +1506,8 @@ event_route[uac:reply] {
 		<title><function>uac.reg_unregister</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_unregister l_uuid account123
-   kamcmd uac.reg_unregister l_uuid s:12345678
+   kamctl rpc uac.reg_unregister l_uuid account123
+   kamctl rpc uac.reg_unregister l_uuid s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1527,7 +1527,7 @@ event_route[uac:reply] {
 		<title><function>uac.reg_reload</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_reload
+   kamctl rpc uac.reg_reload
 ...
 			</programlisting>
 		</example>
@@ -1546,8 +1546,8 @@ event_route[uac:reply] {
 		<title><function>uac.reg_refresh</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_refresh account123
-   kamcmd uac.reg_refresh s:12345678
+   kamctl rpc uac.reg_refresh account123
+   kamctl rpc uac.reg_refresh s:12345678
 ...
 			</programlisting>
 		</example>
@@ -1610,7 +1610,7 @@ event_route[uac:reply] {
 		<title><function>uac.reg_add</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_add ...
+   kamctl rpc uac.reg_add ...
 ...
 			</programlisting>
 		</example>
@@ -1628,7 +1628,7 @@ event_route[uac:reply] {
 		<title><function>uac.reg_remove</function> usage</title>
 			<programlisting format="linespecific">
 ...
-   kamcmd uac.reg_remove my_l_uuid
+   kamctl rpc uac.reg_remove my_l_uuid
 ...
 			</programlisting>
 		</example>
