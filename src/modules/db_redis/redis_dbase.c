@@ -1743,7 +1743,7 @@ static int db_redis_perform_query(const db1_con_t *_h, km_redis_con_t *con,
 
 		max = 0;
 		if(*keys_count == num_rows)
-			max = (*keys_count) % 1000;
+			max = (*keys_count == 1000) ? 1000 : *keys_count % 1000;
 		else if(num_rows % 1000 == 0)
 			max = 1000;
 
