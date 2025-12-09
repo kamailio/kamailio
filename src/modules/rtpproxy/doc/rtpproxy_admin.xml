@@ -933,7 +933,7 @@ start_recording();
 			<function moreinfo="none">rtpproxy.enable</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; rtpproxy.enable udp:192.168.2.133:8081 0
+$ &kamctl; rpc rtpproxy.enable udp:192.168.2.133:8081 0
 ...
 			</programlisting>
 			</example>
@@ -953,7 +953,7 @@ $ &kamcmd; rtpproxy.enable udp:192.168.2.133:8081 0
 				<function moreinfo="none">rtpproxy.list</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; rtpproxy.list
+$ &kamctl; rpc rtpproxy.list
 ...
 			</programlisting>
 			</example>
