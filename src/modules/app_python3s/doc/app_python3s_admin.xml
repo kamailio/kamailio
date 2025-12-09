@@ -237,7 +237,7 @@ app_python3s_exec("my_python_function", "$rU");
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_python3s.reload
+&kamctl; rpc app_python3s.reload
 ...
             </programlisting>
 			<para>
@@ -279,7 +279,7 @@ def ksr_script_init():
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_python3s.api_list
+&kamctl; rpc app_python3s.api_list
 ...
             </programlisting>
         </section>
