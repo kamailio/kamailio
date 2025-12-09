@@ -254,18 +254,8 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	LM_DBG("cleaning up\n");
-	if(_ptree != NULL) {
-		if(*_ptree != NULL)
-			pdt_free_tree(*_ptree);
-		shm_free(_ptree);
-	}
-	if(db_con != NULL && pdt_dbf.close != NULL)
+	if(db_con != NULL && pdt_dbf.close != NULL) {
 		pdt_dbf.close(db_con);
-	/* destroy lock */
-	if(pdt_lock) {
-		lock_destroy(pdt_lock);
-		lock_dealloc(pdt_lock);
-		pdt_lock = 0;
 	}
 }
 
