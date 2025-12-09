@@ -222,7 +222,6 @@ static int mod_init(void)
  */
 static void mod_destroy(void)
 {
-	tree_close();
 }
 
 
