@@ -264,7 +264,7 @@ if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_jsdt.reload
+&kamctl; rpc app_jsdt.reload
 ...
             </programlisting>
         </section>
@@ -284,7 +284,7 @@ if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_jsdt.api_list
+&kamctl; rpc app_jsdt.api_list
 ...
             </programlisting>
         </section>
