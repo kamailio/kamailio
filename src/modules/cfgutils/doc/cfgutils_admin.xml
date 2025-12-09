@@ -677,7 +677,7 @@ core_hash("$ci", "", 4);
 				<title><function moreinfo="none">cfgutils.rand_set_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.rand_set_prob 10
+$ &kamctl; rpc cfgutils.rand_set_prob 10
 ...
 </programlisting>
 			</example>
@@ -696,7 +696,7 @@ $ &kamcmd; cfgutils.rand_set_prob 10
 					<function moreinfo="none">cfgutils.rand_reset_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.rand_reset_prob
+$ &kamctl; rpc cfgutils.rand_reset_prob
 ...
 </programlisting>
 			</example>
@@ -713,7 +713,7 @@ $ &kamcmd; cfgutils.rand_reset_prob
 				<title><function moreinfo="none">cfgutils.rand_get_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.rand_get_prob
+$ &kamctl; rpc cfgutils.rand_get_prob
 ...
 </programlisting>
 			</example>
@@ -732,7 +732,7 @@ $ &kamcmd; cfgutils.rand_get_prob
 				<title><function moreinfo="none">cfgutils.check_config_hash</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.check_config_hash
+$ &kamctl; rpc cfgutils.check_config_hash
 ...
 </programlisting>
 			</example>
@@ -750,7 +750,7 @@ $ &kamcmd; cfgutils.check_config_hash
 				<title><function moreinfo="none">cfgutils.get_config_hash</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.get_config_hash
+$ &kamctl; rpc cfgutils.get_config_hash
 ...
 </programlisting>
 			</example>
@@ -768,7 +768,7 @@ $ &kamcmd; cfgutils.get_config_hash
 			<title><function moreinfo="none">cfgutils.set_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.set_gflag 1
+$ &kamctl; rpc cfgutils.set_gflag 1
 ...
 </programlisting>
 			</example>
@@ -788,7 +788,7 @@ $ &kamcmd; cfgutils.set_gflag 1
 				<function moreinfo="none">cfgutils.reset_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.reset_gflag 1
+$ &kamctl; rpc cfgutils.reset_gflag 1
 ...
 </programlisting>
 			</example>
@@ -810,8 +810,8 @@ $ &kamcmd; cfgutils.reset_gflag 1
 			<title><function moreinfo="none">cfgutils.is_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.set_gflag 1024
-$ &kamcmd; cfgutils.is_gflag 1024
+$ &kamctl; rpc cfgutils.set_gflag 1024
+$ &kamctl; rpc cfgutils.is_gflag 1024
 TRUE
 ...
 </programlisting>
@@ -828,7 +828,7 @@ TRUE
 				<function moreinfo="none">cfgutils.get_gflags</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; cfgutils.get_gflags
+$ &kamctl; rpc cfgutils.get_gflags
 ...
 </programlisting>
 			</example>
