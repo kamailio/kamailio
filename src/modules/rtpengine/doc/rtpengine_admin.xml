@@ -3989,7 +3989,7 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
 				<function moreinfo="none">rtpengine.reload</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; rtpengine.reload
+$ &kamctl; rpc rtpengine.reload
 ...
 			</programlisting>
 			</example>
@@ -4028,9 +4028,9 @@ $ &kamcmd; rtpengine.reload
 			<function moreinfo="none">rtpengine.enable</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; rtpengine.enable udp:192.168.2.133:8081 0
-$ &kamcmd; rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
-$ &kamcmd; rtpengine.enable all 1
+$ &kamctl; rpc rtpengine.enable udp:192.168.2.133:8081 0
+$ &kamctl; rpc rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
+$ &kamctl; rpc rtpengine.enable all 1
 ...
 			</programlisting>
 			</example>
@@ -4059,9 +4059,9 @@ $ &kamcmd; rtpengine.enable all 1
 				<function moreinfo="none">rtpengine.show</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; rtpengine.show udp:192.168.2.133:8081
-$ &kamcmd; rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ &kamcmd; rtpengine.show all
+$ &kamctl; rpc rtpengine.show udp:192.168.2.133:8081
+$ &kamctl; rpc rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ &kamctl; rpc rtpengine.show all
 ...
 			</programlisting>
 			</example>
@@ -4088,9 +4088,9 @@ $ &kamcmd; rtpengine.show all
 				<function moreinfo="none">rtpengine.ping</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; rtpengine.ping udp:192.168.2.133:8081
-$ &kamcmd; rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ &kamcmd; rtpengine.ping all
+$ &kamctl; rpc rtpengine.ping udp:192.168.2.133:8081
+$ &kamctl; rpc rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ &kamctl; rpc rtpengine.ping all
 ...
 			</programlisting>
 			</example>
@@ -4106,7 +4106,7 @@ $ &kamcmd; rtpengine.ping all
 				<function moreinfo="none">rtpengine.get_hash_total</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &kamcmd; rtpengine.get_hash_total
+$ &kamctl; rpc rtpengine.get_hash_total
 ...
 			</programlisting>
 			</example>
