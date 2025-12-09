@@ -166,9 +166,6 @@ mod_list_ims=cdp cdp_avp ims_dialog ims_auth ims_isc ims_icscf ims_qos ims_qos_n
 			   ims_usrloc_scscf ims_charging ims_ocs ims_diameter_server \
 			   ims_ipsec_pcscf
 
-# - modules depending on java library
-mod_list_java=app_java
-
 # - modules depending on gzip library
 mod_list_gzcompress=gzcompress
 
@@ -260,7 +257,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
 			   $(mod_list_outbound) \
-			   $(mod_list_java) $(mod_list_dnssec) \
+			   $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
 			   $(mod_list_ev) $(mod_list_kazoo) \
@@ -461,9 +458,6 @@ module_group_kims=$(mod_list_ims)
 
 # pkg outbound module
 module_group_koutbound=$(mod_list_outbound)
-
-# pkg java module
-module_group_kjava=$(mod_list_java)
 
 # pkg dnssec module
 module_group_kdnssec=$(mod_list_dnssec)
