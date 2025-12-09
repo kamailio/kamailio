@@ -5,7 +5,6 @@
 		 - an "id" to be identified by a tabe
 		 - a URL pointing to the actual database
 		 Supported databases:
-		 * berkeley
 		 * cassandra
 		 * cluster
 		 * flatstore
@@ -188,7 +187,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	
+
 	<!-- dialplan provisioning -->
 	<mod>	<mod_name>dialplan</mod_name>
 		<cmd>	<cmd_name>show_all</cmd_name>
