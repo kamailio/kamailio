@@ -149,7 +149,7 @@ void db_mysql_async_exec_task(void *param)
 		LM_ERR("failed to execute query [%.*s] on async worker\n",
 				(p[1].len > 100) ? 100 : p[1].len, p[1].s);
 	}
-	pkg_free(dbc);
+	db_do_con_free(dbc);
 }
 
 /**
