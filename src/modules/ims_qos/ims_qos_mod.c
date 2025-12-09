@@ -792,8 +792,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 	struct dlg_cell *dlg = 0;
 
 	cfg_action_t *cfg_action = 0;
-	saved_transaction_t *saved_t_data =
-			0; //data specific to each contact's AAR async call
+	// Data specific to each contact's AAR async call.
+	saved_transaction_t *saved_t_data = 0;
 	char *direction = dir;
 
 	// standard config
@@ -911,9 +911,12 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 			|| (t->method.len == 6
 					&& (memcmp(t->method.s, "INVITE", 6) == 0
 							|| memcmp(t->method.s, "UPDATE", 6) == 0))) {
-		if(cscf_get_content_length(msg) == 0
-				|| cscf_get_content_length(orig_sip_request_msg) == 0) {
-			LM_WARN("No SDP offer answer -> therefore we can not do Rx AAR");
+		// UE sends a SIP UPDATE with no SDP in the message body for session refresh.
+		if((memcmp(t->method.s, "UPDATE", 6) != 0)
+				&& (cscf_get_content_length(msg) == 0
+						|| cscf_get_content_length(orig_sip_request_msg)
+								   == 0)) {
+			LM_WARN("No SDP offer/answer in message. Not sending Rx AAR");
 			//goto aarna; //AAR na if we don't have offer/answer pair
 			return result;
 		}
@@ -989,13 +992,19 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 	memcpy(saved_t_data->ftag.s, ftag.s, ftag.len);
 	saved_t_data->ftag.len = ftag.len;
 
-	saved_t_data->aar_update =
-			0; //by default we say this is not an aar update - if it is we set it below
+	// Flag to indicate this is an initial AAR or an update to already sent AAR.
+	// Flag will be updated later on based on the presence of Rx session and other conditions.
+	saved_t_data->aar_update = 0;
+
+	// Flag indicating whether its the case of session refresh.
+	// In such cases, we need to send AAR using previously authorized flows to the PCRF.
+	saved_t_data->session_refresh = 0;
 
 	//store branch
 	int branch;
 	if(tmb.t_check(msg, &branch) == -1) {
 		LOG(L_ERR, "ERROR: t_suspend: failed find UAC branch\n");
+		shm_free(saved_t_data);
 		return result;
 	}
 
@@ -1241,7 +1250,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 				auth_session->id.len, auth_session->id.s, direction);
 	} else {
 		LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
-		//check if this is triggered by a 183 - if so break here as it is probably a re-transmit
+		// Check if this is triggered by a 183 - if so break here as it is probably a re-transmit.
 		if((msg->first_line).u.reply.statuscode == 183) {
 			LM_DBG("Received a 183 for a diameter session that already exists "
 				   "- just going to ignore this\n");
@@ -1249,8 +1258,24 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 			result = CSCF_RETURN_TRUE;
 			goto ignore;
 		}
-		saved_t_data->aar_update =
-				1; //this is an update aar - we set this so on async_aar we know this is an update and act accordingly
+
+		if((memcmp(t->method.s, "UPDATE", 6) == 0)
+				&& (cscf_get_content_length(msg) == 0
+						|| cscf_get_content_length(orig_sip_request_msg)
+								   == 0)) {
+			rx_authdata_p =
+					(rx_authsessiondata_t *)auth_session->u.auth.generic_data;
+			if(rx_authdata_p->first_current_flow_description == NULL) {
+				LM_WARN("No existing authorized flows for this session - not "
+						"sending AAR update for session refresh with no SDP");
+				goto error;
+			}
+			saved_t_data->session_refresh = 1;
+		} else {
+			// In all other cases, we consider this as a AAR update.
+			// We set this so on async_aar we know this is an update and act accordingly.
+			saved_t_data->aar_update = 1;
+		}
 	}
 
 	dlg = dlgb.get_dlg(msg);

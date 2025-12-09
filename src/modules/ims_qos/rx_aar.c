@@ -774,8 +774,8 @@ int rx_send_aar_update_no_video(AAASession *auth)
 			   __FUNCTION__))
 		goto error;
 
-	/* Add Auth lifetime AVP */ LM_DBG("auth_lifetime %u\n",
-			rx_auth_expiry); //TODO check why this is 0 all the time
+	/* Add Auth lifetime AVP */
+	LM_DBG("auth_lifetime %u\n", rx_auth_expiry);
 	if(rx_auth_expiry) {
 		set_4bytes(x, rx_auth_expiry);
 		if(!rx_add_avp(aar, x, 4, AVP_Authorization_Lifetime,
@@ -942,13 +942,17 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
 			goto error;
 	}
 
-	/* Add Auth lifetime AVP */ LM_DBG("auth_lifetime %u\n",
-			rx_auth_expiry); //TODO check why this is 0 all the time
+	/* Add Auth lifetime AVP */
+	LM_DBG("auth_lifetime %u\n", rx_auth_expiry);
 	if(rx_auth_expiry) {
 		set_4bytes(x, rx_auth_expiry);
 		if(!rx_add_avp(aar, x, 4, AVP_Authorization_Lifetime,
 				   AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__))
 			goto error;
+		// Update the auth session expiry time only in case of session refresh.
+		if(saved_t_data->session_refresh) {
+			auth->u.auth.lifetime = time(NULL) + rx_auth_expiry;
+		}
 	}
 
 	LM_DBG("Adding subscription id...\n");
@@ -985,8 +989,14 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
      * 									[RR-Bandwidth]
      * 									*[Codec-Data]
      */
-
-	add_media_components(aar, req, res, dlg_direction, auth);
+	if(saved_t_data->session_refresh) {
+		LM_DBG("Case of session refresh with no SDP in message body. Sending "
+			   "AAR with previously authorized flows\n");
+		add_media_components_using_current_flow_description(
+				aar, p_session_data);
+	} else {
+		add_media_components(aar, req, res, dlg_direction, auth);
+	}
 
 	LM_DBG("Adding framed ip address [%.*s]\n", ip.len, ip.s);
 	/* Add Framed IP address AVP*/
@@ -1150,8 +1160,8 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession *auth,
 		goto error;
 	}
 
-	/* Add Auth lifetime AVP */ LM_DBG("auth_lifetime %u\n",
-			rx_auth_expiry); //TODO check why this is 0 all the time
+	/* Add Auth lifetime AVP */
+	LM_DBG("auth_lifetime %u\n", rx_auth_expiry);
 	if(rx_auth_expiry) {
 		set_4bytes(x, rx_auth_expiry);
 		if(!rx_add_avp(aar, x, 4, AVP_Authorization_Lifetime,
