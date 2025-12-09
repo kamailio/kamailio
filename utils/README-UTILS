@@ -1,6 +1,5 @@
 This directory contains various utility programs for SIP-router
 
-db_berkeley	 recovery for berkeley_db module
 db_oracle		????
 fifo_relay	PHP script to provide network based fifo access
 kamctl		Script to communicate with Kamailio over the MI interface
