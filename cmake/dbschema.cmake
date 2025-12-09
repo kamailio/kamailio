@@ -38,7 +38,6 @@ function(add_db_target db_name xsl_file)
 
   # db_name for old makefiles are different.
   #     old       ->     new (module names)
-  # db_berkeley   -> db_berkeley
   # mongodb       -> db_mongodb
   # mysql         -> db_mysql
   # db_oracle     -> db_oracle
@@ -69,8 +68,7 @@ function(add_db_target db_name xsl_file)
   foreach(table ${EXTRACTED_TABLES})
 
     # Determine the prefix/suffix
-    if(db_name STREQUAL "db_berkeley"
-       OR db_name STREQUAL "db_redis"
+    if(db_name STREQUAL "db_redis"
        OR db_name STREQUAL "db_text"
        OR db_name STREQUAL "db_mongodb"
     )
@@ -94,7 +92,7 @@ function(add_db_target db_name xsl_file)
     )
   endforeach()
 
-  # Create version table for db_text and db_berkeley
+  # Create version table for db_text
   # Use bash script
   set(POSTPROCESS_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/dbschema-version-postprocess.sh")
 
@@ -106,15 +104,6 @@ function(add_db_target db_name xsl_file)
       COMMENT "Creating version table for ${db_name}"
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
     )
-  elseif(db_name STREQUAL "db_berkeley")
-    add_custom_command(
-      TARGET dbschema_${db_name}
-      POST_BUILD
-      COMMAND ${POSTPROCESS_SCRIPT} 2 10
-      COMMENT "Creating version table for ${db_name}"
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}
-    )
-
   endif()
 
   add_custom_target(
@@ -184,9 +173,6 @@ else()
     message(STATUS "Extracted Tables for DB schema generation: ${EXTRACTED_TABLES}")
   endif()
 endif()
-
-#---- DB berkeley
-add_db_target(db_berkeley "${STYLESHEETS}/db_berkeley.xsl")
 
 #---- DB mongo
 add_db_target(db_mongodb "${STYLESHEETS}/db_mongodb.xsl")
