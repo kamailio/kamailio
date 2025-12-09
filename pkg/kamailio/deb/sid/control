@@ -13,6 +13,7 @@ Build-Depends:
  erlang-dev,
  flex,
  libcurl4-openssl-dev,
+ libdb-dev (>= 4.6.19),
  libev-dev,
  libevent-dev,
  libexpat1-dev,
@@ -78,7 +79,6 @@ Depends:
 Replaces:
  kamailio-carrierroute-modules,
 Suggests:
- kamailio-berkeley-modules,
  kamailio-cpl-modules,
  kamailio-dbg,
  kamailio-ldap-modules,

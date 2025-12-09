@@ -40,7 +40,6 @@ EXTRA_EXCLUDED_MODULES += iptrtpproxy
 EXTRA_EXCLUDED_MODULES += dnssec
 EXTRA_EXCLUDED_MODULES += java
 EXTRA_EXCLUDED_MODULES += python
-EXTRA_EXCLUDED_MODULES += berkeley
 ## --EXCLUDED--
 
 
@@ -214,8 +213,6 @@ clean:
 	dh_clean
 
 install: build $(INSTALL_MODULES) $(INSTALL_EXTRA)
-	mv $(D)-berkeley-modules/usr/sbin/kambdb_recover \
-		$(D)-berkeley-bin/usr/sbin/kambdb_recover
 	# install /etc/default/kamailio file
 	mkdir -p $(D)/etc/default
 	cp -f debian/kamailio.default $(D)/etc/default/kamailio

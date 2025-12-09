@@ -62,7 +62,6 @@ EXTRA_EXCLUDED_MODULES += kafka
 # on which other depend first)
 PACKAGE_GROUPS += mysql
 PACKAGE_GROUPS += postgres
-PACKAGE_GROUPS += berkeley
 PACKAGE_GROUPS += unixodbc
 PACKAGE_GROUPS += radius
 PACKAGE_GROUPS += presence
@@ -213,8 +212,6 @@ clean:
 	dh_clean
 
 install: build $(INSTALL_MODULES) $(INSTALL_EXTRA)
-	mv $(D)-berkeley-modules/usr/sbin/kambdb_recover \
-		$(D)-berkeley-bin/usr/sbin/kambdb_recover
 	# install /etc/default/kamailio file
 	mkdir -p $(D)/etc/default
 	cp -f debian/kamailio.default $(D)/etc/default/kamailio
