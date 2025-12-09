@@ -1028,7 +1028,7 @@ event_route[xhttp:request] {
 		<title><function>xhttp_prom.counter_reset</function> usage</title>
 		<programlisting format="linespecific">
 		  ...
-		  &kamcmd; xhttp_prom.counter_reset "cnt01" "push" "192.168.0.1"
+		  &kamctl; rpc xhttp_prom.counter_reset "cnt01" "push" "192.168.0.1"
 		  ...
 		</programlisting>
 	  </example>
@@ -1053,7 +1053,7 @@ event_route[xhttp:request] {
 		<title><function>xhttp_prom.counter_inc</function> usage</title>
 		<programlisting format="linespecific">
 		  ...
-		  &kamcmd; xhttp_prom.counter_inc "cnt01" 15 "push" "192.168.0.1"
+		  &kamctl; rpc xhttp_prom.counter_inc "cnt01" 15 "push" "192.168.0.1"
 		  ...
 		</programlisting>
 	  </example>
@@ -1077,7 +1077,7 @@ event_route[xhttp:request] {
 		<title><function>xhttp_prom.gauge_reset</function> usage</title>
 		<programlisting format="linespecific">
 		  ...
-		  &kamcmd; xhttp_prom.gauge_reset "gg01" "push" "192.168.0.1"
+		  &kamctl; rpc xhttp_prom.gauge_reset "gg01" "push" "192.168.0.1"
 		  ...
 		</programlisting>
 	  </example>
@@ -1102,7 +1102,7 @@ event_route[xhttp:request] {
 		<title><function>xhttp_prom.gauge_inc</function> usage</title>
 		<programlisting format="linespecific">
 		  ...
-		  &kamcmd; xhttp_prom.gauge_inc "gg01" -- -5.2
+		  &kamctl; rpc xhttp_prom.gauge_inc "gg01" -- -5.2
 		  ...
 		</programlisting>
 	  </example>
@@ -1127,7 +1127,7 @@ event_route[xhttp:request] {
 		<title><function>xhttp_prom.gauge_set</function> usage</title>
 		<programlisting format="linespecific">
 		  ...
-		  &kamcmd; xhttp_prom.gauge_set "gg01" -- -5.2
+		  &kamctl; rpc xhttp_prom.gauge_set "gg01" -- -5.2
 		  ...
 		</programlisting>
 	  </example>
@@ -1152,7 +1152,7 @@ event_route[xhttp:request] {
 		<title><function>xhttp_prom.histogram_observe</function> usage</title>
 		<programlisting format="linespecific">
 		  ...
-		  &kamcmd; xhttp_prom.histogram_observe "hist01" -- -5.2
+		  &kamctl; rpc xhttp_prom.histogram_observe "hist01" -- -5.2
 		  ...
 		</programlisting>
 	  </example>
@@ -1174,7 +1174,7 @@ event_route[xhttp:request] {
 		<title><function>xhttp_prom.metric_list_print</function> usage</title>
 		<programlisting format="linespecific">
 		  ...
-		  &kamcmd; xhttp_prom.metric_list_print
+		  &kamctl; rpc xhttp_prom.metric_list_print
 		  ...
 		</programlisting>
 	  </example>
