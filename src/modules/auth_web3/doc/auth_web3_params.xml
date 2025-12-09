@@ -149,13 +149,13 @@ modparam("auth_web3", "ens_registry_address", "0x00000000000C2E074eC69A0dFb2997B
             <emphasis>Environment Variable:</emphasis> CONTRACT_DEBUG_MODE
         </para>
         <para>
-            <emphasis>Default:</emphasis> 1
+            <emphasis>Default:</emphasis> 0
         </para>
         <example>
             <title>Setting the <varname>contract_debug_mode</varname> parameter</title>
             <programlisting>
 ...
-modparam("auth_web3", "contract_debug_mode", 0)
+modparam("auth_web3", "contract_debug_mode", 1)
 ...
             </programlisting>
         </example>

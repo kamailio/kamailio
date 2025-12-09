@@ -69,7 +69,7 @@ char *web3_authentication_rpc_url = NULL;
 char *web3_authentication_contract_address = NULL;
 char *web3_ens_registry_address = NULL;
 char *web3_ens_rpc_url = NULL;
-int web3_contract_debug_mode = 1;
+int web3_contract_debug_mode = 0;
 int web3_rpc_timeout = 10;
 
 /* Base auth module API */
