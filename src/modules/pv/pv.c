@@ -644,8 +644,6 @@ static int mod_init(void)
 
 static void mod_destroy(void)
 {
-	shvar_destroy_locks();
-	destroy_shvars();
 }
 
 static int pv_isset(struct sip_msg *msg, char *pvid, char *foo)
