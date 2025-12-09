@@ -537,8 +537,8 @@ mt_match("mytree", "$rU", "0");
 		<title><function>mtree.list</function> rpc usage</title>
 		<programlisting format="linespecific">
 ...
-&kamcmd; mtree.list
-&kamcmd; mtree.list mytree
+&kamctl; rpc mtree.list
+&kamctl; rpc mtree.list mytree
 ...
 </programlisting>
 	    </example>
