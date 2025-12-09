@@ -919,28 +919,6 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	LM_DBG("SECFILTER module destroy\n");
-	if(!secf_data)
-		return;
-
-	if(secf_rpc_reload_time != NULL) {
-		shm_free(secf_rpc_reload_time);
-		secf_rpc_reload_time = 0;
-	}
-	/* Free shared data */
-	if(secf_data_1)
-		secf_free_data(secf_data_1);
-	if(secf_data_2)
-		secf_free_data(secf_data_2);
-	/* Destroy lock */
-	lock_destroy(&(*secf_data)->lock);
-	shm_free(secf_data);
-	secf_data = NULL;
-
-	if(secf_lock) {
-		lock_destroy(secf_lock);
-		lock_dealloc((void *)secf_lock);
-		secf_lock = NULL;
-	}
 }
 
 
