@@ -186,7 +186,7 @@ ruby_run("rb_funcx", "$rU", "2");
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_ruby.reload
+&kamctl; rpc app_ruby.reload
 ...
             </programlisting>
         </section>
@@ -206,7 +206,7 @@ ruby_run("rb_funcx", "$rU", "2");
             </para>
             <programlisting  format="linespecific">
 ...
-&kamcmd; app_ruby.api_list
+&kamctl; rpc app_ruby.api_list
 ...
             </programlisting>
         </section>
