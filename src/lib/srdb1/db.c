@@ -344,6 +344,15 @@ err:
 	return 0;
 }
 
+/*! \brief
+ * free database connection
+ */
+void db_do_con_free(db1_con_t *_h)
+{
+	if(_h) {
+		pkg_free(_h);
+	}
+}
 
 /*! \brief
  * Shut down database module

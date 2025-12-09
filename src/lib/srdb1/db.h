@@ -486,6 +486,11 @@ db1_con_t *db_do_init2(const str *url, void *(*new_connection)(struct db_id *),
 		db_pooling_t pooling);
 
 
+/*! \brief
+ * free database connection
+ */
+void db_do_con_free(db1_con_t *_h);
+
 /**
  * \brief Helper for db_close function.
  *
