@@ -386,7 +386,7 @@ modparam("db_text", "max_result_rows", 1000000)
 		<para>Parameters: <emphasis>none</emphasis></para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-	kamcmd db_text.dump
+            kamctl rpc db_text.dump
 		</programlisting>
 	</section>
     <section>
@@ -398,7 +398,7 @@ modparam("db_text", "max_result_rows", 1000000)
         <para>Parameters: <emphasis>sqlcmd</emphasis></para>
         <para>RPC Command Format:</para>
         <programlisting  format="linespecific">
-            kamcmd db_text.query 'select * from location where username="xxx"'
+            kamctl rpc db_text.query 'select * from location where username="xxx"'
         </programlisting>
     </section>
 	</section>
@@ -480,4 +480,3 @@ aliases:6
 		</section>
 	</section>
 </chapter>
-
