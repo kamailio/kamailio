@@ -185,7 +185,7 @@ URL:        https://kamailio.org/
 Vendor:     kamailio.org
 BuildRoot:  %{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:  kamailio-acc_json < %ver
-Conflicts:  kamailio-auth-ephemeral < %ver, kamailio-bdb < %ver
+Conflicts:  kamailio-auth-ephemeral < %ver
 Conflicts:  kamailio-carrierroute < %ver, kamailio-cpl < %ver
 Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
 Conflicts:  kamailio-gcrypt < %ver
@@ -1142,9 +1142,6 @@ db2_ldap \
 db_mongodb \
 %endif
 db_mysql \
-%if %{with perl}
-db_perlvdb
-%endif
 db_postgres \
 %if %{with redis}
 db_redis \
@@ -2049,9 +2046,7 @@ fi
 %files      perl
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.app_perl
-%doc %{_docdir}/kamailio/modules/README.db_perlvdb
 %{_libdir}/kamailio/modules/app_perl.so
-%{_libdir}/kamailio/modules/db_perlvdb.so
 %dir %{_libdir}/kamailio/perl
 %{_libdir}/kamailio/perl/Kamailio.pm
 %dir %{_libdir}/kamailio/perl/Kamailio
