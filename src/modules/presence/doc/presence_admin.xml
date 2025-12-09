@@ -1420,7 +1420,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 	  </para>
 	  <programlisting  format="linespecific">
 ...
-&kamcmd; presence.cleanup
+&kamctl; rpc presence.cleanup
 ...
 </programlisting>
     </section>
@@ -1439,7 +1439,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 	  </para>
 	  <programlisting  format="linespecific">
 ...
-&kamcmd; presence.publish_cache_sync
+&kamctl; rpc presence.publish_cache_sync
 ...
 </programlisting>
     </section>
@@ -1496,7 +1496,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 		</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; presence.refreshWatchers sip:test@kamailio.org presence 1
+&kamctl; rpc presence.refreshWatchers sip:test@kamailio.org presence 1
 ...
 </programlisting>
 	</section>
@@ -1525,7 +1525,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 	  </para>
 	  <programlisting  format="linespecific">
 ...
-&kamcmd; presence.updateWatchers sip:alice@domain.com presence
+&kamctl; rpc presence.updateWatchers sip:alice@domain.com presence
 ...
 	  </programlisting>
 	</section>
@@ -1819,4 +1819,3 @@ event_route[presence:notify-reply]
 </section>
 
 </chapter>
-
