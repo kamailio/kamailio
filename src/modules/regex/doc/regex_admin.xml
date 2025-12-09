@@ -384,7 +384,7 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 
 <programlisting  format="linespecific">
 ...
-&kamcmd; regex.reload
+&kamctl; rpc regex.reload
 ...
 </programlisting>
 
