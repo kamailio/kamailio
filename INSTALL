@@ -251,7 +251,7 @@ Compile modules except some explicitly excepted (see below)
   By default make all will not build modules that require external libraries or
   that are considered to be "experimental". For example, modules that have external
   dependencies are: db_mysql, jabber, cpl-c, auth_radius, group_radius, uri_radius,
-  avp_radius, db_postgres, db_berkeley, carrierroute, ...
+  avp_radius, db_postgres, carrierroute, ...
 
 Including groups of modules:
   Instead of compiling the default modules only, you can specify groups of
@@ -263,8 +263,7 @@ Including groups of modules:
 
   - db - Modules in this group use databases and need a database driver to run.
     Included are drivers for the text mode db (dbtext) and for dumping
-    large amount of data to files (db_flatstore). See also the mysql, 
-    postgres, or sqlite groups.
+    large amount of data to files (db_flatstore). See also the mysql, postgres, or sqlite groups.
 
   - standard_dep -  Modules in this group are considered a standard part of Kamailio
     (due to widespread usage) but they have dependencies that must be satisfied
