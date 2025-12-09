@@ -869,31 +869,6 @@ static int child_init(int rank)
 
 static void mod_destroy(void)
 {
-	struct rtpp_set *crt_list, *last_list;
-	struct rtpp_node *crt_rtpp, *last_rtpp;
-
-	/*free the shared memory*/
-	if(natping_state)
-		shm_free(natping_state);
-
-	if(rtpp_set_list == NULL)
-		return;
-
-	for(crt_list = rtpp_set_list->rset_first; crt_list != NULL;) {
-
-		for(crt_rtpp = crt_list->rn_first; crt_rtpp != NULL;) {
-
-			last_rtpp = crt_rtpp;
-			crt_rtpp = last_rtpp->rn_next;
-			shm_free(last_rtpp);
-		}
-
-		last_list = crt_list;
-		crt_list = last_list->rset_next;
-		shm_free(last_list);
-	}
-
-	shm_free(rtpp_set_list);
 }
 
 
