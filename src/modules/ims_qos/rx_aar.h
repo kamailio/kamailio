@@ -76,6 +76,9 @@ typedef struct saved_transaction
 	str ftag;
 	str ttag;
 	unsigned int aar_update;
+	// Flag indicating whether this is a session refresh without any changes to SDP.
+	// A value of 1 means it is a session refresh.
+	unsigned int session_refresh;
 	struct dlg_cell *dlg;
 } saved_transaction_t;
 
