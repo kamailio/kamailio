@@ -73,9 +73,6 @@ mod_list_snmpstats=snmpstats
 # - modules depending on expat library
 mod_list_xmpp=xmpp
 
-# - modules depending on bdb (db4) library
-mod_list_berkeley=db_berkeley
-
 # - modules depending on curl library
 mod_list_utils=utils http_client lost slack
 
@@ -250,7 +247,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_unixodbc) $(mod_list_xmldeps) \
 			   $(mod_list_perldeps) $(mod_list_cpl) \
 			   $(mod_list_xmpp) \
-			   $(mod_list_berkeley) $(mod_list_utils) \
+			   $(mod_list_utils) \
 			   $(mod_list_memcached) \
 			   $(mod_list_tlsdeps) \
 			   $(mod_list_websocket) \
@@ -387,9 +384,6 @@ module_group_ksnmpstats=$(mod_list_snmpstats)
 
 # pkg xmpp module
 module_group_kxmpp=$(mod_list_xmpp)
-
-# pkg berkeley module
-module_group_kberkeley=$(mod_list_berkeley)
 
 # pkg ldap modules
 module_group_kldap=$(mod_list_ldap)
