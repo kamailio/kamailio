@@ -793,7 +793,7 @@ Within event_route[xhttp:request]:
 	  </para>
 	  <programlisting  format="linespecific">
 ...
-&kamcmd; rls.cleanup
+&kamctl; rpc rls.cleanup
 ...
 	  </programlisting>
 	</section>
@@ -823,7 +823,7 @@ Within event_route[xhttp:request]:
 	  </para>
 	  <programlisting  format="linespecific">
 ...
-&kamcmd; rls.update_subs sip:alice@domain.com presence
+&kamctl; rpc rls.update_subs sip:alice@domain.com presence
 ...
 	  </programlisting>
 	</section>
@@ -842,4 +842,3 @@ Within event_route[xhttp:request]:
 </section>
 
 </chapter>
-
