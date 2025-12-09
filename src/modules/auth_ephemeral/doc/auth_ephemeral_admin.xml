@@ -558,7 +558,7 @@ if (!autheph_check_timestamp("$var(username)")) {
 		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; autheph.add_secret mysecret
+&kamctl; rpc autheph.add_secret mysecret
 </programlisting>
 	</section>
 
@@ -575,7 +575,7 @@ if (!autheph_check_timestamp("$var(username)")) {
 		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; autheph.dump_secrets
+&kamctl; rpc autheph.dump_secrets
 ...
 </programlisting>
 	</section>
@@ -598,11 +598,10 @@ if (!autheph_check_timestamp("$var(username)")) {
 		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; autheph.rm_secret 0
+&kamctl; rpc autheph.rm_secret 0
 ...
 </programlisting>
 	</section>
 
 	</section>
 </chapter>
-
