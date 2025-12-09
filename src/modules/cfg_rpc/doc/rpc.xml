@@ -62,7 +62,7 @@
 		<title>Use <varname>cfg.seti</varname> RPC command</title>
 		<programlisting format="linespecific">
 ...
-# &kamcmd; cfg.seti core debug 1
+# &kamctl; rpc cfg.seti core debug 1
 ...
 </programlisting>
 		</example>
@@ -87,7 +87,7 @@
 		<title>Use <varname>cfg.sets</varname> RPC command</title>
 		<programlisting format="linespecific">
 ...
-# &kamcmd; cfg.sets voicemail srv_ip "1.2.3.4"
+# &kamctl; rpc cfg.sets voicemail srv_ip "1.2.3.4"
 ...
 </programlisting>
                 </example>
