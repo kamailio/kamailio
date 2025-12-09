@@ -190,7 +190,7 @@ if(USE_FAST_LOCK)
   if(TARGET_ARCH MATCHES "i386$|x86_64$|sparc64$|sparc$|ppc$|ppc64$|mips2$|mips64$")
     set(USE_FAST_LOCK YES)
   elseif(TARGET_ARCH MATCHES "aarch64$")
-    set(USE_FAST_LOCK YES)
+    set(USE_FAST_LOCK NO)
     target_compile_definitions(common INTERFACE NOSMP) # memory barriers not
                                                        # implemented for arm
   elseif(TARGET_ARCH MATCHES "arm6$|arm7$")
