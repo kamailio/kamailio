@@ -226,6 +226,7 @@ int json_tr_eval(
 	pv_value_t *pv;
 	pv_value_t v;
 	str v2 = {0, 0};
+	char sep = '.';
 
 	if(val == NULL || (val->flags & PV_VAL_NULL))
 		return -1;
@@ -262,6 +263,7 @@ int json_tr_eval(
 
 			break;
 		case TR_JSON_PARSE:
+		case TR_JSON_PARSEX:
 			if(!(val->flags & PV_VAL_STR))
 				return -1;
 
@@ -290,6 +292,10 @@ int json_tr_eval(
 				}
 				sv = v.rs;
 			}
+			if(sv.s == NULL || sv.len < 1) {
+				LM_ERR("invalid value for: %.*s\n", tp->v.s.len, tp->v.s.s);
+				return -1;
+			}
 
 			pv = json_alloc_pv_value();
 			if(pv == NULL) {
@@ -297,7 +303,12 @@ int json_tr_eval(
 				return -1;
 			}
 
-			if(tr_json_get_field_ex(&val->rs, &sv, '.', pv) != 1) {
+			if(subtype == TR_JSON_PARSEX) {
+				sep = sv.s[0];
+				sv.s++;
+				sv.len--;
+			}
+			if(tr_json_get_field_ex(&val->rs, &sv, sep, pv) != 1) {
 				LM_ERR("error getting json\n");
 				json_destroy_pv_value(pv);
 				return -1;
@@ -414,6 +425,23 @@ char *json_tr_parse(str *in, trans_t *t)
 		goto done;
 	} else if(name.len == 5 && strncasecmp(name.s, "parse", 5) == 0) {
 		t->subtype = TR_JSON_PARSE;
+		if(*p != TR_PARAM_MARKER) {
+			LM_ERR("invalid json transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_json_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+			p++;
+		if(*p != TR_RBRACKET) {
+			LM_ERR("invalid json transformation: %.*s!!\n", in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len == 6 && strncasecmp(name.s, "parsex", 6) == 0) {
+		t->subtype = TR_JSON_PARSEX;
 		if(*p != TR_PARAM_MARKER) {
 			LM_ERR("invalid json transformation: %.*s!\n", in->len, in->s);
 			goto error;

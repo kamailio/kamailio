@@ -40,7 +40,8 @@ enum _json_tr_subtype
 {
 	TR_JSON_NONE = 0,
 	TR_JSON_ENCODE,
-	TR_JSON_PARSE
+	TR_JSON_PARSE,
+	TR_JSON_PARSEX
 };
 
 char *json_tr_parse(str *in, trans_t *tr);
