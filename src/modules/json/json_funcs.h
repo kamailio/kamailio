@@ -55,8 +55,10 @@ extern char tr_json_escape_char;
 extern str json_event_key;
 extern str json_event_sub_key;
 
-int tr_json_get_field(struct sip_msg *msg, char *json, char *field, char *dst);
-int tr_json_get_keys(struct sip_msg *msg, char *json, char *field, char *dst);
+int tr_json_get_field(
+		struct sip_msg *msg, char *json, char *field, char sep, char *dst);
+int tr_json_get_keys(
+		struct sip_msg *msg, char *json, char *field, char sep, char *dst);
 
 struct json_object *json_parse(const char *str);
 struct json_object *json_get_object(struct json_object *jso, const char *key);

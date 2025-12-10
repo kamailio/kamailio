@@ -161,7 +161,7 @@ char **str_split(char *a_str, const char a_delim)
 	return result;
 }
 
-struct json_object *tr_json_get_field_object(str *json, str *field)
+struct json_object *tr_json_get_field_object(str *json, str *field, char sep)
 {
 	char **tokens;
 	char *dup;
@@ -187,7 +187,7 @@ struct json_object *tr_json_get_field_object(str *json, str *field)
 	dup = pkg_malloc(field->len + 1);
 	memcpy(dup, field->s, field->len);
 	dup[field->len] = '\0';
-	tokens = str_split(dup, '.');
+	tokens = str_split(dup, sep);
 	pkg_free(dup);
 
 	if(tokens) {
@@ -230,9 +230,9 @@ struct json_object *tr_json_get_field_object(str *json, str *field)
 }
 
 
-int tr_json_get_field_ex(str *json, str *field, pv_value_p dst_val)
+int tr_json_get_field_ex(str *json, str *field, char sep, pv_value_p dst_val)
 {
-	struct json_object *jtree = tr_json_get_field_object(json, field);
+	struct json_object *jtree = tr_json_get_field_object(json, field, sep);
 
 
 	if(jtree != NULL) {
@@ -254,7 +254,8 @@ int tr_json_get_field_ex(str *json, str *field, pv_value_p dst_val)
 }
 
 
-int tr_json_get_field(struct sip_msg *msg, char *json, char *field, char *dst)
+int tr_json_get_field(
+		struct sip_msg *msg, char *json, char *field, char sep, char *dst)
 {
 	str json_s;
 	str field_s;
@@ -271,7 +272,7 @@ int tr_json_get_field(struct sip_msg *msg, char *json, char *field, char *dst)
 		return -1;
 	}
 
-	if(tr_json_get_field_ex(&json_s, &field_s, &dst_val) != 1)
+	if(tr_json_get_field_ex(&json_s, &field_s, sep, &dst_val) != 1)
 		return -1;
 
 	dst_pv = (pv_spec_t *)dst;
@@ -317,7 +318,8 @@ struct json_object *json_get_object(struct json_object *jso, const char *key)
 	return result;
 }
 
-int tr_json_get_keys(struct sip_msg *msg, char *json, char *field, char *dst)
+int tr_json_get_keys(
+		struct sip_msg *msg, char *json, char *field, char sep, char *dst)
 {
 	str json_s;
 	str field_s;
@@ -353,7 +355,8 @@ int tr_json_get_keys(struct sip_msg *msg, char *json, char *field, char *dst)
 		return -1;
 	}
 
-	struct json_object *jtree = tr_json_get_field_object(&json_s, &field_s);
+	struct json_object *jtree =
+			tr_json_get_field_object(&json_s, &field_s, sep);
 
 	if(jtree != NULL) {
 		json_foreach_key(jtree, k)

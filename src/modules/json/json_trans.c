@@ -297,7 +297,7 @@ int json_tr_eval(
 				return -1;
 			}
 
-			if(tr_json_get_field_ex(&val->rs, &sv, pv) != 1) {
+			if(tr_json_get_field_ex(&val->rs, &sv, '.', pv) != 1) {
 				LM_ERR("error getting json\n");
 				json_destroy_pv_value(pv);
 				return -1;

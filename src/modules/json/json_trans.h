@@ -44,7 +44,7 @@ enum _json_tr_subtype
 };
 
 char *json_tr_parse(str *in, trans_t *tr);
-int tr_json_get_field_ex(str *json, str *field, pv_value_p dst_val);
+int tr_json_get_field_ex(str *json, str *field, char sep, pv_value_p dst_val);
 
 int json_tr_init_buffers(void);
 void json_tr_clear_buffers(void);
