@@ -226,7 +226,6 @@ int json_tr_eval(
 	pv_value_t *pv;
 	pv_value_t v;
 	str v2 = {0, 0};
-	void *v1 = NULL;
 
 	if(val == NULL || (val->flags & PV_VAL_NULL))
 		return -1;
@@ -260,7 +259,6 @@ int json_tr_eval(
 			val->rs.len = pv->rs.len;
 
 			json_destroy_pv_value(pv);
-			json_free_pv_value(val);
 
 			break;
 		case TR_JSON_PARSE:
@@ -272,44 +270,32 @@ int json_tr_eval(
 				return -1;
 			}
 
-			pv = json_alloc_pv_value();
-			if(pv == NULL) {
-				LM_ERR("JSON encode transform : no more private memory\n");
-				return -1;
-			}
-
-
 			if(tp->type == TR_PARAM_STRING) {
 				if(str_search_char(&tp->v.s, '$') == NULL) {
 					v2 = tp->v.s;
 				} else {
-					v1 = tp->v.s.s;
-					if(fixup_spve_null(&v1, 1) != 0) {
-						LM_ERR("cannot get spve_value from TR_PARAM_STRING : "
+					if(pv_eval_str(msg, &v2, &tp->v.s) < 0) {
+						LM_ERR("cannot get the value from TR_PARAM_STRING : "
 							   "%.*s\n",
 								tp->v.s.len, tp->v.s.s);
-						pkg_free(pv);
 						return -1;
 					}
-					if(fixup_get_svalue(msg, (gparam_p)v1, &v2) != 0) {
-						LM_ERR("cannot get value from TR_PARAM_STRING\n");
-						fixup_free_spve_null(&v1, 1);
-						pkg_free(pv);
-						return -1;
-					}
-					fixup_free_spve_null(&v1, 1);
 				}
 				sv = v2;
 			} else {
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v) != 0
 						|| (!(v.flags & PV_VAL_STR)) || v.rs.len <= 0) {
 					LM_ERR("value cannot get spec value in json transform\n");
-					json_destroy_pv_value(pv);
 					return -1;
 				}
 				sv = v.rs;
 			}
 
+			pv = json_alloc_pv_value();
+			if(pv == NULL) {
+				LM_ERR("JSON parse transform : no more private memory\n");
+				return -1;
+			}
 
 			if(tr_json_get_field_ex(&val->rs, &sv, pv) != 1) {
 				LM_ERR("error getting json\n");
@@ -326,7 +312,6 @@ int json_tr_eval(
 			val->rs.len = pv->rs.len;
 
 			json_destroy_pv_value(pv);
-			json_free_pv_value(val);
 
 			break;
 
