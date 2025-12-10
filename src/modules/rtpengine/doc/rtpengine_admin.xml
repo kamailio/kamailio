@@ -2343,7 +2343,7 @@ modparam("rtpengine", "control_cmd_tos", 144)
 			CRC32 - 2 (calculate crc32 sum over the callid).
 		</para>
 		<para>
-			Default value is 0, legacy algorithm.
+			Default value is 2, CRC32.
 		</para>
 		<para>
 			The values not falling into the range <quote>0-2</quote> are ignored.

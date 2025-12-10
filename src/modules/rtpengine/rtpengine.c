@@ -418,7 +418,7 @@ int force_send_ip_af = AF_UNSPEC;
 static str _rtpe_wsapi = STR_NULL;
 lwsc_api_t _rtpe_lwscb = {0};
 
-static enum hash_algo_t hash_algo = RTP_HASH_CALLID;
+static enum hash_algo_t hash_algo = RTP_HASH_CRC32_CALLID;
 
 static str rtpengine_dtmf_event_sock;
 static int rtpengine_dtmf_event_fd;
