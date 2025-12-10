@@ -47,6 +47,12 @@ check_subject() {
     return
   fi
 
+  # utils directory?
+  if [ -d "utils/${prefix}" ] ; then
+    echo "[${commit}] prefix is a utils dir in the repo, OK[${prefix}]"
+    return
+  fi
+
   # file (e.g., ChangeLog, etc/kamailio.cfg)
   if [ -f "${prefix}" ] ; then
     echo "[${commit}] prefix is a file in the repo, OK[${prefix}]"
