@@ -50,19 +50,19 @@
 #define ZSW(_c) ((_c) ? (_c) : "")
 
 /* returns string beginning and length without insignificant chars */
-#define trim_len(_len, _begin, _mystr)                             \
-	do {                                                           \
-		static char _c;                                            \
-		(_len) = (_mystr).len;                                     \
-		while((_len)                                               \
-				&& ((_c = (_mystr).s[(_len)-1]) == 0 || _c == '\r' \
-						|| _c == '\n' || _c == ' ' || _c == '\t')) \
-			(_len)--;                                              \
-		(_begin) = (_mystr).s;                                     \
-		while((_len) && ((_c = *(_begin)) == ' ' || _c == '\t')) { \
-			(_len)--;                                              \
-			(_begin)++;                                            \
-		}                                                          \
+#define trim_len(_len, _begin, _mystr)                               \
+	do {                                                             \
+		static char _c;                                              \
+		(_len) = (_mystr).len;                                       \
+		while((_len)                                                 \
+				&& ((_c = (_mystr).s[(_len) - 1]) == 0 || _c == '\r' \
+						|| _c == '\n' || _c == ' ' || _c == '\t'))   \
+			(_len)--;                                                \
+		(_begin) = (_mystr).s;                                       \
+		while((_len) && ((_c = *(_begin)) == ' ' || _c == '\t')) {   \
+			(_len)--;                                                \
+			(_begin)++;                                              \
+		}                                                            \
 	} while(0)
 
 #define trim_r(_mystr)                                                       \
@@ -145,7 +145,7 @@
 #define is_in_str(p, in) (p < in->s + in->len && *p)
 
 #define ksr_container_of(ptr, type, member) \
-	((type *)((char *)(ptr)-offsetof(type, member)))
+	((type *)((char *)(ptr) - offsetof(type, member)))
 
 /* links a value to a msgid */
 struct msgid_var
@@ -1268,6 +1268,8 @@ char *get_abs_pathname(str *base, str *file);
  */
 char *str_search(str *text, str *needle);
 
+char *str_search_strz(str *text, char *needlez);
+
 char *stre_search_strz(char *vstart, char *vend, char *needlez);
 
 char *str_casesearch(str *text, str *needle);
@@ -1279,6 +1281,8 @@ char *str_casesearch_strz(str *text, char *needlez);
 char *str_rsearch(str *text, str *needle);
 
 char *str_rcasesearch(str *text, str *needle);
+
+char *str_search_char(str *text, char needle);
 
 /*
  * ser_memmem() returns the location of the first occurrence of data

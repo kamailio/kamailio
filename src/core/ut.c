@@ -325,6 +325,39 @@ char *str_search(str *text, str *needle)
 }
 
 /**
+ * case sensitive search of a charz string 'needlez' inside str 'text'
+ */
+char *str_search_strz(str *text, char *needlez)
+{
+	str needle;
+
+	needle.s = needlez;
+	needle.len = strlen(needlez);
+
+	return str_search(text, &needle);
+}
+
+/**
+ * search of a char 'needle' inside str 'text'
+ */
+char *str_search_char(str *text, char needle)
+{
+	char *p;
+
+	if(text == NULL || text->s == NULL) {
+		return NULL;
+	}
+
+	for(p = text->s; p <= text->s + text->len; p++) {
+		if(*p == needle) {
+			return p;
+		}
+	}
+
+	return NULL;
+}
+
+/**
  * @brief search for occurrence of needlez starting from vstart and before vend
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
