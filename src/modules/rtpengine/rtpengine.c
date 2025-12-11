@@ -3187,8 +3187,8 @@ static int parse_viabranch(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 			msg->hash_index = hash(msg->callid->body, get_cseq(msg)->number);
 
 			viabranch->s = branch_buf;
-			if(branch_builder(msg->hash_index, 0, md5, branch_idx, branch_buf,
-					   &viabranch->len))
+			if(branch_builder(msg->hash_index, 0, md5, NULL, branch_idx,
+					   branch_buf, &viabranch->len))
 				ret = 0;
 			break;
 	}
