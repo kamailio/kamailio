@@ -2779,7 +2779,7 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 					/* do nothing, we are interested only in the above headers */
 					;
 		} /* end switch */
-	}	  /* end for */
+	} /* end for */
 	/* lumps */
 	for(lump = msg->reply_lump; lump; lump = lump->next)
 		if(lump->flags & LUMP_RPL_HDR) {
@@ -2848,8 +2848,8 @@ error00:
  */
 int branch_builder(unsigned int hash_index,
 		/* only either parameter useful */
-		unsigned int label, char *char_v, int branch, char *branch_str,
-		int *len)
+		unsigned int label, char *char_v, str *xval, int branch,
+		char *branch_str, int *len)
 {
 
 	char *begin;
@@ -2884,6 +2884,20 @@ int branch_builder(unsigned int hash_index,
 	} else { /* ... use the "label" value otherwise */
 		if(int2reverse_hex(&begin, &size, label) == -1)
 			return 0;
+	}
+
+	/* extra value */
+	if(xval != NULL && xval->s != NULL && xval->len > 0
+			&& xval->len <= MAX_BRANCH_XVAL_LEN) {
+		*begin = BRANCH_SEPARATOR;
+		begin++;
+		size--;
+		if(memcpy(begin, xval->s, xval->len)) {
+			begin += xval->len;
+			size -= xval->len;
+		} else {
+			return 0;
+		}
 	}
 
 	if(size) {

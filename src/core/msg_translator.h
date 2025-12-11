@@ -120,7 +120,7 @@ char *create_via_hf(unsigned int *len, struct sip_msg *msg,
 
 int branch_builder(unsigned int hash_index,
 		/* only either parameter useful */
-		unsigned int label, char *char_v, int branch,
+		unsigned int label, char *char_v, str *xval, int branch,
 		/* output value: string and actual length */
 		char *branch_str, int *len);
 

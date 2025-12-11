@@ -598,7 +598,7 @@ int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
 		goto error;
 	}
 	msg->hash_index = hash(msg->callid->body, get_cseq(msg)->number);
-	if(!branch_builder(msg->hash_index, 0, md5, 0 /* 0-th branch */,
+	if(!branch_builder(msg->hash_index, 0, md5, NULL, 0 /* 0-th branch */,
 			   msg->add_to_branch_s, &msg->add_to_branch_len)) {
 		LM_ERR("branch_builder failed\n");
 		ret = E_UNSPEC;
