@@ -1814,7 +1814,8 @@ error:
 
 int t_calc_branch(struct cell *t, int b, char *branch, int *branch_len)
 {
-	return branch_builder(t->hash_index, 0, t->md5, b, branch, branch_len);
+	return branch_builder(
+			t->hash_index, 0, t->md5, NULL, b, branch, branch_len);
 }
 
 /**
