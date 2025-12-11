@@ -73,6 +73,7 @@
 	} while(0)
 
 extern int tm_headers_mode;
+extern int tm_ack_branch_mode;
 
 /* Build a local request based on a previous request; main
  * customers of this function are local ACK and local CANCEL
@@ -1816,6 +1817,34 @@ int t_calc_branch(struct cell *t, int b, char *branch, int *branch_len)
 {
 	return branch_builder(
 			t->hash_index, 0, t->md5, NULL, b, branch, branch_len);
+}
+
+int t_calc_branch_ack(struct cell *t, int b, char *branch, int *branch_len)
+{
+	char md5b[MD5_LEN + 1];
+	int i = 0;
+
+	if(tm_ack_branch_mode == 1) {
+		memcpy(md5b, t->md5, MD5_LEN);
+		md5b[MD5_LEN] = '\0';
+		for(i = MD5_LEN - 1; i < 4; i--) {
+			if(md5b[i] >= '0' && md5b[i] < '9') {
+				md5b[i] = md5b[i] + 1;
+			} else if(md5b[i] == '9') {
+				md5b[i] = '0';
+			} else if(md5b[i] >= 'a' && md5b[i] < 'z') {
+				md5b[i] = md5b[i] + 1;
+			} else if(md5b[i] == 'z') {
+				md5b[i] = 'a';
+			} else if(md5b[i] >= 'A' && md5b[i] < 'Z') {
+				md5b[i] = md5b[i] + 1;
+			} else if(md5b[i] == 'z') {
+				md5b[i] = 'A';
+			}
+		}
+	}
+
+	return branch_builder(t->hash_index, 0, md5b, NULL, b, branch, branch_len);
 }
 
 /**
