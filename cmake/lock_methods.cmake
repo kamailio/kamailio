@@ -34,9 +34,21 @@ endif()
 find_path(FUTEX_HEADER_DIR linux/futex.h)
 if(FUTEX_HEADER_DIR)
   set(_HAVE_FUTEX TRUE)
-  # Unfortunately, arm64 and aarch64 does not have yet implemented the nessecary defines
-  # and operations in atomic_arm.h needed for the futexlock.h
-  if("${TARGET_ARCH}" MATCHES "aarch64$|arm64$")
+  # This conditional checks if the TARGET_ARCH does not match any of the specified supported architectures.
+  # The supported architectures include see atomic_native.h and atomic_(arhitecture).h files:
+  # - Alpha: alpha: atomic_alpha.h
+  # - ARM variants: arm, arm6, and arm7: atomic_arm.h
+  # - MIPS variants: mips, mips2, and mips64: atomic_mips.h
+  # - PowerPC variants: ppc and ppc64: atomic_ppc.h
+  # - SPARC variants: sparc and sparc64: atomic_sparc.h and atomic_sparc64.h
+  # - x86 variants: i386 and x86_64: atomic_x86.h
+  # If the architecture is not in this list, the code block following this if statement will execute,
+  # likely to handle unsupported architectures or apply alternative lock method configurations.
+  if(NOT
+     "${TARGET_ARCH}"
+     MATCHES
+     "^(i386|x86_64)$|^(mips|mips2|mips64)$|^(ppc|ppc64)$|^(sparc|sparc64)$|^(arm|arm6|arm7)$|^alpha$"
+  )
     set(_HAVE_FUTEX FALSE)
   endif()
 else()
@@ -68,7 +80,6 @@ else()
 endif()
 
 # check fast-lock arch support
-set(_FAST_LOCK_ARCH FALSE)
 if("${TARGET_ARCH}" MATCHES
    "i386$|x86_64$|aarch64$|arm6$|arm7$|ppc$|ppc64$|sparc64$|sparc$|alpha$|mips2$|mips64$"
 )
