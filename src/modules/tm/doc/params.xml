@@ -1204,6 +1204,25 @@ modparam("tm", "local_ack_mode", 1)
 	</example>
 	</section>
 
+	<section id="tm.p.local_ack_branch_mode">
+	<title><varname>local_ack_branch_mode</varname> (integer)</title>
+	<para>
+		If set to 1, the branch value of the ACK for 200ok of a local INVITE
+		has different value than the corresponding local INVITE.
+	</para>
+	<para>
+		Default 0.
+	</para>
+	<example>
+		<title>Set <varname>local_ack_branch_mode</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "local_ack_branch_mode", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="tm.p.failure_reply_mode">
 	<title><varname>failure_reply_mode</varname> (integer)</title>
 	<para>
