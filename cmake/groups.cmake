@@ -299,9 +299,6 @@ set(MOD_LIST_IMS
     ims_ipsec_pcscf
 )
 
-# * modules depending on java library
-set(MOD_LIST_JAVA app_java)
-
 # * modules depending on gzip library
 set(MOD_LIST_GZCOMPRESS gzcompress)
 
@@ -406,7 +403,6 @@ set(MOD_LIST_ALL
     ${MOD_LIST_IMS}
     ${MOD_LIST_ORACLE}
     ${MOD_LIST_OUTBOUND}
-    ${MOD_LIST_JAVA}
     ${MOD_LIST_DNSSEC}
     ${MOD_LIST_SCTP}
     ${MOD_LIST_AUTHEPH}
@@ -595,9 +591,6 @@ set(MODULE_GROUP_KIMS ${MOD_LIST_IMS})
 
 # pkg outbound module
 set(MODULE_GROUP_KOUTBOUND ${MOD_LIST_OUTBOUND})
-
-# pkg java module
-set(MODULE_GROUP_KJAVA ${MOD_LIST_JAVA})
 
 # pkg dnssec module
 set(MODULE_GROUP_KDNSSEC ${MOD_LIST_DNSSEC})
