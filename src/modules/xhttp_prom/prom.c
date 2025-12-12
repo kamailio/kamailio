@@ -194,12 +194,6 @@ static int metric_generate(
 		return -1;
 	}
 
-	/* xhttp_prom_tags_braces is not sanitized any more because UTF-8 characters are allowed */
-	if(prom_body_printf(ctx, "%s", xhttp_prom_tags_braces) == -1) {
-		LM_ERR("Fail to print\n");
-		return -1;
-	}
-
 	if(prom_body_printf(ctx, " %lu %" PRIu64 "\n", counter_val, (uint64_t)ts)
 			== -1) {
 		LM_ERR("Fail to print\n");
