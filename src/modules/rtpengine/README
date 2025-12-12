@@ -2164,7 +2164,7 @@ modparam("rtpengine", "control_cmd_tos", 144)
    SHA1 - 1 (apply sha1 over the callid and calculate hash) or CRC32 - 2
    (calculate crc32 sum over the callid).
 
-   Default value is 0, legacy algorithm.
+   Default value is 2, CRC32.
 
    The values not falling into the range “0-2” are ignored.
 
