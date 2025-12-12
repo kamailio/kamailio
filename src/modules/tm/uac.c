@@ -73,6 +73,7 @@ int goto_on_local_req = -1; /* default disabled */
 static char from_tag[FROM_TAG_LEN + 1];
 
 extern str tm_event_callback;
+extern str tm_evcb_local_ack_sent;
 /*
  * Initialize UAC
  */
@@ -961,7 +962,6 @@ int uac_evrt_local_ack_sent(sip_msg_t *rpl)
 	int route_no;
 	run_act_ctx_t ctx;
 	int rtb;
-	str tm_evcb_local_ack_sent = str_init("ksr_tm_local_ack_sent");
 	str evname = str_init("tm:local-ack-sent");
 	sr_kemi_eng_t *keng = NULL;
 
@@ -973,7 +973,7 @@ int uac_evrt_local_ack_sent(sip_msg_t *rpl)
 		}
 	} else {
 		keng = sr_kemi_eng_get();
-		if(keng != NULL) {
+		if(keng == NULL || tm_evcb_local_ack_sent.len <= 0) {
 			LM_DBG("event route not defined and no kemi engine\n");
 			return -2;
 		}

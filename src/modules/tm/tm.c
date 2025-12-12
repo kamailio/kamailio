@@ -259,6 +259,8 @@ static rpc_export_t tm_rpc[];
 
 str tm_event_callback = STR_NULL;
 
+str tm_evcb_local_ack_sent = STR_NULL;
+
 static int fixup_t_check_status(void **param, int param_no);
 
 /* clang-format off */
@@ -528,6 +530,7 @@ static param_export_t params[] = {
 	{"headers_mode", PARAM_INT, &tm_headers_mode},
 	{"xavp_contact", PARAM_STR, &ulattrs_xavp_name},
 	{"event_callback", PARAM_STR, &tm_event_callback},
+	{"evcb_local_ack_sent", PARAM_STR, &tm_evcb_local_ack_sent},
 	{"relay_100", PARAM_INT, &default_tm_cfg.relay_100},
 	{"rich_redirect", PARAM_INT, &tm_rich_redirect},
 	{"event_callback_lres_sent", PARAM_STR, &_tm_event_callback_lres_sent},
