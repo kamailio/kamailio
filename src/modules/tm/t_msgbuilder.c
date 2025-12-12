@@ -1823,11 +1823,13 @@ int t_calc_branch_ack(struct cell *t, int b, char *branch, int *branch_len)
 {
 	char md5b[MD5_LEN + 1];
 	int i = 0;
+	int k = 0;
 
 	if(tm_local_ack_branch_mode == 1) {
 		memcpy(md5b, t->md5, MD5_LEN);
 		md5b[MD5_LEN] = '\0';
-		for(i = MD5_LEN - 1; i < 4; i--) {
+		for(k = 0; k < 4; k++) {
+			i = MD5_LEN - 1 - k;
 			if(md5b[i] >= '0' && md5b[i] < '9') {
 				md5b[i] = md5b[i] + 1;
 			} else if(md5b[i] == '9') {
