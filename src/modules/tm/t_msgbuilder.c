@@ -1321,7 +1321,7 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 	}
 
 	/* via */
-	if(!t_calc_branch(Trans, branch, branch_buf, &branch_len))
+	if(!t_calc_branch_ack(Trans, branch, branch_buf, &branch_len))
 		goto error;
 	branch_str.s = branch_buf;
 	branch_str.len = branch_len;
