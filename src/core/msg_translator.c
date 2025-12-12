@@ -102,6 +102,8 @@
 #include "cfg/cfg.h"
 #include "parser/parse_to.h"
 #include "parser/parse_param.h"
+#include "parser/parser_f.h"
+#include "hash_func.h"
 #include "forward.h"
 #include "str_list.h"
 #include "pvapi.h"
@@ -2842,6 +2844,71 @@ error00:
 	return 0;
 }
 
+
+int via_branch_parser(str *vbranch, viabranch_t *vb)
+{
+	char *p;
+	char *n;
+	int scan_space;
+
+	/* we do RFC 3261 tid matching and want to see first if there is
+	 * magic cookie in branch */
+	if(vbranch->len <= MCOOKIE_LEN)
+		goto nomatch;
+	if(memcmp(vbranch->s, MCOOKIE, MCOOKIE_LEN) != 0)
+		goto nomatch;
+
+	vb->cookie.s = vbranch->s;
+	vb->cookie.len = MCOOKIE_LEN;
+
+	p = vbranch->s + MCOOKIE_LEN;
+	scan_space = vbranch->len - MCOOKIE_LEN;
+
+	/* hash_id */
+	n = eat_token2_end(p, p + scan_space, BRANCH_SEPARATOR);
+	vb->shashidx.len = n - p;
+	scan_space -= vb->shashidx.len;
+	if(!vb->shashidx.len || scan_space < 2 || *n != BRANCH_SEPARATOR)
+		goto nomatch;
+	vb->shashidx.s = p;
+	p = n + 1;
+	scan_space--;
+
+	/* md5 value */
+	n = eat_token2_end(p, p + scan_space, BRANCH_SEPARATOR);
+	vb->transid.len = n - p;
+	scan_space -= vb->transid.len;
+	if(n == p || scan_space < 2 || *n != BRANCH_SEPARATOR)
+		goto nomatch;
+	vb->transid.s = p;
+	p = n + 1;
+	scan_space--;
+
+	/* branch id  -  should exceed the scan_space */
+	n = eat_token_end(p, p + scan_space);
+	vb->sbranchidx.len = n - p;
+	if(!vb->sbranchidx.len)
+		goto nomatch;
+	vb->sbranchidx.s = p;
+
+	/* sanity check */
+	if(unlikely(reverse_hex2int(vb->shashidx.s, vb->shashidx.len, &vb->vhashidx)
+						< 0
+				|| vb->vhashidx >= TABLE_ENTRIES
+				|| reverse_hex2int(vb->sbranchidx.s, vb->sbranchidx.len,
+						   &vb->vbranchidx)
+						   < 0
+				|| vb->vbranchidx >= sr_dst_max_branches
+				|| vb->transid.len != MD5_LEN)) {
+		LM_DBG("poor reply ids - hashidx %d branchidx %d transid-len %d/%d\n",
+				vb->vhashidx, vb->vbranchidx, vb->transid.len, MD5_LEN);
+		goto nomatch;
+	}
+	return 0;
+
+nomatch:
+	return -1;
+}
 
 /* return number of chars printed or 0 if space exceeded;
    assumes buffer size of at least MAX_BRANCH_PARAM_LEN
