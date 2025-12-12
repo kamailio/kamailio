@@ -275,7 +275,7 @@ void free_cell_helper(
 }
 
 
-static inline void init_synonym_id(struct sip_msg *p_msg, char *hash)
+static inline void init_synonym_id(struct sip_msg *p_msg, char *hashval)
 {
 	int size;
 	char *c;
@@ -286,7 +286,7 @@ static inline void init_synonym_id(struct sip_msg *p_msg, char *hash)
 		 * calculated out of header-fields forming
 		 * transaction key
 		*/
-		char_msg_val(p_msg, hash);
+		char_msg_val(p_msg, hashval);
 	} else {
 		/* char value for a UAC transaction is created
 		 * randomly -- UAC is an originating stateful element
@@ -295,7 +295,7 @@ static inline void init_synonym_id(struct sip_msg *p_msg, char *hash)
 		*/
 		/* HACK : not long enough */
 		myrand = kam_rand();
-		c = hash;
+		c = hashval;
 		size = MD5_LEN;
 		memset(c, '0', size);
 		int2reverse_hex(&c, &size, myrand);
