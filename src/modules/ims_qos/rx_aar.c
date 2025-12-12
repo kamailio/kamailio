@@ -465,13 +465,14 @@ int add_media_components_using_current_flow_description(
 {
 
 	flow_description_t *flow_description;
-	int add_flow = 1;
+	int add_flow;
 
 	flow_description = p_session_data->first_current_flow_description;
 	if(!flow_description) {
 		return -1;
 	}
 	while(flow_description) {
+		add_flow = 1;
 
 		if(!authorize_video_flow) {
 			if(strncmp(flow_description->media.s, "video", 5) == 0) {
@@ -494,13 +495,14 @@ int add_media_components_using_current_flow_description(
 		}
 
 		flow_description = flow_description->next;
-		add_flow = 1;
 	}
 	return 0;
 }
 
 
-/** Helper function for adding media component AVPs for each SDP stream*/
+/*
+ * Helper function for adding media component AVPs for each SDP stream.
+ */
 int add_media_components(AAAMessage *aar, struct sip_msg *req,
 		struct sip_msg *rpl, enum dialog_direction direction, AAASession *auth)
 {
@@ -508,11 +510,13 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 	int sdp_stream_num;
 	sdp_session_cell_t *req_sdp_session, *rpl_sdp_session;
 	sdp_stream_cell_t *req_sdp_stream, *rpl_sdp_stream;
-	int add_flow = 1;
+	int add_flow;
 	str ttag = {0, 0};
 	str ftag = {0, 0};
 	int request_originated_from_callee = 0;
 	str ipA, ipB, portA, portB;
+	// New flow descriptions are added hence it wont be added directly to the currently active flow description list until dialog is confirmed.
+	int in_current_flow_description_list = 0;
 
 	rx_authsessiondata_t *p_session_data = 0;
 	p_session_data = (rx_authsessiondata_t *)auth->u.auth.generic_data;
@@ -533,9 +537,10 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 
 	sdp_session_num = 0;
 
-	//Loop through req sessions and streams and get corresponding rpl sessions and streams and populate avps
+	// Loop through req sessions and streams and get corresponding rpl sessions and streams and populate avps.
 	for(;;) {
-		//we only cater for one session at the moment: TDOD: extend
+		// We only cater for one session at the moment.
+		// TODO: Extend to multiple sessions.
 		if(sdp_session_num > 0) {
 			break;
 		}
@@ -554,18 +559,18 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 
 		sdp_stream_num = 0;
 		for(;;) {
+			add_flow = 1;
+
 			req_sdp_stream =
 					get_sdp_stream(req, sdp_session_num, sdp_stream_num);
 			rpl_sdp_stream =
 					get_sdp_stream(rpl, sdp_session_num, sdp_stream_num);
 			if(!req_sdp_stream || !rpl_sdp_stream) {
-				//LM_ERR("Missing SDP stream information\n");
 				break;
 			}
-			//is this a stream to add to AAR.
+			// Check if this is a stream to add to AAR.
 			if(req_sdp_stream->is_rtp) {
-
-				//check if the src or dst port is 0 and if so then don't add to rx
+				// Check if the src or dst port is 0. If so, then don't add to Rx AAR.
 				int intportA = atoi(req_sdp_stream->port.s);
 				int intportB = atoi(rpl_sdp_stream->port.s);
 				if(intportA != 0 && intportB != 0) {
@@ -576,8 +581,6 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 					}
 
 					if(add_flow) {
-
-
 						if(cscf_get_to_tag(rpl, &ttag)
 								&& cscf_get_from_tag(rpl, &ftag)) {
 							LM_DBG("Original ftag [%.*s] ttag [%.*s].  Current "
@@ -663,15 +666,20 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 							}
 						}
 
-						//add this to auth session data
-						add_flow_description((rx_authsessiondata_t *)
-													 auth->u.auth.generic_data,
-								sdp_stream_num + 1, &req_sdp_stream->media,
-								&ipA, &portA, &ipB, &portB,
-								&rpl_sdp_stream->transport,
-								&req_sdp_stream->raw_stream,
-								&rpl_sdp_stream->raw_stream, direction,
-								0 /*This is a new mcd, we are not setting it as active*/);
+						if(!flow_description_exists(p_session_data,
+								   sdp_stream_num + 1, &req_sdp_stream->media,
+								   &ipA, &portA, &ipB, &portB,
+								   &rpl_sdp_stream->transport, direction,
+								   in_current_flow_description_list)) {
+							// Flow description does not exist in the list of flow descriptions to be added. So we add it to auth session data.
+							add_flow_description(p_session_data,
+									sdp_stream_num + 1, &req_sdp_stream->media,
+									&ipA, &portA, &ipB, &portB,
+									&rpl_sdp_stream->transport,
+									&req_sdp_stream->raw_stream,
+									&rpl_sdp_stream->raw_stream, direction,
+									in_current_flow_description_list);
+						}
 
 						rx_add_media_component_description_avp(aar,
 								sdp_stream_num + 1, &req_sdp_stream->media,
@@ -680,11 +688,11 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 								&req_sdp_stream->raw_stream,
 								&rpl_sdp_stream->raw_stream, direction,
 								AVP_EPC_Flow_Usage_No_Information);
+
+						sdp_stream_num++;
 					}
-					add_flow = 1;
 				}
 			}
-			sdp_stream_num++;
 		}
 		sdp_session_num++;
 	}

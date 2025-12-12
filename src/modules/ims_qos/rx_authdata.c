@@ -357,6 +357,109 @@ int add_flow_description(rx_authsessiondata_t *session_data, int stream_num,
 	return 1;
 }
 
+/* 
+ * Helper function to check if a flow description already exists Rx session data.
+ * Returns 1 if flow description exists, 0 otherwise.
+ * Comparison is based on all relevant flow description parameters.
+ */
+int flow_description_exists(rx_authsessiondata_t *session_data, int stream_num,
+		str *media, str *req_sdp_ip_addr, str *req_sdp_port,
+		str *rpl_sdp_ip_addr, str *rpl_sdp_port, str *rpl_sdp_transport,
+		int direction, int current_flow_description_list)
+{
+
+	flow_description_t *fd;
+
+	if(!session_data) {
+		return 0;
+	}
+
+	fd = session_data->first_new_flow_description;
+	if(current_flow_description_list) {
+		fd = session_data->first_current_flow_description;
+	}
+
+	while(fd) {
+		/* Compare stream number. */
+		if(fd->stream_num != stream_num) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* Compare direction. */
+		if(fd->direction != direction) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* Compare media. */
+		if(media
+				&& (fd->media.len != media->len
+						|| strncmp(fd->media.s, media->s, media->len) != 0)) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* Compare req_sdp_ip_addr. */
+		if(req_sdp_ip_addr
+				&& (fd->req_sdp_ip_addr.len != req_sdp_ip_addr->len
+						|| strncmp(fd->req_sdp_ip_addr.s, req_sdp_ip_addr->s,
+								   req_sdp_ip_addr->len)
+								   != 0)) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* Compare req_sdp_port. */
+		if(req_sdp_port
+				&& (fd->req_sdp_port.len != req_sdp_port->len
+						|| strncmp(fd->req_sdp_port.s, req_sdp_port->s,
+								   req_sdp_port->len)
+								   != 0)) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* Compare rpl_sdp_ip_addr. */
+		if(rpl_sdp_ip_addr
+				&& (fd->rpl_sdp_ip_addr.len != rpl_sdp_ip_addr->len
+						|| strncmp(fd->rpl_sdp_ip_addr.s, rpl_sdp_ip_addr->s,
+								   rpl_sdp_ip_addr->len)
+								   != 0)) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* Compare rpl_sdp_port. */
+		if(rpl_sdp_port
+				&& (fd->rpl_sdp_port.len != rpl_sdp_port->len
+						|| strncmp(fd->rpl_sdp_port.s, rpl_sdp_port->s,
+								   rpl_sdp_port->len)
+								   != 0)) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* Compare rpl_sdp_transport. */
+		if(rpl_sdp_transport
+				&& (fd->rpl_sdp_transport.len != rpl_sdp_transport->len
+						|| strncmp(fd->rpl_sdp_transport.s,
+								   rpl_sdp_transport->s, rpl_sdp_transport->len)
+								   != 0)) {
+			fd = fd->next;
+			continue;
+		}
+
+		/* All comparisons matched. */
+		LM_DBG("Flow description found in list\n");
+		return 1;
+	}
+
+	LM_DBG("Flow description does not exist in list\n");
+	return 0;
+}
+
+
 /* Param current tells us if this a current fd or a new fd to add*/
 void free_flow_description(rx_authsessiondata_t *session_data, int current)
 {

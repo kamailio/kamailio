@@ -122,6 +122,10 @@ int add_flow_description(rx_authsessiondata_t *session_data, int stream_num,
 		str *req_sdp_raw_stream, str *rpl_sdp_raw_stream, int direction,
 		int current);
 void free_flow_description(rx_authsessiondata_t *session_data, int current);
+int flow_description_exists(rx_authsessiondata_t *session_data, int stream_num,
+		str *media, str *req_sdp_ip_addr, str *req_sdp_port,
+		str *rpl_sdp_ip_addr, str *rpl_sdp_port, str *rpl_sdp_transport,
+		int direction, int current_flow_description_list);
 
 void show_callsessiondata(rx_authsessiondata_t *session_data);
 
