@@ -328,7 +328,7 @@ _mod_list_presence="\
 _mod_list_lua="app_lua"
 
 # - modules depending on perl library
-_mod_list_perl="app_perl db_perlvdb"
+_mod_list_perl="app_perl"
 
 # - modules depending on python3 library
 _mod_list_python3="app_python3 app_python3s"
