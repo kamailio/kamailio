@@ -93,4 +93,23 @@ event_route[tm:local-response] {
 			</programlisting>
 		</example>
 	</section>
+	<section id="tm.e.local-ack-sent">
+		<title>
+			<function moreinfo="none">event_route[tm:local-ack-sent]</function>
+		</title>
+		<para>
+			Executed after the tm module sent the ACK of the 200ok for a local
+			generated INVITE. It is executed with the received 200ok response.
+		</para>
+		<example>
+			<title><function>event_route[tm:local-ack-sent]</function> usage</title>
+			<programlisting  format="linespecific">
+...
+event_route[tm:local-ack-sent] {
+    xlog("ACK for local INVITE was sent\n");
+}
+...
+			</programlisting>
+		</example>
+	</section>
 </section>
