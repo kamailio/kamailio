@@ -1825,24 +1825,27 @@ int t_calc_branch_ack(struct cell *t, int b, char *branch, int *branch_len)
 	int i = 0;
 	int k = 0;
 
-	if(tm_local_ack_branch_mode == 1) {
-		memcpy(md5b, t->md5, MD5_LEN);
-		md5b[MD5_LEN] = '\0';
-		for(k = 0; k < 4; k++) {
-			i = MD5_LEN - 1 - k;
-			if(md5b[i] >= '0' && md5b[i] < '9') {
-				md5b[i] = md5b[i] + 1;
-			} else if(md5b[i] == '9') {
-				md5b[i] = '0';
-			} else if(md5b[i] >= 'a' && md5b[i] < 'z') {
-				md5b[i] = md5b[i] + 1;
-			} else if(md5b[i] == 'z') {
-				md5b[i] = 'a';
-			} else if(md5b[i] >= 'A' && md5b[i] < 'Z') {
-				md5b[i] = md5b[i] + 1;
-			} else if(md5b[i] == 'z') {
-				md5b[i] = 'A';
-			}
+	if(tm_local_ack_branch_mode != 1) {
+		return branch_builder(
+				t->hash_index, 0, t->md5, NULL, b, branch, branch_len);
+	}
+
+	memcpy(md5b, t->md5, MD5_LEN);
+	md5b[MD5_LEN] = '\0';
+	for(k = 0; k < 4; k++) {
+		i = MD5_LEN - 1 - k;
+		if(md5b[i] >= '0' && md5b[i] < '9') {
+			md5b[i] = md5b[i] + 1;
+		} else if(md5b[i] == '9') {
+			md5b[i] = '0';
+		} else if(md5b[i] >= 'a' && md5b[i] < 'z') {
+			md5b[i] = md5b[i] + 1;
+		} else if(md5b[i] == 'z') {
+			md5b[i] = 'a';
+		} else if(md5b[i] >= 'A' && md5b[i] < 'Z') {
+			md5b[i] = md5b[i] + 1;
+		} else if(md5b[i] == 'z') {
+			md5b[i] = 'A';
 		}
 	}
 
