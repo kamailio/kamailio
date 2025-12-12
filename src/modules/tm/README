@@ -183,6 +183,7 @@ Daniel-Constantin Mierla
               6.1. event_route[tm:branch-failure:id]
               6.2. event_route[tm:local-request]
               6.3. event_route[tm:local-response]
+              6.4. event_route[tm:local-ack-sent]
 
         7. TM Module API
 
@@ -324,6 +325,7 @@ Daniel-Constantin Mierla
    1.118. event_route[tm:branch-failure:id] usage
    1.119. event_route[tm:local-request] usage
    1.120. event_route[tm:local-response] usage
+   1.121. event_route[tm:local-ack-sent] usage
 
 Chapter 1. Admin Guide
 
@@ -487,6 +489,7 @@ Chapter 1. Admin Guide
         6.1. event_route[tm:branch-failure:id]
         6.2. event_route[tm:local-request]
         6.3. event_route[tm:local-response]
+        6.4. event_route[tm:local-ack-sent]
 
    7. TM Module API
 
@@ -3475,6 +3478,7 @@ kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
    6.1. event_route[tm:branch-failure:id]
    6.2. event_route[tm:local-request]
    6.3. event_route[tm:local-response]
+   6.4. event_route[tm:local-ack-sent]
 
 6.1.  event_route[tm:branch-failure:id]
 
@@ -3529,6 +3533,18 @@ event_route [tm:local-request] {
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
+}
+...
+
+6.4.  event_route[tm:local-ack-sent]
+
+   Executed after the tm module sent the ACK of the 200ok for a local
+   generated INVITE. It is executed with the received 200ok response.
+
+   Example 1.121. event_route[tm:local-ack-sent] usage
+...
+event_route[tm:local-ack-sent] {
+    xlog("ACK for local INVITE was sent\n");
 }
 ...
 
