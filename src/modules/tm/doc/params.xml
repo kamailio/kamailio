@@ -1574,6 +1574,36 @@ end
 		</example>
 	</section>
 
+	<section id="tm.p.evcb_local_ack_sent">
+		<title><varname>evcb_local_ack_sent</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[tm:local-ack-sent] block. The function receives
+			a string parameter with the name of the event, respectively
+			"tm:local-ack-sent".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>evcb_local_ack_sent</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "evcb_local_ack_sent", "ksr_tm_event_local_ack_sent")
+...
+-- event callback function implemented in Lua
+function ksr_tm_event_local_ack_sent(evname)
+	KSR.info("===== tm module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="tm.p.relay_100">
 		<title><varname>relay_100</varname> (str)</title>
 		<para>
