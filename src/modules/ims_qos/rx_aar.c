@@ -481,6 +481,20 @@ int add_media_components_using_current_flow_description(
 		}
 
 		if(add_flow) {
+			LM_DBG("Adding media component - stream_num: %d, media: %.*s, "
+				   "req_ip: %.*s, req_port: %.*s, rpl_ip: %.*s, rpl_port: "
+				   "%.*s, direction: %d\n",
+					flow_description->stream_num, flow_description->media.len,
+					flow_description->media.s,
+					flow_description->req_sdp_ip_addr.len,
+					flow_description->req_sdp_ip_addr.s,
+					flow_description->req_sdp_port.len,
+					flow_description->req_sdp_port.s,
+					flow_description->rpl_sdp_ip_addr.len,
+					flow_description->rpl_sdp_ip_addr.s,
+					flow_description->rpl_sdp_port.len,
+					flow_description->rpl_sdp_port.s,
+					flow_description->direction);
 			rx_add_media_component_description_avp(aar,
 					flow_description->stream_num, &flow_description->media,
 					&flow_description->req_sdp_ip_addr,
