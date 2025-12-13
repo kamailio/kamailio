@@ -315,6 +315,34 @@ int add_flow_description(rx_authsessiondata_t *session_data, int stream_num,
 		return -1;
 	}
 
+	LM_DBG("Flow description input: stream_num=%d, media=[%.*s], "
+		   "req_sdp_ip_addr=[%.*s], "
+		   "req_sdp_port=[%.*s], rpl_sdp_ip_addr=[%.*s], rpl_sdp_port=[%.*s], "
+		   "rpl_sdp_transport=[%.*s], direction=%d, current=%d\n",
+			stream_num, media ? media->len : 0, media ? media->s : "",
+			req_sdp_ip_addr ? req_sdp_ip_addr->len : 0,
+			req_sdp_ip_addr ? req_sdp_ip_addr->s : "",
+			req_sdp_port ? req_sdp_port->len : 0,
+			req_sdp_port ? req_sdp_port->s : "",
+			rpl_sdp_ip_addr ? rpl_sdp_ip_addr->len : 0,
+			rpl_sdp_ip_addr ? rpl_sdp_ip_addr->s : "",
+			rpl_sdp_port ? rpl_sdp_port->len : 0,
+			rpl_sdp_port ? rpl_sdp_port->s : "",
+			rpl_sdp_transport ? rpl_sdp_transport->len : 0,
+			rpl_sdp_transport ? rpl_sdp_transport->s : "", direction, current);
+	LM_DBG("Flow description set: media=[%.*s], req_sdp_ip_addr=[%.*s], "
+		   "req_sdp_port=[%.*s], "
+		   "rpl_sdp_ip_addr=[%.*s], rpl_sdp_port=[%.*s], "
+		   "rpl_sdp_transport=[%.*s], "
+		   "req_sdp_raw_stream=[%.*s], rpl_sdp_raw_stream=[%.*s]\n",
+			fd->media.len, fd->media.s, fd->req_sdp_ip_addr.len,
+			fd->req_sdp_ip_addr.s, fd->req_sdp_port.len, fd->req_sdp_port.s,
+			fd->rpl_sdp_ip_addr.len, fd->rpl_sdp_ip_addr.s,
+			fd->rpl_sdp_port.len, fd->rpl_sdp_port.s, fd->rpl_sdp_transport.len,
+			fd->rpl_sdp_transport.s, fd->req_sdp_raw_stream.len,
+			fd->req_sdp_raw_stream.s, fd->rpl_sdp_raw_stream.len,
+			fd->rpl_sdp_raw_stream.s);
+
 	fd->next = 0;
 
 	if(current) {
