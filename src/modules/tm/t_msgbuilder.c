@@ -35,6 +35,7 @@
 #include "../../core/config.h"
 #include "../../core/parser/parser_f.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
 #include "../../core/ut.h"
 #include "../../core/trim.h"
 #include "../../core/srapi.h"

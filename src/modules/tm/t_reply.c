@@ -1398,10 +1398,10 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 		/* Do not discard negative replies for forked REGISTER messages
 		 * if 200 status for initial trasaction already been set.
 		 * In case of REGISTER request is forked to multiple Registrars
-		 * some of registrars may reply with AUTH response later than others. 
+		 * some of registrars may reply with AUTH response later than others.
 		 * Without this code negative replies will be just discarded silently.
 		 * This part lests late negative replies for forked REGISTERs being treated
-		 * the same way negative replies for INVITE requests are treated 
+		 * the same way negative replies for INVITE requests are treated
 		 * However it won't be propagated to UAC, as transacton status already 200.
 		 */
 		if(!(strncmp(Trans->method.s, "REGISTER", 8) == 0 && new_code >= 300)) {
@@ -2534,14 +2534,20 @@ int reply_received(struct sip_msg *p_msg)
 			} else if(is_local(t) /*&& 200 <= msg_status < 300*/) {
 				ack = build_local_ack(p_msg, t, branch, &ack_len, &lack_dst);
 				if(ack) {
-					if(msg_send(&lack_dst, ack, ack_len) < 0)
+					if(msg_send(&lack_dst, ack, ack_len) < 0) {
 						LM_ERR("error while sending local ACK\n");
-					else if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))) {
-						INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
-								p_msg, &uac->request, &lack_dst, ack, ack_len,
-								TMCB_LOCAL_F, branch, TYPE_LOCAL_ACK);
-						run_trans_callbacks_off_params(
-								TMCB_REQUEST_SENT, t, &onsend_params);
+					} else {
+						if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))) {
+							INIT_TMCB_ONSEND_PARAMS(onsend_params,
+									t->uas.request, p_msg, &uac->request,
+									&lack_dst, ack, ack_len, TMCB_LOCAL_F,
+									branch, TYPE_LOCAL_ACK);
+							run_trans_callbacks_off_params(
+									TMCB_REQUEST_SENT, t, &onsend_params);
+						}
+						if(msg_status >= 200 && msg_status < 300) {
+							uac_evrt_local_ack_sent(p_msg);
+						}
 					}
 				}
 			}

@@ -141,6 +141,8 @@ void free_local_ack_unsafe(struct retr_buf *lack);
  */
 int ack_local_uac(struct cell *trans, str *hdrs, str *body);
 
+int uac_evrt_local_ack_sent(sip_msg_t *rpl);
+
 /*
  * Send a transactional request, no dialogs involved
  */
