@@ -684,6 +684,7 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str *proto, str *ipA,
 	str data;
 
 	int len, len2;
+	int intportA, intportB;
 	int int_port_rctp_a = 0, int_port_rctp_b = 0;
 	str port_rtcp_a = STR_NULL, port_rtcp_b = STR_NULL;
 	AAA_AVP *flow_description1 = 0, *flow_description2 = 0,
@@ -721,8 +722,14 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str *proto, str *ipA,
 	}
 	int proto_len = strlen(proto_nr);
 
-	int intportA = atoi(portA->s);
-	int intportB = atoi(portB->s);
+	if(str2int(portA, (unsigned int *)&intportA) != 0) {
+		LM_ERR("Invalid port A\n");
+		return NULL;
+	}
+	if(str2int(portB, (unsigned int *)&intportB) != 0) {
+		LM_ERR("Invalid port B\n");
+		return NULL;
+	}
 
 	set_4bytes(x, number);
 	flow_number = cdpb.AAACreateAVP(AVP_IMS_Flow_Number,
