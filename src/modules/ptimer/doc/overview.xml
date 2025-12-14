@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ptimer.overview" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>Overview</title>
+	<para>
+    This module implements precise timers, which are not limited in
+    precision by the kamailio tick frequency.
+	</para>
+    <para>
+    All timers in this module are implemented as background processes,
+    using system time for synchronization.
+    </para>
+    <para>
+    Each timer can have 3 config routes associated with it:
+    <itemizedlist>
+    <listitem>
+    <para>
+    <emphasis>start</emphasis> - the route to execute when the timer starts
+    </para>
+    </listitem>
+    <listitem>
+    <para>
+    <emphasis>loop</emphasis> - the route to execute continuously (every interval)
+    </para>
+    </listitem>
+    <listitem>
+    <para>
+    <emphasis>end</emphasis> - the route to execute when the timer ends
+    </para>
+    </listitem>
+    </itemizedlist>
+    </para>
+	<para>
+    A faked SIP message is given as parameter to called functions,
+    so all functions available for REQUEST_ROUTE can be used.
+    Additionally, the message state is preserved from start to end of the timer.
+	</para>
+</section>

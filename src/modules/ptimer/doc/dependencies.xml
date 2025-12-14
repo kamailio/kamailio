@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ptimer.dependencies" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Dependencies</title>
+    <section>
+        <title>Module Dependencies</title>
+        <para>
+        The following modules must be loaded before this module:
+        <itemizedlist>
+        <listitem>
+        <para>
+        <emphasis>No dependencies on other &kamailio; modules</emphasis>.
+        </para>
+        </listitem>
+        </itemizedlist>
+        </para>
+    </section>
+    <section>
+        <title>External Dependencies</title>
+        <para>
+        The following libraries or applications must be installed before running
+        &kamailio; with this module loaded:
+        <itemizedlist>
+        <listitem>
+        <para>
+        <emphasis>None</emphasis>.
+        </para>
+        </listitem>
+        </itemizedlist>
+        </para>
+    </section>
+</section>

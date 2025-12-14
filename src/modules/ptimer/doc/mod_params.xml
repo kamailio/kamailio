@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="ptimer.mod_params" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>Parameters</title>
+    <section>
+        <title><varname>default_type</varname> (int)</title>
+        <para>
+        The default timer type (if not present on the "timer" parameter).
+        </para>
+        <para>
+        If not set, defaults to 1, basic timers.
+        </para>
+        <para>
+        Can be one of:
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        0 - basic timer
+
+        A simple sleep / execute timer.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        1 - sync timer
+
+        Synchronizes time each loop, accounting for execution time drift.
+        This type of timer will use a nanosecond precision time functions
+        when sleeping / syncing, and the interval will be scaled for you.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        2 - slice timer
+
+        A basic timer that slices given tasks into chunks for each loop iteration.
+        The current slice and number of tasks are available via the pseudo variables.
+        Tasks are split using an interval splitting algorithm:
+        <programlisting>
+tasks(i) = ⌊((i + 1) * n) / k⌋ − ⌊(i * n) / k⌋
+        </programlisting>
+        Where, n = total tasks, k = number of slices, and i = current slice index.
+        For simplicity, the number of tasks assigned to each worker is roughly:
+        <programlisting>
+tasks = n / k
+        </programlisting>
+        with the integer remainder evenly distributed.
+        Further slicing per worker is possible within the start the route.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        3 - synced slice timer
+
+        This type of timer combines the functionality of a sync timer and slice timer.
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        <emphasis role="bold">Example: set <varname>default_type</varname> parameter</emphasis>
+        </para>
+        <programlisting>
+...
+
+# set the default type to basic timers
+modparam("ptimer", "default_type", 0)
+# set the default type to sync timers
+modparam("ptimer", "default_type", 1)
+# set the default type to slice timers
+modparam("ptimer", "default_type", 2)
+# set the default type to synced slice timers
+modparam("ptimer", "default_type", 3)
+
+...
+        </programlisting>
+    </section>
+    <section>
+        <title><varname>default_interval</varname> (str)</title>
+        <para>
+        The default interval to execute loop route for timers (if not present on the "timer" parameter).
+        Suffix with "s", "ms", or "us" for an interval in seconds, milliseconds, or microseconds.
+        If a number is given without a suffix, the number will be treated as seconds.
+        Defaults to default_interval.
+        </para>
+        <para>
+        If not set, defaults to 1s.
+        </para>
+        <para>
+        <emphasis role="bold">Example: set <varname>default_interval</varname> parameter</emphasis>
+        </para>
+        <programlisting>
+...
+
+# set the default interval to 300 seconds
+modparam("ptimer", "default_interval", "300")
+# set the default interval to 10 seconds
+modparam("ptimer", "default_interval", "10s")
+# set the default interval to 10 milliseconds
+modparam("ptimer", "default_interval", 100ms)
+# set the default interval to 100 microseconds
+modparam("ptimer", "default_interval", 10ous)
+
+...
+        </programlisting>
+    </section>
+    <section>
+        <title><varname>default_nworkers</varname> (int)</title>
+        <para>
+        The default number of workers to run per timer (if not present on the "timer" parameter).
+        </para>
+        <para>
+        <emphasis role="bold">Example: set <varname>default_nworkers</varname> parameter</emphasis>
+        </para>
+        <programlisting>
+...
+
+# set the default number of timer workers to 8
+modparam("ptimer", "default_nworkers", 8)
+
+...
+        </programlisting>
+    </section>
+    <section>
+        <title><varname>timer</varname> (str)</title>
+        <para>
+        The definition of a timer. The value of the parameter must have the
+        following format:
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        "name=_str_;type=_int_;interval=_str_;nworkers=_int_;ntasks=_int_;nslices=_int_"
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        The parameter can be set multiple times to define more timers in
+        same configuration file.
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        <emphasis>name</emphasis> - name of the timer.
+        This attribute is required.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>type</emphasis> - type of timer to use (see default_type for more info).
+        This attribute is optional, defaults to default_type.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>interval</emphasis> - interval at which the timer workers
+        will execute the loop route. See default_interval for more information.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>nworkers</emphasis> - the number of worker processes to
+        spawn for this timer. Defaults to default_nworkers.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>ntasks</emphasis> - number of tasks each worker will process.
+        If static, you can use this parameter, otherwise you can set it within
+        the start route.
+        This attribute is optional.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>nslices</emphasis> - number of slices to split ntasks into.
+        This attribute, although set on other timers, only effects tasks when
+        used on a slice timer.
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        <emphasis role="bold">Example: set <varname>timer</varname> parameter</emphasis>
+        </para>
+        <programlisting>
+...
+
+# basic timer looping every 1 sec
+modparam("ptimer", "timer", "name=t1;interval=1s;type=0")
+# sync timer that processes 25 tasks every 100 ms
+modparam("ptimer", "timer", "name=t2;interval=100ms;type=1;ntasks=25")
+# slice timer that processes 10% of the tasks from queue of 2500 every 10 sec
+modparam("ptimer", "timer", "name=t3;interval=10s;type=2;nslices=10;ntasks=2500")
+# basic timer that runs the loop route on 8 different worker processes every 100us
+modparam("ptimer", "timer", "name=t4;interval=100us;type=1;nworkers=8")
+
+...
+        </programlisting>
+    </section>
+    <section>
+        <title><varname>start</varname> (str)</title>
+        <para>
+        Route to be executed when timer stars. The value of the parameter
+        must have the following format:
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        "timer=_str_;route=_str_"
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        The start route is optional, only one start route can be set per timer.
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        <emphasis>timer</emphasis> - name of the timer.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>route</emphasis> - the name of the route block to be executed,
+        or the name of the function from kemi script. The kemi function
+        receives a string parameter with the value being the name of the module.
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        The start route is the typical place to put code that sets up for the loop route.
+        One can modify some of the pseudo variables in this route, such as ntasks.
+        Dynamic or external values can be obtained and stored here, i.e. from an htable,
+        database, etc...
+        Variables and AVPs set here will remain in-tact in the subsequent loop and end routes.
+        If the start route returns -1 the timer will jump execution to the end route.
+        </para>
+        <para>
+        <emphasis role="bold">Example: set <varname>start</varname> parameter</emphasis>
+        </para>
+        <programlisting>
+...
+
+modparam("ptimer", "timer", "name=t1;interval=10")
+modparam("ptimer", "start", "timer=t1;route=TIMER_START")
+modparam("ptimer", "loop", "timer=t1;route=TIMER_LOOP")
+
+route[TIMER_START] {
+    $ptimer(ntasks) = 1000;
+}
+
+...
+
+route[TIMER_LOOP] {
+    $var(i) = 0;
+    while($var(i) &lt; $ptimer(ntasks)) {
+        xlog("L_INFO", "handled task $var(i)\n");
+        $var(i) = $var(i) + 1;
+    }
+}
+
+...
+        </programlisting>
+    </section>
+    <section>
+        <title><varname>loop</varname> (str)</title>
+        <para>
+        Route to be executed on timer interval. The value of the parameter
+        must have the following format:
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        "timer=_str_;route=_str_"
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        Each timer requires a loop route, only one loop route can be set per timer.
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        <emphasis>timer</emphasis> - name of the timer.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>route</emphasis> - the name of the route block to be executed,
+        or the name of the function from kemi script. The kemi function
+        receives a string parameter with the value being the name of the module.
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        The loop route is executed every interval, continuously.
+        This is typically where you would process the tasks.
+        If the loop route returns -1 the timer will jump execution to the end route.
+        </para>
+        <para>
+        <emphasis role="bold">Example: set <varname>loop</varname> parameter</emphasis>
+        </para>
+        <programlisting>
+...
+
+modparam("ptimer", "timer", "name=t1;interval=10")
+modparam("ptimer", "loop", "timer=t1;route=TIMER_LOOP")
+
+...
+
+route[TIMER_LOOP] {
+    xlog("L_INFO", "timer $ptimer(name) executed at $TF\n");
+}
+
+...
+        </programlisting>
+        <para>
+        <emphasis role="bold">Example: use <varname>loop</varname> parameter with Kemi engine</emphasis>
+        </para>
+        <programlisting>
+...
+
+modparam("ptimer", "timer", "name=t1;interval=10")
+modparam("ptimer", "loop", "timer=t1;route=timer_loop")
+
+...
+
+-- ptimer event callback function implemented in Lua
+function timer_loop(evname)
+    KSR.info("===== ptimer module triggered event\n");
+    return 1;
+end
+
+...
+        </programlisting>
+    </section>
+    <section>
+        <title><varname>end</varname> (str)</title>
+        <para>
+        Route to be executed when timer ends. The value of the parameter
+        must have the following format:
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        "timer=_str_;route=_str_"
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        The end route is optional, only one end route can be set per timer.
+        </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        <emphasis>timer</emphasis> - name of the timer.
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+        <emphasis>route</emphasis> - the name of the route block to be executed,
+        or the name of the function from kemi script. The kemi function
+        receives a string parameter with the value being the name of the module.
+        </para>
+        </listitem>
+        </itemizedlist>
+        <para>
+        The end route runs after the timer ends.
+        Typically this would the place to lgog or store data about the tasks processed.
+        After the end route completes, the environment is cleared, and the worker is paused.
+        </para>
+        <para>
+        <emphasis role="bold">Example: set <varname>end</varname> parameter</emphasis>
+        </para>
+        <programlisting>
+...
+
+modparam("ptimer", "timer", "name=t1;interval=100ms")
+modparam("ptimer", "start", "timer=t1;route=TIMER_START")
+modparam("ptimer", "loop", "timer=t1;route=TIMER_LOOP")
+modparam("ptimer", "end", "timer=t1;route=TIMER_END")
+
+...
+
+route[TIMER_START] {
+    $var(tasks_done) = 0;
+}
+
+route[TIMER_LOOP] {
+    $var(tasks_done) = $var(tasks_done) + 1;
+}
+
+route[TIMER_END] {
+    xlog("L_INFO", "tasks handled $var(tasks_done)\n");
+}
+
+...
+</programlisting>
+    </section>
+</section>
