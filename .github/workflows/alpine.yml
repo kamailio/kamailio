@@ -306,7 +306,7 @@ jobs:
           doas chown -R root:root /mnt/context
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: apk-files-and-context-${{ matrix.arch }}
         path: ${{ runner.temp }}/context
