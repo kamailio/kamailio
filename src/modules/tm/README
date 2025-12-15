@@ -1590,8 +1590,9 @@ modparam("tm", "local_ack_mode", 1)
 
 3.39. local_ack_branch_mode (integer)
 
-   If set to 1, the branch value of the ACK for 200ok of a local INVITE
-   has different value than the corresponding local INVITE.
+   If set to 1, the Via branch value of the ACK for 200ok of a local
+   INVITE has a slightly different value than the corresponding local
+   INVITE. If set to 2, a new Via branch is attempted to be created.
 
    Default 0.
 
