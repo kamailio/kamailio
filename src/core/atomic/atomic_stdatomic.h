@@ -31,13 +31,8 @@
 
 #include <stdatomic.h>
 
-#ifndef HAVE_ASM_INLINE_MEMBAR
-
-#ifdef NOSMP
-#define membar() \
-	do {         \
-	} while(0)
-#else /* SMP */
+#define HAVE_ASM_INLINE_ATOMIC_OPS
+#define HAVE_ASM_INLINE_MEMBAR
 
 /* memory barriers using C11 atomic thread fence */
 #define membar() atomic_thread_fence(memory_order_seq_cst)
@@ -52,8 +47,6 @@
 #define membar_depends() membar_read()
 #endif
 
-#endif /* NOSMP */
-
 #define membar_enter_lock() atomic_thread_fence(memory_order_acquire)
 #define membar_leave_lock() atomic_thread_fence(memory_order_release)
 
@@ -64,11 +57,6 @@
 #define membar_write_atomic_setget() membar_write()
 #define membar_read_atomic_op() membar_read()
 #define membar_read_atomic_setget() membar_read()
-
-#endif /* HAVE_ASM_INLINE_MEMBAR */
-
-
-#ifndef HAVE_ASM_INLINE_ATOMIC_OPS
 
 /* atomic operations for int */
 
@@ -353,7 +341,5 @@ inline static void mb_atomic_set_long(volatile long *v, long i)
 #define mb_atomic_add(v, i) mb_atomic_add_int(&(v)->val, i)
 #define mb_atomic_get(var) mb_atomic_get_int(&(var)->val)
 #define mb_atomic_set(var, i) mb_atomic_set_int(&(var)->val, i)
-
-#endif /* HAVE_ASM_INLINE_ATOMIC_OPS */
 
 #endif /* _atomic_stdatomic_h */
