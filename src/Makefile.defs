@@ -884,7 +884,7 @@ endif
 
 ifeq ($(ARCH), aarch64)
 	use_fast_lock=yes
-	C_DEFS+=-DNOSMP # memory barriers not implemented for arm
+	C_DEFS+=-DCC_GCC_LIKE_ASM
 endif
 
 ifeq ($(ARCH), ppc)
