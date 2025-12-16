@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="auth_arnacon.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>Functions</title>
+
+    <section id="auth_arnacon.f.arnacon_authenticate">
+        <title>
+            <function moreinfo="none">arnacon_authenticate(ens, x_data, x_sign)</function>
+        </title>
+        <para>
+            Authenticates a user by verifying ENS domain ownership through cryptographic signature validation.
+            This function implements the core authentication logic by resolving ENS ownership, recovering
+            the signer's address from the provided signature, and validating that the signer owns the
+            specified ENS domain.
+        </para>
+        <para>
+            <emphasis>Authentication Flow:</emphasis>
+            <orderedlist>
+                <listitem><para>Resolve ENS domain ownership (handling both traditional and wrapped domains)</para></listitem>
+                <listitem><para>Extract and validate timestamp from X-Data header</para></listitem>
+                <listitem><para>Recover Ethereum address from ECDSA signature</para></listitem>
+                <listitem><para>Compare recovered address with ENS domain owner</para></listitem>
+            </orderedlist>
+        </para>
+        <para>
+            <emphasis>Parameters:</emphasis>
+            <itemizedlist>
+                <listitem>
+                    <para><emphasis>user_identifier</emphasis> (string) - ENS domain name (e.g., "user.cellact.global") or plain Ethereum address (e.g., "0x1234...abcd")</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis>x_data</emphasis> (string) - X-Data header value in format "UUID:TIMESTAMP" (can be empty to extract from headers)</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis>x_sign</emphasis> (string) - X-Sign header value containing Ethereum signature (can be empty to extract from headers)</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Return Type:</emphasis> integer
+        </para>
+        <para>
+            <emphasis>Return codes:</emphasis>
+            <itemizedlist>
+                <listitem><para><emphasis>1</emphasis> - Authentication successful</para></listitem>
+                <listitem><para><emphasis>-1</emphasis> - Authentication failed (invalid signature, ENS ownership mismatch, timeout, or error)</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            This function can be used from REQUEST_ROUTE.
+        </para>
+        <example>
+            <title>arnacon_authenticate usage</title>
+            <programlisting format="linespecific">
+...
+# Basic authentication with explicit parameters
+if (arnacon_authenticate("$fU", "$hdr(X-Data)", "$hdr(X-Sign)")) {
+    xlog("L_INFO", "User $fU authenticated successfully\n");
+    # Allow registration/call
+} else {
+    xlog("L_ERR", "Authentication failed for $fU\n");
+    sl_send_reply("403", "Forbidden");
+    exit;
+}
+...
+
+...
+# Automatic header extraction (pass empty strings)
+if (arnacon_authenticate("$fU", "", "")) {
+    xlog("L_INFO", "ENS domain $fU authenticated\n");
+    # Proceed with request processing
+} else {
+    sl_send_reply("403", "Forbidden");
+    exit;
+}
+...
+
+...
+# Complete authentication flow with error handling
+route[AUTH] {
+    # Check if user exists first
+    if (!arnacon_user_exists("$fU")) {
+        xlog("L_ERR", "User $fU does not exist\n");
+        sl_send_reply("404", "User Not Found");
+        exit;
+    }
+    
+    # Authenticate with headers
+    if (arnacon_authenticate("$fU", "$hdr(X-Data)", "$hdr(X-Sign)")) {
+        xlog("L_INFO", "User $fU authenticated successfully\n");
+        return;
+    } else {
+        xlog("L_ERR", "Authentication failed for $fU\n");
+        sl_send_reply("403", "Forbidden");
+        exit;
+    }
+}
+...
+            </programlisting>
+        </example>
+    </section>
+
+    <section id="auth_arnacon.f.arnacon_user_exists">
+        <title>
+            <function moreinfo="none">arnacon_user_exists(ens)</function>
+        </title>
+        <para>
+            Checks if an ENS domain has an owner, effectively verifying if the user exists in the
+            ENS system. This function performs ENS resolution to determine if the domain is registered
+            and has a valid owner address (not the zero address).
+        </para>
+        <para>
+            <emphasis>Use Case:</emphasis> This function is useful for pre-authentication checks to
+            provide better error messages to clients and avoid unnecessary authentication attempts
+            for non-existent ENS domains.
+        </para>
+        <para>
+            <emphasis>ENS Resolution:</emphasis> The function handles both traditional ENS ownership
+            through the ENS Registry and wrapped domain ownership through the ENS Name Wrapper contract,
+            automatically detecting the appropriate resolution method.
+        </para>
+        <para>
+            <emphasis>Parameters:</emphasis>
+            <itemizedlist>
+                <listitem>
+                    <para><emphasis>ens</emphasis> (string) - ENS domain name to check</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            <emphasis>Return Type:</emphasis> integer
+        </para>
+        <para>
+            <emphasis>Return codes:</emphasis>
+            <itemizedlist>
+                <listitem><para><emphasis>1</emphasis> - User exists (ENS has a valid owner)</para></listitem>
+                <listitem><para><emphasis>-1</emphasis> - User does not exist (ENS unregistered, zero owner, or error)</para></listitem>
+            </itemizedlist>
+        </para>
+        <para>
+            This function can be used from REQUEST_ROUTE.
+        </para>
+        <example>
+            <title>arnacon_user_exists usage</title>
+            <programlisting format="linespecific">
+...
+# Basic user existence check
+if (arnacon_user_exists("$fU")) {
+    xlog("L_INFO", "User $fU exists\n");
+    # Proceed with authentication
+} else {
+    xlog("L_ERR", "User $fU does not exist\n");
+    sl_send_reply("404", "User Not Found");
+    exit;
+}
+...
+
+...
+# Pre-authentication validation
+route[PREAUTH] {
+    if (!arnacon_user_exists("$fU")) {
+        xlog("L_WARN", "Authentication attempt for non-existent user: $fU\n");
+        sl_send_reply("404", "User Not Found");
+        exit;
+    }
+    xlog("L_INFO", "User $fU exists, proceeding with authentication\n");
+}
+...
+
+...
+# Registration flow with user existence check
+if (is_method("REGISTER")) {
+    if (!arnacon_user_exists("$fU")) {
+        sl_send_reply("404", "ENS domain not registered");
+        exit;
+    }
+    # Continue with authentication
+    route(AUTH);
+}
+...
+            </programlisting>
+        </example>
+    </section>
+
+</section> 
+
+
