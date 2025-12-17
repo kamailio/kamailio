@@ -149,6 +149,7 @@ static inline int futex_try(futex_lock_t *lock)
 
 
 #else /*HAVE_ASM_INLINE_ATOMIC_OPS*/
+#warning "futex locks not suppported. undefining USE_FUTEX"
 #undef USE_FUTEX
 #endif /*HAVE_ASM_INLINE_ATOMIC_OPS*/
 
