@@ -77,42 +77,55 @@ char *brokers_param = NULL; /**< List of brokers. */
 static int kafka_conf_param(modparam_t type, void *val);
 static int kafka_topic_param(modparam_t type, void *val);
 
+
+/* clang-format off */
 /**
  * \brief Module commands
  */
-static cmd_export_t cmds[] = {{"kafka_send", (cmd_function)w_kafka_send, 2,
-									  fixup_kafka_send, 0, ANY_ROUTE},
-		{"kafka_send_key", (cmd_function)w_kafka_send_key, 3, fixup_kafka_send,
-				0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"kafka_send", (cmd_function)w_kafka_send, 2, fixup_kafka_send,
+		0, ANY_ROUTE},
+	{"kafka_send_key", (cmd_function)w_kafka_send_key, 3, fixup_kafka_send,
+		0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 /**
  * \brief Structure for module parameters.
  */
-static param_export_t params[] = {{"brokers", PARAM_STRING, &brokers_param},
-		{"configuration", PARAM_STRING | PARAM_USE_FUNC,
-				(void *)kafka_conf_param},
-		{"topic", PARAM_STRING | PARAM_USE_FUNC, (void *)kafka_topic_param},
-		{"init_without_kafka", PARAM_INT, &init_without_kafka},
-		{"log_without_overflow", PARAM_INT, &log_without_overflow},
-		{"metadata_timeout", PARAM_INT, &metadata_timeout}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"brokers", PARAM_STRING, &brokers_param},
+	{"configuration", PARAM_STRING | PARAM_USE_FUNC, (void *)kafka_conf_param},
+	{"topic", PARAM_STRING | PARAM_USE_FUNC, (void *)kafka_topic_param},
+	{"init_without_kafka", PARAM_INT, &init_without_kafka},
+	{"log_without_overflow", PARAM_INT, &log_without_overflow},
+	{"metadata_timeout", PARAM_INT, &metadata_timeout},
+	{0, 0, 0}
+};
 
 /**
  * \brief Kafka :: Module interface
  */
 struct module_exports exports = {
-		"kafka", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds, params, 0,		  /* exported RPC methods */
-		0,						  /* exported pseudo-variables */
-		0,						  /* response function */
-		mod_init,				  /* module initialization function */
-		child_init,				  /* per child init function */
-		mod_destroy				  /* destroy function */
+	"kafka",
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,
+	params,
+	0,					/* exported RPC methods */
+	0,					/* exported pseudo-variables */
+	0,					/* response function */
+	mod_init,			/* module initialization function */
+	child_init,			/* per child init function */
+	mod_destroy			/* destroy function */
 };
 
 /*! \brief We expose internal variables via the statistic framework below.*/
-stat_export_t mod_stats[] = {{"total_messages", 0, &total_messages},
-		{"total_messages_err", 0, &total_messages_err}, {0, 0, 0}};
+stat_export_t mod_stats[] = {
+	{"total_messages", 0, &total_messages},
+	{"total_messages_err", 0, &total_messages_err},
+	{0, 0, 0}
+};
+/* clang-format on */
 
 static int mod_init(void)
 {
