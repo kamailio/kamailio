@@ -154,10 +154,13 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	/* call kfk_init() only for timer processes and routing processes */
+	/* call kfk_init() only for rpc, timer and routing processes */
 	/* Note that only these processes will be able to send kafka messages */
-	if(rank != PROC_TIMER && rank <= PROC_MAIN)
-		return 0;
+	if(rank != PROC_RPC) {
+		if(rank != PROC_TIMER && rank <= PROC_MAIN) {
+			return 0;
+		}
+	}
 
 	child_init_ok = 1;
 	if(kfk_init(brokers_param)) {
