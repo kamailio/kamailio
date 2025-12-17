@@ -1,7 +1,13 @@
-# option(USE_FAST_LOCK "Use fast locking if available" ON)
-
 # Locking method selection
-# Priority (auto): FUTEX > FAST_LOCK > PTHREAD_MUTEX > POSIX_SEM > SYSV_SEM
+
+# Default Priority list (auto): FUTEX > FAST_LOCK > PTHREAD_MUTEX > POSIX_SEM > SYSV_SEM
+set(DEFAULT_LOCK_PRIORITY FUTEX FAST_LOCK PTHREAD_MUTEX POSIX_SEM SYSV_SEM)
+
+# Architecture-specific priorities (can be extended)
+# Example: On aarch64, prefer PTHREAD_MUTEX > FAST_LOCK > FUTEX
+set(aarch64_LOCK_PRIORITY PTHREAD_MUTEX FAST_LOCK FUTEX POSIX_SEM SYSV_SEM)
+# Add more as needed
+# set(x86_64_LOCK_PRIORITY FUTEX FAST_LOCK PTHREAD_MUTEX ...)
 
 # Public cache variable (user may force one); AUTO means detect
 set(locking_methods "AUTO" "FAST_LOCK" "FUTEX" "PTHREAD_MUTEX" "POSIX_SEM" "SYSV_SEM")
@@ -14,6 +20,14 @@ set(LOCK_METHOD
 # List of locking methods in option
 set_property(CACHE LOCK_METHOD PROPERTY STRINGS ${locking_methods})
 mark_as_advanced(LOCK_METHOD)
+
+# Determine the priority list for the current architecture
+if(DEFINED ${TARGET_ARCH}_LOCK_PRIORITY)
+  set(_LOCK_PRIORITY ${${TARGET_ARCH}_LOCK_PRIORITY})
+else()
+  set(_LOCK_PRIORITY ${DEFAULT_LOCK_PRIORITY})
+endif()
+message(DEBUG "Lock priority for architecture ${TARGET_ARCH}: ${_LOCK_PRIORITY}")
 
 # Set default locking method if not set
 if(NOT LOCK_METHOD)
@@ -42,8 +56,10 @@ if(FUTEX_HEADER_DIR)
   # - PowerPC variants: ppc and ppc64: atomic_ppc.h
   # - SPARC variants: sparc and sparc64: atomic_sparc.h and atomic_sparc64.h
   # - x86 variants: i386 and x86_64: atomic_x86.h
-  if(NOT "${TARGET_ARCH}" MATCHES
-     "^(i386|x86_64)$|^(mips|mips2|mips64)$|^(ppc|ppc64)$|^(sparc|sparc64)$|^(arm6|arm7)$|^alpha$"
+  if(NOT
+     "${TARGET_ARCH}"
+     MATCHES
+     "^(i386|x86_64)$|^(mips|mips2|mips64)$|^(ppc|ppc64)$|^(sparc|sparc64)$|^(arm6|arm7|aarch64)$|^alpha$"
   )
     set(_HAVE_FUTEX FALSE)
   endif()
@@ -54,9 +70,9 @@ endif()
 # PTHREAD: pthread.h (assume present on typical systems)
 find_path(PTHREAD_HEADER_DIR pthread.h)
 if(PTHREAD_HEADER_DIR)
-  set(_HAVE_PTHREAD TRUE)
+  set(_HAVE_PTHREAD_MUTEX TRUE)
 else()
-  set(_HAVE_PTHREAD FALSE)
+  set(_HAVE_PTHREAD_MUTEX FALSE)
 endif()
 
 # POSIX SEM: semaphore.h
@@ -89,25 +105,22 @@ endif()
 
 message(
   STATUS
-    "Locking Methods for this platform: FUTEX=${_HAVE_FUTEX} FAST_LOCK=${_HAVE_FAST_LOCK} PTHREAD=${_HAVE_PTHREAD} POSIX_SEM=${_HAVE_POSIX_SEM} SYSV_SEM=${_HAVE_SYSV_SEM}"
+    "Locking Methods for this platform: FUTEX=${_HAVE_FUTEX} FAST_LOCK=${_HAVE_FAST_LOCK} PTHREAD_MUTEX=${_HAVE_PTHREAD_MUTEX} POSIX_SEM=${_HAVE_POSIX_SEM} SYSV_SEM=${_HAVE_SYSV_SEM}"
 )
 
 # Final locking method selection logic
 set(_SELECTED_LOCK_METHOD "")
 
 if("${LOCK_METHOD}" STREQUAL "AUTO")
-  # Priority according to code in lock_ops.h
-  if(_HAVE_FUTEX)
-    set(_SELECTED_LOCK_METHOD "FUTEX")
-  elseif(_HAVE_FAST_LOCK)
-    set(_SELECTED_LOCK_METHOD "FAST_LOCK")
-  elseif(_HAVE_PTHREAD)
-    set(_SELECTED_LOCK_METHOD "PTHREAD_MUTEX")
-  elseif(_HAVE_POSIX_SEM)
-    set(_SELECTED_LOCK_METHOD "POSIX_SEM")
-  elseif(_HAVE_SYSV_SEM)
-    set(_SELECTED_LOCK_METHOD "SYSV_SEM")
-  else()
+  # Iterate through the priority list for the current arch
+  foreach(method IN LISTS _LOCK_PRIORITY)
+    if(_HAVE_${method})
+      set(_SELECTED_LOCK_METHOD "${method}")
+      break()
+    endif()
+  endforeach()
+
+  if(_SELECTED_LOCK_METHOD STREQUAL "")
     message(FATAL_ERROR "No supported locking method found for this platform.")
   endif()
 else()

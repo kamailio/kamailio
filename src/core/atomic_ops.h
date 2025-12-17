@@ -176,7 +176,7 @@
 
 /*! \brief if no native operations, emulate them using locks */
 #if !defined HAVE_ASM_INLINE_ATOMIC_OPS || !defined HAVE_ASM_INLINE_MEMBAR
-
+#warning "no native atomic ops, atomic_unknown.h will be used"
 #include "atomic/atomic_unknown.h"
 
 #endif /* if HAVE_ASM_INLINE_ATOMIC_OPS */
