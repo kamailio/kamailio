@@ -432,6 +432,10 @@ static int splitpdu(struct modem *mdm, char *pdu, struct incame_sms *sms)
 		start += 3;
 		end = strstr(start, "\",");
 		if(end != 0) {
+			if(end - start >= SMS_NAME_LEN) {
+				/* too long */
+				return -1;
+			}
 			memcpy(sms->name, start, end - start);
 			sms->name[end - start] = 0;
 		} else {
