@@ -2,14 +2,17 @@
 # It takes the group name, the file name and a boolean to determine if it is for kamctl or kamdbctl
 # It processes the file with sed and installs it to the correct location
 # Used by the helper function add_kamctl_db_files and add_kamdbctl_db_files
+
 function(add_db_files group_name file kamctl)
   # message(WARNING "file name is ${file}")
   # message(WARNING "group name is ${group_name}")
   # Process the file with sed and install it
   add_custom_command(
     OUTPUT "${CMAKE_BINARY_DIR}/utils/kamctl/${file}"
-    COMMAND sed -e "s#/usr/local/sbin#${BIN_DIR}#g" < ${CMAKE_SOURCE_DIR}/utils/kamctl/${file} >
-            ${CMAKE_BINARY_DIR}/utils/kamctl/${file}
+    COMMAND
+      sed -e "s#/usr/local/sbin#${BIN_DIR}#g" -e "s#/usr/local/share/kamailio#${SHARE_DIR}#g" -e
+      "s#/usr/local/etc/kamailio#${CFG_DIR}#g" < ${CMAKE_SOURCE_DIR}/utils/kamctl/${file} >
+      ${CMAKE_BINARY_DIR}/utils/kamctl/${file}
     COMMENT "Processed ${file} with sed "
   )
 
