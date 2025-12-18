@@ -1754,8 +1754,8 @@ onreply_route {
 
 4.19.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
-   Sets the overload control rate, time internval limit and sequence
-   number for the destination record (setid, uri) following RFC7339
+   Sets the overload control rate, time interval limit and sequence number
+   for the destination record (setid, uri) following RFC7339
    specifications.
 
    Description of parameters:

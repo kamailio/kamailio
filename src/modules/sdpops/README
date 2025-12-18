@@ -668,7 +668,7 @@ sdp_iterator_end("s1");
        When set to special value -1, current value is incremented. (read +
        write)
      * $sdp(c:ip) - connection IP (read only) - taken from first media
-       strea if specified, otherwise from first session.
+       stream if specified, otherwise from first session.
 
    Exported pseudo-variables are also documented at
    https://www.kamailio.org/wikidocs/

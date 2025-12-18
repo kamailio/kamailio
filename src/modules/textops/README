@@ -1430,7 +1430,7 @@ if (str_ifind("$rU", "Alice")) {
 4.57.  str_any_in(txt, clist)
 
    Return 1 (true) if any character in "clist" is found inside "txt". Both
-   paramters can contain variables.
+   parameters can contain variables.
 
    This function can be used from ANY_ROUTE.
 

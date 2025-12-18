@@ -2227,7 +2227,7 @@ kamctl rpc dlg.list_ctx
 
 9.3. dlg.list_match
 
-   Lists the details of matching dialogs. The paramters specify the
+   Lists the details of matching dialogs. The parameters specify the
    matching key, operator, value and optionally a limit of matched
    dialogs.
 

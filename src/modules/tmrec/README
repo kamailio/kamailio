@@ -123,7 +123,7 @@ modparam("tmrec", "separator", ";")
 
    The parameters can include pseudo-variables.
 
-   The timerec paramter is a list of attributes defined by RFC2445,
+   The timerec parameter is a list of attributes defined by RFC2445,
    delimited by the 'separator' (module parameter) character. The format
    of timerec parameter, using '|' as the separator, is (all in one line
    without white spaces):

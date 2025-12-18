@@ -511,12 +511,12 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 3.20. header_mode (int)
 
    List of headers to disable multiple comma separated values inserted in
-   compact form. Altough compact form is RFC compliant this paramter gives
-   possibilty to disable compact form header values for UA that don't
-   support or can't handle it. The following options are available: (1) -
-   disable multiple comma separated values for Via header (2) - disable
-   multiple comma separated values for Record-Route header (4) - disable
-   multiple comma separated values for Route header
+   compact form. Altough compact form is RFC compliant this parameter
+   gives possibilty to disable compact form header values for UA that
+   don't support or can't handle it. The following options are available:
+   (1) - disable multiple comma separated values for Via header (2) -
+   disable multiple comma separated values for Record-Route header (4) -
+   disable multiple comma separated values for Route header
 
    Default value is “0”.
 
@@ -554,7 +554,7 @@ modparam("topos", "version_table", 0)
 
 4.1.  tps_set_context(ctx)
 
-   Update the context at runtime. If the value is emtpy string, then the
+   Update the context at runtime. If the value is empty string, then the
    runtime context is reset.
 
    This function can be used from ANY_ROUTE.

@@ -50,7 +50,7 @@ Fabricio Santolin da Silva
               4.6. pvh_modify_header(hname, hvalue, [idx])
               4.7. pvh_remove_header(hname, [idx])
               4.8. pvh_remove_all_headers()
-              4.9. pvh_value_exists(hname, hparameter)
+              4.9. pvh_header_param_exists(hname, hparameter)
               4.10. pvh_remove_header_param(hname, hparameter)
 
         5. Exported Variables
@@ -95,7 +95,7 @@ Chapter 1. Admin Guide
         4.6. pvh_modify_header(hname, hvalue, [idx])
         4.7. pvh_remove_header(hname, [idx])
         4.8. pvh_remove_all_headers()
-        4.9. pvh_value_exists(hname, hparameter)
+        4.9. pvh_header_param_exists(hname, hparameter)
         4.10. pvh_remove_header_param(hname, hparameter)
 
    5. Exported Variables
@@ -252,7 +252,7 @@ modparam("pv_headers", "auto_msg", 1)
    4.6. pvh_modify_header(hname, hvalue, [idx])
    4.7. pvh_remove_header(hname, [idx])
    4.8. pvh_remove_all_headers()
-   4.9. pvh_value_exists(hname, hparameter)
+   4.9. pvh_header_param_exists(hname, hparameter)
    4.10. pvh_remove_header_param(hname, hparameter)
 
 4.1.  pvh_collect_headers()
@@ -336,7 +336,7 @@ modparam("pv_headers", "auto_msg", 1)
    This function can be used from ANY_ROUTE but only after
    pvh_collect_headers() or with “auto_msg” parameter enabled.
 
-4.9.  pvh_value_exists(hname, hparameter)
+4.9.  pvh_header_param_exists(hname, hparameter)
 
    Checks if the parameter “hparameter” is present in the header “hname”
    from XAVP.
