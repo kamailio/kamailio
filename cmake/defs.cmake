@@ -5,6 +5,19 @@
 
 include(CMakeDependentOption) # cmake_dependent_option
 
+# Define full paths for installation directories with name of the project
+# appended where needed. These are used in various places to define paths in
+# config files and scripts using sed for the most part or install(CODE) scripts.
+# For relative paths use the CMAKE_INSTALL_xxxDIR variables directly provided
+# by CMake module GNUInstallDirs.
+# If you need to change path for one of these directories, change the respective
+# CMAKE_INSTALL_xxxDIR variable when invoking cmake, e.g.:
+# cmake -DCMAKE_INSTALL_SBINDIR=custom/sbin ...
+set(BIN_DIR "${CMAKE_INSTALL_FULL_SBINDIR}")
+set(LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}")
+set(CFG_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}")
+set(SHARE_DIR "${CMAKE_INSTALL_FULL_DATADIR}/${MAIN_NAME}")
+
 add_library(common INTERFACE)
 
 # This interface is populated by common and some extra module specific flags
