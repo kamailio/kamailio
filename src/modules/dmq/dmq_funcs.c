@@ -236,14 +236,20 @@ int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 		return -1;
 	}
 	/* add Max-Forwards and Content-Type headers */
-	str_hdr.len = 34 + content_type->len + (CRLF_LEN * 2);
+	str_hdr.len = 40 + content_type->len + (CRLF_LEN * 2);
 	str_hdr.s = pkg_malloc(str_hdr.len);
 	if(str_hdr.s == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	len += sprintf(str_hdr.s, "Max-Forwards: %d" CRLF "Content-Type: %.*s" CRLF,
-			max_forwards, content_type->len, content_type->s);
+	len = snprintf(str_hdr.s, str_hdr.len,
+			"Max-Forwards: %d" CRLF "Content-Type: %.*s" CRLF, max_forwards,
+			content_type->len, content_type->s);
+	if(len < 0 || len >= str_hdr.len) {
+		LM_ERR("failed to create the headers\n");
+		pkg_free(str_hdr.s);
+		return -1;
+	}
 	str_hdr.len = len;
 
 	cb_param = shm_malloc(sizeof(*cb_param));
