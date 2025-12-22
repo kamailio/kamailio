@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <math.h>
+#include <arpa/inet.h>
 
 #include "../../core/ut.h"
 #include "../../core/trim.h"
@@ -563,6 +564,28 @@ static inline int ds_oc_skip(ds_set_t *dsg, int alg, int n)
 	return ret;
 }
 
+
+/**
+ * Determine if the host string is a numeric IP address (IPv4 or IPv6)
+ *
+ * @return 0 - is numeric IP address
+ * 	   	   -1 - not a numeric IP address or error
+ *
+ */
+int is_numeric_host(str *host)
+{
+	int len = host->len;
+	ip_addr_t *addr = NULL;
+
+	if(len == 0)
+		return -1;
+
+	addr = str2ipx(host);
+	if(addr == NULL)
+		return -1;
+
+	return 0;
+}
 /**
  *
  */
@@ -699,8 +722,28 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 
 	/* Copy the port out of the URI */
 	dp->port = puri.port_no;
-	/* Copy the proto out of the URI */
-	dp->proto = puri.proto;
+	/* Modify proto to default if PROTO_NONE was found according to RFC 3263
+		If no transport param is present in the URI, the default is UDP for numerical
+		addresses:
+		If non-numerical address and port it specified, the default is UDP as well.
+		If non-numerical address and no port is specified, the proto should be discovered
+		using DNS NAPTR/SRV lookups.  In this case we set PROTO_NONE and later the
+		forwarding function (e.g. t_relay) will set the correct proto based on the DNS records found.
+	*/
+	if(puri.proto == PROTO_NONE) {
+		if(is_numeric_host(&puri.host) == 0) {
+			dp->proto = PROTO_UDP;
+		} else {
+			if(puri.port_no != 0) {
+				dp->proto = (puri.type == SIP_URI_T) ? PROTO_UDP : PROTO_TCP;
+			} else {
+				dp->proto = PROTO_NONE;
+			}
+		}
+	} else {
+		/* Copy the proto out of the URI */
+		dp->proto = puri.proto;
+	}
 
 	/* Do a DNS-Lookup for the Host-Name, if not disabled via dst flags */
 	if(dp->flags & DS_NODNSARES_DST) {
