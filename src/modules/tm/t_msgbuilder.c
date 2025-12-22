@@ -1786,7 +1786,9 @@ char *build_uac_req(str *method, str *headers, str *body, dlg_t *dialog,
 	/* Server signature */
 	if(server_signature && user_agent_hdr.len > 0) {
 		memapp(w, user_agent_hdr.s, user_agent_hdr.len);
-		memapp(w, CRLF, CRLF_LEN);
+		if(user_agent_hdr.s[user_agent_hdr.len - 1] != '\n') {
+			memapp(w, CRLF, CRLF_LEN);
+		}
 	}
 	if(headers && headers->len > 2) {
 		memapp(w, headers->s, headers->len);
