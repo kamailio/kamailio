@@ -1949,6 +1949,15 @@ if(ds_list_exists("10")) {
 		be set to groupid of matching address and the attributes will be set in
 		variable specified by 'attrs_pvname'.
 		</para>
+
+		<note> Note on default transport (RFC 3263 See 4.1 Selecting a Transport Protocol):
+		The dispatcher module normalizes the transport protocol of destination URIs
+		according to RFC 3263 default transport rules. When a destination in the
+		dispatcher list does not contain an explicit ;transport= URI parameter, the
+		module derives and sets the transport based on the SIP URI scheme and RFC
+		3263 resolution procedures.
+		</note>
+
 		<para>
 		Note that for backward compatibility mode, when no parameter is given
 		or only groupid is given, the matching is done only for IP address
