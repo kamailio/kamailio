@@ -4485,10 +4485,6 @@ static struct rtpp_node *select_rtpp_node_new(str callid, str viabranch,
 	str hash_data = STR_NULL;
 
 	switch(hash_algo) {
-		case RTP_HASH_CALLID:
-			hash_data = callid;
-
-			break;
 		case RTP_HASH_SHA1_CALLID:
 			if(callid.len <= 0 || callid.s == NULL) {
 				LM_ERR("Invalid callid for SHA1 hashing\n");
@@ -4498,6 +4494,7 @@ static struct rtpp_node *select_rtpp_node_new(str callid, str viabranch,
 			hash_data.s = (char *)sha1;
 			hash_data.len = SHA1_DIGEST_LENGTH;
 			break;
+		case RTP_HASH_CALLID:
 		case RTP_HASH_CRC32_CALLID:
 			crc32_uint(&callid, &sum);
 			goto retry;
@@ -4505,18 +4502,10 @@ static struct rtpp_node *select_rtpp_node_new(str callid, str viabranch,
 			LM_ERR("unknown hashing algo %d\n", hash_algo);
 			return NULL;
 	}
-
 	/* XXX Use quick-and-dirty hashing algo */
 	sum = 0;
 	for(i = 0; i < hash_data.len; i++)
 		sum += hash_data.s[i];
-
-	/* FIXME this seems to affect the algorithm in a negative way
-	 * legacy code uses it; disable it for other algos */
-	if(hash_algo == RTP_HASH_CALLID) {
-		sum &= 0xff;
-	}
-
 retry:
 	LM_DBG("sum is = %u\n", sum);
 	weight_sum = 0;
