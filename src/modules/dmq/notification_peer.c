@@ -225,6 +225,7 @@ int get_dmq_host_list(
 	for(prec = phead; prec; prec = prec->next) {
 		/**********
 		* o check max
+		* o skip non-A records (e.g., CNAME)
 		* o create URI
 		**********/
 
@@ -232,6 +233,11 @@ int get_dmq_host_list(
 			LM_WARN("notification host count reached max!\n");
 			free_rdata_list(phead);
 			return host_cnt;
+		}
+		/* Skip non-A records - get_record may return CNAME records
+		 * when DNS search list expansion is used */
+		if(prec->type != T_A) {
+			continue;
 		}
 		len = ip4tosbuf(
 				((struct a_rdata *)prec->rdata)->ip, pIP, IP4_MAX_STR_SIZE);
