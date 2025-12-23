@@ -1,0 +1,510 @@
+The Arnacon Authentication Module
+
+Jonathan Kandel
+
+   Cellact B.V.
+   <jonathan@cellact.com>
+
+   Copyright © 2025 Cellact B.V.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Technical Details
+
+              2.1. ENS Resolution
+              2.2. Signature Verification
+              2.3. Multi-Network Support
+              2.4. Security Features
+
+        3. Dependencies
+        4. Parameters
+
+              4.1. ens_registry_address (string)
+              4.2. rpc_url (string)
+              4.3. signature_timeout (integer)
+              4.4. debug_mode (integer)
+
+        5. Functions
+
+              5.1. arnacon_authenticate(ens, x_data, x_sign)
+              5.2. arnacon_user_exists(ens)
+
+   List of Examples
+
+   1.1. Setting the ens_registry_address parameter
+   1.2. Setting the rpc_url parameter
+   1.3. Setting the signature_timeout parameter
+   1.4. Setting the debug_mode parameter
+   1.5. arnacon_authenticate usage
+   1.6. arnacon_user_exists usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Technical Details
+
+        2.1. ENS Resolution
+        2.2. Signature Verification
+        2.3. Multi-Network Support
+        2.4. Security Features
+
+   3. Dependencies
+   4. Parameters
+
+        4.1. ens_registry_address (string)
+        4.2. rpc_url (string)
+        4.3. signature_timeout (integer)
+        4.4. debug_mode (integer)
+
+   5. Functions
+
+        5.1. arnacon_authenticate(ens, x_data, x_sign)
+        5.2. arnacon_user_exists(ens)
+
+1. Overview
+
+   The Arnacon Authentication module provides ENS-based authentication for
+   Kamailio by verifying ENS domain ownership through cryptographic
+   signature validation. This module enables users to authenticate using
+   their ENS domains (e.g., user.cellact.global) instead of traditional
+   username/password combinations.
+
+   The module implements a secure authentication flow where clients sign a
+   message containing a UUID and timestamp, and the module verifies that
+   the signature comes from the current owner of the specified ENS domain.
+   This provides strong cryptographic authentication while maintaining
+   compatibility with existing SIP infrastructure.
+
+   Key features:
+     * ENS domain-based authentication
+     * ECDSA signature verification using secp256k1
+     * Support for both traditional and wrapped ENS domains
+     * Automatic ENS Name Wrapper detection and handling
+     * Configurable signature timeout for replay attack prevention
+     * Multi-network support (Polygon, Ethereum, custom networks)
+
+2. Technical Details
+
+   2.1. ENS Resolution
+   2.2. Signature Verification
+   2.3. Multi-Network Support
+   2.4. Security Features
+
+   The module implements a comprehensive ENS-based authentication system
+   with the following technical features:
+
+2.1. ENS Resolution
+
+   The module supports both traditional ENS ownership and wrapped domain
+   ownership:
+     * Direct ownership via ENS Registry contract
+     * Wrapped domain ownership via ENS Name Wrapper contract
+     * Automatic detection of wrapped vs traditional domains
+     * Zero address detection for unregistered domains
+
+2.2. Signature Verification
+
+   Implements Ethereum-style message signing and verification:
+     * Ethereum message prefix handling (\x19Ethereum Signed Message:\n)
+     * ECDSA signature recovery using secp256k1
+     * Address recovery from signature for ownership verification
+     * Timestamp validation to prevent replay attacks
+
+2.3. Multi-Network Support
+
+     * Primary support for Polygon network
+     * Configurable for Ethereum mainnet, testnets, or custom networks
+     * Custom RPC endpoint configuration
+     * Flexible contract address configuration for different networks
+
+2.4. Security Features
+
+   Comprehensive security measures to ensure authentication integrity:
+     * Replay attack protection via timestamp validation
+     * Cryptographic signature verification
+     * ENS ownership verification against blockchain state
+     * Configurable signature timeout (default 30 seconds)
+
+3. Dependencies
+
+   The following modules must be loaded before this module:
+     * none
+
+   External dependencies:
+     * libcurl - HTTP client library for blockchain RPC calls
+     * libsecp256k1 - cryptographic library for ECDSA signature operations
+
+4. Parameters
+
+   4.1. ens_registry_address (string)
+   4.2. rpc_url (string)
+   4.3. signature_timeout (integer)
+   4.4. debug_mode (integer)
+
+4.1. ens_registry_address (string)
+
+   ENS Registry contract address for the target blockchain network. This
+   contract is used to resolve ENS domain ownership and handle the initial
+   ownership lookup.
+
+   Common Addresses:
+     * Polygon: 0x16742E546bF92118F7dfdbEF5170E44C47ae254b
+     * Ethereum Mainnet: 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+     * Ethereum Sepolia: 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e
+
+   Default: "0x16742E546bF92118F7dfdbEF5170E44C47ae254b" (Polygon)
+
+   Example 1.1. Setting the ens_registry_address parameter
+...
+modparam("auth_arnacon", "ens_registry_address", "0x16742E546bF92118F7dfdbEF5170
+E44C47ae254b")
+...
+
+4.2. rpc_url (string)
+
+   RPC endpoint URL for blockchain network communication. Used for all ENS
+   registry and contract calls via JSON-RPC eth_call method. The module
+   automatically detects and interacts with Name Wrapper contracts when
+   needed.
+
+   Common Endpoints:
+     * Polygon Mainnet: https://polygon-rpc.com
+     * Ethereum Mainnet: https://eth.drpc.org
+     * Ethereum Sepolia: https://ethereum-sepolia-rpc.publicnode.com
+
+   Default: "https://polygon-rpc.com"
+
+   Example 1.2. Setting the rpc_url parameter
+...
+modparam("auth_arnacon", "rpc_url", "https://polygon-rpc.com")
+...
+
+4.3. signature_timeout (integer)
+
+   Timeout in seconds for signature validation. Signatures older than this
+   timeout will be rejected to prevent replay attacks. The timestamp is
+   extracted from the X-Data header and compared against the current
+   system time.
+
+   Recommended Values:
+     * 30s - Default, balanced security and usability
+     * 60s - More lenient for slower networks
+     * 15s - Stricter security for high-security environments
+
+   Default: 30
+
+   Example 1.3. Setting the signature_timeout parameter
+...
+modparam("auth_arnacon", "signature_timeout", 30)
+...
+
+4.4. debug_mode (integer)
+
+   Enable debug logging for authentication operations. When enabled,
+   detailed information about ENS resolution, signature verification, and
+   authentication steps will be logged. Warning: May log sensitive
+   authentication data.
+
+   Values:
+     * 0 - Debug disabled
+     * 1 - Debug enabled
+
+   Default: 0
+
+   Example 1.4. Setting the debug_mode parameter
+...
+modparam("auth_arnacon", "debug_mode", 1)
+...
+
+5. Functions
+
+   5.1. arnacon_authenticate(ens, x_data, x_sign)
+   5.2. arnacon_user_exists(ens)
+
+5.1.  arnacon_authenticate(ens, x_data, x_sign)
+
+   Authenticates a user by verifying ENS domain ownership through
+   cryptographic signature validation. This function implements the core
+   authentication logic by resolving ENS ownership, recovering the
+   signer's address from the provided signature, and validating that the
+   signer owns the specified ENS domain.
+
+   Authentication Flow:
+    1. Resolve ENS domain ownership (handling both traditional and wrapped
+       domains)
+    2. Extract and validate timestamp from X-Data header
+    3. Recover Ethereum address from ECDSA signature
+    4. Compare recovered address with ENS domain owner
+
+   Parameters:
+     * ens (string) - ENS domain name (e.g., "user.cellact.global")
+     * x_data (string) - X-Data header value in format "UUID:TIMESTAMP"
+       (can be empty to extract from headers)
+     * x_sign (string) - X-Sign header value containing Ethereum signature
+       (can be empty to extract from headers)
+
+   Return Type: integer
+
+   Return codes:
+     * 1 - Authentication successful
+     * -1 - Authentication failed (invalid signature, ENS ownership
+       mismatch, timeout, or error)
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.5. arnacon_authenticate usage
+...
+# Basic authentication with explicit parameters
+if (arnacon_authenticate("$fU", "$hdr(X-Data)", "$hdr(X-Sign)")) {
+    xlog("L_INFO", "User $fU authenticated successfully\n");
+    # Allow registration/call
+} else {
+    xlog("L_ERR", "Authentication failed for $fU\n");
+    sl_send_reply("403", "Forbidden");
+    exit;
+}
+...
+
+...
+# Automatic header extraction (pass empty strings)
+if (arnacon_authenticate("$fU", "", "")) {
+    xlog("L_INFO", "ENS domain $fU authenticated\n");
+    # Proceed with request processing
+} else {
+    sl_send_reply("403", "Forbidden");
+    exit;
+}
+...
+
+...
+# Complete authentication flow with error handling
+route[AUTH] {
+    # Check if user exists first
+    if (!arnacon_user_exists("$fU")) {
+        xlog("L_ERR", "User $fU does not exist\n");
+        sl_send_reply("404", "User Not Found");
+        exit;
+    }
+
+    # Authenticate with headers
+    if (arnacon_authenticate("$fU", "$hdr(X-Data)", "$hdr(X-Sign)")) {
+        xlog("L_INFO", "User $fU authenticated successfully\n");
+        return;
+    } else {
+        xlog("L_ERR", "Authentication failed for $fU\n");
+        sl_send_reply("403", "Forbidden");
+        exit;
+    }
+}
+...
+
+5.2.  arnacon_user_exists(ens)
+
+   Checks if an ENS domain has an owner, effectively verifying if the user
+   exists in the ENS system. This function performs ENS resolution to
+   determine if the domain is registered and has a valid owner address
+   (not the zero address).
+
+   Use Case: This function is useful for pre-authentication checks to
+   provide better error messages to clients and avoid unnecessary
+   authentication attempts for non-existent ENS domains.
+
+   ENS Resolution: The function handles both traditional ENS ownership
+   through the ENS Registry and wrapped domain ownership through the ENS
+   Name Wrapper contract, automatically detecting the appropriate
+   resolution method.
+
+   Parameters:
+     * ens (string) - ENS domain name to check
+
+   Return Type: integer
+
+   Return codes:
+     * 1 - User exists (ENS has a valid owner)
+     * -1 - User does not exist (ENS unregistered, zero owner, or error)
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.6. arnacon_user_exists usage
+...
+# Basic user existence check
+if (arnacon_user_exists("$fU")) {
+    xlog("L_INFO", "User $fU exists\n");
+    # Proceed with authentication
+} else {
+    xlog("L_ERR", "User $fU does not exist\n");
+    sl_send_reply("404", "User Not Found");
+    exit;
+}
+...
+
+...
+# Pre-authentication validation
+route[PREAUTH] {
+    if (!arnacon_user_exists("$fU")) {
+        xlog("L_WARN", "Authentication attempt for non-existent user: $fU\n");
+        sl_send_reply("404", "User Not Found");
+        exit;
+    }
+    xlog("L_INFO", "User $fU exists, proceeding with authentication\n");
+}
+...
+
+...
+# Registration flow with user existence check
+if (is_method("REGISTER")) {
+    if (!arnacon_user_exists("$fU")) {
+        sl_send_reply("404", "ENS domain not registered");
+        exit;
+    }
+    # Continue with authentication
+    route(AUTH);
+}
+...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1. How does ENS-based authentication work?
+   2.2. What networks are supported?
+   2.3. What are the X-Data and X-Sign headers?
+   2.4. How does the module handle wrapped ENS domains?
+   2.5. What happens if the blockchain network is unavailable?
+   2.6. Do SIP clients need special modifications?
+   2.7. How do I troubleshoot authentication failures?
+   2.8. What are the signature timeout considerations?
+   2.9. Is this suitable for production use?
+   2.10. What are the performance implications?
+   2.11. Can I use free RPC providers?
+
+   2.1.
+
+   How does ENS-based authentication work?
+
+   The module uses cryptographic signatures to verify ENS domain
+   ownership. Clients sign a message containing a UUID and timestamp with
+   their private key, then the module recovers the signer's address and
+   verifies it matches the current owner of the specified ENS domain.
+
+   2.2.
+
+   What networks are supported?
+
+   Primary Network: Polygon mainnet (default configuration)
+
+   Other Supported Networks: Ethereum mainnet, Ethereum Sepolia testnet,
+   or any EVM-compatible network with ENS contracts deployed.
+
+   Configuration: Set the appropriate RPC URL and contract addresses for
+   your target network in the module parameters.
+
+   2.3.
+
+   What are the X-Data and X-Sign headers?
+
+   X-Data: Contains authentication data in format "UUID:TIMESTAMP" where
+   UUID is a unique identifier and TIMESTAMP is Unix timestamp when the
+   signature was created.
+
+   X-Sign: Contains the Ethereum ECDSA signature of the X-Data value,
+   signed with the private key corresponding to the ENS domain owner's
+   address.
+
+   Example: X-Data: "550e8400-e29b-41d4-a716-446655440000:1640995200",
+   X-Sign: "0x1b2c3d4e5f6789abcdef..."
+
+   2.4.
+
+   How does the module handle wrapped ENS domains?
+
+   The module automatically detects wrapped ENS domains by first querying
+   the ENS Registry. If the owner is the Name Wrapper contract address, it
+   then queries the Name Wrapper contract to find the actual NFT owner.
+   This ensures compatibility with both traditional and wrapped ENS
+   domains.
+
+   2.5.
+
+   What happens if the blockchain network is unavailable?
+
+   Authentication will fail if the RPC endpoint is unreachable or returns
+   errors. For production deployments, use reliable RPC providers and
+   consider implementing fallback authentication mechanisms. The module
+   logs detailed error information when debug mode is enabled.
+
+   2.6.
+
+   Do SIP clients need special modifications?
+
+   Yes, clients need to be modified to generate the required X-Data and
+   X-Sign headers. Clients must implement Ethereum message signing
+   functionality and include the cryptographic signature in SIP requests.
+   Standard SIP digest authentication is not used.
+
+   2.7.
+
+   How do I troubleshoot authentication failures?
+
+    1. Enable debug mode: modparam("auth_arnacon", "debug_mode", 1)
+    2. Check Kamailio logs for detailed error information
+    3. Verify ENS domain ownership on blockchain explorer
+    4. Test RPC endpoint connectivity and response times
+    5. Verify contract addresses are correct for your network
+    6. Check signature format and timestamp validity
+
+   2.8.
+
+   What are the signature timeout considerations?
+
+   The signature timeout prevents replay attacks by rejecting signatures
+   older than the configured timeout (default 30 seconds). Consider
+   network latency and client clock synchronization when setting this
+   value. Shorter timeouts provide better security but may cause issues
+   with slow networks or unsynchronized clocks.
+
+   2.9.
+
+   Is this suitable for production use?
+
+   Yes, but consider these factors: blockchain network reliability (use
+   enterprise RPC providers), latency (blockchain calls add 100-500ms),
+   client implementation complexity (requires cryptographic capabilities),
+   and monitoring (implement comprehensive health checks).
+
+   Security Considerations: Ensure clients securely manage private keys,
+   use HTTPS for all RPC endpoints, implement proper timestamp validation,
+   and consider backup authentication for critical services.
+
+   2.10.
+
+   What are the performance implications?
+
+   Each authentication requires 1-2 blockchain RPC calls (ENS Registry +
+   potentially Name Wrapper), adding 100-500ms latency compared to
+   database authentication. The module performs cryptographic operations
+   locally (signature verification) which adds minimal overhead. Use
+   connection pooling and reliable RPC providers to minimize network
+   impact.
+
+   2.11.
+
+   Can I use free RPC providers?
+
+   Free providers work for development and testing but have rate limits
+   and no SLA guarantees. For production, use paid providers (Infura,
+   Alchemy, QuickNode) for better reliability, higher rate limits, and
+   support. Polygon mainnet has several reliable free options for
+   low-volume production use.
+
+   Recommended Providers:
+
+   Polygon Mainnet: https://polygon-rpc.com (free),
+   https://rpc.ankr.com/polygon (free)
+
+   Ethereum Mainnet: https://mainnet.infura.io/v3/YOUR_KEY (paid),
+   https://eth.drpc.org (free tier)
