@@ -211,11 +211,11 @@ void ul_publish(ucontact_t *c, int type, void *param)
 	content_type.len = 20;
 
 	if(pua_ul_publish == 0 && pua_ul_bmask == 0) {
-		LM_INFO("should not send ul publish\n");
+		LM_DBG("should not send ul publish\n");
 		return;
 	}
 	if(pua_ul_bmask != 0 && (c->cflags & pua_ul_bmask) == 0) {
-		LM_INFO("not marked for publish\n");
+		LM_DBG("not marked for publish\n");
 		return;
 	}
 
