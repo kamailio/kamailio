@@ -301,7 +301,7 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 			goto error;
 		}
 		if(prom_body_printf(ctx,
-				   "%.*spkgmem_total_size{pid=\"%u\", rank=\"%d\" "
+				   "%.*spkgmem_total_size{pid=\"%u\", rank=\"%d\", "
 				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
