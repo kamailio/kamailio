@@ -74,12 +74,12 @@ void rpc_trusted_reload(rpc_t *rpc, void *c)
 void rpc_trusted_dump(rpc_t *rpc, void *c)
 {
 
-	if(perm_trust_table == NULL) {
+	if(current_trusted_table == NULL) {
 		rpc->fault(c, 500, "No trusted table");
 		return;
 	}
 
-	if(hash_table_rpc_print(*perm_trust_table, rpc, c) < 0) {
+	if(hash_table_rpc_print(*current_trusted_table, rpc, c) < 0) {
 		LM_DBG("failed to print a hash_table dump\n");
 		return;
 	}

@@ -389,128 +389,187 @@ void free_hash_table(struct trusted_list **table)
 }
 
 
+
 /*
  * Add <src_ip, proto, pattern, ruri_pattern, tag, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_list **table, char *src_ip, char *proto,
+int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char *proto,
 		char *pattern, char *ruri_pattern, char *tag, int priority)
 {
-	struct trusted_list *np;
-	struct trusted_list *np0 = NULL;
-	struct trusted_list *np1 = NULL;
-	unsigned int hash_val;
+	struct trusted_list *cur_entry, *prev_entry;
+	struct trusted_list *new_entry = NULL;
 
-	np = (struct trusted_list *)shm_malloc(sizeof(*np));
-	if(np == NULL) {
-		LM_ERR("cannot allocate shm memory for table entry\n");
+	unsigned int hash_index;
+
+	new_entry = (struct trusted_list *)shm_malloc(sizeof(*new_entry));
+	if(new_entry == NULL) {
+		LM_ERR("cannot allocate shm memory for new table entry\n");
 		return -1;
 	}
 
 	if(strcasecmp(proto, "any") == 0) {
-		np->proto = PROTO_NONE;
+		new_entry->proto = PROTO_NONE;
 	} else if(strcasecmp(proto, "udp") == 0) {
-		np->proto = PROTO_UDP;
+		new_entry->proto = PROTO_UDP;
 	} else if(strcasecmp(proto, "tcp") == 0) {
-		np->proto = PROTO_TCP;
+		new_entry->proto = PROTO_TCP;
 	} else if(strcasecmp(proto, "tls") == 0) {
-		np->proto = PROTO_TLS;
+		new_entry->proto = PROTO_TLS;
 	} else if(strcasecmp(proto, "sctp") == 0) {
-		np->proto = PROTO_SCTP;
+		new_entry->proto = PROTO_SCTP;
 	} else if(strcasecmp(proto, "ws") == 0) {
-		np->proto = PROTO_WS;
+		new_entry->proto = PROTO_WS;
 	} else if(strcasecmp(proto, "wss") == 0) {
-		np->proto = PROTO_WSS;
+		new_entry->proto = PROTO_WSS;
 	} else if(strcasecmp(proto, "none") == 0) {
-		shm_free(np);
+		shm_free(new_entry);
 		return 1;
 	} else {
 		LM_CRIT("unknown protocol\n");
-		shm_free(np);
+		shm_free(new_entry);
 		return -1;
 	}
 
-	np->src_ip.len = strlen(src_ip);
-	np->src_ip.s = (char *)shm_malloc(np->src_ip.len + 1);
-
-	if(np->src_ip.s == NULL) {
+	/* source IP */
+	new_entry->src_ip.len = strlen(src_ip);
+	new_entry->src_ip.s = (char *)shm_malloc(new_entry->src_ip.len + 1);
+	if(new_entry->src_ip.s == NULL) {
 		LM_CRIT("cannot allocate shm memory for src_ip string\n");
-		shm_free(np);
+		shm_free(new_entry);
 		return -1;
 	}
+	(void)strncpy(new_entry->src_ip.s, src_ip, new_entry->src_ip.len);
+	new_entry->src_ip.s[new_entry->src_ip.len] = 0;
 
-	(void)strncpy(np->src_ip.s, src_ip, np->src_ip.len);
-	np->src_ip.s[np->src_ip.len] = 0;
-
+	/* pattern */
 	if(pattern) {
-		np->pattern = (char *)shm_malloc(strlen(pattern) + 1);
-		if(np->pattern == NULL) {
+		new_entry->pattern = (char *)shm_malloc(strlen(pattern) + 1);
+		if(new_entry->pattern == NULL) {
 			LM_CRIT("cannot allocate shm memory for pattern string\n");
-			shm_free(np->src_ip.s);
-			shm_free(np);
+			shm_free(new_entry->src_ip.s);
+			shm_free(new_entry);
 			return -1;
 		}
-		(void)strcpy(np->pattern, pattern);
+		(void)strcpy(new_entry->pattern, pattern);
 	} else {
-		np->pattern = 0;
+		new_entry->pattern = 0;
 	}
 
+	/* R-URI pattern */
 	if(ruri_pattern) {
-		np->ruri_pattern = (char *)shm_malloc(strlen(ruri_pattern) + 1);
-		if(np->ruri_pattern == NULL) {
+		new_entry->ruri_pattern = (char *)shm_malloc(strlen(ruri_pattern) + 1);
+		if(new_entry->ruri_pattern == NULL) {
 			LM_CRIT("cannot allocate shm memory for ruri_pattern string\n");
-			shm_free(np->src_ip.s);
-			shm_free(np);
+			shm_free(new_entry->src_ip.s);
+			shm_free(new_entry);
 			return -1;
 		}
-		(void)strcpy(np->ruri_pattern, ruri_pattern);
+		(void)strcpy(new_entry->ruri_pattern, ruri_pattern);
 	} else {
-		np->ruri_pattern = 0;
+		new_entry->ruri_pattern = 0;
 	}
 
+	/* tag */
 	if(tag) {
-		np->tag.len = strlen(tag);
-		np->tag.s = (char *)shm_malloc((np->tag.len) + 1);
-		if(np->tag.s == NULL) {
+		new_entry->tag.len = strlen(tag);
+		new_entry->tag.s = (char *)shm_malloc((new_entry->tag.len) + 1);
+		if(new_entry->tag.s == NULL) {
 			LM_CRIT("cannot allocate shm memory for pattern or ruri_pattern "
 					"string\n");
-			shm_free(np->src_ip.s);
-			shm_free(np->pattern);
-			shm_free(np->ruri_pattern);
-			shm_free(np);
+			shm_free(new_entry->src_ip.s);
+			shm_free(new_entry->pattern);
+			shm_free(new_entry->ruri_pattern);
+			shm_free(new_entry);
 			return -1;
 		}
-		(void)strcpy(np->tag.s, tag);
+		(void)strcpy(new_entry->tag.s, tag);
 	} else {
-		np->tag.len = 0;
-		np->tag.s = 0;
+		new_entry->tag.len = 0;
+		new_entry->tag.s = 0;
 	}
 
-	np->priority = priority;
+	/* priority */
+	new_entry->priority = priority;
 
-	hash_val = perm_hash(np->src_ip);
-	if(table[hash_val] == NULL) {
-		np->next = NULL;
-		table[hash_val] = np;
-	} else {
-		np1 = NULL;
-		np0 = table[hash_val];
-		while(np0) {
-			if(np0->priority < np->priority)
-				break;
-			np1 = np0;
-			np0 = np0->next;
-		}
-		if(np1 == NULL) {
-			np->next = table[hash_val];
-			table[hash_val] = np;
-		} else {
-			np->next = np1->next;
-			np1->next = np;
-		}
+	/* determinde the indexation */
+	hash_index = perm_hash(new_entry->src_ip);
+
+	/* ensure to have a correct index within boundaries */
+	if (hash_index >= hash_table->size) {
+		trusted_table_free_entry(new_entry);
+		LM_ERR("hash index out of bounds [%d]\n", hash_index);
+		return -1;
 	}
 
-	return 1;
+	/* now new entry is ready for insertion */
+
+	/* lock while working */
+	if(hash_table->row_locks[hash_index]) {
+		lock_get(hash_table->row_locks[hash_index]);
+	} else {
+		trusted_table_free_entry(new_entry);
+		LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n", hash_index);
+		return -1;
+	}
+
+	/* check whether the bucket was pre-allocated per index */
+	if(!hash_table->row_entry_list[hash_index]) {
+		trusted_table_free_entry(new_entry);
+		LM_ERR("Non-initialized bucket, hash table slot[%d]\n", hash_index);
+		lock_release(hash_table->row_locks[hash_index]);
+		return -1;
+	}
+
+	new_entry->next = NULL; // for the meanwhile
+	cur_entry = hash_table->row_entry_list[hash_index];
+
+	while(cur_entry)
+	{
+		/* check always if already added before */
+		if(STR_EQ(cur_entry->src_ip, new_entry->src_ip) && /* compare source ip */
+			/* compare From patern (both equal or both null) */
+			((!cur_entry->pattern && !new_entry->pattern) ||
+			(cur_entry->pattern && new_entry->pattern &&
+			strcmp(cur_entry->pattern, new_entry->pattern) == 0)) &&
+			/* compare ruri patern (both equal or both null) */
+			((!cur_entry->ruri_pattern && !new_entry->ruri_pattern) ||
+			(cur_entry->ruri_pattern && new_entry->ruri_pattern &&
+			strcmp(cur_entry->ruri_pattern, new_entry->ruri_pattern) == 0)) &&
+			/* compare protocol */
+			cur_entry->proto == new_entry->proto)
+		{
+			lock_release(hash_table->row_locks[hash_index]);
+			trusted_table_free_entry(new_entry);
+			LM_NOTICE("source IP = '%.*s', was already added before, ingore new entry.\n",
+					cur_entry->src_ip.len, cur_entry->src_ip.s);
+			return 0;
+			/* TODO: we should actually return -1, but the caller is quite strict! */
+		}
+
+		/* stop by the first entry with a lower priority */
+		if (cur_entry->priority < new_entry->priority)
+			break;
+
+		/* find the next available slot in the list */
+		prev_entry = cur_entry;
+		cur_entry = cur_entry->next;
+	}
+
+	/* insert new_entry in the right position */
+	if (prev_entry == NULL) {
+		/* head */
+		new_entry->next = hash_table->row_entry_list[hash_index];
+		hash_table->row_entry_list[hash_index] = new_entry;
+	} else {
+		/* after the last higher priority and before the lower priority */
+		new_entry->next = prev_entry->next;
+		prev_entry->next = new_entry;
+	}
+
+	lock_release(hash_table->row_locks[hash_index]);
+
+	return 0;
 }
 
 
@@ -520,7 +579,7 @@ int hash_table_insert(struct trusted_list **table, char *src_ip, char *proto,
  * has been defined, tag of the entry is added as a value to tag_avp.
  * Returns number of matches or -1 if none matched.
  */
-int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
+int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *msg,
 		char *src_ip_c_str, int proto, char *from_uri)
 {
 	LM_DBG("match_hash_table src_ip: %s, proto: %d, uri: %s\n", src_ip_c_str,
@@ -532,7 +591,19 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 	str src_ip;
 	int_str val;
 	int count = 0;
+	unsigned int hash_index;
+	struct trusted_list **table = NULL;
 
+	if (!trusted_table) {
+		LM_ERR("empty table used for comparison.\n");
+		return -1;
+	}
+
+	/* detect source IP */
+	if (!src_ip_c_str) {
+		LM_ERR("empty source IP given\n");
+		return -1;
+	}
 	src_ip.s = src_ip_c_str;
 	src_ip.len = strlen(src_ip.s);
 
@@ -546,7 +617,25 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 		ruri_string[ruri.len] = (char)0;
 	}
 
-	for(np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
+	/* determinde the indexation */
+	hash_index = perm_hash(src_ip);
+
+	if(trusted_table->row_locks[hash_index]) {
+		lock_get(trusted_table->row_locks[hash_index]);
+	} else {
+		LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n", hash_index);
+		return -1;
+	}
+
+	if(!trusted_table->row_entry_list[hash_index])
+	{
+		LM_ERR("Non-initialized bucket, hash table slot[%d]\n", hash_index);
+		lock_release(trusted_table->row_locks[hash_index]);
+		return -1;
+	}
+	table = trusted_table->row_entry_list;
+
+	for(np = table[hash_index]; np != NULL; np = np->next) {
 		if((np->src_ip.len == src_ip.len)
 				&& (strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0)
 				&& ((np->proto == PROTO_NONE) || (proto == PROTO_NONE)
@@ -561,9 +650,7 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 				if(np->pattern) {
 					if(regcomp(&preg, np->pattern, REG_NOSUB)) {
 						LM_ERR("invalid regular expression\n");
-						if(!np->pattern) {
-							continue;
-						}
+						continue;
 					}
 					if(regexec(&preg, from_uri, 0, (regmatch_t *)0, 0)) {
 						regfree(&preg);
@@ -588,15 +675,19 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 				val.s = np->tag;
 				if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
 					LM_ERR("setting of tag_avp failed\n");
+					lock_release(trusted_table->row_locks[hash_index]);
 					return -1;
 				}
 			}
-			if(!perm_peer_tag_mode)
+			if(!perm_peer_tag_mode) {
+				lock_release(trusted_table->row_locks[hash_index]);
 				return 1;
+			}
 			count++;
 		}
 	}
 
+	lock_release(trusted_table->row_locks[hash_index]);
 	if(!count)
 		return -1;
 	else
@@ -607,12 +698,17 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 /*! \brief
  * RPC interface :: Print trusted entries stored in hash table
  */
-int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c)
+int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c)
 {
 	int i;
-	struct trusted_list *np;
+	struct trusted_list *np = NULL;
 	void *th;
 	void *ih;
+
+	if (!trusted_table) {
+		LM_ERR("empty table used for comparison.\n");
+		return -1;
+	}
 
 	if(rpc->add(c, "{", &th) < 0) {
 		rpc->fault(c, 500, "Internal error creating rpc");
@@ -620,15 +716,33 @@ int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c)
 	}
 
 	for(i = 0; i < PERM_HASH_SIZE; i++) {
-		np = hash_table[i];
+
+		if (trusted_table->row_locks[i]) {
+			lock_get(trusted_table->row_locks[i]);
+		} else {
+			LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n", i);
+			continue;
+		}
+
+		if (!trusted_table->row_entry_list[i])
+		{
+			LM_WARN("Non-initialized bucket, hash table slot[%d]\n", i);
+			lock_release(trusted_table->row_locks[i]);
+			continue;
+		}
+
+		np = trusted_table->row_entry_list[i];
+
 		while(np) {
 			if(rpc->struct_add(th, "d{", "table", i, "item", &ih) < 0) {
 				rpc->fault(c, 500, "Internal error creating rpc ih");
+				lock_release(trusted_table->row_locks[i]);
 				return -1;
 			}
 
 			if(rpc->struct_add(ih, "s", "ip", np->src_ip.s) < 0) {
 				rpc->fault(c, 500, "Internal error creating rpc data (ip)");
+				lock_release(trusted_table->row_locks[i]);
 				return -1;
 			}
 			if(rpc->struct_add(ih, "dsssd", "proto", np->proto, "pattern",
@@ -636,12 +750,15 @@ int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c)
 					   np->ruri_pattern ? np->ruri_pattern : "NULL", "tag",
 					   np->tag.len ? np->tag.s : "NULL", "priority",
 					   np->priority)
-					< 0) {
+					< 0)
+			{
 				rpc->fault(c, 500, "Internal error creating rpc data");
+				lock_release(trusted_table->row_locks[i]);
 				return -1;
 			}
 			np = np->next;
 		}
+		lock_release(trusted_table->row_locks[i]);
 	}
 	return 0;
 }

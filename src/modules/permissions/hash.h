@@ -101,7 +101,7 @@ void free_hash_table(struct trusted_list **table);
  * Add <src_ip, proto, pattern, ruri_pattern, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_list **hash_table, char *src_ip,
+int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip,
 		char *proto, char *pattern, char *ruri_pattern, char *tag,
 		int priority);
 
@@ -110,14 +110,14 @@ int hash_table_insert(struct trusted_list **hash_table, char *src_ip,
  * Check if an entry exists in hash table that has given src_ip and protocol
  * value and pattern or ruri_pattern that matches to provided URI.
  */
-int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
+int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *msg,
 		char *scr_ip, int proto, char *uri);
 
 
 /*
  * Print entries stored in hash table
  */
-int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c);
+int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c);
 
 /*
  * Empty hash table
