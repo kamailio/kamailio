@@ -73,12 +73,6 @@ void free_hash_table(struct trusted_list **table);
 
 
 /*
- * Destroy a hash table
- */
-void destroy_hash_table(struct trusted_list **table);
-
-
-/*
  * Add <src_ip, proto, pattern, ruri_pattern, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
@@ -98,7 +92,6 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 /*
  * Print entries stored in hash table
  */
-void hash_table_print(struct trusted_list **hash_table, FILE *reply_file);
 int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c);
 
 /*
@@ -133,12 +126,6 @@ void free_addr_hash_table(struct addr_list **table);
 
 
 /*
- * Destroy a hash table
- */
-void destroy_addr_hash_table(struct addr_list **table);
-
-
-/*
  * Add <group, ip_addr, port> into hash table
  */
 int addr_hash_table_insert(struct addr_list **hash_table, unsigned int grp,
@@ -165,7 +152,6 @@ int find_group_in_addr_hash_table(
 /*
  * Print addresses stored in hash table
  */
-void addr_hash_table_print(struct addr_list **hash_table, FILE *reply_file);
 int addr_hash_table_rpc_print(struct addr_list **table, rpc_t *rpc, void *c);
 
 
@@ -234,7 +220,6 @@ int subnet_table_insert(struct subnet *table, unsigned int grp,
 /*
  * Print subnets stored in subnet table
  */
-void subnet_table_print(struct subnet *table, FILE *reply_file);
 int subnet_table_rpc_print(struct subnet *table, rpc_t *rpc, void *c);
 
 
@@ -289,7 +274,6 @@ int find_group_in_domain_name_table(
 /*! \brief
  * RPC: Print addresses stored in hash table
  */
-void domain_name_table_print(struct subnet *table, FILE *reply_file);
 int domain_name_table_rpc_print(
 		struct domain_name_list **table, rpc_t *rpc, void *c);
 
