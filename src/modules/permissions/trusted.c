@@ -44,9 +44,10 @@
 static db1_con_t *perm_db_handle = 0;
 static db_func_t perm_dbf;
 
-struct trusted_hash_table **current_trusted_table = NULL; /* pointer to the current hash table (to its pointer) */
-struct trusted_hash_table * trusted_table_1 = NULL; /* hash table 1 */
-struct trusted_hash_table * trusted_table_2 = NULL; /* hash table 2 */
+struct trusted_hash_table **current_trusted_table =
+		NULL; /* pointer to the current hash table (to its pointer) */
+struct trusted_hash_table *trusted_table_1 = NULL; /* hash table 1 */
+struct trusted_hash_table *trusted_table_2 = NULL; /* hash table 2 */
 
 /*
  * Reload trusted table to new hash table and when done, make new hash table
@@ -59,7 +60,7 @@ int reload_trusted_table(void)
 	db_row_t *row;
 	db_val_t *val;
 
-	struct trusted_hash_table * new_trusted_table = NULL;
+	struct trusted_hash_table *new_trusted_table = NULL;
 	int i;
 	int priority;
 	int ret;
@@ -110,7 +111,7 @@ int reload_trusted_table(void)
 	/* clean newly selected table,
 	 * then re-initialize buckets
 	 * for further usage with the new data */
-	if (trusted_table_reinit(new_trusted_table, PERM_HASH_SIZE)) {
+	if(trusted_table_reinit(new_trusted_table, PERM_HASH_SIZE)) {
 		return -1;
 	}
 
@@ -261,9 +262,8 @@ int reload_trusted_table(void)
 			priority = (int)VAL_INT(val + 5);
 		}
 		if(hash_table_insert(new_trusted_table, (char *)VAL_STRING(val),
-					(char *)VAL_STRING(val + 1), pattern, ruri_pattern, tag,
-					priority))
-		{
+				   (char *)VAL_STRING(val + 1), pattern, ruri_pattern, tag,
+				   priority)) {
 			/* anything apart 0 means it has failed */
 
 			LM_WARN("could not insert a new entry\n");
@@ -330,7 +330,9 @@ int init_trusted(void)
 			return -1;
 		}
 
-		if(db_check_table_version(&perm_dbf, perm_db_handle, &perm_trusted_table, TABLE_VERSION) < 0) {
+		if(db_check_table_version(&perm_dbf, perm_db_handle,
+				   &perm_trusted_table, TABLE_VERSION)
+				< 0) {
 			DB_TABLE_VERSION_ERROR(perm_trusted_table);
 			perm_dbf.close(perm_db_handle);
 			perm_db_handle = 0;
@@ -339,30 +341,32 @@ int init_trusted(void)
 
 		/* allocate both tables */
 		trusted_table_1 = trusted_table_allocate(PERM_HASH_SIZE);
-		if (!trusted_table_1) {
+		if(!trusted_table_1) {
 			LM_ERR("failed to allocate trusted table 1\n");
 			return -1;
 		}
 		trusted_table_2 = trusted_table_allocate(PERM_HASH_SIZE);
-		if (!trusted_table_2) {
+		if(!trusted_table_2) {
 			LM_ERR("failed to allocate trusted table 2\n");
 			goto error;
 		}
 
 		/* now init both tables */
-		if (trusted_table_init(trusted_table_1, PERM_HASH_SIZE)) {
+		if(trusted_table_init(trusted_table_1, PERM_HASH_SIZE)) {
 			LM_ERR("failed to initialize trusted table 1\n");
 			goto error;
 		}
-		if (trusted_table_init(trusted_table_2, PERM_HASH_SIZE)) {
+		if(trusted_table_init(trusted_table_2, PERM_HASH_SIZE)) {
 			LM_ERR("failed to initialize trusted table 2\n");
 			goto error;
 		}
 
 		/* allocate space for the current table pointer */
-		current_trusted_table = (struct trusted_hash_table **)shm_malloc(sizeof(struct trusted_hash_table *));
-		if (!current_trusted_table) {
-			LM_ERR("failed to allocate shm for the current trusted table pointer.\n");
+		current_trusted_table = (struct trusted_hash_table **)shm_malloc(
+				sizeof(struct trusted_hash_table *));
+		if(!current_trusted_table) {
+			LM_ERR("failed to allocate shm for the current trusted table "
+				   "pointer.\n");
 			goto error;
 		}
 		/* select */
@@ -676,7 +680,8 @@ int allow_trusted(struct sip_msg *msg, char *src_ip, int proto, char *from_uri)
 		perm_dbf.free_result(perm_db_handle, res);
 		return result;
 	} else {
-		return match_hash_table(*current_trusted_table, msg, src_ip, proto, from_uri);
+		return match_hash_table(
+				*current_trusted_table, msg, src_ip, proto, from_uri);
 	}
 }
 

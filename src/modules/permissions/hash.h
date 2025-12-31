@@ -56,22 +56,24 @@ struct trusted_list
  */
 struct trusted_hash_table
 {
-	struct trusted_list ** row_entry_list; // entry vector (buckets)
-	gen_lock_t ** row_locks; // locks vector
-	unsigned int size; // table size
+	struct trusted_list **row_entry_list; // entry vector (buckets)
+	gen_lock_t **row_locks;				  // locks vector
+	unsigned int size;					  // table size
 };
 
 void trusted_table_free_row_lock(gen_lock_t *row_lock);
 void trusted_table_free_entry(struct trusted_list *entry);
 void trusted_table_free_entries(struct trusted_list *given_entry);
-void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool free_locks,
-		bool keep_dummy_head);
+void trusted_table_free_buckets(struct trusted_hash_table *trusted_table,
+		bool free_locks, bool keep_dummy_head);
 int trusted_table_destroy(struct trusted_hash_table *trusted_table);
-int trusted_table_init(struct trusted_hash_table * trusted_table, unsigned int hash_table_size);
-struct trusted_hash_table * trusted_table_allocate(unsigned int hash_table_size);
+int trusted_table_init(
+		struct trusted_hash_table *trusted_table, unsigned int hash_table_size);
+struct trusted_hash_table *trusted_table_allocate(unsigned int hash_table_size);
 /* same as init, but leaves locks intact
  * and cleans the whole content beforehand */
-int trusted_table_reinit(struct trusted_hash_table * trusted_table, unsigned int hash_table_size);
+int trusted_table_reinit(
+		struct trusted_hash_table *trusted_table, unsigned int hash_table_size);
 
 /*
  * Parse and init tag avp specification
@@ -98,14 +100,15 @@ int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip,
  * Check if an entry exists in hash table that has given src_ip and protocol
  * value and pattern or ruri_pattern that matches to provided URI.
  */
-int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *msg,
-		char *scr_ip, int proto, char *uri);
+int match_hash_table(struct trusted_hash_table *trusted_table,
+		struct sip_msg *msg, char *scr_ip, int proto, char *uri);
 
 
 /*
  * Print entries stored in hash table
  */
-int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c);
+int hash_table_rpc_print(
+		struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c);
 
 
 /*
