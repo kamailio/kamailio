@@ -357,40 +357,6 @@ struct trusted_hash_table * trusted_table_allocate(unsigned int hash_table_size)
 
 
 /*
- * Create and initialize a hash table
- */
-struct trusted_list **new_hash_table(void)
-{
-	struct trusted_list **ptr;
-
-	/* Initializing hash tables and hash table variable */
-	ptr = (struct trusted_list **)shm_malloc(
-			sizeof(struct trusted_list *) * PERM_HASH_SIZE);
-	if(!ptr) {
-		LM_ERR("no shm memory for hash table\n");
-		return 0;
-	}
-
-	memset(ptr, 0, sizeof(struct trusted_list *) * PERM_HASH_SIZE);
-	return ptr;
-}
-
-
-/*
- * Release all memory allocated for a hash table
- */
-void free_hash_table(struct trusted_list **table)
-{
-	if(!table)
-		return;
-
-	empty_hash_table(table);
-	shm_free(table);
-}
-
-
-
-/*
  * Add <src_ip, proto, pattern, ruri_pattern, tag, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
@@ -761,34 +727,6 @@ int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, v
 		lock_release(trusted_table->row_locks[i]);
 	}
 	return 0;
-}
-
-/*
- * Free contents of hash table, it doesn't destroy the
- * hash table itself
- */
-void empty_hash_table(struct trusted_list **table)
-{
-	int i;
-	struct trusted_list *np, *next;
-
-	for(i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
-		while(np) {
-			if(np->src_ip.s)
-				shm_free(np->src_ip.s);
-			if(np->pattern)
-				shm_free(np->pattern);
-			if(np->ruri_pattern)
-				shm_free(np->ruri_pattern);
-			if(np->tag.s)
-				shm_free(np->tag.s);
-			next = np->next;
-			shm_free(np);
-			np = next;
-		}
-		table[i] = 0;
-	}
 }
 
 
