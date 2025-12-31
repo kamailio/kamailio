@@ -26,14 +26,18 @@
 #define _PERM_HASH_H_
 
 #include <stdio.h>
+#include <stdbool.h>
+
 #include "../../core/parser/msg_parser.h"
 #include "../../core/str.h"
 #include "../../core/rpc.h"
 #include "../../core/usr_avp.h"
+#include "../../core/locking.h"
 
 #define PERM_HASH_SIZE 128
 
 /*
+ * Hash bucket.
  * Structure stored in trusted hash table
  */
 struct trusted_list
@@ -47,6 +51,27 @@ struct trusted_list
 	struct trusted_list *next; /* Next element in the list */
 };
 
+/**
+ * Hash table.
+ */
+struct trusted_hash_table
+{
+	struct trusted_list ** row_entry_list; // entry vector (buckets)
+	gen_lock_t ** row_locks; // locks vector
+	unsigned int size; // table size
+};
+
+void trusted_table_free_row_lock(gen_lock_t *row_lock);
+void trusted_table_free_entry(struct trusted_list *entry);
+void trusted_table_free_entries(struct trusted_list *given_entry);
+void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool free_locks,
+		bool keep_dummy_head);
+int trusted_table_destroy(struct trusted_hash_table *trusted_table);
+int trusted_table_init(struct trusted_hash_table * trusted_table, unsigned int hash_table_size);
+struct trusted_hash_table * trusted_table_allocate(unsigned int hash_table_size);
+/* same as init, but leaves locks intact
+ * and cleans the whole content beforehand */
+int trusted_table_reinit(struct trusted_hash_table * trusted_table, unsigned int hash_table_size);
 
 /*
  * Parse and init tag avp specification

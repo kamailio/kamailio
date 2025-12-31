@@ -91,6 +91,271 @@ void get_tag_avp(int_str *tag_avp_p, int *tag_avp_type_p)
 }
 
 
+/**
+ * De-allocation helpers.
+ */
+void trusted_table_free_row_lock(gen_lock_t *row_lock)
+{
+	if(!row_lock) {
+		LM_ERR("Nothing to clean! Empty lock.\n");
+		return;
+	}
+	lock_destroy(row_lock);
+	lock_dealloc(row_lock);
+	return;
+}
+void trusted_table_free_entry(struct trusted_list *entry)
+{
+	if(!entry)
+		return;
+
+	/* clean the content */
+	if(entry->src_ip.s)
+		shm_free(entry->src_ip.s);
+	if(entry->pattern)
+		shm_free(entry->pattern);
+	if(entry->ruri_pattern)
+		shm_free(entry->ruri_pattern);
+	if(entry->tag.s)
+		shm_free(entry->tag.s);
+
+	/* free entry itself */
+	shm_free(entry);
+
+	return;
+}
+
+/**
+ * Must be used with acquired lock.
+ */
+void trusted_table_free_entries(struct trusted_list *given_entry)
+{
+	struct trusted_list *entry, *last_entry;
+
+	if(!given_entry)
+		return;
+
+	entry = given_entry;
+	while(entry)
+	{
+		last_entry = entry;
+		entry = entry->next;
+		trusted_table_free_entry(last_entry);
+		last_entry = NULL;
+	}
+
+	return;
+}
+
+
+/**
+ * Destroy hash table content.
+ * Locks can be left intact,
+ * e.g. in case this is just a table re-initialization.
+ */
+void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool free_locks,
+		bool keep_dummy_head)
+{
+	if(!trusted_table) {
+		LM_ERR("Nothing to de-allocate! Empty trusted table pointer.");
+		return;
+	}
+
+	unsigned int orig_size = trusted_table->size;
+
+	for(int i = 0; i < orig_size; i++)
+	{
+		if(!trusted_table->row_locks[i]) {
+			LM_ERR("Absent table row lock[%d], cannot acquire it and de-allocate members.\n", i);
+			continue;
+		} else {
+			lock_get(trusted_table->row_locks[i]);
+		}
+
+		/* now clean the bucket */
+		if(!trusted_table->row_entry_list[i]) {
+			LM_DBG("Table bucket[%d] is already empty, cannot de-allocate its content.\n", i);
+		} else {
+			/* in case of bucket re-init, leave the dummy head (list is never NULL when using) */
+			if (keep_dummy_head) {
+				struct trusted_list *dummy = trusted_table->row_entry_list[i];
+				trusted_table_free_entries(dummy->next);
+				dummy->next = NULL;
+				/* ensure that dummy is always having no real values */
+				trusted_table->row_entry_list[i]->pattern = NULL;
+				trusted_table->row_entry_list[i]->ruri_pattern = NULL;
+				trusted_table->row_entry_list[i]->next = NULL;
+				trusted_table->row_entry_list[i]->priority = 0;
+
+				/* don't decrement the size,
+				 * because in fact the bucket's size is still the same (as during init) */
+			} else {
+				/* free entries in the bucket */
+				trusted_table_free_entries(trusted_table->row_entry_list[i]);
+				trusted_table->row_entry_list[i] = NULL;
+				/* track real table size */
+				trusted_table->size--;
+			}
+		}
+
+		lock_release(trusted_table->row_locks[i]);
+
+		/* and accordingly a lock */
+		if (free_locks) {
+			trusted_table_free_row_lock(trusted_table->row_locks[i]);
+			trusted_table->row_locks[i] = NULL;
+		}
+	}
+}
+
+
+/**
+ * Clean trusted table (frees all previously allocated shm).
+ */
+int trusted_table_destroy(struct trusted_hash_table *trusted_table)
+{
+	if(!trusted_table) {
+		LM_ERR("Nothing to de-allocate! Empty trusted table pointer.");
+		return -1;
+	}
+
+	/* de-allocate row locks */
+	if(!trusted_table->row_locks) {
+		LM_ERR("Empty row locks, cannot acquire it and de-allocate trusted table members.\n");
+		shm_free(trusted_table);
+		return -1;
+	}
+
+	/* destroy hashtable content */
+	trusted_table_free_buckets(trusted_table, true, false);
+
+	/* clean entries list */
+	if(!trusted_table->row_entry_list) {
+		/* not really critical */
+		LM_ERR("Cannot clean the row entries list, it's NULL.\n");
+	} else {
+		shm_free(trusted_table->row_entry_list);
+		trusted_table->row_entry_list = NULL;
+	}
+
+	/* destroy trusted table row locks list */
+	shm_free(trusted_table->row_locks);
+	trusted_table->row_locks = NULL;
+
+	/* destroy trusted table itself */
+	shm_free(trusted_table);
+
+	return 0;
+}
+
+
+int trusted_table_reinit(struct trusted_hash_table * trusted_table,
+		unsigned int hash_table_size)
+{
+	DBG("re-initializing table.\n");
+
+	trusted_table_free_buckets(trusted_table, false, true);
+	if (trusted_table_init(trusted_table, PERM_HASH_SIZE)) {
+		LM_ERR("failed to re-initialize the new trusted table.\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+/**
+ * Initialize main members and locks.
+ */
+int trusted_table_init(struct trusted_hash_table * trusted_table,
+		unsigned int hash_table_size)
+{
+	if(!trusted_table) {
+		LM_ERR("Cannot initialize this table, empty trusted table pointer.");
+		return -1;
+	}
+
+	DBG("init trusted_table size = %d\n", hash_table_size);
+
+	for(unsigned int i = 0; i < hash_table_size; i++)
+	{
+		/* init locks (can be already in place, e.g. re-init) */
+		if (!trusted_table->row_locks[i]) {
+			trusted_table->row_locks[i] = lock_alloc();
+
+			if(!trusted_table->row_locks[i]) {
+				LM_ERR("no shared memory left to allocate a row lock[%d] for this trusted table\n", i);
+				trusted_table_destroy(trusted_table);
+				return -1;
+			}
+			if(!lock_init(trusted_table->row_locks[i])) {
+				LM_ERR("failed to initialize a row lock[%d] for this trusted table\n", i);
+				trusted_table_destroy(trusted_table);
+				return -1;
+			}
+		}
+
+		/* initialize each trusted_list entry (dummy head can already be in place, e.g. re-init) */
+		if (!trusted_table->row_entry_list[i]) {
+			trusted_table->row_entry_list[i] = shm_malloc(sizeof(struct trusted_list));
+			if(!trusted_table->row_entry_list[i]) {
+				LM_ERR("no shared memory left to allocate trusted list entry[%d] for this trusted table\n", i);
+				trusted_table_destroy(trusted_table);
+				return -1;
+			}
+			memset(trusted_table->row_entry_list[i], 0, sizeof(struct trusted_list));
+
+			/* track real table size */
+			trusted_table->size++;
+		}
+
+		/* make sure to keep bucket's head initialized with empty values */
+		trusted_table->row_entry_list[i]->pattern = NULL;
+		trusted_table->row_entry_list[i]->ruri_pattern = NULL;
+		trusted_table->row_entry_list[i]->next = NULL;
+		trusted_table->row_entry_list[i]->priority = 0;
+	}
+
+	LM_DBG("successfully initialized trusted table\n");
+	return 0;
+}
+
+
+/**
+ * Allocate space (shm) for the table.
+ */
+struct trusted_hash_table * trusted_table_allocate(unsigned int hash_table_size)
+{
+	/* init the main hash table structure */
+	struct trusted_hash_table * trusted_table = shm_malloc(sizeof(struct trusted_hash_table));
+	if(!trusted_table) {
+		LM_ERR("no shared memory left to create this trusted table\n");
+		return NULL;
+	}
+	memset(trusted_table, 0, sizeof(struct trusted_hash_table));
+
+	/* init the row locks for it */
+	trusted_table->row_locks = shm_malloc(hash_table_size * sizeof(gen_lock_t *));
+	if(!trusted_table->row_locks) {
+		LM_ERR("no shared memory left to create row locks for this trusted table\n");
+		trusted_table_destroy(trusted_table);
+		return NULL;
+	}
+	memset(trusted_table->row_locks, 0, hash_table_size * sizeof(gen_lock_t *));
+
+	/* allocate space for the list */
+	trusted_table->row_entry_list = shm_malloc(hash_table_size * sizeof(struct trusted_list *));
+	if(!trusted_table->row_entry_list) {
+		LM_ERR("no shared memory left to create entry list for this trusted table\n");
+		trusted_table_destroy(trusted_table);
+		return NULL;
+	}
+	memset(trusted_table->row_entry_list, 0, hash_table_size * sizeof(struct trusted_list *));
+
+	LM_DBG("successfully allocated new trusted table\n");
+	return trusted_table;
+}
+
+
 /*
  * Create and initialize a hash table
  */
