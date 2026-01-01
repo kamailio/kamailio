@@ -28,10 +28,14 @@
 #include "redis_connection.h"
 #include "redis_table.h"
 
-int db_redis_key_add_string(redis_key_t **list, const char *entry, int len)
+int db_redis_key_add_string(redis_key_t **list, const char *entry, size_t len)
 {
 	redis_key_t *k;
 
+	if (!entry || !len) {
+		LM_ERR("Empty entry or zero length\n");
+		return -1;
+	}
 
 	k = (redis_key_t *)pkg_malloc(sizeof(redis_key_t));
 	if(!k) {
@@ -69,12 +73,19 @@ err:
 
 int db_redis_key_add_str(redis_key_t **list, const str *entry)
 {
-	return db_redis_key_add_string(list, entry->s, entry->len);
+	if (entry->len < 0)
+		return -1;
+	return db_redis_key_add_string(list, entry->s, (size_t)entry->len);
 }
 
-int db_redis_key_prepend_string(redis_key_t **list, const char *entry, int len)
+int db_redis_key_prepend_string(redis_key_t **list, const char *entry, size_t len)
 {
 	redis_key_t *k;
+
+	if (!entry || !len) {
+		LM_ERR("Empty entry or zero length\n");
+		return -1;
+	}
 
 	k = (redis_key_t *)pkg_malloc(sizeof(redis_key_t));
 	if(!k) {
