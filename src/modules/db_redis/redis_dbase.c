@@ -914,7 +914,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 			LM_ERR("Failed to print integer for scan query\n");
 			goto err;
 		}
-		if(db_redis_key_add_string(&query_v, match_count_str, l) != 0) {
+		if(db_redis_key_add_string(&query_v, match_count_str, (size_t)l) != 0) {
 			LM_ERR("Failed to add count value to scan query\n");
 			goto err;
 		}
