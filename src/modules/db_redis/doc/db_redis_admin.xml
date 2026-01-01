@@ -266,6 +266,25 @@ modparam("db_redis", "opt_tls", 1)
 			</example>
 		</section>
 
+		<section id="db_redis.p.max_key_length">
+			<title><varname>max_key_length</varname> (int)</title>
+			<para>
+				Controls the max possible key length to be used when adding/prepending strings into the redis key.
+				If used will be always compared against the given string key length.
+			</para>
+			<para>
+				Default value: 0. Means disabled.
+			</para>
+			<example>
+				<title>Limiting the max key length</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "max_key_length", 4096)
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="db_redis.p.mapping_struct_type">
 			<title><varname>mapping_struct_type</varname> (int)</title>
 			<para>
