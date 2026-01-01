@@ -34,13 +34,14 @@ int db_redis_key_add_string(redis_key_t **list, const char *entry, size_t len)
 {
 	redis_key_t *k;
 
-	if (!entry || !len) {
+	if(!entry || !len) {
 		LM_ERR("Empty entry or zero length\n");
 		return -1;
 	}
 
-	if (db_redis_max_key_len > 0 && len > db_redis_max_key_len) {
-		LM_ERR("Too big length for key being added: allowed '%u' / given '%zu'\n",
+	if(db_redis_max_key_len > 0 && len > db_redis_max_key_len) {
+		LM_ERR("Too big length for key being added: allowed '%u' / given "
+			   "'%zu'\n",
 				db_redis_max_key_len, len);
 		return -1;
 	}
@@ -81,22 +82,24 @@ err:
 
 int db_redis_key_add_str(redis_key_t **list, const str *entry)
 {
-	if (entry->len < 0)
+	if(entry->len < 0)
 		return -1;
 	return db_redis_key_add_string(list, entry->s, (size_t)entry->len);
 }
 
-int db_redis_key_prepend_string(redis_key_t **list, const char *entry, size_t len)
+int db_redis_key_prepend_string(
+		redis_key_t **list, const char *entry, size_t len)
 {
 	redis_key_t *k;
 
-	if (!entry || !len) {
+	if(!entry || !len) {
 		LM_ERR("Empty entry or zero length\n");
 		return -1;
 	}
 
-	if (db_redis_max_key_len > 0 && len > db_redis_max_key_len) {
-		LM_ERR("Too big length for key being prepended: allowed '%u' / given '%zu'\n",
+	if(db_redis_max_key_len > 0 && len > db_redis_max_key_len) {
+		LM_ERR("Too big length for key being prepended: allowed '%u' / given "
+			   "'%zu'\n",
 				db_redis_max_key_len, len);
 		return -1;
 	}
