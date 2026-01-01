@@ -37,6 +37,7 @@ int db_redis_opt_tls = 0;
 char *db_redis_ca_path = 0;
 #endif
 char *db_redis_db_pass = 0;
+unsigned int db_redis_max_key_len = 0; /* 0 means disabled */
 
 MODULE_VERSION
 
@@ -78,6 +79,7 @@ static param_export_t params[] = {
 		{"schema_path", PARAM_STR, &redis_schema_path},
 		{"verbosity", PARAM_INT, &db_redis_verbosity},
 		{"mapping_struct_type", PARAM_INT, &mapping_struct_type},
+		{"max_key_length", PARAM_INT, &db_redis_max_key_len},
 		{"hash_value", PARAM_STRING, &db_redis_hash_value},
 		{"hash_expires", PARAM_INT, &db_redis_hash_expires},
 		{"with_sentinels", PARAM_INT, &db_redis_with_sentinels},
