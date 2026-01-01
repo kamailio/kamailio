@@ -884,8 +884,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 					goto err;
 				}
 			}
-			if(db_redis_key_add_str(&query_v, index_key)
-					!= 0) {
+			if(db_redis_key_add_str(&query_v, index_key) != 0) {
 				LM_ERR("Failed to add scan command to scan query\n");
 				goto err;
 			}
@@ -899,8 +898,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 			LM_ERR("Failed to add match command to scan query\n");
 			goto err;
 		}
-		if(db_redis_key_add_str(&query_v, match_pattern)
-				!= 0) {
+		if(db_redis_key_add_str(&query_v, match_pattern) != 0) {
 			LM_ERR("Failed to add match pattern to scan query\n");
 			goto err;
 		}

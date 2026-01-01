@@ -63,7 +63,8 @@ int db_redis_parse_keys(km_redis_con_t *con);
 
 int db_redis_key_add_string(redis_key_t **list, const char *entry, size_t len);
 int db_redis_key_add_str(redis_key_t **list, const str *entry);
-int db_redis_key_prepend_string(redis_key_t **list, const char *entry, size_t len);
+int db_redis_key_prepend_string(
+		redis_key_t **list, const char *entry, size_t len);
 int db_redis_key_list2arr(redis_key_t *list, char ***arr);
 redis_key_t *db_redis_key_shift(redis_key_t **list);
 void db_redis_key_free(redis_key_t **list);
