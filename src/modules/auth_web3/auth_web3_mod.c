@@ -28,9 +28,10 @@
 #include "../../core/kemi.h"
 #include "../../core/mod_fix.h"
 #include "../../core/sr_module.h"
+#include "../../core/crypto/sha3.h"
+#include "../../core/crypto/shautils.h"
 #include "../../modules/auth/api.h"
 #include "api.h"
-#include "keccak256.h"
 #include "web3_imple.h"
 #include <curl/curl.h>
 #include <stdio.h>
@@ -358,14 +359,14 @@ static int w_web3_proxy_authenticate(
 
 /*
  * Fixup function for authentication functions
- * 
- * This function applies parameter fixups for web3_www_authenticate and 
+ *
+ * This function applies parameter fixups for web3_www_authenticate and
  * web3_proxy_authenticate functions. The switch statement handles:
  * - param 1 (realm): Converts to variable string format
  * - param 2 (method): Converts to variable string format
- * 
+ *
  * Parameters beyond param 2 need no fixup and return 0 (success).
- * This allows proper handling of realm and method parameters which may 
+ * This allows proper handling of realm and method parameters which may
  * contain pseudo-variables like $td, $fd, $rm that need runtime evaluation.
  */
 static int fixup_web3_auth(void **param, int param_no)
