@@ -55,6 +55,8 @@ enum _tr_s_subtype
 	TR_S_SHA256,
 	TR_S_SHA384,
 	TR_S_SHA512,
+	TR_S_SHA3,
+	TR_S_KECCAK,
 	TR_S_SUBSTR,
 	TR_S_SELECT,
 	TR_S_SELECTWS,
