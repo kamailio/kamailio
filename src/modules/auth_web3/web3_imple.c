@@ -24,70 +24,20 @@
 
 #include "web3_imple.h"
 #include "../../core/dprint.h"
+#include "../../core/crypto/sha3.h"
+#include "../../core/crypto/shautils.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../modules/auth/api.h"
 #include "auth_web3_mod.h"
-#include "keccak256.h"
 #include <curl/curl.h>
-#include <ctype.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-/**
- * Convert hex string to bytes
- */
-static int hex_to_bytes(
-		const char *hex_str, unsigned char *bytes, int max_bytes)
-{
-	int len;
-	int byte_len;
-	int i;
-	char *endptr;
-	long val;
-
-	len = strlen(hex_str);
-	if(len % 2 != 0)
-		return -1; /* Invalid hex string */
-
-	byte_len = len / 2;
-	if(byte_len > max_bytes)
-		return -1; /* Too many bytes */
-
-	for(i = 0; i < byte_len; i++) {
-		char hex_byte[3] = {hex_str[i * 2], hex_str[i * 2 + 1], '\0'};
-
-		/* Check for valid hex characters before calling strtol */
-		if(!isxdigit((unsigned char)hex_byte[0])
-				|| !isxdigit((unsigned char)hex_byte[1])) {
-			return -1; /* Invalid hex character */
-		}
-
-		errno = 0;
-		val = strtol(hex_byte, &endptr, 16);
-
-		/* Check for conversion errors */
-		if(errno != 0 || endptr == hex_byte || *endptr != '\0') {
-			return -1; /* Conversion failed */
-		}
-
-		/* Check for out of range values */
-		if(val < 0 || val > 255) {
-			return -1; /* Value out of byte range */
-		}
-
-		bytes[i] = (unsigned char)val;
-	}
-
-	return byte_len;
-}
 
 /**
  * Curl callback function for Web3 RPC responses
@@ -219,15 +169,6 @@ cleanup:
 	return result;
 }
 
-/* Convert bytes to hex string */
-static void bytes_to_hex(const unsigned char *bytes, size_t len, char *hex)
-{
-	for(size_t i = 0; i < len; i++) {
-		sprintf(hex + 2 * i, "%02x", bytes[i]);
-	}
-	hex[2 * len] = '\0';
-}
-
 /* ENS namehash implementation using proper keccak256 */
 static void ens_namehash(const char *name, char *hash_hex)
 {
@@ -278,25 +219,30 @@ static void ens_namehash(const char *name, char *hash_hex)
 	}
 
 	/* Process labels from right to left (reverse order) */
+	sha3_context ctx;
+
 	for(int i = label_count - 1; i >= 0; i--) {
-		SHA3_CTX ctx;
 		unsigned char label_hash[32];
 		unsigned char combined[64]; /* hash + label_hash */
+		const void *hash_out;
 
 		/* Hash the current label */
-		keccak_init(&ctx);
-		keccak_update(
-				&ctx, (const unsigned char *)labels[i], strlen(labels[i]));
-		keccak_final(&ctx, label_hash);
+		sha3_Init256(&ctx);
+		sha3_SetFlags(&ctx, SHA3_FLAGS_KECCAK);
+		sha3_Update(&ctx, (const unsigned char *)labels[i], strlen(labels[i]));
+		hash_out = sha3_Finalize(&ctx);
+		memcpy(label_hash, hash_out, 32);
 
 		/* Combine current hash + label hash */
 		memcpy(combined, hash, 32);
 		memcpy(combined + 32, label_hash, 32);
 
 		/* Hash the combination */
-		keccak_init(&ctx);
-		keccak_update(&ctx, combined, 64);
-		keccak_final(&ctx, hash);
+		sha3_Init256(&ctx);
+		sha3_SetFlags(&ctx, SHA3_FLAGS_KECCAK);
+		sha3_Update(&ctx, combined, 64);
+		hash_out = sha3_Finalize(&ctx);
+		memcpy(hash, hash_out, 32);
 	}
 
 	/* Convert final hash to hex string */
