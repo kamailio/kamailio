@@ -131,6 +131,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	CURLcode res;
 	bind_auth_s_t bind_auth;
 
 	LM_INFO("Authentication module initializing");
@@ -147,8 +148,9 @@ static int mod_init(void)
 	}
 
 	/* Initialize curl globally */
-	if(curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
-		LM_ERR("failed to initialize curl globally");
+	res = curl_global_init(CURL_GLOBAL_DEFAULT);
+	if(res != CURLE_OK) {
+		LM_ERR("Failed to initialize curl: %s\n", curl_easy_strerror(res));
 		return -1;
 	}
 
