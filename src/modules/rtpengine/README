@@ -2159,10 +2159,11 @@ modparam("rtpengine", "control_cmd_tos", 144)
 
 5.83. hash_algo (integer)
 
-   Hashing algorithm to be used in node selection algorithm. Now there are
-   3 possibilities: legacy algorithm - 0 (very basic hash over callid),
-   SHA1 - 1 (apply sha1 over the callid and calculate hash) or CRC32 - 2
-   (calculate crc32 sum over the callid).
+   The hashing algorithm to be used in node selection algorithm. There are
+   two possibilities: SHA1 - 1 (calculate SHA1 hash over the Call-ID) or
+   CRC32 - 2 (calculate crc32 sum over the callid). The legacy algorithm -
+   0 is not available anymore. If 0 is specified the default CRC32 will be
+   used.
 
    Default value is 2, CRC32.
 
@@ -2170,9 +2171,6 @@ modparam("rtpengine", "control_cmd_tos", 144)
 
    Example 1.84. Set hash_algo parameter
 ...
-### use SHA1 instead of legacy algorithm
-modparam("rtpengine", "hash_algo", 1)
-
 ### use CRC32 instead of legacy algorithm
 modparam("rtpengine", "hash_algo", 2)
 ...
