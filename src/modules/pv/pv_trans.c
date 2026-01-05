@@ -42,6 +42,7 @@
 #include "../../core/basex.h"
 #include "../../core/action.h"
 #include "../../core/hashes.h"
+#include "../../core/crc.h"
 
 #include "../../core/parser/parse_param.h"
 #include "../../core/parser/parse_uri.h"
@@ -203,6 +204,7 @@ int tr_eval_string(
 	time_t t;
 	uint32_t sz1, sz2;
 	struct tm tmv;
+	unsigned int uival;
 
 	if(val == NULL || val->flags & PV_VAL_NULL)
 		return -1;
@@ -1658,6 +1660,16 @@ int tr_eval_string(
 			val->rs.s = _tr_buffer;
 			val->rs.len = p - _tr_buffer;
 			val->rs.s[val->rs.len] = '\0';
+			break;
+
+		case TR_S_CRC32:
+			if(!(val->flags & PV_VAL_STR)) {
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			}
+			crc32_uint(&val->rs, &uival);
+			val->ri = (long)uival;
+			val->rs.s = int2str(val->ri, &val->rs.len);
+			val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
 			break;
 
 		default:
@@ -3472,6 +3484,9 @@ char *tr_parse_string(str *in, trans_t *t)
 					in->len, in->s);
 			goto error;
 		}
+		goto done;
+	} else if(name.len == 5 && strncasecmp(name.s, "crc32", 5) == 0) {
+		t->subtype = TR_S_CRC32;
 		goto done;
 	}
 

@@ -109,7 +109,8 @@ enum _tr_s_subtype
 	TR_S_RBEFORE,
 	TR_S_RAFTER,
 	TR_S_FMTLINES,
-	TR_S_FMTLINET
+	TR_S_FMTLINET,
+	TR_S_CRC32
 };
 enum _tr_uri_subtype
 {
