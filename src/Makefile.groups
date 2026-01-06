@@ -74,7 +74,7 @@ mod_list_snmpstats=snmpstats
 mod_list_xmpp=xmpp
 
 # - modules depending on curl library
-mod_list_utils=utils http_client lost slack
+mod_list_utils=utils http_client lost slack auth_web3
 
 # - modules depending on curl and libevent2 library
 mod_list_http_async=http_async_client
@@ -234,6 +234,9 @@ mod_list_secsipid=secsipid secsipid_proc
 
 # - modules depending on oRTP and mediastreamer2 libraries
 mod_list_rtp_media_server=rtp_media_server
+
+# module depending on curl and secp256k1 library
+mod_list_auth_arnacon=auth_arnacon
 
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
