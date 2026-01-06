@@ -174,7 +174,7 @@ int tcp_max_connections = DEFAULT_TCP_MAX_CONNECTIONS;
 int tls_max_connections = DEFAULT_TLS_MAX_CONNECTIONS;
 int tcp_accept_unique = 0;
 int ksr_tcp_main_threads = 0;
-
+int ksr_tcp_listen_backlog = TCP_LISTEN_BACKLOG;
 int tcp_connection_match = TCPCONN_MATCH_DEFAULT;
 
 static union sockaddr_union tcp_source_ipv4_addr; /* saved bind/srv v4 addr. */
@@ -3358,7 +3358,7 @@ int tcp_init(struct socket_info *sock_info)
 		}
 		goto error;
 	}
-	if(listen(sock_info->socket, TCP_LISTEN_BACKLOG) == -1) {
+	if(listen(sock_info->socket, ksr_tcp_listen_backlog) == -1) {
 		LM_ERR("listen(%x, %p, %d) on %s: %s\n", sock_info->socket, &addr->s,
 				(unsigned)sockaddru_len(*addr), sock_info->address_str.s,
 				strerror(errno));

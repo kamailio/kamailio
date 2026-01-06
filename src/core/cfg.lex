@@ -441,6 +441,7 @@ TCP_OPT_KEEPIDLE	"tcp_keepidle"
 TCP_OPT_KEEPINTVL	"tcp_keepintvl"
 TCP_OPT_KEEPCNT		"tcp_keepcnt"
 TCP_OPT_CRLF_PING	"tcp_crlf_ping"
+TCP_OPT_LISTEN_BACKLOG	"tcp_listen_backlog"
 TCP_OPT_ACCEPT_NO_CL	"tcp_accept_no_cl"
 TCP_OPT_ACCEPT_HEP3	"tcp_accept_hep3"
 TCP_OPT_ACCEPT_HAPROXY	"tcp_accept_haproxy"
@@ -963,6 +964,8 @@ IMPORTFILE      "import_file"
 									return TCP_OPT_KEEPCNT; }
 <INITIAL>{TCP_OPT_CRLF_PING}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_CRLF_PING; }
+<INITIAL>{TCP_OPT_LISTEN_BACKLOG}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_LISTEN_BACKLOG; }
 <INITIAL>{TCP_OPT_ACCEPT_NO_CL}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_ACCEPT_NO_CL; }
 <INITIAL>{TCP_OPT_ACCEPT_HEP3}	{ count(); yylval.strval=yytext;
