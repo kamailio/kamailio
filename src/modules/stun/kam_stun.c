@@ -125,7 +125,7 @@ int process_stun_msg(char *buf, unsigned len, struct receive_info *ri)
 #endif
 
 	/* send STUN response */
-	if(msg_send(&dst, msg_res.msg.buf.s, msg_res.msg.buf.len) != 0) {
+	if(msg_send_buffer(&dst, msg_res.msg.buf.s, msg_res.msg.buf.len, 1) != 0) {
 		goto error;
 	}
 
