@@ -18,6 +18,10 @@ Joel Centelles Martin
 
    <joel_centellesmartin@baxter.com>
 
+Donat Zenichev
+
+   <dzenichev@sipwise.com>
+
    Copyright © 2018 sipwise.com
      __________________________________________________________________
 
@@ -38,16 +42,17 @@ Joel Centelles Martin
               4.2. keys (string)
               4.3. verbosity (int)
               4.4. opt_tls (int)
-              4.5. mapping_struct_type (int)
-              4.6. hash_value (string)
-              4.7. hash_expires (int)
-              4.8. db_pass (string)
-              4.9. ca_path (string)
-              4.10. with_sentinels (int)
-              4.11. sentinels_config (string)
-              4.12. redis_master_name (string)
-              4.13. use_replicas (int)
-              4.14. recheck_replicas_interval (int)
+              4.5. max_key_length (int)
+              4.6. mapping_struct_type (int)
+              4.7. hash_value (string)
+              4.8. hash_expires (int)
+              4.9. db_pass (string)
+              4.10. ca_path (string)
+              4.11. with_sentinels (int)
+              4.12. sentinels_config (string)
+              4.13. redis_master_name (string)
+              4.14. use_replicas (int)
+              4.15. recheck_replicas_interval (int)
 
         5. Usage
         6. Module Specific Considerations
@@ -60,18 +65,19 @@ Joel Centelles Martin
    1.2. Setting keys module parameter
    1.3. Setting verbosity module parameter
    1.4. Enabling TLS connection
-   1.5. Enabling redis hashes
-   1.6. Setting hash_value
-   1.7. Setting hash expires
-   1.8. Setting a password
-   1.9. Setting CA path
-   1.10. Enabling sentinels
-   1.11. Setting sentinels
-   1.12. Setting Redis master name
-   1.13. Setting use_replicas
+   1.5. Limiting the max key length
+   1.6. Enabling redis hashes
+   1.7. Setting hash_value
+   1.8. Setting hash expires
+   1.9. Setting a password
+   1.10. Setting CA path
+   1.11. Enabling sentinels
+   1.12. Setting sentinels
+   1.13. Setting Redis master name
    1.14. Setting use_replicas
-   1.15. Usage
+   1.15. Setting use_replicas
    1.16. Usage
+   1.17. Usage
 
 Chapter 1. Admin Guide
 
@@ -90,16 +96,17 @@ Chapter 1. Admin Guide
         4.2. keys (string)
         4.3. verbosity (int)
         4.4. opt_tls (int)
-        4.5. mapping_struct_type (int)
-        4.6. hash_value (string)
-        4.7. hash_expires (int)
-        4.8. db_pass (string)
-        4.9. ca_path (string)
-        4.10. with_sentinels (int)
-        4.11. sentinels_config (string)
-        4.12. redis_master_name (string)
-        4.13. use_replicas (int)
-        4.14. recheck_replicas_interval (int)
+        4.5. max_key_length (int)
+        4.6. mapping_struct_type (int)
+        4.7. hash_value (string)
+        4.8. hash_expires (int)
+        4.9. db_pass (string)
+        4.10. ca_path (string)
+        4.11. with_sentinels (int)
+        4.12. sentinels_config (string)
+        4.13. redis_master_name (string)
+        4.14. use_replicas (int)
+        4.15. recheck_replicas_interval (int)
 
    5. Usage
    6. Module Specific Considerations
@@ -254,16 +261,17 @@ key:"location:entry::example-ruid-1", value:"hash_value")
    4.2. keys (string)
    4.3. verbosity (int)
    4.4. opt_tls (int)
-   4.5. mapping_struct_type (int)
-   4.6. hash_value (string)
-   4.7. hash_expires (int)
-   4.8. db_pass (string)
-   4.9. ca_path (string)
-   4.10. with_sentinels (int)
-   4.11. sentinels_config (string)
-   4.12. redis_master_name (string)
-   4.13. use_replicas (int)
-   4.14. recheck_replicas_interval (int)
+   4.5. max_key_length (int)
+   4.6. mapping_struct_type (int)
+   4.7. hash_value (string)
+   4.8. hash_expires (int)
+   4.9. db_pass (string)
+   4.10. ca_path (string)
+   4.11. with_sentinels (int)
+   4.12. sentinels_config (string)
+   4.13. redis_master_name (string)
+   4.14. use_replicas (int)
+   4.15. recheck_replicas_interval (int)
 
 4.1. schema_path (string)
 
@@ -320,7 +328,20 @@ modparam("db_redis", "verbosity", 0)
 modparam("db_redis", "opt_tls", 1)
 ...
 
-4.5. mapping_struct_type (int)
+4.5. max_key_length (int)
+
+   Controls the max possible key length to be used when adding/prepending
+   strings into the redis key. If used will be always compared against the
+   given string key length.
+
+   Default value: 0. Means disabled.
+
+   Example 1.5. Limiting the max key length
+...
+modparam("db_redis", "max_key_length", 4096)
+...
+
+4.6. mapping_struct_type (int)
 
    Controls the type of mapping structures to be used. Beforehand, only
    sets were used. For the rationale behind mapping structures, see the
@@ -333,12 +354,12 @@ modparam("db_redis", "opt_tls", 1)
 
    Default value: 0.
 
-   Example 1.5. Enabling redis hashes
+   Example 1.6. Enabling redis hashes
 ...
 modparam("db_redis", "mapping_struct_type", 1)
 ...
 
-4.6. hash_value (string)
+4.7. hash_value (string)
 
    Only has sense if mapping_struct_type is set to hash (1). Defines the
    value to be used for the hash entries in the hashes that now replace
@@ -346,12 +367,12 @@ modparam("db_redis", "mapping_struct_type", 1)
 
    Default value: DUMMY.
 
-   Example 1.6. Setting hash_value
+   Example 1.7. Setting hash_value
 ...
 modparam("db_redis", "hash_value", "DUMMY")
 ...
 
-4.7. hash_expires (int)
+4.8. hash_expires (int)
 
    Set an expiration time in seconds for the keys in the hash data
    structures in the database. This is useful for the usrloc module for
@@ -361,35 +382,35 @@ modparam("db_redis", "hash_value", "DUMMY")
 
    Default value: 0.
 
-   Example 1.7. Setting hash expires
+   Example 1.8. Setting hash expires
 ...
 modparam("db_redis", "hash_expires", 3600)
 ...
 
-4.8. db_pass (string)
+4.9. db_pass (string)
 
    Sets the password to connect to the DB.
 
    Default value: "" (empty).
 
-   Example 1.8. Setting a password
+   Example 1.9. Setting a password
 ...
 modparam("db_redis", "db_pass", "r3d1sPass")
 ...
 
-4.9. ca_path (string)
+4.10. ca_path (string)
 
    Sets the path where Certificates Authorities certs for the Redis server
    certificate are stored.
 
    Default value: "" (empty).
 
-   Example 1.9. Setting CA path
+   Example 1.10. Setting CA path
 ...
 modparam("db_redis", "ca_path", "/etc/ssl/certs")
 ...
 
-4.10. with_sentinels (int)
+4.11. with_sentinels (int)
 
    Enables the use of Redis sentinels for high availability. If set to 1,
    the module will connect to the Redis server using the sentinels defined
@@ -397,12 +418,12 @@ modparam("db_redis", "ca_path", "/etc/ssl/certs")
 
    Default value: 0.
 
-   Example 1.10. Enabling sentinels
+   Example 1.11. Enabling sentinels
 ...
 modparam("db_redis", "with_sentinels", 1)
 ...
 
-4.11. sentinels_config (string)
+4.12. sentinels_config (string)
 
    Sets the sentinels to connect to the Redis server. The format is
    semi-colon separated list of key-value pairs: password, sentinels.
@@ -411,13 +432,13 @@ modparam("db_redis", "with_sentinels", 1)
 
    Default value: "" (empty).
 
-   Example 1.11. Setting sentinels
+   Example 1.12. Setting sentinels
 ...
 modparam("db_redis", "sentinels_config", "password=password;sentinels=host1:port
 1|host2:port2|host3:port3")
 ...
 
-4.12. redis_master_name (string)
+4.13. redis_master_name (string)
 
    Sets the name of the Redis master. This is needed when building the
    SENTINEL get-master-addr-by-name command. The name should match the
@@ -425,12 +446,12 @@ modparam("db_redis", "sentinels_config", "password=password;sentinels=host1:port
 
    Default value: "mymaster" (empty).
 
-   Example 1.12. Setting Redis master name
+   Example 1.13. Setting Redis master name
 ...
 modparam("db_redis", "redis_master_name", "mymaster")
 ...
 
-4.13. use_replicas (int)
+4.14. use_replicas (int)
 
    Enables connecting to Redis replicas instead of the master when using
    sentinels. Replicas are selected randomly. This helps distribute load
@@ -440,12 +461,12 @@ modparam("db_redis", "redis_master_name", "mymaster")
 
    Default value: 0 (connect to master).
 
-   Example 1.13. Setting use_replicas
+   Example 1.14. Setting use_replicas
 ...
 modparam("db_redis", "use_replicas", 1)
 ...
 
-4.14. recheck_replicas_interval (int)
+4.15. recheck_replicas_interval (int)
 
    The parameter sets the interval in seconds to recheck for available
    replicas so that we don't remain connected to the master. Because of
@@ -456,7 +477,7 @@ modparam("db_redis", "use_replicas", 1)
 
    Default value: 120 seconds.
 
-   Example 1.14. Setting use_replicas
+   Example 1.15. Setting use_replicas
 ...
 modparam("db_redis", "recheck_replicas_interval", 120)
 ...
@@ -475,7 +496,7 @@ modparam("db_redis", "recheck_replicas_interval", 120)
    setting the "opt_tls" parameter to 1. In case the DB requires a
    password, that should be set using the "db_pass" parameter.
 
-   Example 1.15. Usage
+   Example 1.16. Usage
 ...
 loadmodule "db_redis.so"
 ...
@@ -508,7 +529,7 @@ modparam("dialog", "db_url", DBURL_DLG)
 
    Samples adding records for address table using 'redis-cli':
 
-   Example 1.16. Usage
+   Example 1.17. Usage
 ...
 SELECT 8
 HMSET address:entry::1 id 1 grp 1 ip_addr "127.0.0.1" mask 32 port 0
