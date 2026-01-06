@@ -1955,7 +1955,7 @@ if(ds_list_exists("10")) {
 		according to RFC 3263 default transport rules. When a destination in the
 		dispatcher list does not contain an explicit ;transport= URI parameter, the
 		module derives and sets the transport based on the SIP URI scheme and RFC
-		3263 resolution procedures.
+		3263 resolution procedures (in short, UDP for 'sip:' and TCP for 'sips:').
 		</note>
 
 		<para>
