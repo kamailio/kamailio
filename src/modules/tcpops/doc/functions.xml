@@ -46,16 +46,16 @@
 	</section>
 	<section id="tcpops.f.tcp_con_alive">
 		<title>
-			<function>tcp_con_alive(hostport)</function>
+			<function>tcp_con_alive(addr)</function>
 		</title>
 		<para>
-			Check the connection based on target host:port.
+			Check the connection based on target addrt.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem>
-				<para><emphasis>hostport</emphasis> - target "host:port" address,
-				the port can be omitted (default to 5060) and the parameter can
+				<para><emphasis>addr</emphasis> - target "host:port" or SIP address.
+				The port can be omitted (default to 5060) and the parameter can
 				contain variables.
 				</para>
 			</listitem>
@@ -70,6 +70,10 @@
 	if(!tcp_con_alive("1.2.3.4:5060")) {
 		xlog("connection not found\n");
 	}
+	if(!tcp_con_alive("sip:2.3.4.5:5070")) {
+		xlog("connection not found\n");
+	}
+
 ...
 			]]></programlisting>
 		</example>
