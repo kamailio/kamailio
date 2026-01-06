@@ -106,9 +106,6 @@ mod_list_sctp=sctp
 # - modules depending on openssl library
 mod_list_autheph=auth_ephemeral
 
-# - modules depending on curl, openssl, secp256k1 libraries
-mod_list_authweb3=auth_web3 auth_arnacon
-
 # - modules related to SIMPLE presence extensions
 mod_list_presence=presence presence_conference presence_dialoginfo \
 					   presence_mwi presence_profile presence_reginfo \
@@ -284,7 +281,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_microhttpd) \
 			   $(mod_list_nghttp2) \
 			   $(mod_list_gcrypt) \
-			   $(mod_list_authweb3) \
+			   $(mod_list_auth_arnacon) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -472,8 +469,8 @@ module_group_ksctp=$(mod_list_sctp)
 # pkg auth_ephemeral module
 module_group_kautheph=$(mod_list_autheph)
 
-# pkg auth web3 modules
-module_group_kauthweb3=$(mod_list_authweb3)
+# pkg auth arnacon modules
+module_group_kauth_arnacon=$(mod_list_auth_arnacon)
 
 # pkg gzcompress module
 module_group_kgzcompress=$(mod_list_gzcompress)
