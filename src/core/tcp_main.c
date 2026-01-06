@@ -116,7 +116,10 @@
 #define TCP_PASS_NEW_CONNECTION_ON_DATA /* don't pass a new connection
 										   immediately to a child, wait for
 										   some data on it first */
+#ifndef TCP_LISTEN_BACKLOG
 #define TCP_LISTEN_BACKLOG 1024
+#endif
+
 #define SEND_FD_QUEUE /* queue send fd requests on EAGAIN, instead of sending
 							them immediately */
 #define TCP_CHILD_NON_BLOCKING
