@@ -26,7 +26,7 @@ Olle E. Johansson
         3. Functions
 
               3.1. tcp_conid_alive(conid)
-              3.2. tcp_con_alive(hostport)
+              3.2. tcp_con_alive(addr)
               3.3. tcp_conid_state(conid)
               3.4. tcp_keepalive_enable([conid], idle, count, interval)
               3.5. tcp_keepalive_disable([conid])
@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
    3. Functions
 
         3.1. tcp_conid_alive(conid)
-        3.2. tcp_con_alive(hostport)
+        3.2. tcp_con_alive(addr)
         3.3. tcp_conid_state(conid)
         3.4. tcp_keepalive_enable([conid], idle, count, interval)
         3.5. tcp_keepalive_disable([conid])
@@ -149,7 +149,7 @@ end
 3. Functions
 
    3.1. tcp_conid_alive(conid)
-   3.2. tcp_con_alive(hostport)
+   3.2. tcp_con_alive(addr)
    3.3. tcp_conid_state(conid)
    3.4. tcp_keepalive_enable([conid], idle, count, interval)
    3.5. tcp_keepalive_disable([conid])
@@ -182,12 +182,12 @@ end
         }
 ...
 
-3.2.  tcp_con_alive(hostport)
+3.2.  tcp_con_alive(addr)
 
-   Check the connection based on target host:port.
+   Check the connection based on target addrt.
 
    Meaning of the parameters is as follows:
-     * hostport - target "host:port" address, the port can be omitted
+     * addr - target "host:port" or SIP address. The port can be omitted
        (default to 5060) and the parameter can contain variables.
 
    Return values:
@@ -201,6 +201,10 @@ end
         if(!tcp_con_alive("1.2.3.4:5060")) {
                 xlog("connection not found\n");
         }
+        if(!tcp_con_alive("sip:2.3.4.5:5070")) {
+                xlog("connection not found\n");
+        }
+
 ...
 
 3.3.  tcp_conid_state(conid)
