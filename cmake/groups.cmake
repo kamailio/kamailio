@@ -181,7 +181,7 @@ set(MOD_LIST_SNMPSTATS snmpstats)
 set(MOD_LIST_XMPP xmpp)
 
 # * modules depending on curl library
-set(MOD_LIST_UTILS utils http_client lost slack auth_web3 auth_arnacon)
+set(MOD_LIST_UTILS utils http_client lost slack)
 
 # * modules depending on curl and libevent2 library
 set(MOD_LIST_HTTP_ASYNC http_async_client)
@@ -368,6 +368,9 @@ set(MOD_LIST_SECSIPID secsipid secsipid_proc)
 # * modules depending on oRTP and mediastreamer2 libraries
 set(MOD_LIST_RTP_MEDIA_SERVER rtp_media_server)
 
+# modules depending on curl and secp256k1 library
+set(MOD_LIST_AUTH_BLOCKCHAIN auth_web3 auth_arnacon)
+
 # * all modules
 set(MOD_LIST_ALL
     ${MOD_LIST_BASIC}
@@ -436,6 +439,7 @@ set(MOD_LIST_ALL
     ${MOD_LIST_NGHTTP2}
     ${MOD_LIST_GCRYPT}
     ${MOD_LIST_RTP_MEDIA_SERVER}
+    ${MOD_LIST_AUTH_BLOCKCHAIN}
 )
 
 # sort the list
@@ -670,6 +674,9 @@ set(MODULE_GROUP_KSECSIPID ${MOD_LIST_SECSIPID})
 # K rtp_media_server modules
 set(MODULE_GROUP_KRTP_MEDIA_SERVER ${MOD_LIST_RTP_MEDIA_SERVER})
 
+K auth_blockchain modules
+set(MODULE_GROUP_KAUTH_BLOCKCHAIN ${MOD_LIST_AUTH_BLOCKCHAIN})
+
 # list of static modules
 set(STATIC_MODULES "")
 
@@ -736,6 +743,7 @@ set(MODULE_GROUP_PACKAGE_GROUPS
     KGCRYPT
     KSECSIPID
     KRTP_MEDIA_SERVER
+    KAUTH_BLOCKCHAIN
 )
 
 # Add group names to available group and provide "ALL_PACKAGED" as well
