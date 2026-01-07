@@ -7,7 +7,9 @@
 #include "arnacon_core.h"
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
-#include "keccak256.h"
+#include "../../core/crypto/sha3.h"
+#include "../../core/crypto/shautils.h"
+
 #include <ctype.h>
 #include <curl/curl.h>
 #include <errno.h>
@@ -38,10 +40,6 @@ struct arnacon_xdata
 /* Forward declarations for static functions */
 static size_t arnacon_response_write_callback(void *contents, size_t size,
 		size_t nmemb, struct arnacon_response_data *response);
-static int arnacon_hex_to_bytes(
-		const char *hex_str, unsigned char *bytes, size_t max_bytes);
-static int arnacon_bytes_to_hex(const unsigned char *bytes, size_t len,
-		char *hex_str, size_t hex_str_size);
 static int arnacon_compute_namehash(const char *name, char *hash_hex);
 static int arnacon_get_ens_owner(const char *ens_name, char *owner_address,
 		const char *registry_address, const char *rpc_url, int debug);
@@ -113,103 +111,6 @@ static size_t arnacon_response_write_callback(void *contents, size_t size,
 }
 
 /**
- * Convert hex string to bytes
- */
-static int arnacon_hex_to_bytes(
-		const char *hex_str, unsigned char *bytes, size_t max_bytes)
-{
-	size_t len;
-	size_t byte_len;
-	size_t i;
-	char hex_byte[3];
-	char *endptr;
-	long val;
-
-	if(!hex_str || !bytes) {
-		LM_ERR("Invalid input parameters to hex_to_bytes\n");
-		return -1;
-	}
-
-	/* Skip 0x prefix if present */
-	if(strncmp(hex_str, "0x", 2) == 0 || strncmp(hex_str, "0X", 2) == 0) {
-		hex_str += 2;
-	}
-
-	len = strlen(hex_str);
-	if(len % 2 != 0) {
-		LM_ERR("Invalid hex string length: %zu (must be even)\n", len);
-		return -1;
-	}
-
-	byte_len = len / 2;
-	if(byte_len > max_bytes) {
-		LM_ERR("Hex string too long: %zu bytes (max: %zu)\n", byte_len,
-				max_bytes);
-		return -1;
-	}
-
-	for(i = 0; i < byte_len; i++) {
-		hex_byte[0] = hex_str[i * 2];
-		hex_byte[1] = hex_str[i * 2 + 1];
-		hex_byte[2] = '\0';
-
-		errno = 0;
-		val = strtol(hex_byte, &endptr, 16);
-
-		/* Check for conversion errors */
-		if(errno != 0 || endptr == hex_byte || *endptr != '\0' || val < 0
-				|| val > 255) {
-			LM_ERR("Invalid hex byte at position %zu: %s\n", i, hex_byte);
-			return -1;
-		}
-
-		bytes[i] = (unsigned char)val;
-	}
-
-	return (int)byte_len;
-}
-
-/**
- * Convert bytes to hex string
- * @param bytes Input byte array
- * @param len Length of byte array
- * @param hex_str Output hex string buffer
- * @param hex_str_size Size of hex_str buffer (must be at least 2*len + 1)
- * @return 0 on success, -1 on error
- */
-static int arnacon_bytes_to_hex(const unsigned char *bytes, size_t len,
-		char *hex_str, size_t hex_str_size)
-{
-	size_t i;
-	size_t required_size;
-	int ret;
-
-	if(!bytes || !hex_str) {
-		LM_ERR("Invalid input parameters to bytes_to_hex\n");
-		return -1;
-	}
-
-	/* Check buffer size: need 2 chars per byte + null terminator */
-	required_size = 2 * len + 1;
-	if(hex_str_size < required_size) {
-		LM_ERR("Buffer too small for bytes_to_hex: need %zu, got %zu\n",
-				required_size, hex_str_size);
-		return -1;
-	}
-
-	for(i = 0; i < len; i++) {
-		ret = snprintf(hex_str + 2 * i, hex_str_size - 2 * i, "%02x", bytes[i]);
-		if(ret < 0 || ret >= (int)(hex_str_size - 2 * i)) {
-			LM_ERR("snprintf failed in bytes_to_hex at position %zu\n", i);
-			return -1;
-		}
-	}
-	hex_str[2 * len] = '\0';
-
-	return 0;
-}
-
-/**
  * Compute ENS namehash for a given domain name
  */
 static int arnacon_compute_namehash(const char *name, char *hash_hex)
@@ -221,7 +122,7 @@ static int arnacon_compute_namehash(const char *name, char *hash_hex)
 	char *token;
 	char *p;
 	int i, j;
-	SHA3_CTX ctx;
+	sha3_context ctx;
 	unsigned char label_hash[32];
 	unsigned char combined[64];
 	size_t name_len;
@@ -236,7 +137,7 @@ static int arnacon_compute_namehash(const char *name, char *hash_hex)
 
 	/* Handle empty string (root domain) */
 	if(strlen(name) == 0) {
-		if(arnacon_bytes_to_hex(hash, 32, hash_hex, 65) != 0) {
+		if(bytes_to_hex(hash, 32, hash_hex, 65) != 0) {
 			LM_ERR("Failed to convert root hash to hex\n");
 			return -1;
 		}
@@ -282,11 +183,13 @@ static int arnacon_compute_namehash(const char *name, char *hash_hex)
 
 	/* Process labels from right to left (reverse order) */
 	for(i = label_count - 1; i >= 0; i--) {
+		const void *hash_bytes;
 		/* Hash the current label */
-		keccak_init(&ctx);
-		keccak_update(
-				&ctx, (const unsigned char *)labels[i], strlen(labels[i]));
-		keccak_final(&ctx, label_hash);
+		sha3_Init256(&ctx);
+		sha3_SetFlags(&ctx, SHA3_FLAGS_KECCAK);
+		sha3_Update(&ctx, (const unsigned char *)labels[i], strlen(labels[i]));
+		hash_bytes = sha3_Finalize(&ctx);
+		memcpy(label_hash, hash_bytes, 32);
 
 		LM_DBG("Label '%s' processed\n", labels[i]);
 
@@ -295,13 +198,14 @@ static int arnacon_compute_namehash(const char *name, char *hash_hex)
 		memcpy(combined + 32, label_hash, 32);
 
 		/* Hash the combination */
-		keccak_init(&ctx);
-		keccak_update(&ctx, combined, 64);
-		keccak_final(&ctx, hash);
+		sha3_Init256(&ctx);
+		sha3_Update(&ctx, combined, 64);
+		hash_bytes = sha3_Finalize(&ctx);
+		memcpy(hash, hash_bytes, 32);
 	}
 
 	/* Convert final hash to hex string */
-	if(arnacon_bytes_to_hex(hash, 32, hash_hex, 65) != 0) {
+	if(bytes_to_hex(hash, 32, hash_hex, 65) != 0) {
 		LM_ERR("Failed to convert final hash to hex\n");
 		/* Cleanup */
 		for(i = 0; i < label_count; i++) {
@@ -867,7 +771,6 @@ static int arnacon_try_recover_with_recovery_id(secp256k1_context *ctx,
 	secp256k1_pubkey pubkey;
 	unsigned char pubkey_bytes[65];
 	size_t pubkey_len;
-	SHA3_CTX addr_ctx;
 	unsigned char addr_hash[32];
 	int ret;
 	int serialize_result;
@@ -901,9 +804,8 @@ static int arnacon_try_recover_with_recovery_id(secp256k1_context *ctx,
 
 	/* Ethereum address is the last 20 bytes of the Keccak hash of the public key
    * (excluding the first byte) */
-	keccak_init(&addr_ctx);
-	keccak_update(&addr_ctx, pubkey_bytes + 1, 64); /* Skip first byte (0x04) */
-	keccak_final(&addr_ctx, addr_hash);
+	sha3_HashBuffer(256, SHA3_FLAGS_KECCAK, pubkey_bytes + 1, 64, addr_hash,
+			sizeof(addr_hash));
 
 	/* Convert last 20 bytes to hex address */
 	ret = snprintf(recovered_address, ARNACON_MAX_ADDRESS_LENGTH, "0x");
@@ -912,8 +814,7 @@ static int arnacon_try_recover_with_recovery_id(secp256k1_context *ctx,
 		return -1;
 	}
 	/* Buffer size for hex: 20 bytes * 2 + 1 null = 41, we have 43-2 = 41 available */
-	if(arnacon_bytes_to_hex(addr_hash + 12, 20, recovered_address + 2, 41)
-			!= 0) {
+	if(bytes_to_hex(addr_hash + 12, 20, recovered_address + 2, 41) != 0) {
 		LM_ERR("Failed to convert address hash to hex\n");
 		return -1;
 	}
@@ -933,7 +834,6 @@ static int arnacon_recover_ethereum_address(const char *message,
 	char prefixed_message[512];
 	char ethereum_prefix;
 	int prefix_len;
-	SHA3_CTX hash_ctx;
 	unsigned char message_hash[32];
 	int v_value;
 	int primary_recovery_id;
@@ -961,7 +861,7 @@ static int arnacon_recover_ethereum_address(const char *message,
 	}
 
 	/* Parse signature (65 bytes: r + s + v) */
-	sig_len = arnacon_hex_to_bytes(signature, sig_bytes, sizeof(sig_bytes));
+	sig_len = hex_to_bytes(signature, sig_bytes, sizeof(sig_bytes));
 	if(sig_len != 65) {
 		LM_ERR("Invalid signature length: %d (expected 65 bytes)\n", sig_len);
 		secp256k1_context_destroy(ctx);
@@ -979,9 +879,8 @@ static int arnacon_recover_ethereum_address(const char *message,
 		return -1;
 	}
 
-	keccak_init(&hash_ctx);
-	keccak_update(&hash_ctx, (unsigned char *)prefixed_message, prefix_len);
-	keccak_final(&hash_ctx, message_hash);
+	sha3_HashBuffer(256, SHA3_FLAGS_KECCAK, (unsigned char *)prefixed_message,
+			prefix_len, message_hash, sizeof(message_hash));
 
 	if(debug) {
 		LM_DBG("Message hash computed\n");
