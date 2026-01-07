@@ -79,6 +79,10 @@ static int w_via_reply_add_xavp_params(sip_msg_t *msg, char *pflags, char *p2);
 static int w_is_faked_msg(sip_msg_t *msg, char *p1, char *p2);
 static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2);
 
+static int w_msg_vbflag_set(sip_msg_t *msg, char *pflag, char *p2);
+static int w_msg_vbflag_reset(sip_msg_t *msg, char *pflag, char *p2);
+static int w_msg_vbflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
+
 static int fixup_file_op(void **param, int param_no);
 static int fixup_free_file_op(void **param, int param_no);
 
@@ -185,6 +189,12 @@ static cmd_export_t cmds[] = {
 	{"is_faked_msg", (cmd_function)w_is_faked_msg, 0, 0, 0, ANY_ROUTE},
 	{"is_socket_name", (cmd_function)w_is_socket_name, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"msg_vbflag_set", (cmd_function)w_msg_vbflag_set, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"msg_vbflag_reset", (cmd_function)w_msg_vbflag_reset, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"msg_vbflag_is_set", (cmd_function)w_msg_vbflag_is_set, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -748,6 +758,80 @@ static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2)
 	if(msg->msg_flags & fv)
 		return 1;
 	return -2;
+}
+
+/**
+ *
+ */
+static int ki_msg_vbflag_is_set(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval > MAX_FLAG)
+		return -1;
+	if(msg->vbflags & (fval << 1)) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_msg_vbflag_is_set(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)flag, &fval) != 0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_msg_vbflag_is_set(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_msg_vbflag_reset(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval > MAX_FLAG)
+		return -1;
+	msg->vbflags &= ~(1 << fval);
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_msg_vbflag_reset(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)flag, &fval) != 0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_msg_vbflag_reset(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_msg_vbflag_set(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval > MAX_FLAG)
+		return -1;
+	msg->vbflags |= (1 << fval);
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_msg_vbflag_set(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)flag, &fval) != 0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_msg_vbflag_set(msg, fval);
 }
 
 /**
