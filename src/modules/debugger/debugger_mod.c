@@ -552,7 +552,8 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	} else {
 		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
 				&send_info,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE,
+				NULL);
 	}
 
 	if(obuf.s == NULL) {
