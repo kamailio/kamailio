@@ -254,7 +254,7 @@ char *tps_msg_update(sip_msg_t *msg, unsigned int *olen)
 	init_dest_info(&dst);
 	dst.proto = PROTO_UDP;
 	return build_req_buf_from_sip_req(
-			msg, olen, &dst, BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+			msg, olen, &dst, BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE, NULL);
 }
 
 /**
