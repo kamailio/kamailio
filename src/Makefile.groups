@@ -74,7 +74,7 @@ mod_list_snmpstats=snmpstats
 mod_list_xmpp=xmpp
 
 # - modules depending on curl library
-mod_list_utils=utils http_client lost slack auth_web3
+mod_list_utils=utils http_client lost slack
 
 # - modules depending on curl and libevent2 library
 mod_list_http_async=http_async_client
@@ -235,8 +235,8 @@ mod_list_secsipid=secsipid secsipid_proc
 # - modules depending on oRTP and mediastreamer2 libraries
 mod_list_rtp_media_server=rtp_media_server
 
-# module depending on curl and secp256k1 library
-mod_list_auth_arnacon=auth_arnacon
+# modules depending on curl and secp256k1 library
+mod_list_auth_blockchain=auth_web3 auth_arnacon
 
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
@@ -284,8 +284,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_microhttpd) \
 			   $(mod_list_nghttp2) \
 			   $(mod_list_gcrypt) \
-			   $(mod_list_auth_arnacon) \
-			   $(mod_list_rtp_media_server)
+			   $(mod_list_rtp_media_server) \
+			   $(mod_list_auth_blockchain)
 
 
 
@@ -473,7 +473,7 @@ module_group_ksctp=$(mod_list_sctp)
 module_group_kautheph=$(mod_list_autheph)
 
 # pkg auth arnacon modules
-module_group_kauth_arnacon=$(mod_list_auth_arnacon)
+module_group_kauth_blockchain=$(mod_list_auth_blockchain)
 
 # pkg gzcompress module
 module_group_kgzcompress=$(mod_list_gzcompress)
