@@ -82,6 +82,10 @@ static int w_t_reuse_branch(sip_msg_t *msg, char *, char *);
 static int fixup_t_continue(void **param, int param_no);
 static int w_t_precheck_trans(sip_msg_t *, char *, char *);
 
+static int w_t_vbflag_set(sip_msg_t *msg, char *pflag, char *p2);
+static int w_t_vbflag_reset(sip_msg_t *msg, char *pflag, char *p2);
+static int w_t_vbflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
+
 static int tmx_cfg_callback(sip_msg_t *msg, unsigned int flags, void *cbp);
 
 static int bind_tmx(tmx_api_t *api);
@@ -185,9 +189,15 @@ static cmd_export_t cmds[] = {
 	{"t_continue", (cmd_function)w_t_continue, 3, fixup_t_continue, 0, ANY_ROUTE},
 	{"t_reuse_branch", (cmd_function)w_t_reuse_branch, 0, 0, 0, EVENT_ROUTE},
 	{"t_precheck_trans", (cmd_function)w_t_precheck_trans, 0, 0, 0, REQUEST_ROUTE},
-	{"bind_tmx", (cmd_function)bind_tmx, 1, 0, 0, ANY_ROUTE},
 	{"t_drop", (cmd_function)w_t_drop0, 0, 0, 0, ANY_ROUTE},
 	{"t_drop", (cmd_function)w_t_drop1, 1, fixup_igp_null, 0, ANY_ROUTE},
+	{"t_vbflag_set", (cmd_function)w_t_vbflag_set, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"t_vbflag_reset", (cmd_function)w_t_vbflag_reset, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"t_vbflag_is_set", (cmd_function)w_t_vbflag_is_set, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"bind_tmx", (cmd_function)bind_tmx, 1, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -929,6 +939,132 @@ static int t_precheck_trans(sip_msg_t *msg)
 static int w_t_precheck_trans(sip_msg_t *msg, char *p1, char *p2)
 {
 	return t_precheck_trans(msg);
+}
+
+int tmx_get_branch_idx(sip_msg_t *msg)
+{
+	tm_cell_t *t = NULL;
+	tm_ctx_t *tcx = 0;
+
+	if(msg == NULL) {
+		return T_BR_UNDEFINED;
+	}
+
+	/* stateful replies have the branch_index set */
+	if(msg->first_line.type == SIP_REPLY) {
+		tcx = _tmx_tmb.tm_ctx_get();
+		if(tcx != NULL) {
+			return tcx->branch_index;
+		}
+		return T_BR_UNDEFINED;
+	}
+
+	switch(route_type) {
+		case BRANCH_ROUTE:
+		case BRANCH_FAILURE_ROUTE:
+			/* branch and branch_failure routes have their index set */
+			tcx = _tmx_tmb.tm_ctx_get();
+			if(tcx != NULL) {
+				return tcx->branch_index;
+			}
+			return T_BR_UNDEFINED;
+		case REQUEST_ROUTE:
+			t = _tmx_tmb.t_gett();
+			if(t == NULL || t == T_UNDEFINED) {
+				return T_BR_UNDEFINED;
+			}
+			/* transaction created - use first branch */
+			return 0;
+		case FAILURE_ROUTE:
+			return _tmx_tmb.t_get_picked_branch();
+	}
+	return T_BR_UNDEFINED;
+}
+
+/**
+ *
+ */
+static int ki_t_vbflag_is_set(sip_msg_t *msg, int fval)
+{
+	int bidx = T_BR_UNDEFINED;
+	tm_cell_t *t = NULL;
+
+	if((flag_t)fval > MAX_FLAG) {
+		return -1;
+	}
+	t = _tmx_tmb.t_gett();
+	if(t == NULL || t == T_UNDEFINED) {
+		return -1;
+	}
+	bidx = tmx_get_branch_idx(msg);
+	if(bidx == T_BR_UNDEFINED) {
+		return -1;
+	}
+	if(msg->vbflags & (fval << 1)) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_t_vbflag_is_set(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)flag, &fval) != 0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_t_vbflag_is_set(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_t_vbflag_reset(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval > MAX_FLAG)
+		return -1;
+	msg->vbflags &= ~(1 << fval);
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_t_vbflag_reset(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)flag, &fval) != 0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_t_vbflag_reset(msg, fval);
+}
+
+/**
+ *
+ */
+static int ki_t_vbflag_set(sip_msg_t *msg, int fval)
+{
+	if((flag_t)fval > MAX_FLAG)
+		return -1;
+	msg->vbflags |= (1 << fval);
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_t_vbflag_set(sip_msg_t *msg, char *flag, char *s2)
+{
+	int fval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)flag, &fval) != 0) {
+		LM_ERR("no flag value\n");
+		return -1;
+	}
+	return ki_t_vbflag_set(msg, fval);
 }
 
 /**
