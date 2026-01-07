@@ -362,7 +362,7 @@ static inline int t_run_local_req(char **buf, int *buf_len, int buf_offset,
 		if(buf_offset == 0) {
 			LM_DBG("apply new updates with Via to sip msg\n");
 			buf1 = build_req_buf_from_sip_req(&lreq, (unsigned int *)&buf_len1,
-					&request->dst, BUILD_NEW_LOCAL_VIA | BUILD_IN_SHM);
+					&request->dst, BUILD_NEW_LOCAL_VIA | BUILD_IN_SHM, NULL);
 			if(likely(buf1)) {
 				shm_free(*buf);
 				*buf = buf1;
@@ -374,7 +374,7 @@ static inline int t_run_local_req(char **buf, int *buf_len, int buf_offset,
 			LM_DBG("apply new updates with Via to sip msg, preserving "
 				   "prefix\n");
 			buf1 = build_req_buf_from_sip_req(&lreq, (unsigned int *)&buf_len1,
-					&request->dst, BUILD_NEW_LOCAL_VIA);
+					&request->dst, BUILD_NEW_LOCAL_VIA, NULL);
 			if(likely(buf1)) {
 				buf2 = shm_malloc(buf_offset + buf_len1);
 				if(unlikely(!buf2)) {
@@ -400,7 +400,8 @@ static inline int t_run_local_req(char **buf, int *buf_len, int buf_offset,
 				buf1 = build_req_buf_from_sip_req(&lreq,
 						(unsigned int *)&buf_len1, &request->dst,
 						BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE
-								| BUILD_IN_SHM);
+								| BUILD_IN_SHM,
+						NULL);
 				if(likely(buf1)) {
 					shm_free(*buf);
 					*buf = buf1;
@@ -413,7 +414,7 @@ static inline int t_run_local_req(char **buf, int *buf_len, int buf_offset,
 					   "prefix\n");
 				buf1 = build_req_buf_from_sip_req(&lreq,
 						(unsigned int *)&buf_len1, &request->dst,
-						BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+						BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE, NULL);
 				if(likely(buf1)) {
 					buf2 = shm_malloc(buf_offset + buf_len1);
 					if(unlikely(!buf2)) {

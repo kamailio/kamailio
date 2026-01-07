@@ -152,6 +152,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	struct run_act_ctx ctx;
 	struct run_act_ctx *bctx;
 	sr_kemi_eng_t *keng;
+	ksr_msgbuild_t mbd = {0};
 
 	shbuf = 0;
 	ret = E_UNSPEC;
@@ -484,7 +485,8 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 		goto error01;
 	}
 	/* ... and build it now */
-	shbuf = build_req_buf_from_sip_req(i_req, &len, dst, BUILD_IN_SHM);
+	mbd.tvbflags = t->uac[branch].vbflags;
+	shbuf = build_req_buf_from_sip_req(i_req, &len, dst, BUILD_IN_SHM, &mbd);
 	if(!shbuf || len <= 0) {
 		LM_ERR("could not build request\n");
 		if(shbuf) {
@@ -648,6 +650,7 @@ static char *print_uac_request_from_buf(struct cell *t, struct sip_msg *i_req,
 	str branch_str;
 	char *via, *old_via_begin, *old_via_end;
 	unsigned int via_len;
+	ksr_msgbuild_t mbd = {0};
 
 	shbuf = 0;
 
@@ -674,7 +677,8 @@ static char *print_uac_request_from_buf(struct cell *t, struct sip_msg *i_req,
 	}
 
 	/* create the new VIA HF */
-	via = create_via_hf(&via_len, i_req, dst, &branch_str);
+	mbd.tvbflags = t->uac[branch].vbflags;
+	via = create_via_hf(&via_len, i_req, dst, &branch_str, &mbd);
 	if(!via) {
 		LM_ERR("via building failed\n");
 		goto error00;
