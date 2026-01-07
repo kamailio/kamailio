@@ -674,7 +674,7 @@ set(MODULE_GROUP_KSECSIPID ${MOD_LIST_SECSIPID})
 # K rtp_media_server modules
 set(MODULE_GROUP_KRTP_MEDIA_SERVER ${MOD_LIST_RTP_MEDIA_SERVER})
 
-K auth_blockchain modules
+# K auth_blockchain modules
 set(MODULE_GROUP_KAUTH_BLOCKCHAIN ${MOD_LIST_AUTH_BLOCKCHAIN})
 
 # list of static modules
