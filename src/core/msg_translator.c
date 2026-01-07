@@ -120,6 +120,7 @@ str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
 str _ksr_xavp_via_reply_params = STR_NULL;
 int ksr_local_rport = 0;
+str _ksr_via_body_flags = str_init("kvf");
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -2066,7 +2067,7 @@ clean:
   */
 char *build_req_buf_from_sip_req(struct sip_msg *msg,
 		unsigned int *returned_len, struct dest_info *send_info,
-		unsigned int mode)
+		unsigned int mode, ksr_msgbuild_t *mbd)
 {
 	unsigned int len, new_len, received_len, rport_len, uri_len, via_len,
 			body_delta;
@@ -2126,7 +2127,7 @@ char *build_req_buf_from_sip_req(struct sip_msg *msg,
 	via_anchor = anchor_lump(msg, msg->via1->hdr.s - buf, 0, HDR_VIA_T);
 	if(unlikely(via_anchor == 0))
 		goto error00;
-	line_buf = create_via_hf(&via_len, msg, send_info, &branch);
+	line_buf = create_via_hf(&via_len, msg, send_info, &branch, mbd);
 	if(unlikely(!line_buf)) {
 		LM_ERR("could not create Via header\n");
 		goto error00;
@@ -2304,7 +2305,7 @@ after_update_via1:
 			new_len -= via_len;
 			if(likely(line_buf))
 				pkg_free(line_buf);
-			line_buf = create_via_hf(&via_len, msg, &di, &branch);
+			line_buf = create_via_hf(&via_len, msg, &di, &branch, mbd);
 			if(!line_buf) {
 				LM_ERR("memory allocation failure!\n");
 				goto error00;
@@ -3227,13 +3228,18 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 /* creates a via header honoring the protocol of the incoming socket
  * msg is an optional parameter */
 char *create_via_hf(unsigned int *len, struct sip_msg *msg,
-		struct dest_info *send_info /* where to send the reply */, str *branch)
+		struct dest_info *send_info /* where to send the reply */, str *branch,
+		ksr_msgbuild_t *mbd)
 {
 	char *via;
 	str extra_params;
 	struct hostport hp;
 	char sbuf[24];
 	int slen;
+	char vbfbuf[32];
+	int vbflen;
+	flag_t vbfval;
+
 	str xparams;
 #if defined USE_TCP || defined USE_SCTP
 	char *id_buf;
@@ -3350,6 +3356,42 @@ char *create_via_hf(unsigned int *len, struct sip_msg *msg,
 			memcpy(via + extra_params.len + 1, xparams.s, xparams.len - 1);
 			extra_params.s = via;
 			extra_params.len += xparams.len;
+			extra_params.s[extra_params.len] = '\0';
+		}
+	}
+
+	vbfval = 0;
+	if((_ksr_via_body_flags.len > 0)
+			&& ((msg && msg->vbflags) || (mbd && mbd->tvbflags))) {
+		if(msg && msg->vbflags) {
+			vbfval = msg->vbflags;
+		}
+		if(mbd && mbd->tvbflags) {
+			vbfval |= mbd->tvbflags;
+		}
+	}
+	if(vbfval != 0) {
+		vbflen = snprintf(vbfbuf, 32, ";%.*s=%x", _ksr_via_body_flags.len,
+				_ksr_via_body_flags.s, vbfval);
+		if(vbflen <= 0 || vbflen >= 32) {
+			LM_WARN("failed to build via-body flags parameter");
+		} else {
+			via = (char *)pkg_malloc(extra_params.len + vbflen + 1);
+			if(via == 0) {
+				PKG_MEM_ERROR;
+				if(extra_params.s)
+					pkg_free(extra_params.s);
+				return 0;
+			}
+			if(extra_params.s != NULL && extra_params.len > 0) {
+				memcpy(via, extra_params.s, extra_params.len);
+			}
+			if(extra_params.s != NULL) {
+				pkg_free(extra_params.s);
+			}
+			memcpy(via + extra_params.len, vbfbuf, vbflen);
+			extra_params.s = via;
+			extra_params.len += vbflen;
 			extra_params.s[extra_params.len] = '\0';
 		}
 	}
@@ -3643,8 +3685,8 @@ int sip_msg_eval_changes(sip_msg_t *msg, str *obuf)
 				msg, (unsigned int *)&obuf->len, BUILD_NO_VIA1_UPDATE);
 	} else {
 		obuf->s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf->len,
-				&dst,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+				&dst, BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE,
+				NULL);
 	}
 	if(obuf->s == NULL) {
 		LM_ERR("couldn't update msg buffer content\n");
@@ -3680,8 +3722,8 @@ int sip_msg_apply_changes(sip_msg_t *msg)
 			return -1;
 		}
 		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
-				&dst,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
+				&dst, BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE,
+				NULL);
 	}
 	if(obuf.s == NULL) {
 		LM_ERR("couldn't update msg buffer content\n");

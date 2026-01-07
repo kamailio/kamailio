@@ -56,6 +56,7 @@
 
 #include "parser/msg_parser.h"
 #include "ip_addr.h"
+#include "flags.h"
 
 /* point to some remarkable positions in a SIP message */
 struct bookmark
@@ -80,6 +81,11 @@ typedef struct viabranch
 	unsigned int vbranchidx;
 } viabranch_t;
 
+typedef struct ksr_msgbuild
+{
+	flag_t tvbflags;
+} ksr_msgbuild_t;
+
 #define set_hostport(hp, msg)                                              \
 	do {                                                                   \
 		if((msg) && ((struct sip_msg *)(msg))->set_global_address.len)     \
@@ -94,7 +100,7 @@ typedef struct viabranch
 
 char *build_req_buf_from_sip_req(struct sip_msg *msg,
 		unsigned int *returned_len, struct dest_info *send_info,
-		unsigned int mode);
+		unsigned int mode, ksr_msgbuild_t *mbd);
 
 char *build_res_buf_from_sip_res(
 		struct sip_msg *msg, unsigned int *returned_len);
@@ -125,7 +131,8 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 /* creates a via header honoring the protocol of the incoming socket
  * msg is an optional parameter */
 char *create_via_hf(unsigned int *len, struct sip_msg *msg,
-		struct dest_info *send_info /* where to send the reply */, str *branch);
+		struct dest_info *send_info /* where to send the reply */, str *branch,
+		ksr_msgbuild_t *mbd);
 
 int via_branch_parser(str *vbranch, viabranch_t *vb);
 
