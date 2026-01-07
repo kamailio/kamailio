@@ -180,7 +180,7 @@ static void ens_namehash(const char *name, char *hash_hex)
 
 	/* Handle empty string (root domain) */
 	if(strlen(name) == 0) {
-		bytes_to_hex(hash, 32, hash_hex);
+		bytes_to_hex(hash, 32, hash_hex, 65);
 		return;
 	}
 
@@ -246,7 +246,7 @@ static void ens_namehash(const char *name, char *hash_hex)
 	}
 
 	/* Convert final hash to hex string */
-	bytes_to_hex(hash, 32, hash_hex);
+	bytes_to_hex(hash, 32, hash_hex, 65);
 
 	if(web3_contract_debug_mode) {
 		LM_DBG("Namehash computed for '%s'", name);
