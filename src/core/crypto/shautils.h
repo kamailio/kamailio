@@ -45,8 +45,9 @@ void compute_sha384(char *dst, u_int8_t *src, int src_len);
 
 void compute_sha512(char *dst, u_int8_t *src, int src_len);
 
-int hex_to_bytes(const char *hex_str, unsigned char *bytes, int max_bytes);
+int hex_to_bytes(const char *hex_str, unsigned char *bytes, size_t max_bytes);
 
-void bytes_to_hex(const unsigned char *bytes, size_t len, char *hex);
+int bytes_to_hex(const unsigned char *bytes, size_t len, char *hex_str,
+		size_t hex_str_size);
 
 #endif
