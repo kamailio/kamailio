@@ -215,6 +215,8 @@ typedef struct ua_client
 	unsigned int flags;
 	/* per branch flags */
 	flag_t branch_flags;
+	/* via-body flags */
+	flag_t vbflags;
 	/* internal processing code - (mapping over sip warning codes)
 	 * - storing the code giving a clue of what happened internally */
 	int icode;
