@@ -121,6 +121,7 @@ str _ksr_xavp_via_fields = STR_NULL;
 str _ksr_xavp_via_reply_params = STR_NULL;
 int ksr_local_rport = 0;
 str _ksr_via_body_flags = str_init("kvf");
+int ksr_msg_apply_changes_mode = 0;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
