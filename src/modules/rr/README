@@ -47,6 +47,7 @@ Bogdan-Andrei Iancu
               4.7. force_send_socket (int)
               4.8. ignore_sips (int)
               4.9. sockname_mode (int)
+              4.10. loose_route_mode (int)
 
         5. Functions
 
@@ -93,18 +94,19 @@ Bogdan-Andrei Iancu
    1.9. Set force_send_socket parameter
    1.10. Set ignore_sips parameter
    1.11. Set sockname_mode parameter
-   1.12. loose_route usage
-   1.13. loose_route_preloaded usage
-   1.14. loose_route_mode usage
-   1.15. record_route usage
-   1.16. remove_record_route usage
-   1.17. record_route_preset usage
-   1.18. record_route_advertised_address usage
-   1.19. add_rr_param usage
-   1.20. check_route_param usage
-   1.21. is_direction usage
-   1.22. rr_next_hop_route usage
-   1.23. $route_uri
+   1.12. Set loose_route_mode parameter
+   1.13. loose_route usage
+   1.14. loose_route_preloaded usage
+   1.15. loose_route_mode usage
+   1.16. record_route usage
+   1.17. remove_record_route usage
+   1.18. record_route_preset usage
+   1.19. record_route_advertised_address usage
+   1.20. add_rr_param usage
+   1.21. check_route_param usage
+   1.22. is_direction usage
+   1.23. rr_next_hop_route usage
+   1.24. $route_uri
    2.1. record_route usage
    2.2. record_route_advertised_address usage
    2.3. Loading RR module's API from another module
@@ -131,6 +133,7 @@ Chapter 1. Admin Guide
         4.7. force_send_socket (int)
         4.8. ignore_sips (int)
         4.9. sockname_mode (int)
+        4.10. loose_route_mode (int)
 
    5. Functions
 
@@ -230,6 +233,7 @@ UAC                       Kamailio PROXY                          UAS
    4.7. force_send_socket (int)
    4.8. ignore_sips (int)
    4.9. sockname_mode (int)
+   4.10. loose_route_mode (int)
 
 4.1. enable_full_lr (integer)
 
@@ -383,6 +387,19 @@ modparam("rr", "ignore_sips", 1)
 modparam("rr", "sockname_mode", 1)
 ...
 
+4.10. loose_route_mode (int)
+
+   Controls the behaviour of loose_route() in the same manner as the value
+   of the parameter for for function loose_route_mode(val), in a global
+   manner.
+
+   Default value is 0.
+
+   Example 1.12. Set loose_route_mode parameter
+...
+modparam("rr", "loose_route_mode", 1)
+...
+
 5. Functions
 
    5.1. loose_route()
@@ -439,7 +456,7 @@ modparam("rr", "sockname_mode", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.12. loose_route usage
+   Example 1.13. loose_route usage
 ...
 loose_route();
 ...
@@ -456,7 +473,7 @@ loose_route();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.13. loose_route_preloaded usage
+   Example 1.14. loose_route_preloaded usage
 ...
 if(!loose_route_preloaded()) {
    sl_send_reply("404" "Preloaded route expected");
@@ -479,7 +496,7 @@ if(!loose_route_preloaded()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.14. loose_route_mode usage
+   Example 1.15. loose_route_mode usage
 ...
 if(has_totag() and uri==myself) {
     if(loose_route_mode("1")) {
@@ -512,7 +529,7 @@ if(has_totag() and uri==myself) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.15. record_route usage
+   Example 1.16. record_route usage
 ...
 record_route();
 ...
@@ -526,7 +543,7 @@ record_route();
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.16. remove_record_route usage
+   Example 1.17. remove_record_route usage
 ...
 remove_record_route();
 ...
@@ -561,7 +578,7 @@ remove_record_route();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.17. record_route_preset usage
+   Example 1.18. record_route_preset usage
 ...
 record_route_preset("1.2.3.4:5090");
 ...
@@ -588,7 +605,7 @@ record_route_preset("1.2.3.4:5090");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.18. record_route_advertised_address usage
+   Example 1.19. record_route_advertised_address usage
 ...
 record_route_advertised_address("1.2.3.4:5080");
 ...
@@ -608,7 +625,7 @@ record_route_advertised_address("1.2.3.4:5080");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.19. add_rr_param usage
+   Example 1.20. add_rr_param usage
 ...
 add_rr_param(";nat=yes");
 ...
@@ -625,7 +642,7 @@ add_rr_param(";nat=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.20. check_route_param usage
+   Example 1.21. check_route_param usage
 ...
 if (check_route_param("nat=yes")) {
     setflag(6);
@@ -653,7 +670,7 @@ if (check_route_param("nat=yes")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.21. is_direction usage
+   Example 1.22. is_direction usage
 ...
 if (is_direction("downstream")) {
     xdbg("in-dialog request from caller to callee (downstream) ($rm)\n");
@@ -670,7 +687,7 @@ if (is_direction("downstream")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. rr_next_hop_route usage
+   Example 1.23. rr_next_hop_route usage
 ...
 if(loose_route) {
     if(rr_next_hop_route()) {
@@ -688,7 +705,7 @@ if(loose_route) {
 
    Returns the URI of the top route-header.
 
-   Example 1.23. $route_uri
+   Example 1.24. $route_uri
 ...
     xdbg("Route-URI is: $route_uri\n");
 ...
