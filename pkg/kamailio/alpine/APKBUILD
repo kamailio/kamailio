@@ -5,7 +5,7 @@
 # Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
 
 pkgname=kamailio
-pkgver=6.0.4
+pkgver=6.0.5
 pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
