@@ -59,6 +59,7 @@ static str custom_user_spec = {NULL, 0};
 pv_spec_t custom_user_avp;
 int rr_ignore_sips = 0;	  /*!< ignore sips schema when building record-route */
 int rr_sockname_mode = 0; /*!< add socket name to R-R header */
+int rr_loose_route_mode = 0; /*!< modes for loose_route() */
 
 ob_api_t rr_obb;
 
@@ -136,6 +137,7 @@ static param_export_t params[] = {
 	{"force_send_socket", PARAM_INT, &rr_force_send_socket},
 	{"ignore_sips", PARAM_INT, &rr_ignore_sips},
 	{"sockname_mode", PARAM_INT, &rr_sockname_mode},
+	{"loose_route_mode", PARAM_INT, &rr_loose_route_mode},
 	{0, 0, 0}
 };
 
@@ -259,7 +261,7 @@ static int direction_fixup(void **param, int param_no)
  */
 static int w_loose_route(struct sip_msg *msg, char *p1, char *p2)
 {
-	return loose_route_mode(msg, 0);
+	return loose_route_mode(msg, rr_loose_route_mode);
 }
 
 /**
