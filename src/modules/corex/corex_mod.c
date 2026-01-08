@@ -82,6 +82,7 @@ static int w_is_socket_name(sip_msg_t *msg, char *psockname, char *p2);
 static int w_msg_vbflag_set(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_vbflag_reset(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_vbflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
+static int w_msg_vbflag_parse(sip_msg_t *msg, char *p1, char *p2);
 
 static int fixup_file_op(void **param, int param_no);
 static int fixup_free_file_op(void **param, int param_no);
@@ -195,6 +196,8 @@ static cmd_export_t cmds[] = {
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"msg_vbflag_is_set", (cmd_function)w_msg_vbflag_is_set, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"msg_vbflag_parse", (cmd_function)w_msg_vbflag_parse, 1,
+		0, 0, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -832,6 +835,45 @@ static int w_msg_vbflag_set(sip_msg_t *msg, char *flag, char *s2)
 		return -1;
 	}
 	return ki_msg_vbflag_set(msg, fval);
+}
+
+extern str _ksr_via_body_flags;
+
+/**
+ *
+ */
+static int ki_msg_vbflag_parse(sip_msg_t *msg)
+{
+	via_param_t *vp;
+
+	if(parse_headers(msg, HDR_EOH_F, HDR_VIA_T) < 0) {
+		LM_DBG("failed to parse sip headers\n");
+		return -1;
+	}
+	if(msg->via1 == NULL) {
+		LM_DBG("no via headers\n");
+		return -1;
+	}
+	for(vp = msg->via1->param_lst; vp != NULL; vp = vp->next) {
+		if(vp->name.len == _ksr_via_body_flags.len
+				&& strncasecmp(vp->name.s, _ksr_via_body_flags.s,
+						   _ksr_via_body_flags.len)
+						   == 0) {
+			if(vp->value.len > 0) {
+				hexstr2int(vp->value.s, vp->value.len, &msg->vbflags);
+				return 1;
+			}
+		}
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_msg_vbflag_parse(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_msg_vbflag_parse(msg);
 }
 
 /**
