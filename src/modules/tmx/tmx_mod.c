@@ -1000,7 +1000,11 @@ static int ki_t_vbflag_is_set(sip_msg_t *msg, int fval)
 	if(bidx == T_BR_UNDEFINED) {
 		return -1;
 	}
-	if(msg->vbflags & (fval << 1)) {
+	if(bidx != 0 && bidx >= t->nr_of_outgoings) {
+		return -1;
+	}
+
+	if(t->uac[bidx].vbflags & (fval << 1)) {
 		return 1;
 	}
 	return -1;
@@ -1024,9 +1028,25 @@ static int w_t_vbflag_is_set(sip_msg_t *msg, char *flag, char *s2)
  */
 static int ki_t_vbflag_reset(sip_msg_t *msg, int fval)
 {
-	if((flag_t)fval > MAX_FLAG)
+	int bidx = T_BR_UNDEFINED;
+	tm_cell_t *t = NULL;
+
+	if((flag_t)fval > MAX_FLAG) {
 		return -1;
-	msg->vbflags &= ~(1 << fval);
+	}
+	t = _tmx_tmb.t_gett();
+	if(t == NULL || t == T_UNDEFINED) {
+		return -1;
+	}
+	bidx = tmx_get_branch_idx(msg);
+	if(bidx == T_BR_UNDEFINED) {
+		return -1;
+	}
+	if(bidx != 0 && bidx >= t->nr_of_outgoings) {
+		return -1;
+	}
+
+	t->uac[bidx].vbflags &= ~(1 << fval);
 	return 1;
 }
 
@@ -1048,9 +1068,25 @@ static int w_t_vbflag_reset(sip_msg_t *msg, char *flag, char *s2)
  */
 static int ki_t_vbflag_set(sip_msg_t *msg, int fval)
 {
-	if((flag_t)fval > MAX_FLAG)
+	int bidx = T_BR_UNDEFINED;
+	tm_cell_t *t = NULL;
+
+	if((flag_t)fval > MAX_FLAG) {
 		return -1;
-	msg->vbflags |= (1 << fval);
+	}
+	t = _tmx_tmb.t_gett();
+	if(t == NULL || t == T_UNDEFINED) {
+		return -1;
+	}
+	bidx = tmx_get_branch_idx(msg);
+	if(bidx == T_BR_UNDEFINED) {
+		return -1;
+	}
+	if(bidx != 0 && bidx >= t->nr_of_outgoings) {
+		return -1;
+	}
+
+	t->uac[bidx].vbflags |= (1 << fval);
 	return 1;
 }
 
