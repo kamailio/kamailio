@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+    
+    <title>&adminguide;</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    The peerstate module provides peer state tracking for the 
+	    Kamailio SIP proxy. It monitors both dialog events (call states) 
+	    and registration events (usrloc) to maintain an accurate view of 
+	    each peer's current status.
+	</para>
+	<para>
+	    For example, a common need in call center applications is to track 
+	    agent availability in real-time. In order to monitor agent states, 
+	    it is necessary for the proxy to be aware of both call activity and 
+	    registration status. This is just one common application; there are 
+	    many others such as presence services, load balancing, and 
+	    concurrent call limiting.
+	</para>
+	<para>
+	    The module exports RPC commands for monitoring and management, 
+	    provides an event route mechanism for custom logic execution, and 
+	    offers a callback API for other Kamailio modules.
+	</para>
+    </section>
+    
+    <section>
+	<title>How it works</title>
+	<para>
+	    The peerstate module registers callbacks with the dialog and usrloc 
+	    modules. When dialog state changes (EARLY, CONFIRMED, TERMINATED) 
+	    or registration events (REGISTER/UNREGISTER) occur, the module 
+	    updates its internal cache and determines if a peer's state has 
+	    changed.
+	</para>
+	<para>
+	    Peer state is maintained in a shared memory hash table. Each peer 
+	    entry contains current state, active call count, registration flag, 
+	    and timestamp.
+	</para>
+	<para>
+	    State transitions:
+	    <itemizedlist>
+		<listitem>
+		    <para>EARLY events increment call count and set peer to RINGING (or 
+		    keep INUSE if already in call)</para>
+		</listitem>
+		<listitem>
+		    <para>CONFIRMED events set peer to INUSE</para>
+		</listitem>
+		<listitem>
+		    <para>TERMINATED events decrement call count; peer returns to 
+		    NOT_INUSE (if registered) or UNAVAILABLE (if not registered) 
+		    when call count reaches zero</para>
+		</listitem>
+		<listitem>
+		    <para>REGISTER events set registration flag and may transition from 
+		    UNAVAILABLE to NOT_INUSE</para>
+		</listitem>
+		<listitem>
+		    <para>UNREGISTER events clear registration flag and may transition 
+		    from NOT_INUSE to UNAVAILABLE (if no active calls)</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+	<para>
+	    When a peer's state changes, the module triggers notifications via 
+	    event routes and callback functions.
+	</para>
+    </section>
+    
+    <section>
+	<title>Peer states</title>
+	<para>
+	    Peer states tracked by the module:
+	    <itemizedlist>
+		<listitem>
+		    <para>0 : NOT_INUSE - Peer is registered and idle (no active calls)</para>
+		</listitem>
+		<listitem>
+		    <para>1 : INUSE - Peer is in an active call (dialog confirmed)</para>
+		</listitem>
+		<listitem>
+		    <para>2 : RINGING - Peer has incoming or outgoing call ringing (early dialog)</para>
+		</listitem>
+		<listitem>
+		    <para>3 : UNAVAILABLE - Peer is not registered</para>
+		</listitem>
+		<listitem>
+		    <para>4 : NA - Not applicable or unknown state</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+	<para>
+	    State transitions are designed to accurately reflect the peer's availability:
+	    <itemizedlist>
+		<listitem>
+		    <para>A peer transitions to RINGING when receiving or making a call</para>
+		</listitem>
+		<listitem>
+		    <para>A peer transitions to INUSE when the call is answered</para>
+		</listitem>
+		<listitem>
+		    <para>A peer returns to NOT_INUSE when all calls end and the peer is still registered</para>
+		</listitem>
+		<listitem>
+		    <para>A peer transitions to UNAVAILABLE when unregistering with no active calls</para>
+		</listitem>
+		<listitem>
+		    <para>Active calls are preserved during registration changes</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+		<itemizedlist>
+		    <listitem>
+			<para><emphasis>Dialog</emphasis> - Dialog tracking module</para>
+		    </listitem>
+		    <listitem>
+			<para><emphasis>Usrloc</emphasis> - User location module</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before 
+		running &kamailio; with this module loaded:
+		<itemizedlist>
+		    <listitem>
+			<para><emphasis>None</emphasis>.</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    
+    <section>
+	<title>Parameters</title>
+	<section id="peerstate.p.cache_hash_size">
+	    <title><varname>cache_hash_size</varname> (integer)</title>
+	    <para>
+		The size of the hash table internally used to keep the peer state 
+		information. A larger table is much faster but consumes more 
+		memory. The hash size must be a power of two.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>4096</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cache_hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "cache_hash_size", 8192)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.cache_expire">
+	    <title><varname>cache_expire</varname> (integer)</title>
+	    <para>
+		The time in seconds after which inactive peer entries are removed 
+		from the cache. Set to 0 to disable automatic expiration. This 
+		helps conserve memory by removing stale peer information.
+		Minimum allowed value is 60 seconds (when enabled).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>3600</quote> (1 hour).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cache_expire</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "cache_expire", 7200)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.cache_cleanup_interval">
+	    <title><varname>cache_cleanup_interval</varname> (integer)</title>
+	    <para>
+		The interval in seconds between automatic cache cleanup runs. Must 
+		be less than or equal to cache_expire. Set to 0 to disable 
+		automatic cleanup. During cleanup, expired entries are removed from 
+		the cache. Minimum allowed value is 10 seconds (when enabled).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>300</quote> (5 minutes).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cache_cleanup_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "cache_cleanup_interval", 600)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.use_avps">
+	    <title><varname>use_avps</varname> (integer)</title>
+	    <para>
+		Enable or disable the use of AVPs for peer identification instead 
+		of extracting peer information from SIP headers. When enabled, the 
+		module will use the AVPs specified by caller_avp, callee_avp, and 
+		reg_avp parameters to identify peers.
+	    </para>
+	    <para>
+		If set to 0, the module extracts peer information from From/To 
+		headers. If set to 1, AVPs must be set by the routing script.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>use_avps</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "use_avps", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.caller_avp">
+	    <title><varname>caller_avp</varname> (string)</title>
+	    <para>
+		The specification of an AVP that contains the caller's peer 
+		identifier. Only used when use_avps is set to 1. The AVP should 
+		contain the peer identifier in the format "peer@domain".
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>caller_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "caller_avp", "$avp(caller_peer)")
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.callee_avp">
+	    <title><varname>callee_avp</varname> (string)</title>
+	    <para>
+		The specification of an AVP that contains the callee's peer 
+		identifier. Only used when use_avps is set to 1. The AVP should 
+		contain the peer identifier in the format "peer@domain".
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>callee_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "callee_avp", "$avp(callee_peer)")
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.reg_avp">
+	    <title><varname>reg_avp</varname> (string)</title>
+	    <para>
+		The specification of an AVP that contains the registered peer 
+		identifier for usrloc events. Only used when use_avps is set to 1.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>reg_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "reg_avp", "$avp(reg_peer)")
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.enable_notify_on_trying">
+	    <title><varname>enable_notify_on_trying</varname> (integer)</title>
+	    <para>
+		Enable state change notifications for dialog TRYING state. By 
+		default, only EARLY, CONFIRMED, and TERMINATED states trigger 
+		notifications. When enabled, TRYING state will also trigger 
+		notifications.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>enable_notify_on_trying</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "enable_notify_on_trying", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.disable_caller_notify_flag">
+	    <title><varname>disable_caller_notify_flag</varname> (integer)</title>
+	    <para>
+		Message flag to disable caller state change notifications for 
+		specific calls. When this flag is set on a message, state changes 
+		for the caller will not trigger notifications. Set to -1 to disable 
+		this feature.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>-1</quote> (feature disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>disable_caller_notify_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "disable_caller_notify_flag", 10)
+...
+# In routing script:
+if ($rU == "1234567890") {
+    setflag(10);  # Don't notify about emergency call callers
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.disable_callee_notify_flag">
+	    <title><varname>disable_callee_notify_flag</varname> (integer)</title>
+	    <para>
+		Message flag to disable callee state change notifications for 
+		specific calls. When this flag is set on a message, state changes 
+		for the callee will not trigger notifications. Set to -1 to disable 
+		this feature.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>-1</quote> (feature disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>disable_callee_notify_flag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "disable_callee_notify_flag", 11)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.disable_reg_notify">
+	    <title><varname>disable_reg_notify</varname> (integer)</title>
+	    <para>
+		Globally disable registration event processing. When set to 1, the 
+		module will not register callbacks with the usrloc module and will 
+		not process registration events.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (process registration events).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>disable_reg_notify</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "disable_reg_notify", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+	<section id="peerstate.p.disable_dlg_notify">
+	    <title><varname>disable_dlg_notify</varname> (integer)</title>
+	    <para>
+		Globally disable dialog event processing. When set to 1, the module 
+		will not register callbacks with the dialog module and will not 
+		process dialog events.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (process dialog events).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>disable_dlg_notify</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("peerstate", "disable_dlg_notify", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+    
+    <section>
+	<title>RPC Commands</title>
+	<section id="peerstate.r.get_peer">
+	    <title>
+		<function moreinfo="none">peerstate.get_peer</function>
+	    </title>
+	    <para>
+		Get detailed state information for a specific peer. Returns the 
+		peer's current state, active call count, and registration status.
+	    </para>
+	    <para>
+		Name: <emphasis>peerstate.get_peer</emphasis>
+	    </para>
+	    <para>Parameters:</para>
+	    <itemizedlist>
+		<listitem><para>peer - peer identifier in the format "peer@domain"</para></listitem>
+	    </itemizedlist>
+	    <para>RPC Command Format:</para>
+	    <programlisting  format="linespecific">
+...
+kamctl rpc peerstate.get_peer 1000@192.168.1.100
+...
+	    </programlisting>
+	    <para>
+		The command returns a structure containing:
+		<itemizedlist>
+		    <listitem><para>peer - peer identifier</para></listitem>
+		    <listitem><para>state - current state (NOT_INUSE, INUSE, RINGING, UNAVAILABLE)</para></listitem>
+		    <listitem><para>call_count - number of active calls</para></listitem>
+		    <listitem><para>registered - registration status ("yes" or "no")</para></listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+	
+	<section id="peerstate.r.stats">
+	    <title>
+		<function moreinfo="none">peerstate.stats</function>
+	    </title>
+	    <para>
+		Get global cache statistics including total number of peers, number 
+		of peers in active calls, and number of registered peers.
+	    </para>
+	    <para>
+		Name: <emphasis>peerstate.stats</emphasis>
+	    </para>
+	    <para>Parameters: none</para>
+	    <para>RPC Command Format:</para>
+	    <programlisting  format="linespecific">
+...
+kamctl rpc peerstate.stats
+...
+	    </programlisting>
+	    <para>
+		The command returns a structure containing:
+		<itemizedlist>
+		    <listitem><para>total_peers - total number of peers in cache</para></listitem>
+		    <listitem><para>incall_peers - number of peers in INUSE or RINGING state</para></listitem>
+		    <listitem><para>registered_peers - number of registered peers</para></listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+	
+	<section id="peerstate.r.list">
+	    <title>
+		<function moreinfo="none">peerstate.list</function>
+	    </title>
+	    <para>
+		List all peers in a specific state. This command is useful for 
+		monitoring which peers are currently in a particular state.
+	    </para>
+	    <para>
+		Name: <emphasis>peerstate.list</emphasis>
+	    </para>
+	    <para>Parameters:</para>
+	    <itemizedlist>
+		<listitem><para>state - state filter (NOT_INUSE, INUSE, RINGING, or UNAVAILABLE)</para></listitem>
+	    </itemizedlist>
+	    <para>RPC Command Format:</para>
+	    <programlisting  format="linespecific">
+...
+kamctl rpc peerstate.list INUSE
+...
+	    </programlisting>
+	    <para>
+		The command returns a structure containing:
+		<itemizedlist>
+		    <listitem><para>count - number of peers in the specified state</para></listitem>
+		    <listitem><para>state - the state filter used</para></listitem>
+		    <listitem><para>Peer - array of peer objects with name, state, call_count, and registered status</para></listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+	
+	<section id="peerstate.r.dump">
+	    <title>
+		<function moreinfo="none">peerstate.dump</function>
+	    </title>
+	    <para>
+		Dump all peers from the cache regardless of state. This command 
+		provides a complete view of all tracked peers.
+	    </para>
+	    <para>
+		Name: <emphasis>peerstate.dump</emphasis>
+	    </para>
+	    <para>Parameters: none</para>
+	    <para>RPC Command Format:</para>
+	    <programlisting  format="linespecific">
+...
+kamctl rpc peerstate.dump
+...
+	    </programlisting>
+	    <para>
+		The command returns a structure containing:
+		<itemizedlist>
+		    <listitem><para>count - total number of peers</para></listitem>
+		    <listitem><para>Peer - array of peer objects with name, state, call_count, and registered status</para></listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    
+    <section>
+	<title>Event Routes</title>
+	<section id="peerstate.evr.peerstate_state_changed">
+	    <title>
+		<function moreinfo="none">event_route[peerstate:state_changed]</function>
+	    </title>
+	    <para>
+		Executed when a peer's state changes. Provides access to state 
+		change information through AVP pseudo-variables.
+	    </para>
+	    <para>
+		Available pseudo-variables:
+		<itemizedlist>
+		    <listitem><para>$avp(ps_peer) - Peer identifier</para></listitem>
+		    <listitem><para>$avp(ps_state) - Current state (NOT_INUSE, INUSE, RINGING, UNAVAILABLE)</para></listitem>
+		    <listitem><para>$avp(ps_prev_state) - Previous state</para></listitem>
+		    <listitem><para>$avp(ps_uniq_id) - Call-ID or RUID</para></listitem>
+		</itemizedlist>
+	    </para>
+	    <example>
+		<title><function>event_route[peerstate:state_changed]</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[peerstate:state_changed] {
+    xlog("L_INFO", "Peer $avp(ps_peer): $avp(ps_prev_state) -> $avp(ps_state)");
+
+    # HTTP notification
+    if ($avp(ps_state) == "INUSE") {
+        http_async_query("http://api.local/state", "peer=$avp(ps_peer)&amp;state=busy", "HTTP_REPLY");
+    }
+}
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    
+</chapter>

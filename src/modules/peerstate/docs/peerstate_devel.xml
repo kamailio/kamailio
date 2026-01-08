@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+    
+    <title>&develguide;</title>
+    
+    <section>
+	<title>Available Functions</title>
+	
+	<section id="peerstate.f.bind_peerstate">
+	    <title>
+		<function moreinfo="none">bind_peerstate(peerstate_api_t *api)</function>
+	    </title>
+	    <para>
+		Bind to the peerstate API and fill the provided structure with 
+		function pointers.
+	    </para>
+	    <para>
+		Meaning of the parameters is as follows:
+		<itemizedlist>
+		    <listitem>
+			<para><emphasis>peerstate_api_t *api</emphasis> - pointer to API structure</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The API structure:
+		<programlisting format="linespecific">
+typedef struct peerstate_api {
+    register_peerstate_cb_f register_callback;
+} peerstate_api_t;
+		</programlisting>
+	    </para>
+	    <para>
+		Return value:
+		<itemizedlist>
+		    <listitem>
+			<para>0 - success</para>
+		    </listitem>
+		    <listitem>
+			<para>-1 - error</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+	
+	<section id="peerstate.f.register_peerstate_callback">
+	    <title>
+		<function moreinfo="none">register_peerstate_callback(int event_types, peerstate_cb_f callback, void *param)</function>
+	    </title>
+	    <para>
+		Register a callback function for peer state change notifications.
+	    </para>
+	    <para>
+		Meaning of the parameters is as follows:
+		<itemizedlist>
+		    <listitem>
+			<para><emphasis>int event_types</emphasis> - Bitmask of event types:</para>
+			<itemizedlist>
+			    <listitem>
+				<para>PEERSTATE_EVENT_DIALOG (1) - Dialog events</para>
+			    </listitem>
+			    <listitem>
+				<para>PEERSTATE_EVENT_REGISTRATION (2) - Registration events</para>
+			    </listitem>
+			</itemizedlist>
+		    </listitem>
+		    <listitem>
+			<para><emphasis>peerstate_cb_f callback</emphasis> - Callback function with signature:</para>
+			<para>void callback(peerstate_cb_ctx_t *ctx, void *param);</para>
+		    </listitem>
+		    <listitem>
+			<para><emphasis>void *param</emphasis> - User parameter (can be NULL)</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The callback context structure:
+		<programlisting format="linespecific">
+typedef struct peerstate_cb_ctx {
+    str peer;                      /* Peer identifier */
+    ps_state_t current_state;        /* Current state */
+    ps_state_t previous_state;       /* Previous state */
+    int call_count;                /* Active call count */
+    int is_registered;             /* Registration status */
+    str uniq_id;                   /* Call-ID or RUID */
+    peerstate_event_type_t event_type;  /* Event type */
+} peerstate_cb_ctx_t;
+		</programlisting>
+	    </para>
+	    <para>
+		State enumeration:
+		<programlisting format="linespecific">
+typedef enum ps_state {
+    NOT_INUSE,      /* Registered and idle */
+    INUSE,          /* In active call */
+    RINGING,        /* Ringing */
+    UNAVAILABLE,    /* Not registered */
+    NA              /* Unknown */
+} ps_state_t;
+		</programlisting>
+	    </para>
+	    <para>
+		Return value:
+		<itemizedlist>
+		    <listitem>
+			<para>0 - success</para>
+		    </listitem>
+		    <listitem>
+			<para>-1 - error</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <example>
+		<title>Callback registration example</title>
+		<programlisting format="linespecific">
+<![CDATA[
+#include "../peerstate/peerstate_cb.h"
+
+static peerstate_api_t peerstate_api;
+
+/* Callback function */
+static void my_state_callback(peerstate_cb_ctx_t *ctx, void *param) {
+    LM_INFO("Peer %.*s: %s -> %s (calls=%d, reg=%s)\n",
+            ctx->peer.len, ctx->peer.s,
+            PS_STATE_TO_STR(ctx->previous_state),
+            PS_STATE_TO_STR(ctx->current_state),
+            ctx->call_count,
+            ctx->is_registered ? "yes" : "no");
+}
+
+/* Module initialization */
+static int mod_init(void) {
+    bind_peerstate_f bind_peerstate;
+    
+    bind_peerstate = (bind_peerstate_f)find_export("bind_peerstate", 1, 0);
+    if (!bind_peerstate || bind_peerstate(&peerstate_api) < 0) {
+        LM_ERR("Cannot bind to peerstate module\n");
+        return -1;
+    }
+    
+    if (peerstate_api.register_callback(
+            PEERSTATE_EVENT_DIALOG | PEERSTATE_EVENT_REGISTRATION,
+            my_state_callback, NULL) < 0) {
+        LM_ERR("Failed to register callback\n");
+        return -1;
+    }
+    
+    return 0;
+}
+]]>
+		</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+    
+</chapter>
