@@ -136,6 +136,8 @@
 	} while(0)
 
 
+int ksr_msg_clone_extra_size = 0;
+
 static inline struct via_body *via_body_cloner(
 		char *new_buf, char *org_buf, struct via_body *param_org_via, char **p)
 {
@@ -376,8 +378,8 @@ struct sip_msg *sip_msg_shm_clone(
 
 	/*computing the length of entire sip_msg structure*/
 	len = ROUND4(sizeof(struct sip_msg));
-	/*we will keep only the original msg +ZT */
-	len += ROUND4(org_msg->len + 1);
+	/*we will keep only the original msg + ksr_msg_clone_extra_size + ZT */
+	len += ROUND4(org_msg->len + ksr_msg_clone_extra_size + 1);
 	/*the new uri (if any)*/
 	if(org_msg->new_uri.s && org_msg->new_uri.len)
 		len += ROUND4(org_msg->new_uri.len);
@@ -483,7 +485,7 @@ struct sip_msg *sip_msg_shm_clone(
 				/* we ignore them for now even if they have something parsed*/
 				break;
 		} /*switch*/
-	}	  /*for all headers*/
+	} /*for all headers*/
 
 	if(clone_lumps) {
 		/* calculate the length of the data and reply lump structures */
@@ -552,7 +554,8 @@ struct sip_msg *sip_msg_shm_clone(
 	/* ZT to be safer */
 	*(p + org_msg->len) = 0;
 	new_msg->buf = p;
-	p += ROUND4(new_msg->len + 1);
+	new_msg->buf_size = new_msg->len + ksr_msg_clone_extra_size;
+	p += ROUND4(new_msg->len + ksr_msg_clone_extra_size + 1);
 	/* unparsed and eoh pointer */
 	new_msg->unparsed =
 			translate_pointer(new_msg->buf, org_msg->buf, org_msg->unparsed);

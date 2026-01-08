@@ -250,6 +250,7 @@ extern int ksr_local_rport;
 extern int ksr_rpc_exec_delta;
 
 extern int ksr_udp_receiver_mode;
+extern int ksr_msg_clone_extra_size;
 extern int ksr_msg_recv_max_size;
 extern int ksr_tcp_msg_read_timeout;
 extern int ksr_tcp_msg_data_timeout;
