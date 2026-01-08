@@ -1,3 +1,537 @@
+===================== 2026-01-08 Version 6.0.5 Released =====================
+
+===================== Changes Since Version 6.0.4 ===========================
+
+commit 438c10a6859aaa3865a0b229ab6d40402ebf1b7b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 09:17:32 2026 +0100
+
+    CMakeLists.txt: version set to 6.0.5
+
+commit 857fa6e72f3bf7e146c3817382fb5a7eee637613
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 09:15:04 2026 +0100
+
+    Makefile.defs: version set to 6.0.5
+
+commit 1549d7e8462f754a189f92bc905e387b641ebd25
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 09:10:22 2026 +0100
+
+    pkg/kamailio/deb: version set 6.0.5
+
+commit 566fdcb4a444aad691ebe13ea3f03e1b8183c38d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 09:08:59 2026 +0100
+
+    pkg/kamailio: version set 6.0.5 for rpms and alpine
+
+commit 048e318881087fa6ba2bf25f0410b447203a0a00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 6 17:02:23 2026 +0100
+
+    core: tcp - enable defining TCP_LISTEN_BACKLOG with compile options
+    
+    (cherry picked from commit 45a0e30f845d423474370cc5a46c851c2ba369ec)
+
+commit 27eb9f11da82d5a58137bb3ed2b0f05970a298f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 6 09:07:55 2026 +0100
+
+    stun: send response without triggering message-out callbacks
+    
+    (cherry picked from commit 6d1fe099e284514be05a56f235dcd3ce2325fa67)
+
+commit 28686b3561e5612f0b3e4ae86f7573747a06559d
+Author: Matteo Brancaleoni <matteo.brancaleoni@voismart.it>
+Date:   Tue Dec 23 14:46:22 2025 +0100
+
+    dmq: Fix DNS resolution corruption when search list is used
+    
+    When `dns_use_search_list=1` (the default), `get_record()` may prepend a "fake CNAME" record to map short hostnames to their expanded form.
+    
+    (cherry picked from commit 787bbe5c91e9fc02f741fdd26b06ccad87b4c19e)
+
+commit 6413ceac061fc8cef59802128fa7b3cc43938144
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Fri Nov 14 16:01:07 2025 +0200
+
+    pkg/kamailio: kamailio should listen on loopback only by default
+    
+    fixes GH#4428
+    
+    (cherry picked from commit 4570fe3550d1c16bfa82999371f1f54c3e36c96e)
+
+commit 3b714261419f529ab086c5dee22fe98ef9c7ae2f
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Fri Nov 14 17:23:05 2025 +0200
+
+    pkg/kamailio: refactor kamailio user creation for rpm dists
+    
+    (cherry picked from commit 0f7a2fcab9dea8a3bc60bdfa3115c82bad81f112)
+
+commit c42fb5b9bd4efd2db240c97a6c7044701696098c
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Fri Nov 14 14:55:18 2025 +0200
+
+    pkg/kamailio: fixed systemd unit file inititlization
+    
+    (cherry picked from commit e221ef539d16570840f004c397909441bac58cce)
+
+commit 92ac628ecca55019fbe442de05ed25bc90ae4b05
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Tue Aug 12 21:33:13 2025 +0300
+
+    github: added alma-10 and rocky-10 packaging
+    
+    (cherry picked from commit 7e357abd051a968d0454b24e369b15bfb3a9dd55)
+
+commit ed6084a5e4b9fcf2b58b4436adf1a607930515f3
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jan 5 09:31:18 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit dee536cdc73e9d1b9ce494562fb1cd3d92cb6155
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 2 11:55:58 2026 +0100
+
+    topos: increase size for data buffer
+    
+    (cherry picked from commit d7d6444b3936390e1d977d72dcaa10197c87b87e)
+
+commit 3bc7431d77c5795f58e475087976ee9e3f7d563e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 22 12:08:57 2025 +0100
+
+    tm: safety check for EoL in user-agent parameter
+    
+    (cherry picked from commit 7eea4bc836bd14c7341d77e8cdde8a473ce2eef2)
+
+commit f3e400533b2f26a6efec50a6714ea3b7c09e9d3f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 22 11:47:28 2025 +0100
+
+    dmq: check the result of printing headers
+    
+    (cherry picked from commit 1ad4f802a4827bbfa0b132e6a21146bbb22a3f84)
+
+commit e87e6488335f4610b78469977a999851d96829b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 18 09:54:43 2025 +0100
+
+    sms: check for name field length
+    
+    (cherry picked from commit 6118e5b654e7344bf68ca0b77f4f39567980e0ef)
+
+commit 05291db0c314c1b97a5e9bb3ae20f51375d72a3e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 16 08:50:08 2025 +0100
+
+    timer: docs - organized files for indexing
+    
+    (cherry picked from commit bc14bb405c3cd855a525f1fd7742709051a95d40)
+
+commit d5ceccd0e6d72001ba93071b0bdacf8f6b0736ed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 12 15:40:16 2025 +0100
+
+    tm: rename parameter that hides a global
+    
+    (cherry picked from commit bb604e272dd034abfc0fe8dcbdfc0102cbbc8a40)
+
+commit 9ab4d1715769a4d9246041edf24bd494e86d5996
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 10 09:58:37 2025 +0100
+
+    json: use formatted string evaluation instead of fixup mechanism for transformation
+    
+    (cherry picked from commit a0d3183dda3d7af695deb6aba0798cd860cdde2e)
+
+commit ae611e7b5232e606ebb3b6b27b35af9bb451a926
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 10 09:38:54 2025 +0100
+
+    json: do not parse transformation parameter for vars if none there
+    
+    (cherry picked from commit 42014a3384c76575a96e1b4fe2ba524a503e845a)
+
+commit 0c0e68cfdfd9803d183e17100c0f0be05d62b20e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 10 09:38:05 2025 +0100
+
+    core: ut - helper functions to search in string
+    
+    (cherry picked from commit 5c7accbde8423072d5f3d6620115a588d8678294)
+
+commit eba11b333d215d00d1b0ea0cd1597b5b4efabdae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 9 11:49:53 2025 +0100
+
+    db_redis: use set max fetch for result to 1000 when *keys_count == 1000
+    
+    - GH #4511
+    
+    (cherry picked from commit 46737c269ae290c29639ab1a5e66e4cf1637556e)
+
+commit 5f8f8cc4fb4eeda5cf3a65d5cdc2e8a20e045db4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 8 17:25:28 2025 +0100
+
+    json: reformatted exported structures
+    
+    (cherry picked from commit 9233834b4dd3ac51348b781629c84f4c6fe1aad3)
+
+commit c8df44342534f08be357e7be24f13e88bce282a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 4 08:06:59 2025 +0100
+
+    core: parser/sdp - rename local variable to be different than function name
+    
+    (cherry picked from commit b225469a49db1324ef67a630ad9bcd4a7f3f53ed)
+
+commit 00b8ecf25b647264ac9d5efe68928ced80e152b0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 2 13:53:12 2025 +0100
+
+    topoh: meaningful debug message
+    
+    (cherry picked from commit adc6c53411e572a8f77efffa06ce3e7b5ed02764)
+
+commit cfbefe330d8f60f49bb79b5a6ecfc6c28ba1a965
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 2 09:11:21 2025 +0100
+
+    kamctl: remove CTLENGINE from kamctlrc - it has a single value option
+    
+    (cherry picked from commit 6c03c3e78b76a6b664c65c90c8681a2db62e1df7)
+
+commit 8450b807950cd0b07b6d41020397b5dac8ea2458
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 30 20:27:48 2025 +0100
+
+    benchmark: docs updated about measurment working inside process context
+    
+    (cherry picked from commit d4915b129cc3262a822d53e96b5f52df7b9b23fc)
+
+commit e7597d8478c74cefc22c59f39e886f77c0699dae
+Author: Fredrik Dahlgren <fredrik.dahlgren@kaisa.io>
+Date:   Mon Dec 1 08:34:39 2025 +0100
+
+    statsd: Added missing documentation to statsd module [skip ci]
+    
+    - Document already existing features in the statsd module and update the description of the module to clarify that it is more generic than previously implied.
+    
+    (cherry picked from commit 303b0bc2ad80f3664c38aad74fd67e6577db8751)
+
+commit 53fe35cf9e5276bfb96b210e0b40f2a92b1e7943
+Author: Torrey Searle <torrey.searle@wavecrest.com>
+Date:   Mon Dec 1 09:49:55 2025 +0100
+
+    topos: make tps parameter lookup more robust
+    
+    check both params and sip_params for the tps parameter, this is needed
+    in case extra parameters added to the URI.
+    
+    closes #4505
+    
+    (cherry picked from commit ede3912a732f99cada994157885328eef268f89b)
+
+commit 90a00cebf84bccd5a7c5b2a9dc37476aa5be2a54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 27 19:19:08 2025 +0100
+
+    tm: small code formatting and clarity
+    
+    (cherry picked from commit bb0bb49a30b7732eea8785ce7b7f02bbf512ef74)
+
+commit 5fd4b275f0948621771ad05503fc9225f9e2243a
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Dec 30 01:22:00 2025 -0500
+
+    xhttp_prom: fix attributes for pkgmem_total_size
+    
+    (cherry picked from commit cbffe7b868e8b450293c2977b3ef1df61d6bf1bc)
+
+commit 68cccf5f3b3c640ee5926cec497ca21e80a387d9
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Dec 18 15:32:43 2025 +0000
+
+    cmake: Adopt sed commands for ctl and db files
+    
+    - Move dir defintions to defs.cmake for visibility from other modules
+    - Add missing replacements in sed command
+    
+    (cherry picked from commit 8f912d2d3d748cc1cd95a38b951910a5f4848cf9)
+
+commit 2a9078378dc885a10f7b7a1471b4334b7d27001b
+Author: Joel Serrano <joel@joelserrano.com>
+Date:   Thu Dec 11 14:03:28 2025 -0800
+
+    xhttp_prom: don't sanitize tag values in exported metrics (#4519)
+    
+    Fixes #4508
+    
+    (cherry picked from commit 02f7ace19b49a16ccacc7d83f4717f6492ff56fa)
+
+commit e33380895bee40ccf02a27e8a25b9e94a4801563
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Dec 3 11:09:09 2025 +0000
+
+    core: Add input validation on internal functions
+    
+    - base64url_enc
+    - base64url_dec
+    
+    (cherry picked from commit d7210bc1102ae820f9e6f8998694271ac2a320fe)
+
+commit aec01495a7e24c096d1a0a8fd92a8426a2d1a8b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 4 07:49:04 2025 +0100
+
+    core: parser/sdp - copy data after structure when cloning ice attr and opt
+    
+    (cherry picked from commit 37c78454408043e5d285cbc82681f9e2cc634cf5)
+
+commit 94882113464866cb16166a7e648b3ae938917c65
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 26 20:43:25 2025 +0100
+
+    auth: use AUTH_FLAG_NOINVNC flag
+    
+    (cherry picked from commit 9dc160d1d2bdf0542d3d9d8ae090bb1352520a1c)
+
+commit 244caf8c20ee61312b31aaa912529785e929c766
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 23 11:38:07 2025 +0100
+
+    auth: add defines for authenticate flags
+    
+    (cherry picked from commit cd88ca4bb64a8d44e2ea9f73be53b24d3b3a93fa)
+
+commit de337ed3c2ff50bf095b7179968fe7e73d83b62e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 23 11:21:04 2025 +0100
+
+    auth_db: init variable and set the result header later
+    
+    (cherry picked from commit c2e62cd2dfb0c9969f7e410020fa3a39f343d608)
+
+commit 317ed98d592de0230d84730652b7be5774046c12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 23 11:19:06 2025 +0100
+
+    auth: init variable
+    
+    (cherry picked from commit 6d99a650cb79ec5551bb1af29132be9e9c7c555b)
+
+commit 72b213ce1442234475bed8ce59c002316c3a14cf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 23 09:18:48 2025 +0100
+
+    auth: propagate auth header via pv_authenticate()
+    
+    (cherry picked from commit aa14327b826ac3dfa348c33fe1e9d354cdd855af)
+
+commit 4b1176a2d174941ccf2124dd893a6063493db83d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 19 12:25:57 2025 +0100
+
+    core: parser/digest - more details on parsing failure
+    
+    (cherry picked from commit a07a360a5726350d4d28134e9d407364bb7e9386)
+
+commit ccfeed9bff2dae8a68838343c3d966e2d6338dd1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 16 21:41:24 2025 +0100
+
+    rr: return $null on header not found for $route_uri
+    
+    (cherry picked from commit 09a0a1a0b44f996d9ae5d0a8fea390aa2dbe7d11)
+
+commit 0fe2f9d9da4d98d245b30c83eb3cb5ae7b9e0cd3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 15 20:28:16 2025 +0100
+
+    ims_qos_npn: init variables for add_media_components()
+    
+    (cherry picked from commit 26036ca9a269ca97b30d86e103c512a1ef647886)
+
+commit ec164166ec1c70d85a7e979c24777541083ccba0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 14 09:28:43 2025 +0100
+
+    uac: avp_flags_t for exter declaration of restore avp type vars
+    
+    (cherry picked from commit 2227c53615c807d0de547b1fdcaa399ff95c890c)
+
+commit 1294c2759f3e48031eed22bab447084ede4664d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 13 10:19:58 2025 +0100
+
+    auth_radius: cast value for log message
+    
+    (cherry picked from commit 772edab45c2ad04dda90f94b7e5535df857b5322)
+
+commit aacea30d56b50b32097e584f44e7cca46bef7b6a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 12 16:47:55 2025 +0100
+
+    uac: update cfg framework before sending the first uac registrations
+    
+    - GH #4356
+    
+    (cherry picked from commit 270a57b4e605ce9a2734108f0244993ada774829)
+
+commit 53091debc027d71a38ccad9adfc9fe35ac22da62
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 12 16:36:11 2025 +0100
+
+    core: tcp - decrease busy field if sending to child fails
+    
+    - GH #4437
+    
+    (cherry picked from commit 52f9a57e1a4a817b7ad0c05b3673daaf8458bc92)
+
+commit 43ec53e90e8c73ff68f4ecddd2632b44082b017b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 12 15:33:29 2025 +0100
+
+    lrkproxy: use strcat() instead of strncat() with strlen()
+    
+    - GH #4440
+    
+    (cherry picked from commit 1f02e0a90ae0d463b8843c9d72aaf58a068ce02a)
+
+commit 5f150a910707f6fe29250eba3b06244c77732a89
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Nov 7 17:22:37 2025 +0000
+
+    lib: dbschema: Update xml file to use the db_* namings
+    
+    (cherry picked from commit c749c902a5e9f04a73ec36685de37734bf02f013)
+
+commit d4b3cf36069700ac4d1f24abbd663c388228bc5e
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sat Oct 11 17:25:08 2025 +0300
+
+    github: fixed build for Alpine linux/386 platform
+    
+    (cherry picked from commit c7f7966181b3b8c9f629f9217612342125d588ff)
+
+commit bfadcd65aa6d7881a328dad1ebeaf173a9f98e35
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Tue Sep 30 14:35:13 2025 +0300
+
+    github: fixed base alpine image
+    
+    (cherry picked from commit e357d9b055eac4153e9c0044bc75399eaa410aef)
+
+commit dc45e78266420fba12a8b2d30ff5b4cee8ac2b59
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sat Oct 11 13:16:16 2025 +0300
+
+    pkg/kamailio:  alpine packaging customisation
+    
+    (cherry picked from commit 371972f260f57d4e3db818622ad046108928edb6)
+
+commit 28dfa0c3735867daf58c709ebf63973daa5f52ce
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Mon Sep 22 15:39:27 2025 +0300
+
+    pkg/kamailio: updated Alpine packaging rules
+    
+    (cherry picked from commit 5ae620031e487df487af1af0e398e4ebda513edd)
+
+commit e99748b15cdf12466beeb72acac2178c9208cb65
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sat Oct 11 14:50:17 2025 +0300
+
+    pkg/kamailio: apk build updated make instructions
+    
+    (cherry picked from commit dbcca2ee95227bd62c1fbdd11ae0bbbe2248cde8)
+
+commit ebcc3c3929025b4d1bacd321ec8f496952fe5f11
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sun Oct 19 13:53:58 2025 +0300
+
+    pkg/kamailio: added cmake to the build deps for rpm spec
+    
+    (cherry picked from commit 090a394462abe47f0d8e798bee86b1232407b64b)
+
+commit 70d0795d3dfb4016a5d2758b7a36303968bccafb
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sun Oct 19 13:52:43 2025 +0300
+
+    pkg/kamailio: rpm packaged mqtt module
+    
+    (cherry picked from commit bf36942960307d761919a29b3ed192c59fb94332)
+
+commit 842da6877f78415293dc282e189a8e792f521b01
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sun Oct 19 13:43:27 2025 +0300
+
+    pkg/kamailio: rpm packaged nghttp2 module
+    
+    (cherry picked from commit 451b58b7f0d78c5d2e57b59b03a54ae082c41332)
+
+commit d7540b9c10180907d655041f4aeb195aa6582ca3
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sun Oct 19 13:36:10 2025 +0300
+
+    pkg/kamailio: rpm packaged gcrypt module
+    
+    (cherry picked from commit 2bd5d4e869a0fbe398541e0e695f7c3bbc3c481f)
+
+commit db78b600e069c8ef01b8c13f4fdb1945baeb007e
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sun Oct 19 13:29:21 2025 +0300
+
+    pkg/kamailio: rpm packaged kafka module
+    
+    (cherry picked from commit 29ed29a209a3af6a1c33295901724ce657b94249)
+
+commit b10d7d492707d724a17742343c50987fbe98199f
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sat Aug 16 18:10:32 2025 +0300
+
+    pkg/kamailio: rpm packaging cleanup [skip ci]
+    
+    (cherry picked from commit d9108421d5227d22110eedd2ebe97b7e61e8ac0a)
+
+commit 6752fefd9f607cb8cba2563db7657a4b01c7bff7
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Fri Jan 24 17:20:59 2025 +0200
+
+    pkg/kamailio: switched RPM packaging to use cmake
+    
+    (cherry picked from commit 9a1b9d08a112745663f37f0dfcbe86a741486da3)
+
+commit 3fe34725fb9961a0bdf365389fbcb8ef41573885
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Nov 5 17:04:29 2025 +0000
+
+    gcrypt: cmake: Fallback to libgcrypt-config for older distributions
+    
+    - If no .pc installed, use the libgcrypt-config executable to find the libraries
+    
+    (cherry picked from commit 6a666575765373ee3c8d1daeee580bf50e28b1ff)
+
+commit 34614ff3cfadfe999fdc2815d47dec434bfb69b3
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Thu Nov 6 10:22:53 2025 -0400
+
+    rtpengine: always set "flags"
+    
+    Processing a trickle ICE SDP fragment requires the "flags" list to be
+    present, regardless of how other flags are being processed or if other
+    flags are even set at all. Create the "flags" list unconditionally as
+    it's a cheap operation and eliminates a few case distinctions in the
+    code.
+    
+    (cherry picked from commit 2cd13758f172976c91fa814712e11ccb00a22397)
+
+
 ===================== 2025-11-06 Version 6.0.4 Released =====================
 
 ===================== Changes Since Version 6.0.3 ===========================
