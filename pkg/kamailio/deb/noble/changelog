@@ -1,3 +1,9 @@
+kamailio (6.1.0~pre0) unstable; urgency=medium
+
+  * version set 6.1.0~pre0
+
+ -- Victor Seva <vseva@debian.org>  Fri, 09 Jan 2026 08:55:11 +0100
+
 kamailio (6.1.0~dev1) unstable; urgency=medium
 
   * version set 6.1.0~dev1
