@@ -52,7 +52,8 @@ else
 	else
 		DEFS += -I$(LIBSSL_STATIC_SRCPATH)/include
 	endif
-	LIBS += $(LIBSSL_STATIC_SRCPATH)/libssl.a $(LIBSSL_STATIC_SRCPATH)/libcrypto.a
+	LIBS += $(LIBSSL_STATIC_SRCPATH)/libssl.a $(LIBSSL_STATIC_SRCPATH)/libcrypto.a \
+			 -l:libz.a -ldl
 endif # ifneq ($(LIBSSL_STATIC_SRCLIB),yes)
 
 else # ifneq ($(SSL_BUILDER),)
