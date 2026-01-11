@@ -3405,24 +3405,29 @@ static int w_t_msg_apply_changes(sip_msg_t *msg, char *p1, char *p2)
 {
 	tm_cell_t *t;
 
+	if(ksr_msg_apply_changes_mode != 1) {
+		return -1;
+	}
+	if(ksr_msg_clone_extra_size <= 0) {
+		return -1;
+	}
+
 	if(t_check(msg, 0) == -1)
 		return 1;
 	t = get_t();
 	if(!t || !t->uas.request) {
 		return -1;
 	}
-	if(ksr_msg_apply_changes_mode == 1) {
-		if(sip_msg_apply_changes(msg) < 0) {
-			return E_BAD_REQ;
-		}
-		if(parse_headers(msg, HDR_EOH_F, 0)) {
-			LM_ERR("parse_headers failed\n");
-			return E_BAD_REQ;
-		}
-		if((msg->parsed_flag & HDR_EOH_F) != HDR_EOH_F) {
-			LM_ERR("EoH not parsed\n");
-			return E_UNEXPECTED_STATE;
-		}
+	if(sip_msg_apply_changes(msg) < 0) {
+		return E_BAD_REQ;
+	}
+	if(parse_headers(msg, HDR_EOH_F, 0)) {
+		LM_ERR("parse_headers failed\n");
+		return E_BAD_REQ;
+	}
+	if((msg->parsed_flag & HDR_EOH_F) != HDR_EOH_F) {
+		LM_ERR("EoH not parsed\n");
+		return E_UNEXPECTED_STATE;
 	}
 	return 1;
 }
