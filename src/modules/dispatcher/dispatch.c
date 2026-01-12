@@ -1328,6 +1328,7 @@ int ds_reload_db(void)
 	ret = ds_load_db();
 	if(ret == -2) {
 		LM_WARN("failure while loading one or more dispatcher entries\n");
+		ret = 0;
 	}
 	ds_disconnect_db();
 
