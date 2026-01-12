@@ -51,6 +51,7 @@
 
 #include "../../core/strutils.h"
 #include "../../core/crypto/shautils.h"
+#include "../../core/crypto/sha3.h"
 #include "pv_trans.h"
 
 
@@ -365,6 +366,40 @@ int tr_eval_string(
 			val->rs.s = _tr_buffer;
 			val->rs.len = SHA512_DIGEST_STRING_LENGTH - 1;
 			break;
+		case TR_S_SHA3:
+		case TR_S_KECCAK: {
+			int bitSize = 256;
+			int keccak_flag = (subtype == TR_S_SHA3) ? SHA3_FLAGS_NONE
+													 : SHA3_FLAGS_KECCAK;
+			if(tp && tp->type == TR_PARAM_STRING) {
+				char *end;
+				bitSize = strtol(tp->v.s.s, &end, 10);
+				if(bitSize != 256 && bitSize != 384 && bitSize != 512) {
+					LM_ERR("invalid/unsupported %d bit length in %s "
+						   "transformation\n",
+							bitSize,
+							(subtype == TR_S_SHA3) ? "sha3" : "keccak");
+					return -1;
+				}
+			}
+			if(!(val->flags & PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			unsigned char hash[64];
+			sha3_HashBuffer(bitSize, keccak_flag, (const void *)val->rs.s,
+					val->rs.len, hash, bitSize / 8);
+			int hex_len = (bitSize / 8) * 2;
+			if(bytes_to_hex(hash, bitSize / 8, _tr_buffer, hex_len + 1) != 0) {
+				LM_ERR("bytes_to_hex failed in %s transformation\n",
+						(subtype == TR_S_SHA3) ? "sha3" : "keccak");
+				return -1;
+			}
+			_tr_buffer[hex_len] = '\0';
+			val->flags = PV_VAL_STR;
+			val->ri = 0;
+			val->rs.s = _tr_buffer;
+			val->rs.len = hex_len;
+			break;
+		}
 		case TR_S_ENCODEHEXA:
 			if(!(val->flags & PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
@@ -2992,6 +3027,37 @@ char *tr_parse_string(str *in, trans_t *t)
 		goto done;
 	} else if(name.len == 6 && strncasecmp(name.s, "sha512", 6) == 0) {
 		t->subtype = TR_S_SHA512;
+		goto done;
+	} else if(name.len == 4 && strncasecmp(name.s, "sha3", 4) == 0) {
+		t->subtype = TR_S_SHA3;
+		if(*p == TR_PARAM_MARKER) {
+			p++;
+			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+			t->params = tp;
+			tp = 0;
+			while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+				p++;
+			if(*p != TR_RBRACKET) {
+				LM_ERR("invalid sha3 transformation: %.*s!!\n", in->len, in->s);
+				goto error;
+			}
+		}
+		goto done;
+	} else if(name.len == 6 && strncasecmp(name.s, "keccak", 6) == 0) {
+		t->subtype = TR_S_KECCAK;
+		if(*p == TR_PARAM_MARKER) {
+			p++;
+			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+			t->params = tp;
+			tp = 0;
+			while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+				p++;
+			if(*p != TR_RBRACKET) {
+				LM_ERR("invalid keccak transformation: %.*s!!\n", in->len,
+						in->s);
+				goto error;
+			}
+		}
 		goto done;
 	} else if(name.len == 7 && strncasecmp(name.s, "tolower", 7) == 0) {
 		t->subtype = TR_S_TOLOWER;
