@@ -5,9 +5,13 @@ Maintainer: Kamailio Admin Group <kadmin.hq@lists.kamailio.org>
 Uploaders:
  Victor Seva <vseva@debian.org>,
 Build-Depends:
- debhelper (>= 9),
+ debhelper-compat (= 13),
+ dh-cmake,
+ dh-cmake-compat (= 1),
+ dh-sequence-cmake,
  dpkg-dev (>= 1.16.1.1),
  bison,
+ cmake (>= 3.10),
  default-libmysqlclient-dev,
  docbook-xml,
  erlang-dev,
@@ -77,6 +81,7 @@ Depends:
 Replaces:
  kamailio-carrierroute-modules,
 Suggests:
+ kamailio-berkeley-modules,
  kamailio-cpl-modules,
  kamailio-dbg,
  kamailio-ldap-modules,
@@ -105,7 +110,7 @@ Description: very fast, dynamic and configurable SIP server
  A C Shell like scripting language provides full control over the server's
  behaviour. It's easy to integrate Kamailio with 3rd party API's and applications
  using HTTP, AMQP, database drivers, LDAP, Radius and many other solutions.
- In addition there is support for scripting using Lua, Python, Perl, Java.
+ In addition there is support for scripting using Lua, Python, Perl, Javascript.
  .
  Kamailio's modular architecture allows only required functionality to be loaded.
  There are over 100 modules available: WebSockets for WebRTC, authentication,
@@ -460,6 +465,42 @@ Description: XML based extensions for Kamailio's Management Interface
  - the XMLRPC transport implementations for Kamailio's
  Management and Control Interface.
  - xmlops module for XPath operations in configuration file
+
+Package: kamailio-berkeley-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ db-util (>= 4.6.19),
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Berkeley database module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the Berkeley database module for Kamailio, a
+ high-performance embedded database. All database tables are stored
+ in files, no additional server is necessary.
+
+Package: kamailio-berkeley-bin
+Architecture: any
+Multi-Arch: foreign
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Berkeley database module for Kamailio - helper program
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides helper modules for the Berkeley database module for
+ Kamailio, a high-performance embedded DB kernel. You should normally
+ install kamailio-berkeley-modules and not this package directly.
 
 Package: kamailio-ldap-modules
 Architecture: any
@@ -856,8 +897,7 @@ Description: Extra modules for the Kamailio SIP Server
  .
  This package provides a set of modules for compression of SIP attachments,
  UUID usage, JSON data structure support, HTTP restful API asynchronous
- access and a few more functions:
- gzcompress uuid evapi jansson janssonrpcc http_async_client jwt
+ access and a few more functions: gzcompress uuid evapi jansson janssonrpcc http_async_client
 
 Package: kamailio-nth
 Architecture: any
