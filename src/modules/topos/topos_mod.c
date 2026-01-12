@@ -89,6 +89,7 @@ int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
 int _tps_header_mode = 0;
 str _tps_storage = str_init("db");
+str _tps_methods_update_time_list = str_init("SUBSCRIBE");
 
 extern int _tps_branch_expire;
 extern int _tps_dialog_expire;
@@ -96,6 +97,7 @@ extern unsigned int _tps_methods_nocontact;
 str _tps_methods_nocontact_list = str_init("");
 extern unsigned int _tps_methods_noinitial;
 str _tps_methods_noinitial_list = str_init("");
+unsigned int _tps_methods_update_time = METHOD_SUBSCRIBE;
 
 static topoh_api_t thb = {0};
 
@@ -191,6 +193,7 @@ static param_export_t params[] = {
 	{"methods_nocontact", PARAM_STR, &_tps_methods_nocontact_list},
 	{"methods_noinitial", PARAM_STR, &_tps_methods_noinitial_list},
 	{"version_table", PARAM_INT, &_tps_version_table_check},
+	{"methods_update_time", PARAM_STR, &_tps_methods_update_time_list},
 
 	{0, 0, 0}
 };
@@ -260,6 +263,20 @@ static int mod_init(void)
 			return -1;
 		}
 	}
+
+	if(_tps_methods_update_time_list.len <= 0) {
+		/* Modparam provided but empty. No methods */
+		_tps_methods_update_time = 0;
+	} else {
+		/* Modparam provided with some methods or default value */
+		if(parse_methods(
+				   &_tps_methods_update_time_list, &_tps_methods_update_time)
+				< 0) {
+			LM_ERR("failed to parse methods_update_time parameter\n");
+			return -1;
+		}
+	}
+
 	if(_tps_storage.len == 2 && strncmp(_tps_storage.s, "db", 2) == 0) {
 		/* Find a database module */
 		if(db_bind_mod(&_tps_db_url, &_tpsdbf)) {

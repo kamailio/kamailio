@@ -64,6 +64,7 @@ extern str _tps_xavu_field_bcontact;
 extern str _tps_xavu_field_contact_host;
 extern str _tps_xavu_field_acontact_host;
 extern str _tps_xavu_field_bcontact_host;
+extern int _tps_methods_update_time;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -1854,11 +1855,9 @@ int tps_db_update_dialog(
 		}
 	}
 	if((mode & TPS_DBU_TIME)
-			&& ((sd->b_tag.len > 0)
-					&& ((md->direction == TPS_DIR_UPSTREAM)
-							&& (msg->first_line.type == SIP_REQUEST))
+			&& ((sd->b_tag.len > 0) && (msg->first_line.type == SIP_REQUEST)
 					&& (msg->first_line.u.request.method_value
-							== METHOD_SUBSCRIBE))) {
+							& _tps_methods_update_time))) {
 		db_ucols[nr_ucols] = &td_col_rectime;
 		db_uvals[nr_ucols].type = DB1_DATETIME;
 		db_uvals[nr_ucols].val.time_val = time(NULL);
