@@ -17,7 +17,6 @@ Build-Depends:
  erlang-dev,
  flex,
  libcurl4-openssl-dev,
- libdb-dev (>= 4.6.19),
  libev-dev,
  libevent-dev,
  libexpat1-dev,
@@ -81,7 +80,6 @@ Depends:
 Replaces:
  kamailio-carrierroute-modules,
 Suggests:
- kamailio-berkeley-modules,
  kamailio-cpl-modules,
  kamailio-dbg,
  kamailio-ldap-modules,
@@ -465,42 +463,6 @@ Description: XML based extensions for Kamailio's Management Interface
  - the XMLRPC transport implementations for Kamailio's
  Management and Control Interface.
  - xmlops module for XPath operations in configuration file
-
-Package: kamailio-berkeley-modules
-Architecture: any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- db-util (>= 4.6.19),
- kamailio (= ${binary:Version}),
- ${misc:Depends},
- ${shlibs:Depends},
-Description: Berkeley database module for the Kamailio SIP server
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides the Berkeley database module for Kamailio, a
- high-performance embedded database. All database tables are stored
- in files, no additional server is necessary.
-
-Package: kamailio-berkeley-bin
-Architecture: any
-Multi-Arch: foreign
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- ${misc:Depends},
- ${shlibs:Depends},
-Description: Berkeley database module for Kamailio - helper program
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides helper modules for the Berkeley database module for
- Kamailio, a high-performance embedded DB kernel. You should normally
- install kamailio-berkeley-modules and not this package directly.
 
 Package: kamailio-ldap-modules
 Architecture: any

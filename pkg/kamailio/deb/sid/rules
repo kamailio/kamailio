@@ -28,6 +28,9 @@ export LIBSSL_STATIC_SRCPATH=/usr/$(LIBDIR)
 EXCLUDED_MODULES =
 EXCLUDED_MODULES += mono
 EXCLUDED_MODULES += geoip
+EXCLUDED_MODULES += dnssec
+EXCLUDED_MODULES += java
+EXCLUDED_MODULES += berkeley
 
 # Extra modules to skip, because they are not compilable now:
 # - regardless if they go to the main kamailio package or to some module
@@ -37,10 +40,7 @@ EXTRA_EXCLUDED_MODULES += dbtext
 EXTRA_EXCLUDED_MODULES += oracle
 EXTRA_EXCLUDED_MODULES += pa
 EXTRA_EXCLUDED_MODULES += iptrtpproxy
-EXTRA_EXCLUDED_MODULES += dnssec
-EXTRA_EXCLUDED_MODULES += java
 EXTRA_EXCLUDED_MODULES += python
-EXTRA_EXCLUDED_MODULES += berkeley
 ## --EXCLUDED--
 
 
@@ -50,6 +50,7 @@ EXTRA_EXCLUDED_MODULES += berkeley
 # on which other depend first)
 PACKAGE_GROUPS += mysql
 PACKAGE_GROUPS += postgres
+PACKAGE_GROUPS +=
 PACKAGE_GROUPS += unixodbc
 PACKAGE_GROUPS += radius
 PACKAGE_GROUPS += presence

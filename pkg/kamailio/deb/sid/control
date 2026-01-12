@@ -80,7 +80,6 @@ Depends:
 Replaces:
  kamailio-carrierroute-modules,
 Suggests:
- kamailio-berkeley-modules,
  kamailio-cpl-modules,
  kamailio-dbg,
  kamailio-ldap-modules,
