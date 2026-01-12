@@ -1392,10 +1392,13 @@ int get_urecord(udomain_t *_d, str *_aor, struct urecord **_r)
 					&& !memcmp(r->aor.s, _aor->s, _aor->len)) {
 				if(ul_handle_lost_tcp) {
 					for(ptr = r->contacts; ptr; ptr = ptr->next) {
-						if(ptr->expires == UL_EXPIRED_TIME)
+						if(ptr->expires == UL_EXPIRED_TIME) {
 							continue;
-						if(is_valid_tcpconn(ptr) && !is_tcp_alive(ptr))
+						}
+						if(is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
 							ptr->expires = UL_EXPIRED_TIME;
+							continue;
+						}
 					}
 				}
 				*_r = r;
