@@ -19,6 +19,8 @@
 
 #include "parser/msg_parser.h"
 
+unsigned int sip_msg_clone_len(sip_msg_t *org_msg, int clone_lumps);
+
 struct sip_msg *sip_msg_shm_clone(
 		struct sip_msg *org_msg, int *sip_msg_len, int clone_lumps);
 

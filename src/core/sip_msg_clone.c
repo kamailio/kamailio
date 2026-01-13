@@ -358,23 +358,13 @@ static inline int clone_authorized_hooks(
 
 #define HOOK_SET(hook) (new_msg->hook != org_msg->hook)
 
-
-/** Creates a shm clone for a sip_msg.
- * org_msg is cloned along with most of its headers and lumps into one
- * shm memory block (so that a shm_free() on the result will free everything)
- * @return shm malloced sip_msg on success, 0 on error
- * Warning: Cloner does not clone all hdr_field headers (From, To, etc.).
- */
-struct sip_msg *sip_msg_shm_clone(
-		struct sip_msg *org_msg, int *sip_msg_len, int clone_lumps)
+unsigned int sip_msg_clone_len(sip_msg_t *org_msg, int clone_lumps)
 {
-	unsigned int len;
-	struct hdr_field *hdr, *new_hdr, *last_hdr;
+	struct hdr_field *hdr;
 	struct via_body *via;
 	struct via_param *prm;
-	struct to_param *to_prm, *new_to_prm;
-	struct sip_msg *new_msg;
-	char *p;
+	struct to_param *to_prm;
+	unsigned int len;
 
 	/*computing the length of entire sip_msg structure*/
 	len = ROUND4(sizeof(struct sip_msg));
@@ -494,6 +484,25 @@ struct sip_msg *sip_msg_shm_clone(
 		RPL_LUMP_LIST_LEN(len, org_msg->reply_lump);
 	}
 
+	return len;
+}
+
+/** Creates a shm clone for a sip_msg.
+ * org_msg is cloned along with most of its headers and lumps into one
+ * shm memory block (so that a shm_free() on the result will free everything)
+ * @return shm malloced sip_msg on success, 0 on error
+ * Warning: Cloner does not clone all hdr_field headers (From, To, etc.).
+ */
+struct sip_msg *sip_msg_shm_clone(
+		struct sip_msg *org_msg, int *sip_msg_len, int clone_lumps)
+{
+	unsigned int len;
+	struct hdr_field *hdr, *new_hdr, *last_hdr;
+	struct to_param *to_prm, *new_to_prm;
+	struct sip_msg *new_msg;
+	char *p;
+
+	len = sip_msg_clone_len(org_msg, clone_lumps);
 	p = (char *)shm_malloc(len);
 	if(!p) {
 		SHM_MEM_ERROR;
