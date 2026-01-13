@@ -3,15 +3,15 @@ file(GLOB MODULE_SOURCES "*.c")
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 # rabbitmq provides cmake support for versions 0.13 and above.
-find_package(rabbitmq-c QUIET)
-if(NOT rabbitmq-c_FOUND)
-  message(STATUS "rabbitmq-c not found. looking with pkg-config")
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(rabbitmq-c REQUIRED IMPORTED_TARGET librabbitmq)
-  add_library(rabbitmq::rabbitmq ALIAS PkgConfig::rabbitmq-c)
-endif()
-
+# 0.11 provides cmake files but they are broken (report wrong version).
+# https://github.com/alanxz/rabbitmq-c/commit/20bebf423bd3686fe73634ae239d09e5d21abde4
+# Use pkg-config for all versions
+# TODO: When we have a proper cmake config file for rabbitmq-c for most OS, we can
+# use that instead of pkg-config.
 find_package(PkgConfig REQUIRED)
+pkg_check_modules(rabbitmq-c REQUIRED IMPORTED_TARGET librabbitmq)
+add_library(rabbitmq::rabbitmq ALIAS PkgConfig::rabbitmq-c)
+
 pkg_check_modules(UUID REQUIRED IMPORTED_TARGET uuid)
 add_library(uuid::uuid ALIAS PkgConfig::UUID)
 
