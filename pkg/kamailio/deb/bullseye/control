@@ -52,6 +52,7 @@ Build-Depends:
  libxml2-dev,
  openssl,
  pkg-config,
+ postgresql-server-dev-all,
  python,
  python-dev,
  python3,

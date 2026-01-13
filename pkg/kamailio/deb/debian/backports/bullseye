@@ -6,6 +6,9 @@ DIST=bullseye
 rm -rf ${DIST}
 cp -r debian ${DIST}
 
+# cmake missing PostgreSQL_TYPE_INCLUDE_DIR
+sed -i '/^ libpq-dev,/a\ postgresql-server-dev-all,' ${DIST}/control
+
 # no libnats-dev
 sed -i -e '/^ libnats-dev,/d' \
   -e '/^Package: kamailio-nats-modules/,/^$/d' \
