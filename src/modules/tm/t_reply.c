@@ -2560,7 +2560,7 @@ int reply_received(struct sip_msg *p_msg)
 				membar_read(); /* make sure we get the current value of
 								* local_cancel */
 				/* re-transmit if cancel already built */
-				DBG("tm: reply_received: branch CANCEL retransmit\n");
+				DBG("branch CANCEL retransmit\n");
 				if(SEND_BUFFER(&uac->local_cancel) >= 0) {
 					if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
 						run_trans_callbacks_with_buf(TMCB_REQUEST_SENT,
