@@ -18,7 +18,7 @@ find_package(Threads REQUIRED)
 # will fail and ask to set variables like OPENSSL_ROOT_DIR, OPENSSL_INCLUDE_DIR
 # and LIBRARIES
 if(LIBSSL_STATIC)
-  target_compile_definitions(${module_name} KSR_LIBSSL_STATIC)
+  target_compile_definitions(${module_name} PRIVATE KSR_LIBSSL_STATIC)
   if(LIBSSL_STATIC_SRCLIB)
     target_include_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH}/include)
     target_link_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH})
