@@ -47,9 +47,10 @@
 
 
 /*! Which header fields should be skipped */
-#define tm_skip_hf(_hf)                                       \
-	(((_hf)->type == HDR_FROM_T) || ((_hf)->type == HDR_TO_T) \
-			|| ((_hf)->type == HDR_CALLID_T) || ((_hf)->type == HDR_CSEQ_T))
+#define tm_skip_hf(_hf)                                                     \
+	(((_hf)->type == HDR_FROM_T) || ((_hf)->type == HDR_TO_T)               \
+			|| ((_hf)->type == HDR_CALLID_T) || ((_hf)->type == HDR_CSEQ_T) \
+			|| ((_hf)->type == HDR_ROUTE_T))
 
 
 /* a forced_proto takes precedence if != PROTO_NONE */

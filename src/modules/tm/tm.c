@@ -197,6 +197,7 @@ static int w_t_set_no_e2e_cancel_reason(
 		struct sip_msg *msg, char *on_off, char *f);
 static int w_t_set_disable_internal_reply(
 		struct sip_msg *msg, char *on_off, char *f);
+static int w_t_set_no_auto_ack(struct sip_msg *msg, char *on_off, char *f);
 static int w_t_branch_timeout(struct sip_msg *msg, char *, char *);
 static int w_t_branch_replied(struct sip_msg *msg, char *, char *);
 static int w_t_any_timeout(struct sip_msg *msg, char *, char *);
@@ -401,6 +402,9 @@ static cmd_export_t cmds[] = {
 	{"t_set_disable_6xx", w_t_set_disable_6xx, 1, fixup_var_int_1, 0,
 			REQUEST_ROUTE | TM_ONREPLY_ROUTE | FAILURE_ROUTE
 					| BRANCH_ROUTE},
+	{"t_set_no_auto_ack", w_t_set_no_auto_ack, 1,
+			fixup_var_int_1, 0,
+			REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_disable_failover", w_t_set_disable_failover, 1, fixup_var_int_1,
 			0,
 			REQUEST_ROUTE | TM_ONREPLY_ROUTE | FAILURE_ROUTE
@@ -2301,6 +2305,10 @@ T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
 
 W_T_SET_FLAG_GEN_FUNC(t_set_disable_internal_reply, T_DISABLE_INTERNAL_REPLY)
 
+/* disable generating an ACK automatically for local transaction */
+T_SET_FLAG_GEN_FUNC(t_set_no_auto_ack, T_NO_AUTO_ACK)
+
+W_T_SET_FLAG_GEN_FUNC(t_set_no_auto_ack, T_NO_AUTO_ACK)
 
 /* FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
  * returns true if the choosed "failure" branch failed because of a timeout,
@@ -3784,6 +3792,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	},
 	{ str_init("tm"), str_init("t_set_disable_internal_reply"),
 		SR_KEMIP_INT, t_set_disable_internal_reply,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_set_no_auto_ack"),
+		SR_KEMIP_INT, t_set_no_auto_ack,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

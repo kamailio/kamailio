@@ -164,6 +164,46 @@ if (t_cancel_callid("123qaz", "5", "22", "200")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="tmx.f.t_uac_ack_local">
+		<title>
+			<function moreinfo="none">t_uac_ack_local(callid, cseq [, headers [, body]])
+			</function>
+		</title>
+		<para>
+		ACK the first transaction found with specified Call-ID and C-Seq.
+		Optionally include extra headers and request body.
+		</para>
+		<para>
+		Parameters:.
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> - call-id value.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>cseq</emphasis> - cseq number.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>headers</emphasis> - extra headers to append
+			</para></listitem>
+			<listitem><para>
+					<emphasis>body</emphasis> - body to include
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>t_uac_ack_local</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (t_uac_ack_local("123qaz", "5")) {
+	xlog("transaction ACKed\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="tmx.f.t_reply_callid">
 		<title>
 			<function moreinfo="none">t_reply_callid(callid, cseq, code, reason)
@@ -692,4 +732,3 @@ event_route [tm:branch-failure:contact] {
 
 	</section>
 </chapter>
-

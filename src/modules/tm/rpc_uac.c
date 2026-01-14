@@ -327,7 +327,7 @@ err:
  *         0 on error.
  */
 static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
-		struct socket_info *ssock, str *hout)
+		struct socket_info *ssock, int do_sub, str *hout)
 {
 	struct str_list sl, *last, *i, *foo;
 	int p, frag_len, total_len;
@@ -356,7 +356,7 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 
 		/* substitution loop */
 		while(p) {
-			d = q_memchr(needle, SUBST_CHAR, p);
+			d = do_sub ? q_memchr(needle, SUBST_CHAR, p) : 0;
 			if(!d || d + 1 >= needle + p) { /* nothing to substitute */
 				if(!append_str_list(begin, p, &last, &total_len))
 					goto error;
@@ -402,7 +402,7 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 						needle = d;
 				}
 			} /* possible substitute */
-		}	  /* substitution loop */
+		} /* substitution loop */
 		LM_DBG("one more hf processed\n");
 	} /* header loop */
 
@@ -739,7 +739,7 @@ static void rpc_t_uac_attrs_helper(
 			< 0)
 		goto error;
 	if(get_hfblock(tattrs->nexthop.len ? &tattrs->nexthop : &tattrs->ruri,
-			   faked_msg.headers, PROTO_NONE, ssock, &hfb)
+			   faked_msg.headers, PROTO_NONE, ssock, 1, &hfb)
 			< 0) {
 		rpc->fault(c, 500, "Failed to build headers block");
 		goto error;
@@ -778,6 +778,10 @@ static void rpc_t_uac_attrs_helper(
 	dlg.rem_target = tattrs->ruri;
 	dlg.dst_uri = tattrs->nexthop;
 	dlg.send_sock = ssock;
+	/* needed by calculate_hooks(): otherwise warning by eval_uac_routing()
+	when preparing local ACK because of missing flags for strict/loose router */
+	if(faked_msg.route && parse_rr(faked_msg.route) >= 0)
+		dlg.route_set = (rr_t *)faked_msg.route->parsed;
 
 	memset(&uac_req, 0, sizeof(uac_req));
 	uac_req.method = &tattrs->method;
@@ -1171,6 +1175,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	str fromtag;
 	dlg_t dlg;
 	uac_req_t uac_req;
+	int cb_flags = 0;
 
 	ret = -1;
 
@@ -1179,6 +1184,11 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 		LM_ERR("Empty method\n");
 		return -1;
 	}
+	if(method->s[method->len - 1] == '.') {
+		method->len--; /* drop the trailing dot (no buffer write) */
+		cb_flags |= TMCB_DONT_ACK;
+	}
+
 	if(parse_uri(ruri->s, ruri->len, &p_uri) < 0) {
 		LM_ERR("Invalid request uri \"%s\"", ruri->s);
 		return -1;
@@ -1229,7 +1239,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 		goto error;
 	}
 	if(get_hfblock(nexthop->len ? nexthop : ruri, faked_msg.headers, PROTO_NONE,
-			   ssock, &hfb)
+			   ssock, 0, &hfb)
 			< 0) {
 		LM_ERR("failed to get the block of headers\n");
 		goto error;
@@ -1268,6 +1278,10 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	dlg.rem_target = *ruri;
 	dlg.dst_uri = *nexthop;
 	dlg.send_sock = ssock;
+	/* needed by calculate_hooks(): otherwise warning by eval_uac_routing()
+	when preparing local ACK because of missing flags for strict/loose router */
+	if(faked_msg.route && parse_rr(faked_msg.route) >= 0)
+		dlg.route_set = (rr_t *)faked_msg.route->parsed;
 
 	memset(&uac_req, 0, sizeof(uac_req));
 	uac_req.method = method;
@@ -1275,6 +1289,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 		uac_req.headers = &hfb;
 	uac_req.body = body->len ? body : 0;
 	uac_req.dialog = &dlg;
+	uac_req.cb_flags = cb_flags;
 
 	ret = t_uac(&uac_req);
 

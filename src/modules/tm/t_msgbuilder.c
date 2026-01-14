@@ -1225,6 +1225,7 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 	str next_hop;
 	str body_len;
 	str _to, *to = &_to;
+	struct dest_info *orig_dst = &Trans->uac[branch].request.dst;
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
@@ -1283,7 +1284,7 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 	switch(cfg_get(tm, tm_cfg, local_ack_mode)) {
 		case 1:
 			/* send the local 200 ack to the same dst as the corresp. invite*/
-			*dst = Trans->uac[branch].request.dst;
+			*dst = *orig_dst;
 			break;
 		case 2:
 			/* send the local 200 ack to the same dst as the 200 reply source*/
@@ -1293,7 +1294,8 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 		case 0:
 		default:
 			/* rfc conformant behaviour: use the next_hop determined from the
-			 * contact and the route set */
+			 * contact and the route set - but still apply a potentially forced
+			 * send_socket (taken from the original/ACK'ed request) */
 #ifdef USE_DNS_FAILOVER
 			if(cfg_get(core, core_cfg, use_dns_failover)) {
 				dns_srv_handle_init(&dns_h);
@@ -1318,6 +1320,12 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 				goto error;
 			}
 #endif /* USE_DNS_FAILOVER */
+			if(orig_dst->send_flags.f & SND_F_FORCE_SOCKET) {
+				dst->send_sock = orig_dst->send_sock;
+				dst->proto = orig_dst->proto;
+				dst->send_flags = orig_dst->send_flags;
+				dst->id = orig_dst->id;
+			}
 			break;
 	}
 

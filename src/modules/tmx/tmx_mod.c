@@ -63,6 +63,11 @@ static int w_t_cancel_callid_3(
 static int w_t_cancel_callid_4(
 		sip_msg_t *msg, char *cid, char *cseq, char *flag, char *creason);
 static int fixup_cancel_callid(void **param, int param_no);
+static int w_t_uac_ack_local_2(sip_msg_t *msg, char *cid, char *cseq);
+static int w_t_uac_ack_local_3(
+		sip_msg_t *msg, char *cid, char *cseq, char *phdrs);
+static int w_t_uac_ack_local_4(
+		sip_msg_t *msg, char *cid, char *cseq, char *phdrs, char *pbody);
 static int t_reply_callid(
 		sip_msg_t *msg, char *cid, char *cseq, char *rc, char *rs);
 static int fixup_reply_callid(void **param, int param_no);
@@ -171,6 +176,12 @@ static pv_export_t mod_pvs[] = {
 };
 
 static cmd_export_t cmds[] = {
+		{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_2, 2,
+				fixup_cancel_callid, 0, ANY_ROUTE },
+		{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_3, 3,
+				fixup_cancel_callid, 0, ANY_ROUTE },
+		{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_4, 4,
+				fixup_cancel_callid, 0, ANY_ROUTE },
 	{"t_cancel_branches", (cmd_function)t_cancel_branches, 1,
 			fixup_cancel_branches, 0, ONREPLY_ROUTE},
 	{"t_cancel_callid", (cmd_function)w_t_cancel_callid_3, 3,
@@ -488,6 +499,90 @@ static int w_t_cancel_callid_4(
 		sip_msg_t *msg, char *cid, char *cseq, char *flag, char *creason)
 {
 	return t_cancel_callid(msg, cid, cseq, flag, creason);
+}
+
+static int ki_t_uac_ack_local(
+		sip_msg_t *msg, str *callid_s, str *cseq_s, str *hdrs, str *body)
+{
+
+	tm_cell_t *trans;
+	tm_cell_t *bkt;
+	int bkb;
+	int ret;
+
+	bkt = _tmx_tmb.t_gett();
+	bkb = _tmx_tmb.t_gett_branch();
+	if(_tmx_tmb.t_lookup_callid(&trans, *callid_s, *cseq_s) < 0) {
+		DBG("Lookup failed - no transaction\n");
+		return -1;
+	}
+
+	DBG("Now calling ack_local_uac\n");
+	ret = _tmx_tmb.ack_local_uac(trans, hdrs, body);
+
+	_tmx_tmb.t_sett(bkt, bkb);
+
+	return ret;
+}
+
+static int t_uac_ack_local(
+		sip_msg_t *msg, char *cid, char *cseq, char *phdrs, char *pbody)
+{
+
+	str cseq_s;
+	str callid_s;
+	str headers = STR_NULL;
+	str body = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_p)cid, &callid_s) < 0) {
+		LM_ERR("cannot get callid\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)cseq, &cseq_s) < 0) {
+		LM_ERR("cannot get cseq\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)phdrs, &headers) != 0) {
+		LM_ERR("invalid headers parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pbody, &body) != 0) {
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+
+	if(ki_t_uac_ack_local(msg, &callid_s, &cseq_s, &headers, &body) < 0) {
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_t_uac_ack_local_2(sip_msg_t *msg, char *cid, char *cseq)
+{
+	return t_uac_ack_local(msg, cid, cseq, NULL, NULL);
+}
+
+/**
+ *
+ */
+static int w_t_uac_ack_local_3(
+		sip_msg_t *msg, char *cid, char *cseq, char *phdrs)
+{
+	return t_uac_ack_local(msg, cid, cseq, phdrs, NULL);
+}
+
+/**
+ *
+ */
+static int w_t_uac_ack_local_4(
+		sip_msg_t *msg, char *cid, char *cseq, char *phdrs, char *pbody)
+{
+	return t_uac_ack_local(msg, cid, cseq, phdrs, pbody);
 }
 
 /**
@@ -1295,6 +1390,11 @@ static sr_kemi_t sr_kemi_tmx_exports[] = {
 		SR_KEMIP_INT, ki_t_cancel_callid_reason,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tmx"), str_init("t_uac_ack_local"),
+		SR_KEMIP_INT, ki_t_uac_ack_local,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tmx"), str_init("t_reply_callid"),
 		SR_KEMIP_INT, ki_t_reply_callid,

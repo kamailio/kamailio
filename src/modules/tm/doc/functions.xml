@@ -1589,6 +1589,26 @@ if(!t_relay()) {
 	</example>
 	</section>
 
+	<section id="tm.f.t_set_no_auto_ack">
+	<title>
+		<function>t_set_no_auto_ack(0|1)</function>
+	</title>
+	<para>
+		Turn off/on generating e2e ACKs automatically for successfully answered local transactions (uac)
+	</para>
+	<example>
+		<title><function>t_set_no_auto_ack</function> usage</title>
+		<programlisting>
+...
+t_set_no_auto_ack(1); # when receiving a 200-299 fr for local transaction (uac), do not reply automatically
+if(!t_relay()) {
+   send_reply("500", "Server error");
+}
+...
+		</programlisting>
+	</example>
+	</section>
+
 	<section id="tm.f.t_replicate">
 	<title>
 	    <function>t_replicate([params])</function>
@@ -1890,7 +1910,9 @@ if (t_is_retr_async_reply()) {
 	<para>The parameters:</para>
 	<itemizedlist>
 	    <listitem>
-		<para><emphasis>method</emphasis> - SIP method.
+		<para><emphasis>method</emphasis> - SIP method. Add a "." to the end of the
+			method name to suppress automatic ACK generation (the dot is not
+			transmitted, of course).
 		</para>
 	    </listitem>
 	    <listitem>
