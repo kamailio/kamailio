@@ -45,6 +45,12 @@ EXTRA_EXCLUDED_MODULES += ims
 EXTRA_EXCLUDED_MODULES += tls_wolfssl
 ## --EXCLUDED--
 
+# Mono not on all arches
+ifneq ("$(wildcard /usr/share/mono/mono-archs.make)","")
+PACKAGE_GROUPS += mono
+else
+EXCLUDED_MODULES += mono
+endif
 
 # Module groups that are packaged in separate packages (with the name
 # kamailio-$(group_name)-modules).

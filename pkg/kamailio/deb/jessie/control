@@ -5,11 +5,11 @@ Maintainer: Kamailio Admin Group <kadmin.hq@lists.kamailio.org>
 Uploaders:
  Victor Seva <vseva@debian.org>,
 Build-Depends:
- bison,
  debhelper (>= 9),
  dh-systemd (>= 1.5),
- docbook-xml,
  dpkg-dev (>= 1.16.1.1),
+ bison,
+ docbook-xml,
  erlang-dev,
  flex,
  gcj-jdk,
