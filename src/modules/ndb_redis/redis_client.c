@@ -932,8 +932,7 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 			freeReplyObject(rpl->rplRedis);
 			rpl->rplRedis = NULL;
 		}
-		if(redisGetReplyFromReader(rsrv->ctxRedis, (void **)&rpl->rplRedis)
-				!= REDIS_OK) {
+		if(redisGetReply(rsrv->ctxRedis, (void **)&rpl->rplRedis) != REDIS_OK) {
 			LM_ERR("Unable to read reply\n");
 			continue;
 		}
