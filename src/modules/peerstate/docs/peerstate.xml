@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>Peerstate Module</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Serdar</firstname>
+		<surname>GÜÇLÜER</surname>
+		<affiliation><orgname>Netgsm ICT Inc.</orgname></affiliation>
+		<email>serdar.gucluer@hotmail.com</email>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2025</year>
+	    <holder>Netgsm ICT Inc., http://www.netgsm.com.tr</holder>
+	</copyright>
+    </bookinfo>
+    <toc></toc>
+
+    <xi:include href="peerstate_admin.xml"/>
+    <xi:include href="peerstate_devel.xml"/>
+</book>
