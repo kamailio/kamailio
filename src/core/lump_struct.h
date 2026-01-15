@@ -86,13 +86,14 @@ enum lump_conditions
 
 enum lump_flag
 {
-	LUMPFLAG_NONE = 0,	   /* */
-	LUMPFLAG_DUPED = 1,	   /* lump struct duplicated in pkg, with value
+	LUMPFLAG_NONE = 0,		/* */
+	LUMPFLAG_DUPED = 1,		/* lump struct duplicated in pkg, with value
 									* pointing to initial lump structure
 									* - e.g., used for branch_route execution */
-	LUMPFLAG_SHMEM = 2,	   /* lump stored in shared memory (e.g., tm) */
-	LUMPFLAG_BRANCH = 4,   /* not in use ?!? */
-	LUMPFLAG_COND_TRUE = 8 /* conditional lump processing */
+	LUMPFLAG_SHMEM = 2,		/* lump stored in shared memory (e.g., tm) */
+	LUMPFLAG_BRANCH = 4,	/* not in use ?!? */
+	LUMPFLAG_COND_TRUE = 8, /* conditional lump processing */
+	LUMPFLAG_APPLIED = 16	/* lump already applied */
 };
 
 #define LUMP_SET_COND_TRUE(_lump) (_lump)->flags |= LUMPFLAG_COND_TRUE
