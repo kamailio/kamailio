@@ -508,6 +508,22 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	t->uac[branch].uri.s = t->uac[branch].request.buffer
 						   + i_req->first_line.u.request.method.len + 1;
 	t->uac[branch].uri.len = GET_RURI(i_req)->len;
+	if(unlikely(i_req->dst_uri.s && i_req->dst_uri.len)) {
+		t->uac[branch].dst_uri.s = shm_malloc(i_req->dst_uri.len + 1);
+		if(unlikely(t->uac[branch].dst_uri.s == 0)) {
+			SHM_MEM_ERROR;
+			shm_free(shbuf);
+			t->uac[branch].request.buffer = 0;
+			t->uac[branch].request.buffer_len = 0;
+			t->uac[branch].uri.s = 0;
+			t->uac[branch].uri.len = 0;
+			ret = E_OUT_OF_MEM;
+			goto error01;
+		}
+		t->uac[branch].dst_uri.len = i_req->dst_uri.len;
+		t->uac[branch].dst_uri.s[i_req->dst_uri.len] = 0;
+		memcpy(t->uac[branch].dst_uri.s, i_req->dst_uri.s, i_req->dst_uri.len);
+	}
 	if(unlikely(i_req->path_vec.s && i_req->path_vec.len)) {
 		t->uac[branch].path.s = shm_malloc(i_req->path_vec.len + 1);
 		if(unlikely(t->uac[branch].path.s == 0)) {
