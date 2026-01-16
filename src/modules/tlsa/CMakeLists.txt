@@ -2,8 +2,14 @@ file(GLOB MODULE_SOURCES "*.c")
 
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
+# unset to avoid finding shared library from previous find_package calls
+# that are cached
+unset(OPENSSL_CRYPTO_LIBRARY CACHE)
+unset(OPENSSL_INCLUDE_DIR CACHE)
+unset(OPENSSL_SSL_LIBRARY CACHE)
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+
 # Find packages
-find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
 
 target_compile_definitions(${module_name} PRIVATE KSR_LIBSSL_STATIC)
@@ -13,14 +19,14 @@ if(LIBSSL_STATIC_SRCLIB)
 else()
   # Static linking with system libraries Note: This assumes the static
   # libraries are installed in a standard location
-  set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  find_package(OpenSSL REQUIRED)
 
-  find_library(SSL_ALIB libssl.a REQUIRED)
-  find_library(CRYPTO_ALIB libcrypto.a REQUIRED)
-  find_library(Z_ALIB libz.a REQUIRED)
-  #set(OPENSSL_USE_STATIC_LIBS TRUE)
-  #find_package(OpenSSL REQUIRED)
   # TODO: Check if this is needed: -Wl,-Bstatic
-  #target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB)
-  target_link_libraries(${module_name} PRIVATE ${SSL_ALIB} ${CRYPTO_ALIB} ${Z_ALIB})
+  target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto Threads::Threads)
 endif()
+
+# Reset variables to avoid interference with other modules
+unset(OPENSSL_CRYPTO_LIBRARY CACHE)
+unset(OPENSSL_INCLUDE_DIR CACHE)
+unset(OPENSSL_SSL_LIBRARY CACHE)
+set(OPENSSL_USE_STATIC_LIBS FALSE)
