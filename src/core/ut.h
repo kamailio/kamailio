@@ -1006,6 +1006,11 @@ static inline int pkg_str_dup(str *dst, const str *src)
 		return -1;
 	}
 
+	if(dst->len == 0) {
+		dst->s[0] = 0;
+		return 0;
+	}
+
 	/* avoid memcpy from NULL source - undefined behaviour */
 	if(src->s == NULL) {
 		LM_WARN("pkg_str_dup fallback; skip memcpy for src->s == NULL\n");
