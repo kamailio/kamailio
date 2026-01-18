@@ -996,5 +996,98 @@ int msg_lump_cloner(struct sip_msg *pkg_msg, struct lump **add_rm,
 	return 0;
 }
 
+/**
+ *
+ */
+int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
+{
+	if(imsg == NULL || omsg == NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
 
+	if(omsg->buf == NULL || imsg->buf_size > omsg->buf_size) {
+		LM_ERR("invalid output buffer\n");
+		return -1;
+	}
+
+	memcpy(omsg->buf, imsg->buf, imsg->len);
+	omsg->len = imsg->len;
+	omsg->buf[omsg->len] = '\0';
+
+	/* parse the output message */
+	LM_DBG("SIP message content copied - reparsing\n");
+	if(parse_msg(omsg->buf, omsg->len, omsg) != 0) {
+		LM_ERR("parsing out sip message failed [[%.*s]]\n", omsg->len,
+				omsg->buf);
+		goto error;
+	}
+	if(parse_headers(omsg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
+			< 0) {
+		LM_ERR("parsing main headers of new sip message failed [[%.*s]]\n",
+				omsg->len, omsg->buf);
+		goto error;
+	}
+
+	omsg->id = imsg->id;
+	omsg->pid = imsg->pid;
+	omsg->tval = imsg->tval;
+
+	omsg->fwd_send_flags = imsg->fwd_send_flags;
+	omsg->rpl_send_flags = imsg->rpl_send_flags;
+	omsg->rcv = imsg->rcv;
+
+	omsg->set_global_address = imsg->set_global_address;
+	omsg->set_global_port = imsg->set_global_port;
+	omsg->flags = imsg->flags;
+	omsg->msg_flags = imsg->msg_flags;
+	memcpy(omsg->xflags, imsg->xflags, KSR_XFLAGS_SIZE * sizeof(flag_t));
+	omsg->hash_index = imsg->hash_index;
+	omsg->force_send_socket = imsg->force_send_socket;
+
+	omsg->reg_id = imsg->reg_id;
+	omsg->otcpid = imsg->otcpid;
+	omsg->hash_index = imsg->hash_index;
+
+	/* duplicate */
+	if(imsg->new_uri.s != NULL) {
+		if(pkg_str_dup(&omsg->new_uri, &imsg->new_uri) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->dst_uri.s != NULL) {
+		if(pkg_str_dup(&omsg->dst_uri, &imsg->dst_uri) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->path_vec.s != NULL) {
+		if(pkg_str_dup(&omsg->path_vec, &imsg->path_vec) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->instance.s != NULL) {
+		if(pkg_str_dup(&omsg->instance, &imsg->instance) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->ruid.s != NULL) {
+		if(pkg_str_dup(&omsg->ruid, &imsg->ruid) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->location_ua.s != NULL) {
+		if(pkg_str_dup(&omsg->location_ua, &imsg->location_ua) < 0) {
+			goto error;
+		}
+	}
+
+	memcpy(omsg->add_to_branch_s, imsg->add_to_branch_s, MAX_BRANCH_PARAM_LEN);
+	omsg->add_to_branch_len = omsg->add_to_branch_len;
+
+	return 0;
+
+error:
+	free_sip_msg(omsg);
+	return -1;
+}
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

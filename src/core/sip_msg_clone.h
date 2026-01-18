@@ -27,6 +27,7 @@ struct sip_msg *sip_msg_shm_clone(
 int msg_lump_cloner(struct sip_msg *pkg_msg, struct lump **add_rm,
 		struct lump **body_lumps, struct lump_rpl **reply_lump);
 
+int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags);
 
 #endif /*__sip_msg_clone_h*/
 
