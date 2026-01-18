@@ -1009,7 +1009,7 @@ static int update_contacts_sar_user_deregistration(struct sip_msg *msg,
 									!= 0) {
 								LM_DBG("Contact does not exist <%.*s>\n",
 										STR_FMT(&chi->uri));
-								ul.lock_udomain(_d, public_identity);
+								ul.unlock_udomain(_d, &pi->public_identity);
 								return -1;
 							}
 							if(!ue_unsubscribe_on_dereg) {
@@ -1034,7 +1034,7 @@ static int update_contacts_sar_user_deregistration(struct sip_msg *msg,
 								LM_ERR("Error trying to determine if this is a "
 									   "sos contact <%.*s>\n",
 										STR_FMT(&chi->uri));
-								ul.unlock_udomain(_d, public_identity);
+								ul.unlock_udomain(_d, &pi->public_identity);
 								return -1;
 							}
 							calc_contact_expires(chi, expires_hdr, sos);
