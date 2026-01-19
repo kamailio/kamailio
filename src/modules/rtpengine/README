@@ -926,9 +926,9 @@ route {
 
 5.14. rtp_inst_pvar (string)
 
-   A pseudo variable to store the chosen RTP Engine IP address. If this
-   parameter is set, the IP address and port of the instance chosen will
-   be stored in the given variable.
+   A pseudo variable to store the chosen RTP Engine URI. If this parameter
+   is set, the URI of the instance chosen will be stored in the given
+   variable.
 
    By default, this parameter is not set.
 
