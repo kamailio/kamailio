@@ -34,11 +34,6 @@ int db_redis_key_add_string(redis_key_t **list, const char *entry, size_t len)
 {
 	redis_key_t *k;
 
-	if(!entry || !len) {
-		LM_ERR("Empty entry or zero length\n");
-		return -1;
-	}
-
 	if(db_redis_max_key_len > 0 && len > db_redis_max_key_len) {
 		LM_ERR("Too big length for key being added: allowed '%u' / given "
 			   "'%zu'\n",
@@ -59,8 +54,14 @@ int db_redis_key_add_string(redis_key_t **list, const char *entry, size_t len)
 		goto err;
 	}
 
-	memcpy(k->key.s, entry, len);
-	k->key.s[len] = '\0';
+	/* run memcpy only on non-NULL pointer, because in fact it may happen
+	 * it comes here empty and with len = 0, this is then an implicit
+	 * conversion of <null> redis key value into the empty "" string.
+	 * see `db_redis_val2str()`
+	 * This is the allowed behavior, but avoid then running memcpy() on it. */
+	if(entry && len > 0)
+		memcpy(k->key.s, entry, len);
+	k->key.s[len] = '\0'; /* at least 1 byte is already pre-allocated before */
 	k->key.len = len;
 
 	if(!*list) {
