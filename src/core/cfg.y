@@ -250,7 +250,6 @@ extern char *default_routename;
 %token STRIP
 %token STRIP_TAIL
 %token SET_USERPHONE
-%token APPEND_BRANCH
 %token REMOVE_BRANCH
 %token CLEAR_BRANCHES
 %token SET_USER
@@ -431,6 +430,8 @@ extern char *default_routename;
 %token MAXBUFFER
 %token MAXSNDBUFFER
 %token SQL_BUFFER_SIZE
+%token MSG_CLONE_EXTRA_SIZE
+%token MSG_APPLY_CHANGES_MODE
 %token MSG_RECV_MAX_SIZE
 %token TCP_MSG_READ_TIMEOUT
 %token TCP_MSG_DATA_TIMEOUT
@@ -1069,6 +1070,10 @@ assign_stm:
 	| MAXSNDBUFFER EQUAL error { yyerror("number expected"); }
 	| SQL_BUFFER_SIZE EQUAL NUMBER { sql_buffer_size=$3; }
 	| SQL_BUFFER_SIZE EQUAL error { yyerror("number expected"); }
+	| MSG_CLONE_EXTRA_SIZE EQUAL NUMBER { ksr_msg_clone_extra_size=$3; }
+	| MSG_CLONE_EXTRA_SIZE EQUAL error { yyerror("number expected"); }
+	| MSG_APPLY_CHANGES_MODE EQUAL NUMBER { ksr_msg_apply_changes_mode=$3; }
+	| MSG_APPLY_CHANGES_MODE EQUAL error { yyerror("boolean expected"); }
 	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3; }
 	| MSG_RECV_MAX_SIZE EQUAL error { yyerror("number expected"); }
 	| TCP_MSG_READ_TIMEOUT EQUAL NUMBER { ksr_tcp_msg_read_timeout=$3; }

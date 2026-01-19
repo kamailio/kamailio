@@ -23,7 +23,7 @@ endif()
 # ---- Project settings ----
 
 # Set the version number
-set(EXTRAVERSION "-dev1")
+set(EXTRAVERSION "-pre0")
 set(RELEASE "${PROJECT_VERSION}${EXTRAVERSION}")
 
 message(STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")

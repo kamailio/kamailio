@@ -1,2 +1,0 @@
-kamailio source: debian-watch-file-in-native-package
-kamailio source: build-depends-on-obsolete-package build-depends: libmysqlclient-dev => default-libmysqlclient-dev

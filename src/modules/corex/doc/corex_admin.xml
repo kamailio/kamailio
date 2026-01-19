@@ -1055,6 +1055,93 @@ route[reply] {
 </programlisting>
         </example>
     </section>
+		<section id="corex.f.msg_vbflag_set">
+		<title><function moreinfo="none">msg_vbflag_set(flag)</function></title>
+		<para>
+			Set the via-body flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be set. Can be integer or pseudo-variable with integer value
+				(range 0-31).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_vbflag_set</function> usage</title>
+		<programlisting format="linespecific">
+...
+msg_vbflag_set("1");
+...
+$var(flag) = 11;
+msg_vbflag_set("$var(flag)");
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.msg_vbflag_is_set">
+		<title><function moreinfo="none">msg_vbflag_is_set(flag)</function></title>
+		<para>
+			Return true if the via-body flag is set.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be tested. Can be integer or pseudo-variable with integer value
+				(range 0-31).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_vbflag_is_set</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(msg_vbflag_is_set("1"))
+{
+    ...
+}
+...
+</programlisting>
+		</example>
+		</section>
+		<section id="corex.f.msg_vbflag_reset">
+		<title><function moreinfo="none">msg_vbflag_reset(flag)</function></title>
+		<para>
+			Reset the via-body flag.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>flag</emphasis> - the index of the flag to
+				be reset. Can be integer or pseudo-variable with integer value
+				(range 0-31).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>msg_vbflag_reset</function> usage</title>
+		<programlisting format="linespecific">
+...
+msg_vbflag_reset("1");
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>

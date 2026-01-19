@@ -204,6 +204,7 @@ typedef struct ua_client
 	struct dns_srv_handle dns_h;
 #endif
 	str uri;
+	str dst_uri;
 	str path;
 	str instance;
 	str ruid;

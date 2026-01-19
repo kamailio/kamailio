@@ -217,6 +217,7 @@ static int w_t_get_status_code(sip_msg_t *msg, char *p1, char *p2);
 static int t_clean(struct sip_msg *msg, char *key, char *value);
 static int w_t_exists(struct sip_msg *msg, char *p1, char *p2);
 static int w_t_cell_append_branches(sip_msg_t *msg, char *pindex, char *plabel);
+static int w_t_msg_apply_changes(sip_msg_t *msg, char *p1, char *p2);
 
 /* by default the fr timers avps are not set, so that the avps won't be
  * searched for nothing each time a new transaction is created */
@@ -459,6 +460,7 @@ static cmd_export_t cmds[] = {
 	{"t_next_contact_flow", t_next_contact_flow, 0, 0, 0, REQUEST_ROUTE},
 	{"t_clean", t_clean, 0, 0, 0, ANY_ROUTE},
 	{"t_exists", w_t_exists, 0, 0, 0, ANY_ROUTE},
+	{"t_msg_apply_changes", w_t_msg_apply_changes, 0, 0, 0, ANY_ROUTE},
 	{"t_cell_append_branches", w_t_cell_append_branches, 2, fixup_igp_igp,
 			fixup_free_igp_igp, ANY_ROUTE},
 
@@ -3397,6 +3399,37 @@ static int w_t_cell_append_branches(sip_msg_t *msg, char *pindex, char *plabel)
 	ret = t_cell_append_branches(tindex, tlabel);
 
 	return (ret == 0) ? 1 : ret;
+}
+
+static int w_t_msg_apply_changes(sip_msg_t *msg, char *p1, char *p2)
+{
+	tm_cell_t *t;
+
+	if(ksr_msg_apply_changes_mode != 1) {
+		return -1;
+	}
+	if(ksr_msg_clone_extra_size <= 0) {
+		return -1;
+	}
+
+	if(t_check(msg, 0) == -1)
+		return 1;
+	t = get_t();
+	if(!t || !t->uas.request) {
+		return -1;
+	}
+	if(sip_msg_apply_changes(msg) < 0) {
+		return E_BAD_REQ;
+	}
+	if(parse_headers(msg, HDR_EOH_F, 0)) {
+		LM_ERR("parse_headers failed\n");
+		return E_BAD_REQ;
+	}
+	if((msg->parsed_flag & HDR_EOH_F) != HDR_EOH_F) {
+		LM_ERR("EoH not parsed\n");
+		return E_UNEXPECTED_STATE;
+	}
+	return 1;
 }
 
 #ifdef USE_DNS_FAILOVER

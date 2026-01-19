@@ -6,25 +6,21 @@ add_library(${module_name} SHARED ${MODULE_SOURCES})
 find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
 
-# TODO: Probably all thesse are not need because if OpenSSL can't be found it
-# will fail and ask to set variables like OPENSSL_ROOT_DIR, OPENSSL_INCLUDE_DIR
-# and LIBRARIES
-if(LIBSSL_STATIC)
-  target_compile_definitions(${module_name} KSR_LIBSSL_STATIC)
-  if(LIBSSL_STATIC_SRCLIB)
-    target_include_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH}/include)
-    target_link_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH})
-  else()
-    # Static linking with system libraries Note: This assumes the static
-    # libraries are installed in a standard location
-    set(OPENSSL_USE_STATIC_LIBS TRUE)
-    find_package(OpenSSL REQUIRED)
-    # TODO: Check if this is needed: -Wl,-Bstatic
-    target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB)
-  endif()
+target_compile_definitions(${module_name} PRIVATE KSR_LIBSSL_STATIC)
+if(LIBSSL_STATIC_SRCLIB)
+  target_include_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH}/include)
+  target_link_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH})
 else()
-  find_package(OpenSSL REQUIRED)
-  target_link_libraries(
-    ${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB Threads::Threads
-  )
+  # Static linking with system libraries Note: This assumes the static
+  # libraries are installed in a standard location
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+
+  find_library(SSL_ALIB libssl.a REQUIRED)
+  find_library(CRYPTO_ALIB libcrypto.a REQUIRED)
+  find_library(Z_ALIB libz.a REQUIRED)
+  #set(OPENSSL_USE_STATIC_LIBS TRUE)
+  #find_package(OpenSSL REQUIRED)
+  # TODO: Check if this is needed: -Wl,-Bstatic
+  #target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB)
+  target_link_libraries(${module_name} PRIVATE ${SSL_ALIB} ${CRYPTO_ALIB} ${Z_ALIB})
 endif()

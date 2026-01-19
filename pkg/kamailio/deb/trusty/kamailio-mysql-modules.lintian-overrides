@@ -1,1 +1,0 @@
-kamailio-mysql-modules: depends-on-obsolete-package depends: mysql-client => default-mysql-client

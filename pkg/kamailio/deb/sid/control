@@ -5,23 +5,24 @@ Maintainer: Kamailio Admin Group <kadmin.hq@lists.kamailio.org>
 Uploaders:
  Victor Seva <vseva@debian.org>,
 Build-Depends:
- debhelper (>= 9),
+ debhelper-compat (= 13),
+ dh-cmake,
+ dh-cmake-compat (= 1),
+ dh-sequence-cmake,
  dpkg-dev (>= 1.16.1.1),
  bison,
+ cmake (>= 3.10),
  default-libmysqlclient-dev,
  docbook-xml,
  erlang-dev,
  flex,
  libcurl4-openssl-dev,
- libdb-dev (>= 4.6.19),
  libev-dev,
  libevent-dev,
  libexpat1-dev,
  libhiredis-dev (>= 0.10.0),
  libjansson-dev,
  libjson-c-dev,
- libjwt-dev (<< 3),
- libjwt-dev (>= 1.12),
  libldap2-dev,
  liblua5.1-0-dev,
  libmaxminddb-dev,
@@ -107,7 +108,7 @@ Description: very fast, dynamic and configurable SIP server
  A C Shell like scripting language provides full control over the server's
  behaviour. It's easy to integrate Kamailio with 3rd party API's and applications
  using HTTP, AMQP, database drivers, LDAP, Radius and many other solutions.
- In addition there is support for scripting using Lua, Python, Perl, Java.
+ In addition there is support for scripting using Lua, Python, Perl, Javascript.
  .
  Kamailio's modular architecture allows only required functionality to be loaded.
  There are over 100 modules available: WebSockets for WebRTC, authentication,
@@ -858,8 +859,7 @@ Description: Extra modules for the Kamailio SIP Server
  .
  This package provides a set of modules for compression of SIP attachments,
  UUID usage, JSON data structure support, HTTP restful API asynchronous
- access, JWT (JSON Web Token) and a few more functions:
- gzcompress uuid evapi jansson janssonrpcc http_async_client jwt
+ access and a few more functions: gzcompress uuid evapi jansson janssonrpcc http_async_client
 
 Package: kamailio-nth
 Architecture: any

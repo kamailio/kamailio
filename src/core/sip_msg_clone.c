@@ -136,6 +136,8 @@
 	} while(0)
 
 
+int ksr_msg_clone_extra_size = 0;
+
 static inline struct via_body *via_body_cloner(
 		char *new_buf, char *org_buf, struct via_body *param_org_via, char **p)
 {
@@ -356,28 +358,18 @@ static inline int clone_authorized_hooks(
 
 #define HOOK_SET(hook) (new_msg->hook != org_msg->hook)
 
-
-/** Creates a shm clone for a sip_msg.
- * org_msg is cloned along with most of its headers and lumps into one
- * shm memory block (so that a shm_free() on the result will free everything)
- * @return shm malloced sip_msg on success, 0 on error
- * Warning: Cloner does not clone all hdr_field headers (From, To, etc.).
- */
-struct sip_msg *sip_msg_shm_clone(
-		struct sip_msg *org_msg, int *sip_msg_len, int clone_lumps)
+unsigned int sip_msg_clone_len(sip_msg_t *org_msg, int clone_lumps)
 {
-	unsigned int len;
-	struct hdr_field *hdr, *new_hdr, *last_hdr;
+	struct hdr_field *hdr;
 	struct via_body *via;
 	struct via_param *prm;
-	struct to_param *to_prm, *new_to_prm;
-	struct sip_msg *new_msg;
-	char *p;
+	struct to_param *to_prm;
+	unsigned int len;
 
 	/*computing the length of entire sip_msg structure*/
 	len = ROUND4(sizeof(struct sip_msg));
-	/*we will keep only the original msg +ZT */
-	len += ROUND4(org_msg->len + 1);
+	/*we will keep only the original msg + ksr_msg_clone_extra_size + ZT */
+	len += ROUND4(org_msg->len + ksr_msg_clone_extra_size + 1);
 	/*the new uri (if any)*/
 	if(org_msg->new_uri.s && org_msg->new_uri.len)
 		len += ROUND4(org_msg->new_uri.len);
@@ -483,7 +475,7 @@ struct sip_msg *sip_msg_shm_clone(
 				/* we ignore them for now even if they have something parsed*/
 				break;
 		} /*switch*/
-	}	  /*for all headers*/
+	} /*for all headers*/
 
 	if(clone_lumps) {
 		/* calculate the length of the data and reply lump structures */
@@ -492,6 +484,25 @@ struct sip_msg *sip_msg_shm_clone(
 		RPL_LUMP_LIST_LEN(len, org_msg->reply_lump);
 	}
 
+	return len;
+}
+
+/** Creates a shm clone for a sip_msg.
+ * org_msg is cloned along with most of its headers and lumps into one
+ * shm memory block (so that a shm_free() on the result will free everything)
+ * @return shm malloced sip_msg on success, 0 on error
+ * Warning: Cloner does not clone all hdr_field headers (From, To, etc.).
+ */
+struct sip_msg *sip_msg_shm_clone(
+		struct sip_msg *org_msg, int *sip_msg_len, int clone_lumps)
+{
+	unsigned int len;
+	struct hdr_field *hdr, *new_hdr, *last_hdr;
+	struct to_param *to_prm, *new_to_prm;
+	struct sip_msg *new_msg;
+	char *p;
+
+	len = sip_msg_clone_len(org_msg, clone_lumps);
 	p = (char *)shm_malloc(len);
 	if(!p) {
 		SHM_MEM_ERROR;
@@ -552,7 +563,8 @@ struct sip_msg *sip_msg_shm_clone(
 	/* ZT to be safer */
 	*(p + org_msg->len) = 0;
 	new_msg->buf = p;
-	p += ROUND4(new_msg->len + 1);
+	new_msg->buf_size = new_msg->len + ksr_msg_clone_extra_size;
+	p += ROUND4(new_msg->len + ksr_msg_clone_extra_size + 1);
 	/* unparsed and eoh pointer */
 	new_msg->unparsed =
 			translate_pointer(new_msg->buf, org_msg->buf, org_msg->unparsed);
@@ -984,5 +996,98 @@ int msg_lump_cloner(struct sip_msg *pkg_msg, struct lump **add_rm,
 	return 0;
 }
 
+/**
+ *
+ */
+int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
+{
+	if(imsg == NULL || omsg == NULL) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
 
+	if(omsg->buf == NULL || imsg->buf_size > omsg->buf_size) {
+		LM_ERR("invalid output buffer\n");
+		return -1;
+	}
+
+	memcpy(omsg->buf, imsg->buf, imsg->len);
+	omsg->len = imsg->len;
+	omsg->buf[omsg->len] = '\0';
+
+	/* parse the output message */
+	LM_DBG("SIP message content copied - reparsing\n");
+	if(parse_msg(omsg->buf, omsg->len, omsg) != 0) {
+		LM_ERR("parsing out sip message failed [[%.*s]]\n", omsg->len,
+				omsg->buf);
+		goto error;
+	}
+	if(parse_headers(omsg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
+			< 0) {
+		LM_ERR("parsing main headers of new sip message failed [[%.*s]]\n",
+				omsg->len, omsg->buf);
+		goto error;
+	}
+
+	omsg->id = imsg->id;
+	omsg->pid = imsg->pid;
+	omsg->tval = imsg->tval;
+
+	omsg->fwd_send_flags = imsg->fwd_send_flags;
+	omsg->rpl_send_flags = imsg->rpl_send_flags;
+	omsg->rcv = imsg->rcv;
+
+	omsg->set_global_address = imsg->set_global_address;
+	omsg->set_global_port = imsg->set_global_port;
+	omsg->flags = imsg->flags;
+	omsg->msg_flags = imsg->msg_flags;
+	memcpy(omsg->xflags, imsg->xflags, KSR_XFLAGS_SIZE * sizeof(flag_t));
+	omsg->hash_index = imsg->hash_index;
+	omsg->force_send_socket = imsg->force_send_socket;
+
+	omsg->reg_id = imsg->reg_id;
+	omsg->otcpid = imsg->otcpid;
+	omsg->hash_index = imsg->hash_index;
+
+	/* duplicate */
+	if(imsg->new_uri.s != NULL) {
+		if(pkg_str_dup(&omsg->new_uri, &imsg->new_uri) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->dst_uri.s != NULL) {
+		if(pkg_str_dup(&omsg->dst_uri, &imsg->dst_uri) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->path_vec.s != NULL) {
+		if(pkg_str_dup(&omsg->path_vec, &imsg->path_vec) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->instance.s != NULL) {
+		if(pkg_str_dup(&omsg->instance, &imsg->instance) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->ruid.s != NULL) {
+		if(pkg_str_dup(&omsg->ruid, &imsg->ruid) < 0) {
+			goto error;
+		}
+	}
+	if(imsg->location_ua.s != NULL) {
+		if(pkg_str_dup(&omsg->location_ua, &imsg->location_ua) < 0) {
+			goto error;
+		}
+	}
+
+	memcpy(omsg->add_to_branch_s, imsg->add_to_branch_s, MAX_BRANCH_PARAM_LEN);
+	omsg->add_to_branch_len = omsg->add_to_branch_len;
+
+	return 0;
+
+error:
+	free_sip_msg(omsg);
+	return -1;
+}
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

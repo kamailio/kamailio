@@ -61,6 +61,29 @@
 #include "../../core/kemi.h"
 
 
+typedef struct tm_branch_bak
+{
+	struct lump *add_rm_backup;
+	struct lump *body_lumps_backup;
+	struct sip_uri parsed_uri_bak;
+	int parsed_uri_ok_bak;
+	int free_new_uri;
+	str msg_uri_bak;
+	str dst_uri_bak;
+	int dst_uri_backed_up;
+	str path_bak;
+	int free_path;
+	str instance_bak;
+	int free_instance;
+	str ruid_bak;
+	int free_ruid;
+	str ua_bak;
+	int free_ua;
+	snd_flags_t fwd_snd_flags_bak;
+	snd_flags_t rpl_snd_flags_bak;
+	struct socket_info *force_send_socket_bak;
+} tm_branch_bak_t;
+
 extern int tm_failure_exec_mode;
 extern int tm_dns_reuse_rcv_socket;
 extern int tm_headers_mode;
@@ -93,6 +116,176 @@ void set_branch_route(unsigned int on_branch)
 	branch_route = on_branch;
 }
 
+
+int tm_branch_backup_msg_fields(sip_msg_t *i_req, tm_branch_bak_t *bbak)
+{
+	bbak->add_rm_backup = i_req->add_rm;
+	bbak->body_lumps_backup = i_req->body_lumps;
+	if(unlikely(i_req->add_rm)) {
+		i_req->add_rm = dup_lump_list(i_req->add_rm);
+		if(unlikely(i_req->add_rm == 0)) {
+			i_req->add_rm = bbak->add_rm_backup;
+			return -1;
+		}
+	}
+	if(unlikely(i_req->body_lumps)) {
+		i_req->body_lumps = dup_lump_list(i_req->body_lumps);
+		if(unlikely(i_req->body_lumps == 0)) {
+			free_duped_lump_list(i_req->add_rm);
+			i_req->add_rm = bbak->add_rm_backup;
+			i_req->body_lumps = bbak->body_lumps_backup;
+			return -1;
+		}
+	}
+	/* backup uri & path: we need to change them so that build_req...()
+	 * will use uri & path and not the ones in the original msg (i_req)
+	 * => we must back them up so that we can restore them to the original
+	 * value after building the send buffer */
+	bbak->msg_uri_bak = i_req->new_uri;
+	bbak->parsed_uri_bak = i_req->parsed_uri;
+	bbak->parsed_uri_ok_bak = i_req->parsed_uri_ok;
+	bbak->path_bak = i_req->path_vec;
+	bbak->instance_bak = i_req->instance;
+	bbak->ruid_bak = i_req->ruid;
+	bbak->ua_bak = i_req->location_ua;
+
+	return 0;
+}
+
+int tm_branch_duplicate_msg_fields(sip_msg_t *i_req, str *uri, str *next_hop,
+		str *path, str *instance, str *ruid, str *location_ua, int flags,
+		tm_branch_bak_t *bbak)
+{
+	/* dup uris, path a.s.o. if we have a branch route or callback */
+	/* ... set ruri ... */
+	/* if uri points to new_uri, it needs to be "fixed" so that we can
+		 * change msg->new_uri */
+	if(uri == &i_req->new_uri)
+		uri = &bbak->msg_uri_bak;
+	i_req->parsed_uri_ok = 0;
+	i_req->new_uri.s = pkg_malloc(uri->len);
+	if(unlikely(i_req->new_uri.s == 0)) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	bbak->free_new_uri = 1;
+	memcpy(i_req->new_uri.s, uri->s, uri->len);
+	i_req->new_uri.len = uri->len;
+
+	/* update path_vec */
+	/* if path points to msg path_vec, it needs to be "fixed" so that we
+		 * can change/update msg->path_vec */
+	if(path == &i_req->path_vec)
+		path = &bbak->path_bak;
+	/* zero it first so that set_path_vector will work */
+	i_req->path_vec.s = 0;
+	i_req->path_vec.len = 0;
+	if(unlikely(path)) {
+		if(unlikely(set_path_vector(i_req, path) < 0)) {
+			return -1;
+		}
+		bbak->free_path = 1;
+	}
+	/* update instance */
+	/* if instance points to msg instance, it needs to be "fixed" so that we
+		 * can change/update msg->instance */
+	if(instance == &i_req->instance)
+		instance = &bbak->instance_bak;
+	/* zero it first so that set_instance will work */
+	i_req->instance.s = 0;
+	i_req->instance.len = 0;
+	if(unlikely(instance)) {
+		if(unlikely(set_instance(i_req, instance) < 0)) {
+			return -1;
+		}
+		bbak->free_instance = 1;
+	}
+
+	/* update ruid */
+	/* if ruid points to msg ruid, it needs to be "fixed" so that we
+		 * can change/update msg->ruid */
+	if(ruid == &i_req->ruid)
+		ruid = &bbak->ruid_bak;
+	/* zero it first so that set_ruid will work */
+	i_req->ruid.s = 0;
+	i_req->ruid.len = 0;
+	if(unlikely(ruid)) {
+		if(unlikely(set_ruid(i_req, ruid) < 0)) {
+			return -1;
+		}
+		bbak->free_ruid = 1;
+	}
+
+	/* update location_ua */
+	/* if location_ua points to msg location_ua, it needs to be "fixed"
+		 * so that we can change/update msg->location_ua */
+	if(location_ua == &i_req->location_ua)
+		location_ua = &bbak->ua_bak;
+	/* zero it first so that set_ua will work */
+	i_req->location_ua.s = 0;
+	i_req->location_ua.len = 0;
+	if(unlikely(location_ua)) {
+		if(unlikely(set_ua(i_req, location_ua) < 0)) {
+			return -1;
+		}
+		bbak->free_ua = 1;
+	}
+
+	/* backup dst uri  & zero it*/
+	bbak->dst_uri_bak = i_req->dst_uri;
+	bbak->dst_uri_backed_up = 1;
+	/* if next_hop points to dst_uri, it needs to be "fixed" so that we
+		 * can change msg->dst_uri */
+	if(next_hop == &i_req->dst_uri)
+		next_hop = &bbak->dst_uri_bak;
+	/* zero it first so that set_dst_uri will work */
+	i_req->dst_uri.s = 0;
+	i_req->dst_uri.len = 0;
+	if(likely(next_hop)) {
+		if(unlikely((flags & UAC_SKIP_BR_DST_F) == 0)) {
+			/* set dst uri to next_hop for the on_branch route */
+			if(unlikely(set_dst_uri(i_req, next_hop) < 0)) {
+				return -1;
+			}
+		}
+	}
+	return 0;
+}
+
+void tm_branch_restore_msg_fields(sip_msg_t *i_req, tm_branch_bak_t *bbak)
+{
+	if(unlikely(bbak->free_new_uri && i_req->new_uri.s)) {
+		pkg_free(i_req->new_uri.s);
+	}
+	if(unlikely(bbak->free_path)) {
+		reset_path_vector(i_req);
+	}
+	if(unlikely(bbak->free_instance)) {
+		reset_instance(i_req);
+	}
+	if(unlikely(bbak->free_ruid)) {
+		reset_ruid(i_req);
+	}
+	if(unlikely(bbak->free_ua)) {
+		reset_ua(i_req);
+	}
+	if(bbak->dst_uri_backed_up) {
+		reset_dst_uri(i_req); /* free dst_uri */
+		i_req->dst_uri = bbak->dst_uri_bak;
+	}
+	/* restore original new_uri and path values */
+	i_req->new_uri = bbak->msg_uri_bak;
+	i_req->parsed_uri = bbak->parsed_uri_bak;
+	i_req->parsed_uri_ok = bbak->parsed_uri_ok_bak;
+	i_req->path_vec = bbak->path_bak;
+	i_req->instance = bbak->instance_bak;
+	i_req->ruid = bbak->ruid_bak;
+	i_req->location_ua = bbak->ua_bak;
+
+	/* Restore the lists from backups. */
+	i_req->add_rm = bbak->add_rm_backup;
+	i_req->body_lumps = bbak->body_lumps_backup;
+}
 
 /** prepares a new branch "buffer".
  * Creates the buffer used in the branch rb, fills everything needed (
@@ -127,27 +320,11 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 		str *location_ua)
 {
 	char *shbuf;
-	struct lump *add_rm_backup, *body_lumps_backup;
-	struct sip_uri parsed_uri_bak;
 	int ret;
 	unsigned int len;
-	int parsed_uri_ok_bak, free_new_uri;
-	str msg_uri_bak;
-	str dst_uri_bak;
-	int dst_uri_backed_up;
-	str path_bak;
-	int free_path;
-	str instance_bak;
-	int free_instance;
-	str ruid_bak;
-	int free_ruid;
-	str ua_bak;
-	int free_ua;
 	int backup_route_type;
 	int test_dst;
-	snd_flags_t fwd_snd_flags_bak;
-	snd_flags_t rpl_snd_flags_bak;
-	struct socket_info *force_send_socket_bak;
+	tm_branch_bak_t bbak;
 	struct dest_info *dst;
 	struct run_act_ctx ctx;
 	struct run_act_ctx *bctx;
@@ -156,25 +333,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 
 	shbuf = 0;
 	ret = E_UNSPEC;
-	msg_uri_bak.s = 0; /* kill warnings */
-	msg_uri_bak.len = 0;
-	parsed_uri_ok_bak = 0;
-	free_new_uri = 0;
-	dst_uri_bak.s = 0;
-	dst_uri_bak.len = 0;
-	dst_uri_backed_up = 0;
-	path_bak.s = 0;
-	path_bak.len = 0;
-	free_path = 0;
-	instance_bak.s = 0;
-	instance_bak.len = 0;
-	free_instance = 0;
-	ruid_bak.s = 0;
-	ruid_bak.len = 0;
-	free_ruid = 0;
-	ua_bak.s = 0;
-	ua_bak.len = 0;
-	free_ua = 0;
+	memset(&bbak, 0, sizeof(tm_branch_bak_t));
 	dst = &t->uac[branch].request.dst;
 
 	/* ... we calculate branch ... */
@@ -190,135 +349,19 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	/* lumps can be set outside of the lock, make sure that we read
 	 * the up-to-date values */
 	membar_depends();
-	add_rm_backup = i_req->add_rm;
-	body_lumps_backup = i_req->body_lumps;
-	if(unlikely(i_req->add_rm)) {
-		i_req->add_rm = dup_lump_list(i_req->add_rm);
-		if(unlikely(i_req->add_rm == 0)) {
-			ret = E_OUT_OF_MEM;
-			goto error05;
-		}
+
+	if(tm_branch_backup_msg_fields(i_req, &bbak) < 0) {
+		ret = E_OUT_OF_MEM;
+		goto error00;
 	}
-	if(unlikely(i_req->body_lumps)) {
-		i_req->body_lumps = dup_lump_list(i_req->body_lumps);
-		if(unlikely(i_req->body_lumps == 0)) {
-			ret = E_OUT_OF_MEM;
-			goto error04;
-		}
-	}
-	/* backup uri & path: we need to change them so that build_req...()
-	 * will use uri & path and not the ones in the original msg (i_req)
-	 * => we must back them up so that we can restore them to the original
-	 * value after building the send buffer */
-	msg_uri_bak = i_req->new_uri;
-	parsed_uri_bak = i_req->parsed_uri;
-	parsed_uri_ok_bak = i_req->parsed_uri_ok;
-	path_bak = i_req->path_vec;
-	instance_bak = i_req->instance;
-	ruid_bak = i_req->ruid;
-	ua_bak = i_req->location_ua;
 
 	if(unlikely(branch_route || has_tran_tmcbs(t, TMCB_REQUEST_FWDED))) {
-		/* dup uris, path a.s.o. if we have a branch route or callback */
-		/* ... set ruri ... */
-		/* if uri points to new_uri, it needs to be "fixed" so that we can
-		 * change msg->new_uri */
-		if(uri == &i_req->new_uri)
-			uri = &msg_uri_bak;
-		i_req->parsed_uri_ok = 0;
-		i_req->new_uri.s = pkg_malloc(uri->len);
-		if(unlikely(i_req->new_uri.s == 0)) {
-			PKG_MEM_ERROR;
+		if(tm_branch_duplicate_msg_fields(i_req, uri, next_hop, path, instance,
+				   ruid, location_ua, flags, &bbak)
+				< 0) {
 			ret = E_OUT_OF_MEM;
 			goto error03;
 		}
-		free_new_uri = 1;
-		memcpy(i_req->new_uri.s, uri->s, uri->len);
-		i_req->new_uri.len = uri->len;
-
-		/* update path_vec */
-		/* if path points to msg path_vec, it needs to be "fixed" so that we
-		 * can change/update msg->path_vec */
-		if(path == &i_req->path_vec)
-			path = &path_bak;
-		/* zero it first so that set_path_vector will work */
-		i_req->path_vec.s = 0;
-		i_req->path_vec.len = 0;
-		if(unlikely(path)) {
-			if(unlikely(set_path_vector(i_req, path) < 0)) {
-				ret = E_OUT_OF_MEM;
-				goto error03;
-			}
-			free_path = 1;
-		}
-		/* update instance */
-		/* if instance points to msg instance, it needs to be "fixed" so that we
-		 * can change/update msg->instance */
-		if(instance == &i_req->instance)
-			instance = &instance_bak;
-		/* zero it first so that set_instance will work */
-		i_req->instance.s = 0;
-		i_req->instance.len = 0;
-		if(unlikely(instance)) {
-			if(unlikely(set_instance(i_req, instance) < 0)) {
-				ret = E_OUT_OF_MEM;
-				goto error03;
-			}
-			free_instance = 1;
-		}
-
-		/* update ruid */
-		/* if ruid points to msg ruid, it needs to be "fixed" so that we
-		 * can change/update msg->ruid */
-		if(ruid == &i_req->ruid)
-			ruid = &ruid_bak;
-		/* zero it first so that set_ruid will work */
-		i_req->ruid.s = 0;
-		i_req->ruid.len = 0;
-		if(unlikely(ruid)) {
-			if(unlikely(set_ruid(i_req, ruid) < 0)) {
-				ret = E_OUT_OF_MEM;
-				goto error03;
-			}
-			free_ruid = 1;
-		}
-
-		/* update location_ua */
-		/* if location_ua points to msg location_ua, it needs to be "fixed"
-		 * so that we can change/update msg->location_ua */
-		if(location_ua == &i_req->location_ua)
-			location_ua = &ua_bak;
-		/* zero it first so that set_ua will work */
-		i_req->location_ua.s = 0;
-		i_req->location_ua.len = 0;
-		if(unlikely(location_ua)) {
-			if(unlikely(set_ua(i_req, location_ua) < 0)) {
-				ret = E_OUT_OF_MEM;
-				goto error03;
-			}
-			free_ua = 1;
-		}
-
-		/* backup dst uri  & zero it*/
-		dst_uri_bak = i_req->dst_uri;
-		dst_uri_backed_up = 1;
-		/* if next_hop points to dst_uri, it needs to be "fixed" so that we
-		 * can change msg->dst_uri */
-		if(next_hop == &i_req->dst_uri)
-			next_hop = &dst_uri_bak;
-		/* zero it first so that set_dst_uri will work */
-		i_req->dst_uri.s = 0;
-		i_req->dst_uri.len = 0;
-		if(likely(next_hop)) {
-			if(unlikely((flags & UAC_SKIP_BR_DST_F) == 0)) {
-				/* set dst uri to next_hop for the on_branch route */
-				if(unlikely(set_dst_uri(i_req, next_hop) < 0)) {
-					ret = E_OUT_OF_MEM;
-					goto error03;
-				}
-			}
-		}
-
 		if(likely(branch_route)) {
 			/* run branch_route actions if provided */
 			backup_route_type = get_route_type();
@@ -334,10 +377,9 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			 */
 			if(exec_pre_script_cb(i_req, BRANCH_CB_TYPE) > 0) {
 				/* backup ireq msg send flags and force_send_socket*/
-				fwd_snd_flags_bak = i_req->fwd_send_flags;
-				;
-				rpl_snd_flags_bak = i_req->rpl_send_flags;
-				force_send_socket_bak = i_req->force_send_socket;
+				bbak.fwd_snd_flags_bak = i_req->fwd_send_flags;
+				bbak.rpl_snd_flags_bak = i_req->rpl_send_flags;
+				bbak.force_send_socket_bak = i_req->force_send_socket;
 				/* set the new values */
 				i_req->fwd_send_flags = snd_flags /* initial value  */;
 				set_force_socket(i_req, fsocket);
@@ -362,9 +404,9 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 				snd_flags = i_req->fwd_send_flags;
 				fsocket = i_req->force_send_socket;
 				/* restore ireq_msg force_send_socket & flags */
-				set_force_socket(i_req, force_send_socket_bak);
-				i_req->fwd_send_flags = fwd_snd_flags_bak;
-				i_req->rpl_send_flags = rpl_snd_flags_bak;
+				set_force_socket(i_req, bbak.force_send_socket_bak);
+				i_req->fwd_send_flags = bbak.fwd_snd_flags_bak;
+				i_req->rpl_send_flags = bbak.rpl_snd_flags_bak;
 				exec_post_script_cb(i_req, BRANCH_CB_TYPE);
 				/* if DROP was called in cfg, don't forward, jump to end */
 				if(unlikely(ctx.run_flags & DROP_R_F)) {
@@ -397,8 +439,8 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 		}
 		/* no path vector initially, but now is set after branch route and
 		 * callbacks execution */
-		if(i_req->path_vec.s != 0 && free_path == 0)
-			free_path = 1;
+		if(i_req->path_vec.s != 0 && bbak.free_path == 0)
+			bbak.free_path = 1;
 	} else {
 		/* no branch route and no TMCB_REQUEST_FWDED callback => set
 		 * msg uri and path to the new values (if needed) */
@@ -508,6 +550,23 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	t->uac[branch].uri.s = t->uac[branch].request.buffer
 						   + i_req->first_line.u.request.method.len + 1;
 	t->uac[branch].uri.len = GET_RURI(i_req)->len;
+
+	if(unlikely(i_req->dst_uri.s && i_req->dst_uri.len)) {
+		t->uac[branch].dst_uri.s = shm_malloc(i_req->dst_uri.len + 1);
+		if(unlikely(t->uac[branch].dst_uri.s == 0)) {
+			SHM_MEM_ERROR;
+			shm_free(shbuf);
+			t->uac[branch].request.buffer = 0;
+			t->uac[branch].request.buffer_len = 0;
+			t->uac[branch].uri.s = 0;
+			t->uac[branch].uri.len = 0;
+			ret = E_OUT_OF_MEM;
+			goto error01;
+		}
+		t->uac[branch].dst_uri.len = i_req->dst_uri.len;
+		t->uac[branch].dst_uri.s[i_req->dst_uri.len] = 0;
+		memcpy(t->uac[branch].dst_uri.s, i_req->dst_uri.s, i_req->dst_uri.len);
+	}
 	if(unlikely(i_req->path_vec.s && i_req->path_vec.len)) {
 		t->uac[branch].path.s = shm_malloc(i_req->path_vec.len + 1);
 		if(unlikely(t->uac[branch].path.s == 0)) {
@@ -585,49 +644,16 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 
 error01:
 error03:
-	/* restore the new_uri & path from the backup */
-	if(unlikely(free_new_uri && i_req->new_uri.s)) {
-		pkg_free(i_req->new_uri.s);
-	}
-	if(unlikely(free_path)) {
-		reset_path_vector(i_req);
-	}
-	if(unlikely(free_instance)) {
-		reset_instance(i_req);
-	}
-	if(unlikely(free_ruid)) {
-		reset_ruid(i_req);
-	}
-	if(unlikely(free_ua)) {
-		reset_ua(i_req);
-	}
-	if(dst_uri_backed_up) {
-		reset_dst_uri(i_req); /* free dst_uri */
-		i_req->dst_uri = dst_uri_bak;
-	}
-	/* restore original new_uri and path values */
-	i_req->new_uri = msg_uri_bak;
-	i_req->parsed_uri = parsed_uri_bak;
-	i_req->parsed_uri_ok = parsed_uri_ok_bak;
-	i_req->path_vec = path_bak;
-	i_req->instance = instance_bak;
-	i_req->ruid = ruid_bak;
-	i_req->location_ua = ua_bak;
-
 	/* Delete the duplicated lump lists, this will also delete
 	 * all lumps created here, such as lumps created in per-branch
 	 * routing sections, Via, and Content-Length headers created in
 	 * build_req_buf_from_sip_req().
 	 */
 	free_duped_lump_list(i_req->body_lumps);
-
-error04:
 	free_duped_lump_list(i_req->add_rm);
 
-error05:
-	/* Restore the lists from backups. */
-	i_req->add_rm = add_rm_backup;
-	i_req->body_lumps = body_lumps_backup;
+	/* restore the new_uri & path from the backup */
+	tm_branch_restore_msg_fields(i_req, &bbak);
 
 error00:
 	return ret;

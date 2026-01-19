@@ -370,6 +370,8 @@ STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
 MAXSNDBUFFER maxsndbuffer
 SQL_BUFFER_SIZE sql_buffer_size
+MSG_CLONE_EXTRA_SIZE msg_clone_extra_size
+MSG_APPLY_CHANGES_MODE msg_apply_changes_mode
 MSG_RECV_MAX_SIZE msg_recv_max_size
 TCP_MSG_READ_TIMEOUT tcp_msg_read_timeout
 TCP_MSG_DATA_TIMEOUT tcp_msg_data_timeout
@@ -871,6 +873,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{MAXSNDBUFFER}	{ count(); yylval.strval=yytext; return MAXSNDBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
+<INITIAL>{MSG_CLONE_EXTRA_SIZE}	{ count(); yylval.strval=yytext; return MSG_CLONE_EXTRA_SIZE; }
+<INITIAL>{MSG_APPLY_CHANGES_MODE}	{ count(); yylval.strval=yytext; return MSG_APPLY_CHANGES_MODE; }
 <INITIAL>{MSG_RECV_MAX_SIZE}	{ count(); yylval.strval=yytext; return MSG_RECV_MAX_SIZE; }
 <INITIAL>{TCP_MSG_READ_TIMEOUT}	{ count(); yylval.strval=yytext; return TCP_MSG_READ_TIMEOUT; }
 <INITIAL>{TCP_MSG_DATA_TIMEOUT}	{ count(); yylval.strval=yytext; return TCP_MSG_DATA_TIMEOUT; }

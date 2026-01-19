@@ -67,6 +67,9 @@ Muhammad Shahzad Shafi
               4.26. forward_uac()
               4.27. forward_uac_uri(vuri)
               4.28. forward_reply()
+              4.29. msg_vbflag_set(flag)
+              4.30. msg_vbflag_is_set(flag)
+              4.31. msg_vbflag_reset(flag)
 
         5. RPC Commands
 
@@ -125,8 +128,11 @@ Muhammad Shahzad Shafi
    1.33. forward_uac usage
    1.34. forward_uac usage
    1.35. forward_reply usage
-   1.36. event_route[network:msg] use cases
-   1.37. Sample PERL code for do_compress and do_uncompress
+   1.36. msg_vbflag_set usage
+   1.37. msg_vbflag_is_set usage
+   1.38. msg_vbflag_reset usage
+   1.39. event_route[network:msg] use cases
+   1.40. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -178,6 +184,9 @@ Chapter 1. Admin Guide
         4.26. forward_uac()
         4.27. forward_uac_uri(vuri)
         4.28. forward_reply()
+        4.29. msg_vbflag_set(flag)
+        4.30. msg_vbflag_is_set(flag)
+        4.31. msg_vbflag_reset(flag)
 
    5. RPC Commands
 
@@ -399,6 +408,9 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    4.26. forward_uac()
    4.27. forward_uac_uri(vuri)
    4.28. forward_reply()
+   4.29. msg_vbflag_set(flag)
+   4.30. msg_vbflag_is_set(flag)
+   4.31. msg_vbflag_reset(flag)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -869,6 +881,57 @@ route[reply] {
 }
 ...
 
+4.29. msg_vbflag_set(flag)
+
+   Set the via-body flag.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be set. Can be integer or
+       pseudo-variable with integer value (range 0-31).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.36. msg_vbflag_set usage
+...
+msg_vbflag_set("1");
+...
+$var(flag) = 11;
+msg_vbflag_set("$var(flag)");
+...
+
+4.30. msg_vbflag_is_set(flag)
+
+   Return true if the via-body flag is set.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be tested. Can be integer or
+       pseudo-variable with integer value (range 0-31).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.37. msg_vbflag_is_set usage
+...
+if(msg_vbflag_is_set("1"))
+{
+    ...
+}
+...
+
+4.31. msg_vbflag_reset(flag)
+
+   Reset the via-body flag.
+
+   Meaning of the parameters is as follows:
+     * flag - the index of the flag to be reset. Can be integer or
+       pseudo-variable with integer value (range 0-31).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.38. msg_vbflag_reset usage
+...
+msg_vbflag_reset("1");
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -1045,7 +1108,7 @@ route[reply] {
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.36. event_route[network:msg] use cases
+   Example 1.39. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -1076,7 +1139,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.37. Sample PERL code for do_compress and do_uncompress
+   Example 1.40. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;

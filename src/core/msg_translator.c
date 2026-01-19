@@ -121,6 +121,7 @@ str _ksr_xavp_via_fields = STR_NULL;
 str _ksr_xavp_via_reply_params = STR_NULL;
 int ksr_local_rport = 0;
 str _ksr_via_body_flags = str_init("kvf");
+int ksr_msg_apply_changes_mode = 0;
 
 /** per process fixup function for global_req_flags.
   * It should be called from the configuration framework.
@@ -889,9 +890,13 @@ static inline int lumps_len(
 	}
 
 	for(t = lumps; t; t = t->next) {
-		/* skip if this is an OPT lump and the condition is not satisfied */
-		if((t->op == LUMP_ADD_OPT) && !lump_check_opt(t, msg, send_info))
+		if(t->flags & LUMPFLAG_APPLIED) {
 			continue;
+		}
+		/* skip if this is an OPT lump and the condition is not satisfied */
+		if((t->op == LUMP_ADD_OPT) && !lump_check_opt(t, msg, send_info)) {
+			continue;
+		}
 		for(r = t->before; r; r = r->before) {
 			switch(r->op) {
 				case LUMP_ADD:
@@ -1429,6 +1434,10 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 	s_offset = *orig_offs;
 
 	for(t = lumps; t; t = t->next) {
+		if(t->flags & LUMPFLAG_APPLIED) {
+			continue;
+		}
+		t->flags |= LUMPFLAG_APPLIED;
 		switch(t->op) {
 			case LUMP_ADD:
 			case LUMP_ADD_SUBST:

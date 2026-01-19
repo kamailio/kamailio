@@ -38,12 +38,15 @@ endif(NETSNMP_LIBS)
 find_program(NETSNMP_CONFIG_BIN net-snmp-config)
 
 if(NETSNMP_CONFIG_BIN)
-  execute_process(COMMAND ${NETSNMP_CONFIG_BIN} --cflags OUTPUT_VARIABLE _NETSNMP_CFLAGS)
+  # Find libs required
   execute_process(COMMAND ${NETSNMP_CONFIG_BIN} --libs OUTPUT_VARIABLE _NETSNMP_LIBS)
   # Strip trailing and leading whitespaces
-  string(STRIP "${_NETSNMP_CFLAGS}" _NETSNMP_CFLAGS)
   string(STRIP "${_NETSNMP_LIBS}" _NETSNMP_LIBS)
+  # Create a list from the flags to be used in target_link_libraries and
+  # not quoted as a single argument
+  separate_arguments(_NETSNMP_LIBS UNIX_COMMAND "${_NETSNMP_LIBS}")
 
+  set(_NETSNMP_CFLAGS " ")
   set(NETSNMP_CFLAGS
       ${_NETSNMP_CFLAGS}
       CACHE STRING "CFLAGS for net-snmp lib"
@@ -55,10 +58,16 @@ if(NETSNMP_CONFIG_BIN)
   set(NETSNMP_FOUND TRUE BOOL "net-snmp is found")
 
   add_library(NETSNMP::NETSNMP INTERFACE IMPORTED)
-  set_target_properties(
-    NETSNMP::NETSNMP PROPERTIES COMPILE_FLAGS "${NETSNMP_CFLAGS}" INTERFACE_LINK_LIBRARIES
-                                                                  "${NETSNMP_LIBS}"
-  )
+  set_target_properties(NETSNMP::NETSNMP PROPERTIES INTERFACE_LINK_LIBRARIES "${NETSNMP_LIBS}")
+
+  # Find cflags required if ever needed. kamailio modules don't need them currently.
+  # execute_process(COMMAND ${NETSNMP_CONFIG_BIN} --cflags OUTPUT_VARIABLE _NETSNMP_CFLAGS)
+  # string(STRIP "${_NETSNMP_CFLAGS}" _NETSNMP_CFLAGS)
+  # # string(REPLACE " " ";" _NETSNMP_CFLAGS "${_NETSNMP_CFLAGS}")
+  # separate_arguments(_NETSNMP_CFLAGS UNIX_COMMAND "${_NETSNMP_CFLAGS}")
+  # set_target_properties(
+  #   NETSNMP::NETSNMP PROPERTIES INTERFACE_COMPILE_OPTIONS "${NETSNMP_CFLAGS}"
+  # )
 
   if(NOT TARGET NETSNMP::NETSNMP)
     message(
