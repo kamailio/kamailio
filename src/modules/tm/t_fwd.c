@@ -36,6 +36,7 @@
 #include "../../core/onsend.h"
 #include "../../core/compiler_opt.h"
 #include "../../core/route.h"
+#include "../../core/sip_msg_clone.h"
 #include "../../core/script_cb.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
@@ -330,6 +331,9 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	struct run_act_ctx *bctx;
 	sr_kemi_eng_t *keng;
 	ksr_msgbuild_t mbd = {0};
+	sip_msg_t l_req;
+	sip_msg_t *b_req = NULL;
+	char l_buf[BUF_SIZE];
 
 	shbuf = 0;
 	ret = E_UNSPEC;
@@ -350,17 +354,31 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	 * the up-to-date values */
 	membar_depends();
 
-	if(tm_branch_backup_msg_fields(i_req, &bbak) < 0) {
-		ret = E_OUT_OF_MEM;
-		goto error00;
+	if(ksr_msg_apply_changes_mode == 1) {
+		memset(&l_req, 0, sizeof(sip_msg_t));
+		l_req.buf = l_buf;
+		l_buf[0] = '\0';
+		if(sip_msg_copy(i_req, &l_req, 0) < 0) {
+			ret = E_OUT_OF_MEM;
+			goto error00;
+		}
+		b_req = &l_req;
+	} else {
+		if(tm_branch_backup_msg_fields(i_req, &bbak) < 0) {
+			ret = E_OUT_OF_MEM;
+			goto error00;
+		}
+		b_req = i_req;
 	}
 
 	if(unlikely(branch_route || has_tran_tmcbs(t, TMCB_REQUEST_FWDED))) {
-		if(tm_branch_duplicate_msg_fields(i_req, uri, next_hop, path, instance,
-				   ruid, location_ua, flags, &bbak)
-				< 0) {
-			ret = E_OUT_OF_MEM;
-			goto error03;
+		if(ksr_msg_apply_changes_mode != 1) {
+			if(tm_branch_duplicate_msg_fields(i_req, uri, next_hop, path,
+					   instance, ruid, location_ua, flags, &bbak)
+					< 0) {
+				ret = E_OUT_OF_MEM;
+				goto error03;
+			}
 		}
 		if(likely(branch_route)) {
 			/* run branch_route actions if provided */
@@ -375,39 +393,41 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			 * (for that to work one would have to set branch_route prior to
 			 * calling add_uac(...) and then reset it afterwards).
 			 */
-			if(exec_pre_script_cb(i_req, BRANCH_CB_TYPE) > 0) {
+			if(exec_pre_script_cb(b_req, BRANCH_CB_TYPE) > 0) {
 				/* backup ireq msg send flags and force_send_socket*/
-				bbak.fwd_snd_flags_bak = i_req->fwd_send_flags;
-				bbak.rpl_snd_flags_bak = i_req->rpl_send_flags;
-				bbak.force_send_socket_bak = i_req->force_send_socket;
+				bbak.fwd_snd_flags_bak = b_req->fwd_send_flags;
+				bbak.rpl_snd_flags_bak = b_req->rpl_send_flags;
+				bbak.force_send_socket_bak = b_req->force_send_socket;
 				/* set the new values */
-				i_req->fwd_send_flags = snd_flags /* initial value  */;
-				set_force_socket(i_req, fsocket);
+				b_req->fwd_send_flags = snd_flags /* initial value  */;
+				set_force_socket(b_req, fsocket);
 				keng = sr_kemi_eng_get();
 				if(unlikely(keng != NULL)) {
 					bctx = sr_kemi_act_ctx_get();
 					init_run_actions_ctx(&ctx);
 					sr_kemi_act_ctx_set(&ctx);
-					if(sr_kemi_route(keng, i_req, BRANCH_ROUTE,
+					if(sr_kemi_route(keng, b_req, BRANCH_ROUTE,
 							   sr_kemi_cbname_lookup_idx(branch_route), NULL)
 							< 0) {
 						LM_ERR("error running branch route kemi callback\n");
 					}
 					sr_kemi_act_ctx_set(bctx);
 				} else {
-					if(run_top_route(branch_rt.rlist[branch_route], i_req, &ctx)
+					if(run_top_route(branch_rt.rlist[branch_route], b_req, &ctx)
 							< 0) {
 						LM_DBG("negative return code in run_top_route\n");
 					}
 				}
 				/* update dst send_flags  and send socket*/
-				snd_flags = i_req->fwd_send_flags;
-				fsocket = i_req->force_send_socket;
-				/* restore ireq_msg force_send_socket & flags */
-				set_force_socket(i_req, bbak.force_send_socket_bak);
-				i_req->fwd_send_flags = bbak.fwd_snd_flags_bak;
-				i_req->rpl_send_flags = bbak.rpl_snd_flags_bak;
-				exec_post_script_cb(i_req, BRANCH_CB_TYPE);
+				snd_flags = b_req->fwd_send_flags;
+				fsocket = b_req->force_send_socket;
+				if(ksr_msg_apply_changes_mode != 1) {
+					/* restore ireq_msg force_send_socket & flags */
+					set_force_socket(i_req, bbak.force_send_socket_bak);
+					i_req->fwd_send_flags = bbak.fwd_snd_flags_bak;
+					i_req->rpl_send_flags = bbak.rpl_snd_flags_bak;
+				}
+				exec_post_script_cb(b_req, BRANCH_CB_TYPE);
 				/* if DROP was called in cfg, don't forward, jump to end */
 				if(unlikely(ctx.run_flags & DROP_R_F)) {
 					tm_ctx_set_branch_index(T_BR_UNDEFINED);
@@ -420,7 +440,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			/* run the specific callbacks for this transaction */
 			if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
 				run_trans_callbacks(
-						TMCB_REQUEST_FWDED, t, i_req, 0, -i_req->REQ_METHOD);
+						TMCB_REQUEST_FWDED, t, b_req, 0, -b_req->REQ_METHOD);
 
 			tm_ctx_set_branch_index(T_BR_UNDEFINED);
 			set_route_type(backup_route_type);
@@ -428,65 +448,65 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			/* run the specific callbacks for this transaction */
 			if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_FWDED)))
 				run_trans_callbacks(
-						TMCB_REQUEST_FWDED, t, i_req, 0, -i_req->REQ_METHOD);
+						TMCB_REQUEST_FWDED, t, b_req, 0, -b_req->REQ_METHOD);
 		}
-		if(likely(!(flags & UAC_DNS_FAILOVER_F) && i_req->dst_uri.s
-				   && i_req->dst_uri.len)) {
+		if(likely(!(flags & UAC_DNS_FAILOVER_F) && b_req->dst_uri.s
+				   && b_req->dst_uri.len)) {
 			/* no dns failover and non-empty dst_uri => use it as dst
 			 * (on dns failover dns_h will be non-empty => next_hop will be
 			 * ignored) */
-			next_hop = &i_req->dst_uri;
+			next_hop = &b_req->dst_uri;
 		}
 		/* no path vector initially, but now is set after branch route and
 		 * callbacks execution */
-		if(i_req->path_vec.s != 0 && bbak.free_path == 0)
+		if(b_req->path_vec.s != 0 && bbak.free_path == 0)
 			bbak.free_path = 1;
 	} else {
 		/* no branch route and no TMCB_REQUEST_FWDED callback => set
 		 * msg uri and path to the new values (if needed) */
-		if(unlikely((uri->s != i_req->new_uri.s
-							|| uri->len != i_req->new_uri.len)
-					&& (i_req->new_uri.s != 0
-							|| uri->s != i_req->first_line.u.request.uri.s
+		if(unlikely((uri->s != b_req->new_uri.s
+							|| uri->len != b_req->new_uri.len)
+					&& (b_req->new_uri.s != 0
+							|| uri->s != b_req->first_line.u.request.uri.s
 							|| uri->len
-									   != i_req->first_line.u.request.uri
+									   != b_req->first_line.u.request.uri
 												  .len))) {
 			/* uri is different from i_req uri => replace i_req uri and force
 			 * uri re-parsing */
-			i_req->new_uri = *uri;
-			i_req->parsed_uri_ok = 0;
+			b_req->new_uri = *uri;
+			b_req->parsed_uri_ok = 0;
 		}
 		if(unlikely(path
-					&& (i_req->path_vec.s != path->s
-							|| i_req->path_vec.len != path->len))) {
-			i_req->path_vec = *path;
-		} else if(unlikely(path == 0 && i_req->path_vec.len != 0)) {
-			i_req->path_vec.s = 0;
-			i_req->path_vec.len = 0;
+					&& (b_req->path_vec.s != path->s
+							|| b_req->path_vec.len != path->len))) {
+			b_req->path_vec = *path;
+		} else if(unlikely(path == 0 && b_req->path_vec.len != 0)) {
+			b_req->path_vec.s = 0;
+			b_req->path_vec.len = 0;
 		}
 		if(unlikely(instance
-					&& (i_req->instance.s != instance->s
-							|| i_req->instance.len != instance->len))) {
-			i_req->instance = *instance;
-		} else if(unlikely(instance == 0 && i_req->instance.len != 0)) {
-			i_req->instance.s = 0;
-			i_req->instance.len = 0;
+					&& (b_req->instance.s != instance->s
+							|| b_req->instance.len != instance->len))) {
+			b_req->instance = *instance;
+		} else if(unlikely(instance == 0 && b_req->instance.len != 0)) {
+			b_req->instance.s = 0;
+			b_req->instance.len = 0;
 		}
 		if(unlikely(ruid
-					&& (i_req->ruid.s != ruid->s
-							|| i_req->ruid.len != ruid->len))) {
-			i_req->ruid = *ruid;
-		} else if(unlikely(ruid == 0 && i_req->ruid.len != 0)) {
-			i_req->ruid.s = 0;
-			i_req->ruid.len = 0;
+					&& (b_req->ruid.s != ruid->s
+							|| b_req->ruid.len != ruid->len))) {
+			b_req->ruid = *ruid;
+		} else if(unlikely(ruid == 0 && b_req->ruid.len != 0)) {
+			b_req->ruid.s = 0;
+			b_req->ruid.len = 0;
 		}
 		if(unlikely(location_ua
-					&& (i_req->location_ua.s != location_ua->s
-							|| i_req->location_ua.len != location_ua->len))) {
-			i_req->location_ua = *location_ua;
-		} else if(unlikely(location_ua == 0 && i_req->location_ua.len != 0)) {
-			i_req->location_ua.s = 0;
-			i_req->location_ua.len = 0;
+					&& (b_req->location_ua.s != location_ua->s
+							|| b_req->location_ua.len != location_ua->len))) {
+			b_req->location_ua = *location_ua;
+		} else if(unlikely(location_ua == 0 && b_req->location_ua.len != 0)) {
+			b_req->location_ua.s = 0;
+			b_req->location_ua.len = 0;
 		}
 	}
 
@@ -528,7 +548,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	}
 	/* ... and build it now */
 	mbd.tvbflags = t->uac[branch].vbflags;
-	shbuf = build_req_buf_from_sip_req(i_req, &len, dst, BUILD_IN_SHM, &mbd);
+	shbuf = build_req_buf_from_sip_req(b_req, &len, dst, BUILD_IN_SHM, &mbd);
 	if(!shbuf || len <= 0) {
 		LM_ERR("could not build request\n");
 		if(shbuf) {
@@ -548,11 +568,11 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	t->uac[branch].request.buffer = shbuf;
 	t->uac[branch].request.buffer_len = len;
 	t->uac[branch].uri.s = t->uac[branch].request.buffer
-						   + i_req->first_line.u.request.method.len + 1;
-	t->uac[branch].uri.len = GET_RURI(i_req)->len;
+						   + b_req->first_line.u.request.method.len + 1;
+	t->uac[branch].uri.len = GET_RURI(b_req)->len;
 
-	if(unlikely(i_req->dst_uri.s && i_req->dst_uri.len)) {
-		t->uac[branch].dst_uri.s = shm_malloc(i_req->dst_uri.len + 1);
+	if(unlikely(b_req->dst_uri.s && b_req->dst_uri.len)) {
+		t->uac[branch].dst_uri.s = shm_malloc(b_req->dst_uri.len + 1);
 		if(unlikely(t->uac[branch].dst_uri.s == 0)) {
 			SHM_MEM_ERROR;
 			shm_free(shbuf);
@@ -563,12 +583,12 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			ret = E_OUT_OF_MEM;
 			goto error01;
 		}
-		t->uac[branch].dst_uri.len = i_req->dst_uri.len;
-		t->uac[branch].dst_uri.s[i_req->dst_uri.len] = 0;
-		memcpy(t->uac[branch].dst_uri.s, i_req->dst_uri.s, i_req->dst_uri.len);
+		t->uac[branch].dst_uri.len = b_req->dst_uri.len;
+		t->uac[branch].dst_uri.s[b_req->dst_uri.len] = 0;
+		memcpy(t->uac[branch].dst_uri.s, b_req->dst_uri.s, b_req->dst_uri.len);
 	}
-	if(unlikely(i_req->path_vec.s && i_req->path_vec.len)) {
-		t->uac[branch].path.s = shm_malloc(i_req->path_vec.len + 1);
+	if(unlikely(b_req->path_vec.s && b_req->path_vec.len)) {
+		t->uac[branch].path.s = shm_malloc(b_req->path_vec.len + 1);
 		if(unlikely(t->uac[branch].path.s == 0)) {
 			SHM_MEM_ERROR;
 			shm_free(shbuf);
@@ -579,12 +599,12 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			ret = E_OUT_OF_MEM;
 			goto error01;
 		}
-		t->uac[branch].path.len = i_req->path_vec.len;
-		t->uac[branch].path.s[i_req->path_vec.len] = 0;
-		memcpy(t->uac[branch].path.s, i_req->path_vec.s, i_req->path_vec.len);
+		t->uac[branch].path.len = b_req->path_vec.len;
+		t->uac[branch].path.s[b_req->path_vec.len] = 0;
+		memcpy(t->uac[branch].path.s, b_req->path_vec.s, b_req->path_vec.len);
 	}
-	if(unlikely(i_req->instance.s && i_req->instance.len)) {
-		t->uac[branch].instance.s = shm_malloc(i_req->instance.len + 1);
+	if(unlikely(b_req->instance.s && b_req->instance.len)) {
+		t->uac[branch].instance.s = shm_malloc(b_req->instance.len + 1);
 		if(unlikely(t->uac[branch].instance.s == 0)) {
 			SHM_MEM_ERROR;
 			shm_free(shbuf);
@@ -595,13 +615,13 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			ret = E_OUT_OF_MEM;
 			goto error01;
 		}
-		t->uac[branch].instance.len = i_req->instance.len;
-		t->uac[branch].instance.s[i_req->instance.len] = 0;
-		memcpy(t->uac[branch].instance.s, i_req->instance.s,
-				i_req->instance.len);
+		t->uac[branch].instance.len = b_req->instance.len;
+		t->uac[branch].instance.s[b_req->instance.len] = 0;
+		memcpy(t->uac[branch].instance.s, b_req->instance.s,
+				b_req->instance.len);
 	}
-	if(unlikely(i_req->ruid.s && i_req->ruid.len)) {
-		t->uac[branch].ruid.s = shm_malloc(i_req->ruid.len + 1);
+	if(unlikely(b_req->ruid.s && b_req->ruid.len)) {
+		t->uac[branch].ruid.s = shm_malloc(b_req->ruid.len + 1);
 		if(unlikely(t->uac[branch].ruid.s == 0)) {
 			SHM_MEM_ERROR;
 			shm_free(shbuf);
@@ -612,12 +632,12 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			ret = E_OUT_OF_MEM;
 			goto error01;
 		}
-		t->uac[branch].ruid.len = i_req->ruid.len;
-		t->uac[branch].ruid.s[i_req->ruid.len] = 0;
-		memcpy(t->uac[branch].ruid.s, i_req->ruid.s, i_req->ruid.len);
+		t->uac[branch].ruid.len = b_req->ruid.len;
+		t->uac[branch].ruid.s[b_req->ruid.len] = 0;
+		memcpy(t->uac[branch].ruid.s, b_req->ruid.s, b_req->ruid.len);
 	}
-	if(unlikely(i_req->location_ua.s && i_req->location_ua.len)) {
-		t->uac[branch].location_ua.s = shm_malloc(i_req->location_ua.len + 1);
+	if(unlikely(b_req->location_ua.s && b_req->location_ua.len)) {
+		t->uac[branch].location_ua.s = shm_malloc(b_req->location_ua.len + 1);
 		if(unlikely(t->uac[branch].location_ua.s == 0)) {
 			SHM_MEM_ERROR;
 			shm_free(shbuf);
@@ -628,13 +648,13 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 			ret = E_OUT_OF_MEM;
 			goto error01;
 		}
-		t->uac[branch].location_ua.len = i_req->location_ua.len;
-		t->uac[branch].location_ua.s[i_req->location_ua.len] = 0;
-		memcpy(t->uac[branch].location_ua.s, i_req->location_ua.s,
-				i_req->location_ua.len);
+		t->uac[branch].location_ua.len = b_req->location_ua.len;
+		t->uac[branch].location_ua.s[b_req->location_ua.len] = 0;
+		memcpy(t->uac[branch].location_ua.s, b_req->location_ua.s,
+				b_req->location_ua.len);
 	}
 
-	len = count_applied_lumps(i_req->add_rm, HDR_RECORDROUTE_T);
+	len = count_applied_lumps(b_req->add_rm, HDR_RECORDROUTE_T);
 	if(len == 1)
 		t->uac[branch].flags = TM_UAC_FLAG_RR;
 	else if(len == 2)
@@ -644,17 +664,20 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 
 error01:
 error03:
-	/* Delete the duplicated lump lists, this will also delete
-	 * all lumps created here, such as lumps created in per-branch
-	 * routing sections, Via, and Content-Length headers created in
-	 * build_req_buf_from_sip_req().
-	 */
-	free_duped_lump_list(i_req->body_lumps);
-	free_duped_lump_list(i_req->add_rm);
+	if(ksr_msg_apply_changes_mode != 1) {
+		/* Delete the duplicated lump lists, this will also delete
+		 * all lumps created here, such as lumps created in per-branch
+		 * routing sections, Via, and Content-Length headers created in
+		 * build_req_buf_from_sip_req().
+		 */
+		free_duped_lump_list(i_req->body_lumps);
+		free_duped_lump_list(i_req->add_rm);
 
-	/* restore the new_uri & path from the backup */
-	tm_branch_restore_msg_fields(i_req, &bbak);
-
+		/* restore the new_uri & path from the backup */
+		tm_branch_restore_msg_fields(i_req, &bbak);
+	} else {
+		free_sip_msg(&l_req);
+	}
 error00:
 	return ret;
 }
