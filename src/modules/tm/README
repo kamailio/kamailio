@@ -139,20 +139,21 @@ Daniel-Constantin Mierla
               4.45. t_set_disable_6xx(0|1)
               4.46. t_set_disable_failover(0|1)
               4.47. t_set_disable_internal_reply(0|1)
-              4.48. t_replicate([params])
-              4.49. t_relay_to(proxy, flags)
-              4.50. t_relay_to_proxy(proxy [, flags])
-              4.51. t_set_no_e2e_cancel_reason(0|1)
-              4.52. t_is_set(target)
-              4.53. t_use_uac_headers()
-              4.54. t_is_retr_async_reply()
-              4.55. t_uac_send(method, ruri, nexthop, socket, headers,
+              4.48. t_set_no_auto_ack(0|1)
+              4.49. t_replicate([params])
+              4.50. t_relay_to(proxy, flags)
+              4.51. t_relay_to_proxy(proxy [, flags])
+              4.52. t_set_no_e2e_cancel_reason(0|1)
+              4.53. t_is_set(target)
+              4.54. t_use_uac_headers()
+              4.55. t_is_retr_async_reply()
+              4.56. t_uac_send(method, ruri, nexthop, socket, headers,
                       body)
 
-              4.56. t_get_status_code()
-              4.57. t_clean()
-              4.58. t_exists()
-              4.59. t_cell_append_branches(tindex, tlabel)
+              4.57. t_get_status_code()
+              4.58. t_clean()
+              4.59. t_exists()
+              4.60. t_cell_append_branches(tindex, tlabel)
 
         5. RPC Commands
 
@@ -309,25 +310,26 @@ Daniel-Constantin Mierla
    1.101. t_set_disable_6xx usage
    1.102. t_set_disable_failover usage
    1.103. t_set_disable_internal_reply usage
-   1.104. t_replicate usage
-   1.105. t_relay_to usage
-   1.106. t_relay_to_proxy usage
-   1.107. t_set_no_e2e_cancel_reason usage
-   1.108. t_replicate usage
-   1.109. t_use_uac_headers usage
-   1.110. t_is_retr_async_reply usage
-   1.111. t_uac_send usage
-   1.112. t_get_status_code usage
-   1.113. t_clean usage
-   1.114. t_exists usage
-   1.115. t_cell_append_branches usage
-   1.116. Using “tm.t_uac_attrs”
-   1.117. Using “tm.retransmit_reply”
-   1.118. Using “tm.retransmit_reply_callid”
-   1.119. event_route[tm:branch-failure:id] usage
-   1.120. event_route[tm:local-request] usage
-   1.121. event_route[tm:local-response] usage
-   1.122. event_route[tm:local-ack-sent] usage
+   1.104. t_set_no_auto_ack usage
+   1.105. t_replicate usage
+   1.106. t_relay_to usage
+   1.107. t_relay_to_proxy usage
+   1.108. t_set_no_e2e_cancel_reason usage
+   1.109. t_replicate usage
+   1.110. t_use_uac_headers usage
+   1.111. t_is_retr_async_reply usage
+   1.112. t_uac_send usage
+   1.113. t_get_status_code usage
+   1.114. t_clean usage
+   1.115. t_exists usage
+   1.116. t_cell_append_branches usage
+   1.117. Using “tm.t_uac_attrs”
+   1.118. Using “tm.retransmit_reply”
+   1.119. Using “tm.retransmit_reply_callid”
+   1.120. event_route[tm:branch-failure:id] usage
+   1.121. event_route[tm:local-request] usage
+   1.122. event_route[tm:local-response] usage
+   1.123. event_route[tm:local-ack-sent] usage
 
 Chapter 1. Admin Guide
 
@@ -449,18 +451,19 @@ Chapter 1. Admin Guide
         4.45. t_set_disable_6xx(0|1)
         4.46. t_set_disable_failover(0|1)
         4.47. t_set_disable_internal_reply(0|1)
-        4.48. t_replicate([params])
-        4.49. t_relay_to(proxy, flags)
-        4.50. t_relay_to_proxy(proxy [, flags])
-        4.51. t_set_no_e2e_cancel_reason(0|1)
-        4.52. t_is_set(target)
-        4.53. t_use_uac_headers()
-        4.54. t_is_retr_async_reply()
-        4.55. t_uac_send(method, ruri, nexthop, socket, headers, body)
-        4.56. t_get_status_code()
-        4.57. t_clean()
-        4.58. t_exists()
-        4.59. t_cell_append_branches(tindex, tlabel)
+        4.48. t_set_no_auto_ack(0|1)
+        4.49. t_replicate([params])
+        4.50. t_relay_to(proxy, flags)
+        4.51. t_relay_to_proxy(proxy [, flags])
+        4.52. t_set_no_e2e_cancel_reason(0|1)
+        4.53. t_is_set(target)
+        4.54. t_use_uac_headers()
+        4.55. t_is_retr_async_reply()
+        4.56. t_uac_send(method, ruri, nexthop, socket, headers, body)
+        4.57. t_get_status_code()
+        4.58. t_clean()
+        4.59. t_exists()
+        4.60. t_cell_append_branches(tindex, tlabel)
 
    5. RPC Commands
 
@@ -2034,18 +2037,19 @@ modparam("tm", "evlreq_mode", 1)
    4.45. t_set_disable_6xx(0|1)
    4.46. t_set_disable_failover(0|1)
    4.47. t_set_disable_internal_reply(0|1)
-   4.48. t_replicate([params])
-   4.49. t_relay_to(proxy, flags)
-   4.50. t_relay_to_proxy(proxy [, flags])
-   4.51. t_set_no_e2e_cancel_reason(0|1)
-   4.52. t_is_set(target)
-   4.53. t_use_uac_headers()
-   4.54. t_is_retr_async_reply()
-   4.55. t_uac_send(method, ruri, nexthop, socket, headers, body)
-   4.56. t_get_status_code()
-   4.57. t_clean()
-   4.58. t_exists()
-   4.59. t_cell_append_branches(tindex, tlabel)
+   4.48. t_set_no_auto_ack(0|1)
+   4.49. t_replicate([params])
+   4.50. t_relay_to(proxy, flags)
+   4.51. t_relay_to_proxy(proxy [, flags])
+   4.52. t_set_no_e2e_cancel_reason(0|1)
+   4.53. t_is_set(target)
+   4.54. t_use_uac_headers()
+   4.55. t_is_retr_async_reply()
+   4.56. t_uac_send(method, ruri, nexthop, socket, headers, body)
+   4.57. t_get_status_code()
+   4.58. t_clean()
+   4.59. t_exists()
+   4.60. t_cell_append_branches(tindex, tlabel)
 
 4.1.  t_relay([host, port])
 
@@ -3052,7 +3056,21 @@ if(!t_relay()) {
 }
 ...
 
-4.48.  t_replicate([params])
+4.48.  t_set_no_auto_ack(0|1)
+
+   Turn off/on generating e2e ACKs automatically for successfully answered
+   local transactions (uac)
+
+   Example 1.104. t_set_no_auto_ack usage
+...
+t_set_no_auto_ack(1); # when receiving a 200-299 fr for local transaction (uac),
+ do not reply automatically
+if(!t_relay()) {
+   send_reply("500", "Server error");
+}
+...
+
+4.49.  t_replicate([params])
 
    Replicate the SIP request to a specific address. Return values are the
    same as for t_relay(). Note that responses to the replicated request
@@ -3077,7 +3095,7 @@ if(!t_relay()) {
      * hostport - address in "host:port" format. It can be given via an
        AVP.
 
-   Example 1.104. t_replicate usage
+   Example 1.105. t_replicate usage
 ...
 # sent to 1.2.3.4:5060 over tcp
 t_replicate("sip:1.2.3.4:5060;transport=tcp");
@@ -3090,7 +3108,7 @@ t_replicate("sip:$var(h);transport=tls");
 t_replicate_to_udp("1.2.3.4", "5060");
 ...
 
-4.49.  t_relay_to(proxy, flags)
+4.50.  t_relay_to(proxy, flags)
 
    Forward the SIP request to a specific address, controlling internal
    behavior via flags.
@@ -3111,7 +3129,7 @@ t_replicate_to_udp("1.2.3.4", "5060");
           + 0x02 - do not generate reply on internal error.
           + 0x04 - disable dns failover.
 
-   Example 1.105. t_relay_to usage
+   Example 1.106. t_relay_to usage
 ...
 # sent to 1.2.3.4:5060 over tcp
 t_relay_to("tcp:1.2.3.4:5060");
@@ -3123,7 +3141,7 @@ t_relay_to("tls:1.2.3.4");
 t_relay_to("0x01");
 ...
 
-4.50.  t_relay_to_proxy(proxy [, flags])
+4.51.  t_relay_to_proxy(proxy [, flags])
 
    Alternative function to relay the SIP request to a specific address,
    with the parameter supporting variables inside it.
@@ -3135,12 +3153,12 @@ t_relay_to("0x01");
 
    The function can be used in REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.106. t_relay_to_proxy usage
+   Example 1.107. t_relay_to_proxy usage
 ...
 t_relay_to_proxy("udp:$var(addr):5060");
 ...
 
-4.51.  t_set_no_e2e_cancel_reason(0|1)
+4.52.  t_set_no_e2e_cancel_reason(0|1)
 
    Enables/disables reason header (RFC 3326) copying from the triggering
    received CANCEL to the generated hop-by-hop CANCEL. 0 enables and 1
@@ -3154,7 +3172,7 @@ t_relay_to_proxy("udp:$var(addr):5060");
 
    See also: e2e_cancel_reason.
 
-   Example 1.107. t_set_no_e2e_cancel_reason usage
+   Example 1.108. t_set_no_e2e_cancel_reason usage
 ...
 route {
 ...
@@ -3164,7 +3182,7 @@ opying
 ...
 }
 
-4.52.  t_is_set(target)
+4.53.  t_is_set(target)
 
    Return true if the attribute specified by 'target' is set for
    transaction.
@@ -3177,13 +3195,13 @@ opying
      * onreply_route - the function returns true if an onreply route is
        set to be executed.
 
-   Example 1.108. t_replicate usage
+   Example 1.109. t_replicate usage
 ...
 if(!t_is_set("failure_route"))
     LM_DBG("no failure route will be executed for current transaction\n");
 ...
 
-4.53.  t_use_uac_headers()
+4.54.  t_use_uac_headers()
 
    Set internal flags to tell tm to use UAC side for building headers for
    local generated requests (ACK, CANCEL) - useful when changing From/To
@@ -3191,12 +3209,12 @@ if(!t_is_set("failure_route"))
 
    It returns true.
 
-   Example 1.109. t_use_uac_headers usage
+   Example 1.110. t_use_uac_headers usage
 ...
 t_use_uac_headers();
 ...
 
-4.54.  t_is_retr_async_reply()
+4.55.  t_is_retr_async_reply()
 
    Check to see if the reply is a retransmitted reply on a transaction
    that is currently suspended asynchronously (suspended during reply
@@ -3210,7 +3228,7 @@ t_use_uac_headers();
    returns true if the transaction is currently reply suspended or false
    if not.
 
-   Example 1.110. t_is_retr_async_reply usage
+   Example 1.111. t_is_retr_async_reply usage
 ...
 if (t_is_retr_async_reply()) {
         xlog("L_DBG", "Dropping retransmitted reply which is still currently sus
@@ -3219,14 +3237,16 @@ pended\n");
 }
 ...
 
-4.55.  t_uac_send(method, ruri, nexthop, socket, headers, body)
+4.56.  t_uac_send(method, ruri, nexthop, socket, headers, body)
 
    Send a UAC request.
 
    It returns true (1) if successful, false (-1) on failure.
 
    The parameters:
-     * method - SIP method.
+     * method - SIP method. Add a "." to the end of the method name to
+       suppress automatic ACK generation (the dot is not transmitted, of
+       course).
      * ruri - request URI.
      * nexthop - destination URI (can be empty).
      * socket - local send socket (can be empty).
@@ -3235,39 +3255,39 @@ pended\n");
        Content-Type header must exist.
      * body - SIP message body (can be empty).
 
-   Example 1.111. t_uac_send usage
+   Example 1.112. t_uac_send usage
 ...
 t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
     "From: bob@kamailio.org;tag=2w3e\r\nTo: bob@kamailio.org", "");
 ...
 
-4.56.  t_get_status_code()
+4.57.  t_get_status_code()
 
    Return the status code for transaction - the most relevant SIP reply
    status code, or -1 in case of error or no status code was set.
 
-   Example 1.112. t_get_status_code usage
+   Example 1.113. t_get_status_code usage
 ...
 $var(ts) = t_get_status_code();
 if($var(ts) == 500) { ... }
 ...
 
-4.57.  t_clean()
+4.58.  t_clean()
 
    Cleans active but very old transactions. Returns true (1). Can be
    called from any route.
 
-   Example 1.113. t_clean usage
+   Example 1.114. t_clean usage
 ...
 t_clean();
 ...
 
-4.58.  t_exists()
+4.59.  t_exists()
 
    Return true if a transaction for the current message exists, without
    setting the global references.
 
-   Example 1.114. t_exists usage
+   Example 1.115. t_exists usage
 ...
 reply_route {
     if (!t_exists()) {
@@ -3276,12 +3296,12 @@ reply_route {
 }
 ...
 
-4.59.  t_cell_append_branches(tindex, tlabel)
+4.60.  t_cell_append_branches(tindex, tlabel)
 
    Append destination set branches to the transaction identified by
    (tindex, tlabel). The parameters can also be variables.
 
-   Example 1.115. t_cell_append_branches usage
+   Example 1.116. t_cell_append_branches usage
 ...
     append_branch("sip:1.2.3.4:5060");
     t_cell_append_branches("1234", "$var(tlabel)");
@@ -3410,7 +3430,7 @@ reply_route {
      * fr_inv_timeout - the fr_inv_timeout value for the local
        transaction.
 
-   Example 1.116. Using “tm.t_uac_attrs”
+   Example 1.117. Using “tm.t_uac_attrs”
 ...
 kamcli rpc tm.t_uac_attrs 'reply=wait;cbflags=noack;rpflags=1' 'INVITE' ...
 ...
@@ -3466,7 +3486,7 @@ kamcli rpc tm.t_uac_attrs 'reply=wait;cbflags=noack;rpflags=1' 'INVITE' ...
    Parameters:
      * trans_id - transaction identifier (has the hash_entry:label format)
 
-   Example 1.117. Using “tm.retransmit_reply”
+   Example 1.118. Using “tm.retransmit_reply”
 ...
 kamcli rpc tm.retransmit_reply 1234:5678
 ...
@@ -3479,7 +3499,7 @@ kamcli rpc tm.retransmit_reply 1234:5678
      * callid - SIP Call-ID header
      * cseq - SIP CSeq header
 
-   Example 1.118. Using “tm.retransmit_reply_callid”
+   Example 1.119. Using “tm.retransmit_reply_callid”
 ...
 kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
 ...
@@ -3515,7 +3535,7 @@ kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.119. event_route[tm:branch-failure:id] usage
+   Example 1.120. event_route[tm:branch-failure:id] usage
 ...
 request_route {
     ...
@@ -3541,7 +3561,7 @@ event_route[tm:branch-failure:myroute] {
    The request can still be updated, i.e., changes are possible to R-URI
    ($ru), destination URI ($du) or the send socket ($fs).
 
-   Example 1.120. event_route[tm:local-request] usage
+   Example 1.121. event_route[tm:local-request] usage
 ...
 event_route [tm:local-request] {
     xlog("L_INFO", "Routing locally generated $rm to $ru\n");
@@ -3554,7 +3574,7 @@ event_route [tm:local-request] {
    Executed after the tm module sent a local generated, transaction
    stateful response.
 
-   Example 1.121. event_route[tm:local-response] usage
+   Example 1.122. event_route[tm:local-response] usage
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
@@ -3566,7 +3586,7 @@ event_route[tm:local-response] {
    Executed after the tm module sent the ACK of the 200ok for a local
    generated INVITE. It is executed with the received 200ok response.
 
-   Example 1.122. event_route[tm:local-ack-sent] usage
+   Example 1.123. event_route[tm:local-ack-sent] usage
 ...
 event_route[tm:local-ack-sent] {
     xlog("ACK for local INVITE was sent\n");
