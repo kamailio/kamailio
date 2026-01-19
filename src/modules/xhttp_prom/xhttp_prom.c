@@ -52,6 +52,43 @@
  * This is the main file of xhttp_prom module which contains all the functions
  * related to http processing, as well as the module interface.
  *
+ * MODULE PARAMETER: timestamp_format
+ * ====================================
+ * Controls how timestamps are exported in Prometheus /metrics output.
+ *
+ * RATIONALE:
+ * The default behavior (integer milliseconds) violates the OpenMetrics specification
+ * which requires timestamps to be in seconds with optional fractional precision.
+ * Some monitoring systems like Grafana Alloy and Mimir reject metrics with
+ * millisecond timestamps, causing ingestion failures. This parameter provides
+ * flexibility while maintaining backward compatibility.
+ *
+ * ALLOWED VALUES:
+ *   "ms"  - Integer milliseconds (default, for backward compatibility)
+ *           Example: 1737283200000
+ *           Note: Violates OpenMetrics spec, may cause ingestion issues
+ *
+ *   "s"   - Integer seconds (OpenMetrics compliant)
+ *           Example: 1737283200
+ *           Recommended for compatibility with strict OpenMetrics parsers
+ *
+ *   "sf"  - Seconds with fractional milliseconds (OpenMetrics compliant)
+ *           Example: 1737283200.123
+ *           Provides millisecond precision while compliant with spec
+ *
+ * CONFIGURATION EXAMPLE:
+ *   modparam("xhttp_prom", "timestamp_format", "sf")
+ *
+ * USAGE EXAMPLES:
+ *   # Mode: "ms" (default)
+ *   kamailio_my_counter{label="value"} 42 1737283200000
+ *
+ *   # Mode: "s"
+ *   kamailio_my_counter{label="value"} 42 1737283200
+ *
+ *   # Mode: "sf"
+ *   kamailio_my_counter{label="value"} 42 1737283200.123
+ *
  * @addtogroup xhttp_prom
  */
 
@@ -186,6 +223,8 @@ int pkgmem_stats_enabled = 0; /**< enable or disable pkgmem statistics. */
 
 int metadata_flags = 0; /**< include metrics metadata in text output. */
 
+str timestamp_format = str_init("ms"); /**< timestamp format: ms, s, or sf */
+
 char error_buf[ERROR_REASON_BUF_LEN];
 
 /* clang-format off */
@@ -233,6 +272,7 @@ static param_export_t params[] = {
 	{"xhttp_prom_uptime_stat", PARAM_INT, &uptime_stat_enabled},
 	{"xhttp_prom_pkg_stats", PARAM_INT, &pkgmem_stats_enabled},
 	{"xhttp_prom_metadata_flags", PARAM_INT, &metadata_flags},
+	{"timestamp_format", PARAM_STR, &timestamp_format},
 	{0, 0, 0}
 };
 
@@ -305,6 +345,26 @@ static int mod_init(void)
 	/* Check xhttp_prom_buf_size param */
 	if(buf_size == 0)
 		buf_size = pkg_mem_size / 3;
+
+	/* Validate timestamp_format parameter */
+	if(timestamp_format.len != 1 && timestamp_format.len != 2) {
+		LM_ERR("invalid timestamp_format length: %d (expected 1-2 chars)\n",
+				timestamp_format.len);
+		return -1;
+	}
+	if(timestamp_format.len == 2) {
+		if(strncmp(timestamp_format.s, "ms", 2) != 0
+				&& strncmp(timestamp_format.s, "sf", 2) != 0) {
+			LM_ERR("invalid timestamp_format: '%.*s'\n", timestamp_format.len,
+					timestamp_format.s);
+			return -1;
+		}
+	} else if(timestamp_format.s[0] != 's') {
+		LM_ERR("invalid timestamp_format: '%c'\n", timestamp_format.s[0]);
+		return -1;
+	}
+	LM_INFO("timestamp_format set to: '%.*s'\n", timestamp_format.len,
+			timestamp_format.s);
 
 	memset(&_prom_ctx, 0, sizeof(prom_ctx_t));
 

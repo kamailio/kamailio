@@ -365,6 +365,76 @@ modparam("xhttp_prom", "xhttp_prom_tags", "tag_bar=foo,host_job=wurst");
 		</programlisting>
 	  </example>
 	</section>
+	<section id="xhttp_prom.p.timestamp_format">
+	  <title><varname>timestamp_format</varname> (str)</title>
+	  <para>
+		Controls the format of timestamps exported in Prometheus metrics.
+	  </para>
+	  <para>
+		<emphasis>Rationale:</emphasis> The default behavior (integer milliseconds) violates
+		the OpenMetrics specification which requires timestamps to be in seconds with optional
+		fractional precision. Some monitoring systems like Grafana Alloy and Mimir reject
+		metrics with millisecond timestamps, causing ingestion failures. This parameter
+		provides flexibility to ensure compatibility while maintaining backward compatibility.
+	  </para>
+	  <para>
+		Allowed values:
+		<itemizedlist>
+		  <listitem>
+			<para>
+			  <emphasis>"ms"</emphasis> - Integer milliseconds (default, for backward compatibility).
+			  Example: 1737283200000. Note: Violates OpenMetrics spec and may cause ingestion
+			  issues with strict parsers.
+			</para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>"s"</emphasis> - Integer seconds (OpenMetrics compliant).
+			  Example: 1737283200. Recommended for compatibility with strict OpenMetrics parsers.
+			</para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  <emphasis>"sf"</emphasis> - Seconds with fractional milliseconds (OpenMetrics compliant).
+			  Example: 1737283200.123. Provides millisecond precision while compliant with the
+			  OpenMetrics specification.
+			</para>
+		  </listitem>
+		</itemizedlist>
+	  </para>
+	  <para>
+		<emphasis>
+		  Default value is "ms" (backward compatible).
+		</emphasis>
+	  </para>
+	  <example>
+		<title>Set <varname>timestamp_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# Use milliseconds (default, backward compatible but violates OpenMetrics)
+modparam("xhttp_prom", "timestamp_format", "ms")
+
+# Use integer seconds (OpenMetrics compliant)
+modparam("xhttp_prom", "timestamp_format", "s")
+
+# Use seconds with fractional milliseconds (OpenMetrics compliant, preserves precision)
+modparam("xhttp_prom", "timestamp_format", "sf")
+...
+		</programlisting>
+	  </example>
+	  <para>
+		<emphasis>Example output for each mode:</emphasis>
+	  </para>
+	  <para>
+		Mode "ms": kamailio_my_counter{label="value"} 42 1737283200000
+	  </para>
+	  <para>
+		Mode "s": kamailio_my_counter{label="value"} 42 1737283200
+	  </para>
+	  <para>
+		Mode "sf": kamailio_my_counter{label="value"} 42 1737283200.123
+	  </para>
+	</section>
 	<section id="xhttp_prom.p.prom_counter">
 	  <title><varname>prom_counter</varname> (str)</title>
 	  <para>
