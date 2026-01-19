@@ -10,8 +10,6 @@ unset(OPENSSL_SSL_LIBRARY CACHE)
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 
 # Find packages
-find_package(Threads REQUIRED)
-
 target_compile_definitions(${module_name} PRIVATE KSR_LIBSSL_STATIC)
 if(LIBSSL_STATIC_SRCLIB)
   target_include_directories(${module_name} PRIVATE ${LIBSSL_STATIC_SRCPATH}/include)
@@ -22,7 +20,10 @@ else()
   find_package(OpenSSL REQUIRED)
 
   # TODO: Check if this is needed: -Wl,-Bstatic
-  target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto Threads::Threads)
+  target_link_libraries(${module_name} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+  if(TARGET_ARCH STREQUAL "riscv64")
+    target_link_options(${module_name} PRIVATE "-Wl,-Bsymbolic-functions")
+  endif()
 endif()
 
 # Reset variables to avoid interference with other modules
