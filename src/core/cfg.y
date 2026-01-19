@@ -250,7 +250,6 @@ extern char *default_routename;
 %token STRIP
 %token STRIP_TAIL
 %token SET_USERPHONE
-%token APPEND_BRANCH
 %token REMOVE_BRANCH
 %token CLEAR_BRANCHES
 %token SET_USER
