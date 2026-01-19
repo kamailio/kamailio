@@ -2129,44 +2129,37 @@ static void htable_rpc_flush(rpc_t *rpc, void *c)
 	rpc->rpl_printf(c, "Ok. Htable flushed.");
 }
 
-/*! \brief RPC htable.reload command to reload content of a hash table */
-static void htable_rpc_reload(rpc_t *rpc, void *c)
+/*! \brief Reload content of a hash table from database */
+int ht_reload_table(ht_t *ht)
 {
-	str htname;
-	ht_t *ht;
 	ht_t nht;
 	ht_cell_t *first;
 	ht_cell_t *it;
 	int i;
 
-	if(ht_db_url.len <= 0) {
-		rpc->fault(c, 500, "No htable db_url");
-		return;
-	}
-	if(ht_db_init_con() != 0) {
-		rpc->fault(c, 500, "Failed to init htable db connection");
-		return;
-	}
-	if(ht_db_open_con() != 0) {
-		rpc->fault(c, 500, "Failed to open htable db connection");
-		return;
+	if(ht == NULL) {
+		LM_ERR("htable pointer is NULL\n");
+		return -1;
 	}
 
-	if(rpc->scan(c, "S", &htname) < 1) {
-		ht_db_close_con();
-		rpc->fault(c, 500, "No htable name given");
-		return;
+	if(ht_db_url.len <= 0) {
+		LM_ERR("No htable db_url\n");
+		return -1;
 	}
-	ht = ht_get_table(&htname);
-	if(ht == NULL) {
-		ht_db_close_con();
-		rpc->fault(c, 500, "No such htable");
-		return;
+	if(ht_db_init_con() != 0) {
+		LM_ERR("Failed to init htable db connection\n");
+		return -1;
 	}
+	if(ht_db_open_con() != 0) {
+		LM_ERR("Failed to open htable db connection\n");
+		return -1;
+	}
+
 	if(ht->dbtable.s == NULL || ht->dbtable.len <= 0) {
 		ht_db_close_con();
-		rpc->fault(c, 500, "No database htable");
-		return;
+		LM_ERR("No database htable configured for [%.*s]\n", ht->name.len,
+				ht->name.s);
+		return -1;
 	}
 
 	memcpy(&nht, ht, sizeof(ht_t));
@@ -2174,8 +2167,8 @@ static void htable_rpc_reload(rpc_t *rpc, void *c)
 	nht.entries = (ht_entry_t *)malloc(nht.htsize * sizeof(ht_entry_t));
 	if(nht.entries == NULL) {
 		ht_db_close_con();
-		rpc->fault(c, 500, "No resources for htable reload");
-		return;
+		LM_ERR("No resources for htable reload\n");
+		return -1;
 	}
 	memset(nht.entries, 0, nht.htsize * sizeof(ht_entry_t));
 
@@ -2191,8 +2184,8 @@ static void htable_rpc_reload(rpc_t *rpc, void *c)
 		}
 		free(nht.entries);
 		ht_db_close_con();
-		rpc->fault(c, 500, "Htable reload failed");
-		return;
+		LM_ERR("Htable reload failed for [%.*s]\n", ht->name.len, ht->name.s);
+		return -1;
 	}
 
 	/* replace old entries */
@@ -2217,6 +2210,30 @@ static void htable_rpc_reload(rpc_t *rpc, void *c)
 	}
 	free(nht.entries);
 	ht_db_close_con();
+	return 0;
+}
+
+/*! \brief RPC htable.reload command to reload content of a hash table */
+static void htable_rpc_reload(rpc_t *rpc, void *c)
+{
+	str htname;
+	ht_t *ht;
+
+	if(rpc->scan(c, "S", &htname) < 1) {
+		rpc->fault(c, 500, "No htable name given");
+		return;
+	}
+	ht = ht_get_table(&htname);
+	if(ht == NULL) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+
+	if(ht_reload_table(ht) < 0) {
+		rpc->fault(c, 500, "Htable reload failed");
+		return;
+	}
+
 	rpc->rpl_printf(c, "Ok. Htable reloaded.");
 	return;
 }
