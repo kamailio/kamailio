@@ -140,6 +140,8 @@ typedef enum request_method
 #define FL_FINAL_REPLY (1ULL << 32)	   /* local final reply sent */
 #define FL_DELAYED_REPLY (1ULL << 33)  /* local reply sending delayed */
 #define FL_VIA_NORECEIVED (1ULL << 34) /* no received test for incoming Via */
+/* apply msg changes before transaction is created */
+#define FL_MSG_APPLY_CHANGES (1ULL << 35)
 
 #define FL_MTU_FB_MASK (FL_MTU_TCP_FB | FL_MTU_TLS_FB | FL_MTU_SCTP_FB)
 
