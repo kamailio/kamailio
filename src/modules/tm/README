@@ -154,6 +154,7 @@ Daniel-Constantin Mierla
               4.58. t_clean()
               4.59. t_exists()
               4.60. t_cell_append_branches(tindex, tlabel)
+              4.61. t_msg_apply_changes()
 
         5. RPC Commands
 
@@ -323,13 +324,14 @@ Daniel-Constantin Mierla
    1.114. t_clean usage
    1.115. t_exists usage
    1.116. t_cell_append_branches usage
-   1.117. Using “tm.t_uac_attrs”
-   1.118. Using “tm.retransmit_reply”
-   1.119. Using “tm.retransmit_reply_callid”
-   1.120. event_route[tm:branch-failure:id] usage
-   1.121. event_route[tm:local-request] usage
-   1.122. event_route[tm:local-response] usage
-   1.123. event_route[tm:local-ack-sent] usage
+   1.117. t_msg_apply_changes usage
+   1.118. Using “tm.t_uac_attrs”
+   1.119. Using “tm.retransmit_reply”
+   1.120. Using “tm.retransmit_reply_callid”
+   1.121. event_route[tm:branch-failure:id] usage
+   1.122. event_route[tm:local-request] usage
+   1.123. event_route[tm:local-response] usage
+   1.124. event_route[tm:local-ack-sent] usage
 
 Chapter 1. Admin Guide
 
@@ -464,6 +466,7 @@ Chapter 1. Admin Guide
         4.58. t_clean()
         4.59. t_exists()
         4.60. t_cell_append_branches(tindex, tlabel)
+        4.61. t_msg_apply_changes()
 
    5. RPC Commands
 
@@ -2050,6 +2053,7 @@ modparam("tm", "evlreq_mode", 1)
    4.58. t_clean()
    4.59. t_exists()
    4.60. t_cell_append_branches(tindex, tlabel)
+   4.61. t_msg_apply_changes()
 
 4.1.  t_relay([host, port])
 
@@ -3307,6 +3311,32 @@ reply_route {
     t_cell_append_branches("1234", "$var(tlabel)");
 ...
 
+4.61.  t_msg_apply_changes()
+
+   Apply changes to the SIP request processed in a branch_route block. It
+   changes the request only for that particular branch, not the
+   transaction incoming request. It is similar to msg_apply_changes(), but
+   designed to be used in the context of the branch route, after the
+   transaction was created.
+
+   It is not needed to use this function explicitely, unless the changes
+   to the SIP request are needed for the next functions in the same
+   branch_route block, otherwise the operations for adding/removing
+   headers or changing the body of the request are applied before writing
+   to the outbound socket.
+
+   It requires to set core parameter msg_apply_changes_mode = 1.
+
+   Example 1.117. t_msg_apply_changes usage
+...
+msg_apply_changes_mode = 1;
+...
+branch_route[OUT] {
+    append_hf("X-Hdr: abc\n");
+    t_msg_apply_changes();
+}
+...
+
 5. RPC Commands
 
    5.1. tm.list
@@ -3430,7 +3460,7 @@ reply_route {
      * fr_inv_timeout - the fr_inv_timeout value for the local
        transaction.
 
-   Example 1.117. Using “tm.t_uac_attrs”
+   Example 1.118. Using “tm.t_uac_attrs”
 ...
 kamcli rpc tm.t_uac_attrs 'reply=wait;cbflags=noack;rpflags=1' 'INVITE' ...
 ...
@@ -3486,7 +3516,7 @@ kamcli rpc tm.t_uac_attrs 'reply=wait;cbflags=noack;rpflags=1' 'INVITE' ...
    Parameters:
      * trans_id - transaction identifier (has the hash_entry:label format)
 
-   Example 1.118. Using “tm.retransmit_reply”
+   Example 1.119. Using “tm.retransmit_reply”
 ...
 kamcli rpc tm.retransmit_reply 1234:5678
 ...
@@ -3499,7 +3529,7 @@ kamcli rpc tm.retransmit_reply 1234:5678
      * callid - SIP Call-ID header
      * cseq - SIP CSeq header
 
-   Example 1.119. Using “tm.retransmit_reply_callid”
+   Example 1.120. Using “tm.retransmit_reply_callid”
 ...
 kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
 ...
@@ -3535,7 +3565,7 @@ kamcli rpc tm.retransmit_reply_callid "abc-xyz" "10 INVITE"
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.120. event_route[tm:branch-failure:id] usage
+   Example 1.121. event_route[tm:branch-failure:id] usage
 ...
 request_route {
     ...
@@ -3561,7 +3591,7 @@ event_route[tm:branch-failure:myroute] {
    The request can still be updated, i.e., changes are possible to R-URI
    ($ru), destination URI ($du) or the send socket ($fs).
 
-   Example 1.121. event_route[tm:local-request] usage
+   Example 1.122. event_route[tm:local-request] usage
 ...
 event_route [tm:local-request] {
     xlog("L_INFO", "Routing locally generated $rm to $ru\n");
@@ -3574,7 +3604,7 @@ event_route [tm:local-request] {
    Executed after the tm module sent a local generated, transaction
    stateful response.
 
-   Example 1.122. event_route[tm:local-response] usage
+   Example 1.123. event_route[tm:local-response] usage
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
@@ -3586,7 +3616,7 @@ event_route[tm:local-response] {
    Executed after the tm module sent the ACK of the 200ok for a local
    generated INVITE. It is executed with the received 200ok response.
 
-   Example 1.123. event_route[tm:local-ack-sent] usage
+   Example 1.124. event_route[tm:local-ack-sent] usage
 ...
 event_route[tm:local-ack-sent] {
     xlog("ACK for local INVITE was sent\n");
