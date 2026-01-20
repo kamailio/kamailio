@@ -1015,20 +1015,6 @@ int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
 	omsg->len = imsg->len;
 	omsg->buf[omsg->len] = '\0';
 
-	/* parse the output message */
-	LM_DBG("SIP message content copied - reparsing\n");
-	if(parse_msg(omsg->buf, omsg->len, omsg) != 0) {
-		LM_ERR("parsing out sip message failed [[%.*s]]\n", omsg->len,
-				omsg->buf);
-		goto error;
-	}
-	if(parse_headers(omsg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
-			< 0) {
-		LM_ERR("parsing main headers of new sip message failed [[%.*s]]\n",
-				omsg->len, omsg->buf);
-		goto error;
-	}
-
 	omsg->id = imsg->id;
 	omsg->pid = imsg->pid;
 	omsg->tval = imsg->tval;
@@ -1048,6 +1034,23 @@ int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
 	omsg->reg_id = imsg->reg_id;
 	omsg->otcpid = imsg->otcpid;
 	omsg->hash_index = imsg->hash_index;
+
+	/* parse the output message */
+	LM_DBG("SIP message content copied - reparsing\n");
+	if(parse_msg(omsg->buf, omsg->len, omsg) != 0) {
+		LM_ERR("parsing out sip message failed [[%.*s]]\n", omsg->len,
+				omsg->buf);
+		goto error;
+	}
+	if(parse_headers(omsg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
+			< 0) {
+		LM_ERR("parsing main headers of new sip message failed [[%.*s]]\n",
+				omsg->len, omsg->buf);
+		goto error;
+	}
+
+	memcpy(omsg->add_to_branch_s, imsg->add_to_branch_s, MAX_BRANCH_PARAM_LEN);
+	omsg->add_to_branch_len = imsg->add_to_branch_len;
 
 	/* duplicate */
 	if(imsg->new_uri.s != NULL) {
@@ -1080,9 +1083,6 @@ int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
 			goto error;
 		}
 	}
-
-	memcpy(omsg->add_to_branch_s, imsg->add_to_branch_s, MAX_BRANCH_PARAM_LEN);
-	omsg->add_to_branch_len = omsg->add_to_branch_len;
 
 	if(imsg->add_rm != NULL) {
 		omsg->add_rm = copy_lump_list(imsg->add_rm);
