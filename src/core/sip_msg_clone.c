@@ -1096,7 +1096,12 @@ int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
 			goto error;
 		}
 	}
-
+	if(imsg->reply_lump != NULL) {
+		omsg->reply_lump = copy_reply_lump_list(imsg->reply_lump);
+		if(omsg->reply_lump == NULL) {
+			goto error;
+		}
+	}
 	return 0;
 
 error:
