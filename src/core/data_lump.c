@@ -557,7 +557,7 @@ static struct lump *dup_lump_list_r(
 	}
 
 	memcpy(new_lump, l, sizeof(struct lump));
-	new_lump->flags = LUMPFLAG_DUPED;
+	new_lump->flags |= LUMPFLAG_DUPED;
 	new_lump->next = new_lump->before = new_lump->after = 0;
 
 	switch(dir) {
@@ -625,7 +625,7 @@ void free_duped_lump_list(struct lump *l)
 			 * duped list, remove it completely, preserve it
 			 * otherwise (it is still referred by original list)
 			 */
-			if(foo->flags != LUMPFLAG_DUPED)
+			if(!(foo->flags & LUMPFLAG_DUPED))
 				free_lump(foo);
 			pkg_free(foo);
 		}
@@ -633,13 +633,13 @@ void free_duped_lump_list(struct lump *l)
 		while(r) {
 			foo = r;
 			r = r->after;
-			if(foo->flags != LUMPFLAG_DUPED) /* (+) ... see above */
+			if(!(foo->flags & LUMPFLAG_DUPED)) /* (+) ... see above */
 				free_lump(foo);
 			pkg_free(foo);
 		}
 
 		/*clean current elem*/
-		if(crt->flags != LUMPFLAG_DUPED) /* (+) ... see above */
+		if(!(crt->flags & LUMPFLAG_DUPED)) /* (+) ... see above */
 			free_lump(crt);
 		pkg_free(crt);
 	}
