@@ -66,6 +66,8 @@ inline static struct lump_rpl *add_lump_rpl(
 void free_lump_rpl(struct lump_rpl *);
 void free_reply_lump_list(struct lump_rpl *lump);
 
+struct lump_rpl *copy_reply_lump_list(struct lump_rpl *lump);
+
 void unlink_lump_rpl(struct sip_msg *, struct lump_rpl *);
 
 void del_nonshm_lump_rpl(struct lump_rpl **);
