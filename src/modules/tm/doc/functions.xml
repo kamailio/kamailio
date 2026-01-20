@@ -2026,4 +2026,41 @@ reply_route {
 	</example>
 	</section>
 
+	<section id="tm.f.t_msg_apply_changes">
+	<title>
+	    <function>t_msg_apply_changes()</function>
+	</title>
+	<para>
+		Apply changes to the SIP request processed in a branch_route block. It
+		changes the request only for that particular branch, not the transaction
+		incoming request. It is similar to msg_apply_changes(), but designed
+		to be used in the context of the branch route, after the transaction
+		was created.
+	</para>
+	<para>
+		It is not needed to use this function explicitely, unless the changes
+		to the SIP request are needed for the next functions in the same
+		branch_route block, otherwise the operations for adding/removing headers
+		or changing the body of the request are applied before writing to
+		the outbound socket.
+	</para>
+	<para>
+		It requires to set core parameter
+		<emphasis>msg_apply_changes_mode = 1</emphasis>.
+	</para>
+	<example>
+	    <title><function>t_msg_apply_changes</function> usage</title>
+	    <programlisting>
+...
+msg_apply_changes_mode = 1;
+...
+branch_route[OUT] {
+    append_hf("X-Hdr: abc\n");
+    t_msg_apply_changes();
+}
+...
+	    </programlisting>
+	</example>
+	</section>
+
   </section>
