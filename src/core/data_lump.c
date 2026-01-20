@@ -646,6 +646,96 @@ void free_duped_lump_list(struct lump *l)
 }
 
 
+/* duplicate (deep) a lump list into pkg memory */
+static struct lump *copy_lump_list_r(
+		struct lump *l, enum lump_dir dir, int *error)
+{
+	int deep_error;
+	struct lump *new_lump;
+
+	deep_error = 0; /* optimist: assume success in recursion */
+	/* if at list end, terminate recursion successfully */
+	if(!l) {
+		*error = 0;
+		return 0;
+	}
+	/* otherwise duplicate current element */
+	new_lump = pkg_malloc(sizeof(struct lump));
+	if(!new_lump) {
+		ser_error = E_OUT_OF_MEM;
+		PKG_MEM_ERROR;
+		*error = 1;
+		return 0;
+	}
+
+	memcpy(new_lump, l, sizeof(struct lump));
+	new_lump->next = new_lump->before = new_lump->after = 0;
+	if(l->op == LUMP_ADD) {
+		if(l->u.value != NULL) {
+			/* duplicate value */
+			new_lump->u.value = (char *)pkg_malloc(l->len + 1);
+			if(new_lump->u.value == NULL) {
+				pkg_free(new_lump);
+				ser_error = E_OUT_OF_MEM;
+				PKG_MEM_ERROR;
+				*error = 1;
+				return 0;
+			}
+			new_lump->len = l->len;
+			memcpy(new_lump->u.value, l->u.value, l->len);
+			new_lump->u.value[new_lump->len] = '\0';
+		}
+	}
+
+	switch(dir) {
+		case LD_NEXT:
+			new_lump->before =
+					copy_lump_list_r(l->before, LD_BEFORE, &deep_error);
+			if(deep_error)
+				goto deeperror;
+			new_lump->after = copy_lump_list_r(l->after, LD_AFTER, &deep_error);
+			if(deep_error)
+				goto deeperror;
+			new_lump->next = copy_lump_list_r(l->next, LD_NEXT, &deep_error);
+			break;
+		case LD_BEFORE:
+			new_lump->before =
+					copy_lump_list_r(l->before, LD_BEFORE, &deep_error);
+			break;
+		case LD_AFTER:
+			new_lump->after = copy_lump_list_r(l->after, LD_AFTER, &deep_error);
+			break;
+		default:
+			LM_CRIT("unknown dir: %d\n", dir);
+			deep_error = 1;
+	}
+	if(deep_error)
+		goto deeperror;
+
+	*error = 0;
+	return new_lump;
+
+deeperror:
+	LM_ERR("out of mem\n");
+	free_lump_list(new_lump);
+	*error = 1;
+	return 0;
+}
+
+
+/* deep pkg copy of a lump list
+ *
+ * if either original list empty or error occur returns, 0
+ * is returned, pointer to the copy otherwise
+ */
+struct lump *copy_lump_list(struct lump *l)
+{
+	int deep_error;
+
+	deep_error = 0;
+	return copy_lump_list_r(l, LD_NEXT, &deep_error);
+}
+
 void del_nonshm_lump(struct lump **lump_list)
 {
 	struct lump *r, *foo, *crt, **prev, *prev_r;
