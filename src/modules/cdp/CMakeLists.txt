@@ -4,5 +4,11 @@ add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(LibXml2 REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
 
-target_link_libraries(${module_name} PRIVATE LibXml2::LibXml2 OpenSSL::SSL)
+find_library(LIBRT rt)
+if(LIBRT)
+  target_link_libraries(${module_name} PRIVATE ${LIBRT})
+endif()
+
+target_link_libraries(${module_name} PRIVATE LibXml2::LibXml2 OpenSSL::SSL Threads::Threads)
