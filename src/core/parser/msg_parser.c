@@ -798,17 +798,6 @@ error:
 }
 
 
-void free_reply_lump(struct lump_rpl *lump)
-{
-	struct lump_rpl *foo, *bar;
-	for(foo = lump; foo;) {
-		bar = foo->next;
-		free_lump_rpl(foo);
-		foo = bar;
-	}
-}
-
-
 /*only the content*/
 void free_sip_msg(struct sip_msg *const msg)
 {
@@ -827,7 +816,7 @@ void free_sip_msg(struct sip_msg *const msg)
 	if(msg->body_lumps)
 		free_lump_list(msg->body_lumps);
 	if(msg->reply_lump)
-		free_reply_lump(msg->reply_lump);
+		free_reply_lump_list(msg->reply_lump);
 	msg_ldata_reset(msg);
 	/* no free of msg->buf -- a pointer to a static buffer */
 }

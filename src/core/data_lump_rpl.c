@@ -114,6 +114,17 @@ void free_lump_rpl(struct lump_rpl *lump)
 }
 
 
+void free_reply_lump_list(struct lump_rpl *lump)
+{
+	struct lump_rpl *foo, *bar;
+	for(foo = lump; foo;) {
+		bar = foo->next;
+		free_lump_rpl(foo);
+		foo = bar;
+	}
+}
+
+
 void unlink_lump_rpl(struct sip_msg *msg, struct lump_rpl *lump)
 {
 	struct lump_rpl *foo, *prev;
