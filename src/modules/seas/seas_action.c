@@ -946,10 +946,10 @@ static inline void free_sip_msg_lite(struct sip_msg *my_msg)
 			free_lump_list(my_msg->add_rm);
 		if(my_msg->body_lumps)
 			free_lump_list(my_msg->body_lumps);
-		/* this is not in lump_struct.h, and anyhow it's not supposed to be any lumps
-       * in our messages... or is it?
-      if (my_msg->reply_lump)   free_reply_lump(my_msg->reply_lump);
-      */
+		/* this is not in lump_struct.h, and anyhow it's not supposed
+		 * to be any lumps in our messages... or is it?
+		 * if (my_msg->reply_lump)   free_reply_lump_list(my_msg->reply_lump);
+		 */
 	}
 }
 
