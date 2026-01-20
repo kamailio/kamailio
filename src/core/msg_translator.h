@@ -203,4 +203,6 @@ int sip_msg_eval_changes(sip_msg_t *msg, str *obuf);
  */
 int sip_msg_apply_changes(sip_msg_t *msg);
 
+int sip_msg_apply_changes_now(sip_msg_t *msg);
+
 #endif

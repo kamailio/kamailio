@@ -3655,6 +3655,9 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 	msg->dst_uri = tmp.dst_uri;
 	msg->path_vec = tmp.path_vec;
 
+	memcpy(msg->add_to_branch_s, tmp.add_to_branch_s, MAX_BRANCH_PARAM_LEN);
+	msg->add_to_branch_len = tmp.add_to_branch_len;
+
 	memcpy(msg->buf, obuf->s, obuf->len);
 	msg->len = obuf->len;
 	msg->buf[msg->len] = '\0';
@@ -3708,16 +3711,11 @@ int sip_msg_eval_changes(sip_msg_t *msg, str *obuf)
 /**
  *
  */
-int sip_msg_apply_changes(sip_msg_t *msg)
+int sip_msg_apply_changes_now(sip_msg_t *msg)
 {
 	int ret;
 	dest_info_t dst;
 	str obuf;
-
-	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
-		LM_ERR("invalid usage - not in request route or a reply\n");
-		return -1;
-	}
 
 	init_dest_info(&dst);
 	dst.proto = PROTO_UDP;
@@ -3743,4 +3741,16 @@ int sip_msg_apply_changes(sip_msg_t *msg)
 	pkg_free(obuf.s);
 
 	return ret;
+}
+
+/**
+ *
+ */
+int sip_msg_apply_changes(sip_msg_t *msg)
+{
+	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
+		LM_ERR("invalid usage - not in request route or a reply\n");
+		return -1;
+	}
+	return sip_msg_apply_changes_now(msg);
 }
