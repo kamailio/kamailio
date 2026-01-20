@@ -1084,6 +1084,19 @@ int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
 	memcpy(omsg->add_to_branch_s, imsg->add_to_branch_s, MAX_BRANCH_PARAM_LEN);
 	omsg->add_to_branch_len = omsg->add_to_branch_len;
 
+	if(imsg->add_rm != NULL) {
+		omsg->add_rm = copy_lump_list(imsg->add_rm);
+		if(omsg->add_rm == NULL) {
+			goto error;
+		}
+	}
+	if(imsg->body_lumps != NULL) {
+		omsg->body_lumps = copy_lump_list(imsg->body_lumps);
+		if(omsg->body_lumps == NULL) {
+			goto error;
+		}
+	}
+
 	return 0;
 
 error:
