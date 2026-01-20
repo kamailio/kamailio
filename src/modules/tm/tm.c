@@ -464,7 +464,7 @@ static cmd_export_t cmds[] = {
 	{"t_next_contact_flow", t_next_contact_flow, 0, 0, 0, REQUEST_ROUTE},
 	{"t_clean", t_clean, 0, 0, 0, ANY_ROUTE},
 	{"t_exists", w_t_exists, 0, 0, 0, ANY_ROUTE},
-	{"t_msg_apply_changes", w_t_msg_apply_changes, 0, 0, 0, ANY_ROUTE},
+	{"t_msg_apply_changes", w_t_msg_apply_changes, 0, 0, 0, BRANCH_ROUTE},
 	{"t_cell_append_branches", w_t_cell_append_branches, 2, fixup_igp_igp,
 			fixup_free_igp_igp, ANY_ROUTE},
 
@@ -3413,10 +3413,12 @@ static int w_t_msg_apply_changes(sip_msg_t *msg, char *p1, char *p2)
 {
 	tm_cell_t *t;
 
-	if(ksr_msg_apply_changes_mode != 1) {
+	if(get_route_type() != BRANCH_ROUTE) {
+		LM_ERR("the function must be used in a branch route\n");
 		return -1;
 	}
-	if(ksr_msg_clone_extra_size <= 0) {
+
+	if(ksr_msg_apply_changes_mode != 1) {
 		return -1;
 	}
 
@@ -3426,7 +3428,7 @@ static int w_t_msg_apply_changes(sip_msg_t *msg, char *p1, char *p2)
 	if(!t || !t->uas.request) {
 		return -1;
 	}
-	if(sip_msg_apply_changes(msg) < 0) {
+	if(sip_msg_apply_changes_now(msg) < 0) {
 		return E_BAD_REQ;
 	}
 	if(parse_headers(msg, HDR_EOH_F, 0)) {
