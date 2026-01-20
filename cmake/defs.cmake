@@ -125,16 +125,6 @@ option(USE_DNS_FAILOVER "Use DNS failover" ON)
 option(USE_DST_BLOCKLIST "Use destination blacklist" ON)
 option(HAVE_RESOLV_RES "Have resolv_res" ON)
 
-option(KSR_PTHREAD_MUTEX_SHARED "Use shared mutex for TLS" ON)
-
-# if(${MEMPKG})
-#   target_compile_definitions(common INTERFACE PKG_MALLOC)
-# else()
-#   if(${MEMDBGSYS})
-#     target_compile_definitions(common INTERFACE DDBG_SYS_MEMORY)
-#   endif()
-# endif()
-
 # -----------------------
 # TLS support
 # -----------------------
@@ -154,10 +144,8 @@ else()
   set(TLS_HOOKS ON)
 endif()
 
-set(LIBSSL_SET_MUTEX_SHARED
-    ON
-    CACHE BOOL "enable workaround for libssl 1.1+ to set shared mutex attribute"
-)
+option(LIBSSL_SET_MUTEX_SHARED "enable workaround for libssl 1.1+ to set shared mutex attribute" ON)
+
 if(NOT ${LIBSSL_SET_MUTEX_SHARED})
   message(STATUS "Checking if can enable workaround for libssl 1.1+ to set shared mutex attribute")
 
@@ -287,7 +275,7 @@ if(NO_DEV_POLL)
   target_compile_definitions(common INTERFACE NO_DEV_POLL)
 endif()
 
-if(KSR_PTHREAD_MUTEX_SHARED)
+if(LIBSSL_SET_MUTEX_SHARED)
   target_compile_definitions(common INTERFACE KSR_PTHREAD_MUTEX_SHARED)
 endif()
 
