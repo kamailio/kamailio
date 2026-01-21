@@ -84,6 +84,8 @@ static int w_msg_vbflag_reset(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_vbflag_is_set(sip_msg_t *msg, char *pflag, char *p2);
 static int w_msg_vbflag_parse(sip_msg_t *msg, char *p1, char *p2);
 
+static int w_add_tcp_alias(sip_msg_t *msg, char *pport, char *s2);
+
 static int fixup_file_op(void **param, int param_no);
 static int fixup_free_file_op(void **param, int param_no);
 
@@ -198,7 +200,8 @@ static cmd_export_t cmds[] = {
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"msg_vbflag_parse", (cmd_function)w_msg_vbflag_parse, 1,
 		0, 0, ANY_ROUTE},
-
+	{"add_tcp_alias", (cmd_function)w_add_tcp_alias, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -875,6 +878,48 @@ static int ki_msg_vbflag_parse(sip_msg_t *msg)
 static int w_msg_vbflag_parse(sip_msg_t *msg, char *p1, char *p2)
 {
 	return ki_msg_vbflag_parse(msg);
+}
+
+/**
+ *
+ */
+static int ki_add_tcp_alias(sip_msg_t *msg, int port)
+{
+	if(!(msg->rcv.proto == PROTO_TCP || msg->rcv.proto == PROTO_TLS
+			   || msg->rcv.proto == PROTO_WS || msg->rcv.proto == PROTO_WSS)) {
+		return -1;
+	}
+
+	if(port <= 0) {
+		if(parse_headers(msg, HDR_VIA1_F, 0) < 0) {
+			LM_DBG("failed to parse sip headers\n");
+			return -1;
+		}
+		if(msg->via1 == NULL) {
+			LM_DBG("no via headers\n");
+			return -1;
+		}
+		port = msg->via1->port;
+	}
+	if(tcpconn_add_alias(msg->rcv.proto_reserved1, port, msg->rcv.proto) != 0) {
+		LM_ERR("adding tcp alias failed\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_add_tcp_alias(sip_msg_t *msg, char *pport, char *s2)
+{
+	int pval = 0;
+	if(fixup_get_ivalue(msg, (gparam_t *)pport, &pval) != 0) {
+		LM_ERR("no port value\n");
+		return -1;
+	}
+	return ki_add_tcp_alias(msg, pval);
 }
 
 /**
