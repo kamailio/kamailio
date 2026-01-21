@@ -660,7 +660,7 @@ error:
 typedef struct _msg_iflag_name
 {
 	str name;
-	int value;
+	msg_flags_t value;
 } msg_iflag_name_t;
 
 /* clang-format off */
@@ -677,7 +677,7 @@ static msg_iflag_name_t _msg_iflag_list[] = {
 /**
  *
  */
-static unsigned long long msg_lookup_flag(str *fname)
+static msg_flags_t msg_lookup_flag(str *fname)
 {
 	int i;
 
@@ -711,7 +711,7 @@ static unsigned long long msg_lookup_flag(str *fname)
  */
 static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2)
 {
-	unsigned long long fv;
+	msg_flags_t fv;
 	str fname;
 	if(fixup_get_svalue(msg, (gparam_t *)pflag, &fname)) {
 		LM_ERR("cannot get the msg flag name parameter\n");
@@ -731,7 +731,7 @@ static int w_msg_iflag_set(sip_msg_t *msg, char *pflag, char *p2)
  */
 static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2)
 {
-	unsigned long long fv;
+	msg_flags_t fv;
 	str fname;
 	if(fixup_get_svalue(msg, (gparam_t *)pflag, &fname)) {
 		LM_ERR("cannot get the msg flag name parameter\n");
@@ -751,7 +751,7 @@ static int w_msg_iflag_reset(sip_msg_t *msg, char *pflag, char *p2)
  */
 static int w_msg_iflag_is_set(sip_msg_t *msg, char *pflag, char *p2)
 {
-	unsigned long long fv;
+	msg_flags_t fv;
 	str fname;
 	if(fixup_get_svalue(msg, (gparam_t *)pflag, &fname)) {
 		LM_ERR("cannot get the msg flag name parameter\n");
