@@ -70,6 +70,7 @@ Muhammad Shahzad Shafi
               4.29. msg_vbflag_set(flag)
               4.30. msg_vbflag_is_set(flag)
               4.31. msg_vbflag_reset(flag)
+              4.32. add_tcp_alias(port)
 
         5. RPC Commands
 
@@ -131,8 +132,9 @@ Muhammad Shahzad Shafi
    1.36. msg_vbflag_set usage
    1.37. msg_vbflag_is_set usage
    1.38. msg_vbflag_reset usage
-   1.39. event_route[network:msg] use cases
-   1.40. Sample PERL code for do_compress and do_uncompress
+   1.39. add_tcp_alias usage
+   1.40. event_route[network:msg] use cases
+   1.41. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -187,6 +189,7 @@ Chapter 1. Admin Guide
         4.29. msg_vbflag_set(flag)
         4.30. msg_vbflag_is_set(flag)
         4.31. msg_vbflag_reset(flag)
+        4.32. add_tcp_alias(port)
 
    5. RPC Commands
 
@@ -411,6 +414,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    4.29. msg_vbflag_set(flag)
    4.30. msg_vbflag_is_set(flag)
    4.31. msg_vbflag_reset(flag)
+   4.32. add_tcp_alias(port)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -523,8 +527,8 @@ event_route[network:msg] {
 4.7.  msg_iflag_set(flagname)
 
    Set internal SIP message flag. The parameter flagname can be:
-   USE_UAC_FROM, USE_UAC_TO, UAC_AUTH or a number from 0 to 64 (the
-   meaning of each value can be found in source code).
+   USE_UAC_FROM, USE_UAC_TO, UAC_AUTH, MSG_APPLY_CHANGES or a number from
+   0 to 64 (the meaning of each value can be found in source code).
 
    This functions should not be used in configuration file for (re)setting
    the internal flags, those are done by various functions internally,
@@ -932,6 +936,21 @@ if(msg_vbflag_is_set("1"))
 msg_vbflag_reset("1");
 ...
 
+4.32.  add_tcp_alias(port)
+
+   Add an alias to the TCP connection with the port parameter. If the port
+   is 0, then the port of the first Via-header is used. The parameter can
+   also be a variable holding an integer port value.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.39. add_tcp_alias usage
+...
+    add_tcp_alias("5062");
+...
+    add_tcp_alias("$sp");
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -1108,7 +1127,7 @@ msg_vbflag_reset("1");
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.39. event_route[network:msg] use cases
+   Example 1.40. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -1139,7 +1158,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.40. Sample PERL code for do_compress and do_uncompress
+   Example 1.41. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
