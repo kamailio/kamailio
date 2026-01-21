@@ -952,7 +952,7 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 								!= 0) {
 							LM_DBG("Contact does not exist <%.*s>\n",
 									chi->uri.len, chi->uri.s);
-							ul.unlock_udomain(_d, &pi->public_identity);
+							ul.unlock_udomain(_d, public_identity);
 							goto error;
 						}
 						event_reg(0, impu_rec, ucontact,
@@ -1090,7 +1090,7 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 								!= 0) {
 							LM_DBG("Contact does not exist <%.*s>\n",
 									chi->uri.len, chi->uri.s);
-							ul.unlock_udomain(_d, &pi->public_identity);
+							ul.unlock_udomain(_d, public_identity);
 							goto error;
 						}
 						event_reg(0, impu_rec, ucontact,
@@ -1253,7 +1253,8 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 										LM_ERR("Error trying to determine if "
 											   "this is a sos contact <%.*s>\n",
 												chi->uri.len, chi->uri.s);
-										ul.unlock_udomain(_d, public_identity);
+										ul.unlock_udomain(
+												_d, &pi->public_identity);
 										goto error;
 									}
 									calc_contact_expires(chi, expires_hdr, sos);
