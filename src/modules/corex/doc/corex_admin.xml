@@ -1142,6 +1142,29 @@ msg_vbflag_reset("1");
 </programlisting>
 		</example>
 		</section>
+	<section id="corex.f.add_tcp_alias">
+		<title>
+			<function moreinfo="none">add_tcp_alias(port)</function>
+		</title>
+		<para>
+			Add an alias to the TCP connection with the port parameter. If the
+			port is 0, then the port of the first Via-header is used. The
+			parameter can also be a variable holding an integer port value.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>add_tcp_alias</function> usage</title>
+		<programlisting format="linespecific">
+...
+    add_tcp_alias("5062");
+...
+    add_tcp_alias("$sp");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
