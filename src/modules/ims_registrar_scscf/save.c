@@ -1228,7 +1228,7 @@ static int update_contacts_sar_re_registration(struct sip_msg *msg,
 						!= 0) {
 					LM_DBG("Contact does not exist <%.*s>\n",
 							STR_FMT(&chi->uri));
-					ul.lock_udomain(_d, public_identity);
+					ul.unlock_udomain(_d, public_identity);
 					return -1;
 				}
 				event_reg(0, impu_rec, ucontact,
