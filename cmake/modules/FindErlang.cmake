@@ -49,7 +49,10 @@ This will define the following variables:
 #]=======================================================================]
 include(FindPackageHandleStandardArgs)
 
-set(Erlang_BIN_PATH $ENV{ERLANG_HOME}/bin /opt/bin /sw/bin /usr/bin /usr/local/bin /opt/local/bin)
+set(Erlang_BIN_PATH
+    "$ENV{ERLANG_HOME}/bin;/opt/bin;/sw/bin;/usr/bin;/usr/local/bin;/opt/local/bin"
+    CACHE STRING "Semicolon-separated list of paths to search for Erlang binaries"
+)
 
 find_program(
   Erlang_RUNTIME
@@ -63,25 +66,50 @@ find_program(
   PATHS ${Erlang_BIN_PATH}
 )
 
-execute_process(
-  COMMAND erl -noshell -eval "io:format(\"~s\", [code:lib_dir()])" -s erlang halt
-  OUTPUT_VARIABLE Erlang_OTP_LIB_DIR
+set(Erlang_OTP_LIB_DIR
+    ""
+    CACHE STRING "Erlang OTP library directory. Will be determined by erl bin if not set."
 )
+if(NOT Erlang_OTP_LIB_DIR)
+  execute_process(
+    COMMAND erl -noshell -eval "io:format(\"~s\", [code:lib_dir()])" -s erlang halt
+    OUTPUT_VARIABLE Erlang_OTP_LIB_DIR
+  )
+endif()
 
-execute_process(
-  COMMAND erl -noshell -eval "io:format(\"~s\", [code:root_dir()])" -s erlang halt
-  OUTPUT_VARIABLE Erlang_OTP_ROOT_DIR
+set(Erlang_OTP_ROOT_DIR
+    ""
+    CACHE STRING "Erlang OTP root directory. Will be determined by erl bin if not set."
 )
+if(NOT Erlang_OTP_ROOT_DIR)
+  execute_process(
+    COMMAND erl -noshell -eval "io:format(\"~s\", [code:root_dir()])" -s erlang halt
+    OUTPUT_VARIABLE Erlang_OTP_ROOT_DIR
+  )
+endif()
 
-execute_process(
-  COMMAND erl -noshell -eval "io:format(\"~s\",[filename:basename(code:lib_dir('erl_interface'))])"
-          -s erlang halt OUTPUT_VARIABLE Erlang_EI_DIR
+set(Erlang_EI_DIR
+    ""
+    CACHE STRING "Erlang erl_interface directory name. Will be determined by erl bin if not set."
 )
+if(NOT Erlang_EI_DIR)
+  execute_process(
+    COMMAND erl -noshell -eval
+            "io:format(\"~s\",[filename:basename(code:lib_dir('erl_interface'))])" -s erlang halt
+    OUTPUT_VARIABLE Erlang_EI_DIR
+  )
+endif()
 
-execute_process(
-  COMMAND erl -noshell -eval "io:format(\"~s\",[filename:basename(code:lib_dir('erts'))])" -s erlang
-          halt OUTPUT_VARIABLE Erlang_ERTS_DIR
+set(Erlang_ERTS_DIR
+    ""
+    CACHE STRING "Erlang ERTS directory name. Will be determined by erl bin if not set."
 )
+if(NOT Erlang_ERTS_DIR)
+  execute_process(
+    COMMAND erl -noshell -eval "io:format(\"~s\",[filename:basename(code:lib_dir('erts'))])" -s
+            erlang halt OUTPUT_VARIABLE Erlang_ERTS_DIR
+  )
+endif()
 
 set(Erlang_EI_PATH ${Erlang_OTP_LIB_DIR}/${Erlang_EI_DIR})
 set(Erlang_EI_INCLUDE_DIRS ${Erlang_OTP_LIB_DIR}/${Erlang_EI_DIR}/include)
@@ -91,15 +119,21 @@ set(Erlang_ERTS_PATH ${Erlang_OTP_ROOT_DIR}/${Erlang_ERTS_DIR})
 set(Erlang_ERTS_INCLUDE_DIRS ${Erlang_OTP_ROOT_DIR}/${Erlang_ERTS_DIR}/include)
 set(Erlang_ERTS_LIBRARY_PATH ${Erlang_OTP_ROOT_DIR}/${Erlang_ERTS_DIR}/lib)
 
+# Find the version of Erlang
+execute_process(
+  COMMAND
+    erl -eval
+    "{ok, Version} = file:read_file(filename:join([code:root_dir(), 'releases', erlang:system_info(otp_release), 'OTP_VERSION'])), io:fwrite(Version), halt()."
+    -noshell
+  OUTPUT_VARIABLE Erlang_VERSION
+)
+string(STRIP "${Erlang_VERSION}" Erlang_VERSION)
+
 find_package_handle_standard_args(
   Erlang
-  DEFAULT_MSG
-  Erlang_RUNTIME
-  Erlang_COMPILE
-  Erlang_OTP_LIB_DIR
-  Erlang_OTP_ROOT_DIR
-  Erlang_EI_DIR
-  Erlang_ERTS_DIR
+  REQUIRED_VARS Erlang_RUNTIME Erlang_COMPILE Erlang_OTP_LIB_DIR Erlang_OTP_ROOT_DIR Erlang_EI_DIR
+                Erlang_ERTS_DIR
+  VERSION_VAR Erlang_VERSION
 )
 
 if(Erlang_FOUND)
@@ -119,15 +153,23 @@ if(Erlang_FOUND)
   endif()
 
   if(NOT TARGET Erlang::EI)
+    add_library(Erlang::EI INTERFACE IMPORTED)
+
     add_library(erlang_ei STATIC IMPORTED)
     set_property(TARGET erlang_ei PROPERTY IMPORTED_LOCATION ${Erlang_EI_LIBRARY_PATH}/libei.a)
-    add_library(erlang_erl_interface STATIC IMPORTED)
-    set_property(
-      TARGET erlang_erl_interface PROPERTY IMPORTED_LOCATION
-                                           ${Erlang_EI_LIBRARY_PATH}/liberl_interface.a
-    )
-    add_library(Erlang::EI INTERFACE IMPORTED)
+    if(Erlang_VERSION VERSION_LESS "23")
+      add_library(erlang_erl_interface STATIC IMPORTED)
+      set_property(
+        TARGET erlang_erl_interface PROPERTY IMPORTED_LOCATION
+                                             ${Erlang_EI_LIBRARY_PATH}/liberl_interface.a
+      )
+      set_property(TARGET Erlang::EI PROPERTY INTERFACE_LINK_LIBRARIES erlang_erl_interface)
+    endif()
     set_property(TARGET Erlang::EI PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Erlang_EI_INCLUDE_DIRS})
-    set_property(TARGET Erlang::EI PROPERTY INTERFACE_LINK_LIBRARIES erlang_ei erlang_erl_interface)
+    set_property(
+      TARGET Erlang::EI
+      APPEND
+      PROPERTY INTERFACE_LINK_LIBRARIES erlang_ei
+    )
   endif()
 endif(Erlang_FOUND)
