@@ -3418,12 +3418,15 @@ static int w_t_msg_apply_changes(sip_msg_t *msg, char *p1, char *p2)
 		return -1;
 	}
 
-	if(ksr_msg_apply_changes_mode != 1) {
+	if((ksr_msg_apply_changes_mode != 1)
+			&& !(msg->msg_flags & FL_MSG_APPLY_CHANGES)) {
+		LM_ERR("the function cannot be used\n");
 		return -1;
 	}
 
-	if(t_check(msg, 0) == -1)
+	if(t_check(msg, 0) == -1) {
 		return 1;
+	}
 	t = get_t();
 	if(!t || !t->uas.request) {
 		return -1;

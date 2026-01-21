@@ -334,7 +334,9 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	sip_msg_t l_req;
 	sip_msg_t *b_req = NULL;
 	char l_buf[BUF_SIZE];
+	int l_copy;
 
+	l_copy = 0;
 	shbuf = 0;
 	ret = E_UNSPEC;
 	memset(&bbak, 0, sizeof(tm_branch_bak_t));
@@ -354,7 +356,11 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	 * the up-to-date values */
 	membar_depends();
 
-	if(ksr_msg_apply_changes_mode == 1) {
+	if((ksr_msg_apply_changes_mode == 1)
+			|| (i_req->msg_flags & FL_MSG_APPLY_CHANGES)) {
+		l_copy = 1;
+	}
+	if(l_copy == 1) {
 		memset(&l_req, 0, sizeof(sip_msg_t));
 		l_req.buf = l_buf;
 		l_buf[0] = '\0';
@@ -372,7 +378,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	}
 
 	if(unlikely(branch_route || has_tran_tmcbs(t, TMCB_REQUEST_FWDED))) {
-		if(ksr_msg_apply_changes_mode != 1) {
+		if(l_copy == 0) {
 			if(tm_branch_duplicate_msg_fields(i_req, uri, next_hop, path,
 					   instance, ruid, location_ua, flags, &bbak)
 					< 0) {
@@ -421,7 +427,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 				/* update dst send_flags  and send socket*/
 				snd_flags = b_req->fwd_send_flags;
 				fsocket = b_req->force_send_socket;
-				if(ksr_msg_apply_changes_mode != 1) {
+				if(l_copy == 0) {
 					/* restore ireq_msg force_send_socket & flags */
 					set_force_socket(i_req, bbak.force_send_socket_bak);
 					i_req->fwd_send_flags = bbak.fwd_snd_flags_bak;
@@ -664,7 +670,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 
 error01:
 error03:
-	if(ksr_msg_apply_changes_mode != 1) {
+	if(l_copy == 0) {
 		/* Delete the duplicated lump lists, this will also delete
 		 * all lumps created here, such as lumps created in per-branch
 		 * routing sections, Via, and Content-Length headers created in

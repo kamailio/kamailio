@@ -1831,7 +1831,8 @@ static inline int new_t(struct sip_msg *p_msg)
 {
 	struct cell *new_cell;
 
-	if(ksr_msg_apply_changes_mode == 1) {
+	if((ksr_msg_apply_changes_mode == 1)
+			|| (p_msg->msg_flags & FL_MSG_APPLY_CHANGES)) {
 		if(sip_msg_apply_changes(p_msg) < 0) {
 			return E_BAD_REQ;
 		}
