@@ -299,7 +299,8 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 						status = II_URI_IPV4;
 					case II_URI_IPV4:
 					case II_URI_IPV6:
-						if(isalnum(*p) || *p == '-' || *p == '.' || *p == ':')
+						if(isalnum((unsigned char)(*p)) || *p == '-'
+								|| *p == '.' || *p == ':')
 							break;
 					case II_START:
 						goto parseerror;
