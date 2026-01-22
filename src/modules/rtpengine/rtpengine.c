@@ -5491,7 +5491,7 @@ static int rtpengine_subscribe_request_wrap(
 
 	// Free the bencode buffer
 	bencode_buffer_free(bencode_item_buffer(dict));
-	return 0;
+	return 1;
 }
 
 
