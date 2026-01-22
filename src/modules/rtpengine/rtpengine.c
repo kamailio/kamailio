@@ -5552,7 +5552,7 @@ static int rtpengine_subscribe_answer_wrap(
 		return -1;
 	// Free the bencode buffer
 	bencode_buffer_free(bencode_item_buffer(dict));
-	return 0;
+	return 1;
 }
 
 static int rtpengine_unsubscribe_wrap_f(
@@ -5613,7 +5613,7 @@ static int rtpengine_unsubscribe_wrap(
 		return -1;
 	// Free the bencode buffer
 	bencode_buffer_free(bencode_item_buffer(dict));
-	return 0;
+	return 1;
 }
 
 static int rtpengine_offer_answer(
