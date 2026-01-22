@@ -642,7 +642,7 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 				if(*p == '[') {
 					state = URI_HOST6_P;
 				} else {
-					if(isalnum(*p)) {
+					if(isalnum((unsigned char)(*p))) {
 						state = URI_HOST_P;
 					} else {
 						goto error_bad_host;
@@ -653,8 +653,8 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 				switch(*p) {
 					check_host_end;
 					default:
-						if(!isalnum(*p) && (*p != '.') && (*p != '-')
-								&& !uri_host_char_allowed(*p)) {
+						if(!isalnum((unsigned char)(*p)) && (*p != '.')
+								&& (*p != '-') && !uri_host_char_allowed(*p)) {
 							goto error_bad_host;
 						}
 				}
