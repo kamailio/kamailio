@@ -693,10 +693,10 @@ void *qm_realloc(void *qmp, void *p, size_t size)
 #ifdef DBG_QM_MALLOC
 		MDBG("shrinking from %lu to %lu\n", f->size, (unsigned long)size);
 		if(split_frag(qm, f, size, file, "fragm. from qm_realloc", line, mname)
-				!= 0) {
+				== 0) {
 			MDBG("shrinked successful\n");
 #else
-		if(split_frag(qm, f, size) != 0) {
+		if(split_frag(qm, f, size) == 0) {
 #endif
 			/* update used sizes: freed the splited frag */
 			/* split frag already adds FRAG_OVERHEAD for the newly created
