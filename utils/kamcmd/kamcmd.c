@@ -171,30 +171,6 @@ struct cnt_var_grp *crt_cnt_grp;
 	} while(0)
 
 
-#define INT2STR_MAX_LEN (19 + 1 + 1) /* 2^64~= 16*10^18 => 19+1 digits + \0 */
-
-/* returns a pointer to a static buffer containing l in asciiz & sets len */
-static inline char *int2str(unsigned int l, int *len)
-{
-	static char r[INT2STR_MAX_LEN];
-	int i;
-
-	i = INT2STR_MAX_LEN - 2;
-	r[INT2STR_MAX_LEN - 1] = 0; /* null terminate */
-	do {
-		r[i] = l % 10 + '0';
-		i--;
-		l /= 10;
-	} while(l && (i >= 0));
-	if(l && (i < 0)) {
-		fprintf(stderr, "BUG: int2str: overflow\n");
-	}
-	if(len)
-		*len = (INT2STR_MAX_LEN - 2) - i;
-	return &r[i + 1];
-}
-
-
 static char *trim_ws(char *l)
 {
 	char *ret;
