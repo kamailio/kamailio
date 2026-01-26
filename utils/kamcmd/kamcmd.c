@@ -43,6 +43,8 @@
 #include <time.h> /* time */
 #include <sys/time.h>
 
+#define KAMCMD_JSONRPC_SOCKET "unixd:" RUN_DIR SRNAME "_rpc.sock"
+
 #ifdef USE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -2315,7 +2317,11 @@ int main(int argc, char **argv)
 		}
 	}
 	if(sock_name == 0) {
-		sock_name = DEFAULT_CTL_SOCKET;
+		if(_kamcmd_rpc_type == KAMCMD_JSONRPC) {
+			sock_name = KAMCMD_JSONRPC_SOCKET;
+		} else {
+			sock_name = DEFAULT_CTL_SOCKET;
+		}
 	}
 
 	/* init the random number generator */
