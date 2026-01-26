@@ -2063,8 +2063,26 @@ void kamcmd_json_escape_str(str *s_in, str *s_out, int *emode)
 #define KAMCMD_JSONCMDBUF_SIZE 2048
 #define KAMCMD_JSONRPLBUF_SIZE 16 * 1023
 
+static int kamcmd_append_strz(str *obuf, str *pbuf, char *val)
+{
+	int len;
+
+	len = strlen(val);
+	if(len >= pbuf->len - 1) {
+		fprintf(stderr, "exceeding the buffer\n");
+		return -1;
+	}
+	memcpy(pbuf->s, val, len);
+	obuf->len += len;
+	obuf->s[obuf->len] = '\0';
+	pbuf->s += len;
+	pbuf->len -= len;
+
+	return 0;
+}
+
 /* runs json command */
-inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
+static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 {
 	char jcbuf[KAMCMD_JSONCMDBUF_SIZE];
 	char jrbuf[KAMCMD_JSONRPLBUF_SIZE];
@@ -2084,12 +2102,11 @@ inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 	pbuf.s = jcbuf;
 	pbuf.len = KAMCMD_JSONCMDBUF_SIZE;
 
-	len = strlen("{ \"jsonrpc\": \"2.0\", \"method\": \"");
-	memcpy(pbuf.s, "{ \"jsonrpc\": \"2.0\", \"method\": \"", len);
-	jcmd.len += len;
-	jcmd.s[jcmd.len] = '\0';
-	pbuf.s += len;
-	pbuf.len -= len;
+	if(kamcmd_append_strz(
+			   &jcmd, &pbuf, "{ \"jsonrpc\": \"2.0\", \"method\": \"")
+			< 0) {
+		return -1;
+	}
 
 	len = snprintf(pbuf.s, pbuf.len, "%s\", ", cmd->method);
 	if(len < 0 || len >= pbuf.len) {
@@ -2102,16 +2119,9 @@ inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 	pbuf.len -= len;
 
 	if(cmd->argc > 0) {
-		len = strlen("\"params\": [");
-		if(len >= pbuf.len - 1) {
-			fprintf(stderr, "command is too long\n");
+		if(kamcmd_append_strz(&jcmd, &pbuf, "\"params\": [") < 0) {
 			return -1;
 		}
-		memcpy(pbuf.s, "\"params\": [", len);
-		jcmd.len += len;
-		jcmd.s[jcmd.len] = '\0';
-		pbuf.s += len;
-		pbuf.len -= len;
 		for(i = 0; i < cmd->argc; i++) {
 			switch(cmd->argv[i].type) {
 				case BINRPC_T_INT:
@@ -2145,16 +2155,9 @@ inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 			pbuf.s += len;
 			pbuf.len -= len;
 		}
-		len = strlen("], ");
-		if(len >= pbuf.len - 1) {
-			fprintf(stderr, "command is too long\n");
+		if(kamcmd_append_strz(&jcmd, &pbuf, "], ") < 0) {
 			return -1;
 		}
-		memcpy(pbuf.s, "], ", len);
-		jcmd.len += len;
-		jcmd.s[jcmd.len] = '\0';
-		pbuf.s += len;
-		pbuf.len -= len;
 	}
 
 	len = snprintf(pbuf.s, pbuf.len, "\"id\": %d }", (rand() % 4000000) + 1);
