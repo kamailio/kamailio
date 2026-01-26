@@ -104,6 +104,7 @@ Options:\n\
                 substituted. To print '%v', escape it using '%': %%v.\n\
     -b          use binrpc protocol\n\
     -j          use jsonrpc protocol\n\
+    -t timeout  timeout in seconds to wait for jsonrpc response\n\
     -v          Verbose       \n\
     -V          Version number\n\
     -h          This help message\n\
@@ -142,6 +143,7 @@ int rpc_no = 0;
 
 struct binrpc_val *cfg_vars_array;
 int cfg_vars_no;
+int _kamcmd_read_timeout = 2;
 
 struct cfg_var_grp
 {
@@ -2181,11 +2183,11 @@ inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 		return -1;
 	}
 
-	i = 0;
+	i = _kamcmd_read_timeout;
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 	do {
-		i++;
+		i--;
 		FD_ZERO(&fds);
 		FD_SET(s, &fds);
 		ret = select(s + 1, &fds, NULL, NULL, &tv);
@@ -2194,7 +2196,7 @@ inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 			return -1;
 		} else if(ret == 0) {
 			/* timeout */
-			if(i == 5) {
+			if(i <= 0) {
 				break;
 			}
 			continue;
@@ -2210,7 +2212,7 @@ inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 		}
 		jrbuf[len] = 0x00;
 		printf("%s", jrbuf);
-		if(len < KAMCMD_JSONRPLBUF_SIZE / 2) {
+		if(i <= 0 || len < KAMCMD_JSONRPLBUF_SIZE / 2) {
 			/* expect it is finished */
 			break;
 		}
@@ -2250,7 +2252,7 @@ int main(int argc, char **argv)
 	sock_name = 0;
 	sock_type = UNIXS_SOCK;
 	opterr = 0;
-	while((c = getopt(argc, argv, "UVhbjs:D:R:vf:")) != -1) {
+	while((c = getopt(argc, argv, "UVhbjs:D:R:vf:t:")) != -1) {
 		switch(c) {
 			case 'V':
 				printf("version: %s\n", version);
@@ -2279,6 +2281,12 @@ int main(int argc, char **argv)
 				break;
 			case 'j':
 				_kamcmd_rpc_type = KAMCMD_JSONRPC;
+				break;
+			case 't':
+				_kamcmd_read_timeout = (int)atol(optarg);
+				if(_kamcmd_read_timeout < 0) {
+					_kamcmd_read_timeout = 2;
+				}
 				break;
 			case 'v':
 				verbose++;
