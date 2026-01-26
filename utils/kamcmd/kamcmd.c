@@ -135,7 +135,7 @@ struct sockaddr_un mysun;
 int quit; /* used only in interactive mode */
 
 int _kamcmd_rpc_type = KAMCMD_BINRPC;
-
+int _kamcmd_read_timeout = 2;
 struct binrpc_val *rpc_array;
 int rpc_no = 0;
 
@@ -143,7 +143,6 @@ int rpc_no = 0;
 
 struct binrpc_val *cfg_vars_array;
 int cfg_vars_no;
-int _kamcmd_read_timeout = 2;
 
 struct cfg_var_grp
 {
