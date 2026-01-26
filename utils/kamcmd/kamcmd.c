@@ -90,7 +90,8 @@ static char compiled[] = VERSION_DATE;
 static char compiled[] = __TIME__ " " __DATE__;
 #endif
 #endif
-static char help_msg[] = "\
+static char help_msg[] =
+		"\
 Usage: " NAME " [options][-s address] [ cmd ]\n\
 Options:\n\
     -s address  unix socket name or host name to send the commands on\n\
@@ -115,11 +116,13 @@ arg:\n\
      string or number; to force a number to be interpreted as string \n\
      prefix it by \"s:\", e.g. s:1\n\
 Examples:\n\
-        " NAME " -s unixs:/tmp/" NAME "_ctl system.listMethods\n\
-        " NAME " -f \"pid: %v  desc: %v\\n\" -s udp:localhost:2047 core.ps \n\
-        " NAME " ps  # uses default ctl socket \n\
-        " NAME "     # enters interactive mode on the default socket \n\
-        " NAME " -s tcp:localhost # interactive mode, default port \n\
+    " NAME " -s unixs:/tmp/" NAME "_ctl system.listMethods\n\
+    " NAME " -f \"pid: %v  desc: %v\\n\" -s udp:localhost:2047 core.ps \n\
+    " NAME " ps  # uses default ctl socket \n\
+    " NAME "     # enters interactive mode on the default socket \n\
+    " NAME " -s tcp:localhost # interactive mode, default port \n\
+    " NAME
+		" -s unixd:/run/kamailio/kamailio_rpc.sock -j core.psx # jsonrpc mode\n\
 ";
 
 
