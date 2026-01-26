@@ -43,6 +43,7 @@ Build-Depends:
  libreadline-dev,
  libsasl2-dev,
  libsctp-dev [any],
+ libsecp256k1-dev,
  libsecsipid-dev [amd64 arm64 armel armhf hurd-i386 i386 powerpc ppc64 ppc64el riscv64 s390x],
  libsnmp-dev,
  libsqlite3-dev,
@@ -843,6 +844,22 @@ Description: Kafka module for the Kamailio SIP server
  per second even on low-budget hardware.
  .
  This package provides an embedded kafka producer using librdkafka.
+
+Package: kamailio-authblockchain-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Blockchain related modules for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides auth_web3 and auth_arnacon modules.
 
 Package: kamailio-extra-modules
 Architecture: any
