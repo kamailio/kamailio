@@ -63,7 +63,7 @@
 #define NAME "kamcmd"
 #endif
 #ifndef VERSION
-#define VERSION "1.5"
+#define VERSION "1.6"
 #endif
 
 #define IOVEC_CNT 20
