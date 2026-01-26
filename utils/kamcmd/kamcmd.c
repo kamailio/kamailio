@@ -77,6 +77,9 @@
 #define UNIX_PATH_MAX 104
 #endif
 
+#define KAMCMD_BINRPC 0
+#define KAMCMD_JSONRPC 1
+
 static char version[] = NAME " " VERSION;
 #ifdef VERSION_NODATE
 static char compiled[] = "";
@@ -98,6 +101,8 @@ Options:\n\
     -f format   print the result using format. Format is a string containing\n\
                 %v at the places where values read from the reply should be\n\
                 substituted. To print '%v', escape it using '%': %%v.\n\
+    -b          use binrpc protocol\n\
+    -j          use jsonrpc protocol\n\
     -v          Verbose       \n\
     -V          Version number\n\
     -h          This help message\n\
@@ -124,6 +129,8 @@ char *sock_dir = 0;		/* same as above, but only the directory */
 char *unix_socket = 0;
 struct sockaddr_un mysun;
 int quit; /* used only in interactive mode */
+
+int _kamcmd_rpc_type = KAMCMD_BINRPC;
 
 struct binrpc_val *rpc_array;
 int rpc_no = 0;
@@ -1969,6 +1976,246 @@ end:
 #endif /* USE_READLINE */
 
 
+/*! \brief
+ *  escape input string to prepare it for use as json value
+ */
+void kamcmd_json_escape_str(str *s_in, str *s_out, int *emode)
+{
+	char *p1, *p2;
+	int len = 0;
+	char token;
+	int i;
+
+	s_out->len = 0;
+	if(!s_in || !s_in->s) {
+		s_out->s = strdup("");
+		*emode = 1;
+		return;
+	}
+	for(i = 0; i < s_in->len; i++) {
+		if(strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
+			len += 2;
+		} else if(s_in->s[i] < 32) {
+			len += 6;
+		} else {
+			len++;
+		}
+	}
+	if(len == s_in->len) {
+		s_out->s = s_in->s;
+		s_out->len = s_in->len;
+		*emode = 0;
+		return;
+	}
+
+	s_out->s = (char *)malloc(len + 2);
+	if(!s_out->s) {
+		return;
+	}
+	*emode = 1;
+
+	p2 = s_out->s;
+	p1 = s_in->s;
+	while(p1 < s_in->s + s_in->len) {
+		if((unsigned char)*p1 > 31 && *p1 != '\"' && *p1 != '\\') {
+			*p2++ = *p1++;
+		} else {
+			*p2++ = '\\';
+			switch(token = *p1++) {
+				case '\\':
+					*p2++ = '\\';
+					break;
+				case '\"':
+					*p2++ = '\"';
+					break;
+				case '\b':
+					*p2++ = 'b';
+					break;
+				case '\f':
+					*p2++ = 'f';
+					break;
+				case '\n':
+					*p2++ = 'n';
+					break;
+				case '\r':
+					*p2++ = 'r';
+					break;
+				case '\t':
+					*p2++ = 't';
+					break;
+				default:
+					/* escape and print */
+					snprintf(p2, 6, "u%04x", token);
+					p2 += 5;
+					break;
+			}
+		}
+	}
+	*p2++ = 0;
+	s_out->len = len;
+	return;
+}
+
+#define KAMCMD_JSONCMDBUF_SIZE 2048
+#define KAMCMD_JSONRPLBUF_SIZE 16 * 1023
+
+/* runs json command */
+inline static int run_json_cmd(int s, struct binrpc_cmd *cmd)
+{
+	char jcbuf[KAMCMD_JSONCMDBUF_SIZE];
+	char jrbuf[KAMCMD_JSONRPLBUF_SIZE];
+	struct timeval tv;
+	str jcmd;
+	str pbuf;
+	str sval;
+	int len;
+	int i;
+	int emode;
+	int ret = 0;
+	fd_set fds;
+
+	jcbuf[0] = '\0';
+	jcmd.s = jcbuf;
+	jcmd.len = 0;
+	pbuf.s = jcbuf;
+	pbuf.len = KAMCMD_JSONCMDBUF_SIZE;
+
+	len = strlen("{ \"jsonrpc\": \"2.0\", \"method\": \"");
+	memcpy(pbuf.s, "{ \"jsonrpc\": \"2.0\", \"method\": \"", len);
+	jcmd.len += len;
+	jcmd.s[jcmd.len] = '\0';
+	pbuf.s += len;
+	pbuf.len -= len;
+
+	len = snprintf(pbuf.s, pbuf.len, "%s\", ", cmd->method);
+	if(len < 0 || len >= pbuf.len) {
+		fprintf(stderr, "command is too long\n");
+		return -1;
+	}
+	jcmd.len += len;
+	jcmd.s[jcmd.len] = '\0';
+	pbuf.s += len;
+	pbuf.len -= len;
+
+	if(cmd->argc > 0) {
+		len = strlen("\"params\": [");
+		if(len >= pbuf.len - 1) {
+			fprintf(stderr, "command is too long\n");
+			return -1;
+		}
+		memcpy(pbuf.s, "\"params\": [", len);
+		jcmd.len += len;
+		jcmd.s[jcmd.len] = '\0';
+		pbuf.s += len;
+		pbuf.len -= len;
+		for(i = 0; i < cmd->argc; i++) {
+			switch(cmd->argv[i].type) {
+				case BINRPC_T_INT:
+					len = snprintf(pbuf.s, pbuf.len, "%s%d",
+							(i == 0) ? "" : ", ", cmd->argv[i].u.intval);
+					break;
+				case BINRPC_T_DOUBLE:
+					len = snprintf(pbuf.s, pbuf.len, "%s%.3f",
+							(i == 0) ? "" : ", ", cmd->argv[i].u.fval);
+					break;
+				default:
+					emode = 0;
+					kamcmd_json_escape_str(
+							&cmd->argv[i].u.strval, &sval, &emode);
+					if(sval.s == NULL) {
+						fprintf(stderr, "failed to escape string parameter\n");
+						return -1;
+					}
+					len = snprintf(pbuf.s, pbuf.len, "%s\"%.*s\"",
+							(i == 0) ? "" : ", ", sval.len, sval.s);
+					if(emode == 1) {
+						free(sval.s);
+					}
+			}
+			if(len < 0 || len >= pbuf.len) {
+				fprintf(stderr, "command is too long\n");
+				return -1;
+			}
+			jcmd.len += len;
+			jcmd.s[jcmd.len] = '\0';
+			pbuf.s += len;
+			pbuf.len -= len;
+		}
+		len = strlen("], ");
+		if(len >= pbuf.len - 1) {
+			fprintf(stderr, "command is too long\n");
+			return -1;
+		}
+		memcpy(pbuf.s, "], ", len);
+		jcmd.len += len;
+		jcmd.s[jcmd.len] = '\0';
+		pbuf.s += len;
+		pbuf.len -= len;
+	}
+
+	len = snprintf(pbuf.s, pbuf.len, "\"id\": %d }", (rand() % 4000000) + 1);
+	if(len < 0 || len >= pbuf.len) {
+		fprintf(stderr, "command is too long\n");
+		return -1;
+	}
+	jcmd.len += len;
+	jcmd.s[jcmd.len] = '\0';
+	pbuf.s += len;
+	pbuf.len -= len;
+	// ret = run_binrpc_cmd(s, cmd, fmt);
+
+	if(verbose > 0) {
+		fprintf(stderr, "command is [%.*s]/%d\n", jcmd.len, jcmd.s, jcmd.len);
+	}
+
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+	setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof tv);
+	len = write(s, jcmd.s, jcmd.len);
+	if(len <= 0) {
+		fprintf(stderr, "error sending the command (%d/%s)\n", errno,
+				strerror(errno));
+		return -1;
+	}
+
+	i = 0;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	do {
+		i++;
+		FD_ZERO(&fds);
+		FD_SET(s, &fds);
+		ret = select(s + 1, &fds, NULL, NULL, &tv);
+		if(ret < 0) {
+			fprintf(stderr, "select error (%d/%s)\n", errno, strerror(errno));
+			return -1;
+		} else if(ret == 0) {
+			/* timeout */
+			if(i == 5) {
+				break;
+			}
+			continue;
+		}
+		len = read(s, jrbuf, sizeof(jrbuf) - 1);
+		if(len < 0) {
+			if(errno == EINTR) {
+				continue;
+			}
+			fprintf(stderr, "error reading the response (%d/%s) %d\n", errno,
+					strerror(errno), ETIMEDOUT);
+			return -1;
+		}
+		jrbuf[len] = 0x00;
+		printf("%s", jrbuf);
+		if(len < KAMCMD_JSONRPLBUF_SIZE / 2) {
+			/* expect it is finished */
+			break;
+		}
+	} while(1);
+	printf("\n");
+	return 0;
+}
+
 /* on exit cleanup */
 static void cleanup()
 {
@@ -2000,7 +2247,7 @@ int main(int argc, char **argv)
 	sock_name = 0;
 	sock_type = UNIXS_SOCK;
 	opterr = 0;
-	while((c = getopt(argc, argv, "UVhs:D:R:vf:")) != -1) {
+	while((c = getopt(argc, argv, "UVhbjs:D:R:vf:")) != -1) {
 		switch(c) {
 			case 'V':
 				printf("version: %s\n", version);
@@ -2023,6 +2270,12 @@ int main(int argc, char **argv)
 				break;
 			case 'U':
 				sock_type = UDP_SOCK;
+				break;
+			case 'b':
+				_kamcmd_rpc_type = KAMCMD_BINRPC;
+				break;
+			case 'j':
+				_kamcmd_rpc_type = KAMCMD_JSONRPC;
 				break;
 			case 'v':
 				verbose++;
@@ -2103,11 +2356,22 @@ int main(int argc, char **argv)
 	if(optind >= argc) {
 		/*fprintf(stderr, "ERROR: no command specified\n");
 			goto error; */
+		if(_kamcmd_rpc_type == KAMCMD_JSONRPC) {
+			fprintf(stderr, "jsonrpc does not work in interactive mode\n");
+			goto error;
+		}
 	} else {
 		if(parse_cmd(&cmd, &argv[optind], argc - optind) < 0)
 			goto error;
-		if(run_cmd(s, &cmd, format) < 0)
-			goto error;
+		if(_kamcmd_rpc_type == KAMCMD_JSONRPC) {
+			if(run_json_cmd(s, &cmd) < 0) {
+				goto error;
+			}
+		} else {
+			if(run_cmd(s, &cmd, format) < 0) {
+				goto error;
+			}
+		}
 		goto end;
 	}
 	/* interactive mode */
