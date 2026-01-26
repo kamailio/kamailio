@@ -53,6 +53,7 @@ Frederic Gaisnon
               3.20. header_mode (int)
               3.21. methods_noinitial (str)
               3.22. version_table (integer)
+              3.23. methods_update_time (str)
 
         4. Functions
 
@@ -89,11 +90,12 @@ Frederic Gaisnon
    1.20. Set header_mode parameter
    1.21. Set methods_noinitial parameter
    1.22. version_table parameter usage
-   1.23. tps_set_context usage
-   1.24. Usage of event_route[topos:msg-outgoing]
-   1.25. Usage of event_route[topos:msg-sending]
-   1.26. Usage of event_route[topos:msg-incoming]
-   1.27. Usage of event_route[topos:msg-receiving]
+   1.23. Set methods_update_time parameter
+   1.24. tps_set_context usage
+   1.25. Usage of event_route[topos:msg-outgoing]
+   1.26. Usage of event_route[topos:msg-sending]
+   1.27. Usage of event_route[topos:msg-incoming]
+   1.28. Usage of event_route[topos:msg-receiving]
 
 Chapter 1. Admin Guide
 
@@ -129,6 +131,7 @@ Chapter 1. Admin Guide
         3.20. header_mode (int)
         3.21. methods_noinitial (str)
         3.22. version_table (integer)
+        3.23. methods_update_time (str)
 
    4. Functions
 
@@ -206,6 +209,7 @@ Chapter 1. Admin Guide
    3.20. header_mode (int)
    3.21. methods_noinitial (str)
    3.22. version_table (integer)
+   3.23. methods_update_time (str)
 
 3.1. storage (str)
 
@@ -548,6 +552,20 @@ modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
 modparam("topos", "version_table", 0)
 ...
 
+3.23. methods_update_time (str)
+
+   List of SIP methods (comma separated) for which the dialog timestamp
+   (rectime) should be updated in the topos_d table when processing
+   in-dialog requests. This allows extending the dialog lifetime for
+   specific methods beyond the initial INVITE.
+
+   Default value is “SUBSCRIBE”.
+
+   Example 1.23. Set methods_update_time parameter
+...
+modparam("topos", "methods_update_time", "SUBSCRIBE,UPDATE,INVITE")
+...
+
 4. Functions
 
    4.1. tps_set_context(ctx)
@@ -559,7 +577,7 @@ modparam("topos", "version_table", 0)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. tps_set_context usage
+   Example 1.24. tps_set_context usage
 ...
 request_route {
     ...
@@ -588,7 +606,7 @@ request_route {
    $sndto(ip), $sndto(port) and $sndto(proto) point to the real
    destination of the SIP message.
 
-   Example 1.24. Usage of event_route[topos:msg-outgoing]
+   Example 1.25. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -611,7 +629,7 @@ event_route[topos:msg-outgoing] {
    $sndto(ip), $sndto(port) and $sndto(proto) point to the real
    destination of the SIP message.
 
-   Example 1.25. Usage of event_route[topos:msg-sending]
+   Example 1.26. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {
@@ -633,7 +651,7 @@ event_route[topos:msg-sending] {
    $si, $sp and $proto point to the real source address of the SIP
    message, as well as the keywords src_port and dst_port.
 
-   Example 1.26. Usage of event_route[topos:msg-incoming]
+   Example 1.27. Usage of event_route[topos:msg-incoming]
 ...
 event_route[topos:msg-incoming] {
   if($si=="10.1.1.10") {
@@ -655,7 +673,7 @@ event_route[topos:msg-incoming] {
    $proto point to the real source address of the SIP message, as well as
    the keywords src_port and dst_port.
 
-   Example 1.27. Usage of event_route[topos:msg-receiving]
+   Example 1.28. Usage of event_route[topos:msg-receiving]
 ...
 event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {
