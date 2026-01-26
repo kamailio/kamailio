@@ -178,7 +178,7 @@ static const char *parse_number(
 		do
 			n = (n * 10.0) + (*num++ - '0'), scale--;
 		while(*num >= '0' && *num <= '9');
-	}								 /* Fractional part? */
+	} /* Fractional part? */
 	if(*num == 'e' || *num == 'E') { /* Exponent? */
 		num++;
 		if(*num == '+')
@@ -568,7 +568,7 @@ static char *print_array(srjson_doc_t *doc, srjson_t *item, int depth, int fmt)
 	char *out = 0, *ptr, *ret;
 	int len = 5;
 	srjson_t *child = item->child;
-	int numentries = 0, i = 0, fail = 0;
+	int numentries = 0, i = 0, fail = 0, j = 0;
 
 	/* How many entries in the array? */
 	while(child)
@@ -580,11 +580,15 @@ static char *print_array(srjson_doc_t *doc, srjson_t *item, int depth, int fmt)
 	memset(entries, 0, numentries * sizeof(char *));
 	/* Retrieve all the results: */
 	child = item->child;
+	depth++;
+	if(fmt) {
+		len += depth; /* indent the ending square bracket */
+	}
 	while(child && !fail) {
-		ret = print_value(doc, child, depth + 1, fmt);
+		ret = print_value(doc, child, depth, fmt);
 		entries[i++] = ret;
 		if(ret)
-			len += strlen(ret) + 2 + (fmt ? 1 : 0);
+			len += strlen(ret) + 2 + (fmt ? 2 + depth : 0);
 		else
 			fail = 1;
 		child = child->next;
@@ -608,19 +612,37 @@ static char *print_array(srjson_doc_t *doc, srjson_t *item, int depth, int fmt)
 	/* Compose the output array. */
 	*out = '[';
 	ptr = out + 1;
+	if(fmt) {
+		*ptr++ = '\n';
+	}
 	*ptr = 0;
 	for(i = 0; i < numentries; i++) {
+		if(fmt) {
+			for(j = 0; j < depth; j++) {
+				*ptr++ = '\t';
+			}
+		}
 		strcpy(ptr, entries[i]);
 		ptr += strlen(entries[i]);
 		if(i != numentries - 1) {
 			*ptr++ = ',';
 			if(fmt)
-				*ptr++ = ' ';
+				*ptr++ = '\n';
 			*ptr = 0;
+		} else {
+			if(fmt) {
+				*ptr++ = '\n';
+				*ptr = 0;
+			}
 		}
 		doc->free_fn(entries[i]);
 	}
 	doc->free_fn(entries);
+	if(fmt) {
+		for(j = 0; j < depth - 1; j++) {
+			*ptr++ = '\t';
+		}
+	}
 	*ptr++ = ']';
 	*ptr++ = 0;
 	return out;
