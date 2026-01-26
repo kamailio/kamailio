@@ -634,6 +634,25 @@ modparam("topos", "version_table", 0)
 		</programlisting>
 		</example>
 	</section>
+	<section id="topos.p.methods_update_time">
+		<title><varname>methods_update_time</varname> (str)</title>
+		<para>
+		List of SIP methods (comma separated) for which the dialog timestamp (rectime) should be updated in the topos_d table when processing in-dialog requests. This allows extending the dialog lifetime for specific methods beyond the initial INVITE.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>SUBSCRIBE</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>methods_update_time</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "methods_update_time", "SUBSCRIBE,UPDATE,INVITE")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
