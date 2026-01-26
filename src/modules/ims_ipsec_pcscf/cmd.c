@@ -475,8 +475,10 @@ static int update_contact_ipsec_params(
 	memcpy(s->ik.s, ik.s, ik.len);
 	s->ik.len = ik.len;
 
-	// Generate SPI
-	if(s_old) {
+	// Reuse only if both CK and IK match.
+	if(s_old && s_old->ck.s != NULL && s_old->ik.s != NULL
+			&& strcmp(s_old->ck.s, s->ck.s) == 0
+			&& strcmp(s_old->ik.s, s->ik.s) == 0) {
 		if(s_old->spi_pc && s_old->spi_ps && s_old->port_pc && s_old->port_ps) {
 			LM_INFO("Reusing IPSEC tunnel\n");
 			s->spi_pc = s_old->spi_pc;
