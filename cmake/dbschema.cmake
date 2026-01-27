@@ -90,14 +90,6 @@ function(add_db_target db_name xsl_file)
       WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
       COMMENT "Processing ${table} for ${db_name}"
     )
-    # Ensure the generated files are cleaned up by the global clean target
-    # Note: this only works for CMake >= 3.15 and only for Make and Ninja generators
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.15")
-      set_target_properties(
-        dbschema_${db_name} PROPERTIES ADDITIONAL_CLEAN_FILES
-                                       "${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/"
-      )
-    endif()
   endforeach()
 
   # Create version table for db_text
@@ -143,7 +135,7 @@ if(NOT XSLTPROC_EXECUTABLE)
 else()
   #  Add targets for each database type
   if(NOT TARGET dbschema)
-    add_custom_target(dbschema ALL COMMENT "Generating schemas for all dbs...")
+    add_custom_target(dbschema COMMENT "Generating schemas for all dbs...")
   endif()
   if(NOT TARGET dbschema_clean)
     add_custom_target(dbschema_clean COMMENT "Cleaning schemas for all dbs...")
