@@ -19,6 +19,13 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 # libncurses
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
+# libsecp256k1-dev < 0.5
+sed -i -e '/^ libsecp256k1-dev,/d' \
+  -e '/^Package: kamailio-authblockchain-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += auth_blockchain$/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += auth_blockchain' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

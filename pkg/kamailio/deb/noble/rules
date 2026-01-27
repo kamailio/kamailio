@@ -41,6 +41,7 @@ EXTRA_EXCLUDED_MODULES += oracle
 EXTRA_EXCLUDED_MODULES += pa
 EXTRA_EXCLUDED_MODULES += iptrtpproxy
 EXTRA_EXCLUDED_MODULES += python
+EXTRA_EXCLUDED_MODULES += auth_blockchain
 ## --EXCLUDED--
 
 
@@ -88,7 +89,6 @@ PACKAGE_GROUPS += nats
 PACKAGE_GROUPS += tls_wolfssl
 PACKAGE_GROUPS += microhttpd
 PACKAGE_GROUPS += kafka
-PACKAGE_GROUPS += auth_blockchain
 
 # Module groups to be packaged onto kamailio-extra-modules.
 EXTRA_GROUPS += ev

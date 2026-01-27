@@ -28,6 +28,13 @@ sed -i -e '/libjwt-dev/d' -e 's/, JWT (JSON Web Token)//' ${DIST}/control
 sed -i -e '/^EXTRA_GROUPS += jwt$/d' ${DIST}/rules
 wrap-and-sort -sat -d ${DIST}
 
+# libsecp256k1-dev < 0.5
+sed -i -e '/^ libsecp256k1-dev,/d' \
+  -e '/^Package: kamailio-authblockchain-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += auth_blockchain$/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += auth_blockchain' ${DIST}/rules
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
