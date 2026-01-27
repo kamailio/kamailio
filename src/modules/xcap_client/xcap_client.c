@@ -148,7 +148,10 @@ static int mod_init(void)
 	xcap_dbf.close(xcap_db);
 	xcap_db = NULL;
 
-	curl_global_init(CURL_GLOBAL_ALL);
+	if(curl_global_init(CURL_GLOBAL_ALL)) {
+		LM_ERR("failed to init global curl\n");
+		return -1;
+	}
 
 	if(periodical_query) {
 		register_timer(query_xcap_update, 0, query_period);
