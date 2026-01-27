@@ -471,6 +471,10 @@ char *send_http_get(char *path, unsigned int xcap_port, char *match_etag,
 	}
 
 	curl_handle = curl_easy_init();
+	if(curl_handle == NULL) {
+		LM_ERR("curl_easy_init() failed\n");
+		return NULL;
+	}
 
 	curl_easy_setopt(curl_handle, CURLOPT_URL, path);
 
