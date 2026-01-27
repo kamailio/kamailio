@@ -127,12 +127,11 @@ void free_reply_lump_list(struct lump_rpl *lump)
 
 struct lump_rpl *copy_reply_lump_list(struct lump_rpl *lump_list)
 {
-	struct lump_rpl *nlump;
-	struct lump_rpl *flump;
-	struct lump_rpl *llump;
-	struct lump_rpl *clump;
+	struct lump_rpl *nlump = NULL;
+	struct lump_rpl *flump = NULL;
+	struct lump_rpl *llump = NULL;
+	struct lump_rpl *clump = NULL;
 
-	flump = NULL;
 	for(clump = lump_list; clump; clump = clump->next) {
 		nlump = (struct lump_rpl *)pkg_malloc(
 				sizeof(struct lump_rpl) + clump->text.len + 1);
