@@ -115,4 +115,7 @@ override_dh_auto_configure:
 		-DEXCLUDE_MODULES="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
 		-DMODULE_GROUP_NAME="KSTANDARD $(shell echo "$(addprefix K, $(PACKAGE_GROUPS) $(EXTRA_GROUPS))"| tr '[:lower:]' '[:upper:]')"
 
+execute_after_dh_auto_build:
+	cmake --build "obj-${DEB_HOST_GNU_TYPE}" -t dbschema
+
 override_dh_auto_test:
