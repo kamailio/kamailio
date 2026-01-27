@@ -1014,7 +1014,7 @@ static inline int parse_route_param(
 	param_hooks_t phooks;
 	param_t *pit = NULL;
 	pt_route_t tmp;
-	pt_route_t *rt;
+	pt_route_t *rt = NULL;
 	pt_timer_t *nt;
 	str s1;
 	str s2 = STR_NULL;
@@ -1078,6 +1078,7 @@ static inline int parse_route_param(
 			break;
 		default:
 			LM_CRIT("parsing route param type=%d is undefined\n", which);
+			pkg_free(rt);
 			goto err3;
 	}
 
