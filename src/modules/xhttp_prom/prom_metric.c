@@ -1898,7 +1898,12 @@ static int prom_metric_lvalue_print(
 			goto error;
 		}
 
-		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
@@ -1930,7 +1935,12 @@ static int prom_metric_lvalue_print(
 			goto error;
 		}
 
-		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
@@ -1973,7 +1983,12 @@ static int prom_metric_lvalue_print(
 				goto error;
 			}
 
-			if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
+			if(prom_body_timestamp_printf(ctx, ts) == -1) {
+				LM_ERR("Fail to print\n");
+				goto error;
+			}
+
+			if(prom_body_printf(ctx, "\n") == -1) {
 				LM_ERR("Fail to print\n");
 				goto error;
 			}
@@ -1999,7 +2014,12 @@ static int prom_metric_lvalue_print(
 			goto error;
 		}
 
-		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
@@ -2023,7 +2043,12 @@ static int prom_metric_lvalue_print(
 			goto error;
 		}
 
-		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
@@ -2047,7 +2072,12 @@ static int prom_metric_lvalue_print(
 			goto error;
 		}
 
-		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}

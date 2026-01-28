@@ -44,6 +44,15 @@
 int get_timestamp(uint64_t *ts);
 
 /**
+ * @brief Format and print timestamp according to timestamp_format parameter.
+ *
+ * @param ctx prom_ctx_t context for output buffer
+ * @param ts timestamp in milliseconds
+ * @return number of bytes written, or -1 on error
+ */
+int prom_body_timestamp_printf(prom_ctx_t *ctx, uint64_t ts);
+
+/**
  * @brief Write some data in prom_body buffer.
  *
  * @return number of bytes written.

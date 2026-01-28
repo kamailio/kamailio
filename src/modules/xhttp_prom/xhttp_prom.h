@@ -126,6 +126,11 @@ extern int pkg_proc_stats_no;
  */
 extern int metadata_flags;
 
+/**
+ * @brief timestamp format: "ms" (milliseconds), "s" (seconds), or "sf" (seconds with fraction)
+ */
+extern str timestamp_format;
+
 enum
 {
 	METADATA_FLAGS_TYPE = (1 << 0),

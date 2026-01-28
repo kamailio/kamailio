@@ -170,6 +170,38 @@ int get_timestamp(uint64_t *ts)
 }
 
 /**
+ * @brief Format and print timestamp according to timestamp_format parameter.
+ *
+ * This function formats the timestamp in one of three modes:
+ *   - "ms": integer milliseconds (default, backward compatible)
+ *   - "s":  integer seconds (OpenMetrics compliant)
+ *   - "sf": seconds with fractional milliseconds (OpenMetrics compliant, preserves precision)
+ *
+ * @param ctx prom_ctx_t context for output buffer
+ * @param ts timestamp in milliseconds
+ * @return number of bytes written, or -1 on error
+ */
+int prom_body_timestamp_printf(prom_ctx_t *ctx, uint64_t ts)
+{
+	/* timestamp_format is "ms", "s", or "sf" */
+	if(timestamp_format.len == 2) {
+		if(timestamp_format.s[0] == 'm') {
+			/* "ms" - milliseconds (backward compatible) */
+			return prom_body_printf(ctx, " %" PRIu64, ts);
+		} else {
+			/* "sf" - seconds with fraction */
+			uint64_t sec = ts / 1000;
+			uint64_t ms = ts % 1000;
+			return prom_body_printf(ctx, " %" PRIu64 ".%03" PRIu64, sec, ms);
+		}
+	} else {
+		/* "s" - seconds only */
+		uint64_t sec = ts / 1000;
+		return prom_body_printf(ctx, " %" PRIu64, sec);
+	}
+}
+
+/**
  * @brief Generate a string suitable for a Prometheus metric.
  *
  * @return 0 on success.
@@ -204,8 +236,17 @@ static int metric_generate(
 		return -1;
 	}
 
-	if(prom_body_printf(ctx, " %lu %" PRIu64 "\n", counter_val, (uint64_t)ts)
-			== -1) {
+	if(prom_body_printf(ctx, " %lu", counter_val) == -1) {
+		LM_ERR("Fail to print\n");
+		return -1;
+	}
+
+	if(prom_body_timestamp_printf(ctx, ts) == -1) {
+		LM_ERR("Fail to print\n");
+		return -1;
+	}
+
+	if(prom_body_printf(ctx, "\n") == -1) {
 		LM_ERR("Fail to print\n");
 		return -1;
 	}
@@ -231,10 +272,17 @@ static int prom_metric_uptime_print(prom_ctx_t *ctx)
 
 	time(&now);
 	uptime = (int)(now - up_since);
-	if(prom_body_printf(ctx, "%.*suptime%s %d %" PRIu64 "\n",
-			   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-			   xhttp_prom_tags_braces, uptime, ts)
+	if(prom_body_printf(ctx, "%.*suptime%s %d", xhttp_prom_beginning.len,
+			   xhttp_prom_beginning.s, xhttp_prom_tags_braces, uptime)
 			== -1) {
+		LM_ERR("Fail to print\n");
+		goto error;
+	}
+	if(prom_body_timestamp_printf(ctx, ts) == -1) {
+		LM_ERR("Fail to print\n");
+		goto error;
+	}
+	if(prom_body_printf(ctx, "\n") == -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
 	}
@@ -262,51 +310,91 @@ static int prom_metric_pkgmem_print(prom_ctx_t *ctx)
 	for(; i < pkg_proc_stats_no; i++) {
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_used{pid=\"%u\", rank=\"%d\", desc=\"%s\"%s} "
-				   "%lu %" PRIu64 "\n",
+				   "%lu",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma, pkg_proc_stats[i].used, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].used)
 				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_available{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma, pkg_proc_stats[i].available, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].available)
 				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_real_used{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma, pkg_proc_stats[i].real_used, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].real_used)
 				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_total_frags{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma, pkg_proc_stats[i].total_frags, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].total_frags)
 				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 		if(prom_body_printf(ctx,
 				   "%.*spkgmem_total_size{pid=\"%u\", rank=\"%d\", "
-				   "desc=\"%s\"%s} %lu %" PRIu64 "\n",
+				   "desc=\"%s\"%s} %lu",
 				   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
 				   pkg_proc_stats[i].pid, pkg_proc_stats[i].rank, pt[i].desc,
-				   xhttp_prom_tags_comma, pkg_proc_stats[i].total_size, ts)
+				   xhttp_prom_tags_comma, pkg_proc_stats[i].total_size)
 				== -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_timestamp_printf(ctx, ts) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
+		if(prom_body_printf(ctx, "\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
