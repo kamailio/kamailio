@@ -80,11 +80,14 @@ function(add_db_target db_name xsl_file)
     endif()
 
     # Stringparam db is the db_* module name
+    # https://stackoverflow.com/a/66333704
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/18062
     add_custom_command(
       TARGET dbschema_${db_name}
       PRE_BUILD
       COMMAND
-        "XML_CATALOG_FILES=${CATALOG}" ${XSLTPROC_EXECUTABLE} ${XSLTPROC_FLAGS} --stringparam dir
+        ${CMAKE_COMMAND} -E env XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE}
+        ${XSLTPROC_FLAGS} --stringparam dir
         ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix} --stringparam prefix
         ${prefix} --stringparam db ${db_name} ${xsl_file} "kamailio-${table}.xml"
       WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/src/lib/srdb1/schema"
