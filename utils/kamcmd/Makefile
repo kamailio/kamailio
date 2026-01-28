@@ -6,7 +6,7 @@ include $(COREPATH)/Makefile.defs
 include $(COREPATH)/Makefile.targets
 
 auto_gen=
-RELEASE=1.5
+RELEASE=1.6
 UTIL_SRC_NAME=kamcmd
 # Pass CUSTOM_NAME to overwrite the kamcmd/sercmd bin name
 ifeq ($(CUSTOM_NAME),)
