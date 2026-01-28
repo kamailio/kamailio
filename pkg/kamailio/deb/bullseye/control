@@ -50,6 +50,7 @@ Build-Depends:
  libunistring-dev,
  libwebsockets-dev,
  libxml2-dev,
+ lynx,
  openssl,
  pkg-config,
  postgresql-server-dev-all,

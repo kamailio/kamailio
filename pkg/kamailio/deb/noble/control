@@ -52,6 +52,7 @@ Build-Depends:
  libwebsockets-dev,
  libwolfssl-dev,
  libxml2-dev,
+ lynx,
  openssl,
  pkg-config,
  python3,
