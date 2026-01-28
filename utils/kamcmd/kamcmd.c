@@ -240,31 +240,40 @@ static int kamcmd_quit(int s, struct binrpc_cmd *cmd);
 static int kamcmd_warranty(int s, struct binrpc_cmd *cmd);
 
 
-static struct cmd_alias cmd_aliases[] = {{"ps", "core.ps", "%v\t%v\n"},
-		{"psx", "core.psx", 0}, {"list", "system.listMethods", 0},
-		{"ls", "system.listMethods", 0}, {"ver", "core.version", 0},
-		{"version", "core.version", 0},
-		{"who", "ctl.who", "[%v] %v: %v %v -> %v %v\n"},
-		{"listen", "ctl.listen", "[%v] %v: %v %v\n"},
-		{"dns_mem_info", "dns.mem_info", "%v / %v\n"},
-		{"dns_debug", "dns.debug",
+/* clang-format off */
+static struct cmd_alias cmd_aliases[] = {
+	{"ps", "core.ps", "%v\t%v\n"},
+	{"psx", "core.psx", 0},
+	{"list", "system.listMethods", 0},
+	{"ls", "system.listMethods", 0},
+	{"ver", "core.version", 0},
+	{"version", "core.version", 0},
+	{"who", "ctl.who", "[%v] %v: %v %v -> %v %v\n"},
+	{"listen", "ctl.listen", "[%v] %v: %v %v\n"},
+	{"dns_mem_info", "dns.mem_info", "%v / %v\n"},
+	{"dns_debug", "dns.debug",
 				"%v (%v): size=%v ref=%v expire=%vs last=%vs ago f=%v\n"},
-		{"dns_debug_all", "dns.debug_all",
+	{"dns_debug_all", "dns.debug_all",
 				"%v (%v) [%v]: size=%v ref=%v expire=%vs last=%vs ago f=%v\n"
 				"\t\t%v:%v expire=%vs f=%v\n"},
-		{"dst_blocklist_mem_info", "dst_blocklist.mem_info", "%v / %v\n"},
-		{"dst_blocklist_debug", "dst_blocklist.debug",
+	{"dst_blocklist_mem_info", "dst_blocklist.mem_info", "%v / %v\n"},
+	{"dst_blocklist_debug", "dst_blocklist.debug",
 				"%v:%v:%v expire:%v flags: %v\n"},
-		{0, 0, 0}};
+	{0, 0, 0}
+};
 
 
-static struct kamcmd_builtin builtins[] = {{"?", kamcmd_help, "help"},
-		{"help", kamcmd_help, "displays help for a command"},
-		{"version", kamcmd_ver, "displays " NAME "version"},
-		{"quit", kamcmd_quit, "exits " NAME},
-		{"exit", kamcmd_quit, "exits " NAME},
-		{"warranty", kamcmd_warranty, "displays " NAME "'s warranty info"},
-		{"license", kamcmd_warranty, "displays " NAME "'s license"}, {0, 0}};
+static struct kamcmd_builtin builtins[] = {
+	{"?", kamcmd_help, "help"},
+	{"help", kamcmd_help, "displays help for a command"},
+	{"version", kamcmd_ver, "displays " NAME "version"},
+	{"quit", kamcmd_quit, "exits " NAME},
+	{"exit", kamcmd_quit, "exits " NAME},
+	{"warranty", kamcmd_warranty, "displays " NAME "'s warranty info"},
+	{"license", kamcmd_warranty, "displays " NAME "'s license"},
+	{0, 0}
+};
+/* clang-format on */
 
 
 #ifdef USE_READLINE
@@ -290,23 +299,37 @@ static enum complete_states attempted_completion_state;
 static int crt_param_no;
 
 /* commands for which we complete the params to other method names */
+/* clang-format off */
 char *complete_params_methods[] = {
-		"?", "h", "help", "system.methodSignature", "system.methodHelp", 0};
+		"?", "h", "help", "system.methodSignature", "system.methodHelp", 0
+};
+/* clang-format on */
 
 #ifdef USE_CFG_VARS
 /* commands for which we complete the first param with a cfg var grp*/
-char *complete_params_cfg_var[] = {"cfg.get", "cfg.help", "cfg.set_delayed_int",
-		"cfg.set_delayed_string", "cfg.set_now_int", "cfg.set_now_string", 0};
+/* clang-format off */
+char *complete_params_cfg_var[] = {
+	"cfg.get", "cfg.help", "cfg.set_delayed_int", "cfg.set_delayed_string",
+	"cfg.set_now_int", "cfg.set_now_string", 0
+};
+/* clang-format on */
 #endif /* USE_CFG_VARS */
 
 #ifdef USE_COUNTERS
 /* commands for which we complete the first param with a counter group */
-char *complete_param1_counter_grp[] = {"cnt.get", "cnt.get_raw",
-		"cnt.grp_get_all", "cnt.reset", "cnt.var_list", "cnt.help", 0};
+/* clang-format off */
+char *complete_param1_counter_grp[] = {
+	"cnt.get", "cnt.get_raw", "cnt.grp_get_all", "cnt.reset", "cnt.var_list",
+	"cnt.help", 0
+};
+/* clang-format on */
 
 /* commands for which we completed the 2nd param with a counter name */
+/* clang-format off */
 char *complete_param2_counter_name[] = {
-		"cnt.get", "cnt.get_raw", "cnt.reset", "cnt.help", 0};
+		"cnt.get", "cnt.get_raw", "cnt.reset", "cnt.help", 0
+};
+/* clang-format on */
 #endif /* USE_COUNTERS */
 
 #endif /* USE_READLINE */
