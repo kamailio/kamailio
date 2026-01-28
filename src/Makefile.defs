@@ -221,7 +221,11 @@ endif
 
 ifeq ($(LIBSSL_SET_MUTEX_SHARED), 1)
 CC_PMUTEX_OPTS = -DKSR_PTHREAD_MUTEX_SHARED
+ifeq ($(OS), darwin)
+LD_PMUTEX_OPTS = -rdynamic $(LIBDL)
+else
 LD_PMUTEX_OPTS = -rdynamic $(LIBDL) -Wl,-Bsymbolic-functions
+endif
 else
 CC_PMUTEX_OPTS =
 LD_PMUTEX_OPTS =
