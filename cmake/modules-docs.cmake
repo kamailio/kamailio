@@ -94,16 +94,6 @@ function(docs_add_module group_name module_name)
   add_custom_target(${module_name}_doc COMMENT "Processing target ${module_name}_doc")
   add_dependencies(${module_name}_doc ${module_name}_doc_text ${module_name}_doc_html)
 
-  # Man docs only if author of module provided xml for man.
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.xml)
-    add_custom_target(
-      ${module_name}_man
-      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.xml
-      COMMENT "Processing target ${module_name}_man"
-    )
-    add_dependencies(kamailio_docs_man ${module_name}_man)
-  endif()
-
   # Each version has seperate custon commands for not recompiling all if 1 gets
   # changed.
   # if(XSLTPROC_EXECUTABLE)
@@ -146,28 +136,11 @@ function(docs_add_module group_name module_name)
   )
   # endif()
 
-  add_custom_command(
-    # man version
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.7
-    COMMAND ${DOCBOOK2X_EXECUTABLE} -s ${STYLESHEET_DIR}/serdoc2man.xsl ${module_name}.xml
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml
-            ${STYLESHEET_DIR}/serdoc2man.xsl
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}
-    COMMENT "Processing target ${module_name}_man"
-  )
-
   install(
     FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/README
     RENAME README.${module_name}
     DESTINATION ${CMAKE_INSTALL_DOCDIR}/modules
     COMPONENT ${group_name}
-  )
-
-  install(
-    FILES ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/${module_name}.7
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/man/man7
-    COMPONENT ${group_name}
-    OPTIONAL
   )
   # endif()
 endfunction()
