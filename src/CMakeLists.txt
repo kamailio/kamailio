@@ -76,7 +76,7 @@ else()
   )
 endif()
 
-option(BUILD_DOC "Build documentation" ON)
+option(BUILD_DOC "Build documentation in the default target" OFF)
 # Readme file and man page
 find_program(XSLTPROC_EXECUTABLE xsltproc QUIET)
 find_program(LYNX_EXECUTABLE lynx QUIET)
