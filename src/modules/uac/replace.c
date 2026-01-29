@@ -884,6 +884,7 @@ static void replace_callback(
 	int dlgvar_index = 0;
 	int dlgvar_dpindex = 0;
 	str *dlgvar_names;
+	struct cell *Trans;
 
 	if(!dlg || !_params || _params->direction == DLG_DIR_NONE || !_params->req)
 		return;
@@ -1015,6 +1016,11 @@ static void replace_callback(
 		return;
 	}
 	msg->msg_flags |= uac_flag;
+
+	if((Trans = uac_tmb.t_gett()) != NULL && Trans != T_UNDEFINED
+			&& Trans->uas.request) {
+		Trans->uas.request->msg_flags |= uac_flag;
+	}
 
 	return;
 }
