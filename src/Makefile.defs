@@ -891,6 +891,11 @@ ifeq ($(ARCH), aarch64)
 	C_DEFS+=-DCC_GCC_LIKE_ASM
 endif
 
+ifeq ($(ARCH), arm64)
+	C_DEFS+=-DCC_GCC_LIKE_ASM
+endif
+
+
 ifeq ($(ARCH), ppc)
 	use_fast_lock=yes
 endif
