@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<!-- 
+  Simple UAC REGISTER scenario
+  This scenario simulates a user agent registering with a SIP server
+-->
+
+<scenario name="UAC REGISTER Basic">
+  <!-- Send REGISTER -->
+  <send retrans="500">
+    <![CDATA[
+
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      From: <sip:[caller]@[local_ip]>;tag=[pid]SIPpTag00[call_number]
+      To: <sip:[caller]@[remote_ip]>
+      Call-ID: [call_id]
+      CSeq: 1 REGISTER
+      Contact: <sip:[caller]@[local_ip]:[local_port];transport=[transport]>
+      Max-Forwards: 70
+      Expires: 3600
+      User-Agent: SIPp
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- Receive 401 Unauthorized (optional - if auth required) -->
+  <recv response="401" auth="true" optional="true">
+  </recv>
+
+  <!-- Send authenticated REGISTER (if challenged) -->
+  <send retrans="500">
+    <![CDATA[
+
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      From: <sip:[caller]@[local_ip]>;tag=[pid]SIPpTag00[call_number]
+      To: <sip:[caller]@[remote_ip]>
+      Call-ID: [call_id]
+      CSeq: 2 REGISTER
+      Contact: <sip:[caller]@[local_ip]:[local_port];transport=[transport]>
+      [authentication username=[caller] password=secret]
+      Max-Forwards: 70
+      Expires: 3600
+      User-Agent: SIPp
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- Receive 200 OK -->
+  <recv response="200">
+  </recv>
+
+  <!-- Keep registered for a while -->
+  <pause milliseconds="5000"/>
+
+  <!-- Send REGISTER with Expires: 0 to unregister -->
+  <send retrans="500">
+    <![CDATA[
+
+      REGISTER sip:[remote_ip]:[remote_port] SIP/2.0
+      Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+      From: <sip:[caller]@[local_ip]>;tag=[pid]SIPpTag00[call_number]
+      To: <sip:[caller]@[remote_ip]>
+      Call-ID: [call_id]
+      CSeq: 3 REGISTER
+      Contact: <sip:[caller]@[local_ip]:[local_port];transport=[transport]>
+      Max-Forwards: 70
+      Expires: 0
+      User-Agent: SIPp
+      Content-Length: 0
+
+    ]]>
+  </send>
+
+  <!-- Receive 200 OK for unregister -->
+  <recv response="200">
+  </recv>
+
+  <!-- Definition of response time statistics -->
+  <ResponseTimeRepartition value="10, 20, 30, 40, 50, 100, 150, 200"/>
+
+</scenario>
