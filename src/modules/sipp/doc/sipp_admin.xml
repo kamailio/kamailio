@@ -1,0 +1,817 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<chapter>
+	<title>&adminguide;</title>
+
+	<section id="sipp.overview">
+		<title>Overview</title>
+		<para>
+		The SIPp module provides integration with SIPp (SIP Performance Testing Tool)
+		for automated SIP load testing and scenario execution from within Kamailio.
+		This module enables starting, stopping, and monitoring SIPp test sessions through
+		RPC commands, making it suitable for CI and operational workflows.
+		</para>
+		<para>
+		Key features include:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>Start and stop SIPp test scenarios via RPC commands</para>
+		</listitem>
+		<listitem>
+			<para>Automatic transport protocol detection (UDP/TCP/TLS)</para>
+		</listitem>
+		<listitem>
+			<para>Configurable concurrent test limits</para>
+		</listitem>
+		<listitem>
+			<para>Domain whitelist for security</para>
+		</listitem>
+		<listitem>
+			<para>Real-time test status monitoring</para>
+		</listitem>
+		<listitem>
+			<para>Support for custom SIPp scenarios</para>
+		</listitem>
+		<listitem>
+			<para>Remote control of running tests (pause/resume/adjust rate)</para>
+		</listitem>
+		<listitem>
+			<para>Prometheus metrics export for monitoring and dashboards</para>
+		</listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="sipp.dependencies">
+		<title>Dependencies</title>
+		<section>
+			<title>Kamailio Modules</title>
+			<para>
+			No additional Kamailio modules are required.
+			</para>
+			<para>
+			<emphasis>xhttp_prom (optional)</emphasis> - For Prometheus metrics export.
+			If you want to export SIPp metrics to Prometheus, load xhttp_prom before loading the sipp module.
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed before running
+			&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>SIPp</emphasis> - The SIPp binary must be available in the system PATH
+				or specified via the sipp_path parameter.
+			</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section id="sipp.parameters">
+		<title>Parameters</title>
+
+		<section id="sipp.p.sipp_path">
+			<title><varname>sipp_path</varname> (string)</title>
+			<para>
+			Path to the SIPp binary executable. If not set, the module will look for
+			'sipp' in the system PATH.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL (uses system PATH).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>sipp_path</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "sipp_path", "/usr/local/bin/sipp")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.scenario_dir">
+			<title><varname>scenario_dir</varname> (string)</title>
+			<para>
+			Default directory where SIPp scenario files are stored. This directory
+			is used as the base path when relative scenario paths are provided.
+			</para>
+			<para>
+			<emphasis>
+				No default; this parameter must be set.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>scenario_dir</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "scenario_dir", "/etc/kamailio/sipp/scenarios")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.work_dir">
+			<title><varname>work_dir</varname> (string)</title>
+			<para>
+			Working directory to use for SIPp child processes. When set, the module
+			will chdir to this directory before executing SIPp and will place log and
+			statistics files under this path. The directory must be writable by the
+			Kamailio user.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL (uses /tmp for log/stat files).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>work_dir</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "work_dir", "/run/kamailio")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.media_ip">
+			<title><varname>media_ip</varname> (string)</title>
+			<para>
+			Local media IP address for SIPp. When set, the module passes the value
+			as SIPp's <literal>-mi</literal> option. If not set, SIPp uses its default
+			media IP selection.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL (uses SIPp default).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>media_ip</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "media_ip", "192.168.1.50")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.send_socket_name">
+			<title><varname>send_socket_name</varname> (string)</title>
+			<para>
+			Name identifier for an existing Kamailio listen socket that SIPp should
+			use for sending traffic (for example: udp:192.168.1.10:5060).
+			This parameter is mutually exclusive with <varname>send_socket</varname>.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>send_socket_name</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "send_socket_name", "udp:192.168.1.10:5060")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.send_socket">
+			<title><varname>send_socket</varname> (string)</title>
+			<para>
+			Socket specification in the format proto:ip:port that SIPp should use
+			for sending traffic.
+			This parameter is mutually exclusive with <varname>send_socket_name</varname>.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>send_socket</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "send_socket", "udp:192.168.1.10:5060")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.target_domain">
+			<title><varname>target_domain</varname> (string)</title>
+			<para>
+			Default target domain for SIPp tests. This domain is optional and will
+			be used only if the scenario references <literal>[target_domain]</literal>
+			and no explicit target is provided in the RPC command.
+			</para>
+			<para>
+			If a scenario references <literal>[target_domain]</literal> and neither a
+			per-test value nor a module default is set, the module falls back to
+			<literal>&lt;local_ip&gt;:&lt;send_socket_port&gt;</literal>.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>target_domain</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "target_domain", "sip.example.com")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.default_caller">
+			<title><varname>default_caller</varname> (string)</title>
+			<para>
+			Default caller user/number for SIPp tests. Used only if no explicit
+			caller is provided via RPC. Required when scenarios use
+			<literal>[caller]</literal> and no caller is passed.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>default_caller</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "default_caller", "1000")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.default_service">
+			<title><varname>default_service</varname> (string)</title>
+			<para>
+			Default service user/number for SIPp tests. Used only if no explicit
+			service is provided via RPC. Required when no service is provided in RPC.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>default_service</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "default_service", "2000")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.valid_domains">
+			<title><varname>valid_domains</varname> (string)</title>
+			<para>
+			Comma-separated list of domains that are allowed as SIPp test targets.
+			This provides a security whitelist to prevent unauthorized test execution
+			against arbitrary domains. If set, only domains in this list can be targeted.
+			</para>
+			<para>
+			<emphasis>
+				Default value is NULL (all domains allowed).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>valid_domains</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "valid_domains", "test.example.com,staging.example.com,demo.example.com")
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.default_concurrent_calls">
+			<title><varname>default_concurrent_calls</varname> (integer)</title>
+			<para>
+			Default number of concurrent calls per test when the RPC command does not
+			provide a value.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 50.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>default_concurrent_calls</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "default_concurrent_calls", 25)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.max_concurrent_calls">
+			<title><varname>max_concurrent_calls</varname> (integer)</title>
+			<para>
+			Maximum number of concurrent calls per SIPp test session. This limits
+			the load generated by each individual test.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 1000.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>max_concurrent_calls</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "max_concurrent_calls", 50)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.max_concurrent_tests">
+			<title><varname>max_concurrent_tests</varname> (integer)</title>
+			<para>
+			Maximum number of SIPp test sessions that can run concurrently. This
+			prevents resource exhaustion from too many simultaneous tests.
+			<emphasis>Note:</emphasis> SIPp has a hard limit of 60 concurrent instances
+			(each uses a UDP control port starting from 8888). Values above 60 will
+			be automatically capped.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 10. Maximum value is 60.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>max_concurrent_tests</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "max_concurrent_tests", 5)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.default_duration">
+			<title><varname>default_duration</varname> (integer)</title>
+			<para>
+			Default call duration in seconds (SIPp -d) used when the RPC command does not
+			provide a duration.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 60.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>default_duration</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "default_duration", 30)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.default_call_rate">
+			<title><varname>default_call_rate</varname> (integer)</title>
+			<para>
+			Default call rate (calls per second) used when the RPC command does not
+			provide a rate. The rate can be adjusted at runtime using
+			<function>sipp.adjust_rate</function>.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 10.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>default_call_rate</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "default_call_rate", 20)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.default_total_calls">
+			<title><varname>default_total_calls</varname> (integer)</title>
+			<para>
+			Default maximum total calls per test. Set to 0 to allow tests to run
+			until explicitly stopped.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 0 (unlimited).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>default_total_calls</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "default_total_calls", 0)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.default_max_test_duration">
+			<title><varname>default_max_test_duration</varname> (integer)</title>
+			<para>
+			Default maximum test duration in seconds. Set to 0 to allow tests to run
+			until explicitly stopped.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 0 (unlimited).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>default_max_test_duration</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "default_max_test_duration", 0)
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.p.enable_prometheus">
+			<title><varname>enable_prometheus</varname> (integer)</title>
+			<para>
+			Enable Prometheus metrics export when <emphasis>xhttp_prom</emphasis> is
+			loaded before the sipp module.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 1.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>enable_prometheus</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipp", "enable_prometheus", 0)
+...
+</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section id="sipp.functions">
+		<title>Functions</title>
+		<para>
+		This module does not export any functions to be used in the routing script.
+		All functionality is exposed via RPC commands.
+		</para>
+	</section>
+
+	<section id="sipp.rpc">
+		<title>RPC Commands</title>
+
+		<section id="sipp.rpc.start">
+			<title><function>sipp.start_test</function></title>
+			<para>
+			Start a new SIPp test session with the specified parameters.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>
+				<emphasis>scenario</emphasis> (string, required) - Name of SIPp scenario XML file
+			</para></listitem>
+			<listitem><para>
+				<emphasis>caller</emphasis> (string, optional) - Caller user/number/range/list
+			</para></listitem>
+			<listitem><para>
+				<emphasis>service</emphasis> (string, optional) - Service user/number/range/list
+			</para></listitem>
+			<listitem><para>
+				<emphasis>target_domain</emphasis> (string, optional) - Target domain for scenario variables
+			</para></listitem>
+			<listitem><para>
+				<emphasis>concurrent_calls</emphasis> (integer, optional) - Max concurrent calls
+			</para></listitem>
+			<listitem><para>
+				<emphasis>duration</emphasis> (integer, optional) - Call duration in seconds (SIPp -d)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>total_calls</emphasis> (integer, optional) - Max total calls (0 = unlimited)
+			</para></listitem>
+			<listitem><para>
+				<emphasis>max_test_duration</emphasis> (integer, optional) - Max test duration in seconds (0 = unlimited)
+			</para></listitem>
+			</itemizedlist>
+			<example>
+			<title><function>sipp.start_test</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+# Using kamcmd (positional)
+kamcmd sipp.start_test uac_invite.xml 1000 2000 sip.example.com 10 60 0 0
+
+# Using kamcmd (named)
+kamcmd sipp.start_test scenario=uac_invite.xml caller=1000 service=2000 \
+	target_domain=sip.example.com concurrent_calls=10 duration=60 \
+		total_calls=0 max_test_duration=0
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.stop">
+			<title><function>sipp.stop_test</function></title>
+			<para>
+			Stop a running SIPp test session.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>
+				<emphasis>test_id</emphasis> (int) - Test ID to stop
+			</para></listitem>
+			</itemizedlist>
+			<example>
+			<title><function>sipp.stop_test</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+# Using kamcmd
+kamcmd sipp.stop_test 1
+
+# Using kamctl
+kamctl rpc sipp.stop_test 1
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.get_stats">
+			<title><function>sipp.get_stats</function></title>
+			<para>
+			Retrieve statistics for a specific test session.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>
+				<emphasis>test_id</emphasis> (int, required) - Test ID to query
+			</para></listitem>
+			</itemizedlist>
+			<example>
+			<title><function>sipp.get_stats</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+# Get stats for specific test
+kamcmd sipp.get_stats 1
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.running">
+			<title><function>sipp.running</function></title>
+			<para>
+			List all currently running and recently completed test sessions with their status and statistics.
+			Completed, stopped, and failed tests are eligible for removal after 30 minutes (1800 seconds),
+			and cleanup runs on a periodic timer (every hour). As a result, tests can remain
+			visible for roughly 30 to 90 minutes depending on when the cleanup timer fires.
+			</para>
+			<para>Parameters: None</para>
+			<example>
+			<title><function>sipp.running</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+kamcmd sipp.running
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.list">
+			<title><function>sipp.list</function></title>
+			<para>
+			List all available SIPp scenario files (.xml) from the configured scenario directory.
+			Returns the filename and size in bytes for each scenario found.
+			</para>
+			<para>Parameters: None</para>
+			<example>
+			<title><function>sipp.list</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+kamcmd sipp.list
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.pause_test">
+			<title><function>sipp.pause_test</function></title>
+			<para>
+			Pause a running SIPp test via remote control socket.
+			This stops SIPp from creating new calls but keeps existing calls alive.
+			Uses the SIPp remote control socket created for the test.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>test_id (int, required) - Test ID to pause</para></listitem>
+			</itemizedlist>
+			<example>
+			<title><function>sipp.pause_test</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+kamcmd sipp.pause_test 1
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.resume_test">
+			<title><function>sipp.resume_test</function></title>
+			<para>
+			Resume a paused SIPp test via remote control socket.
+			This resumes call generation after a pause.
+			Uses the SIPp remote control socket created for the test.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>test_id (int, required) - Test ID to resume</para></listitem>
+			</itemizedlist>
+			<example>
+			<title><function>sipp.resume_test</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+kamcmd sipp.resume_test 1
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.adjust_rate">
+			<title><function>sipp.adjust_rate</function></title>
+			<para>
+			Dynamically adjust the call rate of a running SIPp test.
+			This allows increasing or decreasing the call generation rate without
+			stopping and restarting the test.
+			Uses the SIPp remote control socket created for the test.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>test_id (int, required) - Test ID to adjust</para></listitem>
+			<listitem><para>change (string, required) - "increase" or "decrease"</para></listitem>
+			</itemizedlist>
+			<example>
+			<title><function>sipp.adjust_rate</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+kamcmd sipp.adjust_rate 1 increase
+kamcmd sipp.adjust_rate 1 decrease
+...
+</programlisting>
+			</example>
+		</section>
+
+		<section id="sipp.rpc.get_live_stats">
+			<title><function>sipp.get_live_stats</function></title>
+			<para>
+			Get real-time statistics from a running SIPp test via the remote control socket.
+			This queries SIPp directly for current call counts, active calls, and failure counts.
+			Uses the SIPp remote control socket created for the test.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+			<listitem><para>test_id (int, required) - Test ID to query</para></listitem>
+			</itemizedlist>
+			<para>Returns:</para>
+			<itemizedlist>
+			<listitem><para>test_id (int) - Test identifier</para></listitem>
+			<listitem><para>calls_active (int) - Currently active calls</para></listitem>
+			<listitem><para>calls_started (int) - Total calls started</para></listitem>
+			<listitem><para>calls_completed (int) - Calls completed successfully</para></listitem>
+			<listitem><para>calls_failed (int) - Failed calls</para></listitem>
+			</itemizedlist>
+			<example>
+			<title><function>sipp.get_live_stats</function> RPC example</title>
+			<programlisting format="linespecific">
+...
+kamcmd sipp.get_live_stats 1
+...
+</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section id="sipp.prometheus">
+		<title>Prometheus Metrics</title>
+		<para>
+		When the <emphasis>xhttp_prom</emphasis> module is loaded before the sipp module,
+		SIPp test metrics are automatically exported to Prometheus. Metrics are pushed
+		on a periodic timer (by default every 10 seconds).
+		</para>
+		<section id="sipp.prometheus.metrics">
+			<title>Exported Metrics</title>
+			<para>All metrics include the following labels:</para>
+			<itemizedlist>
+			<listitem><para><emphasis>test_id</emphasis> - Unique test identifier (e.g., "1")</para></listitem>
+			<listitem><para><emphasis>scenario</emphasis> - Scenario filename (e.g., "uac_invite.xml")</para></listitem>
+			<listitem><para><emphasis>from_to</emphasis> - Caller and callee combined (e.g., "1000-&gt;2000")</para></listitem>
+			</itemizedlist>
+			<para>Exported metric types:</para>
+			<itemizedlist>
+			<listitem><para><emphasis>sipp_calls_started_total</emphasis> (counter) - Total calls initiated</para></listitem>
+			<listitem><para><emphasis>sipp_calls_completed_total</emphasis> (counter) - Successfully completed calls</para></listitem>
+			<listitem><para><emphasis>sipp_calls_failed_total</emphasis> (counter) - Failed calls</para></listitem>
+			<listitem><para><emphasis>sipp_calls_active</emphasis> (gauge) - Currently active calls</para></listitem>
+			<listitem><para><emphasis>sipp_concurrent_calls_configured</emphasis> (gauge) - Configured concurrent call limit</para></listitem>
+			</itemizedlist>
+		</section>
+		<section id="sipp.prometheus.grafana">
+			<title>Grafana Queries</title>
+			<para>Example Prometheus queries for use in Grafana dashboards:</para>
+			<example>
+			<title>Call volume by scenario</title>
+			<programlisting format="linespecific">
+rate(sipp_calls_started_total[5m]) by (scenario)
+			</programlisting>
+			</example>
+			<example>
+			<title>Success rate by caller/callee</title>
+			<programlisting format="linespecific">
+(sipp_calls_completed_total / sipp_calls_started_total) by (from_to) * 100
+			</programlisting>
+			</example>
+			<example>
+			<title>Active calls by caller/callee</title>
+			<programlisting format="linespecific">
+sipp_calls_active by (from_to)
+			</programlisting>
+			</example>
+			<example>
+			<title>Failure rate</title>
+			<programlisting format="linespecific">
+rate(sipp_calls_failed_total[5m])
+			</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section id="sipp.troubleshooting">
+		<title>Troubleshooting</title>
+		<section id="sipp.troubleshooting.port">
+			<title>Control Port Conflicts</title>
+			<para>
+			Each SIPp test uses a dedicated UDP control port (8888 + test_id).
+			Before starting a test, the module verifies the port is available.
+			If another process is using the port, the test will fail with an error:
+			</para>
+			<programlisting format="linespecific">
+ERROR: control port 8889 is already in use - cannot start test
+ERROR: another SIPp instance or process may be using this port
+			</programlisting>
+			<para>
+			<emphasis>Solutions:</emphasis>
+			</para>
+			<itemizedlist>
+			<listitem><para>Stop the conflicting process using that port</para></listitem>
+			<listitem><para>Wait for subsequent tests (higher test_id = higher port number)</para></listitem>
+			<listitem><para>Restart Kamailio to reset the test_id counter</para></listitem>
+			</itemizedlist>
+		</section>
+		<section id="sipp.troubleshooting.logs">
+			<title>Finding Error Details</title>
+			<para>
+			When a test fails to start, detailed error messages are written to the
+			Kamailio log. Check the log for messages from the sipp module:
+			</para>
+			<programlisting format="linespecific">
+grep "sipp" /var/log/kamailio.log
+			</programlisting>
+			<para>
+			SIPp execution output is also captured in temporary log files:
+			</para>
+			<itemizedlist>
+			<listitem><para><literal>/tmp/sipp_test_&lt;id&gt;_&lt;timestamp&gt;.log</literal> - Main SIPp log</para></listitem>
+			<listitem><para><literal>/tmp/sipp_test_&lt;id&gt;_&lt;timestamp&gt;.log.exec.log</literal> - SIPp startup/error output</para></listitem>
+			<listitem><para><literal>/tmp/sipp_test_&lt;id&gt;_&lt;timestamp&gt;.log.stat.csv</literal> - Statistics CSV</para></listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+</chapter>
