@@ -14,6 +14,15 @@
     <para>This module contains methods for IPSec initialisation/deinitialisation related for usage of Kamailio as a
 	Proxy-CSCF.</para>
 
+    <para>&kamailio; process needs specific permssions in order to manage IPSec tunnels,
+    if executed by non-root user be sure to allow needed capabilities.</para>
+    <example>
+      <title>Systemd override configuration</title>
+      <programlisting format="linespecific">
+[Service]
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+      </programlisting>
+    </example>
   </section>
 
   <section>
