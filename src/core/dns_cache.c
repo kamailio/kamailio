@@ -3430,7 +3430,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 		}
 		return -E_DNS_NO_NAPTR;
 	}
-	if(((h->srv == 0) && (h->a == 0)) && /* first call */
+	if(((h->srv == 0) && (h->a == 0) && (h->naptr == 0)) && /* first call */
 			proto && port && (*proto == 0) && (*port == 0)) {
 		*proto = PROTO_UDP; /* just in case we don't find another */
 
@@ -3447,13 +3447,19 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 			*port = h->port;
 			return 0;
 		}
+
+		/* do naptr lookup */
+		if((e = dns_get_entry(name, T_NAPTR)) == 0)
+			goto naptr_not_found;
+		h->naptr = e;
 		try_lookup_naptr = 1;
+	} else {
+		/* access old naptr lookup */
+		if((e = h->naptr) == 0)
+			goto naptr_not_found;
 	}
 	/* check if it's an ip address, dns_srv_sip_resolve will return the right failure */
 	if(str2ip(name) || str2ip6(name))
-		goto naptr_not_found;
-	/* do naptr lookup */
-	if((e = dns_get_entry(name, T_NAPTR)) == 0)
 		goto naptr_not_found;
 
 	if(!try_lookup_naptr) {
@@ -3475,7 +3481,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 		naptr_iterate_init(&tried_bmp);
 		while(dns_naptr_sip_iterate(
 				e->rr_lst, &tried_bmp, &srv_name, &n_proto)) {
-			dns_srv_handle_init(h); /* make sure h does not contain garbage
+			dns_srv_handle_reset(h); /* make sure h does not contain garbage
 									from previous dns_srv_sip_resolve calls */
 			if((ret = dns_srv_resolve_ip(h, &srv_name, ip, port, flags)) >= 0) {
 				LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n", name->len, name->s,
