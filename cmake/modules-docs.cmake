@@ -41,12 +41,6 @@ set(DOCS_HTML_CSS
 
 set(CATALOG ${DOCBOOK_DIR}/catalog.xml)
 
-if(DOCS_NOCATALOG)
-  set(XMLCATATLOGX "")
-else()
-  set(XMLCATATLOGX "XML_CATALOG_FILES=${CATALOG}")
-endif()
-
 # Set flags for xtproc for generating documentation and allow user defined
 set(DOCS_XSLTPROC_FLAGS
     ""
@@ -102,8 +96,9 @@ function(docs_add_module group_name module_name)
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
     COMMAND
       # TXT version - just plain text
-      ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS} --xinclude ${TXT_XSL}
-      ${module_name}.xml | ${LYNX_EXECUTABLE} ${DOCS_LYNX_FLAGS} -stdin -dump >
+      ${CMAKE_COMMAND} -E env XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE}
+      ${DOCS_XSLTPROC_FLAGS} --xinclude ${TXT_XSL} ${module_name}.xml | ${LYNX_EXECUTABLE}
+      ${DOCS_LYNX_FLAGS} -stdin -dump >
       ${CMAKE_CURRENT_BINARY_DIR}/${module_name}/${module_name}.txt
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml ${TXT_XSL}
             # ${SINGLE_HTML_XSL}
@@ -126,10 +121,10 @@ function(docs_add_module group_name module_name)
     OUTPUT ${DOCS_OUTPUT_DIR}/${module_name}.html
     COMMAND
       # HTML version
-      ${XMLCATATLOGX} ${XSLTPROC_EXECUTABLE} ${DOCS_XSLTPROC_FLAGS} --xinclude --stringparam
-      base.dir ${DOCS_OUTPUT_DIR} --stringparam root.filename ${module_name} --stringparam
-      html.stylesheet ${DOCS_HTML_CSS} --stringparam html.ext ".html" ${SINGLE_HTML_XSL}
-      ${module_name}.xml
+      ${CMAKE_COMMAND} -E env XML_CATALOG_FILES=${CATALOG} ${XSLTPROC_EXECUTABLE}
+      ${DOCS_XSLTPROC_FLAGS} --xinclude --stringparam base.dir ${DOCS_OUTPUT_DIR} --stringparam
+      root.filename ${module_name} --stringparam html.stylesheet ${DOCS_HTML_CSS} --stringparam
+      html.ext ".html" ${SINGLE_HTML_XSL} ${module_name}.xml
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc/${module_name}.xml ${SINGLE_HTML_XSL}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${module_name}/doc
     COMMENT "Generating html documentation for ${module_name}"
