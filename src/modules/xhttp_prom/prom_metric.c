@@ -1735,13 +1735,12 @@ static int prom_label_print(
 		goto error;
 	}
 
-	if(plval->n_elem == 0) {
-		/* Nothing to print. */
-		return 0;
-	}
-
-	if(!lb_name || lb_name->n_elem == 0) {
-		/* Nothing to print. */
+	if(plval->n_elem == 0 || !lb_name || lb_name->n_elem == 0) {
+		/* No metric-specific labels, but print global tags if present. */
+		if(prom_body_printf(ctx, "%s", xhttp_prom_tags_braces) == -1) {
+			LM_ERR("Fail to print\n");
+			goto error;
+		}
 		return 0;
 	}
 
@@ -1773,8 +1772,8 @@ static int prom_label_print(
 		plval_node = plval_node->next;
 	} /* while (lb_name_node && plval_node) */
 
-	/* Close labels. */
-	if(prom_body_printf(ctx, "}") == -1) {
+	/* Append global tags and close labels. */
+	if(prom_body_printf(ctx, "%s}", xhttp_prom_tags_comma) == -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
 	}
@@ -1832,8 +1831,8 @@ static int prom_label_print_le(
 		goto error;
 	}
 
-	/* Close labels. */
-	if(prom_body_printf(ctx, "}") == -1) {
+	/* Append global tags and close labels. */
+	if(prom_body_printf(ctx, "%s}", xhttp_prom_tags_comma) == -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
 	}
@@ -1887,10 +1886,44 @@ static int prom_metric_lvalue_print(
 			goto error;
 		}
 
-		/* Print labels */
-		if(prom_label_print(ctx, p->lb_name, &pvl->lval)) {
-			LM_ERR("Fail to print labels\n");
-			goto error;
+
+		/* Print labels and append global tags if set */
+		int has_labels =
+				(p->lb_name && p->lb_name->n_elem > 0 && pvl->lval.n_elem > 0);
+		int has_tags =
+				(xhttp_prom_tags_comma && xhttp_prom_tags_comma[0] != '\0');
+		if(has_labels) {
+			/* Print user labels, then append global tags if set */
+			/* Remove closing brace, append comma, then tags, then close */
+			if(prom_body_printf(ctx, "{") == -1)
+				goto error;
+			prom_lb_node_t *lb_name_node = p->lb_name->lb;
+			prom_lb_node_t *plval_node = pvl->lval.lb;
+			int first = 1;
+			while(lb_name_node && plval_node) {
+				if(!first) {
+					if(prom_body_printf(ctx, ", ") == -1)
+						goto error;
+				}
+				if(prom_body_printf(ctx, "%.*s=\"%.*s\"", lb_name_node->n.len,
+						   lb_name_node->n.s, plval_node->n.len,
+						   plval_node->n.s)
+						== -1)
+					goto error;
+				lb_name_node = lb_name_node->next;
+				plval_node = plval_node->next;
+				first = 0;
+			}
+			if(has_tags) {
+				if(prom_body_printf(ctx, "%s", xhttp_prom_tags_comma) == -1)
+					goto error;
+			}
+			if(prom_body_printf(ctx, "}") == -1)
+				goto error;
+		} else if(has_tags) {
+			/* Only global tags */
+			if(prom_body_printf(ctx, "{%s}", xhttp_prom_tags) == -1)
+				goto error;
 		}
 
 		if(prom_body_printf(ctx, " %" PRIu64, pvl->m.cval) == -1) {
