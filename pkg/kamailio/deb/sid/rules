@@ -111,6 +111,7 @@ skip-modules:
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
+		-DBUILD_DOC=ON \
 		-DUSE_GIT=OFF \
 		-DEXCLUDE_MODULES="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
 		-DMODULE_GROUP_NAME="KSTANDARD $(shell echo "$(addprefix K, $(PACKAGE_GROUPS) $(EXTRA_GROUPS))"| tr '[:lower:]' '[:upper:]')"
