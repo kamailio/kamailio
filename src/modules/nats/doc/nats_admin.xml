@@ -114,7 +114,7 @@
 				<programlisting format="linespecific">
 ...
 modparam("nats", "nats_url", "nats://127.0.0.1:4222")
-modparam("nats", "nats_url", "nats://user1:pass1127.0.1.2:4222") // with auth
+modparam("nats", "nats_url", "nats://user1:pass1@127.0.1.2:4222") // with auth
 modparam("nats", "nats_url", "nats://127.1.2.3:4222")
 ...
 </programlisting>
