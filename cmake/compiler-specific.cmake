@@ -119,6 +119,10 @@ elseif(TARGET_ARCH MATCHES "aarch64")
     # if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0) target_compile_options(
     # common INTERFACE -ftree-vectorize -fno-strict-overflow ) endif()
 
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
+    target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
   endif()
 
 elseif(TARGET_ARCH MATCHES "ppc64$")
