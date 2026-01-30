@@ -66,22 +66,23 @@ Tsvetomir Dimitrov
 
    List of Examples
 
-   1.1. ipsec_listen_addr parameter usage
-   1.2. ipsec_listen_addr6 parameter usage
-   1.3. ipsec_client_port parameter usage
-   1.4. ipsec_server_port parameter usage
-   1.5. ipsec_listen_name parameter usage
-   1.6. ipsec_listen_agname parameter usage
-   1.7. ipsec_max_connections parameter usage
-   1.8. ipsec_reuse_server_port parameter usage
-   1.9. ipsec_spi_id_start parameter usage
-   1.10. ipsec_spi_id_range parameter usage
-   1.11. ipsec_preferred_alg parameter usage
-   1.12. ipsec_preferred_ealg parameter usage
-   1.13. ipsec_create
-   1.14. ipsec_forward
-   1.15. ipsec_destroy
-   1.16. ipsec_destroy_by_contact()
+   1.1. Systemd override configuration
+   1.2. ipsec_listen_addr parameter usage
+   1.3. ipsec_listen_addr6 parameter usage
+   1.4. ipsec_client_port parameter usage
+   1.5. ipsec_server_port parameter usage
+   1.6. ipsec_listen_name parameter usage
+   1.7. ipsec_listen_agname parameter usage
+   1.8. ipsec_max_connections parameter usage
+   1.9. ipsec_reuse_server_port parameter usage
+   1.10. ipsec_spi_id_start parameter usage
+   1.11. ipsec_spi_id_range parameter usage
+   1.12. ipsec_preferred_alg parameter usage
+   1.13. ipsec_preferred_ealg parameter usage
+   1.14. ipsec_create
+   1.15. ipsec_forward
+   1.16. ipsec_destroy
+   1.17. ipsec_destroy_by_contact()
 
 Chapter 1. Admin Guide
 
@@ -119,6 +120,14 @@ Chapter 1. Admin Guide
 
    This module contains methods for IPSec initialisation/deinitialisation
    related for usage of Kamailio as a Proxy-CSCF.
+
+   Kamailio process needs specific permssions in order to manage IPSec
+   tunnels, if executed by non-root user be sure to allow needed
+   capabilities.
+
+   Example 1.1. Systemd override configuration
+[Service]
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
 
 2. Dependencies
 
@@ -159,7 +168,7 @@ Chapter 1. Admin Guide
    Default value is empty string (null) - IPv4 listen interface will not
    be added
 
-   Example 1.1. ipsec_listen_addr parameter usage
+   Example 1.2. ipsec_listen_addr parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "")
 ...
@@ -172,7 +181,7 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_addr", "")
    Default value is empty string (null) - IPv6 listen interface will not
    be added
 
-   Example 1.2. ipsec_listen_addr6 parameter usage
+   Example 1.3. ipsec_listen_addr6 parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
 ...
@@ -183,7 +192,7 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
 
    Default value is 5062.
 
-   Example 1.3. ipsec_client_port parameter usage
+   Example 1.4. ipsec_client_port parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
 ...
@@ -194,7 +203,7 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
 
    Default value is 5063.
 
-   Example 1.4. ipsec_server_port parameter usage
+   Example 1.5. ipsec_server_port parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
 ...
@@ -204,7 +213,7 @@ modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
    Set a common prefix to build listen socket names. Default value: not
    set.
 
-   Example 1.5. ipsec_listen_name parameter usage
+   Example 1.6. ipsec_listen_name parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_listen_name", "ims")
 ...
@@ -214,7 +223,7 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_name", "ims")
    Set async (action) workers group name for udp sockets for
    multi-threaded reading. Default value: not set.
 
-   Example 1.6. ipsec_listen_agname parameter usage
+   Example 1.7. ipsec_listen_agname parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_listen_agname", "imsudp")
 ...
@@ -225,7 +234,7 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_agname", "imsudp")
 
    Default value is 2.
 
-   Example 1.7. ipsec_max_connections parameter usage
+   Example 1.8. ipsec_max_connections parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
 ...
@@ -239,7 +248,7 @@ modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
 
    Default value is 1.
 
-   Example 1.8. ipsec_reuse_server_port parameter usage
+   Example 1.9. ipsec_reuse_server_port parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_reuse_server_port", 1)
 ...
@@ -253,7 +262,7 @@ modparam("ims_ipsec_pcscf", "ipsec_reuse_server_port", 1)
 
    Default value is 100.
 
-   Example 1.9. ipsec_spi_id_start parameter usage
+   Example 1.10. ipsec_spi_id_start parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
 ...
@@ -266,7 +275,7 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
 
    Default value is 1000.
 
-   Example 1.10. ipsec_spi_id_range parameter usage
+   Example 1.11. ipsec_spi_id_range parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
 ...
@@ -279,7 +288,7 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
    Default value is empty string (null) - the last algorithm in the
    Sec-Agree header will be used.
 
-   Example 1.11. ipsec_preferred_alg parameter usage
+   Example 1.12. ipsec_preferred_alg parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_preferred_alg", "hmac-sha-1-96")
 ...
@@ -293,7 +302,7 @@ modparam("ims_ipsec_pcscf", "ipsec_preferred_alg", "hmac-sha-1-96")
    Sec-Agree header will be used. Note that the possibility of it being
    the "null" algorithm is not insignificant.
 
-   Example 1.12. ipsec_preferred_ealg parameter usage
+   Example 1.13. ipsec_preferred_ealg parameter usage
 ...
 modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
 ...
@@ -319,7 +328,7 @@ modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
        every registration. This is an optional parameter, default value -
        0.
 
-   Example 1.13. ipsec_create
+   Example 1.14. ipsec_create
 ...
 ipsec_create("location");
 # or
@@ -356,7 +365,7 @@ ipsec_create("location", "1");
             found.
        This is an optional parameter, default value - 0.
 
-   Example 1.14. ipsec_forward
+   Example 1.15. ipsec_forward
 ...
 ipsec_forward("location");
 # or
@@ -373,7 +382,7 @@ ipsec_forward("location", "1");
        aor - SIP URI to match the record. If not provided, then R-URI is
        used.
 
-   Example 1.15. ipsec_destroy
+   Example 1.16. ipsec_destroy
 ...
 ipsec_destroy("location");
 ...
@@ -392,7 +401,7 @@ ipsec_destroy("location");
    The last three parameters have to be string values and can contain
    variables.
 
-   Example 1.16. ipsec_destroy_by_contact()
+   Example 1.17. ipsec_destroy_by_contact()
 ...
 ipsec_destroy_by_contact("location", "...", "...", "...");
 ...
