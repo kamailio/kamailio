@@ -540,7 +540,7 @@ jsonrpc_exec('{"jsonrpc": "2.0", "method": "corex.debug", "params": [ 2 ], "id":
   "method": "dispatcher.set_state",
   "params": {
     "state": "ip",
-    "grpup": 2,
+    "group": 2,
     "address": "sip:127.0.0.1:5080"
   },
   "id": 1
