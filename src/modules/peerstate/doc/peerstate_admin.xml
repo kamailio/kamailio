@@ -8,77 +8,77 @@
 ]>
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
-	    The peerstate module provides peer state tracking for the 
-	    Kamailio SIP proxy. It monitors both dialog events (call states) 
-	    and registration events (usrloc) to maintain an accurate view of 
+	    The peerstate module provides peer state tracking for the
+	    Kamailio SIP proxy. It monitors both dialog events (call states)
+	    and registration events (usrloc) to maintain an accurate view of
 	    each peer's current status.
 	</para>
 	<para>
-	    For example, a common need in call center applications is to track 
-	    agent availability in real-time. In order to monitor agent states, 
-	    it is necessary for the proxy to be aware of both call activity and 
-	    registration status. This is just one common application; there are 
-	    many others such as presence services, load balancing, and 
+	    For example, a common need in call center applications is to track
+	    agent availability in real-time. In order to monitor agent states,
+	    it is necessary for the proxy to be aware of both call activity and
+	    registration status. This is just one common application; there are
+	    many others such as presence services, load balancing, and
 	    concurrent call limiting.
 	</para>
 	<para>
-	    The module exports RPC commands for monitoring and management, 
-	    provides an event route mechanism for custom logic execution, and 
+	    The module exports RPC commands for monitoring and management,
+	    provides an event route mechanism for custom logic execution, and
 	    offers a callback API for other Kamailio modules.
 	</para>
     </section>
-    
+
     <section>
 	<title>How it works</title>
 	<para>
-	    The peerstate module registers callbacks with the dialog and usrloc 
-	    modules. When dialog state changes (EARLY, CONFIRMED, TERMINATED) 
-	    or registration events (REGISTER/UNREGISTER) occur, the module 
-	    updates its internal cache and determines if a peer's state has 
+	    The peerstate module registers callbacks with the dialog and usrloc
+	    modules. When dialog state changes (EARLY, CONFIRMED, TERMINATED)
+	    or registration events (REGISTER/UNREGISTER) occur, the module
+	    updates its internal cache and determines if a peer's state has
 	    changed.
 	</para>
 	<para>
-	    Peer state is maintained in a shared memory hash table. Each peer 
-	    entry contains current state, active call count, registration flag, 
+	    Peer state is maintained in a shared memory hash table. Each peer
+	    entry contains current state, active call count, registration flag,
 	    and timestamp.
 	</para>
 	<para>
 	    State transitions:
 	    <itemizedlist>
 		<listitem>
-		    <para>EARLY events increment call count and set peer to RINGING (or 
+		    <para>EARLY events increment call count and set peer to RINGING (or
 		    keep INUSE if already in call)</para>
 		</listitem>
 		<listitem>
 		    <para>CONFIRMED events set peer to INUSE</para>
 		</listitem>
 		<listitem>
-		    <para>TERMINATED events decrement call count; peer returns to 
-		    NOT_INUSE (if registered) or UNAVAILABLE (if not registered) 
+		    <para>TERMINATED events decrement call count; peer returns to
+		    NOT_INUSE (if registered) or UNAVAILABLE (if not registered)
 		    when call count reaches zero</para>
 		</listitem>
 		<listitem>
-		    <para>REGISTER events set registration flag and may transition from 
+		    <para>REGISTER events set registration flag and may transition from
 		    UNAVAILABLE to NOT_INUSE</para>
 		</listitem>
 		<listitem>
-		    <para>UNREGISTER events clear registration flag and may transition 
+		    <para>UNREGISTER events clear registration flag and may transition
 		    from NOT_INUSE to UNAVAILABLE (if no active calls)</para>
 		</listitem>
 	    </itemizedlist>
 	</para>
 	<para>
-	    When a peer's state changes, the module triggers notifications via 
+	    When a peer's state changes, the module triggers notifications via
 	    event routes and callback functions.
 	</para>
     </section>
-    
+
     <section>
 	<title>Peer states</title>
 	<para>
@@ -122,7 +122,7 @@
 	    </itemizedlist>
 	</para>
     </section>
-    
+
     <section>
 	<title>Dependencies</title>
 	<section>
@@ -142,7 +142,7 @@
 	<section>
 	    <title>External Libraries or Applications</title>
 	    <para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 		<itemizedlist>
 		    <listitem>
@@ -152,14 +152,14 @@
 	    </para>
 	</section>
     </section>
-    
+
     <section>
 	<title>Parameters</title>
 	<section id="peerstate.p.cache_hash_size">
 	    <title><varname>cache_hash_size</varname> (integer)</title>
 	    <para>
-		The size of the hash table internally used to keep the peer state 
-		information. A larger table is much faster but consumes more 
+		The size of the hash table internally used to keep the peer state
+		information. A larger table is much faster but consumes more
 		memory. The hash size must be a power of two.
 	    </para>
 	    <para>
@@ -176,12 +176,12 @@ modparam("peerstate", "cache_hash_size", 8192)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.cache_expire">
 	    <title><varname>cache_expire</varname> (integer)</title>
 	    <para>
-		The time in seconds after which inactive peer entries are removed 
-		from the cache. Set to 0 to disable automatic expiration. This 
+		The time in seconds after which inactive peer entries are removed
+		from the cache. Set to 0 to disable automatic expiration. This
 		helps conserve memory by removing stale peer information.
 		Minimum allowed value is 60 seconds (when enabled).
 	    </para>
@@ -199,13 +199,13 @@ modparam("peerstate", "cache_expire", 7200)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.cache_cleanup_interval">
 	    <title><varname>cache_cleanup_interval</varname> (integer)</title>
 	    <para>
-		The interval in seconds between automatic cache cleanup runs. Must 
-		be less than or equal to cache_expire. Set to 0 to disable 
-		automatic cleanup. During cleanup, expired entries are removed from 
+		The interval in seconds between automatic cache cleanup runs. Must
+		be less than or equal to cache_expire. Set to 0 to disable
+		automatic cleanup. During cleanup, expired entries are removed from
 		the cache. Minimum allowed value is 10 seconds (when enabled).
 	    </para>
 	    <para>
@@ -222,17 +222,17 @@ modparam("peerstate", "cache_cleanup_interval", 600)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.use_avps">
 	    <title><varname>use_avps</varname> (integer)</title>
 	    <para>
-		Enable or disable the use of AVPs for peer identification instead 
-		of extracting peer information from SIP headers. When enabled, the 
-		module will use the AVPs specified by caller_avp, callee_avp, and 
+		Enable or disable the use of AVPs for peer identification instead
+		of extracting peer information from SIP headers. When enabled, the
+		module will use the AVPs specified by caller_avp, callee_avp, and
 		reg_avp parameters to identify peers.
 	    </para>
 	    <para>
-		If set to 0, the module extracts peer information from From/To 
+		If set to 0, the module extracts peer information from From/To
 		headers. If set to 1, AVPs must be set by the routing script.
 	    </para>
 	    <para>
@@ -249,12 +249,12 @@ modparam("peerstate", "use_avps", 1)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.caller_avp">
 	    <title><varname>caller_avp</varname> (string)</title>
 	    <para>
-		The specification of an AVP that contains the caller's peer 
-		identifier. Only used when use_avps is set to 1. The AVP should 
+		The specification of an AVP that contains the caller's peer
+		identifier. Only used when use_avps is set to 1. The AVP should
 		contain the peer identifier in the format "peer@domain".
 	    </para>
 	    <para>
@@ -271,12 +271,12 @@ modparam("peerstate", "caller_avp", "$avp(caller_peer)")
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.callee_avp">
 	    <title><varname>callee_avp</varname> (string)</title>
 	    <para>
-		The specification of an AVP that contains the callee's peer 
-		identifier. Only used when use_avps is set to 1. The AVP should 
+		The specification of an AVP that contains the callee's peer
+		identifier. Only used when use_avps is set to 1. The AVP should
 		contain the peer identifier in the format "peer@domain".
 	    </para>
 	    <para>
@@ -293,11 +293,11 @@ modparam("peerstate", "callee_avp", "$avp(callee_peer)")
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.reg_avp">
 	    <title><varname>reg_avp</varname> (string)</title>
 	    <para>
-		The specification of an AVP that contains the registered peer 
+		The specification of an AVP that contains the registered peer
 		identifier for usrloc events. Only used when use_avps is set to 1.
 	    </para>
 	    <para>
@@ -314,13 +314,13 @@ modparam("peerstate", "reg_avp", "$avp(reg_peer)")
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.enable_notify_on_trying">
 	    <title><varname>enable_notify_on_trying</varname> (integer)</title>
 	    <para>
-		Enable state change notifications for dialog TRYING state. By 
-		default, only EARLY, CONFIRMED, and TERMINATED states trigger 
-		notifications. When enabled, TRYING state will also trigger 
+		Enable state change notifications for dialog TRYING state. By
+		default, only EARLY, CONFIRMED, and TERMINATED states trigger
+		notifications. When enabled, TRYING state will also trigger
 		notifications.
 	    </para>
 	    <para>
@@ -337,13 +337,13 @@ modparam("peerstate", "enable_notify_on_trying", 1)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.disable_caller_notify_flag">
 	    <title><varname>disable_caller_notify_flag</varname> (integer)</title>
 	    <para>
-		Message flag to disable caller state change notifications for 
-		specific calls. When this flag is set on a message, state changes 
-		for the caller will not trigger notifications. Set to -1 to disable 
+		Message flag to disable caller state change notifications for
+		specific calls. When this flag is set on a message, state changes
+		for the caller will not trigger notifications. Set to -1 to disable
 		this feature.
 	    </para>
 	    <para>
@@ -365,13 +365,13 @@ if ($rU == "1234567890") {
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.disable_callee_notify_flag">
 	    <title><varname>disable_callee_notify_flag</varname> (integer)</title>
 	    <para>
-		Message flag to disable callee state change notifications for 
-		specific calls. When this flag is set on a message, state changes 
-		for the callee will not trigger notifications. Set to -1 to disable 
+		Message flag to disable callee state change notifications for
+		specific calls. When this flag is set on a message, state changes
+		for the callee will not trigger notifications. Set to -1 to disable
 		this feature.
 	    </para>
 	    <para>
@@ -388,12 +388,12 @@ modparam("peerstate", "disable_callee_notify_flag", 11)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.disable_reg_notify">
 	    <title><varname>disable_reg_notify</varname> (integer)</title>
 	    <para>
-		Globally disable registration event processing. When set to 1, the 
-		module will not register callbacks with the usrloc module and will 
+		Globally disable registration event processing. When set to 1, the
+		module will not register callbacks with the usrloc module and will
 		not process registration events.
 	    </para>
 	    <para>
@@ -410,12 +410,12 @@ modparam("peerstate", "disable_reg_notify", 1)
 </programlisting>
 	    </example>
 	</section>
-	
+
 	<section id="peerstate.p.disable_dlg_notify">
 	    <title><varname>disable_dlg_notify</varname> (integer)</title>
 	    <para>
-		Globally disable dialog event processing. When set to 1, the module 
-		will not register callbacks with the dialog module and will not 
+		Globally disable dialog event processing. When set to 1, the module
+		will not register callbacks with the dialog module and will not
 		process dialog events.
 	    </para>
 	    <para>
@@ -432,9 +432,9 @@ modparam("peerstate", "disable_dlg_notify", 1)
 </programlisting>
 	    </example>
 	</section>
-	
+
     </section>
-    
+
     <section>
 	<title>RPC Commands</title>
 	<section id="peerstate.r.get_peer">
@@ -442,7 +442,7 @@ modparam("peerstate", "disable_dlg_notify", 1)
 		<function moreinfo="none">peerstate.get_peer</function>
 	    </title>
 	    <para>
-		Get detailed state information for a specific peer. Returns the 
+		Get detailed state information for a specific peer. Returns the
 		peer's current state, active call count, and registration status.
 	    </para>
 	    <para>
@@ -468,13 +468,13 @@ kamctl rpc peerstate.get_peer 1000@192.168.1.100
 		</itemizedlist>
 	    </para>
 	</section>
-	
+
 	<section id="peerstate.r.stats">
 	    <title>
 		<function moreinfo="none">peerstate.stats</function>
 	    </title>
 	    <para>
-		Get global cache statistics including total number of peers, number 
+		Get global cache statistics including total number of peers, number
 		of peers in active calls, and number of registered peers.
 	    </para>
 	    <para>
@@ -496,13 +496,13 @@ kamctl rpc peerstate.stats
 		</itemizedlist>
 	    </para>
 	</section>
-	
+
 	<section id="peerstate.r.list">
 	    <title>
 		<function moreinfo="none">peerstate.list</function>
 	    </title>
 	    <para>
-		List all peers in a specific state. This command is useful for 
+		List all peers in a specific state. This command is useful for
 		monitoring which peers are currently in a particular state.
 	    </para>
 	    <para>
@@ -527,13 +527,13 @@ kamctl rpc peerstate.list INUSE
 		</itemizedlist>
 	    </para>
 	</section>
-	
+
 	<section id="peerstate.r.dump">
 	    <title>
 		<function moreinfo="none">peerstate.dump</function>
 	    </title>
 	    <para>
-		Dump all peers from the cache regardless of state. This command 
+		Dump all peers from the cache regardless of state. This command
 		provides a complete view of all tracked peers.
 	    </para>
 	    <para>
@@ -555,7 +555,7 @@ kamctl rpc peerstate.dump
 	    </para>
 	</section>
     </section>
-    
+
     <section>
 	<title>Event Routes</title>
 	<section id="peerstate.evr.peerstate_state_changed">
@@ -563,7 +563,7 @@ kamctl rpc peerstate.dump
 		<function moreinfo="none">event_route[peerstate:state_changed]</function>
 	    </title>
 	    <para>
-		Executed when a peer's state changes. Provides access to state 
+		Executed when a peer's state changes. Provides access to state
 		change information through AVP pseudo-variables.
 	    </para>
 	    <para>
@@ -592,5 +592,5 @@ event_route[peerstate:state_changed] {
 	    </example>
 	</section>
     </section>
-    
+
 </chapter>
