@@ -8,18 +8,18 @@
 ]>
 
 <chapter>
-    
+
     <title>&develguide;</title>
-    
+
     <section>
 	<title>Available Functions</title>
-	
+
 	<section id="peerstate.f.bind_peerstate">
 	    <title>
 		<function moreinfo="none">bind_peerstate(peerstate_api_t *api)</function>
 	    </title>
 	    <para>
-		Bind to the peerstate API and fill the provided structure with 
+		Bind to the peerstate API and fill the provided structure with
 		function pointers.
 	    </para>
 	    <para>
@@ -50,7 +50,7 @@ typedef struct peerstate_api {
 		</itemizedlist>
 	    </para>
 	</section>
-	
+
 	<section id="peerstate.f.register_peerstate_callback">
 	    <title>
 		<function moreinfo="none">register_peerstate_callback(int event_types, peerstate_cb_f callback, void *param)</function>
@@ -139,27 +139,27 @@ static void my_state_callback(peerstate_cb_ctx_t *ctx, void *param) {
 /* Module initialization */
 static int mod_init(void) {
     bind_peerstate_f bind_peerstate;
-    
+
     bind_peerstate = (bind_peerstate_f)find_export("bind_peerstate", 1, 0);
     if (!bind_peerstate || bind_peerstate(&peerstate_api) < 0) {
         LM_ERR("Cannot bind to peerstate module\n");
         return -1;
     }
-    
+
     if (peerstate_api.register_callback(
             PEERSTATE_EVENT_DIALOG | PEERSTATE_EVENT_REGISTRATION,
             my_state_callback, NULL) < 0) {
         LM_ERR("Failed to register callback\n");
         return -1;
     }
-    
+
     return 0;
 }
 ]]>
 		</programlisting>
 	    </example>
 	</section>
-	
+
     </section>
-    
+
 </chapter>
