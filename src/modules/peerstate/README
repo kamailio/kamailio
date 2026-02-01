@@ -1,11 +1,11 @@
 Peerstate Module
 
-Serdar GÜÇLÜER
+Serdar Güçlüer
 
    Netgsm ICT Inc.
-   <serdar.gucluuer@hotmail.com>
+   <serdar.gucluer@hotmail.com>
 
-   Copyright © 2024 Netgsm ICT Inc., http://www.netgsm.com.tr
+   Copyright © 2025 Netgsm ICT Inc., http://www.netgsm.com.tr
      __________________________________________________________________
 
    Table of Contents
@@ -51,8 +51,8 @@ Serdar GÜÇLÜER
         1. Available Functions
 
               1.1. bind_peerstate(peerstate_api_t *api)
-              1.2. register_peerstate_callback(int event_types, 
-                   peerstate_cb_f callback, void *param)
+              1.2. register_peerstate_callback(int event_types,
+                      peerstate_cb_f callback, void *param)
 
    List of Examples
 
@@ -68,12 +68,8 @@ Serdar GÜÇLÜER
    1.10. Set disable_callee_notify_flag parameter
    1.11. Set disable_reg_notify parameter
    1.12. Set disable_dlg_notify parameter
-   1.13. peerstate.get_peer RPC command
-   1.14. peerstate.stats RPC command
-   1.15. peerstate.list RPC command
-   1.16. peerstate.dump RPC command
-   1.17. event_route[peerstate:state_changed] usage
-   1.18. Callback registration example
+   1.13. event_route[peerstate:state_changed] usage
+   2.1. Callback registration example
 
 Chapter 1. Admin Guide
 
@@ -115,47 +111,46 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The peerstate module provides peer state tracking for the 
-   Kamailio SIP proxy. It monitors both dialog events (call states) 
-   and registration events (usrloc) to maintain an accurate view of 
-   each peer's current status.
+   The peerstate module provides peer state tracking for the Kamailio SIP
+   proxy. It monitors both dialog events (call states) and registration
+   events (usrloc) to maintain an accurate view of each peer's current
+   status.
 
-   For example, a common need in call center applications is to track 
-   agent availability in real-time. In order to monitor agent states, 
-   it is necessary for the proxy to be aware of both call activity and 
-   registration status. This is just one common application; there are 
-   many others such as presence services, load balancing, and 
-   concurrent call limiting.
+   For example, a common need in call center applications is to track
+   agent availability in real-time. In order to monitor agent states, it
+   is necessary for the proxy to be aware of both call activity and
+   registration status. This is just one common application; there are
+   many others such as presence services, load balancing, and concurrent
+   call limiting.
 
-   The module exports RPC commands for monitoring and management, 
-   provides an event route mechanism for custom logic execution, and 
-   offers a callback API for other Kamailio modules.
+   The module exports RPC commands for monitoring and management, provides
+   an event route mechanism for custom logic execution, and offers a
+   callback API for other Kamailio modules.
 
 2. How it works
 
-   The peerstate module registers callbacks with the dialog and usrloc 
-   modules. When dialog state changes (EARLY, CONFIRMED, TERMINATED) 
-   or registration events (REGISTER/UNREGISTER) occur, the module 
-   updates its internal cache and determines if a peer's state has 
-   changed.
+   The peerstate module registers callbacks with the dialog and usrloc
+   modules. When dialog state changes (EARLY, CONFIRMED, TERMINATED) or
+   registration events (REGISTER/UNREGISTER) occur, the module updates its
+   internal cache and determines if a peer's state has changed.
 
-   Peer state is maintained in a shared memory hash table. Each peer 
-   entry contains current state, active call count, registration flag, 
-   and timestamp.
+   Peer state is maintained in a shared memory hash table. Each peer entry
+   contains current state, active call count, registration flag, and
+   timestamp.
 
    State transitions:
-     * EARLY events increment call count and set peer to RINGING (or 
-       keep INUSE if already in call)
+     * EARLY events increment call count and set peer to RINGING (or keep
+       INUSE if already in call)
      * CONFIRMED events set peer to INUSE
-     * TERMINATED events decrement call count; peer returns to 
-       NOT_INUSE (if registered) or UNAVAILABLE (if not registered) 
-       when call count reaches zero
-     * REGISTER events set registration flag and may transition from 
+     * TERMINATED events decrement call count; peer returns to NOT_INUSE
+       (if registered) or UNAVAILABLE (if not registered) when call count
+       reaches zero
+     * REGISTER events set registration flag and may transition from
        UNAVAILABLE to NOT_INUSE
-     * UNREGISTER events clear registration flag and may transition 
-       from NOT_INUSE to UNAVAILABLE (if no active calls)
+     * UNREGISTER events clear registration flag and may transition from
+       NOT_INUSE to UNAVAILABLE (if no active calls)
 
-   When a peer's state changes, the module triggers notifications via 
+   When a peer's state changes, the module triggers notifications via
    event routes and callback functions.
 
 3. Peer states
@@ -163,19 +158,19 @@ Chapter 1. Admin Guide
    Peer states tracked by the module:
      * 0 : NOT_INUSE - Peer is registered and idle (no active calls)
      * 1 : INUSE - Peer is in an active call (dialog confirmed)
-     * 2 : RINGING - Peer has incoming or outgoing call ringing (early 
+     * 2 : RINGING - Peer has incoming or outgoing call ringing (early
        dialog)
      * 3 : UNAVAILABLE - Peer is not registered
      * 4 : NA - Not applicable or unknown state
 
-   State transitions are designed to accurately reflect the peer's 
+   State transitions are designed to accurately reflect the peer's
    availability:
      * A peer transitions to RINGING when receiving or making a call
      * A peer transitions to INUSE when the call is answered
-     * A peer returns to NOT_INUSE when all calls end and the peer is 
+     * A peer returns to NOT_INUSE when all calls end and the peer is
        still registered
-     * A peer transitions to UNAVAILABLE when unregistering with no 
-       active calls
+     * A peer transitions to UNAVAILABLE when unregistering with no active
+       calls
      * Active calls are preserved during registration changes
 
 4. Dependencies
@@ -191,7 +186,7 @@ Chapter 1. Admin Guide
 
 4.2. External Libraries or Applications
 
-   The following libraries or applications must be installed before 
+   The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
@@ -212,11 +207,11 @@ Chapter 1. Admin Guide
 
 5.1. cache_hash_size (integer)
 
-   The size of the hash table internally used to keep the peer state 
-   information. A larger table is much faster but consumes more 
-   memory. The hash size must be a power of two.
+   The size of the hash table internally used to keep the peer state
+   information. A larger table is much faster but consumes more memory.
+   The hash size must be a power of two.
 
-   Default value is "4096".
+   Default value is “4096”.
 
    Example 1.1. Set cache_hash_size parameter
 ...
@@ -225,11 +220,12 @@ modparam("peerstate", "cache_hash_size", 8192)
 
 5.2. cache_expire (integer)
 
-   The time in seconds after which inactive peer entries are removed 
-   from the cache. Set to 0 to disable automatic expiration. This 
-   helps conserve memory by removing stale peer information.
+   The time in seconds after which inactive peer entries are removed from
+   the cache. Set to 0 to disable automatic expiration. This helps
+   conserve memory by removing stale peer information. Minimum allowed
+   value is 60 seconds (when enabled).
 
-   Default value is "3600" (1 hour).
+   Default value is “3600” (1 hour).
 
    Example 1.2. Set cache_expire parameter
 ...
@@ -238,12 +234,12 @@ modparam("peerstate", "cache_expire", 7200)
 
 5.3. cache_cleanup_interval (integer)
 
-   The interval in seconds between automatic cache cleanup runs. Must 
-   be less than or equal to cache_expire. Set to 0 to disable 
-   automatic cleanup. During cleanup, expired entries are removed from 
-   the cache.
+   The interval in seconds between automatic cache cleanup runs. Must be
+   less than or equal to cache_expire. Set to 0 to disable automatic
+   cleanup. During cleanup, expired entries are removed from the cache.
+   Minimum allowed value is 10 seconds (when enabled).
 
-   Default value is "300" (5 minutes).
+   Default value is “300” (5 minutes).
 
    Example 1.3. Set cache_cleanup_interval parameter
 ...
@@ -252,16 +248,15 @@ modparam("peerstate", "cache_cleanup_interval", 600)
 
 5.4. use_avps (integer)
 
-   Enable or disable the use of AVPs for peer identification instead 
-   of extracting peer information from SIP headers. When enabled, the 
-   module will use the AVPs specified by caller_avp, callee_avp, and 
-   reg_avp parameters to identify peers.
-   
+   Enable or disable the use of AVPs for peer identification instead of
+   extracting peer information from SIP headers. When enabled, the module
+   will use the AVPs specified by caller_avp, callee_avp, and reg_avp
+   parameters to identify peers.
 
-   If set to 0, the module extracts peer information from From/To 
-   headers. If set to 1, AVPs must be set by the routing script.
+   If set to 0, the module extracts peer information from From/To headers.
+   If set to 1, AVPs must be set by the routing script.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.4. Set use_avps parameter
 ...
@@ -270,11 +265,11 @@ modparam("peerstate", "use_avps", 1)
 
 5.5. caller_avp (string)
 
-   The specification of an AVP that contains the caller's peer 
-   identifier. Only used when use_avps is set to 1. The AVP should 
-   contain the peer identifier in the format "peer@domain".
+   The specification of an AVP that contains the caller's peer identifier.
+   Only used when use_avps is set to 1. The AVP should contain the peer
+   identifier in the format "peer@domain".
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.5. Set caller_avp parameter
 ...
@@ -283,11 +278,11 @@ modparam("peerstate", "caller_avp", "$avp(caller_peer)")
 
 5.6. callee_avp (string)
 
-   The specification of an AVP that contains the callee's peer 
-   identifier. Only used when use_avps is set to 1. The AVP should 
-   contain the peer identifier in the format "peer@domain".
+   The specification of an AVP that contains the callee's peer identifier.
+   Only used when use_avps is set to 1. The AVP should contain the peer
+   identifier in the format "peer@domain".
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.6. Set callee_avp parameter
 ...
@@ -296,10 +291,10 @@ modparam("peerstate", "callee_avp", "$avp(callee_peer)")
 
 5.7. reg_avp (string)
 
-   The specification of an AVP that contains the registered peer 
+   The specification of an AVP that contains the registered peer
    identifier for usrloc events. Only used when use_avps is set to 1.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.7. Set reg_avp parameter
 ...
@@ -308,12 +303,11 @@ modparam("peerstate", "reg_avp", "$avp(reg_peer)")
 
 5.8. enable_notify_on_trying (integer)
 
-   Enable state change notifications for dialog TRYING state. By 
-   default, only EARLY, CONFIRMED, and TERMINATED states trigger 
-   notifications. When enabled, TRYING state will also trigger 
-   notifications.
+   Enable state change notifications for dialog TRYING state. By default,
+   only EARLY, CONFIRMED, and TERMINATED states trigger notifications.
+   When enabled, TRYING state will also trigger notifications.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.8. Set enable_notify_on_trying parameter
 ...
@@ -322,12 +316,11 @@ modparam("peerstate", "enable_notify_on_trying", 1)
 
 5.9. disable_caller_notify_flag (integer)
 
-   Message flag to disable caller state change notifications for 
-   specific calls. When this flag is set on a message, state changes 
-   for the caller will not trigger notifications. Set to -1 to disable 
-   this feature.
+   Message flag to disable caller state change notifications for specific
+   calls. When this flag is set on a message, state changes for the caller
+   will not trigger notifications. Set to -1 to disable this feature.
 
-   Default value is "-1" (feature disabled).
+   Default value is “-1” (feature disabled).
 
    Example 1.9. Set disable_caller_notify_flag parameter
 ...
@@ -341,12 +334,11 @@ if ($rU == "1234567890") {
 
 5.10. disable_callee_notify_flag (integer)
 
-   Message flag to disable callee state change notifications for 
-   specific calls. When this flag is set on a message, state changes 
-   for the callee will not trigger notifications. Set to -1 to disable 
-   this feature.
+   Message flag to disable callee state change notifications for specific
+   calls. When this flag is set on a message, state changes for the callee
+   will not trigger notifications. Set to -1 to disable this feature.
 
-   Default value is "-1" (feature disabled).
+   Default value is “-1” (feature disabled).
 
    Example 1.10. Set disable_callee_notify_flag parameter
 ...
@@ -355,11 +347,11 @@ modparam("peerstate", "disable_callee_notify_flag", 11)
 
 5.11. disable_reg_notify (integer)
 
-   Globally disable registration event processing. When set to 1, the 
-   module will not register callbacks with the usrloc module and will 
-   not process registration events.
+   Globally disable registration event processing. When set to 1, the
+   module will not register callbacks with the usrloc module and will not
+   process registration events.
 
-   Default value is "0" (process registration events).
+   Default value is “0” (process registration events).
 
    Example 1.11. Set disable_reg_notify parameter
 ...
@@ -368,11 +360,11 @@ modparam("peerstate", "disable_reg_notify", 1)
 
 5.12. disable_dlg_notify (integer)
 
-   Globally disable dialog event processing. When set to 1, the module 
-   will not register callbacks with the dialog module and will not 
-   process dialog events.
+   Globally disable dialog event processing. When set to 1, the module
+   will not register callbacks with the dialog module and will not process
+   dialog events.
 
-   Default value is "0" (process dialog events).
+   Default value is “0” (process dialog events).
 
    Example 1.12. Set disable_dlg_notify parameter
 ...
@@ -386,10 +378,10 @@ modparam("peerstate", "disable_dlg_notify", 1)
    6.3. peerstate.list
    6.4. peerstate.dump
 
-6.1. peerstate.get_peer
+6.1.  peerstate.get_peer
 
-   Get detailed state information for a specific peer. Returns the 
-   peer's current state, active call count, and registration status.
+   Get detailed state information for a specific peer. Returns the peer's
+   current state, active call count, and registration status.
 
    Name: peerstate.get_peer
 
@@ -397,8 +389,6 @@ modparam("peerstate", "disable_dlg_notify", 1)
      * peer - peer identifier in the format "peer@domain"
 
    RPC Command Format:
-
-   Example 1.13. peerstate.get_peer RPC command
 ...
 kamctl rpc peerstate.get_peer 1000@192.168.1.100
 ...
@@ -409,18 +399,16 @@ kamctl rpc peerstate.get_peer 1000@192.168.1.100
      * call_count - number of active calls
      * registered - registration status ("yes" or "no")
 
-7.2. peerstate.stats
+6.2.  peerstate.stats
 
-   Get global cache statistics including total number of peers, number 
-   of peers in active calls, and number of registered peers.
+   Get global cache statistics including total number of peers, number of
+   peers in active calls, and number of registered peers.
 
    Name: peerstate.stats
 
    Parameters: none
 
    RPC Command Format:
-
-   Example 1.14. peerstate.stats RPC command
 ...
 kamctl rpc peerstate.stats
 ...
@@ -430,20 +418,17 @@ kamctl rpc peerstate.stats
      * incall_peers - number of peers in INUSE or RINGING state
      * registered_peers - number of registered peers
 
-7.3. peerstate.list
+6.3.  peerstate.list
 
-   List all peers in a specific state. This command is useful for 
+   List all peers in a specific state. This command is useful for
    monitoring which peers are currently in a particular state.
 
    Name: peerstate.list
 
    Parameters:
-     * state - state filter (NOT_INUSE, INUSE, RINGING, or 
-       UNAVAILABLE)
+     * state - state filter (NOT_INUSE, INUSE, RINGING, or UNAVAILABLE)
 
    RPC Command Format:
-
-   Example 1.15. peerstate.list RPC command
 ...
 kamctl rpc peerstate.list INUSE
 ...
@@ -451,15 +436,12 @@ kamctl rpc peerstate.list INUSE
    The command returns a structure containing:
      * count - number of peers in the specified state
      * state - the state filter used
-     * Peer - array of peer objects, each containing:
-          + name - peer identifier
-          + state - current state
-          + call_count - number of active calls
-          + registered - registration status
+     * Peer - array of peer objects with name, state, call_count, and
+       registered status
 
-7.4. peerstate.dump
+6.4.  peerstate.dump
 
-   Dump all peers from the cache regardless of state. This command 
+   Dump all peers from the cache regardless of state. This command
    provides a complete view of all tracked peers.
 
    Name: peerstate.dump
@@ -467,45 +449,40 @@ kamctl rpc peerstate.list INUSE
    Parameters: none
 
    RPC Command Format:
-
-   Example 1.16. peerstate.dump RPC command
 ...
 kamctl rpc peerstate.dump
 ...
 
    The command returns a structure containing:
      * count - total number of peers
-     * Peer - array of peer objects, each containing:
-          + name - peer identifier
-          + state - current state
-          + call_count - number of active calls
-          + registered - registration status
+     * Peer - array of peer objects with name, state, call_count, and
+       registered status
 
 7. Event Routes
 
    7.1. event_route[peerstate:state_changed]
 
-7.1. event_route[peerstate:state_changed]
+7.1.  event_route[peerstate:state_changed]
 
-   Executed when a peer's state changes. Provides access to state 
-   change information through AVP pseudo-variables.
+   Executed when a peer's state changes. Provides access to state change
+   information through AVP pseudo-variables.
 
    Available pseudo-variables:
      * $avp(ps_peer) - Peer identifier
-     * $avp(ps_state) - Current state (NOT_INUSE, INUSE, RINGING, 
+     * $avp(ps_state) - Current state (NOT_INUSE, INUSE, RINGING,
        UNAVAILABLE)
      * $avp(ps_prev_state) - Previous state
      * $avp(ps_uniq_id) - Call-ID or RUID
 
-   Example 1.17. event_route[peerstate:state_changed] usage
+   Example 1.13. event_route[peerstate:state_changed] usage
 ...
 event_route[peerstate:state_changed] {
     xlog("L_INFO", "Peer $avp(ps_peer): $avp(ps_prev_state) -> $avp(ps_state)");
 
     # HTTP notification
     if ($avp(ps_state) == "INUSE") {
-        http_async_query("http://api.local/state", "peer=$avp(ps_peer)&state=b
-usy", "HTTP_REPLY");
+        http_async_query("http://api.local/state", "peer=$avp(ps_peer)&state=bus
+y", "HTTP_REPLY");
     }
 }
 ...
@@ -517,33 +494,33 @@ Chapter 2. Developer Guide
    1. Available Functions
 
         1.1. bind_peerstate(peerstate_api_t *api)
-        1.2. register_peerstate_callback(int event_types, 
-             peerstate_cb_f callback, void *param)
+        1.2. register_peerstate_callback(int event_types, peerstate_cb_f
+                callback, void *param)
 
 1. Available Functions
 
    1.1. bind_peerstate(peerstate_api_t *api)
-   1.2. register_peerstate_callback(int event_types, peerstate_cb_f 
-        callback, void *param)
+   1.2. register_peerstate_callback(int event_types, peerstate_cb_f
+          callback, void *param)
 
 1.1.  bind_peerstate(peerstate_api_t *api)
 
-   Bind to the peerstate API and fill the provided structure with 
-   function pointers.
+   Bind to the peerstate API and fill the provided structure with function
+   pointers.
 
    Meaning of the parameters is as follows:
      * peerstate_api_t *api - pointer to API structure
 
    The API structure:
-     typedef struct peerstate_api {
-         register_peerstate_cb_f register_callback;
-     } peerstate_api_t;
+typedef struct peerstate_api {
+    register_peerstate_cb_f register_callback;
+} peerstate_api_t;
 
    Return value:
      * 0 - success
      * -1 - error
 
-1.2.  register_peerstate_callback(int event_types, peerstate_cb_f callback, 
+1.2.  register_peerstate_callback(int event_types, peerstate_cb_f callback,
 void *param)
 
    Register a callback function for peer state change notifications.
@@ -557,31 +534,30 @@ void *param)
      * void *param - User parameter (can be NULL)
 
    The callback context structure:
-     typedef struct peerstate_cb_ctx {
-         str peer;                      /* Peer identifier */
-         ps_state_t current_state;        /* Current state */
-         ps_state_t previous_state;       /* Previous state */
-         int call_count;                /* Active call count */
-         int is_registered;             /* Registration status */
-         str uniq_id;                   /* Call-ID or RUID */
-         peerstate_event_type_t event_type;  /* Event type */
-     } peerstate_cb_ctx_t;
+typedef struct peerstate_cb_ctx {
+    str peer;                      /* Peer identifier */
+    ps_state_t current_state;        /* Current state */
+    ps_state_t previous_state;       /* Previous state */
+    int call_count;                /* Active call count */
+    int is_registered;             /* Registration status */
+    str uniq_id;                   /* Call-ID or RUID */
+    peerstate_event_type_t event_type;  /* Event type */
+} peerstate_cb_ctx_t;
 
    State enumeration:
-     typedef enum ps_state {
-         NOT_INUSE,      /* Registered and idle */
-         INUSE,          /* In active call */
-         RINGING,        /* Ringing */
-         UNAVAILABLE,    /* Not registered */
-         NA              /* Unknown */
-     } ps_state_t;
+typedef enum ps_state {
+    NOT_INUSE,      /* Registered and idle */
+    INUSE,          /* In active call */
+    RINGING,        /* Ringing */
+    UNAVAILABLE,    /* Not registered */
+    NA              /* Unknown */
+} ps_state_t;
 
    Return value:
      * 0 - success
      * -1 - error
 
-   Example 1.18. Callback registration example
-...
+   Example 2.1. Callback registration example
 #include "../peerstate/peerstate_cb.h"
 
 static peerstate_api_t peerstate_api;
@@ -599,20 +575,19 @@ static void my_state_callback(peerstate_cb_ctx_t *ctx, void *param) {
 /* Module initialization */
 static int mod_init(void) {
     bind_peerstate_f bind_peerstate;
-    
+
     bind_peerstate = (bind_peerstate_f)find_export("bind_peerstate", 1, 0);
     if (!bind_peerstate || bind_peerstate(&peerstate_api) < 0) {
         LM_ERR("Cannot bind to peerstate module\n");
         return -1;
     }
-    
+
     if (peerstate_api.register_callback(
             PEERSTATE_EVENT_DIALOG | PEERSTATE_EVENT_REGISTRATION,
             my_state_callback, NULL) < 0) {
         LM_ERR("Failed to register callback\n");
         return -1;
     }
-    
+
     return 0;
 }
-...
