@@ -443,7 +443,7 @@ end
             </itemizedlist>
             <para>
             The end route runs after the timer ends.
-            Typically this would the place to lgog or store data about the tasks processed.
+            Typically this would the place to log or store data about the tasks processed.
             After the end route completes, the environment is cleared, and the worker is paused.
             </para>
             <para>
