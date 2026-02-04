@@ -18,28 +18,28 @@ ifeq ($(LUAJIT),)
 		endif
 		ifeq ($(BUILDER),)
 			# no pkg-config - try finding by path
-			ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
-				LUALIB=lua5.1
-			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2),)
-				LUALIB=lua5.2
+			ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
+				LUALIB=lua5.4
 			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.3),)
 				LUALIB=lua5.3
-			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
-				LUALIB=lua5.4
+			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2),)
+				LUALIB=lua5.2
+			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
+				LUALIB=lua5.1
 			endif
 			DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include -I$(LOCALBASE)/include/$(LUALIB)
 			LIBS+= -L$(LOCALBASE)/lib -l$(LUALIB) -lm
 		else
-			ifneq ($(shell pkg-config --silence-errors --libs lua-5.1),)
+			ifneq ($(shell pkg-config --silence-errors --libs lua5.4),)
+				LUALIB=lua5.4
+			else ifneq ($(shell pkg-config --silence-errors --libs lua5.3),)
+				LUALIB=lua5.3
+			else ifneq ($(shell pkg-config --silence-errors --libs lua5.2),)
+				LUALIB=lua5.2
+			else ifneq ($(shell pkg-config --silence-errors --libs lua-5.1),)
 				LUALIB=lua-5.1
 			else ifneq ($(shell pkg-config --silence-errors --libs lua5.1),)
 				LUALIB=lua5.1
-			else ifneq ($(shell pkg-config --silence-errors --libs lua5.2),)
-				LUALIB=lua5.2
-			else ifneq ($(shell pkg-config --silence-errors --libs lua5.3),)
-				LUALIB=lua5.3
-			else ifneq ($(shell pkg-config --silence-errors --libs lua5.4),)
-				LUALIB=lua5.4
 			else ifneq ($(shell pkg-config --silence-errors --libs lua),)
 				LUALIB=lua
 			else
@@ -55,14 +55,14 @@ ifeq ($(LUAJIT),)
 			else
 				# pkg-config with no lua library detected - try finding by path
 				LUALIB=lua
-				ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
-					LUALIB=lua5.1
-				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2),)
-					LUALIB=lua5.2
+				ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
+					LUALIB=lua5.4
 				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.3),)
 					LUALIB=lua5.3
-				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
-					LUALIB=lua5.4
+				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2),)
+					LUALIB=lua5.2
+				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
+					LUALIB=lua5.1
 				endif
 				DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include -I$(LOCALBASE)/include/$(LUALIB)
 				LIBS+= -L$(LOCALBASE)/lib -l$(LUALIB) -lm
