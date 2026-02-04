@@ -107,6 +107,7 @@ Options:\n\
     -b          use binrpc protocol\n\
     -j          use jsonrpc protocol\n\
     -t timeout  timeout in seconds to wait for jsonrpc response\n\
+    -z size     size in kilobytes for jsonrpc response buffer\n\
     -v          Verbose       \n\
     -V          Version number\n\
     -h          This help message\n\
@@ -140,6 +141,7 @@ int _kamcmd_rpc_type = KAMCMD_BINRPC;
 int _kamcmd_read_timeout = 2;
 struct binrpc_val *rpc_array;
 int rpc_no = 0;
+unsigned int _kamcmd_jsonrpc_size = 16 * 1024;
 
 #ifdef USE_CFG_VARS
 
@@ -2086,7 +2088,6 @@ void kamcmd_json_escape_str(str *s_in, str *s_out, int *emode)
 }
 
 #define KAMCMD_JSONCMDBUF_SIZE 2048
-#define KAMCMD_JSONRPLBUF_SIZE 16 * 1023
 
 static int kamcmd_append_strz(str *obuf, str *pbuf, char *val)
 {
@@ -2110,7 +2111,7 @@ static int kamcmd_append_strz(str *obuf, str *pbuf, char *val)
 static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 {
 	char jcbuf[KAMCMD_JSONCMDBUF_SIZE];
-	char jrbuf[KAMCMD_JSONRPLBUF_SIZE];
+	char *jrbuf = NULL;
 	struct timeval tv;
 	str jcmd;
 	str pbuf;
@@ -2136,16 +2137,21 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 	len = snprintf(pbuf.s, pbuf.len, "%s\", ", cmd->method);
 	if(len < 0 || len >= pbuf.len) {
 		fprintf(stderr, "command is too long\n");
-		return -1;
+		goto error;
 	}
 	jcmd.len += len;
 	jcmd.s[jcmd.len] = '\0';
 	pbuf.s += len;
 	pbuf.len -= len;
 
+	jrbuf = (char *)malloc(_kamcmd_jsonrpc_size);
+	if(jrbuf == NULL) {
+		fprintf(stderr, "failed to allocate the buffer for response\n");
+		return -1;
+	}
 	if(cmd->argc > 0) {
 		if(kamcmd_append_strz(&jcmd, &pbuf, "\"params\": [") < 0) {
-			return -1;
+			goto error;
 		}
 		for(i = 0; i < cmd->argc; i++) {
 			switch(cmd->argv[i].type) {
@@ -2173,7 +2179,7 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 			}
 			if(len < 0 || len >= pbuf.len) {
 				fprintf(stderr, "command is too long\n");
-				return -1;
+				goto error;
 			}
 			jcmd.len += len;
 			jcmd.s[jcmd.len] = '\0';
@@ -2181,14 +2187,14 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 			pbuf.len -= len;
 		}
 		if(kamcmd_append_strz(&jcmd, &pbuf, "], ") < 0) {
-			return -1;
+			goto error;
 		}
 	}
 
 	len = snprintf(pbuf.s, pbuf.len, "\"id\": %d }", (rand() % 4000000) + 1);
 	if(len < 0 || len >= pbuf.len) {
 		fprintf(stderr, "command is too long\n");
-		return -1;
+		goto error;
 	}
 	jcmd.len += len;
 	jcmd.s[jcmd.len] = '\0';
@@ -2207,7 +2213,7 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 	if(len <= 0) {
 		fprintf(stderr, "error sending the command (%d/%s)\n", errno,
 				strerror(errno));
-		return -1;
+		goto error;
 	}
 
 	i = _kamcmd_read_timeout;
@@ -2220,7 +2226,7 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 		ret = select(s + 1, &fds, NULL, NULL, &tv);
 		if(ret < 0) {
 			fprintf(stderr, "select error (%d/%s)\n", errno, strerror(errno));
-			return -1;
+			goto error;
 		} else if(ret == 0) {
 			/* timeout */
 			if(i <= 0) {
@@ -2228,24 +2234,30 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 			}
 			continue;
 		}
-		len = read(s, jrbuf, sizeof(jrbuf) - 1);
+		len = read(s, jrbuf, _kamcmd_jsonrpc_size - 1);
 		if(len < 0) {
 			if(errno == EINTR) {
 				continue;
 			}
 			fprintf(stderr, "error reading the response (%d/%s) %d\n", errno,
 					strerror(errno), ETIMEDOUT);
-			return -1;
+			goto error;
 		}
 		jrbuf[len] = 0x00;
 		printf("%s", jrbuf);
-		if(i <= 0 || len < KAMCMD_JSONRPLBUF_SIZE / 2) {
+		if(i <= 0 || len < _kamcmd_jsonrpc_size / 2) {
 			/* expect it is finished */
 			break;
 		}
 	} while(1);
 	printf("\n");
 	return 0;
+
+error:
+	if(jrbuf != NULL) {
+		free(jrbuf);
+	}
+	return -1;
 }
 
 /* on exit cleanup */
@@ -2279,7 +2291,7 @@ int main(int argc, char **argv)
 	sock_name = 0;
 	sock_type = UNIXS_SOCK;
 	opterr = 0;
-	while((c = getopt(argc, argv, "UVhbjs:D:R:vf:t:")) != -1) {
+	while((c = getopt(argc, argv, "UVhbjs:D:R:vf:t:z:")) != -1) {
 		switch(c) {
 			case 'V':
 				printf("version: %s\n", version);
@@ -2313,6 +2325,14 @@ int main(int argc, char **argv)
 				_kamcmd_read_timeout = (int)atol(optarg);
 				if(_kamcmd_read_timeout < 0) {
 					_kamcmd_read_timeout = 2;
+				}
+				break;
+			case 'z':
+				_kamcmd_jsonrpc_size = (unsigned int)atol(optarg);
+				if(_kamcmd_jsonrpc_size == 0) {
+					_kamcmd_jsonrpc_size = 16 * 1024;
+				} else {
+					_kamcmd_jsonrpc_size *= 1024;
 				}
 				break;
 			case 'v':
