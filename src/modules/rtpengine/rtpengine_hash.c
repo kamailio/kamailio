@@ -258,10 +258,12 @@ int rtpengine_hash_table_insert(
 				&& str_equal(entry->viabranch, new_entry->viabranch)) {
 			// unlock
 			lock_release(rtpengine_hash_table->row_locks[hash_index]);
+
+			// entry may have been freed by a concurrent DELETE operation;
+			// use function parameters which are guaranteed to be valid
 			LM_NOTICE("callid=%.*s, viabranch=%.*s already in hashtable, "
 					  "ignore new value\n",
-					entry->callid.len, entry->callid.s, entry->viabranch.len,
-					entry->viabranch.s);
+					callid.len, callid.s, viabranch.len, viabranch.s);
 			return 0;
 		}
 
