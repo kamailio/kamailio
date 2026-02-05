@@ -30,6 +30,7 @@
 #include "tcp_options.h"
 
 #include "ip_addr.h"
+#include "str.h"
 #include "locking.h"
 #include "atomic_ops.h"
 #include "timer_ticks.h"
@@ -283,6 +284,8 @@ typedef struct tcp_connection
 	enum tcp_conn_states state; /* connection state */
 	enum tcp_conn_states initstate; /* initial connection state */
 	void *extra_data; /* extra data associated to the connection, 0 for tcp*/
+	str tls_sni; /* outbound SNI (TLS) */
+	str tls_srvid; /* outbound TLS server_id */
 	struct timer_ln timer;
 	time_t timestamp; /* connection creation timestamp */
 	ticks_t timeout;  /* connection timeout, after this it will be removed*/

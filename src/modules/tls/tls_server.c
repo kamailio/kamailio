@@ -130,6 +130,75 @@ extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
 
+static int tls_shm_str_set(str *dst, const str *src)
+{
+	if(dst == NULL) {
+		return -1;
+	}
+	if(dst->s) {
+		shm_free(dst->s);
+		dst->s = NULL;
+		dst->len = 0;
+	}
+	if(src == NULL || src->s == NULL || src->len <= 0) {
+		return 0;
+	}
+	dst->s = (char *)shm_malloc(src->len + 1);
+	if(dst->s == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memcpy(dst->s, src->s, src->len);
+	dst->s[src->len] = '\0';
+	dst->len = src->len;
+	return 0;
+}
+
+static void tls_store_outbound_xavp(struct tcp_connection *c)
+{
+	sr_xavp_t *vavp = NULL;
+	str sname = {"server_name", 11};
+	str sid = {"server_id", 9};
+
+	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
+		return;
+	}
+	if(sr_tls_xavp_cfg.s == NULL) {
+		return;
+	}
+
+	LM_DBG("tls: store outbound xavp (root=%.*s pid=%d proc=%d %s conn=%p)\n",
+			sr_tls_xavp_cfg.len, sr_tls_xavp_cfg.s, my_pid(), process_no,
+			my_desc(), c);
+
+	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
+	if(vavp == NULL) {
+		LM_DBG("tls: outbound server_name not found in xavp\n");
+	} else if(vavp->val.v.s.len <= 0) {
+		LM_DBG("tls: outbound server_name is empty\n");
+	} else {
+		if(tls_shm_str_set(&c->tls_sni, &vavp->val.v.s) < 0) {
+			LM_WARN("failed to store outbound tls server_name in shm\n");
+		} else {
+			LM_DBG("tls: stored outbound server_name: %.*s\n",
+					c->tls_sni.len, c->tls_sni.s);
+		}
+	}
+
+	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
+	if(vavp == NULL) {
+		LM_DBG("tls: outbound server_id not found in xavp\n");
+	} else if(vavp->val.v.s.len <= 0) {
+		LM_DBG("tls: outbound server_id is empty\n");
+	} else {
+		if(tls_shm_str_set(&c->tls_srvid, &vavp->val.v.s) < 0) {
+			LM_WARN("failed to store outbound tls server_id in shm\n");
+		} else {
+			LM_DBG("tls: stored outbound server_id: %.*s\n", c->tls_srvid.len, c->tls_srvid.s);
+		}
+	}
+}
+
 int ksr_tls_set_connect_server_id(str *srvid)
 {
 	if(srvid == NULL || srvid->len <= 0) {
@@ -164,11 +233,16 @@ int ksr_tls_set_connect_server_id(str *srvid)
 	return 0;
 }
 
-static str *tls_get_connect_server_id(void)
+static str *tls_get_connect_server_id(struct tcp_connection *c)
 {
 	sr_xavp_t *vavp = NULL;
 	str sid = {"server_id", 9};
 
+	if(c && c->tls_srvid.s && c->tls_srvid.len > 0) {
+		LM_DBG("found outbound server id in tcp connection: %.*s\n",
+				c->tls_srvid.len, c->tls_srvid.s);
+		return &c->tls_srvid;
+	}
 	if(sr_tls_xavp_cfg.s != NULL) {
 		vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
 	}
@@ -190,12 +264,17 @@ static str *tls_get_connect_server_id(void)
 /**
  * get the server name (sni) for outbound connections from xavp
  */
-static str *tls_get_connect_server_name(void)
+static str *tls_get_connect_server_name(struct tcp_connection *c)
 {
 #ifndef OPENSSL_NO_TLSEXT
 	sr_xavp_t *vavp = NULL;
 	str sname = {"server_name", 11};
 
+	if(c && c->tls_sni.s && c->tls_sni.len > 0) {
+		LM_NOTICE("found outbound server name in tcp connection: %.*s\n",
+				c->tls_sni.len, c->tls_sni.s);
+		return &c->tls_sni;
+	}
 	if(sr_tls_xavp_cfg.s != NULL)
 		vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
 	if(vavp == NULL || vavp->val.v.s.len <= 0) {
@@ -257,8 +336,8 @@ static int tls_complete_init(struct tcp_connection *c)
 				cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
 	} else {
 		state = S_TLS_CONNECTING;
-		sname = tls_get_connect_server_name();
-		srvid = tls_get_connect_server_id();
+		sname = tls_get_connect_server_name(c);
+		srvid = tls_get_connect_server_id(c);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip,
 				c->rcv.dst_port, sname, srvid);
 		ksr_tls_set_connect_server_id(NULL);
@@ -672,6 +751,7 @@ int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
 	c->lifetime = cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
+	tls_store_outbound_xavp(c);
 	return 0;
 }
 
@@ -706,6 +786,16 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 		}
 		shm_free(c->extra_data);
 		c->extra_data = 0;
+	}
+	if(c->tls_sni.s) {
+		shm_free(c->tls_sni.s);
+		c->tls_sni.s = NULL;
+		c->tls_sni.len = 0;
+	}
+	if(c->tls_srvid.s) {
+		shm_free(c->tls_srvid.s);
+		c->tls_srvid.s = NULL;
+		c->tls_srvid.len = 0;
 	}
 }
 
