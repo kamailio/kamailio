@@ -37,9 +37,10 @@ Javier Gallart
               3.6. xhttp_prom_beginning (str)
               3.7. xhttp_prom_metadata_flags (integer)
               3.8. xhttp_prom_tags (str)
-              3.9. prom_counter (str)
-              3.10. prom_gauge (str)
-              3.11. prom_histogram (str)
+              3.9. timestamp_format (str)
+              3.10. prom_counter (str)
+              3.11. prom_gauge (str)
+              3.12. prom_histogram (str)
 
         4. Functions
 
@@ -74,28 +75,29 @@ Javier Gallart
    1.8. xhttp_prom_metadata_flags HELP example
    1.9. Set xhttp_prom_metadata_flags parameter
    1.10. Set xhttp_prom_tags parameter
-   1.11. prom_counter label example
-   1.12. Set prom_counter parameter
-   1.13. prom_gauge label example
-   1.14. Set prom_gauge parameter
-   1.15. prom_histogram label example
-   1.16. Set prom_histogram parameter
-   1.17. prom_counter_reset usage
-   1.18. prom_gauge_reset usage
-   1.19. prom_counter_inc usage
-   1.20. prom_gauge_inc usage
-   1.21. prom_gauge_set usage
-   1.22. prom_histogram_observe usage
-   1.23. prom_dispatch usage
-   1.24. prom_dispatch usage (more complete)
-   1.25. prom_check_uri usage
-   1.26. xhttp_prom.counter_reset usage
-   1.27. xhttp_prom.counter_inc usage
-   1.28. xhttp_prom.gauge_reset usage
-   1.29. xhttp_prom.gauge_inc usage
-   1.30. xhttp_prom.gauge_set usage
-   1.31. xhttp_prom.histogram_observe usage
-   1.32. xhttp_prom.metric_list_print usage
+   1.11. Set timestamp_format parameter
+   1.12. prom_counter label example
+   1.13. Set prom_counter parameter
+   1.14. prom_gauge label example
+   1.15. Set prom_gauge parameter
+   1.16. prom_histogram label example
+   1.17. Set prom_histogram parameter
+   1.18. prom_counter_reset usage
+   1.19. prom_gauge_reset usage
+   1.20. prom_counter_inc usage
+   1.21. prom_gauge_inc usage
+   1.22. prom_gauge_set usage
+   1.23. prom_histogram_observe usage
+   1.24. prom_dispatch usage
+   1.25. prom_dispatch usage (more complete)
+   1.26. prom_check_uri usage
+   1.27. xhttp_prom.counter_reset usage
+   1.28. xhttp_prom.counter_inc usage
+   1.29. xhttp_prom.gauge_reset usage
+   1.30. xhttp_prom.gauge_inc usage
+   1.31. xhttp_prom.gauge_set usage
+   1.32. xhttp_prom.histogram_observe usage
+   1.33. xhttp_prom.metric_list_print usage
 
 Chapter 1. Admin Guide
 
@@ -117,9 +119,10 @@ Chapter 1. Admin Guide
         3.6. xhttp_prom_beginning (str)
         3.7. xhttp_prom_metadata_flags (integer)
         3.8. xhttp_prom_tags (str)
-        3.9. prom_counter (str)
-        3.10. prom_gauge (str)
-        3.11. prom_histogram (str)
+        3.9. timestamp_format (str)
+        3.10. prom_counter (str)
+        3.11. prom_gauge (str)
+        3.12. prom_histogram (str)
 
    4. Functions
 
@@ -194,9 +197,10 @@ Chapter 1. Admin Guide
    3.6. xhttp_prom_beginning (str)
    3.7. xhttp_prom_metadata_flags (integer)
    3.8. xhttp_prom_tags (str)
-   3.9. prom_counter (str)
-   3.10. prom_gauge (str)
-   3.11. prom_histogram (str)
+   3.9. timestamp_format (str)
+   3.10. prom_counter (str)
+   3.11. prom_gauge (str)
+   3.12. prom_histogram (str)
 
 3.1. xhttp_prom_buf_size (integer)
 
@@ -386,7 +390,51 @@ modparam("xhttp_prom", "xhttp_prom_tags", "host_job=foo")
 modparam("xhttp_prom", "xhttp_prom_tags", "tag_bar=foo,host_job=wurst");
 ...
 
-3.9. prom_counter (str)
+3.9. timestamp_format (str)
+
+   Controls the format of timestamps exported in Prometheus metrics.
+
+   Rationale: The default behavior (integer milliseconds) violates the
+   OpenMetrics specification which requires timestamps to be in seconds
+   with optional fractional precision. Some monitoring systems like
+   Grafana Alloy and Mimir reject metrics with millisecond timestamps,
+   causing ingestion failures. This parameter provides flexibility to
+   ensure compatibility while maintaining backward compatibility.
+
+   Allowed values:
+     * "ms" - Integer milliseconds (default, for backward compatibility).
+       Example: 1737283200000. Note: Violates OpenMetrics spec and may
+       cause ingestion issues with strict parsers.
+     * "s" - Integer seconds (OpenMetrics compliant). Example: 1737283200.
+       Recommended for compatibility with strict OpenMetrics parsers.
+     * "sf" - Seconds with fractional milliseconds (OpenMetrics
+       compliant). Example: 1737283200.123. Provides millisecond precision
+       while compliant with the OpenMetrics specification.
+
+   Default value is "ms" (backward compatible).
+
+   Example 1.11. Set timestamp_format parameter
+...
+# Use milliseconds (default, backward compatible but violates OpenMetrics)
+modparam("xhttp_prom", "timestamp_format", "ms")
+
+# Use integer seconds (OpenMetrics compliant)
+modparam("xhttp_prom", "timestamp_format", "s")
+
+# Use seconds with fractional milliseconds (OpenMetrics compliant, preserves pre
+cision)
+modparam("xhttp_prom", "timestamp_format", "sf")
+...
+
+   Example output for each mode:
+
+   Mode "ms": kamailio_my_counter{label="value"} 42 1737283200000
+
+   Mode "s": kamailio_my_counter{label="value"} 42 1737283200
+
+   Mode "sf": kamailio_my_counter{label="value"} 42 1737283200.123
+
+3.10. prom_counter (str)
 
    Create a counter metric.
 
@@ -402,7 +450,7 @@ modparam("xhttp_prom", "xhttp_prom_tags", "tag_bar=foo,host_job=wurst");
        parameter at most allowed in counters. Each label name is separated
        by : without spaces. At most only three label names allowed in each
        label parameter.
-       Example 1.11. prom_counter label example
+       Example 1.12. prom_counter label example
 # Create two labels called method and handler
 label = method:handler
 This would generate  {method="whatever", handler="whatever2"} when building
@@ -416,7 +464,7 @@ the metric.
        any way. The provided HELP string will be included in the output as
        is.
 
-   Example 1.12. Set prom_counter parameter
+   Example 1.13. Set prom_counter parameter
 ...
 
 # Create cnt_first counter with no labels.
@@ -438,7 +486,7 @@ using it by prom_counter_inc or prom_counter_reset functions.
 
 ...
 
-3.10. prom_gauge (str)
+3.11. prom_gauge (str)
 
    Create a gauge metric.
 
@@ -454,7 +502,7 @@ using it by prom_counter_inc or prom_counter_reset functions.
        parameter at most allowed in gauges. Each label name is separated
        by : without spaces. At most only three label names allowed inside
        each label parameter.
-       Example 1.13. prom_gauge label example
+       Example 1.14. prom_gauge label example
 # Create two labels called method and handler
 label = method:handler
 This would generate  {method="whatever", handler="whatever2"} when building
@@ -463,7 +511,7 @@ the metric.
        description for the help attribute in prom_counter parameter.
        Everything is the same for prom_gauge help.
 
-   Example 1.14. Set prom_gauge parameter
+   Example 1.15. Set prom_gauge parameter
 ...
 
 # Create gg_first gauge with no labels
@@ -478,7 +526,7 @@ modparam("xhttp_prom", "prom_gauge", "name=gg_third; label=method:handler;");
 
 ...
 
-3.11. prom_histogram (str)
+3.12. prom_histogram (str)
 
    Create a histogram metric.
 
@@ -494,7 +542,7 @@ modparam("xhttp_prom", "prom_gauge", "name=gg_third; label=method:handler;");
        parameter at most allowed in histograms. Each label name is
        separated by : without spaces. At most only three label names
        allowed in each label parameter.
-       Example 1.15. prom_histogram label example
+       Example 1.16. prom_histogram label example
 # Create two labels called method and handler
 label = method:handler
 This would generate  {method="whatever", handler="whatever2"} when building
@@ -512,7 +560,7 @@ the metric.
        description for the help attribute in prom_counter parameter.
        Everything is the same for prom_histogram help.
 
-   Example 1.16. Set prom_histogram parameter
+   Example 1.17. Set prom_histogram parameter
 ...
 
 # Create my_histo histogram with no labels and default buckets.
@@ -559,7 +607,7 @@ using it by prom_histogram_observe function.
    Available via KEMI framework as counter_reset_l0, counter_reset_l1,
    counter_reset_l2 and counter_reset_l3.
 
-   Example 1.17. prom_counter_reset usage
+   Example 1.18. prom_counter_reset usage
 ...
 # Definition of counter with prom_counter with labels method and IP
 modparam("xhttp_prom", "prom_counter", "name=cnt01; label=method:IP;");
@@ -587,7 +635,7 @@ kamailio_cnt01 {method="push", IP="192.168.0.1"} 0 1234567890
    Available via KEMI framework as gauge_reset_l0, gauge_reset_l1,
    gauge_reset_l2 and gauge_reset_l3.
 
-   Example 1.18. prom_gauge_reset usage
+   Example 1.19. prom_gauge_reset usage
 ...
 # Definition of gauge with prom_gauge with labels method and IP
 modparam("xhttp_prom", "prom_gauge", "name=cnt01; label=method:IP;");
@@ -617,7 +665,7 @@ kamailio_cnt01 {method="push", IP="192.168.0.1"} 0 1234567890
    Available via KEMI framework as counter_inc_l0, counter_inc_l1,
    counter_inc_l2 and counter_inc_l3.
 
-   Example 1.19. prom_counter_inc usage
+   Example 1.20. prom_counter_inc usage
 ...
 # Definition of cnt01 counter with no labels.
 modparam("xhttp_prom", "prom_counter", "name=cnt01;");
@@ -654,7 +702,7 @@ kamailio_cnt02 {method="push", IP="192.168.0.1"} 15 1234567890
    Available via KEMI framework as gauge_set_l0, gauge_set_l1,
    gauge_set_l2 and gauge_set_l3.
 
-   Example 1.20. prom_gauge_inc usage
+   Example 1.21. prom_gauge_inc usage
 ...
 # Definition of gg01 gauge with no labels.
 modparam("xhttp_prom", "prom_gauge", "name=gg01;");
@@ -685,7 +733,7 @@ prom_gauge_inc("gg01", "-22.5");
    Available via KEMI framework as gauge_set_l0, gauge_set_l1,
    gauge_set_l2 and gauge_set_l3.
 
-   Example 1.21. prom_gauge_set usage
+   Example 1.22. prom_gauge_set usage
 ...
 # Definition of gg01 gauge with no labels.
 modparam("xhttp_prom", "prom_gauge", "name=gg01;");
@@ -722,7 +770,7 @@ kamailio_gg02 {method="push", IP="192.168.0.1"} 2.8 1234567890
    Available via KEMI framework as histogram_observe_l0,
    histogram_observe_l1, histogram_observe_l2 and histogram_observe_l3.
 
-   Example 1.22. prom_histogram_observe usage
+   Example 1.23. prom_histogram_observe usage
 ...
 # Definition of hist01 histogram with no labels and default buckets.
 modparam("xhttp_prom", "prom_histogram", "name=hist01;");
@@ -755,7 +803,7 @@ hist02_count{method="push", IP="192.168.0.1"} 1 1592574659768
 
    Available via KEMI framework as xhttp_prom.dispatch
 
-   Example 1.23. prom_dispatch usage
+   Example 1.24. prom_dispatch usage
 ...
 # Needed to use SIP frames as HTTP ones.
 tcp_accept_no_cl=yes
@@ -778,7 +826,7 @@ event_route[xhttp:request] {
 }
 ...
 
-   Example 1.24. prom_dispatch usage (more complete)
+   Example 1.25. prom_dispatch usage (more complete)
 
    Another example with counters and gauge:
 ...
@@ -858,7 +906,7 @@ kamailio_sl_xxx_replies 0 1554839325461
 
    Available via KEMI framework as xhttp_prom.check_uri
 
-   Example 1.25. prom_check_uri usage
+   Example 1.26. prom_check_uri usage
 ...
 # Needed to use SIP frames as HTTP ones.
 tcp_accept_no_cl=yes
@@ -902,7 +950,7 @@ event_route[xhttp:request] {
      * l1: value of second label (optional)
      * l2: value of the third label (optional)
 
-   Example 1.26. xhttp_prom.counter_reset usage
+   Example 1.27. xhttp_prom.counter_reset usage
                   ...
                   kamctl rpc xhttp_prom.counter_reset "cnt01" "push" "192.168.0.
 1"
@@ -922,7 +970,7 @@ event_route[xhttp:request] {
      * l1: value of second label (optional)
      * l2: value of the third label (optional)
 
-   Example 1.27. xhttp_prom.counter_inc usage
+   Example 1.28. xhttp_prom.counter_inc usage
                   ...
                   kamctl rpc xhttp_prom.counter_inc "cnt01" 15 "push" "192.168.0
 .1"
@@ -940,7 +988,7 @@ event_route[xhttp:request] {
      * l1: value of second label (optional)
      * l2: value of the third label (optional)
 
-   Example 1.28. xhttp_prom.gauge_reset usage
+   Example 1.29. xhttp_prom.gauge_reset usage
                   ...
                   kamctl rpc xhttp_prom.gauge_reset "gg01" "push" "192.168.0.1"
                   ...
@@ -959,7 +1007,7 @@ event_route[xhttp:request] {
      * l1: value of second label (optional)
      * l2: value of the third label (optional)
 
-   Example 1.29. xhttp_prom.gauge_inc usage
+   Example 1.30. xhttp_prom.gauge_inc usage
                   ...
                   kamctl rpc xhttp_prom.gauge_inc "gg01" -- -5.2
                   ...
@@ -977,7 +1025,7 @@ event_route[xhttp:request] {
      * l1: value of second label (optional)
      * l2: value of the third label (optional)
 
-   Example 1.30. xhttp_prom.gauge_set usage
+   Example 1.31. xhttp_prom.gauge_set usage
                   ...
                   kamctl rpc xhttp_prom.gauge_set "gg01" -- -5.2
                   ...
@@ -996,7 +1044,7 @@ event_route[xhttp:request] {
      * l1: value of second label (optional)
      * l2: value of the third label (optional)
 
-   Example 1.31. xhttp_prom.histogram_observe usage
+   Example 1.32. xhttp_prom.histogram_observe usage
                   ...
                   kamctl rpc xhttp_prom.histogram_observe "hist01" -- -5.2
                   ...
@@ -1012,7 +1060,7 @@ event_route[xhttp:request] {
    NOTE:: If you list a lot of metrics you may need to increase buffer
    size of your RPC transport layer.
 
-   Example 1.32. xhttp_prom.metric_list_print usage
+   Example 1.33. xhttp_prom.metric_list_print usage
                   ...
                   kamctl rpc xhttp_prom.metric_list_print
                   ...
