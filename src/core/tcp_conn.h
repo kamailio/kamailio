@@ -263,6 +263,16 @@ enum tcp_closed_reason
 	_TCP_CLOSED_REASON_MAX /* /!\ keep this one always at the end */
 };
 
+typedef struct ksr_coninfo
+{
+	ip_addr_t src_ip;
+	ip_addr_t dst_ip;
+	unsigned short src_port; /* host byte order */
+	unsigned short dst_port; /* host byte order */
+	int proto;
+	socket_info_t *csocket;
+} ksr_coninfo_t;
+
 
 typedef struct tcp_connection
 {
@@ -336,14 +346,14 @@ typedef struct tcp_connection
 #define tcpconn_put(c) atomic_dec_and_test(&((c)->refcnt))
 
 
-#define init_tcp_req(r, rd_buf, rd_buf_size)                   \
-	do {                                                       \
-		memset((r), 0, sizeof(struct tcp_req));                \
-		(r)->buf = (rd_buf);                                   \
-		(r)->b_size = (rd_buf_size)-1; /* space for 0 term. */ \
-		(r)->parsed = (r)->pos = (r)->start = (r)->buf;        \
-		(r)->error = TCP_REQ_OK;                               \
-		(r)->state = H_SKIP_EMPTY;                             \
+#define init_tcp_req(r, rd_buf, rd_buf_size)                     \
+	do {                                                         \
+		memset((r), 0, sizeof(struct tcp_req));                  \
+		(r)->buf = (rd_buf);                                     \
+		(r)->b_size = (rd_buf_size) - 1; /* space for 0 term. */ \
+		(r)->parsed = (r)->pos = (r)->start = (r)->buf;          \
+		(r)->error = TCP_REQ_OK;                                 \
+		(r)->state = H_SKIP_EMPTY;                               \
 	} while(0)
 
 
