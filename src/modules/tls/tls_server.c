@@ -130,6 +130,44 @@ extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
 
+static void tls_store_outbound_xavp(struct tcp_connection *c)
+{
+	sr_xavp_t *vavp = NULL;
+	str sname = str_init("server_name");
+	str sid = str_init("server_id");
+
+	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
+		return;
+	}
+	if(sr_tls_xavp_cfg.s == NULL) {
+		return;
+	}
+
+	LM_DBG("storing outbound xavp (root=%.*s pid=%d proc=%d '%s' conn=%p)\n",
+			sr_tls_xavp_cfg.len, sr_tls_xavp_cfg.s, my_pid(), process_no,
+			my_desc(), c);
+
+	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
+	if(vavp != NULL && vavp->val.v.s.len > 0) {
+		if(shm_str_update(&c->cinfo.server_name, &vavp->val.v.s) < 0) {
+			LM_WARN("failed to store outbound tls server_name in shm\n");
+		} else {
+			LM_DBG("stored outbound server_name: %.*s\n",
+					c->cinfo.server_name.len, c->cinfo.server_name.s);
+		}
+	}
+
+	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
+	if(vavp != NULL && vavp->val.v.s.len > 0) {
+		if(shm_str_update(&c->cinfo.server_id, &vavp->val.v.s) < 0) {
+			LM_WARN("failed to store outbound tls server_id in shm\n");
+		} else {
+			LM_DBG("tls: stored outbound server_id: %.*s\n",
+					c->cinfo.server_id.len, c->cinfo.server_id.s);
+		}
+	}
+}
+
 int ksr_tls_set_connect_server_id(str *srvid)
 {
 	if(srvid == NULL || srvid->len <= 0) {
@@ -164,10 +202,17 @@ int ksr_tls_set_connect_server_id(str *srvid)
 	return 0;
 }
 
-static str *tls_get_connect_server_id(void)
+static str *tls_get_connect_server_id(struct tcp_connection *c)
 {
 	sr_xavp_t *vavp = NULL;
 	str sid = {"server_id", 9};
+
+	if(c != NULL && c->cinfo.server_id.s != NULL
+			&& c->cinfo.server_id.len > 0) {
+		LM_DBG("found outbound server id in tcp connection: %.*s\n",
+				c->cinfo.server_id.len, c->cinfo.server_id.s);
+		return &c->cinfo.server_id;
+	}
 
 	if(sr_tls_xavp_cfg.s != NULL) {
 		vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
@@ -190,11 +235,18 @@ static str *tls_get_connect_server_id(void)
 /**
  * get the server name (sni) for outbound connections from xavp
  */
-static str *tls_get_connect_server_name(void)
+static str *tls_get_connect_server_name(struct tcp_connection *c)
 {
 #ifndef OPENSSL_NO_TLSEXT
 	sr_xavp_t *vavp = NULL;
 	str sname = {"server_name", 11};
+
+	if(c != NULL && c->cinfo.server_name.s != NULL
+			&& c->cinfo.server_name.len > 0) {
+		LM_NOTICE("found outbound server name in tcp connection: %.*s\n",
+				c->cinfo.server_name.len, c->cinfo.server_name.s);
+		return &c->cinfo.server_name;
+	}
 
 	if(sr_tls_xavp_cfg.s != NULL)
 		vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
@@ -257,8 +309,8 @@ static int tls_complete_init(struct tcp_connection *c)
 				cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
 	} else {
 		state = S_TLS_CONNECTING;
-		sname = tls_get_connect_server_name();
-		srvid = tls_get_connect_server_id();
+		sname = tls_get_connect_server_name(c);
+		srvid = tls_get_connect_server_id(c);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip,
 				c->rcv.dst_port, sname, srvid);
 		ksr_tls_set_connect_server_id(NULL);
@@ -672,6 +724,7 @@ int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
 	c->lifetime = cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
+	tls_store_outbound_xavp(c);
 	return 0;
 }
 
@@ -706,6 +759,16 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 		}
 		shm_free(c->extra_data);
 		c->extra_data = 0;
+	}
+	if(c->cinfo.server_name.s) {
+		shm_free(c->cinfo.server_name.s);
+		c->cinfo.server_name.s = NULL;
+		c->cinfo.server_name.len = 0;
+	}
+	if(c->cinfo.server_id.s) {
+		shm_free(c->cinfo.server_id.s);
+		c->cinfo.server_id.s = NULL;
+		c->cinfo.server_id.len = 0;
 	}
 }
 
@@ -771,8 +834,8 @@ static char *get_tls_domain_str(
 	if(c->flags & F_CONN_PASSIVE) {
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV, ip, port, 0, 0);
 	} else {
-		sname = tls_get_connect_server_name();
-		srvid = tls_get_connect_server_id();
+		sname = tls_get_connect_server_name(c);
+		srvid = tls_get_connect_server_id(c);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, ip, port, sname, srvid);
 	}
 
