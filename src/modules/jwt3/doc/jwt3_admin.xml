@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides JWT (JSON Web Token) functions to be used
+		in &kamailio; configuration file.
+	</para>
+	<para>
+  	It relies on libjwt (at least v3.2.0) library
+   	(https://github.com/benmcollins/libjwt).
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libjwt</emphasis> - version 3.2.0 or higher.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="jwt.p.leeway_sec">
+		<title><varname>leeway_sec</varname> (int)</title>
+		<para>
+		  This parameter defines the time tolerance in seconds used to account
+			for clock skew when validating the exp (expiration) and nbf (not before)
+			claims. A value of -1 disables nbf/exp claim validation, while any
+			positive integer sets the allowable leeway window.
+		</para>
+		<para>
+		<emphasis>
+			Default value is -1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>leeway_sec</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt", "leeway_sec", 30)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="jwt.f.jwt3_generate">
+	    <title>
+		<function moreinfo="none">jwt3_generate(prvkey, alg, claims[, headers])</function>
+	    </title>
+	    <para>
+	    Generate the JWT, its value can be retrieved in the variable $jwt3(val).
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			prvkey - path to private key (PEM or JWKS)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			alg - the algorithm to build the signature, as supported by the
+			libjwt (e.g., RS256, HS256, ES256, ...)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			claims - the list of claims to be added to JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format).
+			The string values can be enclosed in single or double quotes. If a
+			value is not eclosed in between quotes, it is added as numeric
+			value if it is successfully converted to a long value, otherwise is
+			added as string value.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			headers - the list of headers to be added to JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format).
+			The string values can be enclosed in single or double quotes. If a
+			value is not eclosed in between quotes, it is added as numeric
+			value if it is successfully converted to a long value, otherwise is
+			added as string value.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>jwt3_generate</function> usage</title>
+		<programlisting format="linespecific">
+...
+  jwt3_generate("/path/to/prvkey.json", "ES256",
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="jwt.f.jwt3_verify">
+	    <title>
+		<function moreinfo="none">jwt3_verify(pubkeypath, alg, claims, jwtval)</function>
+	    </title>
+	    <para>
+	    Verify the JWT.
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			pubkeypath - path to public key file (PEM or JWKS)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			alg - the algorithm to build the signature, as supported by the
+			libjwt (e.g., RS256, HS256, ES256, ...)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			claims - the list of claims to be checked they are in the JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format,
+			see also the description of claims parameter for jwt3_generate()).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			jwtval - the value of the JWT to verify
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>jwt3_verify</function> usage</title>
+		<programlisting format="linespecific">
+...
+  if(!jwt3_verify("/path/to/pubkey.json", "ES256",
+         "caller='$fU';callee='$tU';callid='$ci';index=100",
+        "$var(jwt)") {
+    xwarn("failed to verify jwt\n");
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="jwt.f.jwt3_verify_key">
+	    <title>
+		<function moreinfo="none">jwt3_verify_key(pubkeyval, alg, claims, jwtval)</function>
+	    </title>
+	    <para>
+	    Verify the JWT.
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			pubkeyval - public key value
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			alg - the algorithm to build the signature, as supported by the
+			libjwt (e.g., RS256, HS256, ES256, ...)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			claims - the list of claims to be checked they are in the JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format,
+			see also the description of claims parameter for jwt3_generate()).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			jwtval - the value of the JWT to verify
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>jwt3_verify_key</function> usage</title>
+		<programlisting format="linespecific">
+...
+  if(!jwt3_verify_key("...", "RS256",
+         "caller='$fU';callee='$tU';callid='$ci';index=100",
+        "$var(jwt)") {
+    xwarn("failed to verify jwt\n");
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+	<section>
+	<title>Variables</title>
+	<section id="jwt.v.jwt3">
+	    <title>
+		<function moreinfo="none">$jwt3(key)</function>
+	    </title>
+	    <para>
+	    Get the values and attributes after using JWT functions.
+		</para>
+		<para>
+		The key can be:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			val - the value of JWT after a successful jwt3_generate().
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			status - the status of verification after a failed jwt3_verify().
+			</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>$jwt3(name)</function> usage</title>
+		<programlisting format="linespecific">
+...
+  jwt3_generate("/path/to/prvkey.pem", "RS256",
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
+  xinfo("jwt is: $jwt3(val)");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+</chapter>
