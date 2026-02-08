@@ -871,9 +871,10 @@ static inline str *shm_str_dup_block(const str *src)
  *        The copy will be zero-terminated
  * \param dst destination
  * \param src source
+ * \param mode if 1, free destination buffer if set
  * \return 0 on success, -1 on failure
  */
-static inline int shm_str_dup(str *dst, const str *src)
+static inline int shm_str_dup_mode(str *dst, const str *src, int mode)
 {
 	/* NULL checks */
 	if(dst == NULL || src == NULL) {
@@ -897,6 +898,9 @@ static inline int shm_str_dup(str *dst, const str *src)
 		dst->len = src->len;
 	}
 
+	if(mode == 1 && dst->s != NULL) {
+		shm_free(dst->s);
+	}
 	dst->s = (char *)shm_malloc(dst->len + 1);
 	if(dst->s == NULL) {
 		SHM_MEM_ERROR;
@@ -914,6 +918,9 @@ static inline int shm_str_dup(str *dst, const str *src)
 
 	return 0;
 }
+
+#define shm_str_dup(dst, src) shm_str_dup_mode(dst, src, 0)
+#define shm_str_update(dst, src) shm_str_dup_mode(dst, src, 1)
 
 /**
  * \brief Make a copy of a char pointer to a char pointer using shm_malloc
