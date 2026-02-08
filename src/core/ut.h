@@ -882,6 +882,10 @@ static inline int shm_str_dup_mode(str *dst, const str *src, int mode)
 		return -1;
 	}
 
+	if(mode == 1 && dst->s != NULL) {
+		shm_free(dst->s);
+	}
+
 	/**
 	 * fallback actions:
 	 * 	- dst->len=0
@@ -898,9 +902,6 @@ static inline int shm_str_dup_mode(str *dst, const str *src, int mode)
 		dst->len = src->len;
 	}
 
-	if(mode == 1 && dst->s != NULL) {
-		shm_free(dst->s);
-	}
 	dst->s = (char *)shm_malloc(dst->len + 1);
 	if(dst->s == NULL) {
 		SHM_MEM_ERROR;
@@ -910,6 +911,7 @@ static inline int shm_str_dup_mode(str *dst, const str *src, int mode)
 	/* avoid memcpy from NULL source - undefined behaviour */
 	if(src->s == NULL) {
 		LM_WARN("shm_str_dup fallback; skip memcpy for src->s == NULL\n");
+		dst->s[0] = 0;
 		return 0;
 	}
 
