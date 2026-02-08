@@ -29,6 +29,7 @@
 #include "tcp_init.h"
 #include "tcp_options.h"
 
+#include "str.h"
 #include "ip_addr.h"
 #include "locking.h"
 #include "atomic_ops.h"
@@ -271,6 +272,8 @@ typedef struct ksr_coninfo
 	unsigned short dst_port; /* host byte order */
 	int proto;
 	socket_info_t *csocket;
+	str server_name; /* outbound tls server name (sni) */
+	str server_id;	 /* outbound tls server id */
 } ksr_coninfo_t;
 
 
@@ -284,7 +287,7 @@ typedef struct tcp_connection
 	enum tcp_closed_reason event; /* connection close reason */
 	int reader_pid;				  /* pid of the active reader process */
 	struct receive_info rcv;	  /* src & dst ip, ports, proto a.s.o*/
-	ksr_coninfo_t cinfo;		  /* connection info (e.g., for haproxy ) */
+	ksr_coninfo_t cinfo;		  /* additional info (for haproxy, tls, ...) */
 	struct tcp_req req;			  /* request data */
 	atomic_t refcnt;
 	enum sip_protos type;		/* PROTO_TCP or a protocol over it, e.g. TLS */
