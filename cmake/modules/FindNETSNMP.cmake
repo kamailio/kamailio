@@ -39,7 +39,7 @@ find_program(NETSNMP_CONFIG_BIN net-snmp-config)
 
 if(NETSNMP_CONFIG_BIN)
   # Find libs required
-  execute_process(COMMAND ${NETSNMP_CONFIG_BIN} --libs OUTPUT_VARIABLE _NETSNMP_LIBS)
+  execute_process(COMMAND ${NETSNMP_CONFIG_BIN} --netsnmp-agent-libs OUTPUT_VARIABLE _NETSNMP_LIBS)
   # Strip trailing and leading whitespaces
   string(STRIP "${_NETSNMP_LIBS}" _NETSNMP_LIBS)
   # Create a list from the flags to be used in target_link_libraries and
