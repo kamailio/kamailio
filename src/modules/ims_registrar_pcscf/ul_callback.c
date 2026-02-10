@@ -282,7 +282,7 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param)
 	ppublic_t *ptr;
 
 	LM_DBG("----------------------!\n");
-	LM_DBG("PCSCF Contact Callback in regsitrar!\n");
+	LM_DBG("PCSCF Contact Callback in registrar!\n");
 	LM_DBG("Contact AOR: [%.*s]\n", c->aor.len, c->aor.s);
 	LM_DBG("Callback type [%d]\n", type);
 	LM_DBG("Reg state [%s]\n", reg_state_to_string(c->reg_state));
