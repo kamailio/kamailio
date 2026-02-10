@@ -905,9 +905,10 @@ int unreg_pending_contacts_cb(udomain_t *_d, pcontact_t *_c, int type)
 					continue;
 				}
 
-				LM_DBG("=========== c->reg_state 0x%02X, %u-%u | %u-%u | %u-%u "
+				LM_DBG("=========== c->reg_state %s, %u-%u | %u-%u | %u-%u "
 					   "| %u-%u | %u-%u | %u-%u | %u-%u | %u-%u |",
-						c->reg_state, c->security_temp->data.ipsec->port_pc,
+						reg_state_to_string(c->reg_state),
+						c->security_temp->data.ipsec->port_pc,
 						_c->security_temp->data.ipsec->port_pc,
 						c->security_temp->data.ipsec->port_ps,
 						_c->security_temp->data.ipsec->port_ps,
