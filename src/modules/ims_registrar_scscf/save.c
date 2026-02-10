@@ -590,8 +590,9 @@ static inline int update_contacts_helper(struct sip_msg *msg,
 							}
 						} else {
 							LM_DBG("Contact already exists - updating - it's "
-								   "currently in state [%d]\n",
-									ucontact->state);
+								   "currently in state [%s]\n",
+									get_contact_state_as_string(
+											ucontact->state));
 							sl = ucontact->sl;
 							ul.lock_contact_slot_i(sl);
 							if(ucontact->state != CONTACT_VALID) {
