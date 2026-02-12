@@ -442,17 +442,19 @@ static inline void process_impurecord(impurecord_t *_r)
 				mustdeleteimpu = 0;
 				hascontacts = 1;
 			} else {
-				LM_WARN("Bogus state for contact [%.*s] - state: %d... "
+				LM_WARN("Bogus state for contact [%.*s] - state: %s... "
 						"ignoring\n",
-						ptr->c.len, ptr->c.s, ptr->state);
+						ptr->c.len, ptr->c.s,
+						get_contact_state_as_string(ptr->state));
 				mustdeleteimpu = 0;
 				hascontacts = 1;
 			}
 		} else {
 			LM_DBG("\t\tContact #%i - %.*s, Ref [%d] (expires in %" TIME_T_FMT
-				   " seconds) (State: %d)\n",
+				   " seconds) (State: %s)\n",
 					k, ptr->c.len, ptr->c.s, ptr->ref_count,
-					TIME_T_CAST(ptr->expires - act_time), ptr->state);
+					TIME_T_CAST(ptr->expires - act_time),
+					get_contact_state_as_string(ptr->state));
 			mustdeleteimpu = 0;
 			hascontacts = 1;
 		}
@@ -880,9 +882,9 @@ int get_scontact(
 			}
 		}
 		LM_DBG("contact found p=[%p], aor:[%.*s] and contact:[%.*s], state "
-			   "[%d]\n",
+			   "[%s]\n",
 				ptr, ptr->aor.len, ptr->aor.s, ptr->c.len, ptr->c.s,
-				ptr->state);
+				get_contact_state_as_string(ptr->state));
 		ref_contact_unsafe(ptr);
 		*_co = ptr;
 		unlock_contact_slot_i(
