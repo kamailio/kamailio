@@ -44,7 +44,7 @@
 #include "dlgs_records.h"
 
 #define dlgs_compute_hash(_s) core_case_hash(_s, 0, 0)
-#define dlgs_get_index(_h, _size) (_h) & ((_size)-1)
+#define dlgs_get_index(_h, _size) (_h) & ((_size) - 1)
 
 extern int _dlgs_active_lifetime;
 extern int _dlgs_init_lifetime;
@@ -1255,12 +1255,45 @@ static void dlgs_rpc_get(rpc_t *rpc, void *ctx)
 static const char *dlgs_rpc_getall_doc[2] = {
 		"Get all the dlgs records by filter", 0};
 
+static const char *dlgs_rpc_count_doc[2] = {
+		"Count the dlgs records by filter", 0};
+
 /*
  * RPC command to get all dlgs records by filter
  */
 static void dlgs_rpc_getall(rpc_t *rpc, void *ctx)
 {
 	dlgs_rpc_get_limit(rpc, ctx, 0);
+}
+
+/*
+ * RPC command to count dlgs records by filter
+ */
+static void dlgs_rpc_count(rpc_t *rpc, void *ctx)
+{
+	str vfield = STR_NULL;
+	str vop = STR_NULL;
+	str vdata = STR_NULL;
+	int n;
+
+	if(_dlgs_htb == NULL) {
+		rpc->fault(ctx, 500, "DLGS not initialized");
+		return;
+	}
+
+	n = rpc->scan(ctx, "SSS", &vfield, &vop, &vdata);
+	if(n < 3) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	n = dlgs_count(NULL, &vfield, &vop, &vdata);
+	if(n < 0) {
+		rpc->fault(ctx, 500, "Error counting dialogs");
+		return;
+	}
+
+	rpc->add(ctx, "d", n);
 }
 
 /* clang-format off */
@@ -1275,6 +1308,8 @@ rpc_export_t dlgs_rpc_cmds[] = {
 		dlgs_rpc_get_doc, RET_ARRAY},
 	{"dlgs.getall",  dlgs_rpc_getall,
 		dlgs_rpc_getall_doc, RET_ARRAY},
+	{"dlgs.count", dlgs_rpc_count,
+		dlgs_rpc_count_doc, 0},
 
 	{0, 0, 0, 0}
 };
