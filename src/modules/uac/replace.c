@@ -246,6 +246,7 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 	struct cell *Trans;
 	str replace;
 	char *p;
+	str luri;
 	str param;
 	str buf;
 	msg_flags_t uac_flag;
@@ -372,13 +373,29 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 		LM_ERR("del lump failed\n");
 		goto error;
 	}
-	p = pkg_malloc(uri->len);
-	if(p == 0) {
+	luri.len = uri->len;
+	if(!(body->style & TBS_URI_ENCLOSED)) {
+		/* existing uri not enclosed - check if new one has parameters */
+		for(p = uri->s + uri->len - 1; p > uri->s; p--) {
+			if(*p == ';') {
+				luri.len += 2;
+				break;
+			}
+		}
+	}
+	luri.s = pkg_malloc(luri.len);
+	if(luri.s == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	memcpy(p, uri->s, uri->len);
-	if(insert_new_lump_after(l, p, uri->len, 0) == 0) {
+	if(luri.len == uri->len + 2) {
+		luri.s[0] = '<';
+		memcpy(luri.s + 1, uri->s, uri->len);
+		luri.s[luri.len - 1] = '>';
+	} else {
+		memcpy(luri.s, uri->s, uri->len);
+	}
+	if(insert_new_lump_after(l, luri.s, luri.len, 0) == 0) {
 		LM_ERR("insert new lump failed\n");
 		pkg_free(p);
 		goto error;
