@@ -249,7 +249,7 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 	str param;
 	str buf;
 	msg_flags_t uac_flag;
-	int i;
+	int i, del_offset, del_len;
 	int_str avp_value;
 	struct dlg_cell *dlg = 0;
 	str *dlgvar_names;
@@ -313,10 +313,23 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 		l = 0;
 		/* first remove the existing display */
 		if(body->display.len) {
+			del_offset = body->display.s - msg->buf;
+			del_len = body->display.len;
+
 			LM_DBG("removing display [%.*s]\n", body->display.len,
 					body->display.s);
+
+			/* if removing display, also remove trailing spaces after it */
+			if(!display->len) {
+				p = body->display.s + body->display.len;
+				while(p < msg->buf + msg->len && *p == ' ') {
+					del_len++;
+					p++;
+				}
+			}
+
 			/* build del lump */
-			l = del_lump(msg, body->display.s - msg->buf, body->display.len, 0);
+			l = del_lump(msg, del_offset, del_len, 0);
 			if(l == 0) {
 				LM_ERR("display del lump failed\n");
 				goto error;
