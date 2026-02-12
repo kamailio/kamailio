@@ -438,5 +438,26 @@ request_route {
 </programlisting>
 		</example>
 	</section>
+			<section id="dlgs.rpc.count">
+			<title>
+				<function moreinfo="none">dlgs.count</function>
+			</title>
+			<para>
+		Prototype: dlgs.count field op data
+			</para>
+			<para>
+			Return the number of ongoing dialogs. The parameters have
+			the same meaning like those for <xref linkend="dlgs.f.dlgs_count"/> function.
+			</para>
+			<example>
+				<title>
+					<function>dlgs.count</function> usage</title>
+				<programlisting format="linespecific">
+...
+&kamctl; rpc dlgs.count src sw "sip:alice"
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 </chapter>
