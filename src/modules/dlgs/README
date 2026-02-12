@@ -47,6 +47,7 @@ Daniel-Constantin Mierla
               5.3. dlgs.get
               5.4. dlgs.getall
               5.5. dlgs.stats
+              5.6. dlgs.count
 
    List of Examples
 
@@ -66,6 +67,7 @@ Daniel-Constantin Mierla
    1.14. dlgs.get usage
    1.15. dlgs.getall usage
    1.16. dlgs.stats usage
+   1.17. dlgs.count usage
 
 Chapter 1. Admin Guide
 
@@ -101,6 +103,7 @@ Chapter 1. Admin Guide
         5.3. dlgs.get
         5.4. dlgs.getall
         5.5. dlgs.stats
+        5.6. dlgs.count
 
 1. Overview
 
@@ -343,6 +346,7 @@ request_route {
    5.3. dlgs.get
    5.4. dlgs.getall
    5.5. dlgs.stats
+   5.6. dlgs.count
 
 5.1.  dlgs.list
 
@@ -393,4 +397,17 @@ kamctl rpc dlgs.getall src eq sip:alice@sipserver.com
    Example 1.16. dlgs.stats usage
 ...
 kamctl rpc dlgs.stats
+...
+
+5.6.  dlgs.count
+
+   Prototype: dlgs.count field op data
+
+   Return the number of ongoing dialogs. The parameters have the same
+   meaning like those for Section 4.3, “ dlgs_count(field, op, data) ”
+   function.
+
+   Example 1.17.  dlgs.count usage
+...
+kamctl rpc dlgs.count src sw "sip:alice"
 ...
