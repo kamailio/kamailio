@@ -687,8 +687,12 @@ void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 					break;
 				nr += npos;
 			}
-			assert(nr == wr_used);
-			_tcpconn_write_nb(fd, c, (char *)wr_buf, wr_used);
+			if(nr == wr_used) {
+				_tcpconn_write_nb(fd, c, (char *)wr_buf, wr_used);
+			} else {
+				LM_ERR("skip tcp con write - nr(%lu) != wr_used(%lu)\n",
+						(unsigned long)nr, (unsigned long)wr_used);
+			}
 		}
 		/* we don't bother reading anything (we don't want to wait
            on close) */
@@ -1017,7 +1021,11 @@ end:
 			break;
 		nr += npos;
 	}
-	assert(nr == wr_used);
+	if(unlikely(nr != wr_used)) {
+		LM_ERR("failure - nr(%lu) != wr_used(%lu)\n", (unsigned long)nr,
+				(unsigned long)wr_used);
+		goto error;
+	}
 	*plen = wr_used;
 	*pbuf = (const char *)wr_buf;
 	TLS_WR_TRACE("(%p) end (offs %d, rest_buf=%p rest_len=%d 0x%0x) => %d \n",
@@ -1041,7 +1049,11 @@ ssl_eof:
 			break;
 		nr += npos;
 	}
-	assert(nr == wr_used);
+	if(unlikely(nr != wr_used)) {
+		LM_ERR("failure - nr(%lu) != wr_used(%lu)\n", (unsigned long)nr,
+				(unsigned long)wr_used);
+		return -1;
+	}
 	*plen = wr_used;
 	*pbuf = (const char *)wr_buf;
 	DBG("TLS connection has been closed\n");
@@ -1145,7 +1157,11 @@ redo_read:
 				break;
 			nw += npos;
 		}
-		assert(nw == bytes_read);
+		if(unlikely(nw != bytes_read)) {
+			LM_ERR("failure - nw(%lu) != bytes_read(%lu)\n", (unsigned long)nw,
+					(unsigned long)bytes_read);
+			goto error;
+		}
 	}
 continue_ssl_read:
 	ssl_error = WOLFSSL_ERROR_NONE;
@@ -1296,7 +1312,13 @@ continue_ssl_read:
 				break;
 			nr += npos;
 		}
-		assert(nr == wr_used);
+		if(unlikely(nr != wr_used)) {
+			LM_ERR("failure - nr(%lu) != wr_used(%lu)\n", (unsigned long)nr,
+					(unsigned long)wr_used);
+			lock_release(&c->write_lock);
+			TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe failure\n", c, flags);
+			goto error_send;
+		}
 		if(unlikely(tcpconn_send_unsafe(
 							c->fd, c, (char *)wr_buf, wr_used, c->send_flags)
 					< 0)) {
