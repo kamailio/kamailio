@@ -518,15 +518,16 @@ static void link_dlg_profile(
 		linker->next = dlg->profile_links;
 		dlg->profile_links = linker;
 		linker->hash_linker.dlg = dlg;
+		link_profile(linker, &dlg->callid);
 		dlg_unlock(d_table, d_entry);
 	} else {
 		linker->next = dlg->profile_links;
 		dlg->profile_links = linker;
 		linker->hash_linker.dlg = dlg;
+		link_profile(linker, &dlg->callid);
 	}
 
 	atomic_or_int((volatile int *)&dlg->dflags, DLG_FLAG_CHANGED_PROF);
-	link_profile(linker, &dlg->callid);
 }
 
 
