@@ -92,7 +92,7 @@ int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark)
 	struct hdr_field *hdr;
 	rr_t *rr;
 	str x;
-	LM_DBG("isc_mark_get_from_msg: Trying to get the mark from the message \n");
+	LM_DBG("Trying to get the mark from the message\n");
 
 	memset(mark, 0, sizeof(isc_mark));
 
@@ -102,8 +102,7 @@ int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark)
 		if(hdr->type == HDR_ROUTE_T) {
 			if(!hdr->parsed) {
 				if(parse_rr(hdr) < 0) {
-					LM_ERR("isc_mark_get_from_msg: Error while parsing Route "
-						   "HF\n");
+					LM_ERR("Error while parsing Route HF\n");
 					hdr = hdr->next;
 					continue;
 				}
@@ -118,7 +117,7 @@ int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark)
 						&& strncasecmp(x.s + ISC_MARK_USERNAME_LEN + 1,
 								   isc_my_uri.s, isc_my_uri.len)
 								   == 0) {
-					LM_DBG("isc_mark_get_from_msg: Found <%.*s>\n", x.len, x.s);
+					LM_DBG("Found <%.*s>\n", x.len, x.s);
 					isc_mark_get(x, mark);
 					return 1;
 				}
@@ -142,8 +141,7 @@ int isc_mark_get_from_lumps(struct sip_msg *msg, isc_mark *mark)
 	struct lump *lmp, *tmp;
 	str found = {0, 0};
 
-	LM_DBG("isc_mark_get_from_lumps: Trying to get the mark from the add_rm "
-		   "lumps \n");
+	LM_DBG("Trying to get the mark from the add_rm lumps\n");
 
 	memset(mark, 0, sizeof(isc_mark));
 
@@ -162,10 +160,9 @@ int isc_mark_get_from_lumps(struct sip_msg *msg, isc_mark *mark)
 		tmp = lmp->before;
 		if(tmp && tmp->op == LUMP_ADD && tmp->u.value
 				&& (found.s = strstr(tmp->u.value, ISC_MARK_USERNAME))) {
-			LM_DBG("ifc_get_from_lumps: Found lump %s\n", tmp->u.value);
+			LM_DBG("Found lump %s\n", tmp->u.value);
 			found.len = tmp->len - (found.s - tmp->u.value);
-			LM_DBG("ifc_get_from_lumps: take fraction of lump ...%.*s\n",
-					found.len, found.s);
+			LM_DBG("take fraction of lump ...%.*s\n", found.len, found.s);
 			isc_mark_get(found, mark);
 			return 1;
 		}
@@ -213,8 +210,7 @@ void isc_mark_get(str x, isc_mark *mark)
 					mark->aor.len = aor_hex.len / 2;
 					mark->aor.s = pkg_malloc(mark->aor.len);
 					if(!mark->aor.s) {
-						LM_ERR("isc_mark_get: Error allocating %d bytes\n",
-								mark->aor.len);
+						LM_ERR("Error allocating %d bytes\n", mark->aor.len);
 						mark->aor.len = 0;
 					} else {
 						mark->aor.len = base16_to_bin(
@@ -222,8 +218,7 @@ void isc_mark_get(str x, isc_mark *mark)
 					}
 					break;
 				default:
-					LM_ERR("isc_mark_get: unknown parameter found: %c !\n",
-							x.s[i]);
+					LM_ERR("unknown parameter found: %c !\n", x.s[i]);
 			}
 
 			if(x.s[j] == '>')
@@ -234,14 +229,11 @@ void isc_mark_get(str x, isc_mark *mark)
 	}
 }
 
+/* clang-format off */
 /** from base16 char to int */
-#define HEX_DIGIT(x)                                                         \
-	((x >= '0' && x <= '9')                                                  \
-					? x - '0'                                                \
-					: ((x >= 'a' && x <= 'f')                                \
-									? x - 'a' + 10                           \
-									: ((x >= 'A' && x <= 'F') ? x - 'A' + 10 \
-															  : 0)))
+#define HEX_DIGIT(x) \
+       ((x>='0'&&x<='9')?x-'0':((x>='a'&&x<='f')?x-'a'+10:((x>='A'&&x<='F')?x-'A'+10:0)))
+/* clang-format on */
 /**
  * Converts a hex encoded value to its binary value
  * @param from - buffer containing the input data
@@ -273,14 +265,13 @@ int isc_mark_drop_route(struct sip_msg *msg)
 
 	anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
 
-	LM_DBG("ifc_mark_drop_route: Start --------- \n");
+	LM_DBG("Start --------- \n");
 	lmp = msg->add_rm;
 	while(lmp) {
 		tmp = lmp->before;
 		if(tmp && tmp->op == LUMP_ADD && tmp->u.value
 				&& strstr(tmp->u.value, ISC_MARK_USERNAME)) {
-			LM_DBG("ifc_mark_drop_route: Found lump %s ... dropping\n",
-					tmp->u.value);
+			LM_DBG("Found lump %s ... dropping\n", tmp->u.value);
 			//tmp->op=LUMP_NOP;
 			tmp->len = 0;
 			/*lmp->before = tmp->before;
@@ -288,7 +279,7 @@ int isc_mark_drop_route(struct sip_msg *msg)
 		}
 		lmp = lmp->next;
 	}
-	LM_DBG("ifc_mark_drop_route: ---------- End \n");
+	LM_DBG("---------- End \n");
 
 	return 1;
 }
@@ -327,7 +318,7 @@ int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark)
 	if(add_p_served_user) {
 		isc_mark_write_psu(msg, mark);
 	}
-	LM_DBG("isc_mark_set: NEW mark <%s>\n", chr_mark);
+	LM_DBG("NEW mark <%s>\n", chr_mark);
 
 	return 1;
 }
@@ -362,17 +353,17 @@ int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark)
 	}
 
 	route.len = strlen(route.s);
-	LM_DBG("isc_mark_write_route: <%.*s>\n", route.len, route.s);
+	LM_DBG("<%.*s>\n", route.len, route.s);
 
 	anchor = anchor_lump(msg, first->name.s - msg->buf, 0, HDR_ROUTE_T);
 	if(anchor == NULL) {
-		LM_ERR("isc_mark_write_route: anchor_lump failed\n");
+		LM_ERR("anchor_lump failed\n");
 		pkg_free(route.s);
 		return 0;
 	}
 
 	if(!insert_new_lump_before(anchor, route.s, route.len, HDR_ROUTE_T)) {
-		LM_ERR("isc_mark_write_route: error creating lump for header_mark\n");
+		LM_ERR("error creating lump for header_mark\n");
 	}
 	return 1;
 }
@@ -405,8 +396,7 @@ int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark)
 			sescase = &sescase_term;
 			break;
 		default:
-			LM_ERR("isc_mark_write_psu: unknown direction: %d\n",
-					mark->direction);
+			LM_ERR("unknown direction: %d\n", mark->direction);
 			return 0;
 	}
 
@@ -414,24 +404,21 @@ int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark)
 		   + sescase->len + 1;
 	hstr = pkg_malloc(hlen);
 	if(hstr == NULL) {
-		LM_ERR("isc_mark_write_psu: could not allocate %zu bytes\n", hlen);
+		LM_ERR("could not allocate %zu bytes\n", hlen);
 		return 0;
 	}
 
 	int ret = snprintf(hstr, hlen, psu_hdr_s.s, mark->aor.len, mark->aor.s,
 			sescase->len, sescase->s, regstate->len, regstate->s);
 	if(ret >= hlen) {
-		LM_ERR("isc_mark_write_psu: invalid string buffer size: %zu, required: "
-			   "%d\n",
-				hlen, ret);
+		LM_ERR("invalid string buffer size: %zu, required: %d\n", hlen, ret);
 		pkg_free(hstr);
 		return 0;
 	}
 
-	LM_DBG("isc_mark_write_psu: %.*s\n", (int)hlen - 3 /* don't print \r\n\0 */,
-			hstr);
+	LM_DBG("%.*s\n", (int)hlen - 3 /* don't print \r\n\0 */, hstr);
 	if(append_new_lump(&l, hstr, hlen - 1, HDR_OTHER_T) == 0) {
-		LM_ERR("isc_mark_write_psu: append_new_lump(%p, \"%.*s\\\r\\n\", %zu, "
+		LM_ERR("append_new_lump(%p, \"%.*s\\\r\\n\", %zu, "
 			   "0) failed\n",
 				&l, (int)hlen - 3 /* don't print \r\n\0 */, hstr, hlen - 1);
 		pkg_free(hstr);

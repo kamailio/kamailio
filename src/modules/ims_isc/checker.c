@@ -96,10 +96,9 @@ static int isc_check_headers(ims_spt *spt, struct hdr_field *headers)
 		return FALSE;
 	}
 
-	LM_DBG("isc_check_headers: Looking for Header[%.*s(%d)] %.*s \n",
-			spt->sip_header.header.len, spt->sip_header.header.s,
-			spt->sip_header.type, spt->sip_header.content.len,
-			spt->sip_header.content.s);
+	LM_DBG("Looking for Header[%.*s(%d)] %.*s \n", spt->sip_header.header.len,
+			spt->sip_header.header.s, spt->sip_header.type,
+			spt->sip_header.content.len, spt->sip_header.content.s);
 	while(i != NULL) {
 		ch = i->name.s[i->name.len];
 		i->name.s[i->name.len] = 0;
@@ -111,8 +110,8 @@ static int isc_check_headers(ims_spt *spt, struct hdr_field *headers)
 		) {
 
 			i->name.s[i->name.len] = ch;
-			LM_DBG("isc_check_headers: Found Header[%.*s(%d)] %.*s \n",
-					i->name.len, i->name.s, i->type, i->body.len, i->body.s);
+			LM_DBG("Found Header[%.*s(%d)] %.*s \n", i->name.len, i->name.s,
+					i->type, i->body.len, i->body.s);
 			//if the header should be absent but found it
 
 			if(spt->sip_header.content.s == NULL)
@@ -167,7 +166,7 @@ static int isc_check_session_desc(ims_spt *spt, struct sip_msg *msg)
 			   msg->content_type->body.s, sdp.s, msg->content_type->body.len)
 			!= 0)
 		return FALSE;
-	LM_DBG("ifc_check_session_desc:      Found Content-Type == "
+	LM_DBG("     Found Content-Type == "
 		   "appliction/sdp\n");
 	//check for sdp line
 	body = get_body(msg);
@@ -193,7 +192,7 @@ static int isc_check_session_desc(ims_spt *spt, struct sip_msg *msg)
 	if(regexec(&(comp), body, 0, NULL, 0) == 0) //regex match
 	{
 		body[len] = c;
-		LM_DBG("ifc_check_session_desc:      Found Session Desc. > %s\n", body);
+		LM_DBG("     Found Session Desc. > %s\n", body);
 		pkg_free(x);
 		return TRUE;
 	}
@@ -265,19 +264,19 @@ static int isc_check_spt(ims_spt *spt, struct sip_msg *msg, char direction,
 	int r = FALSE;
 	switch(spt->type) {
 		case IFC_REQUEST_URI:
-			LM_DBG("ifc_check_spt:             SPT type %d -> RequestURI == "
+			LM_DBG("            SPT type %d -> RequestURI == "
 				   "%.*s ?\n",
 					spt->type, spt->request_uri.len, spt->request_uri.s);
-			LM_DBG("ifc_check_spt:               Found Request URI %.*s \n",
+			LM_DBG("              Found Request URI %.*s \n",
 					msg->first_line.u.request.uri.len,
 					msg->first_line.u.request.uri.s);
 			r = isc_check_ruri(spt, msg);
 			break;
 		case IFC_METHOD:
-			LM_DBG("ifc_check_spt:             SPT type %d -> Method == %.*s "
+			LM_DBG("            SPT type %d -> Method == %.*s "
 				   "?\n",
 					spt->type, spt->method.len, spt->method.s);
-			LM_DBG("ifc_check_spt:               Found method %.*s \n",
+			LM_DBG("              Found method %.*s \n",
 					msg->first_line.u.request.method.len,
 					msg->first_line.u.request.method.s);
 			r = (strncasecmp(spt->method.s, msg->first_line.u.request.method.s,
@@ -290,27 +289,26 @@ static int isc_check_spt(ims_spt *spt, struct sip_msg *msg, char direction,
 				r = 0;
 			break;
 		case IFC_SIP_HEADER:
-			LM_DBG("ifc_check_spt:             SPT type %d -> Header[%.*s]  "
+			LM_DBG("            SPT type %d -> Header[%.*s]  "
 				   "%%= %.*s ?\n",
 					spt->type, spt->sip_header.header.len,
 					spt->sip_header.header.s, spt->sip_header.content.len,
 					spt->sip_header.content.s);
 			if(parse_headers(msg, HDR_EOH_F, 0) != 0) {
-				LM_ERR("ifc_checker: can't parse all headers\n");
+				LM_ERR("can't parse all headers\n");
 				r = FALSE;
 			} else
 				r = isc_check_headers(spt, msg->headers);
 			break;
 		case IFC_SESSION_CASE:
-			LM_DBG("ifc_check_spt:             SPT type %d -> Session Case  == "
+			LM_DBG("            SPT type %d -> Session Case  == "
 				   "%d ?\n",
 					spt->type, spt->session_case);
-			LM_DBG("ifc_check_spt:               Found session_case %d \n",
-					direction);
+			LM_DBG("              Found session_case %d \n", direction);
 			r = (direction == spt->session_case);
 			break;
 		case IFC_SESSION_DESC:
-			LM_DBG("ifc_check_spt:             SPT type %d -> Session "
+			LM_DBG("            SPT type %d -> Session "
 				   "Desc.[%.*s]  %%= %.*s ?\n",
 					spt->type, spt->session_desc.line.len,
 					spt->session_desc.line.s, spt->session_desc.content.len,
@@ -318,13 +316,13 @@ static int isc_check_spt(ims_spt *spt, struct sip_msg *msg, char direction,
 
 			if(parse_headers(msg, HDR_CONTENTTYPE_F | HDR_CONTENTLENGTH_F, 0)
 					!= 0) {
-				LM_ERR("ifc_checker: can't parse all headers \n");
+				LM_ERR("can't parse all headers \n");
 				r = FALSE;
 			}
 			r = isc_check_session_desc(spt, msg);
 			break;
 		default:
-			LM_ERR("ifc_checker: unknown spt type %d \n", spt->type);
+			LM_ERR("unknown spt type %d \n", spt->type);
 			return FALSE;
 	}
 	if(spt->condition_negated)
@@ -367,22 +365,21 @@ static int isc_check_filter_criteria(ims_filter_criteria *fc,
 		partial = TRUE;
 		total = FALSE;
 	}
-	LM_DBG("ifc_checker_trigger: Starting expression check: \n");
+	LM_DBG("Starting expression check:\n");
 	group = t->spt[0].group;
 	for(i = 0; i < t->spt_cnt; i++) {
 		if(group != t->spt[i].group) { //jump to other group
 			total = t->condition_type_cnf == IFC_CNF ? total && partial
 													 : total || partial;
 			if(total == outside) {
-				LM_DBG("ifc_checker_trigger: Total compromised, aborting...\n");
+				LM_DBG("Total compromised, aborting...\n");
 				return outside; // will never match from now on, so get out
 			}
 
 			group = t->spt[i].group;
 			partial = isc_check_spt(
 					t->spt + i, msg, direction, registration_type);
-			LM_DBG("ifc_checker_trigger:  - group %d => %d. \n", group,
-					partial);
+			LM_DBG(" - group %d => %d. \n", group, partial);
 		} else { //in same group
 			partial = t->condition_type_cnf == IFC_CNF
 							  ? partial
@@ -394,7 +391,7 @@ static int isc_check_filter_criteria(ims_filter_criteria *fc,
 		}
 
 		if(partial == inside) { // can't change partial from now, so next group
-			LM_DBG("ifc_checker_trigger:       - group compromised, skipping "
+			LM_DBG("      - group compromised, skipping "
 				   "to next group\n");
 			while(i + 1 < t->spt_cnt && t->spt[i + 1].group == group)
 				i++;
@@ -403,7 +400,7 @@ static int isc_check_filter_criteria(ims_filter_criteria *fc,
 	}
 	total = t->condition_type_cnf == IFC_CNF ? total && partial
 											 : total || partial;
-	LM_DBG("ifc_checker_trigger: Check finished => %d\n", total);
+	LM_DBG("Check finished => %d\n", total);
 	return total;
 }
 
@@ -419,15 +416,14 @@ static inline isc_match *isc_new_match(ims_filter_criteria *fc, int index)
 
 	r = pkg_malloc(sizeof(isc_match));
 	if(!r) {
-		LM_ERR("isc_new_match(): error allocating %lx bytes\n",
-				sizeof(isc_match));
+		LM_ERR("error allocating %lx bytes\n", sizeof(isc_match));
 		return 0;
 	}
 	memset(r, 0, sizeof(isc_match));
 	if(fc->application_server.server_name.len) {
 		r->server_name.s = pkg_malloc(fc->application_server.server_name.len);
 		if(!r->server_name.s) {
-			LM_ERR("isc_new_match(): error allocating %d bytes\n",
+			LM_ERR("error allocating %d bytes\n",
 					fc->application_server.server_name.len);
 			pkg_free(r);
 			return 0;
@@ -440,7 +436,7 @@ static inline isc_match *isc_new_match(ims_filter_criteria *fc, int index)
 	if(fc->application_server.service_info.len) {
 		r->service_info.s = pkg_malloc(fc->application_server.service_info.len);
 		if(!r->service_info.s) {
-			LM_ERR("isc_new_match(): error allocating %d bytes\n",
+			LM_ERR("error allocating %d bytes\n",
 					fc->application_server.service_info.len);
 			if(r->server_name.s) {
 				pkg_free(r->server_name.s);
@@ -483,9 +479,9 @@ isc_match *isc_checker_find(str uri, char direction, int skip,
 	isc_match *r;
 
 	if(skip == 0)
-		LM_DBG("isc_checker_find: starting search\n");
+		LM_DBG("starting search\n");
 	else
-		LM_DBG("isc_checker_find: resuming search from %d\n", skip);
+		LM_DBG("resuming search from %d\n", skip);
 
 	expires = cscf_get_expires(msg);
 	if(!registered)
@@ -537,18 +533,18 @@ isc_match *isc_checker_find(str uri, char direction, int skip,
 		si++;
 	}
 
-	LM_DBG("DEBUG ISC: SECOND TIME About to try "
+	LM_DBG("SECOND TIME About to try "
 		   "p->s->service_profiles_cnt!!\n");
 	/* iterate through the rest and check for matches */
 	i = si;
 	while(i < p->s->service_profiles_cnt) {
-		LM_DBG("DEBUG ISC : About to try p->s->service_profiles\n");
+		LM_DBG("About to try p->s->service_profiles\n");
 		sp = p->s->service_profiles + i;
 		k = 0;
-		LM_DBG("DEBUG ISC : About to try public identities\n");
+		LM_DBG("About to try public identities\n");
 		for(j = 0; j < sp->public_identities_cnt; j++) {
 
-			LM_DBG("DEBUG ISC : About to try WPSI\n");
+			LM_DBG("About to try WPSI\n");
 			if(p->s->wpsi) {
 				// here i should regexec again!
 				// to check this , but anyway if i already got p
@@ -582,7 +578,7 @@ isc_match *isc_checker_find(str uri, char direction, int skip,
 							   && (*fc->profile_part_indicator))
 							|| ((registered == IMS_USER_UNREGISTERED)
 									&& !(*fc->profile_part_indicator))) {
-						LM_DBG("isc_checker_find: this one is not good... "
+						LM_DBG("this one is not good... "
 							   "ppindicator wrong \n");
 						cnt++;
 						continue;
@@ -591,8 +587,7 @@ isc_match *isc_checker_find(str uri, char direction, int skip,
 
 				if(isc_check_filter_criteria(
 						   fc, msg, direction, registration_type)) {
-					LM_DBG("isc_checker_find: MATCH -> %.*s (%.*s) handling %d "
-						   "\n",
+					LM_DBG("MATCH -> %.*s (%.*s) handling %d \n",
 							fc->application_server.server_name.len,
 							fc->application_server.server_name.s,
 							fc->application_server.service_info.len,
@@ -636,7 +631,7 @@ void isc_free_match(isc_match *m)
 			pkg_free(m->service_info.s);
 		pkg_free(m);
 	}
-	LM_DBG("isc_match_free: match position freed\n");
+	LM_DBG("match position freed\n");
 }
 /**
  *	Find if user is registered or not => TRUE/FALSE.
