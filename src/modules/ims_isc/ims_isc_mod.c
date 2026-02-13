@@ -238,7 +238,7 @@ static inline enum dialog_direction get_dialog_direction(char *direction)
  */
 int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 {
-	int k = 0;
+	int k = 0, regstate = 0;
 	isc_match *m = NULL;
 	str s = {0, 0};
 
@@ -287,13 +287,14 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 		if(dir == DLG_MOBILE_ORIGINATING) {
 			k = cscf_get_originating_user(msg, &s);
 			if(k) {
-				k = isc_is_registered(&s, d);
-				if(k == IMPU_NOT_REGISTERED) {
+				regstate = isc_is_registered(&s, d);
+				if(regstate == IMPU_NOT_REGISTERED) {
 					ret = ISC_RETURN_FALSE;
 					goto done;
 				}
 				new_mark.direction = IFC_ORIGINATING_SESSION;
-				LM_DBG("Orig User <%.*s> [%d]\n", s.len, s.s, k);
+				LM_DBG("Orig User <%.*s> [%s]\n", s.len, s.s,
+						get_impu_regstate_as_string(regstate));
 			} else
 				goto done;
 		}
@@ -303,14 +304,15 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 			free_s = 1;
 
 			if(k) {
-				k = isc_is_registered(&s, d);
+				regstate = isc_is_registered(&s, d);
 				//LOG(L_DBG,"after isc_is_registered in ISC_match_filter\n");
-				if(k == IMPU_REGISTERED) {
+				if(regstate == IMPU_REGISTERED) {
 					new_mark.direction = IFC_TERMINATING_SESSION;
 				} else {
 					new_mark.direction = IFC_TERMINATING_UNREGISTERED;
 				}
-				LM_DBG("Term User <%.*s> [%d]\n", s.len, s.s, k);
+				LM_DBG("Term User <%.*s> [%s]\n", s.len, s.s,
+						get_impu_regstate_as_string(regstate));
 			} else {
 				goto done;
 			}
@@ -319,8 +321,8 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 		LM_CRIT("SKIP after AS failure: %d\n", old_mark.skip);
 		int index = old_mark.skip;
 		for(k = 0; k < t->nr_of_outgoings; k++) {
-			m = isc_checker_find(s, new_mark.direction, index, msg,
-					isc_is_registered(&s, d), d);
+			m = isc_checker_find(
+					s, new_mark.direction, index, msg, regstate, d);
 			if(m) {
 				index = m->index;
 				if(k < t->nr_of_outgoings - 1)
@@ -359,13 +361,14 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 		LM_DBG("ISC is for Orig user\n");
 		if(k) {
 			LM_DBG("Orig user is [%.*s]\n", s.len, s.s);
-			k = isc_is_registered(&s, d);
-			if(k == IMPU_NOT_REGISTERED) {
+			regstate = isc_is_registered(&s, d);
+			if(regstate == IMPU_NOT_REGISTERED) {
 				LM_DBG("User is not registered\n");
 				return ISC_RETURN_FALSE;
 			}
 
-			LM_DBG("Orig User <%.*s> [%d]\n", s.len, s.s, k);
+			LM_DBG("Orig User <%.*s> [%s]\n", s.len, s.s,
+					get_impu_regstate_as_string(regstate));
 			//CHECK if this is a new call (According to spec if the new uri and old mark URI are different then this is a new call and should
 			//be triggered accordingly
 			LM_DBG("Checking if RURI has changed...comparing: <%.*s> and "
@@ -374,11 +377,11 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 			if((old_mark.aor.len == s.len)
 					&& memcmp(old_mark.aor.s, s.s, s.len) != 0) {
 				LM_DBG("This is a new call....... trigger accordingly\n");
-				m = isc_checker_find(s, old_mark.direction, 0, msg,
-						isc_is_registered(&s, d), d);
+				m = isc_checker_find(
+						s, old_mark.direction, 0, msg, regstate, d);
 			} else {
-				m = isc_checker_find(s, old_mark.direction, old_mark.skip, msg,
-						isc_is_registered(&s, d), d);
+				m = isc_checker_find(
+						s, old_mark.direction, old_mark.skip, msg, regstate, d);
 			}
 			if(m) {
 				new_mark.direction = IFC_ORIGINATING_SESSION;
@@ -400,13 +403,14 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 		free_s = 1;
 		LM_DBG("ISC is for Term user\n");
 		if(k) {
-			k = isc_is_registered(&s, d);
+			regstate = isc_is_registered(&s, d);
 			if(k == IMPU_REGISTERED) {
 				new_mark.direction = IFC_TERMINATING_SESSION;
 			} else {
 				new_mark.direction = IFC_TERMINATING_UNREGISTERED;
 			}
-			LM_DBG("Term User <%.*s> [%d]\n", s.len, s.s, k);
+			LM_DBG("Term User <%.*s> [%s]\n", s.len, s.s,
+					get_impu_regstate_as_string(regstate));
 			//CHECK if this is a new call (According to spec if the new uri and old mark URI are different then this is a new call and should
 			//be triggered accordingly
 			LM_DBG("Checking if RURI has changed...comparing: <%.*s> and "
@@ -415,12 +419,12 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 			if((old_mark.aor.len == s.len)
 					&& memcmp(old_mark.aor.s, s.s, s.len) != 0) {
 				LM_DBG("This is a new call....... trigger accordingly\n");
-				m = isc_checker_find(s, new_mark.direction, 0, msg,
-						isc_is_registered(&s, d), d);
+				m = isc_checker_find(
+						s, new_mark.direction, 0, msg, regstate, d);
 			} else {
 				LM_DBG("Resuming triggering\n");
-				m = isc_checker_find(s, new_mark.direction, old_mark.skip, msg,
-						isc_is_registered(&s, d), d);
+				m = isc_checker_find(
+						s, new_mark.direction, old_mark.skip, msg, regstate, d);
 			}
 			if(m) {
 				new_mark.skip = m->index + 1;
