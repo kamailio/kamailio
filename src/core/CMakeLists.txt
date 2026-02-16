@@ -47,12 +47,13 @@ add_custom_target(
 # -----------------------
 
 file(GLOB_RECURSE kamailio_SRC "*.c")
-list(REMOVE_ITEM kamailio_SRC ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
-     ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
+# The generated files are not in the source directory but in the binary directory,
+# so we need to add them to the sources of the kamailio target.
+# We also need to mark them as GENERATED so that CMake knows they are generated
+# (older CMAKE) when used from other scopes (see src/CMakelists.txt).
+# Public is used beacuse the fuzz target needs to use these sources as well
+# and links to kamailio.
+target_sources(
+  kamailio PUBLIC ${kamailio_SRC} ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c
+                  ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.c ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.h
 )
-set(kamailio_SRC_FILES
-    ${kamailio_SRC}
-    PARENT_SCOPE
-)
-# target_include_directories(kamailio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-# message(STATUS "kamailio_SRC: ${kamailio_SRC}")
