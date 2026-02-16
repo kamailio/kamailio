@@ -114,14 +114,10 @@ add_subdirectory(lib)
 add_subdirectory(modules)
 
 # These sources are coming from core subdirectory.
-# Lib subdirecotry add it sources to kamailio target using target_sources
+# Lib and core subdirectory add it sources to kamailio target using target_sources
 # from their own CMakeLists.txt
 # Module subdiretory does not contribute to the Kamailio executable.
-target_sources(
-  kamailio PRIVATE ${kamailio_SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/core/lex.yy.c
-                   ${CMAKE_CURRENT_BINARY_DIR}/core/cfg.tab.c
-)
-target_include_directories(kamailio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
+target_include_directories(kamailio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core)
 
 # Debugging the sources of kamailio executable.
 # get_property(
@@ -137,6 +133,31 @@ target_link_libraries(kamailio PUBLIC common m Threads::Threads)
 target_compile_definitions(
   kamailio PUBLIC MODS_DIR="${CMAKE_INSTALL_FULL_LIBDIR}/${MAIN_NAME}/modules"
 )
+# ------ OSS-Fuzz integration target ------------------
+# - add_Library target that will be linked with the fuzzing engine and the fuzzers.
+# - It will contain all the sources of kamailio executable with main.c as a static
+# library since add_executable requires the main function.
+# - The library is defined as STATIC and EXCLUDE_FROM_ALL since it will be only used
+# for fuzzing and not for the normal build of kamailio.
+
+add_library(kamailio-oss-fuzz STATIC EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
+
+# set_target_properties(kamailio-oss-fuzz PROPERTIES ENABLE_EXPORTS TRUE)
+target_link_libraries(kamailio-oss-fuzz PRIVATE common m Threads::Threads kamailio)
+
+# Strip the main symbol from the oss-fuzz library to avoid conflicts with the fuzzers that
+# define their own main function.
+find_program(OBJCOPY objcopy)
+if(OBJCOPY)
+  add_custom_command(
+    TARGET kamailio-oss-fuzz
+    POST_BUILD
+    COMMAND ${OBJCOPY} --strip-symbol=main $<TARGET_FILE:kamailio-oss-fuzz>
+    COMMENT "Stripping main symbol from kamailio-oss-fuzz library"
+  )
+endif()
+
+# -----------------------
 
 # Add the install targets Specify the directory on disk to which a file will be
 # installed. <dir> should be a relative path. An absolute path is allowed, but
