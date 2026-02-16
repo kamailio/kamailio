@@ -8,3 +8,4 @@ CREATE TABLE htable (
 );
 
 INSERT INTO version (table_name, table_version) values ('htable','2');
+

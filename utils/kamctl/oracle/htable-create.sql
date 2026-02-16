@@ -16,3 +16,4 @@ END htable_tr;
 BEGIN map2users('htable'); END;
 /
 INSERT INTO version (table_name, table_version) values ('htable','2');
+

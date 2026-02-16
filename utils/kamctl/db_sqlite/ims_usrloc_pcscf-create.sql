@@ -50,3 +50,4 @@ CREATE TABLE pcscf_location (
 CREATE INDEX pcscf_location_aor_idx ON pcscf_location (aor);
 
 INSERT INTO version (table_name, table_version) values ('pcscf_location','7');
+
