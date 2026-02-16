@@ -15,7 +15,7 @@ endif()
 add_executable(${NAME})
 
 # detect libreadline
-find_package(PkgConfig REQUIRED)
+find_package(PkgConfig)
 pkg_check_modules(READLINE IMPORTED_TARGET readline)
 
 if(READLINE_FOUND)
