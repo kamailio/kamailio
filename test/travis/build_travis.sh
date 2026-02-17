@@ -31,8 +31,9 @@ function _build {
 function _install {
 	if [[ "$CC" =~ gcc ]] ; then
 		echo "make install"
-		make install
+		make -f debian/rules install
 	else
+		# https://bugs-devel.debian.org/cgi-bin/bugreport.cgi?bug=1016936
 		echo "skip make install step"
 	fi
 }
