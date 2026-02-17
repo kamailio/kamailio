@@ -102,15 +102,14 @@ static int add_contact(str aor, ucontact_info_t *ci)
 
 	dmq_ul.lock_udomain(_d, &aor);
 	res = dmq_ul.get_urecord(_d, &aor, &r);
-	if(res < 0) {
-		LM_ERR("failed to retrieve record from usrloc\n");
-		goto error;
-	} else if(res == 0) {
+	// res can be only 0 or 1
+	if(res == 0) {
 		LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 		res = dmq_ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
 		LM_DBG("get_ucontact = %d\n", res);
-		if(res == -1) {
-			LM_ERR("Invalid cseq\n");
+		// res can be -2, -1, 0 or 1
+		if(res < 0) {
+			LM_ERR("Invalid cseq res=%d\n", res);
 			goto error;
 		} else if(res > 0) {
 			LM_DBG("Not found contact\n");
@@ -123,8 +122,14 @@ static int add_contact(str aor, ucontact_info_t *ci)
 		}
 	} else {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		dmq_ul.insert_urecord(_d, &aor, &r);
-		LM_DBG("Insert record\n");
+		// will take care of free mem by itself, if any issues
+		res = dmq_ul.insert_urecord(_d, &aor, &r);
+		if(res == 0) {
+			LM_DBG("Insert urecord for new aor\n");
+		} else {
+			LM_ERR("Failed to insert urecord for new aor\n");
+			goto error;
+		}
 		contact.s = ci->c->s;
 		contact.len = ci->c->len;
 		dmq_ul.insert_ucontact(r, &contact, ci, &c);
