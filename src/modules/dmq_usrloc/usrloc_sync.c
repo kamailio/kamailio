@@ -102,12 +102,10 @@ static int add_contact(str aor, ucontact_info_t *ci)
 
 	dmq_ul.lock_udomain(_d, &aor);
 	res = dmq_ul.get_urecord(_d, &aor, &r);
-	// res can be only 0 or 1
 	if(res == 0) {
 		LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 		res = dmq_ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
 		LM_DBG("get_ucontact = %d\n", res);
-		// res can be -2, -1, 0 or 1
 		if(res < 0) {
 			LM_ERR("Invalid cseq res=%d\n", res);
 			goto error;
