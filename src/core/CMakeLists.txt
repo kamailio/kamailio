@@ -47,12 +47,7 @@ add_custom_target(
 # -----------------------
 
 file(GLOB_RECURSE kamailio_SRC "*.c")
-list(REMOVE_ITEM kamailio_SRC ${CMAKE_CURRENT_SOURCE_DIR}/cfg.tab.c
-     ${CMAKE_CURRENT_SOURCE_DIR}/lex.yy.c
+target_sources(
+  kamailio PUBLIC ${kamailio_SRC} ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.c
+                  ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.c ${CMAKE_CURRENT_BINARY_DIR}/cfg.tab.h
 )
-set(kamailio_SRC_FILES
-    ${kamailio_SRC}
-    PARENT_SCOPE
-)
-# target_include_directories(kamailio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-# message(STATUS "kamailio_SRC: ${kamailio_SRC}")
