@@ -311,6 +311,9 @@ set(MOD_LIST_EV evapi)
 # * modules depending on libjwt library
 set(MOD_LIST_JWT jwt)
 
+# * modules depending on libjwt3 library
+set(MOD_LIST_JWT3 jwt3)
+
 # * modules depending on libwebsockets library
 set(MOD_LIST_LWSC lwsc)
 
@@ -431,6 +434,7 @@ set(MOD_LIST_ALL
     ${MOD_LIST_RUXC}
     ${MOD_LIST_SECSIPID}
     ${MOD_LIST_JWT}
+    ${MOD_LIST_JWT3}
     ${MOD_LIST_LWSC}
     ${MOD_LIST_STIRSHAKEN}
     ${MOD_LIST_TLSA}
@@ -617,6 +621,9 @@ set(MODULE_GROUP_KEV ${MOD_LIST_EV})
 # pkg jwt module
 set(MODULE_GROUP_KJWT ${MOD_LIST_JWT})
 
+# pkg jwt3 module
+set(MODULE_GROUP_KJWT3 ${MOD_LIST_JWT3})
+
 # pkg lwsc module
 set(MODULE_GROUP_KLWSC ${MOD_LIST_LWSC})
 
@@ -724,6 +731,7 @@ set(MODULE_GROUP_PACKAGE_GROUPS
     KUUID
     KEV
     KJWT
+    KJWT3
     KLWSC
     KSTIRSHAKEN
     KKAZOO
