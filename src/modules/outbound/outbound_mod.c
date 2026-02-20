@@ -342,11 +342,21 @@ static int use_outbound_register(struct sip_msg *msg)
 			return 0;
 		}
 
-		if(((contact_body_t *)msg->contact->parsed)->star
-				&& ((exp_body_t *)msg->expires->parsed)->val == 0) {
-			LM_DBG("found REGISTER with * in Contact: header body and Expires "
-				   ": 0 - outbound used\n");
-			return 1;
+		if(((contact_body_t *)msg->contact->parsed)->star) {
+			if(!msg->expires) {
+				LM_ERR("absent Expires header\n");
+				return 0;
+			}
+			if(!msg->expires->parsed && parse_expires(msg->expires) < 0) {
+				LM_ERR("parsing Expires: header body\n");
+				return 0;
+			}
+			if(((exp_body_t *)msg->expires->parsed)->val == 0) {
+				LM_DBG("found REGISTER with * in Contact: header body and "
+					   "Expires "
+					   ": 0 - outbound used\n");
+				return 1;
+			}
 		}
 
 		contact = ((contact_body_t *)msg->contact->parsed)->contacts;
