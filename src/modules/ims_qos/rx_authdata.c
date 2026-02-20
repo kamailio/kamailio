@@ -390,10 +390,10 @@ int add_flow_description(rx_authsessiondata_t *session_data, int stream_num,
  * Returns 1 if flow description exists, 0 otherwise.
  * Comparison is based on all relevant flow description parameters.
  */
-int flow_description_exists(rx_authsessiondata_t *session_data, int stream_num,
-		str *media, str *req_sdp_ip_addr, str *req_sdp_port,
-		str *rpl_sdp_ip_addr, str *rpl_sdp_port, str *rpl_sdp_transport,
-		int direction, int current_flow_description_list)
+int flow_description_exists(rx_authsessiondata_t *session_data, str *media,
+		str *req_sdp_ip_addr, str *req_sdp_port, str *rpl_sdp_ip_addr,
+		str *rpl_sdp_port, str *rpl_sdp_transport,
+		int current_flow_description_list)
 {
 
 	flow_description_t *fd;
@@ -408,18 +408,6 @@ int flow_description_exists(rx_authsessiondata_t *session_data, int stream_num,
 	}
 
 	while(fd) {
-		/* Compare stream number. */
-		if(fd->stream_num != stream_num) {
-			fd = fd->next;
-			continue;
-		}
-
-		/* Compare direction. */
-		if(fd->direction != direction) {
-			fd = fd->next;
-			continue;
-		}
-
 		/* Compare media. */
 		if(media
 				&& (fd->media.len != media->len
