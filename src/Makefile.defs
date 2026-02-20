@@ -1883,7 +1883,9 @@ ifeq ($(OS), linux)
 	# check for >= 2.5.70
 	ifeq ($(shell [ $(OSREL_N) -ge 2005070 ] && echo has_futex), has_futex)
 		ifeq ($(use_futex), yes)
-			C_DEFS+=-DUSE_FUTEX
+			ifneq ($(ARCH), aarch64)
+				C_DEFS+=-DUSE_FUTEX
+			endif
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
