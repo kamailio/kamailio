@@ -397,7 +397,7 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 	}
 	if(insert_new_lump_after(l, luri.s, luri.len, 0) == 0) {
 		LM_ERR("insert new lump failed\n");
-		pkg_free(p);
+		pkg_free(luri.s);
 		goto error;
 	}
 
