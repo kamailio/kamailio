@@ -4475,7 +4475,7 @@ static void ds_options_callback(
 	ds_rctx_set_uri(&rctx, &uri);
 
 	ds_extract_fromhdr_iuid(&t->from_hdr, &iuid);
-	LM_INFO("=== iuid: %.*s\n", iuid.len, iuid.s);
+	LM_DBG("=== iuid: %.*s\n", iuid.len, iuid.s);
 
 	/* Check if in the meantime someone disabled probing of the target
 	 * through RPC or reload */
