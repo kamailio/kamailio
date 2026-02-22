@@ -75,6 +75,11 @@ typedef struct _ht
 	int evex_index;
 	char evex_name_buf[HT_EVEX_NAME_SIZE];
 	str evex_name;
+	unsigned int reloadat;
+	time_t last_reload;
+	int evex_reload_index;
+	char evex_reload_name_buf[HT_EVEX_NAME_SIZE];
+	str evex_reload_name;
 	ht_entry_t *entries;
 	struct _ht *next;
 } ht_t;
@@ -88,7 +93,7 @@ typedef struct _ht_pv
 
 int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 		int dbmode, int itype, int_str *ival, int updateexpire,
-		int dmqreplicate, char coldelim, char colnull);
+		int dmqreplicate, char coldelim, char colnull, int reloadat);
 int ht_init_tables(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
@@ -110,6 +115,8 @@ int ht_db_sync_tables(void);
 int ht_has_autoexpire(void);
 void ht_timer(unsigned int ticks, void *param);
 void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell);
+int ht_reload_table(ht_t *ht);
+void ht_handle_reloaded_table(ht_t *ht);
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
 int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
 

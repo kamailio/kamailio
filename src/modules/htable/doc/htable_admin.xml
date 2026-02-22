@@ -363,6 +363,13 @@ $ kamctl rpc htable.dump htable
 		</listitem>
 		<listitem>
 		<para>
+			<emphasis>reloadat</emphasis> - time in seconds to reload a hash table.
+			For each new seconds interval, the hash table will be reloaded. You can catch
+			the reload on the event_route: htable:reloaded:<htable>.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
 			<emphasis>dbtable</emphasis> - name of database to be loaded at
 			startup in hash table. If empty or missing, no data will be loaded.
 		</para>
@@ -2057,6 +2064,26 @@ event_route[htable:expired:mytable] {
 ...
 </programlisting>
 	</section>
+
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">htable:reloaded:&lt;table&gt;</function>
+		</title>
+		<para>
+			When defined, the module calls event_route[htable:reloaded:&lt;table&gt;]
+			when a hash table was reloaded.
+		</para>
+<programlisting  format="linespecific">
+...
+
+event_route[htable:reloaded:mytable] {
+    xlog("mytable was reloaded\n");
+}
+...
+</programlisting>
+	</section>
+
 	</section>
 
 </chapter>
