@@ -457,8 +457,9 @@ static const char *rpc_help_doc[2] = {
 static void rpc_help(rpc_t *rpc, void *c)
 {
 	str group, var;
-	char *ch;
+	char *ch = NULL;
 	unsigned int input_type;
+	void *rh = NULL;
 
 	if(rpc->scan(c, "SS", &group, &var) < 2)
 		return;
@@ -467,16 +468,22 @@ static void rpc_help(rpc_t *rpc, void *c)
 		rpc->fault(c, 400, "Failed to get the variable description");
 		return;
 	}
-	rpc->add(c, "s", ch);
+	rpc->add(c, "{", &rh);
+	if(rh == NULL) {
+		LM_ERR("failed to add root structure\n");
+		rpc->fault(c, 500, "Failed to add root structure");
+		return;
+	}
+	rpc->struct_add(rh, "s", "desc", ch ? ch : "none");
 
 	switch(input_type) {
 		case CFG_INPUT_INT:
-			rpc->rpl_printf(c, "(parameter type is integer)");
+			rpc->struct_add(rh, "s", "type", "integer");
 			break;
 
 		case CFG_INPUT_STRING:
 		case CFG_INPUT_STR:
-			rpc->rpl_printf(c, "(parameter type is string)");
+			rpc->struct_add(rh, "s", "type", "string");
 			break;
 	}
 }
