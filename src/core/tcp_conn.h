@@ -75,6 +75,17 @@
 #define READ_WS
 #endif
 
+/* tcp application protocol flags */
+#define KSR_TCPAP_HTTP 4
+#define KSR_TCPAP_WS 8
+#define KSR_TCPAP_MSRP 16
+#define KSR_TCPAP_HEP 32
+#define KSR_TCPAP_HEP3 32
+#define KSR_TCPAP_STUN 64
+#define KSR_TCPAP_HAPROXY 128
+#define KSR_TCPAP_DEFAULT \
+	(KSR_TCPAP_HTTP | KSR_TCPAP_WS | KSR_TCPAP_MSRP | KSR_TCPAP_STUN)
+
 typedef enum tcp_req_errors
 {
 	TCP_REQ_INIT,
@@ -435,5 +446,7 @@ typedef struct ws_event_info
 } ws_event_info_t;
 
 tcp_connection_t *ksr_tcpcon_evcb_get(void);
+
+int ksr_tcp_parse_accept_protocols(char *protos);
 
 #endif

@@ -435,6 +435,7 @@ TCP_OPT_CRLF_PING	"tcp_crlf_ping"
 TCP_OPT_ACCEPT_NO_CL	"tcp_accept_no_cl"
 TCP_OPT_ACCEPT_HEP3	"tcp_accept_hep3"
 TCP_OPT_ACCEPT_HAPROXY	"tcp_accept_haproxy"
+TCP_OPT_ACCEPT_PROTOCOLS	"tcp_accept_protocols"|"tcp_accept_protos"
 TCP_OPT_CLOSE_RST	"tcp_close_rst"
 TCP_CLONE_RCVBUF	"tcp_clone_rcvbuf"
 TCP_REUSE_PORT		"tcp_reuse_port"
@@ -952,6 +953,8 @@ IMPORTFILE      "import_file"
 									return TCP_OPT_ACCEPT_HEP3; }
 <INITIAL>{TCP_OPT_ACCEPT_HAPROXY}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_ACCEPT_HAPROXY; }
+<INITIAL>{TCP_OPT_ACCEPT_PROTOCOLS}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_ACCEPT_PROTOCOLS; }
 <INITIAL>{TCP_OPT_CLOSE_RST}	{ count(); yylval.strval=yytext; return TCP_OPT_CLOSE_RST; }
 <INITIAL>{TCP_CLONE_RCVBUF}		{ count(); yylval.strval=yytext;
 									return TCP_CLONE_RCVBUF; }
