@@ -108,6 +108,7 @@ extern int ksr_tcp_listen_backlog;
 #endif
 extern int ksr_tcp_accept_hep3;
 extern int ksr_tcp_accept_haproxy;
+extern int ksr_tcp_accept_protocols;
 extern int ksr_tcp_script_mode;
 #ifdef USE_TLS
 extern int tls_connection_match_domain;
