@@ -1243,7 +1243,9 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	atomic_set(&c->refcnt, 0);
 	local_timer_init(&c->timer, tcpconn_main_timeout, c, 0);
 
-	if(unlikely(ksr_tcp_accept_haproxy && state == S_CONN_ACCEPT)) {
+	if(unlikely((ksr_tcp_accept_haproxy
+						|| (ksr_tcp_accept_protocols & KSR_TCPAP_HAPROXY))
+				&& state == S_CONN_ACCEPT)) {
 		ret = tcpconn_read_haproxy(c);
 		if(ret == -1) {
 			LM_ERR("invalid PROXY protocol header\n");
