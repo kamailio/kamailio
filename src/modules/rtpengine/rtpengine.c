@@ -6483,6 +6483,46 @@ static int ki_stop_media2(sip_msg_t *msg, str *flags, str *viabranch)
 			msg, rtpengine_simple_wrap, parms, 1, OP_STOP_MEDIA);
 }
 
+/* KI - start forwarding */
+static int ki_start_forwarding0(sip_msg_t *msg)
+{
+	void *parms[2] = {NULL, NULL};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_simple_wrap, parms, 1, OP_START_FORWARDING);
+}
+static int ki_start_forwarding(sip_msg_t *msg, str *flags)
+{
+	void *parms[2] = {flags, NULL};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_simple_wrap, parms, 1, OP_START_FORWARDING);
+}
+static int ki_start_forwarding2(sip_msg_t *msg, str *flags, str *viabranch)
+{
+	void *parms[2] = {flags, viabranch};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_simple_wrap, parms, 1, OP_START_FORWARDING);
+}
+
+/* KI - stop forwarding */
+static int ki_stop_forwarding0(sip_msg_t *msg)
+{
+	void *parms[2] = {NULL, NULL};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_simple_wrap, parms, 1, OP_STOP_FORWARDING);
+}
+static int ki_stop_forwarding(sip_msg_t *msg, str *flags)
+{
+	void *parms[2] = {flags, NULL};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_simple_wrap, parms, 1, OP_STOP_FORWARDING);
+}
+static int ki_stop_forwarding2(sip_msg_t *msg, str *flags, str *viabranch)
+{
+	void *parms[2] = {flags, viabranch};
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_simple_wrap, parms, 1, OP_STOP_FORWARDING);
+}
+
 static int ki_set_rtpengine_set(sip_msg_t *msg, int r1)
 {
 	rtpp_set_link_t rtpl1;
@@ -6747,6 +6787,37 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     },
     { str_init("rtpengine"), str_init("stop_media2"),
         SR_KEMIP_INT, ki_stop_media2,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+    { str_init("rtpengine"), str_init("start_forwarding0"),
+        SR_KEMIP_INT, ki_start_forwarding0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("start_forwarding"),
+        SR_KEMIP_INT, ki_start_forwarding,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("start_forwarding2"),
+        SR_KEMIP_INT, ki_start_forwarding2,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("stop_forwarding0"),
+        SR_KEMIP_INT, ki_stop_forwarding0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("stop_forwarding"),
+        SR_KEMIP_INT, ki_stop_forwarding,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("stop_forwarding2"),
+        SR_KEMIP_INT, ki_stop_forwarding2,
         { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },

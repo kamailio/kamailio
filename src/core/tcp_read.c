@@ -351,7 +351,7 @@ again:
 			}
 		} else if(unlikely((bytes_read == 0) || (*flags & RD_CONN_FORCE_EOF))) {
 			LM_DBG("EOF on connection %p (state: %u, flags: %x) - FD %d,"
-				   " bytes %d, rd-flags %x ([%s]:%u -> [%s]:%u)",
+				   " bytes %d, rd-flags %x ([%s]:%u -> [%s]:%u)\n",
 					c, c->state, c->flags, fd, bytes_read, *flags,
 					ip_addr2xa(&c->rcv.src_ip), c->rcv.src_port,
 					ip_addr2xa(&c->rcv.dst_ip), c->rcv.dst_port);
