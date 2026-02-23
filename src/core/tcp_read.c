@@ -102,6 +102,7 @@ int is_msg_complete(struct tcp_req *r);
 
 int ksr_tcp_accept_hep3 = 0;
 int ksr_tcp_accept_haproxy = 0;
+int ksr_tcp_accept_protocols = KSR_TCPAP_DEFAULT;
 
 #define TCP_SCRIPT_MODE_CONTINUE (1 << 0)
 int ksr_tcp_script_mode = 0;
@@ -127,6 +128,68 @@ int tcp_get_clone_rcvbuf(void)
 	return tcp_clone_rcvbuf;
 }
 
+static inline void ksr_tcp_match_accept_protocol(str *proto)
+{
+	if(proto->len == 2 && strncasecmp(proto->s, "ws", 2) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_WS;
+	} else if(proto->len == 3 && strncasecmp(proto->s, "wss", 3) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_WS;
+	} else if(proto->len == 3 && strncasecmp(proto->s, "hep", 3) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_HEP;
+	} else if(proto->len == 4 && strncasecmp(proto->s, "hep3", 4) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_HEP3;
+	} else if(proto->len == 4 && strncasecmp(proto->s, "http", 4) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_HTTP;
+	} else if(proto->len == 4 && strncasecmp(proto->s, "msrp", 4) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_MSRP;
+	} else if(proto->len == 4 && strncasecmp(proto->s, "stun", 4) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_STUN;
+	} else if(proto->len == 7 && strncasecmp(proto->s, "haproxy", 7) == 0) {
+		ksr_tcp_accept_protocols |= KSR_TCPAP_HAPROXY;
+	}
+}
+
+int ksr_tcp_parse_accept_protocols(char *protos)
+{
+	char *comma = NULL;
+	char *end = NULL;
+	str input;
+	str pr;
+
+	ksr_tcp_accept_protocols = 0;
+
+	if(protos == NULL) {
+		return -1;
+	}
+
+	input.s = protos;
+	input.len = strlen(input.s);
+
+	trim(&input);
+
+	if(input.len == 0) {
+		return 0;
+	}
+
+	end = input.s + input.len;
+	pr = input;
+	comma = q_memchr(input.s, ',', input.len);
+	while(comma != NULL) {
+		pr.s = input.s;
+		pr.len = comma - input.s;
+		trim(&pr);
+		ksr_tcp_match_accept_protocol(&pr);
+		input.s = comma + 1;
+		input.len = end - input.s;
+		trim(&input);
+		pr = input;
+		comma = q_memchr(input.s, ',', input.len);
+	}
+	ksr_tcp_match_accept_protocol(&pr);
+	return 0;
+}
+
+
 #ifdef READ_HTTP11
 int tcp_http11_continue(struct tcp_connection *c)
 {
@@ -137,6 +200,10 @@ int tcp_http11_continue(struct tcp_connection *c)
 	str msg;
 
 	ret = 0;
+
+	if(!(ksr_tcp_accept_protocols & KSR_TCPAP_HTTP)) {
+		return 0;
+	}
 
 	msg.s = c->req.start;
 	msg.len = c->req.pos - c->req.start;
@@ -488,14 +555,16 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 				p = q_memchr(p, '\n', r->pos - p);
 				if(p) {
 #ifdef READ_MSRP
-					/* catch if it is MSRP or not with first '\n' */
-					if(!((r->flags & F_TCP_REQ_MSRP_NO)
-							   || (r->flags & F_TCP_REQ_MSRP_FRAME))) {
-						if((r->pos - r->start) > 5
-								&& strncmp(r->start, "MSRP ", 5) == 0) {
-							r->flags |= F_TCP_REQ_MSRP_FRAME;
-						} else {
-							r->flags |= F_TCP_REQ_MSRP_NO;
+					if(ksr_tcp_accept_protocols & KSR_TCPAP_MSRP) {
+						/* catch if it is MSRP or not with first '\n' */
+						if(!((r->flags & F_TCP_REQ_MSRP_NO)
+								   || (r->flags & F_TCP_REQ_MSRP_FRAME))) {
+							if((r->pos - r->start) > 5
+									&& strncmp(r->start, "MSRP ", 5) == 0) {
+								r->flags |= F_TCP_REQ_MSRP_FRAME;
+							} else {
+								r->flags |= F_TCP_REQ_MSRP_NO;
+							}
 						}
 					}
 #endif
@@ -543,14 +612,16 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 #endif
 
 #ifdef READ_HTTP11
-								if(TCP_REQ_BCHUNKED(r)) {
-									r->body = p + 1;
-									/* at least 3 bytes: 0\r\n */
-									r->bytes_to_go = 3;
-									p++;
-									r->content_len = 0;
-									r->state = H_HTTP11_CHUNK_START;
-									break;
+								if(ksr_tcp_accept_protocols & KSR_TCPAP_HTTP) {
+									if(TCP_REQ_BCHUNKED(r)) {
+										r->body = p + 1;
+										/* at least 3 bytes: 0\r\n */
+										r->bytes_to_go = 3;
+										p++;
+										r->content_len = 0;
+										r->state = H_HTTP11_CHUNK_START;
+										break;
+									}
 								}
 #endif
 								r->body = p + 1;
@@ -614,14 +685,16 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 #endif
 
 #ifdef READ_HTTP11
-							if(TCP_REQ_BCHUNKED(r)) {
-								r->body = p + 1;
-								/* at least 3 bytes: 0\r\n */
-								r->bytes_to_go = 3;
-								p++;
-								r->content_len = 0;
-								r->state = H_HTTP11_CHUNK_START;
-								break;
+							if(ksr_tcp_accept_protocols & KSR_TCPAP_HTTP) {
+								if(TCP_REQ_BCHUNKED(r)) {
+									r->body = p + 1;
+									/* at least 3 bytes: 0\r\n */
+									r->bytes_to_go = 3;
+									p++;
+									r->content_len = 0;
+									r->state = H_HTTP11_CHUNK_START;
+									break;
+								}
 							}
 #endif
 							r->body = p + 1;
@@ -673,7 +746,9 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 						break;
 					default:
 						/* stun test */
-						if(unlikely(sr_event_enabled(SREV_STUN_IN))
+						if(unlikely(sr_event_enabled(SREV_STUN_IN)
+									&& (ksr_tcp_accept_protocols
+											& KSR_TCPAP_STUN))
 								&& (unsigned char)*p == 0x00) {
 							r->state = H_STUN_MSG;
 							/* body is used as pointer to the last used byte */
@@ -1519,11 +1594,13 @@ int tcp_read_req(struct tcp_connection *con, int *bytes_read,
 again:
 	if(likely(req->error == TCP_REQ_OK)) {
 #ifdef READ_WS
-		if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)) {
+		if(unlikely(con->type == PROTO_WS || con->type == PROTO_WSS)
+				&& (ksr_tcp_accept_protocols & KSR_TCPAP_WS)) {
 			bytes = tcp_read_ws(con, read_flags);
 		} else {
 #endif
-			if(unlikely(ksr_tcp_accept_hep3 != 0)) {
+			if(unlikely(ksr_tcp_accept_hep3 != 0)
+					|| (ksr_tcp_accept_protocols & KSR_TCPAP_HEP3)) {
 				bytes = tcp_read_hep3(con, read_flags);
 				if(bytes >= 0) {
 					if(!(con->req.flags & F_TCP_REQ_HEP3)) {
