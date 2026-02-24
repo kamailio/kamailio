@@ -711,6 +711,14 @@ int udp_rcv_loop()
 		su2ip_addr(&rcvi.src_ip, fromaddr);
 		rcvi.src_port = su_getport(fromaddr);
 
+		if(ksr_evrt_received_mode & KSR_EVRT_RECEIVED_DATAIN) {
+			if(ksr_evrt_received(buf, &len, &rcvi, KSR_EVRT_RECEIVED_DATAIN)
+					< 0) {
+				LM_DBG("dropping the received data\n");
+				continue;
+			}
+		}
+
 		if(unlikely(sr_event_enabled(SREV_NET_DGRAM_IN))) {
 			void *sredp[3];
 			sredp[0] = (void *)buf;

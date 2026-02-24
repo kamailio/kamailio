@@ -24,7 +24,9 @@
 
 #include "tls_hooks.h"
 #include "tls_hooks_init.h"
+#include "tcp_conn.h"
 #include "globals.h"
+#include "receive.h"
 
 #ifdef TLS_HOOKS
 
@@ -78,6 +80,34 @@ void destroy_tls()
 int tls_loaded()
 {
 	return tls_hooks_loaded;
+}
+
+int tls_read(struct tcp_connection *c, rd_conn_flags_t *flags)
+{
+	int bytes;
+	char *buf;
+	unsigned int len;
+
+	bytes = tls_hook_read(c, flags);
+
+	if(bytes <= 0) {
+		return bytes;
+	}
+
+	if(ksr_evrt_received_mode & KSR_EVRT_RECEIVED_DATAIN) {
+		buf = c->req.parsed;
+		len = c->req.pos - c->req.parsed;
+		if(ksr_evrt_received(buf, &len, &c->rcv, KSR_EVRT_RECEIVED_DATAIN)
+				< 0) {
+			LM_DBG("dropping the received data and closing\n");
+			c->req.content_len = 0;
+			c->req.error = TCP_READ_ERROR;
+			c->req.state = H_SKIP;
+			return -1;
+		}
+	}
+
+	return bytes;
 }
 
 #endif /* TLS_HOOKS */

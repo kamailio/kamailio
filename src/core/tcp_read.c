@@ -389,6 +389,8 @@ int tcp_read(struct tcp_connection *c, rd_conn_flags_t *flags)
 	int bytes_free, bytes_read;
 	struct tcp_req *r;
 	int fd;
+	char *buf;
+	unsigned int len;
 
 	r = &c->req;
 	fd = c->fd;
@@ -410,6 +412,20 @@ int tcp_read(struct tcp_connection *c, rd_conn_flags_t *flags)
 	LM_DBG("read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
 #endif
 	r->pos += bytes_read;
+
+	if(ksr_evrt_received_mode & KSR_EVRT_RECEIVED_DATAIN) {
+		buf = c->req.parsed;
+		len = c->req.pos - c->req.parsed;
+		if(ksr_evrt_received(buf, &len, &c->rcv, KSR_EVRT_RECEIVED_DATAIN)
+				< 0) {
+			LM_DBG("dropping the received data and closing\n");
+			c->req.content_len = 0;
+			c->req.error = TCP_READ_ERROR;
+			c->req.state = H_SKIP;
+			return -1;
+		}
+	}
+
 	return bytes_read;
 }
 
