@@ -262,6 +262,7 @@ typedef struct sr_net_info
 	unsigned int bufsize;
 	receive_info_t *rcv;
 	dest_info_t *dst;
+	unsigned int evtype;
 } sr_net_info_t;
 
 sr_net_info_t *ksr_evrt_rcvnetinfo_get(void);

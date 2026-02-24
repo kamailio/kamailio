@@ -106,7 +106,9 @@ extern struct tls_hooks tls_hook;
 #define tls_encode(c, pbuf, plen, rbuf, rlen, sflags) \
 	tls_hook_call(encode, -1, (c), (pbuf), (plen), (rbuf), (rlen), (sflags))
 #define tls_close(conn, fd) tls_hook_call_v(tcpconn_close, (conn), (fd))
-#define tls_read(c, flags) tls_hook_call(read, -1, (c), (flags))
+#define tls_hook_read(c, flags) tls_hook_call(read, -1, (c), (flags))
+
+int tls_read(struct tcp_connection *c, rd_conn_flags_t *flags);
 
 int register_tls_hooks(struct tls_hooks *h);
 
