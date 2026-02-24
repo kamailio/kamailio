@@ -1483,6 +1483,49 @@ int tr_eval_string(
 			val->rs.s[val->rs.len] = '\0';
 			break;
 
+		case TR_S_CHARAT:
+		case TR_S_BYTEAT:
+			if(tp == NULL) {
+				LM_ERR("charat/byteat invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
+				return -1;
+			}
+			if(!(val->flags & PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(tp->type == TR_PARAM_NUMBER) {
+				i = tp->v.n;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v) != 0
+						|| (!(v.flags & PV_VAL_INT))) {
+					LM_ERR("cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
+					return -1;
+				}
+				i = v.ri;
+			}
+			if(subtype == TR_S_CHARAT) {
+				val->flags = PV_VAL_STR;
+			} else {
+				val->flags = PV_TYPE_INT | PV_VAL_INT | PV_VAL_STR;
+			}
+			val->ri = 0;
+			if(i < 0 || i >= val->rs.len) {
+				_tr_buffer[0] = '\0';
+				val->rs.s = _tr_buffer;
+				val->rs.len = 0;
+				val->ri = -1;
+				break;
+			}
+			if(subtype == TR_S_CHARAT) {
+				_tr_buffer[0] = val->rs.s[i];
+				_tr_buffer[1] = '\0';
+				val->rs.len = 1;
+			} else {
+				val->ri = (long)val->rs.s[i];
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			}
+			break;
+
 		default:
 			LM_ERR("unknown subtype %d (cfg line: %d)\n", subtype,
 					get_cfg_crt_line());
@@ -3170,6 +3213,40 @@ char *tr_parse_string(str *in, trans_t *t)
 		if(*p != TR_RBRACKET) {
 			LM_ERR("invalid fmtline%c transformation: %.*s!!\n", name.s[7],
 					in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len == 6 && strncasecmp(name.s, "charat", 6) == 0) {
+		t->subtype = TR_S_CHARAT;
+		if(*p != TR_PARAM_MARKER) {
+			LM_ERR("invalid charat transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+			p++;
+		if(*p != TR_RBRACKET) {
+			LM_ERR("invalid charat transformation: %.*s!!\n", in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len == 6 && strncasecmp(name.s, "byteat", 6) == 0) {
+		t->subtype = TR_S_BYTEAT;
+		if(*p != TR_PARAM_MARKER) {
+			LM_ERR("invalid byteat transformation: %.*s!\n", in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+			p++;
+		if(*p != TR_RBRACKET) {
+			LM_ERR("invalid byteat transformation: %.*s!!\n", in->len, in->s);
 			goto error;
 		}
 		goto done;
