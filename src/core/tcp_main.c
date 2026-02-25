@@ -2136,6 +2136,7 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		LM_ERR("no destination address provided\n");
 		return -1;
 	}
+	dst->sent_local.set = 0;
 
 	port = su_getport(&dst->to);
 	try_local_port = (dst->send_sock) ? dst->send_sock->port_no : 0;
@@ -2512,14 +2513,32 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 			tcp_safe_close(fd);
 		/* here we can have only commands that _do_ _not_ dec refcnt.
 	 * (CONN_EOF, CON_ERROR, CON_QUEUED_WRITE are all treated above) */
+		if(n >= 0) {
+			dst->sent_local.ip = c->rcv.dst_ip;
+			dst->sent_local.port = c->rcv.dst_port;
+			dst->sent_local.proto = c->rcv.proto;
+			dst->sent_local.set = 1;
+		}
 		goto release_c;
 	} /* if (c==0 or unusable) new connection */
 	/* existing connection, send on it */
 	n = tcpconn_send_put(c, buf, len, dst->send_flags);
 	/* no deref needed (automatically done inside tcpconn_send_put() */
+	if(n >= 0) {
+		dst->sent_local.ip = c->rcv.dst_ip;
+		dst->sent_local.port = c->rcv.dst_port;
+		dst->sent_local.proto = c->rcv.proto;
+		dst->sent_local.set = 1;
+	}
 	return n;
 #ifdef TCP_CONNECT_WAIT
 conn_wait_success:
+	if(n >= 0) {
+		dst->sent_local.ip = c->rcv.dst_ip;
+		dst->sent_local.port = c->rcv.dst_port;
+		dst->sent_local.proto = c->rcv.proto;
+		dst->sent_local.set = 1;
+	}
 #ifdef TCP_FD_CACHE
 	if(cfg_get(tcp, tcp_cfg, fd_cache)) {
 		tcp_fd_cache_add(c, fd);
@@ -2564,6 +2583,12 @@ conn_wait_close:
 	return n;
 #endif /* TCP_CONNECT_WAIT */
 release_c:
+	if(n >= 0) {
+		dst->sent_local.ip = c->rcv.dst_ip;
+		dst->sent_local.port = c->rcv.dst_port;
+		dst->sent_local.proto = c->rcv.proto;
+		dst->sent_local.set = 1;
+	}
 	tcpconn_chld_put(c); /* release c (dec refcnt & free on 0) */
 end_no_deref:
 end_no_conn:

@@ -236,6 +236,15 @@ typedef struct receive_info
 } receive_info_t;
 
 
+/* optional actual local address used for TCP/TLS send (ephemeral port) */
+typedef struct dest_sent_local
+{
+	struct ip_addr ip;
+	unsigned short port;
+	char proto;
+	unsigned char set; /* 1 if filled by tcp_send for TCP/TLS */
+} dest_sent_local_t;
+
 typedef struct dest_info
 {
 	struct socket_info *send_sock;
@@ -250,6 +259,7 @@ typedef struct dest_info
 	char proto_pad0;  /* padding field */
 	short proto_pad1; /* padding field */
 #endif
+	dest_sent_local_t sent_local; /* actual local addr for outbound TCP/TLS */
 } dest_info_t;
 
 typedef struct sr_net_info
