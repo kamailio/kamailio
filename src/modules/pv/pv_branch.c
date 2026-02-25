@@ -540,10 +540,35 @@ error:
 	return -1;
 }
 
+static inline int pv_char_safe(int c)
+{
+	/* \t \r \n */
+	if(c == 9 || c == 10 || c == 13) {
+		return 1;
+	}
+	/* ' ' .. '~' */
+	if(c >= 32 && c <= 127) {
+		return 1;
+	}
+	return 0;
+}
+
+static inline int pv_str_safe(str *s)
+{
+	int i;
+	for(i = 0; i < s->len; i++) {
+		if(pv_char_safe(s->s[0]) == 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 int pv_get_rcv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	sr_net_info_t *neti = NULL;
 	str s;
+	int n;
 
 	neti = ksr_evrt_rcvnetinfo_get();
 
@@ -551,7 +576,8 @@ int pv_get_rcv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 
 	switch(param->pvn.u.isname.name.n) {
-		case 1: /* buf */
+		case 1:	 /* buf */
+		case 11: /* bufat */
 			s.s = neti->data.s;
 			s.len = neti->data.len;
 			return pv_get_strval(msg, param, res, &s);
@@ -576,6 +602,13 @@ int pv_get_rcv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_uintval(msg, param, res, (int)neti->rcv->src_port);
 		case 8: /* rcvport */
 			return pv_get_uintval(msg, param, res, (int)neti->rcv->dst_port);
+		case 9: /* safe */
+			n = pv_str_safe(&neti->data);
+			return pv_get_sintval(msg, param, res, n);
+		case 10: /* evtype */
+			return pv_get_uintval(msg, param, res, (int)neti->evtype);
+		case 12: /* hexat */
+			return pv_get_null(msg, param, res);
 		default:
 			/* 0 - af */
 			return pv_get_uintval(
@@ -588,6 +621,11 @@ int pv_get_rcv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 int pv_set_rcv(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	sr_net_info_t *neti = NULL;
+	char *p = NULL;
+	str token;
+	unsigned int pos = 0;
+	int i = 0;
+	int k = 0;
 
 	neti = ksr_evrt_rcvnetinfo_get();
 
@@ -629,6 +667,92 @@ int pv_set_rcv(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
 			neti->data.s[val->rs.len] = '\0';
 			neti->data.len = val->rs.len;
 			break;
+		case 11: /* bufat */
+			if(val == NULL || (val->flags & PV_VAL_NULL)) {
+				LM_ERR("str value required to set received data\n");
+				return -1;
+			}
+			if(!(val->flags & PV_VAL_STR)) {
+				LM_ERR("str value required to set received data\n");
+				return -1;
+			}
+			if(val->rs.len < 3) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			p = q_memchr(val->rs.s, ':', val->rs.len);
+			if(p == NULL) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			token.s = val->rs.s;
+			token.len = p - val->rs.s;
+			str2int(&token, &pos);
+			if(pos >= neti->data.len) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			token.s = p + 1;
+			token.len = val->rs.s + val->rs.len - token.s;
+			if(token.len <= 0) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			memcpy(neti->data.s + pos, token.s, token.len);
+			break;
+		case 12: /* hexat */
+			if(val == NULL || (val->flags & PV_VAL_NULL)) {
+				LM_ERR("str value required to set received data\n");
+				return -1;
+			}
+			if(!(val->flags & PV_VAL_STR)) {
+				LM_ERR("str value required to set received data\n");
+				return -1;
+			}
+			if(val->rs.len < 3) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			p = q_memchr(val->rs.s, ':', val->rs.len);
+			if(p == NULL) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			token.s = val->rs.s;
+			token.len = p - val->rs.s;
+			str2int(&token, &pos);
+			if(pos >= neti->data.len) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			token.s = p + 1;
+			token.len = val->rs.s + val->rs.len - token.s;
+			if(token.len <= 0 || (token.len % 2) == 1) {
+				LM_ERR("invalid value to set buf-at data\n");
+				return -1;
+			}
+			i = 0;
+			k = 0;
+			p = neti->data.s + pos;
+			while(i < token.len) {
+				if(token.s[i] >= '0' && token.s[i] <= '9') {
+					p[k] = (token.s[i] - '0');
+				} else if(token.s[i] >= 'A' && token.s[i] <= 'F') {
+					p[k] = (10 + (token.s[i] - 'A'));
+				} else if(token.s[i] >= 'a' && token.s[i] <= 'f') {
+					p[k] = (10 + (token.s[i] - 'a'));
+				}
+				if(token.s[i + 1] >= '0' && token.s[i + 1] <= '9') {
+					p[k] = (p[k] << 4) + (token.s[i] - '0');
+				} else if(token.s[i] >= 'A' && token.s[i + 1] <= 'F') {
+					p[k] = (p[k] << 4) + (10 + (token.s[i + 1] - 'A'));
+				} else if(token.s[i] >= 'a' && token.s[i + 1] <= 'f') {
+					p[k] = (p[k] << 4) + (10 + (token.s[i + 1] - 'a'));
+				}
+				i += 2;
+				k++;
+			}
+			break;
 		default:
 			LM_DBG("set operation not supported for field %ld\n",
 					param->pvn.u.isname.name.n);
@@ -656,6 +780,12 @@ int pv_parse_rcv_name(pv_spec_p sp, str *in)
 			else
 				goto error;
 			break;
+		case 4:
+			if(strncmp(in->s, "safe", 4) == 0)
+				sp->pvp.pvn.u.isname.name.n = 9;
+			else
+				goto error;
+			break;
 		case 5:
 			if(strncmp(in->s, "proto", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 3;
@@ -663,12 +793,18 @@ int pv_parse_rcv_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "rcvip", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else if(strncmp(in->s, "bufat", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 11;
+			else if(strncmp(in->s, "hexat", 5) == 0)
+				sp->pvp.pvn.u.isname.name.n = 12;
 			else
 				goto error;
 			break;
 		case 6:
 			if(strncmp(in->s, "sproto", 6) == 0)
 				sp->pvp.pvn.u.isname.name.n = 6;
+			else if(strncmp(in->s, "evtype", 6) == 0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else
 				goto error;
 			break;
