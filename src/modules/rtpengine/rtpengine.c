@@ -3242,6 +3242,8 @@ static int parse_from_to_tags(struct ng_flags_parse *ng_flags,
 			if(ng_flags->to && ng_flags->to_tag.s && ng_flags->to_tag.len)
 				bencode_dictionary_add_str(
 						ng_flags->dict, "to-tag", &ng_flags->to_tag);
+			if(ng_flags->flags)
+				bencode_list_add_string(ng_flags->flags, "directional");
 		}
 	} else if(op == OP_SUBSCRIBE_REQUEST) {
 		/* SUBSCRIBE can either specify a list of from tags or have the keyword
