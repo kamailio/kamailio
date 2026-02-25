@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
 #include <fcntl.h>
 
 #include <ev.h>
@@ -902,6 +903,7 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 	int len;
 	int sbsize;
 	evapi_msg_t *emsg;
+	struct timeval tv;
 
 	LM_DBG("relaying event data [%.*s] (%d)\n", evdata->len, evdata->s,
 			evdata->len);
@@ -943,6 +945,10 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 	LM_DBG("sending [%p] [%.*s] (%d)\n", (void *)emsg, emsg->data.len,
 			emsg->data.s, emsg->data.len);
 	if(_evapi_notify_sockets[1] != -1) {
+		tv.tv_sec = EAVPI_TASK_SEND_TIMEOUT_US / 1000000;
+		tv.tv_usec = EAVPI_TASK_SEND_TIMEOUT_US % 1000000;
+		setsockopt(_evapi_notify_sockets[1], SOL_SOCKET, SO_SNDTIMEO, &tv,
+				sizeof(struct timeval));
 		len = write(_evapi_notify_sockets[1], &emsg, sizeof(evapi_msg_t *));
 		if(len <= 0) {
 			shm_free(emsg);
