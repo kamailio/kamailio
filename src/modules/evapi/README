@@ -265,9 +265,12 @@ modparam("evapi", "wait_increase", 1)
    netstring_format parameter is set to 0.
 
    The function is passing the task to evapi dispatcher process, therefore
-   the SIP worker process is not blocked. Also, it doesn't wait for any
-   response, therefore the processing of the configuration continues very
-   fast when executing evapi_relay().
+   the SIP worker process is not blocked executing the task. Also, it does
+   not wait for any response, therefore the processing of the
+   configuration usually continues very fast when executing evapi_relay().
+   Note that passing the task is done internally via an inter-process
+   communication channel that is designed to be reliable and can block if
+   the reading of the tasks is slow.
 
    This function can be used from ANY_ROUTE.
 
