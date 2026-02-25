@@ -22,7 +22,6 @@ Build-Depends:
  libevent-dev,
  libexpat1-dev,
  libhiredis-dev (>= 0.10.0),
- libicu-dev,
  libjansson-dev,
  libjson-c-dev,
  libldap2-dev,
