@@ -265,6 +265,39 @@ modparam("mtree", "fetch_rows", 4000)
 	    </example>
 	</section>
 
+	<section id="mtree.p.connect_mode">
+	    <title><varname>connect_mode</varname> (int)</title>
+	    <para>
+		Control how the module will connect to database.
+		Values:
+	    </para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>0</emphasis> - connect at start up in each child process or fail
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>1</emphasis> - do not connect until tree reload is needed (this will limit the amount of idle connections)
+		</para>
+		</listitem>
+	</itemizedlist>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>connect_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "connect_mode", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	<section id="mtree.p.char_list">
 	    <title><varname>char_list</varname> (string)</title>
 	    <para>
