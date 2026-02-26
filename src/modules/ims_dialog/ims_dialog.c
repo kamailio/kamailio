@@ -151,14 +151,6 @@ static param_export_t mod_params[] = {
 	{0, 0, 0}
 };
 
-#ifdef MI_REMOVED
-static mi_export_t mi_cmds[] = {
-	{"dlg_list", mi_print_dlgs, 0, 0, 0},
-	{"dlg_terminate_dlg", mi_terminate_dlg, 0, 0, 0},
-	{0, 0, 0, 0, 0}
-};
-#endif
-
 static rpc_export_t rpc_methods[];
 
 static pv_export_t mod_items[] = {
