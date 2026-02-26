@@ -253,21 +253,17 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg, struct cell *t,
 		goto error0;
 	}
 
-	if(leg == DLG_CALLER_LEG) {
-		skip_recs = 0;
-	} else {
-		skip_recs = 0;
+	skip_recs = 0;
+	if(leg != DLG_CALLER_LEG) {
 		/* was the 200 OK received or local generated */
-		skip_recs = dlg->from_rr_nb
-					+ ((t->relayed_reply_branch >= 0) ? (
-							   (t->uac[t->relayed_reply_branch].flags
-									   & TM_UAC_FLAG_R2)
-									   ? 2
-									   : ((t->uac[t->relayed_reply_branch].flags
-												  & TM_UAC_FLAG_RR)
-													   ? 1
-													   : 0))
-													  : 0);
+		skip_recs = dlg->from_rr_nb;
+		if(t->relayed_reply_branch >= 0) {
+			if(t->uac[t->relayed_reply_branch].flags & TM_UAC_FLAG_R2) {
+				skip_recs += 2;
+			} else if(t->uac[t->relayed_reply_branch].flags & TM_UAC_FLAG_RR) {
+				skip_recs += 1;
+			}
+		}
 	}
 
 	if(msg->record_route) {
