@@ -52,7 +52,6 @@
 #include "udomain.h"	   /* {insert,delete,get,release}_urecord */
 #include "urecord.h"	   /* {insert,delete,get}_ucontact */
 #include "ucontact.h"	   /* update_ucontact */
-#include "ul_mi.h"
 #include "../usrloc/ul_callback.h"
 #include "ul_db_api.h"
 #include "ul_db_watch.h"
