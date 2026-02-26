@@ -472,37 +472,6 @@ static void destroy(void)
 	ul_db_watch_destroy();
 }
 
-
-#ifdef MI_REMOVED
-static int mi_child_loc_nr_init(void)
-{
-	if(ul_db_child_locnr_init() < 0) {
-		LM_ERR("could not retrieve location number from database. Try to "
-			   "reinitialize the db handles\n");
-		return -1;
-	}
-	return 0;
-}
-
-
-struct mi_root *mi_ul_db_refresh(struct mi_root *cmd_tree, void *param)
-{
-	int ret;
-	ret = set_must_refresh();
-
-	LM_INFO("sp-ul_db location databases were refreshed (%i elements).\n", ret);
-
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-}
-
-
-struct mi_root *mi_loc_nr_refresh(struct mi_root *cmd_tree, void *param)
-{
-	/* this function does nothing, all work is done per each child in the mi_child_loc_nr_init function */
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-}
-#endif
-
 time_t ul_db_datetime_set(time_t v)
 {
 	if(cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
