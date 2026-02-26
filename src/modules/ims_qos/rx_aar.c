@@ -701,11 +701,10 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 								&req_sdp_stream->raw_stream,
 								&rpl_sdp_stream->raw_stream, direction,
 								AVP_EPC_Flow_Usage_No_Information);
-
-						sdp_stream_num++;
 					}
 				}
 			}
+			sdp_stream_num++;
 		}
 		sdp_session_num++;
 	}
