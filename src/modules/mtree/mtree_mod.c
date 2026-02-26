@@ -52,6 +52,7 @@ MODULE_VERSION
 #define NR_KEYS 3
 
 int mt_fetch_rows = 1000;
+static int mt_connect_mode = 0;
 
 /** database connection */
 static db1_con_t *db_con = NULL;
@@ -143,6 +144,7 @@ static param_export_t params[] = {
 	{"tvalue_column", PARAM_STR, &tvalue_column},
 	{"char_list", PARAM_STRING | PARAM_USE_FUNC, &mt_set_char_list},
 	{"fetch_rows", PARAM_INT, &mt_fetch_rows},
+	{"connect_mode", PARAM_INT, &mt_connect_mode},
 	{"pv_value", PARAM_STR, &value_param},
 	{"pv_values", PARAM_STR, &values_param},
 	{"pv_dstid", PARAM_STR, &dstid_param},
@@ -305,12 +307,20 @@ static int child_init(int rank)
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0;
 
+	if(mt_connect_mode == 1) {
+		LM_DBG("mtree: database connection deferred until reload (connect_mode=1) "
+				"rank[%d] pid[%d]\n",
+				rank, getpid());
+		return 0;
+	}
+
 	db_con = mt_dbf.init(&db_url);
 	if(db_con == NULL) {
 		LM_ERR("failed to connect to database\n");
 		return -1;
 	}
-	LM_DBG("#%d: database connection opened successfully\n", rank);
+	LM_DBG("mtree: database connection opened at startup rank[%d] pid[%d]\n",
+			rank, getpid());
 
 	return 0;
 }
@@ -549,8 +559,19 @@ static int mt_load_db(m_tree_t *pt)
 	VAL_STRING(vals) = pt->tname.s;
 
 	if(db_con == NULL) {
-		LM_ERR("no db connection\n");
-		return -1;
+		if(mt_connect_mode != 1) {
+			LM_ERR("no db connection\n");
+			return -1;
+		}
+		LM_INFO("mtree: connecting to database on-demand for reload pid[%d]\n",
+				getpid());
+		db_con = mt_dbf.init(&db_url);
+		if(db_con == NULL) {
+			LM_ERR("failed to connect to database on-demand\n");
+			return -1;
+		}
+		LM_INFO("mtree: database connection established on-demand pid[%d]\n",
+				getpid());
 	}
 
 	old_tree = mt_get_tree(&(pt->tname));
@@ -700,8 +721,19 @@ static int mt_load_db_trees()
 	m_tree_t *old_head = NULL;
 
 	if(db_con == NULL) {
-		LM_ERR("no db connection\n");
-		return -1;
+		if(mt_connect_mode != 1) {
+			LM_ERR("no db connection\n");
+			return -1;
+		}
+		LM_INFO("mtree: connecting to database on-demand for trees reload pid[%d]\n",
+				getpid());
+		db_con = mt_dbf.init(&db_url);
+		if(db_con == NULL) {
+			LM_ERR("failed to connect to database on-demand\n");
+			return -1;
+		}
+		LM_INFO("mtree: database connection established on-demand pid[%d]\n",
+				getpid());
 	}
 
 	if(mt_dbf.use_table(db_con, &db_table) < 0) {
