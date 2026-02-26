@@ -544,7 +544,7 @@ static int fixup_async_task_route(void **param, int param_no)
 		return -1;
 	}
 
-	if(param_no == 1 || param_no == 2 || param_no == 2) {
+	if(param_no == 1 || param_no == 2 || param_no == 3) {
 		if(fixup_spve_null(param, 1) < 0)
 			return -1;
 		return 0;
