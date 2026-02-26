@@ -340,65 +340,6 @@ int conf_parse_switch(char *settings)
 	return 1;
 }
 
-
-#ifdef MI_REMOVED
-/*!
- * \brief Output configuration in FIFO format
- * \param rpl_tree FIFO root
- * \return 0 on success, -1 on failure
- */
-int conf_show(struct mi_root *rpl_tree)
-{
-	int id, sfilter;
-	struct mi_node *node = NULL;
-
-	node = addf_mi_node_child(
-			&rpl_tree->node, 0, 0, 0, "id switch %30s proxy\n", "filter");
-	if(node == NULL)
-		goto error;
-
-	for(id = 0; id <= fwd_max_id; id++) {
-		char buf[BUFSIZE + 1];
-		char tmp[BUFSIZE + 1];
-		buf[0] = '\0';
-		for(sfilter = 0; sfilter < sfilter_cnt; sfilter++) {
-			if(fwd_settings[id].sfilter & sfilter_mask[sfilter]) {
-				if(buf[0]) {
-					strcpy(tmp, buf);
-					snprintf(buf, BUFSIZE, "%s:%s", tmp, sfilter_str[sfilter]);
-					buf[BUFSIZE] = '\0';
-				} else {
-					snprintf(buf, BUFSIZE, "%s", sfilter_str[sfilter]);
-					buf[BUFSIZE] = '\0';
-				}
-			}
-		}
-		if(fwd_settings[id].filter_methods) {
-			if(buf[0]) {
-				strcpy(tmp, buf);
-				snprintf(buf, BUFSIZE, "%s:%s", tmp,
-						fwd_settings[id].filter_methods);
-				buf[BUFSIZE] = '\0';
-			} else {
-				snprintf(buf, BUFSIZE, "%s", fwd_settings[id].filter_methods);
-				buf[BUFSIZE] = '\0';
-			}
-		}
-		node = addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
-				"%2d %s %33s %s:%d\n", id,
-				fwd_settings[id].active ? "on " : "off", buf,
-				fwd_settings[id].proxy ? fwd_settings[id].proxy->name.s : "",
-				fwd_settings[id].proxy ? fwd_settings[id].proxy->port : 0);
-		if(node == NULL)
-			goto error;
-	}
-	return 0;
-
-error:
-	return -1;
-}
-#endif
-
 /*!
  * \brief Parses a configuration string for the filter
  * Parses a configuration string for switch settings and
