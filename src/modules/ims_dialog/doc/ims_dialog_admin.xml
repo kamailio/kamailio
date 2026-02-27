@@ -36,7 +36,7 @@
         <para>
 	To create the dialog associated to an initial request, the flag
             <quote>dlg_flag</quote> (
-            <xref linkend="dlg-flag-id"/>) must be set before
+            <xref linkend="ims_dialog.p.dlg_flag"/>) must be set before
 	creating the corresponding transaction.
         </para>
         <para>
@@ -47,9 +47,9 @@
 	controlled via the default timeout (see
             <quote>default_timeout</quote>
 	-
-            <xref linkend="default-timeout-id"/>) and custom timeout (see
+            <xref linkend="ims_dialog.p.default_timeout"/>) and custom timeout (see
             <quote>timeout_avp</quote> -
-            <xref linkend="timeout-avp-id"/>). The
+            <xref linkend="ims_dialog.p.timeout_avp"/>). The
 	dialog timeout is reset each time a sequential request passes.
         </para>
     </section>
@@ -136,7 +136,7 @@
 
     <section>
         <title>Parameters</title>
-        <section>
+        <section id="ims_dialog.p.enable_stats">
             <title>
                 <varname>enable_stats</varname> (integer)
             </title>
@@ -146,7 +146,7 @@
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.hash_size">
             <title>
                 <varname>hash_size</varname> (integer)
             </title>
@@ -179,7 +179,7 @@ modparam("ims_dialog", "hash_size", 1024)
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.rr_param">
             <title>
                 <varname>rr_param</varname> (string)
             </title>
@@ -205,7 +205,7 @@ modparam("ims_dialog", "rr_param", "xyz")
             </example>
         </section>
 
-        <section id="dlg-flag-id">
+        <section  id="ims_dialog.p.dlg_flag">
             <title>
                 <varname>dlg_flag</varname> (integer)
             </title>
@@ -231,7 +231,7 @@ modparam("ims_dialog", "dlg_flag", 4)
             </example>
         </section>
 
-        <section id="timeout-avp-id">
+        <section id="ims_dialog.p.timeout_avp">
             <title>
                 <varname>timeout_avp</varname> (string)
             </title>
@@ -258,7 +258,7 @@ modparam("ims_dialog", "timeout_avp", "$avp(i:10)")
             </example>
         </section>
 
-        <section id="default-timeout-id">
+        <section id="ims_dialog.p.default_timeout">
             <title>
                 <varname>default_timeout</varname> (integer)
             </title>
@@ -283,7 +283,7 @@ modparam("ims_dialog", "default_timeout", 21600)
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.dlg_extra_hdrs">
             <title>
                 <varname>dlg_extra_hdrs</varname> (string)
             </title>
@@ -309,7 +309,7 @@ modparam("ims_dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.dlg_match_mode">
             <title>
                 <varname>dlg_match_mode</varname> (integer)
             </title>
@@ -318,7 +318,7 @@ modparam("ims_dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.detect_spirals">
             <title>
                 <varname>detect_spirals</varname> (integer)
             </title>
@@ -346,7 +346,7 @@ modparam("ims_dialog", "detect_spirals", 1)
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.db_url">
             <title>
                 <varname>db_url</varname> (string)
             </title>
@@ -369,7 +369,7 @@ modparam("ims_dialog", "detect_spirals", 1)
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.db_mode">
             <title>
                 <varname>db_mode</varname> (integer)
             </title>
@@ -410,7 +410,7 @@ modparam("ims_dialog", "detect_spirals", 1)
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.db_update_period">
             <title>
                 <varname>db_update_period</varname> (integer)
             </title>
@@ -435,7 +435,7 @@ modparam("ims_dialog", "detect_spirals", 1)
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.db_fetch_rows">
             <title>
                 <varname>db_fetch_rows</varname> (integer)
             </title>
@@ -462,7 +462,7 @@ modparam("ims_dialog", "detect_spirals", 1)
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.profiles_with_value">
             <title>
                 <varname>profiles_with_value</varname> (string)
             </title>
@@ -512,7 +512,7 @@ modparam("ims_dialog", "profiles_no_value", "inbound ; outbound")
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.bridge_controller">
             <title>
                 <varname>bridge_controller</varname> (string)
             </title>
@@ -537,7 +537,7 @@ modparam("ims_dialog", "bridge_controller", "sip:ctd@kamailio.org")
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.p.initial_cbs_inscript">
             <title>
                 <varname>initial_cbs_inscript</varname> (string)
             </title>
@@ -551,7 +551,7 @@ modparam("ims_dialog", "bridge_controller", "sip:ctd@kamailio.org")
 
     <section>
         <title>Functions</title>
-        <section>
+        <section id="ims_dialog.f.set_dlg_profile">
             <title>
                 <function moreinfo="none">set_dlg_profile(profile[, value])</function>
             </title>
@@ -595,7 +595,7 @@ set_dlg_profile("caller","$fu");
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.unset_dlg_profile">
             <title>
                 <function moreinfo="none">unset_dlg_profile(profile[, value])</function>
             </title>
@@ -637,7 +637,7 @@ unset_dlg_profile("caller","$fu");
         </section>
 
 
-        <section>
+        <section id="ims_dialog.f.is_in_profile">
             <title>
                 <function moreinfo="none">is_in_profile(profile[, value])</function>
             </title>
@@ -686,7 +686,7 @@ if (is_in_profile("caller","XX")) {
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.get_profile_size">
             <title>
                 <function moreinfo="none">get_profile_size(profile[, value], size)</function>
             </title>
@@ -739,7 +739,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_isflagset">
             <title>
                 <function moreinfo="none">dlg_isflagset(flag)</function>
             </title>
@@ -774,7 +774,7 @@ if(dlg_isflagset("1"))
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_setflag">
             <title>
                 <function moreinfo="none">dlg_setflag(flag)</function>
             </title>
@@ -806,7 +806,7 @@ dlg_setflag("1");
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_resetflag">
             <title>
                 <function moreinfo="none">dlg_resetflag(flag)</function>
             </title>
@@ -838,7 +838,7 @@ dlg_resetflag("1");
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_terminate">
             <title>
                 <function moreinfo="none">dlg_terminate</function>
             </title>
@@ -876,7 +876,7 @@ dlg_terminate("all", "Insufficient QoS");
             </example>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_refer">
             <title>
                 <function moreinfo="none">dlg_refer(side, address)</function>
             </title>
@@ -886,7 +886,7 @@ dlg_terminate("all", "Insufficient QoS");
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_manage">
             <title>
                 <function moreinfo="none">dlg_manage()</function>
             </title>
@@ -897,7 +897,7 @@ dlg_terminate("all", "Insufficient QoS");
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_bridge">
             <title>
                 <function moreinfo="none">dlg_bridge(from, to, op)</function>
             </title>
@@ -907,7 +907,7 @@ dlg_terminate("all", "Insufficient QoS");
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.f.dlg_get">
 		<title>
 		<function moreinfo="none">dlg_get(callid, ftag, ttag)</function>
 		</title>
@@ -947,7 +947,7 @@ if(dlg_get("abcdef", "123", "456"))
 		</example>
 	</section>
 
-        <section>
+        <section id="ims_dialog.f.is_known_dlg">
             <title>
                 <function moreinfo="none">is_known_dlg()</function>
             </title>
@@ -1009,156 +1009,9 @@ if(dlg_get("abcdef", "123", "456"))
         </section>
     </section>
 
-
-    <section>
-        <title>MI Commands</title>
-
-        <section>
-            <title>
-                <varname>dlg_list</varname>
-            </title>
-            <para>
-		Lists the description of a dialog or of all dialogs (calls). If only
-		one dialogs is to be listed, the dialog identifiers are to be passed
-		as parameter (callid and fromtag).  In ims_dialog module this also now
-                also lists all dlg_out entries for early dialogs.
-            </para>
-            <para>
-		Name:
-                <emphasis>dlg_list</emphasis>
-            </para>
-            <para>Parameters:</para>
-            <itemizedlist>
-                <listitem>
-                    <para>
-                        <emphasis>callid</emphasis> (optional) - callid if a single
-				dialog to be listed.
-                    </para>
-                </listitem>
-                <listitem>
-                    <para>
-                        <emphasis>from_tag</emphasis> (optional, but cannot be present
-				without the callid parameter) - from tag (as per initial request)
-				of the dialog to be listed.  Note that if the from_tag is not
-				specified, only dialogs created by a request without a from tag
-				are matched, which will only occur with broken clients and is
-				thus a very rare situation.
-                    </para>
-                </listitem>
-            </itemizedlist>
-            <para>
-		MI FIFO Command Format:
-            </para>
-            <programlisting  format="linespecific">
-		:dlg_list:_reply_fifo_file_
-		_empty_line_
-            </programlisting>
-            <programlisting  format="linespecific">
-		:dlg_list:_reply_fifo_file_
-		abcdrssfrs122444@192.168.1.1
-		AAdfeEFF33
-            </programlisting>
-        </section>
-
-        <section>
-            <title>
-                <varname>dlg_list_ctx</varname>
-            </title>
-            <para>
-		This function is currently not supported by the ims_dialog module.
-                    To be incorporated in the future.
-            </para>
-        </section>
-
-        <section>
-            <title>
-                <varname>dlg_end_dlg</varname>
-            </title>
-            <para>
-			This function is currently not supported by the ims_dialog module.
-                    To be incorporated in the future.
-            </para>
-        </section>
-
-        <section>
-            <title>
-                <varname>dlg_terminate_dlg</varname>
-            </title>
-            <para>
-		Terminates a single dialog, identified by the call_id, ftag, ttag. In ims_dialog module this
-                dialog can be terminated in the early or confirmed states.
-            </para>
-            <para>
-		Name:
-                <emphasis>dlg_terminate_dlg</emphasis>
-            </para>
-            <para>Parameters:</para>
-            <itemizedlist>
-                <listitem>
-                    <para>
-                        <emphasis>callid</emphasis> - callid of the dialog to be terminated.
-                    </para>
-                </listitem>
-                <listitem>
-                    <para>
-                        <emphasis>ftag</emphasis> fromtag of dialog to be terminated.
-                    </para>
-                </listitem>
-                <listitem>
-                    <para>
-                        <emphasis>ttag</emphasis> totag of dialog to be terminated.
-                    </para>
-                </listitem>
-            </itemizedlist>
-            <para>
-                <emphasis>Note: Works for confirmed and early dialogs.</emphasis>
-            </para>
-            <para>
-		MI FIFO Command Format:
-            </para>
-            <programlisting  format="linespecific">
-		:dlg_terminate_dlg:_reply_fifo_file_
-		abcdrssfrs122444@192.168.1.1
-		AAdfeEFF33 ftag-1234 t-tag1234
-            </programlisting>
-        </section>
-
-        <section>
-            <title>
-                <varname>profile_get_size</varname>
-            </title>
-            <para>
-		This function is currently not supported by the ims_dialog module.
-                    To be incorporated in the future.
-            </para>
-        </section>
-
-        <section>
-            <title>
-                <varname>profile_list_dlgs</varname>
-            </title>
-            <para>
-		This function is currently not supported by the ims_dialog module.
-                    To be incorporated in the future.
-            </para>
-        </section>
-
-        <section>
-            <title>
-                <varname>dlg_bridge</varname>
-            </title>
-            <para>
-			This function is currently not supported by the ims_dialog module.
-                    To be incorporated in the future.
-            </para>
-        </section>
-
-    </section>
-
-
     <section>
         <title>RPC Commands</title>
-        <section>
+        <section id="ims_dialog.r.list">
             <title>
                 <varname>dlg.list</varname>
             </title>
@@ -1168,7 +1021,7 @@ if(dlg_get("abcdef", "123", "456"))
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.r.list_ctx">
             <title>
                 <varname>dlg.list_ctx</varname>
             </title>
@@ -1178,7 +1031,7 @@ if(dlg_get("abcdef", "123", "456"))
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.r.dlg_list">
             <title>
                 <varname>dlg.dlg_list</varname>
             </title>
@@ -1188,7 +1041,7 @@ if(dlg_get("abcdef", "123", "456"))
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.r.dlg_list_ctx">
             <title>
                 <varname>dlg.dlg_list_ctx</varname>
             </title>
@@ -1198,7 +1051,7 @@ if(dlg_get("abcdef", "123", "456"))
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.r.end_dlg">
             <title>
                 <varname>dlg.end_dlg</varname>
             </title>
@@ -1208,7 +1061,7 @@ if(dlg_get("abcdef", "123", "456"))
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.r.profile_get_size">
             <title>
                 <varname>dlg.profile_get_size</varname>
             </title>
@@ -1218,7 +1071,7 @@ if(dlg_get("abcdef", "123", "456"))
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.r.profile_list">
             <title>
                 <varname>dlg.profile_list</varname>
             </title>
@@ -1228,7 +1081,7 @@ if(dlg_get("abcdef", "123", "456"))
             </para>
         </section>
 
-        <section>
+        <section id="ims_dialog.r.bridge_dlg">
             <title>
                 <varname>dlg.bridge_dlg</varname>
             </title>
@@ -1241,7 +1094,7 @@ if(dlg_get("abcdef", "123", "456"))
 
 
 
-    <section>
+    <section id="ims_dialog.pvs">
         <title>Exported pseudo-variables</title>
 
         <section>
