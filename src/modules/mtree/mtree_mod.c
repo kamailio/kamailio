@@ -308,8 +308,9 @@ static int child_init(int rank)
 		return 0;
 
 	if(mt_connect_mode == 1) {
-		LM_DBG("mtree: database connection deferred until reload (connect_mode=1) "
-				"rank[%d] pid[%d]\n",
+		LM_DBG("mtree: database connection deferred until reload "
+			   "(connect_mode=1) "
+			   "rank[%d] pid[%d]\n",
 				rank, getpid());
 		return 0;
 	}
@@ -725,7 +726,8 @@ static int mt_load_db_trees()
 			LM_ERR("no db connection\n");
 			return -1;
 		}
-		LM_INFO("mtree: connecting to database on-demand for trees reload pid[%d]\n",
+		LM_INFO("mtree: connecting to database on-demand for trees reload "
+				"pid[%d]\n",
 				getpid());
 		db_con = mt_dbf.init(&db_url);
 		if(db_con == NULL) {
