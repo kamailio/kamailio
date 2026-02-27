@@ -71,6 +71,12 @@ check_subject() {
     return
   fi
 
+  # pre-commit config
+  if [[ "${prefix}" =~ ^pre-commit$ ]] ; then
+    echo "[${commit}] prefix is pre-commit config, OK[${prefix}]"
+    return
+  fi
+
   fail "[${commit}] unknown prefix:'${prefix}'"
 }
 
