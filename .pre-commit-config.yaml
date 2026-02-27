@@ -1,10 +1,4 @@
 repos:
-  - repo: https://github.com/pamoller/xmlformatter
-    rev: v0.2.8
-    hooks:
-      - id: xml-formatter
-        args:
-          - --eof-newline
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
