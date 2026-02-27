@@ -61,7 +61,8 @@ Richard Good
               5.14. profiles_with_value (string)
               5.15. profiles_no_value (string)
               5.16. bridge_controller (string)
-              5.17. initial_cbs_inscript (string)
+              5.17. dbg_list (integer)
+              5.18. initial_cbs_inscript (string)
 
         6. Functions
 
@@ -139,15 +140,16 @@ Richard Good
    1.12. Set profiles_with_value parameter
    1.13. Set profiles_no_value parameter
    1.14. Set bridge_controller parameter
-   1.15. set_dlg_profile usage
-   1.16. unset_dlg_profile usage
-   1.17. is_in_profile usage
-   1.18. get_profile_size usage
-   1.19. dlg_isflagset usage
-   1.20. dlg_setflag usage
-   1.21. dlg_resetflag usage
-   1.22. dlg_terminate usage
-   1.23. dlg_get usage
+   1.15. Set bridge_controller parameter
+   1.16. set_dlg_profile usage
+   1.17. unset_dlg_profile usage
+   1.18. is_in_profile usage
+   1.19. get_profile_size usage
+   1.20. dlg_isflagset usage
+   1.21. dlg_setflag usage
+   1.22. dlg_resetflag usage
+   1.23. dlg_terminate usage
+   1.24. dlg_get usage
 
 Chapter 1. Admin Guide
 
@@ -179,7 +181,8 @@ Chapter 1. Admin Guide
         5.14. profiles_with_value (string)
         5.15. profiles_no_value (string)
         5.16. bridge_controller (string)
-        5.17. initial_cbs_inscript (string)
+        5.17. dbg_list (integer)
+        5.18. initial_cbs_inscript (string)
 
    6. Functions
 
@@ -312,7 +315,8 @@ Chapter 1. Admin Guide
    5.14. profiles_with_value (string)
    5.15. profiles_no_value (string)
    5.16. bridge_controller (string)
-   5.17. initial_cbs_inscript (string)
+   5.17. dbg_list (integer)
+   5.18. initial_cbs_inscript (string)
 
 5.1.  enable_stats (integer)
 
@@ -513,7 +517,108 @@ modparam("ims_dialog", "profiles_no_value", "inbound ; outbound")
 modparam("ims_dialog", "bridge_controller", "sip:ctd@kamailio.org")
 ...
 
-5.17.  initial_cbs_inscript (string)
+5.17. dbg_list (integer)
+
+   Print internal list of dialogs. This output is only visible at debug
+   log level and should only be used for debugging. By default it iss
+   disabled.
+
+   Default value is “0” (disabled).
+
+   Example 1.15. Set bridge_controller parameter
+... modparam("ims_dialog", "dbg_list", 1) ...
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2066]: print_
+all_dlgs(): ********************
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2067]: print_
+all_dlgs(): printing 4096 dialogs
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1992]: intern
+al_print_all_dlg(): Trying to get lock for printing
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1998]: intern
+al_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1999]: intern
+al_print_all_dlg(): Dialog h_entry:h_id = [13 : 1205]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2000]: intern
+al_print_all_dlg(): Dialog age: 3
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2002]: intern
+al_print_all_dlg(): Dialog call-id: PHkdmevTqxWmRmNrR1RHHMer
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2003]: intern
+al_print_all_dlg(): Dialog state: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2004]: intern
+al_print_all_dlg(): Dialog ref counter: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2005]: intern
+al_print_all_dlg(): Dialog did: d.5b4
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2006]: intern
+al_print_all_dlg(): Dialog from_tag: QNRtb5XTpM
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2007]: intern
+al_print_all_dlg(): Dialog from_uri: sip:999888@ims.mnc001.mcc001.3gppnetwork.or
+g
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2008]: intern
+al_print_all_dlg(): Dialog caller contact: sip:10.46.0.3:50880;alias=10.46.0.3~5
+0330~2
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2010]: intern
+al_print_all_dlg(): Dialog first request cseq: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2012]: intern
+al_print_all_dlg(): Dialog caller route set: <sip:mo@192.168.6.21:6101;r2=on;lr=
+on;ftag=QNRtb5XTpM;rm=8;did=d.1c51>,<sip:mo@192.168.6.21:6101;transport=tcp;r2=o
+n;lr=on;ftag=QNRtâ
+                    b5XTpM;rm=8;did=d.1c51>
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2014]: intern
+al_print_all_dlg(): Dialog lifetime: 43200
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2015]: intern
+al_print_all_dlg(): Dialog bind_address: tcp:192.168.6.21:6060
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2018]: intern
+al_print_all_dlg(): Dialog-creating transaction pointer [0x7fc6918083a0]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2046]: intern
+al_print_all_dlg(): Releasing lock for dlgout
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2049]: intern
+al_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1992]: intern
+al_print_all_dlg(): Trying to get lock for printing
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1998]: intern
+al_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1999]: intern
+al_print_all_dlg(): Dialog h_entry:h_id = [13 : 1206]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2000]: intern
+al_print_all_dlg(): Dialog age: 3
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2002]: intern
+al_print_all_dlg(): Dialog call-id: PHkdmevTqxWmRmNrR1RHHMer
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2003]: intern
+al_print_all_dlg(): Dialog state: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2004]: intern
+al_print_all_dlg(): Dialog ref counter: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2005]: intern
+al_print_all_dlg(): Dialog did: d.6b4
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2006]: intern
+al_print_all_dlg(): Dialog from_tag: QNRtb5XTpM
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2007]: intern
+al_print_all_dlg(): Dialog from_uri: sip:999888@ims.mnc001.mcc001.3gppnetwork.or
+g
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2008]: intern
+al_print_all_dlg(): Dialog caller contact: sip:10.46.0.3:50880;alias=10.46.0.3~5
+0330~2
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2010]: intern
+al_print_all_dlg(): Dialog first request cseq: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2012]: intern
+al_print_all_dlg(): Dialog caller route set: <sip:mo@192.168.6.21:6060;r2=on;lr=
+on;ftag=QNRtb5XTpM;did=d.5b4>,<sip:mo@192.168.6.21:6060;transport=tcp;r2=on;lr=o
+n;ftag=QNRtb5XTpMâ
+                    ;did=d.5b4>,<sip:mo@192.168.6.21:6101;r2=on;lr=on;ftag=QNRtb
+5XTpM;rm=8;did=d.1c51>,<sip:mo@192.168.6.21:6101;transport=tcp;r2=on;lr=on;ftag=
+QNRtb5XTpM;rm=8;did=d.1c51>
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2014]: intern
+al_print_all_dlg(): Dialog lifetime: 43200
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2015]: intern
+al_print_all_dlg(): Dialog bind_address: udp:192.168.6.21:6060
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2018]: intern
+al_print_all_dlg(): Dialog-creating transaction pointer [0x7fc6917eb760]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2046]: intern
+al_print_all_dlg(): Releasing lock for dlgout
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2049]: intern
+al_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2077]: print_
+all_dlgs(): ********************
+
+5.18.  initial_cbs_inscript (string)
 
    This has been deprecated since dlg_manage has been removed.
 
@@ -549,7 +654,7 @@ modparam("ims_dialog", "bridge_controller", "sip:ctd@kamailio.org")
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.15.  set_dlg_profile usage
+   Example 1.16.  set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -568,7 +673,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.16.  unset_dlg_profile usage
+   Example 1.17.  unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -591,7 +696,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.17.  is_in_profile usage
+   Example 1.18.  is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to an inbound call\n");
@@ -620,7 +725,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.18.  get_profile_size usage
+   Example 1.19.  get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -639,7 +744,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.19.  dlg_isflagset usage
+   Example 1.20.  dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -657,7 +762,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.20.  dlg_setflag usage
+   Example 1.21.  dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -672,7 +777,7 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.21.  dlg_resetflag usage
+   Example 1.22.  dlg_resetflag usage
 ...
 dlg_resetflag("1");
 ...
@@ -690,7 +795,7 @@ dlg_resetflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.22.  dlg_terminate usage
+   Example 1.23.  dlg_terminate usage
 ...
 dlg_terminate("all", "Insufficient QoS");
 ...
@@ -724,7 +829,7 @@ dlg_terminate("all", "Insufficient QoS");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.23. dlg_get usage
+   Example 1.24. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
