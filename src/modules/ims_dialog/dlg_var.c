@@ -31,6 +31,7 @@
 
 dlg_ctx_t _dlg_ctx;
 extern int spiral_detected;
+extern int dlg_dbg_list;
 
 /*! global variable table, in case the dialog does not exist yet */
 struct dlg_var *var_table = 0;
@@ -307,7 +308,9 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 	if(dlg_db_mode == DB_MODE_REALTIME)
 		update_dialog_dbinfo(dlg);
 
-	print_lists(dlg);
+	if(unlikely(dlg_dbg_list)) {
+		print_lists(dlg);
+	}
 
 	return 0;
 
@@ -358,7 +361,9 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		}
 	}
 
-	print_lists(dlg);
+	if(unlikely(dlg_dbg_list)) {
+		print_lists(dlg);
+	}
 
 	/* unlock dialog */
 	if(dlg) {
@@ -434,7 +439,9 @@ int pv_set_dlg_variable(
 		if(dlg_db_mode == DB_MODE_REALTIME)
 			update_dialog_dbinfo(dlg);
 	}
-	print_lists(dlg);
+	if(unlikely(dlg_dbg_list)) {
+		print_lists(dlg);
+	}
 
 	dlg_release(dlg);
 	return 0;

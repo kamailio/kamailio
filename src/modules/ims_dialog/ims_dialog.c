@@ -45,7 +45,7 @@ static int dlg_hash_size = 4096;
 
 static char *rr_param = "did";
 static int dlg_flag = -1;
-
+int dlg_dbg_list = 0;
 
 static str timeout_spec = {NULL, 0};
 static int default_timeout = 60 * 60 * 12; /* 12 hours */
@@ -137,7 +137,7 @@ static param_export_t mod_params[] = {
 	{"dlg_extra_hdrs", PARAM_STR, &dlg_extra_hdrs},
 	//In this new dialog module we always match using DID
 	{"dlg_match_mode", PARAM_INT, &seq_match_mode},
-
+	{"dbg_list", PARAM_INT, &dlg_dbg_list},
 	{"db_url", PARAM_STR, &db_url},
 	{"db_mode", PARAM_INT, &dlg_db_mode_param},
 	{"db_update_period", PARAM_INT, &db_update_period},

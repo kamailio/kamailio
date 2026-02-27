@@ -537,6 +537,61 @@ modparam("ims_dialog", "bridge_controller", "sip:ctd@kamailio.org")
             </example>
         </section>
 
+        <section id="ims_dialog.p.dbg_list">
+            <title><varname>dbg_list</varname> (integer)</title>
+            <para>Print internal list of dialogs. This output is only visible at debug log level and should only be used for debugging. By default it iss disabled.</para>
+            <para>
+                <emphasis>Default value is <quote>0</quote> (disabled).</emphasis>
+            </para>
+            <example>
+                <title>Set <varname>bridge_controller</varname> parameter</title>
+                <programlisting format="linespecific">... modparam("ims_dialog", "dbg_list", 1) ...</programlisting>
+                <programlisting format="linespecific">
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2066]: print_all_dlgs(): ********************
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2067]: print_all_dlgs(): printing 4096 dialogs
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1992]: internal_print_all_dlg(): Trying to get lock for printing
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1998]: internal_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1999]: internal_print_all_dlg(): Dialog h_entry:h_id = [13 : 1205]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2000]: internal_print_all_dlg(): Dialog age: 3
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2002]: internal_print_all_dlg(): Dialog call-id: PHkdmevTqxWmRmNrR1RHHMer
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2003]: internal_print_all_dlg(): Dialog state: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2004]: internal_print_all_dlg(): Dialog ref counter: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2005]: internal_print_all_dlg(): Dialog did: d.5b4
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2006]: internal_print_all_dlg(): Dialog from_tag: QNRtb5XTpM
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2007]: internal_print_all_dlg(): Dialog from_uri: sip:999888@ims.mnc001.mcc001.3gppnetwork.org
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2008]: internal_print_all_dlg(): Dialog caller contact: sip:10.46.0.3:50880;alias=10.46.0.3~50330~2
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2010]: internal_print_all_dlg(): Dialog first request cseq: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2012]: internal_print_all_dlg(): Dialog caller route set: &lt;sip:mo@192.168.6.21:6101;r2=on;lr=on;ftag=QNRtb5XTpM;rm=8;did=d.1c51&gt;,&lt;sip:mo@192.168.6.21:6101;transport=tcp;r2=on;lr=on;ftag=QNRt│
+                    b5XTpM;rm=8;did=d.1c51&gt;
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2014]: internal_print_all_dlg(): Dialog lifetime: 43200
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2015]: internal_print_all_dlg(): Dialog bind_address: tcp:192.168.6.21:6060
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2018]: internal_print_all_dlg(): Dialog-creating transaction pointer [0x7fc6918083a0]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2046]: internal_print_all_dlg(): Releasing lock for dlgout
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2049]: internal_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1992]: internal_print_all_dlg(): Trying to get lock for printing
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1998]: internal_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:1999]: internal_print_all_dlg(): Dialog h_entry:h_id = [13 : 1206]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2000]: internal_print_all_dlg(): Dialog age: 3
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2002]: internal_print_all_dlg(): Dialog call-id: PHkdmevTqxWmRmNrR1RHHMer
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2003]: internal_print_all_dlg(): Dialog state: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2004]: internal_print_all_dlg(): Dialog ref counter: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2005]: internal_print_all_dlg(): Dialog did: d.6b4
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2006]: internal_print_all_dlg(): Dialog from_tag: QNRtb5XTpM
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2007]: internal_print_all_dlg(): Dialog from_uri: sip:999888@ims.mnc001.mcc001.3gppnetwork.org
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2008]: internal_print_all_dlg(): Dialog caller contact: sip:10.46.0.3:50880;alias=10.46.0.3~50330~2
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2010]: internal_print_all_dlg(): Dialog first request cseq: 1
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2012]: internal_print_all_dlg(): Dialog caller route set: &lt;sip:mo@192.168.6.21:6060;r2=on;lr=on;ftag=QNRtb5XTpM;did=d.5b4&gt;,&lt;sip:mo@192.168.6.21:6060;transport=tcp;r2=on;lr=on;ftag=QNRtb5XTpM│
+                    ;did=d.5b4&gt;,&lt;sip:mo@192.168.6.21:6101;r2=on;lr=on;ftag=QNRtb5XTpM;rm=8;did=d.1c51&gt;,&lt;sip:mo@192.168.6.21:6101;transport=tcp;r2=on;lr=on;ftag=QNRtb5XTpM;rm=8;did=d.1c51&gt;
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2014]: internal_print_all_dlg(): Dialog lifetime: 43200
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2015]: internal_print_all_dlg(): Dialog bind_address: udp:192.168.6.21:6060
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2018]: internal_print_all_dlg(): Dialog-creating transaction pointer [0x7fc6917eb760]
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2046]: internal_print_all_dlg(): Releasing lock for dlgout
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2049]: internal_print_all_dlg(): ----------------------------
+                    scscf[1125]: DEBUG: ims_dialog [dlg_handlers.c:2077]: print_all_dlgs(): ********************
+                </programlisting>
+            </example>
+        </section>
+
         <section id="ims_dialog.p.initial_cbs_inscript">
             <title>
                 <varname>initial_cbs_inscript</varname> (string)
