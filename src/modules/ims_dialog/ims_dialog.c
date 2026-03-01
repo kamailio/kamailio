@@ -561,10 +561,12 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/*for testing only!!!! setup timer to call print all dlg every 10 seconds!*/
-	if(register_timer(print_all_dlgs, 0, 10) < 0) {
-		LM_ERR("failed to register timer \n");
-		return -1;
+	if(unlikely(dlg_dbg_list)) {
+		/*for testing only!!!! setup timer to call print all dlg every 10 seconds!*/
+		if(register_timer(print_all_dlgs, 0, 10) < 0) {
+			LM_ERR("failed to register timer \n");
+			return -1;
+		}
 	}
 
 	/* init handlers */
