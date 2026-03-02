@@ -195,7 +195,11 @@ int ksr_evrt_received(char *buf, unsigned int *len, receive_info_t *rcv_info,
 	memset(&netinfo, 0, sizeof(sr_net_info_t));
 	netinfo.data.s = buf;
 	netinfo.data.len = *len;
-	netinfo.bufsize = BUF_SIZE;
+	if(evtype == KSR_EVRT_RECEIVED_MESSAGE) {
+		netinfo.bufsize = BUF_SIZE;
+	} else {
+		netinfo.bufsize = netinfo.data.len;
+	}
 	netinfo.rcv = rcv_info;
 	netinfo.evtype = evtype;
 
