@@ -65,6 +65,7 @@
 #define F_CONN_PASSIVE 16384  /* conn. created via accept() and not connect()*/
 #define F_CONN_CLOSE_EV 32768 /* explicitely call tcpops ev route when closed */
 #define F_CONN_NOSEND 65536	  /* do not send data on this connection */
+#define F_CONN_NORECV (1 << 17) /* do not receive data on this connection */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11

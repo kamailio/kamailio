@@ -529,12 +529,16 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 	if(unlikely(r->parsed < r->pos)) {
 		bytes = 0;
 	} else {
+		if(unlikely(c->flags & F_CONN_NORECV)) {
+			bytes = 0;
+		} else {
 #ifdef USE_TLS
-		if(unlikely(c->type == PROTO_TLS))
-			bytes = tls_read(c, read_flags);
-		else
+			if(unlikely(c->type == PROTO_TLS))
+				bytes = tls_read(c, read_flags);
+			else
 #endif
-			bytes = tcp_read(c, read_flags);
+				bytes = tcp_read(c, read_flags);
+		}
 		if(bytes <= 0)
 			return bytes;
 		gettimeofday(&tvnow, NULL);
