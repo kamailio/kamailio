@@ -50,6 +50,7 @@ int ksr_fuzz_tcp_read(char *buf, size_t bsize)
 	c.state = S_CONN_OK;
 	c.type = PROTO_TCP;
 	c.rcv.proto = PROTO_TCP;
+	c.flags |= F_CONN_NORECV;
 	read_flags = 0;
 	tcp_read_headers(&c, &read_flags);
 
@@ -61,6 +62,7 @@ int ksr_fuzz_tcp_read(char *buf, size_t bsize)
 	c.state = S_CONN_OK;
 	c.type = PROTO_TCP;
 	c.rcv.proto = PROTO_TCP;
+	c.flags |= F_CONN_NORECV;
 	read_flags = 0;
 	tcp_read_headers(&c, &read_flags);
 
