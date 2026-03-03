@@ -412,11 +412,14 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 	int i;
 	int n;
 	int wlen;
+	struct timeval tv;
 
 	if(_evapi_clients == NULL) {
 		return 0;
 	}
 
+	tv.tv_sec = EAVPI_CLIENT_SEND_TIMEOUT_US / 1000000;
+	tv.tv_usec = EAVPI_CLIENT_SEND_TIMEOUT_US % 1000000;
 	n = 0;
 	for(i = 0; i < EVAPI_MAX_CLIENTS; i++) {
 		if(_evapi_clients[i].connected == 1 && _evapi_clients[i].sock >= 0) {
@@ -425,6 +428,8 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 							&& strncmp(_evapi_clients[i].stag.s, emsg->tag.s,
 									   emsg->tag.len)
 									   == 0)) {
+				setsockopt(_evapi_clients[i].sock, SOL_SOCKET, SO_SNDTIMEO, &tv,
+						sizeof(struct timeval));
 				wlen = write(
 						_evapi_clients[i].sock, emsg->data.s, emsg->data.len);
 				if(wlen != emsg->data.len) {
