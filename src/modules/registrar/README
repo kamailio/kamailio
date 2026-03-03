@@ -384,7 +384,8 @@ modparam("registrar", "default_expires", 1800)
 
    Example 1.2. Set default_expires_range parameter
 ...
-modparam("registrar", "default_expires_range", 30) # +- 30% from default_expires
+modparam("registrar", "default_expires_range", 30) # expires within [0.7*default
+_expires .. default_expires]
 ...
 
 3.3. expires_range (integer)
