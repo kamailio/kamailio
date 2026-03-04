@@ -1,3 +1,339 @@
+===================== 2026-03-04 Version 6.1.1 Released =====================
+
+===================== Changes Since Version 6.1.0 ===========================
+
+commit 7a920ed8d2600e15f9a3ba5c7d9a5a897cbf9207
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 20:04:44 2026 +0100
+
+    src: version set to 6.1.1
+
+commit 5f02ed54a24e08b0ebbf9816f15c80213f3b666d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:33:54 2026 +0100
+
+    db2_ldap: cmake - link libldap
+    
+    (cherry picked from commit ce7c002c6ccf6f7b0a369c73a66c25b566080420)
+
+commit 2bfbac1574692ff54e9647159ee9473ee95bc7d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:25:01 2026 +0100
+
+    kazoo: cmake - link with libevent
+    
+    (cherry picked from commit 6b51a80f70a524eaadd2d52fc13594006d41d1bb)
+
+commit 78a3b9c22a6212ab619c3e20ee0513a3d43b90fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:23:45 2026 +0100
+
+    jsonrpcc: cmake - link with libevent
+    
+    (cherry picked from commit 69b4b70f38ec0458dd58f3c9fe1f522daad57279)
+
+commit 43014286810a7777dd6cedb61586056861c3ff2a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:23:20 2026 +0100
+
+    db2_ldap: cmake - define OPENLDAP23
+    
+    (cherry picked from commit 88df34e4aa711140f63dfec6db1d185459fdd1aa)
+
+commit ee3fd8976daa30fa02e43decbbfc8326775108e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 16:49:08 2026 +0100
+
+    src: pvtpl and ims_qos_npn added to modules groups
+    
+    (cherry picked from commit 443fefa91001c4d26cd73f2b621834aa67074a72)
+
+commit 1910d07f5235209d7e559b72b8e5f2d6994921ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 16:45:28 2026 +0100
+
+    src: added siprepo to modules groups
+    
+    (cherry picked from commit 449e57126fce3d4e95a4b519dbf7e2d0efcca34e)
+
+commit 9ea8ab74f5a681059c2f4f1dfa2352138502b741
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 16:36:31 2026 +0100
+
+    src: added peerstate and ptimer to modules groups
+    
+    (cherry picked from commit 1eb09224d7cd6a6734c0a8bf2b62dd9c2364178a)
+
+commit 61cac26fe18b195029b31d0c946f7be6ab37473e
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Mar 4 09:13:12 2026 +0000
+
+    phonenum: cmake: Add missing cpp files for compilation
+    
+    (cherry picked from commit a5a63fdca5a676b4317a21b95214ebed262f9b14)
+
+commit aea091e3e9b8adf04b70d827ca55cc43d2e50dc0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 10:45:22 2026 +0100
+
+    pkg/kamailio: version set to 6.1.1 for rpms and alpine [skip ci]
+
+commit 93bad4a3efcf7c09e55c2dff4c24cf64b0a05876
+Author: JiangHai2011 <haij2011@sina.com>
+Date:   Wed Mar 4 09:07:41 2026 +0100
+
+    tls: check SSL_set_app_data return value and handle the error
+    
+    (cherry picked from commit 072e948b41d5633bf5d824141460d72307826d0b)
+
+commit 727c9d52bd4bb6d6fc1b645f695c86e76f56baed
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Mar 4 09:00:43 2026 +0100
+
+    pkg/kamailio/deb: version set 6.1.1 [skip ci]
+
+commit 876553de11aae0f50f4da5dbea0218c684ef2a74
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Mar 4 07:31:18 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 0a3db968d0c816235d45db5c3a7c2493225d8471
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Mar 3 15:34:58 2026 +0000
+
+    registrar: fix wrong example for default_expires_range
+    
+    (cherry picked from commit 5f7aeeddb91a7eee57a1640d08ea5c367062c7d2)
+
+commit 1ab4d31158030138c933a8d74b55ad2b2e78bd14
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 2 12:45:52 2026 +0100
+
+    core: adjust bufsize filed for event route message received
+    
+    (cherry picked from commit c2639123993febc5b59f0127c2d97d79520a2928)
+
+commit 4076b32435b32205460e4d5fbcbef3ed8500e8c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 1 22:55:21 2026 +0100
+
+    core: tcp read - check coontent lenght for max int limit
+    
+    (cherry picked from commit 2c47fe1625b57e04252230e0e783ba4182afbebb)
+
+commit 4a6c201910a84bb2a296df7ee489350be5f91f7d
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Thu Feb 26 19:23:14 2026 +0000
+
+    ims_qos: fix incrementing of SDP stream number
+    
+    (cherry picked from commit 6fc2102ca771f5a64bd058eee08dd537f6b804e0)
+
+commit 95a51ee7b098ced29ed372ba1ba05973a73223a3
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Fri Feb 20 19:27:11 2026 +0000
+
+    ims_qos: fix in-dialog requests by removing comparison of SDP stream number and direction
+    
+    (cherry picked from commit 2faeae906b182b9f2bf0e79dd073e3de99a3f3cc)
+
+commit 398a3d4a9c467ad82ba2fdd51f575946d3776947
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Feb 25 09:23:42 2026 -0400
+
+    rtpengine: add "directional" flag
+    
+    Closes #4599
+    
+    (cherry picked from commit a02f07ecf24564b7f0eb555cce0bdf88727ebdd3)
+
+commit a666c77b3ab18b98db5328d2f5409667ecce2fea
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Feb 27 12:46:18 2026 +0100
+
+    pkg/kamailio/deb: restore jwt module missing from cmake-components [skip ci]
+    
+    (cherry picked from commit 5abcf292345c124fa449755c1ca1871fabb533b2)
+
+commit 4efd743e0d9e209428fdcf934a5859d3ea6b3b7d
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Feb 26 14:45:47 2026 +0100
+
+    app_python3s: cmake link python3 lib
+    
+    fixes #4605
+    
+    (cherry picked from commit 67e891d0c6a9d538c6ba646b7db12db4c0ddcc1e)
+
+commit 71b8248a13b9efe1ec33625931e62cee7da3af01
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Feb 26 14:01:19 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 422449360dd6b83f7847a942364665b5b3650ce8
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Feb 26 13:53:16 2026 +0100
+
+    async: fix typo on use example of async_task_group_data cmd [skip ci]
+    
+    related #4606
+    
+    (cherry picked from commit 6f29228e07eddf155a97a403b66c60dbcf2e051e)
+
+commit 59799ab4c3d337e64cddbe4c87ea08c8a38cf9a4
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Feb 26 13:49:15 2026 +0100
+
+    async: fix processing of 3rd parameter of async_task_group_data cmd
+    
+    fixes #4606
+    
+    (cherry picked from commit 9ae78f8bb918324f4303f769ba79c6e2910d2eab)
+
+commit 8d702d7e912aba45e6fd2a3ad76bac1a936b6633
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 25 08:15:17 2026 +0100
+
+    pv: extended $rcv(...) variable for event_route[core:msg-received]
+    
+    - aliased to $recv(...) to be able to avoid collisions in some cases
+      with return code
+    
+    (cherry picked from commit 93ba4a9e3c37904d564e75e8802cd70e94491ae9)
+
+commit 4ed2c55c4cfc8bd8d66b352775d9c5f1f0252ef7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 24 18:06:23 2026 +0100
+
+    pv: extended string transformation with charat and byteat
+    
+    (cherry picked from commit df1f5c02c003c77d0a902e6e4ba1115caa096ff3)
+
+commit 6204721ab081d63022b9b37c6702dff8c6d2fa50
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 24 13:14:51 2026 +0100
+
+    core: extended the execution of event_route[core:msg-received]
+    
+    - option to be executed when data is read from network
+    
+    (cherry picked from commit 454e897f153736aac53776517a9ecfa260ce910a)
+
+commit 4960e787fe95fa52c07b959af157232bfc1697fa
+Author: Alexey Volokitin <alexey.v@didww.com>
+Date:   Thu Feb 19 23:31:11 2026 +0200
+
+    outbound: parse Expires header to prevent crash
+    
+    (cherry picked from commit bf135ccbdcf2bdb607c95952c92bd96972e65413)
+
+commit 35c48f4fbb5fc70371cdfccbe80c23c888a7efa3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 23 09:02:00 2026 +0100
+
+    rtpengine: exported start_/stop_forwarding() to kemi
+    
+    - GH #4598
+    
+    (cherry picked from commit fd75abf30ae80bd3243cd5942f071457fb4bc0aa)
+
+commit e6f010c553df6499b9d85ee621312d77307c2617
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 23 08:37:07 2026 +0100
+
+    core: parameter tcp_accept_protocols to control active protocols
+    
+    (cherry picked from commit 96ebc009544b7e3c5efa88708cfe71df8e7d5989)
+
+commit c92362ee8674dc98388674b44d99befd23c04d36
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 22 11:21:36 2026 +0100
+
+    cfg_rpc: compliant response for rpc cfg.help
+    
+    - it was overwriting a single string value for jsonrpc and standard rpc
+      response structure, switched to structure with two fields for
+      description and type
+    
+    (cherry picked from commit a8e9cd99b56e455ed8c21d2454f9d3286701b118)
+
+commit 3cc921f1c41da0bacbbb5e10d920f6b41897dbaa
+Author: Alex Hermann <gaaf@gmx.net>
+Date:   Fri Feb 20 16:22:04 2026 +0100
+
+    dispatcher: Fix overly verbose logging
+    
+    (cherry picked from commit ad98a3ec9fa76fdf85254d96458245641084614c)
+
+commit 7c56584d90f7efa6dcef65ddb318b1583d02b8f6
+Author: Morten Tryfoss <morten@tryfoss.no>
+Date:   Mon Feb 23 21:23:19 2026 +0100
+
+    auth_ephemeral: Add link to OpenSSL in CMakeLists
+    
+    (cherry picked from commit 3fd1afe60fe37e0ed87fe3b3c5acb6da9dd613f0)
+
+commit 2e63fb3f707c0976b9c5e48fb280c613fb55f95a
+Author: Morten Tryfoss <morten@tryfoss.no>
+Date:   Mon Feb 23 21:00:24 2026 +0100
+
+    geoip2: Fix typo in CMakeLists
+    
+    (cherry picked from commit 2c9e3138d2e5ada1b52e8e66af7df0dae4dce0f8)
+
+commit 16edcfdbc95db427babf47fb2a9bd052258cc34a
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue Feb 24 08:22:45 2026 +0100
+
+    pkg/kamailio/deb: add back db_text module [skip ci]
+    
+    (cherry picked from commit bb3b8fe6e0bb648b40bd7c2ec15ed9407bb2a3ae)
+
+commit a64fd75c148ab1e224587da9b60ed048366d208a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 20 06:58:22 2026 +0100
+
+    core: tcp read - checks for MSRP first line
+    
+    (cherry picked from commit 045bf283c095d72e69986403c5835afeca9af4f1)
+
+commit c3fd3592257edbb2bd4d74cb438e6576cac7a079
+Author: Norm Brandinger <n.brandinger@gmail.com>
+Date:   Fri Feb 13 15:00:33 2026 -0500
+
+    dialog: fix race condition in link_dlg_profile
+    
+    Move link_profile() call inside the dialog entry lock in
+    link_dlg_profile(). Without this, a linker added to the dialog's
+    profile list becomes visible to destroy_linkers() before it is
+    inserted into the profile hash table. If destroy_linkers() runs in
+    that window, it sees hash_linker.next as NULL, skips the hash table
+    unlink, and frees the linker. The subsequent link_profile() call
+    then operates on freed memory, corrupting the profile hash table.
+    
+    This causes SIGSEGV in get_profile_size() (NULL pointer in hash
+    chain traversal) or an infinite loop when hash buckets become
+    cross-linked.
+    
+    GH #2923
+    
+    (cherry picked from commit c958cc7a1dcad00c4bb36f79d539bbb96f135642)
+
+commit f7e7d8917dcc56b1023ff6574faab83281d4adc2
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Feb 18 10:07:21 2026 +0000
+
+    dmq_usrloc: remove comments about function exit status
+    
+    (cherry picked from commit 70c1964854fea7cbd4c3990e0e3aef0e9ee3243c)
+
+commit 450caa3548a4840778c7eafd9320a01fd40a299c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 18 11:08:03 2026 +0100
+
+
 ===================== 2026-02-18 Version 6.1.0 Released =====================
 
 ===================== Changes Since Version 6.0.0 ===========================
