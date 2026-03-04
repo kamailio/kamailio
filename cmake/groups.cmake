@@ -104,6 +104,8 @@ set(MOD_LIST_EXTRA
     dlgs
     sworker
     influxdbc
+    peerstate
+    ptimer
 )
 
 # * common modules depending on database
