@@ -106,6 +106,7 @@ set(MOD_LIST_EXTRA
     influxdbc
     peerstate
     ptimer
+    siprepo
 )
 
 # * common modules depending on database
