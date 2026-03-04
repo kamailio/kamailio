@@ -30,4 +30,9 @@ endif()
 pkg_check_modules(UUID REQUIRED IMPORTED_TARGET uuid)
 add_library(uuid::uuid ALIAS PkgConfig::UUID)
 
-target_link_libraries(${module_name} PRIVATE json-c::json-c rabbitmq::rabbitmq uuid::uuid)
+pkg_check_modules(EVENT REQUIRED IMPORTED_TARGET libevent)
+add_library(event::event ALIAS PkgConfig::EVENT)
+
+target_link_libraries(
+  ${module_name} PRIVATE json-c::json-c rabbitmq::rabbitmq event::event uuid::uuid
+)
