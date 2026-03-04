@@ -376,11 +376,18 @@ static int tls_complete_init(struct tcp_connection *c)
 	}
 #endif
 #endif
+	/* link the extra data struct inside ssl connection*/
+	if(SSL_set_app_data(data->ssl, data) == 0) {
+		LM_ERR("failed to set app_data - possible memory issue\n");
+		if(data->ssl)
+			SSL_free(data->ssl);
+		if(data->rwbio)
+			BIO_free(data->rwbio);
+		goto error;
+	}
+	/* SSL_set_bio does not allocate memory and has no return value */
 	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
-
-	/* link the extra data struct inside ssl connection*/
-	SSL_set_app_data(data->ssl, data);
 	return 0;
 
 error:
