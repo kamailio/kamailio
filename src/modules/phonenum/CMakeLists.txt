@@ -1,4 +1,7 @@
 file(GLOB MODULE_SOURCES "*.c")
+file(GLOB MODULE_CPP_SOURCES "*.cpp")
+
+list(APPEND MODULE_SOURCES ${MODULE_CPP_SOURCES})
 
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
