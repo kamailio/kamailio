@@ -106,6 +106,7 @@ set(MOD_LIST_EXTRA
     influxdbc
     peerstate
     ptimer
+    pvtpl
     siprepo
 )
 
@@ -292,6 +293,7 @@ set(MOD_LIST_IMS
     ims_isc
     ims_icscf
     ims_qos
+    ims_qos_npn
     ims_registrar_pcscf
     ims_registrar_scscf
     ims_usrloc_pcscf
