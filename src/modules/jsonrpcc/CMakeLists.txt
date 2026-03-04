@@ -16,4 +16,7 @@ pkg_check_modules(json-c REQUIRED IMPORTED_TARGET json-c)
 add_library(json-c::json-c ALIAS PkgConfig::json-c)
 # endif()
 
-target_link_libraries(${module_name} PRIVATE json-c::json-c)
+pkg_check_modules(EVENT REQUIRED IMPORTED_TARGET libevent)
+add_library(event::event ALIAS PkgConfig::EVENT)
+
+target_link_libraries(${module_name} PRIVATE json-c::json-c event::event)
