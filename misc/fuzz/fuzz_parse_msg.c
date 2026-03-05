@@ -52,7 +52,7 @@ int ksr_fuzz_tcp_read(char *buf, size_t bsize)
 	c.rcv.proto = PROTO_TCP;
 	c.flags |= F_CONN_NORECV;
 	read_flags = 0;
-	tcp_read_headers(&c, &read_flags);
+	tcp_read_headers(&c, &read_flags, 1);
 
 	memset(&c, 0, sizeof(struct tcp_connection));
 	init_tcp_req(&c.req, p, rsize);
@@ -64,7 +64,7 @@ int ksr_fuzz_tcp_read(char *buf, size_t bsize)
 	c.rcv.proto = PROTO_TCP;
 	c.flags |= F_CONN_NORECV;
 	read_flags = 0;
-	tcp_read_headers(&c, &read_flags);
+	tcp_read_headers(&c, &read_flags, 1);
 
 	free(p);
 
