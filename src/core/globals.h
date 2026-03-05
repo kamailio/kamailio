@@ -259,6 +259,7 @@ extern int ksr_tcp_msg_data_timeout;
 extern int ksr_tcp_accept_iplimit;
 extern int ksr_tcp_main_threads;
 extern int ksr_tcp_check_timer;
+extern int ksr_udp_accept_proxy;
 
 #ifdef USE_DNS_CACHE
 extern int

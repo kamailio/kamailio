@@ -3394,6 +3394,11 @@ int main(int argc, char **argv)
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
+	if(udp_main_init()) {
+		LM_CRIT("main UDP init failed\n");
+		goto error;
+	}
+
 	/* The total number of processes is now known, note that no
 	 * function being called before this point may rely on the
 	 * number of processes !

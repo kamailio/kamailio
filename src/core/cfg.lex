@@ -172,6 +172,7 @@ UDP_RECEIVER_MODE "udp_receiver_mode"
 UDP4_RAW		"udp4_raw"
 UDP4_RAW_MTU	"udp4_raw_mtu"
 UDP4_RAW_TTL	"udp4_raw_ttl"
+UDP_ACCEPT_PROXY	"udp_accept_proxy"
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
@@ -710,6 +711,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{UDP4_RAW_MTU}	{ count(); yylval.strval=yytext; return UDP4_RAW_MTU; }
 <INITIAL>{UDP4_RAW_TTL}	{ count(); yylval.strval=yytext; return UDP4_RAW_TTL; }
 <INITIAL>{UDP_RECEIVER_MODE}	{ count(); yylval.strval=yytext; return UDP_RECEIVER_MODE; }
+<INITIAL>{UDP_ACCEPT_PROXY}	{ count(); yylval.strval=yytext; return UDP_ACCEPT_PROXY; }
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 

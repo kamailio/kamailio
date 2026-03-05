@@ -65,6 +65,628 @@
 #ifdef USE_MCAST
 #include <net/if.h>
 #endif /* USE_MCAST */
+#include "locking.h"
+#include "rpc.h"
+#include "rpc_lookup.h"
+
+
+#define UDP_ACCEPT_PROXY_HAPROXY 1
+#define UDP_ACCEPT_PROXY_SIMPLE 2
+#define UDP_ACCEPT_PROXY_BOTH 3
+
+int ksr_udp_accept_proxy = 0;
+
+#define UDP_PROXY_HT_SIZE 4093
+#define UDP_PROXY_HT_LIFETIME 7200 // 2 hours
+
+struct udp_ht_link
+{
+	struct udp_ht_link *next;
+	struct udp_ht_link *prev;
+};
+
+struct udp_ht_entry
+{
+	union sockaddr_union real_peer;
+	union sockaddr_union proxy_peer;
+
+	time_t accessed; // last access time
+
+	// each entry is linked in two hash tables
+	// using a doubly-linked circular list
+	struct udp_ht_link real_link;
+	struct udp_ht_link proxy_link;
+};
+
+gen_lock_t *udp_proxy_ht_lock;
+struct udp_ht_link
+		*udp_proxy_ht_real; // hashed by real_peer, linked by real_link
+struct udp_ht_link
+		*udp_proxy_ht_proxy; // hashed by proxy_peer, linked by proxy_link
+
+
+static unsigned int sockaddr_hash(const union sockaddr_union *addr)
+{
+	unsigned int len = sockaddru_len(*addr);
+	const unsigned char *ptr = (const unsigned char *)addr;
+	unsigned int hash = 0;
+
+	while(len >= sizeof(unsigned int)) {
+		hash ^= *((const unsigned int *)ptr);
+		len -= sizeof(unsigned int);
+		ptr += sizeof(unsigned int);
+	}
+	while(len) {
+		hash ^= *ptr;
+		len--;
+		ptr++;
+	}
+
+	return hash % UDP_PROXY_HT_SIZE;
+}
+
+
+static inline void ht_list_add(
+		struct udp_ht_link *link, struct udp_ht_link *head)
+{
+	head->next->prev = link;
+	link->next = head->next;
+	link->prev = head;
+	head->next = link;
+}
+
+
+static inline void ht_list_remove(struct udp_ht_link *link)
+{
+	link->next->prev = link->prev;
+	link->prev->next = link->next;
+}
+
+
+static const char *udp_ht_dump_doc[] = {
+		"Dump the contents of the UDP proxy hash table.", 0};
+
+static const char *udp_ht_stats_doc[] = {
+		"Report statistics about the UDP proxy hash table.", 0};
+
+static const char *udp_ht_clean_doc[] = {
+		"Remove expired entries from the UDP proxy hash table.", 0};
+
+static const char *udp_ht_flush_doc[] = {
+		"Flush (empty out) the UDP proxy hash table.", 0};
+
+
+static void udp_ht_dump(rpc_t *rpc, void *c)
+{
+	unsigned int i;
+
+	lock_get(udp_proxy_ht_lock);
+
+	for(i = 0; i < UDP_PROXY_HT_SIZE; i++) {
+		struct udp_ht_link *head = &udp_proxy_ht_real[i];
+		struct udp_ht_link *link;
+		for(link = head->next; link != head; link = link->next) {
+			struct udp_ht_entry *entry =
+					ksr_container_of(link, struct udp_ht_entry, real_link);
+			void *h;
+			if(rpc->add(c, "{", &h) < 0) {
+				rpc->fault(c, 500, "Internal error while adding to array");
+				goto error;
+			}
+			if(rpc->struct_add(h, "sst", "proxyaddr",
+					   su2a(&entry->proxy_peer, sizeof(entry->proxy_peer)),
+					   "realaddr",
+					   su2a(&entry->real_peer, sizeof(entry->real_peer)),
+					   "lastaccess", entry->accessed)
+					< 0) {
+				rpc->fault(c, 500, "Internal error while adding struct");
+				goto error;
+			}
+		}
+	}
+
+error:
+	lock_release(udp_proxy_ht_lock);
+}
+
+
+static void udp_ht_stats(rpc_t *rpc, void *c)
+{
+	void *h;
+	unsigned int i;
+	unsigned int real_buckets = 0, proxy_buckets = 0;
+	unsigned int real_count = 0, proxy_count = 0;
+
+	lock_get(udp_proxy_ht_lock);
+
+	for(i = 0; i < UDP_PROXY_HT_SIZE; i++) {
+		struct udp_ht_link *head = &udp_proxy_ht_real[i];
+		if(head->next == head)
+			continue;
+		real_buckets++;
+
+		struct udp_ht_link *link;
+		for(link = head->next; link != head; link = link->next)
+			real_count++;
+	}
+
+	for(i = 0; i < UDP_PROXY_HT_SIZE; i++) {
+		struct udp_ht_link *head = &udp_proxy_ht_proxy[i];
+		if(head->next == head)
+			continue;
+		proxy_buckets++;
+
+		struct udp_ht_link *link;
+		for(link = head->next; link != head; link = link->next)
+			proxy_count++;
+	}
+
+	if(rpc->add(c, "{", &h) < 0) {
+		rpc->fault(c, 500, "Internal error while adding to array");
+		goto error;
+	}
+	if(rpc->struct_add(h, "uuuu", "real_buckets", real_buckets, "proxy_buckets",
+			   proxy_buckets, "real_items", real_count, "proxy_items",
+			   proxy_count)
+			< 0) {
+		rpc->fault(c, 500, "Internal error while adding struct");
+		goto error;
+	}
+
+error:
+	lock_release(udp_proxy_ht_lock);
+}
+
+
+static void udp_ht_clean(rpc_t *rpc, void *c)
+{
+	unsigned int i;
+	unsigned int count = 0;
+	time_t now = time(NULL);
+	time_t cutoff = now - UDP_PROXY_HT_LIFETIME;
+
+	lock_get(udp_proxy_ht_lock);
+
+	for(i = 0; i < UDP_PROXY_HT_SIZE; i++) {
+		struct udp_ht_link *head = &udp_proxy_ht_real[i];
+		struct udp_ht_link *link, *next;
+
+		for(link = head->next; link != head; link = next) {
+			struct udp_ht_entry *entry = ksr_container_of(
+					head->next, struct udp_ht_entry, real_link);
+			next = link->next;
+
+			if(entry->accessed >= cutoff)
+				continue;
+
+			ht_list_remove(&entry->real_link);
+			ht_list_remove(&entry->proxy_link);
+			shm_free(entry);
+			count++;
+		}
+	}
+
+	lock_release(udp_proxy_ht_lock);
+
+	rpc->rpl_printf(
+			c, "%u expired hash table entries have been removed.", count);
+}
+
+
+static void udp_ht_flush(rpc_t *rpc, void *c)
+{
+	unsigned int i;
+	unsigned int count = 0;
+
+	lock_get(udp_proxy_ht_lock);
+
+	for(i = 0; i < UDP_PROXY_HT_SIZE; i++) {
+		struct udp_ht_link *head = &udp_proxy_ht_real[i];
+		while(head->next != head) {
+			struct udp_ht_entry *entry = ksr_container_of(
+					head->next, struct udp_ht_entry, real_link);
+			ht_list_remove(&entry->real_link);
+			ht_list_remove(&entry->proxy_link);
+			shm_free(entry);
+			count++;
+		}
+	}
+
+	lock_release(udp_proxy_ht_lock);
+
+	rpc->rpl_printf(c, "%u hash table entries have been flushed.", count);
+}
+
+
+// clang-format off
+static rpc_export_t udp_rpc[] = {
+	{"udp.proxy.dump",	udp_ht_dump,	udp_ht_dump_doc,	RET_ARRAY},
+	{"udp.proxy.stats",	udp_ht_stats,	udp_ht_stats_doc,	0},
+	{"udp.proxy.clean",	udp_ht_clean,	udp_ht_clean_doc,	0},
+	{"udp.proxy.flush",	udp_ht_flush,	udp_ht_flush_doc,	0},
+	{0}
+};
+// clang-format on
+
+
+int udp_main_init(void)
+{
+	unsigned int i;
+
+	if(ksr_udp_accept_proxy == 0)
+		return 0;
+	if(ksr_udp_accept_proxy < 0
+			|| ksr_udp_accept_proxy > UDP_ACCEPT_PROXY_BOTH) {
+		LM_ERR("Invalid value for 'udp_accept_proxy'.\n");
+		return -1;
+	}
+
+	if(rpc_register_array(udp_rpc)) {
+		LM_ERR("failed to register UDP RPC commands\n");
+		return -1;
+	}
+
+	udp_proxy_ht_lock = lock_alloc();
+	if(!udp_proxy_ht_lock) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	if(!lock_init(udp_proxy_ht_lock)) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	udp_proxy_ht_real = (struct udp_ht_link *)shm_malloc(
+			sizeof(struct udp_ht_link) * UDP_PROXY_HT_SIZE);
+	if(!udp_proxy_ht_real) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	udp_proxy_ht_proxy = (struct udp_ht_link *)shm_malloc(
+			sizeof(struct udp_ht_link) * UDP_PROXY_HT_SIZE);
+	if(!udp_proxy_ht_proxy) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	// initialise circular lists
+	for(i = 0; i < UDP_PROXY_HT_SIZE; i++) {
+		udp_proxy_ht_real[i] = (struct udp_ht_link){
+				.next = &udp_proxy_ht_real[i], .prev = &udp_proxy_ht_real[i]};
+		udp_proxy_ht_proxy[i] = (struct udp_ht_link){
+				.next = &udp_proxy_ht_proxy[i], .prev = &udp_proxy_ht_proxy[i]};
+	}
+
+	return 0;
+}
+
+
+// Generic lookup function that can be used to do lookups in both hash tables
+// with both keys, given the offsets to the struct members.
+// The compiler will optimize away this indirection and produce code identical
+// to having two distinct specific lookup functions.
+static inline struct udp_ht_entry *sockaddr_ht_get_generic(
+		const union sockaddr_union *addr, struct udp_ht_link *head,
+		size_t link_offset, size_t peer_offset)
+{
+	time_t now = time(NULL);
+	time_t cutoff = now - UDP_PROXY_HT_LIFETIME;
+	struct udp_ht_link *link, *next;
+
+	for(link = head->next; link != head; link = next) {
+		struct udp_ht_entry *entry =
+				(struct udp_ht_entry *)(((char *)link) - link_offset);
+		union sockaddr_union *peer =
+				(union sockaddr_union *)(((char *)entry) + peer_offset);
+
+		next = link->next;
+
+		if(su_cmp(addr, peer)) {
+			entry->accessed = now;
+			return entry;
+		}
+
+		if(entry->accessed >= cutoff)
+			continue;
+
+		// remove expired entry
+		ht_list_remove(&entry->proxy_link);
+		ht_list_remove(&entry->real_link);
+		shm_free(entry);
+	}
+
+	return NULL;
+}
+
+// given proxy address, returns pointer to entry. unlocked
+struct udp_ht_entry *sockaddr_ht_get_by_proxy(
+		const union sockaddr_union *addr, unsigned int hash)
+{
+	return sockaddr_ht_get_generic(addr, &udp_proxy_ht_proxy[hash],
+			offsetof(struct udp_ht_entry, proxy_link),
+			offsetof(struct udp_ht_entry, proxy_peer));
+}
+
+
+// given real peer address, returns pointer to entry. unlocked
+struct udp_ht_entry *sockaddr_ht_get_by_real(
+		const union sockaddr_union *addr, unsigned int hash)
+{
+	return sockaddr_ht_get_generic(addr, &udp_proxy_ht_real[hash],
+			offsetof(struct udp_ht_entry, real_link),
+			offsetof(struct udp_ht_entry, real_peer));
+}
+
+
+// given proxy address, returns peer address
+static union sockaddr_union sockaddr_ht_lookup_real(
+		const union sockaddr_union *addr, unsigned int hash)
+{
+	union sockaddr_union ret = {0};
+	struct udp_ht_entry *entry;
+
+	lock_get(udp_proxy_ht_lock);
+
+	entry = sockaddr_ht_get_by_proxy(addr, hash);
+	if(entry)
+		ret = entry->real_peer;
+
+	lock_release(udp_proxy_ht_lock);
+
+	return ret;
+}
+
+
+// given real peer address, returns proxy address
+static union sockaddr_union sockaddr_ht_lookup_proxy(
+		const union sockaddr_union *addr, unsigned int hash)
+{
+	union sockaddr_union ret = {0};
+	struct udp_ht_entry *entry;
+
+	lock_get(udp_proxy_ht_lock);
+
+	entry = sockaddr_ht_get_by_real(addr, hash);
+	if(entry)
+		ret = entry->proxy_peer;
+
+	lock_release(udp_proxy_ht_lock);
+
+	return ret;
+}
+
+
+static void sockaddr_ht_insert(union sockaddr_union *proxy,
+		union sockaddr_union *real, unsigned int proxy_hash)
+{
+	unsigned int real_hash = sockaddr_hash(real);
+	struct udp_ht_entry *entry;
+
+	lock_get(udp_proxy_ht_lock);
+
+	// first see if the proxy address is already known
+	entry = sockaddr_ht_get_by_proxy(proxy, proxy_hash);
+	if(entry) {
+		// proxy entry already present. has address changed?
+		if(!su_cmp(real, &entry->real_peer)) {
+			// update real peer
+			// remove previous peer entry
+			ht_list_remove(&entry->real_link);
+
+			// update value
+			entry->real_peer = *real;
+
+			// insert into new hash bucket
+			ht_list_add(&entry->real_link, &udp_proxy_ht_real[real_hash]);
+		}
+	}
+	// now see if maybe the real address is already known
+	else if((entry = sockaddr_ht_get_by_real(real, real_hash))) {
+		// real entry already present. has address changed?
+		if(!su_cmp(proxy, &entry->proxy_peer)) {
+			// update proxy address
+			// remove previous proxy entry
+			ht_list_remove(&entry->proxy_link);
+
+			// update value
+			entry->proxy_peer = *proxy;
+
+			// insert into new hash bucket
+			ht_list_add(&entry->proxy_link, &udp_proxy_ht_proxy[proxy_hash]);
+		}
+	} else {
+		// no entry exist: make new one
+		entry = shm_malloc(sizeof(*entry));
+		if(!entry)
+			SHM_MEM_ERROR;
+		else {
+			entry->proxy_peer = *proxy;
+			entry->real_peer = *real;
+			entry->accessed = time(NULL);
+
+			// insert into tables
+			ht_list_add(&entry->proxy_link, &udp_proxy_ht_proxy[proxy_hash]);
+			ht_list_add(&entry->real_link, &udp_proxy_ht_real[real_hash]);
+		}
+	}
+
+	lock_release(udp_proxy_ht_lock);
+}
+
+
+static char *resolve_proxy_proto_haproxy(
+		char *buf, unsigned int *len, union sockaddr_union *fromaddr)
+{
+	if(!(ksr_udp_accept_proxy & UDP_ACCEPT_PROXY_HAPROXY))
+		return NULL;
+
+	// is this a known flow? only the first datagram may have the header
+	union sockaddr_union proxy_addr = *fromaddr;
+	unsigned int proxy_hash = sockaddr_hash(fromaddr);
+
+	union sockaddr_union real_addr =
+			sockaddr_ht_lookup_real(fromaddr, proxy_hash);
+	if(real_addr.s.sa_family) {
+		LM_DBG("Received UDP from known proxy flow %s, substituting real peer "
+			   "address %s\n",
+				su2a(fromaddr, sizeof(*fromaddr)),
+				su2a(&real_addr, sizeof(real_addr)));
+		// possible clobber of address while still returning NULL
+		*fromaddr = real_addr;
+	}
+	// continue checking for header even if flow is known
+
+	if(*len < 16)
+		return NULL;
+	if(memcmp(buf, "\x0d\x0a\x0d\x0a\x00\x0d\x0a\x51\x55\x49\x54\x0a", 12))
+		return NULL;
+
+	LM_DBG("Received UDP using HAproxy protocol v2 from %s\n",
+			su2a(fromaddr, sizeof(*fromaddr)));
+
+	uint8_t ver_cmd = buf[12];
+	if((ver_cmd & 0xf0) != 0x20)
+		return NULL; // must be version 2
+
+	uint8_t fam = buf[13];
+	uint16_t addr_len = ntohs(*((uint16_t *)(buf + 14)));
+	if(*len < addr_len + 16)
+		return NULL; // too short
+
+	// got enough information to skip the header
+	*len -= 16 + addr_len;
+	buf += 16 + addr_len;
+
+	if((ver_cmd & 0xf) != 0x1)
+		return buf; // not proxy
+
+	if((fam & 0xf) != 0x2)
+		return buf; // not UDP
+
+	switch((fam & 0xf0)) {
+		case 0x10: // IPv4
+			if(addr_len != 12)
+				return buf; // invalid length
+			memset(fromaddr, 0, sizeof(*fromaddr));
+			fromaddr->sin.sin_family = AF_INET;
+			fromaddr->sin.sin_addr.s_addr = *((in_addr_t *)(buf - 12));
+			fromaddr->sin.sin_port = *((uint16_t *)(buf - 4));
+#ifdef HAVE_SOCKADDR_SA_LEN
+			fromaddr->s.sa_len = sizeof(fromaddr->sin);
+#endif
+			break;
+
+		case 0x20: // IPv6
+			if(addr_len != 36)
+				return buf; // invalid length
+			memset(fromaddr, 0, sizeof(*fromaddr));
+			fromaddr->sin6.sin6_family = AF_INET6;
+			fromaddr->sin6.sin6_addr = *((struct in6_addr *)(buf - 36));
+			fromaddr->sin6.sin6_port = *((uint16_t *)(buf - 4));
+#ifdef HAVE_SOCKADDR_SA_LEN
+			fromaddr->s.sa_len = sizeof(fromaddr->sin6);
+#endif
+			break;
+
+		default:
+			break;
+	}
+
+	LM_DBG("Peer address reported via HAproxy protocol v2 is %s\n",
+			su2a(fromaddr, sizeof(*fromaddr)));
+
+	// remember flow
+	sockaddr_ht_insert(&proxy_addr, fromaddr, proxy_hash);
+
+	return buf;
+}
+
+static char *resolve_proxy_proto_simple(
+		char *buf, unsigned int *len, union sockaddr_union *fromaddr)
+{
+	if(!(ksr_udp_accept_proxy & UDP_ACCEPT_PROXY_SIMPLE))
+		return NULL;
+	if(*len < 38)
+		return NULL;
+	if(memcmp(buf, "\x56\xec", 2))
+		return NULL;
+
+	union sockaddr_union proxy_addr = *fromaddr;
+
+	memset(fromaddr, 0, sizeof(*fromaddr));
+
+	struct in6_addr *addr = ((struct in6_addr *)(buf + 2));
+
+	// check for 4-in-6 address
+	if(memcmp(addr, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff", 12)) {
+		fromaddr->sin6.sin6_family = AF_INET6;
+		fromaddr->sin6.sin6_addr = *addr;
+		fromaddr->sin6.sin6_port = *((uint16_t *)(buf + 34));
+#ifdef HAVE_SOCKADDR_SA_LEN
+		fromaddr->s.sa_len = sizeof(fromaddr->sin6);
+#endif
+	} else {
+		fromaddr->sin.sin_family = AF_INET;
+		memcpy(&fromaddr->sin.sin_addr.s_addr, buf + 14, 4);
+		fromaddr->sin.sin_port = *((uint16_t *)(buf + 34));
+#ifdef HAVE_SOCKADDR_SA_LEN
+		fromaddr->s.sa_len = sizeof(fromaddr->sin);
+#endif
+	}
+
+	LM_DBG("Received UDP using simple proxy protocol from %s, reported real "
+		   "peer address is %s\n",
+			su2a(&proxy_addr, sizeof(proxy_addr)),
+			su2a(fromaddr, sizeof(*fromaddr)));
+
+	// remember flow
+	sockaddr_ht_insert(&proxy_addr, fromaddr, sockaddr_hash(&proxy_addr));
+
+	*len -= 38;
+	return buf + 38;
+}
+
+static char *resolve_proxy_proto(
+		char *buf, unsigned int *len, union sockaddr_union *fromaddr)
+{
+	if(likely(ksr_udp_accept_proxy == 0))
+		return buf;
+
+	// save address in case it's rewritten from a known flow
+	union sockaddr_union orig_from = *fromaddr;
+
+	char *ret = resolve_proxy_proto_haproxy(buf, len, fromaddr);
+	if(ret)
+		return ret;
+
+	ret = resolve_proxy_proto_simple(buf, len, &orig_from);
+	if(ret) {
+		// report back substituted address
+		*fromaddr = orig_from;
+		return ret;
+	}
+
+	return buf;
+}
+
+
+static void resolve_proxy_dest(union sockaddr_union *addr, int *len)
+{
+	if(likely(ksr_udp_accept_proxy == 0))
+		return;
+
+	union sockaddr_union proxy_addr =
+			sockaddr_ht_lookup_proxy(addr, sockaddr_hash(addr));
+	if(!proxy_addr.s.sa_family)
+		return;
+
+	LM_DBG("Sending UDP to %s via HA proxy %s\n", su2a(addr, sizeof(*addr)),
+			su2a(&proxy_addr, sizeof(proxy_addr)));
+
+	*addr = proxy_addr;
+	*len = sockaddru_len(proxy_addr);
+}
 
 
 #ifdef DBG_MSG_QA
@@ -655,8 +1277,9 @@ error:
 int udp_rcv_loop()
 {
 	unsigned len;
-	static char buf[BUF_SIZE + 1];
-	char *tmp;
+	static char raw_buf[BUF_SIZE + 38
+						+ 1]; // 38 = size of "HA proxy v2" binary header
+	char *tmp, *buf;
 	union sockaddr_union *fromaddr;
 	unsigned int fromaddrlen;
 	receive_info_t rcvi;
@@ -665,7 +1288,6 @@ int udp_rcv_loop()
 	int i;
 	int j;
 	int l;
-
 
 	fromaddr = (union sockaddr_union *)pkg_malloc(sizeof(union sockaddr_union));
 	if(fromaddr == 0) {
@@ -686,7 +1308,7 @@ int udp_rcv_loop()
 
 	for(;;) {
 		fromaddrlen = sizeof(union sockaddr_union);
-		len = recvfrom(bind_address->socket, buf, BUF_SIZE, 0,
+		len = recvfrom(bind_address->socket, raw_buf, BUF_SIZE, 0,
 				(struct sockaddr *)fromaddr, &fromaddrlen);
 		if(len == -1) {
 			if(errno == EAGAIN) {
@@ -712,7 +1334,9 @@ int udp_rcv_loop()
 			continue;
 		}
 		/* we must 0-term the messages, receive_msg expects it */
-		buf[len] = 0; /* no need to save the previous char */
+		raw_buf[len] = 0; /* no need to save the previous char */
+
+		buf = resolve_proxy_proto(raw_buf, &len, fromaddr);
 
 		if(is_printable(L_DBG) && len > 10) {
 			j = 0;
@@ -830,12 +1454,16 @@ int udp_send(struct dest_info *dst, char *buf, unsigned len)
 		abort();
 	}
 #endif
+
+	tolen = sockaddru_len(dst->to);
+
+	resolve_proxy_dest(&dst->to, &tolen);
+
 #ifdef USE_RAW_SOCKS
 	if(likely(!(raw_udp4_send_sock >= 0 && cfg_get(core, core_cfg, udp4_raw)
 				&& dst->send_sock->address.af == AF_INET))) {
 #endif /* USE_RAW_SOCKS */
 		/* normal send over udp socket */
-		tolen = sockaddru_len(dst->to);
 	again:
 		n = sendto(dst->send_sock->socket, buf, len, 0, &dst->to.s, tolen);
 #ifdef XL_DEBUG
@@ -1022,7 +1650,7 @@ void *ksr_udp_mtworker(void *si)
 {
 	socket_info_t *tsock;
 	unsigned len;
-	char *buf;
+	char *raw_buf, *buf;
 	union sockaddr_union *fromaddr;
 	unsigned int fromaddrlen;
 	receive_info_t rcvi;
@@ -1034,8 +1662,8 @@ void *ksr_udp_mtworker(void *si)
 	LM_DBG("initiating udp thread worker [%.*s]\n", tsock->sock_str.len,
 			tsock->sock_str.s);
 
-	buf = (char *)malloc((BUF_SIZE + 1) * sizeof(char));
-	if(buf == NULL) {
+	raw_buf = (char *)malloc((BUF_SIZE + 1) * sizeof(char));
+	if(raw_buf == NULL) {
 		LM_ERR("failled to allocate thread message buffer\n");
 		exit(-1);
 	}
@@ -1061,7 +1689,7 @@ void *ksr_udp_mtworker(void *si)
 
 	while(1) {
 		fromaddrlen = sizeof(union sockaddr_union);
-		len = recvfrom(tsock->socket, buf, BUF_SIZE, 0,
+		len = recvfrom(tsock->socket, raw_buf, BUF_SIZE, 0,
 				(struct sockaddr *)fromaddr, &fromaddrlen);
 		if(len == -1) {
 			if(errno == EAGAIN) {
@@ -1088,7 +1716,9 @@ void *ksr_udp_mtworker(void *si)
 			continue;
 		}
 		/* it must 0-term the messages, receive_msg expects it */
-		buf[len] = 0; /* no need to save the previous char */
+		raw_buf[len] = 0; /* no need to save the previous char */
+
+		buf = resolve_proxy_proto(raw_buf, &len, fromaddr);
 
 		rcvi.src_su = *fromaddr;
 		su2ip_addr(&rcvi.src_ip, fromaddr);
