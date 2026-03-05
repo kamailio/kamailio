@@ -100,9 +100,6 @@
 /* to-tag separator for stateful processing */
 #define TM_TAG_SEPARATOR '-'
 
-/* FIFO substitution character */
-#define SUBST_CHAR '!'
-
 struct cfg_group_tm
 {
 	char *tm_auto_inv_100_r;
