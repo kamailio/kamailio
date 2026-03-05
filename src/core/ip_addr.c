@@ -352,8 +352,12 @@ char *ip_addr2xstrz(struct ip_addr *ip)
  */
 char *su2a(union sockaddr_union *su, int su_len)
 {
-	static char buf[SU2A_MAX_STR_SIZE];
+	static char bufs[2][SU2A_MAX_STR_SIZE];
+	static int buf_idx = 0;
+	char *buf;
 	int offs;
+
+	buf = bufs[buf_idx ^= 1];
 
 	if(unlikely(su->s.sa_family == AF_INET6)) {
 		if(unlikely(su_len < sizeof(su->sin6)))
@@ -361,20 +365,20 @@ char *su2a(union sockaddr_union *su, int su_len)
 		buf[0] = '[';
 		offs = 1
 			   + ip6tosbuf((unsigned char *)su->sin6.sin6_addr.s6_addr, &buf[1],
-					   sizeof(buf) - 4);
+					   SU2A_MAX_STR_SIZE - 4);
 		buf[offs] = ']';
 		offs++;
 	} else {
 		if(unlikely(su_len < sizeof(su->sin)))
 			return "<addr. error>";
 		else
-			offs = ip4tosbuf(
-					(unsigned char *)&su->sin.sin_addr, buf, sizeof(buf) - 2);
+			offs = ip4tosbuf((unsigned char *)&su->sin.sin_addr, buf,
+					SU2A_MAX_STR_SIZE - 2);
 	}
 	buf[offs] = ':';
 	offs += 1
 			+ ushort2sbuf(su_getport(su), &buf[offs + 1],
-					sizeof(buf) - (offs + 1) - 1);
+					SU2A_MAX_STR_SIZE - (offs + 1) - 1);
 	buf[offs] = 0;
 	return buf;
 }
