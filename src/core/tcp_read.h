@@ -34,7 +34,8 @@ typedef enum rd_conn_flags
 	RD_CONN_FORCE_EOF = (1 << 16),
 } rd_conn_flags_t;
 
-int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags);
+int tcp_read_headers(
+		struct tcp_connection *c, rd_conn_flags_t *read_flags, int rmode);
 
 int tcp_read_data(int fd, struct tcp_connection *c, char *buf, int b_size,
 		rd_conn_flags_t *flags);

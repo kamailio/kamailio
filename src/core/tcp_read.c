@@ -445,7 +445,8 @@ int tcp_read(struct tcp_connection *c, rd_conn_flags_t *flags)
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
+int tcp_read_headers(
+		struct tcp_connection *c, rd_conn_flags_t *read_flags, int rmode)
 {
 	int bytes, remaining;
 	char *p;
@@ -605,7 +606,8 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 						/* found LF LF */
 						r->state = H_BODY;
 #ifdef READ_HTTP11
-						if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
+						if(rmode != 0
+								|| cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
 							tcp_http11_continue(c);
 #endif
 						if(TCP_REQ_HAS_CLEN(r)) {
@@ -617,7 +619,9 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 								goto skip;
 							}
 						} else {
-							if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0) {
+							if(rmode != 0
+									|| cfg_get(tcp, tcp_cfg, accept_no_cl)
+											   != 0) {
 #ifdef READ_MSRP
 								/* if MSRP message */
 								if(c->req.flags & F_TCP_REQ_MSRP_FRAME) {
@@ -678,7 +682,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 					/* found LF CR LF */
 					r->state = H_BODY;
 #ifdef READ_HTTP11
-					if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
+					if(rmode != 0 || cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
 						tcp_http11_continue(c);
 #endif
 					if(TCP_REQ_HAS_CLEN(r)) {
@@ -690,7 +694,8 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 							goto skip;
 						}
 					} else {
-						if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0) {
+						if(rmode != 0
+								|| cfg_get(tcp, tcp_cfg, accept_no_cl) != 0) {
 #ifdef READ_MSRP
 							/* if MSRP message */
 							if(c->req.flags & F_TCP_REQ_MSRP_FRAME) {
@@ -744,7 +749,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 					case '\n':
 						break;
 					case '\r':
-						if(cfg_get(tcp, tcp_cfg, crlf_ping)) {
+						if(rmode != 0 || cfg_get(tcp, tcp_cfg, crlf_ping)) {
 							r->state = H_SKIP_EMPTY_CR_FOUND;
 							r->start = p;
 						}
@@ -1634,11 +1639,11 @@ again:
 				if(bytes >= 0) {
 					if(!(con->req.flags & F_TCP_REQ_HEP3)) {
 						/* not hep3, try to read headers */
-						bytes = tcp_read_headers(con, read_flags);
+						bytes = tcp_read_headers(con, read_flags, 0);
 					}
 				}
 			} else {
-				bytes = tcp_read_headers(con, read_flags);
+				bytes = tcp_read_headers(con, read_flags, 0);
 			}
 #ifdef READ_WS
 		}
