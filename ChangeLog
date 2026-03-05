@@ -2,6 +2,15 @@
 
 ===================== Changes Since Version 6.0.5 ===========================
 
+commit 0d7a4b072cd649b7109451e15f2611461f35cdb5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 1 22:55:21 2026 +0100
+
+    core: tcp read - check coontent lenght for max int limit
+
+    (cherry picked from commit 2c47fe1625b57e04252230e0e783ba4182afbebb)
+    (cherry picked from commit 4076b32435b32205460e4d5fbcbef3ed8500e8c7)
+
 commit 196a8e38cd09663ecaab33c0a3b507989f06637b
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Thu Mar 5 09:19:14 2026 +0100
