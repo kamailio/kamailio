@@ -1,3 +1,727 @@
+===================== 2026-03-05 Version 6.0.6 Released =====================
+
+===================== Changes Since Version 6.0.5 ===========================
+
+commit 196a8e38cd09663ecaab33c0a3b507989f06637b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 5 09:19:14 2026 +0100
+
+    src: version set to 6.0.6
+
+commit 73916b1eb9614bffe58b1be0258cb146e2d75e07
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 5 08:58:09 2026 +0100
+
+    pkg/kamailio: version set 6.0.6 for rpms and alpine [skip ci]
+
+commit ad78dbb3d13abcc0535a08f580b3f7f0c3c11191
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Mar 5 08:46:52 2026 +0100
+
+    pkg/kamailio/deb: version set 6.0.6 [skip ci]
+
+commit b4cde3ba4bb36da81f8ac8c1aceae2bab7bd63f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:33:54 2026 +0100
+
+    db2_ldap: cmake - link libldap
+    
+    (cherry picked from commit ce7c002c6ccf6f7b0a369c73a66c25b566080420)
+    (cherry picked from commit 5f02ed54a24e08b0ebbf9816f15c80213f3b666d)
+
+commit 25dc203de73236e698db9bd304b0b1d712575610
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:25:01 2026 +0100
+
+    kazoo: cmake - link with libevent
+    
+    (cherry picked from commit 6b51a80f70a524eaadd2d52fc13594006d41d1bb)
+    (cherry picked from commit 2bfbac1574692ff54e9647159ee9473ee95bc7d1)
+
+commit c35d28a7ba7a819758f0787a508168a99be4f8a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:23:45 2026 +0100
+
+    jsonrpcc: cmake - link with libevent
+    
+    (cherry picked from commit 69b4b70f38ec0458dd58f3c9fe1f522daad57279)
+    (cherry picked from commit 78a3b9c22a6212ab619c3e20ee0513a3d43b90fe)
+
+commit 4df0071a8c80941ecc62f4576db2445b7998158f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 4 17:23:20 2026 +0100
+
+    db2_ldap: cmake - define OPENLDAP23
+    
+    (cherry picked from commit 88df34e4aa711140f63dfec6db1d185459fdd1aa)
+    (cherry picked from commit 43014286810a7777dd6cedb61586056861c3ff2a)
+
+commit 57a6d6f969ceebcb652c6aa261fff4d5062a2cce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 5 06:21:11 2026 +0100
+
+    src: updates to modules groups
+
+commit c907c964647ff0a3125a060d8ac64715d9b60b49
+Author: Joel Serrano <joel@joelserrano.com>
+Date:   Fri Jan 30 01:38:30 2026 -0800
+
+    xhttp_prom: include global tags in user-defined metrics
+    
+    (cherry picked from commit 9f7838561daece724a9fa877cd140f744c81d452)
+    (cherry picked from commit 361c7ac0dc35f9907bcb1e151c0cc6e7971367d8)
+
+commit 396fe7478706d62ecb4e0fc67304f14abb366d42
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Mar 4 09:13:12 2026 +0000
+
+    phonenum: cmake: Add missing cpp files for compilation
+    
+    (cherry picked from commit a5a63fdca5a676b4317a21b95214ebed262f9b14)
+
+commit bb790fd7c3eec3deb16196517fe510322e0a8d31
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Mar 2 17:01:26 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 79f3a1fdc1cc9e816171a87811d08c6f7c1c3fc8
+Author: Norm Brandinger <n.brandinger@gmail.com>
+Date:   Fri Feb 13 15:00:33 2026 -0500
+
+    dialog: fix race condition in link_dlg_profile
+    
+    Move link_profile() call inside the dialog entry lock in
+    link_dlg_profile(). Without this, a linker added to the dialog's
+    profile list becomes visible to destroy_linkers() before it is
+    inserted into the profile hash table. If destroy_linkers() runs in
+    that window, it sees hash_linker.next as NULL, skips the hash table
+    unlink, and frees the linker. The subsequent link_profile() call
+    then operates on freed memory, corrupting the profile hash table.
+    
+    This causes SIGSEGV in get_profile_size() (NULL pointer in hash
+    chain traversal) or an infinite loop when hash buckets become
+    cross-linked.
+    
+    GH #2923
+    
+    (cherry picked from commit c958cc7a1dcad00c4bb36f79d539bbb96f135642)
+    (cherry picked from commit c3fd3592257edbb2bd4d74cb438e6576cac7a079)
+
+commit 99d67106cb608feed5c89111f2642db3336baaa2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 13 09:59:11 2026 +0100
+
+    pv: manage if changing uri to from/to needs enclosing
+    
+    (cherry picked from commit b29086966d6ab8b69c0fada8b6b379a0b3268bbb)
+    (cherry picked from commit 5182a677a078dd89f16dd85fb0941577a6e7f3a4)
+
+commit 96e5e0a82d850392169fe88937ee0f874a1660a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 13 08:46:28 2026 +0100
+
+    tls_wolfssl: replace asserts with error logs
+    
+    - do not crash, try to run further
+    - GH #4391
+    
+    (cherry picked from commit 8239d541503ce43c58d7f7ab54ba8ee70f557821)
+    (cherry picked from commit e8a43d551523e232c90214cc05929b35e5898d20)
+
+commit 06d806320c565f13db359f490409b2979d664e5e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 12 20:23:42 2026 +0100
+
+    uac: replace - enclose new uri if needed
+    
+    (cherry picked from commit d9e6bb39cabc963468326731d99423eaa65da278)
+    (cherry picked from commit f3a00a3051b709580d7df75e8c91a438c195060c)
+
+commit 9e3df334e32c8014b572d575b37f0e0d0a74c937
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Feb 12 10:42:28 2026 +0000
+
+    uac: Fix 2 spaces when replacing empty display name
+    
+    (cherry picked from commit 1018ff6934879658ec045a6c2165e412c711a2c7)
+    (cherry picked from commit 966d92ff34a892757aec7036dba0085abae3ff12)
+
+commit 18a872b76aa6a84cea2a52922304400e9cac2734
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 10 22:09:15 2026 +0100
+
+    core: parser - field to keep the style of the to_body
+    
+    - enclosed URI or quoted display
+    
+    (cherry picked from commit b1f0091b17707c5e04e7cc370ceb52d84bbd1aae)
+    (cherry picked from commit e4a1693906780e1c7141cec228f5ee1e5172f212)
+
+commit 88b4f8c3fd2e1be08ea246057b2f59f7d6d67cc1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 27 14:20:31 2026 +0100
+
+    xcap_client: check return for curl_easy_init()
+    
+    (cherry picked from commit 7ebb826040d63b4d55f11fb685a6c201739cd4b2)
+    (cherry picked from commit 8b3872b7ddb9653e59e627cbd2e4399813b71abc)
+
+commit 28ed3259bd2a1e1b50923beed9330cdb8803f16e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 27 13:25:20 2026 +0100
+
+    xcap_client: check the return for curl_global_init()
+    
+    (cherry picked from commit 898cdbb4e37f8451c19b7be676d49e3aacd404a2)
+    (cherry picked from commit e96b51fb988b43d7050669c9b598790ee577701e)
+
+commit e1e5e50cbd79c94177dd3414285d76b04f9785c3
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu Jan 22 12:06:07 2026 +0000
+
+    db_text: fix conflicting comment about db_mode
+    
+    (cherry picked from commit 9c6606d335a92b2ef75e106ee958e43cd9c2aff1)
+
+commit 133b7c1dfdc853307513370daaeaadd715a83dc9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 22 11:41:25 2026 +0100
+
+    core: avoid unpredictable parsing behavior on platorms where char is signed
+    
+    * cast unsigned char before calling isalnum(), isdigit(), tolower()
+    
+    fixes #4563
+    
+    (cherry picked from commit 8247b56401401f258995ade7edd8602937a96b19)
+
+commit 439ffa6dcedce96f7eef0569d9c2a12568fca046
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 21 09:50:14 2026 +0100
+
+    corex: use the data type for internal message flags
+    
+    (cherry picked from commit 9cc994d57f9a2a298bc4cbd5dda507b2fe261670)
+
+commit a552ffb0380596e4a750cc4f4cf48a3b8c31a1c7
+Author: Michal PopovicÌ <michal.popovic@cloudtalk.io>
+Date:   Mon Jan 19 13:54:15 2026 +0100
+
+    rtpengine: update documentation for rtp_inst_pvar variable
+    
+    (cherry picked from commit 8712ef21db9109d392c71e64c49fc0255d75decb)
+
+commit d01b0fde219c5fd1be3af95f184339fed1fa57aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 19 10:03:00 2026 +0100
+
+    core: cfg.y - removed unused tocken APPEND_BRANCH
+    
+    (cherry picked from commit d3bbbbfa15c849bb1f1d7aef7a0dfc5d9120a380)
+
+commit 52e23ef0ccd9940aadd0cf47deef77706ca37cdb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 17 07:53:09 2026 +0100
+
+    core: ut - pkg_str_dup() skip memcpy when dst->len is 0
+    
+    (cherry picked from commit fc1004506098e302cba9819179b76a62e245aba0)
+
+commit dbbfe1541f73ba49592da6df2bc18b1c81a1c77a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 13 12:56:02 2026 +0100
+
+    tm: remove module prefix from log message
+    
+    (cherry picked from commit 436b6a3de1797f90ae50fa4730567c3b31d6f660)
+
+commit 2e7e2d449a266a43c76723ce0233ea4d817bfcc0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 12 13:23:12 2026 +0100
+
+    usrloc: small code update for clarity
+    
+    (cherry picked from commit 29e06a63289b70d7fc46fde16cc7ef6ad49f53f7)
+
+commit 4815912fd4e931f4a6710cd94defa5ba1fe86d30
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Wed Feb 25 09:23:42 2026 -0400
+
+    rtpengine: add "directional" flag
+    
+    Closes #4599
+    
+    (cherry picked from commit a02f07ecf24564b7f0eb555cce0bdf88727ebdd3)
+
+commit 3253177f525fd322e4e5e25f85efa6d39563bed5
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Feb 26 14:01:29 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 962028fb3cc5fd72c0ec244eb5be246403207fb2
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Feb 26 13:53:16 2026 +0100
+
+    async: fix typo on use example of async_task_group_data cmd [skip ci]
+    
+    related #4606
+    
+    (cherry picked from commit 6f29228e07eddf155a97a403b66c60dbcf2e051e)
+    (cherry picked from commit 422449360dd6b83f7847a942364665b5b3650ce8)
+
+commit a9055ac8d8fe0e344b1fc73a302b1edfb37f6877
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Feb 26 13:49:15 2026 +0100
+
+    async: fix processing of 3rd parameter of async_task_group_data cmd
+    
+    fixes #4606
+    
+    (cherry picked from commit 9ae78f8bb918324f4303f769ba79c6e2910d2eab)
+    (cherry picked from commit 59799ab4c3d337e64cddbe4c87ea08c8a38cf9a4)
+
+commit c22ffcab6b7b544cc9ae6c3cb055ef74b56a5933
+Author: Morten Tryfoss <morten@tryfoss.no>
+Date:   Mon Feb 23 21:23:19 2026 +0100
+
+    auth_ephemeral: Add link to OpenSSL in CMakeLists
+    
+    (cherry picked from commit 3fd1afe60fe37e0ed87fe3b3c5acb6da9dd613f0)
+
+commit a440d2151bf70ceb4d9ff2e2585e89984fb8960e
+Author: Morten Tryfoss <morten@tryfoss.no>
+Date:   Mon Feb 23 21:00:24 2026 +0100
+
+    geoip2: Fix typo in CMakeLists
+    
+    (cherry picked from commit 2c9e3138d2e5ada1b52e8e66af7df0dae4dce0f8)
+
+commit 43e5af11f3a0c91a28b85095038812e281b37500
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 20 09:13:46 2026 +0100
+
+    core: skip warning for no-native locks on aarch64
+
+commit ee02200c2f4d8820fc9e165925ee25acbb1e3447
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 20 06:58:22 2026 +0100
+
+    core: tcp read - checks for MSRP first line
+    
+    (cherry picked from commit 045bf283c095d72e69986403c5835afeca9af4f1)
+    (cherry picked from commit a64fd75c148ab1e224587da9b60ed048366d208a)
+
+commit 58109a52b91c852feda76261fa0c3cedff9e9ce5
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Feb 9 08:17:03 2026 +0000
+
+    cmake: netsnmp: Use correct option for discovering linking libraries
+    
+    (cherry picked from commit 92540376d1ab794802f7a047389f68a079a23021)
+
+commit 4fe55009757be0de60bffe647eef9a8cc1257d0b
+Author: eddie2072 <eddie2072@icloud.com>
+Date:   Wed Feb 4 19:44:33 2026 +0800
+
+    rtpengine: avoid use-after-free when logging duplicate hash entry
+    
+    (cherry picked from commit 94ce539038df5565e88bfa8105cfc289575105cd)
+
+commit dc03baff3bb13214c8715905f34bfedfbe57f958
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Wed Jan 28 04:59:27 2026 +0100
+
+    uac: copy uac_flag to transaction's uas request in replace_callback
+    
+    (cherry picked from commit 3da94a1920f0dfafc553c0d7519fd9733ce00899)
+
+commit 761c4f0d354fbe58f7412fcd0ea4aa4d429be6da
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Jan 30 12:31:29 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 4407527432a5a33763dcb62b5d397a868262d461
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Jan 30 11:52:45 2026 +0100
+
+    nats: fix typo at nats_url example [skip ci]
+    
+    (cherry picked from commit cc0362dc78eedd8f88d546d3d4e58555717d8088)
+    (cherry picked from commit bbd698b2e591e6b70337911d93d0385329cffa76)
+
+commit 0d1eb775b65981936debdd3f22bdd692746c930b
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:11:37 2026 +0000
+
+    cmake: Update mutex option for TLS support and clean up unused code
+    
+    (cherry picked from commit c992bc7621ee1d18ceddf8866a8b38a852d1a1a9)
+
+commit 4b3c53265e0a073d1d3453a014f3fa43b6eef19d
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:04:57 2026 +0000
+
+    sipdump: cmake: Add missing dependencies
+    
+    (cherry picked from commit 98d6e8df16778e60e2b71f7d1c6bdff2b3a3df61)
+
+commit 23e2d5c5a6daf67e7c41ef20a3d0c757c71ce481
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:04:33 2026 +0000
+
+    misctest: cmake: Add missing dependencies
+    
+    (cherry picked from commit 983f8cdc8af95b7bfb7d443c58427b8cff733003)
+
+commit 9f3d18d7ad8180a098224dd14defa23bd863114c
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:04:10 2026 +0000
+
+    ims_registrar_scscf: cmake: Add missing dependencies
+    
+    (cherry picked from commit 53ddd2411960606821dddd8db8b8fe7abc5704ba)
+
+commit 93785b09c8c09cf686abd84590639cccd5722195
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:02:48 2026 +0000
+
+    ims_registrar_pcscf: cmake: Add missing dependencies
+    
+    (cherry picked from commit 7269a4c281d3e4f1a5d89e62c97bc17a04779201)
+
+commit b99def4d6ebc32e3113dc94c1ee8eb50b8afc6e9
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:01:19 2026 +0000
+
+    ims_qos_npn: cmake: Add missing dependencies
+    
+    (cherry picked from commit 5cf2f4ecde080d6ab1402b9c94bcb33f7b91b8dc)
+
+commit f10715bb3fa82627a1804cfc62dafaee73c662c1
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:00:58 2026 +0000
+
+    ims_qos: cmake: Add missing dependencies
+    
+    (cherry picked from commit cd5ad0b7f0f14bcdafa0ec7597d7a0a802260429)
+
+commit 4f2ed2db5f1364525e5e2d7df402556f885b6264
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:00:35 2026 +0000
+
+    ims_ocs: cmake: Add missing dependencies
+    
+    (cherry picked from commit 5a3874b0140527eacbb1c90ea53a6c8560cbb892)
+
+commit 26c2c3bf1bdab22166f0f3b434557b240e7072b6
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 17:00:08 2026 +0000
+
+    ims_ipsec_pcscf: cmake: Add missing dependencies
+    
+    (cherry picked from commit a4589658e78a79a4d9561ee50eae208360513f86)
+
+commit 0c152bfb9f2b8819b37c66cfc3213f08508b08d5
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 16:58:43 2026 +0000
+
+    ims_diameter_server: cmake: Add missing dependencies
+    
+    (cherry picked from commit a284b855016eaeed430c79db9300f0c167aa7dc3)
+
+commit ddf2cdd70a851661769f6e6e9492cac1a544be70
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 16:58:27 2026 +0000
+
+    erlang: cmake: Add missing dependencies
+    
+    (cherry picked from commit 441b7c861e0d1324b642493175e28b7d8a41a974)
+
+commit b9a03d970ae1cf180ba6a6f261744c0ab9861749
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Jan 21 01:35:21 2026 +0000
+
+    cmake: erlang: Adopt for newer Erlang/OTP version
+    
+    - libinterface.a deprecated in OTP Version 23
+    - Allow custom installation paths
+    
+    (cherry picked from commit 13d22450cdf99c6bbc31dfae51d874361b8f78f6)
+
+commit 27018e007d045a0d9e2b10479136b31d9e22a1d4
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 16:57:32 2026 +0000
+
+    cdp: cmake: Add missing dependencies
+    
+    (cherry picked from commit d13fcc0300c6bed9f531d0db9a513e116ca4d89a)
+
+commit 00296194d1fda096000441083886e11d51e5c099
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 16:57:05 2026 +0000
+
+    app_ruby_proc: cmake: Add missing dependencies
+    
+    (cherry picked from commit 7d86a9b2d20bb0b8a550498be44bb904066c00a9)
+
+commit 59cb58305afa84ebdee1ca63708920ead855635e
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 20 16:56:21 2026 +0000
+
+    app_ruby: cmake: Add missing dependencies
+    
+    (cherry picked from commit f87fd704d4ec4d6c470fc49be799a460937de806)
+
+commit f2d67fb3e1abdf03834c179f0747b9bd31896151
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Jan 19 09:15:33 2026 +0000
+
+    tlsa: cmake: Add build workaround for riscv64
+    
+    (cherry picked from commit ba74e43074eaf9df80f6b2d231c658bbc4b85db6)
+
+commit 6380082df413958166f5413dcfe42c5914dae1d6
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Jan 16 11:07:02 2026 +0000
+
+    tlsa: cmake: Search for static openssl with find_package
+    
+    (cherry picked from commit acf5882c6142674a8f44de208f60f8d586eefb11)
+
+commit 075aba703ae7cb287ffff600dfa35ad3ce3670b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 14 23:21:37 2026 +0100
+
+    tlsa: CMakeLists.txt - search and link to static ssl, crypto and z libs
+    
+    - GH #4552
+    
+    (cherry picked from commit 73d2ffe0f39d27376ea2e4082d1cbf317a80623d)
+
+commit 5d6372dccf8739e7ae10edb5890ef5832750ca0f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 14 19:25:39 2026 +0100
+
+    tls: CMakeLists.txt - added scope to target_compile_definitions()
+    
+    (cherry picked from commit aa64948ab69ce4ea7c0210de42b357353ff9aee4)
+
+commit 379d15587b8f8e24a631426eed95831165f0a08b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 14 19:24:01 2026 +0100
+
+    tlsa: CMakeLists.txt - the module has to be always linked with static libs
+    
+    - removed condition on LIBSSL_STATIC
+    
+    (cherry picked from commit 8006cc7d72b71b1e65c7f6eabead72593d03fcd6)
+
+commit 4d67fbf0d297f7c93f206a42fe74297939ec2c2e
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 13 15:28:41 2026 +0000
+
+    microhttpd: Lower acceptable version
+    
+    - bookworm builds fine with 0.9.72
+    
+    (cherry picked from commit 8e3e3499c15c77403974d94f8602384e7455cbed)
+
+commit 7bbbd0a5f93e7a70671784048cc593acab4327df
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 13 16:00:59 2026 +0000
+
+    cmake: netsnmp:  Don't require the cflags
+    
+    - It was using wrong interface property
+    - kamailio modules do not require them
+    
+    (cherry picked from commit 884208172dd50fcbda1010be1e5cff66a484cfbc)
+
+commit d74ac6f65d20332692ee70809dca206cfbfe6275
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Jan 13 10:54:44 2026 +0000
+
+    rabbitmq: cmake: Use pkgconfig to find it
+    
+    - v0.11 (bookworm) reports wrong version (4.5.0) when used which adds the defintion and breaks the build
+    
+    (cherry picked from commit c13053e0d015391ceb76161375ca8389af40158d)
+
+commit 5f0de9fef869f4b312842bf71009e7f19fad9c39
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Dec 17 11:53:27 2025 +0000
+
+    cmake: Add default and per arch priority list for lock methods
+    
+    - Add aarch64 support for futexlock
+    - Add default priority  according to lock_ops.h
+    - Add per-arch priorrity list, if not exist back to default
+    - Add aarch64 priority list
+    - Add some compile warnings
+    
+    (cherry picked from commit 18119539680183d5815df84c67d64a94357afbfd)
+
+commit eca78e86d21c7cb571e4fe1b7c76a10e9942b14d
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Dec 12 13:02:20 2025 +0000
+
+    cmake: Update futex and fast_lock arch support
+    
+    - Remove futex support for arm
+    - Add fast_lock support for arm
+    
+    (cherry picked from commit 4b3ac98cd29b3fbe9856e9b83e92e49031fe081a)
+
+commit dff8a9c266c7676af7d809579f4fce85dddd9f1a
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Dec 11 15:54:06 2025 +0000
+
+    cmake: Update arch that support futex locking mechanism
+    
+    (cherry picked from commit 9ad781bb519182cb13b63be5bc2c68944a75c1d3)
+
+commit 37379eff106f2746a360dcbf91fa0bc4ec780400
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Dec 9 11:09:50 2025 +0000
+
+    cmake: Don't USE_FUTEX for arm64/aarch64
+    
+    (cherry picked from commit a326b57363754e2ba5e1824e02b2a1ce80584fc7)
+
+commit 38d9c40e646f820404c422518690e1af7d824729
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Sep 24 15:38:35 2025 +0000
+
+    core: Add missing USE_FUTEX check in locks
+    
+    (cherry picked from commit da4e0d2dab0678374abbe6fa2274a6a434cf39c5)
+
+commit 80bc8665dcc185f5301b93283560a890eac73ac4
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Aug 12 14:13:05 2025 +0000
+
+    cmake: Update locking method detection
+    
+    (cherry picked from commit b4df3a4e9586e5a583fbee089993f9eb25e2d417)
+
+commit bca81cc5694cf05a669637cefb94faf0ce1b5a5d
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Dec 8 16:30:46 2025 +0000
+
+    cmake: Respect KTLS_INCLUDE_TLSA env variable
+    
+    - KTLS group will include TLSA modules as well when defined
+    - KTLSA group exists when not defined
+    
+    (cherry picked from commit 0f67c919e2a0b06e6a398867aff47cef7a7db679)
+
+commit 8621578197b44fe2f6794b16ec20bfb1d048dd88
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Aug 18 09:40:50 2025 +0000
+
+    websocket: cmake: Replace definition as an option for visibility
+    
+    - EMBEDDED_UTF8_DECODE option
+    
+    (cherry picked from commit acae32534942bd50436ec5e615193bd8f55f42cc)
+
+commit 9efb4c9ed558e7054f98e52abe1db2c4f9c0e132
+Author: Nathan Bruning <nathan.bruning@gmail.com>
+Date:   Fri Jan 23 12:10:36 2026 +0100
+
+    core: qm: fix bookkeeping of used and real_used in case of fragment split
+    
+    (cherry picked from commit 412dcbfc9e2079c16ca23e423beb12b867ab4709)
+
+commit f8df3ff98392c63733e0eb7e2c47e502730ee9dc
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Mon Jan 26 13:25:04 2026 +0000
+
+    ims_ipsec_pcscf: reuse IPSec tunnel params only if Ck and Ik stays the same
+    
+    (cherry picked from commit e728b7b8ec58cbd4c322fac076ef24572e895d0a)
+
+commit 800895cb5d069268016812a0174ca3ed2dc6b479
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jan 21 08:36:46 2026 +0100
+
+    ims_registrar_scscf: unlock_udomain using the proper identity
+    
+    related #4553
+
+commit 8529975a9e2fc9f61dcde50955db02c78c7157b4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 15 09:54:19 2026 +0100
+
+    ims_registrar_scscf: fix missing unlocks at update_contacts()
+    
+    issue introduced at 75904895577d0329ba0d30d10e645b8769451e51
+    
+    fix #4553
+    
+    (cherry picked from commit dacfbbf4d919c3004827bc7a0107c37a9bf77655)
+
+commit 5ae059af990782f7f38b6738d01fa59e961e54f7
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Tue Nov 11 19:15:17 2025 +0000
+
+    ims_registrar_scscf: check event type before populating Subscription-State in NOTIFY from S-CSCF
+    
+    (cherry picked from commit 913dce948729cdd0f9e45e7d71da8c3936719c58)
+
+commit 96dc055e5bc08791e30296faa8a0f60867268aa5
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Tue Nov 11 18:15:33 2025 +0000
+
+    ims_registrar_scscf: fix populating of Subscription-State in NOTIFY from S-CSCF
+    
+    (cherry picked from commit b4e07a290b7cbf369762c579a81182a1f9edf6e4)
+
+commit 288639366a56235c4a09266d734c9520e78a9f0f
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Nov 17 17:16:48 2025 +0000
+
+    cmake: Demote fatal errors to warning for compilers
+    
+    (cherry picked from commit f7da6becd8bdb6446ea7ca4b681b694283f02102)
+
+commit d467d91eea3eaee4822e130588c86fd3cc5d662b
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Nov 26 09:39:54 2025 +0000
+
+    topos_htable: fix PRACK routing
+    
+    - fix PRACK routing
+    - related to GH #4466
+    
+    (cherry picked from commit e893703d2b319468ca9d5f9ff51d8b74a29ca190)
+
+commit 6a8ccf7841e016f7d2c219469f517343281e09bd
+Author: Stefan Mititelu <stefan.mititelu@net2phone.com>
+Date:   Tue Oct 7 13:55:19 2025 +0300
+
+    topos_htable: remove smethod from transaction key
+    
+    (cherry picked from commit b8db6e6ee1ff61ca517c209a202f5db05865c3ab)
+
+commit 6e51390db6b60178b58c2a9f619011aae4f35eea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 8 21:10:17 2026 +0100
+
+    core: split input/output parameters validation for base64url_enc()/_dec()
+    
+    - update after commit d7210bc1102ae820f9e6f8998694271ac2a320fe, allowing
+      again null input with lenght 0 that is used by some modules (e.g.,
+      topos_htable)
+    - GH #4546
+    
+    (cherry picked from commit 21f84cd08052a656ffc74480ee22b2ab6b7a02f0)
+
+
+
 ===================== 2026-01-08 Version 6.0.5 Released =====================
 
 ===================== Changes Since Version 6.0.4 ===========================
