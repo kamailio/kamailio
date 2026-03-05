@@ -265,6 +265,7 @@ extern char *default_routename;
 %token UDP_MTU
 %token UDP_MTU_TRY_PROTO
 %token UDP_RECEIVER_MODE
+%token UDP_ACCEPT_PROXY
 %token UDP4_RAW
 %token UDP4_RAW_MTU
 %token UDP4_RAW_TTL
@@ -2168,6 +2169,8 @@ assign_stm:
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| UDP_RECEIVER_MODE EQUAL NUMBER { ksr_udp_receiver_mode=$3; }
 	| UDP_RECEIVER_MODE EQUAL error { yyerror("number expected"); }
+	| UDP_ACCEPT_PROXY EQUAL NUMBER { ksr_udp_accept_proxy=$3; }
+	| UDP_ACCEPT_PROXY EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER
 		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0, 0); }
 	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }

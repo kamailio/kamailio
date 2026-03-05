@@ -38,6 +38,7 @@
 #define BUFFER_INCREMENT 2048
 
 
+int udp_main_init(void);
 int udp_init(struct socket_info *si);
 int udp_send(struct dest_info *dst, char *buf, unsigned len);
 int udp_rcv_loop(void);
