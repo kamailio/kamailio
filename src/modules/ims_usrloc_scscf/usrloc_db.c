@@ -102,15 +102,17 @@ int impu_contact_delete_query_len;
 
 char *impu_subscriber_insert_query =
 		"INSERT INTO impu_subscriber (impu_id, subscriber_id) (SELECT I.id, "
-		"S.id FROM impu I, subscriber S WHERE I.impu='%.*s' and S.event='%.*s' "
-		"and S.watcher_contact='%.*s' and S.presentity_uri='%.*s')";
+		"S.id FROM impu I, subscriber_scscf S WHERE I.impu='%.*s' and "
+		"S.event='%.*s' and S.watcher_contact='%.*s' and "
+		"S.presentity_uri='%.*s')";
 int impu_subscriber_insert_query_len;
 char *impu_subscriber_delete_query =
 		"DELETE impu_subscriber FROM impu_subscriber INNER JOIN impu on "
-		"impu_subscriber.impu_id=impu.id INNER JOIN subscriber on "
-		"impu_subscriber.subscriber_id=subscriber.id WHERE impu.impu='%.*s' "
-		"AND subscriber.event='%.*s' and subscriber.watcher_contact='%.*s' and "
-		"subscriber.presentity_uri='%.*s'";
+		"impu_subscriber.impu_id=impu.id INNER JOIN subscriber_scscf on "
+		"impu_subscriber.subscriber_id=subscriber_scscf.id WHERE "
+		"impu.impu='%.*s' AND subscriber_scscf.event='%.*s' and "
+		"subscriber_scscf.watcher_contact='%.*s' and "
+		"subscriber_scscf.presentity_uri='%.*s'";
 int impu_subscriber_delete_query_len;
 
 char *delete_unlinked_contact_query = "DELETE from contact";
@@ -822,7 +824,8 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 			"s.presentity_uri,s.watcher_uri,s.watcher_contact,s.event,s."
 			"expires,s.version,s.local_cseq,s.call_id,s.from_tag,"
 			"s.to_tag,s.record_route,s.sockinfo_str FROM impu_subscriber m "
-			"LEFT JOIN subscriber s ON s.id=m.subscriber_id WHERE m.impu_id=";
+			"LEFT JOIN subscriber_scscf s ON s.id=m.subscriber_id WHERE "
+			"m.impu_id=";
 
 	query_contact.s = p_contact;
 	query_contact.len = strlen(query_contact.s);
