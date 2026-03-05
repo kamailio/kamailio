@@ -28,6 +28,7 @@ function(add_db_target db_name xsl_file)
   endif()
 
   find_group_name(${db_name_folder})
+  # message(WARNING "group name is ${group_name}")
 
   add_custom_target(
     dbschema_${db_name}
@@ -127,14 +128,25 @@ function(add_db_target db_name xsl_file)
   add_dependencies(dbschema dbschema_${db_name})
   add_dependencies(dbschema_clean dbschema_${db_name}_clean)
 
-  # message(WARNING "group name is ${group_name}")
-  # Before installing, ensure the target is built `dbschema_${db_name}`
-  # install as previously done in makefile folder. see naming above
-  # TODO: when tools adopt to new folder structure, replace the install_folder variable
-  # with ${db_name_folder}
+  # When a schema file is updated, we should run the `dbschema_${db_name}`
+  # target to update the generated schema files in the source directory.
+  # TODO: when tools adopt to new folder structure, replace the install_folder
+  # variable with ${db_name_folder}
 
+  # Copy the generated schema files to the source directory
+  add_custom_command(
+    TARGET dbschema_${db_name}
+    POST_BUILD
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory
+      "${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/${folder_suffix}"
+      "${CMAKE_SOURCE_DIR}/utils/kamctl/${install_folder}/${folder_suffix}"
+    COMMENT "Copying generated schema files for ${db_name} to source directory"
+  )
+
+  # Install from source tree (should always be up to date)
   install(
-    DIRECTORY ${CMAKE_BINARY_DIR}/utils/kamctl/${db_name_folder}/
+    DIRECTORY ${CMAKE_SOURCE_DIR}/utils/kamctl/${install_folder}/
     DESTINATION ${CMAKE_INSTALL_DATADIR}/${MAIN_NAME}/${install_folder}
     OPTIONAL
     COMPONENT ${group_name}
