@@ -34,6 +34,9 @@
 /* RPC substitution char (used in rpc_t_uac headers) */
 #define SUBST_CHAR '!'
 
+#ifndef TM_RPC_SUBST_CHAR_ON
+#define TM_RPC_SUBST_CHAR_ON 0
+#endif
 #define TM_RPC_RESPONSE_LIFETIME 300
 #define TM_RPC_RESPONSE_TIMERSTEP 10
 
@@ -739,7 +742,7 @@ static void rpc_t_uac_attrs_helper(
 			< 0)
 		goto error;
 	if(get_hfblock(tattrs->nexthop.len ? &tattrs->nexthop : &tattrs->ruri,
-			   faked_msg.headers, PROTO_NONE, ssock, 1, &hfb)
+			   faked_msg.headers, PROTO_NONE, ssock, TM_RPC_SUBST_CHAR_ON, &hfb)
 			< 0) {
 		rpc->fault(c, 500, "Failed to build headers block");
 		goto error;
