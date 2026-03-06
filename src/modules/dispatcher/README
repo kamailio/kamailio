@@ -1319,7 +1319,7 @@ With congestion control the formula becomes :
             rate).
           + “14” - round-robin (4) if all the destinations in the group
             have the same priority and the priority is greater than 0,
-            otherise serial dispatching (8).
+            otherwise serial dispatching (8).
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in XAVP list for
