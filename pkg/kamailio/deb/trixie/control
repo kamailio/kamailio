@@ -25,7 +25,7 @@ Build-Depends:
  libjansson-dev,
  libjson-c-dev,
  libldap2-dev,
- liblua5.1-0-dev,
+ liblua5.4-dev,
  libmaxminddb-dev,
  libmemcached-dev,
  libmicrohttpd-dev,

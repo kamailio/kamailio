@@ -19,6 +19,9 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 # libncurses
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
+# latest higher lua version available
+sed -i -e 's/liblua5.5-dev/liblua5.4-dev/g' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

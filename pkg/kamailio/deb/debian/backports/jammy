@@ -25,6 +25,9 @@ sed -i -e '/^ libsecp256k1-dev,/d' \
 sed -i -e '/^PACKAGE_GROUPS += auth_blockchain$/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += auth_blockchain' ${DIST}/rules
 
+# latest higher lua version available
+sed -i -e 's/liblua5.5-dev/liblua5.4-dev/g' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
