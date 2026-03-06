@@ -1,3 +1,272 @@
+===================== 2026-03-06 Version 5.8.8 Released =====================
+
+===================== Changes Since Version 5.8.8 ===========================
+
+
+commit f981bf4a773124d23b028f7ac2c0c6c5756ad377
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 6 09:03:57 2026 +0100
+
+    Makefile.defs: version set to 5.8.8
+
+commit f03f27bab1e0ed66a42e6aedf58597f305959e82
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 6 09:00:23 2026 +0100
+
+    pkg/kamailio/deb: set version to 5.8.8 [skip ci]
+
+commit dee1ded335b690d8c3e9077a6e87c8e1ba973944
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 6 08:59:19 2026 +0100
+
+    pkg/kamailio: version set 5.8.8 for rpms and alpine
+
+commit 1d50642f1c3521e78542737b452cc5de99eb2cf5
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Mar 5 18:16:35 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 2cfa06823d9230b2ca09865fa1331321d819729c
+Author: JiangHai2011 <haij2011@sina.com>
+Date:   Wed Mar 4 09:07:41 2026 +0100
+
+    tls: check SSL_set_app_data return value and handle the error
+
+    (cherry picked from commit 072e948b41d5633bf5d824141460d72307826d0b)
+    (cherry picked from commit 93bad4a3efcf7c09e55c2dff4c24cf64b0a05876)
+    (cherry picked from commit a44abcbcaecea58d3e913b7e6c41a3e7e4ad0ac1)
+
+commit 26742e3b930cd5106de5d01fc9e5d04ac096cfe0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 2 12:45:52 2026 +0100
+
+    core: adjust bufsize filed for event route message received
+
+    (cherry picked from commit c2639123993febc5b59f0127c2d97d79520a2928)
+    (cherry picked from commit 1ab4d31158030138c933a8d74b55ad2b2e78bd14)
+    (cherry picked from commit 4942b7dfe0b10c2e7d6a37033df35ab52e7a3267)
+
+commit fed0b023d440263ef9206479087dc548b09aeecd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 25 08:15:17 2026 +0100
+
+    pv: extended $rcv(...) variable for event_route[core:msg-received]
+
+    - aliased to $recv(...) to be able to avoid collisions in some cases
+      with return code
+
+    (cherry picked from commit 93ba4a9e3c37904d564e75e8802cd70e94491ae9)
+    (cherry picked from commit 8d702d7e912aba45e6fd2a3ad76bac1a936b6633)
+    (cherry picked from commit b5325e69ea6075e2f520b8a2a8a920e4a1d06653)
+
+commit 39fa85558d07e3713b6334f976b2c544b9ded69e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 24 18:06:23 2026 +0100
+
+    pv: extended string transformation with charat and byteat
+
+    (cherry picked from commit df1f5c02c003c77d0a902e6e4ba1115caa096ff3)
+    (cherry picked from commit 4ed2c55c4cfc8bd8d66b352775d9c5f1f0252ef7)
+    (cherry picked from commit 280ca8288c7a64fedfb0e7be321fc74fe7c095da)
+
+commit 463dfcdbb648dbd5c8e691ac97cc96e6f690e440
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 24 13:14:51 2026 +0100
+
+    core: extended the execution of event_route[core:msg-received]
+
+    - option to be executed when data is read from network
+
+    (cherry picked from commit 454e897f153736aac53776517a9ecfa260ce910a)
+    (cherry picked from commit 6204721ab081d63022b9b37c6702dff8c6d2fa50)
+    (cherry picked from commit 5e86153562a919c73160e2a2e14a5073cb026aaa)
+
+commit c2f65781197c1de203e95c1dcfa9a119c85b8b30
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 23 08:37:07 2026 +0100
+
+    core: parameter tcp_accept_protocols to control active protocols
+
+    (cherry picked from commit 96ebc009544b7e3c5efa88708cfe71df8e7d5989)
+    (cherry picked from commit e6f010c553df6499b9d85ee621312d77307c2617)
+    (cherry picked from commit f18657182c03ede0ac54fe73c0c81368d89c2e0d)
+
+commit 060b6c2530c82f71eff0a205baaa248f9be11388
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 1 22:55:21 2026 +0100
+
+    core: tcp read - check coontent lenght for max int limit
+
+    (cherry picked from commit 2c47fe1625b57e04252230e0e783ba4182afbebb)
+    (cherry picked from commit 4076b32435b32205460e4d5fbcbef3ed8500e8c7)
+    (cherry picked from commit 0d7a4b072cd649b7109451e15f2611461f35cdb5)
+
+commit c207afcf7ae30fa98cde00919417446d6c3eef7e
+Author: Norm Brandinger <n.brandinger@gmail.com>
+Date:   Fri Feb 13 15:00:33 2026 -0500
+
+    dialog: fix race condition in link_dlg_profile
+
+    Move link_profile() call inside the dialog entry lock in
+    link_dlg_profile(). Without this, a linker added to the dialog's
+    profile list becomes visible to destroy_linkers() before it is
+    inserted into the profile hash table. If destroy_linkers() runs in
+    that window, it sees hash_linker.next as NULL, skips the hash table
+    unlink, and frees the linker. The subsequent link_profile() call
+    then operates on freed memory, corrupting the profile hash table.
+
+    This causes SIGSEGV in get_profile_size() (NULL pointer in hash
+    chain traversal) or an infinite loop when hash buckets become
+    cross-linked.
+
+    GH #2923
+
+    (cherry picked from commit c958cc7a1dcad00c4bb36f79d539bbb96f135642)
+    (cherry picked from commit c3fd3592257edbb2bd4d74cb438e6576cac7a079)
+    (cherry picked from commit 79f3a1fdc1cc9e816171a87811d08c6f7c1c3fc8)
+
+commit 4a5e3fbc54c6b8f362a9c31027f1f712bc616578
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 22 11:41:25 2026 +0100
+
+    core: avoid unpredictable parsing behavior on platorms where char is signed
+
+    * cast unsigned char before calling isalnum(), isdigit(), tolower()
+
+    fixes #4563
+
+    (cherry picked from commit 8247b56401401f258995ade7edd8602937a96b19)
+    (cherry picked from commit 133b7c1dfdc853307513370daaeaadd715a83dc9)
+
+commit 985869ce91fe8350bb43aa84099da77e5a5e332c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Jan 17 07:53:09 2026 +0100
+
+    core: ut - pkg_str_dup() skip memcpy when dst->len is 0
+
+    (cherry picked from commit fc1004506098e302cba9819179b76a62e245aba0)
+    (cherry picked from commit 52e23ef0ccd9940aadd0cf47deef77706ca37cdb)
+
+commit 42949d0f7f4e1c0dc9d1fd0ed4e69d2860775812
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 19 10:03:00 2026 +0100
+
+    core: cfg.y - removed unused tocken APPEND_BRANCH
+
+    (cherry picked from commit d3bbbbfa15c849bb1f1d7aef7a0dfc5d9120a380)
+    (cherry picked from commit d01b0fde219c5fd1be3af95f184339fed1fa57aa)
+
+commit 2e455d6b1111376f9a74f4418af2fd050e164ba2
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Feb 26 13:53:16 2026 +0100
+
+    async: fix typo on use example of async_task_group_data cmd [skip ci]
+
+    related #4606
+
+    (cherry picked from commit 6f29228e07eddf155a97a403b66c60dbcf2e051e)
+    (cherry picked from commit 422449360dd6b83f7847a942364665b5b3650ce8)
+    (cherry picked from commit 962028fb3cc5fd72c0ec244eb5be246403207fb2)
+
+commit 48f0a8f63ce6969a4eadcbdcb891e5ebdd035bf3
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Feb 26 13:49:15 2026 +0100
+
+    async: fix processing of 3rd parameter of async_task_group_data cmd
+
+    fixes #4606
+
+    (cherry picked from commit 9ae78f8bb918324f4303f769ba79c6e2910d2eab)
+    (cherry picked from commit 59799ab4c3d337e64cddbe4c87ea08c8a38cf9a4)
+    (cherry picked from commit a9055ac8d8fe0e344b1fc73a302b1edfb37f6877)
+
+commit 1fb7931f070c214f1a6a7dfb1a1f34a3fe0c8879
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Sat Mar 29 20:50:13 2025 +0200
+
+    github: generate rpm packages
+
+    (cherry picked from commit afa2d017e3b5a1f5a776935767e485c1158be461)
+
+commit d542b3372afa4eaa560cf3f99f0f97f30050719f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 20 06:58:22 2026 +0100
+
+    core: tcp read - checks for MSRP first line
+
+    (cherry picked from commit 045bf283c095d72e69986403c5835afeca9af4f1)
+    (cherry picked from commit a64fd75c148ab1e224587da9b60ed048366d208a)
+    (cherry picked from commit ee02200c2f4d8820fc9e165925ee25acbb1e3447)
+
+commit 451ea2ac7968473e840e92f3e6c72d712d753040
+Author: eddie2072 <eddie2072@icloud.com>
+Date:   Wed Feb 4 19:44:33 2026 +0800
+
+    rtpengine: avoid use-after-free when logging duplicate hash entry
+
+    (cherry picked from commit 94ce539038df5565e88bfa8105cfc289575105cd)
+
+commit 1c97636ae32e1a66ba49a866819e9d27a14fa920
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Jan 30 12:31:38 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e2af125b571f67182bc579488fd6f324943788ac
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Jan 30 11:52:45 2026 +0100
+
+    nats: fix typo at nats_url example [skip ci]
+
+    (cherry picked from commit cc0362dc78eedd8f88d546d3d4e58555717d8088)
+    (cherry picked from commit bbd698b2e591e6b70337911d93d0385329cffa76)
+    (cherry picked from commit 4407527432a5a33763dcb62b5d397a868262d461)
+
+commit 5bdd839652a8018cb7abdf59e4d407c4ad06c35a
+Author: Nathan Bruning <nathan.bruning@gmail.com>
+Date:   Fri Jan 23 12:10:36 2026 +0100
+
+    core: qm: fix bookkeeping of used and real_used in case of fragment split
+
+    (cherry picked from commit 412dcbfc9e2079c16ca23e423beb12b867ab4709)
+
+commit 8bdde9e6ad5fed54ca5112e7f5dd1379d2f6c51c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jan 21 08:36:46 2026 +0100
+
+    ims_registrar_scscf: unlock_udomain using the proper identity
+
+    related #4553
+
+    (cherry picked from commit 800895cb5d069268016812a0174ca3ed2dc6b479)
+
+commit 6dbc891ec89c21da5225f0181a7743ccf5cb3bda
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jan 15 09:54:19 2026 +0100
+
+    ims_registrar_scscf: fix missing unlocks at update_contacts()
+
+    issue introduced at 75904895577d0329ba0d30d10e645b8769451e51
+
+    fix #4553
+
+    (cherry picked from commit dacfbbf4d919c3004827bc7a0107c37a9bf77655)
+    (cherry picked from commit 8529975a9e2fc9f61dcde50955db02c78c7157b4)
+
+commit c0cd36913a2acc0a0276fe7e3eb81b3923b2d0de
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jan 14 18:05:00 2026 +0100
+
+    pkg/kamailio/deb: remove mono group by default and relay on dynamic detection
+
+commit fca89f8897c76b081923652da44fb901753447d9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jan 14 17:47:14 2026 +0100
+
+    pkg/kamailio/deb: mono is not on all arches [skip ci]
+
+
 ===================== 2026-01-14 Version 5.8.7 Released =====================
 
 ===================== Changes Since Version 5.8.6 ===========================
