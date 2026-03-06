@@ -286,9 +286,11 @@ typedef struct _ds_set {
 	int last;			/*!< last used item in dst set (round robin) */
 	int wlast;			/*!< last used item in dst set (by weight) */
 	int rwlast;			/*!< last used item in dst set (by relative weight) */
+	int pwlast;			/*!< last used item in dst set (by priority+weight) */
 	ds_dest_t *dlist;
 	unsigned int wlist[100];
 	unsigned int rwlist[100];
+	unsigned int pwlist[100];	/*!< priority-weight distribution list */
 	struct _ds_set *next[2];
 	int longer;
 	int rrserial;		/*!< round-robin or serial flag */

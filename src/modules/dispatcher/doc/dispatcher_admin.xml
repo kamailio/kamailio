@@ -1516,6 +1516,43 @@ With congestion control the formula becomes :
 			</listitem>
 			<listitem>
 				<para>
+				<quote>15</quote> - priority and weight based distribution
+				(SRV-style). This algorithm was implemented to help replicate
+				DNS SRV record selection logic within the dispatcher.
+				</para>
+				<para>
+				It first selects all active destinations that share the best
+				(lowest) priority value — following the SRV convention where
+				a lower priority number means higher preference. Calls are
+				then distributed among those destinations according to their
+				weight attribute. If the weights are not set, traffic is
+				distributed equally among the selected destinations.
+				</para>
+				<para>
+				When all destinations at the current best priority become
+				inactive, the algorithm automatically recalculates the
+				distribution and falls back to destinations at the next
+				priority level, mirroring SRV failover behaviour.
+				</para>
+				<example>
+				<title><function>priority_weight_dispatching</function> usage</title>
+				<programlisting format="linespecific">
+GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
+   1    |    10    |   70   |   70%
+   2    |    10    |   30   |   30%
+   3    |    20    |   50   |    0%  (higher priority value = lower preference)
+   4    |    20    |   50   |    0%
+
+If gateways 1 and 2 become inactive:
+
+GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
+   3    |    20    |   50   |   50%
+   4    |    20    |   50   |   50%
+				</programlisting>
+				</example>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
