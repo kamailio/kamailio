@@ -26,14 +26,18 @@
 #define _PERM_HASH_H_
 
 #include <stdio.h>
+#include <stdbool.h>
+
 #include "../../core/parser/msg_parser.h"
 #include "../../core/str.h"
 #include "../../core/rpc.h"
 #include "../../core/usr_avp.h"
+#include "../../core/locking.h"
 
 #define PERM_HASH_SIZE 128
 
 /*
+ * Hash bucket.
  * Structure stored in trusted hash table
  */
 struct trusted_list
@@ -47,6 +51,29 @@ struct trusted_list
 	struct trusted_list *next; /* Next element in the list */
 };
 
+/**
+ * Hash table.
+ */
+struct trusted_hash_table
+{
+	struct trusted_list **row_entry_list; // entry vector (buckets)
+	gen_lock_t **row_locks;				  // locks vector
+	unsigned int size;					  // table size
+};
+
+void trusted_table_free_row_lock(gen_lock_t *row_lock);
+void trusted_table_free_entry(struct trusted_list *entry);
+void trusted_table_free_entries(struct trusted_list *given_entry);
+void trusted_table_free_buckets(struct trusted_hash_table *trusted_table,
+		bool free_locks, bool keep_dummy_head);
+int trusted_table_destroy(struct trusted_hash_table *trusted_table);
+int trusted_table_init(
+		struct trusted_hash_table *trusted_table, unsigned int hash_table_size);
+struct trusted_hash_table *trusted_table_allocate(unsigned int hash_table_size);
+/* same as init, but leaves locks intact
+ * and cleans the whole content beforehand */
+int trusted_table_reinit(
+		struct trusted_hash_table *trusted_table, unsigned int hash_table_size);
 
 /*
  * Parse and init tag avp specification
@@ -61,28 +88,10 @@ void get_tag_avp(int_str *tag_avp_p, int *tag_avp_type_p);
 
 
 /*
- * Create and initialize a hash table
- */
-struct trusted_list **new_hash_table(void);
-
-
-/*
- * Release all memory allocated for a hash table
- */
-void free_hash_table(struct trusted_list **table);
-
-
-/*
- * Destroy a hash table
- */
-void destroy_hash_table(struct trusted_list **table);
-
-
-/*
  * Add <src_ip, proto, pattern, ruri_pattern, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_list **hash_table, char *src_ip,
+int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip,
 		char *proto, char *pattern, char *ruri_pattern, char *tag,
 		int priority);
 
@@ -91,20 +100,15 @@ int hash_table_insert(struct trusted_list **hash_table, char *src_ip,
  * Check if an entry exists in hash table that has given src_ip and protocol
  * value and pattern or ruri_pattern that matches to provided URI.
  */
-int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
-		char *scr_ip, int proto, char *uri);
+int match_hash_table(struct trusted_hash_table *trusted_table,
+		struct sip_msg *msg, char *scr_ip, int proto, char *uri);
 
 
 /*
  * Print entries stored in hash table
  */
-void hash_table_print(struct trusted_list **hash_table, FILE *reply_file);
-int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c);
-
-/*
- * Empty hash table
- */
-void empty_hash_table(struct trusted_list **hash_table);
+int hash_table_rpc_print(
+		struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c);
 
 
 /*
@@ -130,12 +134,6 @@ struct addr_list **new_addr_hash_table(void);
  * Release all memory allocated for a hash table
  */
 void free_addr_hash_table(struct addr_list **table);
-
-
-/*
- * Destroy a hash table
- */
-void destroy_addr_hash_table(struct addr_list **table);
 
 
 /*
@@ -165,7 +163,6 @@ int find_group_in_addr_hash_table(
 /*
  * Print addresses stored in hash table
  */
-void addr_hash_table_print(struct addr_list **hash_table, FILE *reply_file);
 int addr_hash_table_rpc_print(struct addr_list **table, rpc_t *rpc, void *c);
 
 
@@ -234,7 +231,6 @@ int subnet_table_insert(struct subnet *table, unsigned int grp,
 /*
  * Print subnets stored in subnet table
  */
-void subnet_table_print(struct subnet *table, FILE *reply_file);
 int subnet_table_rpc_print(struct subnet *table, rpc_t *rpc, void *c);
 
 
@@ -289,7 +285,6 @@ int find_group_in_domain_name_table(
 /*! \brief
  * RPC: Print addresses stored in hash table
  */
-void domain_name_table_print(struct subnet *table, FILE *reply_file);
 int domain_name_table_rpc_print(
 		struct domain_name_list **table, rpc_t *rpc, void *c);
 
