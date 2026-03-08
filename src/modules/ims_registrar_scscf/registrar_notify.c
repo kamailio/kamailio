@@ -2462,22 +2462,27 @@ void uac_request_cb(struct cell *t, int type, struct tmcb_params *ps)
 		goto done;
 	}
 	// https://datatracker.ietf.org/doc/html/rfc3265#section-3.2.2
-	// Search fro Retry-After in ps->rpl
-	int has_retry_after = 0;
-	if(ps->rpl != NULL && ps->rpl->headers != NULL) {
-		struct hdr_field *hf = ps->rpl->headers;
-		while(hf) {
-			if(hf->name.len == 11
-					&& strncasecmp(hf->name.s, "Retry-After", 11) == 0) {
-				has_retry_after = 1;
-				break;
+	// Search for Retry-After header in ps->rpl in case of non-timeout response for NOTIFY.
+	// A NOTIFY request is considered failed if the response times out, or a non-200 class
+	// response code is received which has no "Retry-After" header and no implied further
+	// action which can be taken to retry the request.
+	if(ps->code != 408 && !(ps->flags & TMCB_LOCAL_F)) {
+		int has_retry_after = 0;
+		if(ps->rpl != NULL && ps->rpl->headers != NULL) {
+			struct hdr_field *hf = ps->rpl->headers;
+			while(hf) {
+				if(hf->name.len == 11
+						&& strncasecmp(hf->name.s, "Retry-After", 11) == 0) {
+					has_retry_after = 1;
+					break;
+				}
+				hf = hf->next;
 			}
-			hf = hf->next;
 		}
-	}
-	if(has_retry_after) {
-		// TODO - save and obey Retry-After
-		goto done;
+		if(has_retry_after) {
+			// TODO - save and obey Retry-After
+			goto done;
+		}
 	}
 	LM_INFO("NOTIFY failed with code [%d] and no Retry-After - the "
 			"subscription will be removed\n",
