@@ -410,6 +410,15 @@ static int mod_init(void)
 	}
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x10101000L
+	/* musl libc does not initialize pthread TSD for the main thread until
+	 * pthread_key_create() is called at least once; calling
+	 * pthread_getspecific() before that dereferences a NULL tsd pointer.
+	 * Create and immediately delete a key to force TSD initialization. */
+	{
+		pthread_key_t _ksr_tsd_init;
+		pthread_key_create(&_ksr_tsd_init, NULL);
+		pthread_key_delete(_ksr_tsd_init);
+	}
 	for(k = 0; k < 32; k++) {
 		if(pthread_getspecific(k) != 0) {
 			LM_WARN("detected initialized thread-locals created before tls.so; "
