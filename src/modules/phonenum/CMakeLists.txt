@@ -21,10 +21,10 @@ else()
 
   if(libphonenumber_LIBRARY AND libgeocoding_LIBRARY)
     set(libphonenum_LIBRARY ${libphonenumber_LIBRARY} ${libgeocoding_LIBRARY})
-    find_path(libphonenumber_INCLUDE_DIR phonenumbers/geocoding/phonenumber_offline_geocoder.h
+    find_path(libphonenumber_INCLUDE_DIRS phonenumbers/geocoding/phonenumber_offline_geocoder.h
               phonenumbers/phonenumberutil.h
     )
-    message(STATUS "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIR}")
+    message(STATUS "Found libphonenumber include directory: ${libphonenumber_INCLUDE_DIRS}")
     message(STATUS "Found libphonenumber library: ${libphonenum_LIBRARY}")
   else()
     message(FATAL_ERROR "libphonenumber library not found")
