@@ -365,7 +365,7 @@ $ kamctl rpc htable.dump htable
 		<para>
 			<emphasis>reloadat</emphasis> - time in seconds to reload a hash table.
 			For each new seconds interval, the hash table will be reloaded. You can catch
-			the reload on the event_route: htable:reloaded:<htable>.
+			the reload on the event_route: htable:reloaded:&lt;htable&gt;.
 		</para>
 		</listitem>
 		<listitem>
@@ -2065,7 +2065,6 @@ event_route[htable:expired:mytable] {
 </programlisting>
 	</section>
 
-	</section>
 	<section>
 		<title>
 		<function moreinfo="none">htable:reloaded:&lt;table&gt;</function>
