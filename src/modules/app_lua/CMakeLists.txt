@@ -12,6 +12,7 @@ else()
   if(NOT Lua_FOUND)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(LUA REQUIRED IMPORTED_TARGET lua)
+    set(LUA_INCLUDE_DIR ${LUA_INCLUDE_DIRS})
   endif()
 endif()
 
