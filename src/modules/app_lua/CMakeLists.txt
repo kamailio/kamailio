@@ -18,5 +18,5 @@ endif()
 # the LUA_COMPAT_MODULE fixes this error: - implicit declaration of function
 # luaL_openlib
 target_compile_definitions(${module_name} PRIVATE LUA_COMPAT_MODULE)
-target_include_directories(${module_name} PRIVATE ${LUA_INCLUDE_DIRS})
+target_include_directories(${module_name} PRIVATE ${LUA_INCLUDE_DIR})
 target_link_libraries(${module_name} PRIVATE ${LUA_LIBRARIES})
