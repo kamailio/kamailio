@@ -112,7 +112,7 @@ jobs:
         echo ${{ github.sha }}
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
       if: "! contains(fromJson('[\"x86_64\", \"aarch64\"]'), matrix.arch)"
 
     - name: Login to GitHub Container Registry
