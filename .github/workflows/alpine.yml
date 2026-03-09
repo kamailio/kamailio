@@ -402,7 +402,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build minimal image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
         DOCKER_BUILD_SUMMARY: false
       with:
@@ -415,7 +415,7 @@ jobs:
         context: "context"
 
     - name: Build .alpine image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
         DOCKER_BUILD_SUMMARY: false
       with:
@@ -430,7 +430,7 @@ jobs:
           IMAGE=${{ needs.check.outputs.alpine_tag }}
 
     - name: Build .debug image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
         DOCKER_BUILD_SUMMARY: false
       with:
