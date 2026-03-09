@@ -217,6 +217,26 @@ modparam("evapi", "wait_increase", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="evapi.p.send_task_timeout">
+		<title><varname>send_task_timeout</varname> (int)</title>
+		<para>
+			Set the timeout in microseconds to send the task internally to
+			evapi workers. If set to 0, no timeout is set.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>send_task_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "send_task_timeout", 200000)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
