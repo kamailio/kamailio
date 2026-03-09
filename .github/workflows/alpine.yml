@@ -339,7 +339,7 @@ jobs:
 
     - name: Docker meta
       id: meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         # list of Docker images to use as base name for tags
         images: |
@@ -356,7 +356,7 @@ jobs:
 
     - name: Docker meta "-alpine"
       id: meta-alpine
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         # list of Docker images to use as base name for tags
         images: |
@@ -373,7 +373,7 @@ jobs:
 
     - name: Docker meta "-debug"
       id: meta-debug
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         # list of Docker images to use as base name for tags
         images: |
