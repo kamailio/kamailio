@@ -418,8 +418,8 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 		return 0;
 	}
 
-	tv.tv_sec = EAVPI_CLIENT_SEND_TIMEOUT_US / 1000000;
-	tv.tv_usec = EAVPI_CLIENT_SEND_TIMEOUT_US % 1000000;
+	tv.tv_sec = EAVPI_SEND_DATA_TIMEOUT_US / 1000000;
+	tv.tv_usec = EAVPI_SEND_DATA_TIMEOUT_US % 1000000;
 	n = 0;
 	for(i = 0; i < EVAPI_MAX_CLIENTS; i++) {
 		if(_evapi_clients[i].connected == 1 && _evapi_clients[i].sock >= 0) {
@@ -950,8 +950,8 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 	LM_DBG("sending [%p] [%.*s] (%d)\n", (void *)emsg, emsg->data.len,
 			emsg->data.s, emsg->data.len);
 	if(_evapi_notify_sockets[1] != -1) {
-		tv.tv_sec = EAVPI_TASK_SEND_TIMEOUT_US / 1000000;
-		tv.tv_usec = EAVPI_TASK_SEND_TIMEOUT_US % 1000000;
+		tv.tv_sec = EAVPI_SEND_TASK_TIMEOUT_US / 1000000;
+		tv.tv_usec = EAVPI_SEND_TASK_TIMEOUT_US % 1000000;
 		setsockopt(_evapi_notify_sockets[1], SOL_SOCKET, SO_SNDTIMEO, &tv,
 				sizeof(struct timeval));
 		len = write(_evapi_notify_sockets[1], &emsg, sizeof(evapi_msg_t *));
