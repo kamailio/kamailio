@@ -316,13 +316,6 @@ jobs:
     needs:
     - check
     - build
-    services:
-      repo:
-        image: nginx
-        ports:
-        - 80
-        volumes:
-        - ${{ github.workspace }}/context:/usr/share/nginx/html:ro
     runs-on: ubuntu-latest
     steps:
     - name: Download artifact images
@@ -335,7 +328,12 @@ jobs:
     - name: prepare local repo
       id: init
       run: |
-        sudo mv -f  ${{ runner.temp }}/context/* ${{ github.workspace }}/context
+        # Create repo folder with kamailio apk files
+        mkdir -p ${{ github.workspace }}/context/apk_repo
+        mv -f ${{ runner.temp }}/context/*/apk_files/* ${{ github.workspace }}/context/apk_repo
+        rmdir ${{ runner.temp }}/context/*/apk_files
+        # Move other files into context folder
+        mv -f ${{ runner.temp }}/context/* ${{ github.workspace }}/context
 
     - name: Docker meta
       id: meta
