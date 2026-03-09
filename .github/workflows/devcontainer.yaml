@@ -48,7 +48,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: steps.changed-files-builder.outputs.any_changed == 'true' || inputs.force
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
