@@ -54,6 +54,7 @@ extern int _evapi_dispatcher_pid;
 extern int _evapi_max_clients;
 extern int _evapi_wait_idle;
 extern int _evapi_wait_increase;
+extern int _evapi_send_task_timeout;
 
 #define EVAPI_IPADDR_SIZE 64
 #define EVAPI_TAG_SIZE 64
@@ -950,8 +951,10 @@ int _evapi_relay(str *evdata, str *ctag, int unicast)
 	LM_DBG("sending [%p] [%.*s] (%d)\n", (void *)emsg, emsg->data.len,
 			emsg->data.s, emsg->data.len);
 	if(_evapi_notify_sockets[1] != -1) {
-		tv.tv_sec = EAVPI_SEND_TASK_TIMEOUT_US / 1000000;
-		tv.tv_usec = EAVPI_SEND_TASK_TIMEOUT_US % 1000000;
+		if(_evapi_send_task_timeout > 0) {
+			tv.tv_sec = _evapi_send_task_timeout / 1000000;
+			tv.tv_usec = _evapi_send_task_timeout % 1000000;
+		}
 		setsockopt(_evapi_notify_sockets[1], SOL_SOCKET, SO_SNDTIMEO, &tv,
 				sizeof(struct timeval));
 		len = write(_evapi_notify_sockets[1], &emsg, sizeof(evapi_msg_t *));

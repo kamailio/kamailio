@@ -25,7 +25,7 @@
 
 #include "../../core/pvar.h"
 
-#define EAVPI_SEND_TASK_TIMEOUT_US 200000
+#define EAVPI_SEND_TASK_TIMEOUT_US 0
 #define EAVPI_SEND_DATA_TIMEOUT_US 500000
 
 int evapi_init_notify_sockets(void);
