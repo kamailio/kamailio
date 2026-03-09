@@ -8,9 +8,11 @@ if(LUAJIT)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(LUA REQUIRED IMPORTED_TARGET luajit)
 else()
-  find_package(Lua REQUIRED)
-  # CMake FindLua defines include as LUA_INCLUDE_DIR and lib as LUA_LIBRARIES
-  set(LUA_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
+  find_package(Lua)
+  if(NOT Lua_FOUND)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(LUA REQUIRED IMPORTED_TARGET lua)
+  endif()
 endif()
 
 # the LUA_COMPAT_MODULE fixes this error: - implicit declaration of function
