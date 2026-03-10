@@ -556,8 +556,14 @@ jsonrpc_exec('{"jsonrpc": "2.0", "method": "corex.debug", "params": [ 2 ], "id":
 	<para>
 	JSONRPC specifications do not enforce a specific transport to carry the
 	JSON documents. Very common is JSONRPC over HTTP or HTTPS, and they are
-	supported by &kamailio;. In addition, &kamailio; supports receiving JSON
-	documents via a local FIFO file.
+	supported by &kamailio;. In addition, &kamailio; JSONRPC over a local FIFO
+	file and over UDP/datagram using unix socket files or IPv4/IPv6 sockets.
+	</para>
+	<para>
+	An extenssion to the JSONRPC protocol is available: when "store_path" field
+	is provided in the command, instead of returning it, the result is stored in
+	a file on server at the path provided as the value of the field. It can
+	be useful for troubleshooting or when the result is very large.
 	</para>
  	<section>
 	    <title>JSONRPC Over HTTP</title>
