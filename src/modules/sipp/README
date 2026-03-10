@@ -1,0 +1,682 @@
+SIPp Module
+
+Daniel Donoghue
+
+   Aurora Innovation AB
+
+   Copyright © 2026 Aurora Innovation AB
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. sipp_path (string)
+              3.2. scenario_dir (string)
+              3.3. work_dir (string)
+              3.4. media_ip (string)
+              3.5. send_socket_name (string)
+              3.6. send_socket (string)
+              3.7. target_domain (string)
+              3.8. default_caller (string)
+              3.9. default_service (string)
+              3.10. valid_domains (string)
+              3.11. default_concurrent_calls (integer)
+              3.12. max_concurrent_calls (integer)
+              3.13. max_concurrent_tests (integer)
+              3.14. default_duration (integer)
+              3.15. default_call_rate (integer)
+              3.16. default_total_calls (integer)
+              3.17. default_max_test_duration (integer)
+              3.18. enable_prometheus (integer)
+
+        4. Functions
+        5. RPC Commands
+
+              5.1. sipp.start_test
+              5.2. sipp.stop_test
+              5.3. sipp.get_stats
+              5.4. sipp.running
+              5.5. sipp.list
+              5.6. sipp.pause_test
+              5.7. sipp.resume_test
+              5.8. sipp.adjust_rate
+              5.9. sipp.get_live_stats
+
+        6. Prometheus Metrics
+
+              6.1. Exported Metrics
+              6.2. Grafana Queries
+
+        7. Troubleshooting
+
+              7.1. Control Port Conflicts
+              7.2. Finding Error Details
+
+   List of Examples
+
+   1.1. Set sipp_path parameter
+   1.2. Set scenario_dir parameter
+   1.3. Set work_dir parameter
+   1.4. Set media_ip parameter
+   1.5. Set send_socket_name parameter
+   1.6. Set send_socket parameter
+   1.7. Set target_domain parameter
+   1.8. Set default_caller parameter
+   1.9. Set default_service parameter
+   1.10. Set valid_domains parameter
+   1.11. Set default_concurrent_calls parameter
+   1.12. Set max_concurrent_calls parameter
+   1.13. Set max_concurrent_tests parameter
+   1.14. Set default_duration parameter
+   1.15. Set default_call_rate parameter
+   1.16. Set default_total_calls parameter
+   1.17. Set default_max_test_duration parameter
+   1.18. Set enable_prometheus parameter
+   1.19. sipp.start_test RPC example
+   1.20. sipp.stop_test RPC example
+   1.21. sipp.get_stats RPC example
+   1.22. sipp.running RPC example
+   1.23. sipp.list RPC example
+   1.24. sipp.pause_test RPC example
+   1.25. sipp.resume_test RPC example
+   1.26. sipp.adjust_rate RPC example
+   1.27. sipp.get_live_stats RPC example
+   1.28. Call volume by scenario
+   1.29. Success rate by caller/callee
+   1.30. Active calls by caller/callee
+   1.31. Failure rate
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. sipp_path (string)
+        3.2. scenario_dir (string)
+        3.3. work_dir (string)
+        3.4. media_ip (string)
+        3.5. send_socket_name (string)
+        3.6. send_socket (string)
+        3.7. target_domain (string)
+        3.8. default_caller (string)
+        3.9. default_service (string)
+        3.10. valid_domains (string)
+        3.11. default_concurrent_calls (integer)
+        3.12. max_concurrent_calls (integer)
+        3.13. max_concurrent_tests (integer)
+        3.14. default_duration (integer)
+        3.15. default_call_rate (integer)
+        3.16. default_total_calls (integer)
+        3.17. default_max_test_duration (integer)
+        3.18. enable_prometheus (integer)
+
+   4. Functions
+   5. RPC Commands
+
+        5.1. sipp.start_test
+        5.2. sipp.stop_test
+        5.3. sipp.get_stats
+        5.4. sipp.running
+        5.5. sipp.list
+        5.6. sipp.pause_test
+        5.7. sipp.resume_test
+        5.8. sipp.adjust_rate
+        5.9. sipp.get_live_stats
+
+   6. Prometheus Metrics
+
+        6.1. Exported Metrics
+        6.2. Grafana Queries
+
+   7. Troubleshooting
+
+        7.1. Control Port Conflicts
+        7.2. Finding Error Details
+
+1. Overview
+
+   The SIPp module provides integration with SIPp (SIP Performance Testing
+   Tool) for automated SIP load testing and scenario execution from within
+   Kamailio. This module enables starting, stopping, and monitoring SIPp
+   test sessions through RPC commands, making it suitable for CI and
+   operational workflows.
+
+   Key features include:
+     * Start and stop SIPp test scenarios via RPC commands
+     * Automatic transport protocol detection (UDP/TCP/TLS)
+     * Configurable concurrent test limits
+     * Domain whitelist for security
+     * Real-time test status monitoring
+     * Support for custom SIPp scenarios
+     * Remote control of running tests (pause/resume/adjust rate)
+     * Prometheus metrics export for monitoring and dashboards
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   No additional Kamailio modules are required.
+
+   xhttp_prom (optional) - For Prometheus metrics export. If you want to
+   export SIPp metrics to Prometheus, load xhttp_prom before loading the
+   sipp module.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * SIPp - The SIPp binary must be available in the system PATH or
+       specified via the sipp_path parameter.
+
+3. Parameters
+
+   3.1. sipp_path (string)
+   3.2. scenario_dir (string)
+   3.3. work_dir (string)
+   3.4. media_ip (string)
+   3.5. send_socket_name (string)
+   3.6. send_socket (string)
+   3.7. target_domain (string)
+   3.8. default_caller (string)
+   3.9. default_service (string)
+   3.10. valid_domains (string)
+   3.11. default_concurrent_calls (integer)
+   3.12. max_concurrent_calls (integer)
+   3.13. max_concurrent_tests (integer)
+   3.14. default_duration (integer)
+   3.15. default_call_rate (integer)
+   3.16. default_total_calls (integer)
+   3.17. default_max_test_duration (integer)
+   3.18. enable_prometheus (integer)
+
+3.1. sipp_path (string)
+
+   Path to the SIPp binary executable. If not set, the module will look
+   for 'sipp' in the system PATH.
+
+   Default value is NULL (uses system PATH).
+
+   Example 1.1. Set sipp_path parameter
+...
+modparam("sipp", "sipp_path", "/usr/local/bin/sipp")
+...
+
+3.2. scenario_dir (string)
+
+   Default directory where SIPp scenario files are stored. This directory
+   is used as the base path when relative scenario paths are provided.
+
+   No default; this parameter must be set.
+
+   Example 1.2. Set scenario_dir parameter
+...
+modparam("sipp", "scenario_dir", "/etc/kamailio/sipp/scenarios")
+...
+
+3.3. work_dir (string)
+
+   Working directory to use for SIPp child processes. When set, the module
+   will chdir to this directory before executing SIPp and will place log
+   and statistics files under this path. The directory must be writable by
+   the Kamailio user.
+
+   Default value is NULL (uses /tmp for log/stat files).
+
+   Example 1.3. Set work_dir parameter
+...
+modparam("sipp", "work_dir", "/run/kamailio")
+...
+
+3.4. media_ip (string)
+
+   Local media IP address for SIPp. When set, the module passes the value
+   as SIPp's -mi option. If not set, SIPp uses its default media IP
+   selection.
+
+   Default value is NULL (uses SIPp default).
+
+   Example 1.4. Set media_ip parameter
+...
+modparam("sipp", "media_ip", "192.168.1.50")
+...
+
+3.5. send_socket_name (string)
+
+   Name identifier for an existing Kamailio listen socket that SIPp should
+   use for sending traffic (for example: udp:192.168.1.10:5060). This
+   parameter is mutually exclusive with send_socket.
+
+   Default value is NULL.
+
+   Example 1.5. Set send_socket_name parameter
+...
+modparam("sipp", "send_socket_name", "udp:192.168.1.10:5060")
+...
+
+3.6. send_socket (string)
+
+   Socket specification in the format proto:ip:port that SIPp should use
+   for sending traffic. This parameter is mutually exclusive with
+   send_socket_name.
+
+   Default value is NULL.
+
+   Example 1.6. Set send_socket parameter
+...
+modparam("sipp", "send_socket", "udp:192.168.1.10:5060")
+...
+
+3.7. target_domain (string)
+
+   Default target domain for SIPp tests. This domain is optional and will
+   be used only if the scenario references [target_domain] and no explicit
+   target is provided in the RPC command.
+
+   If a scenario references [target_domain] and neither a per-test value
+   nor a module default is set, the module falls back to
+   <local_ip>:<send_socket_port>.
+
+   Default value is NULL.
+
+   Example 1.7. Set target_domain parameter
+...
+modparam("sipp", "target_domain", "sip.example.com")
+...
+
+3.8. default_caller (string)
+
+   Default caller user/number for SIPp tests. Used only if no explicit
+   caller is provided via RPC. Required when scenarios use [caller] and no
+   caller is passed.
+
+   Default value is NULL.
+
+   Example 1.8. Set default_caller parameter
+...
+modparam("sipp", "default_caller", "1000")
+...
+
+3.9. default_service (string)
+
+   Default service user/number for SIPp tests. Used only if no explicit
+   service is provided via RPC. Required when no service is provided in
+   RPC.
+
+   Default value is NULL.
+
+   Example 1.9. Set default_service parameter
+...
+modparam("sipp", "default_service", "2000")
+...
+
+3.10. valid_domains (string)
+
+   Comma-separated list of domains that are allowed as SIPp test targets.
+   This provides a security whitelist to prevent unauthorized test
+   execution against arbitrary domains. If set, only domains in this list
+   can be targeted.
+
+   Default value is NULL (all domains allowed).
+
+   Example 1.10. Set valid_domains parameter
+...
+modparam("sipp", "valid_domains", "test.example.com,staging.example.com,demo.exa
+mple.com")
+...
+
+3.11. default_concurrent_calls (integer)
+
+   Default number of concurrent calls per test when the RPC command does
+   not provide a value.
+
+   Default value is 50.
+
+   Example 1.11. Set default_concurrent_calls parameter
+...
+modparam("sipp", "default_concurrent_calls", 25)
+...
+
+3.12. max_concurrent_calls (integer)
+
+   Maximum number of concurrent calls per SIPp test session. This limits
+   the load generated by each individual test.
+
+   Default value is 1000.
+
+   Example 1.12. Set max_concurrent_calls parameter
+...
+modparam("sipp", "max_concurrent_calls", 50)
+...
+
+3.13. max_concurrent_tests (integer)
+
+   Maximum number of SIPp test sessions that can run concurrently. This
+   prevents resource exhaustion from too many simultaneous tests. Note:
+   SIPp has a hard limit of 60 concurrent instances (each uses a UDP
+   control port starting from 8888). Values above 60 will be automatically
+   capped.
+
+   Default value is 10. Maximum value is 60.
+
+   Example 1.13. Set max_concurrent_tests parameter
+...
+modparam("sipp", "max_concurrent_tests", 5)
+...
+
+3.14. default_duration (integer)
+
+   Default call duration in seconds (SIPp -d) used when the RPC command
+   does not provide a duration.
+
+   Default value is 60.
+
+   Example 1.14. Set default_duration parameter
+...
+modparam("sipp", "default_duration", 30)
+...
+
+3.15. default_call_rate (integer)
+
+   Default call rate (calls per second) used when the RPC command does not
+   provide a rate. The rate can be adjusted at runtime using
+   sipp.adjust_rate.
+
+   Default value is 10.
+
+   Example 1.15. Set default_call_rate parameter
+...
+modparam("sipp", "default_call_rate", 20)
+...
+
+3.16. default_total_calls (integer)
+
+   Default maximum total calls per test. Set to 0 to allow tests to run
+   until explicitly stopped.
+
+   Default value is 0 (unlimited).
+
+   Example 1.16. Set default_total_calls parameter
+...
+modparam("sipp", "default_total_calls", 0)
+...
+
+3.17. default_max_test_duration (integer)
+
+   Default maximum test duration in seconds. Set to 0 to allow tests to
+   run until explicitly stopped.
+
+   Default value is 0 (unlimited).
+
+   Example 1.17. Set default_max_test_duration parameter
+...
+modparam("sipp", "default_max_test_duration", 0)
+...
+
+3.18. enable_prometheus (integer)
+
+   Enable Prometheus metrics export when xhttp_prom is loaded before the
+   sipp module.
+
+   Default value is 1.
+
+   Example 1.18. Set enable_prometheus parameter
+...
+modparam("sipp", "enable_prometheus", 0)
+...
+
+4. Functions
+
+   This module does not export any functions to be used in the routing
+   script. All functionality is exposed via RPC commands.
+
+5. RPC Commands
+
+   5.1. sipp.start_test
+   5.2. sipp.stop_test
+   5.3. sipp.get_stats
+   5.4. sipp.running
+   5.5. sipp.list
+   5.6. sipp.pause_test
+   5.7. sipp.resume_test
+   5.8. sipp.adjust_rate
+   5.9. sipp.get_live_stats
+
+5.1. sipp.start_test
+
+   Start a new SIPp test session with the specified parameters.
+
+   Parameters:
+     * scenario (string, required) - Name of SIPp scenario XML file
+     * caller (string, optional) - Caller user/number/range/list
+     * service (string, optional) - Service user/number/range/list
+     * target_domain (string, optional) - Target domain for scenario
+       variables
+     * concurrent_calls (integer, optional) - Max concurrent calls
+     * duration (integer, optional) - Call duration in seconds (SIPp -d)
+     * total_calls (integer, optional) - Max total calls (0 = unlimited)
+     * max_test_duration (integer, optional) - Max test duration in
+       seconds (0 = unlimited)
+
+   Example 1.19. sipp.start_test RPC example
+...
+# Using kamcmd (positional)
+kamcmd sipp.start_test uac_invite.xml 1000 2000 sip.example.com 10 60 0 0
+
+# Using kamcmd (named)
+kamcmd sipp.start_test scenario=uac_invite.xml caller=1000 service=2000 \
+        target_domain=sip.example.com concurrent_calls=10 duration=60 \
+                total_calls=0 max_test_duration=0
+...
+
+5.2. sipp.stop_test
+
+   Stop a running SIPp test session.
+
+   Parameters:
+     * test_id (int) - Test ID to stop
+
+   Example 1.20. sipp.stop_test RPC example
+...
+# Using kamcmd
+kamcmd sipp.stop_test 1
+
+# Using kamctl
+kamctl rpc sipp.stop_test 1
+...
+
+5.3. sipp.get_stats
+
+   Retrieve statistics for a specific test session.
+
+   Parameters:
+     * test_id (int, required) - Test ID to query
+
+   Example 1.21. sipp.get_stats RPC example
+...
+# Get stats for specific test
+kamcmd sipp.get_stats 1
+...
+
+5.4. sipp.running
+
+   List all currently running and recently completed test sessions with
+   their status and statistics. Completed, stopped, and failed tests are
+   eligible for removal after 30 minutes (1800 seconds), and cleanup runs
+   on a periodic timer (every hour). As a result, tests can remain visible
+   for roughly 30 to 90 minutes depending on when the cleanup timer fires.
+
+   Parameters: None
+
+   Example 1.22. sipp.running RPC example
+...
+kamcmd sipp.running
+...
+
+5.5. sipp.list
+
+   List all available SIPp scenario files (.xml) from the configured
+   scenario directory. Returns the filename and size in bytes for each
+   scenario found.
+
+   Parameters: None
+
+   Example 1.23. sipp.list RPC example
+...
+kamcmd sipp.list
+...
+
+5.6. sipp.pause_test
+
+   Pause a running SIPp test via remote control socket. This stops SIPp
+   from creating new calls but keeps existing calls alive. Uses the SIPp
+   remote control socket created for the test.
+
+   Parameters:
+     * test_id (int, required) - Test ID to pause
+
+   Example 1.24. sipp.pause_test RPC example
+...
+kamcmd sipp.pause_test 1
+...
+
+5.7. sipp.resume_test
+
+   Resume a paused SIPp test via remote control socket. This resumes call
+   generation after a pause. Uses the SIPp remote control socket created
+   for the test.
+
+   Parameters:
+     * test_id (int, required) - Test ID to resume
+
+   Example 1.25. sipp.resume_test RPC example
+...
+kamcmd sipp.resume_test 1
+...
+
+5.8. sipp.adjust_rate
+
+   Dynamically adjust the call rate of a running SIPp test. This allows
+   increasing or decreasing the call generation rate without stopping and
+   restarting the test. Uses the SIPp remote control socket created for
+   the test.
+
+   Parameters:
+     * test_id (int, required) - Test ID to adjust
+     * change (string, required) - "increase" or "decrease"
+
+   Example 1.26. sipp.adjust_rate RPC example
+...
+kamcmd sipp.adjust_rate 1 increase
+kamcmd sipp.adjust_rate 1 decrease
+...
+
+5.9. sipp.get_live_stats
+
+   Get real-time statistics from a running SIPp test via the remote
+   control socket. This queries SIPp directly for current call counts,
+   active calls, and failure counts. Uses the SIPp remote control socket
+   created for the test.
+
+   Parameters:
+     * test_id (int, required) - Test ID to query
+
+   Returns:
+     * test_id (int) - Test identifier
+     * calls_active (int) - Currently active calls
+     * calls_started (int) - Total calls started
+     * calls_completed (int) - Calls completed successfully
+     * calls_failed (int) - Failed calls
+
+   Example 1.27. sipp.get_live_stats RPC example
+...
+kamcmd sipp.get_live_stats 1
+...
+
+6. Prometheus Metrics
+
+   6.1. Exported Metrics
+   6.2. Grafana Queries
+
+   When the xhttp_prom module is loaded before the sipp module, SIPp test
+   metrics are automatically exported to Prometheus. Metrics are pushed on
+   a periodic timer (by default every 10 seconds).
+
+6.1. Exported Metrics
+
+   All metrics include the following labels:
+     * test_id - Unique test identifier (e.g., "1")
+     * scenario - Scenario filename (e.g., "uac_invite.xml")
+     * from_to - Caller and callee combined (e.g., "1000->2000")
+
+   Exported metric types:
+     * sipp_calls_started_total (counter) - Total calls initiated
+     * sipp_calls_completed_total (counter) - Successfully completed calls
+     * sipp_calls_failed_total (counter) - Failed calls
+     * sipp_calls_active (gauge) - Currently active calls
+     * sipp_concurrent_calls_configured (gauge) - Configured concurrent
+       call limit
+
+6.2. Grafana Queries
+
+   Example Prometheus queries for use in Grafana dashboards:
+
+   Example 1.28. Call volume by scenario
+rate(sipp_calls_started_total[5m]) by (scenario)
+
+   Example 1.29. Success rate by caller/callee
+(sipp_calls_completed_total / sipp_calls_started_total) by (from_to) * 100
+
+   Example 1.30. Active calls by caller/callee
+sipp_calls_active by (from_to)
+
+   Example 1.31. Failure rate
+rate(sipp_calls_failed_total[5m])
+
+7. Troubleshooting
+
+   7.1. Control Port Conflicts
+   7.2. Finding Error Details
+
+7.1. Control Port Conflicts
+
+   Each SIPp test uses a dedicated UDP control port (8888 + test_id).
+   Before starting a test, the module verifies the port is available. If
+   another process is using the port, the test will fail with an error:
+ERROR: control port 8889 is already in use - cannot start test
+ERROR: another SIPp instance or process may be using this port
+
+   Solutions:
+     * Stop the conflicting process using that port
+     * Wait for subsequent tests (higher test_id = higher port number)
+     * Restart Kamailio to reset the test_id counter
+
+7.2. Finding Error Details
+
+   When a test fails to start, detailed error messages are written to the
+   Kamailio log. Check the log for messages from the sipp module:
+grep "sipp" /var/log/kamailio.log
+
+   SIPp execution output is also captured in temporary log files:
+     * /tmp/sipp_test_<id>_<timestamp>.log - Main SIPp log
+     * /tmp/sipp_test_<id>_<timestamp>.log.exec.log - SIPp startup/error
+       output
+     * /tmp/sipp_test_<id>_<timestamp>.log.stat.csv - Statistics CSV
