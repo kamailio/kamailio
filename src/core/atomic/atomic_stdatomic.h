@@ -84,14 +84,14 @@ inline static int atomic_inc_and_test_int(volatile int *var)
 {
 	return atomic_fetch_add_explicit(
 				   (_Atomic int *)var, 1, memory_order_relaxed)
-		   == 1;
+		   == -1;
 }
 
 inline static int atomic_dec_and_test_int(volatile int *var)
 {
 	return atomic_fetch_sub_explicit(
 				   (_Atomic int *)var, 1, memory_order_relaxed)
-		   == -1;
+		   == 1;
 }
 
 inline static int atomic_get_and_set_int(volatile int *var, int v)
@@ -143,14 +143,14 @@ inline static long atomic_inc_and_test_long(volatile long *var)
 {
 	return atomic_fetch_add_explicit(
 				   (_Atomic long *)var, 1, memory_order_relaxed)
-		   == 1;
+		   == -1;
 }
 
 inline static long atomic_dec_and_test_long(volatile long *var)
 {
 	return atomic_fetch_sub_explicit(
 				   (_Atomic long *)var, 1, memory_order_relaxed)
-		   == -1;
+		   == 1;
 }
 
 inline static long atomic_get_and_set_long(volatile long *var, long v)
@@ -216,14 +216,14 @@ inline static int mb_atomic_inc_and_test_int(volatile int *var)
 {
 	return atomic_fetch_add_explicit(
 				   (_Atomic int *)var, 1, memory_order_seq_cst)
-		   == 1;
+		   == -1;
 }
 
 inline static int mb_atomic_dec_and_test_int(volatile int *var)
 {
 	return atomic_fetch_sub_explicit(
 				   (_Atomic int *)var, 1, memory_order_seq_cst)
-		   == -1;
+		   == 1;
 }
 
 inline static int mb_atomic_get_and_set_int(volatile int *var, int v)
@@ -285,14 +285,14 @@ inline static long mb_atomic_inc_and_test_long(volatile long *var)
 {
 	return atomic_fetch_add_explicit(
 				   (_Atomic long *)var, 1, memory_order_seq_cst)
-		   == 1;
+		   == -1;
 }
 
 inline static long mb_atomic_dec_and_test_long(volatile long *var)
 {
 	return atomic_fetch_sub_explicit(
 				   (_Atomic long *)var, 1, memory_order_seq_cst)
-		   == -1;
+		   == 1;
 }
 
 inline static long mb_atomic_get_and_set_long(volatile long *var, long v)
