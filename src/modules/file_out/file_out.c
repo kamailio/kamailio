@@ -27,6 +27,7 @@
 #include "../../core/locking.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/timer.h"
+#include "../../core/rand/kam_rand.h"
 
 #include "types.h"
 
@@ -41,7 +42,6 @@ MODULE_VERSION
 
 
 #define FO_DEFAULT_PATH "/var/log/kamailio/file_out"
-#define FO_DEFAULT_ROTATE_CHECK_INTERVAL 10
 #define FO_DEFAULT_INTERVAL 10 * 60
 #define FO_DEFAULT_EXTENSION ".out"
 #define FO_DEFAULT_PREFIX ""
@@ -52,33 +52,30 @@ static void destroy(void);
 
 static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message);
 
-static FILE *fo_get_file_handle(const int index);
-static int fo_get_full_path(const int index, char *full_path);
-static int fo_init_file(const int index);
-static int fo_close_file(const int index);
-static int fo_check_interval(int index);
-static int fo_rotate_file(const int index);
+static FILE *fo_get_file_handle(const int index, const int worker_id);
+static int fo_get_full_path(
+		const int index, const int worker_id, char *full_path);
+static int fo_init_file(const int index, const int worker_id);
+static int fo_close_file(const int index, const int worker_id);
+static int fo_check_interval(int index, int worker_id);
+static int fo_rotate_file(const int index, const int worker_id);
+static void fo_log_writer_process(int file_index, int worker_id);
+
 static int fo_fixup_int_pvar(void **param, int param_no);
 static int fo_fixup_str_index(void **param, int param_no);
 static int fo_fixup_free_int_pvar(void **param, int param_no);
 static int fo_count_assigned_files();
-static void fo_log_writer_process(int rank);
 static int fo_add_filename(modparam_t type, void *val);
 static int fo_parse_filename_params(str input);
 
-static void fo_timer_check_interval(unsigned int ticks, void *);
-
 /* Default parameters */
-int fo_check_time = FO_DEFAULT_ROTATE_CHECK_INTERVAL;
 
 str fo_base_folder = str_init(FO_DEFAULT_PATH);
 int fo_worker_usleep = 10000;
 
 /* Shared variables */
-fo_queue_t *fo_queue = NULL;
 int *fo_number_of_files = NULL;
-fo_file_properties_t *fo_files;
-gen_lock_t *fo_properties_lock;
+fo_output_properties_t *fo_files;
 
 time_t fo_current_timestamp = 0;
 
@@ -90,7 +87,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {{"base_folder", PARAM_STR, &fo_base_folder},
 		{"file", PARAM_STR | PARAM_USE_FUNC, &fo_add_filename},
 		{"worker_usleep", PARAM_INT, &fo_worker_usleep},
-		{"timer_interval", PARAM_INT, &fo_check_time}, {0, 0, 0}};
+		{0, 0, 0}};
 
 struct module_exports exports = {
 	"file_out",		 /* module name */
@@ -108,41 +105,19 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	int i = 0;
+	int i, j = 0;
+	int total_workers = 0;
+	str s;
+	fo_worker_file_t *sub;
+
 	LM_DBG("initializing\n");
 	LM_DBG("base_folder = %.*s\n", fo_base_folder.len, fo_base_folder.s);
-
-	//*  Create shared variables */
-	fo_queue = (fo_queue_t *)shm_malloc(sizeof(fo_queue_t));
-	if(!fo_queue) {
-		SHM_MEM_ERROR;
-		return -1;
-	}
-	fo_queue->front = NULL;
-	fo_queue->rear = NULL;
-	if(lock_init(&fo_queue->lock) == 0) {
-		/* error initializing the lock */
-		LM_ERR("error initializing the lock\n");
-		return -1;
-	}
-
-	fo_properties_lock = lock_alloc();
-	if(fo_properties_lock == NULL) {
-		LM_ERR("cannot allocate the lock\n");
-		return -1;
-	}
-	if(lock_init(fo_properties_lock) == NULL) {
-		LM_ERR("cannot init the lock\n");
-		lock_dealloc(fo_properties_lock);
-		return -1;
-	}
 
 	/* Count the given files */
 	*fo_number_of_files = fo_count_assigned_files();
 
 	/* Fixup the prefix */
 	for(i = 0; i < *fo_number_of_files; i++) {
-		str s;
 		s.s = fo_files[i].fo_prefix.s;
 		s.len = fo_files[i].fo_prefix.len;
 
@@ -152,17 +127,33 @@ static int mod_init(void)
 		}
 	}
 
-	/* Initialize per process vars */
+	/* Initialize per-file workers and per-worker jitter */
+	total_workers = 0;
 	for(i = 0; i < *fo_number_of_files; i++) {
-		fo_files[i].fo_stored_timestamp = time(NULL);
+		if(fo_files[i].num_workers < 1) {
+			fo_files[i].num_workers = 1;
+		}
+
+		if(fo_create_files(&fo_files[i], fo_files[i].num_workers) < 0) {
+			LM_ERR("failed to create files for output index %d\n", i);
+			return -1;
+		}
+
+		for(j = 0; j < fo_files[i].num_workers; j++) {
+			sub = &fo_files[i].files[j];
+			sub->fo_stored_timestamp = time(NULL);
+			sub->effective_interval_seconds = fo_calculate_effective_interval(
+					fo_files[i].fo_base_interval_seconds,
+					fo_files[i].fo_interval_range);
+		}
+		fo_output_properties_print(fo_files[i]);
+
+		total_workers += fo_files[i].num_workers;
 	}
 
-	/* Register worker process */
-	register_procs(1);
-	cfg_register_child(1);
-
-	/* Register the timer */
-	register_timer(fo_timer_check_interval, 0, fo_check_time);
+	/* Register one process per worker across all files */
+	register_procs(total_workers);
+	cfg_register_child(total_workers);
 
 	LM_DBG("Initialization done\n");
 	return 0;
@@ -173,37 +164,42 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	int pid;
+	int pid, res;
 	int i = 0;
+	int j = 0;
+	char desc[16] = {0};
 	if(rank != PROC_MAIN) {
 		return 0;
 	}
 
-	pid = fork_process(PROC_NOCHLDINIT, "fo_writer", 1);
-	if(pid < 0) {
-		LM_ERR("fork failed\n");
-		return -1; /* error */
-	}
-	if(pid == 0) {
-		/* child */
-		/* initialize the config framework */
-		if(cfg_child_init())
-			return -1;
+	for(i = 0; i < *fo_number_of_files; i++) {
+		for(j = 0; j < fo_files[i].num_workers; j++) {
+			res = snprintf(desc, sizeof(desc), "fo_writer_%d_%d", i, j);
+			if(res < 0 || res >= (int)sizeof(desc)) {
+				LM_ERR("Failed to create process description\n");
+				return -1;
+			}
+			pid = fork_process(PROC_NOCHLDINIT, desc, 1);
+			if(pid < 0) {
+				LM_ERR("fork failed\n");
+				return -1;
+			}
+			if(pid == 0) {
+				if(cfg_child_init())
+					return -1;
 
-		/* Initialize and open files  */
-		for(i = 0; i < *fo_number_of_files; i++) {
-			fo_init_file(i);
+				if(fo_init_file(i, j) < 0)
+					return -1;
+
+				for(;;) {
+					cfg_update();
+					usleep(fo_worker_usleep);
+					fo_log_writer_process(i, j);
+				}
+			}
 		}
-
-		for(;;) {
-			/* update the local config framework structures */
-			cfg_update();
-
-			usleep(fo_worker_usleep);
-			fo_log_writer_process(rank);
-		}
-		// return 0;
 	}
+
 	return 0;
 }
 
@@ -215,7 +211,7 @@ static void destroy(void)
 	int result = 0;
 	int i = 0;
 	for(i = 0; i < *fo_number_of_files; i++) {
-		result = fo_file_properties_destroy(&fo_files[i]);
+		result = fo_output_properties_destroy(&fo_files[i]);
 		if(result < 0) {
 			LM_ERR("Failed to destroy file properties\n");
 		}
@@ -226,52 +222,47 @@ static void destroy(void)
 		shm_free(fo_number_of_files);
 		fo_number_of_files = NULL;
 	}
-
-	if(fo_queue != NULL) {
-		fo_free_queue(fo_queue);
-	}
 }
 
-static int fo_rotate_file(int index)
+static int fo_rotate_file(const int index, const int worker_id)
 {
-	if(fo_check_interval(index) == 0) {
+	fo_worker_file_t *sub = NULL;
+
+	if(fo_check_interval(index, worker_id) == 0) {
 		return 0;
 	}
-	lock_get(fo_properties_lock);
-	fo_files[index].fo_stored_timestamp = time(NULL);
-	fo_files[index].fo_requires_rotation = 1;
-	lock_release(fo_properties_lock);
+
+	sub = &fo_files[index].files[worker_id];
+	sub->fo_stored_timestamp = time(NULL);
+
+	fo_close_file(index, worker_id);
+	fo_init_file(index, worker_id);
+
 	return 1;
 }
 
-static void fo_timer_check_interval(unsigned int ticks, void *param)
-{
-	int index = 0;
-	for(index = 0; index < *fo_number_of_files; index++) {
-		if(fo_rotate_file(index) == 1) {
-			LM_DBG("Next write will rotate the file %d\n", index);
-		}
-	}
-}
-
-static void fo_log_writer_process(int rank)
+static void fo_log_writer_process(int file_index, int worker_id)
 {
 	fo_log_message_t log_message;
 	int result = 0;
 	FILE *out = NULL;
-	while(!fo_is_queue_empty(fo_queue)) {
-		result = fo_dequeue(fo_queue, &log_message);
+	fo_worker_file_t *sub = &fo_files[file_index].files[worker_id];
+
+	out = fo_get_file_handle(file_index, worker_id);
+
+	if(out == NULL) {
+		LM_ERR("file handle is NULL\n");
+		return;
+	}
+
+	while(!fo_is_queue_empty(sub->queue)) {
+		result = fo_dequeue(sub->queue, &log_message);
 		if(result < 0) {
 			LM_ERR("deque error\n");
 			return;
 		}
 		if(log_message.message != NULL) {
-			out = fo_get_file_handle(log_message.dest_file);
 
-			if(out == NULL) {
-				LM_ERR("file handle is NULL\n");
-				return;
-			}
 
 			/* Get prefix for the file */
 			if(log_message.prefix != NULL && log_message.prefix->len > 0) {
@@ -401,14 +392,14 @@ static int fo_add_filename(modparam_t type, void *val)
 	}
 
 	if(fo_files == NULL) {
-		fo_files = (fo_file_properties_t *)shm_malloc(
-				FO_MAX_FILES * sizeof(fo_file_properties_t));
+		fo_files = (fo_output_properties_t *)shm_malloc(
+				FO_MAX_FILES * sizeof(fo_output_properties_t));
 		if(!fo_files) {
 			SHM_MEM_ERROR;
 			return -1;
 		}
 		for(i = 0; i < FO_MAX_FILES; i++) {
-			fo_file_properties_init(&fo_files[i]);
+			fo_output_properties_init(&fo_files[i]);
 		}
 	}
 
@@ -445,6 +436,8 @@ static int fo_parse_filename_params(str in)
 	char *extension = NULL;
 	char *interval = NULL;
 	char *prefix = NULL;
+	char *interval_range = NULL;
+	char *workers = NULL;
 	char *token = NULL;
 	char *saveptr = NULL;
 	char *input = in.s;
@@ -460,6 +453,10 @@ static int fo_parse_filename_params(str in)
 			interval = token + 9;
 		} else if(strstr(token, "prefix=") != NULL) {
 			prefix = token + 7;
+		} else if(strstr(token, "interval_range=") != NULL) {
+			interval_range = token + 15;
+		} else if(strstr(token, "workers=") != NULL) {
+			workers = token + 8;
 		} else {
 			LM_ERR("Unknown parameter %s\n", token);
 			return -1;
@@ -506,16 +503,17 @@ static int fo_parse_filename_params(str in)
 			LM_ERR("interval cannot be zero\n");
 			return -1;
 		} else if(val > INT_MAX || val < INT_MIN) {
-			LM_ERR("interval outside of range of int\n");
+			LM_ERR("interval outside of range, max value %d", INT_MAX);
 			return -1;
 		}
 		LM_DBG("interval = %d\n", (int)val);
 
-		fo_files[*fo_number_of_files].fo_interval_seconds = (int)val;
+		fo_files[*fo_number_of_files].fo_base_interval_seconds = (int)val;
 	} else {
 		LM_DBG("no interval= provided. Using default %d\n",
 				FO_DEFAULT_INTERVAL);
-		fo_files[*fo_number_of_files].fo_interval_seconds = FO_DEFAULT_INTERVAL;
+		fo_files[*fo_number_of_files].fo_base_interval_seconds =
+				FO_DEFAULT_INTERVAL;
 	}
 
 	if(prefix != NULL) {
@@ -527,6 +525,54 @@ static int fo_parse_filename_params(str in)
 		fo_files[*fo_number_of_files].fo_prefix.s = FO_DEFAULT_PREFIX;
 		fo_files[*fo_number_of_files].fo_prefix.len = strlen(FO_DEFAULT_PREFIX);
 	}
+
+	/* Parse interval_range (percentage) */
+	if(interval_range != NULL) {
+		errno = 0;
+		val = strtol(interval_range, &token, 0);
+
+		if(token == interval_range || *token != '\0'
+				|| ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE)) {
+			LM_ERR("Could not convert interval_range '%s' to long\n",
+					interval_range);
+			return -1;
+		}
+		if(val < 0 || val > 100) {
+			LM_ERR("interval_range must be between 0 and 100 (%%)\n");
+			return -1;
+		}
+		LM_DBG("interval_range = %d\n", (int)val);
+		fo_files[*fo_number_of_files].fo_interval_range = (int)val;
+	} else {
+		LM_DBG("no interval_range= provided. Using default (no jitter)\n");
+		fo_files[*fo_number_of_files].fo_interval_range = 0;
+	}
+
+	/* Parse worker count for multi-worker mode */
+	if(workers != NULL) {
+		errno = 0;
+		val = strtol(workers, &token, 0);
+
+		if(token == workers || *token != '\0'
+				|| ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE)) {
+			LM_ERR("Could not convert workers '%s' to long\n", workers);
+			return -1;
+		}
+		if(val < 1 || val > FO_MAX_WORKERS_PER_FILE) {
+			LM_ERR("worker must be between 1 and %d\n",
+					FO_MAX_WORKERS_PER_FILE);
+			return -1;
+		}
+		LM_DBG("workers = %d\n", (int)val);
+		fo_files[*fo_number_of_files].num_workers = (int)val;
+	} else {
+		LM_DBG("no worker(s)= provided for file %.*s. Using default (1 "
+			   "worker)\n",
+				fo_files[*fo_number_of_files].fo_base_filename.len,
+				fo_files[*fo_number_of_files].fo_base_filename.s);
+		fo_files[*fo_number_of_files].num_workers = 1;
+	}
+
 	return 1;
 }
 
@@ -538,15 +584,20 @@ static int fo_count_assigned_files()
 	return *fo_number_of_files;
 }
 
-static int fo_init_file(const int index)
+static int fo_init_file(const int index, const int worker_id)
 {
 	char full_path[FO_MAX_PATH_LEN];
+	fo_worker_file_t *sub = &fo_files[index].files[worker_id];
 
-	fo_get_full_path(index, full_path);
-	fo_files[index].fo_file_output = fopen(full_path, "a");
+	if(fo_get_full_path(index, worker_id, full_path) < 0) {
+		LM_ERR("failed to generate file path\n");
+		return -1;
+	}
+
+	sub->file_output = fopen(full_path, "a");
 
 	LM_INFO("Opening file %s\n", full_path);
-	if(fo_files[index].fo_file_output == NULL) {
+	if(sub->file_output == NULL) {
 		LM_ERR("Couldn't open file %s\n", strerror(errno));
 		return -1;
 	}
@@ -554,17 +605,19 @@ static int fo_init_file(const int index)
 	return 1;
 }
 
-static int fo_close_file(const int index)
+static int fo_close_file(const int index, const int worker_id)
 {
 	int result = 0;
-	if(fo_files[index].fo_file_output != NULL) {
-		result = fclose(fo_files[index].fo_file_output);
+	fo_worker_file_t *sub = &fo_files[index].files[worker_id];
+
+	if(sub->file_output != NULL) {
+		result = fclose(sub->file_output);
 		if(result != 0) {
 			LM_ERR("Failed to close output file");
 			return -1;
 		}
-		fo_files[index].fo_file_output = NULL;
-		LM_DBG("Closed file %d\n", index);
+		sub->file_output = NULL;
+		LM_DBG("Closed file %d worker %d\n", index, worker_id);
 	}
 	return 1;
 }
@@ -574,14 +627,15 @@ static int fo_close_file(const int index)
 * return 1 if interval has passed
 * return 0 if interval has not passed
 */
-static int fo_check_interval(int index)
+static int fo_check_interval(int index, int worker_id)
 {
+	fo_worker_file_t *sub = &fo_files[index].files[worker_id];
+
 	fo_current_timestamp = time(NULL);
 
-	/* Calculate the difference between the current timestamp and the stored timestamp */
-	int difference =
-			difftime(fo_current_timestamp, fo_files[index].fo_stored_timestamp);
-	if(difference >= fo_files[index].fo_interval_seconds) {
+	/* Check against this worker's own jittered interval */
+	if((int)difftime(fo_current_timestamp, sub->fo_stored_timestamp)
+			>= sub->effective_interval_seconds) {
 		return 1;
 	}
 	return 0;
@@ -590,40 +644,53 @@ static int fo_check_interval(int index)
 /**
  * Get file handle for file at index
  */
-static FILE *fo_get_file_handle(const int index)
+static FILE *fo_get_file_handle(const int index, const int worker_id)
 {
-	/*
-	Lock the properties lock to prevent race conditions when checking
-	if the file needs rotation. Find out if the file needs rotation is
-	by another timer process that sets the flag. If the flag is set, close
-	the file and reopen it.
-	*/
-	lock_get(fo_properties_lock);
-	if(fo_files[index].fo_requires_rotation == 1) {
-		fo_close_file(index);
-		fo_init_file(index);
-		fo_files[index].fo_requires_rotation = 0;
-	}
-	lock_release(fo_properties_lock);
-	return fo_files[index].fo_file_output;
+	fo_worker_file_t *sub = &fo_files[index].files[worker_id];
+
+	fo_rotate_file(index, worker_id);
+
+	return sub->file_output;
 }
 
 /**
  * Determine full file path
  */
-static int fo_get_full_path(const int index, char *full_path)
+static int fo_get_full_path(
+		const int index, const int worker_id, char *full_path)
 {
-	fo_file_properties_t fp = fo_files[index];
-	snprintf(full_path, FO_MAX_PATH_LEN, "%.*s/%.*s_%.f%.*s",
-			fo_base_folder.len, fo_base_folder.s, fp.fo_base_filename.len,
-			fp.fo_base_filename.s, difftime(fp.fo_stored_timestamp, (time_t)0),
-			fp.fo_extension.len, fp.fo_extension.s);
+	int res = 0;
+	fo_output_properties_t fp = fo_files[index];
+	fo_worker_file_t *sub = &fo_files[index].files[worker_id];
+
+
+	if(fp.num_workers > 1) {
+		res = snprintf(full_path, FO_MAX_PATH_LEN, "%.*s/%.*s%.*s_%.f%.*s",
+				fo_base_folder.len, fo_base_folder.s, fp.fo_base_filename.len,
+				fp.fo_base_filename.s, sub->filename_suffix.len,
+				sub->filename_suffix.s,
+				difftime(sub->fo_stored_timestamp, (time_t)0),
+				fp.fo_extension.len, fp.fo_extension.s);
+	} else {
+		/* Keep single-worker filename (no _0 suffix) */
+		res = snprintf(full_path, FO_MAX_PATH_LEN, "%.*s/%.*s_%.f%.*s",
+				fo_base_folder.len, fo_base_folder.s, fp.fo_base_filename.len,
+				fp.fo_base_filename.s,
+				difftime(sub->fo_stored_timestamp, (time_t)0),
+				fp.fo_extension.len, fp.fo_extension.s);
+	}
+	if(res < 0 || res >= FO_MAX_PATH_LEN) {
+		LM_ERR("Failed to generate full path for file index %d worker %d\n",
+				index, worker_id);
+		return -1;
+	}
 	return 1;
 }
 
 static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 {
 	int result, file_index;
+	int worker_id;
 	str fo_prefix_str = str_init("");
 	str fo_prefix_val = str_init("");
 	str value = str_init("");
@@ -676,9 +743,22 @@ static int fo_write_to_file(sip_msg_t *msg, char *index, char *log_message)
 		return -1;
 	}
 
-	/* Add the logging string to the global gueue */
+	/* Route to a worker queue (single-worker uses files[0]) */
+	fo_output_properties_t *fp = &fo_files[file_index];
+	worker_id = 0;
+
+	if(fp->num_workers > 1) {
+		worker_id = (kam_rand() % fp->num_workers);
+	}
+
+	if(fp->files == NULL || fp->files[worker_id].queue == NULL) {
+		LM_ERR("worker queue is not initialized for file %d worker %d\n",
+				file_index, worker_id);
+		return -1;
+	}
+
 	logMessage.dest_file = file_index;
-	fo_enqueue(fo_queue, logMessage);
+	fo_enqueue(fp->files[worker_id].queue, logMessage);
 
 	return 1;
 }
