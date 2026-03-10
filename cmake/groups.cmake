@@ -108,6 +108,7 @@ set(MOD_LIST_EXTRA
     ptimer
     pvtpl
     siprepo
+    sipp
 )
 
 # * common modules depending on database

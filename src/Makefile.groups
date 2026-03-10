@@ -24,7 +24,7 @@ mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
 			xhttp xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
 			log_custom keepalive ss7ops acc_diameter evrexec file_out \
 			sipjson lrkproxy math posops xhttp_prom dlgs sworker influxdbc \
-			peerstate ptimer pvtpl siprepo
+			peerstate ptimer pvtpl siprepo sipp
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \
