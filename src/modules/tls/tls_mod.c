@@ -91,21 +91,7 @@ int ksr_rand_engine_param(modparam_t type, void *val);
 
 MODULE_VERSION
 
-/* Engine is deprecated in OpenSSL 3 */
-#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER < 0x030000000L
-#define KSR_SSL_COMMON
-#define KSR_SSL_ENGINE
-#define KEY_PREFIX "/engine:"
-#define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
-#endif
-
-#if !defined(OPENSSL_NO_PROVIDER) && OPENSSL_VERSION_NUMBER >= 0x030000000L
-#define KSR_SSL_COMMON
-#define KSR_SSL_PROVIDER
-#include <openssl/store.h>
-#define KEY_PREFIX "/uri:"
-#define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
-#endif
+#include "tls_openssl.h"
 
 #ifdef STATISTICS
 unsigned long tls_stats_connections_no(void);
@@ -125,6 +111,7 @@ static stat_export_t mod_stats[] = {
 /* clang-format on */
 #endif
 
+extern int ksr_tcp_main_threads;
 extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
 /*
@@ -549,7 +536,8 @@ static int mod_init(void)
 		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
 #endif
-	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK) {
+	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
+			&& ksr_tcp_main_threads == 0) {
 		pthread_atfork(NULL, NULL, &fork_child);
 	}
 
@@ -589,6 +577,42 @@ error:
 #ifdef KSR_SSL_COMMON
 static int tls_engine_init();
 int tls_fix_engine_keys(tls_domains_cfg_t *, tls_domain_t *, tls_domain_t *);
+
+/**
+ * tls_reload_engine_keys - reload HSM/engine private keys after tls.reload
+ *
+ * Called from tls_reload_do() after a new tls_domains_cfg has been installed.
+ * tls_fix_domains_cfg only handles soft keys — this reloads HSM/engine keys
+ * into the new SSL_CTX. Fixes a pre-existing bug where tls.reload silently
+ * left the new ctx with no private key, breaking all subsequent TLS handshakes.
+ *
+ * Safe to call in:
+ *   tcp_main_threads == 0: any rank (ctx lives in shm, engine per-process)
+ *   tcp_main_threads  > 0: PROC_TCP_MAIN only (sole owner of SSL_CTX)
+ *
+ * @return 0 on success, -1 on failure
+ */
+int tls_reload_engine_keys(void)
+{
+#ifdef KSR_SSL_ENGINE
+	if(!strncmp(tls_engine_settings.engine.s, "NONE", 4))
+		return 0;
+#endif /* KSR_SSL_ENGINE */
+
+#ifdef KSR_SSL_PROVIDER
+	if(tls_provider_quirks & 1) {
+		OSSL_LIB_CTX *new_ctx = OSSL_LIB_CTX_new();
+		OSSL_LIB_CTX_set0_default(new_ctx);
+		CONF_modules_load_file(CONF_get1_default_config_file(), NULL, 0L);
+	}
+#endif /* KSR_SSL_PROVIDER */
+	if(tls_engine_init() < 0)
+		return -1;
+	if(tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults) < 0)
+		return -1;
+	LM_INFO("HSM/engine keys reloaded\n");
+	return 0;
+}
 #endif /* KSR_SSL_COMMON */
 
 /*
@@ -628,8 +652,19 @@ static int mod_child(int rank)
 	if(tls_disable || (tls_domains_cfg == 0))
 		return 0;
 
-	if(rank == PROC_INIT) {
+	if(rank == PROC_INIT && ksr_tcp_main_threads == 0) {
 		return mod_child_hook(&rank, NULL);
+	}
+	if(rank == PROC_INIT && ksr_tcp_main_threads > 0) {
+		LM_INFO("tcp_main_threads=%d: SSL_CTX init deferred to "
+				"PROC_TCP_MAIN, skipping PROC_INIT\n",
+				ksr_tcp_main_threads);
+		return 0;
+	}
+	if(rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0) {
+		if(mod_child_hook(&rank, NULL) < 0)
+			return -1;
+		/* fall through to HSM key loading below */
 	}
 
 #ifdef KSR_SSL_COMMON
@@ -642,7 +677,8 @@ static int mod_child(int rank)
 		return 0;
 #endif /* KSR_SSL_ENGINE */
 
-	if(rank > 0) {
+	if((rank > 0 && ksr_tcp_main_threads == 0)
+			|| (rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0)) {
 #ifdef KSR_SSL_PROVIDER
 		if(tls_provider_quirks & 1) {
 			new_ctx = OSSL_LIB_CTX_new();
@@ -657,7 +693,7 @@ static int mod_child(int rank)
 			return -1;
 		LM_INFO("OpenSSL loaded private keys in child: %d\n", rank);
 	}
-#endif /* KSR_SSL_PROVIDER */
+#endif /* KSR_SSL_COMMON */
 	return 0;
 }
 
@@ -705,9 +741,8 @@ int ksr_rand_engine_param(modparam_t type, void *val)
 static int ki_is_peer_verified(sip_msg_t *msg)
 {
 	struct tcp_connection *c;
-	SSL *ssl;
+	struct tls_extra_data *tls_c;
 	long ssl_verify;
-	X509 *x509_cert;
 
 	LM_DBG("started...\n");
 	if(msg->rcv.proto != PROTO_TLS) {
@@ -737,9 +772,9 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 		return -1;
 	}
 
-	ssl = ((struct tls_extra_data *)c->extra_data)->ssl;
+	tls_c = (struct tls_extra_data *)c->extra_data;
 
-	ssl_verify = SSL_get_verify_result(ssl);
+	ssl_verify = tls_c->ssl_verify_result;
 	if(ssl_verify != X509_V_OK) {
 		LM_WARN("verification of presented certificate failed... return -1\n");
 		tcpconn_put(c);
@@ -749,15 +784,12 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	/* now, we have only valid peer certificates or peers without certificates.
 	 * Thus we have to check for the existence of a peer certificate
 	 */
-	x509_cert = SSL_get_peer_certificate(ssl);
-	if(x509_cert == NULL) {
+	if(!tls_c->ssl_peer_cert) {
 		LM_INFO("tlsops:is_peer_verified: WARNING: peer did not present "
 				"a certificate. Thus it could not be verified... return -1\n");
 		tcpconn_put(c);
 		return -1;
 	}
-
-	X509_free(x509_cert);
 
 	tcpconn_put(c);
 

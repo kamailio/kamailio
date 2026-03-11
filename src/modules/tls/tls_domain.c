@@ -30,23 +30,13 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-/* only OpenSSL <= 1.1.1 */
-#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER < 0x030000000L
-#define KSR_SSL_COMMON
-#define KSR_SSL_ENGINE
-#define KEY_PREFIX "/engine:"
-#define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
+#include "tls_openssl.h"
+#ifdef KSR_SSL_ENGINE
 #include <openssl/engine.h>
+#endif /* KSR_SSL_ENGINE */
+#ifdef KSR_SSL_COMMON
 extern EVP_PKEY *tls_engine_private_key(const char *key_id);
-#endif
-
-#if !defined(OPENSSL_NO_PROVIDER) && OPENSSL_VERSION_NUMBER >= 0x030000000L
-#define KSR_SSL_COMMON
-#define KSR_SSL_PROVIDER
-#define KEY_PREFIX "/uri:"
-#define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
-extern EVP_PKEY *tls_engine_private_key(const char *key_id);
-#endif
+#endif /* KSR_SSL_COMMON */
 
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 #include <openssl/ui.h>
@@ -229,7 +219,9 @@ void tls_free_domain(tls_domain_t *d)
 
 	if(!d)
 		return;
-	if(d->ctx) {
+
+	/* TODO: in multi-threaded mode this needs to be freed in PROC_TCP_MAIN */
+	if(d->ctx && ksr_tcp_main_threads == 0) {
 		procs_no = get_max_procs();
 		for(i = 0; i < procs_no; i++) {
 			if(d->ctx[i])
@@ -456,7 +448,7 @@ static int tls_domain_foreach_CTX(
 	int i, ret;
 	int procs_no;
 
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
 		if((ret = ctx_cbk(d->ctx[i], l1, p2)) < 0)
 			return ret;
@@ -603,7 +595,7 @@ static int load_cert(tls_domain_t *d)
 	}
 	if(fix_shm_pathname(&d->cert_file) < 0)
 		return -1;
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
 		if(!SSL_CTX_use_certificate_chain_file(d->ctx[i], d->cert_file.s)) {
 			ERR("%s: Unable to load certificate file '%s'\n", tls_domain_str(d),
@@ -635,7 +627,7 @@ static int load_ca_list(tls_domain_t *d)
 		return -1;
 	if(d->ca_path.s && d->ca_path.len > 0 && fix_shm_pathname(&d->ca_path) < 0)
 		return -1;
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
 		if(SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s, d->ca_path.s)
 				!= 1) {
@@ -680,7 +672,7 @@ static int load_crl(tls_domain_t *d)
 		return -1;
 	LOG(L_INFO, "%s: Certificate revocation lists will be checked (%.*s)\n",
 			tls_domain_str(d), d->crl_file.len, d->crl_file.s);
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
 		if(SSL_CTX_load_verify_locations(d->ctx[i], d->crl_file.s, 0) != 1) {
 			ERR("%s: Unable to load certificate revocation list '%s'\n",
@@ -736,7 +728,7 @@ static int set_cipher_list(tls_domain_t *d)
 #endif /* TLS_KSSL_WORKAROUND */
 	if(!cipher_list)
 		return 0;
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
 #if OPENSSL_VERSION_NUMBER < 0x030000000L
 		if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
@@ -811,7 +803,7 @@ static int set_verification(tls_domain_t *d)
 		}
 	}
 
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
 		if(d->verify_client >= TLS_VERIFY_CLIENT_OPTIONAL_NO_CA) {
 			/* Note that actual verification result is available in $tls_peer_verified */
@@ -877,7 +869,7 @@ static int set_ssl_options(tls_domain_t *d)
 	STACK_OF(SSL_COMP) * comp_methods;
 #endif
 
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	options = SSL_OP_ALL; /* all the bug workarounds by default */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	options |= SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
@@ -928,7 +920,7 @@ static int set_session_cache(tls_domain_t *d)
 	int procs_no;
 	str tls_session_id;
 
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	tls_session_id = cfg_get(tls, tls_cfg, session_id);
 	for(i = 0; i < procs_no; i++) {
 		/* janakj: I am not sure if session cache makes sense in ser, session
@@ -1064,10 +1056,12 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 		   " socket [%s:%d] server name='%s' -"
 		   " switching SSL CTX to %p dom %p%s\n",
 			server_name.s, ip_addr2a(&new_domain->ip), new_domain->port,
-			ZSW(new_domain->server_name.s), new_domain->ctx[process_no],
+			ZSW(new_domain->server_name.s),
+			new_domain->ctx[ksr_tcp_main_threads == 0 ? process_no : 0],
 			new_domain,
 			(new_domain->type & TLS_DOMAIN_DEF) ? " (default)" : "");
-	SSL_set_SSL_CTX(ssl, new_domain->ctx[process_no]);
+	SSL_set_SSL_CTX(
+			ssl, new_domain->ctx[ksr_tcp_main_threads == 0 ? process_no : 0]);
 	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
 	   set the proper verify options. Thus this will be done manually! */
 
@@ -1130,7 +1124,7 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 		}
 	}
 
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	d->ctx = (SSL_CTX **)shm_malloc(sizeof(SSL_CTX *) * procs_no);
 	if(!d->ctx) {
 		ERR("%s: Cannot allocate shared memory\n", tls_domain_str(d));
@@ -1344,7 +1338,7 @@ static int load_engine_private_key(tls_domain_t *d)
 		return 0;
 
 	do {
-		i = process_no;
+		i = (ksr_tcp_main_threads == 0 ? process_no : 0);
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 			pkey = tls_engine_private_key(d->pkey_file.s + KEY_PREFIX_LEN);
 			if(pkey) {
@@ -1400,7 +1394,7 @@ static int load_private_key(tls_domain_t *d)
 	if(fix_shm_pathname(&d->pkey_file) < 0)
 		return -1;
 
-	procs_no = get_max_procs();
+	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
 		if(ksr_tls_key_password_mode == 1) {
 			SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_ui_cb);

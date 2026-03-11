@@ -697,28 +697,31 @@ int tls_pre_init(void)
 	mf = NULL;
 	rf = NULL;
 	ff = NULL;
+
+	if(ksr_tcp_main_threads == 0) {
 #ifdef TLS_MALLOC_DBG
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
-	if(!CRYPTO_set_mem_ex_functions(ser_malloc, ser_realloc, ser_free)) {
+		if(!CRYPTO_set_mem_ex_functions(ser_malloc, ser_realloc, ser_free)) {
 #else
-	if(!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
+		if(!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
 #endif
 #else
-	if(!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
+		if(!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
 #endif
-		LM_ERR("Unable to set the memory allocation functions\n");
-		CRYPTO_get_mem_functions(&mf, &rf, &ff);
-		LM_ERR("libssl current mem functions - m: %p r: %p f: %p\n", mf, rf,
-				ff);
-		LM_ERR("module mem functions - m: %p r: %p f: %p\n", ser_malloc,
-				ser_realloc, ser_free);
-		LM_ERR("Be sure tls module is loaded before any other module using"
-			   " libssl (can be loaded first to be safe)\n");
-		return -1;
-	}
-	LM_DBG("updated memory functions - malloc: %p realloc: %p free: %p\n",
-			ser_malloc, ser_realloc, ser_free);
+			LM_ERR("Unable to set the memory allocation functions\n");
+			CRYPTO_get_mem_functions(&mf, &rf, &ff);
+			LM_ERR("libssl current mem functions - m: %p r: %p f: %p\n", mf, rf,
+					ff);
+			LM_ERR("module mem functions - m: %p r: %p f: %p\n", ser_malloc,
+					ser_realloc, ser_free);
+			LM_ERR("Be sure tls module is loaded before any other module using"
+				   " libssl (can be loaded first to be safe)\n");
+			return -1;
+		}
+		LM_DBG("updated memory functions - malloc: %p realloc: %p free: %p\n",
+				ser_malloc, ser_realloc, ser_free);
 #endif /* LIBRESSL_VERSION_NUMBER */
+	}
 
 	if(tls_init_locks() < 0)
 		return -1;

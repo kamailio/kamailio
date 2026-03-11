@@ -41,4 +41,10 @@ extern str tls_domains_cfg_file;
 
 extern int sr_tls_renegotiation;
 
+#include "tls_openssl.h"
+
+#ifdef KSR_SSL_COMMON
+int tls_reload_engine_keys(void);
+#endif /* KSR_SSL_COMMON */
+
 #endif /* _TLS_MOD_H */
