@@ -96,5 +96,8 @@ int ksr_tls_keylog_file_write(const SSL *ssl, const char *line);
 int ksr_tls_keylog_peer_init(void);
 int ksr_tls_keylog_peer_send(const SSL *ssl, const char *line);
 int ksr_tls_keylog_vfilter_match(const char *line);
-
+unsigned char *cert_to_x509_DER(X509 *cert, int *len);
+X509 *x509_DER_to_cert(const unsigned char *der_bytes, int len);
+unsigned char *stack_to_x509_DER(STACK_OF(X509) * stack, int *out_len);
+STACK_OF(X509) * x509_DER_to_stack(const unsigned char *der_buf, int der_len);
 #endif /* _TLS_UTIL_H */

@@ -279,3 +279,168 @@ int ksr_tls_keylog_peer_send(const SSL *ssl, const char *line)
 	}
 	return 0;
 }
+
+
+unsigned char *cert_to_x509_DER(X509 *cert, int *len)
+{
+	unsigned char *result = NULL;
+	unsigned char *buf;
+
+	if(cert == NULL) {
+		*len = 0;
+		return NULL;
+	}
+
+	*len = i2d_X509(cert, NULL);
+	buf = result = shm_malloc(*len);
+	i2d_X509(cert, &buf);
+
+	return result;
+}
+
+
+X509 *x509_DER_to_cert(const unsigned char *der_bytes, int len)
+{
+	const unsigned char *source = der_bytes;
+	if(!der_bytes)
+		return NULL;
+
+	X509 *cert = d2i_X509(NULL, &source, len);
+
+	return cert;
+}
+
+/*
+ * stack_to_x509_DER:
+ *   Packs a STACK_OF(X509) into a heap-allocated binary blob.
+ *   Caller must free() the returned pointer.
+ *   *out_sz receives the total byte count.
+ *   Returns NULL on error.
+ */
+unsigned char *stack_to_x509_DER(STACK_OF(X509) * sk, int *out_sz)
+{
+	if(!sk || !out_sz)
+		return NULL;
+
+	int count = sk_X509_num(sk);
+	if(count <= 0)
+		return NULL;
+
+	/* ---- pass 1: calculate required buffer size ---- */
+	size_t total = sizeof(uint32_t); /* leading count field */
+
+	for(int i = 0; i < count; i++) {
+		X509 *x = sk_X509_value(sk, i);
+		int der_sz = i2d_X509(x, NULL); /* returns length only */
+		if(der_sz <= 0) {
+			LM_ERR("i2d_X509 probe failed for cert %d\n", i);
+			return NULL;
+		}
+		total += sizeof(uint32_t) + (size_t)der_sz;
+	}
+
+	/* ---- pass 2: allocate and pack ---- */
+	unsigned char *buf = shm_malloc(total);
+	if(!buf)
+		return NULL;
+
+	uint8_t *p = buf;
+
+	uint32_t u_count = (uint32_t)count;
+	memcpy(p, &u_count, sizeof(uint32_t));
+	p += sizeof(uint32_t);
+
+	for(int i = 0; i < count; i++) {
+		X509 *x = sk_X509_value(sk, i);
+
+		/* Probe length again (cheap; avoids storing an array) */
+		int der_sz = i2d_X509(x, NULL);
+		if(der_sz <= 0) {
+			free(buf);
+			return NULL;
+		}
+
+		uint32_t u_sz = (uint32_t)der_sz;
+		memcpy(p, &u_sz, sizeof(uint32_t));
+		p += sizeof(uint32_t);
+
+		/*
+         * i2d_X509 with a non-NULL **pp writes DER and advances *pp
+         * by der_sz bytes — identical behaviour to wolfSSL_i2d_X509.
+         */
+		unsigned char *der_ptr = p;
+		int written = i2d_X509(x, &der_ptr);
+		if(written != der_sz) {
+			LM_ERR("i2d_X509 wrote %d bytes, expected %d\n", written, der_sz);
+			free(buf);
+			return NULL;
+		}
+		/* der_ptr was advanced by i2d_X509; p advances manually */
+		p += der_sz;
+	}
+
+	*out_sz = (int)total;
+	return buf;
+}
+
+/* ---------- deserialise ------------------------------------------ */
+
+/*
+ * x509_DER_to_stack:
+ *   Reconstructs a STACK_OF(X509) from the blob produced above.
+ *   Caller owns the returned stack and must free it with
+ *   sk_X509_pop_free(sk, X509_free).
+ *   Returns NULL on hard error.
+ */
+STACK_OF(X509) * x509_DER_to_stack(const unsigned char *buf, int buf_sz)
+{
+	if(!buf || buf_sz < (int)sizeof(uint32_t))
+		return NULL;
+
+	const uint8_t *p = buf;
+	const uint8_t *end = buf + buf_sz;
+
+	uint32_t count;
+	memcpy(&count, p, sizeof(uint32_t));
+	p += sizeof(uint32_t);
+
+	STACK_OF(X509) *sk = sk_X509_new_null();
+	if(!sk)
+		return NULL;
+
+	for(uint32_t i = 0; i < count; i++) {
+		/* Need at least 4 bytes for the length field */
+		if(end - p < (ptrdiff_t)sizeof(uint32_t)) {
+			LM_ERR("Truncated buffer at cert %u (no length field)\n", i);
+			break;
+		}
+
+		uint32_t der_sz;
+		memcpy(&der_sz, p, sizeof(uint32_t));
+		p += sizeof(uint32_t);
+
+		if((size_t)(end - p) < (size_t)der_sz) {
+			LM_ERR("Buffer overrun during deserialisation at cert %u "
+				   "(claims %u bytes, only %td remain)\n",
+					i, der_sz, end - p);
+			break;
+		}
+
+		/*
+         * d2i_X509 advances the const-pointer it is given; keep a
+         * local copy so we can advance p by the original der_sz.
+         */
+		const unsigned char *der_ptr = p;
+		X509 *x = d2i_X509(NULL, &der_ptr, (long)der_sz);
+		if(x) {
+			sk_X509_push(sk, x);
+		} else {
+			LM_ERR("d2i_X509 failed for cert %u\n", i);
+			ERR_print_errors_fp(stderr);
+		}
+
+		p += der_sz;
+	}
+
+	return sk;
+}
