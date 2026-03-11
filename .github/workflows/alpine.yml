@@ -103,7 +103,7 @@ jobs:
       if: "! contains(fromJson('[\"x86\", \"x86_64\", \"aarch64\"]'), matrix.arch)"
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v4
@@ -392,7 +392,7 @@ jobs:
       uses: docker/setup-qemu-action@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v4
