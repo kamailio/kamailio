@@ -55,6 +55,7 @@ extern int _evapi_max_clients;
 extern int _evapi_wait_idle;
 extern int _evapi_wait_increase;
 extern int _evapi_send_task_timeout;
+extern int _evapi_send_data_timeout;
 
 #define EVAPI_IPADDR_SIZE 64
 #define EVAPI_TAG_SIZE 64
@@ -419,8 +420,10 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 		return 0;
 	}
 
-	tv.tv_sec = EAVPI_SEND_DATA_TIMEOUT_US / 1000000;
-	tv.tv_usec = EAVPI_SEND_DATA_TIMEOUT_US % 1000000;
+	if(_evapi_send_data_timeout > 0) {
+		tv.tv_sec = _evapi_send_data_timeout / 1000000;
+		tv.tv_usec = _evapi_send_data_timeout % 1000000;
+	}
 	n = 0;
 	for(i = 0; i < EVAPI_MAX_CLIENTS; i++) {
 		if(_evapi_clients[i].connected == 1 && _evapi_clients[i].sock >= 0) {
@@ -429,8 +432,10 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 							&& strncmp(_evapi_clients[i].stag.s, emsg->tag.s,
 									   emsg->tag.len)
 									   == 0)) {
-				setsockopt(_evapi_clients[i].sock, SOL_SOCKET, SO_SNDTIMEO, &tv,
-						sizeof(struct timeval));
+				if(_evapi_send_data_timeout > 0) {
+					setsockopt(_evapi_clients[i].sock, SOL_SOCKET, SO_SNDTIMEO,
+							&tv, sizeof(struct timeval));
+				}
 				wlen = write(
 						_evapi_clients[i].sock, emsg->data.s, emsg->data.len);
 				if(wlen != emsg->data.len) {
