@@ -1009,6 +1009,38 @@ kamcli rpc modparam.list tls
 		Returns signature of given method.
 		</para>
 	</section>
+	<section id="kex.r.udp.proxy.dump">
+		<title>
+		<function moreinfo="none">udp.proxy.dump</function>
+		</title>
+		<para>
+		If support for the UDP proxy protocol is enabled, returns the full contents of the proxy hash table. The returned list can be large.
+		</para>
+	</section>
+	<section id="kex.r.udp.proxy.stats">
+		<title>
+		<function moreinfo="none">udp.proxy.stats</function>
+		</title>
+		<para>
+		Returns a brief overview of the size of the UDP proxy hash table.
+		</para>
+	</section>
+	<section id="kex.r.udp.proxy.clean">
+		<title>
+		<function moreinfo="none">udp.proxy.clean</function>
+		</title>
+		<para>
+		Removes expired (older than 2 hours) entries from the UDP proxy hash table.
+		</para>
+	</section>
+	<section id="kex.r.udp.proxy.flush">
+		<title>
+		<function moreinfo="none">udp.proxy.flush</function>
+		</title>
+		<para>
+		Completely empties out the UDP proxy hash table by removing all entries.
+		</para>
+	</section>
 
 	<section id="kex.r.mod.mem_stats">
 		<title>
