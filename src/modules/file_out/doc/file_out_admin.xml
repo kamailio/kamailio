@@ -18,25 +18,22 @@
 		<title>Overview</title>
 		<para>
 		This is a small module to support fast streaming output to files
-		and process this changes depending on an interval. It implements only one
+		and process these changes depending on an interval. It implements only one
 		function that streams a chunk of text to the current output file handle.
 		</para>
 		<para>
-		The module can be used to write logs for up to 10 different log files.
-		Each log file can be configured to have a different name and extension.
+		The module can be used to define up to 10 logical outputs. For each output, one or more writer workers can be configured; in multi-worker mode, each worker writes to its own file.
+
+		Each logical output can be configured to have a different name and extension.
 		The processed string can contain pseudo-variables. The module will replace
 		the pseudo-variables with the actual values. The module will also rotate
 		the log files at a specified interval. The interval is specified in seconds.
 		</para>
 		<para>
-		Known limitations on the rotation interval are:
-		<itemizedlist>
-					<listitem>
-						<para>
-		If there is no messages coming, the rotation will not be done until the next message arrives.
-						</para>
-					</listitem>
-				</itemizedlist>
+		Each configured logical output can run with one or more dedicated writer workers.
+		Every worker owns its own queue and file handle, so writes are distributed
+		across per-worker files while preserving the same
+			<literal>file_out(filename, string)</literal> API.
 		</para>
 	</section>
 	<section>
@@ -102,7 +99,7 @@ modparam("file_out", "base_folder", "/tmp/file_out") # trailing slash will be ad
 		<itemizedlist>
 			<listitem>
 				<para>
-		"name=accounting;extension=.out;interval=20;prefix=accounting:"
+		"name=accounting;extension=.out;interval=20;prefix=accounting:;interval_range=20;workers=2"
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -156,14 +153,41 @@ modparam("file_out", "base_folder", "/tmp/file_out") # trailing slash will be ad
 					</emphasis>
 			</para>
 			</listitem>
+			<listitem>
+				<para>
+		interval_range (Optional) - range percentage for rotation interval
+				</para>
+				<para>
+					<emphasis>
+		    Default value is <quote>0</quote> (no change). Allowed range is <quote>0..100</quote>.
+					</emphasis>
+			</para>
+			</listitem>
+
+			<listitem>
+				<para>
+		workers (Optional) - number of writer workers for this file
+				</para>
+				<para>
+					<emphasis>
+		    Default value is <quote>1</quote>. Allowed range is <quote>1..16</quote>.
+					</emphasis>
+			</para>
+			</listitem>
 		</itemizedlist>
+		<para>
+		Flow summary: each call to <literal>file_out()</literal> resolves the configured
+		file, selects one worker queue randomly for that file, enqueues the message, and that
+		dedicated worker process flushes to its own output file. Rotation is checked
+		per worker, using that worker's own effective interval [(100 - interval_range)%*interval..interval].
+		</para>
 
 			<example>
 				<title>Set <varname>file</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("file_out", "file", "name=missed_calls;interval=30;extension=.json")
-modparam("file_out", "file", "name=accounting;extension=.txt")
+modparam("file_out", "file", "name=missed_calls;interval=30;extension=.json;workers=3;interval_range=10")
+modparam("file_out", "file", "name=accounting;extension=.txt;workers=1")
 ...
 				</programlisting>
 			</example>
@@ -190,29 +214,7 @@ modparam("file_out", "worker_usleep", 1000)
 			</example>
 		</section>
 
-		<section>
-			<title>
-				<varname>timer_interval</varname> (int)</title>
-			<para>
-		The time in seconds which timer will trigger for rotating the files.
-				<emphasis>
-				Make sure that this value is lower than the interval of the files.
-				</emphasis>
-			</para>
-			<para>
-				<emphasis>
-			Default value is <quote>10</quote> (10 s).
-				</emphasis>
-			</para>
-			<example>
-				<title>Set <varname>timer_interval</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("file_out", "timer_interval", 60)
-...
-				</programlisting>
-			</example>
-		</section>
+
 	</section>
 
 	<section>
