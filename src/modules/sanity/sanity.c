@@ -333,6 +333,12 @@ int check_required_headers(sip_msg_t *msg)
 		LM_DBG("check_required_headers failed\n");
 		return SANITY_CHECK_FAILED;
 	}
+
+	if(parse_headers(msg, HDR_VIA_F, 0) != 0 || !msg->h_via1) {
+		LM_ERR("failed to parse Via header\n");
+		return SANITY_CHECK_FAILED;
+	}
+
 	if(parse_headers(msg, HDR_EOH_F, 0) != 0) {
 		LM_ERR("failed to parse headers\n");
 		if(sanity_reply(msg, 400, "Bad Headers") < 0) {
