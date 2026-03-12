@@ -3468,6 +3468,8 @@ error:
 /**
  * code to set PTHREAD_PROCESS_SHARED attribute for pthread mutex to cope
  * with libssl 1.1+ thread-only mutex initialization
+ *
+ * disabled when tcp_main_thread = 1 - MT-mode for OpenSSL/wolfSSL
  */
 
 #define SYMBOL_EXPORT __attribute__((visibility("default")))
@@ -3489,16 +3491,14 @@ int SYMBOL_EXPORT pthread_mutex_init(
 
 	if(__mutexattr) {
 		pthread_mutexattr_t attr = *__mutexattr;
-		if(ksr_tcp_main_threads != 2) {
+		if(ksr_tcp_main_threads == 0)
 			pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-		}
 		return real_pthread_mutex_init(__mutex, &attr);
 	}
 
 	pthread_mutexattr_init(&attr);
-	if(ksr_tcp_main_threads != 2) {
+	if(ksr_tcp_main_threads == 0)
 		pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-	}
 	ret = real_pthread_mutex_init(__mutex, &attr);
 	pthread_mutexattr_destroy(&attr);
 
@@ -3523,13 +3523,14 @@ int SYMBOL_EXPORT pthread_rwlock_init(pthread_rwlock_t *__restrict __rwlock,
 
 	if(__attr) {
 		pthread_rwlockattr_t attr = *__attr;
-		if(ksr_tcp_main_threads != 2)
+
+		if(ksr_tcp_main_threads == 0)
 			pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
 		return real_pthread_rwlock_init(__rwlock, &attr);
 	}
 
 	pthread_rwlockattr_init(&attr);
-	if(ksr_tcp_main_threads != 2)
+	if(ksr_tcp_main_threads == 0)
 		pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
 	ret = real_pthread_rwlock_init(__rwlock, &attr);
 	pthread_rwlockattr_destroy(&attr);
