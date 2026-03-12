@@ -88,8 +88,9 @@ int dlgs_destroy(void)
  */
 int dlgs_sipfields_get(sip_msg_t *msg, dlgs_sipfields_t *sf)
 {
+	via_body_t *via1;
 	memset(sf, 0, sizeof(dlgs_sipfields_t));
-	via_body_t *via1 = msg->h_via1 ? (msg->h_via1)->parsed : NULL;
+	via1 = msg->h_via1 ? (msg->h_via1)->parsed : NULL;
 
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("failed to parse the request headers\n");
@@ -108,8 +109,8 @@ int dlgs_sipfields_get(sip_msg_t *msg, dlgs_sipfields_t *sf)
 		return -1;
 	}
 
-	if(!via1 && parse_via_header(msg, 1, &via1) < 0) {
-		LM_ERR("failed to parse Via header\n");
+	if((!via1 && parse_via_header(msg, 1, &via1) < 0) || !via1->branch) {
+		LM_ERR("failed to parse Via header or missing branch param\n");
 		return -1;
 	}
 
