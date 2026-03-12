@@ -376,6 +376,12 @@ int check_via1_header(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
+	if(msg->via1->branch == NULL || msg->via1->branch->value.len <= 0) {
+		LM_WARN("failed to parse the Via1 branch\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
 	return SANITY_CHECK_PASSED;
 }
 
