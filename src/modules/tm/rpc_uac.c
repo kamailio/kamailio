@@ -774,9 +774,15 @@ static void rpc_t_uac_attrs_helper(
 	dlg.loc_seq.is_set = DLG_SEQ_VALSET;
 
 	dlg.loc_uri = get_from(&faked_msg)->uri;
+	if(get_from(&faked_msg)->display.len > 0) {
+		dlg.loc_dname = get_from(&faked_msg)->display;
+	}
 	dlg.rem_uri = get_to(&faked_msg)->uri;
 	if(get_to(&faked_msg)->tag_value.len > 0) {
 		dlg.id.rem_tag = get_to(&faked_msg)->tag_value;
+	}
+	if(get_to(&faked_msg)->display.len > 0) {
+		dlg.rem_dname = get_to(&faked_msg)->display;
 	}
 	dlg.rem_target = tattrs->ruri;
 	dlg.dst_uri = tattrs->nexthop;
