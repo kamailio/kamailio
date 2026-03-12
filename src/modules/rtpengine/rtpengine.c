@@ -4091,7 +4091,7 @@ static void rtpengine_ping_check_timer(unsigned int ticks, void *param)
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
 			rtpp_list = rtpp_list->rset_next) {
 		lock_get(rtpp_list->rset_lock);
-		for(crt_rtpp = rtpp_list->rn_first, idx = 0;
+		for(crt_rtpp = rtpp_list->rn_first;
 				crt_rtpp != NULL && idx < total_nodes;
 				crt_rtpp = crt_rtpp->rn_next, idx++) {
 			nodes[idx] = *crt_rtpp;
