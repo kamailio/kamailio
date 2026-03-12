@@ -90,9 +90,13 @@ Ovidiu Sas
               4.34. system.listMethods
               4.35. system.methodHelp
               4.36. system.methodSignature
-              4.37. mod.mem_stats
-              4.38. mod.stats
-              4.39. mod.mem_statsx
+              4.37. udp.proxy.dump
+              4.38. udp.proxy.stats
+              4.39. udp.proxy.clean
+              4.40. udp.proxy.flush
+              4.41. mod.mem_stats
+              4.42. mod.stats
+              4.43. mod.mem_statsx
 
    List of Examples
 
@@ -177,9 +181,13 @@ Chapter 1. Admin Guide
         4.34. system.listMethods
         4.35. system.methodHelp
         4.36. system.methodSignature
-        4.37. mod.mem_stats
-        4.38. mod.stats
-        4.39. mod.mem_statsx
+        4.37. udp.proxy.dump
+        4.38. udp.proxy.stats
+        4.39. udp.proxy.clean
+        4.40. udp.proxy.flush
+        4.41. mod.mem_stats
+        4.42. mod.stats
+        4.43. mod.mem_statsx
 
 1. Overview
 
@@ -509,9 +517,13 @@ resetdebug();
    4.34. system.listMethods
    4.35. system.methodHelp
    4.36. system.methodSignature
-   4.37. mod.mem_stats
-   4.38. mod.stats
-   4.39. mod.mem_statsx
+   4.37. udp.proxy.dump
+   4.38. udp.proxy.stats
+   4.39. udp.proxy.clean
+   4.40. udp.proxy.flush
+   4.41. mod.mem_stats
+   4.42. mod.stats
+   4.43. mod.mem_statsx
 
 4.1.  core.aliases_list
 
@@ -854,7 +866,26 @@ kamctl rpc system.listMethods
 
    Returns signature of given method.
 
-4.37.  mod.mem_stats
+4.37.  udp.proxy.dump
+
+   If support for the UDP proxy protocol is enabled, returns the full
+   contents of the proxy hash table. The returned list can be large.
+
+4.38.  udp.proxy.stats
+
+   Returns a brief overview of the size of the UDP proxy hash table.
+
+4.39.  udp.proxy.clean
+
+   Removes expired (older than 2 hours) entries from the UDP proxy hash
+   table.
+
+4.40.  udp.proxy.flush
+
+   Completely empties out the UDP proxy hash table by removing all
+   entries.
+
+4.41.  mod.mem_stats
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.
@@ -899,12 +930,12 @@ loc
     Total: 864
 }
 
-4.38.  mod.stats
+4.42.  mod.stats
 
    Same as RPC command "mod.mem_stats", this is an alias command to
    preserve backward compatibility.
 
-4.39.  mod.mem_statsx
+4.43.  mod.mem_statsx
 
    Similar to RPC command "mod.mem_stats", but the output has an extended
    format, printing info that includes the allocated size and the count of
