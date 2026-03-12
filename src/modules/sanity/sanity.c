@@ -379,6 +379,32 @@ int check_via1_header(sip_msg_t *msg)
 	return SANITY_CHECK_PASSED;
 }
 
+/* check if the Via header contains a branch parameter
+and that it starts with the magic cookie */
+int check_via1_branch(sip_msg_t *msg)
+{
+	LM_DBG("check via1 branch\n");
+	if(parse_headers(msg, HDR_VIA1_F, 0) != 0) {
+		LM_WARN("failed to parse the Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1->branch == NULL || msg->via1->branch->value.len <= 0) {
+		LM_WARN("failed to parse the Via1 branch\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1->branch->value.len < 7
+			|| memcmp(msg->via1->branch->value.s, "z9hG4bK", 7) != 0) {
+		LM_WARN("Via1 branch parameter does not start with the magic cookie\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+	return SANITY_CHECK_PASSED;
+}
+
 /* check if the SIP version in the Via header is 2.0 */
 int check_via_sip_version(sip_msg_t *msg)
 {

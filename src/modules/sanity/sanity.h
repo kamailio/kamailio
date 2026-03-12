@@ -44,6 +44,9 @@ str_list_t *parse_str_list(str *_string);
 /* check top Via header */
 int check_via1_header(sip_msg_t *msg);
 
+/* check if the Via header contains a branch parameter */
+int check_via1_branch(sip_msg_t *msg);
+
 /* compare the protocol string in the Via header with the transport */
 int check_via_protocol(struct sip_msg *_msg);
 
