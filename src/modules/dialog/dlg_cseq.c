@@ -281,6 +281,10 @@ int dlg_cseq_msg_received(sr_event_param_t *evp)
 		goto done;
 	}
 
+	if(!msg.h_via1) {
+		goto done;
+	}
+
 	via = (struct via_body *)msg.h_via1->parsed;
 
 	if(via->branch == NULL || via->branch->value.len <= 0) {
