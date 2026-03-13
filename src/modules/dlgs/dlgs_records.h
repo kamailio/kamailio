@@ -63,6 +63,7 @@ typedef struct _dlgs_item {
 	str ftag;              /* sip from-tag */
 	str ttag;              /* sip to-tag */
 	str ruid;              /* record unique id */
+	str branch;            /* branch id */
 	str src;               /* src field */
 	str dst;               /* dst field */
 	str data;              /* data field */
@@ -95,6 +96,7 @@ typedef struct _dlgs_sipfields {
 	str callid;
 	str ftag;
 	str ttag;
+	str branch;
 } dlgs_sipfields_t;
 /* clang-format on */
 

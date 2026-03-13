@@ -88,7 +88,9 @@ int dlgs_destroy(void)
  */
 int dlgs_sipfields_get(sip_msg_t *msg, dlgs_sipfields_t *sf)
 {
+	via_body_t *via1;
 	memset(sf, 0, sizeof(dlgs_sipfields_t));
+	via1 = msg->h_via1 ? (msg->h_via1)->parsed : NULL;
 
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("failed to parse the request headers\n");
@@ -107,11 +109,19 @@ int dlgs_sipfields_get(sip_msg_t *msg, dlgs_sipfields_t *sf)
 		return -1;
 	}
 
+	if((!via1 && parse_via_header(msg, 1, &via1) < 0) || !via1->branch) {
+		LM_ERR("failed to parse Via header or missing branch param\n");
+		return -1;
+	}
+
 	/* callid */
 	sf->callid = msg->callid->body;
 	trim(&sf->callid);
 	/* from tag */
 	sf->ftag = get_from(msg)->tag_value;
+
+	/* branch */
+	sf->branch = via1->branch->value;
 
 	return 0;
 }
@@ -145,7 +155,7 @@ dlgs_item_t *dlgs_item_new(sip_msg_t *msg, dlgs_sipfields_t *sf, str *src,
 					  + ((sf->ttag.len > 0) ? (sf->ttag.len + 1)
 											: DLGS_TOTAG_SIZE)
 					  + ruid.len + 1 + dst->len + 1 + src->len + 1 + data->len
-					  + 1)
+					  + 1 + sf->branch.len + 1)
 					  * sizeof(char);
 
 	item = (dlgs_item_t *)shm_malloc(msize);
@@ -189,6 +199,10 @@ dlgs_item_t *dlgs_item_new(sip_msg_t *msg, dlgs_sipfields_t *sf, str *src,
 	item->data.len = data->len;
 	item->data.s = item->dst.s + item->dst.len + 1;
 	memcpy(item->data.s, data->s, data->len);
+
+	item->branch.len = sf->branch.len;
+	item->branch.s = item->data.s + item->data.len + 1;
+	memcpy(item->branch.s, sf->branch.s, sf->branch.len);
 
 	return item;
 }
@@ -317,15 +331,42 @@ int dlgs_add_item(sip_msg_t *msg, str *src, str *dst, str *data)
 	while(it != NULL && it->hashid == hid) {
 		if(sf.callid.len == it->callid.len
 				&& strncmp(sf.callid.s, it->callid.s, sf.callid.len) == 0) {
-			lock_release(&dsht->slots[idx].lock);
-			LM_DBG("call-id already in hash table [%.*s].\n", sf.callid.len,
-					sf.callid.s);
-			return 1;
+			/* Same Call-Id found, check branch-id */
+			if(sf.branch.len == it->branch.len
+					&& strncmp(sf.branch.s, it->branch.s, sf.branch.len) == 0) {
+				/* Same branch-id found */
+				lock_release(&dsht->slots[idx].lock);
+				LM_DBG("call-id already in hash table [%.*s] with same "
+					   "branch-id [%.*s].\n",
+						sf.callid.len, sf.callid.s, sf.branch.len, sf.branch.s);
+				return 1;
+			} else {
+				/* Same Call-ID but different branch-id, check state */
+				if(it->state == DLGS_STATE_TERMINATED
+						|| it->state == DLGS_STATE_NOTANSWERED) {
+					LM_DBG("allowing serial fork attempt - old state: %d, new "
+						   "branch-id [%.*s]\n",
+							it->state, sf.branch.len, sf.branch.s);
+					break;
+				} else {
+					lock_release(&dsht->slots[idx].lock);
+					LM_DBG("possible spiraling or parallel forking attempt for "
+						   "call-id [%.*s], branch-id [%.*s], "
+						   "not supported\n",
+							sf.callid.len, sf.callid.s, sf.branch.len,
+							sf.branch.s);
+					return 1;
+				}
+			}
 		}
+
 		prev = it;
 		it = it->next;
 	}
 	/* add */
+	LM_DBG("adding new attempt to hash table with call-id [%.*s], branch-id "
+		   "[%.*s]\n",
+			sf.callid.len, sf.callid.s, sf.branch.len, sf.branch.s);
 	nitem = dlgs_item_new(msg, &sf, src, dst, data, hid);
 	if(nitem == NULL) {
 		LM_ERR("cannot create new cell.\n");
@@ -423,6 +464,7 @@ dlgs_item_t *dlgs_get_item(sip_msg_t *msg)
 	while(it != NULL && it->hashid == hid) {
 		if(cid->len == it->callid.len
 				&& strncmp(cid->s, it->callid.s, cid->len) == 0) {
+			/* Don't check branch-id, spiraling or parallel forking not supported */
 			/* found */
 			return it;
 		}
@@ -470,6 +512,7 @@ int dlgs_del_item(sip_msg_t *msg)
 	while(it != NULL && it->hashid == hid) {
 		if(cid->len == it->callid.len
 				&& strncmp(cid->s, it->callid.s, cid->len) == 0) {
+			/* Don't check branch-id, spiraling or parallel forking not supported */
 			/* found */
 			if(it->prev == NULL)
 				dsht->slots[idx].first = it->next;
@@ -658,6 +701,7 @@ int dlgs_ht_dbg(void)
 		it = dsht->slots[i].first;
 		while(it) {
 			LM_ERR("\tcallid: %.*s\n", it->callid.len, it->callid.s);
+			LM_ERR("\tbranch: %.*s\n", it->branch.len, it->branch.s);
 			LM_ERR("\tftag: %.*s\n", it->ftag.len, it->ftag.s);
 			LM_ERR("\tttag: %.*s\n", it->ttag.len, it->ttag.s);
 			LM_ERR("\tsrc: %.*s\n", it->src.len, it->src.s);
@@ -1080,11 +1124,11 @@ static int dlgs_rpc_add_item(
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if(rpc->struct_add(th, "dSSSSSSSJJu", "count", n, "src", &it->src, "dst",
+	if(rpc->struct_add(th, "dSSSSSSSSJJu", "count", n, "src", &it->src, "dst",
 			   &it->dst, "data", &it->data, "ruid", &it->ruid, "callid",
-			   &it->callid, "ftag", &it->ftag, "ttag", &it->ttag, "ts_init",
-			   (uint64_t)it->ts_init, "ts_answer", (uint64_t)it->ts_answer,
-			   "state", it->state)
+			   &it->callid, "branch", &it->branch, "ftag", &it->ftag, "ttag",
+			   &it->ttag, "ts_init", (uint64_t)it->ts_init, "ts_answer",
+			   (uint64_t)it->ts_answer, "state", it->state)
 			< 0) {
 		rpc->fault(ctx, 500, "Internal error creating item");
 		return -1;
@@ -1149,9 +1193,9 @@ static void dlgs_rpc_briefing(rpc_t *rpc, void *ctx)
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "dSSSu", "count", ++n, "src", &it->src,
-					   "dst", &it->dst, "callid", &it->callid, "state",
-					   it->state)
+			if(rpc->struct_add(th, "dSSSSu", "count", ++n, "src", &it->src,
+					   "dst", &it->dst, "callid", &it->callid, "branch",
+					   &it->branch, "state", it->state)
 					< 0) {
 				lock_release(&_dlgs_htb->slots[i].lock);
 				rpc->fault(ctx, 500, "Internal error creating item");
