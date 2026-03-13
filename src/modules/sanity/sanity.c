@@ -330,7 +330,7 @@ int check_required_headers(sip_msg_t *msg)
 
 	if(!check_transaction_quadruple(msg)) {
 		msg->msg_flags |= FL_MSG_NOREPLY;
-		LM_DBG("check_required_headers failed\n");
+		LM_ERR("check_required_headers failed\n");
 		return SANITY_CHECK_FAILED;
 	}
 
