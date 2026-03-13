@@ -2057,7 +2057,7 @@ int t_unref(struct sip_msg *p_msg)
 		return -1;
 	if(p_msg->first_line.type == SIP_REQUEST) {
 		kr = get_kr();
-		if(unlikely(kr == REQ_ERR_DELAYED)) {
+		if(unlikely(kr & REQ_ERR_DELAYED)) {
 			LM_DBG("delayed error reply generation(%d)\n", tm_error);
 			if(unlikely(is_route_type(FAILURE_ROUTE))) {
 				LM_BUG("called w/ kr=REQ_ERR_DELAYED in failure"
@@ -2074,13 +2074,11 @@ int t_unref(struct sip_msg *p_msg)
 								   && !(kr & REQ_RLSD)))) {
 			LM_WARN("script writer didn't release transaction\n");
 			t_release_transaction(T);
-		} else if(unlikely((kr & REQ_ERR_DELAYED)
-						   && (kr
-								   & ~(REQ_RLSD | REQ_RPLD | REQ_ERR_DELAYED
-										   | REQ_FWDED)))) {
-			LM_BUG("REQ_ERR DELAYED should have been caught much"
-				   " earlier for %p: %d (hex %x)\n",
-					T, kr, kr);
+		} else if(unlikely(T->nr_of_outgoings == 0
+						   && !(T->flags & T_IN_AGONY))) {
+			LM_WARN("dropping orphaned transaction without branches"
+					" T=%p kr=%d\n",
+					T, kr);
 			t_release_transaction(T);
 		}
 	}
