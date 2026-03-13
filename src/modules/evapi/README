@@ -33,6 +33,7 @@ Daniel-Constantin Mierla
               3.6. wait_idle (int)
               3.7. wait_increase (int)
               3.8. send_task_timeout (int)
+              3.9. send_data_timeout (int)
 
         4. Functions
 
@@ -63,15 +64,16 @@ Daniel-Constantin Mierla
    1.6. Set wait_idle parameter
    1.7. Set wait_increase parameter
    1.8. Set send_task_timeout parameter
-   1.9. evapi_relay usage
-   1.10. TCP message
-   1.11. evapi_async_relay usage
-   1.12. evapi_multicast usage
-   1.13. evapi_async_multicast usage
-   1.14. evapi_unicast usage
-   1.15. evapi_async_unicast usage
-   1.16. evapi_close usage
-   1.17. evapi_set_tag usage
+   1.9. Set send_data_timeout parameter
+   1.10. evapi_relay usage
+   1.11. TCP message
+   1.12. evapi_async_relay usage
+   1.13. evapi_multicast usage
+   1.14. evapi_async_multicast usage
+   1.15. evapi_unicast usage
+   1.16. evapi_async_unicast usage
+   1.17. evapi_close usage
+   1.18. evapi_set_tag usage
 
 Chapter 1. Admin Guide
 
@@ -93,6 +95,7 @@ Chapter 1. Admin Guide
         3.6. wait_idle (int)
         3.7. wait_increase (int)
         3.8. send_task_timeout (int)
+        3.9. send_data_timeout (int)
 
    4. Functions
 
@@ -151,6 +154,7 @@ Chapter 1. Admin Guide
    3.6. wait_idle (int)
    3.7. wait_increase (int)
    3.8. send_task_timeout (int)
+   3.9. send_data_timeout (int)
 
 3.1. workers (int)
 
@@ -261,6 +265,18 @@ modparam("evapi", "wait_increase", 1)
 modparam("evapi", "send_task_timeout", 200000)
 ...
 
+3.9. send_data_timeout (int)
+
+   Set the timeout in microseconds to send the data to evapi clients. If
+   set to 0, no timeout is set.
+
+   Default value is 0.
+
+   Example 1.9. Set send_data_timeout parameter
+...
+modparam("evapi", "send_data_timeout", 400000)
+...
+
 4. Functions
 
    4.1. evapi_relay(evdata)
@@ -290,14 +306,14 @@ modparam("evapi", "send_task_timeout", 200000)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. evapi_relay usage
+   Example 1.10. evapi_relay usage
 ...
 evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 ...
 
    The above example will send the following message over tcp:
 
-   Example 1.10. TCP message
+   Example 1.11. TCP message
 ...
 47:{
  "event": "test",
@@ -321,7 +337,7 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.11. evapi_async_relay usage
+   Example 1.12. evapi_async_relay usage
 ...
 evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
         " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
@@ -333,7 +349,7 @@ evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
    tag provided by etag value. The etag can be a variable. For more see
    evapi_relay() and evapi_set_tag().
 
-   Example 1.12. evapi_multicast usage
+   Example 1.13. evapi_multicast usage
 ...
 evapi_multicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "ta
 gx");
@@ -345,7 +361,7 @@ gx");
    the tag provided by etag value. The etag can be a variable. For more
    see evapi_async_relay() and evapi_set_tag().
 
-   Example 1.13. evapi_async_multicast usage
+   Example 1.14. evapi_async_multicast usage
 ...
 evapi_async_multicast("{ \"event\": \"suspend\",\n \"data\":"
     " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
@@ -357,7 +373,7 @@ evapi_async_multicast("{ \"event\": \"suspend\",\n \"data\":"
    match the tag provided by etag value. The etag can be a variable. For
    more see evapi_relay() and evapi_set_tag().
 
-   Example 1.14. evapi_unicast usage
+   Example 1.15. evapi_unicast usage
 ...
 evapi_unicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx
 ");
@@ -369,7 +385,7 @@ evapi_unicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx
    that match the tag provided by etag value. The etag can be a variable.
    For more see evapi_async_relay() and evapi_set_tag().
 
-   Example 1.15. evapi_async_unicast usage
+   Example 1.16. evapi_async_unicast usage
 ...
 evapi_async_unicast("{ \"event\": \"suspend\",\n \"data\":"
     " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
@@ -381,7 +397,7 @@ evapi_async_unicast("{ \"event\": \"suspend\",\n \"data\":"
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.16. evapi_close usage
+   Example 1.17. evapi_close usage
 ...
 event_route[evapi:connection-new] {
   if($evapi(srcaddr)!="127.0.0.1") {
@@ -399,7 +415,7 @@ event_route[evapi:connection-new] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17. evapi_set_tag usage
+   Example 1.18. evapi_set_tag usage
 ...
 event_route[evapi:connection-new] {
   if($evapi(srcaddr)=="127.0.0.1") {
