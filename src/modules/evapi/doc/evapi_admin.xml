@@ -237,6 +237,26 @@ modparam("evapi", "send_task_timeout", 200000)
 </programlisting>
 		</example>
 	</section>
+	<section id="evapi.p.send_data_timeout">
+		<title><varname>send_data_timeout</varname> (int)</title>
+		<para>
+			Set the timeout in microseconds to send the data to
+			evapi clients. If set to 0, no timeout is set.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>send_data_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "send_data_timeout", 400000)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
