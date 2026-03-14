@@ -2057,7 +2057,7 @@ int t_unref(struct sip_msg *p_msg)
 		return -1;
 	if(p_msg->first_line.type == SIP_REQUEST) {
 		kr = get_kr();
-		if(unlikely(kr == REQ_ERR_DELAYED)) {
+		if(unlikely(kr & REQ_ERR_DELAYED)) {
 			LM_DBG("delayed error reply generation(%d)\n", tm_error);
 			if(unlikely(is_route_type(FAILURE_ROUTE))) {
 				LM_BUG("called w/ kr=REQ_ERR_DELAYED in failure"
