@@ -1687,7 +1687,7 @@ char *build_uac_req(str *method, str *headers, str *body, dlg_t *dialog,
 	str content_length, cseq, via;
 	unsigned int maxfwd_len;
 	int tbracket, fbracket;
-	int tdname, fdname;
+	int tdname = 0, fdname = 0;
 	str fromtag = STR_NULL;
 	str loc_tag = STR_NULL;
 
