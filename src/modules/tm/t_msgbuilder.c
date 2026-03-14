@@ -1554,11 +1554,9 @@ static inline char *print_to(
 		char *w, dlg_t *dialog, struct cell *t, int bracket)
 {
 	t->to_hdr.s = w;
-	t->to_hdr.len =
-			TO_LEN + dialog->rem_dname.len
-			+ ((dialog->rem_dname.len > 0) ? 1 : 0) + dialog->rem_uri.len
-			+ CRLF_LEN
-			+ (((dialog->rem_uri.s[dialog->rem_uri.len - 1] != '>')) ? 2 : 0);
+	t->to_hdr.len = TO_LEN + dialog->rem_dname.len
+					+ ((dialog->rem_dname.len > 0) ? 1 : 0)
+					+ dialog->rem_uri.len + ((bracket) ? 2 : 0) + CRLF_LEN;
 
 	memapp(w, TO, TO_LEN);
 	if(dialog->rem_dname.len > 0) {
@@ -1589,11 +1587,9 @@ static inline char *print_from(
 		char *w, dlg_t *dialog, struct cell *t, int bracket)
 {
 	t->from_hdr.s = w;
-	t->from_hdr.len =
-			FROM_LEN + dialog->loc_dname.len
-			+ ((dialog->loc_dname.len > 0) ? 1 : 0) + dialog->loc_uri.len
-			+ CRLF_LEN
-			+ ((dialog->loc_uri.s[dialog->loc_uri.len - 1] != '>') ? 2 : 0);
+	t->from_hdr.len = FROM_LEN + dialog->loc_dname.len
+					  + ((dialog->loc_dname.len > 0) ? 1 : 0)
+					  + dialog->loc_uri.len + ((bracket) ? 2 : 0) + CRLF_LEN;
 
 	memapp(w, FROM, FROM_LEN);
 	if(dialog->loc_dname.len > 0) {
