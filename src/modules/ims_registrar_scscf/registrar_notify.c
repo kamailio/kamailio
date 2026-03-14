@@ -2483,12 +2483,15 @@ void uac_request_cb(struct cell *t, int type, struct tmcb_params *ps)
 			// TODO - save and obey Retry-After
 			goto done;
 		}
-	}
-	LM_INFO("NOTIFY failed with code [%d] and no Retry-After - the "
-			"subscription will be removed\n",
-			ps->code);
-	if(drop_subscription(ps->rpl, watcher_contact) != 0) {
-		LM_ERR("Error dropping subscription\n");
+		LM_INFO("NOTIFY failed with code [%d] and no Retry-After - the "
+				"subscription will be removed\n",
+				ps->code);
+		if(drop_subscription(ps->rpl, watcher_contact) != 0) {
+			LM_ERR("Error dropping subscription\n");
+		}
+	} else {
+		LM_INFO("NOTIFY request timed out. No further action can be taken.\n",
+				ps->code);
 	}
 done:
 	if(watcher_contact) {
@@ -2617,7 +2620,7 @@ void send_notification(reg_notification *n)
 				uac_request_cb, watcher_contact);
 		tmb.t_request_within(&uac_r);
 	} else {
-		LM_DBG("o notification content - about to send notification with "
+		LM_DBG("No notification content - about to send notification with "
 			   "subscription state: [%.*s] presentity_uri: [%.*s] watcher_uri: "
 			   "[%.*s]\n",
 				n->subscription_state.len, n->subscription_state.s,
