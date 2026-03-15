@@ -2456,8 +2456,25 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 	if(unlikely(new_dst.send_sock == 0)) {
 		LM_WARN("no sending socket found\n");
 		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
+		sto.fromip.s = sto.fromip_buff;
 		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
 		proto = PROTO_UDP;
+	} else if(new_dst.sent_local.set
+			  && (new_dst.sent_local.proto == PROTO_TCP
+					  || new_dst.sent_local.proto == PROTO_TLS)) {
+		/* use actual local address (ephemeral port) for outbound TCP/TLS */
+		sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
+				"%s:%s:%d", siptrace_proto_name(new_dst.sent_local.proto),
+				ip_addr2strz(&new_dst.sent_local.ip),
+				(int)new_dst.sent_local.port);
+		if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
+			LM_ERR("failed to format fromip buffer (%d)\n", sto.fromip.len);
+			sto.fromip.s = SIPTRACE_ANYADDR;
+			sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+		} else {
+			sto.fromip.s = sto.fromip_buff;
+		}
+		proto = new_dst.sent_local.proto;
 	} else {
 		if((_siptrace_data_mode & SIPTRACE_DATA_MODE_ADVADDR)
 				&& new_dst.send_sock->useinfo.sock_str.len > 0) {
@@ -2472,9 +2489,9 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 		memcpy(sto.fromip_buff, vsock.s, vsock.len);
 		sto.fromip.len = vsock.len;
 		sto.fromip_buff[sto.fromip.len] = '\0';
+		sto.fromip.s = sto.fromip_buff;
 		proto = new_dst.send_sock->proto;
 	}
-	sto.fromip.s = sto.fromip_buff;
 
 	sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
 			siptrace_proto_name(proto), suip2a(&new_dst.to, sizeof(new_dst.to)),
