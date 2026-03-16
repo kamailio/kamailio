@@ -64,7 +64,7 @@ typedef struct _evapi_client
 	unsigned short af;
 	unsigned short src_port;
 	char src_addr[EVAPI_IPADDR_SIZE];
-	char tag[EVAPI_IPADDR_SIZE];
+	char tag[EVAPI_TAG_SIZE];
 	str stag;
 	char rbuffer[CLIENT_BUFFER_SIZE];
 	unsigned int rpos;
