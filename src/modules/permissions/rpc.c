@@ -60,12 +60,19 @@ void rpc_trusted_reload(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(reload_trusted_table_cmd() != 1) {
-		rpc->fault(c, 500, "Reload failed.");
-		goto done;
+	// only reload the hash buckets then, when the cache is activated (db_mode = 1)
+	if(perm_db_mode == ENABLE_CACHE) {
+		if(reload_trusted_table_cmd() != 1) {
+			rpc->fault(c, 500, "Reload failed.");
+			goto done;
+		}
+		rpc->rpl_printf(c, "Reload OK");
+	} else {
+		LM_DBG("Skip trusted sources reload in hash buckets, caching is "
+			   "disabled.\n");
+		rpc->fault(c, 500, "Reload skipped (disabled cache)");
 	}
 
-	rpc->rpl_printf(c, "Reload OK");
 done:
 	// reloading is done
 	*perm_rpc_reload_time = time(NULL);
