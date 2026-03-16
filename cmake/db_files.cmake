@@ -33,7 +33,7 @@ function(add_db_files group_name file kamctl)
     set_property(GLOBAL APPEND PROPERTY KAMDBCTL_DEPENDENCIES "kamdbctl_${file}")
   endif()
   install(
-    PROGRAMS ${CMAKE_BINARY_DIR}/utils/kamctl/${file}
+    FILES ${CMAKE_BINARY_DIR}/utils/kamctl/${file}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/${MAIN_NAME}/kamctl
     COMPONENT ${group_name}
   )
