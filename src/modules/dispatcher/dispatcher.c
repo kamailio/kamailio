@@ -388,7 +388,7 @@ static int mod_init(void)
 
 	if(cfg_declare("dispatcher", dispatcher_cfg_def, &default_dispatcher_cfg,
 			   cfg_sizeof(dispatcher), &dispatcher_cfg)) {
-		LM_ERR("Fail to declare the configuration\n");
+		LM_ERR("fail to declare the configuration\n");
 		return -1;
 	}
 	/* if the ping-keepalive-timer is enabled the tm-api needs to be loaded */
@@ -865,7 +865,7 @@ static int ki_ds_mark_dst_state(sip_msg_t *msg, str *sval)
 	state = ds_parse_flags(sval->s, sval->len);
 
 	if(state < 0) {
-		LM_WARN("Failed to parse state flags: %.*s", sval->len, sval->s);
+		LM_WARN("failed to parse state flags: %.*s", sval->len, sval->s);
 		return -1;
 	}
 
@@ -896,7 +896,7 @@ static int ki_ds_mark_addr(sip_msg_t *msg, str *vstate, int vgroup, str *vuri)
 	state = ds_parse_flags(vstate->s, vstate->len);
 
 	if(state < 0) {
-		LM_WARN("Failed to parse state flags: %.*s", vstate->len, vstate->s);
+		LM_WARN("failed to parse state flags: %.*s", vstate->len, vstate->s);
 		return -1;
 	}
 
@@ -977,12 +977,12 @@ static int ds_reload(sip_msg_t *msg)
 
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0) {
-			LM_ERR("Error reloading from list\n");
+			LM_ERR("failed reloading the list file\n");
 			return -1;
 		}
 	} else {
 		if(ds_reload_db() < 0) {
-			LM_ERR("Error reloading from db\n");
+			LM_ERR("failed reloading records from db\n");
 			return -1;
 		}
 	}
