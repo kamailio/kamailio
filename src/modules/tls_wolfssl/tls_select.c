@@ -51,6 +51,7 @@
 #include "tls_wolfssl_mod.h"
 #include "tls_init.h" /* features macros */
 #include "tls_cfg.h"
+#include "tls_util.h"
 
 // CERT_REVOKED is already defined by wolfSSL
 enum
@@ -159,11 +160,23 @@ static SSL *get_ssl(struct tcp_connection *c)
 	return extra->ssl;
 }
 
+static struct tls_extra_data *get_extra(struct tcp_connection *c)
+{
+	struct tls_extra_data *extra;
+
+	if(!c || !c->extra_data) {
+		ERR("Unable to extract SSL data from TLS connection\n");
+		return 0;
+	}
+	extra = (struct tls_extra_data *)c->extra_data;
+	return extra;
+}
+
 
 static int get_cert(WOLFSSL_X509 **cert, struct tcp_connection **c,
 		struct sip_msg *msg, int my)
 {
-	WOLFSSL *ssl;
+	struct tls_extra_data *extra;
 
 	*cert = 0;
 	*c = get_cur_connection(msg);
@@ -171,11 +184,12 @@ static int get_cert(WOLFSSL_X509 **cert, struct tcp_connection **c,
 		INFO("TLS connection not found\n");
 		return -1;
 	}
-	ssl = get_ssl(*c);
-	if(!ssl)
+	extra = get_extra(*c);
+	if(!extra)
 		goto err;
-	*cert = my ? wolfSSL_get_certificate(ssl)
-			   : wolfSSL_get_peer_certificate(ssl);
+	*cert = my ? x509_DER_to_cert(extra->ssl_my_cert, extra->ssl_my_cert_len)
+			   : x509_DER_to_cert(
+						 extra->ssl_peer_cert, extra->ssl_peer_cert_len);
 	if(!*cert) {
 		if(my) {
 			ERR("Unable to retrieve my TLS certificate from SSL structure\n");
@@ -199,18 +213,18 @@ static int get_cipher(str *res, sip_msg_t *msg)
 	static char buf[1024];
 
 	struct tcp_connection *c;
-	WOLFSSL *ssl;
+	struct tls_extra_data *extra;
 
 	c = get_cur_connection(msg);
 	if(!c) {
 		INFO("TLS connection not found in select_cipher\n");
 		goto err;
 	}
-	ssl = get_ssl(c);
-	if(!ssl)
+	extra = get_extra(c);
+	if(!extra)
 		goto err;
 
-	cipher.s = (char *)wolfSSL_CIPHER_get_name(wolfSSL_get_current_cipher(ssl));
+	cipher.s = extra->ssl_cipher_name;
 	cipher.len = cipher.s ? strlen(cipher.s) : 0;
 	if(cipher.len >= 1024) {
 		ERR("Cipher name too long\n");
@@ -255,18 +269,18 @@ static int get_bits(str *res, long *i, sip_msg_t *msg)
 	static char buf[1024];
 
 	struct tcp_connection *c;
-	WOLFSSL *ssl;
+	struct tls_extra_data *extra;
 
 	c = get_cur_connection(msg);
 	if(!c) {
 		INFO("TLS connection not found in select_bits\n");
 		goto err;
 	}
-	ssl = get_ssl(c);
-	if(!ssl)
+	extra = get_extra(c);
+	if(!extra)
 		goto err;
 
-	b = wolfSSL_CIPHER_get_bits(wolfSSL_get_current_cipher(ssl), 0);
+	b = extra->ssl_cipher_bits;
 	bits.s = int2str(b, &bits.len);
 	if(bits.len >= 1024) {
 		ERR("Bits string too long\n");
@@ -308,18 +322,18 @@ static int get_version(str *res, sip_msg_t *msg)
 	static char buf[1024];
 
 	struct tcp_connection *c;
-	SSL *ssl;
+	struct tls_extra_data *extra;
 
 	c = get_cur_connection(msg);
 	if(!c) {
 		INFO("TLS connection not found in select_version\n");
 		goto err;
 	}
-	ssl = get_ssl(c);
-	if(!ssl)
+	extra = get_extra(c);
+	if(!extra)
 		goto err;
 
-	version.s = (char *)wolfSSL_get_version(ssl);
+	version.s = extra->ssl_version;
 	version.len = version.s ? strlen(version.s) : 0;
 	if(version.len >= 1024) {
 		ERR("Version string too long\n");
@@ -363,19 +377,19 @@ static int get_desc(str *res, sip_msg_t *msg)
 	static char buf[128];
 
 	struct tcp_connection *c;
-	SSL *ssl;
+	struct tls_extra_data *extra;
 
 	c = get_cur_connection(msg);
 	if(!c) {
 		INFO("TLS connection not found in select_desc\n");
 		goto err;
 	}
-	ssl = get_ssl(c);
-	if(!ssl)
+	extra = get_extra(c);
+	if(!extra)
 		goto err;
 
 	buf[0] = '\0';
-	wolfSSL_CIPHER_description(SSL_get_current_cipher(ssl), buf, 128);
+	strcpy(buf, extra->ssl_cipher_desc);
 	res->s = buf;
 	res->len = strlen(buf);
 	tcpconn_put(c);
@@ -471,23 +485,24 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 	static str fail = STR_STATIC_INIT("0");
 
 	struct tcp_connection *c;
-	SSL *ssl;
+	struct tls_extra_data *extra;
 	WOLFSSL_X509 *cert = 0;
 
 	c = get_cur_connection(msg);
 	if(!c)
 		return -1;
 
-	ssl = get_ssl(c);
-	if(!ssl)
+	extra = get_extra(c);
+	if(!extra)
 		goto error;
 
 	if(local) {
 		DBG("Verification of local certificates not supported\n");
 		goto error;
 	} else {
-		if((cert = wolfSSL_get_peer_certificate(ssl))
-				&& wolfSSL_get_verify_result(ssl) == err) {
+		if((cert = x509_DER_to_cert(
+					extra->ssl_peer_cert, extra->ssl_peer_cert_len))
+				&& extra->ssl_verify_result == err) {
 			*res = succ;
 			if(ires)
 				*ires = 1;
@@ -923,7 +938,7 @@ static int pv_ssl_cert(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 static int get_verified_cert_chain(WOLF_STACK_OF(WOLFSSL_X509) * *chain,
 		struct tcp_connection **c, struct sip_msg *msg)
 {
-	SSL *ssl;
+	struct tls_extra_data *extra;
 
 	*chain = 0;
 	*c = get_cur_connection(msg);
@@ -931,10 +946,11 @@ static int get_verified_cert_chain(WOLF_STACK_OF(WOLFSSL_X509) * *chain,
 		INFO("TLS connection not found\n");
 		return -1;
 	}
-	ssl = get_ssl(*c);
-	if(!ssl)
+	extra = get_extra(*c);
+	if(!extra)
 		goto err;
-	*chain = wolfSSL_get0_verified_chain(ssl);
+	*chain =
+			x509_DER_to_stack(extra->ssl_cert_chain, extra->ssl_cert_chain_len);
 	if(!*chain) {
 		ERR("Unable to retrieve peer TLS verified chain from SSL structure\n");
 		goto err;
@@ -1010,6 +1026,20 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 	if(!name) {
 		ERR("Cannot extract subject or issuer name from peer certificate\n");
 		goto err;
+	}
+
+	if(nid == NID_undef) {
+		/* no component requested - return the full subject/issuer oneline */
+		if(wolfSSL_X509_NAME_oneline(name, buf, sizeof(buf)) == NULL) {
+			ERR("Error converting X509 name to string\n");
+			goto err;
+		}
+		res->s = buf;
+		res->len = strlen(buf);
+		if(!local)
+			wolfSSL_X509_free(cert);
+		tcpconn_put(c);
+		return 0;
 	}
 
 	index = wolfSSL_X509_NAME_get_index_by_NID(name, nid, -1);

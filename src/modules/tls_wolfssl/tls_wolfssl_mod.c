@@ -371,6 +371,21 @@ error:
 }
 
 
+static int mod_child_hook(int rank)
+{
+	if(cfg_get(tls, tls_cfg, config_file).s) {
+		if(tls_fix_domains_cfg(*tls_domains_cfg, &srv_defaults, &cli_defaults)
+				< 0)
+			return -1;
+	} else {
+		if(tls_fix_domains_cfg(*tls_domains_cfg, &mod_params, &mod_params) < 0)
+			return -1;
+	}
+
+	return 0;
+}
+
+
 static int mod_child(int rank)
 {
 	if(tls_disable || (tls_domains_cfg == 0))
@@ -378,18 +393,13 @@ static int mod_child(int rank)
 
 	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
-	if(rank == PROC_INIT) {
-		if(cfg_get(tls, tls_cfg, config_file).s) {
-			if(tls_fix_domains_cfg(
-					   *tls_domains_cfg, &srv_defaults, &cli_defaults)
-					< 0)
-				return -1;
-		} else {
-			if(tls_fix_domains_cfg(*tls_domains_cfg, &mod_params, &mod_params)
-					< 0)
-				return -1;
-		}
+	if(rank == PROC_INIT && ksr_tcp_main_threads != 2) {
+		return mod_child_hook(rank);
 	}
+	if(rank == PROC_TCP_MAIN && ksr_tcp_main_threads == 2) {
+		return mod_child_hook(rank);
+	}
+
 	return 0;
 }
 
@@ -404,9 +414,8 @@ static void destroy(void)
 static int ki_is_peer_verified(sip_msg_t *msg)
 {
 	struct tcp_connection *c;
-	SSL *ssl;
+	struct tls_extra_data *tls_c;
 	long ssl_verify;
-	WOLFSSL_X509 *x509_cert;
 
 	LM_DBG("started...\n");
 	if(msg->rcv.proto != PROTO_TLS) {
@@ -436,9 +445,9 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 		return -1;
 	}
 
-	ssl = ((struct tls_extra_data *)c->extra_data)->ssl;
+	tls_c = (struct tls_extra_data *)c->extra_data;
 
-	ssl_verify = wolfSSL_get_verify_result(ssl);
+	ssl_verify = tls_c->ssl_verify_result;
 	// WOLFSSL_X509_V_OK / X509_V_OK
 	if(ssl_verify != 0) {
 		LM_WARN("verification of presented certificate failed... return -1\n");
@@ -449,15 +458,12 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	/* now, we have only valid peer certificates or peers without certificates.
 	 * Thus we have to check for the existence of a peer certificate
 	 */
-	x509_cert = wolfSSL_get_peer_certificate(ssl);
-	if(x509_cert == NULL) {
+	if(!tls_c->ssl_peer_cert) {
 		LM_INFO("tlsops:is_peer_verified: WARNING: peer did not present "
 				"a certificate. Thus it could not be verified... return -1\n");
 		tcpconn_put(c);
 		return -1;
 	}
-
-	wolfSSL_X509_free(x509_cert);
 
 	tcpconn_put(c);
 

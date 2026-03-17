@@ -371,7 +371,8 @@ int tls_pre_init(void)
 	mf = NULL;
 	rf = NULL;
 	ff = NULL;
-	if(wolfSSL_SetAllocators(ser_malloc, ser_free, ser_realloc)) {
+	if(ksr_tcp_main_threads != 2
+			&& wolfSSL_SetAllocators(ser_malloc, ser_free, ser_realloc)) {
 		LM_ERR("Unable to set the memory allocation functions\n");
 		// CRYPTO_get_mem_functions(&mf, &rf, &ff);
 		LM_ERR("libssl current mem functions - m: %p r: %p f: %p\n", mf, rf,

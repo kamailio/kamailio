@@ -58,14 +58,27 @@ typedef struct tls_extra_data
 {
 	tls_domains_cfg_t *cfg; /* Configuration used for this connection */
 	str dom;				/* tls_domain_str() for this connection */
-	SSL *ssl;				/* SSL context used for the connection */
-	BIO *rwbio;				/* bio used for read/write
+	WOLFSSL *ssl;			/* SSL context used for the connection */
+	WOLFSSL_BIO *rwbio;		/* bio used for read/write
 							 * (openssl code might add buffering BIOs so
 							 * it's better to remember our original BIO) */
 	tls_ct_q *ct_wq;
 
 	unsigned int flags;
 	enum tls_conn_states state;
+
+	long ssl_verify_result;
+	int ssl_peer_cert_len;
+	unsigned char *ssl_peer_cert;
+	int ssl_my_cert_len;
+	unsigned char *ssl_my_cert;
+	int ssl_cert_chain_len;
+	unsigned char *ssl_cert_chain;
+	char ssl_version[64];
+	char *ssl_cipher_name;
+	char ssl_cipher_desc[128];
+	int ssl_cipher_bits;
+	char *ssl_servername;
 } tls_extra_data_t;
 
 

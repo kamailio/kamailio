@@ -31,6 +31,7 @@
 #include "../../core/timer.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
+#include "../../core/tcp_mtops.h"
 #include "tls_init.h"
 #include "tls_wolfssl_mod.h"
 #include "tls_domain.h"
@@ -41,9 +42,191 @@
 #include "tls_rpc.h"
 #include "tls_cfg.h"
 
+extern int ksr_tcp_main_threads;
 static const char *tls_reload_doc[2] = {"Reload TLS configuration file", 0};
 
+static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
+{
+	tls_domains_cfg_t *cfg = NULL;
+
+	collect_garbage();
+
+	cfg = tls_load_config(config_file);
+	if(cfg == NULL) {
+		snprintf(errmsg, errmsg_size,
+				"Error while loading TLS configuration file"
+				" (consult server log)");
+		return -1;
+	}
+
+	if(tls_fix_domains_cfg(cfg, &srv_defaults, &cli_defaults) < 0) {
+		snprintf(errmsg, errmsg_size,
+				"Error while fixing TLS configuration"
+				" (consult server log)");
+		tls_free_cfg(cfg);
+		return -1;
+	}
+
+	if(tls_check_sockets(cfg) < 0) {
+		snprintf(errmsg, errmsg_size,
+				"No server listening socket found for one of"
+				" TLS domains (consult server log)");
+		tls_free_cfg(cfg);
+		return -1;
+	}
+
+	DBG("TLS configuration successfully loaded");
+
+	lock_get(tls_domains_cfg_lock);
+	cfg->next = (*tls_domains_cfg);
+	*tls_domains_cfg = cfg;
+	lock_release(tls_domains_cfg_lock);
+
+#ifdef KSR_SSL_COMMON
+	/* reload HSM/engine keys into the new SSL_CTX.
+	 * tls_fix_domains_cfg only handles soft keys — without this,
+	 * tls.reload silently leaves the new ctx with no private key,
+	 * breaking all subsequent TLS handshakes until restart.
+	 * Fixes the pre-existing bug for both tcp_main_threads==0 and >0. */
+	if(tls_reload_engine_keys() < 0) {
+		snprintf(errmsg, errmsg_size,
+				"TLS config reloaded but HSM/engine key reload failed"
+				" (consult server log)");
+		return -1;
+	}
+#endif /* KSR_SSL_COMMON */
+
+	LM_INFO("TLS configuration reloaded\n");
+	return 0;
+}
+
+typedef struct tls_reload_task
+{
+	/* input — set by sender before dispatch */
+	char config_file_buf[256];
+	int config_file_len;
+	int pidx; /* sender process_no for result channel */
+	/* result — set by PROC_TCP_MAIN thread callback */
+	int code; /* 0 = success, -1 = error */
+	char errmsg[256];
+} tls_reload_task_t;
+
+
+static void tls_reload_mt_thread_cb(void *p, int pidx)
+{
+	tls_reload_task_t *t = (tls_reload_task_t *)p;
+	tcpx_task_result_t *rtask = NULL;
+	str config_file;
+
+	config_file.s = t->config_file_buf;
+	config_file.len = t->config_file_len;
+
+	rtask = (tcpx_task_result_t *)shm_mallocxz(sizeof(tcpx_task_result_t));
+	if(rtask == NULL) {
+		SHM_MEM_ERROR;
+		t->code = -1;
+		snprintf(t->errmsg, sizeof(t->errmsg), "Out of shared memory");
+		ksr_tcpx_thread_eresult(NULL, t->pidx);
+		return;
+	}
+
+	t->code = tls_reload_do(&config_file, t->errmsg, sizeof(t->errmsg));
+
+	rtask->code = t->code;
+	rtask->data = NULL; /* result embedded in task block */
+	ksr_tcpx_thread_eresult(rtask, t->pidx);
+}
+
+
+static void tls_reload_mt(rpc_t *rpc, void *ctx, str *config_file)
+{
+	int dsize = 0;
+	tcpx_task_t *ptask = NULL;
+	tcpx_task_result_t *rtask = NULL;
+	tls_reload_task_t *t = NULL;
+
+	if(config_file->len >= (int)sizeof(t->config_file_buf)) {
+		rpc->fault(ctx, 500, "TLS configuration file path too long");
+		return;
+	}
+
+	dsize = sizeof(tcpx_task_t) + sizeof(tls_reload_task_t);
+	ptask = (tcpx_task_t *)shm_mallocxz(dsize);
+	if(ptask == NULL) {
+		SHM_MEM_ERROR;
+		rpc->fault(ctx, 500, "Out of shared memory");
+		return;
+	}
+
+	ptask->exec = tls_reload_mt_thread_cb;
+	ptask->param = (void *)((char *)ptask + sizeof(tcpx_task_t));
+	t = (tls_reload_task_t *)ptask->param;
+	memcpy(t->config_file_buf, config_file->s, config_file->len);
+	t->config_file_buf[config_file->len] = '\0';
+	t->config_file_len = config_file->len;
+	t->pidx = process_no;
+
+	LM_DBG("dispatching tls.reload to PROC_TCP_MAIN from rank=%d\n",
+			process_no);
+
+	if(ksr_tcpx_task_send(ptask, process_no) < 0) {
+		LM_ERR("failed to send tls.reload task to PROC_TCP_MAIN\n");
+		rpc->fault(ctx, 500, "Failed to dispatch tls.reload to PROC_TCP_MAIN");
+		shm_free(ptask);
+		return;
+	}
+
+	ksr_tcpx_task_result_recv(&rtask, process_no);
+	if(rtask == NULL) {
+		LM_ERR("no result received from PROC_TCP_MAIN for tls.reload\n");
+		rpc->fault(ctx, 500, "No result received from PROC_TCP_MAIN");
+		shm_free(ptask);
+		return;
+	}
+
+	/* result is embedded in ptask block — read before free */
+	if(t->code < 0) {
+		LM_ERR("tls.reload failed in PROC_TCP_MAIN: %s\n", t->errmsg);
+		rpc->fault(ctx, 500, t->errmsg);
+	} else {
+		LM_INFO("tls.reload succeeded in PROC_TCP_MAIN\n");
+		rpc->rpl_printf(ctx, "Ok. TLS configuration reloaded.");
+	}
+
+	shm_free(rtask);
+	shm_free(ptask);
+}
+
+
 static void tls_reload(rpc_t *rpc, void *ctx)
+{
+	char errmsg[256];
+	str config_file;
+
+	config_file = cfg_get(tls, tls_cfg, config_file);
+	if(!config_file.s) {
+		rpc->fault(ctx, 500, "No TLS configuration file configured");
+		return;
+	}
+
+	if(ksr_tcp_main_threads > 0) {
+		/* SSL_CTX owned by PROC_TCP_MAIN — use client stub */
+		LM_INFO("tcp_main_threads=%d: proxying tls.reload to"
+				" PROC_TCP_MAIN\n",
+				ksr_tcp_main_threads);
+		tls_reload_mt(rpc, ctx, &config_file);
+		return;
+	}
+
+	/* tcp_main_threads == 0: execute locally (in-process server) */
+	if(tls_reload_do(&config_file, errmsg, sizeof(errmsg)) < 0) {
+		rpc->fault(ctx, 500, errmsg);
+		return;
+	}
+	rpc->rpl_printf(ctx, "Ok. TLS configuration reloaded.");
+}
+
+static void tls_reload0(rpc_t *rpc, void *ctx)
 {
 	tls_domains_cfg_t *cfg;
 	str tls_domains_cfg_file;
@@ -102,7 +285,6 @@ extern struct tcp_connection **tcpconn_id_hash;
 
 static void tls_list(rpc_t *rpc, void *c)
 {
-	char buf[128];
 	char src_ip[IP_ADDR_MAX_STR_SIZE];
 	char dst_ip[IP_ADDR_MAX_STR_SIZE];
 	void *handle;
@@ -145,8 +327,7 @@ static void tls_list(rpc_t *rpc, void *c)
 			}
 
 			if(tls_d) {
-				sni = wolfSSL_get_servername(
-						tls_d->ssl, TLSEXT_NAMETYPE_host_name);
+				sni = tls_d->ssl_servername;
 				if(sni == NULL) {
 					sni = "N/A";
 				}
@@ -161,16 +342,7 @@ static void tls_list(rpc_t *rpc, void *c)
 					"src_ip", src_ip, "src_port", con->rcv.src_port, "dst_ip",
 					dst_ip, "dst_port", con->rcv.dst_port);
 			if(tls_d) {
-				if(wolfSSL_get_current_cipher(tls_d->ssl)) {
-					tls_info = wolfSSL_CIPHER_description(
-							wolfSSL_get_current_cipher(tls_d->ssl), buf,
-							sizeof(buf));
-					len = strlen(buf);
-					if(len && buf[len - 1] == '\n')
-						buf[len - 1] = '\0';
-				} else {
-					tls_info = "unknown";
-				}
+				tls_info = tls_d->ssl_cipher_desc;
 				/* tls data */
 				state = "unknown/error";
 				lock_get(&con->write_lock);

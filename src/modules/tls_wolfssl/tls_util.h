@@ -82,5 +82,8 @@ int shm_asciiz_dup(char **dest, char *val);
 void collect_garbage(void);
 
 void tls_dump_verification_failure(long verification_result);
-
+unsigned char *cert_to_x509_DER(WOLFSSL_X509 *x509, int *out_sz);
+WOLFSSL_X509 *x509_DER_to_cert(const unsigned char *der, int len);
+unsigned char *stack_to_x509_DER(WOLF_STACK_OF(WOLFSSL_X509) * sk, int *out_sz);
+WOLF_STACK_OF(WOLFSSL_X509) * x509_DER_to_stack(unsigned char *buf, int buf_sz);
 #endif /* _TLS_UTIL_H */
