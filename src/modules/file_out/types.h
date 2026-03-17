@@ -90,12 +90,10 @@ typedef struct fo_output_properties
 } fo_output_properties_t;
 
 int fo_output_properties_init(fo_output_properties_t *fp);
-int fo_output_properties_destroy(fo_output_properties_t *fp);
 int fo_output_properties_print(const fo_output_properties_t file_prop);
 
 /* Multi-worker file management */
 int fo_create_files(fo_output_properties_t *fp, int num_workers);
-int fo_destroy_files(fo_output_properties_t *fp);
 
 /* Effective interval calculation */
 int fo_calculate_effective_interval(int base_interval, int range_percent);

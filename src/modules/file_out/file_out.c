@@ -208,20 +208,6 @@ static int child_init(int rank)
  */
 static void destroy(void)
 {
-	int result = 0;
-	int i = 0;
-	for(i = 0; i < *fo_number_of_files; i++) {
-		result = fo_output_properties_destroy(&fo_files[i]);
-		if(result < 0) {
-			LM_ERR("Failed to destroy file properties\n");
-		}
-	}
-
-	/* Free allocated mem */
-	if(fo_number_of_files != NULL) {
-		shm_free(fo_number_of_files);
-		fo_number_of_files = NULL;
-	}
 }
 
 static int fo_rotate_file(const int index, const int worker_id)

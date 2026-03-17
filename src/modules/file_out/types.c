@@ -232,31 +232,6 @@ int fo_output_properties_init(fo_output_properties_t *fp)
 	return 1;
 }
 
-/* freeing the memory allocated for the members base_filename, extension, prefix
-	lead to BUG bad pointer 0x7f6b50d57095 (out of memory block!) called from file_out: types.c: fo_file_properties_destroy(167) - ignoring
- */
-int fo_output_properties_destroy(fo_output_properties_t *fp)
-{
-	if(fp == NULL) {
-		return 1;
-	}
-
-	if(fp->fo_prefix_pvs != NULL) {
-		if(pv_elem_free_all(fp->fo_prefix_pvs) < 0) {
-			LM_ERR("Failed to free prefix pvs\n");
-			return -1;
-		}
-	}
-
-	/* Free multi-worker files */
-	if(fp->files != NULL) {
-		fo_destroy_files(fp);
-		fp->files = NULL;
-	}
-
-	return 1;
-}
-
 int fo_output_properties_print(const fo_output_properties_t file_prop)
 {
 	int i = 0;
@@ -361,46 +336,6 @@ int fo_create_files(fo_output_properties_t *fp, int num_workers)
 
 	LM_DBG("Created %d worker files for output '%s'\n", fp->num_workers,
 			fp->fo_base_filename.s);
-
-	return 1;
-}
-
-/**
- * Destroy all files and their queues
- * @param fp file properties with files to destroy
- * @return 1 on success, -1 on failure
- */
-int fo_destroy_files(fo_output_properties_t *fp)
-{
-	if(fp == NULL || fp->files == NULL) {
-		return 1;
-	}
-
-	for(int i = 0; i < fp->num_workers; i++) {
-		fo_worker_file_t *sub = &fp->files[i];
-
-		/* Close file if open */
-		if(sub->file_output != NULL) {
-			fclose(sub->file_output);
-			sub->file_output = NULL;
-		}
-
-		/* Destroy queue */
-		if(sub->queue != NULL) {
-			fo_queue_destroy(sub->queue);
-			sub->queue = NULL;
-		}
-
-		/* Free suffix string */
-		if(sub->filename_suffix.s != NULL) {
-			shm_free(sub->filename_suffix.s);
-			sub->filename_suffix.s = NULL;
-		}
-	}
-
-	shm_free(fp->files);
-	fp->files = NULL;
-	fp->num_workers = 1;
 
 	return 1;
 }
