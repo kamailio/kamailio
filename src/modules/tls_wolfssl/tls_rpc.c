@@ -226,57 +226,6 @@ static void tls_reload(rpc_t *rpc, void *ctx)
 	rpc->rpl_printf(ctx, "Ok. TLS configuration reloaded.");
 }
 
-static void tls_reload0(rpc_t *rpc, void *ctx)
-{
-	tls_domains_cfg_t *cfg;
-	str tls_domains_cfg_file;
-
-	tls_domains_cfg_file = cfg_get(tls, tls_cfg, config_file);
-	if(!tls_domains_cfg_file.s) {
-		rpc->fault(ctx, 500, "No TLS configuration file configured");
-		return;
-	}
-
-	/* Try to delete old configurations first */
-	collect_garbage();
-
-	cfg = tls_load_config(&tls_domains_cfg_file);
-
-	if(!cfg) {
-		rpc->fault(ctx, 500,
-				"Error while loading TLS configuration file"
-				" (consult server log)");
-		return;
-	}
-
-	if(tls_fix_domains_cfg(cfg, &srv_defaults, &cli_defaults) < 0) {
-		rpc->fault(ctx, 500,
-				"Error while fixing TLS configuration"
-				" (consult server log)");
-		goto error;
-	}
-	if(tls_check_sockets(cfg) < 0) {
-		rpc->fault(ctx, 500,
-				"No server listening socket found for one of"
-				" TLS domains (consult server log)");
-		goto error;
-	}
-
-	DBG("TLS configuration successfully loaded");
-
-	lock_get(tls_domains_cfg_lock);
-
-	cfg->next = (*tls_domains_cfg);
-	*tls_domains_cfg = cfg;
-
-	lock_release(tls_domains_cfg_lock);
-	rpc->rpl_printf(ctx, "Ok. TLS configuration reloaded.");
-	return;
-
-error:
-	tls_free_cfg(cfg);
-}
-
 
 static const char *tls_list_doc[2] = {"List currently open TLS connections", 0};
 
