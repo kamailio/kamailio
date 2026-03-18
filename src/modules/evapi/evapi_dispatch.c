@@ -57,6 +57,15 @@ extern int _evapi_wait_increase;
 extern int _evapi_send_task_timeout;
 extern int _evapi_send_data_timeout;
 
+typedef struct _evapi_context_t
+{
+	gen_lock_t alock;
+	int mcount;
+	int mlimit;
+} evapi_context_t;
+
+static evapi_context_t *_evapi_context = NULL;
+
 #define EVAPI_IPADDR_SIZE 64
 #define EVAPI_TAG_SIZE 64
 #define CLIENT_BUFFER_SIZE 32768
@@ -113,6 +122,24 @@ typedef struct _evapi_evroutes
 static evapi_evroutes_t _evapi_rts;
 
 static evapi_queue_t *_evapi_queue_packets = NULL;
+
+/**
+ *
+ */
+int evapi_context_init(void)
+{
+	_evapi_context = (evapi_context_t *)shm_malloc(sizeof(evapi_context_t));
+	if(_evapi_context == NULL) {
+		return -1;
+	}
+	memset(_evapi_context, 0, sizeof(evapi_context_t));
+	if(lock_init(&_evapi_context->alock) == NULL) {
+		shm_free(_evapi_context);
+		_evapi_context = NULL;
+		return -1;
+	}
+	return 0;
+}
 
 /**
  *

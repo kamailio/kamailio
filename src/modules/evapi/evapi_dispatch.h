@@ -62,4 +62,6 @@ int evapi_clients_init(void);
 
 int evapi_queue_init(void);
 
+int evapi_context_init(void);
+
 #endif

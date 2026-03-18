@@ -173,6 +173,10 @@ static int mod_init(void)
 		LM_ERR("failed to init faked internal message queue\n");
 		return -1;
 	}
+	if(evapi_context_init() < 0) {
+		LM_ERR("failed to init internal context\n");
+		return -1;
+	}
 	/* add space for one extra process */
 	register_procs(1 + _evapi_workers);
 
