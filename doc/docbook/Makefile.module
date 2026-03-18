@@ -1,0 +1,4 @@
+# This is the future home for module specific targets,
+# nothing here yet
+
+include $(docbook_dir)/Makefile
