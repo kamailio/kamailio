@@ -139,7 +139,7 @@ static void corex_rpc_shm_rprint(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Cannot open file");
 		return;
 	}
-	LM_DBG("matching file name with: %.*s\n", fmatch.len, fmatch.s);
+	LM_DBG("matching file or function name with: %.*s\n", fmatch.len, fmatch.s);
 	shm_status_filter(&fmatch, fp);
 	fclose(fp);
 }

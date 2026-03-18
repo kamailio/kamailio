@@ -1317,14 +1317,17 @@ msg_vbflag_reset("1");
 		</para>
 		<para>
 			It takes two parameters: the path to file where to write the report;
-			the string to match the allocation file (the match is done as value
-			included in the path fo the allocation file).
+			the string to match the allocation location. The location can be
+			given as either a file name (the match is done as value included in
+			the path of the allocation file), or as a function name and line
+			number as reported by <emphasis>mod.mem_stats</emphasis>.
 		</para>
 		<para>
-		Example:
+		Examples:
 		</para>
         <programlisting  format="linespecific">
 			&kamcli; rpc shm.rprint /tmp/kamailioshm.txt dns_cache.c
+			&kamcli; rpc shm.rprint /tmp/kamailioshm.txt init_dns_cache:359
 		</programlisting>
     </section>
     </section>

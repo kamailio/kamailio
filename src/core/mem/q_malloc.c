@@ -1014,7 +1014,8 @@ static void *qm_strnstr(const void *b1, int l1, const void *b2, int l2)
 	return NULL;
 }
 
-static int qm_frag_match(struct qm_frag *f, const str *fmatch)
+static int qm_frag_match(struct qm_frag *f, const str *fmatch, int fn_matches,
+		const char *func, unsigned long line)
 {
 	if(!fmatch)
 		return 1;
@@ -1023,6 +1024,8 @@ static int qm_frag_match(struct qm_frag *f, const str *fmatch)
 	if(strlen(f->file) >= fmatch->len
 			&& qm_strnstr(f->file, strlen(f->file), fmatch->s, fmatch->len)
 					   != NULL)
+		return 1;
+	if(fn_matches == 2 && f->line == line && !strcmp(f->func, func))
 		return 1;
 	return 0;
 }
@@ -1035,6 +1038,20 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 	int i, j;
 	int h;
 	int unused;
+#ifdef DBG_QM_MALLOC
+	char func_name[128];
+	unsigned long linenum;
+	int fn_matches = 0;
+
+	if(fmatch && fmatch->len) {
+		// try "func:123"
+		fn_matches =
+				sscanf(fmatch->s, "%127[a-zA-Z_]:%lu", func_name, &linenum);
+		if(fn_matches != 2) // try "func(123)"
+			fn_matches = sscanf(
+					fmatch->s, "%127[a-zA-Z_](%lu)", func_name, &linenum);
+	}
+#endif
 
 	qm = (struct qm_block *)qmp;
 
@@ -1052,7 +1069,7 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 			f = FRAG_NEXT(f), i++) {
 		if(!f->u.is_free) {
 #ifdef DBG_QM_MALLOC
-			if(qm_frag_match(f, fmatch)) {
+			if(qm_frag_match(f, fmatch, fn_matches, func_name, linenum)) {
 				fprintf(fp, "   %3d. %c  address=%p frag=%p size=%lu used=%d\n",
 						i, (f->u.is_free) ? 'A' : 'N',
 						(char *)f + sizeof(struct qm_frag), f, f->size,
@@ -1088,7 +1105,7 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 			if(!FRAG_WAS_USED(f)) {
 				unused++;
 #ifdef DBG_QM_MALLOC
-				if(qm_frag_match(f, fmatch)) {
+				if(qm_frag_match(f, fmatch, fn_matches, func_name, linenum)) {
 					fprintf(fp,
 							"unused fragm.: hash = %3d, fragment %p,"
 							" address %p size %lu, created from %s:%lu / "
