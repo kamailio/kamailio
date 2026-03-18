@@ -1,0 +1,50 @@
+# Kamailio build system
+#
+# shared functions 
+#
+#
+#
+
+escape_values=$(subst $$,\$$,$(subst ",\", $(1)))
+
+# generates echo "$(1)=escape($(1))"
+cfg_gen_var=echo "$(1)=$(call escape_values,$($(1)))"
+
+# similar to cfg_gen_var, but for FOO=1 var=$(FOO)
+# it would generate "echo var=$(FOO)" and not "echo var=1"
+cfg_gen_var2=echo "$(1)=$(call escape_values,$(value $(1)))"
+
+# generate a var from itself concatenated with another one
+cfg_gen_var3=echo "$(1)=$(call escape_values,$(value $(1))) \$$($(2))"
+
+# generates echo "$(1)=escape($(1)) >> $(2)"
+cfg_save_var=$(call cfg_gen_var,$(1)) >>$(2);
+# same as above but uses cfg_gen_var2
+cfg_save_var2=$(call cfg_gen_var2,$(1)) >>$(2);
+# concatenate another var to first var
+cfg_save_var3=$(call cfg_gen_var3,$(1),$(2)) >>$(3);
+
+# map function $(1) on variable list $($(2)) (the function is used with only
+# one arg)
+mapf1=$(foreach v,$($(2)),$(call $(1),$v))
+# map function $(1) on variable list $($(2)), passing also $(3) as second
+# arg
+mapf2=$(foreach v,$($(2)),$(call $(1),$v,$(3)))
+
+
+#cfg_fixed_to_file=$(call mapf2,cfg_save_var,saved_fixed_vars,$(1))
+#cfg_chg_to_file=$(call mapf2,cfg_save_var2,saved_chg_vars,$(1))
+
+ifeq (${err_fail},1)
+sh_err_fail=set -e;
+try_err=$(1) ; if [ $$? != 0 ]; then echo ERROR: $(1) failed ;  exit 1 ; fi
+else
+sh_err_fail=
+try_err=$(1) ; if [ $$? != 0 ]; then echo ERROR: $(1) failed ; fi
+endif
+
+DOCBOOKMAN = $(shell which docbook2x-man 2>/dev/null)
+ifeq ($(DOCBOOKMAN),)
+	DOCBOOKMAN = $(shell which db2x_docbook2man 2>/dev/null)
+endif
+

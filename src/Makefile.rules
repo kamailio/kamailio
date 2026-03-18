@@ -1,0 +1,296 @@
+# Kamailio build system
+#
+# common Makefile rules, included by main Makefile & the  modules
+#
+
+#
+# Uses: NAME, ALLDEP, CC, CFLAGS, C_DEFS, DEFS, C_INCLUDES, INCLUDES, LIBS, 
+#       MKDEP, auto_gen, auto_gen_others, auto_gen_keep, 
+#       depends, objs, extra_objs, static_modules, static_modules_path,
+#       LD_RPATH
+# (all this must  be defined previously!,  see Makefile.defs & Makefile)
+# Optional: SER_LIBS - list of ser libraries that will be automatically
+#  built if necessary. Format: path/shortname, where shortname is the 
+#  name passed to -l (e.g. for libprint.so the shortname is print)
+#
+
+
+# check if the saved cfg corresponds with the current one
+# (if not rebuild everything)
+ifeq (,$(filter $(nodep_targets),$(MAKECMDGOALS)))
+-include makecfg.lst
+# if trying  to build a lib automatically and the lib is already compiled,
+# don't rebuild it if the only differences in DEFS or INCLUDES are covered
+# by LIB_NOREBUILD_DEFS/LIB_NOREBUILD_INCLUDES
+LIB_NOREBUILD_DEFS=
+
+# don't rebuild if the differences are covered by NOREBUILD_DEFS or 
+# NOREBUILD_INCLUDES
+ifneq ($(strip $(filter-out $(NOREBUILD_DEFS),\
+		$(C_DEFS) $(DEFS))),$(strip $(CFG_DEFS)))
+#$(warning different defs: <$(strip $(C_DEFS) $(DEFS))> != )
+#$(warning               : <$(strip $(CFG_DEFS))>)
+$(shell rm -f makecfg.lst)
+endif
+ifneq ($(strip $(filter-out $(NOREBUILD_INCLUDES),\
+			$(C_INCLUDES) $(INCLUDES))),$(strip $(CFG_INCLUDES)))
+$(shell rm -f makecfg.lst)
+endif
+endif
+
+ALLDEP+=makecfg.lst
+
+# returns current type: "" core/unknown, "M" module, "L" libray, "U" util
+crt_type=$(if $(MOD_NAME),M,$(if $(LIB_NAME),L,$(if $(UTIL_NAME),U)))
+
+cmd_CC=$(CC) $(CFLAGS) $(C_INCLUDES) $(INCLUDES) $(C_DEFS) $(DEFS) -c $< -o $@
+cmd_LD=$(LD) $(LDFLAGS) $(objs) $(extra_objs) $(ALL_LIBS) $(SER_RPATH) \
+	-o $(NAME)
+
+ifeq (,$(CC_MKDEP_OPTS))
+# if CCC_MKDEP_OPTS is empty => CC cannot generate dependencies on the fly
+cmd_MKDEP=$(MKDEP) $(filter -D% -I%,$(CFLAGS)) $(C_INCLUDES) $(INCLUDES) \
+			$(C_DEFS) $(DEFS) $< \
+		|  sed	-e 's/\#.*//' -e '/:[ 	]*$$/d' -e '/^[ 	]*$$/d' \
+				-e 's|.*:|$@: $$(wildcard |' -e 's/\([^\\]\)$$/\1)/'> $*.d
+else
+# deps can be generated on the fly by cmd_CC
+cmd_CC+=$(CC_MKDEP_OPTS)
+# no MKDEP command any more
+cmd_MKDEP=
+endif # CC_MKDEP_OPTS
+
+# what will be displayed if quiet==silent
+silent_cmd_CC=CC ($(CC)) [$(strip $(crt_type) $(NAME))]		$@
+silent_cmd_LD=LD ($(LD)) [$(strip $(crt_type) $(NAME))]		$@
+
+ifneq (,$(filter 0 no off verbose noisy, $(Q) $(QUIET)))
+override Q:=
+quiet=verbose
+#shell optional print
+oecho=echo $(1)
+else
+quiet=silent
+Q=1
+MAKE+= --no-print-directory
+#shell optional print
+oecho=
+endif
+
+module_make=	if [ -n "$(1)" -a -r "$(1)/Makefile" ]; then \
+			$(call oecho, "" ;) \
+			$(call oecho, "" ;) \
+			if  $$(MAKE) -C $(1) $(2) || [ ${err_fail} != 1 ] ; then \
+				:; \
+			else \
+				exit 1; \
+			fi ; \
+		else \
+			echo module not found: $(1) ; \
+			exit 1; \
+		fi ;
+
+quote:= "
+escall= $(subst $$,\$$,$(subst $(quote),\$(quote),$1))
+exec_cmd= $(if $($(quiet)_cmd_$(1)),\
+			@echo "$(call escall,$($(quiet)_cmd_$(1)))" ;) $(cmd_$(1))
+
+#implicit rules
+%.o:%.c  $(ALLDEP)
+	$(call exec_cmd,CC)
+	@$(call cmd_MKDEP)
+
+# use RPATH and SER_LIBS if needed (make install and the module depends
+# on some ser libs)
+
+ifneq	($(SER_LIBS),)
+# abspath & realpath don't work on make <= 3.80
+SER_LIBS_DIRS:=$(dir $(SER_LIBS))
+ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
+lib_compile_for_install=yes
+expected_lib_ipath=$(lib_target)
+else
+lib_compile_for_install=$(compile_for_install)
+# function: expected_lib_ipath ser_lib_dir
+expected_lib_ipath=$(1)
+endif
+ifneq	($(LD_RPATH),)
+ifneq	(,$(filter install install% %install, $(MAKECMDGOALS)))
+SER_RPATH_LST:=$(lib_target)
+else
+# realpath is not supported in make 3.80 or older
+ifeq (,$(filter-out 3.80 3.80.%,$(MAKE_VERSION)))
+fullpath=$(shell cd $(1); pwd)
+else
+fullpath=$(realpath $(1))
+endif
+
+SER_RPATH_LST:=$(call fullpath,$(dir $(SER_LIBS)))
+endif
+ifneq	($(strip $(SER_RPATH_LST)),)
+SER_RPATH:=$(addprefix $(LD_RPATH),$(SER_RPATH_LST))
+endif
+endif
+ifeq ($(OS), darwin)
+SER_IPATH_LST:=$(addsuffix /libiname.lst,$(SER_LIBS_DIRS))
+#$(warning $(NAME) DARWIN, SER_LIBS=$(SER_LIBS), $(SER_LIBS_DIRS), ipath_lst=$(SER_IPATH_LST))
+endif
+endif
+
+ALL_LIBS=$(LIBS)
+
+ifeq	(,$(filter clean %clean clean% proper %proper proper%, $(MAKECMDGOALS)))
+ifneq ($(SER_LIBS),)
+-include librpath.lst
+ifneq ($(SER_RPATH_LST), $(LIB_RPATH_LST))
+$(shell rm -f librpath.lst)
+endif
+endif
+
+SER_LIBS_DEPS:= \
+	$(foreach l, $(SER_LIBS), $(dir $l)$(LIB_PREFIX)$(notdir $l)$(LIB_SUFFIX))
+ALL_LIBS+=$(foreach l, $(SER_LIBS), -L$(dir $l) -l$(notdir $l))
+
+$(NAME): librpath.lst $(SER_LIBS_DEPS)
+
+$(SER_LIBS_DEPS): FORCE
+	@$(MAKE) -wC $(dir $@)  compile_for_install=$(lib_compile_for_install) \
+		NOREBUILD_DEFS="$(NOREBUILD_DEFS) $(LIB_NOREBUILD_DEFS)" \
+		NOREBUILD_INCLUDES="$(NOREBUILD_INCLUDES) $(LIB_NOREBUILD_INCLUDES)"
+
+.PHONY: FORCE
+FORCE:
+
+ifneq ($(SER_IPATH_LST),)
+
+$(NAME): $(SER_IPATH_LST) 
+
+$(SER_IPATH_LST): FORCE
+	@if grep \
+		"COMPILED_INAME:=$(call expected_lib_ipath,$(shell cd $(@D); pwd))" \
+		$(@) 1>/dev/null 2>/dev/null ; \
+	then :; \
+	else \
+		$(call oecho,"re-building $(@D)" ;) \
+		$(MAKE) -wC $(@D) compile_for_install=$(lib_compile_for_install) ; \
+	fi
+
+.PHONY: FORCE-BUILD-LIBS
+FORCE-BUILD-LIBS:
+	@for r in $(SER_LIBS_DIRS) ; do \
+		$(call oecho,building lib $$r ;) \
+		$(MAKE) -wC $$r compile_for_install=$(lib_compile_for_install) ; \
+	done
+
+endif
+
+endif
+
+# normal rules
+$(NAME): $(objs) $(ALLDEP)
+	$(call exec_cmd,LD)
+
+
+librpath.lst: $(ALLDEP)
+	@echo LIB_RPATH_LST:=$(SER_RPATH_LST) >librpath.lst
+
+makecfg.lst:
+	@echo "CFG_DEFS:=$(call escall,$(strip \
+			$(filter-out $(NOREBUILD_DEFS), $(C_DEFS) $(DEFS))))" >>$@
+	@echo "CFG_INCLUDES:=$(call escall,$(strip \
+			$(filter-out $(NOREBUILD_INCLUDES),\
+				$(C_INCLUDES) $(INCLUDES))))" >>$@
+.PHONY: all
+all: $(NAME) every-module
+
+.PHONY: static
+static: $(objs)
+
+# clean only the current directory (no modules or utils)
+# (it's useful to have it separated from clean for speeding up make proper)
+.PHONY: local-clean
+local-clean:
+	-@rm -f $(objs) $(NAME) $(objs:.o=.il) *.a librpath.lst 2>/dev/null
+
+.PHONY: clean
+clean: local-clean
+
+.PHONY: clean-modules
+clean-modules:
+	-@for r in $(cmodules) $(static_modules_path) "" ; do \
+		if [ -d "$$r" ]; then \
+			$(call oecho,"module $$r" ;) \
+			$(MAKE) -C "$$r" clean ; \
+			[ -r "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc clean ; \
+		fi ; \
+	done
+
+# make proper for the local directory
+.PHONY: proper
+.PHONY: distclean
+.PHONY: realclean
+.PHONY: maintainer-clean
+proper distclean realclean maintainer-clean: local-clean
+	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) $(auto_gen_keep) \
+			makecfg.lst 2>/dev/null
+
+maintainer-clean: clean-tmp
+
+.PHONY: proper-modules
+.PHONY: distclean-modules
+.PHONY: realclean-modules
+.PHONY: maintainer-clean-modules
+proper-modules realclean-modules distclean-modules maintainer-clean-modules: \
+ clean_target=$(patsubst %-modules,%,$@)
+proper-modules realclean-modules distclean-modules maintainer-clean-modules:
+	-@for r in $(cmodules) "" ; do \
+		if [ -d "$$r" ]; then \
+			$(MAKE) -C "$$r" $(clean_target); \
+			[ -r "$$r"/doc/Makefile ] && $(MAKE) -C "$$r"/doc $(clean_target);\
+		fi ; \
+	done
+
+.PHONY: clean-tmp
+clean-tmp:
+	-@rm -f TAGS tags *.dbg .*.swp
+
+
+.PHONY: doxygen
+doxygen:
+	-@mkdir -p $(doxygen_dir)
+	-@echo "Create Doxygen documentation"
+	# disable call graphes, because of the DOT dependencies
+	(cat ./$(COREPATH)/doc/doxygen/ser.doxygen; \
+	echo "HAVE_DOT=no" ;\
+	echo "PROJECT_NAME=SIP-ROUTER" ;\
+	echo "PROJECT_NUMBER=$(NAME)-$(RELEASE)" )| doxygen -
+	-@echo "Doxygen documentation created"
+
+.PHONY: clean_doxygen
+clean_doxygen:
+	-@rm -rf $(doxygen_dir)/{xml,man,rtf,latex,html}
+	-@rmdir --ignore-fail-on-non-empty -p $(doxygen_dir) || true
+
+
+.PHONY: TAGS
+.PHONY: tags
+TAGS tags:
+	$(MKTAGS) --exclude="obsolete/*" --exclude="test/*" -R .
+
+.PHONY: TAGS-ALL
+.PHONY: tags-all
+TAGS-ALL tags-all:
+	$(MKTAGS) -R .
+
+
+
+ifeq (,$(MAKECMDGOALS))
+-include $(depends)
+else
+ifeq (,$(strip $(nodep_targets)))
+include $(COREPATH)/Makefile.targets
+endif
+ifneq (,$(filter-out $(nodep_targets),$(MAKECMDGOALS)))
+-include $(depends)
+endif
+endif # ifeq (,$(MAKECMDGOALS))

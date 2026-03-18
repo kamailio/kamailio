@@ -1,0 +1,162 @@
+# Kamailio build system
+#
+# module Makefile
+#(to be included from each library makefile)
+#
+# NAME, MAJOR_VER and MINOR_VER should be pre-defined in the library 
+# makefile
+#
+
+ifneq ($(makefile_defs_included), 1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
+
+ifneq	(,$(filter install% %install install, $(MAKECMDGOALS)))
+compile_for_install:=yes
+ifeq ($(quiet),verbose)
+$(info install mode)
+endif # verbose
+endif
+
+ifeq ($(NAME),)
+$(error NAME, MAJOR_VER and MINOR_VER must be defined in the library Makefile)
+endif
+ifeq ($(MAJOR_VER),)
+$(error NAME, MAJOR_VER and MINOR_VER must be defined in the library Makefile)
+endif
+ifeq ($(MINOR_VER),)
+$(error NAME, MAJOR_VER and MINOR_VER must be defined in the library Makefile)
+endif
+ifeq ($(BUGFIX_VER),)
+	BUGFIX_VER:=0
+endif
+
+# if config was not loaded (makefile_defs!=1) ignore
+# the rest of makefile and try only to remake the config
+ifeq ($(makefile_defs),1)
+
+
+ifeq ($(OS), darwin)
+	LIB_NAME:= \
+	$(LIB_PREFIX)$(NAME).$(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER)$(LIB_SUFFIX)
+	LIB_RUNTIME_NAME:=$(LIB_PREFIX)$(NAME).$(MAJOR_VER)$(LIB_SUFFIX)
+	LIB_LINK_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX)
+	# on darwin we add an extra dependency on a file containing the install 
+	# name (we want to rebuild the library if the install path changed)
+	# this is needed because instead of a rpath link option, on darwin the
+	# path to a linked library is taken from the library itself (the path
+	# is built-in the library)
+	LIBINAME_F:=libiname.lst
+	NAME_LD_FLAGS= -compatibility_version $(MAJOR_VER).$(MINOR_VER) \
+					-current_version $(MAJOR_VER).$(MINOR_VER).$(BUGFIX_VER) \
+					-install_name $(LIB_INSTALL_NAME)
+
+else
+	LIB_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER).$(MINOR_VER)
+	LIB_RUNTIME_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX).$(MAJOR_VER)
+	LIB_LINK_NAME:=$(LIB_PREFIX)$(NAME)$(LIB_SUFFIX)
+	NAME_LD_FLAGS= $(LIB_SONAME)$(LIB_RUNTIME_NAME)
+	LIBINAME_F:=
+endif
+
+ifeq	($(strip $(compile_for_install)),yes)
+	LIB_INSTALL_NAME:=$(lib_target)/$(LIB_RUNTIME_NAME)
+else
+	LIB_INSTALL_NAME:=$(shell pwd)/$(LIB_RUNTIME_NAME)
+endif
+
+
+COREPATH ?=../..
+
+ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
+ $(COREPATH)/Makefile.libs $(COREPATH)/config.mak
+
+
+ifeq ($(MAKELEVEL), 0)
+# make called directly in the library dir!
+else
+# called by the main Makefile
+
+ALLDEP+=$(COREPATH)/Makefile $(COREPATH)/Makefile.defs
+
+endif
+
+include $(COREPATH)/Makefile.sources
+
+
+CFLAGS:=$(LIB_CFLAGS)
+LDFLAGS:=$(LIB_LDFLAGS) $(NAME_LD_FLAGS)
+NAME:=$(LIB_NAME)
+
+
+include $(COREPATH)/Makefile.targets
+include $(COREPATH)/Makefile.rules
+
+ifeq	(,$(filter clean %clean clean% proper %proper proper%, $(MAKECMDGOALS)))
+ifneq ($(strip $(LIBINAME_F)),)
+-include $(LIBINAME_F)
+ifneq ($(strip $(LIB_INSTALL_NAME)), $(strip $(COMPILED_INAME)))
+$(shell rm -f $(LIBINAME_F))
+endif
+endif
+endif
+
+$(NAME): $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME) $(LIBINAME_F)
+
+$(LIB_RUNTIME_NAME):
+	-@ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME)
+
+$(LIB_LINK_NAME):
+ifeq ($(OS), freebsd)
+	-@ln -s $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME)
+else
+	-@ln -s $(LIB_NAME) $(LIB_LINK_NAME)
+endif
+
+.PHONY: link_clean
+link_clean:
+	-@rm -f $(LIB_RUNTIME_NAME)
+	-@rm -f $(LIB_LINK_NAME)
+
+local-clean: link_clean
+
+.PHONY: libiname_clean
+libiname_clean:
+	-@rm -f libiname.lst
+
+local-clean: libiname_clean
+
+$(lib_prefix)/$(lib_dir):
+	mkdir -p $(lib_prefix)/$(lib_dir)
+
+.PHONY: install
+install: $(LIB_NAME) $(lib_prefix)/$(lib_dir) $(LIBINAME_F)
+ifeq ($(OS), freebsd)
+	$(INSTALL_TOUCH) $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME)
+	$(INSTALL_LIB) $(LIB_NAME) $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME)
+	rm -f $(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME)
+	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME)
+else
+	$(INSTALL_TOUCH) $(lib_prefix)/$(lib_dir)/$(LIB_NAME)
+	$(INSTALL_LIB) $(LIB_NAME) $(lib_prefix)/$(lib_dir)
+	rm -f $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) \
+			$(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME) 
+	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME) 
+	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_NAME) $(LIB_LINK_NAME) 
+endif
+
+
+.PHONY:install-if-newer
+install-if-newer: $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME)
+
+$(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME): $(LIB_NAME) $(LIBINAME_F)
+	@$(MAKE) install
+
+
+ifneq ($(strip $(LIBINAME_F)),)
+$(LIBINAME_F): $(ALLDEP)
+	@echo "COMPILED_INAME:=$(LIB_INSTALL_NAME)" > $(LIBINAME_F)
+endif
+
+endif # ifeq ($(makefile_defs),1)
+include $(COREPATH)/Makefile.cfg

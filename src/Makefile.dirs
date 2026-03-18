@@ -1,0 +1,19 @@
+# Kamailio build system
+# path config makefile
+#
+ifneq ($(makefile_dirs_included),1)
+
+override makefile_dirs_included:=1
+
+# modules directories
+# WARNING: - names must not conflict with any makefile variable or 
+#            target name
+#          - they should not contain '-' in them (portability: some exported
+#            var names might be derived from them and some shell do not 
+#            support '-' in variables)
+# makefile module related targets will be defined based on them:
+# install-$(1), install-$(1)-doc, $(1) a.s.o.
+# - old: modules_dirs?= modules modules_s modules_k
+modules_dirs?= modules
+
+endif
