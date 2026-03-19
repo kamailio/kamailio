@@ -111,7 +111,9 @@ Chapter 1. Admin Guide
    statistics about them.
 
    The dialogs can be tagged and the number of dialogs with the same tag
-   can be retrieved in configuration file.
+   can be retrieved in configuration file. Serial forking is supported,
+   but no spiraled calls or parall forking. It will track the first call
+   attempt and ignore eventual later attempts with the same Call-ID.
 
    The module aims to be a lightweight alternative to dialog module, to
    enable SIP server instances (such as an edge proxy or SBC) to know how
