@@ -33,7 +33,10 @@
 // WOLFFIX
 #define GET_CIPHER_VERSION(s) \
 	wolfSSL_CIPHER_get_version(wolfSSL_get_current_cipher(s))
-
+/* for v5.5.4-stable */
+#ifndef X509_V_ERR_UNSPECIFIED
+#define X509_V_ERR_UNSPECIFIED 1
+#endif
 
 #include "../../core/dprint.h"
 #include "../../core/ip_addr.h"
