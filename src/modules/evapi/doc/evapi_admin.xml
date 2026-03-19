@@ -257,6 +257,27 @@ modparam("evapi", "send_data_timeout", 400000)
 </programlisting>
 		</example>
 	</section>
+	<section id="evapi.p.context_mlimit">
+		<title><varname>context_mlimit</varname> (int)</title>
+		<para>
+			How many messages are allowed to be in the internal queue used to
+			propagate messages from config towards the dispatcher for evapi
+			clients.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>context_mlimit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "context_mlimit", 100)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
