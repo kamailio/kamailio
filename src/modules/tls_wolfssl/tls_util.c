@@ -35,6 +35,11 @@
 #include "tls_wolfssl_mod.h"
 #include "tls_util.h"
 
+/* compatibility for < v5.5.2-stable */
+#if LIBWOLFSSL_VERSION_HEX < 0x05005002
+    /* In 5.2.0, 'new' takes no args and 'new_null' doesn't exist */
+    #define wolfSSL_sk_X509_new_null wolfSSL_sk_X509_new
+#endif
 
 /*
  * Make a shared memory copy of ASCII zero terminated string
