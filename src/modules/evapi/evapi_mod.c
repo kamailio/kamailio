@@ -60,6 +60,7 @@ int _evapi_send_data_timeout = EAVPI_SEND_DATA_TIMEOUT_US;
 
 static str _evapi_data = STR_NULL;
 static int _evapi_data_size = 0;
+static int _evapi_context_mlimit = 0;
 
 static tm_api_t tmb;
 
@@ -109,6 +110,7 @@ static param_export_t params[] = {
 	{"wait_increase", PARAM_INT, &_evapi_wait_increase},
 	{"send_task_timeout", PARAM_INT, &_evapi_send_task_timeout},
 	{"send_data_timeout", PARAM_INT, &_evapi_send_data_timeout},
+	{"context_mlimit", PARAM_INT, &_evapi_context_mlimit},
 	{0, 0, 0}
 };
 
@@ -173,7 +175,7 @@ static int mod_init(void)
 		LM_ERR("failed to init faked internal message queue\n");
 		return -1;
 	}
-	if(evapi_context_init() < 0) {
+	if(evapi_context_init((unsigned int)_evapi_context_mlimit) < 0) {
 		LM_ERR("failed to init internal context\n");
 		return -1;
 	}
