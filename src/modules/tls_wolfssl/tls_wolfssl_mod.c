@@ -393,10 +393,10 @@ static int mod_child(int rank)
 
 	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
-	if(rank == PROC_INIT && ksr_tcp_main_threads != 2) {
+	if(rank == PROC_INIT && ksr_tcp_main_threads == 0) {
 		return mod_child_hook(rank);
 	}
-	if(rank == PROC_TCP_MAIN && ksr_tcp_main_threads == 2) {
+	if(rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0) {
 		return mod_child_hook(rank);
 	}
 
