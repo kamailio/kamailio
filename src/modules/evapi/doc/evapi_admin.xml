@@ -266,7 +266,7 @@ modparam("evapi", "send_data_timeout", 400000)
 		</para>
 		<para>
 		<emphasis>
-			Default value is 0.
+			Default value is 0 (limit check disabled).
 		</emphasis>
 		</para>
 		<example>
