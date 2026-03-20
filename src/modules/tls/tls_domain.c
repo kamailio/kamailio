@@ -407,6 +407,15 @@ static int ksr_tls_fill_missing(tls_domain_t *d, tls_domain_t *parent)
 	LOG(L_INFO, "%s: private_key_password='%s'\n", tls_domain_str(d),
 			d->pkey_password.s ? "..." : NULL);
 
+	if(d->cert_file2.s) {
+		LOG(L_INFO, "%s: certificate2='%s'\n", tls_domain_str(d),
+				d->cert_file2.s);
+	}
+	if(d->pkey_file2.s) {
+		LOG(L_INFO, "%s: private_key2='%s'\n", tls_domain_str(d),
+				d->pkey_file2.s);
+	}
+
 	if(d->verify_cert == -1)
 		d->verify_cert = parent->verify_cert;
 	LOG(L_INFO, "%s: verify_certificate=%d\n", tls_domain_str(d),
@@ -604,6 +613,21 @@ static int load_cert(tls_domain_t *d)
 			return -1;
 		}
 	}
+
+	if(d->cert_file2.s && d->cert_file2.len) {
+		if(fix_shm_pathname(&d->cert_file2) < 0)
+			return -1;
+		for(i = 0; i < procs_no; i++) {
+			if(!SSL_CTX_use_certificate_chain_file(
+					   d->ctx[i], d->cert_file2.s)) {
+				ERR("%s: Unable to load certificate2 file '%s'\n",
+						tls_domain_str(d), d->cert_file2.s);
+				TLS_ERR("load_cert:");
+				return -1;
+			}
+		}
+	}
+
 	return 0;
 }
 
@@ -1272,6 +1296,30 @@ static int ksr_passwd_cfg_cb(char *buf, int size, int rwflag, void *tlsd)
 }
 
 /**
+ * @brief Password callback for second private key, using pkey_password2
+ */
+static int ksr_passwd_cfg_cb2(char *buf, int size, int rwflag, void *tlsd)
+{
+	tls_domain_t *d;
+
+	d = (tls_domain_t *)tlsd;
+	if(d->pkey_password2.s == NULL || d->pkey_password2.len <= 0) {
+		return 0;
+	}
+	if(d->pkey_password2.len >= size - 1) {
+		LM_WARN("key2 password is too long (%d / %d) - truncating\n",
+				d->pkey_password2.len, size);
+		memcpy(buf, d->pkey_password2.s, size - 1);
+		buf[size - 1] = '\0';
+	} else {
+		memcpy(buf, d->pkey_password2.s, d->pkey_password2.len);
+		buf[d->pkey_password2.len] = '\0';
+	}
+	LM_DBG("returning password for private key2\n");
+	return strlen(buf);
+}
+
+/**
  * @brief Password callback, ask for private key password on CLI
  * @param buf buffer
  * @param size buffer size
@@ -1451,6 +1499,38 @@ static int load_private_key(tls_domain_t *d)
 
 	DBG("%s: Key '%s' successfully loaded\n", tls_domain_str(d),
 			d->pkey_file.s);
+
+	/* Load second private key if configured (for dual-cert support) */
+	if(d->pkey_file2.s && d->pkey_file2.len) {
+		if(fix_shm_pathname(&d->pkey_file2) < 0)
+			return -1;
+
+		for(i = 0; i < procs_no; i++) {
+			if(d->pkey_password2.s && d->pkey_password2.len > 0) {
+				SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_cfg_cb2);
+				SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d);
+			} else if(ksr_tls_key_password_mode == 1) {
+				SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_ui_cb);
+				SSL_CTX_set_default_passwd_cb_userdata(
+						d->ctx[i], d->pkey_file2.s);
+			} else {
+				SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_cfg_cb2);
+				SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d);
+			}
+
+			ret_pwd = SSL_CTX_use_PrivateKey_file(
+					d->ctx[i], d->pkey_file2.s, SSL_FILETYPE_PEM);
+			if(!ret_pwd) {
+				ERR("%s: Unable to load private key2 file '%s'\n",
+						tls_domain_str(d), d->pkey_file2.s);
+				TLS_ERR("load_private_key:");
+				return -1;
+			}
+		}
+		DBG("%s: Key2 '%s' successfully loaded\n", tls_domain_str(d),
+				d->pkey_file2.s);
+	}
+
 	return 0;
 }
 

@@ -77,6 +77,13 @@
 		They can be given as modparam or provided in the profiles of tls.cfg file.
 		</para>
 		<para>
+		For dual-cert support (e.g., serving both RSA and ECDSA certificates),
+		set <varname>certificate2</varname> and <varname>private_key2</varname>
+		in addition to the primary certificate. OpenSSL automatically selects
+		the appropriate certificate during the TLS handshake based on the
+		client's advertised signature algorithms.
+		</para>
+		<para>
 		When installing tls module of kamailio, a sample 'tls.cfg' file is deployed in the same
 		folder with 'kamailio.cfg'. For freshly generated self signed certificates make must be called from tls folder
 		<programlisting>
