@@ -227,6 +227,141 @@ static void tls_reload(rpc_t *rpc, void *ctx)
 }
 
 
+static const char *tls_domains_doc[2] = {
+		"List all configured TLS server and client domains", 0};
+
+/**
+ * Map tls_method enum to a human-readable string.
+ */
+static const char *tls_method_name(enum tls_method m)
+{
+	switch(m) {
+		case TLS_USE_SSLv23_cli:
+		case TLS_USE_SSLv23_srv:
+		case TLS_USE_SSLv23:
+			return "SSLv23";
+		case TLS_USE_SSLv2_cli:
+		case TLS_USE_SSLv2_srv:
+		case TLS_USE_SSLv2:
+			return "SSLv2";
+		case TLS_USE_SSLv3_cli:
+		case TLS_USE_SSLv3_srv:
+		case TLS_USE_SSLv3:
+			return "SSLv3";
+		case TLS_USE_TLSv1_cli:
+		case TLS_USE_TLSv1_srv:
+		case TLS_USE_TLSv1:
+			return "TLSv1.0";
+		case TLS_USE_TLSv1_1_cli:
+		case TLS_USE_TLSv1_1_srv:
+		case TLS_USE_TLSv1_1:
+			return "TLSv1.1";
+		case TLS_USE_TLSv1_2_cli:
+		case TLS_USE_TLSv1_2_srv:
+		case TLS_USE_TLSv1_2:
+			return "TLSv1.2";
+		case TLS_USE_TLSv1_3_cli:
+		case TLS_USE_TLSv1_3_srv:
+		case TLS_USE_TLSv1_3:
+			return "TLSv1.3";
+		case TLS_USE_TLSv1_PLUS:
+			return "TLSv1.0+";
+		case TLS_USE_TLSv1_1_PLUS:
+			return "TLSv1.1+";
+		case TLS_USE_TLSv1_2_PLUS:
+			return "TLSv1.2+";
+		case TLS_USE_TLSv1_3_PLUS:
+			return "TLSv1.3+";
+		default:
+			return "unspecified";
+	}
+}
+
+/**
+ * Emit one tls_domain_t as a struct element into an RPC array handle.
+ */
+static int tls_rpc_dump_one_domain(rpc_t *rpc, void *ah, tls_domain_t *d)
+{
+	void *dh;
+	char ip_buf[IP_ADDR_MAX_STR_SIZE];
+	int len;
+
+	if(rpc->array_add(ah, "{", &dh) < 0)
+		return -1;
+
+	len = ip_addr2sbuf(&d->ip, ip_buf, sizeof(ip_buf) - 1);
+	ip_buf[len] = '\0';
+
+	if(rpc->struct_add(dh, "sssd", "name", tls_domain_str(d), "ip", ip_buf,
+			   "method", tls_method_name(d->method), "port", (int)d->port)
+			< 0)
+		return -1;
+	if(rpc->struct_add(dh, "ssss", "cert_file",
+			   d->cert_file.s ? d->cert_file.s : "", "pkey_file",
+			   d->pkey_file.s ? d->pkey_file.s : "", "ca_file",
+			   d->ca_file.s ? d->ca_file.s : "", "ca_path",
+			   d->ca_path.s ? d->ca_path.s : "")
+			< 0)
+		return -1;
+	if(rpc->struct_add(dh, "sss", "crl_file",
+			   d->crl_file.s ? d->crl_file.s : "", "cipher_list",
+			   d->cipher_list.s ? d->cipher_list.s : "", "server_name",
+			   d->server_name.s ? d->server_name.s : "")
+			< 0)
+		return -1;
+	if(rpc->struct_add(
+			   dh, "s", "server_id", d->server_id.s ? d->server_id.s : "")
+			< 0)
+		return -1;
+	if(rpc->struct_add(dh, "dddddd", "verify_cert", d->verify_cert,
+			   "verify_depth", d->verify_depth, "require_cert", d->require_cert,
+			   "verify_client", d->verify_client, "server_name_mode",
+			   d->server_name_mode, "is_default",
+			   (d->type & TLS_DOMAIN_DEF) ? 1 : 0)
+			< 0)
+		return -1;
+	return 0;
+}
+
+static void tls_domains(rpc_t *rpc, void *c)
+{
+	tls_domains_cfg_t *cfg;
+	tls_domain_t *d;
+	void *th, *sa, *ca;
+
+	lock_get(tls_domains_cfg_lock);
+	cfg = *tls_domains_cfg;
+	if(!cfg) {
+		lock_release(tls_domains_cfg_lock);
+		rpc->fault(c, 500, "No TLS configuration loaded");
+		return;
+	}
+	atomic_inc(&cfg->ref_count);
+	lock_release(tls_domains_cfg_lock);
+
+	if(rpc->add(c, "{", &th) < 0)
+		goto out;
+
+	/* server domains */
+	if(rpc->struct_add(th, "[", "servers", &sa) < 0)
+		goto out;
+	if(cfg->srv_default)
+		tls_rpc_dump_one_domain(rpc, sa, cfg->srv_default);
+	for(d = cfg->srv_list; d != NULL; d = d->next)
+		tls_rpc_dump_one_domain(rpc, sa, d);
+
+	/* client domains */
+	if(rpc->struct_add(th, "[", "clients", &ca) < 0)
+		goto out;
+	if(cfg->cli_default)
+		tls_rpc_dump_one_domain(rpc, ca, cfg->cli_default);
+	for(d = cfg->cli_list; d != NULL; d = d->next)
+		tls_rpc_dump_one_domain(rpc, ca, d);
+
+out:
+	atomic_dec(&cfg->ref_count);
+}
+
 static const char *tls_list_doc[2] = {"List currently open TLS connections", 0};
 
 extern gen_lock_t *tcpconn_lock;
@@ -378,4 +513,5 @@ static void tls_options(rpc_t *rpc, void *c)
 rpc_export_t tls_rpc[] = {{"tls.reload", tls_reload, tls_reload_doc, 0},
 		{"tls.list", tls_list, tls_list_doc, RET_ARRAY},
 		{"tls.info", tls_info, tls_info_doc, 0},
-		{"tls.options", tls_options, tls_options_doc, 0}, {0, 0, 0, 0}};
+		{"tls.options", tls_options, tls_options_doc, 0},
+		{"tls.domains", tls_domains, tls_domains_doc, 0}, {0, 0, 0, 0}};
