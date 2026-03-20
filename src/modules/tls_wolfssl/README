@@ -13,6 +13,9 @@ Shih-Ping Chan
         2. Quick Start
         3. Important Notes
         4. Compiling the wolfSSL TLS Module
+        5. Additional RPC Commands
+
+              5.1. tls.domains
 
    List of Examples
 
@@ -26,6 +29,9 @@ Chapter 1. Admin Guide
    2. Quick Start
    3. Important Notes
    4. Compiling the wolfSSL TLS Module
+   5. Additional RPC Commands
+
+        5.1. tls.domains
 
 1. Overview
 
@@ -34,13 +40,11 @@ Chapter 1. Admin Guide
    this module must be loaded and enable_tls=yes core setting must be
    added to the Kamailio config file.
 
-   This module is derived from the tls module and adapted to wolfSSL using
-   the OpenSSL-compatibility layer. Credit goes to the authors of the tls
-   module.
+   This module is derived from the tls module and adapted to wolfSSL.
+   Credit goes to the authors of the tls module.
 
-   This module is based on wolfSSL 5.2.0 and 5.3.0 and is not fully
-   compatible with the tls module (protocol versions < 1.1 not supported
-   it the Debian package for example.
+   This module build from wolfSSl 5.2.0 onwards. There is a git submodule
+   that contains a recent version of wolfSSL for easier building.
 
    This user is referred to the documentation of the tls module for
    configuration and other information. Not all configuration keys are
@@ -53,11 +57,11 @@ Chapter 1. Admin Guide
    be enabled with "#!define WITH_TLS" directive.
 
    Example 1.1. Quick Start Basic Config
-#...
-loadmodule "sl.so"
-loadmodule "tls_wolfssl.so"
-#... refer to Quick Start of tls module
-#... for further configuration
+                #...
+                loadmodule "sl.so"
+                loadmodule "tls_wolfssl.so"
+                #... refer to Quick Start of tls module
+                #... for further configuration
 
 3. Important Notes
 
@@ -74,12 +78,22 @@ loadmodule "tls_wolfssl.so"
    equivalent).
 
    In most case compiling the wolfSSL TLS module is as simple as:
-make -C modules/tls_wolfssl
+                make -C modules/tls_wolfssl
+                # to use the internal git submodule
+                make -C src WOLFSSL_INTERNAL=yes module_group_more="tls_wolfssl"
+ group_include=more every-module
+                # cmake
+                cd build; make tls_wolfssl
+                cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
 
-   or
-make modules modules=modules/tls_wolfssl
+5. Additional RPC Commands
 
-   or (compiling whole Kamailio and the tls module)
-make all include_modules=tls_wolfssl
+   5.1. tls.domains
 
-   .
+   Supports the same RPC command as the tls module with some additions.
+
+5.1. tls.domains
+
+   Lists internal domain configuration that was configured in tls.cfg.
+   Complements tls.options, see the tls module, which retrieves TLS
+   settings directly from the Kamailio routing script.
