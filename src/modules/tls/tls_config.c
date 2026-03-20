@@ -178,7 +178,15 @@ static cfg_option_t options[] = {
 		{"server_id", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 		{"verify_client", .param = verify_client_params,
 				.f = cfg_parse_enum_opt},
-		{"ca_path", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM}, {0}};
+		{"ca_path", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"certificate2", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"cert_file2", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"private_key2", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"pkey_file2", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"private_key_password2", .f = cfg_parse_str_opt,
+				.flags = CFG_STR_SHMMEM},
+		{"pkey_password2", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{0}};
 
 
 static void update_opt_variables(void)
@@ -232,6 +240,18 @@ static void update_opt_variables(void)
 	}
 	n++;
 	options[n].param = &_ksr_tls_domain->ca_path;
+	n++;
+	options[n].param = &_ksr_tls_domain->cert_file2;
+	n++;
+	options[n].param = &_ksr_tls_domain->cert_file2;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_file2;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_file2;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_password2;
+	n++;
+	options[n].param = &_ksr_tls_domain->pkey_password2;
 }
 
 

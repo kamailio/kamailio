@@ -127,6 +127,9 @@ typedef struct tls_domain
 	str cert_file;
 	str pkey_file;
 	str pkey_password;
+	str cert_file2;
+	str pkey_file2;
+	str pkey_password2;
 	int verify_cert;
 	int verify_depth;
 	str ca_file;

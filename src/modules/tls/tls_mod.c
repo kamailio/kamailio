@@ -126,6 +126,9 @@ static tls_domain_t mod_params = {
 	STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
 	STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
 	{0, 0},							 /* Private key password */
+	{0, 0},							 /* Second certificate file */
+	{0, 0},							 /* Second private key file */
+	{0, 0},							 /* Second private key password */
 	0,								 /* Verify certificate */
 	9,								 /* Verify depth */
 	STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
@@ -153,6 +156,9 @@ tls_domain_t srv_defaults = {
 	STR_STATIC_INIT(TLS_CERT_FILE),	 /* Certificate file */
 	STR_STATIC_INIT(TLS_PKEY_FILE),	 /* Private key file */
 	{0, 0},							 /* Private key password */
+	{0, 0},							 /* Second certificate file */
+	{0, 0},							 /* Second private key file */
+	{0, 0},							 /* Second private key password */
 	0,								 /* Verify certificate */
 	9,								 /* Verify depth */
 	STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */
@@ -206,6 +212,9 @@ tls_domain_t cli_defaults = {
 	{0, 0},							 /* Certificate file */
 	{0, 0},							 /* Private key file */
 	{0, 0},							 /* Private key password */
+	{0, 0},							 /* Second certificate file */
+	{0, 0},							 /* Second private key file */
+	{0, 0},							 /* Second private key password */
 	0,								 /* Verify certificate */
 	9,								 /* Verify depth */
 	STR_STATIC_INIT(TLS_CA_FILE),	 /* CA file */

@@ -197,6 +197,79 @@ modparam("tls", "private_key_password", "secret")
 	</example>
 	</section>
 
+	<section id="tls.p.certificate2">
+	<title><varname>certificate2</varname> (string)</title>
+	<para>
+		Sets the file name for a second certificate, enabling dual-cert
+		support. This is typically used to configure both an RSA and an
+		ECDSA certificate for the same TLS domain. OpenSSL will
+		automatically select the appropriate certificate during the TLS
+		handshake based on the client's advertised signature algorithms.
+	</para>
+	<para>
+		The path resolution rules are the same as for
+		<varname>certificate</varname>.
+	</para>
+	<para>
+		The parameter is optional. When not set, the TLS domain serves
+		only the certificate configured via <varname>certificate</varname>.
+		It does not inherit from the parent domain.
+	</para>
+	<para>
+		The default value is empty (not set).
+	</para>
+	<example>
+	    <title>Set <varname>certificate2</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "certificate2", "/usr/local/etc/kamailio/my_ecdsa_cert.pem")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="tls.p.private_key2">
+	<title><varname>private_key2</varname> (string)</title>
+	<para>
+		Sets the file name for the private key corresponding to the
+		second certificate (<varname>certificate2</varname>).
+	</para>
+	<para>
+		The path resolution rules are the same as for
+		<varname>private_key</varname>.
+	</para>
+	<para>
+		The default value is empty (not set).
+	</para>
+	<example>
+	    <title>Set <varname>private_key2</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "private_key2", "/usr/local/etc/kamailio/my_ecdsa_pkey.pem")
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="tls.p.private_key_password2">
+	<title><varname>private_key_password2</varname> (string)</title>
+	<para>
+		The password for the second private key
+		(<varname>private_key2</varname>).
+	</para>
+	<para>
+		The default value is empty.
+	</para>
+	<example>
+	    <title>Set <varname>private_key_password2</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "private_key_password2", "secret")
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="tls.p.key_password_mode">
 	<title><varname>key_password_mode</varname> (int)</title>
 	<para>
