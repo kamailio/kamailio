@@ -1204,9 +1204,13 @@ int tr_eval_string(
 			i = 0;
 			j = 0;
 			max = val->rs.len - st.len;
-			while(i < val->rs.len && j < TR_BUFFER_SIZE) {
+			while(i < val->rs.len && j < TR_BUFFER_SIZE - 1) {
 				if(i <= max && val->rs.s[i] == st.s[0]
 						&& strncmp(val->rs.s + i, st.s, st.len) == 0) {
+					if(j + st2.len >= TR_BUFFER_SIZE - 1) {
+						LM_ERR("replacing result is too long\n");
+						return -1;
+					}
 					strncpy(_tr_buffer + j, st2.s, st2.len);
 					i += st.len;
 					j += st2.len;
@@ -1216,6 +1220,7 @@ int tr_eval_string(
 			}
 			val->rs.s = _tr_buffer;
 			val->rs.len = j;
+			val->rs.s[val->rs.len] = '\0';
 			break;
 
 		case TR_S_TIMEFORMAT:
