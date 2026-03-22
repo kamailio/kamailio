@@ -313,7 +313,7 @@ X509 *x509_DER_to_cert(const unsigned char *der_bytes, int len)
 /*
  * stack_to_x509_DER:
  *   Packs a STACK_OF(X509) into a heap-allocated binary blob.
- *   Caller must free() the returned pointer.
+ *   Caller must shm_free() the returned pointer.
  *   *out_sz receives the total byte count.
  *   Returns NULL on error.
  */
@@ -356,7 +356,7 @@ unsigned char *stack_to_x509_DER(STACK_OF(X509) * sk, int *out_sz)
 		/* Probe length again (cheap; avoids storing an array) */
 		int der_sz = i2d_X509(x, NULL);
 		if(der_sz <= 0) {
-			free(buf);
+			shm_free(buf);
 			return NULL;
 		}
 
@@ -372,7 +372,7 @@ unsigned char *stack_to_x509_DER(STACK_OF(X509) * sk, int *out_sz)
 		int written = i2d_X509(x, &der_ptr);
 		if(written != der_sz) {
 			LM_ERR("i2d_X509 wrote %d bytes, expected %d\n", written, der_sz);
-			free(buf);
+			shm_free(buf);
 			return NULL;
 		}
 		/* der_ptr was advanced by i2d_X509; p advances manually */
