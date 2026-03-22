@@ -1061,7 +1061,7 @@ again:
 		rd->name_len = name_len;
 		/* alloc sizeof struct + space for the null terminated name */
 		rd->rdata = (void *)pkg_malloc(
-				sizeof(struct cname_rdata) - 1 + head->name_len + 1);
+				sizeof(struct cname_rdata) - 1 + fullname_rd->name_len + 1);
 		if(unlikely(rd->rdata == 0)) {
 			PKG_MEM_ERROR;
 			goto error_rd;
