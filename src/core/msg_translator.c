@@ -1890,10 +1890,12 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 	str body = {0, 0};
 	str buf = {0, 0};
 	str tmp = {0, 0};
-	struct str_list *lb = NULL;
+	struct str_list *lb_f = NULL;
 	struct str_list *lb_t = NULL;
+	struct str_list *lb_l = NULL;
 	int lb_found = 0;
-	int t, ret, lb_size;
+	int t, ret;
+	int lb_size = 0;
 	char *pb;
 
 	if(!(msg->msg_flags & FL_BODY_MULTIPART)) {
@@ -1928,16 +1930,16 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 			if(find_line_start(b.s, ret, &tmp.s, (unsigned int *)&tmp.len)) {
 				/*LM_DBG("found t[%d] tmp.len[%d]:[%.*s]\n",
 					t, tmp.len, tmp.len, tmp.s);*/
-				if(!lb) {
-					lb = pkg_malloc(sizeof(struct str_list));
-					if(!lb) {
+				if(!lb_f) {
+					lb_f = pkg_malloc(sizeof(struct str_list));
+					if(!lb_f) {
 						PKG_MEM_ERROR;
 						goto error;
 					}
-					lb->s.s = tmp.s;
-					lb->s.len = tmp.len;
-					lb->next = 0;
-					lb_t = lb;
+					lb_f->s.s = tmp.s;
+					lb_f->s.len = tmp.len;
+					lb_f->next = 0;
+					lb_t = lb_f;
 				} else {
 					lb_t = append_str_list(tmp.s, tmp.len, &lb_t, &lb_size);
 				}
@@ -1949,6 +1951,7 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 				t = 0;
 			}
 		}
+		lb_l = lb_t;
 		if(lb_found < 2) {
 			LM_ERR("found[%d] wrong number of boundaries\n", lb_found);
 			goto error;
@@ -1962,7 +1965,7 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 		}
 		pb = body.s;
 		body.len = 0;
-		lb_t = lb;
+		lb_t = lb_f;
 		while(lb_t) {
 			tmp.s = lb_t->s.s;
 			tmp.len = lb_t->s.len;
@@ -1989,9 +1992,9 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 				lb_t = NULL;
 		}
 		/* last boundary */
-		tmp.s = lb->s.s;
-		tmp.len = lb->s.len;
-		tmp.len = get_line(lb->s);
+		tmp.s = lb_l->s.s;
+		tmp.len = lb_l->s.len;
+		tmp.len = get_line(lb_l->s);
 		if(tmp.len != fb.len || strncmp(fb.s, tmp.s, fb.len) != 0) {
 			LM_DBG("last bondary without -- at the end\n");
 			memcpy(pb, fb.s, fb.len);
@@ -1999,9 +2002,9 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 			pb = pb + fb.len;
 			body.len = body.len + fb.len;
 		} else {
-			memcpy(pb, lb->s.s, lb->s.len);
-			pb = pb + lb->s.len;
-			body.len = body.len + lb->s.len;
+			memcpy(pb, lb_l->s.s, lb_l->s.len);
+			pb = pb + lb_l->s.len;
+			body.len = body.len + lb_l->s.len;
 			/*LM_DBG("copy[%d][%.*s]\n", lb->s.len, lb->s.len, pb - lb->s.len);*/
 		}
 		/*LM_DBG("body[%d][%.*s] expected[%ld]\n",
@@ -2028,10 +2031,10 @@ clean:
 		pkg_free(body.s);
 	if(buf.s)
 		pkg_free(buf.s);
-	while(lb) {
-		lb_t = lb->next;
-		pkg_free(lb);
-		lb = lb_t;
+	while(lb_f) {
+		lb_t = lb_f->next;
+		pkg_free(lb_f);
+		lb_f = lb_t;
 	}
 	return ret;
 }
