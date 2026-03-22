@@ -1248,6 +1248,11 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	at = &(buf[0]);
 	append_str(at, "sip:", 4);
 	ip_port_len = trans - val;
+	if(ip_port_len >= MAX_URI_SIZE - 128) {
+		/* ip or hostname and port */
+		LM_ERR("very long alias address\n");
+		return -1;
+	}
 	alias_len = _ksr_contact_salias.len + ip_port_len + 2 /* ~n */;
 	if(is_ipv6 && val[0] != '[') {
 		// IPv6 - add '[' ']' around IP
