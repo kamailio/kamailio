@@ -239,6 +239,7 @@ int dlg_clean_run(ticks_t ti)
 						tdlg, tdlg->ref);
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
+				continue;
 			}
 			if(tdlg->state == DLG_STATE_CONFIRMED_NA && tdlg->start_ts > 0
 					&& tdlg->start_ts < tm - dlg_noack_timeout) {
@@ -248,6 +249,7 @@ int dlg_clean_run(ticks_t ti)
 				}
 				tdlg->lifetime = 10;
 				tdlg->dflags |= DLG_FLAG_CHANGED;
+				continue;
 			}
 			if(tdlg->state == DLG_STATE_DELETED && tdlg->end_ts > 0
 					&& tdlg->end_ts < tm - dlg_end_timeout) {
@@ -256,6 +258,7 @@ int dlg_clean_run(ticks_t ti)
 						tdlg, tdlg->ref);
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
+				continue;
 			}
 		}
 		dlg_unlock(d_table, &d_table->entries[i]);
