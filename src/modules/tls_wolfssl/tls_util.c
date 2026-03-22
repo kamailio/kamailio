@@ -166,6 +166,9 @@ WOLFSSL_X509 *x509_DER_to_cert(const unsigned char *der, int len)
  */
 unsigned char *stack_to_x509_DER(WOLF_STACK_OF(WOLFSSL_X509) * sk, int *out_sz)
 {
+	if(!sk || !out_sz)
+		return NULL;
+
 	int count = wolfSSL_sk_X509_num(sk);
 	if(count <= 0)
 		return NULL;
@@ -175,9 +178,9 @@ unsigned char *stack_to_x509_DER(WOLF_STACK_OF(WOLFSSL_X509) * sk, int *out_sz)
 	for(int i = 0; i < count; i++) {
 		WOLFSSL_X509 *x = wolfSSL_sk_X509_value(sk, i);
 		int der_sz = wolfSSL_i2d_X509(x, NULL);
-		if(der_sz > 0) {
-			total += sizeof(uint32_t) + (size_t)der_sz;
-		}
+		if(der_sz <= 0)
+			return NULL;
+		total += sizeof(uint32_t) + (size_t)der_sz;
 	}
 
 	/* 2. Allocate and Pack in index order (0 to count-1) */
@@ -193,6 +196,10 @@ unsigned char *stack_to_x509_DER(WOLF_STACK_OF(WOLFSSL_X509) * sk, int *out_sz)
 	for(int i = 0; i < count; i++) {
 		WOLFSSL_X509 *x = wolfSSL_sk_X509_value(sk, i);
 		int der_sz = wolfSSL_i2d_X509(x, NULL);
+		if(der_sz <= 0) {
+			shm_free(buf);
+			return NULL;
+		}
 		uint32_t u_sz = (uint32_t)der_sz;
 
 		/* Write individual cert length */
