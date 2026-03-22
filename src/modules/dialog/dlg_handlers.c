@@ -1615,6 +1615,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 		}
 	}
 
+	unref = 0;
 	/* mark dialog as expired */
 	dlg->dflags |= DLG_FLAG_EXPIRED;
 
@@ -1688,18 +1689,19 @@ void dlg_ontimeout(struct dlg_tl *tl)
 		run_dlg_callbacks(
 				DLGCB_EXPIRED, dlg, NULL, NULL, DLG_DIR_NONE, timeout_cb);
 
-		dlg_unref(dlg, unref + 1);
-
+		unref++;
 		if_update_stat(dlg_enable_stats, expired_dlgs, 1);
 		if_update_stat(dlg_enable_stats, active_dlgs, -1);
 	} else {
-		dlg_unref(dlg, 1);
+		unref = 1;
 	}
 
 	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
 			&& new_state > old_state) {
 		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0, 0);
 	}
+
+	dlg_unref(dlg, unref);
 
 	return;
 }
