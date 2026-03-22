@@ -208,7 +208,13 @@ unsigned char *stack_to_x509_DER(WOLF_STACK_OF(WOLFSSL_X509) * sk, int *out_sz)
 
 		/* Write DER data (wolfSSL_i2d advances the internal pointer) */
 		unsigned char *der_ptr = (unsigned char *)p;
-		wolfSSL_i2d_X509(x, &der_ptr);
+		int written = wolfSSL_i2d_X509(x, &der_ptr);
+		if(written != der_sz) {
+			LM_ERR("wolfSSL_i2d_X509 wrote %d bytes, expected %d\n", written,
+					der_sz);
+			shm_free(buf);
+			return NULL;
+		}
 		p += der_sz;
 	}
 
