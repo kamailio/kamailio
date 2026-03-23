@@ -30,7 +30,7 @@ $(WOLFSSL_PREFIX)/include/wolfssl/options.h $(WOLFSSL_PREFIX)/lib/libwolfssl.a:
 		./autogen.sh; \
 	fi; \
 	if [ ! -f "Makefile" ]; then \
-		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -O2 -fPIC" ./configure \
+		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -O2 -fPIC -DWOLF_CRYPTO_CB_RSA_PAD" ./configure \
 		--enable-all --enable-pkcs11 --enable-static --enable-writedup \
 		--disable-shared --disable-examples \
 		--disable-jni --disable-crl-monitor \

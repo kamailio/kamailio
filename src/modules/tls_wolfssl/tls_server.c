@@ -61,6 +61,7 @@
 #include "tls_wolfssl_mod.h"
 #include "tls_server.h"
 #include "tls_select.h"
+#include "wolfssl_pkcs11.h"
 
 #include "tls_cfg.h"
 
@@ -493,6 +494,8 @@ static void tls_dump_cert_info(char *s, WOLFSSL_X509 *cert)
  *           returned and error==SSL_ERROR_NONE).
  *
  */
+
+extern int tls_pkcs11_open_token(WOLFSSL *);
 int tls_accept(struct tcp_connection *c, int *error)
 {
 	int ret;
@@ -509,6 +512,10 @@ int tls_accept(struct tcp_connection *c, int *error)
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
 		goto err;
 	}
+
+
+	tls_pkcs11_open_token(ssl);
+
 	ret = wolfSSL_accept(ssl);
 	tls_init_ssl_cache(tls_c);
 	if(unlikely(ret == 1)) {
@@ -574,6 +581,10 @@ int tls_connect(struct tcp_connection *c, int *error)
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
 		goto err;
 	}
+
+	/* load external keys if necessary for mTLS */
+	tls_pkcs11_open_token(ssl);
+
 	ret = wolfSSL_connect(ssl);
 	tls_init_ssl_cache(tls_c);
 	if(unlikely(ret == 1)) {

@@ -245,5 +245,6 @@ void tls_destroy_cfg(void);
  * @brief Check if a TLS configuration domain exists
  */
 int ksr_tls_domain_duplicated(tls_domains_cfg_t *cfg, tls_domain_t *d);
-
+int tls_load_pkcs11_keys(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
+		tls_domain_t *cli_defaults);
 #endif /* _TLS_DOMAIN_H */

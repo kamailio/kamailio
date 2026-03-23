@@ -41,6 +41,9 @@
 	must be added to the Kamailio config file.
 			</para>
 			<para>
+	Is is highly recommended to run this module with MT-mode (<code>tcp_main_threads = 1</code>).
+			</para>
+			<para>
 	This module is derived from the &tls-url;
 	module and adapted to wolfSSL.
 	Credit goes to the authors of the tls module.
@@ -79,10 +82,15 @@
 	The wolfSSL TLS module is intended to be compiled with a
 	recent version of wolfSSL (5.2.0+).
 			</para>
-			<para>
-	Default compilations of the library will not work with Kamailio's
-	own memory allocation. See https://github.com/wolfSSL/wolfssl/issues/5264
-	for more details.
+			<para>Kamailio shared memory allocators, used in MP-mode(<code>tcp_main_threads = 0</code>), support
+                        16-byte alignment - it is possible to use this module with either the internal submodule
+                        or distro provided packages. For reference the ideal build flags are:
+                        <programlisting>
+# - this assumes the allocators are 16-byte aligned
+# - Debian currently does not use -DWOLF_CRYPTO_CB_RSA_PAD: this affects use of RSA
+#   padding mechanisms on HSMs
+EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --enable-pkcs11
+                        </programlisting>
 			</para>
 		</section>
 
@@ -90,6 +98,8 @@
 		<section id="tls_wolfssl.compile">
 			<title>Compiling the wolfSSL TLS Module</title>
 			<para> The development package for wolfSSL is required (libwolfssl-dev or equivalent).
+                        The module requires PKCS#11 support so <code>-DHAVE_PKCS11</code> must be used in building
+                        the library (e.g. Debian/Ubuntu).
 			</para>
 			<para>
 	In most case compiling the wolfSSL TLS module is as simple as:
@@ -102,6 +112,29 @@
 		cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
 	</programlisting>
 			</para>
+		</section>
+		<section id="tls.pkcs11">
+			<sectioninfo></sectioninfo>
+			<title>Support for externalized keys (PKCS#11)</title>
+
+                        <para>The module now supports loading a key from PKCS#11.
+                        <emphasis>MT-mode is required</emphasis> for this functionality.
+                        The key naming convention  follows a PKCS#11-URI style:
+                        <programlisting>
+...
+# in tls.cfg these pseudo-file names to refer to PKCS#11 keys
+# MUST run in MT-mode
+private_key = /uri:pkcs11:module=/usr/lib64/libsoftokn3.so;token=MyToken;object=MyPrivateKey;pin=12345678
+                        </programlisting>
+
+                        The string value itself cannot contain spaces so, e.g <code>token=NSS%20Certificate%20DB</code>,
+                        allows URL-encoding. The <literal>pin</literal> parameter supports redirection for security:
+    <itemizedlist>
+      <listitem><para><literal>pin=file:/path/to/pin</literal> (Read from file)</para></listitem>
+      <listitem><para><literal>pin=env:MY_PIN_VAR</literal> (Read from environment)</para></listitem>
+    </itemizedlist>
+
+                        </para>
 		</section>
 
 		<section id="tls.rpc">

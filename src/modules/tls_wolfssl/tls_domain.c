@@ -39,6 +39,7 @@
 #include "tls_domain.h"
 #include "tls_cfg.h"
 #include "tls_verify.h"
+#include "wolfssl_pkcs11.h"
 
 /*
  * needed for wolfSSL
@@ -523,6 +524,8 @@ static int load_cert(tls_domain_t *d)
 			TLS_ERR("load_cert:");
 			return -1;
 		}
+		LM_WARN("%s: Certificate loaded from file '%s[%p]'\n",
+				tls_domain_str(d), d->cert_file.s, d->ctx[0]);
 	} while(0);
 	return 0;
 }
@@ -1003,8 +1006,20 @@ static int load_private_key(tls_domain_t *d)
 	do {
 
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
-			ret_pwd = wolfSSL_CTX_use_PrivateKey_file(
-					d->ctx[0], d->pkey_file.s, SSL_FILETYPE_PEM);
+
+			/* defer pkcs11 keys to workers */
+			if(strncmp(d->pkey_file.s, "/uri:", 5) != 0) {
+				ret_pwd = wolfSSL_CTX_use_PrivateKey_file(
+						d->ctx[0], d->pkey_file.s, SSL_FILETYPE_PEM);
+			} else {
+				if(ksr_tcp_main_threads == 0) {
+					LM_ERR("%s: wolfSSL HSM[key = %s] support requires "
+						   "MT-mode: tcp_main_thread=1\n",
+							tls_domain_str(d), d->pkey_file.s);
+					return -1;
+				}
+				ret_pwd = 1;
+			}
 			if(ret_pwd) {
 				break;
 			} else {
@@ -1020,6 +1035,10 @@ static int load_private_key(tls_domain_t *d)
 					d->pkey_file.s);
 			TLS_ERR("load_private_key:");
 			return -1;
+		}
+		if(strncmp(d->pkey_file.s, "/uri:", 5) == 0) {
+			// skip private key validity check for HSM keys
+			continue;
 		}
 		if(!wolfSSL_CTX_check_private_key(d->ctx[0])) {
 			ERR("%s: Key '%s' does not match the public key of the"
@@ -1369,5 +1388,68 @@ int tls_add_domain(tls_domains_cfg_t *cfg, tls_domain_t *d)
 			cfg->cli_list = d;
 		}
 	}
+	return 0;
+}
+
+static int load_pkcs11_private_key(tls_domain_t *d)
+{
+	int ret_pwd;
+	WOLFSSL *ssl;
+
+	if(!d->pkey_file.s || !d->pkey_file.len) {
+		DBG("%s: No private key specified\n", tls_domain_str(d));
+		return 0;
+	}
+	if(strncmp(d->pkey_file.s, "/uri:", 5) != 0)
+		return 0;
+
+	char temp_name[512];
+	if(d->pkey_file.len > sizeof(temp_name) - 1) {
+		ERR("%s: PKCS#11 key label too long '%.*s'\n", tls_domain_str(d),
+				d->pkey_file.len, d->pkey_file.s);
+		return -1;
+	}
+
+	memcpy(temp_name, d->pkey_file.s + 5, d->pkey_file.len - 5);
+	temp_name[d->pkey_file.len - 5] = '\0';
+
+	LM_WARN("%s: Loading PKCS#11 key label '%s' for domain %p\n",
+			tls_domain_str(d), temp_name, d);
+	ret_pwd = tls_pkcs11_set_key(d->ctx[0], temp_name);
+
+	if(ret_pwd) {
+		ERR("%s: Unable to load engine key label '%s'\n", tls_domain_str(d),
+				d->pkey_file.s);
+		TLS_ERR("load_private_key:");
+		return -1;
+	}
+
+	return 0;
+}
+
+int tls_load_pkcs11_keys(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
+		tls_domain_t *cli_defaults)
+{
+
+	tls_domain_t *d;
+	d = cfg->srv_list;
+	while(d) {
+		if(load_pkcs11_private_key(d) < 0)
+			return -1;
+		d = d->next;
+	}
+
+	d = cfg->cli_list;
+	while(d) {
+		if(load_pkcs11_private_key(d) < 0)
+			return -1;
+		d = d->next;
+	}
+
+	if(load_pkcs11_private_key(cfg->srv_default) < 0)
+		return -1;
+	if(load_pkcs11_private_key(cfg->cli_default) < 0)
+		return -1;
+
 	return 0;
 }
