@@ -869,13 +869,16 @@ void save_peer_applications(peer *p, AAAMessage *msg)
 int Process_CEA(peer *p, AAAMessage *cea)
 {
 	AAA_AVP *avp;
+	int result_code = AAA_UNABLE_TO_COMPLY;
+
 	avp = AAAFindMatchingAVP(cea, cea->avpList.head, AVP_Result_Code, 0, 0);
 	save_peer_applications(p, cea);
+	if(avp && avp->data.len >= 4) {
+		result_code = get_4bytes(avp->data.s);
+	}
 	AAAFreeMessage(&cea);
-	if(!avp)
-		return AAA_UNABLE_TO_COMPLY;
-	else
-		return get_4bytes(avp->data.s);
+
+	return result_code;
 }
 
 /**
