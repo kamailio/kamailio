@@ -1091,21 +1091,21 @@ int set_uri_user(struct sip_msg *_m, char *_uri, char *_value)
 		return -1;
 	}
 	value = value_val.rs;
-
-	colon = strchr(uri.s, ':');
+	if(uri.len + value.len >= MAX_URI_SIZE - 2) {
+		LM_ERR("resulting uri would be too large\n");
+		return -1;
+	}
+	colon = memchr(uri.s, ':', uri.len);
 	if(colon == NULL) {
 		LM_ERR("uri does not contain ':' character\n");
 		return -1;
 	}
-	at = strchr(uri.s, '@');
+	at = memchr(uri.s, '@', uri.len);
 	c = &(new_uri[0]);
 	if(at == NULL) {
 		if(value.len == 0)
 			return 1;
-		if(uri.len + value.len > MAX_URI_SIZE) {
-			LM_ERR("resulting uri would be too large\n");
-			return -1;
-		}
+
 		append_str(c, uri.s, colon - uri.s + 1);
 		append_str(c, value.s, value.len);
 		append_chr(c, '@');
@@ -1117,10 +1117,6 @@ int set_uri_user(struct sip_msg *_m, char *_uri, char *_value)
 			append_str(c, at + 1, uri.len - (at - uri.s + 1));
 			res_val.rs.len = uri.len - (at - colon);
 		} else {
-			if(uri.len + value.len - (at - colon - 1) > MAX_URI_SIZE) {
-				LM_ERR("resulting uri would be too large\n");
-				return -1;
-			}
 			append_str(c, uri.s, colon - uri.s + 1);
 			append_str(c, value.s, value.len);
 			append_str(c, at, uri.len - (at - uri.s));
@@ -1129,6 +1125,7 @@ int set_uri_user(struct sip_msg *_m, char *_uri, char *_value)
 	}
 
 	res_val.rs.s = &(new_uri[0]);
+	res_val.rs.s[res_val.rs.len] = '\0';
 	LM_DBG("resulting uri: %.*s\n", res_val.rs.len, res_val.rs.s);
 	res_val.flags = PV_VAL_STR;
 	uri_pv->setf(_m, &uri_pv->pvp, (int)EQ_T, &res_val);
@@ -1186,29 +1183,41 @@ int set_uri_host(struct sip_msg *_m, char *_uri, char *_value)
 		LM_ERR("hostpart of uri cannot be empty\n");
 		return -1;
 	}
-	if(uri.len + value.len > MAX_URI_SIZE) {
+	if(uri.len + value.len >= MAX_URI_SIZE - 2) {
 		LM_ERR("resulting uri would be too large\n");
 		return -1;
 	}
 
-	colon = strchr(uri.s, ':');
+	colon = memchr(uri.s, ':', uri.len);
 	if(colon == NULL) {
 		LM_ERR("uri does not contain ':' character\n");
 		return -1;
 	}
 	c = &(new_uri[0]);
-	at = strchr(colon + 1, '@');
+	at = memchr(colon + 1, '@', (uri.s + uri.len) - (colon + 1));
 	if(at == NULL) {
 		next = colon + 1;
 	} else {
 		next = at + 1;
 	}
 	append_str(c, uri.s, next - uri.s);
-	host_len = strcspn(next, ":;?");
+	host_len = 0;
+	while(next + host_len < uri.s + uri.len) {
+		if(next[host_len] == ':' || next[host_len] == ';'
+				|| next[host_len] == '?') {
+			break;
+		}
+		host_len++;
+	}
+	if(host_len == 0) {
+		LM_ERR("uri does not contain host\n");
+		return -1;
+	}
 	append_str(c, value.s, value.len);
-	strcpy(c, next + host_len);
+	memcpy(c, next + host_len, (uri.s + uri.len) - (next + host_len));
 	res_val.rs.len = uri.len + value.len - host_len;
 	res_val.rs.s = &(new_uri[0]);
+	res_val.rs.s[res_val.rs.len] = '\0';
 
 	LM_DBG("resulting uri: %.*s\n", res_val.rs.len, res_val.rs.s);
 	res_val.flags = PV_VAL_STR;
