@@ -2722,7 +2722,7 @@ done:
 
 static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 {
-	static char buf[500];
+	static char buf[MAX_URI_SIZE];
 	contact_t *c;
 	int n, def_port_fl, len;
 	char *cp;
@@ -2756,7 +2756,7 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 			|| (msg->rcv.proto != PROTO_TLS && msg->rcv.src_port == SIP_PORT);
 	if(!def_port_fl)
 		len += 1 /*:*/ + 5 /*port*/;
-	if(len > sizeof(buf)) {
+	if(len > sizeof(buf) - 1) {
 		LM_ERR("rewrite contact[%d] - contact too long\n", s->params[2].v.i);
 		return -1;
 	}
@@ -2769,14 +2769,25 @@ static int sel_rewrite_contact(str *res, select_t *s, struct sip_msg *msg)
 	memcpy(buf, c->name.s, res->len);
 	cp = ip_addr2a(&msg->rcv.src_ip);
 	if(def_port_fl) {
-		res->len += snprintf(buf + res->len, sizeof(buf) - res->len, "%s", cp);
+		len = snprintf(buf + res->len, sizeof(buf) - res->len, "%s", cp);
 	} else {
-		res->len += snprintf(buf + res->len, sizeof(buf) - res->len, "%s:%d",
-				cp, msg->rcv.src_port);
+		len = snprintf(buf + res->len, sizeof(buf) - res->len, "%s:%d", cp,
+				msg->rcv.src_port);
+	}
+	if(len < 0 || len >= sizeof(buf) - res->len) {
+		LM_ERR("rewrite contact[%d] - result address too long\n",
+				s->params[2].v.i);
+		return -1;
+	}
+	res->len += len;
+	len = res->len + c->len - (hostport.s + hostport.len - c->name.s);
+	if(len >= MAX_URI_SIZE - 1) {
+		LM_ERR("rewrite contact[%d] - result too long\n", s->params[2].v.i);
+		return -1;
 	}
 	memcpy(buf + res->len, hostport.s + hostport.len,
 			c->len - (hostport.s + hostport.len - c->name.s));
-	res->len += c->len - (hostport.s + hostport.len - c->name.s);
+	res->len = len;
 
 	return 0;
 }
