@@ -116,7 +116,7 @@ inline static char *get_multipart_body(
 		goto error;
 
 	beg = buf;
-	while((*beg != '\r') && (*beg != '\n')) {
+	while((beg < buf_end) && (*beg != '\r') && (*beg != '\n')) {
 		while((beg < buf_end) && (*beg != '\n'))
 			beg++;
 		beg++;
@@ -135,9 +135,9 @@ inline static char *get_multipart_body(
 
 	/* CRLF preceding the boundary belongs to the boundary
 	and not to the body */
-	if(*(end - 1) == '\n')
+	if(end > beg && *(end - 1) == '\n')
 		end--;
-	if(*(end - 1) == '\r')
+	if(end > beg && *(end - 1) == '\r')
 		end--;
 
 	if(end < beg)
@@ -213,7 +213,7 @@ char *get_body_part(struct sip_msg *msg, unsigned short type,
 				return NULL;
 
 			/* try to find the content-type header */
-			while((*c != '\r') && (*c != '\n')) {
+			while((c < buf_end) && (*c != '\r') && (*c != '\n')) {
 				if(c + content_type_len >= buf_end)
 					return NULL;
 
