@@ -36,6 +36,10 @@
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/mem/mem.h"
+#include "../../core/list.h"
+#include "../../core/ip_addr.h"
+#include "../../core/trim.h"
 
 MODULE_VERSION
 
@@ -46,7 +50,17 @@ static str _microhttpd_listen_addr = str_init("");
 static int microhttpd_route_no = -1;
 static str microhttpd_event_callback = STR_NULL;
 
+typedef struct ksr_mhttpd_net_item
+{
+	struct net net;
+	SLIST_ENTRY(ksr_mhttpd_net_item) entries;
+} ksr_mhttpd_net_item_t;
+
+SLIST_HEAD(ksr_mhttpd_net_head, ksr_mhttpd_net_item)
+_ksr_mhttpd_allowed_ips = SLIST_HEAD_INITIALIZER(_ksr_mhttpd_allowed_ips);
+
 static int microhttpd_server_run(void);
+static int parse_allowed_ips(modparam_t type, str *val);
 
 static int w_mhttpd_send_reply(
 		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody);
@@ -78,9 +92,10 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
-	{"listen_port",     PARAM_INT,    &_microhttpd_listen_port},
-	{"listen_addr",     PARAM_STR,    &_microhttpd_listen_addr},
-	{"event_callback",  PARAM_STR,    &microhttpd_event_callback},
+	{"listen_port",     PARAM_INT,                &_microhttpd_listen_port},
+	{"listen_addr",     PARAM_STR,                &_microhttpd_listen_addr},
+	{"event_callback",  PARAM_STR,                &microhttpd_event_callback},
+	{"allowed_ips",     PARAM_STR|PARAM_USE_FUNC, &parse_allowed_ips},
 	{0, 0, 0}
 };
 
@@ -175,6 +190,13 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
+	ksr_mhttpd_net_item_t *item;
+
+	while(!SLIST_EMPTY(&_ksr_mhttpd_allowed_ips)) {
+		item = SLIST_FIRST(&_ksr_mhttpd_allowed_ips);
+		SLIST_REMOVE_HEAD(&_ksr_mhttpd_allowed_ips, entries);
+		pkg_free(item);
+	}
 }
 
 typedef struct ksr_mhd_cstream
@@ -342,6 +364,44 @@ int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		default:
 			return pv_get_null(msg, param, res);
 	}
+}
+
+static int parse_allowed_ips(modparam_t type, str *val)
+{
+	str token;
+	char *p, *end, *comma;
+	ksr_mhttpd_net_item_t *item;
+
+	if(val == NULL)
+		return -1;
+
+	p = val->s;
+	end = val->s + val->len;
+	while(p < end) {
+		comma = memchr(p, ',', (size_t)(end - p));
+		token.s = p;
+		token.len = comma ? (int)(comma - p) : (int)(end - p);
+		trim_leading(&token);
+		trim_trailing(&token);
+		if(token.len > 0) {
+			item = (ksr_mhttpd_net_item_t *)pkg_malloc(
+					sizeof(ksr_mhttpd_net_item_t));
+			if(item == NULL) {
+				LM_ERR("no pkg memory\n");
+				return -1;
+			}
+			if(mk_net_str(&item->net, &token) < 0) {
+				LM_ERR("failed to parse subnet: %.*s\n", token.len, token.s);
+				pkg_free(item);
+				return -1;
+			}
+			SLIST_INSERT_HEAD(&_ksr_mhttpd_allowed_ips, item, entries);
+			LM_DBG("added allowed client subnet: %.*s\n", token.len, token.s);
+		}
+		p = comma ? comma + 1 : end;
+	}
+
+	return 0;
 }
 
 /**
@@ -588,6 +648,31 @@ static enum MHD_Result ksr_microhttpd_request(void *cls,
 #define KSR_MICROHTTPD_PAGE               \
 	"<html><head><title>Kamailio</title>" \
 	"</head><body>Thanks for flying Kamailio!</body></html>"
+
+/**
+ *
+ */
+static enum MHD_Result ksr_mhttpd_accept_policy(
+		void *cls, const struct sockaddr *addr, socklen_t addrlen)
+{
+	struct ip_addr ip;
+	ksr_mhttpd_net_item_t *item;
+
+	if(SLIST_EMPTY(&_ksr_mhttpd_allowed_ips))
+		return MHD_YES;
+
+	sockaddr2ip_addr(&ip, addr);
+
+	SLIST_FOREACH(item, &_ksr_mhttpd_allowed_ips, entries)
+	{
+		if(matchnet(&ip, &item->net))
+			return MHD_YES;
+	}
+
+	LM_DBG("connection rejected from %s\n", ip_addr2a(&ip));
+	return MHD_NO;
+}
+
 /**
  *
  */
@@ -608,13 +693,14 @@ static int microhttpd_server_run(void)
 		LM_DBG("preparing to listen on %s :%d\n", _microhttpd_listen_addr.s,
 				_microhttpd_listen_port);
 		d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
-				NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
-				MHD_OPTION_SOCK_ADDR, &address, MHD_OPTION_END);
+				&ksr_mhttpd_accept_policy, NULL, &ksr_microhttpd_request,
+				KSR_MICROHTTPD_PAGE, MHD_OPTION_SOCK_ADDR, &address,
+				MHD_OPTION_END);
 	} else {
 		LM_DBG("preparing to listen on port: %d\n", _microhttpd_listen_port);
 		d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
-				NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
-				MHD_OPTION_END);
+				&ksr_mhttpd_accept_policy, NULL, &ksr_microhttpd_request,
+				KSR_MICROHTTPD_PAGE, MHD_OPTION_END);
 	}
 
 	if(d == NULL) {
