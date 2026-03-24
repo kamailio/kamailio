@@ -37,6 +37,11 @@ int nats_pub_workers_num = DEFAULT_NUM_PUB_WORKERS;
 
 static int _nats_proc_count = 0;
 char *eventData = NULL;
+static int nats_tls = 0;
+static char *nats_tls_ca_file = NULL;
+static char *nats_tls_cert_file = NULL;
+static char *nats_tls_key_file = NULL;
+static char *nats_tls_expected_hostname = NULL;
 
 int *nats_pub_worker_pipes_fds = NULL;
 int *nats_pub_worker_pipes = NULL;
@@ -53,6 +58,11 @@ static pv_export_t nats_mod_pvs[] = {
 
 static param_export_t params[] = {
 	{"nats_url", PARAM_STRING|PARAM_USE_FUNC, (void*)_init_nats_server_url_add},
+	{"tls", PARAM_INT, &nats_tls},
+	{"tls_ca_file", PARAM_STRING, &nats_tls_ca_file},
+	{"tls_cert_file", PARAM_STRING, &nats_tls_cert_file},
+	{"tls_key_file", PARAM_STRING, &nats_tls_key_file},
+	{"tls_expected_hostname", PARAM_STRING, &nats_tls_expected_hostname},
 	{"num_publish_workers", PARAM_INT, &nats_pub_workers_num},
 	{"subject_queue_group", PARAM_STRING|PARAM_USE_FUNC, (void*)_init_nats_sub_add},
 	{"event_callback", PARAM_STR,   &nats_event_callback},
@@ -118,11 +128,86 @@ static void reconnectedCb(natsConnection *nc, void *closure)
 
 static void closedCB(natsConnection *nc, void *closure)
 {
-	bool *closed = (bool *)closure;
 	const char *err = NULL;
 	natsConnection_GetLastError(nc, &err);
 	LM_INFO("connect failed: %s\n", err);
-	*closed = true;
+}
+
+static int nats_has_value(const char *value)
+{
+	return (value != NULL && value[0] != '\0');
+}
+
+static int nats_validate_tls_config(void)
+{
+	if(!nats_tls) {
+		if(nats_has_value(nats_tls_ca_file)
+				|| nats_has_value(nats_tls_cert_file)
+				|| nats_has_value(nats_tls_key_file)
+				|| nats_has_value(nats_tls_expected_hostname)) {
+			LM_ERR("tls parameters require tls=1\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	if(!nats_has_value(nats_tls_ca_file)) {
+		LM_ERR("tls_ca_file is required when tls=1\n");
+		return -1;
+	}
+
+	if(nats_has_value(nats_tls_cert_file)
+			!= nats_has_value(nats_tls_key_file)) {
+		LM_ERR("tls_cert_file and tls_key_file must be set together\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int nats_apply_tls_options(nats_connection_ptr c)
+{
+	natsStatus s = NATS_OK;
+	natsStatus err_st = NATS_OK;
+	const char *detail = NULL;
+
+	if(!nats_tls) {
+		return 0;
+	}
+
+	if((s = natsOptions_SetSecure(c->opts, true)) != NATS_OK) {
+		LM_ERR("could not enable nats tls [%s]\n", natsStatus_GetText(s));
+		return -1;
+	}
+
+	if((s = natsOptions_LoadCATrustedCertificates(c->opts, nats_tls_ca_file))
+			!= NATS_OK) {
+		detail = nats_GetLastError(&err_st);
+		LM_ERR("could not load nats tls ca file [%s] [%s]\n",
+				natsStatus_GetText(s), (detail != NULL) ? detail : "");
+		return -1;
+	}
+
+	if(nats_has_value(nats_tls_cert_file)
+			&& (s = natsOptions_LoadCertificatesChain(
+						c->opts, nats_tls_cert_file, nats_tls_key_file))
+					   != NATS_OK) {
+		detail = nats_GetLastError(&err_st);
+		LM_ERR("could not load nats tls client certificate chain [%s] [%s]\n",
+				natsStatus_GetText(s), (detail != NULL) ? detail : "");
+		return -1;
+	}
+
+	if(nats_has_value(nats_tls_expected_hostname)
+			&& (s = natsOptions_SetExpectedHostname(
+						c->opts, nats_tls_expected_hostname))
+					   != NATS_OK) {
+		LM_ERR("could not set nats tls expected hostname [%s]\n",
+				natsStatus_GetText(s));
+		return -1;
+	}
+
+	return 0;
 }
 
 void nats_consumer_worker_proc(nats_consumer_worker_t *worker)
@@ -180,6 +265,9 @@ static int mod_init(void)
 {
 	int i = 0;
 	int total_procs = _nats_proc_count + nats_pub_workers_num;
+	if(nats_validate_tls_config() < 0) {
+		return -1;
+	}
 	if(faked_msg_init() < 0) {
 		LM_ERR("failed to init faked sip message\n");
 		return -1;
@@ -425,7 +513,7 @@ int nats_cleanup_init_sub()
 int nats_init_connection(nats_connection_ptr c)
 {
 	natsStatus s = NATS_OK;
-	bool closed = false;
+	int i;
 	int len;
 	char *sc;
 	int num_servers = 0;
@@ -457,6 +545,7 @@ int nats_init_connection(nats_connection_ptr c)
 		strcpy(sc, NATS_DEFAULT_URL);
 		sc[len] = '\0';
 		c->servers[0] = sc;
+		num_servers = 1;
 		LM_INFO("using default server [%s]\n", sc);
 	}
 
@@ -468,7 +557,6 @@ int nats_init_connection(nats_connection_ptr c)
 
 	// use these defaults
 	natsOptions_SetAllowReconnect(c->opts, true);
-	natsOptions_SetSecure(c->opts, false);
 	natsOptions_SetMaxReconnect(c->opts, 10000);
 	natsOptions_SetReconnectWait(c->opts, 2 * 1000);	 // 2s
 	natsOptions_SetPingInterval(c->opts, 2 * 60 * 1000); // 2m
@@ -478,13 +566,18 @@ int nats_init_connection(nats_connection_ptr c)
 	natsOptions_SetTimeout(c->opts, 2 * 1000);				   // 2s
 	natsOptions_SetReconnectBufSize(c->opts, 8 * 1024 * 1024); // 8 MB;
 	natsOptions_SetReconnectJitter(c->opts, 100, 1000);		   // 100ms, 1s;
+	natsOptions_SetSecure(c->opts, false);
+
+	if(nats_apply_tls_options(c) < 0) {
+		goto error;
+	}
 
 	// nats set servers and options
 	if((s = natsOptions_SetServers(
 				c->opts, (const char **)c->servers, num_servers))
 			!= NATS_OK) {
 		LM_ERR("could not set nats server[%s]\n", natsStatus_GetText(s));
-		return -1;
+		goto error;
 	}
 
 	// nats set callbacks
@@ -506,11 +599,24 @@ int nats_init_connection(nats_connection_ptr c)
 				natsStatus_GetText(s));
 	}
 
-	s = natsOptions_SetClosedCB(c->opts, closedCB, (void *)&closed);
+	s = natsOptions_SetClosedCB(c->opts, closedCB, NULL);
 	if(s != NATS_OK) {
 		LM_ERR("could not set closed callback [%s]\n", natsStatus_GetText(s));
 	}
 	return 0;
+
+error:
+	if(c->opts != NULL) {
+		natsOptions_Destroy(c->opts);
+		c->opts = NULL;
+	}
+	for(i = 0; i < NATS_MAX_SERVERS; i++) {
+		if(c->servers[i] != NULL) {
+			shm_free(c->servers[i]);
+			c->servers[i] = NULL;
+		}
+	}
+	return -1;
 }
 
 int nats_cleanup_init_servers()
@@ -587,9 +693,10 @@ int nats_destroy_workers()
 					}
 					shm_free(worker->on_message);
 				}
-				shm_free(worker);
 			}
 		}
+		shm_free(nats_workers);
+		nats_workers = NULL;
 	}
 
 	if(nats_pub_workers != NULL) {
@@ -604,9 +711,10 @@ int nats_destroy_workers()
 				if(uv_is_active((uv_handle_t *)&pub_worker->poll)) {
 					uv_poll_stop(&pub_worker->poll);
 				}
-				shm_free(pub_worker);
 			}
 		}
+		shm_free(nats_pub_workers);
+		nats_pub_workers = NULL;
 	}
 	return 0;
 }
