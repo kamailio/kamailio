@@ -1042,11 +1042,15 @@ msg_vbflag_reset("1");
    with the file of allocation.
 
    It takes two parameters: the path to file where to write the report;
-   the string to match the allocation file (the match is done as value
-   included in the path fo the allocation file).
+   the string to match the allocation location. The location can be given
+   as either a file name (the match is done as value included in the path
+   of the allocation file), or as a function name and line number as
+   reported by mod.mem_stats.
 
-   Example:
+   Examples:
                         kamcli rpc shm.rprint /tmp/kamailioshm.txt dns_cache.c
+                        kamcli rpc shm.rprint /tmp/kamailioshm.txt init_dns_cach
+e:359
 
 6. Event Routes
 
