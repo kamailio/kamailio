@@ -2102,6 +2102,12 @@ str *create_winfo_xml(watcher_t *watchers, char *version, str resource,
 
 	w = watchers->next;
 	while(w) {
+		if(w->uri.len == 0 || w->uri.len > (int)sizeof(content) - 1) {
+			LM_ERR("Invalid watcher URI length (0 or over %d)\n",
+					(int)sizeof(content) - 1);
+			goto error;
+		}
+
 		strncpy(content, w->uri.s, w->uri.len);
 		content[w->uri.len] = '\0';
 		node = xmlNewChild(
