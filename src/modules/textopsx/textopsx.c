@@ -2483,10 +2483,10 @@ static int pv_get_hf_iterator_hname(
 		return pv_get_null(msg, param, res);
 	}
 
-	if(_hf_iterators[i].it == NULL) {
+	if(_hf_iterators[k].it == NULL) {
 		return pv_get_null(msg, param, res);
 	}
-	return pv_get_strval(msg, param, res, &_hf_iterators[i].it->name);
+	return pv_get_strval(msg, param, res, &_hf_iterators[k].it->name);
 }
 
 /**
