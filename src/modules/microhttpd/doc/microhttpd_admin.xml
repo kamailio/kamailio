@@ -54,7 +54,7 @@
 	<section>
 	<title>Parameters</title>
 	<section id="microhttpd.p.listen_addr">
-		<title><varname>listen_addr</varname> (int)</title>
+		<title><varname>listen_addr</varname> (str)</title>
 		<para>
 			IPv4 address to listen for HTTP connection. If not set, then it
 			listens on all local addresses (port has to be specified by
@@ -200,7 +200,7 @@ event_route[microhttpd:request] {
         <programlisting  format="linespecific">
 ...
 ...
-loadmodule "microhttpd.so
+loadmodule "microhttpd.so"
 ...
 event_route[microhttpd:request] {
     xinfo("request: $mhttpd(method) - url: $mhttpd(url) - data: [$mhttpd(data)]\n");
