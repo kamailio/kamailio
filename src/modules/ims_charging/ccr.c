@@ -464,8 +464,8 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 															zz->code);
 											}
 											zz = zz->next;
-											cdp_avp->cdp->AAAFreeAVPList(&yy);
 										}
+										cdp_avp->cdp->AAAFreeAVPList(&yy);
 										break;
 									default:
 										LM_ERR("Unsupported Final Unit "
