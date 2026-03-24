@@ -33,9 +33,14 @@ Emmanuel Schmidbauer
         4. Parameters
 
               4.1. nats_url (str)
-              4.2. num_publish_workers (int)
-              4.3. subject_queue_group (str)
-              4.4. event_callback (str)
+              4.2. tls (int)
+              4.3. tls_ca_file (str)
+              4.4. tls_cert_file (str)
+              4.5. tls_key_file (str)
+              4.6. tls_expected_hostname (str)
+              4.7. num_publish_workers (int)
+              4.8. subject_queue_group (str)
+              4.9. event_callback (str)
 
         5. Functions
 
@@ -47,12 +52,18 @@ Emmanuel Schmidbauer
    List of Examples
 
    1.1. Set nats_url parameter
-   1.2. Set num_publish_workers parameter
-   1.3. Set subject_queue_group parameter
-   1.4. Set event_callback parameter
-   1.5. nats_publish usage
-   1.6. Example usage of $natsData pseudo variable
-   1.7. Define the event routes
+   1.2. Set tls parameter
+   1.3. Set tls_ca_file parameter
+   1.4. Set tls_cert_file parameter
+   1.5. Set tls_key_file parameter
+   1.6. Set tls_expected_hostname parameter
+   1.7. Set num_publish_workers parameter
+   1.8. TLS configuration example
+   1.9. Set subject_queue_group parameter
+   1.10. Set event_callback parameter
+   1.11. nats_publish usage
+   1.12. Example usage of $natsData pseudo variable
+   1.13. Define the event routes
 
 Chapter 1. Admin Guide
 
@@ -68,9 +79,14 @@ Chapter 1. Admin Guide
    4. Parameters
 
         4.1. nats_url (str)
-        4.2. num_publish_workers (int)
-        4.3. subject_queue_group (str)
-        4.4. event_callback (str)
+        4.2. tls (int)
+        4.3. tls_ca_file (str)
+        4.4. tls_cert_file (str)
+        4.5. tls_key_file (str)
+        4.6. tls_expected_hostname (str)
+        4.7. num_publish_workers (int)
+        4.8. subject_queue_group (str)
+        4.9. event_callback (str)
 
    5. Functions
 
@@ -116,9 +132,14 @@ Chapter 1. Admin Guide
 4. Parameters
 
    4.1. nats_url (str)
-   4.2. num_publish_workers (int)
-   4.3. subject_queue_group (str)
-   4.4. event_callback (str)
+   4.2. tls (int)
+   4.3. tls_ca_file (str)
+   4.4. tls_cert_file (str)
+   4.5. tls_key_file (str)
+   4.6. tls_expected_hostname (str)
+   4.7. num_publish_workers (int)
+   4.8. subject_queue_group (str)
+   4.9. event_callback (str)
 
 4.1.  nats_url (str)
 
@@ -135,7 +156,73 @@ modparam("nats", "nats_url", "nats://user1:pass1@127.0.1.2:4222") // with auth
 modparam("nats", "nats_url", "nats://127.1.2.3:4222")
 ...
 
-4.2.  num_publish_workers (int)
+4.2.  tls (int)
+
+   Enable TLS for all configured NATS servers.
+
+   When enabled, tls_ca_file must also be set. If client authentication is
+   required, tls_cert_file and tls_key_file must be set together.
+
+   Default value is “0”.
+
+   Example 1.2.  Set tls parameter
+...
+modparam("nats", "tls", 1)
+...
+
+4.3.  tls_ca_file (str)
+
+   Path to the CA certificate bundle used to validate the NATS server
+   certificate.
+
+   This parameter is required when tls is enabled.
+
+   Default value is not set.
+
+   Example 1.3.  Set tls_ca_file parameter
+...
+modparam("nats", "tls_ca_file", "/etc/kamailio/nats/ca.crt")
+...
+
+4.4.  tls_cert_file (str)
+
+   Path to the client certificate presented to the NATS server for mTLS.
+
+   If set, tls_key_file must also be set.
+
+   Default value is not set.
+
+   Example 1.4.  Set tls_cert_file parameter
+...
+modparam("nats", "tls_cert_file", "/etc/kamailio/nats/client.crt")
+...
+
+4.5.  tls_key_file (str)
+
+   Path to the client private key used with tls_cert_file.
+
+   If set, tls_cert_file must also be set.
+
+   Default value is not set.
+
+   Example 1.5.  Set tls_key_file parameter
+...
+modparam("nats", "tls_key_file", "/etc/kamailio/nats/client.key")
+...
+
+4.6.  tls_expected_hostname (str)
+
+   Expected hostname in the NATS server certificate. Use it when the
+   server certificate hostname should be pinned explicitly.
+
+   Default value is not set.
+
+   Example 1.6.  Set tls_expected_hostname parameter
+...
+modparam("nats", "tls_expected_hostname", "nats.internal")
+...
+
+4.7.  num_publish_workers (int)
 
    The number of worker threads for publishing messages.
 
@@ -143,12 +230,23 @@ modparam("nats", "nats_url", "nats://127.1.2.3:4222")
 
    Default value is “2”.
 
-   Example 1.2.  Set num_publish_workers parameter
+   Example 1.7.  Set num_publish_workers parameter
 ...
 modparam("nats", "num_publish_workers", 4)
 ...
 
-4.3.  subject_queue_group (str)
+   Example 1.8. TLS configuration example
+...
+modparam("nats", "nats_url", "nats://nats-1:4222")
+modparam("nats", "nats_url", "nats://nats-2:4222")
+modparam("nats", "tls", 1)
+modparam("nats", "tls_ca_file", "/etc/kamailio/nats/ca.crt")
+modparam("nats", "tls_cert_file", "/etc/kamailio/nats/client.crt")
+modparam("nats", "tls_key_file", "/etc/kamailio/nats/client.key")
+modparam("nats", "tls_expected_hostname", "nats.internal")
+...
+
+4.8.  subject_queue_group (str)
 
    The NATS Subject and Queue Group. Separated by ":"
 
@@ -156,7 +254,7 @@ modparam("nats", "num_publish_workers", 4)
 
    Default value is not set.
 
-   Example 1.3.  Set subject_queue_group parameter
+   Example 1.9.  Set subject_queue_group parameter
 ...
 modparam("nats", "subject_queue_group", "Kamailio-World:2020")
 modparam("nats", "subject_queue_group", "Kamailio-World:2021") // this will crea
@@ -165,13 +263,13 @@ modparam("nats", "subject_queue_group", "MyQueue1:2021")
 modparam("nats", "subject_queue_group", "MyQueue2:2021")
 ...
 
-4.4.  event_callback (str)
+4.9.  event_callback (str)
 
    Name of the KEMI function to be executed instead of the event route.
 
    Default value is not set.
 
-   Example 1.4.  Set event_callback parameter
+   Example 1.10.  Set event_callback parameter
 ...
 modparam("nats", "event_callback", "ksr_nats_event")
 
@@ -191,7 +289,7 @@ end
 
    Publishes the payload to subject, with an optional reply subject.
 
-   Example 1.5.  nats_publish usage
+   Example 1.11.  nats_publish usage
 ...
 $var(my_info) = "$ci=" + $ci + " $fU=" + $fU;
 nats_publish("mysubject", "$var(my_info)"); # publish $var(my_info) to "mysubjec
@@ -204,7 +302,7 @@ nats_publish("mysubject", "$var(my_info)", "reply.topic");
 
 6. Pseudo Variables
 
-   Example 1.6. Example usage of $natsData pseudo variable
+   Example 1.12. Example usage of $natsData pseudo variable
         ...
         xlog("L_INFO", "received payload $natsData");
 }
@@ -217,7 +315,7 @@ nats_publish("mysubject", "$var(my_info)", "reply.topic");
    received payload. The name of the event-route name must match the
    subject of the message.
 
-   Example 1.7. Define the event routes
+   Example 1.13. Define the event routes
 ...
 modparam("nats", "subject_queue_group", "Kamailio-World:2021")
 modparam("nats", "subject_queue_group", "MyQueue1:2021")
