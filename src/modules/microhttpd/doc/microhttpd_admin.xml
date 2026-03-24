@@ -93,6 +93,41 @@ modparam("microhttpd", "listen_port", 8284)
 </programlisting>
 		</example>
 	</section>
+	<section id="microhttpd.p.allowed_ips">
+		<title><varname>allowed_ips</varname> (str)</title>
+		<para>
+			A comma-separated list of IP subnets allowed to connect to the
+			embedded HTTP server. Each entry can be specified as a plain IP
+			address, an IP address with a prefix length in CIDR notation
+			(e.g. <emphasis>192.168.1.0/24</emphasis>), or an IP address
+			paired with a dotted-decimal netmask
+			(e.g. <emphasis>10.0.0.0/255.0.0.0</emphasis>). Both IPv4 and
+			IPv6 addresses are supported. Whitespace around the comma
+			separator and around the slash is ignored.
+		</para>
+		<para>
+			When this parameter is set, incoming TCP connections whose
+			source address does not match any of the listed subnets are
+			rejected before any HTTP processing takes place. When the
+			parameter is not set (default), all source addresses are
+			accepted.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (empty - all ips are allowed).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>allowed_ips</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("microhttpd", "allowed_ips", "127.0.0.1")
+modparam("microhttpd", "allowed_ips", "192.168.1.0/24, 10.0.0.0/8")
+modparam("microhttpd", "allowed_ips", "::1/128, 2001:db8::/32")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="microhttpd.p.event_callback">
 		<title><varname>event_callback</varname> (str)</title>
 		<para>
