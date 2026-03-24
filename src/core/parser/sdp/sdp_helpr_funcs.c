@@ -87,7 +87,7 @@ int get_mixed_part_delimiter(str *body, str *mp_delimiter)
 	/* LM_DBG("<%.*s>\n",body->len,body->s); */
 	p = str_type.s = body->s;
 	str_type.len = body->len;
-	while(*p != ';' && p < (body->s + body->len))
+	while((p < body->s + body->len) && (*p != ';'))
 		advance(p, 1, str_type, error);
 	p++;
 	str_type.s = p;
