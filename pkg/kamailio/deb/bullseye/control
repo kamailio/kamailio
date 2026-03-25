@@ -33,6 +33,7 @@ Build-Depends:
  libmongoc-dev,
  libmosquitto-dev,
  libncurses5-dev,
+ libnghttp2-dev,
  libpcre2-dev,
  libperl-dev,
  libphonenumber-dev (>= 7),
