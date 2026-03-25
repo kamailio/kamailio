@@ -39,25 +39,32 @@ typedef struct msrp_str_id
 } msrp_str_id_t;
 
 
-static msrp_str_id_t _msrp_rtypes[] = {{str_init("SEND"), MSRP_REQ_SEND},
-		{str_init("AUTH"), MSRP_REQ_AUTH},
-		{str_init("REPORT"), MSRP_REQ_REPORT}, {{0, 0}, 0}};
+/* clang-format off */
+static msrp_str_id_t _msrp_rtypes[] = {
+	{str_init("SEND"), MSRP_REQ_SEND},
+	{str_init("AUTH"), MSRP_REQ_AUTH},
+	{str_init("REPORT"), MSRP_REQ_REPORT},
+	{{0, 0}, 0}
+};
 
 
 static msrp_str_id_t _msrp_htypes[] = {
-		{str_init("From-Path"), MSRP_HDR_FROM_PATH},
-		{str_init("To-Path"), MSRP_HDR_TO_PATH},
-		{str_init("Use-Path"), MSRP_HDR_USE_PATH},
-		{str_init("Message-ID"), MSRP_HDR_MESSAGE_ID},
-		{str_init("Byte-Range"), MSRP_HDR_BYTE_RANGE},
-		{str_init("Status"), MSRP_HDR_STATUS},
-		{str_init("Success-Report"), MSRP_HDR_SUCCESS_REPORT},
-		{str_init("Content-Type"), MSRP_HDR_CONTENT_TYPE},
-		{str_init("Authorization"), MSRP_HDR_AUTH},
-		{str_init("WWW-Authenticate"), MSRP_HDR_WWWAUTH},
-		{str_init("Authentication-Info"), MSRP_HDR_AUTHINFO},
-		{str_init("Expires"), MSRP_HDR_EXPIRES}, {{0, 0}, 0}};
+	{str_init("From-Path"), MSRP_HDR_FROM_PATH},
+	{str_init("To-Path"), MSRP_HDR_TO_PATH},
+	{str_init("Use-Path"), MSRP_HDR_USE_PATH},
+	{str_init("Message-ID"), MSRP_HDR_MESSAGE_ID},
+	{str_init("Byte-Range"), MSRP_HDR_BYTE_RANGE},
+	{str_init("Status"), MSRP_HDR_STATUS},
+	{str_init("Success-Report"), MSRP_HDR_SUCCESS_REPORT},
+	{str_init("Content-Type"), MSRP_HDR_CONTENT_TYPE},
+	{str_init("Authorization"), MSRP_HDR_AUTH},
+	{str_init("WWW-Authenticate"), MSRP_HDR_WWWAUTH},
+	{str_init("Authentication-Info"), MSRP_HDR_AUTHINFO},
+	{str_init("Expires"), MSRP_HDR_EXPIRES},
+	{{0, 0}, 0}
+};
 
+/* clang-format on */
 
 /* */
 int msrp_fline_set_rtypeid(msrp_frame_t *mf);
