@@ -35,6 +35,10 @@
 #define DBG_QM_MALLOC
 #endif
 
+#ifdef DBG_SR_MEMORY_BACKTRACE
+#define DBG_QM_MALLOC_BACKTRACE
+#endif
+
 /**
  * ROUNDTO: size to round to, must be = 2^n
  * - on sun in 32 bits mode long long must be 64 bits aligned but long
@@ -79,8 +83,13 @@ struct qm_frag
 	const char *func;
 	const char *mname;
 	unsigned long line;
-	unsigned long check;
+#ifdef DBG_QM_MALLOC_BACKTRACE
+#define DBG_QM_MALLOC_BACKTRACE_SIZE 9
+	void *backtrace[DBG_QM_MALLOC_BACKTRACE_SIZE];
+#else // ! DBG_QM_MALLOC_BACKTRACE
 	unsigned long reserved1;
+#endif
+	unsigned long check;
 #endif
 };
 

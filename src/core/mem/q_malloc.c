@@ -37,6 +37,10 @@
 #include "../events.h"
 #endif
 
+#ifdef DBG_QM_MALLOC_BACKTRACE
+#include <execinfo.h>
+#endif
+
 #include "pkg.h"
 
 /*useful macros*/
@@ -343,6 +347,9 @@ static inline
 	size_t rest;
 	struct qm_frag *n;
 	struct qm_frag_end *end;
+#ifdef DBG_QM_MALLOC_BACKTRACE
+	int stack_frames;
+#endif
 
 	rest = f->size - new_size;
 #ifdef MEM_FRAG_AVOIDANCE
@@ -370,6 +377,11 @@ static inline
 		n->line = line;
 		n->mname = mname;
 		n->check = ST_CHECK_PATTERN;
+#ifdef DBG_QM_MALLOC_BACKTRACE
+		stack_frames = backtrace(n->backtrace, DBG_QM_MALLOC_BACKTRACE_SIZE);
+		memset(n->backtrace + stack_frames, 0,
+				sizeof(void *) * (DBG_QM_MALLOC_BACKTRACE_SIZE - stack_frames));
+#endif
 #endif
 		/* reinsert n in free list*/
 		qm_insert_free(qm, n);
@@ -393,6 +405,9 @@ void *qm_malloc(void *qmp, size_t size)
 	int hash;
 #ifdef DBG_QM_MALLOC
 	unsigned int list_cntr;
+#ifdef DBG_QM_MALLOC_BACKTRACE
+	int stack_frames;
+#endif
 #endif
 
 	qm = (struct qm_block *)qmp;
@@ -444,6 +459,11 @@ void *qm_malloc(void *qmp, size_t size)
 		f->mname = mname;
 		f->line = line;
 		f->check = ST_CHECK_PATTERN;
+#ifdef DBG_QM_MALLOC_BACKTRACE
+		stack_frames = backtrace(f->backtrace, DBG_QM_MALLOC_BACKTRACE_SIZE);
+		memset(f->backtrace + stack_frames, 0,
+				sizeof(void *) * (DBG_QM_MALLOC_BACKTRACE_SIZE - stack_frames));
+#endif
 		/*  FRAG_END(f)->check1=END_CHECK_PATTERN1;
 			FRAG_END(f)->check2=END_CHECK_PATTERN2;*/
 		MDBG("qm_malloc(%p, %lu) returns address %p frag. %p (size=%lu) on %d"
@@ -508,6 +528,9 @@ void qm_free(void *qmp, void *p)
 	struct qm_frag *next;
 	struct qm_frag *prev;
 #endif /* MEM_JOIN_FREE*/
+#ifdef DBG_QM_MALLOC_BACKTRACE
+	int stack_frames;
+#endif
 
 	qm = (struct qm_block *)qmp;
 
@@ -619,6 +642,11 @@ void qm_free(void *qmp, void *p)
 	f->func = func;
 	f->mname = mname;
 	f->line = line;
+#ifdef DBG_QM_MALLOC_BACKTRACE
+	stack_frames = backtrace(f->backtrace, DBG_QM_MALLOC_BACKTRACE_SIZE);
+	memset(f->backtrace + stack_frames, 0,
+			sizeof(void *) * (DBG_QM_MALLOC_BACKTRACE_SIZE - stack_frames));
+#endif
 #endif
 	qm_insert_free(qm, f);
 #ifdef MALLOC_STATS
@@ -1031,6 +1059,23 @@ static int qm_frag_match(struct qm_frag *f, const str *fmatch, int fn_matches,
 }
 #endif
 
+#ifdef DBG_QM_MALLOC_BACKTRACE
+static void qm_print_backtrace(struct qm_frag *f, FILE *fp)
+{
+	unsigned int i;
+	char **buf = backtrace_symbols(f->backtrace, DBG_QM_MALLOC_BACKTRACE_SIZE);
+
+	fprintf(fp, "-------- backtrace:\n");
+
+	for(i = 0; i < DBG_QM_MALLOC_BACKTRACE_SIZE; i++)
+		fprintf(fp, "%s\n", buf[i]);
+
+	fprintf(fp, "-------- end backtrace\n");
+
+	free(buf);
+}
+#endif
+
 void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 {
 	struct qm_block *qm;
@@ -1088,6 +1133,9 @@ void qm_status_filter(void *qmp, str *fmatch, FILE *fp)
 					fprintf(fp, "         * end overwritten(%lx, %lx)!\n",
 							FRAG_END(f)->check1, FRAG_END(f)->check2);
 				}
+#ifdef DBG_QM_MALLOC_BACKTRACE
+				qm_print_backtrace(f, fp);
+#endif
 			}
 #else
 			fprintf(fp, "   %3d. %c  address=%p frag=%p size=%lu used=%d\n", i,
