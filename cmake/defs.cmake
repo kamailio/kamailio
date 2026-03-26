@@ -4,6 +4,7 @@
 # libraries and executables
 
 include(CMakeDependentOption) # cmake_dependent_option
+include(CheckSymbolExists) # check_symbol_exists
 
 # Define full paths for installation directories with name of the project
 # appended where needed. These are used in various places to define paths in
@@ -112,6 +113,11 @@ option(PKG_MALLOC "Use custom package memory manager (OFF will use system manage
 option(MEMDBG "Use memory debugging system" ON)
 cmake_dependent_option(MEMDBGSYS "Debug system memory manager" OFF "NOT PKG_MALLOC" OFF)
 
+check_symbol_exists(backtrace "execinfo.h" HAVE_BACKTRACE)
+cmake_dependent_option(
+  MEMDBG_BACKTRACE "Add backtraces to debug memory fragments" OFF "MEMDBG AND HAVE_BACKTRACE" OFF
+)
+
 option(MEM_JOIN_FREE "Use mem_join_free" ON)
 option(F_MALLOC "Use f_malloc" ON)
 option(Q_MALLOC "Use q_malloc" ON)
@@ -216,6 +222,9 @@ if(MEMDBG)
   target_compile_definitions(common INTERFACE DBG_SR_MEMORY)
   if(MEMDBGSYS)
     target_compile_definitions(common INTERFACE DBG_SYS_MEMORY)
+  endif()
+  if(MEMDBG_BACKTRACE)
+    target_compile_definitions(common INTERFACE DBG_SR_MEMORY_BACKTRACE)
   endif()
 endif()
 
