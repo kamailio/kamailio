@@ -269,6 +269,19 @@ int pv_get_ruri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	return pv_get_strval(msg, param, res, &msg->first_line.u.request.uri);
 }
 
+int pv_get_ruri_len(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg == NULL || res == NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY) /* REPLY doesn't have a ruri */
+		return pv_get_null(msg, param, res);
+
+	if(msg->new_uri.s != NULL)
+		return pv_get_sintval(msg, param, res, msg->new_uri.len);
+	return pv_get_sintval(msg, param, res, msg->first_line.u.request.uri.len);
+}
+
 int pv_get_ouri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(msg == NULL || res == NULL)
@@ -320,6 +333,7 @@ int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
 		if(parsed_uri->user.s == NULL || parsed_uri->user.len <= 0)
 			return pv_get_sintval(msg, param, res, 0);
 		return pv_get_sintval(msg, param, res, parsed_uri->user.len);
+	} else if(param->pvn.u.isname.name.n == 7) /* uri length */ {
 	}
 	LM_ERR("unknown specifier\n");
 	return pv_get_null(msg, param, res);
