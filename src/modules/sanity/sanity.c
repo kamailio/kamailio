@@ -330,9 +330,15 @@ int check_required_headers(sip_msg_t *msg)
 
 	if(!check_transaction_quadruple(msg)) {
 		msg->msg_flags |= FL_MSG_NOREPLY;
-		LM_DBG("check_required_headers failed\n");
+		LM_ERR("check_required_headers failed\n");
 		return SANITY_CHECK_FAILED;
 	}
+
+	if(parse_headers(msg, HDR_VIA_F, 0) != 0 || !msg->h_via1) {
+		LM_ERR("failed to parse Via header\n");
+		return SANITY_CHECK_FAILED;
+	}
+
 	if(parse_headers(msg, HDR_EOH_F, 0) != 0) {
 		LM_ERR("failed to parse headers\n");
 		if(sanity_reply(msg, 400, "Bad Headers") < 0) {
@@ -364,12 +370,38 @@ int check_via1_header(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
-	if(msg->via1->host.s == NULL || msg->via1->host.len < 0) {
+	if(msg->via1->host.s == NULL || msg->via1->host.len <= 0) {
 		LM_WARN("failed to parse the Via1 host\n");
 		msg->msg_flags |= FL_MSG_NOREPLY;
 		return SANITY_CHECK_FAILED;
 	}
 
+	return SANITY_CHECK_PASSED;
+}
+
+/* check if the Via header contains a branch parameter
+and that it starts with the magic cookie */
+int check_via1_branch(sip_msg_t *msg)
+{
+	LM_DBG("check via1 branch\n");
+	if(parse_headers(msg, HDR_VIA1_F, 0) != 0) {
+		LM_WARN("failed to parse the Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1->branch == NULL || msg->via1->branch->value.len <= 0) {
+		LM_WARN("failed to parse the Via1 branch\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1->branch->value.len < 7
+			|| memcmp(msg->via1->branch->value.s, "z9hG4bK", 7) != 0) {
+		LM_WARN("Via1 branch parameter does not start with the magic cookie\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
 	return SANITY_CHECK_PASSED;
 }
 

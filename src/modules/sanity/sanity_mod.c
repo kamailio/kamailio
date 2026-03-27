@@ -161,6 +161,10 @@ int sanity_check(struct sip_msg *_msg, int msg_checks, int uri_checks)
 			&& (ret = check_via1_header(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;
 	}
+	if(SANITY_VIA1_BRANCH & msg_checks
+			&& (ret = check_via1_branch(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
+	}
 	if(SANITY_VIA_SIP_VERSION & msg_checks
 			&& (ret = check_via_sip_version(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;
