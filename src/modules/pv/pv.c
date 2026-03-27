@@ -250,6 +250,8 @@ static pv_export_t mod_pvs[] = {
 	{{"from", (sizeof("from") - 1)}, /* */
 			PVT_FROM, pv_get_from_attr, pv_set_from_uri, 0, 0,
 			pv_init_iname, 1},
+	{{"ful", (sizeof("ful") - 1)}, /* */
+			PVT_OTHER, pv_get_furi_len, 0, 0, 0, 0, 0},
 	{{"fU", (sizeof("fU") - 1)}, /* */
 			PVT_OTHER, pv_get_from_attr, pv_set_from_username, 0, 0,
 			pv_init_iname, 2},

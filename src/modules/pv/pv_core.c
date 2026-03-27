@@ -561,6 +561,24 @@ int pv_get_from_attr(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	return pv_get_xto_attr(msg, param, res, get_from(msg), 1);
 }
 
+int pv_get_furi_len(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg == NULL || res == NULL)
+		return -1;
+
+	if(parse_from_header(msg) < 0) {
+		LM_ERR("cannot parse From header\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if(msg->from == NULL || get_from(msg) == NULL) {
+		LM_DBG("no From header\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_sintval(msg, param, res, get_from(msg)->uri.len);
+}
+
 int pv_get_cseq(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(msg == NULL)
