@@ -122,6 +122,12 @@
 			available, can be parsed and has an address value.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+			first via header branch paramater (32768) - checks if the branch parameter of the first Via header is present and
+			parseable by the &kamailio; parsers and starts with magic cookie of z9hG4bK.
+			</para>
+		</listitem>
 		</itemizedlist>
 	</para>
     </section>
