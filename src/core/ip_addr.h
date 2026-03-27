@@ -235,6 +235,12 @@ typedef struct receive_info
 	/* no need for dst_su yet */
 } receive_info_t;
 
+typedef struct ksr_sockaddr {
+	ip_addr_t ip;
+	unsigned short port;
+	char proto;
+	unsigned char vset; /* 1 if values are set */
+} ksr_sockaddr_t;
 
 typedef struct dest_info
 {
@@ -250,6 +256,7 @@ typedef struct dest_info
 	char proto_pad0;  /* padding field */
 	short proto_pad1; /* padding field */
 #endif
+	ksr_sockaddr_t ephemeral; /* local socket for outbound TCP/TLS */
 } dest_info_t;
 
 typedef struct sr_net_info
