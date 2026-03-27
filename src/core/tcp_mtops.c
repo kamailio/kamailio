@@ -67,8 +67,10 @@ static ksr_tcpx_proc_t *_ksr_tcpx_proc_list = NULL;
 static int _ksr_tcpx_proc_list_size = 0;
 
 /**
- *
+ * Set a unique id per thread
  */
+
+_Thread_local int thread_etask_pidx = -1;
 static void *ksr_tcpx_thread_etask(void *param)
 {
 	int pidx = 0;
@@ -76,6 +78,7 @@ static void *ksr_tcpx_thread_etask(void *param)
 	int received;
 
 	pidx = (int)(long)param;
+	thread_etask_pidx = pidx;
 
 	while(1) {
 		if((received = recvfrom(_ksr_tcpx_proc_list[pidx].sndsock[0], &ptask,
