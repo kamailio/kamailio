@@ -23,7 +23,6 @@ Xenofon Karamanos
               3.1. base_folder (string)
               3.2. file (string)
               3.3. worker_usleep (int)
-              3.4. timer_interval (int)
 
         4. Functions
 
@@ -36,8 +35,7 @@ Xenofon Karamanos
    1.1. Set base_folder parameter
    1.2. Set file parameter
    1.3. Set worker_usleep parameter
-   1.4. Set timer_interval parameter
-   1.5. file_out usage
+   1.4. file_out usage
 
 Chapter 1. Admin Guide
 
@@ -54,7 +52,6 @@ Chapter 1. Admin Guide
         3.1. base_folder (string)
         3.2. file (string)
         3.3. worker_usleep (int)
-        3.4. timer_interval (int)
 
    4. Functions
 
@@ -65,20 +62,23 @@ Chapter 1. Admin Guide
 1. Overview
 
    This is a small module to support fast streaming output to files and
-   process this changes depending on an interval. It implements only one
+   process these changes depending on an interval. It implements only one
    function that streams a chunk of text to the current output file
    handle.
 
-   The module can be used to write logs for up to 10 different log files.
-   Each log file can be configured to have a different name and extension.
-   The processed string can contain pseudo-variables. The module will
-   replace the pseudo-variables with the actual values. The module will
-   also rotate the log files at a specified interval. The interval is
-   specified in seconds.
+   The module can be used to define up to 10 logical outputs. For each
+   output, one or more writer workers can be configured; in multi-worker
+   mode, each worker writes to its own file. Each logical output can be
+   configured to have a different name and extension. The processed string
+   can contain pseudo-variables. The module will replace the
+   pseudo-variables with the actual values. The module will also rotate
+   the log files at a specified interval. The interval is specified in
+   seconds.
 
-   Known limitations on the rotation interval are:
-     * If there is no messages coming, the rotation will not be done until
-       the next message arrives.
+   Each configured logical output can run with one or more dedicated
+   writer workers. Every worker owns its own queue and file handle, so
+   writes are distributed across per-worker files while preserving the
+   same file_out(filename, string) API.
 
 2. Dependencies
 
@@ -101,7 +101,6 @@ Chapter 1. Admin Guide
    3.1. base_folder (string)
    3.2. file (string)
    3.3. worker_usleep (int)
-   3.4. timer_interval (int)
 
 3.1.  base_folder (string)
 
@@ -119,7 +118,8 @@ ded.
 
    The definition of a file and its properties. The value of the parameter
    may have the following format:
-     * "name=accounting;extension=.out;interval=20;prefix=accounting:"
+     * "name=accounting;extension=.out;interval=20;prefix=accounting:;inte
+       rval_range=20;workers=2"
 
    The parameter can be set multiple times to define more files in same
    configuration file.
@@ -131,11 +131,22 @@ ded.
        Default value is “600” (10min).
      * prefix (Optional) - the prefix for log messages
        Default value is “""” (empty string).
+     * interval_range (Optional) - range percentage for rotation interval
+       Default value is “0” (no change). Allowed range is “0..100”.
+     * workers (Optional) - number of writer workers for this file
+       Default value is “1”. Allowed range is “1..16”.
+
+   Flow summary: each call to file_out() resolves the configured file,
+   selects one worker queue randomly for that file, enqueues the message,
+   and that dedicated worker process flushes to its own output file.
+   Rotation is checked per worker, using that worker's own effective
+   interval [(100 - interval_range)%*interval..interval].
 
    Example 1.2. Set file parameter
 ...
-modparam("file_out", "file", "name=missed_calls;interval=30;extension=.json")
-modparam("file_out", "file", "name=accounting;extension=.txt")
+modparam("file_out", "file", "name=missed_calls;interval=30;extension=.json;work
+ers=3;interval_range=10")
+modparam("file_out", "file", "name=accounting;extension=.txt;workers=1")
 ...
 
 3.3.  worker_usleep (int)
@@ -150,18 +161,6 @@ modparam("file_out", "file", "name=accounting;extension=.txt")
 modparam("file_out", "worker_usleep", 1000)
 ...
 
-3.4.  timer_interval (int)
-
-   The time in seconds which timer will trigger for rotating the files.
-   Make sure that this value is lower than the interval of the files.
-
-   Default value is “10” (10 s).
-
-   Example 1.4. Set timer_interval parameter
-...
-modparam("file_out", "timer_interval", 60)
-...
-
 4. Functions
 
    4.1. file_out(filename, string)
@@ -173,7 +172,7 @@ modparam("file_out", "timer_interval", 60)
    string to be written to the file. Filename is the name of the file
    defined in the configuration file as name=filename.
 
-   Example 1.5.  file_out usage
+   Example 1.4.  file_out usage
 ...
 modparam("file_out", "file", "name=accounting;interval=200")
 modparam("file_out", "file", "name=missed_calls;extension=.json;interval=300")
