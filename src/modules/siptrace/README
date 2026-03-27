@@ -48,24 +48,25 @@ Camille Oudot
               3.7. duplicate_uri (str)
               3.8. trace_to_database (integer)
               3.9. trace_local_ip (str)
-              3.10. trace_sl_acks (integer)
-              3.11. xheaders_write (integer)
-              3.12. xheaders_read (integer)
-              3.13. hep_mode_on (integer)
-              3.14. hep_version (integer)
-              3.15. hep_capture_id (integer)
-              3.16. trace_db_mode (integer)
-              3.17. trace_delayed (integer)
-              3.18. send_sock_name (str)
-              3.19. send_sock_addr (str)
-              3.20. force_send_sock (str)
-              3.21. trace_init_mode (integer)
-              3.22. trace_mode (integer)
-              3.23. data_mode (integer)
-              3.24. auth_key (integer)
-              3.25. evcb_msg (str)
-              3.26. trace_dialog_ack (str)
-              3.27. trace_dialog_spiral (str)
+              3.10. trace_ephemeral_socket (int)
+              3.11. trace_sl_acks (integer)
+              3.12. xheaders_write (integer)
+              3.13. xheaders_read (integer)
+              3.14. hep_mode_on (integer)
+              3.15. hep_version (integer)
+              3.16. hep_capture_id (integer)
+              3.17. trace_db_mode (integer)
+              3.18. trace_delayed (integer)
+              3.19. send_sock_name (str)
+              3.20. send_sock_addr (str)
+              3.21. force_send_sock (str)
+              3.22. trace_init_mode (integer)
+              3.23. trace_mode (integer)
+              3.24. data_mode (integer)
+              3.25. auth_key (integer)
+              3.26. evcb_msg (str)
+              3.27. trace_dialog_ack (str)
+              3.28. trace_dialog_spiral (str)
 
         4. Functions
 
@@ -96,28 +97,29 @@ Camille Oudot
    1.7. Set duplicate_uri parameter
    1.8. Set trace_to_database parameter
    1.9. Set trace_local_ip parameter
-   1.10. Set trace_sl_acks parameter
-   1.11. Set xheaders_write parameter
-   1.12. Set xheaders_read parameter
-   1.13. Set hep_mode_on parameter
-   1.14. Set hep_version parameter
-   1.15. Set hep_capture_id parameter
-   1.16. Set trace_db_mode parameter
-   1.17. Set trace_delayed parameter
-   1.18. Set send_sock_name parameter
-   1.19. Set send_sock_addr parameter
-   1.20. Set trace_init_mode parameter
-   1.21. Set trace_mode parameter
-   1.22. Set data_mode parameter
-   1.23. Set auth_key parameter
-   1.24. Set evcb_msg parameter
-   1.25. Set trace_dialog_ack parameter
-   1.26. Set trace_dialog_spiral parameter
-   1.27. sip_trace() usage
-   1.28. sip_trace_mode() usage
-   1.29. sip_trace_msg() usage
-   1.30. hlog() usage
-   1.31. Send relayed ACK message
+   1.10. Set trace_ephemeral_socket parameter
+   1.11. Set trace_sl_acks parameter
+   1.12. Set xheaders_write parameter
+   1.13. Set xheaders_read parameter
+   1.14. Set hep_mode_on parameter
+   1.15. Set hep_version parameter
+   1.16. Set hep_capture_id parameter
+   1.17. Set trace_db_mode parameter
+   1.18. Set trace_delayed parameter
+   1.19. Set send_sock_name parameter
+   1.20. Set send_sock_addr parameter
+   1.21. Set trace_init_mode parameter
+   1.22. Set trace_mode parameter
+   1.23. Set data_mode parameter
+   1.24. Set auth_key parameter
+   1.25. Set evcb_msg parameter
+   1.26. Set trace_dialog_ack parameter
+   1.27. Set trace_dialog_spiral parameter
+   1.28. sip_trace() usage
+   1.29. sip_trace_mode() usage
+   1.30. sip_trace_msg() usage
+   1.31. hlog() usage
+   1.32. Send relayed ACK message
 
 Chapter 1. Admin Guide
 
@@ -140,24 +142,25 @@ Chapter 1. Admin Guide
         3.7. duplicate_uri (str)
         3.8. trace_to_database (integer)
         3.9. trace_local_ip (str)
-        3.10. trace_sl_acks (integer)
-        3.11. xheaders_write (integer)
-        3.12. xheaders_read (integer)
-        3.13. hep_mode_on (integer)
-        3.14. hep_version (integer)
-        3.15. hep_capture_id (integer)
-        3.16. trace_db_mode (integer)
-        3.17. trace_delayed (integer)
-        3.18. send_sock_name (str)
-        3.19. send_sock_addr (str)
-        3.20. force_send_sock (str)
-        3.21. trace_init_mode (integer)
-        3.22. trace_mode (integer)
-        3.23. data_mode (integer)
-        3.24. auth_key (integer)
-        3.25. evcb_msg (str)
-        3.26. trace_dialog_ack (str)
-        3.27. trace_dialog_spiral (str)
+        3.10. trace_ephemeral_socket (int)
+        3.11. trace_sl_acks (integer)
+        3.12. xheaders_write (integer)
+        3.13. xheaders_read (integer)
+        3.14. hep_mode_on (integer)
+        3.15. hep_version (integer)
+        3.16. hep_capture_id (integer)
+        3.17. trace_db_mode (integer)
+        3.18. trace_delayed (integer)
+        3.19. send_sock_name (str)
+        3.20. send_sock_addr (str)
+        3.21. force_send_sock (str)
+        3.22. trace_init_mode (integer)
+        3.23. trace_mode (integer)
+        3.24. data_mode (integer)
+        3.25. auth_key (integer)
+        3.26. evcb_msg (str)
+        3.27. trace_dialog_ack (str)
+        3.28. trace_dialog_spiral (str)
 
    4. Functions
 
@@ -228,24 +231,25 @@ Chapter 1. Admin Guide
    3.7. duplicate_uri (str)
    3.8. trace_to_database (integer)
    3.9. trace_local_ip (str)
-   3.10. trace_sl_acks (integer)
-   3.11. xheaders_write (integer)
-   3.12. xheaders_read (integer)
-   3.13. hep_mode_on (integer)
-   3.14. hep_version (integer)
-   3.15. hep_capture_id (integer)
-   3.16. trace_db_mode (integer)
-   3.17. trace_delayed (integer)
-   3.18. send_sock_name (str)
-   3.19. send_sock_addr (str)
-   3.20. force_send_sock (str)
-   3.21. trace_init_mode (integer)
-   3.22. trace_mode (integer)
-   3.23. data_mode (integer)
-   3.24. auth_key (integer)
-   3.25. evcb_msg (str)
-   3.26. trace_dialog_ack (str)
-   3.27. trace_dialog_spiral (str)
+   3.10. trace_ephemeral_socket (int)
+   3.11. trace_sl_acks (integer)
+   3.12. xheaders_write (integer)
+   3.13. xheaders_read (integer)
+   3.14. hep_mode_on (integer)
+   3.15. hep_version (integer)
+   3.16. hep_capture_id (integer)
+   3.17. trace_db_mode (integer)
+   3.18. trace_delayed (integer)
+   3.19. send_sock_name (str)
+   3.20. send_sock_addr (str)
+   3.21. force_send_sock (str)
+   3.22. trace_init_mode (integer)
+   3.23. trace_mode (integer)
+   3.24. data_mode (integer)
+   3.25. auth_key (integer)
+   3.26. evcb_msg (str)
+   3.27. trace_dialog_ack (str)
+   3.28. trace_dialog_spiral (str)
 
 3.1. db_url (str)
 
@@ -361,7 +365,18 @@ modparam("siptrace", "trace_to_database", 0)
 modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 ...
 
-3.10. trace_sl_acks (integer)
+3.10. trace_ephemeral_socket (int)
+
+   Use ephemeral socket fields for outbound TCP/TLS connections.
+
+   Default value is 0.
+
+   Example 1.10. Set trace_ephemeral_socket parameter
+...
+modparam("siptrace", "trace_ephemeral_socket", 1)
+...
+
+3.11. trace_sl_acks (integer)
 
    Parameter to enable/disable tracing of SL-filtered ACKs (on=1 / off=0).
 
@@ -373,12 +388,12 @@ modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 
    Default value is "1".
 
-   Example 1.10. Set trace_sl_acks parameter
+   Example 1.11. Set trace_sl_acks parameter
 ...
 modparam("siptrace", "trace_sl_acks", 0)
 ...
 
-3.11. xheaders_write (integer)
+3.12. xheaders_write (integer)
 
    Parameter to enable/disable writing of x-headers.
 
@@ -396,12 +411,12 @@ modparam("siptrace", "trace_sl_acks", 0)
 
    Default value is "0".
 
-   Example 1.11. Set xheaders_write parameter
+   Example 1.12. Set xheaders_write parameter
 ...
 modparam("siptrace", "xheaders_write", 0)
 ...
 
-3.12. xheaders_read (integer)
+3.13. xheaders_read (integer)
 
    Parameter to enable/disable reading of x-headers.
 
@@ -411,23 +426,23 @@ modparam("siptrace", "xheaders_write", 0)
 
    Default value is "0".
 
-   Example 1.12. Set xheaders_read parameter
+   Example 1.13. Set xheaders_read parameter
 ...
 modparam("siptrace", "xheaders_read", 0)
 ...
 
-3.13. hep_mode_on (integer)
+3.14. hep_mode_on (integer)
 
    Parameter to enable/disable Homer encapsulate mode (on(1)/off(0))
 
    Default value is "0".
 
-   Example 1.13. Set hep_mode_on parameter
+   Example 1.14. Set hep_mode_on parameter
 ...
 modparam("siptrace", "hep_mode_on", 1)
 ...
 
-3.14. hep_version (integer)
+3.15. hep_version (integer)
 
    The parameter indicate the version of the HEP protocol. Can be “1”, “2”
    or “3”. In HEPv2 and HEPv3 the timestamp and capture agent ID will be
@@ -435,24 +450,24 @@ modparam("siptrace", "hep_mode_on", 1)
 
    Default value is "1".
 
-   Example 1.14. Set hep_version parameter
+   Example 1.15. Set hep_version parameter
 ...
 modparam("siptrace", "hep_version", 3)
 ...
 
-3.15. hep_capture_id (integer)
+3.16. hep_capture_id (integer)
 
    The parameter indicate the capture agent ID for the HEPv2 or HEPv3
    protocol. Limitation: 16-bit integer for HEPv2, 32-bit for HEPv3.
 
    Default value is "1".
 
-   Example 1.15. Set hep_capture_id parameter
+   Example 1.16. Set hep_capture_id parameter
 ...
 modparam("siptrace", "hep_capture_id", 234)
 ...
 
-3.16. trace_db_mode (integer)
+3.17. trace_db_mode (integer)
 
    If set to 1, the module uses “INSERT DELAYED” to store to database
    (when it is available, otherwise falls back to “INSERT”).
@@ -462,12 +477,12 @@ modparam("siptrace", "hep_capture_id", 234)
 
    Default value is 0 (use “INSERT”).
 
-   Example 1.16. Set trace_db_mode parameter
+   Example 1.17. Set trace_db_mode parameter
 ...
 modparam("siptrace", "trace_db_mode", 1)
 ...
 
-3.17. trace_delayed (integer)
+3.18. trace_delayed (integer)
 
    Kept for backward compatibily, use trace_db_mode instead.
 
@@ -476,41 +491,41 @@ modparam("siptrace", "trace_db_mode", 1)
 
    Default value is 0.
 
-   Example 1.17. Set trace_delayed parameter
+   Example 1.18. Set trace_delayed parameter
 ...
 modparam("siptrace", "trace_delayed", 1)
 ...
 
-3.18. send_sock_name (str)
+3.19. send_sock_name (str)
 
    The name of the local listen socket from where to send the duplicated
    traffic via SIP or HEP. In the absence of this parameter Kamailio
    automatically picks an interface. It has priority over 'send_sock_addr'
    parameter.
 
-   Example 1.18. Set send_sock_name parameter
+   Example 1.19. Set send_sock_name parameter
 ...
 modparam("siptrace", "send_sock_name", "sock1")
 ...
 
-3.19. send_sock_addr (str)
+3.20. send_sock_addr (str)
 
    The local interface in the form of SIP URI from where to send the
    duplicated traffic. In the absence of this parameter Kamailio
    automatically picks an interface.
 
-   Example 1.19. Set send_sock_addr parameter
+   Example 1.20. Set send_sock_addr parameter
 ...
 modparam("siptrace", "send_sock_addr", "sip:10.1.1.2:5000")
 ...
 
-3.20. force_send_sock (str)
+3.21. force_send_sock (str)
 
    It is the same as 'send_sock_addr' parameter, this being kept for
    backward compatibility when 'send_sock_name' and 'send_sock_addr' were
    introduced.
 
-3.21. trace_init_mode (integer)
+3.22. trace_init_mode (integer)
 
    Control what tracing modes are initialized.
 
@@ -523,12 +538,12 @@ modparam("siptrace", "send_sock_addr", "sip:10.1.1.2:5000")
 
    Default value is 0.
 
-   Example 1.20. Set trace_init_mode parameter
+   Example 1.21. Set trace_init_mode parameter
 ...
 modparam("siptrace", "trace_init_mode", 1)
 ...
 
-3.22. trace_mode (integer)
+3.23. trace_mode (integer)
 
    If not set to 0, the module uses core events triggered when receiving
    or sending SIP traffic to store it to database or mirror it to a SIP
@@ -549,7 +564,7 @@ modparam("siptrace", "trace_init_mode", 1)
 
    Default value is 0.
 
-   Example 1.21. Set trace_mode parameter
+   Example 1.22. Set trace_mode parameter
 ...
 modparam("siptrace", "trace_on", 1)
 modparam("siptrace", "trace_mode", 1)
@@ -557,7 +572,7 @@ modparam("siptrace", "trace_mode", 1)
 modparam("siptrace", "trace_mode", 3)
 ...
 
-3.23. data_mode (integer)
+3.24. data_mode (integer)
 
    A set of flags to control what data is used for the trace. If flag 1
    (value 1) is set, then advertised address (when set) is used instead of
@@ -565,47 +580,47 @@ modparam("siptrace", "trace_mode", 3)
 
    Default value is 0.
 
-   Example 1.22. Set data_mode parameter
+   Example 1.23. Set data_mode parameter
 ...
 modparam("siptrace", "data_mode", 1)
 ...
 
-3.24. auth_key (integer)
+3.25. auth_key (integer)
 
    A string with an authorization key. Supported on HEPv3 only.
 
    Default value is empty.
 
-   Example 1.23. Set auth_key parameter
+   Example 1.24. Set auth_key parameter
 ...
 modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 ...
 
-3.25. evcb_msg (str)
+3.26. evcb_msg (str)
 
    Set the name of KEMI function to be executed instead of
    event_route[siptrace:msg].
 
    Default value is empty.
 
-   Example 1.24. Set evcb_msg parameter
+   Example 1.25. Set evcb_msg parameter
 ...
 modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
 ...
 
-3.26. trace_dialog_ack (str)
+3.27. trace_dialog_ack (str)
 
    Enable tracing of in-dialog ACK. Before this param, one must have set
    the onsend() route and captured the outgoing ACK there.
 
    Default value is 1 (enabled).
 
-   Example 1.25. Set trace_dialog_ack parameter
+   Example 1.26. Set trace_dialog_ack parameter
 ...
 modparam("siptrace", "trace_dialog_ack", 1)
 ...
 
-3.27. trace_dialog_spiral (str)
+3.28. trace_dialog_spiral (str)
 
    Enable tracing of dialog spirals. A spiraled dialog is a dialog
    established by a SIP INVITE that loops back to the same kamailio (as
@@ -614,7 +629,7 @@ modparam("siptrace", "trace_dialog_ack", 1)
 
    Default value is 1 (enabled).
 
-   Example 1.26. Set trace_dialog_spiral parameter
+   Example 1.27. Set trace_dialog_spiral parameter
 ...
 modparam("siptrace", "trace_dialog_spiral", 1)
 ...
@@ -650,7 +665,7 @@ modparam("siptrace", "trace_dialog_spiral", 1)
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.27. sip_trace() usage
+   Example 1.28. sip_trace() usage
 ...
 sip_trace();
 ...
@@ -676,7 +691,7 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.28. sip_trace_mode() usage
+   Example 1.29. sip_trace_mode() usage
 ...
 sip_trace_mode("t");
 ...
@@ -691,7 +706,7 @@ sip_trace_mode("t");
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.29. sip_trace_msg() usage
+   Example 1.30. sip_trace_msg() usage
 ...
 sip_trace_msg("$var(msg)", "udp:127.0.0.1:5062", "udp:127.0.0.1:5064", "sip:127.
 0.0.1:5090", "");
@@ -709,7 +724,7 @@ sip_trace_msg("$var(msg)", "udp:127.0.0.1:5062", "udp:127.0.0.1:5064", "sip:127.
      * message - The text to send to Homer as log event. (This parameter
        may contain PVs)
 
-   Example 1.30. hlog() usage
+   Example 1.31. hlog() usage
 ...
 hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
 ...
@@ -783,7 +798,7 @@ event_route[siptrace:msg] {
    this name will result in overlapping internal avp used by the module
    therefore causing unknown consequences.
 
-   Example 1.31. Send relayed ACK message
+   Example 1.32. Send relayed ACK message
 ...
 onsend_route {
     if (is_method("ACK")) {
