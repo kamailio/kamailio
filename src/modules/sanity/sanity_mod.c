@@ -31,6 +31,8 @@
 #include "../../core/error.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 
 MODULE_VERSION
 
@@ -42,6 +44,16 @@ int default_msg_checks = SANITY_DEFAULT_CHECKS;
 int default_uri_checks = SANITY_DEFAULT_URI_CHECKS;
 int _sanity_drop = 1;
 int ksr_sanity_noreply = 0;
+
+int sn_size_checks = 0;
+int sn_size_ruri = 256;
+int sn_size_from_uri = 256;
+int sn_size_to_uri = 256;
+int sn_size_contact_uri = 256;
+int sn_size_header = 1024;
+int sn_size_headers = 8192;
+int sn_size_body = 8192;
+int sn_size_message = 16384;
 
 str_list_t *proxyrequire_list = NULL;
 
@@ -75,6 +87,15 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"default_checks", PARAM_INT, &default_msg_checks},
 	{"uri_checks", PARAM_INT, &default_uri_checks},
+	{"size_checks", PARAM_INT, &sn_size_checks},
+	{"size_ruri", PARAM_INT, &sn_size_ruri},
+	{"size_from_uri", PARAM_INT, &sn_size_from_uri},
+	{"size_to_uri", PARAM_INT, &sn_size_to_uri},
+	{"size_contact_uri", PARAM_INT, &sn_size_contact_uri},
+	{"size_header", PARAM_INT, &sn_size_header},
+	{"size_headers", PARAM_INT, &sn_size_headers},
+	{"size_body", PARAM_INT, &sn_size_body},
+	{"size_message", PARAM_INT, &sn_size_message},
 	{"proxy_require", PARAM_STR, &_sanity_prval},
 	{"autodrop", PARAM_INT, &_sanity_drop},
 	{"noreply", PARAM_INT, &ksr_sanity_noreply},
@@ -128,6 +149,51 @@ static int mod_init(void)
 	return 0;
 }
 
+/**
+ *
+ */
+int sanity_check_sizes(sip_msg_t *msg)
+{
+	if(sn_size_ruri > 0) {
+		if(msg->new_uri.s) {
+			if(msg->new_uri.len > sn_size_ruri) {
+				return SANITY_CHECK_FAILED;
+			}
+		} else {
+			if(msg->first_line.u.request.uri.len > sn_size_ruri) {
+				return SANITY_CHECK_FAILED;
+			}
+		}
+	}
+	if(sn_size_from_uri > 0) {
+		if(parse_from_header(msg) < 0) {
+			LM_WARN("cannot parse From header\n");
+			return SANITY_CHECK_FAILED;
+		}
+		if(msg->from == NULL || get_from(msg) == NULL) {
+			LM_WARN("no From header\n");
+			return SANITY_CHECK_FAILED;
+		}
+		if(get_from(msg)->uri.len > sn_size_from_uri) {
+			return SANITY_CHECK_FAILED;
+		}
+	}
+	if(sn_size_to_uri > 0) {
+		if(parse_to_header(msg) < 0) {
+			LM_WARN("cannot parse To header\n");
+			return SANITY_CHECK_FAILED;
+		}
+		if(msg->to == NULL || get_to(msg) == NULL) {
+			LM_WARN("no To header\n");
+			return SANITY_CHECK_FAILED;
+		}
+		if(get_to(msg)->uri.len > sn_size_from_uri) {
+			return SANITY_CHECK_FAILED;
+		}
+	}
+
+	return SANITY_CHECK_PASSED;
+}
 
 /**
  * perform SIP message sanity check
@@ -145,6 +211,11 @@ int sanity_check(struct sip_msg *_msg, int msg_checks, int uri_checks)
 	}
 
 	ret = SANITY_CHECK_PASSED;
+
+	if(((SANITY_CHECK_SIZES & msg_checks) || sn_size_checks)
+			&& (ret = sanity_check_sizes(_msg)) != SANITY_CHECK_PASSED) {
+		goto done;
+	}
 	if(SANITY_RURI_SIP_VERSION & msg_checks
 			&& (ret = check_ruri_sip_version(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;
