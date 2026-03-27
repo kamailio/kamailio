@@ -203,6 +203,7 @@ static avp_name_t trace_table_avp;
 static str trace_table_avp_str = {NULL, 0};
 
 static str trace_local_ip = {NULL, 0};
+static int trace_ephemeral_socket = 0;
 
 static db1_con_t *db_con = NULL; /*!< database connection */
 static db_func_t db_funcs;		 /*!< Database functions */
@@ -266,6 +267,7 @@ static param_export_t params[] = {
 	{"duplicate_uri", PARAM_STR, &trace_dup_uri_str},
 	{"trace_to_database", PARAM_INT, &trace_to_database},
 	{"trace_local_ip", PARAM_STR, &trace_local_ip},
+	{"trace_ephemeral_socket", PARAM_INT, &trace_ephemeral_socket},
 	{"trace_sl_acks", PARAM_INT, &trace_sl_acks},
 	{"xheaders_write", PARAM_INT, &trace_xheaders_write},
 	{"xheaders_read", PARAM_INT, &trace_xheaders_read},
@@ -2458,6 +2460,18 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
 		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
 		proto = PROTO_UDP;
+	} else if(trace_ephemeral_socket && new_dst.ephemeral.vset) {
+		/* use actual local address (ephemeral port) for outbound TCP/TLS */
+		sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX,
+				"%s:%s:%d", siptrace_proto_name(new_dst.ephemeral.proto),
+				ip_addr2strz(&new_dst.ephemeral.ip),
+				(int)new_dst.ephemeral.port);
+		if(sto.fromip.len < 0 || sto.fromip.len >= SIPTRACE_ADDR_MAX) {
+			LM_ERR("failed to format fromip buffer (%d)\n", sto.fromip.len);
+			strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
+			sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+		}
+		proto = new_dst.ephemeral.proto;
 	} else {
 		if((_siptrace_data_mode & SIPTRACE_DATA_MODE_ADVADDR)
 				&& new_dst.send_sock->useinfo.sock_str.len > 0) {
