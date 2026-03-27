@@ -279,6 +279,25 @@ modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 </programlisting>
 		</example>
 	</section>
+	<section id="siptrace.p.trace_ephemeral_socket">
+		<title><varname>trace_ephemeral_socket</varname> (int)</title>
+		<para>
+		Use ephemeral socket fields for outbound TCP/TLS connections.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trace_ephemeral_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("siptrace", "trace_ephemeral_socket", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="siptrace.p.trace_sl_acks">
 		<title><varname>trace_sl_acks</varname> (integer)</title>
 		<para>
