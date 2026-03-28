@@ -154,6 +154,13 @@ static int mod_init(void)
  */
 int sanity_check_sizes(sip_msg_t *msg)
 {
+	str s;
+
+	if(sn_size_message > 0) {
+		if(msg->len > sn_size_message) {
+			return SANITY_CHECK_FAILED;
+		}
+	}
 	if(sn_size_ruri > 0) {
 		if(msg->new_uri.s) {
 			if(msg->new_uri.len > sn_size_ruri) {
@@ -164,6 +171,10 @@ int sanity_check_sizes(sip_msg_t *msg)
 				return SANITY_CHECK_FAILED;
 			}
 		}
+	}
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse to end of headers\n");
+		return SANITY_CHECK_FAILED;
 	}
 	if(sn_size_from_uri > 0) {
 		if(parse_from_header(msg) < 0) {
@@ -191,7 +202,25 @@ int sanity_check_sizes(sip_msg_t *msg)
 			return SANITY_CHECK_FAILED;
 		}
 	}
-
+	if(sn_size_body > 0) {
+		s.s = get_body(msg);
+		if(s.s != NULL) {
+			s.len = msg->buf + msg->len - s.s;
+			if(s.len > sn_size_body) {
+				return SANITY_CHECK_FAILED;
+			}
+		}
+	}
+	if(sn_size_headers > 0) {
+		if(msg->unparsed == NULL) {
+			return SANITY_CHECK_FAILED;
+		}
+		s.s = msg->buf + msg->first_line.len;
+		s.len = msg->unparsed - s.s;
+		if(s.len > sn_size_headers) {
+			return SANITY_CHECK_FAILED;
+		}
+	}
 	return SANITY_CHECK_PASSED;
 }
 
