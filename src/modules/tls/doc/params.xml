@@ -1566,18 +1566,60 @@ verify_client = optional_no_ca
         <section id="tls.p.provider_quirks">
             <title><varname>provider_quirks</varname> (integer)</title>
             <para>
-                Sets a flag to configure OpenSSL 3 behaviour. Currently only <varname>1</varname>
+              Reload a provider in the child - needed in MP-mode only (tcp_main_threads = 0) for some providers.
+              The configuration file for the provider is provided in the <varname>provider_quirks_config</varname> parameter.
+              Should be 0 in MT-mode.
             </para>
             <itemizedlist>
                 <listitem>
-                    <para><emphasis>0</emphasis> - no flags set (default)</para>
+                    <para><emphasis>0</emphasis> - no reload (default)</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis>1</emphasis> - create a new `OSSL_LIB_CTX` context in the child process.
-                    Known to be required when using OpenSSL 3 pkcs11-provider.
+                  <para><emphasis>1</emphasis> - reloads a provider in a new library context
+                  in the child. pkcs11-provider is known to require this.
                     </para>
                 </listitem>
             </itemizedlist>
+	<example>
+		<title>Set <varname>provider_quirks</varname> modparam parameter</title>
+		<programlisting>
+...
+modparam("tls", "provider_quirks", 1)
+# 1: provider_quirks_config parameter must be set
+...
+		</programlisting>
+        </example>
+        </section>
+        <section id="tls.p.provider_quirks_config">
+            <title><varname>provider_quirks_config</varname> (string)</title>
+            <para>
+              A file name of a OpenSSL configuration snippet that contains the provider configuration.
+              The file must contain two mandatory keys: <varname>quirks_sect</varname> - section to load,
+              <varname>quirks_provider</varname> - the provider to load. </para>
+	<example>
+		<title>Set <varname>provider_quirks_config</varname> modparam parameter</title>
+		<programlisting>
+...
+modparam("tls", "provider_quirks_config", "/etc/kamailio/tls/pkcs11-provider.cnf")
+...
+		</programlisting>
+
+                <para>A provider example:
+		<programlisting>
+# /etc/kamailio/tls/pkcs11-provider.cnf
+quirks_sect = pkcs11_sect
+quirks_provider = pkcs11
+
+[pkcs11_sect]
+module = pkcs11.so
+pkcs11-module-path = /usr/lib64/libsoftokn3.so
+pkcs11-module-init-args = configDir=/etc/kamailio/certs/tokens
+pkcs11-module-token-pin = file:/etc/kamailio/certs/pinfile-softoken.txt
+pkcs11-module-quirks = no-deinit no-operation-state
+activate = 1
+		</programlisting>
+                </para>
+            </example>
         </section>
 	<section id="tls.p.keylog_mode">
 	<title><varname>keylog_mode</varname> (int)</title>
