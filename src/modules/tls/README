@@ -12,9 +12,9 @@ Olle E. Johansson
 
    Edvina AB
 
-   Copyright © 2007 iptelorg GmbH
+   Copyright Â© 2007 iptelorg GmbH
 
-   Copyright © 2014 ng-voice GmbH
+   Copyright Â© 2014 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -76,9 +76,10 @@ Olle E. Johansson
               10.42. engine_algorithms (string)
               10.43. verify_client (string)
               10.44. provider_quirks (integer)
-              10.45. keylog_mode (int)
-              10.46. keylog_file (str)
-              10.47. keylog_peer (str)
+              10.45. provider_quirks_config (string)
+              10.46. keylog_mode (int)
+              10.47. keylog_file (str)
+              10.48. keylog_peer (str)
 
         11. Functions
 
@@ -160,12 +161,14 @@ Olle E. Johansson
    1.52. Set rand_engine parameter
    1.53. Set verify_client modparam parameter
    1.54. Set verify_client tls.cfg parameter
-   1.55. Set keylog_mode parameter
-   1.56. Set keylog_file parameter
-   1.57. Set keylog_peer parameter
-   1.58. is_peer_verified usage
-   1.59. tls_set_connect_server_id usage
-   1.60. Use of event_route[tls:connection-out]
+   1.55. Set provider_quirks modparam parameter
+   1.56. Set provider_quirks_config modparam parameter
+   1.57. Set keylog_mode parameter
+   1.58. Set keylog_file parameter
+   1.59. Set keylog_peer parameter
+   1.60. is_peer_verified usage
+   1.61. tls_set_connect_server_id usage
+   1.62. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -226,9 +229,10 @@ Chapter 1. Admin Guide
         10.42. engine_algorithms (string)
         10.43. verify_client (string)
         10.44. provider_quirks (integer)
-        10.45. keylog_mode (int)
-        10.46. keylog_file (str)
-        10.47. keylog_peer (str)
+        10.45. provider_quirks_config (string)
+        10.46. keylog_mode (int)
+        10.47. keylog_file (str)
+        10.48. keylog_peer (str)
 
    11. Functions
 
@@ -678,9 +682,10 @@ Place holder
    10.42. engine_algorithms (string)
    10.43. verify_client (string)
    10.44. provider_quirks (integer)
-   10.45. keylog_mode (int)
-   10.46. keylog_file (str)
-   10.47. keylog_peer (str)
+   10.45. provider_quirks_config (string)
+   10.46. keylog_mode (int)
+   10.47. keylog_file (str)
+   10.48. keylog_peer (str)
 
 10.1. tls_method (string)
 
@@ -1719,12 +1724,46 @@ verify_client = optional_no_ca
 
 10.44. provider_quirks (integer)
 
-   Sets a flag to configure OpenSSL 3 behaviour. Currently only 1
-     * 0 - no flags set (default)
-     * 1 - create a new `OSSL_LIB_CTX` context in the child process. Known
-       to be required when using OpenSSL 3 pkcs11-provider.
+   Reload a provider in the child - needed in MP-mode only
+   (tcp_main_threads = 0) for some providers. The configuration file for
+   the provider is provided in the provider_quirks_config parameter.
+   Should be 0 in MT-mode.
+     * 0 - no reload (default)
+     * 1 - reloads a provider in a new library context in the child.
+       pkcs11-provider is known to require this.
 
-10.45. keylog_mode (int)
+   Example 1.55. Set provider_quirks modparam parameter
+...
+modparam("tls", "provider_quirks", 1)
+# 1: provider_quirks_config parameter must be set
+...
+
+10.45. provider_quirks_config (string)
+
+   A file name of a OpenSSL configuration snippet that contains the
+   provider configuration. The file must contain two mandatory keys:
+   quirks_sect - section to load, quirks_provider - the provider to load.
+
+   Example 1.56. Set provider_quirks_config modparam parameter
+...
+modparam("tls", "provider_quirks_config", "/etc/kamailio/tls/pkcs11-provider.cnf
+")
+...
+
+   A provider example:
+# /etc/kamailio/tls/pkcs11-provider.cnf
+quirks_sect = pkcs11_sect
+quirks_provider = pkcs11
+
+[pkcs11_sect]
+module = pkcs11.so
+pkcs11-module-path = /usr/lib64/libsoftokn3.so
+pkcs11-module-init-args = configDir=/etc/kamailio/certs/tokens
+pkcs11-module-token-pin = file:/etc/kamailio/certs/pinfile-softoken.txt
+pkcs11-module-quirks = no-deinit no-operation-state
+activate = 1
+
+10.46. keylog_mode (int)
 
    Control the TLS key logging functionality, available for libssl version
    greater than 1.1.0. Its value is composed from bitwise values (can be
@@ -1746,12 +1785,12 @@ verify_client = optional_no_ca
 
    The default value: 0.
 
-   Example 1.55. Set keylog_mode parameter
+   Example 1.57. Set keylog_mode parameter
 ...
 modparam("tls", "keylog_mode", 15)
 ...
 
-10.46. keylog_file (str)
+10.47. keylog_file (str)
 
    Path to the file where to write the TLS keys. The values are appended
    to the content of the file. The value 8 (bit 4) has to be set to
@@ -1759,12 +1798,12 @@ modparam("tls", "keylog_mode", 15)
 
    The default value: NULL.
 
-   Example 1.56. Set keylog_file parameter
+   Example 1.58. Set keylog_file parameter
 ...
 modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
 ...
 
-10.47. keylog_peer (str)
+10.48. keylog_peer (str)
 
    Address of the peer where to send the keys log. It has to be in the
    format "proto:ip:port". Only "udp" protocol (proto) is supported. The
@@ -1772,7 +1811,7 @@ modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
 
    The default value: NULL.
 
-   Example 1.57. Set keylog_peer parameter
+   Example 1.59. Set keylog_peer parameter
 ...
 modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
 ...
@@ -1790,7 +1829,7 @@ modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
 
    It can be used only in a request route.
 
-   Example 1.58. is_peer_verified usage
+   Example 1.60. is_peer_verified usage
 ...
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
@@ -1809,7 +1848,7 @@ modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
 
    It can be used only in ANY_ROUTE.
 
-   Example 1.59. tls_set_connect_server_id usage
+   Example 1.61. tls_set_connect_server_id usage
 ...
     tls_set_connect_server_id("clientone");
 ...
@@ -1901,7 +1940,7 @@ modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.60. Use of event_route[tls:connection-out]
+   Example 1.62. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {
