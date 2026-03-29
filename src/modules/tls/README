@@ -73,6 +73,7 @@ Olle E. Johansson
               10.39. engine_algorithms (string)
               10.40. verify_client (string)
               10.41. provider_quirks (integer)
+              10.42. provider_quirks_config (string)
 
         11. Functions
 
@@ -151,9 +152,11 @@ Olle E. Johansson
    1.49. Set rand_engine parameter
    1.50. Set verify_client modparam parameter
    1.51. Set verify_client tls.cfg parameter
-   1.52. is_peer_verified usage
-   1.53. tls_set_connect_server_id usage
-   1.54. Use of event_route[tls:connection-out]
+   1.52. Set provider_quirks modparam parameter
+   1.53. Set provider_quirks_config modparam parameter
+   1.54. is_peer_verified usage
+   1.55. tls_set_connect_server_id usage
+   1.56. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -211,6 +214,7 @@ Chapter 1. Admin Guide
         10.39. engine_algorithms (string)
         10.40. verify_client (string)
         10.41. provider_quirks (integer)
+        10.42. provider_quirks_config (string)
 
    11. Functions
 
@@ -651,6 +655,7 @@ Place holder
    10.39. engine_algorithms (string)
    10.40. verify_client (string)
    10.41. provider_quirks (integer)
+   10.42. provider_quirks_config (string)
 
 10.1. tls_method (string)
 
@@ -1643,10 +1648,44 @@ verify_client = optional_no_ca
 
 10.41. provider_quirks (integer)
 
-   Sets a flag to configure OpenSSL 3 behaviour. Currently only 1
-     * 0 - no flags set (default)
-     * 1 - create a new `OSSL_LIB_CTX` context in the child process. Known
-       to be required when using OpenSSL 3 pkcs11-provider.
+   Reload a provider in the child - needed in MP-mode only
+   (tcp_main_threads = 0) for some providers. The configuration file for
+   the provider is provided in the provider_quirks_config parameter.
+   Should be 0 in MT-mode.
+     * 0 - no reload (default)
+     * 1 - reloads a provider in a new library context in the child.
+       pkcs11-provider is known to require this.
+
+   Example 1.52. Set provider_quirks modparam parameter
+...
+modparam("tls", "provider_quirks", 1)
+# 1: provider_quirks_config parameter must be set
+...
+
+10.42. provider_quirks_config (string)
+
+   A file name of a OpenSSL configuration snippet that contains the
+   provider configuration. The file must contain two mandatory keys:
+   quirks_sect - section to load, quirks_provider - the provider to load.
+
+   Example 1.53. Set provider_quirks_config modparam parameter
+...
+modparam("tls", "provider_quirks_config", "/etc/kamailio/tls/pkcs11-provider.cnf
+")
+...
+
+   A provider example:
+# /etc/kamailio/tls/pkcs11-provider.cnf
+quirks_sect = pkcs11_sect
+quirks_provider = pkcs11
+
+[pkcs11_sect]
+module = pkcs11.so
+pkcs11-module-path = /usr/lib64/libsoftokn3.so
+pkcs11-module-init-args = configDir=/etc/kamailio/certs/tokens
+pkcs11-module-token-pin = file:/etc/kamailio/certs/pinfile-softoken.txt
+pkcs11-module-quirks = no-deinit no-operation-state
+activate = 1
 
 11. Functions
 
@@ -1661,7 +1700,7 @@ verify_client = optional_no_ca
 
    It can be used only in a request route.
 
-   Example 1.52. is_peer_verified usage
+   Example 1.54. is_peer_verified usage
 ...
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
@@ -1680,7 +1719,7 @@ verify_client = optional_no_ca
 
    It can be used only in ANY_ROUTE.
 
-   Example 1.53. tls_set_connect_server_id usage
+   Example 1.55. tls_set_connect_server_id usage
 ...
     tls_set_connect_server_id("clientone");
 ...
@@ -1772,7 +1811,7 @@ verify_client = optional_no_ca
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.54. Use of event_route[tls:connection-out]
+   Example 1.56. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {
