@@ -33,6 +33,8 @@
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/contact/contact.h"
+#include "../../core/parser/contact/parse_contact.h"
 
 MODULE_VERSION
 
@@ -155,6 +157,8 @@ static int mod_init(void)
 int sanity_check_sizes(sip_msg_t *msg)
 {
 	str s;
+	contact_t *cb = NULL;
+	hdr_field_t *hf = NULL;
 
 	if(sn_size_message > 0) {
 		if(msg->len > sn_size_message) {
@@ -219,6 +223,24 @@ int sanity_check_sizes(sip_msg_t *msg)
 		s.len = msg->unparsed - s.s;
 		if(s.len > sn_size_headers) {
 			return SANITY_CHECK_FAILED;
+		}
+	}
+	if(sn_size_contact_uri > 0) {
+		if(msg->contact != NULL) {
+			if(parse_contact_headers(msg) < 0) {
+				LM_DBG("failed to parse Contact headers\n");
+				return SANITY_CHECK_FAILED;
+			}
+			for(hf = msg->contact; hf != NULL; hf = hf->next) {
+				if(hf->type == HDR_CONTACT_T) {
+					for(cb = (((contact_body_t *)hf->parsed)->contacts);
+							cb != NULL; cb = cb->next) {
+						if(cb->uri.len > sn_size_contact_uri) {
+							return SANITY_CHECK_FAILED;
+						}
+					}
+				}
+			}
 		}
 	}
 	return SANITY_CHECK_PASSED;
