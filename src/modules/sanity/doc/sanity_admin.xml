@@ -258,6 +258,44 @@ modparam("sanity", "noreply", 1)
 	    </programlisting>
 	</example>
 	</section>
+	<section id="sanity.p.size_checks">
+	<title><varname>size_checks</varname> (int)</title>
+	<para>
+		If set to 1, then the module performs the size checks for various
+		SIP message attributes. The size of each attribute can be set by a
+		dedicated parameter. If the size is greater than the corresponding
+		parameter value, then the sanity check failed.
+	</para>
+	<para>
+		Default value: 0.
+	</para>
+	<example>
+	    <title>Set <varname>size_checks</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_checks", 1)
+...
+	    </programlisting>
+	</example>
+	</section>
+	<section id="sanity.p.size_message">
+	<title><varname>size_message</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message to do sanity check with. If set to
+		0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 16384.
+	</para>
+	<example>
+	    <title>Set <varname>size_message</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_message", 8192)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
 
    <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
