@@ -28,10 +28,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include <openssl/conf.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
-
 #include "../../core/locking.h"
 #include "../../core/sr_module.h"
 #include "../../core/ip_addr.h"
@@ -109,6 +105,9 @@ MODULE_VERSION
 #define KSR_SSL_COMMON
 #define KSR_SSL_PROVIDER
 #include <openssl/store.h>
+#include <openssl/conf.h>
+#include <openssl/provider.h>
+#include <openssl/params.h>
 #define KEY_PREFIX "/uri:"
 #define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
 #endif
