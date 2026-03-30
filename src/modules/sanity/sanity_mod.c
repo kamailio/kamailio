@@ -52,7 +52,7 @@ int sn_size_ruri = 256;
 int sn_size_from_uri = 256;
 int sn_size_to_uri = 256;
 int sn_size_contact_uri = 256;
-int sn_size_header = 1024;
+int sn_size_header = 2048;
 int sn_size_headers = 8192;
 int sn_size_body = 8192;
 int sn_size_message = 16384;
@@ -180,6 +180,13 @@ int sanity_check_sizes(sip_msg_t *msg)
 		LM_ERR("failed to parse to end of headers\n");
 		return SANITY_CHECK_FAILED;
 	}
+	if(sn_size_header > 0) {
+		for(hf = msg->headers; hf != NULL; hf = hf->next) {
+			if(hf->len > sn_size_header) {
+				return SANITY_CHECK_FAILED;
+			}
+		}
+	}
 	if(sn_size_from_uri > 0) {
 		if(parse_from_header(msg) < 0) {
 			LM_WARN("cannot parse From header\n");
@@ -243,6 +250,14 @@ int sanity_check_sizes(sip_msg_t *msg)
 			}
 		}
 	}
+	if(sn_size_header > 0) {
+		for(hf = msg->headers; hf != NULL; hf = hf->next) {
+			if(hf->len > sn_size_header) {
+				return SANITY_CHECK_FAILED;
+			}
+		}
+	}
+
 	return SANITY_CHECK_PASSED;
 }
 
