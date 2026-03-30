@@ -20,6 +20,8 @@ Nils Ohlmeier
               3.3. proxy_require (string)
               3.4. autodrop (integer)
               3.5. noreply (int)
+              3.6. size_checks (int)
+              3.7. size_message (int)
 
         4. Functions
 
@@ -33,10 +35,12 @@ Nils Ohlmeier
    1.3. Set proxy_require parameter
    1.4. Set autodrop parameter
    1.5. Set noreply parameter
-   1.6. sanity_check usage
-   1.7. sanity_check usage with parameter
-   1.8. sanity_check usage with two parameters
-   1.9. sanity_reply usage
+   1.6. Set size_checks parameter
+   1.7. Set size_message parameter
+   1.8. sanity_check usage
+   1.9. sanity_check usage with parameter
+   1.10. sanity_check usage with two parameters
+   1.11. sanity_reply usage
 
 Chapter 1. Admin Guide
 
@@ -51,6 +55,8 @@ Chapter 1. Admin Guide
         3.3. proxy_require (string)
         3.4. autodrop (integer)
         3.5. noreply (int)
+        3.6. size_checks (int)
+        3.7. size_message (int)
 
    4. Functions
 
@@ -121,6 +127,8 @@ Chapter 1. Admin Guide
    3.3. proxy_require (string)
    3.4. autodrop (integer)
    3.5. noreply (int)
+   3.6. size_checks (int)
+   3.7. size_message (int)
 
 3.1. default_checks (integer)
 
@@ -195,6 +203,32 @@ modparam("sanity", "autodrop", 1)
 modparam("sanity", "noreply", 1)
 ...
 
+3.6. size_checks (int)
+
+   If set to 1, then the module performs the size checks for various SIP
+   message attributes. The size of each attribute can be set by a
+   dedicated parameter. If the size is greater than the corresponding
+   parameter value, then the sanity check failed.
+
+   Default value: 0.
+
+   Example 1.6. Set size_checks parameter
+...
+modparam("sanity", "size_checks", 1)
+...
+
+3.7. size_message (int)
+
+   Specify the size of the SIP message to do sanity check with. If set to
+   0, this size sanity check is not performed.
+
+   Default value: 16384.
+
+   Example 1.7. Set size_message parameter
+...
+modparam("sanity", "size_message", 8192)
+...
+
 4. Functions
 
    4.1. sanity_check([msg_checks [, uri_checks]])
@@ -213,7 +247,7 @@ modparam("sanity", "noreply", 1)
    The parameters can be static integers or variables holding integer
    values.
 
-   Example 1.6. sanity_check usage
+   Example 1.8. sanity_check usage
 ...
 if (!sanity_check()) {
         exit;
@@ -226,7 +260,7 @@ if (!sanity_check()) {
    of the checks (like for the module parameter) which should be executed
    at this function call.
 
-   Example 1.7. sanity_check usage with parameter
+   Example 1.9. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
@@ -239,7 +273,7 @@ if (method=="REGISTER" && !sanity_check("256")) {
    overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
-   Example 1.8. sanity_check usage with two parameters
+   Example 1.10. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
@@ -254,7 +288,7 @@ a 400 */
    module when detecting errors while performing the sanity checks. It is
    done only when parameter noreply is set to 1.
 
-   Example 1.9. sanity_reply usage
+   Example 1.11. sanity_reply usage
 ...
 if(!sanity_check("1024", "6")) {
    xdbg("sanity checks failed\n");
