@@ -656,8 +656,6 @@ static int mod_child_hook(int *rank, void *dummy)
 }
 
 #ifdef KSR_SSL_PROVIDER
-static OSSL_LIB_CTX *orig_ctx;
-static OSSL_LIB_CTX *new_ctx;
 
 #include <openssl/conf.h>
 #include <openssl/provider.h>
