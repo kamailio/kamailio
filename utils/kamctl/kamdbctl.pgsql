@@ -1,31 +1,24 @@
 #
 # Script for adding and dropping Kamailio Postgres tables
 #
-# History:
-# 2006-05-16  added ability to specify MD5 from a configuration file
-#             FreeBSD does not have the md5sum function (norm)
-# 2006-07-14  Corrected syntax from MySQL to Postgres (norm)
-#             moved INDEX creation out of CREATE table statement into
-#                  CREATE INDEX (usr_preferences, trusted)
-#             auto_increment isn't valid in Postgres, replaced with
-#                  local AUTO_INCREMENT
-#             datetime isn't valid in Postgres, replaced with local DATETIME
-#             split GRANTs for SERWeb tables so that it is only executed
-#                  if SERWeb tables are created
-#             added GRANTs for re_grp table
-#             added CREATE pdt table (from PDT module)
-#             corrected comments to indicate Postgres as opposed to MySQL
-#             made last_modified/created stamps consistent to now() using
-#                  local TIMESTAMP
-# 2006-10-19  Added address table (bogdan)
-# 2006-10-27  subscriber table cleanup; some columns are created only if
-#             serweb is installed (bogdan)
-# 2007-01-26  added separate installation routine for presence related tables
-#             and fix permissions for the SERIAL sequences.
-# 2007-05-21  Move SQL database definitions out of this script (henning)
-# 2007-05-31  Move common definitions to kamdbctl.base file (henningw)
+# This file is part of Kamailio, a free SIP server.
 #
-# 2007-06-11  Use a common control tool for database tasks, like the kamctl
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# Kamailio is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version
+#
+# Kamailio is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+#
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/kamailio"
