@@ -408,6 +408,14 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L \
+		&& OPENSSL_VERSION_NUMBER < 0x30200000L
+	unsigned long run_ver = OpenSSL_version_num();
+	if(run_ver >= 0x30200000L) {
+		LM_ERR("OpenSSL version < 3.2.0 is required\n");
+		return -1;
+	}
+#endif
 #if OPENSSL_VERSION_NUMBER >= 0x10101000L
 	{
 		pthread_key_t _ksr_tsd_init;
@@ -604,7 +612,9 @@ int tls_fix_engine_keys(tls_domains_cfg_t *, tls_domain_t *, tls_domain_t *);
  *
  * @return 0 on success, -1 on failure
  */
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
 void load_p11_via_nconf(const char *config_path);
+#endif /*  OPENSSL_VERSION_NUMBER */
 
 int tls_reload_engine_keys(void)
 {
@@ -615,7 +625,17 @@ int tls_reload_engine_keys(void)
 
 #ifdef KSR_SSL_PROVIDER
 	if(tls_provider_quirks & 1) {
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
 		load_p11_via_nconf(tls_provider_config.s);
+#else
+		OSSL_LIB_CTX *new_ctx = OSSL_LIB_CTX_new();
+		if(CONF_modules_load_file_ex(
+				   new_ctx, CONF_get1_default_config_file(), NULL, 0L)
+				<= 0) {
+			LM_ERR("Failed to load provider config in child %d\n", process_no);
+		}
+		OSSL_LIB_CTX_set0_default(new_ctx);
+#endif
 	}
 #endif /* KSR_SSL_PROVIDER */
 	if(tls_engine_init() < 0)
@@ -656,6 +676,7 @@ static int mod_child_hook(int *rank, void *dummy)
 }
 
 #ifdef KSR_SSL_PROVIDER
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
 
 #include <openssl/conf.h>
 #include <openssl/provider.h>
@@ -721,9 +742,9 @@ cleanup:
 	NCONF_free(
 			conf); // The params now live in the provider, we can free the parser
 }
-
-
 #endif
+#endif
+
 static int mod_child(int rank)
 {
 	if(tls_disable || (tls_domains_cfg == 0))
@@ -758,7 +779,18 @@ static int mod_child(int rank)
 			|| (rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0)) {
 #ifdef KSR_SSL_PROVIDER
 		if(tls_provider_quirks & 1) {
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
 			load_p11_via_nconf(tls_provider_config.s);
+#else
+			OSSL_LIB_CTX *new_ctx = OSSL_LIB_CTX_new();
+			if(CONF_modules_load_file_ex(
+					   new_ctx, CONF_get1_default_config_file(), NULL, 0L)
+					<= 0) {
+				LM_ERR("Failed to load provider config in child %d\n",
+						process_no);
+			}
+			OSSL_LIB_CTX_set0_default(new_ctx);
+#endif
 		}
 #endif /* KSR_SSL_PROVIDER */
 		if(tls_engine_init() < 0)
