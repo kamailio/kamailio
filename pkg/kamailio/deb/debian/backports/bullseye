@@ -24,7 +24,8 @@ sed -i -e '/^PACKAGE_GROUPS += tls_wolfssl/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += tls_wolfssl' ${DIST}/rules
 
 # libjwt < 1.12
-sed -i -e '/libjwt-dev/d' -e 's/, JWT (JSON Web Token)//' ${DIST}/control
+sed -i -e '/libjwt-dev/d' -e 's/, JWT (JSON Web Token)//' \
+  -e 's/ jwt//' ${DIST}/control
 sed -i -e '/^EXTRA_GROUPS += jwt$/d' ${DIST}/rules
 sed -i -e '/KJWT/d' ${DIST}/kamailio-extra-modules.cmake-components
 
