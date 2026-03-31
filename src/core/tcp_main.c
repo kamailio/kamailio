@@ -1781,7 +1781,7 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 						a->parent->id);
 
 #ifdef USE_TLS
-				if(tls_connection_match_domain && proto == PROTO_TLS
+				if(tls_connection_match_domain && a->parent->type == PROTO_TLS
 						&& !tls_hook_call(match_domain, 1, a->parent, ip, port))
 					continue;
 #endif
