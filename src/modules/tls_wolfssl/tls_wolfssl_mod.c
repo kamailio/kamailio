@@ -364,6 +364,7 @@ static int mod_init(void)
 	if(sr_tls_event_callback.s == NULL || sr_tls_event_callback.len <= 0) {
 		tls_lookup_event_routes();
 	}
+
 	return 0;
 error:
 	tls_h_mod_destroy_f();
@@ -386,6 +387,7 @@ static int mod_child_hook(int rank)
 }
 
 
+int wolfssl_child_rank = -1;
 static int mod_child(int rank)
 {
 	if(tls_disable || (tls_domains_cfg == 0))
@@ -393,6 +395,8 @@ static int mod_child(int rank)
 
 	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
+	wolfssl_child_rank = rank;
+
 	if(rank == PROC_INIT && ksr_tcp_main_threads == 0) {
 		return mod_child_hook(rank);
 	}

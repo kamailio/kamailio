@@ -36,9 +36,10 @@
 			<para>
 	This module implements the TLS transport for &kamailio;
 	using the <ulink url="https://www.wolfssl.com">wolfSSL library</ulink>
-	(https://www.wolfssl.com). To enable the &kamailio; TLS support this
-	module must be loaded and <emphasis>enable_tls=yes</emphasis> core setting
-	must be added to the Kamailio config file.
+	(https://www.wolfssl.com). To enable it, the module must be configured and
+        loaded and the <emphasis>enable_tls=yes</emphasis> core setting
+	must set. This module is mutually exclusive
+        with the <emphasis>tls</emphasis> module.
 			</para>
 			<para>
 	Is is highly recommended to run this module with MT-mode (<code>tcp_main_threads = 1</code>).
@@ -49,7 +50,7 @@
 	Credit goes to the authors of the tls module.
 			</para>
 			<para>
-	This module build from wolfSSl 5.2.0 onwards. There is a git submodule that
+	This module builds from wolfSSl 5.2.0 onwards. There is a git submodule that
 	contains a recent version of wolfSSL for easier building.
 			</para>
 			<para>
@@ -80,7 +81,7 @@
 			<title>Important Notes</title>
 			<para>
 	The wolfSSL TLS module is intended to be compiled with a
-	recent version of wolfSSL (5.2.0+).
+	recent version of wolfSSL - 5.8.4+ is recommended.
 			</para>
 			<para>Kamailio shared memory allocators, used in MP-mode(<code>tcp_main_threads = 0</code>), support
                         16-byte alignment - it is possible to use this module with either the internal submodule
@@ -117,13 +118,14 @@ EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --ena
 			<sectioninfo></sectioninfo>
 			<title>Support for externalized keys (PKCS#11)</title>
 
-                        <para>The module now supports loading a key from PKCS#11.
-                        <emphasis>MT-mode is required</emphasis> for this functionality.
-                        The key naming convention  follows a PKCS#11-URI style:
+                        <para>The module now supports loading keys from PKCS#11 and
+                        up to 4 tokens are supported.
+                        This feature is available in both MT- and MP- modes.
+                        The key naming convention for keys follows a PKCS#11-URI-like style:
                         <programlisting>
 ...
-# in tls.cfg these pseudo-file names to refer to PKCS#11 keys
-# MUST run in MT-mode
+# in tls.cfg these pseudo-file names to refer to PKCS#11 keys; this format
+# is not conformant to RFC 7512
 private_key = /uri:pkcs11:module=/usr/lib64/libsoftokn3.so;token=MyToken;object=MyPrivateKey;pin=12345678
                         </programlisting>
 
