@@ -296,6 +296,61 @@ modparam("sanity", "size_message", 8192)
 	    </programlisting>
 	</example>
 	</section>
+	<section id="sanity.p.size_headers">
+	<title><varname>size_headers</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message headers (all together) to do sanity
+		check with. If set to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 8192.
+	</para>
+	<example>
+	    <title>Set <varname>size_headers</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_headers", 4096)
+...
+	    </programlisting>
+	</example>
+	</section>
+	<section id="sanity.p.size_body">
+	<title><varname>size_body</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message body to do sanity check with. If set
+		to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 8192.
+	</para>
+	<example>
+	    <title>Set <varname>size_body</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_body", 4096)
+...
+	    </programlisting>
+	</example>
+	</section>
+	<section id="sanity.p.size_header">
+	<title><varname>size_header</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message header to do sanity check with. The
+		check is done for each header, including its name and value. If set
+		to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 2048.
+	</para>
+	<example>
+	    <title>Set <varname>size_header</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_header", 1024)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
 
    <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
