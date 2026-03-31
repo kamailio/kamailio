@@ -33,6 +33,7 @@
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_cseq.h"
 #include "../../core/parser/contact/contact.h"
 #include "../../core/parser/contact/parse_contact.h"
 
@@ -56,6 +57,7 @@ int sn_size_header = 2048;
 int sn_size_headers = 8192;
 int sn_size_body = 8192;
 int sn_size_message = 16384;
+int sn_size_method = 32;
 
 str_list_t *proxyrequire_list = NULL;
 
@@ -179,6 +181,19 @@ int sanity_check_sizes(sip_msg_t *msg)
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse to end of headers\n");
 		return SANITY_CHECK_FAILED;
+	}
+	if(sn_size_method > 0) {
+		if(msg->first_line.type == SIP_REQUEST) {
+			if(msg->first_line.u.request.method.len > sn_size_method) {
+				return SANITY_CHECK_FAILED;
+			}
+		} else {
+			if(msg->cseq != NULL) {
+				if(get_cseq(msg)->method.len > sn_size_method) {
+					return SANITY_CHECK_FAILED;
+				}
+			}
+		}
 	}
 	if(sn_size_header > 0) {
 		for(hf = msg->headers; hf != NULL; hf = hf->next) {
