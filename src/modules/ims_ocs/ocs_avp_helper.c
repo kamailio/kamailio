@@ -206,8 +206,7 @@ int getUnits(AAAMessage *msg, int *used, int *service, int *group)
 			list2 = cdp_avp->cdp->AAAUngroupAVPS(req_units->data);
 			value = cdpb.AAAFindMatchingAVPList(
 					list2, list2.head, AVP_CC_Time, 0, 0);
-			cdpb.AAAFreeAVPList(&list2);
-			if(value)
+			if(value && value->data.len >= 4)
 				units = get_4bytes(value->data.s);
 			cdpb.AAAFreeAVPList(&list2);
 		}
