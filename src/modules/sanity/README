@@ -22,6 +22,9 @@ Nils Ohlmeier
               3.5. noreply (int)
               3.6. size_checks (int)
               3.7. size_message (int)
+              3.8. size_headers (int)
+              3.9. size_body (int)
+              3.10. size_header (int)
 
         4. Functions
 
@@ -37,10 +40,13 @@ Nils Ohlmeier
    1.5. Set noreply parameter
    1.6. Set size_checks parameter
    1.7. Set size_message parameter
-   1.8. sanity_check usage
-   1.9. sanity_check usage with parameter
-   1.10. sanity_check usage with two parameters
-   1.11. sanity_reply usage
+   1.8. Set size_headers parameter
+   1.9. Set size_body parameter
+   1.10. Set size_header parameter
+   1.11. sanity_check usage
+   1.12. sanity_check usage with parameter
+   1.13. sanity_check usage with two parameters
+   1.14. sanity_reply usage
 
 Chapter 1. Admin Guide
 
@@ -57,6 +63,9 @@ Chapter 1. Admin Guide
         3.5. noreply (int)
         3.6. size_checks (int)
         3.7. size_message (int)
+        3.8. size_headers (int)
+        3.9. size_body (int)
+        3.10. size_header (int)
 
    4. Functions
 
@@ -129,6 +138,9 @@ Chapter 1. Admin Guide
    3.5. noreply (int)
    3.6. size_checks (int)
    3.7. size_message (int)
+   3.8. size_headers (int)
+   3.9. size_body (int)
+   3.10. size_header (int)
 
 3.1. default_checks (integer)
 
@@ -229,6 +241,43 @@ modparam("sanity", "size_checks", 1)
 modparam("sanity", "size_message", 8192)
 ...
 
+3.8. size_headers (int)
+
+   Specify the size of the SIP message headers (all together) to do sanity
+   check with. If set to 0, this size sanity check is not performed.
+
+   Default value: 8192.
+
+   Example 1.8. Set size_headers parameter
+...
+modparam("sanity", "size_headers", 4096)
+...
+
+3.9. size_body (int)
+
+   Specify the size of the SIP message body to do sanity check with. If
+   set to 0, this size sanity check is not performed.
+
+   Default value: 8192.
+
+   Example 1.9. Set size_body parameter
+...
+modparam("sanity", "size_body", 4096)
+...
+
+3.10. size_header (int)
+
+   Specify the size of the SIP message header to do sanity check with. The
+   check is done for each header, including its name and value. If set to
+   0, this size sanity check is not performed.
+
+   Default value: 2048.
+
+   Example 1.10. Set size_header parameter
+...
+modparam("sanity", "size_header", 1024)
+...
+
 4. Functions
 
    4.1. sanity_check([msg_checks [, uri_checks]])
@@ -247,7 +296,7 @@ modparam("sanity", "size_message", 8192)
    The parameters can be static integers or variables holding integer
    values.
 
-   Example 1.8. sanity_check usage
+   Example 1.11. sanity_check usage
 ...
 if (!sanity_check()) {
         exit;
@@ -260,7 +309,7 @@ if (!sanity_check()) {
    of the checks (like for the module parameter) which should be executed
    at this function call.
 
-   Example 1.9. sanity_check usage with parameter
+   Example 1.12. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
@@ -273,7 +322,7 @@ if (method=="REGISTER" && !sanity_check("256")) {
    overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
-   Example 1.10. sanity_check usage with two parameters
+   Example 1.13. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
@@ -288,7 +337,7 @@ a 400 */
    module when detecting errors while performing the sanity checks. It is
    done only when parameter noreply is set to 1.
 
-   Example 1.11. sanity_reply usage
+   Example 1.14. sanity_reply usage
 ...
 if(!sanity_check("1024", "6")) {
    xdbg("sanity checks failed\n");
