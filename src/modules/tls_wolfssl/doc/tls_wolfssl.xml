@@ -42,7 +42,7 @@
         with the <emphasis>tls</emphasis> module.
 			</para>
 			<para>
-	Is is highly recommended to run this module with MT-mode (<code>tcp_main_threads = 1</code>).
+	It is highly recommended to run this module with MT-mode (<code>tcp_main_threads = 1</code>).
 			</para>
 			<para>
 	This module is derived from the &tls-url;
@@ -68,11 +68,13 @@
 			<example>
 	<title>Quick Start Basic Config</title>
 	<programlisting>
-		#...
-		loadmodule "sl.so"
-		loadmodule "tls_wolfssl.so"
-		#... refer to Quick Start of tls module
-		#... for further configuration
+...
+#...
+loadmodule "sl.so"
+loadmodule "tls_wolfssl.so"
+#... refer to Quick Start of tls module
+#... for further configuration
+...
 	</programlisting>
 			</example>
 		</section>
@@ -86,11 +88,14 @@
 			<para>Kamailio shared memory allocators, used in MP-mode(<code>tcp_main_threads = 0</code>), support
                         16-byte alignment - it is possible to use this module with either the internal submodule
                         or distro provided packages. For reference the ideal build flags are:
+
                         <programlisting>
+...
 # - this assumes the allocators are 16-byte aligned
 # - Debian currently does not use -DWOLF_CRYPTO_CB_RSA_PAD: this affects use of RSA
 #   padding mechanisms on HSMs
 EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --enable-pkcs11
+...
                         </programlisting>
 			</para>
 		</section>
@@ -104,15 +109,19 @@ EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --ena
 			</para>
 			<para>
 	In most case compiling the wolfSSL TLS module is as simple as:
+
 	<programlisting>
-		make -C modules/tls_wolfssl
-		# to use the internal git submodule
-		make -C src WOLFSSL_INTERNAL=yes module_group_more="tls_wolfssl" group_include=more every-module
-		# cmake
-		cd build; make tls_wolfssl
-		cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
+...
+make -C modules/tls_wolfssl
+# to use the internal git submodule
+make -C src WOLFSSL_INTERNAL=yes module_group_more="tls_wolfssl" group_include=more every-module
+# cmake
+cd build; make tls_wolfssl
+cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
+...
 	</programlisting>
-			</para>
+
+		        </para>
 		</section>
 		<section id="tls.pkcs11">
 			<sectioninfo></sectioninfo>
@@ -124,9 +133,10 @@ EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --ena
                         The key naming convention for keys follows a PKCS#11-URI-like style:
                         <programlisting>
 ...
-# in tls.cfg these pseudo-file names to refer to PKCS#11 keys; this format
-# is not conformant to RFC 7512
+# - in tls.cfg these pseudo-file names to refer to PKCS#11 keys
+# - this format is not entirely conformant with RFC 7512
 private_key = /uri:pkcs11:module=/usr/lib64/libsoftokn3.so;token=MyToken;object=MyPrivateKey;pin=12345678
+...
                         </programlisting>
 
                         The string value itself cannot contain spaces so, e.g <code>token=NSS%20Certificate%20DB</code>,
