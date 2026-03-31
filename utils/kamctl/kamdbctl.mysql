@@ -1,19 +1,24 @@
 #
 # Script for adding and dropping Kamailio MySQL tables
 #
-# History:
-# 2006-04-07  removed gen_ha1 dependency - use md5sum;
-#             separated the serweb from kamailio tables;
-#             fixed the reinstall functionality (bogdan)
-# 2006-05-16  added ability to specify MD5 from a configuration file
-#             FreeBSD does not have the md5sum function (norm)
-# 2006-09-02  Added address table (juhe)
-# 2006-10-27  subscriber table cleanup; some columns are created only if
-#             serweb is installed (bogdan)
-# 2007-02-28  DB migration added (bogdan)
-# 2007-05-21  Move SQL database definitions out of this script (henning)
-# 2007-05-31  Move common definitions to kamdbctl.base file (henningw)
-# 2007-06-11  Use a common control tool for database tasks, like the kamctl
+# This file is part of Kamailio, a free SIP server.
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# Kamailio is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version
+#
+# Kamailio is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+#
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/kamailio"
