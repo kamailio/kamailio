@@ -91,6 +91,10 @@ static int mod_init(void)
 
 
 	callback_singleton = shm_malloc(sizeof(int));
+	if(callback_singleton == 0) {
+		LM_ERR("No shared memory left\n");
+		goto error;
+	}
 	*callback_singleton = 0;
 
 	cdp_avp = 0;
@@ -108,6 +112,10 @@ static int mod_init(void)
 
 	return 0;
 error:
+	/* clean up */
+	if(callback_singleton) {
+		shm_free(callback_singleton);
+	}
 	LM_ERR("Failed to initialise ims_ocs module\n");
 	return -1;
 }
