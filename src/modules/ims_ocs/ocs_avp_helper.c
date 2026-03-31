@@ -27,9 +27,9 @@
 
 /**
  * Returns the value of a certain AVP from a Diameter message.
- * @param m - Diameter message to look into
+ * @param msg - Diameter message to look into
  * @param avp_code - the code to search for
- * @param vendorid - the value of the vendor id to look for or 0 if none
+ * @param vendor_id - the value of the vendor id to look for or 0 if none
  * @param func - the name of the calling function, for debugging purposes
  * @returns the str with the payload on success or an empty string on failure
  */
