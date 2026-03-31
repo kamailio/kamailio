@@ -38,9 +38,9 @@ Chapter 1. Admin Guide
 1. Overview
 
    This module implements the TLS transport for Kamailio using the wolfSSL
-   library (https://www.wolfssl.com). To enable the Kamailio TLS support
-   this module must be loaded and enable_tls=yes core setting must be
-   added to the Kamailio config file.
+   library (https://www.wolfssl.com). To enable it, the module must be
+   configured and loaded and the enable_tls=yes core setting must set.
+   This module is mutually exclusive with the tls module.
 
    Is is highly recommended to run this module with MT-mode
    (tcp_main_threads = 1).
@@ -48,7 +48,7 @@ Chapter 1. Admin Guide
    This module is derived from the tls module and adapted to wolfSSL.
    Credit goes to the authors of the tls module.
 
-   This module build from wolfSSl 5.2.0 onwards. There is a git submodule
+   This module builds from wolfSSl 5.2.0 onwards. There is a git submodule
    that contains a recent version of wolfSSL for easier building.
 
    This user is referred to the documentation of the tls module for
@@ -71,7 +71,7 @@ Chapter 1. Admin Guide
 3. Important Notes
 
    The wolfSSL TLS module is intended to be compiled with a recent version
-   of wolfSSL (5.2.0+).
+   of wolfSSL - 5.8.4+ is recommended.
 
    Kamailio shared memory allocators, used in MP-mode(tcp_main_threads =
    0), support 16-byte alignment - it is possible to use this module with
@@ -101,12 +101,12 @@ ble-pkcs11
 
 5. Support for externalized keys (PKCS#11)
 
-   The module now supports loading a key from PKCS#11. MT-mode is required
-   for this functionality. The key naming convention follows a PKCS#11-URI
-   style:
+   The module now supports loading keys from PKCS#11 and up to 4 tokens
+   are supported. This feature is available in both MT- and MP- modes. The
+   key naming convention for keys follows a PKCS#11-URI-like style:
 ...
-# in tls.cfg these pseudo-file names to refer to PKCS#11 keys
-# MUST run in MT-mode
+# in tls.cfg these pseudo-file names to refer to PKCS#11 keys; this format
+# is not conformant to RFC 7512
 private_key = /uri:pkcs11:module=/usr/lib64/libsoftokn3.so;token=MyToken;object=
 MyPrivateKey;pin=12345678
 
