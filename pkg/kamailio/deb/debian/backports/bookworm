@@ -20,7 +20,8 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
 # libjwt < 1.12
-sed -i -e '/libjwt-dev/d' -e 's/, JWT (JSON Web Token)//' ${DIST}/control
+sed -i -e '/libjwt-dev/d' -e 's/, JWT (JSON Web Token)//' \
+  -e 's/ jwt//' ${DIST}/control
 sed -i -e '/^EXTRA_GROUPS += jwt$/d' ${DIST}/rules
 sed -i -e '/KJWT/d' ${DIST}/kamailio-extra-modules.cmake-components
 
