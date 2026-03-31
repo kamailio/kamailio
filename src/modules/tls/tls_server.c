@@ -1071,7 +1071,7 @@ static char *get_tls_domain_str(
 	atomic_inc(&cfg->ref_count);
 	lock_release(tls_domains_cfg_lock);
 
-	if(c->flags & F_CONN_PASSIVE) {
+	if(c && (c->flags & F_CONN_PASSIVE)) {
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV, ip, port, 0, 0);
 	} else {
 		sname = tls_get_connect_server_name(c);
@@ -1105,7 +1105,7 @@ int tls_h_match_domain_f(
 		return 0;
 	}
 
-	dom_str = get_tls_domain_str(c, ip, port);
+	dom_str = get_tls_domain_str(NULL /* to use XAVPs only */, ip, port);
 	STR_SET(dom, dom_str);
 
 	return STR_EQ(tls_c->dom, dom);
