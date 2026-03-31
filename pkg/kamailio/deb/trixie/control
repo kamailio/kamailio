@@ -24,6 +24,7 @@ Build-Depends:
  libhiredis-dev (>= 0.10.0),
  libjansson-dev,
  libjson-c-dev,
+ libjwt-dev,
  libldap2-dev,
  liblua5.4-dev,
  libmaxminddb-dev,

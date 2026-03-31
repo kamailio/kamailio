@@ -26,6 +26,7 @@ Build-Depends:
  libjson-c-dev,
  libldap2-dev,
  liblua5.5-dev,
+ libjwt-dev,
  libmaxminddb-dev,
  libmemcached-dev,
  libmicrohttpd-dev,
