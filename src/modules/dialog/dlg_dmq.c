@@ -35,7 +35,7 @@ dmq_api_t dlg_dmqb;
 dmq_peer_t *dlg_dmq_peer = NULL;
 
 int dmq_send_all_dlgs(dmq_node_t *dmq_node);
-int dlg_dmq_request_sync();
+int dlg_dmq_request_sync(dmq_node_t *dmq_node);
 
 extern int dlg_enable_stats;
 
@@ -436,7 +436,7 @@ error:
 }
 
 
-int dlg_dmq_request_sync()
+int dlg_dmq_request_sync(dmq_node_t *dmq_node)
 {
 	srjson_doc_t jdoc;
 
@@ -458,7 +458,7 @@ int dlg_dmq_request_sync()
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if(dlg_dmq_send(&jdoc.buf, 0) != 0) {
+	if(dlg_dmq_send(&jdoc.buf, dmq_node) != 0) {
 		goto error;
 	}
 
