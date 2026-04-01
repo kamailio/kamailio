@@ -107,21 +107,24 @@ cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
 
 5. Support for externalized keys (PKCS#11)
 
-   The module now supports loading keys from PKCS#11 and up to 4 tokens
-   are supported. This feature is available in both MT- and MP- modes. The
-   key naming convention for keys follows a PKCS#11-URI-like style:
+   The module supports loading keys from PKCS#11 and up to 8 tokens are
+   supported. This feature is available in both MT- and MP- modes. The key
+   naming convention follows RFC 7512 (PKCS#11 URI):
 ...
 # - in tls.cfg these pseudo-file names to refer to PKCS#11 keys
-# - this format is not entirely conformant with RFC 7512
-private_key = /uri:pkcs11:module=/usr/lib64/libsoftokn3.so;token=MyToken;object=
-MyPrivateKey;pin=12345678
+# - this format is a subset of RFC 7512
+# The prefix /uri: is for tls_wolfssl to recognise PKCS#11 - it
+# is stripped off before parsing the key
+#
+private_key = /uri:pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib
+64/libsoftokn3.so&pin-value=12345678[pin-source=....]
 ...
 
    The string value itself cannot contain spaces so, e.g
-   token=NSS%20Certificate%20DB, allows URL-encoding. The pin parameter
-   supports redirection for security:
-     * pin=file:/path/to/pin (Read from file)
-     * pin=env:MY_PIN_VAR (Read from environment)
+   token=NSS%20Certificate%20DB, allows URL-encoding. The pin-source
+   parameter supports redirection for security:
+     * pin-source=file:/path/to/pin (Read from file)
+     * pin-source=env:MY_PIN_VAR (Read from environment)
 
 6. Additional RPC Commands
 
