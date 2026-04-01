@@ -127,23 +127,26 @@ cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
 			<sectioninfo></sectioninfo>
 			<title>Support for externalized keys (PKCS#11)</title>
 
-                        <para>The module now supports loading keys from PKCS#11 and
-                        up to 4 tokens are supported.
+                        <para>The module supports loading keys from PKCS#11 and
+                        up to 8 tokens are supported.
                         This feature is available in both MT- and MP- modes.
-                        The key naming convention for keys follows a PKCS#11-URI-like style:
+                        The key naming convention follows <ulink url="https://www.rfc-editor.org/rfc/rfc7512.html">RFC 7512 (PKCS#11 URI)</ulink>:
                         <programlisting>
 ...
 # - in tls.cfg these pseudo-file names to refer to PKCS#11 keys
-# - this format is not entirely conformant with RFC 7512
-private_key = /uri:pkcs11:module=/usr/lib64/libsoftokn3.so;token=MyToken;object=MyPrivateKey;pin=12345678
+# - this format is a subset of RFC 7512
+# The prefix /uri: is for tls_wolfssl to recognise PKCS#11 - it
+# is stripped off before parsing the key
+# 
+private_key = /uri:pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib64/libsoftokn3.so&amp;pin-value=12345678[pin-source=....]
 ...
                         </programlisting>
 
                         The string value itself cannot contain spaces so, e.g <code>token=NSS%20Certificate%20DB</code>,
-                        allows URL-encoding. The <literal>pin</literal> parameter supports redirection for security:
+                        allows URL-encoding. The <literal>pin-source</literal> parameter supports redirection for security:
     <itemizedlist>
-      <listitem><para><literal>pin=file:/path/to/pin</literal> (Read from file)</para></listitem>
-      <listitem><para><literal>pin=env:MY_PIN_VAR</literal> (Read from environment)</para></listitem>
+      <listitem><para><literal>pin-source=file:/path/to/pin</literal> (Read from file)</para></listitem>
+      <listitem><para><literal>pin-source=env:MY_PIN_VAR</literal> (Read from environment)</para></listitem>
     </itemizedlist>
 
                         </para>

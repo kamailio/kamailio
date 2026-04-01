@@ -149,17 +149,30 @@ static int pkcs11_resolve_pin(const char *raw, char *out, int out_sz)
  * Returns 1 if the field was found and copied into out, 0 otherwise.
  */
 static int pkcs11_parse_field(
-		const char *uri, const char *field, char *out, int out_sz)
+		const char *uri, const char *field, char *out, int out_sz, int query)
 {
 	const char *p;
 	const char *end;
 	int len;
+	const char *question_mark = strchr(uri, '?');
 
-	p = strstr(uri, field);
+	if(query) {
+		if(!question_mark)
+			return 0;
+		p = strstr(question_mark, field);
+	} else {
+		p = strstr(uri, field);
+		if(p && question_mark && p > question_mark)
+			return 0;
+	}
+
 	if(!p)
 		return 0;
+
 	p += strlen(field);
-	end = strchr(p, ';');
+
+	end = strpbrk(p, query ? "&" : ";?");
+
 	len = end ? (int)(end - p) : (int)strlen(p);
 	if(len <= 0 || len >= out_sz)
 		return 0;
@@ -206,19 +219,20 @@ void uri_decode(char *dst, const char *src)
 
 
 /*
- * Load a PKCS#11 private key identified by a URI into a WOLFSSL_CTX.
+ * Load a PKCS#11 private key identified by a PKCS#11 URI (RFC 7512) into a WOLFSSL_CTX.
  *
  * URI format:
- *   pkcs11:module=<path_to_pkcs11_lib.so>;token=<token_name>;object=<key_label>
- *               [;pin=<pin>|env:<VAR>|file:<path>]
+ *   pkcs11:token=<token_name>;object=<key_label>?
+ *               [module_path=<module>]
+ *               [&pin=<pin>|pin-value=env:<VAR>|pin-value=file:<path>]
  *
- * - module: absolute path to PKCS#11 shared library (mandatory)
+ * - module_path: absolute path to PKCS#11 shared library (mandatory)
  * - token:  PKCS#11 token name (mandatory)
  * - object: key label (mandatory) - used to look up the private key
  * - pin:    token PIN; optional if the token requires no login
- *           pin=secret          literal PIN
- *           pin=env:VAR_NAME    read from environment variable
- *           pin=file:/path      read first line from file
+ *           pin-value=secret          literal PIN
+ *           pin-source=env:VAR_NAME    read from environment variable
+ *           pin-source=file:/path      read first line from file
  *
  * Devices are cached by (module, token): the same pair reuses the
  * already-registered devId across multiple calls.
@@ -293,6 +307,7 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key)
 	char pin_buf[256] = "";
 
 	int i;
+	int found_pin;
 
 	static int inited = 0;
 
@@ -314,12 +329,22 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key)
 	}
 	uri_decode(uri, key + 7);
 
-	pkcs11_parse_field(uri, "module=", lib_path, sizeof(lib_path));
-	pkcs11_parse_field(uri, "token=", token_name, sizeof(token_name));
-	pkcs11_parse_field(uri, "object=", obj_name, sizeof(obj_name));
-	if(pkcs11_parse_field(uri, "pin=", pin_raw, sizeof(pin_raw))) {
-		if(!pkcs11_resolve_pin(pin_raw, pin_buf, sizeof(pin_buf)))
-			return -1;
+	pkcs11_parse_field(uri, "module-path=", lib_path, sizeof(lib_path), 1);
+	pkcs11_parse_field(uri, "token=", token_name, sizeof(token_name), 0);
+	pkcs11_parse_field(uri, "object=", obj_name, sizeof(obj_name), 0);
+	if(!(found_pin = pkcs11_parse_field(
+				 uri, "pin-value=", pin_buf, sizeof(pin_buf), 1))) {
+		found_pin =
+				pkcs11_parse_field(uri, "source=", pin_raw, sizeof(pin_raw), 1);
+
+		if(found_pin) {
+			found_pin = pkcs11_resolve_pin(pin_raw, pin_buf, sizeof(pin_buf));
+		}
+	}
+
+	if(!found_pin) {
+		LM_WARN("PIN not found - this will likely lead to error opening "
+				"PKCS#11\n");
 	}
 
 	if(!lib_path[0]) {
