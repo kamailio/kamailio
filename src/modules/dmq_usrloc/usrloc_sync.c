@@ -44,7 +44,7 @@ dmq_api_t usrloc_dmqb;
 dmq_peer_t *usrloc_dmq_peer = NULL;
 
 int usrloc_dmq_send_all();
-int usrloc_dmq_request_sync();
+int usrloc_dmq_request_sync(dmq_node_t *node);
 int usrloc_dmq_send_contact(
 		ucontact_t *ptr, str aor, int action, dmq_node_t *node);
 int usrloc_dmq_send_multi_contact(
@@ -605,7 +605,7 @@ error:
 }
 
 
-int usrloc_dmq_request_sync()
+int usrloc_dmq_request_sync(dmq_node_t *node)
 {
 	srjson_doc_t jdoc;
 
@@ -629,7 +629,7 @@ int usrloc_dmq_request_sync()
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if(usrloc_dmq_send(&jdoc.buf, 0) != 0) {
+	if(usrloc_dmq_send(&jdoc.buf, node) != 0) {
 		goto error;
 	}
 

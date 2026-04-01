@@ -46,7 +46,7 @@ typedef enum
 int usrloc_dmq_initialize();
 int usrloc_dmq_handle_msg(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *node);
-int usrloc_dmq_request_sync();
+int usrloc_dmq_request_sync(dmq_node_t *node);
 void dmq_ul_cb_contact(ucontact_t *c, int type, void *param);
 
 #endif
