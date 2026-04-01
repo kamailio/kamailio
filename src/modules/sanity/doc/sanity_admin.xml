@@ -31,72 +31,72 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			ruri sip version - (1) - checks if the SIP version in the request
+			ruri sip version - (1 [0x01 / 2^0]) - checks if the SIP version in the request
 			URI is supported, currently only 2.0.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			ruri scheme - (2) - checks if the URI scheme of the request URI is
+			ruri scheme - (2 [0x02 / 2^1]) - checks if the URI scheme of the request URI is
 			supported (sip[s]|tel[s]) by &kamailio;
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			required headers - (4) -checks if the minimum set of required headers
+			required headers - (4 [0x04 / 2^2]) -checks if the minimum set of required headers
 			To, From, CSeq, Call-ID and Via is present in the request.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			via sip version - (8) - disabled.
+			via sip version - (8 [0x08 / 2^3]) - disabled.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			via protocol - (16) - disabled.
+			via protocol - (16 [0x10 / 2^4]) - disabled.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Cseq method - (32) - checks if the method from the CSeq header is equal
+			Cseq method - (32 [0x20 / 2^5]) - checks if the method from the CSeq header is equal
 			to the request method.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Cseq value - (64) - checks if the number in the CSeq header is a valid
+			Cseq value - (64 [0x40 / 2^6]) - checks if the number in the CSeq header is a valid
 			unsigned integer.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			content length - (128) - checks if the size of the body matches with the
+			content length - (128 [0x80 / 2^7]) - checks if the size of the body matches with the
 			value from the Content-Length header.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			expires value - (256) - checks if the value of the Expires header is a
+			expires value - (256 [0x100 / 2^8]) - checks if the value of the Expires header is a
 			valid unsigned integer.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			proxy require - (512) - checks if all items of the Proxy-Require header
+			proxy require - (512 [0x200 / 2^9]) - checks if all items of the Proxy-Require header
 			are present in the list of the extensions from the module
 			parameter proxy_require.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			parse uri's - (1024) - checks if the specified URIs are present and
+			parse uri's - (1024 [0x400 / 2^10]) - checks if the specified URIs are present and
 			parseable by the &kamailio; parsers
 			</para>
 		</listitem>
 		<listitem>
 		        <para>
-			digest credentials (2048) - Check all instances of digest credentials in a
+			digest credentials (2048 [0x800 / 2^11]) - Check all instances of digest credentials in a
 			message. The test checks whether there are all required
 			digest parameters and that they have meaningful values.
 			<emphasis>NOTE:</emphasis> the message will be considered invalid
@@ -105,27 +105,28 @@
 		</listitem>
 		<listitem>
 			<para>
-			duplicated To/From tags (4096) - checks for the presence of duplicated
+			duplicated To/From tags (4096 [0x1000 / 2^12]) - checks for the presence of duplicated
 			tags in To/From headers.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Authorization header (8192) - checks if the Authorization header is valid
+			Authorization header (8192 [0x2000 / 2^13]) - checks if the Authorization header is valid
 			if the scheme is "digest" (see "digest credentials" above), always
 			returns success for other schemes.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			first via header (16384) - checks if the first Via header is
+			first Via header (16384 [0x4000 / 2^14]) - checks if the first Via header is
 			available, can be parsed and has an address value.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			first via header branch paramater (32768) - checks if the branch parameter of the first Via header is present and
-			parseable by the &kamailio; parsers and starts with magic cookie of z9hG4bK.
+			first Via header branch parameter (32768 [0x8000 / 2^15]) - checks if the branch
+			parameter of the first Via header is present, can be parsed by the &kamailio;
+			and starts with magic cookie: 'z9hG4bK'.
 			</para>
 		</listitem>
 		</itemizedlist>
