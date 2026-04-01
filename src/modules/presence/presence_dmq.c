@@ -36,7 +36,7 @@ dmq_peer_t *pres_dmq_peer = NULL;
 
 int pres_dmq_send_all_presentities(dmq_node_t *dmq_node);
 int pres_dmq_send_all_subscriptions(dmq_node_t *dmq_node);
-int pres_dmq_request_sync();
+int pres_dmq_request_sync(dmq_node_t *dmq_node);
 
 /**
 * @brief add notification peer
@@ -490,7 +490,7 @@ cleanup:
 }
 
 
-int pres_dmq_request_method_sync(int action)
+int pres_dmq_request_method_sync(int action, dmq_node_t *dmq_node)
 {
 	srjson_doc_t jdoc;
 
@@ -512,7 +512,7 @@ int pres_dmq_request_method_sync(int action)
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if(pres_dmq_send(&jdoc.buf, 0) != 0) {
+	if(pres_dmq_send(&jdoc.buf, dmq_node) != 0) {
 		goto error;
 	}
 
@@ -531,16 +531,18 @@ error:
 }
 
 
-int pres_dmq_request_sync()
+int pres_dmq_request_sync(dmq_node_t *dmq_node)
 {
 	if(pres_enable_pres_dmq > 0 && pres_enable_pres_sync_dmq > 0) {
-		if(pres_dmq_request_method_sync(PRES_DMQ_SYNC_PRESENTITY) != 0) {
+		if(pres_dmq_request_method_sync(PRES_DMQ_SYNC_PRESENTITY, dmq_node)
+				!= 0) {
 			LM_ERR("cannot send presence sync request\n");
 			return -1;
 		}
 	}
 	if(pres_enable_subs_dmq > 0 && pres_enable_subs_sync_dmq > 0) {
-		if(pres_dmq_request_method_sync(PRES_DMQ_SYNC_SUBSCRIPTION) != 0) {
+		if(pres_dmq_request_method_sync(PRES_DMQ_SYNC_SUBSCRIPTION, dmq_node)
+				!= 0) {
 			LM_ERR("cannot send subscription sync request\n");
 			return -1;
 		}
