@@ -31,7 +31,7 @@ static str rtpengine_dmq_500_rpl = str_init("Server Internal Error");
 dmq_api_t rtpengine_dmqb;
 dmq_peer_t *rtpengine_dmq_peer = NULL;
 
-int rtpengine_dmq_request_sync();
+int rtpengine_dmq_request_sync(dmq_node_t *node);
 
 /**
 * @brief add rtpengine notification peer
@@ -64,7 +64,7 @@ int rtpengine_dmq_init()
 	return 0;
 }
 
-int rtpengine_dmq_request_sync()
+int rtpengine_dmq_request_sync(dmq_node_t *node)
 {
 	return 0;
 }
