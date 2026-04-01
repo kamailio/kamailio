@@ -527,7 +527,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 			<emphasis>$http_rb</emphasis> and <emphasis>$http_bs</emphasis>: HTTP response body and body length
 		</para></listitem>
 		<listitem><para>
-			<emphasis>$http_time</emphasis>: provides access to broken-down transfer time in microseconds calculated by cURL (https://curl.se/libcurl/c/curl_easy_getinfo.html).
+			<emphasis>$http_time(name)</emphasis>: provides access to broken-down transfer time in microseconds calculated by cURL (https://curl.se/libcurl/c/curl_easy_getinfo.html).
 				<para>
 					<emphasis>'name'</emphasis> can be:
 					<itemizedlist>
