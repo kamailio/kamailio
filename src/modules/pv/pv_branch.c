@@ -23,6 +23,7 @@
 
 #include "../../core/parser/parse_uri.h"
 #include "../../core/dset.h"
+#include "../../core/receive.h"
 #include "../../core/onsend.h"
 #include "../../core/socket_info.h"
 #include "../../core/resolve.h"
@@ -640,6 +641,10 @@ int pv_set_rcv(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
 	}
 	switch(param->pvn.u.isname.name.n) {
 		case 1: /* buf */
+			if(neti->evtype == KSR_EVRT_RECEIVED_DATAIN) {
+				LM_WARN("update not allowed for event received:data-in\n");
+				return -1;
+			}
 			if(neti->bufsize <= 0) {
 				LM_ERR("received data cannot be changed\n");
 				return -1;
