@@ -92,6 +92,7 @@ int nio_msg_received(sr_event_param_t *evp)
 	int_str avp_value;
 	struct usr_avp *avp;
 	struct run_act_ctx ra_ctx;
+	sr_net_info_t netinfo;
 
 	obuf = (str *)evp->data;
 
@@ -105,7 +106,13 @@ int nio_msg_received(sr_event_param_t *evp)
 
 	nio_is_incoming = 1;
 	init_run_actions_ctx(&ra_ctx);
+	memset(&netinfo, 0, sizeof(sr_net_info_t));
+	netinfo.data.s = obuf->s;
+	netinfo.data.len = obuf->len;
+	netinfo.rcv = evp->rcv;
+	ksr_evrt_rcvnetinfo_set(&netinfo);
 	run_actions(&ra_ctx, event_rt.rlist[nio_route_no], &msg);
+	ksr_evrt_rcvnetinfo_set(NULL);
 
 	if(nio_msg_avp_name.n != 0) {
 		avp = NULL;
