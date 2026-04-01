@@ -458,7 +458,7 @@ int ht_dmq_replay_action(ht_dmq_action_t action, str *htname, str *cname,
 	}
 }
 
-int ht_dmq_request_sync(str *htname)
+int ht_dmq_request_sync(str *htname, dmq_node_t *dmq_node)
 {
 
 	srjson_doc_t jdoc;
@@ -484,7 +484,7 @@ int ht_dmq_request_sync(str *htname)
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if(ht_dmq_send(&jdoc.buf, 0) != 0) {
+	if(ht_dmq_send(&jdoc.buf, dmq_node) != 0) {
 		goto error;
 	}
 
@@ -502,9 +502,9 @@ error:
 	return -1;
 }
 
-int ht_dmq_request_sync_all()
+int ht_dmq_request_sync_all(dmq_node_t *dmq_node)
 {
-	return ht_dmq_request_sync(NULL);
+	return ht_dmq_request_sync(NULL, dmq_node);
 }
 
 int ht_dmq_send_sync(dmq_node_t *node, str *htname)

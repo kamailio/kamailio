@@ -52,7 +52,7 @@ int ht_dmq_replicate_action(ht_dmq_action_t action, str *htname, str *cname,
 		int type, int_str *val, int mode);
 int ht_dmq_replay_action(ht_dmq_action_t action, str *htname, str *cname,
 		int type, int_str *val, int mode);
-int ht_dmq_request_sync(str *htname);
-int ht_dmq_request_sync_all();
+int ht_dmq_request_sync(str *htname, dmq_node_t *dmq_node);
+int ht_dmq_request_sync_all(dmq_node_t *dmq_node);
 
 #endif
