@@ -2298,7 +2298,7 @@ static void htable_rpc_dmqsync(rpc_t *rpc, void *c)
 	if(n != 1) {
 		htname.len = 0;
 	}
-	if(ht_dmq_request_sync(&htname) < 0) {
+	if(ht_dmq_request_sync(&htname, NULL) < 0) {
 		rpc->fault(c, 500, "HTable DMQ Sync Failed");
 		return;
 	}
@@ -2324,7 +2324,7 @@ static void htable_rpc_dmqresync(rpc_t *rpc, void *c)
 		rpc->fault(c, 500, "Htable flush failed.");
 		return;
 	}
-	if(ht_dmq_request_sync(&htname) < 0) {
+	if(ht_dmq_request_sync(&htname, NULL) < 0) {
 		rpc->fault(c, 500, "HTable DMQ Sync Failed");
 		return;
 	}
