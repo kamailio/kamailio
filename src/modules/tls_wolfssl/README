@@ -42,7 +42,7 @@ Chapter 1. Admin Guide
    configured and loaded and the enable_tls=yes core setting must set.
    This module is mutually exclusive with the tls module.
 
-   Is is highly recommended to run this module with MT-mode
+   It is highly recommended to run this module with MT-mode
    (tcp_main_threads = 1).
 
    This module is derived from the tls module and adapted to wolfSSL.
@@ -62,11 +62,13 @@ Chapter 1. Admin Guide
    be enabled with "#!define WITH_TLS" directive.
 
    Example 1.1. Quick Start Basic Config
-                #...
-                loadmodule "sl.so"
-                loadmodule "tls_wolfssl.so"
-                #... refer to Quick Start of tls module
-                #... for further configuration
+...
+#...
+loadmodule "sl.so"
+loadmodule "tls_wolfssl.so"
+#... refer to Quick Start of tls module
+#... for further configuration
+...
 
 3. Important Notes
 
@@ -77,12 +79,14 @@ Chapter 1. Admin Guide
    0), support 16-byte alignment - it is possible to use this module with
    either the internal submodule or distro provided packages. For
    reference the ideal build flags are:
+...
 # - this assumes the allocators are 16-byte aligned
 # - Debian currently does not use -DWOLF_CRYPTO_CB_RSA_PAD: this affects use of
 RSA
 #   padding mechanisms on HSMs
 EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --ena
 ble-pkcs11
+...
 
 4. Compiling the wolfSSL TLS Module
 
@@ -91,13 +95,15 @@ ble-pkcs11
    be used in building the library (e.g. Debian/Ubuntu).
 
    In most case compiling the wolfSSL TLS module is as simple as:
-                make -C modules/tls_wolfssl
-                # to use the internal git submodule
-                make -C src WOLFSSL_INTERNAL=yes module_group_more="tls_wolfssl"
- group_include=more every-module
-                # cmake
-                cd build; make tls_wolfssl
-                cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
+...
+make -C modules/tls_wolfssl
+# to use the internal git submodule
+make -C src WOLFSSL_INTERNAL=yes module_group_more="tls_wolfssl" group_include=m
+ore every-module
+# cmake
+cd build; make tls_wolfssl
+cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
+...
 
 5. Support for externalized keys (PKCS#11)
 
@@ -105,10 +111,11 @@ ble-pkcs11
    are supported. This feature is available in both MT- and MP- modes. The
    key naming convention for keys follows a PKCS#11-URI-like style:
 ...
-# in tls.cfg these pseudo-file names to refer to PKCS#11 keys; this format
-# is not conformant to RFC 7512
+# - in tls.cfg these pseudo-file names to refer to PKCS#11 keys
+# - this format is not entirely conformant with RFC 7512
 private_key = /uri:pkcs11:module=/usr/lib64/libsoftokn3.so;token=MyToken;object=
 MyPrivateKey;pin=12345678
+...
 
    The string value itself cannot contain spaces so, e.g
    token=NSS%20Certificate%20DB, allows URL-encoding. The pin parameter
