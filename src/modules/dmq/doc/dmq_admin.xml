@@ -420,6 +420,23 @@ modparam("dmq", "fail_count_threshold_disabled", 105)
 		</programlisting>
 		</example>
 	</section>
+	<section id="dmq.p.init_with_single">
+		<title><varname>init_with_single</varname>(int)</title>
+		<para>
+			A non-zero value enables init and sync with single DMQ node (first pinged or answered) instead of all nodes in a node list.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote> (init and sync with all nodes in a node list).</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>init_with_single</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "init_with_single", 1)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

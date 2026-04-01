@@ -37,6 +37,7 @@ dmq_resp_cback_t dmq_default_resp_callback = {&default_resp_callback_f, 0};
 int *dmq_init_callback_done = 0;
 
 extern str dmq_notification_channel;
+extern int dmq_init_with_single;
 
 /**
  * @brief add notification peer
@@ -461,7 +462,7 @@ error:
 }
 
 
-int run_init_callbacks()
+int run_init_callbacks(dmq_node_t *dmq_node)
 {
 	dmq_peer_t *crt;
 
@@ -472,7 +473,7 @@ int run_init_callbacks()
 	crt = dmq_peer_list->peers;
 	while(crt) {
 		if(crt->init_callback) {
-			crt->init_callback();
+			crt->init_callback(dmq_node);
 		}
 		crt = crt->next;
 	}
@@ -525,7 +526,7 @@ int dmq_notification_callback_f(
 	pkg_free(response_body);
 	if(dmq_init_callback_done && !*dmq_init_callback_done) {
 		*dmq_init_callback_done = 1;
-		run_init_callbacks();
+		run_init_callbacks(dmq_init_with_single ? dmq_node : NULL);
 	}
 	return 0;
 error:
@@ -637,7 +638,7 @@ int notification_resp_callback_f(
 		LM_DBG("received %d new or changed nodes\n", nodes_recv);
 		if(dmq_init_callback_done && !*dmq_init_callback_done) {
 			*dmq_init_callback_done = 1;
-			run_init_callbacks();
+			run_init_callbacks(dmq_init_with_single ? node : NULL);
 		}
 	} else if(code == 408) {
 		LM_WARN("timeout: previous fail_count=%d fail_threshold_not_active=%d "
