@@ -163,6 +163,14 @@ sr_net_info_t *ksr_evrt_rcvnetinfo_get(void)
 /**
  *
  */
+void ksr_evrt_rcvnetinfo_set(sr_net_info_t *netinfo)
+{
+	ksr_evrt_rcvnetinfo = netinfo;
+}
+
+/**
+ *
+ */
 int ksr_evrt_received(char *buf, unsigned int *len, receive_info_t *rcv_info,
 		unsigned int evtype)
 {

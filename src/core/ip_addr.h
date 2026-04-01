@@ -235,7 +235,8 @@ typedef struct receive_info
 	/* no need for dst_su yet */
 } receive_info_t;
 
-typedef struct ksr_sockaddr {
+typedef struct ksr_sockaddr
+{
 	ip_addr_t ip;
 	unsigned short port;
 	char proto;
@@ -269,6 +270,7 @@ typedef struct sr_net_info
 } sr_net_info_t;
 
 sr_net_info_t *ksr_evrt_rcvnetinfo_get(void);
+void ksr_evrt_rcvnetinfo_set(sr_net_info_t *netinfo);
 
 #define SND_FLAGS_INIT(sflags)    \
 	do {                          \
