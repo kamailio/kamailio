@@ -331,7 +331,7 @@ target_compile_definitions(
             VERSION="${RELEASE}"
             ARCH="${TARGET_ARCH}"
             OS=${OS}
-            OS_QUOTED="${OS}"
+            OS_QUOTED="${OS_LOWER}"
             COMPILER="${COMPILER_NAME} ${CMAKE_C_COMPILER_VERSION}"
             # ${HOST_ARCH}
             __CPU_${TARGET_ARCH}
