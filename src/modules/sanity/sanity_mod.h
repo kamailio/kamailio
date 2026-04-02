@@ -46,7 +46,7 @@
 #define SANITY_CHECK_DUPTAGS (1 << 12)
 #define SANITY_CHECK_AUTHORIZATION (1 << 13)
 #define SANITY_VIA1_HEADER (1 << 14)
-#define SANITY_VIA1_BRANCH (1 << 15)
+#define SANITY_RFC3261_COMPLIANCE (1 << 15)
 #define SANITY_CHECK_SIZES (1 << 16)
 #define SANITY_MAX_CHECKS (1 << 17) /* Make sure this is the highest value */
 
