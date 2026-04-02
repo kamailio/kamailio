@@ -313,8 +313,8 @@ int sanity_check(struct sip_msg *_msg, int msg_checks, int uri_checks)
 			&& (ret = check_via1_header(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;
 	}
-	if(SANITY_VIA1_BRANCH & msg_checks
-			&& (ret = check_via1_branch(_msg)) != SANITY_CHECK_PASSED) {
+	if(SANITY_RFC3261_COMPLIANCE & msg_checks
+			&& (ret = check_rfc3261_compliance(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;
 	}
 	if(SANITY_VIA_SIP_VERSION & msg_checks
