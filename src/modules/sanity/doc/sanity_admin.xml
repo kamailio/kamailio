@@ -351,6 +351,78 @@ modparam("sanity", "size_header", 1024)
 	    </programlisting>
 	</example>
 	</section>
+	<section id="sanity.p.size_ruri">
+	<title><varname>size_ruri</varname> (int)</title>
+	<para>
+		Specify the size of the SIP request URI to do sanity check with. If set
+		to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 256.
+	</para>
+	<example>
+	    <title>Set <varname>size_ruri</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_ruri", 512)
+...
+	    </programlisting>
+	</example>
+	</section>
+	<section id="sanity.p.size_from_uri">
+	<title><varname>size_from_uri</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message From-URI to do sanity check with.
+		If set to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 256.
+	</para>
+	<example>
+	    <title>Set <varname>size_from_uri</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_from_uri", 512)
+...
+	    </programlisting>
+	</example>
+	</section>
+	<section id="sanity.p.size_to_uri">
+	<title><varname>size_to_uri</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message To-URI to do sanity check with.
+		If set to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 256.
+	</para>
+	<example>
+	    <title>Set <varname>size_to_uri</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_to_uri", 512)
+...
+	    </programlisting>
+	</example>
+	</section>
+	<section id="sanity.p.size_contact_uri">
+	<title><varname>size_contact_uri</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message Contact-URI to do sanity check with.
+		If set to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 256.
+	</para>
+	<example>
+	    <title>Set <varname>size_contact_uri</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_contact_uri", 512)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
 
    <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
