@@ -169,13 +169,15 @@ int sanity_check_sizes(sip_msg_t *msg)
 		}
 	}
 	if(sn_size_ruri > 0) {
-		if(msg->new_uri.s) {
-			if(msg->new_uri.len > sn_size_ruri) {
-				return SANITY_CHECK_FAILED;
-			}
-		} else {
-			if(msg->first_line.u.request.uri.len > sn_size_ruri) {
-				return SANITY_CHECK_FAILED;
+		if(msg->first_line.type == SIP_REQUEST) {
+			if(msg->new_uri.s) {
+				if(msg->new_uri.len > sn_size_ruri) {
+					return SANITY_CHECK_FAILED;
+				}
+			} else {
+				if(msg->first_line.u.request.uri.len > sn_size_ruri) {
+					return SANITY_CHECK_FAILED;
+				}
 			}
 		}
 	}
