@@ -25,6 +25,10 @@ Nils Ohlmeier
               3.8. size_headers (int)
               3.9. size_body (int)
               3.10. size_header (int)
+              3.11. size_ruri (int)
+              3.12. size_from_uri (int)
+              3.13. size_to_uri (int)
+              3.14. size_contact_uri (int)
 
         4. Functions
 
@@ -43,10 +47,14 @@ Nils Ohlmeier
    1.8. Set size_headers parameter
    1.9. Set size_body parameter
    1.10. Set size_header parameter
-   1.11. sanity_check usage
-   1.12. sanity_check usage with parameter
-   1.13. sanity_check usage with two parameters
-   1.14. sanity_reply usage
+   1.11. Set size_ruri parameter
+   1.12. Set size_from_uri parameter
+   1.13. Set size_to_uri parameter
+   1.14. Set size_contact_uri parameter
+   1.15. sanity_check usage
+   1.16. sanity_check usage with parameter
+   1.17. sanity_check usage with two parameters
+   1.18. sanity_reply usage
 
 Chapter 1. Admin Guide
 
@@ -66,6 +74,10 @@ Chapter 1. Admin Guide
         3.8. size_headers (int)
         3.9. size_body (int)
         3.10. size_header (int)
+        3.11. size_ruri (int)
+        3.12. size_from_uri (int)
+        3.13. size_to_uri (int)
+        3.14. size_contact_uri (int)
 
    4. Functions
 
@@ -145,6 +157,10 @@ Chapter 1. Admin Guide
    3.8. size_headers (int)
    3.9. size_body (int)
    3.10. size_header (int)
+   3.11. size_ruri (int)
+   3.12. size_from_uri (int)
+   3.13. size_to_uri (int)
+   3.14. size_contact_uri (int)
 
 3.1. default_checks (integer)
 
@@ -282,6 +298,54 @@ modparam("sanity", "size_body", 4096)
 modparam("sanity", "size_header", 1024)
 ...
 
+3.11. size_ruri (int)
+
+   Specify the size of the SIP request URI to do sanity check with. If set
+   to 0, this size sanity check is not performed.
+
+   Default value: 256.
+
+   Example 1.11. Set size_ruri parameter
+...
+modparam("sanity", "size_ruri", 512)
+...
+
+3.12. size_from_uri (int)
+
+   Specify the size of the SIP message From-URI to do sanity check with.
+   If set to 0, this size sanity check is not performed.
+
+   Default value: 256.
+
+   Example 1.12. Set size_from_uri parameter
+...
+modparam("sanity", "size_from_uri", 512)
+...
+
+3.13. size_to_uri (int)
+
+   Specify the size of the SIP message To-URI to do sanity check with. If
+   set to 0, this size sanity check is not performed.
+
+   Default value: 256.
+
+   Example 1.13. Set size_to_uri parameter
+...
+modparam("sanity", "size_to_uri", 512)
+...
+
+3.14. size_contact_uri (int)
+
+   Specify the size of the SIP message Contact-URI to do sanity check
+   with. If set to 0, this size sanity check is not performed.
+
+   Default value: 256.
+
+   Example 1.14. Set size_contact_uri parameter
+...
+modparam("sanity", "size_contact_uri", 512)
+...
+
 4. Functions
 
    4.1. sanity_check([msg_checks [, uri_checks]])
@@ -300,7 +364,7 @@ modparam("sanity", "size_header", 1024)
    The parameters can be static integers or variables holding integer
    values.
 
-   Example 1.11. sanity_check usage
+   Example 1.15. sanity_check usage
 ...
 if (!sanity_check()) {
         exit;
@@ -313,7 +377,7 @@ if (!sanity_check()) {
    of the checks (like for the module parameter) which should be executed
    at this function call.
 
-   Example 1.12. sanity_check usage with parameter
+   Example 1.16. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
@@ -326,7 +390,7 @@ if (method=="REGISTER" && !sanity_check("256")) {
    overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
-   Example 1.13. sanity_check usage with two parameters
+   Example 1.17. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
@@ -341,7 +405,7 @@ a 400 */
    module when detecting errors while performing the sanity checks. It is
    done only when parameter noreply is set to 1.
 
-   Example 1.14. sanity_reply usage
+   Example 1.18. sanity_reply usage
 ...
 if(!sanity_check("1024", "6")) {
    xdbg("sanity checks failed\n");
