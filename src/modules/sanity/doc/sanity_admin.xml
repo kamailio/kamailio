@@ -364,6 +364,25 @@ modparam("sanity", "size_header", 1024)
 	    </programlisting>
 	</example>
 	</section>
+	<section id="sanity.p.size_method">
+	<title><varname>size_method</varname> (int)</title>
+	<para>
+		Specify the size of the SIP method to do sanity check with (taken from
+		first line for SIP request and from CSeq for SIP reply). If set
+		to 0, this size sanity check is not performed.
+	</para>
+	<para>
+		Default value: 32.
+	</para>
+	<example>
+	    <title>Set <varname>size_method</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_method", 16)
+...
+	    </programlisting>
+	</example>
+	</section>
 	<section id="sanity.p.size_ruri">
 	<title><varname>size_ruri</varname> (int)</title>
 	<para>
