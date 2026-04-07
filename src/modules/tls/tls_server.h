@@ -69,7 +69,7 @@ typedef struct tls_extra_data
 
 	char *ssl_servername;
 	char *ssl_cipher_name;
-	char ssl_cipher_desc[128];
+	char ssl_cipher_desc[256];
 	char ssl_version[32];
 	int ssl_cipher_bits;
 	long ssl_verify_result;
@@ -82,7 +82,6 @@ typedef struct tls_extra_data
 	unsigned char *ssl_cert_chain;
 	int ssl_cert_chain_len;
 } tls_extra_data_t;
-
 
 /* return true if write wants read */
 #define tls_write_wants_read(tls_ed) (tls_ed->flags & F_TLS_CON_WR_WANTS_RD)
