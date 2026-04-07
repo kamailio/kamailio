@@ -83,35 +83,8 @@ static unsigned char dh3072_g[] = {0x02};
 
 static void setup_dh(WOLFSSL_CTX *ctx)
 {
-	/*
- * not needed for OpenSSL 1.1.0+ and LibreSSL
- * DH_new() is deprecated in OpenSSL 3
- */
-	DH *dh;
-	BIGNUM *p;
-	BIGNUM *g;
-
-	dh = DH_new();
-	if(dh == NULL) {
-		return;
-	}
-
-	p = BN_bin2bn(dh3072_p, sizeof(dh3072_p), NULL);
-	g = BN_bin2bn(dh3072_g, sizeof(dh3072_g), NULL);
-
-	if(p == NULL || g == NULL) {
-		DH_free(dh);
-		return;
-	}
-
-	dh->p = p;
-	dh->g = g;
-
-
-	wolfSSL_CTX_set_options(ctx, WOLFSSL_OP_SINGLE_DH_USE);
-	wolfSSL_CTX_set_tmp_dh(ctx, dh);
-
-	DH_free(dh);
+	wolfSSL_CTX_SetTmpDH(
+			ctx, dh3072_p, sizeof(dh3072_p), dh3072_g, sizeof(dh3072_g));
 }
 
 
@@ -620,18 +593,16 @@ static int set_cipher_list(tls_domain_t *d)
 {
 	char *cipher_list;
 
+	setup_dh(d->ctx[0]);
 	cipher_list = d->cipher_list.s;
 	if(!cipher_list)
 		return 0;
 
-	do {
-		if(wolfSSL_CTX_set_cipher_list(d->ctx[0], cipher_list) == 0) {
-			ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
-					tls_domain_str(d), cipher_list);
-			return -1;
-		}
-		setup_dh(d->ctx[0]);
-	} while(0);
+	if(wolfSSL_CTX_set_cipher_list(d->ctx[0], cipher_list) == 0) {
+		ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
+				tls_domain_str(d), cipher_list);
+		return -1;
+	}
 	return 0;
 }
 
