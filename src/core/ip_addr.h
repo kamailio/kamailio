@@ -197,6 +197,7 @@ typedef enum send_flags
 	SND_F_FORCE_CON_REUSE = (1 << 0), /* reuse an existing connection or fail */
 	SND_F_CON_CLOSE = (1 << 1),		  /* close the connection after sending */
 	SND_F_FORCE_SOCKET = (1 << 2),	  /* send socket in dst is forced */
+	SND_F_FORCE_PROTO = (1 << 3),	  /* reuse connections of same proto */
 } send_flags_t;
 
 typedef struct snd_flags
