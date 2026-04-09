@@ -250,6 +250,12 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 			if(i == SREV_CB_LIST_SIZE)
 				return -1;
 			break;
+		case SREV_TCP_WS_HANDSHAKE:
+			if(_sr_events_list.tcp_ws_handshake == 0)
+				_sr_events_list.tcp_ws_handshake = f;
+			else
+				return -1;
+			break;
 		default:
 			return -1;
 	}
@@ -420,6 +426,12 @@ int sr_event_exec(int type, sr_event_param_t *evp)
 				return ret;
 			} else
 				return 1;
+		case SREV_TCP_WS_HANDSHAKE:
+			if(unlikely(_sr_events_list.tcp_ws_handshake != 0)) {
+				ret = _sr_events_list.tcp_ws_handshake(evp);
+				return ret;
+			} else
+				return 1;
 		default:
 			return -1;
 	}
@@ -467,6 +479,8 @@ int sr_event_enabled(int type)
 			return (_sr_events_list.sip_reply_out[0] != 0) ? 1 : 0;
 		case SREV_TCP_WS_CLOSE:
 			return (_sr_events_list.tcp_ws_close[0] != 0) ? 1 : 0;
+		case SREV_TCP_WS_HANDSHAKE:
+			return (_sr_events_list.tcp_ws_handshake != 0) ? 1 : 0;
 	}
 	return 0;
 }
