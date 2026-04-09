@@ -2108,13 +2108,14 @@ static int tcpconn_do_send(int fd, struct tcp_connection *c, const char *buf,
 static int tcpconn_1st_send(int fd, struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags, long *resp, int locked);
 
-#define tcp_dst_ephemeral_set(n, c, dst) do { \
-		if(n >= 0) { \
-			dst->ephemeral.ip = c->rcv.dst_ip; \
+#define tcp_dst_ephemeral_set(n, c, dst)           \
+	do {                                           \
+		if(n >= 0) {                               \
+			dst->ephemeral.ip = c->rcv.dst_ip;     \
 			dst->ephemeral.port = c->rcv.dst_port; \
-			dst->ephemeral.proto = c->rcv.proto; \
-			dst->ephemeral.vset = 1; \
-		} \
+			dst->ephemeral.proto = c->rcv.proto;   \
+			dst->ephemeral.vset = 1;               \
+		}                                          \
 	} while(0)
 
 /* finds a tcpconn & sends on it
@@ -2152,7 +2153,8 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 	con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
 	if(likely(port)) {
 		su2ip_addr(&ip, &dst->to);
-		if(tcp_connection_match == TCPCONN_MATCH_STRICT) {
+		if(tcp_connection_match == TCPCONN_MATCH_STRICT
+				|| (dst->send_flags.f & SND_F_FORCE_PROTO)) {
 			c = tcpconn_lookup(dst->id, &ip, port, from, try_local_port,
 					con_lifetime, dst->proto);
 		} else {
@@ -2169,7 +2171,8 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		if(unlikely(c == 0)) {
 			if(likely(port)) {
 				/* try again w/o id */
-				if(tcp_connection_match == TCPCONN_MATCH_STRICT) {
+				if(tcp_connection_match == TCPCONN_MATCH_STRICT
+						|| (dst->send_flags.f & SND_F_FORCE_PROTO)) {
 					c = tcpconn_lookup(0, &ip, port, from, try_local_port,
 							con_lifetime, dst->proto);
 				} else {
