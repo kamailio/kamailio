@@ -200,6 +200,7 @@ typedef enum tcp_req_flags
 	F_TCP_REQ_MSRP_BODY = (1 << 5),
 #endif
 	F_TCP_REQ_HEP3 = (1 << 6),
+	F_TCP_REQ_WS_HANDSHAKE = (1 << 7),
 } tcp_req_flags_t;
 
 #define TCP_REQ_HAS_CLEN(tr) ((tr)->flags & F_TCP_REQ_HAS_CLEN)
