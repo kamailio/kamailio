@@ -1397,6 +1397,30 @@ static int ws_process_msg(char *tcpbuf, unsigned int len,
 	}
 	return ret;
 }
+
+static int ws_process_handshake_msg(char *tcpbuf, unsigned int len,
+		struct receive_info *rcv_info, struct tcp_connection *con)
+{
+	int ret;
+	tcp_event_info_t tev;
+	sr_event_param_t evp = {0};
+
+	ret = 0;
+	if(likely(sr_event_enabled(SREV_TCP_WS_HANDSHAKE))) {
+		memset(&tev, 0, sizeof(tcp_event_info_t));
+		tev.type = SREV_TCP_WS_HANDSHAKE;
+		tev.buf = tcpbuf;
+		tev.len = len;
+		tev.rcv = rcv_info;
+		tev.con = con;
+		evp.data = (void *)(&tev);
+		ret = sr_event_exec(SREV_TCP_WS_HANDSHAKE, &evp);
+	} else {
+		LM_DBG("no callback registered for outbound WebSocket handshake\n");
+		ret = -1;
+	}
+	return ret;
+}
 #endif
 
 static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t *read_flags)
@@ -1708,7 +1732,9 @@ again:
 		print_ip("received from: ip", &con->rcv.src_ip, "\n");
 		LM_DBG("headers:\n%.*s.\n", (int)(req->body - req->start), req->start);
 #endif
-		if(likely(TCP_REQ_HAS_CLEN(req))) {
+		if(unlikely(req->flags & F_TCP_REQ_WS_HANDSHAKE)) {
+			LM_DBG("websocket handshake response complete\n");
+		} else if(likely(TCP_REQ_HAS_CLEN(req))) {
 			LM_DBG("content-length=%d\n", req->content_len);
 #ifdef EXTRA_DEBUG
 			LM_DBG("body:\n%.*s\n", req->content_len, req->body);
@@ -1752,6 +1778,9 @@ again:
 			/* stun request */
 			ret = stun_process_msg(
 					req->start, req->parsed - req->start, &con->rcv);
+		} else if(unlikely(req->flags & F_TCP_REQ_WS_HANDSHAKE)) {
+			ret = ws_process_handshake_msg(
+					req->start, req->parsed - req->start, &con->rcv, con);
 		} else
 #ifdef READ_MSRP
 			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
