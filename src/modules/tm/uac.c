@@ -1181,8 +1181,16 @@ int req_outside(uac_req_t *uac_r, str *ruri, str *to, str *from, str *next_hop)
 	if(check_params(uac_r, to, from) < 0)
 		goto err;
 
-	generate_callid(&callid);
-	generate_fromtag(&fromtag, &callid, ruri);
+	if(uac_r->callid == NULL || uac_r->callid->len <= 0) {
+		generate_callid(&callid);
+	} else {
+		callid = *uac_r->callid;
+	}
+	if(uac_r->fromtag == NULL || uac_r->fromtag->len <= 0) {
+		generate_fromtag(&fromtag, &callid, ruri);
+	} else {
+		fromtag = *uac_r->fromtag;
+	}
 
 	if(new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &uac_r->dialog)
 			< 0) {
