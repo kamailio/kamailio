@@ -11,7 +11,7 @@ LIBS=
 PERLBIN ?= perl
 
 ifeq ($(PERLLDOPTS),)
-	LIBS+=`$(PERLBIN) -MExtUtils::Embed -e ldopts`
+	LIBS+=$(shell $(PERLBIN) -MExtUtils::Embed -e ldopts)
 else
 	LIBS+=$(PERLLDOPTS)
 endif
@@ -23,11 +23,11 @@ DEFS+=$(PERLCCOPTS)
 
 SERLIBPATH=../../lib
 
-PODFILES=kamailioxs.xs `find lib/perl -name *.pm`
+PODFILES=kamailioxs.xs $(shell find lib/perl -name *.pm)
 
 ifeq ($(TYPEMAP),)
 	ifeq ($(PERLLIBPATH),)
-		PERLLIBPATH=`$(PERLBIN) -MConfig -e 'print $$Config{installprivlib}'`
+		PERLLIBPATH=$(shell $(PERLBIN) -MConfig -e 'print $$Config{installprivlib}')
 	endif
 	TYPEMAP=$(PERLLIBPATH)/ExtUtils/typemap
 endif
@@ -69,4 +69,3 @@ install-perl-scripts:
 		$(modules_prefix)/$(lib_dir)/perl/Kamailio/VDB/Adapter
 
 install-scripts: install-perl-scripts
-
