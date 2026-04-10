@@ -668,7 +668,7 @@ static int fix_nated_contact(struct sip_msg *msg)
 	str params1 = {0};
 	str params2 = {0};
 
-	if(get_contact_uri(msg, &uri, &c) == -1)
+	if(get_contact_uri(msg, &uri, &c) < 0)
 		return -1;
 	if((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
 		LM_ERR("you can't call fix_nated_contact twice, "
@@ -769,7 +769,7 @@ static int set_contact_alias(struct sip_msg *msg, int trim)
 	nuri.len = MAX_URI_SIZE;
 	curi.s = cbuf;
 	curi.len = MAX_URI_SIZE;
-	if(get_contact_uri(msg, &uri, &c) == -1)
+	if(get_contact_uri(msg, &uri, &c) < 0)
 		return -1;
 	if((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
 		LM_ERR("you can't update contact twice, check your config!\n");
@@ -876,7 +876,7 @@ static int add_contact_alias_0(struct sip_msg *msg)
 			return 2;
 		}
 	}
-	if(get_contact_uri(msg, &uri, &c) == -1) {
+	if(get_contact_uri(msg, &uri, &c) < 0) {
 		LM_ERR("failed to get contact uri\n");
 		return -1;
 	}
@@ -1039,7 +1039,7 @@ static int add_contact_alias_3(
 			return 2;
 		}
 	}
-	if(get_contact_uri(msg, &uri, &c) == -1) {
+	if(get_contact_uri(msg, &uri, &c) < 0) {
 		LM_ERR("failed to get contact uri\n");
 		return -1;
 	}
@@ -1495,7 +1495,7 @@ static int contact_1918(struct sip_msg *msg)
 	struct sip_uri uri;
 	contact_t *c;
 
-	if(get_contact_uri(msg, &uri, &c) == -1)
+	if(get_contact_uri(msg, &uri, &c) < 0)
 		return -1;
 
 	return (is1918addr(&(uri.host)) == 1) ? 1 : 0;
@@ -1510,7 +1510,7 @@ static int contact_rport(struct sip_msg *msg)
 	struct sip_uri uri;
 	contact_t *c;
 
-	if(get_contact_uri(msg, &uri, &c) == -1) {
+	if(get_contact_uri(msg, &uri, &c) < 0) {
 		return -1;
 	}
 
