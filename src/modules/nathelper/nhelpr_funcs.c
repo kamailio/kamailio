@@ -285,11 +285,23 @@ done:
  */
 int get_contact_uri(struct sip_msg *_m, struct sip_uri *uri, contact_t **_c)
 {
-	if((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
-		return -1;
+	if(!_m->contact) {
+		if(parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
+			LM_ERR("while parsing headers\n");
+			return -1;
+		}
+		if(!_m->contact) {
+			LM_DBG("no Contact header\n");
+			return -2;
+		}
+	}
 	if(!_m->contact->parsed && parse_contact(_m->contact) < 0) {
 		LM_ERR("failed to parse Contact body\n");
 		return -1;
+	}
+	if(((contact_body_t *)_m->contact->parsed)->star == 1) {
+		LM_DBG("star Contact header\n");
+		return -3;
 	}
 	*_c = ((contact_body_t *)_m->contact->parsed)->contacts;
 	if(*_c == NULL)
