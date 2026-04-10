@@ -866,19 +866,14 @@ static int add_contact_alias_0(struct sip_msg *msg)
 	struct sip_uri uri;
 	struct ip_addr *ip;
 	char *bracket, *lt, *param, *at, *port, *start;
+	int rc = 0;
 
-	/* Do nothing if Contact header does not exist */
-	if(!msg->contact) {
-		if(parse_headers(msg, HDR_CONTACT_F, 0) == -1) {
-			LM_ERR("while parsing headers\n");
-			return -1;
-		}
-		if(!msg->contact) {
-			LM_DBG("no contact header\n");
+	if((rc = get_contact_uri(msg, &uri, &c)) < 0) {
+		if(rc < -1) {
+			/* do nothing if Contact header or URI does not exist */
+			LM_DBG("star or no contact header\n");
 			return 2;
 		}
-	}
-	if(get_contact_uri(msg, &uri, &c) < 0) {
 		LM_ERR("failed to get contact uri\n");
 		return -1;
 	}
@@ -1029,19 +1024,14 @@ static int add_contact_alias_3(
 	char *bracket, *lt, *param, *at, *start;
 	int is_ipv6 = 0;
 	int i;
+	int rc = 0;
 
-	/* Do nothing if Contact header does not exist */
-	if(!msg->contact) {
-		if(parse_headers(msg, HDR_CONTACT_F, 0) == -1) {
-			LM_ERR("while parsing headers\n");
-			return -1;
-		}
-		if(!msg->contact) {
-			LM_DBG("no contact header\n");
+	if((rc = get_contact_uri(msg, &uri, &c)) < 0) {
+		if(rc < -1) {
+			/* do nothing if Contact header or URI does not exist */
+			LM_DBG("star or no contact header\n");
 			return 2;
 		}
-	}
-	if(get_contact_uri(msg, &uri, &c) < 0) {
 		LM_ERR("failed to get contact uri\n");
 		return -1;
 	}
