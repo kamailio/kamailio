@@ -72,6 +72,7 @@ char *wsconn_state_str[] = {
 		"CONNECTING", /* WS_S_CONNECTING */
 		"OPEN",		  /* WS_S_OPEN */
 		"CLOSING",	  /* WS_S_CLOSING */
+		"REMOVING",	  /* WS_S_REMOVING */
 		"CLOSED"	  /* WS_S_CLOSED */
 };
 
