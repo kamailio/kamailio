@@ -188,9 +188,7 @@ elseif(TARGET_ARCH STREQUAL "arm7")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
 
     # ARM specific flags
-    target_compile_options(
-      common_compiler_flags INTERFACE -march=armv7-a -funroll-loops -fsigned-char
-    )
+    target_compile_options(common_compiler_flags INTERFACE -funroll-loops -fsigned-char)
     if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
       target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize -fno-strict-overflow)
     elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
@@ -206,9 +204,7 @@ elseif(TARGET_ARCH STREQUAL "arm7")
 elseif(TARGET_ARCH STREQUAL "arm6")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
-    target_compile_options(
-      common_compiler_flags INTERFACE -march=armv6 -funroll-loops -fsigned-char
-    )
+    target_compile_options(common_compiler_flags INTERFACE -funroll-loops -fsigned-char)
     if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
       target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize -fno-strict-overflow)
     elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
@@ -226,9 +222,7 @@ elseif(TARGET_ARCH STREQUAL "arm")
     target_compile_definitions(common_compiler_flags INTERFACE CC_GCC_LIKE_ASM)
 
     # ARM specific flags
-    target_compile_options(
-      common_compiler_flags INTERFACE -marm -march=armv5t -funroll-loops -fsigned-char
-    )
+    target_compile_options(common_compiler_flags INTERFACE -marm -funroll-loops -fsigned-char)
     if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.2.0)
       target_compile_options(common_compiler_flags INTERFACE -ftree-vectorize -fno-strict-overflow)
     elseif(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.0)
