@@ -43,6 +43,7 @@
 #include "../../core/tcp_server.h"
 #include "../../core/counters.h"
 #include "../../core/mem/mem.h"
+#include "../../core/rand/kam_rand.h"
 #include "ws_conn.h"
 #include "ws_frame.h"
 #include "websocket.h"
@@ -140,12 +141,15 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 {
 	int pos = 0, extended_length;
 	unsigned int frame_length;
+	unsigned int header_length;
 	char *send_buf;
 	struct tcp_connection *con;
 	struct dest_info dst;
 	union sockaddr_union *from = NULL;
 	union sockaddr_union local_addr;
 	int sub_proto;
+	unsigned int i;
+	int use_mask;
 
 	LM_DBG("encoding WebSocket frame\n");
 
@@ -187,12 +191,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 			return -1;
 	}
 
-	/* validate the second byte */
-	if(frame->mask) {
-		LM_ERR("this is a server - all messages sent will be "
-			   "unmasked\n");
-		return -1;
-	}
+	use_mask = (frame->wsc->role == WS_ROLE_CLIENT) ? 1 : 0;
 
 	if(frame->payload_len < 126)
 		extended_length = 0;
@@ -208,7 +207,8 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	}
 
 	/* Allocate send buffer and build frame */
-	frame_length = frame->payload_len + extended_length + 2;
+	header_length = 2 + extended_length + ((use_mask) ? 4 : 0);
+	frame_length = frame->payload_len + header_length;
 	if((send_buf = pkg_malloc(sizeof(char) * frame_length)) == NULL) {
 		PKG_MEM_ERROR_FMT("for send buffer\n");
 		return -1;
@@ -216,19 +216,30 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	memset(send_buf, 0, sizeof(char) * frame_length);
 	send_buf[pos++] = 0x80 | (frame->opcode & 0xff);
 	if(extended_length == 0)
-		send_buf[pos++] = (frame->payload_len & 0xff);
+		send_buf[pos++] = (frame->payload_len & 0xff) | ((use_mask) ? 0x80 : 0);
 	else if(extended_length == 2) {
-		send_buf[pos++] = 126;
+		send_buf[pos++] = 126 | ((use_mask) ? 0x80 : 0);
 		send_buf[pos++] = (frame->payload_len & 0xff00) >> 8;
 		send_buf[pos++] = (frame->payload_len & 0x00ff) >> 0;
 	} else {
-		send_buf[pos++] = 127;
+		send_buf[pos++] = 127 | ((use_mask) ? 0x80 : 0);
 		send_buf[pos++] = (frame->payload_len & 0xff000000) >> 24;
 		send_buf[pos++] = (frame->payload_len & 0x00ff0000) >> 16;
 		send_buf[pos++] = (frame->payload_len & 0x0000ff00) >> 8;
 		send_buf[pos++] = (frame->payload_len & 0x000000ff) >> 0;
 	}
+	if(use_mask) {
+		for(i = 0; i < 4; i++) {
+			frame->masking_key[i] = (unsigned char)(kam_rand() & 0xff);
+			send_buf[pos++] = frame->masking_key[i];
+		}
+	}
 	memcpy(&send_buf[pos], frame->payload_data, frame->payload_len);
+	if(use_mask) {
+		for(i = 0; i < frame->payload_len; i++) {
+			send_buf[pos + i] ^= frame->masking_key[i % 4];
+		}
+	}
 
 	if((con = tcpconn_get(frame->wsc->id, 0, 0, 0, 0)) == NULL) {
 		LM_WARN("TCP/TLS connection get failed\n");
@@ -428,12 +439,20 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 			return -1;
 	}
 
-	if(!frame->mask) {
-		LM_WARN("this is a server - all received messages must be "
-				"masked\n");
-		*err_code = 1002;
-		*err_text = str_status_protocol_error;
-		return -1;
+	if(frame->wsc->role == WS_ROLE_SERVER) {
+		if(!frame->mask) {
+			LM_WARN("server-side websocket received unmasked client frame\n");
+			*err_code = 1002;
+			*err_text = str_status_protocol_error;
+			return -1;
+		}
+	} else {
+		if(frame->mask) {
+			LM_WARN("client-side websocket received masked server frame\n");
+			*err_code = 1002;
+			*err_text = str_status_protocol_error;
+			return -1;
+		}
 	}
 
 	/* Decode and validate length */
@@ -474,9 +493,10 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 		mask_start = 2;
 
 	if((unsigned long long)len
-			!= (unsigned long long)frame->payload_len + mask_start + 4) {
+			!= (unsigned long long)frame->payload_len + mask_start
+					   + ((frame->mask) ? 4 : 0)) {
 		LM_WARN("message not complete frame size %u but received %u\n",
-				frame->payload_len + mask_start + 4, len);
+				frame->payload_len + mask_start + ((frame->mask) ? 4 : 0), len);
 		*err_code = 1002;
 		*err_text = str_status_protocol_error;
 		return -1;
@@ -488,18 +508,23 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 		*err_text = str_status_message_too_big;
 		return -1;
 	}
-	/* Decode mask */
-	frame->masking_key[0] = (buf[mask_start + 0] & 0xff);
-	frame->masking_key[1] = (buf[mask_start + 1] & 0xff);
-	frame->masking_key[2] = (buf[mask_start + 2] & 0xff);
-	frame->masking_key[3] = (buf[mask_start + 3] & 0xff);
+	if(frame->mask) {
+		/* Decode mask */
+		frame->masking_key[0] = (buf[mask_start + 0] & 0xff);
+		frame->masking_key[1] = (buf[mask_start + 1] & 0xff);
+		frame->masking_key[2] = (buf[mask_start + 2] & 0xff);
+		frame->masking_key[3] = (buf[mask_start + 3] & 0xff);
 
-	frame->payload_data = &buf[mask_start + 4];
+		frame->payload_data = &buf[mask_start + 4];
 
-	/* Decode and unmask payload */
-	for(i = 0; i < frame->payload_len; i++) {
-		j = i % 4;
-		frame->payload_data[i] = frame->payload_data[i] ^ frame->masking_key[j];
+		/* Decode and unmask payload */
+		for(i = 0; i < frame->payload_len; i++) {
+			j = i % 4;
+			frame->payload_data[i] =
+					frame->payload_data[i] ^ frame->masking_key[j];
+		}
+	} else {
+		frame->payload_data = &buf[mask_start];
 	}
 
 	LM_DBG("Rx (decoded) (len %u): %.*s\n", frame->payload_len,
