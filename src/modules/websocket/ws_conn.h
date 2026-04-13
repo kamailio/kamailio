@@ -50,11 +50,14 @@ typedef enum
 	WS_ROLE_CLIENT
 } ws_conn_role_t;
 
+#define WS_HANDSHAKE_KEY_SIZE 64
+
 typedef struct ws_connection
 {
 	ws_conn_state_t state;
 	ws_conn_role_t role;
 	int awaiting_pong;
+	int stats_enabled;
 	ticks_t rmticks;
 
 	int last_used;
@@ -72,6 +75,8 @@ typedef struct ws_connection
 
 	atomic_t refcnt;
 	int run_event;
+	int handshake_key_len;
+	char handshake_key[WS_HANDSHAKE_KEY_SIZE];
 
 	str frag_buf;
 } ws_connection_t;
@@ -107,6 +112,9 @@ extern stat_var *ws_msrp_max_concurrent_connections;
 int wsconn_init(void);
 void wsconn_destroy(void);
 int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol);
+int wsconn_add_outgoing(struct receive_info *rcv, unsigned int sub_protocol,
+		str *handshake_key);
+int wsconn_mark_open(ws_connection_t *wsc);
 int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route);
 int wsconn_update(ws_connection_t *wsc);
 void wsconn_close_now(ws_connection_t *wsc);

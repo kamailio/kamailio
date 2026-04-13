@@ -141,13 +141,50 @@ static inline void _wsconn_rm(ws_connection_t *wsc)
 {
 	wsconn_listrm(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
 
-	update_stat(ws_current_connections, -1);
-	if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
-		update_stat(ws_sip_current_connections, -1);
-	else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
-		update_stat(ws_msrp_current_connections, -1);
+	if(wsc->stats_enabled) {
+		update_stat(ws_current_connections, -1);
+		if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
+			update_stat(ws_sip_current_connections, -1);
+		else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+			update_stat(ws_msrp_current_connections, -1);
+	}
 
 	shm_free(wsc);
+}
+
+static void wsconn_open_set_stats(ws_connection_t *wsc)
+{
+	int cur_cons, max_cons;
+
+	if(wsc->stats_enabled)
+		return;
+
+	lock_get(wsstat_lock);
+
+	update_stat(ws_current_connections, 1);
+	cur_cons = get_stat_val(ws_current_connections);
+	max_cons = get_stat_val(ws_max_concurrent_connections);
+	if(max_cons < cur_cons)
+		update_stat(ws_max_concurrent_connections, cur_cons - max_cons);
+
+	if(wsc->sub_protocol == SUB_PROTOCOL_SIP) {
+		update_stat(ws_sip_current_connections, 1);
+		cur_cons = get_stat_val(ws_sip_current_connections);
+		max_cons = get_stat_val(ws_sip_max_concurrent_connections);
+		if(max_cons < cur_cons)
+			update_stat(ws_sip_max_concurrent_connections, cur_cons - max_cons);
+	} else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP) {
+		update_stat(ws_msrp_current_connections, 1);
+		cur_cons = get_stat_val(ws_msrp_current_connections);
+		max_cons = get_stat_val(ws_msrp_max_concurrent_connections);
+		if(max_cons < cur_cons)
+			update_stat(
+					ws_msrp_max_concurrent_connections, cur_cons - max_cons);
+	}
+
+	wsc->stats_enabled = 1;
+
+	lock_release(wsstat_lock);
 }
 
 void wsconn_destroy(void)
@@ -189,9 +226,9 @@ void wsconn_destroy(void)
 	}
 }
 
-int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
+static int wsconn_add_mode(struct receive_info *rcv, unsigned int sub_protocol,
+		ws_conn_role_t role, ws_conn_state_t state, str *handshake_key)
 {
-	int cur_cons, max_cons;
 	int id = rcv->proto_reserved1;
 	int id_hash = tcp_id_hash(id);
 	ws_connection_t *wsc;
@@ -207,12 +244,22 @@ int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 	memset(wsc, 0, sizeof(ws_connection_t) + BUF_SIZE + 1);
 	wsc->id = id;
 	wsc->id_hash = id_hash;
-	wsc->state = WS_S_OPEN;
+	wsc->state = state;
+	wsc->role = role;
 	wsc->rcv = *rcv;
 	wsc->sub_protocol = sub_protocol;
 	wsc->run_event = 0;
 	wsc->frag_buf.s = ((char *)wsc) + sizeof(ws_connection_t);
 	atomic_set(&wsc->refcnt, 0);
+	if(handshake_key && handshake_key->s && handshake_key->len > 0) {
+		if(handshake_key->len >= (int)sizeof(wsc->handshake_key)) {
+			LM_ERR("handshake key too long\n");
+			shm_free(wsc);
+			return -1;
+		}
+		memcpy(wsc->handshake_key, handshake_key->s, handshake_key->len);
+		wsc->handshake_key_len = handshake_key->len;
+	}
 
 	LM_DBG("new wsc => [%p], ref => [%d]\n", wsc, atomic_get(&wsc->refcnt));
 
@@ -236,32 +283,35 @@ int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 	LM_DBG("added to conn_table wsc => [%p], ref => [%d]\n", wsc,
 			atomic_get(&wsc->refcnt));
 
-	/* Update connection statistics */
-	lock_get(wsstat_lock);
+	if(state == WS_S_OPEN)
+		wsconn_open_set_stats(wsc);
 
-	update_stat(ws_current_connections, 1);
-	cur_cons = get_stat_val(ws_current_connections);
-	max_cons = get_stat_val(ws_max_concurrent_connections);
-	if(max_cons < cur_cons)
-		update_stat(ws_max_concurrent_connections, cur_cons - max_cons);
+	return 0;
+}
 
-	if(wsc->sub_protocol == SUB_PROTOCOL_SIP) {
-		update_stat(ws_sip_current_connections, 1);
-		cur_cons = get_stat_val(ws_sip_current_connections);
-		max_cons = get_stat_val(ws_sip_max_concurrent_connections);
-		if(max_cons < cur_cons)
-			update_stat(ws_sip_max_concurrent_connections, cur_cons - max_cons);
-	} else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP) {
-		update_stat(ws_msrp_current_connections, 1);
-		cur_cons = get_stat_val(ws_msrp_current_connections);
-		max_cons = get_stat_val(ws_msrp_max_concurrent_connections);
-		if(max_cons < cur_cons)
-			update_stat(
-					ws_msrp_max_concurrent_connections, cur_cons - max_cons);
-	}
+int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
+{
+	return wsconn_add_mode(rcv, sub_protocol, WS_ROLE_SERVER, WS_S_OPEN, NULL);
+}
 
-	lock_release(wsstat_lock);
+int wsconn_add_outgoing(
+		struct receive_info *rcv, unsigned int sub_protocol, str *handshake_key)
+{
+	return wsconn_add_mode(
+			rcv, sub_protocol, WS_ROLE_CLIENT, WS_S_CONNECTING, handshake_key);
+}
 
+int wsconn_mark_open(ws_connection_t *wsc)
+{
+	if(!wsc)
+		return -1;
+
+	WSCONN_LOCK;
+	if(wsc->state != WS_S_REMOVING)
+		wsc->state = WS_S_OPEN;
+	WSCONN_UNLOCK;
+
+	wsconn_open_set_stats(wsc);
 	return 0;
 }
 
@@ -416,11 +466,13 @@ void wsconn_detach_connection(ws_connection_t *wsc)
 	wsconn_listrm(wsconn_id_hash[wsc->id_hash], wsc, id_next, id_prev);
 
 	/* stat */
-	update_stat(ws_current_connections, -1);
-	if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
-		update_stat(ws_sip_current_connections, -1);
-	else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
-		update_stat(ws_msrp_current_connections, -1);
+	if(wsc->stats_enabled) {
+		update_stat(ws_current_connections, -1);
+		if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
+			update_stat(ws_sip_current_connections, -1);
+		else if(wsc->sub_protocol == SUB_PROTOCOL_MSRP)
+			update_stat(ws_msrp_current_connections, -1);
+	}
 }
 
 /* mode controls if lock needs to be aquired */
@@ -737,11 +789,25 @@ static int ws_rpc_add_node(
 	char rplbuf[512];
 
 	if(con) {
-		src_proto = (con->rcv.proto == PROTO_WS) ? "ws" : "wss";
+		if(con->rcv.proto == PROTO_WS)
+			src_proto = "ws";
+		else if(con->rcv.proto == PROTO_WSS)
+			src_proto = "wss";
+		else if(con->rcv.proto == PROTO_TLS)
+			src_proto = "tls";
+		else
+			src_proto = "tcp";
 		memset(src_ip, 0, IP6_MAX_STR_SIZE + 1);
 		ip_addr2sbuf(&con->rcv.src_ip, src_ip, IP6_MAX_STR_SIZE);
 
-		dst_proto = (con->rcv.proto == PROTO_WS) ? "ws" : "wss";
+		if(con->rcv.proto == PROTO_WS)
+			dst_proto = "ws";
+		else if(con->rcv.proto == PROTO_WSS)
+			dst_proto = "wss";
+		else if(con->rcv.proto == PROTO_TLS)
+			dst_proto = "tls";
+		else
+			dst_proto = "tcp";
 		memset(dst_ip, 0, IP6_MAX_STR_SIZE + 1);
 		ip_addr2sbuf(&con->rcv.dst_ip, dst_ip, IP6_MAX_STR_SIZE);
 
