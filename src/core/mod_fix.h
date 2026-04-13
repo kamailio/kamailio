@@ -202,4 +202,7 @@ int fixup_free_isii(void **param, int param_no);
 int fixup_isiii(void **param, int param_no);
 int fixup_free_isiii(void **param, int param_no);
 
+int fixup_sissi(void **param, int param_no);
+int fixup_free_sissi(void **param, int param_no);
+
 #endif
