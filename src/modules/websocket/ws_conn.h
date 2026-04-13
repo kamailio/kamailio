@@ -44,9 +44,16 @@ typedef enum
 	WS_S_CLOSED /* Never used - included for completeness */
 } ws_conn_state_t;
 
+typedef enum
+{
+	WS_ROLE_SERVER = 0,
+	WS_ROLE_CLIENT
+} ws_conn_role_t;
+
 typedef struct ws_connection
 {
 	ws_conn_state_t state;
+	ws_conn_role_t role;
 	int awaiting_pong;
 	ticks_t rmticks;
 
