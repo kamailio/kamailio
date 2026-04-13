@@ -137,11 +137,12 @@ modparam("siprepo", "timer_procs", 2)
 	<title>Functions</title>
 	<section id="siprepo.f.sr_msg_push">
 		<title>
-		<function moreinfo="none">sr_msg_push(msgid)</function>
+		<function moreinfo="none">sr_msg_push(msgid, rmode)</function>
 		</title>
 		<para>
 			Push the message content to hash table and associate it with
 			`msgid`. The Call-Id and msgid are needed to pull the message.
+			The rmode is reserved for repo mode, use 0.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -153,7 +154,8 @@ modparam("siprepo", "timer_procs", 2)
 request_route {
     ...
     $var(msgid) = $sruid;
-    if(sr_msg_push("$var(msgid)")) {
+    if(sr_msg_push("$var(msgid)", "0")) {
+        ...
     }
     ...
 }
@@ -163,10 +165,12 @@ request_route {
 	</section>
 	<section id="siprepo.f.sr_msg_pull">
 		<title>
-		<function moreinfo="none">sr_msg_pull(callid, msgid, rname)</function>
+		<function moreinfo="none">sr_msg_pull(callid, msgid, rname, rmode)</function>
 		</title>
 		<para>
 			Pull the message content and execute the route block 'rname'.
+			If rmode is set to "1", the item of the message is removed from siprepo
+			storage, use "0" to keep it.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -177,7 +181,7 @@ request_route {
 ...
 request_route {
     ...
-    if(sr_msg_pull("$var(callid)", "$var(msgid)", "REPOPULL")) {
+    if(sr_msg_pull("$var(callid)", "$var(msgid)", "REPOPULL", "1")) {
     }
     ...
 }
@@ -187,11 +191,12 @@ request_route {
 	</section>
 	<section id="siprepo.f.sr_msg_async_pull">
 		<title>
-		<function moreinfo="none">sr_msg_async_pull(callid, msgid, gname, rname)</function>
+		<function moreinfo="none">sr_msg_async_pull(callid, msgid, gname, rname, rmode)</function>
 		</title>
 		<para>
 			Pull the message content and execute the route block 'rname' via
-			async group 'gname'.
+			async group 'gname'. If rmode is set to "1", the item of the message
+			is removed from siprepo storage, use "0" to keep it.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -202,7 +207,7 @@ request_route {
 ...
 request_route {
     ...
-    if(sr_msg_async_pull("$var(callid)", "$var(msgid)", "WG01", "REPOPULL")) {
+    if(sr_msg_async_pull("$var(callid)", "$var(msgid)", "WG01", "REPOPULL", "1")) {
     }
     ...
 }
@@ -215,7 +220,7 @@ request_route {
 		<function moreinfo="none">sr_msg_rm(callid, msgid)</function>
 		</title>
 		<para>
-			Remove the message content.
+			Remove the item of the message from the siprepo storage.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
