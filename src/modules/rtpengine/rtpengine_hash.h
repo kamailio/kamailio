@@ -28,6 +28,8 @@ struct rtpengine_hash_table
 };
 
 
+extern struct rtpengine_hash_table *rtpengine_hash_table;
+
 int rtpengine_hash_table_init(int size);
 int rtpengine_hash_table_destroy();
 int rtpengine_hash_table_insert(

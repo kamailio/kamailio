@@ -22,6 +22,7 @@
 
 #include "rtpengine.h"
 #include "rtpengine_dmq.h"
+#include "../../core/timer.h"
 
 static str rtpengine_dmq_content_type = str_init("application/json");
 static str rtpengine_dmq_200_rpl = str_init("OK");
@@ -32,6 +33,7 @@ dmq_api_t rtpengine_dmqb;
 dmq_peer_t *rtpengine_dmq_peer = NULL;
 
 int rtpengine_dmq_request_sync();
+int rtpengine_dmq_send(str *body, dmq_node_t *node);
 
 /**
 * @brief add rtpengine notification peer
@@ -66,7 +68,42 @@ int rtpengine_dmq_init()
 
 int rtpengine_dmq_request_sync()
 {
+	srjson_doc_t jdoc;
+
+	LM_DBG("requesting sync from dmq peers\n");
+
+	srjson_InitDoc(&jdoc, NULL);
+
+	jdoc.root = srjson_CreateObject(&jdoc);
+	if(jdoc.root == NULL) {
+		LM_ERR("cannot create json root\n");
+		goto error;
+	}
+
+	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", RTPENGINE_DMQ_SYNC);
+	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
+	if(jdoc.buf.s == NULL) {
+		LM_ERR("unable to serialize data\n");
+		goto error;
+	}
+	jdoc.buf.len = strlen(jdoc.buf.s);
+	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
+	if(rtpengine_dmq_send(&jdoc.buf, 0) != 0) {
+		goto error;
+	}
+
+	jdoc.free_fn(jdoc.buf.s);
+	jdoc.buf.s = NULL;
+	srjson_DestroyDoc(&jdoc);
 	return 0;
+
+error:
+	if(jdoc.buf.s != NULL) {
+		jdoc.free_fn(jdoc.buf.s);
+		jdoc.buf.s = NULL;
+	}
+	srjson_DestroyDoc(&jdoc);
+	return -1;
 }
 
 int rtpengine_dmq_handle_msg(
@@ -197,6 +234,11 @@ int rtpengine_dmq_handle_msg(
 				goto error;
 			break;
 		case RTPENGINE_DMQ_SYNC:
+            if(rtpengine_dmq_replicate_sync() != 0) {
+                LM_ERR("failed to replicate sync\n");
+                goto error;
+            }
+            break;
 		case RTPENGINE_DMQ_NONE:
 			break;
 	}
@@ -309,4 +351,50 @@ int rtpengine_dmq_replicate_remove(str callid, str viabranch)
 {
 	return rtpengine_dmq_replicate_action(
 			RTPENGINE_DMQ_REMOVE, callid, viabranch, NULL, NULL);
+}
+
+int rtpengine_dmq_replicate_sync()
+{
+	int i;
+	struct rtpengine_hash_entry *entry, **last_next;
+
+	LM_DBG("replicating all hash entries to dmq peers\n");
+
+	if(!rtpengine_hash_table_sanity_checks()) {
+		LM_ERR("sanity checks failed\n");
+		return -1;
+	}
+
+	for(i = 0; i < rtpengine_hash_table->size; i++) {
+		lock_get(&rtpengine_hash_table->row_locks[i]);
+
+		last_next = &rtpengine_hash_table->row_entry_list[i];
+
+		while((entry = *last_next)) {
+			if(entry->tout < get_ticks()) {
+				/* skip expired entries — do not replicate stale data */
+				last_next = &entry->next;
+				continue;
+			}
+
+			LM_DBG("replicating hash entry callid=%.*s viabranch=%.*s\n",
+					entry->callid.len, entry->callid.s,
+					entry->viabranch.len, entry->viabranch.s);
+
+			if(rtpengine_dmq_replicate_insert(
+					   entry->callid, entry->viabranch, entry)
+					!= 0) {
+				LM_ERR("failed to replicate hash entry callid=%.*s "
+					   "viabranch=%.*s\n",
+						entry->callid.len, entry->callid.s,
+						entry->viabranch.len, entry->viabranch.s);
+			}
+
+			last_next = &entry->next;
+		}
+
+		lock_release(&rtpengine_hash_table->row_locks[i]);
+	}
+
+	return 0;
 }
