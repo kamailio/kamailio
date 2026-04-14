@@ -538,6 +538,26 @@ ws_handle_handshake();
 </programlisting>
 		</example>
 	</section>
+	<section id="websocket.f.ws_connect">
+		<title>
+		<function moreinfo="none">ws_connect(host, port, path, subproto, cmode)</function>
+		</title>
+		<para>Connect via websocket to target specified by host and port over tcp
+		(cmode=0) or tls (cmode=1), using the specified the HTTP path and sub-protocol.</para>
+		<para>Return: 1 (true) on success, negative (false) on failure.</para>
+		<example>
+		<title><function>ws_connect</function> usage</title>
+		<programlisting format="linespecific">
+...
+	$fs = "tcp:127.0.0.1:5060";
+	$du = "sip:127.0.0.1:443;transport=ws";
+    if(ws_connect("127.0.0.1", "443", "/service", "sip", "0") {
+        forward();
+    }
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="websocket.f.ws_close">
 		<title>
 		<function moreinfo="none">ws_close([status,
