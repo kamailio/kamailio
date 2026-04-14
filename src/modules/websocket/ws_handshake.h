@@ -59,5 +59,6 @@ int ws_handle_handshake_response(sr_event_param_t *evp);
 
 void ws_rpc_disable(rpc_t *rpc, void *ctx);
 void ws_rpc_enable(rpc_t *rpc, void *ctx);
+void ws_rpc_connect(rpc_t *rpc, void *ctx);
 
 #endif /* _WS_HANDSHAKE_H */

@@ -388,6 +388,11 @@ static const char* ws_rpc_disable_doc[2] = {
 	0
 };
 
+static const char* ws_rpc_connect_doc[2] = {
+	"Initiate an outbound websocket connection: host port path subprotocol tls(0|1)",
+	0
+};
+
 rpc_export_t ws_rpc_cmds[] = {
 	{"ws.dump", ws_rpc_dump, ws_rpc_dump_doc, 0},
 	{"ws.close", ws_rpc_close, ws_rpc_close_doc, 0},
@@ -395,6 +400,7 @@ rpc_export_t ws_rpc_cmds[] = {
 	{"ws.pong", ws_rpc_pong, ws_rpc_pong_doc, 0},
 	{"ws.enable", ws_rpc_enable, ws_rpc_enable_doc, 0},
 	{"ws.disable", ws_rpc_disable, ws_rpc_disable_doc, 0},
+	{"ws.connect", ws_rpc_connect, ws_rpc_connect_doc, 0},
 	{0, 0, 0, 0}
 };
 /* clang-format on */

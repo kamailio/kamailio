@@ -838,3 +838,26 @@ void ws_rpc_enable(rpc_t *rpc, void *ctx)
 	LM_WARN("enabling websockets\n");
 	return;
 }
+
+void ws_rpc_connect(rpc_t *rpc, void *ctx)
+{
+	str host = STR_NULL;
+	str path = STR_NULL;
+	str subproto = STR_NULL;
+	int port = 0;
+	int cmode = 0;
+
+	if(rpc->scan(ctx, "SdSSd", &host, &port, &path, &subproto, &cmode) < 5) {
+		rpc->fault(ctx, 400,
+				"Invalid parameters. Expected host, port, path, subprotocol, "
+				"tls");
+		return;
+	}
+
+	if(ws_connect(NULL, &host, port, &path, &subproto, cmode) < 0) {
+		rpc->fault(ctx, 500, "Failed to initiate outbound websocket handshake");
+		return;
+	}
+
+	rpc->rpl_printf(ctx, "Outbound websocket handshake initiated");
+}
