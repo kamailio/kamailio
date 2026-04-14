@@ -40,7 +40,8 @@ Peter Dunkley
         5. Functions
 
               5.1. ws_handle_handshake()
-              5.2. ws_close([status, reason[, connection_id]])
+              5.2. ws_connect(host, port, path, subproto, cmode)
+              5.3. ws_close([status, reason[, connection_id]])
 
         6. RPC Commands
 
@@ -75,9 +76,10 @@ Peter Dunkley
    1.12. Set timer_interval parameter
    1.13. Set rm_delay_intervalparameter
    1.14. ws_handle_handshake usage
-   1.15. ws_close usage
-   1.16. event_route[websocket:closed] usage
-   1.17. $ws_conid usage
+   1.15. ws_connect usage
+   1.16. ws_close usage
+   1.17. event_route[websocket:closed] usage
+   1.18. $ws_conid usage
 
 Chapter 1. Admin Guide
 
@@ -112,7 +114,8 @@ Chapter 1. Admin Guide
    5. Functions
 
         5.1. ws_handle_handshake()
-        5.2. ws_close([status, reason[, connection_id]])
+        5.2. ws_connect(host, port, path, subproto, cmode)
+        5.3. ws_close([status, reason[, connection_id]])
 
    6. RPC Commands
 
@@ -524,7 +527,8 @@ modparam("websocket", "rm_delay_interval", 2)
 5. Functions
 
    5.1. ws_handle_handshake()
-   5.2. ws_close([status, reason[, connection_id]])
+   5.2. ws_connect(host, port, path, subproto, cmode)
+   5.3. ws_close([status, reason[, connection_id]])
 
 5.1.  ws_handle_handshake()
 
@@ -546,7 +550,24 @@ Note
 ws_handle_handshake();
 ...
 
-5.2.  ws_close([status, reason[, connection_id]])
+5.2.  ws_connect(host, port, path, subproto, cmode)
+
+   Connect via websocket to target specified by host and port over tcp
+   (cmode=0) or tls (cmode=1), using the specified the HTTP path and
+   sub-protocol.
+
+   Return: 1 (true) on success, negative (false) on failure.
+
+   Example 1.15. ws_connect usage
+...
+        $fs = "tcp:127.0.0.1:5060";
+        $du = "sip:127.0.0.1:443;transport=ws";
+    if(ws_connect("127.0.0.1", "443", "/service", "sip", "0") {
+        forward();
+    }
+...
+
+5.3.  ws_close([status, reason[, connection_id]])
 
    This function closes a WebSocket connection.
 
@@ -566,7 +587,7 @@ Note
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. ws_close usage
+   Example 1.16. ws_close usage
 ...
 ws_close(4000, "Because I say so");
 ...
@@ -680,7 +701,7 @@ kamctl rpc ws.enable
    connection closes. The connection may be identified using the $si and
    $sp pseudo-variables.
 
-   Example 1.16. event_route[websocket:closed] usage
+   Example 1.17. event_route[websocket:closed] usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");
@@ -696,7 +717,7 @@ event_route[websocket:closed] {
    Connection id of closed websocket connection. Can only be used in
    websocket:closed event route.
 
-   Example 1.17. $ws_conid usage
+   Example 1.18. $ws_conid usage
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection with id $ws_conid has closed\n");
