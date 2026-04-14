@@ -224,8 +224,18 @@ void tls_free_domain(tls_domain_t *d)
 	if(d->ctx && ksr_tcp_main_threads == 0) {
 		procs_no = get_max_procs();
 		for(i = 0; i < procs_no; i++) {
-			if(d->ctx[i])
+			if(d->ctx[i]) {
+#ifdef KSR_SSL_COMMON
+				if(ksr_tls_jit_key_ex_idx >= 0) {
+					ksr_tls_jit_key_t *jk =
+							(ksr_tls_jit_key_t *)SSL_CTX_get_ex_data(
+									d->ctx[i], ksr_tls_jit_key_ex_idx);
+					if(jk)
+						shm_free(jk);
+				}
+#endif /* KSR_SSL_COMMON */
 				SSL_CTX_free(d->ctx[i]);
+			}
 		}
 		shm_free(d->ctx);
 	}
@@ -1454,12 +1464,35 @@ static int load_private_key(tls_domain_t *d)
 
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 #ifdef KSR_SSL_COMMON
-			// in PROC_INIT skip loading HSM keys due to
-			// fork() issues with PKCS#11 libraries
+			/*
+			 * engine/PKCS#11 keys are not loaded here (PKCS#11 libs are
+			 * not fork()-safe).  In MP-mode (tcp_main_threads == 0) the
+			 * key URI is stored in the SSL_CTX ex_data slot and the
+			 * actual ENGINE/OSSL_STORE call is deferred to the first
+			 * SSL_new() in each worker (JIT).  In MT-mode the key is
+			 * loaded in PROC_TCP_MAIN via tls_fix_engine_keys().
+			 */
 			if(strncmp(d->pkey_file.s, KEY_PREFIX, KEY_PREFIX_LEN) != 0) {
 				ret_pwd = SSL_CTX_use_PrivateKey_file(
 						d->ctx[i], d->pkey_file.s, SSL_FILETYPE_PEM);
+			} else if(ksr_tcp_main_threads == 0
+					  && ksr_tls_jit_key_ex_idx >= 0) {
+				/* MP-mode JIT: store URI in this ctx slot's ex_data. */
+				ksr_tls_jit_key_t *jk = (ksr_tls_jit_key_t *)shm_mallocxz(
+						sizeof(ksr_tls_jit_key_t));
+				if(jk == NULL) {
+					SHM_MEM_ERROR;
+					ret_pwd = 0;
+				} else {
+					snprintf(jk->key_uri, KSR_TLS_JIT_KEY_URI_LEN, "%s",
+							d->pkey_file.s);
+					jk->loaded = 0;
+					SSL_CTX_set_ex_data(d->ctx[i], ksr_tls_jit_key_ex_idx, jk);
+					ret_pwd = 1;
+				}
 			} else {
+				/* MT-mode: loaded later by tls_fix_engine_keys() in
+				 * PROC_TCP_MAIN. */
 				ret_pwd = 1;
 			}
 #else

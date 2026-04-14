@@ -341,6 +341,41 @@ static int tls_complete_init(struct tcp_connection *c)
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	tls_openssl_clear_errors();
+#ifdef KSR_SSL_COMMON
+	/*
+	 * MP-mode JIT engine key loading.
+	 *
+	 * Each worker owns d->ctx[process_no] exclusively.  The key URI was
+	 * stored in the SSL_CTX ex_data slot at tls_fix_domains_cfg() time
+	 * (PROC_INIT) or after a tls.reload.  We load the EVP_PKEY here,
+	 * once per ctx lifetime, so that the SSL* inherits it.  In-flight
+	 * SSL* objects are never touched.
+	 */
+	if(ksr_tcp_main_threads == 0 && ksr_tls_jit_key_ex_idx >= 0) {
+		SSL_CTX *jit_ctx = DOM_CTX(dom);
+		ksr_tls_jit_key_t *jk = (ksr_tls_jit_key_t *)SSL_CTX_get_ex_data(
+				jit_ctx, ksr_tls_jit_key_ex_idx);
+		if(jk != NULL && jk->loaded == 0 && jk->key_uri[0] != '\0') {
+			EVP_PKEY *pkey =
+					tls_engine_private_key(jk->key_uri + KEY_PREFIX_LEN);
+			if(pkey == NULL) {
+				LM_ERR("JIT engine key load failed for URI [%s]\n",
+						jk->key_uri);
+				goto error;
+			}
+			if(SSL_CTX_use_PrivateKey(jit_ctx, pkey) != 1) {
+				LM_ERR("SSL_CTX_use_PrivateKey failed for URI [%s]\n",
+						jk->key_uri);
+				EVP_PKEY_free(pkey);
+				goto error;
+			}
+			EVP_PKEY_free(pkey);
+			jk->loaded = 1;
+			LM_INFO("JIT: rank=%d loaded engine key [%s] into ctx %p\n",
+					process_no, jk->key_uri, (void *)jit_ctx);
+		}
+	}
+#endif /* KSR_SSL_COMMON */
 	data->ssl = SSL_new(DOM_CTX(dom));
 	data->rwbio = tls_BIO_new_mbuf(0, 0);
 	data->cfg = cfg;

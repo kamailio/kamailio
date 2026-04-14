@@ -244,6 +244,10 @@ int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
 int ksr_tls_key_password_mode = 0;
 int *ksr_tls_keylog_mode = NULL;
+#ifdef KSR_SSL_COMMON
+/** SSL_CTX ex_data index for JIT engine key scratch; -1 until mod_init. */
+int ksr_tls_jit_key_ex_idx = -1;
+#endif /* KSR_SSL_COMMON */
 str ksr_tls_keylog_file = STR_NULL;
 str ksr_tls_keylog_peer = STR_NULL;
 
@@ -555,6 +559,18 @@ static int mod_init(void)
 		goto error;
 	}
 
+#ifdef KSR_SSL_COMMON
+	/* Register SSL_CTX ex_data slot for JIT engine key loading (MP-mode).
+	 * Must be done before tls_fix_domains_cfg() creates any SSL_CTX. */
+	ksr_tls_jit_key_ex_idx =
+			SSL_CTX_get_ex_new_index(0, "ksr_jit_key", NULL, NULL, NULL);
+	if(ksr_tls_jit_key_ex_idx < 0) {
+		LM_ERR("failed to allocate SSL_CTX ex_data index for JIT key\n");
+		goto error;
+	}
+	LM_DBG("SSL_CTX JIT key ex_data index = %d\n", ksr_tls_jit_key_ex_idx);
+#endif /* KSR_SSL_COMMON */
+
 	return 0;
 error:
 	tls_h_mod_destroy_f();
@@ -608,9 +624,20 @@ int tls_reload_engine_keys(void)
 #endif /* KSR_SSL_PROVIDER */
 	if(tls_engine_init() < 0)
 		return -1;
-	if(tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults) < 0)
-		return -1;
-	LM_INFO("HSM/engine keys reloaded\n");
+	if(ksr_tcp_main_threads > 0) {
+		/* MT-mode: PROC_TCP_MAIN owns the single SSL_CTX — load now. */
+		if(tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults)
+				< 0)
+			return -1;
+		LM_INFO("HSM/engine keys reloaded\n");
+	} else {
+		/* MP-mode: tls_fix_domains_cfg() already stored key URIs in
+		 * each ctx[N] ex_data slot; workers JIT load at next SSL_new().
+		 * tls_engine_init() above keeps the calling process's ENGINE
+		 * handle current in case it re-enters this path. */
+		LM_INFO("MP-mode: engine key URIs staged in ctx ex_data;"
+				" workers will JIT load at next SSL_new()\n");
+	}
 	return 0;
 }
 #endif /* KSR_SSL_COMMON */
@@ -763,10 +790,21 @@ static int mod_child(int rank)
 #endif /* KSR_SSL_PROVIDER */
 		if(tls_engine_init() < 0)
 			return -1;
-		if(tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults)
-				< 0)
-			return -1;
-		LM_INFO("OpenSSL loaded private keys in child: %d\n", rank);
+		if(ksr_tcp_main_threads > 0) {
+			/* MT-mode: PROC_TCP_MAIN owns the single SSL_CTX — load now. */
+			if(tls_fix_engine_keys(
+					   *tls_domains_cfg, &srv_defaults, &cli_defaults)
+					< 0)
+				return -1;
+			LM_INFO("OpenSSL loaded private keys in child: %d\n", rank);
+		} else {
+			/* MP-mode: key URIs already stored in each ctx[N] ex_data
+			 * slot by load_private_key() at tls_fix_domains_cfg() time.
+			 * Each worker loads its own key JIT at the first SSL_new(). */
+			LM_INFO("MP-mode: engine key loading deferred (JIT) for"
+					" rank=%d\n",
+					rank);
+		}
 	}
 #endif /* KSR_SSL_COMMON */
 	return 0;

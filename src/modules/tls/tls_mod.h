@@ -45,6 +45,25 @@ extern int sr_tls_renegotiation;
 
 #ifdef KSR_SSL_COMMON
 int tls_reload_engine_keys(void);
+
+/** SSL_CTX ex_data index registered once in mod_init() for JIT key scratch. */
+extern int ksr_tls_jit_key_ex_idx;
+
+#define KSR_TLS_JIT_KEY_URI_LEN 512
+/**
+ * Per-SSL_CTX scratch space for JIT engine/PKCS#11 key loading (MP-mode).
+ * Allocated in shm; attached to ctx[N] via SSL_CTX ex_data.
+ * Worker N owns ctx[N] exclusively — no locking is needed on 'loaded'.
+ */
+typedef struct ksr_tls_jit_key
+{
+	char key_uri[KSR_TLS_JIT_KEY_URI_LEN]; /**< pkey_file.s incl. KEY_PREFIX */
+	int loaded; /**< 1 = key installed in this ctx; 0 = pending JIT load */
+} ksr_tls_jit_key_t;
+
+/** Defined in tls_mod.c; loads an engine/PKCS#11 private key by URI. */
+EVP_PKEY *tls_engine_private_key(const char *key_id);
+
 #endif /* KSR_SSL_COMMON */
 
 #endif /* _TLS_MOD_H */
