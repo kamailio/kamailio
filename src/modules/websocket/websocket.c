@@ -97,6 +97,9 @@ static cmd_export_t cmds[] = {
 	{ "ws_handle_handshake", (cmd_function)w_ws_handle_handshake,
 	  0, 0, 0,
 	  ANY_ROUTE },
+	{ "ws_connect", (cmd_function)w_ws_connect,
+	  5, fixup_sissi, fixup_free_sissi,
+	  ANY_ROUTE },
 
 	{ 0, 0, 0, 0, 0, 0 }
 };
@@ -193,6 +196,12 @@ static int mod_init(void)
 
 	if(sr_event_register_cb(SREV_TCP_WS_FRAME_OUT, ws_frame_transmit) != 0) {
 		LM_ERR("registering WebSocket transmit call-back\n");
+		goto error;
+	}
+
+	if(sr_event_register_cb(SREV_TCP_WS_HANDSHAKE, ws_handle_handshake_response)
+			!= 0) {
+		LM_ERR("registering WebSocket handshake call-back\n");
 		goto error;
 	}
 
@@ -426,6 +435,11 @@ static sr_kemi_t sr_kemi_websocket_exports[] = {
 		SR_KEMIP_INT, ws_close3,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("websocket"), str_init("connect"),
+		SR_KEMIP_INT, ws_connect,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

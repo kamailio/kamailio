@@ -30,6 +30,7 @@
 #define _WS_HANDSHAKE_H
 
 #include "../../core/sr_module.h"
+#include "../../core/events.h"
 #include "../../core/rpc.h"
 #include "../../core/parser/msg_parser.h"
 #include "websocket.h"
@@ -50,6 +51,11 @@ extern stat_var *ws_msrp_successful_handshakes;
 
 int ws_handle_handshake(struct sip_msg *msg);
 int w_ws_handle_handshake(sip_msg_t *msg, char *p1, char *p2);
+int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
+		str *sub_protocol, int cmode);
+int w_ws_connect(sip_msg_t *msg, char *phost, char *pport, char *ppath,
+		char *psubproto, char *pcmode);
+int ws_handle_handshake_response(sr_event_param_t *evp);
 
 void ws_rpc_disable(rpc_t *rpc, void *ctx);
 void ws_rpc_enable(rpc_t *rpc, void *ctx);
