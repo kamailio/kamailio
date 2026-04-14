@@ -544,6 +544,30 @@ ws_handle_handshake();
 		</title>
 		<para>Connect via websocket to target specified by host and port over tcp
 		(cmode=0) or tls (cmode=1), using the specified the HTTP path and sub-protocol.</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>host - remote WebSocket server host name or IP
+				address.</para>
+			</listitem>
+			<listitem>
+				<para>port - remote WebSocket server port.</para>
+			</listitem>
+			<listitem>
+				<para>path - HTTP request path used for the WebSocket
+				upgrade request.</para>
+			</listitem>
+			<listitem>
+				<para>subproto - WebSocket sub-protocol to request. At
+				present, the supported values are
+				<quote>sip</quote> and <quote>msrp</quote>.</para>
+			</listitem>
+			<listitem>
+				<para>cmode - set to <quote>1</quote> for a secure outbound
+				connection over TLS and <quote>0</quote> for a plain TCP
+				connection.</para>
+			</listitem>
+		</itemizedlist>
 		<para>Return: 1 (true) on success, negative (false) on failure.</para>
 		<example>
 		<title><function>ws_connect</function> usage</title>
