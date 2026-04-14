@@ -679,6 +679,43 @@ ws_close(4000, "Because I say so");
 </programlisting>
 	</section>
 
+	<section id="websocket.rpc.ws.connect">
+		<title><function moreinfo="none">ws.connect</function></title>
+		<para>Initiates an outbound WebSocket client connection and starts
+		the HTTP upgrade handshake.</para>
+		<para>Name: <emphasis>ws.connect</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>host - remote WebSocket server host name or IP
+				address.</para>
+			</listitem>
+			<listitem>
+				<para>port - remote WebSocket server port.</para>
+			</listitem>
+			<listitem>
+				<para>path - HTTP request path used for the WebSocket
+				upgrade request.</para>
+			</listitem>
+			<listitem>
+				<para>subprotocol - WebSocket sub-protocol to request. At
+				present, the supported values are
+				<quote>sip</quote> and <quote>msrp</quote>.</para>
+			</listitem>
+			<listitem>
+				<para>cmode - set to <quote>1</quote> for a secure outbound
+				connection over TLS and <quote>0</quote> for a plain TCP
+				connection.</para>
+			</listitem>
+		</itemizedlist>
+		<para>RPC Command Usage:</para>
+		<programlisting  format="linespecific">
+...
+&kamctl; rpc ws.connect example.com 443 /ws sip 1
+...
+</programlisting>
+	</section>
+
 	<section id="websocket.rpc.ws.disable">
 		<title><function moreinfo="none">ws.disable</function></title>
 		<para>Disables WebSockets preventing new connections from
