@@ -49,8 +49,9 @@ Peter Dunkley
               6.2. ws.close
               6.3. ws.ping
               6.4. ws.pong
-              6.5. ws.disable
-              6.6. ws.enable
+              6.5. ws.connect
+              6.6. ws.disable
+              6.7. ws.enable
 
         7. Event routes
 
@@ -123,8 +124,9 @@ Chapter 1. Admin Guide
         6.2. ws.close
         6.3. ws.ping
         6.4. ws.pong
-        6.5. ws.disable
-        6.6. ws.enable
+        6.5. ws.connect
+        6.6. ws.disable
+        6.7. ws.enable
 
    7. Event routes
 
@@ -598,8 +600,9 @@ ws_close(4000, "Because I say so");
    6.2. ws.close
    6.3. ws.ping
    6.4. ws.pong
-   6.5. ws.disable
-   6.6. ws.enable
+   6.5. ws.connect
+   6.6. ws.disable
+   6.7. ws.enable
 
 6.1. ws.dump
 
@@ -661,7 +664,28 @@ kamctl rpc ws.ping 1
 kamctl rpc ws.pong 1
 ...
 
-6.5. ws.disable
+6.5. ws.connect
+
+   Initiates an outbound WebSocket client connection and starts the HTTP
+   upgrade handshake.
+
+   Name: ws.connect
+
+   Parameters:
+     * host - remote WebSocket server host name or IP address.
+     * port - remote WebSocket server port.
+     * path - HTTP request path used for the WebSocket upgrade request.
+     * subprotocol - WebSocket sub-protocol to request. At present, the
+       supported values are “sip” and “msrp”.
+     * cmode - set to “1” for a secure outbound connection over TLS and
+       “0” for a plain TCP connection.
+
+   RPC Command Usage:
+...
+kamctl rpc ws.connect example.com 443 /ws sip 1
+...
+
+6.6. ws.disable
 
    Disables WebSockets preventing new connections from being established.
 
@@ -674,7 +698,7 @@ kamctl rpc ws.pong 1
 kamctl rpc ws.disable
 ...
 
-6.6. ws.enable
+6.7. ws.enable
 
    Enables WebSockets allowing new connections to be established.
 
