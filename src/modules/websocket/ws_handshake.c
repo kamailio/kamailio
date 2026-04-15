@@ -168,6 +168,123 @@ static int ws_parse_sub_protocol(str *sub_protocol, unsigned int *sub_proto)
 	return -1;
 }
 
+int ws_parse_url(str *wsurl, ws_address_t *waddr)
+{
+	char *p;
+	char *end;
+	char *hstart;
+	char *hend;
+	char *ppos;
+	int port_no = 0;
+
+	if(wsurl == NULL || wsurl->s == NULL || wsurl->len <= 0 || waddr == NULL) {
+		LM_ERR("invalid parameters for websocket url parsing\n");
+		return -1;
+	}
+
+	memset(waddr, 0, sizeof(*waddr));
+
+	p = wsurl->s;
+	end = wsurl->s + wsurl->len;
+
+	if(wsurl->len >= 5 && strncasecmp(p, "ws://", 5) == 0) {
+		waddr->proto.s = p;
+		waddr->proto.len = 2;
+		waddr->proto_no = PROTO_WS;
+		p += 5;
+	} else if(wsurl->len >= 6 && strncasecmp(p, "wss://", 6) == 0) {
+		waddr->proto.s = p;
+		waddr->proto.len = 3;
+		waddr->proto_no = PROTO_WSS;
+		p += 6;
+	} else {
+		LM_ERR("websocket url must start with ws:// or wss://\n");
+		return -1;
+	}
+
+	if(p >= end) {
+		LM_ERR("websocket url missing host\n");
+		return -1;
+	}
+
+	hstart = p;
+	ppos = memchr(p, '/', end - p);
+	hend = (ppos != NULL) ? ppos : end;
+	if(hstart >= hend) {
+		LM_ERR("websocket url missing host\n");
+		return -1;
+	}
+
+	if(*hstart == '[') {
+		char *brend;
+
+		brend = memchr(hstart + 1, ']', hend - hstart - 1);
+		if(brend == NULL) {
+			LM_ERR("invalid websocket url: unterminated IPv6 host\n");
+			return -1;
+		}
+		waddr->host.s = hstart + 1;
+		waddr->host.len = brend - (hstart + 1);
+		if(brend + 1 < hend) {
+			if(*(brend + 1) != ':') {
+				LM_ERR("invalid websocket url after IPv6 host\n");
+				return -1;
+			}
+			waddr->port.s = brend + 2;
+			waddr->port.len = hend - waddr->port.s;
+			if(waddr->port.len <= 0) {
+				LM_ERR("websocket url has empty port\n");
+				return -1;
+			}
+		}
+	} else {
+		char *colon;
+
+		colon = memchr(hstart, ':', hend - hstart);
+		if(colon != NULL) {
+			waddr->host.s = hstart;
+			waddr->host.len = colon - hstart;
+			waddr->port.s = colon + 1;
+			waddr->port.len = hend - waddr->port.s;
+			if(waddr->port.len <= 0) {
+				LM_ERR("websocket url has empty port\n");
+				return -1;
+			}
+		} else {
+			waddr->host.s = hstart;
+			waddr->host.len = hend - hstart;
+		}
+	}
+
+	if(waddr->host.len <= 0) {
+		LM_ERR("websocket url has empty host\n");
+		return -1;
+	}
+
+	if(waddr->port.len > 0) {
+		if(str2sint(&waddr->port, &port_no) < 0 || port_no <= 0
+				|| port_no > 65535) {
+			LM_ERR("websocket url has invalid port\n");
+			return -1;
+		}
+		waddr->port_no = port_no;
+	} else if(waddr->proto_no == PROTO_WS) {
+		waddr->port_no = 80;
+	} else {
+		waddr->port_no = 443;
+	}
+
+	if(ppos != NULL) {
+		waddr->path.s = ppos;
+		waddr->path.len = end - ppos;
+	} else {
+		waddr->path.s = end;
+		waddr->path.len = 0;
+	}
+
+	return 0;
+}
+
 static str *ws_sub_protocol_name(unsigned int sub_proto)
 {
 	if(sub_proto == SUB_PROTOCOL_SIP)

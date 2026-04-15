@@ -49,6 +49,17 @@ extern stat_var *ws_successful_handshakes;
 extern stat_var *ws_sip_successful_handshakes;
 extern stat_var *ws_msrp_successful_handshakes;
 
+typedef struct ws_address
+{
+	str proto;
+	int proto_no;
+	str host;
+	str port;
+	int port_no;
+	str path;
+} ws_address_t;
+
+int ws_parse_url(str *wsurl, ws_address_t *waddr);
 int ws_handle_handshake(struct sip_msg *msg);
 int w_ws_handle_handshake(sip_msg_t *msg, char *p1, char *p2);
 int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
