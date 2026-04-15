@@ -29,6 +29,7 @@
 
 #include "../../core/mem/shm_mem.h"
 #include "../../core/dprint.h"
+#include "wolfssl_pkcs11.h"
 
 #define PKCS11_MAX_DEVS 8
 
@@ -60,12 +61,6 @@ typedef struct
 	pkcs11_module_t *dev;
 	int used;
 } pkcs11_token_t;
-
-typedef struct
-{
-	int token_id;
-	char private_key[256];
-} pkcs11_context_t;
 
 /* Each hardware key 0-3 will be backed
  * by a single Pkcs11Token with same devId.
@@ -290,14 +285,24 @@ int tls_pkcs11_open_token(WOLFSSL *ssl)
 	if(ctxd == NULL)
 		return -1;
 
-	int idx = ctxd->token_id;
+	int idx;
+	if(ksr_tcp_main_threads > 0) {
+		idx = ctxd->token_id;
+	} else {
+		idx = ctxd->index[process_no];
+		if(idx < 0) {
+			tls_pkcs11_set_key(ctx, ctxd->config_key, 0);
+		}
+		idx = ctxd->index[process_no];
+	}
+
 
 	wolfSSL_use_PrivateKey_Label(ssl, ctxd->private_key, idx);
 
 	return 0;
 }
 
-int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key)
+int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 {
 	char uri[1024];
 	char token_name[256] = "";
@@ -439,29 +444,25 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key)
 		ctxd = wolfSSL_CTX_get_ex_data(ctx, 0);
 
 		if(ctxd == NULL) {
-			ctxd = (pkcs11_context_t *)malloc(sizeof(pkcs11_context_t));
-			if(ctxd == NULL) {
-				LM_ERR("tls_pkcs11_set_key: no more pkg memory for ctx "
-					   "metadata\n");
-				return -1;
-			}
-			memset(ctxd, 0, sizeof(*ctxd));
-			wolfSSL_CTX_set_ex_data(ctx, 0, ctxd);
+			LM_ERR("tls_pkcs11_set_key: ex data was not allocated!\n");
+			return -1;
 		}
 		ctxd->token_id = cur_token->token_id;
 		strncpy(ctxd->private_key, obj_name, sizeof(ctxd->private_key) - 1);
 		ctxd->private_key[sizeof(ctxd->private_key) - 1] = '\0';
-	} else if(ksr_tcp_main_threads == 0 && wolfssl_child_rank == 1) {
-		ctxd = (pkcs11_context_t *)shm_malloc(sizeof(pkcs11_context_t));
-		memset(ctxd, 0, sizeof(*ctxd));
-		wolfSSL_CTX_set_ex_data(ctx, 0, ctxd);
-		ctxd->token_id = cur_token->token_id;
+	} else if(ksr_tcp_main_threads == 0) {
+		ctxd = wolfSSL_CTX_get_ex_data(ctx, 0);
+
+		if(ctxd == NULL) {
+			LM_ERR("tls_pkcs11_set_key: ex data was not allocated!\n");
+			return -1;
+		}
+		ctxd->index[process_no] = cur_token->token_id;
 		strncpy(ctxd->private_key, obj_name, sizeof(ctxd->private_key) - 1);
 		ctxd->private_key[sizeof(ctxd->private_key) - 1] = '\0';
 
-
-		LM_INFO("[%d] Storing WOLFSSL_CTX*[%p] key data: devId[%d]\n",
-				wolfssl_child_rank, ctx, cur_token->token_id);
+		LM_INFO("[%d] Storing WOLFSSL_CTX*[%p] key data: devId[%d][%d]\n",
+				wolfssl_child_rank, ctx, cur_token->token_id, process_no);
 	}
 
 	if(wc_CryptoCb_RegisterDevice(devId, my_FilterPk, token) != 0) {
@@ -478,6 +479,9 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key)
 	*/
 
 	/* Bind the crypto device to this SSL context */
+	if(!check_key) {
+		return 0;
+	}
 	WOLFSSL *ssl;
 	ssl = wolfSSL_new(ctx);
 	if(wolfSSL_SetDevId(ssl, devId) != WOLFSSL_SUCCESS) {

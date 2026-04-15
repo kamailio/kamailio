@@ -132,6 +132,7 @@ int tls_run_event_routes(struct tcp_connection *c);
 extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
+int tls_pkcs11_open_token(WOLFSSL *);
 
 static void tls_init_ssl_cache(struct tls_extra_data *tls_c)
 {
@@ -369,6 +370,9 @@ static int tls_complete_init(struct tcp_connection *c)
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	data->ssl = wolfSSL_new(dom->ctx[0]);
+
+	/* Load PKCS#11 keys */
+	tls_pkcs11_open_token(data->ssl);
 	wolfSSL_BIO_new_bio_pair(
 			&internal_bio, TLS_WR_MBUF_SZ, &rw_bio, TLS_RD_MBUF_SZ);
 	data->rwbio = rw_bio;
@@ -494,8 +498,6 @@ static void tls_dump_cert_info(char *s, WOLFSSL_X509 *cert)
  *           returned and error==SSL_ERROR_NONE).
  *
  */
-
-extern int tls_pkcs11_open_token(WOLFSSL *);
 int tls_accept(struct tcp_connection *c, int *error)
 {
 	int ret;
@@ -512,9 +514,6 @@ int tls_accept(struct tcp_connection *c, int *error)
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
 		goto err;
 	}
-
-
-	tls_pkcs11_open_token(ssl);
 
 	ret = wolfSSL_accept(ssl);
 	tls_init_ssl_cache(tls_c);
@@ -581,9 +580,6 @@ int tls_connect(struct tcp_connection *c, int *error)
 		BUG("Invalid connection state %d (bug in TLS code)\n", tls_c->state);
 		goto err;
 	}
-
-	/* load external keys if necessary for mTLS */
-	tls_pkcs11_open_token(ssl);
 
 	ret = wolfSSL_connect(ssl);
 	tls_init_ssl_cache(tls_c);

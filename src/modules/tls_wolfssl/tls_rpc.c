@@ -82,19 +82,11 @@ static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
 	*tls_domains_cfg = cfg;
 	lock_release(tls_domains_cfg_lock);
 
-#ifdef KSR_SSL_COMMON
-	/* reload HSM/engine keys into the new SSL_CTX.
-	 * tls_fix_domains_cfg only handles soft keys — without this,
-	 * tls.reload silently leaves the new ctx with no private key,
-	 * breaking all subsequent TLS handshakes until restart.
-	 * Fixes the pre-existing bug for both tcp_main_threads==0 and >0. */
-	if(tls_reload_engine_keys() < 0) {
-		snprintf(errmsg, errmsg_size,
-				"TLS config reloaded but HSM/engine key reload failed"
-				" (consult server log)");
+	if(tls_load_pkcs11_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults)
+			< 0) {
+		LM_ERR("failed to load PKCS#11 keys in child process(es)\n");
 		return -1;
 	}
-#endif /* KSR_SSL_COMMON */
 
 	LM_INFO("TLS configuration reloaded\n");
 	return 0;

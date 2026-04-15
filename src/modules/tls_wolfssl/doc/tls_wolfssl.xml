@@ -133,12 +133,10 @@ cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
                         The key naming convention follows <ulink url="https://www.rfc-editor.org/rfc/rfc7512.html">RFC 7512 (PKCS#11 URI)</ulink>:
                         <programlisting>
 ...
-# - in tls.cfg these pseudo-file names to refer to PKCS#11 keys
+# - in tls.cfg these URIs to refer to PKCS#11 keys
 # - this format is a subset of RFC 7512
-# The prefix /uri: is for tls_wolfssl to recognise PKCS#11 - it
-# is stripped off before parsing the key
 # 
-private_key = /uri:pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib64/libsoftokn3.so&amp;pin-value=12345678[pin-source=....]
+private_key = pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib64/libsoftokn3.so&amp;pin-value=12345678[pin-source=....]
 ...
                         </programlisting>
 
