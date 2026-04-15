@@ -110,11 +110,8 @@ static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
 
 #ifdef KSR_SSL_COMMON
 	/* reload HSM/engine keys into the new SSL_CTX.
-	 * tls_fix_domains_cfg only handles soft keys — without this,
-	 * tls.reload silently leaves the new ctx with no private key,
-	 * breaking all subsequent TLS handshakes until restart.
-	 * Fixes the pre-existing bug for both tcp_main_threads==0 and >0. */
-	if(tls_reload_engine_keys() < 0) {
+	 */
+	if(ksr_tcp_main_threads > 0 && tls_reload_engine_keys() < 0) {
 		snprintf(errmsg, errmsg_size,
 				"TLS config reloaded but HSM/engine key reload failed"
 				" (consult server log)");

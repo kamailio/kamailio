@@ -801,8 +801,8 @@ static int mod_child(int rank)
 			/* MP-mode: key URIs already stored in each ctx[N] ex_data
 			 * slot by load_private_key() at tls_fix_domains_cfg() time.
 			 * Each worker loads its own key JIT at the first SSL_new(). */
-			LM_INFO("MP-mode: engine key loading deferred (JIT) for"
-					" rank=%d\n",
+			LM_DBG("MP-mode: engine key loading deferred (JIT) for"
+				   " rank=%d\n",
 					rank);
 		}
 	}
@@ -1028,6 +1028,12 @@ static int tls_engine_init()
 	STACK_OF(CONF_VALUE) * stack;
 	CONF_VALUE *confval;
 	ENGINE *e;
+
+	if(ksr_tls_engine) {
+		LM_INFO("OpenSSL engine is already initialized, skipping...\n");
+		/* this is a reload */
+		return 0;
+	}
 
 	LM_INFO("With OpenSSL engine support %*s\n",
 			tls_engine_settings.engine_config.len,
