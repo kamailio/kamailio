@@ -558,6 +558,15 @@ ws_handle_handshake();
    (cmode=0) or tls (cmode=1), using the specified the HTTP path and
    sub-protocol.
 
+   Parameters:
+     * host - remote WebSocket server host name or IP address.
+     * port - remote WebSocket server port.
+     * path - HTTP request path used for the WebSocket upgrade request.
+     * subproto - WebSocket sub-protocol to request. At present, the
+       supported values are “sip” and “msrp”.
+     * cmode - set to “1” for a secure outbound connection over TLS and
+       “0” for a plain TCP connection.
+
    Return: 1 (true) on success, negative (false) on failure.
 
    Example 1.15. ws_connect usage
