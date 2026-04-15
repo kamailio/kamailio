@@ -173,7 +173,7 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 	HEP3_PACK_CHUNK_DATA(0, 0x000f, body->s, body->len);
 	HEP3_PACK_FINALIZE(buffer, &len);
 
-	if(!dst2) {
+	if(!dst2 && trace_dup_uri) {
 		init_dest_info(&dst);
 		dst.proto = trace_dup_uri->proto;
 		p = mk_proxy(&trace_dup_uri->host, trace_dup_uri->port_no, dst.proto);
@@ -186,8 +186,11 @@ int trace_send_hep3_duplicate(str *body, str *from, str *to,
 				&dst.to, &p->host, p->addr_idx, (p->port) ? p->port : SIP_PORT);
 		LM_DBG("setting up the socket_info\n");
 		dst_fin = &dst;
-	} else {
+	} else if(dst2) {
 		dst_fin = dst2;
+	} else {
+		LM_ERR("Don't have anywhere to send the trace to\n");
+		goto error;
 	}
 
 	si = NULL;
