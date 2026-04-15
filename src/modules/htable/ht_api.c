@@ -1148,14 +1148,16 @@ void ht_timer(unsigned int ticks, void *param)
 					if(it->expire != 0 && it->expire < now) {
 						/* expired */
 						ht_handle_expired_record(ht, it);
-						if(it->prev == NULL)
-							ht->entries[i].first = it->next;
-						else
-							it->prev->next = it->next;
-						if(it->next)
-							it->next->prev = it->prev;
-						ht->entries[i].esize--;
-						ht_cell_free(it);
+						if(it->expire < now) {
+							if(it->prev == NULL)
+								ht->entries[i].first = it->next;
+							else
+								it->prev->next = it->next;
+							if(it->next)
+								it->next->prev = it->prev;
+							ht->entries[i].esize--;
+							ht_cell_free(it);
+						}
 					}
 					it = it0;
 				}
