@@ -258,12 +258,6 @@ int pv_get_ruri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	if(msg->first_line.type == SIP_REPLY) /* REPLY doesn't have a ruri */
 		return pv_get_null(msg, param, res);
 
-	if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
-			&& parse_sip_msg_uri(msg) < 0) {
-		LM_ERR("failed to parse the R-URI\n");
-		return pv_get_null(msg, param, res);
-	}
-
 	if(msg->new_uri.s != NULL)
 		return pv_get_strval(msg, param, res, &msg->new_uri);
 	return pv_get_strval(msg, param, res, &msg->first_line.u.request.uri);
@@ -277,12 +271,6 @@ int pv_get_ouri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	if(msg->first_line.type == SIP_REPLY) /* REPLY doesn't have a ruri */
 		return pv_get_null(msg, param, res);
 
-	if(msg->parsed_orig_ruri_ok == 0
-			/* orig R-URI not parsed*/
-			&& parse_orig_ruri(msg) < 0) {
-		LM_ERR("failed to parse the R-URI\n");
-		return pv_get_null(msg, param, res);
-	}
 	return pv_get_strval(msg, param, res, &msg->first_line.u.request.uri);
 }
 
