@@ -44,7 +44,7 @@ if [ -z "$DBROOTUSER" ]; then
 	fi
 fi
 if [ -z "$DBCLI" ] ; then
-	DBCMD="psql"
+	DBCLI="psql"
 fi
 
 if [ -z "$DBROOTPORT" ] ; then
