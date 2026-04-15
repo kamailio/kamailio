@@ -810,6 +810,19 @@ done:
 	return ret;
 }
 
+int ws_connect_url(sip_msg_t *msg, str *wsurl, str *sub_protocol)
+{
+	ws_address_t waddr;
+
+	if(ws_parse_url(wsurl, &waddr) < 0) {
+		LM_ERR("failed to parse websocket url: %.*s\n", wsurl->len, wsurl->s);
+		return -1;
+	}
+
+	return ws_connect(msg, &waddr.host, waddr.port_no, &waddr.path,
+			sub_protocol, (waddr.proto_no == PROTO_WSS) ? 1 : 0);
+}
+
 int w_ws_connect(sip_msg_t *msg, char *phost, char *pport, char *ppath,
 		char *psubproto, char *pcmode)
 {
@@ -831,6 +844,19 @@ int w_ws_connect(sip_msg_t *msg, char *phost, char *pport, char *ppath,
 		return -1;
 
 	return ws_connect(msg, &host, port, &path, &subproto, cmode);
+}
+
+int w_ws_connect_url(sip_msg_t *msg, char *purl, char *psubproto)
+{
+	str wsurl = STR_NULL;
+	str subproto = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_p)purl, &wsurl) < 0)
+		return -1;
+	if(fixup_get_svalue(msg, (gparam_p)psubproto, &subproto) < 0)
+		return -1;
+
+	return ws_connect_url(msg, &wsurl, &subproto);
 }
 
 int ws_handle_handshake_response(sr_event_param_t *evp)

@@ -100,6 +100,9 @@ static cmd_export_t cmds[] = {
 	{ "ws_connect", (cmd_function)w_ws_connect,
 	  5, fixup_sissi, fixup_free_sissi,
 	  ANY_ROUTE },
+	{ "ws_connect_url", (cmd_function)w_ws_connect_url,
+	  2, fixup_spve_spve, fixup_free_spve_spve,
+	  ANY_ROUTE },
 
 	{ 0, 0, 0, 0, 0, 0 }
 };
