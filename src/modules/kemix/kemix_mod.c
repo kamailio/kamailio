@@ -82,13 +82,6 @@ static sr_kemi_xval_t *ki_kx_get_ruri(sip_msg_t *msg)
 		return &_sr_kemi_kx_xval;
 	}
 
-	if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
-			&& parse_sip_msg_uri(msg) < 0) {
-		LM_ERR("failed to parse the R-URI\n");
-		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
-		return &_sr_kemi_kx_xval;
-	}
-
 	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
 	if(msg->new_uri.s != NULL) {
 		_sr_kemi_kx_xval.v.s = msg->new_uri;
@@ -112,13 +105,6 @@ static sr_kemi_xval_t *ki_kx_get_ouri(sip_msg_t *msg)
 
 	if(msg->first_line.type == SIP_REPLY) {
 		/* REPLY doesn't have a ruri */
-		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
-		return &_sr_kemi_kx_xval;
-	}
-
-	if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
-			&& parse_sip_msg_uri(msg) < 0) {
-		LM_ERR("failed to parse the R-URI\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
