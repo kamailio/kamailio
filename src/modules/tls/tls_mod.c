@@ -635,8 +635,8 @@ int tls_reload_engine_keys(void)
 		 * each ctx[N] ex_data slot; workers JIT load at next SSL_new().
 		 * tls_engine_init() above keeps the calling process's ENGINE
 		 * handle current in case it re-enters this path. */
-		LM_INFO("MP-mode: engine key URIs staged in ctx ex_data;"
-				" workers will JIT load at next SSL_new()\n");
+		LM_DBG("MP-mode: engine key URIs staged in ctx ex_data;"
+			   " workers will JIT load at next SSL_new()\n");
 	}
 	return 0;
 }
