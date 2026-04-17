@@ -53,6 +53,7 @@ Federico Cabiddu
         4. Functions
 
               4.1. http_async_query(url, route_name)
+              4.2. http_async_send(url, route_name)
 
         5. Pseudo Variables
         6. Statistics
@@ -82,8 +83,9 @@ Federico Cabiddu
    1.14. Set tcp_ka_idle parameter
    1.15. Set tcp_ka_interval parameter
    1.16. http_async_query() usage
-   1.17. $http_req_id variable usage
-   1.18. $http_req(key) variable usage
+   1.17. http_async_send() usage
+   1.18. $http_req_id variable usage
+   1.19. $http_req(key) variable usage
 
 Chapter 1. Admin Guide
 
@@ -116,6 +118,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. http_async_query(url, route_name)
+        4.2. http_async_send(url, route_name)
 
    5. Pseudo Variables
    6. Statistics
@@ -364,6 +367,7 @@ modparam("http_async_client", "tcp_ka_interval", 120)
 4. Functions
 
    4.1. http_async_query(url, route_name)
+   4.2. http_async_send(url, route_name)
 
 4.1.  http_async_query(url, route_name)
 
@@ -410,6 +414,44 @@ route[HTTP_REPLY] {
 }
 ...
 
+4.2.  http_async_send(url, route_name)
+
+   Sends HTTP(S) request asynchronously to the URL given in “url”
+   parameter, which is a string that may contain pseudo variables.
+
+   Parameter “route_name” defines the route to be executed upon reception
+   of HTTP reply, on error or on timeout. Unlike http_async_query(), this
+   function never suspends the current SIP transaction. The routing script
+   execution continues immediately after the function call and, when the
+   HTTP response is received, “route_name” is executed using an internal
+   faked SIP request message.
+
+   Return value: 1 (continue script execution) on success, -1 on error.
+
+   This function can be used from ANY_ROUTE.
+
+   This method is executed asynchronously by the module worker processes.
+   The HTTP return code, body and error are returned in the
+   module-specific $http_* PVs (see below) and are available inside the
+   callback route.
+
+   Example 1.17. http_async_send() usage
+...
+http_async_send("https://example.com/test.php?r_uri=$rU", "HTTP_REPLY");
+
+xinfo("HTTP query queued, SIP routing continues\n");
+
+route[HTTP_REPLY] {
+    xinfo("async callback for query $http_req_id\n");
+    if ($http_ok) {
+        xinfo("route[HTTP_REPLY]: status $http_rs\n");
+        xinfo("route[HTTP_REPLY]: body   $http_rb\n");
+    } else {
+        xinfo("route[HTTP_REPLY]: error  $http_err\n");
+    }
+}
+...
+
 5. Pseudo Variables
 
    The $http_req_id read-only variable can be used in REQUEST_ROUTE to
@@ -417,7 +459,7 @@ route[HTTP_REPLY] {
    HTTP callback route to retrieve the id of the query the reply belongs
    to. Useful mainly in non-transactional context.
 
-   Example 1.17. $http_req_id variable usage
+   Example 1.18. $http_req_id variable usage
 ...
 $http_req(suspend) = 0;
 
@@ -471,7 +513,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
        follow HTTP 3xx redirects. Defaults to curl_follow_redirect global
        parameter.
 
-   Example 1.18. $http_req(key) variable usage
+   Example 1.19. $http_req(key) variable usage
 ...
 $http_req(all) = $null;                    # reset the parameters
 $http_req(timeout) = 100;                  # 100 ms
