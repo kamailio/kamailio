@@ -338,22 +338,21 @@ int diameter_authorize(struct hdr_field *hdr, str *p_method, sip_uri_t *uri,
 				goto error1;
 			}
 		} else {
-			user_name.s = 0;
-			user_name.len = cred->username.user.len + cred->realm.len;
-			if(user_name.len > 0) {
-				user_name.s = ad_malloc(user_name.len);
-				if(!user_name.s) {
-					PKG_MEM_ERROR;
-					goto error;
-				}
-				memcpy(user_name.s, cred->username.whole.s,
-						cred->username.whole.len);
-				if(cred->username.whole.len > 0) {
-					user_name.s[cred->username.whole.len] = '@';
-					memcpy(user_name.s + cred->username.whole.len + 1,
-							cred->realm.s, cred->realm.len);
-				} else
-					memcpy(user_name.s, cred->realm.s, cred->realm.len);
+			user_name.len = cred->username.user.len + cred->realm.len + 1;
+			user_name.s = ad_malloc(user_name.len + 1);
+			if(!user_name.s) {
+				PKG_MEM_ERROR;
+				goto error;
+			}
+			if(cred->username.user.len > 0) {
+				memcpy(user_name.s, cred->username.user.s,
+						cred->username.user.len);
+				user_name.s[cred->username.user.len] = '@';
+				memcpy(user_name.s + cred->username.user.len + 1, cred->realm.s,
+						cred->realm.len);
+			} else {
+				memcpy(user_name.s, cred->realm.s, cred->realm.len);
+				user_name.len -= 1;
 			}
 
 			if((avp = AAACreateAVP(AVP_User_Name, 0, 0, user_name.s,
