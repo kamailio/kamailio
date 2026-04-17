@@ -252,14 +252,14 @@ int radius_authorize_sterman(
 		}
 	} else {
 		user_name.len = _cred->username.user.len + _cred->realm.len + 1;
-		user_name.s = pkg_malloc(user_name.len);
+		user_name.s = pkg_mallocxz(user_name.len + 1);
 		if(!user_name.s) {
 			LM_ERR("no pkg memory left\n");
 			return -3;
 		}
-		memcpy(user_name.s, _cred->username.whole.s, _cred->username.whole.len);
-		user_name.s[_cred->username.whole.len] = '@';
-		memcpy(user_name.s + _cred->username.whole.len + 1, _cred->realm.s,
+		memcpy(user_name.s, _cred->username.user.s, _cred->username.user.len);
+		user_name.s[_cred->username.user.len] = '@';
+		memcpy(user_name.s + _cred->username.user.len + 1, _cred->realm.s,
 				_cred->realm.len);
 		if(!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user_name.s,
 				   user_name.len, 0)) {
