@@ -317,7 +317,9 @@ int tps_storage_fill_contact(
 			vavu = get_xavu_host(dir);
 		}
 
-		append_host_info(td, &puri, vavu, 0);
+		/* ctmode=0 preserves port/transport from original URI; ctmode=3 does not */
+		append_host_info(
+				td, &puri, vavu, (ctmode == TPS_CONTACT_MODE_SKEYUSER) ? 1 : 0);
 	}
 
 	/* Finalize the contact header */
