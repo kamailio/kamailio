@@ -1228,6 +1228,10 @@ static int get_alt(str *res, int local, int type, sip_msg_t *msg)
 
 			case GEN_IPADD:
 				ip.len = ASN1_STRING_length(nm->d.iPAddress);
+				if(ip.len != 4 && ip.len != 16) {
+					ERR("Invalid ip address length\n");
+					goto err;
+				}
 				ip.af = (ip.len == 16) ? AF_INET6 : AF_INET;
 				memcpy(ip.u.addr, ASN1_STRING_get0_data(nm->d.iPAddress),
 						ip.len);
