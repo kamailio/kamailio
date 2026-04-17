@@ -58,6 +58,7 @@ extern struct tm_binds tmb;
 
 struct sip_msg *ah_reply = NULL;
 str ah_error = {NULL, 0};
+str ah_xdata = {NULL, 0};
 http_m_time_t ah_time = {0};
 
 async_http_worker_t *workers = NULL;
@@ -149,6 +150,8 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	/* clean process-local result variables */
 	ah_error.s = NULL;
 	ah_error.len = 0;
+	ah_xdata.s = NULL;
+	ah_xdata.len = 0;
 
 	memset(&ah_time, 0, sizeof(struct http_m_time));
 	memset(ah_reply, 0, sizeof(struct sip_msg));
@@ -228,6 +231,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	strncpy(q_id, aq->id, strlen(aq->id));
 
 	q_id[strlen(aq->id)] = '\0';
+	ah_xdata = aq->xdata;
 
 	cfg_update();
 
@@ -276,6 +280,8 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	}
 
 done:
+	ah_xdata.s = NULL;
+	ah_xdata.len = 0;
 	free_sip_msg(ah_reply);
 	free_async_query(aq);
 
@@ -451,6 +457,12 @@ int init_socket(async_http_worker_t *worker)
 int async_send_query(
 		sip_msg_t *msg, str *query, str *cbname, ah_suspend_mode_t smode)
 {
+	return async_send_query_xdata(msg, query, cbname, smode, NULL);
+}
+
+int async_send_query_xdata(sip_msg_t *msg, str *query, str *cbname,
+		ah_suspend_mode_t smode, str *xdata)
+{
 	async_query_t *aq;
 	unsigned int tindex = 0;
 	unsigned int tlabel = 0;
@@ -503,6 +515,12 @@ int async_send_query(
 
 	if(shm_str_dup(&aq->query, query) < 0) {
 		goto error;
+	}
+	if(xdata != NULL && xdata->s != NULL && xdata->len > 0) {
+		if(shm_str_dup(&aq->xdata, xdata) < 0) {
+			LM_ERR("Error allocating aq->xdata\n");
+			goto error;
+		}
 	}
 
 	memcpy(aq->cbname, cbname->s, cbname->len);

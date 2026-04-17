@@ -56,6 +56,7 @@ extern int tcp_ka_interval;
 
 extern struct sip_msg *ah_reply;
 extern str ah_error;
+extern str ah_xdata;
 extern http_m_time_t ah_time;
 
 extern int tls_verify_host;
@@ -122,6 +123,7 @@ extern struct query_params ah_params;
 typedef struct async_query
 {
 	str query;
+	str xdata;
 	char id[MAX_ID_LEN + 1];
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -143,6 +145,8 @@ void async_http_run_worker(async_http_worker_t *worker);
 
 int async_send_query(
 		sip_msg_t *msg, str *query, str *cbname, ah_suspend_mode_t smode);
+int async_send_query_xdata(sip_msg_t *msg, str *query, str *cbname,
+		ah_suspend_mode_t smode, str *xdata);
 int async_push_query(async_query_t *aq);
 
 void notification_socket_cb(int fd, short event, void *arg);
@@ -163,6 +167,11 @@ static inline void free_async_query(async_query_t *aq)
 		shm_free(aq->query.s);
 		aq->query.s = 0;
 		aq->query.len = 0;
+	}
+	if(aq->xdata.s && aq->xdata.len) {
+		shm_free(aq->xdata.s);
+		aq->xdata.s = 0;
+		aq->xdata.len = 0;
 	}
 
 	if(aq->query_params.headers.t) {
