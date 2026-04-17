@@ -448,7 +448,8 @@ int init_socket(async_http_worker_t *worker)
 	return (0);
 }
 
-int async_send_query(sip_msg_t *msg, str *query, str *cbname)
+int async_send_query(
+		sip_msg_t *msg, str *query, str *cbname, ah_suspend_mode_t smode)
 {
 	async_query_t *aq;
 	unsigned int tindex = 0;
@@ -472,7 +473,9 @@ int async_send_query(sip_msg_t *msg, str *query, str *cbname)
 	if(t == NULL || t == T_UNDEFINED) {
 		LM_DBG("no pre-existing transaction, switching to transaction-less "
 			   "behavior\n");
-	} else if(!ah_params.suspend_transaction) {
+	} else if(smode == AH_SUSPEND_NONE) {
+		LM_DBG("transaction won't be suspended (forced no-suspend mode)\n");
+	} else if(smode == AH_SUSPEND_CFG && !ah_params.suspend_transaction) {
 		LM_DBG("transaction won't be suspended\n");
 	} else {
 		if(tmb.t_suspend == NULL) {

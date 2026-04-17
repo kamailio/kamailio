@@ -88,6 +88,7 @@ static int child_init(int);
 static void mod_destroy(void);
 
 static int w_http_async_query(sip_msg_t *msg, char *query, char *rt);
+static int w_http_async_send(sip_msg_t *msg, char *query, char *rt);
 static int set_query_param(str *param, str input);
 
 /* pv api binding */
@@ -163,6 +164,8 @@ enum http_time_name_t
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"http_async_query", (cmd_function)w_http_async_query, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"http_async_send", (cmd_function)w_http_async_send, 2,
 			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -424,7 +427,38 @@ static int w_http_async_query(sip_msg_t *msg, char *query, char *rt)
 		LM_ERR("invalid route name parameter\n");
 		return -1;
 	}
-	return async_send_query(msg, &sdata, &rn);
+	return async_send_query(msg, &sdata, &rn, AH_SUSPEND_CFG);
+}
+
+/**
+ *
+ */
+static int w_http_async_send(sip_msg_t *msg, char *query, char *rt)
+{
+	str sdata;
+	str rn;
+
+	if(msg == NULL)
+		return -1;
+
+	if(fixup_get_svalue(msg, (gparam_t *)query, &sdata) != 0) {
+		LM_ERR("unable to get data\n");
+		return -1;
+	}
+	if(sdata.s == NULL || sdata.len == 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)rt, &rn) != 0) {
+		LM_ERR("no route block name\n");
+		return -1;
+	}
+	if(rn.s == NULL || rn.len == 0) {
+		LM_ERR("invalid route name parameter\n");
+		return -1;
+	}
+	return async_send_query(msg, &sdata, &rn, AH_SUSPEND_NONE);
 }
 
 /**
@@ -442,7 +476,25 @@ static int ki_http_async_query(sip_msg_t *msg, str *sdata, str *rn)
 		LM_ERR("invalid route name parameter\n");
 		return -1;
 	}
-	return async_send_query(msg, sdata, rn);
+	return async_send_query(msg, sdata, rn, AH_SUSPEND_CFG);
+}
+
+/**
+ *
+ */
+static int ki_http_async_send(sip_msg_t *msg, str *sdata, str *rn)
+{
+	if(msg == NULL)
+		return -1;
+	if(sdata == NULL || sdata->len <= 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+	if(rn->s == NULL || rn->len <= 0) {
+		LM_ERR("invalid route name parameter\n");
+		return -1;
+	}
+	return async_send_query(msg, sdata, rn, AH_SUSPEND_NONE);
 }
 
 #define _IVALUE_ERROR(NAME) \
@@ -930,6 +982,11 @@ static int ah_set_req(
 static sr_kemi_t sr_kemi_http_async_client_exports[] = {
 	{ str_init("http_async_client"), str_init("query"),
 		SR_KEMIP_INT, ki_http_async_query,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("http_async_client"), str_init("send"),
+		SR_KEMIP_INT, ki_http_async_send,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
