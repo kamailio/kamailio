@@ -54,6 +54,7 @@ Federico Cabiddu
 
               4.1. http_async_query(url, route_name)
               4.2. http_async_send(url, route_name)
+              4.3. http_async_send_xdata(url, route_name, xdata)
 
         5. Pseudo Variables
         6. Statistics
@@ -84,8 +85,9 @@ Federico Cabiddu
    1.15. Set tcp_ka_interval parameter
    1.16. http_async_query() usage
    1.17. http_async_send() usage
-   1.18. $http_req_id variable usage
-   1.19. $http_req(key) variable usage
+   1.18. http_async_send_xdata() usage
+   1.19. $http_req_id variable usage
+   1.20. $http_req(key) variable usage
 
 Chapter 1. Admin Guide
 
@@ -119,6 +121,7 @@ Chapter 1. Admin Guide
 
         4.1. http_async_query(url, route_name)
         4.2. http_async_send(url, route_name)
+        4.3. http_async_send_xdata(url, route_name, xdata)
 
    5. Pseudo Variables
    6. Statistics
@@ -368,6 +371,7 @@ modparam("http_async_client", "tcp_ka_interval", 120)
 
    4.1. http_async_query(url, route_name)
    4.2. http_async_send(url, route_name)
+   4.3. http_async_send_xdata(url, route_name, xdata)
 
 4.1.  http_async_query(url, route_name)
 
@@ -452,6 +456,35 @@ route[HTTP_REPLY] {
 }
 ...
 
+4.3.  http_async_send_xdata(url, route_name, xdata)
+
+   Sends HTTP(S) request asynchronously to the URL given in “url”
+   parameter, which is a string that may contain pseudo variables.
+
+   Parameter “route_name” defines the route to be executed upon reception
+   of HTTP reply, on error or on timeout. Parameter “xdata” is a string
+   that may contain pseudo variables and its evaluated value is propagated
+   to the callback route via $http_xdata.
+
+   Like http_async_send(), this function never suspends the current SIP
+   transaction. The routing script execution continues immediately after
+   the function call and, when the HTTP response is received, “route_name”
+   is executed using an internal faked SIP request message.
+
+   Return value: 1 (continue script execution) on success, -1 on error.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.18. http_async_send_xdata() usage
+...
+http_async_send_xdata("https://example.com/test.php?r_uri=$rU",
+        "HTTP_REPLY", "callid=" + $ci + ";from=" + $fu);
+
+route[HTTP_REPLY] {
+    xinfo("async callback for query $http_req_id xdata=$http_xdata\n");
+}
+...
+
 5. Pseudo Variables
 
    The $http_req_id read-only variable can be used in REQUEST_ROUTE to
@@ -459,7 +492,7 @@ route[HTTP_REPLY] {
    HTTP callback route to retrieve the id of the query the reply belongs
    to. Useful mainly in non-transactional context.
 
-   Example 1.18. $http_req_id variable usage
+   Example 1.19. $http_req_id variable usage
 ...
 $http_req(suspend) = 0;
 
@@ -513,7 +546,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
        follow HTTP 3xx redirects. Defaults to curl_follow_redirect global
        parameter.
 
-   Example 1.19. $http_req(key) variable usage
+   Example 1.20. $http_req(key) variable usage
 ...
 $http_req(all) = $null;                    # reset the parameters
 $http_req(timeout) = 100;                  # 100 ms
@@ -526,8 +559,14 @@ uting script's execution
 http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
+   The $http_xdata read-only variable can be used in callback routes
+   executed by http_async_send_xdata() to retrieve the extra application
+   data attached to the asynchronous query. If no extra data was provided,
+   it evaluates to $null.
+
    The following read-only pseudo variables can only be used in the
-   callback routes executed by http_async_query()
+   callback routes executed by http_async_query(), http_async_send() or
+   http_async_send_xdata()
      * $http_ok: 1 if cURL executed the request successfully, 0 otherwise
        (check $http_err for details)
      * $http_err: cURL error string if an error occurred, $null otherwise
