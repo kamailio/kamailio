@@ -1520,6 +1520,10 @@ static int w_rx_aar_register(
 		recv_proto = msg->rcv.proto;
 	} else {
 		memset(&recv_ip, 0, sizeof(str));
+		if(vb->host.len >= sizeof(buff)) {
+			LM_ERR("Via host too long for buffer (%d)\n", vb->host.len);
+			goto error;
+		}
 		memcpy(&buff, vb->host.s, vb->host.len);
 		buff[vb->host.len] = 0;
 		recv_ip.s = buff;
