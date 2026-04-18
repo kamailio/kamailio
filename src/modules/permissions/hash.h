@@ -31,7 +31,7 @@
 #include "../../core/rpc.h"
 #include "../../core/usr_avp.h"
 
-#define PERM_HASH_SIZE 256
+#define PERM_HASH_SIZE 128
 
 /*
  * Structure stored in trusted hash table
