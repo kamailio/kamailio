@@ -185,7 +185,7 @@ set(MOD_LIST_SNMPSTATS snmpstats)
 set(MOD_LIST_XMPP xmpp)
 
 # * modules depending on curl library
-set(MOD_LIST_UTILS utils http_client lost slack local)
+set(MOD_LIST_UTILS utils http_client lost slack)
 
 # * modules depending on curl and libevent2 library
 set(MOD_LIST_HTTP_ASYNC http_async_client)

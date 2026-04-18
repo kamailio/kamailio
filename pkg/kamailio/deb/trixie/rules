@@ -31,7 +31,6 @@ EXCLUDED_MODULES += geoip
 EXCLUDED_MODULES += dnssec
 EXCLUDED_MODULES += java
 EXCLUDED_MODULES += berkeley
-EXCLUDED_MODULES += acc_diameter app_jsdt auth_diameter auth_xkeys benchmark blst call_control call_obj carrierroute alias_db app_lua cfg_db cfgt counters crypto db_flatstore db_text db2_ops debugger dialog diversion dlgs dmq dmq_usrloc domainpolicy drouting evrexec exec file_out group imc influxdbc json jsonrpcc keepalive kemix log_custom log_systemd lost lrkproxy mangler math matrix mediaproxy memcached mohqueue mqueue msrp nat_traversal nosip p_usrloc pdb pdt peerstate pipelimit posops prefix_route ptimer pua_json pv_headers pvtpl qos ratelimit regex rtjson rtpproxy sca seas secfilter sipcapture sipjson siprepo sipt slack sms smsops speeddial ss7ops sst statistics statsc statsd sworker systemdops timer tlsa tmrec topoh topos topos_htable tsilo uac uid_auth_db uid_avp_db uid_domain uid_gflags uid_uri_db uri_db userblocklist xhttp_prom xhttp_rpc xprint
 
 # Extra modules to skip, because they are not compilable now:
 # - regardless if they go to the main kamailio package or to some module
