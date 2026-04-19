@@ -738,7 +738,7 @@ static int set_cipher_list(tls_domain_t *d)
 		return 0;
 	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-#if OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER < 0x010101000L
 		if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
 			ERR("%s: Failure to set SSL context cipher list \"%s\"\n",
 					tls_domain_str(d), cipher_list);
