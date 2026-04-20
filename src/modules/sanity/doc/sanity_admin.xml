@@ -126,7 +126,7 @@
 			<para>
 			RFC3261 compliance related checks (32768 [0x8000 / 2^15]) - checks if
 			the branch parameter of the first Via header starts with magic cookie: 'z9hG4bK'.
-			Also checks that the lr parameter is present in Record-Route headers if they are present.
+			Also checks that the lr parameter is present in Record-Route and Route headers if they are present.
 			</para>
 		</listitem>
 		<listitem>
