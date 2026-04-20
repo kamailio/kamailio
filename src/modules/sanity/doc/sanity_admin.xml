@@ -455,6 +455,25 @@ modparam("sanity", "size_contact_uri", 512)
 	    </programlisting>
 	</example>
 	</section>
+	<section id="sanity.p.size_route_uri">
+	<title><varname>size_route_uri</varname> (int)</title>
+	<para>
+		Specify the size of the SIP message Route-URI and Record-Route-URI to
+		do sanity check with. If set to 0, this size sanity check is not
+		performed.
+	</para>
+	<para>
+		Default value: 256.
+	</para>
+	<example>
+	    <title>Set <varname>size_route_uri</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "size_route_uri", 512)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
 
    <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
