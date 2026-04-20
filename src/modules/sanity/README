@@ -30,6 +30,7 @@ Nils Ohlmeier
               3.13. size_from_uri (int)
               3.14. size_to_uri (int)
               3.15. size_contact_uri (int)
+              3.16. size_route_uri (int)
 
         4. Functions
 
@@ -53,10 +54,11 @@ Nils Ohlmeier
    1.13. Set size_from_uri parameter
    1.14. Set size_to_uri parameter
    1.15. Set size_contact_uri parameter
-   1.16. sanity_check usage
-   1.17. sanity_check usage with parameter
-   1.18. sanity_check usage with two parameters
-   1.19. sanity_reply usage
+   1.16. Set size_route_uri parameter
+   1.17. sanity_check usage
+   1.18. sanity_check usage with parameter
+   1.19. sanity_check usage with two parameters
+   1.20. sanity_reply usage
 
 Chapter 1. Admin Guide
 
@@ -81,6 +83,7 @@ Chapter 1. Admin Guide
         3.13. size_from_uri (int)
         3.14. size_to_uri (int)
         3.15. size_contact_uri (int)
+        3.16. size_route_uri (int)
 
    4. Functions
 
@@ -167,6 +170,7 @@ Chapter 1. Admin Guide
    3.13. size_from_uri (int)
    3.14. size_to_uri (int)
    3.15. size_contact_uri (int)
+   3.16. size_route_uri (int)
 
 3.1. default_checks (integer)
 
@@ -370,6 +374,19 @@ modparam("sanity", "size_to_uri", 512)
 modparam("sanity", "size_contact_uri", 512)
 ...
 
+3.16. size_route_uri (int)
+
+   Specify the size of the SIP message Route-URI and Record-Route-URI to
+   do sanity check with. If set to 0, this size sanity check is not
+   performed.
+
+   Default value: 256.
+
+   Example 1.16. Set size_route_uri parameter
+...
+modparam("sanity", "size_route_uri", 512)
+...
+
 4. Functions
 
    4.1. sanity_check([msg_checks [, uri_checks]])
@@ -388,7 +405,7 @@ modparam("sanity", "size_contact_uri", 512)
    The parameters can be static integers or variables holding integer
    values.
 
-   Example 1.16. sanity_check usage
+   Example 1.17. sanity_check usage
 ...
 if (!sanity_check()) {
         exit;
@@ -401,7 +418,7 @@ if (!sanity_check()) {
    of the checks (like for the module parameter) which should be executed
    at this function call.
 
-   Example 1.17. sanity_check usage with parameter
+   Example 1.18. sanity_check usage with parameter
 ...
 if (method=="REGISTER" && !sanity_check("256")) {
         /* the register contains an invalid expires value and is replied with a
@@ -414,7 +431,7 @@ if (method=="REGISTER" && !sanity_check("256")) {
    overwrites the global module parameter uri_checks and thus determines
    which URIs will be checked if the parse uri test will be executed.
 
-   Example 1.18. sanity_check usage with two parameters
+   Example 1.19. sanity_check usage with two parameters
 ...
 if (method=="INVITE" && !sanity_check("1024", "6")) {
         /* the INVITE contains an invalid From or To header and is replied with
@@ -429,7 +446,7 @@ a 400 */
    module when detecting errors while performing the sanity checks. It is
    done only when parameter noreply is set to 1.
 
-   Example 1.19. sanity_reply usage
+   Example 1.20. sanity_reply usage
 ...
 if(!sanity_check("1024", "6")) {
    xdbg("sanity checks failed\n");
