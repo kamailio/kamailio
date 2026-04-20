@@ -682,6 +682,13 @@ void check_multi_info(struct http_m_global *g)
 
 			if(cell != 0) {
 				LM_DBG("cleaning up cell %p\n", cell);
+				if(cell->evset && cell->ev) {
+					LM_DBG("freeing event %p\n", cell->ev);
+					event_del(cell->ev);
+					event_free(cell->ev);
+					cell->ev = NULL;
+					cell->evset = 0;
+				}
 				unlink_http_m_cell(cell);
 				free_http_m_cell(cell);
 			}
