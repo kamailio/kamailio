@@ -50,6 +50,7 @@ Charles Chance
               3.10. fail_count_enabled(int)
               3.11. fail_count_threshold_not_active(int)
               3.12. fail_count_threshold_disabled(int)
+              3.13. init_with_single(int)
 
         4. Functions
 
@@ -92,14 +93,15 @@ Charles Chance
    1.11. Set fail_count_enabled parameter
    1.12. Set fail_count_threshold_not_active parameter
    1.13. Set fail_count_threshold_disabled parameter
-   1.14. dmq_handle_message usage
-   1.15. dmq_process_message usage
-   1.16. dmq_send_message usage
-   1.17. dmq_bcast_message usage
-   1.18. dmq_t_replicate usage
-   1.19. dmq_is_from_node usage
-   1.20. dmq.list_nodes usage
-   1.21. dmq.remove usage
+   1.14. Set init_with_single parameter
+   1.15. dmq_handle_message usage
+   1.16. dmq_process_message usage
+   1.17. dmq_send_message usage
+   1.18. dmq_bcast_message usage
+   1.19. dmq_t_replicate usage
+   1.20. dmq_is_from_node usage
+   1.21. dmq.list_nodes usage
+   1.22. dmq.remove usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -132,6 +134,7 @@ Chapter 1. Admin Guide
         3.10. fail_count_enabled(int)
         3.11. fail_count_threshold_not_active(int)
         3.12. fail_count_threshold_disabled(int)
+        3.13. init_with_single(int)
 
    4. Functions
 
@@ -257,6 +260,7 @@ sip:192.168.40.17:5060;status=not_active
    3.10. fail_count_enabled(int)
    3.11. fail_count_threshold_not_active(int)
    3.12. fail_count_threshold_disabled(int)
+   3.13. init_with_single(int)
 
 3.1. server_address(str)
 
@@ -442,6 +446,18 @@ modparam("dmq", "fail_count_threshold_not_active", 100)
 modparam("dmq", "fail_count_threshold_disabled", 105)
 ...
 
+3.13. init_with_single(int)
+
+   A non-zero value enables init and sync with single DMQ node (first
+   pinged or answered) instead of all nodes in a node list.
+
+   Default value is “0” (init and sync with all nodes in a node list).
+
+   Example 1.14. Set init_with_single parameter
+...
+modparam("dmq", "init_with_single", 1)
+...
+
 4. Functions
 
    4.1. dmq_handle_message([continue])
@@ -464,7 +480,7 @@ modparam("dmq", "fail_count_threshold_disabled", 105)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.14. dmq_handle_message usage
+   Example 1.15. dmq_handle_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_handle_message();
@@ -485,7 +501,7 @@ modparam("dmq", "fail_count_threshold_disabled", 105)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.15. dmq_process_message usage
+   Example 1.16. dmq_process_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_process_message();
@@ -505,7 +521,7 @@ modparam("dmq", "fail_count_threshold_disabled", 105)
 
    This function can be used from any route.
 
-   Example 1.16. dmq_send_message usage
+   Example 1.17. dmq_send_message usage
 ...
         dmq_send_message("channel1", "sip:10.0.0.21:5060", "Message body...", "t
 ext/plain");
@@ -523,7 +539,7 @@ ext/plain");
 
    This function can be used from any route.
 
-   Example 1.17. dmq_bcast_message usage
+   Example 1.18. dmq_bcast_message usage
 ...
     dmq_bcast_message("channel1", "Message body...", "text/plain");
 ...
@@ -545,7 +561,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.18. dmq_t_replicate usage
+   Example 1.19. dmq_t_replicate usage
 ...
     dmq_t_replicate();
 ...
@@ -557,7 +573,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.19. dmq_is_from_node usage
+   Example 1.20. dmq_is_from_node usage
 ...
         # basic example for REGISTER replication
     if(is_method("REGISTER")) {
@@ -580,7 +596,7 @@ ext/plain");
 
    List the DMQ nodes. It has no parameters.
 
-   Example 1.20. dmq.list_nodes usage
+   Example 1.21. dmq.list_nodes usage
 ...
 kamctl rpc dmq.list_nodes
 ...
@@ -592,7 +608,7 @@ kamctl rpc dmq.list_nodes
    Parameters:
      * address - the SIP address of the DMQ node to remove.
 
-   Example 1.21. dmq.remove usage
+   Example 1.22. dmq.remove usage
 ...
 kamctl rpc dmq.remove sip:1.2.3.4:5060
 ...
