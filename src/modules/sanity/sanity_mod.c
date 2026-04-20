@@ -36,6 +36,7 @@
 #include "../../core/parser/parse_cseq.h"
 #include "../../core/parser/contact/contact.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_rr.h"
 
 MODULE_VERSION
 
@@ -53,6 +54,7 @@ int sn_size_ruri = 256;
 int sn_size_from_uri = 256;
 int sn_size_to_uri = 256;
 int sn_size_contact_uri = 256;
+int sn_size_route_uri = 256;
 int sn_size_header = 2048;
 int sn_size_headers = 8192;
 int sn_size_body = 8192;
@@ -98,6 +100,7 @@ static param_export_t params[] = {
 	{"size_from_uri", PARAM_INT, &sn_size_from_uri},
 	{"size_to_uri", PARAM_INT, &sn_size_to_uri},
 	{"size_contact_uri", PARAM_INT, &sn_size_contact_uri},
+	{"size_route_uri", PARAM_INT, &sn_size_route_uri},
 	{"size_header", PARAM_INT, &sn_size_header},
 	{"size_headers", PARAM_INT, &sn_size_headers},
 	{"size_body", PARAM_INT, &sn_size_body},
@@ -161,6 +164,7 @@ int sanity_check_sizes(sip_msg_t *msg)
 {
 	str s;
 	contact_t *cb = NULL;
+	rr_t *rb = NULL;
 	hdr_field_t *hf = NULL;
 
 	if(sn_size_message > 0) {
@@ -263,6 +267,34 @@ int sanity_check_sizes(sip_msg_t *msg)
 						if(cb->uri.len > sn_size_contact_uri) {
 							return SANITY_CHECK_FAILED;
 						}
+					}
+				}
+			}
+		}
+	}
+	if(sn_size_route_uri > 0) {
+		if(parse_route_headers(msg) < 0) {
+			LM_DBG("failed to parse Route headers\n");
+			return SANITY_CHECK_FAILED;
+		}
+		for(hf = msg->route; hf != NULL; hf = next_sibling_hdr(hf)) {
+			if(hf->type == HDR_ROUTE_T) {
+				for(rb = (rr_t *)hf->parsed; rb != NULL; rb = rb->next) {
+					if(rb->nameaddr.uri.len > sn_size_route_uri) {
+						return SANITY_CHECK_FAILED;
+					}
+				}
+			}
+		}
+		if(parse_record_route_headers(msg) < 0) {
+			LM_DBG("failed to parse Record-Route headers\n");
+			return SANITY_CHECK_FAILED;
+		}
+		for(hf = msg->record_route; hf != NULL; hf = next_sibling_hdr(hf)) {
+			if(hf->type == HDR_RECORDROUTE_T) {
+				for(rb = (rr_t *)hf->parsed; rb != NULL; rb = rb->next) {
+					if(rb->nameaddr.uri.len > sn_size_route_uri) {
+						return SANITY_CHECK_FAILED;
 					}
 				}
 			}
