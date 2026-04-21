@@ -162,7 +162,9 @@ Chapter 1. Admin Guide
      * port - is the port to connect to REDIS server.
      * db - is the DB number to use (defaults to 0 if not specified).
      * pass - is the server password.
-     * tls - is to enable TLS connectivity.
+     * tls - is to enable TLS connectivity (value 1 to connect to server
+       via tls; value 2 to connect to sentinel via tls; value 3 to connect
+       to both via tls).
      * connect_timeout - is to set connect timeout to REDIS server.
      * command_timeout - is to set command timeout to REDIS server.
 
