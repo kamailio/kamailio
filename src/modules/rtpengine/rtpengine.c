@@ -426,6 +426,7 @@ int dtmf_event_rt = -1; /* default disabled */
 static int rtpengine_ping_mode = 1;
 static int rtpengine_ping_interval = 60;
 static int rtpengine_enable_dmq = 0;
+str rtpengine_dmq_peer_id = str_init("rtpengine");
 
 /* clang-format off */
 typedef struct rtpp_set_link {
@@ -700,6 +701,7 @@ static param_export_t params[] = {
 			&side_B_mos_stats.average.samples_param},
 
 	{"wsapi", PARAM_STR, &_rtpe_wsapi},
+	{"dmq_peer_id", PARAM_STR, &rtpengine_dmq_peer_id},
 
 	{0, 0, 0}
 };
