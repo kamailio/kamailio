@@ -23,6 +23,7 @@
 
 #include <phonenumbers/geocoding/phonenumber_offline_geocoder.h>
 #include <phonenumbers/phonenumberutil.h>
+#include <phonenumbers/shortnumberinfo.h>
 #include <unicode/locid.h>
 #include <string.h>
 #include <cstring>
@@ -34,8 +35,15 @@ using icu::Locale;
 using std::string;
 
 const PhoneNumberUtil &_phoneUtil(*PhoneNumberUtil::GetInstance());
+static const ShortNumberInfo _shortInfo;
 static PhoneNumberOfflineGeocoder *_phoneGeoCoder =
 		new PhoneNumberOfflineGeocoder();
+static int _telnum_short_mode = 0;
+
+void telnum_set_short_mode(int mode)
+{
+	_telnum_short_mode = mode;
+}
 
 const char *telnum_linetype(PhoneNumberUtil::PhoneNumberType ltype)
 {
@@ -126,6 +134,15 @@ telnum_t *telnum_parse(char *number, char *region)
 		return res;
 	}
 	if(!_phoneUtil.IsValidNumber(parsedNumber)) {
+		if(_telnum_short_mode > 0 && regionStr != "ZZ"
+				&& _shortInfo.IsValidShortNumberForRegion(
+						parsedNumber, regionStr)) {
+			res->valid = 1;
+			res->natnum = strdup(number);
+			res->ccname = strdup(regionStr.c_str());
+			res->cctel = _phoneUtil.GetCountryCodeForRegion(regionStr);
+			return res;
+		}
 		string error = "Invalid number";
 		res->error = strdup(error.c_str());
 		return res;
