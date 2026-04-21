@@ -98,7 +98,9 @@
 		</listitem>
 		<listitem>
 			<para>
-			tls - is to enable TLS connectivity.
+			tls - is to enable TLS connectivity (value 1 to connect to server
+			via tls; value 2 to connect to sentinel via tls; value 3 to
+			connect to both via tls).
 			</para>
 		</listitem>
 		<listitem>
