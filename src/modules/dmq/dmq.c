@@ -533,13 +533,13 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 /* clang-format on */
 
 /**
- * Run peer event route. @a evt is which route to run (DMQ_NODE_ACTIVE ->
- * dmq:peer-up, DMQ_NODE_NOT_ACTIVE -> dmq:peer-down, DMQ_NODE_DISABLED ->
- * dmq:peer-disabled). Pass the transition decided under dmq_node_list lock (or
- * when queuing extract callbacks); do not derive from node->status after
- * lock_release — other workers may change SHM before this runs.
+ * Run peer event route from @a node->status (DMQ_NODE_ACTIVE -> dmq:peer-up,
+ * DMQ_NODE_NOT_ACTIVE -> dmq:peer-down, DMQ_NODE_DISABLED -> dmq:peer-disabled).
+ * Callers must set node->status to the intended announcement before calling
+ * (e.g. under dmq_node_list lock, or after applying a transition).
+ * Duplicate for the same status are suppressed using last_peer_evt.
  */
-void dmq_peer_run_event_route(int evt, dmq_node_t *node)
+void dmq_peer_run_event_route(dmq_node_t *node)
 {
 	const char *rtname;
 	int rt, backup_rt;
@@ -547,11 +547,14 @@ void dmq_peer_run_event_route(int evt, dmq_node_t *node)
 	sip_msg_t *fmsg = NULL;
 	sr_kemi_eng_t *keng = NULL;
 	str evname;
+	int evt;
 
 	if(node == NULL || node->local)
 		return;
 	if(node->orig_uri.s == NULL || node->orig_uri.len <= 0)
 		return;
+
+	evt = node->status;
 
 	/* Same announcement twice (timer/body oscillation). */
 	if(node->last_peer_evt == evt) {

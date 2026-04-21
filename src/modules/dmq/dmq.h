@@ -64,6 +64,6 @@ extern str dmq_500_rpl;
 extern str dmq_404_rpl;
 
 extern str dmq_event_callback;
-void dmq_peer_run_event_route(int evt, dmq_node_t *node);
+void dmq_peer_run_event_route(dmq_node_t *node);
 
 #endif
