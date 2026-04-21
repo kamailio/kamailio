@@ -34,10 +34,12 @@
 #include "../../core/mod_fix.h"
 
 #include "phonenum_pv.h"
+#include "cphonenumber.h"
 
 MODULE_VERSION
 
 static int phonenum_smode = 0;
+static int phonenum_shortcode = 0;
 
 static int mod_init(void);
 static void mod_destroy(void);
@@ -66,6 +68,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"smode", PARAM_INT, &phonenum_smode},
+	{"shortcode", PARAM_INT, &phonenum_shortcode},
 	{"resid", PARAM_STR|PARAM_USE_FUNC, &phonenum_resid_param},
 	{0, 0, 0}
 };
@@ -89,6 +92,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	telnum_set_short_mode(phonenum_shortcode);
 
 	if(phonenum_init_pv(phonenum_smode) != 0) {
 		LM_ERR("cannot do init\n");
