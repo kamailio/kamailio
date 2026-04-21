@@ -43,6 +43,7 @@ int _dmq_usrloc_batch_msg_contacts = 1;
 int _dmq_usrloc_batch_msg_size = 60000;
 int _dmq_usrloc_batch_usleep = 0;
 str _dmq_usrloc_domain = str_init("location");
+str _dmq_usrloc_peer_id = str_init("usrloc");
 int _dmq_usrloc_delete = 1;
 int _dmq_usrloc_delete_expired = 0;
 
@@ -63,6 +64,7 @@ static param_export_t params[] = {
 	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
 	{"usrloc_delete", PARAM_INT, &_dmq_usrloc_delete},
 	{"usrloc_delete_expired", PARAM_INT, &_dmq_usrloc_delete_expired},
+	{"dmq_peer_id", PARAM_STR, &_dmq_usrloc_peer_id},
 	{0, 0, 0}
 };
 

@@ -368,6 +368,27 @@ modparam("dmq_usrloc", "usrloc_delete_expired", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="usrloc_dmq.p.dmq_peer_id">
+		<title><varname>dmq_peer_id</varname> (string)</title>
+		<para>
+			The DMQ peer identifier for usrloc replication. This allows
+			customizing the peer name used in DMQ communication, which can be useful
+			to avoid compatibility conflicts, and for a better partitioning.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>usrloc</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dmq_peer_id</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "dmq_peer_id", "usrloc_6.1.1")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>

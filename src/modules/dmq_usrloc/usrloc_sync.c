@@ -65,6 +65,7 @@ extern int _dmq_usrloc_batch_msg_size;
 extern int _dmq_usrloc_batch_size;
 extern int _dmq_usrloc_batch_usleep;
 extern str _dmq_usrloc_domain;
+extern str _dmq_usrloc_peer_id;
 extern int _dmq_usrloc_delete;
 extern int _dmq_usrloc_delete_expired;
 
@@ -303,10 +304,8 @@ int usrloc_dmq_initialize()
 	}
 	not_peer.callback = usrloc_dmq_handle_msg;
 	not_peer.init_callback = usrloc_dmq_request_sync;
-	not_peer.description.s = "usrloc";
-	not_peer.description.len = 6;
-	not_peer.peer_id.s = "usrloc";
-	not_peer.peer_id.len = 6;
+	not_peer.peer_id = _dmq_usrloc_peer_id;
+	not_peer.description = _dmq_usrloc_peer_id;
 	usrloc_dmq_peer = usrloc_dmqb.register_dmq_peer(&not_peer);
 	if(!usrloc_dmq_peer) {
 		LM_ERR("error in register_dmq_peer\n");
