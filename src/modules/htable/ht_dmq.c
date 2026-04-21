@@ -53,6 +53,7 @@ static int dmq_cell_group_empty_size = 12; // {"cells":[]}
 static int dmq_cell_group_max_size = 60000;
 static ht_dmq_jdoc_cell_group_t ht_dmq_jdoc_cell_group;
 extern int ht_dmq_init_sync;
+extern str ht_dmq_peer_id;
 
 dmq_api_t ht_dmqb;
 dmq_peer_t *ht_dmq_peer = NULL;
@@ -220,10 +221,8 @@ int ht_dmq_initialize()
 	not_peer.callback = ht_dmq_handle_msg;
 	not_peer.init_callback =
 			(ht_dmq_init_sync ? ht_dmq_request_sync_all : NULL);
-	not_peer.description.s = "htable";
-	not_peer.description.len = 6;
-	not_peer.peer_id.s = "htable";
-	not_peer.peer_id.len = 6;
+	not_peer.peer_id = ht_dmq_peer_id;
+	not_peer.description = ht_dmq_peer_id;
 	ht_dmq_peer = ht_dmqb.register_dmq_peer(&not_peer);
 	if(!ht_dmq_peer) {
 		LM_ERR("error in register_dmq_peer\n");
