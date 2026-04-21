@@ -117,6 +117,7 @@ int dlg_noack_timeout = 60;
 int dlg_end_timeout = 300;
 
 int dlg_enable_dmq = 0;
+str dlg_dmq_peer_id = str_init("dialog");
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 str dlg_event_callback = STR_NULL;
@@ -388,6 +389,7 @@ static param_export_t mod_params[]={
 	{ "dlg_ctxiuid_mode",      PARAM_INT, &dlg_ctxiuid_mode         },
 	{ "debug_variables",       PARAM_INT, &debug_variables_list     },
 	{ "dlg_mode",              PARAM_INT, &dlg_process_mode         },
+	{ "dmq_peer_id",           PARAM_STR, &dlg_dmq_peer_id          },
 
 	{ 0,0,0 }
 };
