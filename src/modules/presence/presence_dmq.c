@@ -34,6 +34,8 @@ static int *pres_dmq_recv = 0;
 dmq_api_t pres_dmqb;
 dmq_peer_t *pres_dmq_peer = NULL;
 
+extern str pres_dmq_peer_id;
+
 int pres_dmq_send_all_presentities(dmq_node_t *dmq_node);
 int pres_dmq_send_all_subscriptions(dmq_node_t *dmq_node);
 int pres_dmq_request_sync(dmq_node_t *dmq_node);
@@ -55,10 +57,8 @@ int pres_dmq_initialize()
 
 	not_peer.callback = pres_dmq_handle_msg;
 	not_peer.init_callback = pres_dmq_request_sync;
-	not_peer.description.s = "presence";
-	not_peer.description.len = 8;
-	not_peer.peer_id.s = "presence";
-	not_peer.peer_id.len = 8;
+	not_peer.peer_id = pres_dmq_peer_id;
+	not_peer.description = pres_dmq_peer_id;
 	pres_dmq_peer = pres_dmqb.register_dmq_peer(&not_peer);
 	if(!pres_dmq_peer) {
 		LM_ERR("error in register_dmq_peer\n");
