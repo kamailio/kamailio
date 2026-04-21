@@ -461,31 +461,33 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 				  && (ret->status != DMQ_NODE_DISABLED
 						  || find->status == DMQ_NODE_ACTIVE)) {
 			/* while disabled, ignore body except recovery to active */
-			int old_status = ret->status;
-
 			LM_DBG("updating status on %.*s from %d to %d\n", STR_FMT(&tmp_uri),
 					ret->status, find->status);
 			ret->status = find->status;
 			total_nodes++;
-			if(old_status != DMQ_NODE_ACTIVE
-					&& ret->status == DMQ_NODE_ACTIVE) {
-				if(peer_upc < DMQ_EXTRACT_PEER_EVT_MAX)
-					peer_upv[peer_upc++] = ret;
-				else
-					peer_up_dropped++;
-			} else if(old_status == DMQ_NODE_ACTIVE
-					  && ret->status == DMQ_NODE_NOT_ACTIVE) {
-				if(peer_downc < DMQ_EXTRACT_PEER_EVT_MAX)
-					peer_downv[peer_downc++] = ret;
-				else
-					peer_down_dropped++;
-			} else if((old_status == DMQ_NODE_ACTIVE
-							  || old_status == DMQ_NODE_NOT_ACTIVE)
-					  && ret->status == DMQ_NODE_DISABLED) {
-				if(peer_disabledc < DMQ_EXTRACT_PEER_EVT_MAX)
-					peer_disabledv[peer_disabledc++] = ret;
-				else
-					peer_disabled_dropped++;
+			/* Peer event follows new status; legal edges are fixed by the outer
+			 * condition above (e.g. no DISABLED -> not_active in this branch). */
+			switch(ret->status) {
+				case DMQ_NODE_ACTIVE:
+					if(peer_upc < DMQ_EXTRACT_PEER_EVT_MAX)
+						peer_upv[peer_upc++] = ret;
+					else
+						peer_up_dropped++;
+					break;
+				case DMQ_NODE_NOT_ACTIVE:
+					if(peer_downc < DMQ_EXTRACT_PEER_EVT_MAX)
+						peer_downv[peer_downc++] = ret;
+					else
+						peer_down_dropped++;
+					break;
+				case DMQ_NODE_DISABLED:
+					if(peer_disabledc < DMQ_EXTRACT_PEER_EVT_MAX)
+						peer_disabledv[peer_disabledc++] = ret;
+					else
+						peer_disabled_dropped++;
+					break;
+				default:
+					break;
 			}
 		}
 		destroy_dmq_node(find, 0);
@@ -494,19 +496,12 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 	/* release big list lock */
 	lock_release(&update_list->lock);
 	LM_DBG("released dmq_node_list->lock\n");
-	for(pi = 0; pi < peer_upc; pi++) {
-		if(!peer_upv[pi]->local && peer_upv[pi]->status == DMQ_NODE_ACTIVE)
-			dmq_peer_run_event_route(DMQ_NODE_ACTIVE, peer_upv[pi]);
-	}
-	for(pi = 0; pi < peer_downc; pi++) {
-		if(!peer_downv[pi]->local && peer_downv[pi]->status != DMQ_NODE_ACTIVE)
-			dmq_peer_run_event_route(DMQ_NODE_NOT_ACTIVE, peer_downv[pi]);
-	}
-	for(pi = 0; pi < peer_disabledc; pi++) {
-		if(!peer_disabledv[pi]->local
-				&& peer_disabledv[pi]->status == DMQ_NODE_DISABLED)
-			dmq_peer_run_event_route(DMQ_NODE_DISABLED, peer_disabledv[pi]);
-	}
+	for(pi = 0; pi < peer_upc; pi++)
+		dmq_peer_run_event_route(peer_upv[pi]);
+	for(pi = 0; pi < peer_downc; pi++)
+		dmq_peer_run_event_route(peer_downv[pi]);
+	for(pi = 0; pi < peer_disabledc; pi++)
+		dmq_peer_run_event_route(peer_disabledv[pi]);
 	if(peer_up_dropped > 0)
 		LM_WARN("dmq extract: %d peers skipped peer-up (max %d)\n",
 				peer_up_dropped, DMQ_EXTRACT_PEER_EVT_MAX);
