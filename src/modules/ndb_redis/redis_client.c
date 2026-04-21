@@ -41,6 +41,9 @@
 
 #include "redis_client.h"
 
+#define NDBR_SERVER_TLS 1
+#define NDBR_SENTINEL_TLS 2
+
 #define redisCommandNR(a...)        \
 	(int)({                         \
 		void *__tmp;                \
@@ -205,7 +208,7 @@ int redisc_init(void)
 		// address / port
 		if(sentinels_count > 0) {
 #ifdef WITH_SSL
-			if(enable_ssl == 3) {
+			if(enable_ssl & NDBR_SENTINEL_TLS) {
 				redisInitOpenSSL();
 				sslCtxSentinel = redisCreateSSLContext(
 						NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
@@ -231,7 +234,7 @@ int redisc_init(void)
 				redis = redisConnectWithTimeout(sentinelAddr, port, tv_conn);
 				if(redis) {
 #ifdef WITH_SSL
-					if(enable_ssl == 3) {
+					if(enable_ssl & NDBR_SENTINEL_TLS) {
 						if(redisInitiateSSLWithContext(redis, sslCtxSentinel)
 								!= REDIS_OK) {
 							LM_ERR("Failed to initiate TLS connection to "
@@ -302,7 +305,7 @@ int redisc_init(void)
 		}
 
 #ifdef WITH_SSL
-		if(enable_ssl) {
+		if(enable_ssl & NDBR_SERVER_TLS) {
 			/* Create SSL context*/
 			redisInitOpenSSL();
 			rsrv->sslCtxRedis = redisCreateSSLContext(
@@ -321,7 +324,7 @@ int redisc_init(void)
 		} else {
 #ifdef WITH_SSL
 			LOG(ndb_redis_debug, "Connecting to %s %s:%d\n",
-					(enable_ssl) ? "TLS" : "UDP", addr, port);
+					(enable_ssl & NDBR_SERVER_TLS) ? "TLS" : "UDP", addr, port);
 #else
 			LOG(ndb_redis_debug, "Connecting to %s:%d\n", addr, port);
 #endif
@@ -329,7 +332,7 @@ int redisc_init(void)
 		}
 
 #ifdef WITH_SSL
-		if(enable_ssl) {
+		if(enable_ssl & NDBR_SERVER_TLS) {
 			/* Negotiate SSL/TLS handshake*/
 			redisInitiateSSLWithContext(rsrv->ctxRedis, rsrv->sslCtxRedis);
 		}
@@ -712,7 +715,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 		rsrv->sslCtxRedis = NULL;
 	}
 
-	if(enable_ssl) {
+	if(enable_ssl & NDBR_SERVER_TLS) {
 		/* Create SSL context*/
 		redisInitOpenSSL();
 		rsrv->sslCtxRedis = redisCreateSSLContext(
@@ -729,7 +732,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 		rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv_conn);
 	}
 #ifdef WITH_SSL
-	if(enable_ssl) {
+	if(enable_ssl & NDBR_SERVER_TLS) {
 		/* Negotiate SSL/TLS handshake*/
 		redisInitiateSSLWithContext(rsrv->ctxRedis, rsrv->sslCtxRedis);
 	}
