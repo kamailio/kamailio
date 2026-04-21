@@ -31,6 +31,8 @@ static str rtpengine_dmq_500_rpl = str_init("Server Internal Error");
 dmq_api_t rtpengine_dmqb;
 dmq_peer_t *rtpengine_dmq_peer = NULL;
 
+extern str rtpengine_dmq_peer_id;
+
 int rtpengine_dmq_request_sync(dmq_node_t *node);
 
 /**
@@ -50,10 +52,8 @@ int rtpengine_dmq_init()
 
 	not_peer.callback = rtpengine_dmq_handle_msg;
 	not_peer.init_callback = rtpengine_dmq_request_sync;
-	not_peer.description.s = "rtpengine";
-	not_peer.description.len = 9;
-	not_peer.peer_id.s = "rtpengine";
-	not_peer.peer_id.len = 9;
+	not_peer.peer_id = rtpengine_dmq_peer_id;
+	not_peer.description = rtpengine_dmq_peer_id;
 	rtpengine_dmq_peer = rtpengine_dmqb.register_dmq_peer(&not_peer);
 	if(!rtpengine_dmq_peer) {
 		LM_ERR("error in register_dmq_peer\n");

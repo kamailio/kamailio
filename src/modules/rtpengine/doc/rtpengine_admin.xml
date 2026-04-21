@@ -2510,6 +2510,28 @@ modparam("rtpengine", "enable_dmq", 1)
 	</para>
 </section>
 
+<section id="rtpengine.p.dmq_peer_id">
+	<title><varname>dmq_peer_id</varname> (string)</title>
+	<para>
+		The DMQ peer identifier for rtpengine replication. This allows
+		customizing the peer name used in DMQ communication, which can be useful
+		to avoid compatibility conflicts, and for a better partitioning.
+	</para>
+	<para>
+	<emphasis>
+		Default value is <quote>rtpengine</quote>.
+	</emphasis>
+	</para>
+	<example>
+	<title>Set <varname>dmq_peer_id</varname> parameter</title>
+	<programlisting format="linespecific">
+...
+modparam("rtpengine", "dmq_peer_id", "rtpengine_6.1.1")
+...
+</programlisting>
+	</example>
+</section>
+
 	<section>
 	<title>Functions</title>
 	<section id="rtpengine.f.set_rtpengine_set">
