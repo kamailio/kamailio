@@ -397,20 +397,15 @@ static int mod_child(int rank)
 	 * the exact process number and before any other process starts*/
 	wolfssl_child_rank = rank;
 
-	if(rank == PROC_INIT && ksr_tcp_main_threads == 0) {
-		return mod_child_hook(rank);
-	}
-	if(rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0) {
+	if(rank == PROC_TCP_MAIN) {
 		if(mod_child_hook(rank) < 0) {
 			LM_ERR("failed to fix TLS configuration in TCP main thread\n");
 			return -1;
 		}
-		// fall-through to PKCS#11
 	}
 
 
-	if((rank > 0 && ksr_tcp_main_threads == 0)
-			|| (rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0)) {
+	if(rank == PROC_TCP_MAIN) {
 		if(tls_load_pkcs11_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults)
 				< 0) {
 			LM_ERR("failed to load PKCS#11 keys in child process\n");
