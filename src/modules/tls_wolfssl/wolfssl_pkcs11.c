@@ -81,7 +81,6 @@ static pkcs11_token_t _pkcs11_tokens[PKCS11_MAX_DEVS];
 
 static pkcs11_device_t _pkcs11_devices[PKCS11_MAX_DEVS];
 extern _Thread_local int thread_etask_pidx;
-extern int ksr_tcp_main_threads;
 extern int wolfssl_child_rank;
 
 
@@ -286,15 +285,7 @@ int tls_pkcs11_open_token(WOLFSSL *ssl)
 		return -1;
 
 	int idx;
-	if(ksr_tcp_main_threads > 0) {
-		idx = ctxd->token_id;
-	} else {
-		idx = ctxd->index[process_no];
-		if(idx < 0) {
-			tls_pkcs11_set_key(ctx, ctxd->config_key, 0);
-		}
-		idx = ctxd->index[process_no];
-	}
+	idx = ctxd->token_id;
 
 
 	wolfSSL_use_PrivateKey_Label(ssl, ctxd->private_key, idx);
@@ -440,30 +431,16 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 	int devId = token_slot;
 	Pkcs11Token *token = &_pkcs11_devices[token_slot].tok;
 	pkcs11_context_t *ctxd = NULL;
-	if(ksr_tcp_main_threads > 0) {
-		ctxd = wolfSSL_CTX_get_ex_data(ctx, 0);
 
-		if(ctxd == NULL) {
-			LM_ERR("tls_pkcs11_set_key: ex data was not allocated!\n");
-			return -1;
-		}
-		ctxd->token_id = cur_token->token_id;
-		strncpy(ctxd->private_key, obj_name, sizeof(ctxd->private_key) - 1);
-		ctxd->private_key[sizeof(ctxd->private_key) - 1] = '\0';
-	} else if(ksr_tcp_main_threads == 0) {
-		ctxd = wolfSSL_CTX_get_ex_data(ctx, 0);
+	ctxd = wolfSSL_CTX_get_ex_data(ctx, 0);
 
-		if(ctxd == NULL) {
-			LM_ERR("tls_pkcs11_set_key: ex data was not allocated!\n");
-			return -1;
-		}
-		ctxd->index[process_no] = cur_token->token_id;
-		strncpy(ctxd->private_key, obj_name, sizeof(ctxd->private_key) - 1);
-		ctxd->private_key[sizeof(ctxd->private_key) - 1] = '\0';
-
-		LM_INFO("[%d] Storing WOLFSSL_CTX*[%p] key data: devId[%d][%d]\n",
-				wolfssl_child_rank, ctx, cur_token->token_id, process_no);
+	if(ctxd == NULL) {
+		LM_ERR("tls_pkcs11_set_key: ex data was not allocated!\n");
+		return -1;
 	}
+	ctxd->token_id = cur_token->token_id;
+	strncpy(ctxd->private_key, obj_name, sizeof(ctxd->private_key) - 1);
+	ctxd->private_key[sizeof(ctxd->private_key) - 1] = '\0';
 
 	if(wc_CryptoCb_RegisterDevice(devId, my_FilterPk, token) != 0) {
 		LM_ERR("pkcs11: failed to register runtime devId=%d token='%s'\n", 0,

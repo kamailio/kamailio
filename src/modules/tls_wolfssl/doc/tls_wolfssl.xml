@@ -42,7 +42,7 @@
         with the <emphasis>tls</emphasis> module.
 			</para>
 			<para>
-	It is highly recommended to run this module with MT-mode (<code>tcp_main_threads = 1</code>).
+	The module no longer supports multi-process mode and requires the global config <code>tcp_main_threads = 1</code>. All wolfSSL functions run in the <code>PROC_TCP_MAIN</code> process. Shared memory and pthreads monkey-patching are not used.
 			</para>
 			<para>
 	This module is derived from the &tls-url;
@@ -85,16 +85,20 @@ loadmodule "tls_wolfssl.so"
 	The wolfSSL TLS module is intended to be compiled with a
 	recent version of wolfSSL - 5.8.4+ is recommended.
 			</para>
-			<para>Kamailio shared memory allocators, used in MP-mode(<code>tcp_main_threads = 0</code>), support
-                        16-byte alignment - it is possible to use this module with either the internal submodule
-                        or distro provided packages. For reference the ideal build flags are:
+			<para>For reference the ideal build flags are:
 
                         <programlisting>
 ...
-# - this assumes the allocators are 16-byte aligned
 # - Debian currently does not use -DWOLF_CRYPTO_CB_RSA_PAD: this affects use of RSA
 #   padding mechanisms on HSMs
 EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --enable-pkcs11
+
+# additional flags may be used: e.g. what Debian uses on forky for its libwolfssl44 / libwolfssl-dev
+EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure \
+    --enable-distro --enable-ech --enable-hpke --enable-jni \
+    --enable-jobserver=no --enable-memcached --enable-quic --enable-qt --enable-pkcs11 \
+    --enable-writedup --disable-asm --disable-crl-monitor --disable-examples \
+    --disable-silent-rules
 ...
                         </programlisting>
 			</para>
@@ -129,13 +133,12 @@ cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
 
                         <para>The module supports loading keys from PKCS#11 and
                         up to 8 tokens are supported.
-                        This feature is available in both MT- and MP- modes.
                         The key naming convention follows <ulink url="https://www.rfc-editor.org/rfc/rfc7512.html">RFC 7512 (PKCS#11 URI)</ulink>:
                         <programlisting>
 ...
 # - in tls.cfg these URIs to refer to PKCS#11 keys
 # - this format is a subset of RFC 7512
-# 
+#
 private_key = pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib64/libsoftokn3.so&amp;pin-value=12345678[pin-source=....]
 ...
                         </programlisting>

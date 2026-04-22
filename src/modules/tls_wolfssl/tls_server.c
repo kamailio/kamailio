@@ -779,10 +779,10 @@ void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 {
 	/* At shutdown in MT mode, PROC_TCP_MAIN is already dead and the OS
          * reclaims all memory. Avoid touching its heap entirely. */
-	if(_ksr_is_main && ksr_tcp_main_threads != 0)
+	if(_ksr_is_main)
 		return;
 
-	if(ksr_tcp_main_threads != 0 && !is_tcp_main() && !_ksr_is_main) {
+	if(!is_tcp_main() && !_ksr_is_main) {
 		int dsize = 0;
 		tcpx_task_t *ptask = NULL;
 		tcpx_task_result_t *rtask = NULL;
@@ -1371,11 +1371,7 @@ int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
 		snd_flags_t *send_flags)
 {
-	if(ksr_tcp_main_threads == 0) {
-		return tls_h_encode_mp_f(c, pbuf, plen, rest_buf, rest_len, send_flags);
-	} else {
-		return tls_h_encode_mt_f(c, pbuf, plen, rest_buf, rest_len, send_flags);
-	}
+	return tls_h_encode_mt_f(c, pbuf, plen, rest_buf, rest_len, send_flags);
 }
 
 
@@ -1886,11 +1882,7 @@ int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 
 int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 {
-	if(ksr_tcp_main_threads == 0) {
-		return tls_h_read_mp_f(c, flags);
-	} else {
-		return tls_h_read_mt_f(c, flags);
-	}
+	return tls_h_read_mt_f(c, flags);
 }
 
 static int _tls_evrt_connection_out = -1; /* default disabled */

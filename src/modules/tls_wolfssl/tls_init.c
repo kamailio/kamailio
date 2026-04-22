@@ -371,16 +371,8 @@ int tls_pre_init(void)
 	mf = NULL;
 	rf = NULL;
 	ff = NULL;
-	if(ksr_tcp_main_threads == 0
-			&& wolfSSL_SetAllocators(ser_malloc, ser_free, ser_realloc)) {
-		LM_ERR("Unable to set the memory allocation functions\n");
-		// CRYPTO_get_mem_functions(&mf, &rf, &ff);
-		LM_ERR("libssl current mem functions - m: %p r: %p f: %p\n", mf, rf,
-				ff);
-		LM_ERR("module mem functions - m: %p r: %p f: %p\n", ser_malloc,
-				ser_realloc, ser_free);
-		LM_ERR("Be sure tls module is loaded before any other module using"
-			   " libssl (can be loaded first to be safe)\n");
+	if(ksr_tcp_main_threads == 0) {
+		LM_ERR("tls_wolfssl requires tcp_main_threads = 1\n");
 		return -1;
 	}
 	LM_DBG("updated memory functions - malloc: %p realloc: %p free: %p\n",

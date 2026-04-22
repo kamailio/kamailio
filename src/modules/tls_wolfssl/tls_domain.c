@@ -131,19 +131,7 @@ void tls_free_domain(tls_domain_t *d)
 {
 	if(!d)
 		return;
-	if(d->ctx && ksr_tcp_main_threads == 0) {
-		if(d->ctx[0]) {
-			void *ext = wolfSSL_CTX_get_ex_data(d->ctx[0], 0);
-			if(ext) {
-				shm_free(((pkcs11_context_t *)ext)->index);
-				shm_free(ext);
-			}
-
-			wolfSSL_CTX_free(d->ctx[0]);
-		}
-		shm_free(d->ctx);
-	}
-	if(d->ctx && ksr_tcp_main_threads > 0 && process_no == PROC_TCP_MAIN) {
+	if(d->ctx && process_no == PROC_TCP_MAIN) {
 		if(d->ctx[0]) {
 			void *ext = wolfSSL_CTX_get_ex_data(d->ctx[0], 0);
 			if(ext) {
@@ -1005,21 +993,8 @@ static int load_private_key(tls_domain_t *d)
 						d->ctx[0], d->pkey_file.s, SSL_FILETYPE_PEM);
 			} else {
 				pkcs11_context_t *ctxd;
-				if(ksr_tcp_main_threads == 0) {
-					LM_WARN("%s: for wolfSSL HSM[key = %s] keys it is strongly "
-							"recommended to use  "
-							"MT-mode: tcp_main_threads=1\n",
-							tls_domain_str(d), d->pkey_file.s);
-					ctxd = shm_malloc(sizeof(pkcs11_context_t));
-					memset(ctxd, 0, sizeof(pkcs11_context_t));
-					ctxd->index = shm_malloc(sizeof(int) * procs_no);
-					for(i2 = 0; i2 < procs_no; i2++) {
-						ctxd->index[i2] = -1;
-					}
-				} else {
-					ctxd = pkg_malloc(sizeof(pkcs11_context_t));
-					memset(ctxd, 0, sizeof(pkcs11_context_t));
-				}
+				ctxd = pkg_malloc(sizeof(pkcs11_context_t));
+				memset(ctxd, 0, sizeof(pkcs11_context_t));
 				if(ctxd == NULL) {
 					ERR("%s: Cannot allocate memory for PKCS#11 context\n",
 							tls_domain_str(d));

@@ -42,7 +42,6 @@
 #include "tls_rpc.h"
 #include "tls_cfg.h"
 
-extern int ksr_tcp_main_threads;
 static const char *tls_reload_doc[2] = {"Reload TLS configuration file", 0};
 
 static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
@@ -201,21 +200,8 @@ static void tls_reload(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	if(ksr_tcp_main_threads > 0) {
-		/* SSL_CTX owned by PROC_TCP_MAIN — use client stub */
-		LM_INFO("tcp_main_threads=%d: proxying tls.reload to"
-				" PROC_TCP_MAIN\n",
-				ksr_tcp_main_threads);
-		tls_reload_mt(rpc, ctx, &config_file);
-		return;
-	}
-
-	/* tcp_main_threads == 0: execute locally (in-process server) */
-	if(tls_reload_do(&config_file, errmsg, sizeof(errmsg)) < 0) {
-		rpc->fault(ctx, 500, errmsg);
-		return;
-	}
-	rpc->rpl_printf(ctx, "Ok. TLS configuration reloaded.");
+	/* SSL_CTX owned by PROC_TCP_MAIN — use client stub */
+	tls_reload_mt(rpc, ctx, &config_file);
 }
 
 
