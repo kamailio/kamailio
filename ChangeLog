@@ -1,3 +1,937 @@
+===================== 2026-04-22 Version 6.1.2 Released =====================
+
+===================== Changes Since Version 6.1.1 ===========================
+
+commit 6adfcf115ac36006a4b1c621587acd6cd0b25790
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 22 09:08:46 2026 +0200
+
+    src: version set to 6.1.2
+
+commit 9b914ff01d83bfb2c3dd694c41399c9d1c89341e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 22 08:54:12 2026 +0200
+
+    pkg/kamailio: version set to 6.1.2 for rpms and alpine [skip ci]
+
+commit fcf5d89c11d437675bd299aaa9aceb042e15feba
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Apr 22 08:42:19 2026 +0200
+
+    pkg/kamailio/deb: version set 6.1.2 [skip ci]
+
+commit 86323fa28e1aa75547cc43c2803b14030d1c00ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 22 08:40:31 2026 +0200
+
+    src: removed CMakelists.notes
+    
+    (cherry picked from commit 97610b799890e317a5e0b53f462c96a419d28faf)
+
+commit 4529bcfa59e4292b95fd30c20a74b54eff8018b7
+Author: Loi Dang <loidang@b3networks.com>
+Date:   Fri Apr 17 17:41:56 2026 +0700
+
+    topos: restore port/transport in contact URI for contact_mode=0
+    
+    In 6.1 the contact-building logic in tps_storage_fill_contact was
+    refactored into helper functions. The else branch (ctmode=0 SKEYUSER
+    and ctmode=3 XAVPHOST) was unified into a single append_host_info call
+    with append_port_proto=0, which silently dropped port and transport from
+    the generated contact URI for ctmode=0.
+    
+    In 6.0 the equivalent inline code always appended port and transport,
+    producing contacts like <sip:bXXX@host:port;transport=tcp>. ctmode=3
+    (XAVPHOST) did not exist in 6.0, so its omission of port/transport is
+    intentional and is kept as-is.
+    
+    Fix: pass append_port_proto=1 for TPS_CONTACT_MODE_SKEYUSER only.
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+    (cherry picked from commit fc204822831f2732ce07864e1d2213d2d3c30bd6)
+
+commit 1626393aac97e7665a34cc2a6853d018c8a28e09
+Author: Michael Furmur <furmur@pm.me>
+Date:   Wed Apr 1 02:10:52 2026 +0300
+
+    core: _tcpconn_find: fix protocol checking for tls_connection_match_domain
+    
+    (cherry picked from commit a4ddf14d894a4bbcb7fb169aab6235abf749f21a)
+
+commit 3c783894c6679aef52dec8a86bec7dcff3f814aa
+Author: Michael Furmur <furmur@pm.me>
+Date:   Wed Apr 1 02:10:37 2026 +0300
+
+    tls_wolfssl: fix tls_h_match_domain_f connection matching
+    
+    (cherry picked from commit f67cf74db5ebc80a4affe42921bd525fbdbb2a1c)
+
+commit 5c5b348831632ba739228c372408d2d7d7835c2f
+Author: Michael Furmur <furmur@pm.me>
+Date:   Wed Apr 1 02:10:23 2026 +0300
+
+    tls: fix tls_h_match_domain_f connection matching
+    
+    (cherry picked from commit 337ac691039588fda41a98d055f32ed25630447d)
+
+commit 9a927829635e597688246485872c2d110cc08e4d
+Author: Tim Anderson <tim@claritynetworks.com.au>
+Date:   Wed Apr 15 13:18:38 2026 +1000
+
+    siptrace: fix segfault when hep tracing in transaction mode
+    
+    - added checking that the trace_uri is not null
+    
+    (cherry picked from commit d56c61bf93798860721937c6cac42f63c4af1319)
+
+commit ffb4a62f8b62aa30d59c69f6c9ee610b54382eaa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 19 17:25:10 2026 +0200
+
+    tls: use SSL_CTX_set_ciphersuites() for TLS 1.3 ciphers from libssl 1.1.1
+    
+    (cherry picked from commit 8ee596f6972ff52648c8fea6246ff20972b67e52)
+
+commit 6a41ed61fc3dc359e473a35b40f9786b33cd05df
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Apr 17 14:05:20 2026 +0000
+
+    ims_qos: Validate length before copying
+    
+    (cherry picked from commit af1ae1d1e08a9880062882789bd1c7acb1077852)
+
+commit e5d17078f33fab286af8d8d097f85f093f8cb8e0
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Apr 17 13:19:00 2026 +0000
+
+    ims_usrloc_pcscf: Improve error handling
+    
+    (cherry picked from commit 5e012c7b6039ed2d8ec04eb7694670d0edce63d8)
+
+commit c68def4c8628d4a1895f7f3e31561089f6c41ff1
+Author: Maksim Nesterov <braams@users.noreply.github.com>
+Date:   Mon Apr 20 22:45:30 2026 +0200
+
+    http_async_client: freeing event upon request completion
+    
+    (cherry picked from commit 383f5fb9ec9943a5435fdc107638a512469648ef)
+
+commit 5a281a77ba2cc104dab294471904afaa6aae641e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 19 18:26:21 2026 +0200
+
+    Revert "core: dns - Fix lookup of multiple NAPTR entries"
+    
+    This reverts commit 723528c4f91a1601575d454ef7f56609423e7b89.
+
+commit 84ebaa20790fc61670bd4ed85ddea38e23cdb8b3
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Apr 19 09:46:18 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 48481b0bd8515556ab8ba66ef1af240b8db742bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 17 21:08:23 2026 +0200
+
+    tls_wolfssl: check IP address length in get_alt()
+    
+    (cherry picked from commit eb53aace0f9941cfdf4d90a7f8f49a4533bf8e30)
+
+commit 5b0ff2dc8b52652c1ee46bb3c4d0b3c2495bd03e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 17 21:03:40 2026 +0200
+
+    tls: check IP address length in get_alt()
+    
+    (cherry picked from commit 6a5cb97f2a89573fe2e8252f34fe9da100cbfa2c)
+
+commit 83b3614407b08b467eaa06a7dc83187f1fe5ae79
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 17 20:56:06 2026 +0200
+
+    auth_diameter: use digest user field when appending realm
+    
+    (cherry picked from commit a79e8ce6d2f31a599147766feb76dba8901a0d08)
+
+commit 7933e0d44e64f588165760f306116a6c0f5c5a8f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 17 20:48:30 2026 +0200
+
+    auth_radius: use digest user field when appending realm
+    
+    (cherry picked from commit 9e24a3764f5957102486e3d9834c210223809ddd)
+
+commit e375affe23482b528326742cbb9418fba3c58d0a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 16 06:31:40 2026 +0200
+
+    siprepo: keep the rcv structure
+    
+    (cherry picked from commit 596398dd56d7a084c338829e9225df4c033d309b)
+
+commit 8c3fb89cfc5c7b1022c97ca4b08d3ba00e7bf20b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 16 06:01:49 2026 +0200
+
+    siprepo: removed unused structure
+    
+    (cherry picked from commit 42859aa15638f89135cf82ea760e8ba123644184)
+
+commit e8da8a16aafe469088ade4d0a3400a05057d1428
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 18:04:31 2026 +0200
+
+    htable: check if item is still expired after event route execution
+    
+    - event route for expired item might prolong lifetime with new
+      assignment
+    
+    (cherry picked from commit 7d091e2f11e977e533691d5b76ec495a640831fb)
+
+commit 64bc9747ad61702c0c646ff9384092f85be76da6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 17:20:21 2026 +0200
+
+    pv: remove unnecessary r-uri parsing for geting it and o-uri
+    
+    (cherry picked from commit fa57bb58431a950f3691a288704ba603fa7aa7d6)
+
+commit 584f7e803021e4e313dae992fe28d6e590d0af47
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 15 17:14:34 2026 +0200
+
+    kemix: remove unnecessary r-uri parsing for geting it and o-uri
+    
+    (cherry picked from commit 675fe2335097da0d9583f5ca8a5b045b9e6354a4)
+
+commit 9c7e8026fa997c2be7d085060a814905e50b02c5
+Author: timando <tim@crazytel.com.au>
+Date:   Wed Apr 15 10:39:00 2026 +1000
+
+    kamctl: Fix incorrectly spelled variable name in kamdbctl.pgsql
+    
+    - Fixed incorrectly spelled variable name DBCLI from DBCMD
+    
+    (cherry picked from commit 52b384386f26dbf611e4846c03daab820d75e591)
+
+commit 961f460de37fe03ad8a05b7c1b519f8f88f323d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 13 21:36:36 2026 +0200
+
+    siprepo: removed unnecessary conditions on ack and cancel
+    
+    (cherry picked from commit fdb8ea0e788640c278c6cbd7bd9bf311cd5afa2a)
+
+commit 9b6ced91d198adea48b8afcb077f429f5a1a3ceb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 13 21:30:22 2026 +0200
+
+    siprepo: docs updated with the missing rmode param
+    
+    (cherry picked from commit ebff50f398aed798fc169630d13c7250e59979b5)
+
+commit 0fa7499ab82cff9f5c8f343c976ed59684c31bae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 13 21:17:00 2026 +0200
+
+    siprepo: proper fixup free for sr_msg_push()
+    
+    (cherry picked from commit 17608acc4411c75fbc5e4ca1a48278333e1e72cb)
+
+commit b8905f36d1f020479678df16dce3b6d573e398d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 10 11:03:23 2026 +0200
+
+    nathelper: reworked detection of no contact or star value
+    
+    (cherry picked from commit 15705a76e112b38ed782ed380c28ef5f8a3934a0)
+
+commit 69392c24e218f5890f7ecb509792f627bc559079
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 10 10:25:53 2026 +0200
+
+    nathlper: get contact uri detect star header value
+    
+    - GH #4683
+    
+    (cherry picked from commit 38d013a578a2c03cf880fe4bb26394ec865ccd07)
+
+commit f783f3a141626967daf0c6c3b1f24c8bf8a471f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 10 08:53:21 2026 +0200
+
+    app_perl: Makefile - use $(shell ...) instead of backticks
+    
+    (cherry picked from commit 3f3701d19d2b0620e03d386286a4ab2c378b6986)
+
+commit 87c54f0d454f350ebab4e1415790e6b29acc939b
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Wed Apr 1 14:02:42 2026 +0200
+
+    http_async_client: Add $http_time parameter to docs
+    
+    (cherry picked from commit ce087ee796a3b1a6751a8286018cb2e5601d8fac)
+
+commit 053b6500fdd112fef5ed2c5bd134556240c3f561
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 11:34:09 2026 +0300
+
+    Revert "Receive patch for fail2ban"
+    
+    This reverts commit 5bd7f4ed3e3a47cab2d8d2246176e26374427b5c.
+
+commit 65968e4d4c9d74f692c8217871b536a5e0805b3a
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 11:32:51 2026 +0300
+
+    Revert "Build related changes"
+    
+    This reverts commit 4e4df33e7f8dcdbad001f4b2c35fe9633608d508.
+
+commit 3a54116a4e8ec265d51393d06f67d1a51ec480e8
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 11:32:39 2026 +0300
+
+    Revert "Increase size of permissions hash table"
+    
+    This reverts commit cd8d60b71e1824426f0898097dcccb5a4c1c8dfb.
+
+commit f91338b298138df58e49537fd978dcaa92503572
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 11:32:02 2026 +0300
+
+    Revert "Added local module"
+    
+    This reverts commit c50bbf6caffe2bbaa1d124402a992abb757e6d57.
+
+commit cd8d60b71e1824426f0898097dcccb5a4c1c8dfb
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 11:06:37 2026 +0300
+
+    Increase size of permissions hash table
+
+commit 5bd7f4ed3e3a47cab2d8d2246176e26374427b5c
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 11:02:16 2026 +0300
+
+    Receive patch for fail2ban
+
+commit 4e4df33e7f8dcdbad001f4b2c35fe9633608d508
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 10:53:47 2026 +0300
+
+    Build related changes
+
+commit c50bbf6caffe2bbaa1d124402a992abb757e6d57
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Sat Apr 18 10:53:32 2026 +0300
+
+    Added local module
+
+commit 835c2de86d599c90a5b03119730aff8c031ac34f
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Apr 7 16:35:29 2026 +0800
+
+    tls_wolfssl: improve setup of DH tmp key
+    
+    Cherry-picked from 0caa84ab481abf8584bf67a79b09f4c46caeabd8
+
+commit 1b48726e1cb6046e217f54d65295d337799e555c
+Author: Sergey Safarov <s.safarov@anycast-lb.net>
+Date:   Thu Mar 5 00:12:07 2026 +0200
+
+    pkg/kamailio: packaged peerstate and ptimer modules
+    
+    (cherry picked from commit 387d33bd62f784020bd7d7f9b855d9bdadb2ac11)
+
+commit 7c6aeed89f713fa3fd86c6bd89daf1e4b5e4cb0f
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Tue Mar 31 10:46:25 2026 +0200
+
+    kamctl: clarify license [skip ci]
+    
+    * remove history lines from files
+    
+    (cherry picked from commit 99f121429b6f97cad647518bfebc7bc984108315)
+
+commit bc4919177557a48f697d85aa9d7f6def826dc7e4
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Mar 31 11:03:15 2026 +0000
+
+    ims_ocs: Fix typos in comments
+    
+    (cherry picked from commit 0eb01e0515c84314b0b7e334b348b331afeaf233)
+
+commit 612dc997579fa5e2f37deb7345705e2003a3a0ff
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Mar 31 11:02:47 2026 +0000
+
+    ims_ocs: Add memory check
+    
+    (cherry picked from commit 53b47f5be5961dfca0142c74d549f7de5ce768b8)
+
+commit b886b6623dec905b817bfc4c09e095ce1f582312
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Mar 31 10:52:11 2026 +0000
+
+    ims_ocs: Free after copying the values
+    
+    - Remove extra freeavplist call
+    - Add len check
+    
+    (cherry picked from commit a56942affd35d41890c23f1d3b5bb519f87ef5ad)
+
+commit 079f5900bef55e16d5183a32fa6c9b48175900a0
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Tue Mar 31 09:02:12 2026 +0200
+
+    pkg-kamailio-deb: restore libjwt-dev dependency [skip ci]
+    
+    (cherry picked from commit 274edebc23f4ea9789149b4864167a4a8d8b3c75)
+
+commit 594764afc935b8d0225afd16ff0c1d13567c2cda
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Tue Mar 31 08:51:43 2026 +0200
+
+    pkg/kamailio/deb: restore jwt on supported releases [skip ci]
+    
+    (cherry picked from commit d7d0752558821e9a7c19da985ea59ab66a7b29bf)
+
+commit e69384f016fde821c84bbf978b9b915028038c68
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Mar 31 08:52:55 2026 +0800
+
+    tls: fix builds with OpenSSL 3.0.x
+    
+    Cherry-picked from d139f421b85df86d7dbeb97d74c6c65626b2079d
+
+commit bbe1aa9fd6ff81f15208fb3252d431bc325810e4
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Mar 30 15:24:26 2026 +0800
+
+    tls: fix compilation on OpenSSL 1.1.1
+
+commit f613089ae78e34b84f61fa29e4c379e900eda70b
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Mar 29 15:51:48 2026 +0800
+
+    tls_wolfssl: use accessors for ASN1
+    
+    Cherry-picked from 6c3807836f6deeefa29508b2a01e09d87a3bdbfc
+
+commit 701960a8a5c324d2585bf72e36aa809d71c75593
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Mar 29 15:19:52 2026 +0800
+
+    tls: fix compilation with OpenSSL 4
+    
+    Replace direct field access with accessor functions/macros.
+    
+    Cherry-picked from 403c87522327e005e7387fc464519c8fa19c3719
+
+commit 9a64f7580635f4b641c45810e9bbbc02f68bb282
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Mar 29 03:16:19 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 912e14ec2631cf3abfadd0f2126ec713d3d91d64
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Mar 28 10:00:41 2026 +0800
+
+    tls: fix loading of providers in MP-mode in OpenSSL >= 3.3
+    
+    - like engines in 1.1.1 we cannot use the config mechanism to
+      load in the child anymore
+    - provide a new parameter provider_quirks_config that points
+      to a provider configuration file
+    - required due to changes in OpenSSL 3.3+
+    - updated docs
+    
+    Cherry-picked from b69fbf0001494fe45546c4f847364d34a40f8c57
+    Cherry-picked from 6a038dc232ddb908c8c1c066bfa0c918fa3566f1
+
+commit 02cdbb1d4e28ee587722ab6c04000f7530b4c385
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 25 14:36:17 2026 +0100
+
+    msrp: reformat initialized structures
+    
+    (cherry picked from commit 2c860b61afd0207e897f47a65e644c0b6a1c54d2)
+
+commit 6e4cd0366db49ecc59a987f8841aaa06417c409d
+Author: Julien Chavanton <jchavanton@gmail.com>
+Date:   Mon Mar 23 21:50:05 2026 -0400
+
+    textopsx: fix segfault in pv_get_hf_iterator_hname()
+    
+    Use correct array index [k] instead of [i] after loop exit.
+    Variable 'i' contains undefined value after the search loop completes,
+    causing segfault when dereferencing _hf_iterators[i].it->name.
+    
+    The loop finds the iterator at index i and stores it in k (line 2476),
+    but then incorrectly uses _hf_iterators[i] instead of _hf_iterators[k]
+    after the loop (lines 2486, 2489).
+    
+    Crash backtrace:
+    #0  pv_get_strval() - dereferencing invalid pointer
+    #1  pv_get_hf_iterator_hname() at textopsx.c:2489
+        Passing garbage pointer &_hf_iterators[i].it->name where i is undefined
+    
+    This bug causes crashes when processing SIP replies with header iterators.
+    
+    (cherry picked from commit af593600fb7ae0297ce649ff099536aebf490134)
+
+commit f2edccb1df540f0b90184756df8802b349f354be
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Mar 25 16:06:36 2026 +0100
+
+    pkg/kamailio/deb: missing nghttp2 module in rules [skip ci]
+    
+    (cherry picked from commit 2d9f3f0d3e5cf2a9151691c2c17850cdccb449a5)
+
+commit 6ea2d7fd96d98882f1a64a0a7ccfe4bf4a1bbdff
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Mar 25 15:56:48 2026 +0100
+
+    pkg/kamailio/deb: add missing libnghttp2-dev build dependency [skip ci]
+    
+    (cherry picked from commit ab3342136f05ae27793388cfbbbdf5a4560f9638)
+
+commit 80f5817fe9013352634697602f0f8ec9db98e8a1
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Mar 25 15:49:48 2026 +0100
+
+    pkg/kamailio/deb: add nghttp2 module to extra package [skip ci]
+    
+    (cherry picked from commit 73e675504e6e1cddc4cb8766eaf34c5eca94c6ac)
+
+commit 741e4e9dc2fd335405997c9682588884639ab77d
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Mar 25 12:31:18 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit a856aef46d536bb4d5dd13a04615cb0961ba551c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 24 11:10:43 2026 +0100
+
+    core: parser: guard conditions for limits on multipart body processing
+    
+    - GH #4656, GH #4657
+    
+    (cherry picked from commit d20a5bae01f8eaa8e8fec271cd964d6e3b2fb694)
+
+commit e70e3da19b4230d8bd7a0ebde0e683861c7fcbd9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 23 11:58:04 2026 +0100
+
+    siputils: find special chars with limit for set user/host functions
+    
+    - copy values with size to target buffer
+    
+    (cherry picked from commit f678332df50ec60a2fb4f587dcd40f217aec32b5)
+
+commit 87233d8aac1c67ff7445d7356321d33a5b05828b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 23 07:27:46 2026 +0100
+
+    nathelper: check size of built contact for select operation
+    
+    (cherry picked from commit 3c4746dc3873ce6766eb01fae598c47bbaaa5ea0)
+
+commit 5e7a360a7a5127395ebd81a77723c9ed06724cbe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 22 16:04:23 2026 +0100
+
+    dialog: skip other state tests on dlg clean run on a match
+    
+    (cherry picked from commit 6b5b97849c1cda9013ef4090809472e7aa047161)
+
+commit dd7588a07007daa151a0f764d2f8f47ba5c0937f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 22 15:46:47 2026 +0100
+
+    dialog: unref after dmq operation on dlg timeout
+    
+    (cherry picked from commit 1b723b4d3ec6df6cf721a3794998c7d2fcab9582)
+
+commit 9557d3e73f6e2e900e637400dae982291cd37063
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 22 11:03:23 2026 +0100
+
+    nathelper: check the length for alias ip and port
+    
+    (cherry picked from commit f2896a23725df88469faa89b1b864727d7bc6534)
+
+commit 2ec277a1566a73c313eeaf42842f56c640be2fcc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 22 10:41:19 2026 +0100
+
+    core: check boundaries - init lb size, keep reference to last boundary list item
+    
+    - rename local variable for clarity
+    
+    (cherry picked from commit 762ef9169a0aaabb74989494057d025383d0cb3f)
+
+commit 44809658f4d6506613c55fb9cfe63fb739381dbc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 22 09:32:21 2026 +0100
+
+    core: dns cname result - allocate space for full name
+    
+    (cherry picked from commit fa3587c929e53c37d37b3396511ee165f8affeff)
+
+commit 4328c00dda75d88af8a3f3ef1481fb133056b247
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 21 21:28:36 2026 +0100
+
+    msrp: use macro to append to buffer
+    
+    (cherry picked from commit 61f9db0a1ae8539ac9684ca8439ba975b881b540)
+
+commit 0a49e11b6c36d0b8d8530b51c697c12ef532c611
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 21 20:24:44 2026 +0100
+
+    pv: zero terminate s.replace transformation result
+    
+    - check the result length
+    
+    (cherry picked from commit 6d21462c7c3c53dd0fab772d6acf288ff2e4759c)
+
+commit 20c6869d960e0242144cea261eecc78cef35315a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 17 21:58:17 2026 +0100
+
+    dispatcher: small updates to log messages
+    
+    (cherry picked from commit 3000a0c29b7d872842822287dbc5fe55ca00d502)
+
+commit 7e1faa1b8739bcbb2f153a1d98eacdb85b567c57
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 17 09:20:02 2026 +0100
+
+    dispatcher: export ds_ping_fr_timer to match the docs
+    
+    (cherry picked from commit a1c8a3650143ae2c5a70455453a89d16f5a8fa66)
+
+commit 7f699ade41a6411f333fa683c0895251a86b8f00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 16 22:23:29 2026 +0100
+
+    evapi: use the appropriate define for tag size
+    
+    (cherry picked from commit 14a0d12e1d6e441e3d57fabd8f8aa416d6907056)
+
+commit 4874edb13d2df6264c128e126185ef413dbeca5a
+Author: Michael Furmur <furmur@pm.me>
+Date:   Mon Mar 16 18:08:37 2026 +0200
+
+    core: tcp_main: do not check tls domain for non-tls connections
+    
+    (cherry picked from commit e1a8b303d9d46fa29c4da44b824fac83e518b29f)
+
+commit 5bb4fe0ac48aa1f9bdca51da242a7684419b5b87
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 14 22:08:38 2026 +0100
+
+    tm: uac build - use bracket condtion also for length
+    
+    (cherry picked from commit 311157f86c6707be68258df7537345cc8075f90b)
+
+commit e68cb00c6463d8e27e5eef85248cdcfad210301d
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Mar 14 22:51:49 2026 +0800
+
+    tm: fix uninitialized variables tdname/fdname in build_uac_req()
+    
+    This caused a garbage (very large or negative) value to be passed to
+    shm_malloc(), resulting in allocation failure for any UAC-initiated
+    request with no display names in From/To headers - most visibly
+    dispatcher health check pings (OPTIONS/INFO).
+    
+    Introduced by: 2cc287dff638ea65aca3bf9fd55377f519bcab3f
+    ("tm: uac - keep the display name set via rpc")
+    
+    Fix: initialize tdname and fdname to 0 at declaration.
+    
+    Co-authored-by: Claude Sonnet 4.6 <no-reply@anthropic.com>
+    (cherry picked from commit 6cc6b34f18e252f70501bb53d7dd38a326016406)
+
+commit 07cd43c63702dbee7380b0204320d09d3540a852
+Author: Norm Brandinger <n.brandinger@gmail.com>
+Date:   Tue Mar 10 00:10:35 2026 -0400
+
+    rtpengine: fix NULL pv_spec_t dereference in DTMF event handling
+    
+    Guard all pv_spec_t setf() calls in rtpengine_raise_dtmf_event()
+    with NULL checks. When DTMF event pvars are not configured via
+    modparams, the corresponding pv_spec_t pointers remain NULL, causing
+    a segfault when rtpengine sends a DTMF notification.
+    
+    Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+    (cherry picked from commit 4767914ff7e29771ca4261dea38e8dff2b5dd3d2)
+
+commit dfb88b390df2979234f587f75b43f2b8deb02853
+Author: Alex Hermann <gaaf@gmx.net>
+Date:   Thu Mar 12 16:36:32 2026 +0100
+
+    rtpengine: Fix memory leak due to overwriting nodes
+    
+    idx should not get reset within the outer loop as it will cause overwriting
+    of earlier nodes and leaking their mem.
+    
+    (cherry picked from commit 80ae09ba669f5dba3b02a91c0ef19934843ee412)
+
+commit 5fd4473ec1574c30e9300261e029da90e657d9e5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 12 07:18:24 2026 +0100
+
+    tm: uac - keep the display name set via rpc
+    
+    (cherry picked from commit 2cc287dff638ea65aca3bf9fd55377f519bcab3f)
+
+commit 3efa3ec85cf0d23060bb278366fc5a3a7419228f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 17:54:12 2026 +0100
+
+    jsonrpcs: docs for transports and store_path field
+    
+    (cherry picked from commit 8ef9cedc1609ec519fbd029a70960fc27abbf37d)
+
+commit 723528c4f91a1601575d454ef7f56609423e7b89
+Author: Kilian WÃ¶ber <Kilian.Woeber@kontron.com>
+Date:   Thu Jan 29 15:31:48 2026 +0100
+
+    core: dns - Fix lookup of multiple NAPTR entries
+    
+    - Allow storing NAPTR entries in dns_srv_handle
+    - When resolving NAPTR, try to reuse entry after initial lookup
+    
+    (cherry picked from commit 34844f3b235235c9d44681f89098893967e3b408)
+
+commit 5bc12fc123958eda051ba4f4259664b78f632132
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Mar 9 18:52:02 2026 +0100
+
+    app_lua: [cmake] set missing LUA_INCLUDE_DIR when using PkgConfig
+    
+    > https://cmake.org/cmake/help/latest/module/FindPkgConfig.html
+    
+    (cherry picked from commit e54590d8758c978a452050a969db078fa3de2fdd)
+
+commit dbddf8989518dd374290bd59805e30039b93250d
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Mar 9 14:16:32 2026 +0100
+
+    app_lua: [cmake] use proper lua include var
+    
+    > https://cmake.org/cmake/help/latest/module/FindLua.html
+    
+    (cherry picked from commit 2ccd8a1183690693038606735292e8586d325704)
+
+commit 12db0455efc88dc16f6ad799a59c8badcad1205f
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Mar 9 12:53:16 2026 +0100
+
+    app_lua: cmake fix for detect lua5.5
+    
+    (cherry picked from commit 876b2d1d579c0386fe1c17faa4dd6fdb871889f4)
+
+commit c71f6d37f658645c8563d85a644a032d09905b2c
+Author: Joey Golan <joey@synchapp.io>
+Date:   Sun Mar 8 08:12:34 2026 +0200
+
+    tls: fix segfault on musl libc due to uninitialized pthread TSD
+    
+    On musl libc (Alpine Linux), pthread thread-specific data (TSD) for
+    the main thread is not initialized until pthread_key_create() is
+    called at least once. The diagnostic loop in mod_init() calls
+    pthread_getspecific() with raw integer keys 0-31 before any key has
+    been created, causing a NULL pointer dereference on musl.
+    
+    Force TSD initialization by creating and immediately deleting a
+    pthread key before the diagnostic loop.
+    
+    Fixes: kamailio/kamailio-ci#20
+    Related: #4534
+    Made-with: Cursor
+    (cherry picked from commit d53dc5ab9b95b82a2e8769351d77e33ce8d43bb7)
+
+commit a24d88c19f68d9a94509aac83fd2d4679389e6d3
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Mar 24 13:48:48 2026 +0000
+
+    presence: Validate watcher URI length before copying
+    
+    (cherry picked from commit e134644d16ea54c17598e880f1cc791715f4ea31)
+
+commit 194343ba282a4fd52d0ca0b382f14098cfc0ce49
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Mon Mar 23 17:01:41 2026 +0000
+
+    cdp: copy data before freeing
+    
+    (cherry picked from commit d08376c33ee97613eb99b00405af86b5dba45738)
+
+commit 77422bf8cc4a75317cb26669b9bc41dfed744c09
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Mar 24 15:39:41 2026 +0000
+
+    ims_charging: Free avp after traversing
+    
+    (cherry picked from commit 8d71214cddf1a82b229e0fb0ab11139878536178)
+
+commit f1a333b37bce0b6f4f1b177813a7d144ec252d97
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Tue Mar 24 11:14:42 2026 +0000
+
+    cmake: Add back missing definitions
+    
+    - b4df3a4e9 removed some definition by mistake
+
+commit 03458f22adc4cb65858430d39bbf8fa88fd4f8c6
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Mar 6 16:20:57 2026 +0100
+
+    pkg/kamailio/deb: compile app_lua with the highest available Lua version [skip ci]
+    
+    (cherry picked from commit c49662d5cadf22a7612709d55c7bb0fd76dc05c2)
+
+commit 84de956799df6ee4f4c7bb46249f1477f334111e
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Mar 16 08:54:51 2026 +0100
+
+    cmake: don't add executable perms to kamctl/kamctl.* files
+    
+    > W: kamailio: executable-not-elf-or-script [usr/lib/x86_64-linux-gnu/kamailio/kamctl/kamctl.base]
+    
+    (cherry picked from commit bbf67a6d94427da38d32b361e15175bce3d2195f)
+
+commit 02a444451598eef26481af781e047c62adc6ce14
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Mar 12 16:37:00 2026 +0800
+
+    tls: fix $tls_my_subject/$tls_peer_subject always returning null
+    
+    The PVs $tls_my_subject, $tls_my_issuer, $tls_peer_subject and
+    $tls_peer_issuer are registered with pv_comp() as their getter with
+    only PV_CERT_{LOCAL,PEER}|PV_CERT_{SUBJECT,ISSUER} flags â no
+    PV_COMP_* bit. After pv_comp() strips the cert/subject flags,
+    ind_local becomes 0, hitting the default: branch which sets
+    nid=NID_undef. get_comp() then called X509_NAME_get_index_by_NID()
+    with NID_undef which always returns -1, causing all four PVs to
+    silently return null regardless of the certificate content.
+    
+    Fix by handling NID_undef in get_comp() as a request for the full
+    distinguished name, using X509_NAME_oneline() to return the complete
+    subject or issuer string (e.g. /O=Example/CN=host.example.com).
+    
+    Cherry-picked from 86549be22f92442c192281bedcce1c3a1f80cac1
+
+commit f1a6e0c8a05d658c4f3fab5a58d57e91d3236e44
+Author: Norm Brandinger <n.brandinger@gmail.com>
+Date:   Mon Mar 9 23:46:18 2026 -0400
+
+    core: fix swapped comparison in atomic_stdatomic.h dec/inc_and_test
+    
+    atomic_fetch_sub_explicit() returns the value BEFORE the subtraction.
+    To test whether the result reached zero, dec_and_test must compare the
+    old value against 1 (old=1, new=1-1=0).  The code compared against -1,
+    which can never be true for a positive refcount, so the "reached zero"
+    condition was never triggered.
+    
+    The symmetric bug existed in inc_and_test: it compared the pre-increment
+    value against 1 instead of -1.
+    
+    This affected all 8 _and_test functions (int/long x relaxed/seq_cst).
+    
+    The practical impact is that any refcount-guarded free (TM transactions,
+    TCP connections, DNS cache entries, config blocks, WebSocket connections)
+    never fired on aarch64, causing shared memory to leak monotonically.
+    
+    Fixes: #4626
+    
+    Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+    (cherry picked from commit 79f5265057c99a6058bb92a3c0992fa1b9b0c121)
+
+commit acd0b07537a0f838da7e0003d032b1626756a654
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Fri Mar 13 20:44:02 2026 +0100
+
+    dialog: Check for Via header
+    
+    (cherry picked from commit 8f1565799c8ba55805005a3e4880d7b9808c6fc8)
+
+commit b97ca6ff380060e5c2ce5385dc87da627c6be231
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Mar 5 10:59:30 2026 +0000
+
+    cmake: Update dbschema generation flow
+    
+    - dbschema will build schema files into db files and copy them to source directory
+    
+    - install will copy source tree files (utils/kamctl/db*) to install folder
+    
+    (cherry picked from commit 9631c04c09fa128718ecd0fa0cb614188625fafd)
+
+commit 1a6cea4a43b9aa02a29aa80b4ee1f5ead3209995
+Author: Boris Korzun <drtr0jan@yandex.ru>
+Date:   Mon Mar 9 16:37:36 2026 +0300
+
+    phonenum: cmake: Fix a typo
+    
+    (cherry picked from commit a898ee597e959cfe288853ed3521e7afb8e45e75)
+
+commit 4dbc6b328ba063cca6005819b845dfb15871b15a
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Jan 30 13:02:41 2026 +0000
+
+    websocket: cmake: Use find_package to find unistring
+    
+    (cherry picked from commit f0437e30ce60fdbab1f56963ca15d04c9da43c30)
+
+commit 02643327bd18718a77c902d7aef8ad95919c0267
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Fri Jan 30 14:16:44 2026 +0000
+
+    cmake: Add unistring module
+    
+    - Add as a find_package to allow easier custom installs
+    
+    (cherry picked from commit 46302eb4f5d7b2c0e85f19ff09a25fc9c74a2712)
+
+commit 02299bb855c5e82e20044ca52e5334219ceb78a4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 5 16:32:50 2026 +0100
+
+    tm: remove unused define for mi fifo
+    
+    (cherry picked from commit 7b67d5a719b7ba0f5a34360e4713425a85911613)
+
+commit c116205815df569fb40d01b989a4958a12bf0710
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 5 17:06:22 2026 +0100
+
+    tm: disable char substitution for tm uac rpc
+    
+    - undocumented unexpected behaviour
+    - can be enabled with compile option (considered to be modparam if
+      needed)
+    
+    (cherry picked from commit 6796c967ab07616a9e749858de58f5e920ea9fdf)
+
+commit 361c7ac0dc35f9907bcb1e151c0cc6e7971367d8
+Author: Joel Serrano <joel@joelserrano.com>
+Date:   Fri Jan 30 01:38:30 2026 -0800
+
+    xhttp_prom: include global tags in user-defined metrics
+    
+    (cherry picked from commit 9f7838561daece724a9fa877cd140f744c81d452)
+
+
 ===================== 2026-03-04 Version 6.1.1 Released =====================
 
 ===================== Changes Since Version 6.1.0 ===========================
