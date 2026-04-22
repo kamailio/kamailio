@@ -582,6 +582,59 @@ ws_handle_handshake();
 </programlisting>
 		</example>
 	</section>
+	<section id="websocket.f.ws_send">
+		<title>
+		<function moreinfo="none">ws_send(host, port, path, subproto, cmode)</function>
+		</title>
+		<para>Send the current SIP message over an outbound WebSocket connection
+		to the target specified by host and port over tcp (cmode=0) or tls
+		(cmode=1), using the specified HTTP path and sub-protocol.</para>
+		<para>If a matching outbound WebSocket connection already exists and is
+		ready, the SIP message is sent immediately. If a matching connection is
+		still in the WebSocket handshake phase, a copy of the SIP wire buffer is
+		queued in shared memory and transmitted after the handshake succeeds. If
+		no matching connection exists, a new outbound WebSocket connection is
+		initiated and the SIP message is queued until the connection becomes
+		ready.</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>host - remote WebSocket server host name or IP
+				address.</para>
+			</listitem>
+			<listitem>
+				<para>port - remote WebSocket server port.</para>
+			</listitem>
+			<listitem>
+				<para>path - HTTP request path used for the WebSocket
+				upgrade request.</para>
+			</listitem>
+			<listitem>
+				<para>subproto - WebSocket sub-protocol to use. At present,
+				the supported values are <quote>sip</quote> and
+				<quote>msrp</quote>.</para>
+			</listitem>
+			<listitem>
+				<para>cmode - set to <quote>1</quote> for a secure outbound
+				connection over TLS and <quote>0</quote> for a plain TCP
+				connection.</para>
+			</listitem>
+		</itemizedlist>
+		<para>Return: 1 (true) on success, negative (false) on failure.</para>
+		<para>This function can be used from ANY_ROUTE.</para>
+		<example>
+		<title><function>ws_send</function> usage</title>
+		<programlisting format="linespecific">
+...
+	$fs = "tcp:127.0.0.1:5060";
+	$du = "sip:127.0.0.1:80;transport=ws";
+    if(!ws_send("127.0.0.1", "80", "/service", "sip", "0")) {
+        xlog("failed to send over websocket\n");
+    }
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="websocket.f.ws_close">
 		<title>
 		<function moreinfo="none">ws_close([status,
