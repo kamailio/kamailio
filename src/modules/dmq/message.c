@@ -38,7 +38,7 @@
 str dmq_200_rpl = str_init("OK");
 str dmq_400_rpl = str_init("Bad request");
 str dmq_500_rpl = str_init("Server Internal Error");
-str dmq_404_rpl = str_init("User Not Found");
+str dmq_404_rpl = str_init("Not Found Peer ID");
 
 /**
  * @brief set the body of a response
