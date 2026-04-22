@@ -65,9 +65,13 @@ int w_ws_handle_handshake(sip_msg_t *msg, char *p1, char *p2);
 int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 		str *sub_protocol, int cmode);
 int ws_connect_url(sip_msg_t *msg, str *wsurl, str *sub_protocol);
+int ws_send(sip_msg_t *msg, str *host, int port, str *path, str *sub_protocol,
+		int cmode);
 int w_ws_connect(sip_msg_t *msg, char *phost, char *pport, char *ppath,
 		char *psubproto, char *pcmode);
 int w_ws_connect_url(sip_msg_t *msg, char *purl, char *psubproto);
+int w_ws_send(sip_msg_t *msg, char *phost, char *pport, char *ppath,
+		char *psubproto, char *pcmode);
 int ws_handle_handshake_response(sr_event_param_t *evp);
 
 void ws_rpc_disable(rpc_t *rpc, void *ctx);

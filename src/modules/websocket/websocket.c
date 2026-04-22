@@ -100,6 +100,9 @@ static cmd_export_t cmds[] = {
 	{ "ws_connect", (cmd_function)w_ws_connect,
 	  5, fixup_sissi, fixup_free_sissi,
 	  ANY_ROUTE },
+	{ "ws_send", (cmd_function)w_ws_send,
+	  5, fixup_sissi, fixup_free_sissi,
+	  ANY_ROUTE },
 	{ "ws_connect_url", (cmd_function)w_ws_connect_url,
 	  2, fixup_spve_spve, fixup_free_spve_spve,
 	  ANY_ROUTE },
@@ -447,6 +450,11 @@ static sr_kemi_t sr_kemi_websocket_exports[] = {
 	},
 	{ str_init("websocket"), str_init("connect"),
 		SR_KEMIP_INT, ws_connect,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE }
+	},
+	{ str_init("websocket"), str_init("send"),
+		SR_KEMIP_INT, ws_send,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE }
 	},

@@ -362,6 +362,46 @@ static void ws_mark_failed_client(ws_connection_t *wsc)
 	wsconn_put(wsc);
 }
 
+static int ws_send_buffer(int conid, char *buf, unsigned int len)
+{
+	ws_event_info_t wsev;
+	sr_event_param_t evp = {0};
+
+	memset(&wsev, 0, sizeof(ws_event_info_t));
+	wsev.type = SREV_TCP_WS_FRAME_OUT;
+	wsev.buf = buf;
+	wsev.len = len;
+	wsev.id = conid;
+	evp.data = (void *)&wsev;
+
+	return (sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp) < 0) ? -1 : 1;
+}
+
+static int ws_flush_send_queue(ws_connection_t *wsc)
+{
+	ws_send_item_t *item;
+	ws_send_item_t *next;
+
+	if(wsc == NULL)
+		return -1;
+
+	item = wsconn_sendq_detach(wsc);
+	while(item != NULL) {
+		next = item->next;
+		if(ws_send_buffer(wsc->id, item->data, item->len) < 0) {
+			LM_ERR("failed to flush websocket send queue for connection %d\n",
+					wsc->id);
+			wsconn_sendq_free_list(next);
+			shm_free(item);
+			return -1;
+		}
+		shm_free(item);
+		item = next;
+	}
+
+	return 0;
+}
+
 static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 {
 	if(hdrs && hdrs->len > 0) {
@@ -789,7 +829,9 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 	con->req.flags |= F_TCP_REQ_WS_HANDSHAKE;
 	rcv = con->rcv;
 	rcv.proto_reserved1 = con->id;
-	if(wsconn_add_outgoing(&rcv, sub_proto, &key) < 0) {
+	if(wsconn_add_outgoing(&rcv, sub_proto, &key, host, port, &lpath,
+			   (cmode) ? PROTO_WSS : PROTO_WS)
+			< 0) {
 		LM_ERR("failed to track outbound websocket connection\n");
 		con->req.flags &= ~F_TCP_REQ_WS_HANDSHAKE;
 		goto done;
@@ -821,6 +863,97 @@ int ws_connect_url(sip_msg_t *msg, str *wsurl, str *sub_protocol)
 
 	return ws_connect(msg, &waddr.host, waddr.port_no, &waddr.path,
 			sub_protocol, (waddr.proto_no == PROTO_WSS) ? 1 : 0);
+}
+
+int ws_send(sip_msg_t *msg, str *host, int port, str *path, str *sub_protocol,
+		int cmode)
+{
+	ws_connection_t *wsc = NULL;
+	unsigned int sub_proto = 0;
+	str lpath = STR_NULL;
+	int ret;
+
+	if(msg == NULL || msg->buf == NULL || msg->len <= 0) {
+		LM_ERR("missing SIP message to send over websocket\n");
+		return -1;
+	}
+	if(host == NULL || host->s == NULL || host->len <= 0) {
+		LM_ERR("missing host for websocket send\n");
+		return -1;
+	}
+	if(ws_parse_sub_protocol(sub_protocol, &sub_proto) < 0) {
+		LM_ERR("unsupported websocket sub-protocol: %.*s\n", sub_protocol->len,
+				sub_protocol->s);
+		return -1;
+	}
+	if((sub_proto & ws_sub_protocols) == 0) {
+		LM_ERR("websocket sub-protocol %.*s is not enabled\n",
+				sub_protocol->len, sub_protocol->s);
+		return -1;
+	}
+
+	if(path != NULL)
+		lpath = *path;
+	if(lpath.s == NULL || lpath.len <= 0) {
+		lpath.s = "/";
+		lpath.len = 1;
+	}
+
+	if(port <= 0)
+		port = (cmode) ? 443 : 80;
+
+	wsc = wsconn_get_outgoing(
+			host, port, &lpath, (cmode) ? PROTO_WSS : PROTO_WS, sub_proto);
+	if(wsc != NULL) {
+		if(wsc->state == WS_S_OPEN) {
+			ret = ws_send_buffer(wsc->id, msg->buf, msg->len);
+			wsconn_put(wsc);
+			return ret;
+		}
+		ret = wsconn_sendq_push(wsc, msg->buf, msg->len);
+		if(ret == 0) {
+			wsconn_put(wsc);
+			return 1;
+		}
+		if(ret < 0) {
+			wsconn_put(wsc);
+			return -1;
+		}
+		wsconn_put(wsc);
+	}
+
+	if(ws_connect(msg, host, port, &lpath, sub_protocol, cmode) < 0) {
+		LM_ERR("failed to initiate outbound websocket connection for send\n");
+		return -1;
+	}
+
+	wsc = wsconn_get_outgoing(
+			host, port, &lpath, (cmode) ? PROTO_WSS : PROTO_WS, sub_proto);
+	if(wsc == NULL) {
+		LM_ERR("cannot retrieve outbound websocket connection after connect\n");
+		return -1;
+	}
+
+	if(wsc->state == WS_S_OPEN) {
+		ret = ws_send_buffer(wsc->id, msg->buf, msg->len);
+		wsconn_put(wsc);
+		return ret;
+	}
+
+	ret = wsconn_sendq_push(wsc, msg->buf, msg->len);
+	wsconn_put(wsc);
+	if(ret == 0)
+		return 1;
+	if(ret == 1) {
+		wsc = wsconn_get_outgoing(
+				host, port, &lpath, (cmode) ? PROTO_WSS : PROTO_WS, sub_proto);
+		if(wsc == NULL)
+			return -1;
+		ret = ws_send_buffer(wsc->id, msg->buf, msg->len);
+		wsconn_put(wsc);
+		return ret;
+	}
+	return -1;
 }
 
 int w_ws_connect(sip_msg_t *msg, char *phost, char *pport, char *ppath,
@@ -857,6 +990,29 @@ int w_ws_connect_url(sip_msg_t *msg, char *purl, char *psubproto)
 		return -1;
 
 	return ws_connect_url(msg, &wsurl, &subproto);
+}
+
+int w_ws_send(sip_msg_t *msg, char *phost, char *pport, char *ppath,
+		char *psubproto, char *pcmode)
+{
+	str host = STR_NULL;
+	str path = STR_NULL;
+	str subproto = STR_NULL;
+	int port = 0;
+	int cmode = 0;
+
+	if(fixup_get_svalue(msg, (gparam_p)phost, &host) < 0)
+		return -1;
+	if(fixup_get_ivalue(msg, (gparam_p)pport, &port) < 0)
+		return -1;
+	if(fixup_get_svalue(msg, (gparam_p)ppath, &path) < 0)
+		return -1;
+	if(fixup_get_svalue(msg, (gparam_p)psubproto, &subproto) < 0)
+		return -1;
+	if(fixup_get_ivalue(msg, (gparam_p)pcmode, &cmode) < 0)
+		return -1;
+
+	return ws_send(msg, &host, port, &path, &subproto, cmode);
 }
 
 int ws_handle_handshake_response(sr_event_param_t *evp)
@@ -952,6 +1108,11 @@ int ws_handle_handshake_response(sr_event_param_t *evp)
 
 	tev->con->req.flags &= ~F_TCP_REQ_WS_HANDSHAKE;
 	wsconn_mark_open(wsc);
+	if(ws_flush_send_queue(wsc) < 0) {
+		update_stat(ws_failed_handshakes, 1);
+		ws_mark_failed_client(wsc);
+		return -1;
+	}
 	update_stat(ws_successful_handshakes, 1);
 	if(wsc->sub_protocol == SUB_PROTOCOL_SIP)
 		update_stat(ws_sip_successful_handshakes, 1);
