@@ -55,6 +55,7 @@ int sn_size_from_uri = 256;
 int sn_size_to_uri = 256;
 int sn_size_contact_uri = 256;
 int sn_size_route_uri = 256;
+int sn_size_path_uri = 256;
 int sn_size_header = 2048;
 int sn_size_headers = 8192;
 int sn_size_body = 8192;
@@ -101,6 +102,7 @@ static param_export_t params[] = {
 	{"size_to_uri", PARAM_INT, &sn_size_to_uri},
 	{"size_contact_uri", PARAM_INT, &sn_size_contact_uri},
 	{"size_route_uri", PARAM_INT, &sn_size_route_uri},
+	{"size_path_uri", PARAM_INT, &sn_size_path_uri},
 	{"size_header", PARAM_INT, &sn_size_header},
 	{"size_headers", PARAM_INT, &sn_size_headers},
 	{"size_body", PARAM_INT, &sn_size_body},
@@ -294,6 +296,25 @@ int sanity_check_sizes(sip_msg_t *msg)
 			if(hf->type == HDR_RECORDROUTE_T) {
 				for(rb = (rr_t *)hf->parsed; rb != NULL; rb = rb->next) {
 					if(rb->nameaddr.uri.len > sn_size_route_uri) {
+						return SANITY_CHECK_FAILED;
+					}
+				}
+			}
+		}
+	}
+	if(sn_size_path_uri > 0) {
+		if(parse_headers(msg, HDR_PATH_F, 0) < 0) {
+			LM_DBG("failed to parse Path headers\n");
+			return SANITY_CHECK_FAILED;
+		}
+		for(hf = msg->path; hf != NULL; hf = next_sibling_hdr(hf)) {
+			if(hf->type == HDR_PATH_T) {
+				if(parse_rr(hf) < 0) {
+					LM_DBG("failed to parse Path header body\n");
+					return SANITY_CHECK_FAILED;
+				}
+				for(rb = (rr_t *)hf->parsed; rb != NULL; rb = rb->next) {
+					if(rb->nameaddr.uri.len > sn_size_path_uri) {
 						return SANITY_CHECK_FAILED;
 					}
 				}
