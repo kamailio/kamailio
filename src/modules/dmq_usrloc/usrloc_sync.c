@@ -90,6 +90,18 @@ static int add_contact(str aor, ucontact_info_t *ci)
 		res = dmq_ul.get_urecord_by_ruid(
 				_d, dmq_ul.get_aorhash(&aor), &ci->ruid, &r, &c);
 		if(res == 0) {
+			/* LWW: skip update if local contact is newer */
+			if(ci->last_modified > 0 && c->last_modified > ci->last_modified) {
+				LM_DBG("LWW: skipping stale update for contact=[%.*s] "
+					   "ruid=[%.*s] "
+					   "local=%u incoming=%u\n",
+						c->c.len, c->c.s, c->ruid.len, c->ruid.s,
+						(unsigned int)c->last_modified,
+						(unsigned int)ci->last_modified);
+				dmq_ul.release_urecord(r);
+				dmq_ul.unlock_udomain(_d, &aor);
+				return 0;
+			}
 			LM_DBG("Found contact\n");
 			dmq_ul.update_ucontact(r, c, ci);
 			LM_DBG("Release record\n");
@@ -115,8 +127,18 @@ static int add_contact(str aor, ucontact_info_t *ci)
 			contact.len = ci->c->len;
 			dmq_ul.insert_ucontact(r, &contact, ci, &c);
 		} else if(res == 0) {
-			LM_DBG("Found contact\n");
-			dmq_ul.update_ucontact(r, c, ci);
+			/* LWW: skip update if local contact is newer */
+			if(ci->last_modified > 0 && c->last_modified > ci->last_modified) {
+				LM_DBG("LWW: skipping stale update for contact=[%.*s] "
+					   "ruid=[%.*s] "
+					   "local=%u incoming=%u\n",
+						c->c.len, c->c.s, c->ruid.len, c->ruid.s,
+						(unsigned int)c->last_modified,
+						(unsigned int)ci->last_modified);
+			} else {
+				LM_DBG("Found contact\n");
+				dmq_ul.update_ucontact(r, c, ci);
+			}
 		}
 	} else {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
@@ -161,6 +183,17 @@ static int delete_contact(str aor, ucontact_info_t *ci)
 			!= 0) {
 		LM_DBG("AOR/Contact [%.*s] not found\n", aor.len, aor.s);
 		return -1;
+	}
+	/* LWW: skip delete if local contact is newer */
+	if(ci->last_modified > 0 && c->last_modified > ci->last_modified) {
+		LM_DBG("LWW: skipping stale delete for contact=[%.*s] ruid=[%.*s] "
+			   "local=%u incoming=%u\n",
+				c->c.len, c->c.s, c->ruid.len, c->ruid.s,
+				(unsigned int)c->last_modified,
+				(unsigned int)ci->last_modified);
+		dmq_ul.release_urecord(r);
+		dmq_ul.unlock_udomain(_d, &aor);
+		return 0;
 	}
 	if(dmq_ul.delete_ucontact(r, c) != 0) {
 		dmq_ul.unlock_udomain(_d, &aor);
