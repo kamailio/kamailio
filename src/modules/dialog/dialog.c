@@ -3565,6 +3565,7 @@ static void rpc_dlg_set_state(rpc_t *rpc, void *c)
 	/* setting new state for this dialog */
 	ostate = dlg->state;
 	dlg->state = sval;
+	dlg->last_modified = (unsigned int)time(NULL);
 
 	/* updates for terminated dialogs */
 	if(ostate == DLG_STATE_CONFIRMED && sval == DLG_STATE_DELETED) {

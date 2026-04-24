@@ -25,6 +25,7 @@
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 #include "dlg_var.h"
+#include <time.h>
 
 static str dlg_dmq_content_type = str_init("application/json");
 static str dmq_200_rpl = str_init("OK");
@@ -115,6 +116,7 @@ int dlg_dmq_handle_msg(
 		req_uri = {0, 0};
 	unsigned int init_ts = 0, start_ts = 0, lifetime = 0;
 	unsigned int state = 1;
+	unsigned int lm = 0;
 	srjson_t *vj;
 	int newdlg = 0;
 	dlg_entry_t *d_entry = NULL;
@@ -213,8 +215,10 @@ int dlg_dmq_handle_msg(
 		} else if(strcmp(it->string, "req_uri") == 0) {
 			req_uri.s = it->valuestring;
 			req_uri.len = strlen(req_uri.s);
+		} else if(strcmp(it->string, "last_modified") == 0) {
+			lm = SRJSON_GET_UINT(it);
 		} else {
-			LM_ERR("unrecognized field in json object\n");
+			LM_WARN("unrecognized field in json object: %s\n", it->string);
 		}
 	}
 
@@ -223,6 +227,17 @@ int dlg_dmq_handle_msg(
 		LM_DBG("found dialog [%u:%u] at %p\n", iuid.h_entry, iuid.h_id, dlg);
 		d_entry = &(d_table->entries[dlg->h_entry]);
 		unref++;
+
+		if(lm > 0 && dlg->last_modified > lm && action != DLG_DMQ_SYNC) {
+			/* LWW: skip if local dialog is newer */
+			LM_DBG("LWW: skipping stale action %d for dlg [%u:%u] "
+				   "local=%u incoming=%u\n",
+					action, iuid.h_entry, iuid.h_id, dlg->last_modified, lm);
+			goto skip;
+		}
+		if(lm > 0 && lm > dlg->last_modified) {
+			dlg->last_modified = lm;
+		}
 	}
 
 	switch(action) {
@@ -253,6 +268,9 @@ int dlg_dmq_handle_msg(
 				/* prevent DB sync */
 				dlg->dflags &= ~(DLG_FLAG_NEW | DLG_FLAG_CHANGED);
 				dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
+				if(lm > 0) {
+					dlg->last_modified = lm;
+				}
 				newdlg = 1;
 			} else {
 				/* remove existing profiles */
@@ -404,6 +422,7 @@ int dlg_dmq_handle_msg(
 		case DLG_DMQ_NONE:
 			break;
 	}
+skip:
 	if(dlg) {
 		if(unref) {
 			dlg_unref(dlg, unref);
@@ -519,6 +538,8 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", action);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "h_entry", dlg->h_entry);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "h_id", dlg->h_id);
+	srjson_AddNumberToObject(
+			&jdoc, jdoc.root, "last_modified", dlg->last_modified);
 
 	switch(action) {
 		case DLG_DMQ_UPDATE:

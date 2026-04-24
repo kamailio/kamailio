@@ -143,6 +143,7 @@ typedef struct dlg_cell
 	struct cell *t;				 /*!< Reference to Transaction of the INVITE */
 	unsigned int ka_src_counter; /*!< keepalive src (caller) counter */
 	unsigned int ka_dst_counter; /*!< keepalive dst (callee) counter */
+	unsigned int last_modified;	 /*!< LWW timestamp for DMQ sync */
 } dlg_cell_t;
 
 
