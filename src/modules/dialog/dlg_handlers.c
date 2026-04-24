@@ -761,6 +761,8 @@ static void dlg_on_send(struct cell *t, int type, struct tmcb_params *param)
 	if(dlg == NULL)
 		return;
 
+	dlg->last_modified = (unsigned int)time(NULL);
+
 	/* sync over dmq */
 	if(dlg_enable_dmq) {
 		dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 1, 0);

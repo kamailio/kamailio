@@ -478,6 +478,7 @@ struct dlg_cell *build_new_dlg(
 	memset(dlg, 0, len);
 	dlg->state = DLG_STATE_UNCONFIRMED;
 	dlg->init_ts = ksr_time_uint(NULL, NULL);
+	dlg->last_modified = (unsigned int)time(NULL);
 
 	dlg->h_entry = core_hash(callid, 0, d_table->size);
 	LM_DBG("new dialog on hash %u\n", dlg->h_entry);
@@ -1327,6 +1328,8 @@ void next_state_dlg(
 					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 	}
 	*new_state = dlg->state;
+
+	dlg->last_modified = (unsigned int)time(NULL);
 
 	/* remove the dialog from profiles when is not no longer active */
 	if(*new_state == DLG_STATE_DELETED && dlg->profile_links != NULL
