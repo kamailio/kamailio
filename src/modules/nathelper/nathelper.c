@@ -1175,6 +1175,11 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 			ip_len, ip_port_len, port_len, i;
 	int is_ipv6 = 0;
 
+	if(msg->first_line.u.request.uri.len > MAX_URI_SIZE - 1
+			|| msg->new_uri.len > MAX_URI_SIZE - 1) {
+		LM_ERR("very long Request-URI\n");
+		return -1;
+	}
 	if(parse_sip_msg_uri(msg) < 0) {
 		LM_ERR("while parsing Request-URI\n");
 		return -1;
