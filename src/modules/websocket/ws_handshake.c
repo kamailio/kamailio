@@ -269,9 +269,9 @@ int ws_parse_url(str *wsurl, ws_address_t *waddr)
 		}
 		waddr->port_no = port_no;
 	} else if(waddr->proto_no == PROTO_WS) {
-		waddr->port_no = 80;
+		waddr->port_no = SIP_PORT;
 	} else {
-		waddr->port_no = 443;
+		waddr->port_no = SIPS_PORT;
 	}
 
 	if(ppos != NULL) {
@@ -736,7 +736,7 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 	}
 
 	if(port <= 0)
-		port = (cmode) ? 443 : 80;
+		port = (cmode) ? SIPS_PORT : SIP_PORT;
 
 	lpath = *path;
 	if(lpath.s == NULL || lpath.len <= 0) {
@@ -900,7 +900,7 @@ int ws_send(sip_msg_t *msg, str *host, int port, str *path, str *sub_protocol,
 	}
 
 	if(port <= 0)
-		port = (cmode) ? 443 : 80;
+		port = (cmode) ? SIPS_PORT : SIP_PORT;
 
 	wsc = wsconn_get_outgoing(
 			host, port, &lpath, (cmode) ? PROTO_WSS : PROTO_WS, sub_proto);
