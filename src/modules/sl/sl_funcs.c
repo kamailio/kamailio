@@ -140,6 +140,11 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	str evname = str_init("sl:local-response");
 	struct sip_msg pmsg;
 
+	if(reason == NULL || reason[0] == '\0') {
+		LM_ERR("reply reason is null or empty\n");
+		goto error;
+	}
+
 	if(msg->first_line.u.request.method_value == METHOD_ACK)
 		goto error;
 
@@ -363,7 +368,10 @@ int sl_send_reply_str(struct sip_msg *msg, int code, str *reason)
 	char *r;
 	int ret;
 
-	if(reason->s[reason->len - 1] == '\0') {
+	if(reason == NULL || reason->s == NULL || reason->len <= 0) {
+		LM_ERR("reply reason is null or empty\n");
+		return -1;
+	} else if(reason->s[reason->len - 1] == '\0') {
 		r = reason->s;
 	} else {
 		r = as_asciiz(reason);
@@ -375,7 +383,7 @@ int sl_send_reply_str(struct sip_msg *msg, int code, str *reason)
 
 	ret = sl_reply_helper(msg, code, r, 0);
 
-	if(r != reason->s)
+	if(reason != NULL && r != reason->s)
 		pkg_free(r);
 	return ret;
 }
@@ -386,7 +394,10 @@ int sl_send_reply_dlg(struct sip_msg *msg, int code, str *reason, str *tag)
 	char *r;
 	int ret;
 
-	if(reason->s[reason->len - 1] == '\0') {
+	if(reason == NULL || reason->s == NULL || reason->len <= 0) {
+		LM_ERR("reply reason is null or empty\n");
+		return -1;
+	} else if(reason->s[reason->len - 1] == '\0') {
 		r = reason->s;
 	} else {
 		r = as_asciiz(reason);
@@ -398,7 +409,7 @@ int sl_send_reply_dlg(struct sip_msg *msg, int code, str *reason, str *tag)
 
 	ret = sl_reply_helper(msg, code, r, tag);
 
-	if(r != reason->s)
+	if(reason != NULL && r != reason->s)
 		pkg_free(r);
 	return ret;
 }
