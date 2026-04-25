@@ -194,8 +194,9 @@ presentity_t *pres_parse_json_presentity(srjson_t *in)
 				return NULL;
 			}
 		} else {
-			LM_ERR("unrecognized field in json object\n");
-			return NULL;
+			LM_WARN("unrecognized field [%s] in presentity json object"
+					" - skipping\n",
+					p_it->string);
 		}
 	}
 
@@ -302,6 +303,8 @@ subs_t *pres_parse_json_subscription(srjson_t *in)
 			subscription.updated = SRJSON_GET_INT(s_it);
 		} else if(strcmp(s_it->string, "updated_winfo") == 0) {
 			subscription.updated_winfo = SRJSON_GET_INT(s_it);
+		} else if(strcmp(s_it->string, "recv") == 0) {
+			subscription.received_time = SRJSON_GET_INT(s_it);
 		} else if(strcmp(s_it->string, "event") == 0) {
 			s_event_str.s = s_it->valuestring;
 			s_event_str.len = strlen(s_it->valuestring);
@@ -311,8 +314,8 @@ subs_t *pres_parse_json_subscription(srjson_t *in)
 				return NULL;
 			}
 		} else {
-			LM_ERR("unrecognized field in json object\n");
-			return NULL;
+			LM_WARN("unrecognized field [%s] in json object - skipping\n",
+					s_it->string);
 		}
 	}
 
@@ -427,8 +430,9 @@ int pres_dmq_handle_msg(
 				p_body.s = NULL;
 			}
 		} else {
-			LM_ERR("unrecognized field in json object\n");
-			goto invalid;
+			LM_WARN("unrecognized field [%s] in dmq json object"
+					" - skipping\n",
+					it->string);
 		}
 	}
 
@@ -732,6 +736,8 @@ int pres_dmq_replicate_subscription(subs_t *subscription, dmq_node_t *node)
 	srjson_AddNumberToObject(&jdoc, s_json, "updated", subscription->updated);
 	srjson_AddNumberToObject(
 			&jdoc, s_json, "updated_winfo", subscription->updated_winfo);
+	srjson_AddNumberToObject(
+			&jdoc, s_json, "recv", subscription->received_time);
 
 	srjson_AddItemToObject(&jdoc, jdoc.root, "subscription", s_json);
 
