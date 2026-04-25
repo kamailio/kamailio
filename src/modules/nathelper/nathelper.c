@@ -2293,6 +2293,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 	static unsigned int iteration = 0;
 	int rval;
 	void *buf, *cp;
+	char *buf_end;
 	str c;
 	str recv;
 	str *dst_uri;
@@ -2359,25 +2360,78 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		goto done;
 
 	cp = buf;
+	buf_end = (char *)buf + cblen;
 	while(1) {
+		if((char *)cp + sizeof(c.len) > buf_end) {
+			LM_ERR("truncated natping contact blob while reading contact "
+				   "length\n");
+			goto error;
+		}
 		memcpy(&(c.len), cp, sizeof(c.len));
 		if(c.len == 0)
 			break;
-		c.s = (char *)cp + sizeof(c.len);
-		cp = (char *)cp + sizeof(c.len) + c.len;
+		cp = (char *)cp + sizeof(c.len);
+		if(c.len < 0 || (char *)cp + c.len > buf_end) {
+			LM_ERR("invalid natping contact length: %d\n", c.len);
+			goto error;
+		}
+		c.s = (char *)cp;
+		cp = (char *)cp + c.len;
+		if((char *)cp + sizeof(recv.len) > buf_end) {
+			LM_ERR("truncated natping contact blob while reading received "
+				   "length\n");
+			goto error;
+		}
 		memcpy(&(recv.len), cp, sizeof(recv.len));
-		recv.s = (char *)cp + sizeof(recv.len);
-		cp = (char *)cp + sizeof(recv.len) + recv.len;
+		cp = (char *)cp + sizeof(recv.len);
+		if(recv.len < 0 || (char *)cp + recv.len > buf_end) {
+			LM_ERR("invalid natping received length: %d\n", recv.len);
+			goto error;
+		}
+		recv.s = recv.len ? (char *)cp : NULL;
+		cp = (char *)cp + recv.len;
+		if((char *)cp + sizeof(send_sock) > buf_end) {
+			LM_ERR("truncated natping contact blob while reading socket\n");
+			goto error;
+		}
 		memcpy(&send_sock, cp, sizeof(send_sock));
 		cp = (char *)cp + sizeof(send_sock);
+		if((char *)cp + sizeof(flags) > buf_end) {
+			LM_ERR("truncated natping contact blob while reading flags\n");
+			goto error;
+		}
 		memcpy(&flags, cp, sizeof(flags));
 		cp = (char *)cp + sizeof(flags);
+		if((char *)cp + sizeof(path.len) > buf_end) {
+			LM_ERR("truncated natping contact blob while reading path "
+				   "length\n");
+			goto error;
+		}
 		memcpy(&(path.len), cp, sizeof(path.len));
-		path.s = path.len ? ((char *)cp + sizeof(path.len)) : NULL;
-		cp = (char *)cp + sizeof(path.len) + path.len;
+		cp = (char *)cp + sizeof(path.len);
+		if(path.len < 0 || (char *)cp + path.len > buf_end) {
+			LM_ERR("invalid natping path length: %d\n", path.len);
+			goto error;
+		}
+		path.s = path.len ? (char *)cp : NULL;
+		cp = (char *)cp + path.len;
+		if((char *)cp + sizeof(ruid.len) > buf_end) {
+			LM_ERR("truncated natping contact blob while reading ruid "
+				   "length\n");
+			goto error;
+		}
 		memcpy(&(ruid.len), cp, sizeof(ruid.len));
-		ruid.s = ruid.len ? ((char *)cp + sizeof(ruid.len)) : NULL;
-		cp = (char *)cp + sizeof(ruid.len) + ruid.len;
+		cp = (char *)cp + sizeof(ruid.len);
+		if(ruid.len < 0 || (char *)cp + ruid.len > buf_end) {
+			LM_ERR("invalid natping ruid length: %d\n", ruid.len);
+			goto error;
+		}
+		ruid.s = ruid.len ? (char *)cp : NULL;
+		cp = (char *)cp + ruid.len;
+		if((char *)cp + sizeof(aorhash) > buf_end) {
+			LM_ERR("truncated natping contact blob while reading aorhash\n");
+			goto error;
+		}
 		memcpy(&aorhash, cp, sizeof(aorhash));
 		cp = (char *)cp + sizeof(aorhash);
 
@@ -2476,11 +2530,15 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 			}
 		}
 	}
+
+error:
 	pkg_free(buf);
+
 done:
 	iteration++;
 	if(iteration == natping_interval)
 		iteration = 0;
+	return;
 }
 
 
