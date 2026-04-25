@@ -1269,7 +1269,8 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 		at = at + ip_port_len;
 	}
 	trans = trans + 1;
-	if((ip_port_len + 2 > val_len) || (*trans == ';') || (*trans == '?')) {
+	if((ip_port_len + 2 > val_len) || (trans >= val + val_len)
+			|| (*trans == ';') || (*trans == '?')) {
 		LM_ERR("no proto in alias param\n");
 		return -1;
 	}
