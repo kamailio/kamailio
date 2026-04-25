@@ -2911,6 +2911,7 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 	str port = {0, 0};
 	str proto = {0, 0};
 	char *memchr_pointer = NULL;
+	unsigned int proto_type = 0;
 
 	if(!contact_header)
 		return -1;
@@ -2959,7 +2960,22 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 	}
 	//last char is proto 0,1,2,3,4..7
 	proto.s = &port.s[port.len + 1];
-	proto_type_to_str((unsigned short)atoi(proto.s), &proto);
+	if(proto.s >= contact_header->s + contact_header->len
+			|| !isdigit((unsigned char)*proto.s)) {
+		LM_ERR("alias proto is not set or invalid\n");
+		return -1;
+	}
+	proto_type = (unsigned int)(*proto.s - '0');
+	if(proto.s + 1 < contact_header->s + contact_header->len
+			&& isdigit((unsigned char)proto.s[1])) {
+		LM_ERR("alias proto has invalid length\n");
+		return -1;
+	}
+	proto_type_to_str((unsigned short)proto_type, &proto);
+	if(proto.len == 0) {
+		LM_ERR("alias proto is unknown\n");
+		return -1;
+	}
 
 	LM_DBG("Host [%.*s][port: %.*s][proto: %.*s]\n", host.len, host.s, port.len,
 			port.s, proto.len, proto.s);
