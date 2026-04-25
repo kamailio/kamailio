@@ -27,15 +27,20 @@
  */
 
 #include "../../core/basex.h"
+#include "../../core/char_msg_val.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/dprint.h"
+#include "../../core/forward.h"
 #include "../../core/locking.h"
+#include "../../core/hash_func.h"
+#include "../../core/msg_translator.h"
 #include "../../core/str.h"
 #include "../../core/trim.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/tcp_server.h"
 #include "../../core/counters.h"
 #include "../../core/strutils.h"
+#include "../../core/crypto/md5utils.h"
 #include "../../core/crypto/shautils.h"
 #include "../../core/globals.h"
 #include "../../core/mem/mem.h"
@@ -402,6 +407,69 @@ static int ws_flush_send_queue(ws_connection_t *wsc)
 	return 0;
 }
 
+static char *ws_build_req_buf(
+		sip_msg_t *msg, str *host, int port, int cmode, unsigned int *outlen)
+{
+	char md5[MD5_LEN];
+	unsigned short dport;
+	char *buf = NULL;
+	dest_info_t dst;
+	proxy_l_t *proxy = NULL;
+
+	if(msg == NULL || outlen == NULL)
+		return NULL;
+
+	if(msg->first_line.type != SIP_REQUEST) {
+		LM_ERR("ws_send() supports only SIP requests\n");
+		return NULL;
+	}
+
+	memset(&dst, 0, sizeof(dst));
+	dport = (unsigned short)((port > 0) ? port
+										: ((cmode) ? SIPS_PORT : SIP_PORT));
+
+	proxy = mk_proxy(host, dport, (cmode) ? PROTO_WSS : PROTO_WS);
+	if(proxy == NULL) {
+		LM_ERR("failed to resolve outbound websocket target\n");
+		goto done;
+	}
+	if(proxy2su(&dst.to, proxy) < 0) {
+		LM_ERR("failed to build outbound websocket socket address\n");
+		goto done;
+	}
+
+	dst.proto = (cmode) ? PROTO_WSS : PROTO_WS;
+	dst.send_flags = msg->fwd_send_flags;
+	dst.send_flags.f |= SND_F_WSX_OUTBOUND;
+	dst.send_sock = get_send_socket(msg, &dst.to, dst.proto);
+	if(dst.send_sock == NULL) {
+		LM_ERR("cannot find send socket for outbound websocket request\n");
+		goto done;
+	}
+
+	if(!char_msg_val(msg, md5)) {
+		LM_ERR("char_msg_val failed\n");
+		goto done;
+	}
+	msg->hash_index = hash(msg->callid->body, get_cseq(msg)->number);
+	if(!branch_builder(msg->hash_index, 0, md5, NULL, 0, msg->add_to_branch_s,
+			   &msg->add_to_branch_len)) {
+		LM_ERR("branch_builder failed\n");
+		goto done;
+	}
+
+	buf = build_req_buf_from_sip_req(msg, outlen, &dst, 0, NULL);
+	if(buf == NULL) {
+		LM_ERR("failed to build outbound websocket request buffer\n");
+		goto done;
+	}
+
+done:
+	if(proxy != NULL)
+		free_proxy(proxy);
+	return buf;
+}
+
 static int ws_send_reply(sip_msg_t *msg, int code, str *reason, str *hdrs)
 {
 	if(hdrs && hdrs->len > 0) {
@@ -736,7 +804,7 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 	}
 
 	if(port <= 0)
-		port = (cmode) ? SIPS_PORT : SIP_PORT;
+		port = (cmode) ? 443 : 80;
 
 	lpath = *path;
 	if(lpath.s == NULL || lpath.len <= 0) {
@@ -870,7 +938,9 @@ int ws_send(sip_msg_t *msg, str *host, int port, str *path, str *sub_protocol,
 {
 	ws_connection_t *wsc = NULL;
 	unsigned int sub_proto = 0;
+	unsigned int outlen = 0;
 	str lpath = STR_NULL;
+	char *outbuf = NULL;
 	int ret;
 
 	if(msg == NULL || msg->buf == NULL || msg->len <= 0) {
@@ -902,21 +972,28 @@ int ws_send(sip_msg_t *msg, str *host, int port, str *path, str *sub_protocol,
 	if(port <= 0)
 		port = (cmode) ? SIPS_PORT : SIP_PORT;
 
+	outbuf = ws_build_req_buf(msg, host, port, cmode, &outlen);
+	if(outbuf == NULL)
+		return -1;
+
 	wsc = wsconn_get_outgoing(
 			host, port, &lpath, (cmode) ? PROTO_WSS : PROTO_WS, sub_proto);
 	if(wsc != NULL) {
 		if(wsc->state == WS_S_OPEN) {
-			ret = ws_send_buffer(wsc->id, msg->buf, msg->len);
+			ret = ws_send_buffer(wsc->id, outbuf, outlen);
 			wsconn_put(wsc);
+			pkg_free(outbuf);
 			return ret;
 		}
-		ret = wsconn_sendq_push(wsc, msg->buf, msg->len);
+		ret = wsconn_sendq_push(wsc, outbuf, outlen);
 		if(ret == 0) {
 			wsconn_put(wsc);
+			pkg_free(outbuf);
 			return 1;
 		}
 		if(ret < 0) {
 			wsconn_put(wsc);
+			pkg_free(outbuf);
 			return -1;
 		}
 		wsconn_put(wsc);
@@ -924,6 +1001,7 @@ int ws_send(sip_msg_t *msg, str *host, int port, str *path, str *sub_protocol,
 
 	if(ws_connect(msg, host, port, &lpath, sub_protocol, cmode) < 0) {
 		LM_ERR("failed to initiate outbound websocket connection for send\n");
+		pkg_free(outbuf);
 		return -1;
 	}
 
@@ -931,28 +1009,36 @@ int ws_send(sip_msg_t *msg, str *host, int port, str *path, str *sub_protocol,
 			host, port, &lpath, (cmode) ? PROTO_WSS : PROTO_WS, sub_proto);
 	if(wsc == NULL) {
 		LM_ERR("cannot retrieve outbound websocket connection after connect\n");
+		pkg_free(outbuf);
 		return -1;
 	}
 
 	if(wsc->state == WS_S_OPEN) {
-		ret = ws_send_buffer(wsc->id, msg->buf, msg->len);
+		ret = ws_send_buffer(wsc->id, outbuf, outlen);
 		wsconn_put(wsc);
+		pkg_free(outbuf);
 		return ret;
 	}
 
-	ret = wsconn_sendq_push(wsc, msg->buf, msg->len);
+	ret = wsconn_sendq_push(wsc, outbuf, outlen);
 	wsconn_put(wsc);
-	if(ret == 0)
+	if(ret == 0) {
+		pkg_free(outbuf);
 		return 1;
+	}
 	if(ret == 1) {
 		wsc = wsconn_get_outgoing(
 				host, port, &lpath, (cmode) ? PROTO_WSS : PROTO_WS, sub_proto);
-		if(wsc == NULL)
+		if(wsc == NULL) {
+			pkg_free(outbuf);
 			return -1;
-		ret = ws_send_buffer(wsc->id, msg->buf, msg->len);
+		}
+		ret = ws_send_buffer(wsc->id, outbuf, outlen);
 		wsconn_put(wsc);
+		pkg_free(outbuf);
 		return ret;
 	}
+	pkg_free(outbuf);
 	return -1;
 }
 
