@@ -3128,8 +3128,6 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 
 	extra_len = 0;
 
-	via_len = via_prefix_len + address_str->len; /*space included in MY_VIA*/
-
 	memcpy(line_buf, MY_VIA, MY_VIA_LEN);
 	if(proto == PROTO_UDP) {
 		/* do nothing */
@@ -3160,24 +3158,35 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		}
 
 		if(con == NULL) {
-			LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not be "
-					"found - likely it is gone (dst: [%s]:%d)\n",
-					send_info->id, (port) ? ip_addr2a(&ip) : "", port);
-			pkg_free(line_buf);
-			return 0;
-		}
-
-		if(con->rcv.proto == PROTO_WS) {
-			memcpy(line_buf + MY_VIA_LEN - 4, "WS ", 3);
-		} else if(con->rcv.proto == PROTO_WSS) {
-			memcpy(line_buf + MY_VIA_LEN - 4, "WSS ", 4);
+			if(!(send_info->send_flags.f & SND_F_WSX_OUTBOUND)) {
+				LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not "
+						"be "
+						"found - likely it is gone (dst: [%s]:%d)\n",
+						send_info->id, (port) ? ip_addr2a(&ip) : "", port);
+				pkg_free(line_buf);
+				return 0;
+			} else {
+				if(proto == PROTO_WS) {
+					memcpy(line_buf + MY_VIA_LEN - 4, "WS ", 3);
+					via_prefix_len--;
+				} else {
+					memcpy(line_buf + MY_VIA_LEN - 4, "WS ", 4);
+				}
+			}
 		} else {
+			if(con->rcv.proto == PROTO_WS) {
+				memcpy(line_buf + MY_VIA_LEN - 4, "WS ", 3);
+				via_prefix_len--;
+			} else if(con->rcv.proto == PROTO_WSS) {
+				memcpy(line_buf + MY_VIA_LEN - 4, "WSS ", 4);
+			} else {
+				tcpconn_put(con);
+				LM_CRIT("unknown proto %d\n", con->rcv.proto);
+				pkg_free(line_buf);
+				return 0;
+			}
 			tcpconn_put(con);
-			LM_CRIT("unknown proto %d\n", con->rcv.proto);
-			pkg_free(line_buf);
-			return 0;
 		}
-		tcpconn_put(con);
 	} else if(proto == PROTO_WSS) {
 		memcpy(line_buf + MY_VIA_LEN - 4, "WSS ", 4);
 	} else {
@@ -3185,6 +3194,9 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		pkg_free(line_buf);
 		return 0;
 	}
+
+	via_len = via_prefix_len + address_str->len; /*space included in MY_VIA*/
+
 	/* add [] only if ipv6 address is used;
 	 * if using pre-set no check is made */
 	if(send_sock != NULL && send_sock->address.af == AF_INET6) {
