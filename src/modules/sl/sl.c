@@ -64,7 +64,6 @@ MODULE_VERSION
 
 static int default_code = 500;
 static str default_reason = STR_STATIC_INIT("Internal Server Error");
-
 static int sl_bind_tm = 1;
 static struct tm_binds tmb;
 
@@ -233,7 +232,10 @@ static int w_sl_send_reply(struct sip_msg *msg, char *p1, char *p2)
 		reason = default_reason;
 	}
 
-	if(reason.s[reason.len - 1] == '\0') {
+	if(reason.s == NULL || reason.len <= 0) {
+		LM_ERR("reply reason is null or empty\n");
+		return -1;
+	} else if(reason.s[reason.len - 1] == '\0') {
 		r = reason.s;
 	} else {
 		r = as_asciiz(&reason);
@@ -278,7 +280,10 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 		return -2;
 	}
 
-	if(reason->s[reason->len - 1] == '\0') {
+	if(reason == NULL || reason->s == NULL || reason->len <= 0) {
+		LM_ERR("reply reason is null or empty\n");
+		return -1;
+	} else if(reason->s[reason->len - 1] == '\0') {
 		r = reason->s;
 	} else {
 		r = as_asciiz(reason);
@@ -307,12 +312,12 @@ int send_reply(struct sip_msg *msg, int code, str *reason)
 	ret = sl_send_reply(msg, code, r);
 
 done:
-	if(r != reason->s)
+	if(reason != NULL && r != reason->s)
 		pkg_free(r);
 	return ret;
 
 error:
-	if(r != reason->s)
+	if(reason != NULL && r != reason->s)
 		pkg_free(r);
 	return -1;
 }
