@@ -809,7 +809,14 @@ int check_proxy_require(sip_msg_t *msg)
 					memcpy(u + UNSUPPORTED_HEADER_LEN, r_pr->s.s, r_pr->s.len);
 					memcpy(u + UNSUPPORTED_HEADER_LEN + r_pr->s.len, CRLF,
 							CRLF_LEN);
-					add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR);
+					if(add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR) == 0) {
+						LM_ERR("failed to append Unsupported header to "
+							   "reply\n");
+						pkg_free(u);
+						u = NULL;
+					} else {
+						u = NULL;
+					}
 				}
 
 				if(sanity_reply(msg, 420, "Bad Proxy Require Extension") < 0) {
