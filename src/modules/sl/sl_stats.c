@@ -119,6 +119,7 @@ int init_sl_stats_child(void)
 	if(*sl_stats == 0) {
 		SHM_MEM_ERROR;
 		shm_free(sl_stats);
+		sl_stats = NULL;
 		return -1;
 	}
 	memset(*sl_stats, 0, len);
