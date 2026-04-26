@@ -1359,6 +1359,12 @@ static int w_auth_get_www_authenticate(
 	val.rs.s = pv_get_buffer();
 	val.rs.len = 0;
 	if(hf.s != NULL) {
+		if(hf.len + 1 >= pv_get_buffer_size()) {
+			LM_ERR("challenge header is too large for pv buffer: %d > %d\n",
+					hf.len + 1, pv_get_buffer_size());
+			pkg_free(hf.s);
+			return -1;
+		}
 		memcpy(val.rs.s, hf.s, hf.len);
 		val.rs.len = hf.len;
 		val.rs.s[val.rs.len] = '\0';
@@ -1425,6 +1431,12 @@ static int ki_auth_get_www_authenticate(
 	val.rs.s = pv_get_buffer();
 	val.rs.len = 0;
 	if(hf.s != NULL) {
+		if(hf.len + 1 >= pv_get_buffer_size()) {
+			LM_ERR("challenge header is too large for pv buffer: %d > %d\n",
+					hf.len + 1, pv_get_buffer_size());
+			pkg_free(hf.s);
+			return -1;
+		}
 		memcpy(val.rs.s, hf.s, hf.len);
 		val.rs.len = hf.len;
 		val.rs.s[val.rs.len] = '\0';
