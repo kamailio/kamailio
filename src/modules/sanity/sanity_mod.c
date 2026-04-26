@@ -233,7 +233,7 @@ int sanity_check_sizes(sip_msg_t *msg)
 			LM_WARN("no To header\n");
 			return SANITY_CHECK_FAILED;
 		}
-		if(get_to(msg)->uri.len > sn_size_from_uri) {
+		if(get_to(msg)->uri.len > sn_size_to_uri) {
 			return SANITY_CHECK_FAILED;
 		}
 	}
