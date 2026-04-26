@@ -43,6 +43,7 @@
 #include "auth_db_mod.h"
 #include "authorize.h"
 
+#define AUTHDB_HA1BUF_SIZE 256
 
 int fetch_credentials(
 		sip_msg_t *msg, str *user, str *domain, str *table, int flags)
@@ -200,6 +201,11 @@ static inline int get_ha1(struct username *_username, str *_domain,
 				HA_MD5, &_username->whole, _domain, &result, 0, 0, _ha1);
 		LM_DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
+		if(result.len >= AUTHDB_HA1BUF_SIZE) {
+			LM_ERR("HA1 value too long: %d (max %d)\n", result.len,
+					AUTHDB_HA1BUF_SIZE - 1);
+			return -1;
+		}
 		memcpy(_ha1, result.s, result.len);
 		_ha1[result.len] = '\0';
 	}
@@ -234,7 +240,7 @@ static int generate_avps(struct sip_msg *msg, db1_res_t *db_res)
 static int digest_authenticate_hdr(sip_msg_t *msg, str *realm, str *table,
 		hdr_types_t hftype, str *method, hdr_field_t **ahdr)
 {
-	char ha1[256];
+	char ha1[AUTHDB_HA1BUF_SIZE];
 	auth_cfg_result_t ret;
 	auth_result_t rauth;
 	struct hdr_field *h = NULL;
