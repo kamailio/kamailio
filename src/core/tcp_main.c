@@ -173,7 +173,7 @@ int tcp_main_max_fd_no = 0;
 int tcp_max_connections = DEFAULT_TCP_MAX_CONNECTIONS;
 int tls_max_connections = DEFAULT_TLS_MAX_CONNECTIONS;
 int tcp_accept_unique = 0;
-int ksr_tcp_main_threads = 1;
+int ksr_tcp_main_threads = 0;
 int ksr_tcp_listen_backlog = TCP_LISTEN_BACKLOG;
 int tcp_connection_match = TCPCONN_MATCH_DEFAULT;
 
