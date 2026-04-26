@@ -134,6 +134,7 @@ static inline int get_ha1(struct username *_username, str *_domain,
 		const str *_table, char *_ha1, db1_res_t **res)
 {
 	pv_elem_t *cred;
+	db_val_t *dbv;
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_key_t *col;
@@ -191,8 +192,39 @@ static inline int get_ha1(struct username *_username, str *_domain,
 		return 1;
 	}
 
-	result.s = (char *)ROW_VALUES(RES_ROWS(*res))[0].val.string_val;
-	result.len = strlen(result.s);
+	dbv = &ROW_VALUES(RES_ROWS(*res))[0];
+	if(VAL_NULL(dbv)) {
+		LM_ERR("password/ha1 value is NULL for user '%.*s@%.*s'\n",
+				_username->user.len, ZSW(_username->user.s),
+				(use_domain ? (_domain->len) : 0), ZSW(_domain->s));
+		return -1;
+	}
+
+	switch(VAL_TYPE(dbv)) {
+		case DB1_STRING:
+			result.s = (char *)VAL_STRING(dbv);
+			if(result.s == NULL) {
+				LM_ERR("password/ha1 string value is NULL for user "
+					   "'%.*s@%.*s'\n",
+						_username->user.len, ZSW(_username->user.s),
+						(use_domain ? (_domain->len) : 0), ZSW(_domain->s));
+				return -1;
+			}
+			result.len = strlen(result.s);
+			break;
+		case DB1_STR:
+			result = VAL_STR(dbv);
+			if(result.s == NULL) {
+				LM_ERR("password/ha1 str value is NULL for user '%.*s@%.*s'\n",
+						_username->user.len, ZSW(_username->user.s),
+						(use_domain ? (_domain->len) : 0), ZSW(_domain->s));
+				return -1;
+			}
+			break;
+		default:
+			LM_ERR("invalid password/ha1 column type: %d\n", VAL_TYPE(dbv));
+			return -1;
+	}
 
 	if(calc_ha1) {
 		/* Only plaintext passwords are stored in database,
