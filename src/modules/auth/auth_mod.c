@@ -648,6 +648,12 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 				HA_MD5, &cred->digest.username.whole, realm, passwd, 0, 0, ha1);
 		LM_DBG("HA1 string calculated: %s\n", ha1);
 	} else {
+		if(passwd->len >= (int)sizeof(ha1)) {
+			LM_ERR("HA1 value too long: %d (max %lu)\n", passwd->len,
+					(unsigned long)(sizeof(ha1) - 1));
+			ret = AUTH_ERROR;
+			goto end;
+		}
 		memcpy(ha1, passwd->s, passwd->len);
 		ha1[passwd->len] = '\0';
 	}
