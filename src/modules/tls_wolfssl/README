@@ -42,8 +42,10 @@ Chapter 1. Admin Guide
    configured and loaded and the enable_tls=yes core setting must set.
    This module is mutually exclusive with the tls module.
 
-   It is highly recommended to run this module with MT-mode
-   (tcp_main_threads = 1).
+   The module no longer supports multi-process mode and requires the
+   global config tcp_main_threads = 1. All wolfSSL functions run in the
+   PROC_TCP_MAIN process. Shared memory and pthreads monkey-patching are
+   not used.
 
    This module is derived from the tls module and adapted to wolfSSL.
    Credit goes to the authors of the tls module.
@@ -75,17 +77,22 @@ loadmodule "tls_wolfssl.so"
    The wolfSSL TLS module is intended to be compiled with a recent version
    of wolfSSL - 5.8.4+ is recommended.
 
-   Kamailio shared memory allocators, used in MP-mode(tcp_main_threads =
-   0), support 16-byte alignment - it is possible to use this module with
-   either the internal submodule or distro provided packages. For
-   reference the ideal build flags are:
+   For reference the ideal build flags are:
 ...
-# - this assumes the allocators are 16-byte aligned
 # - Debian currently does not use -DWOLF_CRYPTO_CB_RSA_PAD: this affects use of
 RSA
 #   padding mechanisms on HSMs
 EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --ena
 ble-pkcs11
+
+# additional flags may be used: e.g. what Debian uses on forky for its libwolfss
+l44 / libwolfssl-dev
+EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure \
+    --enable-distro --enable-ech --enable-hpke --enable-jni \
+    --enable-jobserver=no --enable-memcached --enable-quic --enable-qt --enable-
+pkcs11 \
+    --enable-writedup --disable-asm --disable-crl-monitor --disable-examples \
+    --disable-silent-rules
 ...
 
 4. Compiling the wolfSSL TLS Module
@@ -108,8 +115,7 @@ cd build; make WOLFSSL_INTERNAL=ON tls_wolfssl
 5. Support for externalized keys (PKCS#11)
 
    The module supports loading keys from PKCS#11 and up to 8 tokens are
-   supported. This feature is available in both MT- and MP- modes. The key
-   naming convention follows RFC 7512 (PKCS#11 URI):
+   supported. The key naming convention follows RFC 7512 (PKCS#11 URI):
 ...
 # - in tls.cfg these URIs to refer to PKCS#11 keys
 # - this format is a subset of RFC 7512
