@@ -337,10 +337,11 @@ static int auth_check_fixup(void **param, int param_no)
 int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 {
 	pv_elem_t *pve;
-	str pv;
+	str pv = STR_NULL;
 	char *p;
 	char *end;
 	char *sep;
+	int pv_alloc = 0;
 
 	p = definition;
 	if(p == 0 || *p == 0)
@@ -392,6 +393,7 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 				PKG_MEM_ERROR;
 				goto error;
 			}
+			pv_alloc = 1;
 			pv.len = snprintf(pv.s, pve->text.len + 7, "$avp(%.*s)",
 					pve->text.len, pve->text.s);
 		}
@@ -403,6 +405,11 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 		if(pve->spec == NULL || pve->spec->setf == NULL) {
 			LM_ERR("PV is not writeable: %.*s\n", pv.len, pv.s);
 			goto parse_error;
+		}
+		if(pv_alloc) {
+			pkg_free(pv.s);
+			pv.s = NULL;
+			pv_alloc = 0;
 		}
 
 		/* link the element */
@@ -425,6 +432,8 @@ parse_error:
 	LM_ERR("parse failed in \"%s\" at pos %d(%s)\n", definition,
 			(int)(long)(p - definition), p);
 error:
+	if(pv_alloc && pv.s != NULL)
+		pkg_free(pv.s);
 	pkg_free(pve);
 	pv_elem_free_all(*pv_def);
 	*pv_def = 0;
