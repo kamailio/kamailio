@@ -186,8 +186,11 @@ int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp)
 					whatstr[what]);
 			if(cell->action == CURL_POLL_IN && what == CURL_POLL_OUT) {
 				if(cell->reply) {
-					if(cell->reply->result)
+					if(cell->reply->result) {
+						if(cell->reply->result->s)
+							shm_free(cell->reply->result->s);
 						shm_free(cell->reply->result);
+					}
 					shm_free(cell->reply);
 					cell->reply = NULL;
 				}
@@ -599,6 +602,7 @@ error:
 		LM_DBG("cleaning up curl handler %p\n", easy);
 		curl_easy_cleanup(easy);
 	}
+	unlink_http_m_cell(cell);
 	free_http_m_cell(cell);
 	return -1;
 }
@@ -639,45 +643,59 @@ void check_multi_info(struct http_m_global *g)
 				update_stat(errors, 1);
 				reply_error(cell);
 			} else {
+				if(cell->reply == NULL) {
+					LM_ERR("successful transfer but reply is NULL for handle "
+						   "%p\n",
+							easy);
+					reply_error(cell);
+				} else {
+					if(curl_easy_getinfo(cell->easy, CURLINFO_TOTAL_TIME,
+							   &tmp_time)
+							== CURLE_OK)
+						cell->reply->time.total =
+								(uint32_t)(tmp_time * 1000000);
+					if(curl_easy_getinfo(
+							   cell->easy, CURLINFO_NAMELOOKUP_TIME, &tmp_time)
+							== CURLE_OK)
+						cell->reply->time.lookup =
+								(uint32_t)(tmp_time * 1000000);
+					if(curl_easy_getinfo(
+							   cell->easy, CURLINFO_CONNECT_TIME, &tmp_time)
+							== CURLE_OK)
+						cell->reply->time.connect =
+								(uint32_t)(tmp_time * 1000000);
+					if(curl_easy_getinfo(
+							   cell->easy, CURLINFO_REDIRECT_TIME, &tmp_time)
+							== CURLE_OK)
+						cell->reply->time.redirect =
+								(uint32_t)(tmp_time * 1000000);
+					if(curl_easy_getinfo(
+							   cell->easy, CURLINFO_APPCONNECT_TIME, &tmp_time)
+							== CURLE_OK)
+						cell->reply->time.appconnect =
+								(uint32_t)(tmp_time * 1000000);
+					if(curl_easy_getinfo(cell->easy,
+							   CURLINFO_PRETRANSFER_TIME, &tmp_time)
+							== CURLE_OK)
+						cell->reply->time.pretransfer =
+								(uint32_t)(tmp_time * 1000000);
+					if(curl_easy_getinfo(cell->easy,
+							   CURLINFO_STARTTRANSFER_TIME, &tmp_time)
+							== CURLE_OK)
+						cell->reply->time.starttransfer =
+								(uint32_t)(tmp_time * 1000000);
 
-				if(curl_easy_getinfo(cell->easy, CURLINFO_TOTAL_TIME, &tmp_time)
-						== CURLE_OK)
-					cell->reply->time.total = (uint32_t)(tmp_time * 1000000);
-				if(curl_easy_getinfo(
-						   cell->easy, CURLINFO_NAMELOOKUP_TIME, &tmp_time)
-						== CURLE_OK)
-					cell->reply->time.lookup = (uint32_t)(tmp_time * 1000000);
-				if(curl_easy_getinfo(
-						   cell->easy, CURLINFO_CONNECT_TIME, &tmp_time)
-						== CURLE_OK)
-					cell->reply->time.connect = (uint32_t)(tmp_time * 1000000);
-				if(curl_easy_getinfo(
-						   cell->easy, CURLINFO_REDIRECT_TIME, &tmp_time)
-						== CURLE_OK)
-					cell->reply->time.redirect = (uint32_t)(tmp_time * 1000000);
-				if(curl_easy_getinfo(
-						   cell->easy, CURLINFO_APPCONNECT_TIME, &tmp_time)
-						== CURLE_OK)
-					cell->reply->time.appconnect =
-							(uint32_t)(tmp_time * 1000000);
-				if(curl_easy_getinfo(
-						   cell->easy, CURLINFO_PRETRANSFER_TIME, &tmp_time)
-						== CURLE_OK)
-					cell->reply->time.pretransfer =
-							(uint32_t)(tmp_time * 1000000);
-				if(curl_easy_getinfo(
-						   cell->easy, CURLINFO_STARTTRANSFER_TIME, &tmp_time)
-						== CURLE_OK)
-					cell->reply->time.starttransfer =
-							(uint32_t)(tmp_time * 1000000);
+					cell->reply->error[0] = '\0';
+					cell->cb(cell->reply, cell->param);
 
-				cell->reply->error[0] = '\0';
-				cell->cb(cell->reply, cell->param);
-
-				LM_DBG("reply: [%d] %.*s [%d]\n", (int)cell->reply->retcode,
-						cell->reply->result->len, cell->reply->result->s,
-						cell->reply->result->len);
-				update_stat(replies, 1);
+					if(cell->reply->result)
+						LM_DBG("reply: [%d] %.*s [%d]\n",
+								(int)cell->reply->retcode,
+								cell->reply->result->len,
+								cell->reply->result->s,
+								cell->reply->result->len);
+					update_stat(replies, 1);
+				}
 			}
 
 			if(cell != 0) {

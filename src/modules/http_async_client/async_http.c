@@ -71,11 +71,16 @@ int async_http_init_worker(int prank, async_http_worker_t *worker)
 {
 	LM_DBG("initializing worker process: %d\n", prank);
 	worker->evbase = event_base_new();
+	if(worker->evbase == NULL) {
+		LM_ERR("failed to create event base\n");
+		return -1;
+	}
 	LM_DBG("base event %p created\n", worker->evbase);
 
 	worker->g = shm_malloc(sizeof(struct http_m_global));
 	if(worker->g == NULL) {
 		LM_ERR("out of shared memory\n");
+		event_base_free(worker->evbase);
 		return -1;
 	}
 	memset(worker->g, 0, sizeof(http_m_global_t));
@@ -238,6 +243,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		if(tmb.t_lookup_ident(&t, tindex, tlabel) < 0) {
 			LM_ERR("transaction not found %d:%d\n", tindex, tlabel);
 			LM_DBG("freeing query %p\n", aq);
+			free_sip_msg(ah_reply);
 			free_async_query(aq);
 			return;
 		}
@@ -291,6 +297,7 @@ void notification_socket_cb(int fd, short event, void *arg)
 	int received;
 	int i, len;
 	async_query_t *aq;
+	int dispatched = 0;
 
 	http_m_params_t query_params;
 
@@ -404,10 +411,18 @@ void notification_socket_cb(int fd, short event, void *arg)
 
 	if(new_request(&query, &query_params, async_http_cb, aq) < 0) {
 		LM_ERR("Cannot create request for %.*s\n", query.len, query.s);
-		free_async_query(aq);
+	} else {
+		dispatched = 1;
 	}
 
 done:
+	if(!dispatched) {
+		free_async_query(aq);
+		if(query_params.headers) {
+			curl_slist_free_all(query_params.headers);
+			query_params.headers = NULL;
+		}
+	}
 	if(query_params.tls_client_cert) {
 		shm_free(query_params.tls_client_cert);
 		query_params.tls_client_cert = NULL;
@@ -517,6 +532,8 @@ int async_send_query(sip_msg_t *msg, str *query, str *cbname)
 	aq->query_params.tcp_ka_idle = ah_params.tcp_ka_idle;
 	aq->query_params.tcp_ka_interval = ah_params.tcp_ka_interval;
 	aq->query_params.headers = ah_params.headers;
+	ah_params.headers.t = NULL;
+	ah_params.headers.len = 0;
 	aq->query_params.method = ah_params.method;
 	aq->query_params.authmethod = ah_params.authmethod;
 
@@ -659,6 +676,14 @@ void init_query_params(struct query_params *p)
 void set_query_params(struct query_params *p)
 {
 	int len;
+	int i;
+	if(p->headers.t) {
+		for(i = 0; i < p->headers.len; i++) {
+			if(p->headers.t[i])
+				shm_free(p->headers.t[i]);
+		}
+		shm_free(p->headers.t);
+	}
 	p->headers.len = 0;
 	p->headers.t = NULL;
 	p->tls_verify_host = tls_verify_host;
@@ -744,20 +769,20 @@ int header_list_add(struct header_list *hl, str *hdr)
 {
 	char *tmp;
 
-	hl->len++;
-	hl->t = shm_reallocxf(hl->t, hl->len * sizeof(char *));
+	hl->t = shm_reallocxf(hl->t, (hl->len + 1) * sizeof(char *));
 	if(!hl->t) {
 		LM_ERR("shm memory allocation failure\n");
 		return -1;
 	}
-	hl->t[hl->len - 1] = shm_malloc(hdr->len + 1);
-	tmp = hl->t[hl->len - 1];
+	hl->t[hl->len] = shm_malloc(hdr->len + 1);
+	tmp = hl->t[hl->len];
 	if(!tmp) {
 		LM_ERR("shm memory allocation failure\n");
 		return -1;
 	}
 	memcpy(tmp, hdr->s, hdr->len);
 	*(tmp + hdr->len) = '\0';
+	hl->len++;
 
 	LM_DBG("stored new http header: [%s]\n", tmp);
 	return 1;
