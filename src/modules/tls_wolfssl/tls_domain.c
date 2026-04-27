@@ -973,8 +973,7 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
  */
 static int load_private_key(tls_domain_t *d)
 {
-	int idx, ret_pwd, i2;
-	int procs_no;
+	int idx, ret_pwd;
 
 	if(!d->pkey_file.s || !d->pkey_file.len) {
 		DBG("%s: No private key specified\n", tls_domain_str(d));
@@ -983,7 +982,6 @@ static int load_private_key(tls_domain_t *d)
 	if(fix_shm_pathname(&d->pkey_file) < 0)
 		return -1;
 
-	procs_no = get_max_procs();
 	do {
 
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {

@@ -22,6 +22,7 @@
  * Returns 1 on success, 0 on failure.
  */
 int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key);
+int tls_pkcs11_open_token(WOLFSSL* ssl);
 
 typedef struct
 {
