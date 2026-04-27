@@ -740,8 +740,10 @@ cleanup:
 #endif
 #endif
 
+int tls_child_rank = 0;
 static int mod_child(int rank)
 {
+	tls_child_rank = rank;
 	if(tls_disable || (tls_domains_cfg == 0))
 		return 0;
 

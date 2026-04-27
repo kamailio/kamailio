@@ -40,6 +40,7 @@ extern tls_domain_t srv_defaults;
 extern str tls_domains_cfg_file;
 
 extern int sr_tls_renegotiation;
+extern int tls_child_rank;
 
 #include "tls_openssl.h"
 

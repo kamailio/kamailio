@@ -46,6 +46,7 @@ extern EVP_PKEY *tls_engine_private_key(const char *key_id);
 #include "../../core/pt.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
+#include "../../core/sr_module.h"
 #include "tls_config.h"
 #include "tls_server.h"
 #include "tls_util.h"
@@ -214,27 +215,42 @@ tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
  */
 void tls_free_domain(tls_domain_t *d)
 {
-	int i;
+	int i, free_ctx;
 	int procs_no;
 
 	if(!d)
 		return;
 
-	/* TODO: in multi-threaded mode this needs to be freed in PROC_TCP_MAIN */
-	if(d->ctx && ksr_tcp_main_threads == 0) {
-		procs_no = get_max_procs();
-		for(i = 0; i < procs_no; i++) {
-			if(d->ctx[i]) {
+	if(d->ctx) {
+		if(ksr_tcp_main_threads == 0) {
+			procs_no = get_max_procs();
+			for(i = 0; i < procs_no; i++) {
+				if(d->ctx[i]) {
+					free_ctx = 1;
 #ifdef KSR_SSL_COMMON
-				if(ksr_tls_jit_key_ex_idx >= 0) {
-					ksr_tls_jit_key_t *jk =
-							(ksr_tls_jit_key_t *)SSL_CTX_get_ex_data(
-									d->ctx[i], ksr_tls_jit_key_ex_idx);
-					if(jk)
-						shm_free(jk);
-				}
+					if(ksr_tls_jit_key_ex_idx >= 0) {
+						ksr_tls_jit_key_t *jk =
+								(ksr_tls_jit_key_t *)SSL_CTX_get_ex_data(
+										d->ctx[i], ksr_tls_jit_key_ex_idx);
+						/* If provider/engine keys are used we cannot
+						 * free the SSL_CTX in the RPC process; there is
+						 * is a memory leak here
+						 */
+						if(jk) {
+							shm_free(jk);
+							free_ctx = 0;
+						}
+					}
 #endif /* KSR_SSL_COMMON */
-				SSL_CTX_free(d->ctx[i]);
+					if(free_ctx) {
+						SSL_CTX_free(d->ctx[i]);
+					}
+				}
+			}
+		} else {
+			/* In multi-threaded mode this must be freed in PROC_TCP_MAIN */
+			if(d->ctx[0] && tls_child_rank == PROC_TCP_MAIN) {
+				SSL_CTX_free(d->ctx[0]);
 			}
 		}
 		shm_free(d->ctx);
@@ -1053,6 +1069,37 @@ static int tls_ssl_ctx_set_read_ahead(SSL_CTX *ctx, long val, void *unused)
 
 #ifndef OPENSSL_NO_TLSEXT
 
+#ifdef KSR_SSL_COMMON
+/**
+ * @brief SNI callback key loading hook
+ *
+ * used to install engine/provider keys in the SSL_CTX */
+
+int tls_engine_key_hook(SSL_CTX *jit_ctx)
+{
+	ksr_tls_jit_key_t *jk = (ksr_tls_jit_key_t *)SSL_CTX_get_ex_data(
+			jit_ctx, ksr_tls_jit_key_ex_idx);
+	if(jk != NULL && jk->loaded == 0 && jk->key_uri[0] != '\0') {
+		EVP_PKEY *pkey = tls_engine_private_key(jk->key_uri + KEY_PREFIX_LEN);
+		if(pkey == NULL) {
+			LM_ERR("JIT engine key load failed for URI [%s]\n", jk->key_uri);
+			goto error;
+		}
+		if(SSL_CTX_use_PrivateKey(jit_ctx, pkey) != 1) {
+			LM_ERR("SSL_CTX_use_PrivateKey failed for URI [%s]\n", jk->key_uri);
+			EVP_PKEY_free(pkey);
+			goto error;
+		}
+		EVP_PKEY_free(pkey);
+		jk->loaded = 1;
+		LM_INFO("JIT: rank=%d loaded engine key [%s] into ctx %p\n", process_no,
+				jk->key_uri, (void *)jit_ctx);
+	}
+	return 0;
+error:
+	return -1;
+}
+#endif /* KSR_SSL_COMMON */
 /**
  * @brief SNI callback function
  *
@@ -1788,6 +1835,13 @@ tls_domain_t *tls_lookup_cfg(tls_domains_cfg_t *cfg, int type,
 	tls_domain_t *p;
 	int dotpos;
 
+#ifdef KSR_SSL_COMMON
+	if(ksr_tcp_main_threads == 0 && tls_child_rank > 0) {
+		tls_engine_key_hook(cfg->srv_default->ctx[process_no]);
+		tls_engine_key_hook(cfg->cli_default->ctx[process_no]);
+	}
+#endif /* KSR_SSL_COMMON */
+
 	if(type & TLS_DOMAIN_DEF) {
 		if(type & TLS_DOMAIN_SRV)
 			return cfg->srv_default;
@@ -1801,6 +1855,11 @@ tls_domain_t *tls_lookup_cfg(tls_domains_cfg_t *cfg, int type,
 	}
 
 	while(p) {
+#ifdef KSR_SSL_COMMON
+		if(ksr_tcp_main_threads == 0 && tls_child_rank > 0) {
+			tls_engine_key_hook(p->ctx[process_no]);
+		}
+#endif /* KSR_SSL_COMMON */
 		if(srvid && srvid->len > 0) {
 			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- id: [%.*s] [%.*s]\n",
 					ip_addr2a(&p->ip), p->port, ip_addr2a(ip), port,
