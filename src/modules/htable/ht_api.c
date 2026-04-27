@@ -116,6 +116,10 @@ int keyvalue_parse_str(str *data, int type, keyvalue_t *res)
 	res->value.len = s.len;
 	res->type = type;
 	if(type == KEYVALUE_TYPE_PARAMS) {
+		if(s.len <= 0) {
+			LM_ERR("empty params value\n");
+			goto error;
+		}
 		if(s.s[s.len - 1] == ';')
 			s.len--;
 		if(parse_params(&s, CLASS_ANY, &phooks, &res->u.params) < 0) {
