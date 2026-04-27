@@ -752,7 +752,7 @@ static inline void rr_do_force_send_socket(
 
 	if(rr_sockname_mode != 0 && puri->params.len > 0) {
 		s = puri->params;
-		if(s.s[s.len - 1] == ';') {
+		if(s.len > 0 && s.s[s.len - 1] == ';') {
 			s.len--;
 		}
 		if(parse_params(&s, CLASS_ANY, &phooks, &plist) < 0) {
