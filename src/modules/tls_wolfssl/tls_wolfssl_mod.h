@@ -40,5 +40,5 @@ extern tls_domain_t srv_defaults;
 extern str tls_domains_cfg_file;
 
 extern int sr_tls_renegotiation;
-
+extern int wolfssl_child_rank;
 #endif /* _TLS_WOLFSSL_MOD_H */

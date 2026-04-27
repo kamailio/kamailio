@@ -131,7 +131,7 @@ void tls_free_domain(tls_domain_t *d)
 {
 	if(!d)
 		return;
-	if(d->ctx && process_no == PROC_TCP_MAIN) {
+	if(d->ctx && wolfssl_child_rank == PROC_TCP_MAIN) {
 		if(d->ctx[0]) {
 			void *ext = wolfSSL_CTX_get_ex_data(d->ctx[0], 0);
 			if(ext) {
