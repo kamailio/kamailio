@@ -849,6 +849,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 			ZSW(new_domain->server_name.s), new_domain->ctx[0], new_domain,
 			(new_domain->type & TLS_DOMAIN_DEF) ? " (default)" : "");
 	wolfSSL_set_SSL_CTX(ssl, new_domain->ctx[0]);
+	tls_pkcs11_open_token(ssl);
 	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
 	   set the proper verify options. Thus this will be done manually! */
 
