@@ -171,6 +171,7 @@ str pres_xavp_cfg = {0};
 int pres_retrieve_order = 0;
 str pres_retrieve_order_by = str_init("priority");
 int pres_enable_dmq = 0;
+str pres_dmq_peer_id = str_init("presence");
 int pres_enable_pres_dmq = 1;
 int pres_enable_pres_sync_dmq = 1;
 int pres_enable_subs_dmq = 0;
@@ -263,6 +264,7 @@ static param_export_t params[]={
 	{ "delete_same_subs",       PARAM_INT, &pres_delete_same_subs},
 	{ "timer_mode",             PARAM_INT, &pres_timer_mode},
 	{ "subs_respond_200",       PARAM_INT, &pres_subs_respond_200},
+	{ "dmq_peer_id",            PARAM_STR, &pres_dmq_peer_id},
 
 	{0,0,0}
 };
