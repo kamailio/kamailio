@@ -305,6 +305,10 @@ int ht_dmq_handle_msg(
 			goto invalid;
 		}
 	}
+	if(jdoc.root->child == NULL || jdoc.root->child->string == NULL) {
+		LM_ERR("invalid json doc: missing root child\n");
+		goto invalid;
+	}
 
 	if(unlikely(strcmp(jdoc.root->child->string, "cells") == 0)) {
 		ht_dmq_handle_sync(&jdoc);
