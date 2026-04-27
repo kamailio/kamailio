@@ -362,6 +362,10 @@ static int copy_flow_token(str *token, struct sip_msg *_m)
 			LM_ERR("parsing Route-URI\n");
 			return -1;
 		}
+		if(puri.user.len <= 0 || puri.user.s == NULL) {
+			LM_ERR("empty flow-token in Route user part\n");
+			return -1;
+		}
 
 		token->s = pkg_malloc(puri.user.len * sizeof(char));
 		if(token->s == NULL) {
