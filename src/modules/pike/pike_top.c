@@ -45,9 +45,6 @@ struct TopListItem_t *pike_top_get_root()
 char *pike_top_print_addr(
 		unsigned char *ip, int iplen, char *obuff, int obuffsize)
 {
-	unsigned short *ipv6_ptr = (unsigned short *)ip;
-	int blen;
-
 	memset(obuff, 0, obuffsize);
 
 	DBG("address iplen: %d, buffsize: %d", iplen, obuffsize);
@@ -57,15 +54,8 @@ char *pike_top_print_addr(
 	} else if(iplen == 16) {
 		inet_ntop(AF_INET6, ip, obuff, obuffsize);
 	} else {
-		blen = snprintf(obuff, obuffsize,
-				"%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", htons(ipv6_ptr[0]),
-				htons(ipv6_ptr[1]), htons(ipv6_ptr[2]), htons(ipv6_ptr[3]),
-				htons(ipv6_ptr[4]), htons(ipv6_ptr[5]), htons(ipv6_ptr[6]),
-				htons(ipv6_ptr[7]));
-		if(blen < 0 || blen >= obuffsize) {
-			LM_ERR("failed to print the address - reset it\n");
-			memset(obuff, 0, obuffsize);
-		}
+		strcpy(obuff, "0.0.0.0");
+		LM_ERR("unsupported ip address length: %d\n", iplen);
 	}
 
 	return obuff;
