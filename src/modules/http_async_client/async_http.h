@@ -116,6 +116,7 @@ struct query_params
 	unsigned int tcp_keepalive;
 	unsigned int tcp_ka_idle;
 	unsigned int tcp_ka_interval;
+	unsigned int http_version; /* 0=default, 1=HTTP/2 upgrade, 2=HTTP/2 prior knowledge */
 };
 
 extern struct query_params ah_params;

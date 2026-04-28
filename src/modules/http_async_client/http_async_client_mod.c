@@ -151,7 +151,8 @@ enum http_req_name_t
 	E_HRN_TCP_KA,
 	E_HRN_TCP_KA_IDLE,
 	E_HRN_TCP_KA_INTERVAL,
-	E_HRN_FOLLOW_REDIRECT
+	E_HRN_FOLLOW_REDIRECT,
+	E_HRN_HTTP_VERSION
 };
 
 enum http_time_name_t
@@ -787,6 +788,12 @@ static int ah_parse_req_name(pv_spec_p sp, str *in)
 			else
 				goto error;
 			break;
+		case 12:
+			if(strncmp(in->s, "http_version", 12) == 0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_HTTP_VERSION;
+			else
+				goto error;
+			break;
 		case 14:
 			if(strncmp(in->s, "tls_client_key", 14) == 0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CLIENT_KEY;
@@ -1047,6 +1054,24 @@ static int ah_set_req(
 				ah_params.follow_redirect = tval->ri ? 1 : 0;
 			} else {
 				ah_params.follow_redirect = curl_follow_redirect;
+			}
+			break;
+		case E_HRN_HTTP_VERSION:
+			if(tval) {
+				if(!(tval->flags & PV_VAL_INT)) {
+					LM_ERR("invalid value type for $http_req(http_version)\n");
+					return -1;
+				}
+				if(tval->ri < 0 || tval->ri > 2) {
+					LM_ERR("invalid value for $http_req(http_version): %d "
+						   "(0=default, 1=HTTP/2 upgrade, "
+						   "2=HTTP/2 prior knowledge)\n",
+							tval->ri);
+					return -1;
+				}
+				ah_params.http_version = tval->ri;
+			} else {
+				ah_params.http_version = 0;
 			}
 			break;
 	}

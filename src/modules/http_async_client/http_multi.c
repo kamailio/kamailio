@@ -585,6 +585,17 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb,
 #endif
 	}
 
+	if(cell->params.http_version == 1) {
+		curl_easy_setopt(
+				cell->easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2);
+		LM_DBG("CURLOPT_HTTP_VERSION set to CURL_HTTP_VERSION_2\n");
+	} else if(cell->params.http_version == 2) {
+		curl_easy_setopt(cell->easy, CURLOPT_HTTP_VERSION,
+				CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE);
+		LM_DBG("CURLOPT_HTTP_VERSION set to "
+			   "CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE\n");
+	}
+
 	LM_DBG("Adding easy %p to multi %p (%.*s)\n", cell->easy, g->multi,
 			query->len, query->s);
 	rc = curl_multi_add_handle(g->multi, cell->easy);

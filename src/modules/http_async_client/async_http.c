@@ -332,6 +332,7 @@ void notification_socket_cb(int fd, short event, void *arg)
 	query_params.tcp_keepalive = aq->query_params.tcp_keepalive;
 	query_params.tcp_ka_idle = aq->query_params.tcp_ka_idle;
 	query_params.tcp_ka_interval = aq->query_params.tcp_ka_interval;
+	query_params.http_version = aq->query_params.http_version;
 
 	for(i = 0; i < aq->query_params.headers.len; i++) {
 		query_params.headers = curl_slist_append(
@@ -552,6 +553,7 @@ int async_send_query_xdata(sip_msg_t *msg, str *query, str *cbname,
 	aq->query_params.tcp_keepalive = ah_params.tcp_keepalive;
 	aq->query_params.tcp_ka_idle = ah_params.tcp_ka_idle;
 	aq->query_params.tcp_ka_interval = ah_params.tcp_ka_interval;
+	aq->query_params.http_version = ah_params.http_version;
 	aq->query_params.headers = ah_params.headers;
 	ah_params.headers.t = NULL;
 	ah_params.headers.len = 0;
@@ -717,6 +719,7 @@ void set_query_params(struct query_params *p)
 	p->tcp_keepalive = tcp_keepalive;
 	p->tcp_ka_idle = tcp_ka_idle;
 	p->tcp_ka_interval = tcp_ka_interval;
+	p->http_version = 0;
 
 	if(p->tls_client_cert) {
 		shm_free(p->tls_client_cert);

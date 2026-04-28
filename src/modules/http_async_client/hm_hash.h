@@ -96,6 +96,7 @@ typedef struct hm_params
 	int tcp_keepalive;
 	int tcp_ka_idle;
 	int tcp_ka_interval;
+	unsigned int http_version;
 } http_m_params_t;
 
 typedef struct http_m_cell
