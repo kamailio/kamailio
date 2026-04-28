@@ -64,11 +64,26 @@ int search_append_api(struct sip_msg *msg, str *regex, str *data_str)
 	void **param;
 
 	data = pkg_malloc(data_str->len + 1);
+	if(data == NULL) {
+		LM_ERR("no pkg memory for data buffer\n");
+		return -1;
+	}
 	memcpy(data, data_str->s, data_str->len);
 	memset(data + data_str->len, 0, 1);
 
 	param = pkg_malloc(sizeof(void *));
+	if(param == NULL) {
+		LM_ERR("no pkg memory for regex parameter\n");
+		pkg_free(data);
+		return -1;
+	}
 	*param = pkg_malloc(regex->len + 1);
+	if(*param == NULL) {
+		LM_ERR("no pkg memory for regex buffer\n");
+		pkg_free(param);
+		pkg_free(data);
+		return -1;
+	}
 	memcpy(*param, regex->s, regex->len);
 	memset(*param + regex->len, 0, 1);
 
@@ -92,8 +107,17 @@ int search_api(struct sip_msg *msg, str *regex)
 	int retval;
 
 	void **param = pkg_malloc(sizeof(void *));
+	if(param == NULL) {
+		LM_ERR("no pkg memory for regex parameter\n");
+		return -1;
+	}
 
 	*param = pkg_malloc(regex->len + 1);
+	if(*param == NULL) {
+		LM_ERR("no pkg memory for regex buffer\n");
+		pkg_free(param);
+		return -1;
+	}
 	memcpy(*param, regex->s, regex->len);
 	memset(*param + regex->len, 0, 1);
 
@@ -111,7 +135,16 @@ int is_privacy_api(struct sip_msg *msg, str *privacy_type)
 {
 	int retval;
 	void **param = pkg_malloc(sizeof(void *));
+	if(param == NULL) {
+		LM_ERR("no pkg memory for privacy parameter\n");
+		return -1;
+	}
 	*param = pkg_malloc(privacy_type->len + 1);
+	if(*param == NULL) {
+		LM_ERR("no pkg memory for privacy buffer\n");
+		pkg_free(param);
+		return -1;
+	}
 	memcpy(*param, privacy_type->s, privacy_type->len);
 	memset(*param + privacy_type->len, 0, 1);
 
