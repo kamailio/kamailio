@@ -30,6 +30,12 @@
 #define WL_CUSER 23
 #define BL_DST 24
 #define BL_SQL 25
+#define SECF_FIELD_DOMAIN  3
+#define SECF_FIELD_NAME    1
+#define SECF_FIELD_USER    2
+#define SECF_CONTACT_HEADER   3
+#define SECF_FROM_HEADER      1
+#define SECF_TO_HEADER        2
 
 typedef struct _secf_info
 {
