@@ -514,9 +514,9 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
      * hdr: sets/modifies/removes a HTTP header. N.B.: setting this
        variable multiple times will add several headers to the query.
      * body: sets/modifies/removes the request body
-     * method: sets the HTTP method: either "GET", "POST", "PUT" or
-       "DELETE" (these are the supported methods). (Note: if the method is
-       not set, curl will use GET, or POST if a body is specified)
+     * method: sets the HTTP method: either "GET", "POST", "PUT", "DELETE"
+       or "PATCH" (these are the supported methods). (Note: if the method
+       is not set, curl will use GET, or POST if a body is specified)
      * timeout: sets the HTTP timeout. (Note, this timeout should be
        normally less than tm.fr_timer timeout, because transaction timeout
        has a higher priority over HTTP timeout)
@@ -545,6 +545,15 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
      * follow_redirect: if defined to a non-zero value, will tell curl to
        follow HTTP 3xx redirects. Defaults to curl_follow_redirect global
        parameter.
+     * http_version: sets the HTTP protocol version used by cURL
+       (CURLOPT_HTTP_VERSION). Valid values are:
+          + 0 - default (let cURL choose, typically HTTP/1.1)
+          + 1 - HTTP/2 with upgrade (CURL_HTTP_VERSION_2): attempt to
+            upgrade to HTTP/2, fall back to HTTP/1.1 if not supported
+          + 2 - HTTP/2 prior knowledge
+            (CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE): use HTTP/2 directly
+            without upgrade negotiation (h2c, cleartext)
+       Setting to $null resets to 0 (default).
 
    Example 1.20. $http_req(key) variable usage
 ...
@@ -555,6 +564,7 @@ $http_req(hdr) = "X-Sip-Call-Id: " + $ci;
 $http_req(hdr) = "X-Foo: bar";             # add a 2nd header
 $http_req(suspend) = 0;             # don't suspend the transaction, continue ro
 uting script's execution
+$http_req(http_version) = 2;        # use HTTP/2 prior knowledge (h2c)
 # the following request will use the above parameters
 http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
