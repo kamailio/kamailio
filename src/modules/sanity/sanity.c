@@ -388,7 +388,7 @@ int check_via1_header(sip_msg_t *msg)
 
 /* check multiple conditions regarding RFC3261
 	1. via branch parameter starts with the magic cookie
-	2. for Record-Route headers check that the lr parameter is present
+	2. for Record-Route and Route headers check that the lr parameter is present
 */
 int check_rfc3261_compliance(sip_msg_t *msg)
 {
@@ -437,6 +437,38 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 
 		if(parsed_uri.lr.len == 0 || parsed_uri.lr.s == NULL) {
 			LM_WARN("missing lr parameter in Record-Route URI\n");
+			msg->msg_flags |= FL_MSG_NOREPLY;
+			return SANITY_CHECK_FAILED;
+		}
+		hf = next_sibling_hdr(hf);
+	}
+
+	/* Check lr parameter for Route */
+	LM_DBG("check Route lr parameter for all Route headers\n");
+
+	if(parse_route_headers(msg) != 0) {
+		LM_WARN("failed to parse the Route headers\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	hf = msg->route;
+	while(hf) {
+		if(hf->parsed == NULL) {
+			LM_WARN("failed to parse the Route header body\n");
+			msg->msg_flags |= FL_MSG_NOREPLY;
+			return SANITY_CHECK_FAILED;
+		}
+		rr = hf->parsed;
+		if(parse_uri(rr->nameaddr.uri.s, rr->nameaddr.uri.len, &parsed_uri)
+				!= 0) {
+			LM_WARN("failed to parse the Route URI\n");
+			msg->msg_flags |= FL_MSG_NOREPLY;
+			return SANITY_CHECK_FAILED;
+		}
+
+		if(parsed_uri.lr.len == 0 || parsed_uri.lr.s == NULL) {
+			LM_WARN("missing lr parameter in Route URI\n");
 			msg->msg_flags |= FL_MSG_NOREPLY;
 			return SANITY_CHECK_FAILED;
 		}
