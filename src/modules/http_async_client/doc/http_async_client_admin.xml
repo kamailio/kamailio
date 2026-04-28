@@ -578,6 +578,14 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
 		<listitem><para><emphasis>tcp_ka_idle</emphasis>: set TCP keepalive idle time wait</para></listitem>
 		<listitem><para><emphasis>tcp_ka_interval</emphasis>: set TCP keepalive interval</para></listitem>
 		<listitem><para><emphasis>follow_redirect</emphasis>: if defined to a non-zero value, will tell curl to follow HTTP 3xx redirects. Defaults to curl_follow_redirect global parameter.</para></listitem>
+		<listitem><para><emphasis>http_version</emphasis>: sets the HTTP protocol version used by cURL (<literal>CURLOPT_HTTP_VERSION</literal>). Valid values are:
+			<itemizedlist>
+				<listitem><para>0 - default (let cURL choose, typically HTTP/1.1)</para></listitem>
+				<listitem><para>1 - HTTP/2 with upgrade (<literal>CURL_HTTP_VERSION_2</literal>): attempt to upgrade to HTTP/2, fall back to HTTP/1.1 if not supported</para></listitem>
+				<listitem><para>2 - HTTP/2 prior knowledge (<literal>CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE</literal>): use HTTP/2 directly without upgrade negotiation (h2c, cleartext)</para></listitem>
+			</itemizedlist>
+			Setting to <literal>$null</literal> resets to 0 (default).
+		</para></listitem>
 	</itemizedlist>
 	<example>
 		<title><literal>$http_req(key)</literal> variable usage</title>
@@ -589,6 +597,7 @@ $http_req(method) = "DELETE";
 $http_req(hdr) = "X-Sip-Call-Id: " + $ci;
 $http_req(hdr) = "X-Foo: bar";             # add a 2nd header
 $http_req(suspend) = 0;             # don't suspend the transaction, continue routing script's execution
+$http_req(http_version) = 2;        # use HTTP/2 prior knowledge (h2c)
 # the following request will use the above parameters
 http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
