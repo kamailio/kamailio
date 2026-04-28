@@ -604,6 +604,92 @@
 	</section>
 
  	<section>
+
+
+	<section id="secfilter.f.secf_check_username">
+	<title>
+		<function moreinfo="none">secf_check_username_[from|to|contact]_hdr()</function>
+	</title>
+	<para>
+		These three functions (<emphasis>secf_check_username_from_hdr</emphasis>, 
+		<emphasis>secf_check_username_to_hdr</emphasis>, and 
+		<emphasis>secf_check_username_contact_hdr</emphasis>) check only the 
+		<emphasis>username</emphasis> part of the respective SIP URI.
+	</para>
+	<para>Return values:</para>
+	<itemizedlist>
+		<listitem> 2 = username is whitelisted</listitem>
+		<listitem> 1 = username not found (neutral)</listitem>
+		<listitem>-1 = error (parsing failed)</listitem>
+		<listitem>-2 = username is blacklisted</listitem>
+	</itemizedlist>
+	<example>
+		<title><function>secf_check_username_from_hdr</function> usage</title>
+		<programlisting format="linespecific">
+			if (secf_check_username_from_hdr() == -2) {
+				sl_send_reply("403", "Forbidden User");
+				exit;
+			}
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="secfilter.f.secf_check_name">
+     <title>
+        <function moreinfo="none">secf_check_name_[from|to|contact]_hdr()</function>
+     </title>
+     <para>
+      These three functions (<emphasis>secf_check_name_from_hdr</emphasis>, 
+        <emphasis>secf_check_name_to_hdr</emphasis>, and 
+        <emphasis>secf_check_name_contact_hdr</emphasis>) check only the 
+            <emphasis>name</emphasis> part of the respective SIP URI.
+     </para>
+        <para>Return values:</para>
+        <itemizedlist>
+            <listitem> 2 = name is whitelisted</listitem>
+            <listitem> 1 = name not found (neutral)</listitem>
+            <listitem>-1 = error (parsing failed)</listitem>
+            <listitem>-2 = name is blacklisted</listitem>
+        </itemizedlist>
+        <example>
+            <title><function>secf_check_name_from_hdr</function> usage</title>
+            <programlisting format="linespecific">
+                if (secf_check_name_from_hdr() == -2) {
+                    sl_send_reply("403", "Forbidden name");
+                    exit;
+                }
+            </programlisting>
+        </example>
+	</section>
+
+	<section id="secfilter.f.secf_check_domain">
+        <title>
+            <function moreinfo="none">secf_check_domain_[from|to|contact]_hdr()</function>
+        </title>
+        <para>
+            These three functions (<emphasis>secf_check_domain_from_hdr</emphasis>, 
+            <emphasis>secf_check_domain_to_hdr</emphasis>, and 
+            <emphasis>secf_check_domain_contact_hdr</emphasis>) check only the 
+            <emphasis>domain</emphasis> part of the respective SIP URI.
+        </para>
+        <para>Return values:</para>
+        <itemizedlist>
+            <listitem> 2 = domain is whitelisted</listitem>
+            <listitem> 1 = domain not found (neutral)</listitem>
+            <listitem>-1 = error (parsing failed)</listitem>
+            <listitem>-2 = domain is blacklisted</listitem>
+        </itemizedlist>
+        <example>
+            <title><function>secf_check_domain_from_hdr</function> usage</title>
+            <programlisting format="linespecific">
+                if (secf_check_domain_from_hdr() == -2) {
+                    sl_send_reply("403", "Forbidden domain");
+                    exit;
+                }
+            </programlisting>
+        </example>
+	</section>
+
      <title>RPC commands</title>
 
 	<section id="secfilter.r.reload">
