@@ -822,6 +822,8 @@ int query_params_set_method(struct query_params *qp, str *meth)
 		qp->method = AH_METH_PUT;
 	} else if(strncasecmp(meth->s, "DELETE", meth->len) == 0) {
 		qp->method = AH_METH_DELETE;
+	} else if(strncasecmp(meth->s, "PATCH", meth->len) == 0) {
+		qp->method = AH_METH_PATCH;
 	} else {
 		LM_ERR("Unsupported method: %.*s\n", meth->len, meth->s);
 		return -1;

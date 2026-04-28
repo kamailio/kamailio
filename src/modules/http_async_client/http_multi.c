@@ -544,6 +544,9 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb,
 		case 4:
 			curl_easy_setopt(cell->easy, CURLOPT_CUSTOMREQUEST, "DELETE");
 			break;
+		case 5:
+			curl_easy_setopt(cell->easy, CURLOPT_CUSTOMREQUEST, "PATCH");
+			break;
 		default:
 			break;
 	}

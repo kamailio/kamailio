@@ -83,7 +83,8 @@ typedef enum
 	AH_METH_GET,
 	AH_METH_POST,
 	AH_METH_PUT,
-	AH_METH_DELETE
+	AH_METH_DELETE,
+	AH_METH_PATCH
 } async_http_method_t;
 
 struct header_list
