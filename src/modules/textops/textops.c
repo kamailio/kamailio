@@ -2807,7 +2807,7 @@ static str *generate_boundary(str *txt, str *content_type,
 	n->len = delimiter->len + 2 + CRLF_LEN;
 	if(initial)
 		n->len = 2 * n->len;
-	if(strncmp("\r\n\r\n", txt->s + txt->len - 4, 4) != 0) {
+	if(txt->len < 4 || strncmp("\r\n\r\n", txt->s + txt->len - 4, 4) != 0) {
 		n->len = n->len + CRLF_LEN;
 		flag = 1;
 		LM_DBG("adding final CRLF+CRLF\n");
