@@ -3000,8 +3000,14 @@ static int sel_hf_value_name(str *res, select_t *s, struct sip_msg *msg)
 				if(s->params[1].v.s.s[i] == '_')
 					s->params[1].v.s.s[i] = '-';
 			}
-			i = snprintf(buf, sizeof(buf) - 1, "%.*s: X\n",
-					s->params[1].v.s.len, s->params[1].v.s.s);
+			i = snprintf(buf, sizeof(buf) - 1, "%.*s: X\n", s->params[1].v.s.len,
+					s->params[1].v.s.s);
+			if(i < 0 || i >= (int)sizeof(buf) - 1) {
+				LM_ERR("header name is too long [%.*s]\n", s->params[1].v.s.len,
+						s->params[1].v.s.s);
+				pkg_free(hname);
+				return E_CFG;
+			}
 			buf[i] = 0;
 
 			hname->hname = s->params[1].v.s;
