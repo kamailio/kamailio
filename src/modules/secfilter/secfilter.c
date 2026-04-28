@@ -602,7 +602,7 @@ static int check_generic(
 			res = secf_get_to(msg, &name, &user, &domain);
 			break;
 		case SECF_CONTACT_HEADER:
-			res = secf_get_contact(msg, &user, &domain);
+			res = secf_get_contact_with_name(msg, &name, &user, &domain);
 			break;
 		default:
 			return -1;
