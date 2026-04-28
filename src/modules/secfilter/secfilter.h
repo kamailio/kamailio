@@ -71,6 +71,7 @@ int secf_get_ua(struct sip_msg *msg, str *ua);
 int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain);
 int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain);
 int secf_get_contact(struct sip_msg *msg, str *user, str *domain);
+int secf_get_contact_with_name(struct sip_msg *msg,str *name, str *user, str *domain);
 
 /* Database functions */
 int secf_init_db(void);

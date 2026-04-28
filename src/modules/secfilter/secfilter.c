@@ -595,7 +595,7 @@ static int check_generic(struct sip_msg *msg, struct str_list *list, int type, i
     switch(type) {
         case SECF_FROM_HEADER: res = secf_get_from(msg, &name, &user, &domain); break;
         case SECF_TO_HEADER: res = secf_get_to(msg, &name, &user, &domain);   break;
-        case SECF_CONTACT_HEADER: res = secf_get_contact(msg, &user, &domain);     break;
+        case SECF_CONTACT_HEADER: res = secf_get_contact_with_name(msg, &name, &user, &domain);     break;
         default: return -1;
     }
 
