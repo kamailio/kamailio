@@ -74,13 +74,6 @@ static int isup_put_number(
 {
 	int i = 0;
 	int numlen = strlen(src);
-	int encoded_len = (numlen + 1) / 2;
-
-	if(encoded_len > dest_len) {
-		LM_ERR("phone number too long (%d chars, max %d bytes)\n", numlen,
-				dest_len);
-		return -1;
-	}
 
 	if(numlen % 2) {
 		*oddeven = 1;
@@ -88,6 +81,12 @@ static int isup_put_number(
 	} else {
 		*oddeven = 0;
 		*len = numlen / 2;
+	}
+
+	if(*len > dest_len) {
+		LM_ERR("phone number too long (%d chars, max %d bytes)\n", numlen,
+				dest_len);
+		return -1;
 	}
 
 
@@ -100,7 +99,7 @@ static int isup_put_number(
 		i++;
 	}
 
-	return encoded_len;
+	return 1;
 }
 
 static int encode_called_party(char *number, unsigned char *flags, int nai,
@@ -772,6 +771,8 @@ int isup_update_calling(struct sdp_mangler *mangle, char *origin, int nai,
 				case ISUP_PARM_CALLING_PARTY_NUM:
 					res2 = encode_calling_party(origin, nai, presentation,
 							screening, &new_party[1], 255 - 1);
+					if(res2 < 0)
+						return -1;
 					new_party[0] = (char)res2;
 					replace_body_segment(mangle, offset + 1,
 							(int)buf[offset + 1] + 1, new_party, res2 + 1);
@@ -793,6 +794,8 @@ int isup_update_calling(struct sdp_mangler *mangle, char *origin, int nai,
 			new_party[0] = ISUP_PARM_CALLING_PARTY_NUM;
 			res = encode_calling_party(origin, nai, presentation, screening,
 					new_party + 2, 255 - 2);
+			if(res < 0)
+				return -1;
 			new_party[1] = (char)res;
 
 			add_body_segment(mangle, offset, new_party, res + 2);
@@ -847,6 +850,8 @@ int isup_update_forwarding(struct sdp_mangler *mangle, char *forwardn, int nai,
 				case ISUP_PARM_REDIRECTING_NUMBER:
 					res2 = encode_forwarding_number(
 							forwardn, nai, &new_party[1], 255 - 1);
+					if(res2 < 0)
+						return -1;
 					new_party[0] = (char)res2;
 					replace_body_segment(mangle, offset + 1,
 							(int)buf[offset + 1] + 1, new_party, res2 + 1);
@@ -854,6 +859,8 @@ int isup_update_forwarding(struct sdp_mangler *mangle, char *forwardn, int nai,
 				case ISUP_PARM_ORIGINAL_CALLED_NUM:
 					res2 = encode_forwarding_number(
 							forwardn, nai, &new_party[1], 255 - 1);
+					if(res2 < 0)
+						return -1;
 					new_party[0] = (char)res2;
 					replace_body_segment(mangle, offset + 1,
 							(int)buf[offset + 1] + 1, new_party, res2 + 1);
