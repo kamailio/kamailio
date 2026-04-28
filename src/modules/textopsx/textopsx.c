@@ -2649,11 +2649,12 @@ static int ki_bl_iterator_next(sip_msg_t *msg, str *iname)
 	_bl_iterators[k].it.s = p;
 	while(p < _bl_iterators[k].body.s + _bl_iterators[k].body.len) {
 		if(*p == '\n') {
+			p++;
 			break;
 		}
 		p++;
 	}
-	_bl_iterators[k].it.len = p - _bl_iterators[k].it.s + 1;
+	_bl_iterators[k].it.len = p - _bl_iterators[k].it.s;
 
 	return 1;
 }
