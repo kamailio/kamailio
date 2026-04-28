@@ -1207,7 +1207,9 @@ static int find_hf_value2_param(struct hname_data *hname, str *param_area,
 				i++;
 		} else {
 			while(i < param_area->len && !is_space(param_area->s[i])
-					&& !(param_area->s[i] != ','))
+					&& param_area->s[i] != ',')
+				i++;
+			if(i < param_area->len && param_area->s[i] == ',')
 				i++;
 		}
 	}
