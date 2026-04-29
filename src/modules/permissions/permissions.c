@@ -34,6 +34,7 @@
 #include "rpc.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_refer_to.h"
 #include "../../core/parser/contact/parse_contact.h"
@@ -841,6 +842,11 @@ static int check_register(struct sip_msg *msg, int idx, int check_port)
 	if(((contact_body_t *)msg->contact->parsed)->star) {
 		LM_DBG("* Contact found, allowing\n");
 		return 1;
+	}
+
+	if((!msg->to->parsed) && (parse_to_header(msg) < 0)) {
+		LM_ERR("failed to parse To body\n");
+		return -1;
 	}
 
 	len = ((struct to_body *)msg->to->parsed)->uri.len;
