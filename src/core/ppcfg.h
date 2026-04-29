@@ -34,8 +34,10 @@
 #define KSR_PPDEF_DEFINE 0
 #define KSR_PPDEF_TRYDEF 1
 #define KSR_PPDEF_REDEF 2
-#define KSR_PPDEF_DEFEXP 3
-#define KSR_PPDEF_DEFEXPS 4
+#define KSR_PPDEF_UNDEF 3
+#define KSR_PPDEF_TRYUNDEF 4
+#define KSR_PPDEF_DEFEXP 5
+#define KSR_PPDEF_DEFEXPS 6
 
 typedef struct ksr_ppdefine
 {
@@ -59,6 +61,8 @@ int pp_define_set(int len, char *text, int mode);
 int pp_define_set_type(int type);
 str *pp_define_get(int len, const char *text);
 int pp_define_env(const char *text, int len, int qmode, int vmode);
+
+int pp_undefine(int len, const char *text);
 
 void pp_ifdef_level_update(int val);
 int pp_ifdef_level_check(void);
