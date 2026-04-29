@@ -87,6 +87,33 @@ modparam("phonenum", "smode", 0)
 </programlisting>
 	    </example>
 	</section>
+	<section id="phonenum.p.shortcode">
+	    <title><varname>shortcode</varname> (int)</title>
+	    <para>
+		Enable validation for short numbers (service codes) when matching with
+		<function moreinfo="none">phonenum_match_cn()</function> and a region
+		code is provided.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>shortcode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("phonenum", "shortcode", 1)
+...
+if(phonenum_match_cn("115", "DE", "src")) {
+    if($phn(src=&gt;valid)==1) {
+        xlog("DE short code accepted: $phn(src=&gt;natnum)\n");
+    }
+}
+...
+</programlisting>
+	    </example>
+	</section>
 	<section id="phonenum.p.resid">
 	    <title><varname>resid</varname> (str)</title>
 	    <para>
@@ -235,4 +262,3 @@ if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
 	</section>
 
 </chapter>
-
