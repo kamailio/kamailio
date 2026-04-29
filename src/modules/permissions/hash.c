@@ -261,7 +261,7 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 	LM_DBG("match_hash_table src_ip: %s, proto: %d, uri: %s\n", src_ip_c_str,
 			proto, from_uri);
 	str ruri;
-	char ruri_string[MAX_URI_SIZE + 1];
+	char ruri_string[MAX_URI_SIZE];
 	regex_t preg;
 	struct trusted_list *np;
 	str src_ip;
@@ -273,7 +273,7 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 
 	if(IS_SIP(msg)) {
 		ruri = msg->first_line.u.request.uri;
-		if(ruri.len > MAX_URI_SIZE) {
+		if(ruri.len >= MAX_URI_SIZE - 1) {
 			LM_ERR("message has Request URI too large\n");
 			return -1;
 		}
