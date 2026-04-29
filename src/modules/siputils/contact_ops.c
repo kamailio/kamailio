@@ -112,7 +112,7 @@ int ki_encode_contact(sip_msg_t *msg, str *eprefix, str *eaddr)
 				return -3;
 			}
 		} /* while */
-	}	  /* if c != NULL */
+	} /* if c != NULL */
 
 	return 1;
 }
@@ -254,7 +254,7 @@ int ki_decode_contact_header(sip_msg_t *msg)
 				return -3;
 			}
 		} // end while
-	}	  // if c!= NULL
+	} // if c!= NULL
 
 	return 1;
 }
@@ -439,7 +439,7 @@ int decode2format(str uri, char separator, struct uri_format *format)
 	if(start == NULL) {
 		LM_ERR("invalid SIP uri - missing :\n");
 		return -2;
-	}				   /* invalid uri */
+	} /* invalid uri */
 	start = start + 1; /* jumping over sip: */
 	format->first = start - uri.s;
 
@@ -707,7 +707,7 @@ int ki_contact_param_encode_helper(
 					break;
 				}
 			}
-			nuri.len = snprintf(nuri.s, MAX_URI_SIZE - 1, "%s%.*s;%.*s=%.*s%s",
+			nuri.len = snprintf(nuri.s, MAX_URI_SIZE, "%s%.*s;%.*s=%.*s%s",
 					(q) ? "<" : "", saddr->len, saddr->s, nparam->len,
 					nparam->s, pval.len, pval.s, (q) ? ">" : "");
 			if(nuri.len <= 0 || nuri.len >= MAX_URI_SIZE) {
