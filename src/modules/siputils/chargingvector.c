@@ -29,6 +29,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/str.h"
 #include "../../core/strutils.h"
+#include "../../core/ut.h"
 #include "chargingvector.h"
 
 #define SIZE_CONF_ID 16
@@ -193,10 +194,15 @@ static int sip_parse_charging_vector(const char *pcv_value, unsigned int len)
 
 	char *s = NULL;
 	const char *pcv_value_end = pcv_value + len;
+	static const char icid_value_key[] = "icid-value=";
+	static const char icid_generated_at_key[] = "icid-generated-at=";
+	static const char orig_ioi_key[] = "orig-ioi=";
+	static const char term_ioi_key[] = "term-ioi=";
 
-	s = strstr(pcv_value, "icid-value=");
+	s = (char *)ser_memmem(
+			pcv_value, icid_value_key, len, sizeof(icid_value_key) - 1);
 	if(s != NULL) {
-		_siputils_pcv_id.s = s + strlen("icid-value=");
+		_siputils_pcv_id.s = s + sizeof(icid_value_key) - 1;
 		_siputils_pcv_id.len = sip_param_end(_siputils_pcv_id.s, pcv_value_end);
 		LM_DBG("parsed P-Charging-Vector icid-value=%.*s\n",
 				STR_FMT(&_siputils_pcv_id));
@@ -205,9 +211,10 @@ static int sip_parse_charging_vector(const char *pcv_value, unsigned int len)
 		_siputils_pcv_id = (str)STR_NULL;
 	}
 
-	s = strstr(pcv_value, "icid-generated-at=");
+	s = (char *)ser_memmem(pcv_value, icid_generated_at_key, len,
+			sizeof(icid_generated_at_key) - 1);
 	if(s != NULL) {
-		_siputils_pcv_genaddr.s = s + strlen("icid-generated-at=");
+		_siputils_pcv_genaddr.s = s + sizeof(icid_generated_at_key) - 1;
 		_siputils_pcv_genaddr.len =
 				sip_param_end(_siputils_pcv_genaddr.s, pcv_value_end);
 		LM_DBG("parsed P-Charging-Vector icid-generated-at=%.*s\n",
@@ -217,9 +224,10 @@ static int sip_parse_charging_vector(const char *pcv_value, unsigned int len)
 		_siputils_pcv_genaddr = (str)STR_NULL;
 	}
 
-	s = strstr(pcv_value, "orig-ioi=");
+	s = (char *)ser_memmem(
+			pcv_value, orig_ioi_key, len, sizeof(orig_ioi_key) - 1);
 	if(s != NULL) {
-		_siputils_pcv_orig.s = s + strlen("orig-ioi=");
+		_siputils_pcv_orig.s = s + sizeof(orig_ioi_key) - 1;
 		_siputils_pcv_orig.len =
 				sip_param_end(_siputils_pcv_orig.s, pcv_value_end);
 		LM_INFO("parsed P-Charging-Vector orig-ioi=%.*s\n",
@@ -228,9 +236,10 @@ static int sip_parse_charging_vector(const char *pcv_value, unsigned int len)
 		_siputils_pcv_orig = (str)STR_NULL;
 	}
 
-	s = strstr(pcv_value, "term-ioi=");
+	s = (char *)ser_memmem(
+			pcv_value, term_ioi_key, len, sizeof(term_ioi_key) - 1);
 	if(s != NULL) {
-		_siputils_pcv_term.s = s + strlen("term-ioi=");
+		_siputils_pcv_term.s = s + sizeof(term_ioi_key) - 1;
 		_siputils_pcv_term.len =
 				sip_param_end(_siputils_pcv_term.s, pcv_value_end);
 		LM_INFO("parsed P-Charging-Vector term-ioi=%.*s\n",
