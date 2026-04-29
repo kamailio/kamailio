@@ -92,18 +92,22 @@ int patch_content_length(struct sip_msg *msg, unsigned int newValue)
 	}
 	/* perhaps dangerous because buffer is static ? */
 	//pos = int2str(newValue,&len);
-	len = snprintf((char *)pos, 10, "%u", newValue);
+	len = snprintf((char *)pos, sizeof(pos), "%u", newValue);
+	if(len <= 0 || len >= (int)sizeof(pos)) {
+		LM_ERR("failed to format Content-Length value %u\n", newValue);
+		return -3;
+	}
 	s = pkg_malloc(len);
 	if(s == NULL) {
 		PKG_MEM_ERROR_FMT("missing %d bytes\n", len);
-		return -3;
+		return -4;
 	}
 	memcpy(s, pos, len);
 	/* perhaps we made it and no one called int2str,might use sprintf */
 	if(patch(msg, contentLength->body.s, contentLength->body.len, s, len) < 0) {
 		pkg_free(s);
 		LM_ERR("lumping failed\n");
-		return -4;
+		return -5;
 	}
 
 	LM_DBG("succeeded in altering Content-Length to new value %u\n", newValue);
