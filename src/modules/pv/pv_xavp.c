@@ -460,7 +460,26 @@ error:
 
 void pv_xavp_name_destroy(pv_xavp_name_t *xname)
 {
-	return;
+	if(xname == NULL)
+		return;
+
+	if(xname->next != NULL) {
+		pkg_free(xname->next);
+		xname->next = NULL;
+	}
+	pkg_free(xname);
+}
+
+static void pv_xavp_name_free(void *pvn)
+{
+	pv_name_t *pname = NULL;
+
+	if(pvn == NULL)
+		return;
+
+	pname = (pv_name_t *)pvn;
+	pv_xavp_name_destroy((pv_xavp_name_t *)pname->u.dname);
+	pname->u.dname = NULL;
 }
 
 int pv_parse_xavp_name(pv_spec_p sp, str *in)
@@ -512,16 +531,12 @@ int pv_parse_xavp_name(pv_spec_p sp, str *in)
 done:
 	sp->pvp.pvn.u.dname = (void *)xname;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
+	sp->pvp.pvn.nfree = pv_xavp_name_free;
 	return 0;
 
 error:
 	if(xname != NULL) {
-		if(xname->next != NULL) {
-			pkg_free(xname->next);
-			xname->next = NULL;
-		}
 		pv_xavp_name_destroy(xname);
-		pkg_free(xname);
 	}
 	return -1;
 }
@@ -905,7 +920,26 @@ int pv_xavp_to_var(str *xname)
 
 void pv_xavu_name_destroy(pv_xavu_name_t *xname)
 {
-	return;
+	if(xname == NULL)
+		return;
+
+	if(xname->next != NULL) {
+		pkg_free(xname->next);
+		xname->next = NULL;
+	}
+	pkg_free(xname);
+}
+
+static void pv_xavu_name_free(void *pvn)
+{
+	pv_name_t *pname = NULL;
+
+	if(pvn == NULL)
+		return;
+
+	pname = (pv_name_t *)pvn;
+	pv_xavu_name_destroy((pv_xavu_name_t *)pname->u.dname);
+	pname->u.dname = NULL;
 }
 
 int pv_parse_xavu_name(pv_spec_t *sp, str *in)
@@ -964,16 +998,12 @@ int pv_parse_xavu_name(pv_spec_t *sp, str *in)
 done:
 	sp->pvp.pvn.u.dname = (void *)xname;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
+	sp->pvp.pvn.nfree = pv_xavu_name_free;
 	return 0;
 
 error:
 	if(xname != NULL) {
-		if(xname->next != NULL) {
-			pkg_free(xname->next);
-			xname->next = NULL;
-		}
 		pv_xavu_name_destroy(xname);
-		pkg_free(xname);
 	}
 	return -1;
 }
@@ -1063,7 +1093,26 @@ int pv_set_xavu(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 
 void pv_xavi_name_destroy(pv_xavp_name_t *xname)
 {
-	return;
+	if(xname == NULL)
+		return;
+
+	if(xname->next != NULL) {
+		pkg_free(xname->next);
+		xname->next = NULL;
+	}
+	pkg_free(xname);
+}
+
+static void pv_xavi_name_free(void *pvn)
+{
+	pv_name_t *pname = NULL;
+
+	if(pvn == NULL)
+		return;
+
+	pname = (pv_name_t *)pvn;
+	pv_xavi_name_destroy((pv_xavp_name_t *)pname->u.dname);
+	pname->u.dname = NULL;
 }
 
 int pv_parse_xavi_name(pv_spec_p sp, str *in)
@@ -1115,6 +1164,7 @@ int pv_parse_xavi_name(pv_spec_p sp, str *in)
 done:
 	sp->pvp.pvn.u.dname = (void *)xname;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
+	sp->pvp.pvn.nfree = pv_xavi_name_free;
 	return 0;
 
 error:
