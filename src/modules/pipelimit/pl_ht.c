@@ -76,6 +76,7 @@ int pl_init_htable(unsigned int hsize)
 	if(_pl_pipes_ht->slots == NULL) {
 		LM_ERR("no more shm.\n");
 		shm_free(_pl_pipes_ht);
+		_pl_pipes_ht = NULL;
 		return -1;
 	}
 	memset(_pl_pipes_ht->slots, 0, _pl_pipes_ht->htsize * sizeof(rlp_slot_t));
@@ -90,6 +91,7 @@ int pl_init_htable(unsigned int hsize)
 			}
 			shm_free(_pl_pipes_ht->slots);
 			shm_free(_pl_pipes_ht);
+			_pl_pipes_ht = NULL;
 			return -1;
 		}
 	}
@@ -141,6 +143,11 @@ int pl_pipe_add(str *pipeid, str *algorithm, int limit)
 
 	if(_pl_pipes_ht == NULL)
 		return -1;
+
+	if(pipeid == NULL || pipeid->s == NULL || pipeid->len <= 0 || pipeid->len > 4096) {
+		LM_ERR("invalid pipeid\n");
+		return -1;
+	}
 
 	cellid = pl_compute_hash(pipeid);
 	idx = pl_get_entry(cellid, _pl_pipes_ht->htsize);
