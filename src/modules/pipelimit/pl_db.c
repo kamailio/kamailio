@@ -70,6 +70,39 @@ str rlp_table_name = str_init(RLP_TABLE_NAME);
 
 int pl_load_db(void);
 
+static int pl_db_get_str(db_val_t *value, str *out, const char *colname)
+{
+	if(value == NULL || out == NULL) {
+		LM_ERR("invalid db value for column %s\n", colname);
+		return -1;
+	}
+	if(VAL_NULL(value)) {
+		LM_ERR("null value for column %s\n", colname);
+		return -1;
+	}
+
+	switch(VAL_TYPE(value)) {
+		case DB1_STRING:
+			if(VAL_STRING(value) == NULL) {
+				LM_ERR("null string value for column %s\n", colname);
+				return -1;
+			}
+			out->s = (char *)VAL_STRING(value);
+			out->len = strlen(out->s);
+			return 0;
+		case DB1_STR:
+			if(VAL_STR(value).s == NULL || VAL_STR(value).len < 0) {
+				LM_ERR("invalid str value for column %s\n", colname);
+				return -1;
+			}
+			*out = VAL_STR(value);
+			return 0;
+		default:
+			LM_ERR("invalid type %d for column %s\n", VAL_TYPE(value), colname);
+			return -1;
+	}
+}
+
 int pl_connect_db(void)
 {
 	if(pl_db_url.s == NULL)
@@ -179,11 +212,11 @@ int pl_load_db(void)
 	for(i = 0; i < nr_rows; i++) {
 		values = ROW_VALUES(rows + i);
 
-		pipeid.s = VAL_STR(values).s;
-		pipeid.len = strlen(pipeid.s);
+		if(pl_db_get_str(values, &pipeid, RLP_PIPEID_COL) < 0)
+			goto error;
 		limit = VAL_INT(values + 1);
-		algorithm.s = VAL_STR(values + 2).s;
-		algorithm.len = strlen(algorithm.s);
+		if(pl_db_get_str(values + 2, &algorithm, RLP_ALGORITHM_COL) < 0)
+			goto error;
 
 		if(pl_pipe_add(&pipeid, &algorithm, limit) != 0)
 			goto error;
