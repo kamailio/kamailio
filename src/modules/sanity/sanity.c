@@ -407,7 +407,6 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 	if(msg->via1->branch->value.len < 7
 			|| memcmp(msg->via1->branch->value.s, "z9hG4bK", 7) != 0) {
 		LM_WARN("Via1 branch parameter does not start with the magic cookie\n");
-		msg->msg_flags |= FL_MSG_NOREPLY;
 		return SANITY_CHECK_FAILED;
 	}
 
@@ -416,7 +415,6 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 
 	if(parse_record_route_headers(msg) != 0) {
 		LM_WARN("failed to parse the Record-Route headers\n");
-		msg->msg_flags |= FL_MSG_NOREPLY;
 		return SANITY_CHECK_FAILED;
 	}
 
@@ -424,20 +422,17 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 	while(hf) {
 		if(hf->parsed == NULL) {
 			LM_WARN("failed to parse the Record-Route header body\n");
-			msg->msg_flags |= FL_MSG_NOREPLY;
 			return SANITY_CHECK_FAILED;
 		}
 		rr = hf->parsed;
 		if(parse_uri(rr->nameaddr.uri.s, rr->nameaddr.uri.len, &parsed_uri)
 				!= 0) {
 			LM_WARN("failed to parse the Record-Route URI\n");
-			msg->msg_flags |= FL_MSG_NOREPLY;
 			return SANITY_CHECK_FAILED;
 		}
 
 		if(parsed_uri.lr.len == 0 || parsed_uri.lr.s == NULL) {
 			LM_WARN("missing lr parameter in Record-Route URI\n");
-			msg->msg_flags |= FL_MSG_NOREPLY;
 			return SANITY_CHECK_FAILED;
 		}
 		hf = next_sibling_hdr(hf);
