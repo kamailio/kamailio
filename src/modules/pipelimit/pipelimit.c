@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <regex.h>
 #include <math.h>
+#include <limits.h>
 
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
@@ -68,6 +69,7 @@ MODULE_VERSION
  * timer interval length in seconds, tunable via modparam
  */
 #define PL_TIMER_INTERVAL_DEFAULT 10
+#define PL_HASH_SIZE_MAX 20
 
 /** SL API structure */
 static sl_api_t _pl_slb;
@@ -359,6 +361,47 @@ static void update_cpu_load(void)
 	do_update_load();
 }
 
+static void pl_cleanup(void)
+{
+	if(network_load_value != NULL) {
+		shm_free(network_load_value);
+		network_load_value = NULL;
+	}
+	if(load_value != NULL) {
+		shm_free(load_value);
+		load_value = NULL;
+	}
+	if(load_source != NULL) {
+		shm_free(load_source);
+		load_source = NULL;
+	}
+	if(pid_kp != NULL) {
+		shm_free(pid_kp);
+		pid_kp = NULL;
+	}
+	if(pid_ki != NULL) {
+		shm_free(pid_ki);
+		pid_ki = NULL;
+	}
+	if(pid_kd != NULL) {
+		shm_free(pid_kd);
+		pid_kd = NULL;
+	}
+	if(_pl_pid_setpoint != NULL) {
+		shm_free(_pl_pid_setpoint);
+		_pl_pid_setpoint = NULL;
+	}
+	if(drop_rate != NULL) {
+		shm_free(drop_rate);
+		drop_rate = NULL;
+	}
+	if(pl_timer != NULL) {
+		timer_free(pl_timer);
+		pl_timer = NULL;
+	}
+	pl_destroy_htable();
+}
+
 /* initialize ratelimit module */
 static int mod_init(void)
 {
@@ -370,81 +413,70 @@ static int mod_init(void)
 		LM_ERR("invalid hash size parameter: %d\n", pl_hash_size);
 		return -1;
 	}
+	if(pl_hash_size > PL_HASH_SIZE_MAX) {
+		LM_ERR("hash size parameter too large: %d - max is %d\n", pl_hash_size,
+				PL_HASH_SIZE_MAX);
+		return -1;
+	}
 	if(pl_timer_interval <= 0) {
 		LM_ERR("invalid timer interval parameter: %d\n", pl_timer_interval);
 		return -1;
 	}
-	if(pl_init_htable(1 << pl_hash_size) < 0) {
+	if(pl_init_htable(1U << pl_hash_size) < 0) {
 		LM_ERR("could not allocate pipes htable\n");
 		return -1;
 	}
 	if(pl_init_db() < 0) {
 		LM_ERR("could not load pipes description\n");
-		return -1;
-	}
-
-	if(pl_timer_mode == 0) {
-		/* register timer to reset counters */
-		if((pl_timer = timer_alloc()) == NULL) {
-			LM_ERR("could not allocate timer\n");
-			return -1;
-		}
-		timer_init(pl_timer, pl_timer_handle, 0, F_TIMER_FAST);
-		/* execute timer routine after pl_timer_interval * 1000ms */
-		timer_add(pl_timer, pl_timer_interval * MS_TO_TICKS(1000));
-	} else {
-		if(sr_wtimer_add(pl_timer_exec, NULL, pl_timer_interval) < 0) {
-			LM_ERR("cannot add timer exec routine\n");
-			return -1;
-		}
+		goto error;
 	}
 
 	/* bind the SL API */
 	if(sl_load_api(&_pl_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
-		return -1;
+		goto error;
 	}
 
 	network_load_value = shm_malloc(sizeof(int));
 	if(network_load_value == NULL) {
 		LM_ERR("oom for network_load_value\n");
-		return -1;
+		goto error;
 	}
 
 	load_value = shm_malloc(sizeof(double));
 	if(load_value == NULL) {
 		LM_ERR("oom for load_value\n");
-		return -1;
+		goto error;
 	}
 	load_source = shm_malloc(sizeof(int));
 	if(load_source == NULL) {
 		LM_ERR("oom for load_source\n");
-		return -1;
+		goto error;
 	}
 	pid_kp = shm_malloc(sizeof(double));
 	if(pid_kp == NULL) {
 		LM_ERR("oom for pid_kp\n");
-		return -1;
+		goto error;
 	}
 	pid_ki = shm_malloc(sizeof(double));
 	if(pid_ki == NULL) {
 		LM_ERR("oom for pid_ki\n");
-		return -1;
+		goto error;
 	}
 	pid_kd = shm_malloc(sizeof(double));
 	if(pid_kd == NULL) {
 		LM_ERR("oom for pid_kd\n");
-		return -1;
+		goto error;
 	}
 	_pl_pid_setpoint = shm_malloc(sizeof(double));
 	if(_pl_pid_setpoint == NULL) {
 		LM_ERR("oom for pid_setpoint\n");
-		return -1;
+		goto error;
 	}
 	drop_rate = shm_malloc(sizeof(int));
 	if(drop_rate == NULL) {
 		LM_ERR("oom for drop_rate\n");
-		return -1;
+		goto error;
 	}
 
 	*network_load_value = 0;
@@ -456,7 +488,30 @@ static int mod_init(void)
 	*_pl_pid_setpoint = 0.01 * (double)_pl_cfg_setpoint;
 	*drop_rate = 0;
 
+	if(pl_timer_mode == 0) {
+		/* register timer to reset counters */
+		if((pl_timer = timer_alloc()) == NULL) {
+			LM_ERR("could not allocate timer\n");
+			goto error;
+		}
+		timer_init(pl_timer, pl_timer_handle, 0, F_TIMER_FAST);
+		/* execute timer routine after pl_timer_interval * 1000ms */
+		if(timer_add(pl_timer, pl_timer_interval * MS_TO_TICKS(1000)) < 0) {
+			LM_ERR("cannot add timer routine\n");
+			goto error;
+		}
+	} else {
+		if(sr_wtimer_add(pl_timer_exec, NULL, pl_timer_interval) < 0) {
+			LM_ERR("cannot add timer exec routine\n");
+			goto error;
+		}
+	}
+
 	return 0;
+
+error:
+	pl_cleanup();
+	return -1;
 }
 
 
@@ -564,8 +619,16 @@ int hash[100] = {18, 50, 51, 39, 49, 68, 8, 78, 61, 75, 53, 32, 45, 77, 31, 12,
 static int pipe_push_direct(pl_pipe_t *pipe)
 {
 	int ret;
+	unsigned int hash_idx;
 
-	pipe->counter++;
+	if(pipe->counter < 0) {
+		LM_WARN("resetting negative counter for pipe %.*s\n", pipe->name.len,
+				pipe->name.s);
+		pipe->counter = 0;
+	}
+	if(pipe->counter < INT_MAX) {
+		pipe->counter++;
+	}
 
 	switch(pipe->algo) {
 		case PIPE_ALGO_NOP:
@@ -583,7 +646,8 @@ static int pipe_push_direct(pl_pipe_t *pipe)
 				ret = (!(pipe->counter % pipe->load)) ? 1 : -1;
 			break;
 		case PIPE_ALGO_FEEDBACK:
-			ret = (hash[pipe->counter % 100] < *drop_rate) ? -1 : 1;
+			hash_idx = ((unsigned int)pipe->counter) % 100;
+			ret = (hash[hash_idx] < *drop_rate) ? -1 : 1;
 			break;
 		case PIPE_ALGO_NETWORK:
 			ret = -1 * pipe->load;
