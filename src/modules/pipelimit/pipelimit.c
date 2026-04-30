@@ -262,18 +262,24 @@ static int get_cpuload(double *load)
 							+ (n_sirq - o_sirq) + (n_stl - o_stl);
 		long long d_idle = (n_idle - o_idle);
 
-		vload = ((double)d_idle) / (double)d_total;
+		if(d_total <= 0) {
+			LM_DBG("no CPU tick delta available\n");
+		} else {
+			vload = ((double)d_idle) / (double)d_total;
 
-		/* divide by numbers of cpu */
-		ncpu = get_num_cpus();
-		vload = vload / ncpu;
-		vload = 1.0 - vload;
-		if(vload < 0.0)
-			vload = 0.0;
-		else if(vload > 1.0)
-			vload = 1.0;
+			/* divide by numbers of cpu */
+			ncpu = get_num_cpus();
+			vload = vload / ncpu;
+			vload = 1.0 - vload;
+			if(vload < 0.0)
+				vload = 0.0;
+			else if(vload > 1.0)
+				vload = 1.0;
 
-		*load = vload;
+			if(isfinite(vload)) {
+				*load = vload;
+			}
+		}
 	}
 
 	o_user = n_user;
@@ -300,6 +306,14 @@ static void do_update_load(void)
 	int load;
 	double err, dif_err, output;
 
+	if(!isfinite(*load_value)) {
+		*load_value = 0.0;
+	} else if(*load_value < 0.0) {
+		*load_value = 0.0;
+	} else if(*load_value > 1.0) {
+		*load_value = 1.0;
+	}
+
 	/* PID update */
 	err = *_pl_pid_setpoint - *load_value;
 
@@ -322,8 +336,13 @@ static void do_update_load(void)
 	*drop_rate = (output > 0) ? output : 0;
 
 	load = 0.5 + 100.0 * *load_value; /* round instead of floor */
+	if(load < 0) {
+		load = 0;
+	} else if(load > 100) {
+		load = 100;
+	}
 
-	memset(spcs, '-', load / 4);
+	memset(spcs, '-', (size_t)(load / 4));
 	spcs[load / 4] = 0;
 
 	/*
@@ -349,6 +368,10 @@ static int mod_init(void)
 	}
 	if(pl_hash_size <= 0) {
 		LM_ERR("invalid hash size parameter: %d\n", pl_hash_size);
+		return -1;
+	}
+	if(pl_timer_interval <= 0) {
+		LM_ERR("invalid timer interval parameter: %d\n", pl_timer_interval);
 		return -1;
 	}
 	if(pl_init_htable(1 << pl_hash_size) < 0) {
