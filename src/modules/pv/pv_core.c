@@ -3696,7 +3696,7 @@ int pv_set_xto_attr(struct sip_msg *msg, pv_param_t *param, int op,
 			}
 
 			buf.len = val->rs.len;
-			if(!(tb->style & TBS_URI_ENCLOSED)) {
+			if(val->rs.len > 0 && !(tb->style & TBS_URI_ENCLOSED)) {
 				/* existing uri not enclosed - check if new one has parameters */
 				for(p = val->rs.s + val->rs.len - 1; p > val->rs.s; p--) {
 					if(*p == ';') {
