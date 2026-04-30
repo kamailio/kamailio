@@ -402,7 +402,7 @@ char *pv_xavp_fill_ni(str *in, pv_xavp_name_t *xname)
 	while(p < in->s + in->len
 			&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 		p++;
-	if(p > in->s + in->len || *p == '\0')
+	if(p >= in->s + in->len || *p == '\0')
 		goto error;
 	xname->name.s = p;
 	while(p < in->s + in->len) {
