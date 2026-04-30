@@ -138,11 +138,16 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 	switch(db_mysql_opt_ssl_mode) {
 		case 0: /* opt_ssl_mode = 0(off) */
 		case 1: /* SSL_MODE_DISABLED */
+#if MARIADB_PACKAGE_VERSION_ID >= 30000
+			mysql_options(ptr->con, MYSQL_OPT_SSL_ENFORCE, (void *)&(int){0});
+			mysql_options(ptr->con, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+					(void *)&(int){0});
+#endif
 			break;
 		case 2: /* SSL_MODE_PREFERRED */
 		case 3: /* SSL_MODE_REQUIRED */
 		case 4: /* SSL_MODE_VERIFY_CA */
-#if MYSQL_VERSION_ID >= 100339
+#if MARIADB_PACKAGE_VERSION_ID >= 30000
 			mysql_options(ptr->con, MYSQL_OPT_SSL_ENFORCE, (void *)&(int){1});
 #else
 			LM_DBG("ssl mode not supported by %s\n", MARIADB_BASE_VERSION);
@@ -181,7 +186,7 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 #endif /* MYSQL_VERSION_ID */
 #endif /* MARIADB_BASE_VERSION */
 
-#if(MYSQL_VERSION_ID >= 50600)
+#if (MYSQL_VERSION_ID >= 50600)
 	if(db_mysql_opt_ssl_ca)
 		mysql_options(
 				ptr->con, MYSQL_OPT_SSL_CA, (const void *)db_mysql_opt_ssl_ca);
@@ -208,7 +213,7 @@ struct my_con *db_mysql_new_connection(const struct db_id *id)
 		connection_flag |= CLIENT_FOUND_ROWS;
 	}
 
-#if(MYSQL_VERSION_ID >= 40100)
+#if (MYSQL_VERSION_ID >= 40100)
 	if(!mysql_real_connect(ptr->con, host, id->username, id->password,
 			   id->database, id->port, 0,
 			   connection_flag | CLIENT_MULTI_STATEMENTS)) {
