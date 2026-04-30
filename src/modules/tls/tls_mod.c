@@ -395,10 +395,23 @@ static void tls_atfork_prepare(void)
 #endif
 }
 
+/* In MP-mode, engine/provider keys are late bound in the worker:
+ * keep track of the version of the tls config so workers can
+ * refresh keys
+ */
+
+int *tls_config_rev; /* incremented after tls.reload */
+int tls_child_rev =
+		-1; /* worker local - track whether keys need to be reloaded */
+
 static int mod_init(void)
 {
 	int method;
 	int verify_client;
+
+	tls_config_rev = shm_malloc(sizeof(int));
+	*tls_config_rev =
+			0; /* the version is increased in RPC process on tls.reload */
 
 #ifdef STATISTICS
 	/* register statistics */

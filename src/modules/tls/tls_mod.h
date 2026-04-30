@@ -64,6 +64,8 @@ typedef struct ksr_tls_jit_key
 
 /** Defined in tls_mod.c; loads an engine/PKCS#11 private key by URI. */
 EVP_PKEY *tls_engine_private_key(const char *key_id);
+extern int *tls_config_rev;
+extern int tls_child_rev;
 
 #endif /* KSR_SSL_COMMON */
 

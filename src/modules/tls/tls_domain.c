@@ -1836,9 +1836,30 @@ tls_domain_t *tls_lookup_cfg(tls_domains_cfg_t *cfg, int type,
 	int dotpos;
 
 #ifdef KSR_SSL_COMMON
-	if(ksr_tcp_main_threads == 0 && tls_child_rank > 0) {
+	/* Late binding of engine/provider keys in worker:
+         * walk the domains and bind key to SSL_CTX
+         */
+	if(ksr_tcp_main_threads == 0 && tls_child_rank > 0
+			&& tls_child_rev < *tls_config_rev) {
 		tls_engine_key_hook(cfg->srv_default->ctx[process_no]);
 		tls_engine_key_hook(cfg->cli_default->ctx[process_no]);
+
+		p = cfg->srv_list;
+		while(p) {
+			tls_engine_key_hook(p->ctx[process_no]);
+			p = p->next;
+		}
+
+		p = cfg->cli_list;
+		while(p) {
+			tls_engine_key_hook(p->ctx[process_no]);
+			p = p->next;
+		}
+
+		tls_child_rev = *tls_config_rev;
+
+		LM_INFO("Fixup of engine/provider keys in child rank=%d version=%d\n",
+				tls_child_rank, tls_child_rev);
 	}
 #endif /* KSR_SSL_COMMON */
 
@@ -1855,11 +1876,6 @@ tls_domain_t *tls_lookup_cfg(tls_domains_cfg_t *cfg, int type,
 	}
 
 	while(p) {
-#ifdef KSR_SSL_COMMON
-		if(ksr_tcp_main_threads == 0 && tls_child_rank > 0) {
-			tls_engine_key_hook(p->ctx[process_no]);
-		}
-#endif /* KSR_SSL_COMMON */
 		if(srvid && srvid->len > 0) {
 			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- id: [%.*s] [%.*s]\n",
 					ip_addr2a(&p->ip), p->port, ip_addr2a(ip), port,

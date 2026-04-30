@@ -77,6 +77,9 @@ static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
 
 	collect_garbage();
 
+	(*tls_config_rev)++;
+        LM_INFO("Setting tls config version to %d\n", *tls_config_rev);
+
 	cfg = tls_load_config(config_file);
 	if(cfg == NULL) {
 		snprintf(errmsg, errmsg_size,
