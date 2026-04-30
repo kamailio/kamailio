@@ -142,6 +142,16 @@ void event_cb(int fd, short kind, void *userp)
 			reply_error(cell);
 			curl_multi_remove_handle(g->multi, easy);
 			curl_easy_cleanup(easy);
+			/* sock_cb with CURL_POLL_REMOVE (triggered by remove_handle above)
+			 * may have already freed cell->ev; guard before freeing here */
+			if(cell->evset && cell->ev) {
+				event_del(cell->ev);
+				event_free(cell->ev);
+				cell->ev = NULL;
+				cell->evset = 0;
+			}
+			unlink_http_m_cell(cell);
+			free_http_m_cell(cell);
 		}
 	}
 
@@ -477,6 +487,16 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb,
 	cell->easy = easy;
 	cell->error[0] = '\0';
 	cell->params = *query_params;
+	/* Transfer ownership of dynamically allocated fields to the cell.
+	 * The caller must not free these after new_request() returns. */
+	query_params->headers = NULL;
+	query_params->tls_client_cert = NULL;
+	query_params->tls_client_key = NULL;
+	query_params->tls_ca_path = NULL;
+	query_params->body.s = NULL;
+	query_params->body.len = 0;
+	query_params->username = NULL;
+	query_params->password = NULL;
 	cell->param = param;
 	cell->cb = cb;
 	cell->url = (char *)shm_malloc(query->len + 1);

@@ -174,5 +174,18 @@ void free_http_m_cell(struct http_m_cell *cell)
 	if(cell->url)
 		shm_free(cell->url);
 
+	if(cell->params.tls_client_cert)
+		shm_free(cell->params.tls_client_cert);
+	if(cell->params.tls_client_key)
+		shm_free(cell->params.tls_client_key);
+	if(cell->params.tls_ca_path)
+		shm_free(cell->params.tls_ca_path);
+	if(cell->params.body.s && cell->params.body.len > 0)
+		shm_free(cell->params.body.s);
+	if(cell->params.username)
+		shm_free(cell->params.username);
+	if(cell->params.password)
+		shm_free(cell->params.password);
+
 	shm_free(cell);
 }
