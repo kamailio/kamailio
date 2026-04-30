@@ -49,6 +49,7 @@ typedef struct dmq_node
 	struct ip_addr ip_address; /* resolved IP address */
 	int status; /* reserved - maybe something like active,timeout,disabled */
 	int last_notification; /* last notification received from the node */
+	int last_peer_evt; /* last DMQ_NODE_* peer event_route emitted; 0 = none */
 	struct dmq_node *next; /* pointer to the next struct dmq_node */
 } dmq_node_t;
 
@@ -66,7 +67,7 @@ extern dmq_node_list_t *dmq_node_list;
 dmq_node_list_t *init_dmq_node_list();
 dmq_node_t *build_dmq_node(str *uri, int shm);
 int update_node_list(dmq_node_list_t *remote_list);
-dmq_node_t *add_dmq_node(dmq_node_list_t *list, str *uri);
+dmq_node_t *add_dmq_node(dmq_node_list_t *list, str *uri, int no_peer_evt);
 dmq_node_t *find_dmq_node(dmq_node_list_t *list, dmq_node_t *node);
 dmq_node_t *find_dmq_node_uri(dmq_node_list_t *list, str *uri);
 dmq_node_t *find_dmq_node_uri2(str *uri);

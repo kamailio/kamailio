@@ -437,6 +437,38 @@ modparam("dmq", "init_with_single", 1)
 		</programlisting>
 		</example>
 	</section>
+	<section id="dmq.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, &hellip;) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values are: <literal>dmq:peer-down</literal>,
+			<literal>dmq:peer-up</literal>, <literal>dmq:peer-disabled</literal>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "event_callback", "ksr_dmq_event")
+...
+-- event callback function implemented in Lua
+function ksr_dmq_event(evname)
+	KSR.info("===== dmq module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -655,6 +687,75 @@ modparam("dmq", "init_with_single", 1)
                 </example>
         </section>
 
+	</section>
+
+	<section id="dmq.ex.event_routes">
+		<title>Event routes</title>
+		<section>
+			<title>
+			<function moreinfo="none">dmq:peer-down</function>
+			</title>
+			<para>
+			When defined, the module calls event_route[dmq:peer-down] when a
+			remote peer (from <varname>notification_address</varname> or the learned
+			list, not <varname>server_address</varname>) transitions from active to
+			not active (but not when it becomes disabled; see
+			<literal>dmq:peer-disabled</literal>).
+			</para>
+			<para>
+			Execution uses <varname>event_callback</varname> when that modparam is
+			set, otherwise event_route blocks.
+			</para>
+			<programlisting format="linespecific">
+...
+event_route[dmq:peer-down] {
+	xlog("L_INFO", "DMQ peer down: $ru\n");
+}
+...
+</programlisting>
+		</section>
+		<section>
+			<title>
+			<function moreinfo="none">dmq:peer-up</function>
+			</title>
+			<para>
+			When defined, the module calls event_route[dmq:peer-up] when such a
+			remote peer becomes active or is added as active (never for this
+			instance's own server entry).
+			</para>
+			<para>
+			Execution uses <varname>event_callback</varname> when that modparam is
+			set, otherwise event_route blocks.
+			</para>
+			<programlisting format="linespecific">
+...
+event_route[dmq:peer-up] {
+	xlog("L_INFO", "DMQ peer up: $ru\n");
+}
+...
+</programlisting>
+		</section>
+		<section>
+			<title>
+			<function moreinfo="none">dmq:peer-disabled</function>
+			</title>
+			<para>
+			When defined, the module calls event_route[dmq:peer-disabled] when a
+			remote peer enters the disabled state (<literal>DMQ_NODE_DISABLED</literal>),
+			for example after fail-count thresholds.
+			</para>
+			<para>
+			Execution uses <varname>event_callback</varname> when that modparam is
+			set, otherwise event_route blocks.
+			</para>
+			<programlisting format="linespecific">
+...
+event_route[dmq:peer-disabled] {
+	xlog("L_INFO", "DMQ peer disabled: $ru\n");
+}
+...
+</programlisting>
+		</section>
 	</section>
 
 	<section>
