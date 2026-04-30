@@ -572,18 +572,21 @@ static int load_crl(tls_domain_t *d)
 	LOG(L_INFO, "%s: Certificate revocation lists will be checked (%.*s)\n",
 			tls_domain_str(d), d->crl_file.len, d->crl_file.s);
 
-	do {
-		if(wolfSSL_CTX_load_verify_locations(d->ctx[0], d->crl_file.s, 0)
-				!= 1) {
-			ERR("%s: Unable to load certificate revocation list '%s'\n",
-					tls_domain_str(d), d->crl_file.s);
-			TLS_ERR("load_crl:");
-			return -1;
-		}
-		store = wolfSSL_CTX_get_cert_store(d->ctx[0]);
-		wolfSSL_X509_STORE_set_flags(
-				store, WOLFSSL_CRL_CHECK | WOLFSSL_CRL_CHECKALL);
-	} while(0);
+
+	if(wolfSSL_CTX_EnableCRL(d->ctx[0], 0) != WOLFSSL_SUCCESS) {
+		ERR("%s: Unable to enable CRL checking '%s'\n", tls_domain_str(d),
+				d->crl_file.s);
+		TLS_ERR("load_crl:");
+		return -1;
+	}
+	if(wolfSSL_CTX_LoadCRL(d->ctx[0], d->crl_file.s, WOLFSSL_FILETYPE_PEM, 0)
+			!= WOLFSSL_SUCCESS) {
+		ERR("%s: Unable to load CRL file '%s'\n", tls_domain_str(d),
+				d->crl_file.s);
+		TLS_ERR("load_crl:");
+		return -1;
+	}
+
 	return 0;
 }
 
