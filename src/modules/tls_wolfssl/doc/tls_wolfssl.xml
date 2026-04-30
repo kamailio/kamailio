@@ -105,6 +105,18 @@ make all include_modules=tls_wolfssl
 			.
 		</para>
 	</section>
+		<section id="tls.parameters">
+			<sectioninfo></sectioninfo>
+			<title>Parameters</title>
+			<para>Important differences to the tls module</para>
+			<section id="tls.p.crl">
+	<title><varname>crl</varname></title>
+	<para>
+          The value is a <emphasis>folder</emphasis> containing PEM CRL files
+          with extension <varname>.pem</varname>.
+	</para>
+			</section>
+		</section>
 	</chapter>
 </book>
 
