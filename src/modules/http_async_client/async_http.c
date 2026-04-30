@@ -422,33 +422,31 @@ done:
 			curl_slist_free_all(query_params.headers);
 			query_params.headers = NULL;
 		}
-	}
-	if(query_params.tls_client_cert) {
-		shm_free(query_params.tls_client_cert);
-		query_params.tls_client_cert = NULL;
-	}
-	if(query_params.tls_client_key) {
-		shm_free(query_params.tls_client_key);
-		query_params.tls_client_key = NULL;
-	}
-	if(query_params.tls_ca_path) {
-		shm_free(query_params.tls_ca_path);
-		query_params.tls_ca_path = NULL;
-	}
-	if(query_params.body.s && query_params.body.len > 0) {
-		shm_free(query_params.body.s);
-		query_params.body.s = NULL;
-		query_params.body.len = 0;
-	}
-
-	if(query_params.username) {
-		shm_free(query_params.username);
-		query_params.username = NULL;
-	}
-
-	if(query_params.password) {
-		shm_free(query_params.password);
-		query_params.password = NULL;
+		if(query_params.tls_client_cert) {
+			shm_free(query_params.tls_client_cert);
+			query_params.tls_client_cert = NULL;
+		}
+		if(query_params.tls_client_key) {
+			shm_free(query_params.tls_client_key);
+			query_params.tls_client_key = NULL;
+		}
+		if(query_params.tls_ca_path) {
+			shm_free(query_params.tls_ca_path);
+			query_params.tls_ca_path = NULL;
+		}
+		if(query_params.body.s && query_params.body.len > 0) {
+			shm_free(query_params.body.s);
+			query_params.body.s = NULL;
+			query_params.body.len = 0;
+		}
+		if(query_params.username) {
+			shm_free(query_params.username);
+			query_params.username = NULL;
+		}
+		if(query_params.password) {
+			shm_free(query_params.password);
+			query_params.password = NULL;
+		}
 	}
 
 	return;
