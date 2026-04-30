@@ -99,6 +99,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 			/* JSON escaping */
 			int emode = 0;
 			ksr_str_json_escape(&sin, &sout, &emode);
+			if(emode)
+				free(sout.s);
 			break;
 		}
 		case 9: {
