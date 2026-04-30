@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- tlscfg Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The <emphasis>tlscfg</emphasis> module is a companion to the
+		<emphasis>tls</emphasis> module. It provides dynamic TLS profile
+		management via RPC commands, config file write-back with debounce,
+		and certificate file monitoring.
+	</para>
+	<para>
+		The module does not implement any TLS plumbing itself  - it
+		delegates all TLS operations to the existing
+		<emphasis>tls</emphasis> module. Instead, it manages the tls.cfg
+		configuration file and triggers <function>tls.reload</function>
+		when changes are made.
+	</para>
+	<para>
+		Key capabilities:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>Profile management</emphasis>  - add, update,
+			remove, enable, and disable TLS profiles at runtime via RPC.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Config write-back</emphasis>  - mutations are
+			buffered in memory and flushed to the tls.cfg file after a
+			configurable debounce interval, followed by an automatic
+			<function>tls.reload</function>. Before each write, a
+			timestamped backup of the existing config file can
+			optionally be created (see
+			<varname>config_backup_dir</varname>).
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Certificate watching</emphasis>  - periodically
+			checks mtime of certificate files referenced by managed
+			profiles. When changes are detected (e.g., renewed certs),
+			triggers <function>tls.reload</function> automatically.
+			All certificate paths configured on a profile are monitored
+			independently. See
+			<xref linkend="tlscfg.cert_watching"/> for details.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Certificate path resolution</emphasis>  -
+			supports absolute paths, relative paths (resolved against
+			<varname>cert_base_path</varname>), and
+			<literal>certman:</literal> shorthand for integration with
+			external certificate management services.
+		</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		At startup the module discovers the tls.cfg file path from the
+		<emphasis>tls</emphasis> module's <varname>config</varname>
+		parameter and parses the existing configuration into an in-memory
+		profile index. All subsequent RPC mutations operate on this index
+		and are written back atomically.
+	</para>
+	<section id="tlscfg.profile_ids">
+	<title>Profile IDs</title>
+	<para>
+		Each profile has two identities: its <emphasis>section
+		header</emphasis> (the tls domain address, e.g.,
+		<literal>[server:10.0.0.1:5061]</literal>) and its
+		<emphasis>profile ID</emphasis> (a user-chosen name used to
+		reference the profile in all RPC commands).
+	</para>
+	<para>
+		By default the profile ID is derived from the section header by
+		stripping the brackets (e.g.,
+		<literal>server:10.0.0.1:5061</literal>). You can override this
+		by adding a <literal>profile_id</literal> directive inside the
+		section:
+	</para>
+	<programlisting format="linespecific">
+[server:10.0.0.1:5061]
+profile_id = sip-main
+certificate = certman:sip-main
+</programlisting>
+	<para>
+		With an explicit profile ID, all RPC commands use the friendly
+		name:
+	</para>
+	<programlisting format="linespecific">
+$ &amp;kamctl; rpc tlscfg.profile_get sip-main
+$ &amp;kamctl; rpc tlscfg.profile_update sip-main certificate certman:sip-main
+</programlisting>
+	<para>
+		The <literal>profile_id</literal> directive is preserved across
+		config write-back cycles. When adding profiles via RPC, the
+		<function>tlscfg.profile_add</function> command takes the profile
+		ID and section as separate parameters.
+	</para>
+	</section>
+	<para>
+		Disabled profiles are written to the config file as comments
+		(prefixed with <literal>#</literal>) so the
+		<emphasis>tls</emphasis> module's parser ignores them. The
+		<emphasis>tlscfg</emphasis> module recognizes these commented-out
+		sections and can re-enable them via RPC.
+	</para>
+	</section>
+
+	<section id="tlscfg.cert_watching">
+	<title>Certificate File Watching</title>
+	<para>
+		The certificate file watcher is a pull-based safety net that
+		automatically detects when certificate files change on disk,
+		independent of any RPC notification. It provides two key benefits:
+	</para>
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>Standalone operation</emphasis>  - the module is
+			useful on its own without any external certificate manager.
+			Operators can rotate certificates by any means (manual
+			copy, cron-driven certbot, configuration management tools)
+			and Kamailio will automatically reload the new certificates.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>Defense in depth</emphasis>  - even when using the
+			<function>tlscfg.cert_notify</function> RPC as the primary
+			notification path, the watcher ensures that certificate
+			changes are never silently missed (e.g., if the RPC call
+			fails or an operator replaces files manually).
+		</para>
+		</listitem>
+	</itemizedlist>
+	<para>
+		The watcher monitors all certificate paths configured on each
+		profile independently. If a profile references multiple
+		certificate files, a change to any one of them triggers a
+		reload. If a profile only has a single certificate path (the
+		common case), only that path is watched.
+	</para>
+	<para>
+		The check interval is controlled by
+		<varname>cert_check_interval</varname>. The watcher is designed
+		to work safely with certificate files on network-attached storage
+		(NFS, CIFS) as well as local filesystems.
+	</para>
+	<para>
+		Set <varname>cert_check_interval</varname> to <literal>0</literal>
+		to disable the watcher entirely if all certificate changes are
+		guaranteed to arrive via
+		<function>tlscfg.cert_notify</function>.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<para>
+		The module depends on the following modules (in other words the
+		listed modules must be loaded before this module):
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>tls</emphasis>  - required. The tls module must
+			be loaded and its <varname>config</varname> parameter must
+			point to a tls.cfg file.
+			</para>
+		</listitem>
+		</itemizedlist>
+	</para>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+
+	<section id="tlscfg.p.cert_check_interval">
+		<title><varname>cert_check_interval</varname> (int)</title>
+		<para>
+		Interval in seconds between certificate file mtime checks. When a
+		referenced certificate or key file has changed on disk, the module
+		triggers <function>tls.reload</function> automatically.
+		</para>
+		<para>
+		Set to <literal>0</literal> to disable certificate file watching.
+		</para>
+		<para>
+		Default value is <quote>300</quote> (5 minutes).
+		</para>
+		<example>
+		<title><varname>cert_check_interval</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tlscfg", "cert_check_interval", 60)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.p.debounce_interval">
+		<title><varname>debounce_interval</varname> (int)</title>
+		<para>
+		Seconds to wait after the last RPC mutation before flushing the
+		config file and triggering <function>tls.reload</function>. This
+		batches rapid sequential updates (e.g., setting multiple fields on
+		a new profile) into a single write and reload cycle.
+		</para>
+		<para>
+		Default value is <quote>2</quote>.
+		</para>
+		<example>
+		<title><varname>debounce_interval</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tlscfg", "debounce_interval", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.p.cert_base_path">
+		<title><varname>cert_base_path</varname> (string)</title>
+		<para>
+		Base directory for certificate file path resolution. Certificate
+		and key paths set via RPC support three resolution modes:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>Absolute paths</emphasis> (starting with
+			<literal>/</literal>)  - used as-is.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>certman: prefix</emphasis>  -
+			<literal>certman:&lt;id&gt;</literal> resolves to
+			<literal>{cert_base_path}/{id}/cert.pem</literal> for
+			certificates and
+			<literal>{cert_base_path}/{id}/key.pem</literal> for
+			private keys. The private key is auto-inferred when
+			setting a certificate with the certman: prefix.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>Relative paths</emphasis>  - resolved as
+			<literal>{cert_base_path}/{value}</literal>.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>/var/lib/certman/certs</quote>.
+		</para>
+		<example>
+		<title><varname>cert_base_path</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tlscfg", "cert_base_path", "/etc/kamailio/tls/certs")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.p.config_backup_dir">
+		<title><varname>config_backup_dir</varname> (string)</title>
+		<para>
+		Directory where timestamped backups of the tls.cfg file are stored
+		before each config write. A backup file is created with the naming
+		pattern
+		<literal>{basename}.YYYYMMDDTHHmmss.bak</literal>.
+		</para>
+		<para>
+		When set to an empty string (the default), backups are written to
+		the same directory as the tls.cfg file. Set to an absolute path to
+		store backups in a different location.
+		</para>
+		<para>
+		To disable config backups entirely, set
+		<varname>config_max_backups</varname> to <literal>0</literal>.
+		</para>
+		<para>
+		Default value is <quote></quote> (empty  - same directory as
+		tls.cfg).
+		</para>
+		<example>
+		<title><varname>config_backup_dir</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tlscfg", "config_backup_dir", "/var/backups/kamailio")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.p.config_max_backups">
+		<title><varname>config_max_backups</varname> (int)</title>
+		<para>
+		Maximum number of tls.cfg backup files to retain. When this limit
+		is exceeded, the oldest backups are pruned after each write. Old
+		backups are identified by alphabetical sort order of filenames
+		(the timestamp format ensures chronological ordering).
+		</para>
+		<para>
+		Set to <literal>0</literal> to disable config backups entirely.
+		</para>
+		<para>
+		Default value is <quote>10</quote>.
+		</para>
+		<example>
+		<title><varname>config_max_backups</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("tlscfg", "config_max_backups", 20)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>RPC Commands</title>
+	<para>
+		The module exports several RPC commands for managing TLS profiles
+		at runtime. Profile mutations are buffered and flushed after the
+		debounce interval, unless noted otherwise.
+	</para>
+
+	<section id="tlscfg.rpc.profile_add">
+		<title><function moreinfo="none">tlscfg.profile_add</function></title>
+		<para>
+		Create a new TLS profile. The profile is added to the in-memory
+		index with the given section type. It starts enabled but empty
+		(no certificate or key fields).
+		</para>
+		<para>
+		Parameters:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>profile_id</emphasis>  - unique identifier for
+			the profile (e.g., <literal>carrier-abc</literal>).
+		</para></listitem>
+		<listitem><para>
+			<emphasis>section</emphasis>  - section type and address
+			(e.g., <literal>server:default</literal>,
+			<literal>client:any</literal>). Written to the config as
+			<literal>[server:default]</literal>.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function moreinfo="none">tlscfg.profile_add</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.profile_add carrier-abc client:any
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.profile_update">
+		<title><function moreinfo="none">tlscfg.profile_update</function></title>
+		<para>
+		Set or remove a field on an existing profile. If the value is
+		omitted or set to <literal>-</literal>, the field is removed.
+		</para>
+		<para>
+		When setting <varname>certificate</varname> or
+		<varname>certificate2</varname> to a <literal>certman:</literal>
+		value, the corresponding <varname>private_key</varname> or
+		<varname>private_key2</varname> is automatically inferred.
+		</para>
+		<para>
+		Parameters:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>profile_id</emphasis>  - target profile.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>key</emphasis>  - field name (any tls.cfg
+			directive, e.g., <literal>certificate</literal>,
+			<literal>method</literal>, <literal>cipher_list</literal>).
+		</para></listitem>
+		<listitem><para>
+			<emphasis>value</emphasis> (optional)  - new value. Omit
+			or pass <literal>-</literal> to remove the field.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function moreinfo="none">tlscfg.profile_update</function> usage</title>
+		<programlisting format="linespecific">
+...
+# Set a field:
+$ &kamctl; rpc tlscfg.profile_update carrier-abc certificate certman:carrier-abc
+
+# Remove a field:
+$ &kamctl; rpc tlscfg.profile_update carrier-abc cipher_list -
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.profile_remove">
+		<title><function moreinfo="none">tlscfg.profile_remove</function></title>
+		<para>
+		Remove a profile entirely from the in-memory index.
+		</para>
+		<para>
+		Parameters:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>profile_id</emphasis>  - profile to remove.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function moreinfo="none">tlscfg.profile_remove</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.profile_remove carrier-abc
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.profile_list">
+		<title><function moreinfo="none">tlscfg.profile_list</function></title>
+		<para>
+		List all managed profiles. Each entry includes the profile id,
+		section header, enabled status, and type (server or client). Use
+		<function>tlscfg.profile_get</function> to retrieve the full
+		details including key-value fields.
+		</para>
+		<para>
+		No parameters.
+		</para>
+		<example>
+		<title><function moreinfo="none">tlscfg.profile_list</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.profile_list
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.profile_get">
+		<title><function moreinfo="none">tlscfg.profile_get</function></title>
+		<para>
+		Return full details of a single profile, including all key-value
+		fields.
+		</para>
+		<para>
+		Parameters:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>profile_id</emphasis>  - profile to inspect.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function moreinfo="none">tlscfg.profile_get</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.profile_get carrier-abc
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.profile_enable">
+		<title><function moreinfo="none">tlscfg.profile_enable</function></title>
+		<para>
+		Enable a previously disabled profile. The profile section will be
+		uncommented in the config file on the next flush.
+		</para>
+		<para>
+		Parameters:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>profile_id</emphasis>  - profile to enable.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function moreinfo="none">tlscfg.profile_enable</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.profile_enable carrier-abc
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.profile_disable">
+		<title><function moreinfo="none">tlscfg.profile_disable</function></title>
+		<para>
+		Disable a profile. The profile section will be written as comments
+		in the config file on the next flush, so the tls module ignores it.
+		The profile remains in the in-memory index and can be re-enabled.
+		</para>
+		<para>
+		Parameters:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>profile_id</emphasis>  - profile to disable.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function moreinfo="none">tlscfg.profile_disable</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.profile_disable carrier-abc
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.cert_check">
+		<title><function moreinfo="none">tlscfg.cert_check</function></title>
+		<para>
+		Trigger an immediate certificate file mtime check cycle. If any
+		referenced certificate files have changed,
+		<function>tls.reload</function> is triggered.
+		</para>
+		<para>
+		No parameters.
+		</para>
+		<example>
+		<title><function moreinfo="none">tlscfg.cert_check</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.cert_check
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.cert_notify">
+		<title><function moreinfo="none">tlscfg.cert_notify</function></title>
+		<para>
+		Notification endpoint for external certificate management services
+		(e.g., certman). Immediately flushes the current config to disk and
+		triggers <function>tls.reload</function>, bypassing the debounce
+		timer. Use this when an external tool has written new certificate
+		files and wants Kamailio to pick them up immediately.
+		</para>
+		<para>
+		No parameters.
+		</para>
+		<example>
+		<title><function moreinfo="none">tlscfg.cert_notify</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.cert_notify
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tlscfg.rpc.reload">
+		<title><function moreinfo="none">tlscfg.reload</function></title>
+		<para>
+		Re-read the tls.cfg file from disk into the in-memory profile
+		index, then trigger <function>tls.reload</function>. Use this
+		after manually editing the config file.
+		</para>
+		<para>
+		No parameters.
+		</para>
+		<example>
+		<title><function moreinfo="none">tlscfg.reload</function> usage</title>
+		<programlisting format="linespecific">
+...
+$ &kamctl; rpc tlscfg.reload
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+</chapter>
