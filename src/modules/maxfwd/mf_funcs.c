@@ -115,7 +115,7 @@ int add_maxfwd_header(struct sip_msg *msg, unsigned int val)
 
 	buf = (char *)pkg_malloc(len);
 	if(!buf) {
-		LM_ERR("add_maxfwd_header: no more pkg memory\n");
+		LM_ERR("no more pkg memory\n");
 		goto error;
 	}
 	memcpy(buf, MF_HDR, MF_HDR_LEN);
@@ -125,14 +125,18 @@ int add_maxfwd_header(struct sip_msg *msg, unsigned int val)
 	len += CRLF_LEN;
 
 	/*inserts the header at the beginning of the message*/
+	if(msg->headers == NULL || msg->headers->name.s == NULL) {
+		LM_ERR("message has no header anchor\n");
+		goto error1;
+	}
 	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, 0);
 	if(anchor == 0) {
-		LM_ERR("add_maxfwd_header: failed to get anchor\n");
+		LM_ERR("failed to get anchor\n");
 		goto error1;
 	}
 
 	if(insert_new_lump_before(anchor, buf, len, 0) == 0) {
-		LM_ERR("add_maxfwd_header: failed to insert MAX-FORWARDS lump\n");
+		LM_ERR("failed to insert MAX-FORWARDS lump\n");
 		goto error1;
 	}
 
