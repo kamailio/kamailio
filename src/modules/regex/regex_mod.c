@@ -497,7 +497,7 @@ err:
 				pcre2_code_free(pcres_tmp[i]);
 			}
 		}
-		pkg_free(pcres_tmp);
+		shm_free(pcres_tmp);
 	}
 	if(reload_lock) {
 		lock_release(reload_lock);
@@ -516,7 +516,7 @@ static void free_shared_memory(void)
 	if(pcres) {
 		for(i = 0; i < *num_pcres; i++) {
 			if(pcres[i]) {
-				shm_free(pcres[i]);
+				pcre2_code_free(pcres[i]);
 			}
 		}
 		shm_free(pcres);
@@ -556,7 +556,7 @@ static int ki_pcre_match(sip_msg_t *msg, str *string, str *regex)
 	size_t pcre_erroffset;
 
 	pcre_re = pcre2_compile((PCRE2_SPTR)regex->s, PCRE2_ZERO_TERMINATED,
-			pcre_options, &pcre_error_num, &pcre_erroffset, pcres_ctx);
+			pcre_options, &pcre_error_num, &pcre_erroffset, NULL);
 	if(pcre_re == NULL) {
 		switch(pcre2_get_error_message(
 				pcre_error_num, (PCRE2_UCHAR *)pcre_error, 128)) {
@@ -575,14 +575,19 @@ static int ki_pcre_match(sip_msg_t *msg, str *string, str *regex)
 		return -4;
 	}
 
-	pcre_md = pcre2_match_data_create_from_pattern(pcre_re, pcres_gctx);
+	pcre_md = pcre2_match_data_create_from_pattern(pcre_re, NULL);
+	if(pcre_md == NULL) {
+		LM_ERR("failed to allocate pcre match data\n");
+		pcre2_code_free(pcre_re);
+		return -4;
+	}
 	pcre_rc = pcre2_match(pcre_re,	   /* the compiled pattern */
 			(PCRE2_SPTR)string->s,	   /* the matching string */
 			(PCRE2_SIZE)(string->len), /* the length of the subject */
 			0,						   /* start at offset 0 in the string */
 			0,						   /* default options */
 			pcre_md,				   /* the match data block */
-			pcres_mctx); /* a match context; NULL means use defaults */
+			NULL); /* NULL means use default match context */
 
 	/* Matching failed: handle error cases */
 	if(pcre_rc < 0) {
@@ -667,15 +672,20 @@ static int ki_pcre_match_group(sip_msg_t *_msg, str *string, int num_pcre)
 	}
 
 	lock_get(reload_lock);
-	pcre_md = pcre2_match_data_create_from_pattern(
-			(*pcres_addr)[num_pcre], pcres_gctx);
+	pcre_md =
+			pcre2_match_data_create_from_pattern((*pcres_addr)[num_pcre], NULL);
+	if(pcre_md == NULL) {
+		lock_release(reload_lock);
+		LM_ERR("failed to allocate pcre match data for group %d\n", num_pcre);
+		return -4;
+	}
 	pcre_rc = pcre2_match((*pcres_addr)[num_pcre], /* the compiled pattern */
 			(PCRE2_SPTR)string->s,				   /* the matching string */
 			(PCRE2_SIZE)(string->len), /* the length of the subject */
 			0,						   /* start at offset 0 in the string */
 			0,						   /* default options */
 			pcre_md,				   /* the match data block */
-			pcres_mctx); /* a match context; NULL means use defaults */
+			NULL); /* NULL means use default match context */
 
 	lock_release(reload_lock);
 	if(pcre_md)
