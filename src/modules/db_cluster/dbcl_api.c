@@ -178,8 +178,8 @@ extern int dbcl_max_query_length;
 										"cluster"                              \
 										" [%.*s] (%d/%d) [%.*s]\n",            \
 										cls->name.len, cls->name.s, i, j,      \
-										cls->rlist[i].clist[j]->name.len,      \
-										cls->rlist[i].clist[j]->name.s);       \
+										cls->wlist[i].clist[j]->name.len,      \
+										cls->wlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -215,8 +215,8 @@ extern int dbcl_max_query_length;
 										"cluster"                              \
 										" [%.*s] (%d/%d) [%.*s]\n",            \
 										cls->name.len, cls->name.s, i, j,      \
-										cls->rlist[i].clist[j]->name.len,      \
-										cls->rlist[i].clist[j]->name.s);       \
+										cls->wlist[i].clist[j]->name.len,      \
+										cls->wlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -248,8 +248,8 @@ extern int dbcl_max_query_length;
 										"cluster"                              \
 										" [%.*s] (%d/%d) [%.*s]\n",            \
 										cls->name.len, cls->name.s, i, j,      \
-										cls->rlist[i].clist[j]->name.len,      \
-										cls->rlist[i].clist[j]->name.s);       \
+										cls->wlist[i].clist[j]->name.len,      \
+										cls->wlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -262,8 +262,8 @@ extern int dbcl_max_query_length;
 						return 0;                                              \
 					break;                                                     \
 				default:                                                       \
-					LM_ERR("invalid mode %c (%d)\n", cls->rlist[i].mode,       \
-							cls->rlist[i].mode);                               \
+					LM_ERR("invalid mode %c (%d)\n", cls->wlist[i].mode,       \
+							cls->wlist[i].mode);                               \
 					return -1;                                                 \
 			}                                                                  \
 		}                                                                      \
@@ -321,8 +321,8 @@ extern int dbcl_max_query_length;
 										"cluster"                              \
 										" [%.*s] (%d/%d) [%.*s]\n",            \
 										cls->name.len, cls->name.s, i, j,      \
-										cls->rlist[i].clist[j]->name.len,      \
-										cls->rlist[i].clist[j]->name.s);       \
+										cls->wlist[i].clist[j]->name.len,      \
+										cls->wlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -364,8 +364,8 @@ extern int dbcl_max_query_length;
 										"cluster"                              \
 										" [%.*s] (%d/%d) [%.*s]\n",            \
 										cls->name.len, cls->name.s, i, j,      \
-										cls->rlist[i].clist[j]->name.len,      \
-										cls->rlist[i].clist[j]->name.s);       \
+										cls->wlist[i].clist[j]->name.len,      \
+										cls->wlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -403,8 +403,8 @@ extern int dbcl_max_query_length;
 										"cluster"                              \
 										" [%.*s] (%d/%d) [%.*s]\n",            \
 										cls->name.len, cls->name.s, i, j,      \
-										cls->rlist[i].clist[j]->name.len,      \
-										cls->rlist[i].clist[j]->name.s);       \
+										cls->wlist[i].clist[j]->name.len,      \
+										cls->wlist[i].clist[j]->name.s);       \
 								sec = get_ticks() - sec;                       \
 								if(sec >= dbcl_max_query_length) {             \
 									dbcl_inactive_con(cls->wlist[i].clist[j]); \
@@ -417,8 +417,8 @@ extern int dbcl_max_query_length;
 						return 0;                                              \
 					break;                                                     \
 				default:                                                       \
-					LM_ERR("invalid mode %c (%d)\n", cls->rlist[i].mode,       \
-							cls->rlist[i].mode);                               \
+					LM_ERR("invalid mode %c (%d)\n", cls->wlist[i].mode,       \
+							cls->wlist[i].mode);                               \
 					return -1;                                                 \
 			}                                                                  \
 		}                                                                      \
