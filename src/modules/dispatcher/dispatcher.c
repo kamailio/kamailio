@@ -1502,9 +1502,13 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		case 2: /* inactive */
 			return pv_get_sintval(msg, param, res, inactive);
 		case 3: /* pactive */
+			if(count == 0)
+				return pv_get_sintval(msg, param, res, 0);
 			return pv_get_sintval(
 					msg, param, res, (int)((active * 100) / count));
 		case 4: /* pinactive */
+			if(count == 0)
+				return pv_get_sintval(msg, param, res, 0);
 			return pv_get_sintval(
 					msg, param, res, (int)((inactive * 100) / count));
 		case 5: /* octime_sec */
