@@ -2218,6 +2218,11 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 			if(rule->from_uri_len != 0) {
 				pcre_md = pcre2_match_data_create_from_pattern(
 						rule->from_uri_re, NULL);
+				if(pcre_md == NULL) {
+					LM_ERR("failed to allocate pcre2 match data for "
+						   "from_uri\n");
+					return -1;
+				}
 				rc = pcre2_match(rule->from_uri_re, (PCRE2_SPTR)from_uri->s,
 						(PCRE2_SIZE)from_uri->len, 0, 0, pcre_md, NULL);
 				if(pcre_md) {
@@ -2261,6 +2266,11 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 				}
 				pcre_md = pcre2_match_data_create_from_pattern(
 						rule->request_uri_re, NULL);
+				if(pcre_md == NULL) {
+					LM_ERR("failed to allocate pcre2 match data for "
+						   "request_uri\n");
+					return -1;
+				}
 				rc = pcre2_match(rule->request_uri_re,
 						(PCRE2_SPTR)request_uri->s,
 						(PCRE2_SIZE)request_uri->len, 0, 0, pcre_md, NULL);
@@ -2397,6 +2407,11 @@ static int ki_load_gws_furi(
 			if(rule->from_uri_len != 0) {
 				pcre_md = pcre2_match_data_create_from_pattern(
 						rule->from_uri_re, NULL);
+				if(pcre_md == NULL) {
+					LM_ERR("failed to allocate pcre2 match data for "
+						   "from_uri\n");
+					return -1;
+				}
 				rc = pcre2_match(rule->from_uri_re, (PCRE2_SPTR)from_uri->s,
 						(PCRE2_SIZE)from_uri->len, 0, 0, pcre_md, NULL);
 				if(pcre_md) {
@@ -2441,6 +2456,11 @@ static int ki_load_gws_furi(
 			if(rule->request_uri_len != 0) {
 				pcre_md = pcre2_match_data_create_from_pattern(
 						rule->request_uri_re, NULL);
+				if(pcre_md == NULL) {
+					LM_ERR("failed to allocate pcre2 match data for "
+						   "request_uri\n");
+					return -1;
+				}
 				rc = pcre2_match(rule->request_uri_re,
 						(PCRE2_SPTR)request_uri->s,
 						(PCRE2_SIZE)request_uri->len, 0, 0, pcre_md, NULL);
