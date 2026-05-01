@@ -4307,6 +4307,12 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 					}
 				}
 			} else {
+				if(node->dlist[j].host.len >= DS_HN_SIZE) {
+					LM_WARN("hostname too long to resolve (skipping) [%.*s]\n",
+							node->dlist[j].host.len, node->dlist[j].host.s);
+					dns_set_local_ttl(0);
+					continue;
+				}
 				memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
 				hn[node->dlist[j].host.len] = '\0';
 				he = resolvehost(hn);
@@ -4936,6 +4942,12 @@ void ds_dns_update_set(ds_set_t *node)
 		} else {
 			/* The Hostname needs to be \0 terminated for resolvehost, so we
 			 * make a copy here. */
+			if(node->dlist[j].host.len >= DS_HN_SIZE) {
+				LM_ERR("hostname too long to resolve [%.*s]\n",
+						node->dlist[j].host.len, node->dlist[j].host.s);
+				dns_set_local_ttl(0);
+				continue;
+			}
 			memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
 			hn[node->dlist[j].host.len] = '\0';
 			he = resolvehost(hn);
