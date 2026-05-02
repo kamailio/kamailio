@@ -14,9 +14,13 @@ Shih-Ping Chan
         3. Important Notes
         4. Compiling the wolfSSL TLS Module
         5. Support for externalized keys (PKCS#11)
-        6. Additional RPC Commands
+        6. Parameters
 
-              6.1. tls.domains
+              6.1. crl
+
+        7. Additional RPC Commands
+
+              7.1. tls.domains
 
    List of Examples
 
@@ -31,9 +35,13 @@ Chapter 1. Admin Guide
    3. Important Notes
    4. Compiling the wolfSSL TLS Module
    5. Support for externalized keys (PKCS#11)
-   6. Additional RPC Commands
+   6. Parameters
 
-        6.1. tls.domains
+        6.1. crl
+
+   7. Additional RPC Commands
+
+        7.1. tls.domains
 
 1. Overview
 
@@ -130,13 +138,23 @@ bsoftokn3.so&pin-value=12345678[pin-source=....]
      * pin-source=file:/path/to/pin (Read from file)
      * pin-source=env:MY_PIN_VAR (Read from environment)
 
-6. Additional RPC Commands
+6. Parameters
 
-   6.1. tls.domains
+   6.1. crl
+
+   Important differences to the tls module
+
+6.1. crl
+
+   The value is a folder containing PEM CRL files with extension .pem.
+
+7. Additional RPC Commands
+
+   7.1. tls.domains
 
    Supports the same RPC command as the tls module with some additions.
 
-6.1. tls.domains
+7.1. tls.domains
 
    Lists internal domain configuration that was configured in tls.cfg.
    Complements tls.options, see the tls module, which retrieves TLS
