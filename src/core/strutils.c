@@ -187,6 +187,10 @@ int unescape_user(str *sin, str *sout)
 	while(p < sin->s + sin->len) {
 		if(*p == '%') {
 			p++;
+			if(p >= sin->s + sin->len) {
+				LM_ERR("incomplete escaped sequence at end of string\n");
+				return -1;
+			}
 			switch(*p) {
 				case '0':
 				case '1':
@@ -221,6 +225,10 @@ int unescape_user(str *sin, str *sout)
 					return -1;
 			}
 			p++;
+			if(p >= sin->s + sin->len) {
+				LM_ERR("incomplete escaped sequence at end of string\n");
+				return -1;
+			}
 			switch(*p) {
 				case '0':
 				case '1':
