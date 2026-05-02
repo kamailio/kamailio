@@ -67,6 +67,34 @@ void pv_tmx_data_init(void)
 	memset(&_pv_tinv, 0, sizeof(struct _pv_tmx_data));
 }
 
+void pv_tmx_data_free(void)
+{
+	if(_pv_treq.buf) {
+		if(_pv_treq.tmsgp)
+			free_sip_msg(&_pv_treq.msg);
+		pkg_free(_pv_treq.buf);
+		_pv_treq.buf = NULL;
+		_pv_treq.buf_size = 0;
+		_pv_treq.tmsgp = NULL;
+	}
+	if(_pv_trpl.buf) {
+		if(_pv_trpl.tmsgp)
+			free_sip_msg(&_pv_trpl.msg);
+		pkg_free(_pv_trpl.buf);
+		_pv_trpl.buf = NULL;
+		_pv_trpl.buf_size = 0;
+		_pv_trpl.tmsgp = NULL;
+	}
+	if(_pv_tinv.buf) {
+		if(_pv_tinv.tmsgp)
+			free_sip_msg(&_pv_tinv.msg);
+		pkg_free(_pv_tinv.buf);
+		_pv_tinv.buf = NULL;
+		_pv_tinv.buf_size = 0;
+		_pv_tinv.tmsgp = NULL;
+	}
+}
+
 int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst)
 {
 	dst->id = src->id;
