@@ -903,13 +903,15 @@ int urlencode(str *sin, str *sout)
 int urldecode(str *sin, str *sout)
 {
 	char *at, *p;
+	char *end;
 
 	at = sout->s;
 	p = sin->s;
+	end = sin->s + sin->len;
 
-	while(p < sin->s + sin->len) {
+	while(p < end) {
 		if(*p == '%') {
-			if(p[1] && p[2]) {
+			if(p + 2 < end) {
 				*at++ = hex_to_char(p[1]) << 4 | hex_to_char(p[2]);
 				p += 2;
 			}
