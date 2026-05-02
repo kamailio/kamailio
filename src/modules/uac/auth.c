@@ -215,6 +215,8 @@ struct hdr_field *get_authenticate_hdr(struct sip_msg *rpl, int rpl_code)
 {
 	struct hdr_field *hdr;
 	str hdr_name;
+	struct authenticate_body auth;
+	int auth_hdr_found = 0;
 
 	/* what hdr should we look for */
 	if(rpl_code == WWW_AUTH_CODE) {
@@ -237,17 +239,26 @@ struct hdr_field *get_authenticate_hdr(struct sip_msg *rpl, int rpl_code)
 		goto error;
 	}
 	for(hdr = rpl->headers; hdr; hdr = hdr->next) {
-		if(rpl_code == WWW_AUTH_CODE && hdr->type == HDR_WWW_AUTHENTICATE_T)
-			return hdr;
-		if(rpl_code == PROXY_AUTH_CODE && hdr->type == HDR_PROXY_AUTHENTICATE_T)
-			return hdr;
+		if((rpl_code == WWW_AUTH_CODE && hdr->type == HDR_WWW_AUTHENTICATE_T)
+				|| (rpl_code == PROXY_AUTH_CODE
+						&& hdr->type == HDR_PROXY_AUTHENTICATE_T)) {
+			auth_hdr_found = 1;
+			if(parse_authenticate_body(&hdr->body, &auth) == 0) {
+				return hdr;
+			}
+			LM_DBG("skipping unsupported authenticate header body <%.*s>\n",
+					hdr->body.len, hdr->body.s);
+		}
 	}
 
-	LM_ERR("reply has no "
-		   "auth hdr (%.*s)\n",
-			hdr_name.len, hdr_name.s);
+	if(auth_hdr_found) {
+		LM_ERR("reply has no supported auth hdr (%.*s)\n", hdr_name.len,
+				hdr_name.s);
+	} else {
+		LM_ERR("reply has no auth hdr (%.*s)\n", hdr_name.len, hdr_name.s);
+	}
 error:
-	return 0;
+	return NULL;
 }
 
 
