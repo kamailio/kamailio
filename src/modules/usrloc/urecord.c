@@ -285,9 +285,14 @@ static inline void nodb_timer(urecord_t *_r)
 
 	while(ptr) {
 		if(ul_handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
-			LM_DBG("tcp connection has been lost, expiring contact %.*s\n",
+			LM_DBG("tcp connection has been lost, deleting contact %.*s\n",
 					ptr->c.len, ptr->c.s);
-			ptr->expires = UL_EXPIRED_TIME;
+			t = ptr;
+			ptr = ptr->next;
+			if(delete_ucontact(_r, t) < 0) {
+				LM_ERR("failed to delete contact with lost tcp connection\n");
+			}
+			continue;
 		}
 
 		if(!VALID_CONTACT(ptr, ul_act_time)) {
@@ -379,9 +384,14 @@ static inline void wb_timer(urecord_t *_r)
 
 	while(ptr) {
 		if(ul_handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
-			LM_DBG("tcp connection has been lost, expiring contact %.*s\n",
+			LM_DBG("tcp connection has been lost, deleting contact %.*s\n",
 					ptr->c.len, ptr->c.s);
-			ptr->expires = UL_EXPIRED_TIME;
+			t = ptr;
+			ptr = ptr->next;
+			if(delete_ucontact(_r, t) < 0) {
+				LM_ERR("failed to delete contact with lost tcp connection\n");
+			}
+			continue;
 		}
 
 		if(!VALID_CONTACT(ptr, ul_act_time)) {
