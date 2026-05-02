@@ -153,6 +153,23 @@ private_key = pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib64/li
                         </para>
 		</section>
 
+
+
+                
+		<section id="tls.parameters">
+			<sectioninfo></sectioninfo>
+			<title>Parameters</title>
+			<para>Important differences to the tls module</para>
+			<section id="tls.p.crl">
+	<title><varname>crl</varname></title>
+	<para>
+          The value is a <emphasis>folder</emphasis> containing PEM CRL files
+          with extension <varname>.pem</varname>.
+	</para>
+			</section>
+		</section>
+
+
 		<section id="tls.rpc">
 			<sectioninfo></sectioninfo>
 			<title>Additional RPC Commands</title>
