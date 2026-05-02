@@ -46,6 +46,20 @@ static struct _pv_tmx_data _pv_treq;
 static struct _pv_tmx_data _pv_trpl;
 static struct _pv_tmx_data _pv_tinv;
 
+static void pv_t_var_free(void *p)
+{
+	pv_name_t *pvn = NULL;
+
+	if(p == NULL)
+		return;
+
+	pvn = (pv_name_t *)p;
+	if(pvn->u.dname != NULL) {
+		pv_spec_free((pv_spec_t *)pvn->u.dname);
+		pvn->u.dname = NULL;
+	}
+}
+
 void pv_tmx_data_init(void)
 {
 	memset(&_pv_treq, 0, sizeof(struct _pv_tmx_data));
@@ -386,6 +400,7 @@ int pv_parse_t_var_name(pv_spec_p sp, str *in)
 
 	sp->pvp.pvn.u.dname = (void *)pv;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
+	sp->pvp.pvn.nfree = pv_t_var_free;
 	return 0;
 
 error:
@@ -846,6 +861,10 @@ int pv_get_t_branch(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 					tcx = _tmx_tmb.tm_ctx_get();
 					if(tcx == NULL)
 						return pv_get_null(msg, param, res);
+					if(tcx->branch_index < 0
+							|| tcx->branch_index >= t->nr_of_outgoings) {
+						return pv_get_null(msg, param, res);
+					}
 					return pv_get_strval(
 							msg, param, res, &t->uac[tcx->branch_index].ruid);
 					break;
