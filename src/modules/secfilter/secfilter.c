@@ -587,21 +587,31 @@ static int w_check_contact_hdr(struct sip_msg *msg)
 }
 
 
-static int check_generic(struct sip_msg *msg, struct str_list *list, int type, int field) {
-    str name = STR_NULL, user = STR_NULL, domain = STR_NULL;
-    str *target = NULL;
-    int res, original_len;
+static int check_generic(
+		struct sip_msg *msg, struct str_list *list, int type, int field)
+{
+	str name = STR_NULL, user = STR_NULL, domain = STR_NULL;
+	str *target = NULL;
+	int res, original_len;
 
-    switch(type) {
-        case SECF_FROM_HEADER: res = secf_get_from(msg, &name, &user, &domain); break;
-        case SECF_TO_HEADER: res = secf_get_to(msg, &name, &user, &domain);   break;
-        case SECF_CONTACT_HEADER: res = secf_get_contact_with_name(msg, &name, &user, &domain);     break;
-        default: return -1;
-    }
+	switch(type) {
+		case SECF_FROM_HEADER:
+			res = secf_get_from(msg, &name, &user, &domain);
+			break;
+		case SECF_TO_HEADER:
+			res = secf_get_to(msg, &name, &user, &domain);
+			break;
+		case SECF_CONTACT_HEADER:
+			res = secf_get_contact_with_name(msg, &name, &user, &domain);
+			break;
+		default:
+			return -1;
+	}
 
-    if (res != 0) return res;
+	if(res != 0)
+		return res;
 
-    switch (field){
+	switch(field) {
 		case SECF_FIELD_NAME:
 			target = &name;
 			break;
@@ -615,205 +625,208 @@ static int check_generic(struct sip_msg *msg, struct str_list *list, int type, i
 			return -1;
 	}
 
-	if (target->s == NULL) return -1;
-    original_len = target->len;
+	if(target->s == NULL)
+		return -1;
+	original_len = target->len;
 
-	while (list) {
-        if (target->len > list->s.len)
-            target->len = list->s.len;
+	while(list) {
+		if(target->len > list->s.len)
+			target->len = list->s.len;
 
-        res = cmpi_str(&list->s, target);
-        
-        if (res == 0) {
-            target->len = original_len;
-            return 1;
-        }
+		res = cmpi_str(&list->s, target);
 
-        list = list->next;
-        target->len = original_len;
-    }
+		if(res == 0) {
+			target->len = original_len;
+			return 1;
+		}
 
-    return 0;
-}
-
-
-static int check_username(struct sip_msg *msg, int type) {
-    int field = SECF_FIELD_USER;
-    struct str_list *list = NULL;
-	int res = -1;
-    // Check Whitelist
-    list = (*secf_data)->wl.user;
-
-	res = check_generic(msg, list, type, field);
-
-    if (res == -1) {
-        return -1;
+		list = list->next;
+		target->len = original_len;
 	}
 
-    if (res == 1) {
-        lock_get(secf_lock);
-        switch(type) {
-            case SECF_FROM_HEADER:
-                secf_stats[WL_FUSER]++;
-                break;
-            case SECF_TO_HEADER:
-                secf_stats[WL_TUSER]++;
-                break;
-            case SECF_CONTACT_HEADER:
-                secf_stats[WL_CUSER]++;
-                break;
-        }
-        lock_release(secf_lock);
-        return 2;
-    }
-
-    // Check Blacklist
-	res = -1;
-    list = (*secf_data)->bl.user;
-	res = check_generic(msg, list, type, field);
-
-    if (res == -1) {
-        return -1;
-    }
-
-    if (res == 1) {
-        lock_get(secf_lock);
-        switch(type) {
-            case SECF_FROM_HEADER:
-                secf_stats[BL_FUSER]++;
-                break;
-            case SECF_TO_HEADER:
-                secf_stats[BL_TUSER]++;
-                break;
-            case SECF_CONTACT_HEADER:
-                secf_stats[BL_CUSER]++;
-                break;
-        }
-        lock_release(secf_lock);
-        return -2;
-    }
-
-    return 1;
+	return 0;
 }
 
 
-static int check_name(struct sip_msg *msg, int type) {
-
-    int field = SECF_FIELD_NAME;
-    struct str_list *list = NULL;
+static int check_username(struct sip_msg *msg, int type)
+{
+	int field = SECF_FIELD_USER;
+	struct str_list *list = NULL;
 	int res = -1;
-    // Check Whitelist
-    list = (*secf_data)->wl.user;
+	// Check Whitelist
+	list = (*secf_data)->wl.user;
+
 	res = check_generic(msg, list, type, field);
-	if(res == -1){
+
+	if(res == -1) {
 		return -1;
 	}
 
-    if (res == 1) {
-        lock_get(secf_lock);
-        switch(type) {
-            case SECF_FROM_HEADER:
-                secf_stats[WL_FNAME]++;
-                break;
-            case SECF_TO_HEADER:
-                secf_stats[WL_TNAME]++;
-                break;
-            case SECF_CONTACT_HEADER:
-                secf_stats[WL_CNAME]++;
-                break;
-        }
-        lock_release(secf_lock);
-        return 2; 
-    }
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[WL_FUSER]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[WL_TUSER]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[WL_CUSER]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return 2;
+	}
 
-    // Check Blacklist
+	// Check Blacklist
 	res = -1;
-    list = (*secf_data)->bl.user;
+	list = (*secf_data)->bl.user;
 	res = check_generic(msg, list, type, field);
 
-	if (res == -1){
+	if(res == -1) {
 		return -1;
 	}
 
-    if (res == 1) {
-        lock_get(secf_lock);
-        switch(type) {
-            case SECF_FROM_HEADER:
-                secf_stats[BL_FNAME]++;
-                break;
-            case SECF_TO_HEADER:
-                secf_stats[BL_TNAME]++;
-                break;
-            case SECF_CONTACT_HEADER:
-                secf_stats[BL_CNAME]++;
-                break;
-        }
-        lock_release(secf_lock);
-        return -2;
-    }
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[BL_FUSER]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[BL_TUSER]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[BL_CUSER]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return -2;
+	}
 
-    return 1;
+	return 1;
 }
 
 
+static int check_name(struct sip_msg *msg, int type)
+{
 
-static int check_domain(struct sip_msg *msg, int type) {
+	int field = SECF_FIELD_NAME;
+	struct str_list *list = NULL;
+	int res = -1;
+	// Check Whitelist
+	list = (*secf_data)->wl.user;
+	res = check_generic(msg, list, type, field);
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[WL_FNAME]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[WL_TNAME]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[WL_CNAME]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return 2;
+	}
+
+	// Check Blacklist
+	res = -1;
+	list = (*secf_data)->bl.user;
+	res = check_generic(msg, list, type, field);
+
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[BL_FNAME]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[BL_TNAME]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[BL_CNAME]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return -2;
+	}
+
+	return 1;
+}
+
+
+static int check_domain(struct sip_msg *msg, int type)
+{
 	int field = SECF_FIELD_DOMAIN;
-    struct str_list *list = NULL;
+	struct str_list *list = NULL;
 	int res = -1;
 
-    // Check Whitelist
-    list = (*secf_data)->wl.user;
+	// Check Whitelist
+	list = (*secf_data)->wl.user;
 	res = check_generic(msg, list, type, field);
 
-    if (res == -1) {
-        return -1;
+	if(res == -1) {
+		return -1;
 	}
 
-    if (res == 1) {
-        lock_get(secf_lock);
-        switch(type) {
-            case SECF_FROM_HEADER:
-                secf_stats[WL_FDOMAIN]++;
-                break;
-            case SECF_TO_HEADER:
-                secf_stats[WL_TDOMAIN]++;
-                break;
-            case SECF_CONTACT_HEADER:
-                secf_stats[WL_CDOMAIN]++;
-                break;
-        }
-        lock_release(secf_lock);
-        return 2;
-    }
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[WL_FDOMAIN]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[WL_TDOMAIN]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[WL_CDOMAIN]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return 2;
+	}
 
-    // Check Blacklist
+	// Check Blacklist
 	res = -1;
-    list = (*secf_data)->bl.domain;
+	list = (*secf_data)->bl.domain;
 	res = check_generic(msg, list, type, field);
 
-    if (res == -1) {
-        return -1;
+	if(res == -1) {
+		return -1;
 	}
 
-    if (res == 1) {
-        lock_get(secf_lock);
-        switch(type) {
-            case SECF_FROM_HEADER:
-                secf_stats[BL_FDOMAIN]++;
-                break;
-            case SECF_TO_HEADER:
-                secf_stats[BL_TDOMAIN]++;
-                break;
-            case SECF_CONTACT_HEADER:
-                secf_stats[BL_CDOMAIN]++;
-                break;
-        }
-        lock_release(secf_lock);
-        return -2;
-    }
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[BL_FDOMAIN]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[BL_TDOMAIN]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[BL_CDOMAIN]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return -2;
+	}
 
-    return 1;
+	return 1;
 }
 
 
