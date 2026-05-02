@@ -4367,6 +4367,14 @@ int dns_cache_add_record(unsigned short type, str *name, int ttl, str *value,
 		LM_ERR("dns cache support disabled (see use_dns_cache)\n");
 		return -1;
 	}
+	if(name == NULL || name->s == NULL || name->len <= 0) {
+		LM_ERR("invalid dns record name\n");
+		return -1;
+	}
+	if(name->len >= MAX_DNS_NAME) {
+		LM_ERR("dns record name too long (%d chars)\n", name->len);
+		return -1;
+	}
 
 	if((type != T_A) && (type != T_AAAA) && (type != T_SRV)) {
 		LM_ERR("rr type %d is not implemented\n", type);
@@ -4374,6 +4382,10 @@ int dns_cache_add_record(unsigned short type, str *name, int ttl, str *value,
 	}
 
 	if((flags & DNS_FLAG_BAD_NAME) == 0) {
+		if(value == NULL || value->s == NULL || value->len <= 0) {
+			LM_ERR("invalid dns record value for type %d\n", type);
+			return -1;
+		}
 		/* fix-up the values */
 		switch(type) {
 			case T_A:
@@ -4393,6 +4405,11 @@ int dns_cache_add_record(unsigned short type, str *name, int ttl, str *value,
 				}
 				break;
 			case T_SRV:
+				if(value->len >= MAX_DNS_NAME) {
+					LM_ERR("dns SRV target name too long (%d chars)\n",
+							value->len);
+					return -1;
+				}
 				rr_name = *value;
 				break;
 		}
