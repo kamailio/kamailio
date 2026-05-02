@@ -945,12 +945,22 @@ void ksr_str_json_escape(str *s_in, str *s_out, int *emode)
 		return;
 	}
 	for(i = 0; i < s_in->len; i++) {
-		if(strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
-			len += 2;
-		} else if(s_in->s[i] < 32) {
-			len += 6;
-		} else {
-			len++;
+		switch(s_in->s[i]) {
+			case '\"':
+			case '\\':
+			case '\b':
+			case '\f':
+			case '\n':
+			case '\r':
+			case '\t':
+				len += 2;
+				break;
+			default:
+				if((unsigned char)s_in->s[i] < 32) {
+					len += 6;
+				} else {
+					len++;
+				}
 		}
 	}
 	if(len == s_in->len) {
