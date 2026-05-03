@@ -338,17 +338,27 @@ static const char _sr_b58digits[] =
  */
 char *b58_decode(char *outb, int *outbszp, char *b58, int b58sz)
 {
-	size_t outbsz = *outbszp - 1 /* save space for ending 0 */;
+	size_t outbsz;
 	const unsigned char *b58u = (void *)b58;
 	unsigned char *outu = (void *)outb;
-	size_t outisz = (outbsz + 3) / 4;
-	uint32_t outi[outisz];
+	size_t outisz;
 	uint64_t t;
 	uint32_t c;
 	size_t i, j;
-	uint8_t bytesleft = outbsz % 4;
-	uint32_t zeromask = bytesleft ? (0xffffffff << (bytesleft * 8)) : 0;
+	uint8_t bytesleft;
+	uint32_t zeromask;
 	unsigned zerocount = 0;
+
+	if(outb == NULL || outbszp == NULL || b58 == NULL || *outbszp <= 1) {
+		LM_ERR("invalid output buffer for base58 decode\n");
+		return NULL;
+	}
+
+	outbsz = *outbszp - 1 /* save space for ending 0 */;
+	outisz = (outbsz + 3) / 4;
+	uint32_t outi[outisz];
+	bytesleft = outbsz % 4;
+	zeromask = bytesleft ? (0xffffffff << (bytesleft * 8)) : 0;
 
 	if(!b58sz)
 		b58sz = strlen(b58);
