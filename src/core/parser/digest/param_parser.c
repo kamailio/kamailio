@@ -30,8 +30,8 @@
 #include "../../trim.h"
 #include "../../ut.h"
 
-#define LOWER_BYTE(b) ((b) | 0x20)
-#define LOWER_DWORD(d) ((d) | 0x20202020)
+#define LOWER_BYTE(b) (((unsigned char)(b)) | 0x20)
+#define LOWER_DWORD(d) ((d) | 0x20202020U)
 
 /*
  * Parse short (less than 4 bytes) parameter names
@@ -74,8 +74,11 @@
  * does not allow reading 4-bytes at once from unaligned memory position
  * (Sparc for example)
  */
-#define READ(val) \
-	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+#define READ(val)                                                 \
+	(((unsigned int)(unsigned char)*((val) + 0))                  \
+			+ (((unsigned int)(unsigned char)*((val) + 1)) << 8)  \
+			+ (((unsigned int)(unsigned char)*((val) + 2)) << 16) \
+			+ (((unsigned int)(unsigned char)*((val) + 3)) << 24))
 
 
 #define name_CASE                  \
@@ -194,7 +197,7 @@
 int parse_param_name(str *_s, dig_par_t *_type)
 {
 	register char *p;
-	register int val;
+	register unsigned int val;
 	char *end;
 
 	end = _s->s + _s->len;
