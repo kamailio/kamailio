@@ -613,6 +613,10 @@ static int ki_t_reply_callid(
 	}
 
 	LM_DBG("now calling internal tm reply\n");
+	if(trans->uas.request == NULL) {
+		LM_DBG("no uas.request for transaction\n");
+		return -1;
+	}
 	if(_tmx_tmb.t_reply_trans(
 			   trans, trans->uas.request, (unsigned int)code, status_s->s)
 			> 0)
