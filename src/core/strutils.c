@@ -912,7 +912,8 @@ int urldecode(str *sin, str *sout)
 	while(p < end) {
 		if(*p == '%') {
 			if(p + 2 < end) {
-				*at++ = hex_to_char(p[1]) << 4 | hex_to_char(p[2]);
+				*at++ = (((unsigned char)hex_to_char(p[1])) << 4)
+						| (unsigned char)hex_to_char(p[2]);
 				p += 2;
 			}
 		} else if(*p == '+') {
