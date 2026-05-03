@@ -252,6 +252,12 @@ int tmx_check_pretran(sip_msg_t *msg)
 	sftag = get_from(msg)->tag_value;
 	trim(&sftag);
 
+	if(4096 < scallid.len || 32 < scseqnum.len || 128 < scseqmet.len
+			|| 4096 < sftag.len) {
+		LM_ERR("attributes are too large\n");
+		return -1;
+	}
+
 	chid = get_hash1_raw(scallid.s, scallid.len);
 	slotid = chid & (_tmx_ptran_size - 1);
 
@@ -265,9 +271,14 @@ int tmx_check_pretran(sip_msg_t *msg)
 		_tmx_proc_ptran->pid = my_pid();
 	}
 	dsize = scallid.len + scseqnum.len + scseqmet.len + sftag.len + 4;
+
 	if(likely(vbr != NULL)) {
 		svbranch = vbr->value;
 		trim(&svbranch);
+		if(4096 < svbranch.len + 1) {
+			LM_ERR("too large branch value\n");
+			return -1;
+		}
 		dsize += svbranch.len + 1;
 	}
 	if(dsize < 256)
