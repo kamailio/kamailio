@@ -635,6 +635,14 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			while(k < _evapi_clients[i].rpos + rlen) {
 				if(_evapi_clients[i].rbuffer[k] >= '0'
 						&& _evapi_clients[i].rbuffer[k] <= '9') {
+					if(frame.len > INT_MAX / 10
+							|| (_evapi_clients[i].rbuffer[k] - '0')
+									   > (INT_MAX - frame.len * 10)) {
+						/* overflow - invalid frame */
+						LM_ERR("frame length overflow. 10+ digits \n");
+						_evapi_clients[i].rpos = 0;
+						return;
+					}
 					frame.len =
 							frame.len * 10 + _evapi_clients[i].rbuffer[k] - '0';
 				} else {
