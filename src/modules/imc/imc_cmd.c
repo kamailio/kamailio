@@ -1732,6 +1732,9 @@ void imc_inv_callback(struct cell *t, int type, struct tmcb_params *ps)
 build_inform:
 	body_final.s = body_buf;
 	body_final.len = member->uri.len - 4 /* sip: part of URI */ + 20;
+	if(member->uri.len - 4 > sizeof(body_buf)) {
+		goto error;
+	}
 	memcpy(body_final.s, member->uri.s + 4, member->uri.len - 4);
 	memcpy(body_final.s + member->uri.len - 4, " is not registered.  ", 21);
 
