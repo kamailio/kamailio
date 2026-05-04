@@ -186,6 +186,10 @@ int bla_handle_notify(struct sip_msg *msg, char *s1, char *s2)
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
 
 	/* build extra_headers with Sender*/
+	if(header_name.len + 2 + contact.len + CRLF_LEN > sizeof(buf)) {
+		LM_ERR("extra headers too long\n");
+		goto error;
+	}
 	extra_headers.s = buf;
 	memcpy(extra_headers.s, header_name.s, header_name.len);
 	extra_headers.len = header_name.len;
