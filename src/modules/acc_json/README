@@ -34,7 +34,7 @@ Julien Chavanton
               3.1. acc_flag (integer)
               3.2. acc_missed_flag (integer)
               3.3. acc_extra (string)
-              3.4. acc_json_pre_encoded_prefix (string)
+              3.4. acc_pre_encoded_prefix (string)
               3.5. acc_time_mode (integer)
               3.6. acc_time_format (str)
               3.7. acc_output_mqueue (integer)
@@ -56,7 +56,7 @@ Julien Chavanton
    1.1. acc_flag example
    1.2. acc_missed_flag example
    1.3. acc_extra example
-   1.4. acc_json_pre_encoded_prefix example
+   1.4. acc_pre_encoded_prefix example
    1.5. acc_time_mode example
    1.6. acc_time_format example
    1.7. acc_output_mqueue usage example
@@ -87,7 +87,7 @@ Chapter 1. Admin Guide
         3.1. acc_flag (integer)
         3.2. acc_missed_flag (integer)
         3.3. acc_extra (string)
-        3.4. acc_json_pre_encoded_prefix (string)
+        3.4. acc_pre_encoded_prefix (string)
         3.5. acc_time_mode (integer)
         3.6. acc_time_format (str)
         3.7. acc_output_mqueue (integer)
@@ -138,7 +138,7 @@ Chapter 1. Admin Guide
    3.1. acc_flag (integer)
    3.2. acc_missed_flag (integer)
    3.3. acc_extra (string)
-   3.4. acc_json_pre_encoded_prefix (string)
+   3.4. acc_pre_encoded_prefix (string)
    3.5. acc_time_mode (integer)
    3.6. acc_time_format (str)
    3.7. acc_output_mqueue (integer)
@@ -190,17 +190,17 @@ modparam("acc_json", "acc_missed_flag", 3)
 modparam("acc_json", "acc_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 ...
 
-3.4. acc_json_pre_encoded_prefix (string)
+3.4. acc_pre_encoded_prefix (string)
 
    Prefix to identify values that will be considered to be already json
    encoded.
 
    Default value is NULL.
 
-   Example 1.4. acc_json_pre_encoded_prefix example
+   Example 1.4. acc_pre_encoded_prefix example
 ...
 modparam("acc_json", "acc_extra", "json_data=$avp(json_data);")
-modparam("acc_json", "acc_json_pre_encoded_prefix", "json_")
+modparam("acc_json", "acc_pre_encoded_prefix", "json_")
 ...
 $avp(json_data) = '{"b":2, "c":3}';
 ...
