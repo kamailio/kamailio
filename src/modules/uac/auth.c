@@ -76,6 +76,17 @@ static struct uac_credential *crd_list = 0;
 static str nc = {"00000001", 8};
 static str cnonce = {"o", 1};
 
+static inline int uac_auth_alg_strength(struct authenticate_body *auth)
+{
+	if(auth->flags & AUTHENTICATE_SHA256)
+		return 3;
+	if(auth->flags & AUTHENTICATE_MD5SESS)
+		return 2;
+	if(auth->flags & AUTHENTICATE_MD5)
+		return 1;
+	return 0;
+}
+
 int has_credentials(void)
 {
 	return (crd_list != 0) ? 1 : 0;
@@ -211,12 +222,15 @@ void destroy_credentials(void)
 }
 
 
-struct hdr_field *get_authenticate_hdr(struct sip_msg *rpl, int rpl_code)
+struct hdr_field *get_authenticate_hdr(
+		struct sip_msg *rpl, int rpl_code, struct authenticate_body *auth)
 {
 	struct hdr_field *hdr;
+	struct hdr_field *best_hdr = NULL;
 	str hdr_name;
-	struct authenticate_body auth;
+	struct authenticate_body tauth;
 	int auth_hdr_found = 0;
+	int best_strength = 0;
 
 	/* what hdr should we look for */
 	if(rpl_code == WWW_AUTH_CODE) {
@@ -243,13 +257,19 @@ struct hdr_field *get_authenticate_hdr(struct sip_msg *rpl, int rpl_code)
 				|| (rpl_code == PROXY_AUTH_CODE
 						&& hdr->type == HDR_PROXY_AUTHENTICATE_T)) {
 			auth_hdr_found = 1;
-			if(parse_authenticate_body(&hdr->body, &auth) == 0) {
-				return hdr;
+			if(parse_authenticate_body(&hdr->body, &tauth) == 0) {
+				if(uac_auth_alg_strength(&tauth) > best_strength) {
+					best_hdr = hdr;
+					best_strength = uac_auth_alg_strength(&tauth);
+					if(auth != NULL) {
+						memcpy(auth, &tauth, sizeof(struct authenticate_body));
+					}
+				}
 			}
-			LM_DBG("skipping unsupported authenticate header body <%.*s>\n",
-					hdr->body.len, hdr->body.s);
 		}
 	}
+	if(best_hdr != NULL)
+		return best_hdr;
 
 	if(auth_hdr_found) {
 		LM_ERR("reply has no supported auth hdr (%.*s)\n", hdr_name.len,
@@ -315,6 +335,10 @@ void do_uac_auth(str *method, str *uri, struct uac_credential *crd,
 {
 	HASHHEX ha1;
 	HASHHEX ha2;
+
+	memset(ha1, 0, sizeof(ha1));
+	memset(ha2, 0, sizeof(ha2));
+	memset(response, 0, sizeof(HASHHEX));
 
 	if((auth->flags & QOP_AUTH) || (auth->flags & QOP_AUTH_INT)) {
 		/* if qop generate nonce-count and cnonce */
@@ -423,18 +447,14 @@ int uac_auth_mode(sip_msg_t *msg, int mode)
 		goto error;
 	}
 
-	hdr = get_authenticate_hdr(rpl, code);
+	memset(&auth, 0, sizeof(auth));
+	hdr = get_authenticate_hdr(rpl, code, &auth);
 	if(hdr == 0) {
 		LM_ERR("failed to extract authenticate hdr\n");
 		goto error;
 	}
 
 	LM_DBG("header found; body=<%.*s>\n", hdr->body.len, hdr->body.s);
-
-	if(parse_authenticate_body(&hdr->body, &auth) < 0) {
-		LM_ERR("failed to parse auth hdr body\n");
-		goto error;
-	}
 
 	/* can we authenticate this realm? */
 	crd = 0;
@@ -458,6 +478,10 @@ int uac_auth_mode(sip_msg_t *msg, int mode)
 	/* do authentication */
 	do_uac_auth(&msg->first_line.u.request.method, &t->uac[branch].uri, crd,
 			&auth, response);
+	if(response[0] == '\0') {
+		LM_ERR("failed to calculate authentication response\n");
+		goto error;
+	}
 
 	/* build the authorization header */
 	new_hdr = build_authorization_hdr(

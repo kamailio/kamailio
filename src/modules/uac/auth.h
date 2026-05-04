@@ -40,6 +40,7 @@ typedef struct uac_credential
 typedef struct authenticate_body
 {
 	int flags;
+	str algorithm;
 	str realm;
 	str domain;
 	str nonce;
@@ -54,14 +55,18 @@ typedef struct authenticate_body
 #define AUTHENTICATE_MD5 (1 << 0)
 #define AUTHENTICATE_MD5SESS (1 << 1)
 #define AUTHENTICATE_STALE (1 << 2)
-#define QOP_AUTH (1 << 3)
-#define QOP_AUTH_INT (1 << 4)
+#define AUTHENTICATE_SHA256 (1 << 3)
+#define QOP_AUTH (1 << 4)
+#define QOP_AUTH_INT (1 << 5)
 
 #define HASHLEN 16
 typedef char HASH[HASHLEN];
 
 #define HASHHEXLEN 32
-typedef char HASHHEX[HASHHEXLEN + 1];
+#define HASHLEN_SHA256 32
+#define HASHHEXLEN_SHA256 64
+#define HASHHEXLEN_MAX HASHHEXLEN_SHA256
+typedef char HASHHEX[HASHHEXLEN_MAX + 1];
 
 int has_credentials(void);
 
@@ -69,7 +74,8 @@ int add_credential(unsigned int type, void *val);
 
 void destroy_credentials(void);
 
-struct hdr_field *get_authenticate_hdr(struct sip_msg *rpl, int rpl_code);
+struct hdr_field *get_authenticate_hdr(
+		struct sip_msg *rpl, int rpl_code, struct authenticate_body *auth);
 
 int uac_auth(sip_msg_t *msg);
 int uac_auth_mode(sip_msg_t *msg, int mode);

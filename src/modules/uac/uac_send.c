@@ -847,18 +847,14 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 	LM_DBG("completed with status %d\n", ps->code);
 
-	hdr = get_authenticate_hdr(ps->rpl, ps->code);
+	memset(&auth, 0, sizeof(auth));
+	hdr = get_authenticate_hdr(ps->rpl, ps->code, &auth);
 	if(hdr == 0) {
 		LM_ERR("failed to extract authenticate hdr\n");
 		goto error;
 	}
 
 	LM_DBG("auth header body [%.*s]\n", hdr->body.len, hdr->body.s);
-
-	if(parse_authenticate_body(&hdr->body, &auth) < 0) {
-		LM_ERR("failed to parse auth hdr body\n");
-		goto error;
-	}
 
 	memset(&cred, 0, sizeof(struct uac_credential));
 	cred.realm = auth.realm;
@@ -869,6 +865,10 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	do_uac_auth(&tp->s_method, &tp->s_ruri, &cred, &auth, response);
+	if(response[0] == '\0') {
+		LM_ERR("failed to calculate authentication response\n");
+		goto error;
+	}
 	new_auth_hdr = build_authorization_hdr(
 			ps->code, &tp->s_ruri, &cred, &auth, response);
 	if(new_auth_hdr == 0) {

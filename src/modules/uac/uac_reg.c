@@ -370,7 +370,7 @@ int uac_reg_ht_shift(void)
 }
 
 #define reg_compute_hash(_s) get_hash1_raw((_s)->s, (_s)->len)
-#define reg_get_entry(_h, _size) ((_h) & ((_size)-1))
+#define reg_get_entry(_h, _size) ((_h) & ((_size) - 1))
 
 /**
  *
@@ -833,18 +833,14 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 					ri->l_uuid.s);
 			goto error;
 		}
-		hdr = get_authenticate_hdr(ps->rpl, ps->code);
+		memset(&auth, 0, sizeof(auth));
+		hdr = get_authenticate_hdr(ps->rpl, ps->code, &auth);
 		if(hdr == 0) {
 			LM_ERR("failed to extract authenticate hdr\n");
 			goto error;
 		}
 
 		LM_DBG("auth header body [%.*s]\n", hdr->body.len, hdr->body.s);
-
-		if(parse_authenticate_body(&hdr->body, &auth) < 0) {
-			LM_ERR("failed to parse auth hdr body\n");
-			goto error;
-		}
 		if(ri->realm.len > 0) {
 			/* only check if realms match if it is non-empty */
 			if(auth.realm.len != ri->realm.len
@@ -871,6 +867,10 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		s_ruri.len = strlen(s_ruri.s);
 
 		do_uac_auth(&method, &s_ruri, &cred, &auth, response);
+		if(response[0] == '\0') {
+			LM_ERR("failed to calculate authentication response\n");
+			goto error;
+		}
 		new_auth_hdr = build_authorization_hdr(
 				ps->code, &s_ruri, &cred, &auth, response);
 		if(new_auth_hdr == 0) {
