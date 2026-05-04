@@ -18,6 +18,12 @@ check_subject() {
   local commit="$1"
   local subject="$2"
 
+  # special cases
+  if [[ "${subject}" =~ ^Revert\ .*$ ]] ; then
+    echo "[${commit}] is a git revert commit, OK[Revert]"
+    return
+  fi
+
   # get the prefix
   if ! [[ "${subject}" =~ ^([^:]+):.*$ ]] ; then
     fail "[${commit}] prefix not detected:'${subject}'"
