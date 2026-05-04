@@ -121,8 +121,8 @@ modparam("acc_json", "acc_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 		</example>
 	</section>
 
-	<section id="acc_json.p.acc_json_pre_encoded_prefix">
-		<title><varname>acc_json_pre_encoded_prefix</varname> (string)</title>
+	<section id="acc_json.p.acc_pre_encoded_prefix">
+		<title><varname>acc_pre_encoded_prefix</varname> (string)</title>
 		<para>
 		Prefix to identify values that will be considered to be already json encoded.
 		</para>
@@ -130,11 +130,11 @@ modparam("acc_json", "acc_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 		Default value is NULL.
 		</para>
 		<example>
-		<title>acc_json_pre_encoded_prefix example</title>
+		<title>acc_pre_encoded_prefix example</title>
 		<programlisting format="linespecific">
 ...
 modparam("acc_json", "acc_extra", "json_data=$avp(json_data);")
-modparam("acc_json", "acc_json_pre_encoded_prefix", "json_")
+modparam("acc_json", "acc_pre_encoded_prefix", "json_")
 ...
 $avp(json_data) = '{"b":2, "c":3}';
 ...
