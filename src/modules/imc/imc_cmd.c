@@ -108,11 +108,16 @@ static str *build_headers(struct sip_msg *msg)
 	static str name = STR_STATIC_INIT("In-Reply-To: ");
 	static str nl = STR_STATIC_INIT("\r\n");
 	static char buf[1024];
-	static str rv;
+	static str rv = {NULL, 0};
 	str *callid;
 
 	rv.s = buf;
 	rv.len = all_hdrs.len + ctname.len + msg->content_type->body.len;
+
+	if(rv.len > sizeof(buf)) {
+		LM_ERR("headers too long\n");
+		return &rv;
+	}
 
 	memcpy(buf, all_hdrs.s, all_hdrs.len);
 	memcpy(buf + all_hdrs.len, ctname.s, ctname.len);
