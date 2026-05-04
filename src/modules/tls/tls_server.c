@@ -581,6 +581,7 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 		}
 		tls_c->ssl_cipher_bits = SSL_CIPHER_get_bits(cipher, &alg_bits);
 
+#if OPENSSL_VERSION_NUMBER >= 0x30200000L
 		/* Improve for TLS 1.3  as SSL_CIPHER_description shows
          * Kx=any Au=any
          *
@@ -610,6 +611,7 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 			snprintf(tls_c->ssl_cipher_desc + cur_len, max_len - cur_len - 1,
 					"TLSv1.3: Group=%s Au=%s\n", group_name, au_str);
 		}
+#endif /* OPENSSL_VERSION_NUMBER */
 	}
 
 	my_cert = SSL_get_certificate(ssl);
