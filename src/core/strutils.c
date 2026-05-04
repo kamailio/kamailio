@@ -578,11 +578,14 @@ int cmp_str_params(str *s1, str *s2)
 	param_t *pl2 = NULL;
 	param_hooks_t phooks2;
 	param_t *pit2 = NULL;
+	int ret = 0;
 
 	if(parse_params(s1, CLASS_ANY, &phooks1, &pl1) < 0)
 		return -1;
-	if(parse_params(s2, CLASS_ANY, &phooks2, &pl2) < 0)
+	if(parse_params(s2, CLASS_ANY, &phooks2, &pl2) < 0) {
+		free_params(pl1);
 		return -1;
+	}
 	for(pit1 = pl1; pit1; pit1 = pit1->next) {
 		for(pit2 = pl2; pit2; pit2 = pit2->next) {
 			if(pit1->name.len == pit2->name.len
@@ -591,12 +594,17 @@ int cmp_str_params(str *s1, str *s2)
 				if(pit1->body.len != pit2->body.len
 						|| strncasecmp(
 								   pit1->body.s, pit2->body.s, pit2->body.len)
-								   != 0)
-					return 1;
+								   != 0) {
+					ret = 1;
+					goto done;
+				}
 			}
 		}
 	}
-	return 0;
+done:
+	free_params(pl1);
+	free_params(pl2);
+	return ret;
 }
 
 /**
