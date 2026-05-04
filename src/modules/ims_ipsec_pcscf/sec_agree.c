@@ -311,6 +311,8 @@ cleanup:
 			if(params->data.ipsec->mod.s)
 				shm_free(params->data.ipsec->mod.s);
 			shm_free(params->data.ipsec);
+		} else {
+			shm_free(params->data.ipsec);
 		}
 
 		shm_free(params);
