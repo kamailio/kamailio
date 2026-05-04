@@ -214,8 +214,8 @@ cleanup:
 	// Function - free_security()
 	// Keep them in sync!
 	if(params) {
-		shm_free(params->sec_header.s);
-		shm_free(params->data.ipsec);
+		if(params->sec_header.s)
+			shm_free(params->sec_header.s);
 		if(params->type == SECURITY_IPSEC && params->data.ipsec) {
 			if(params->data.ipsec->ealg.s)
 				shm_free(params->data.ipsec->ealg.s);
