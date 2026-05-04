@@ -1026,13 +1026,21 @@ int lost_parse_geo(xmlNodePtr node, p_lost_loc_t loc)
 		return -1;
 	}
 
-	scan = sscanf(content, "%s %s %s", bufLat, bufLon, bufAlt);
+	scan = sscanf(content, "%127s %127s %127s", bufLat, bufLon, bufAlt);
 	xmlFree(content);
 
 	if(scan < 2) {
 		LM_WARN("invalid pos element\n");
 		return -1;
 	}
+
+	/* Check for truncation: if any field reached max width (127), it was likely truncated */
+	if((strlen(bufLat) >= 127) || (strlen(bufLon) >= 127)
+			|| (strlen(bufAlt) >= 127)) {
+		LM_WARN("pos element contains oversized coordinates (truncation "
+				"detected)\n");
+	}
+
 	/* latitude */
 	len = strlen((char *)bufLat);
 	loc->latitude = (char *)pkg_malloc(len + 1);
