@@ -293,14 +293,22 @@ cleanup:
 		shm_free(params->sec_header.s);
 
 		if(params->type == SECURITY_IPSEC && params->data.ipsec) {
-			shm_free(params->data.ipsec->ealg.s);
-			shm_free(params->data.ipsec->r_ealg.s);
-			shm_free(params->data.ipsec->ck.s);
-			shm_free(params->data.ipsec->alg.s);
-			shm_free(params->data.ipsec->r_alg.s);
-			shm_free(params->data.ipsec->ik.s);
-			shm_free(params->data.ipsec->prot.s);
-			shm_free(params->data.ipsec->mod.s);
+			if(params->data.ipsec->ealg.s)
+				shm_free(params->data.ipsec->ealg.s);
+			if(params->data.ipsec->r_ealg.s)
+				shm_free(params->data.ipsec->r_ealg.s);
+			if(params->data.ipsec->ck.s)
+				shm_free(params->data.ipsec->ck.s);
+			if(params->data.ipsec->alg.s)
+				shm_free(params->data.ipsec->alg.s);
+			if(params->data.ipsec->r_alg.s)
+				shm_free(params->data.ipsec->r_alg.s);
+			if(params->data.ipsec->ik.s)
+				shm_free(params->data.ipsec->ik.s);
+			if(params->data.ipsec->prot.s)
+				shm_free(params->data.ipsec->prot.s);
+			if(params->data.ipsec->mod.s)
+				shm_free(params->data.ipsec->mod.s);
 			shm_free(params->data.ipsec);
 		}
 
