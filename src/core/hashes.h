@@ -35,31 +35,33 @@
  *         char* p,  and unsigned v temporary vars (used)
  *         unsigned h - result
  * h should be initialized (e.g. set it to 0), the result in h */
-#define hash_update_str(s, end, p, v, h)                                    \
-	do {                                                                    \
-		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {                      \
-			(v) = (((unsigned char)*(p)) << 24)                             \
-				  + (((unsigned char)(p)[1]) << 16)                         \
-				  + (((unsigned char)(p)[2]) << 8) + (unsigned char)(p)[3]; \
-			(h) += (v) ^ ((v) >> 3);                                        \
-		}                                                                   \
-		switch((end) - (p)) {                                               \
-			case 3:                                                         \
-				(v) = (((unsigned char)*(p)) << 16)                         \
-					  + (((unsigned char)(p)[1]) << 8)                      \
-					  + (unsigned char)(p)[2];                              \
-				break;                                                      \
-			case 2:                                                         \
-				(v) = (((unsigned char)*(p)) << 8) + (unsigned char)p[1];   \
-				break;                                                      \
-			case 1:                                                         \
-				(v) = (unsigned char)*p;                                    \
-				break;                                                      \
-			default:                                                        \
-				(v) = 0;                                                    \
-				break;                                                      \
-		}                                                                   \
-		(h) += (v) ^ ((v) >> 3);                                            \
+#define hash_update_str(s, end, p, v, h)                             \
+	do {                                                             \
+		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {               \
+			(v) = (((unsigned int)(unsigned char)(p)[0]) << 24)      \
+				  + (((unsigned int)(unsigned char)(p)[1]) << 16)    \
+				  + (((unsigned int)(unsigned char)(p)[2]) << 8)     \
+				  + (unsigned int)(unsigned char)(p)[3];             \
+			(h) += (v) ^ ((v) >> 3);                                 \
+		}                                                            \
+		switch((end) - (p)) {                                        \
+			case 3:                                                  \
+				(v) = (((unsigned int)(unsigned char)(p)[0]) << 16)  \
+					  + (((unsigned int)(unsigned char)(p)[1]) << 8) \
+					  + (unsigned int)(unsigned char)(p)[2];         \
+				break;                                               \
+			case 2:                                                  \
+				(v) = (((unsigned int)(unsigned char)(p)[0]) << 8)   \
+					  + (unsigned int)(unsigned char)p[1];           \
+				break;                                               \
+			case 1:                                                  \
+				(v) = (unsigned int)(unsigned char)*p;               \
+				break;                                               \
+			default:                                                 \
+				(v) = 0;                                             \
+				break;                                               \
+		}                                                            \
+		(h) += (v) ^ ((v) >> 3);                                     \
 	} while(0)
 
 /** like hash_update_str, but case insensitive
@@ -68,22 +70,22 @@
  *         char* p,  and unsigned v temporary vars (used)
  *         unsigned h - result
  * h should be initialized (e.g. set it to 0), the result in h */
-#define hash_update_case_str(s, end, p, v, h)               \
-	do {                                                    \
-		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {      \
-			(v) = ((((unsigned char)*(p)) << 24)            \
-						  + (((unsigned char)(p)[1]) << 16) \
-						  + (((unsigned char)(p)[2]) << 8)  \
-						  + (unsigned char)(p)[3])          \
-				  | 0x20202020;                             \
-			(h) += (v) ^ ((v) >> 3);                        \
-		}                                                   \
-		(v) = 0;                                            \
-		for(; (p) < (end); (p)++) {                         \
-			(v) <<= 8;                                      \
-			(v) += ((unsigned char)*(p)) | 0x20;            \
-		}                                                   \
-		(h) += (v) ^ ((v) >> 3);                            \
+#define hash_update_case_str(s, end, p, v, h)                             \
+	do {                                                                  \
+		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {                    \
+			(v) = ((((unsigned int)(unsigned char)(p)[0]) << 24)          \
+						  + (((unsigned int)(unsigned char)(p)[1]) << 16) \
+						  + (((unsigned int)(unsigned char)(p)[2]) << 8)  \
+						  + (unsigned int)(unsigned char)(p)[3])          \
+				  | 0x20202020;                                           \
+			(h) += (v) ^ ((v) >> 3);                                      \
+		}                                                                 \
+		(v) = 0;                                                          \
+		for(; (p) < (end); (p)++) {                                       \
+			(v) <<= 8;                                                    \
+			(v) += ((unsigned int)(unsigned char)*(p)) | 0x20;            \
+		}                                                                 \
+		(h) += (v) ^ ((v) >> 3);                                          \
 	} while(0)
 
 
@@ -126,38 +128,39 @@ inline static unsigned int get_hash1_raw(const char *s, int len)
 
 /** a little slower than hash_* , but better distribution for
  * numbers and about the same for strings */
-#define hash_update_str2(s, end, p, v, h)                                    \
-	do {                                                                     \
-		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {                       \
-			(v) = (((unsigned char)*(p)) * 16777213)                         \
-				  + (((unsigned char)(p)[1]) * 65537)                        \
-				  + (((unsigned char)(p)[2]) * 257) + (unsigned char)(p)[3]; \
-			(h) = 16777259 * (h) + ((v) ^ ((v) << 17));                      \
-		}                                                                    \
-		(v) = 0;                                                             \
-		for(; (p) < (end); (p)++) {                                          \
-			(v) *= 251;                                                      \
-			(v) += (unsigned char)*(p);                                      \
-		}                                                                    \
-		(h) = 16777259 * (h) + ((v) ^ ((v) << 17));                          \
+#define hash_update_str2(s, end, p, v, h)                            \
+	do {                                                             \
+		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {               \
+			(v) = (((unsigned int)(unsigned char)(p)[0]) * 16777213) \
+				  + (((unsigned int)(unsigned char)(p)[1]) * 65537)  \
+				  + (((unsigned int)(unsigned char)(p)[2]) * 257)    \
+				  + (unsigned int)(unsigned char)(p)[3];             \
+			(h) = 16777259 * (h) + ((v) ^ ((v) << 17));              \
+		}                                                            \
+		(v) = 0;                                                     \
+		for(; (p) < (end); (p)++) {                                  \
+			(v) *= 251;                                              \
+			(v) += (unsigned int)(unsigned char)*(p);                \
+		}                                                            \
+		(h) = 16777259 * (h) + ((v) ^ ((v) << 17));                  \
 	} while(0)
 
 /**  like hash_update_str2 but case insensitive */
-#define hash_update_case_str2(s, end, p, v, h)                 \
-	do {                                                       \
-		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {         \
-			(v) = ((((unsigned char)*(p)) | 0x20) * 16777213)  \
-				  + ((((unsigned char)(p)[1]) | 0x20) * 65537) \
-				  + ((((unsigned char)(p)[2]) | 0x20) * 257)   \
-				  + (((unsigned char)(p)[3]) | 0x20);          \
-			(h) = 16777259 * (h) + ((v) ^ ((v) << 17));        \
-		}                                                      \
-		(v) = 0;                                               \
-		for(; (p) < (end); (p)++) {                            \
-			(v) *= 251;                                        \
-			(v) += ((unsigned char)*(p)) | 0x20;               \
-		}                                                      \
-		(h) = 16777259 * (h) + ((v) ^ ((v) << 17));            \
+#define hash_update_case_str2(s, end, p, v, h)                                \
+	do {                                                                      \
+		for((p) = (s); (p) <= ((end) - 4); (p) += 4) {                        \
+			(v) = ((((unsigned int)(unsigned char)(p)[0]) | 0x20) * 16777213) \
+				  + ((((unsigned int)(unsigned char)(p)[1]) | 0x20) * 65537)  \
+				  + ((((unsigned int)(unsigned char)(p)[2]) | 0x20) * 257)    \
+				  + (((unsigned int)(unsigned char)(p)[3]) | 0x20);           \
+			(h) = 16777259 * (h) + ((v) ^ ((v) << 17));                       \
+		}                                                                     \
+		(v) = 0;                                                              \
+		for(; (p) < (end); (p)++) {                                           \
+			(v) *= 251;                                                       \
+			(v) += ((unsigned int)(unsigned char)(p)[0]) | 0x20;              \
+		}                                                                     \
+		(h) = 16777259 * (h) + ((v) ^ ((v) << 17));                           \
 	} while(0)
 
 /** internal use: call it to adjust the h from hash_update_str */
@@ -289,26 +292,32 @@ static inline unsigned int core_hash(
 
 	end = s1->s + s1->len;
 	for(p = s1->s; p <= (end - 4); p += 4) {
-		v = ((unsigned int)p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3];
+		v = ((unsigned int)(unsigned char)p[0] << 24)
+			+ ((unsigned int)(unsigned char)p[1] << 16)
+			+ ((unsigned int)(unsigned char)p[2] << 8)
+			+ (unsigned int)(unsigned char)p[3];
 		ch_h_inc;
 	}
 	v = 0;
 	for(; p < end; p++) {
 		v <<= 8;
-		v += *p;
+		v += (unsigned int)(unsigned char)*p;
 	}
 	ch_h_inc;
 
 	if(s2) {
 		end = s2->s + s2->len;
 		for(p = s2->s; p <= (end - 4); p += 4) {
-			v = ((unsigned int)p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3];
+			v = ((unsigned int)(unsigned char)p[0] << 24)
+				+ ((unsigned int)(unsigned char)p[1] << 16)
+				+ ((unsigned int)(unsigned char)p[2] << 8)
+				+ (unsigned int)(unsigned char)p[3];
 			ch_h_inc;
 		}
 		v = 0;
 		for(; p < end; p++) {
 			v <<= 8;
-			v += p[0];
+			v += (unsigned int)(unsigned char)p[0];
 		}
 		ch_h_inc;
 	}
