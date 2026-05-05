@@ -126,11 +126,15 @@ int dlgs_sipfields_get(sip_msg_t *msg, dlgs_sipfields_t *sf)
 	return 0;
 }
 
+#define DLGS_ITEM_SIZE_MAX (1 << 16)
+
 dlgs_item_t *dlgs_item_new(sip_msg_t *msg, dlgs_sipfields_t *sf, str *src,
 		str *dst, str *data, unsigned int hashid)
 {
 	dlgs_item_t *item;
-	unsigned int msize;
+	size_t msize;
+	size_t payload_size;
+	size_t ttag_space;
 	str ruid = STR_NULL;
 	char ruidbuf[SRUID_SIZE + 16];
 
@@ -150,13 +154,56 @@ dlgs_item_t *dlgs_item_new(sip_msg_t *msg, dlgs_sipfields_t *sf, str *src,
 	}
 	ruid.s = ruidbuf;
 
-	msize = sizeof(dlgs_item_t)
-			+ (sf->callid.len + 1 + sf->ftag.len + 1
-					  + ((sf->ttag.len > 0) ? (sf->ttag.len + 1)
-											: DLGS_TOTAG_SIZE)
-					  + ruid.len + 1 + dst->len + 1 + src->len + 1 + data->len
-					  + 1 + sf->branch.len + 1)
-					  * sizeof(char);
+	if(sf->callid.len < 0 || sf->ftag.len < 0 || sf->ttag.len < 0
+			|| sf->branch.len < 0 || src == NULL || src->len < 0 || dst == NULL
+			|| dst->len < 0 || data == NULL || data->len < 0 || ruid.len < 0) {
+		LM_ERR("invalid negative length while building dlg item\n");
+		return NULL;
+	}
+
+	ttag_space =
+			(sf->ttag.len > 0) ? (size_t)sf->ttag.len + 1 : DLGS_TOTAG_SIZE;
+	payload_size = (size_t)sf->callid.len + 1;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - ((size_t)sf->ftag.len + 1)) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	payload_size += (size_t)sf->ftag.len + 1;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - ttag_space) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	payload_size += ttag_space;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - ((size_t)ruid.len + 1)) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	payload_size += (size_t)ruid.len + 1;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - ((size_t)dst->len + 1)) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	payload_size += (size_t)dst->len + 1;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - ((size_t)src->len + 1)) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	payload_size += (size_t)src->len + 1;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - ((size_t)data->len + 1)) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	payload_size += (size_t)data->len + 1;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - ((size_t)sf->branch.len + 1)) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	payload_size += (size_t)sf->branch.len + 1;
+	if(payload_size > DLGS_ITEM_SIZE_MAX - sizeof(dlgs_item_t)) {
+		LM_ERR("dlg item size overflow\n");
+		return NULL;
+	}
+	msize = sizeof(dlgs_item_t) + payload_size;
 
 	item = (dlgs_item_t *)shm_malloc(msize);
 	if(item == NULL) {
