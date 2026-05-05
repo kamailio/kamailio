@@ -50,6 +50,8 @@ extern "C"
 	int telnum_possible(char *number, char *region);
 	// parse a number
 	telnum_t *telnum_parse(char *number, char *region);
+	// enable or disable short-number validation branch
+	void telnum_set_short_mode(int mode);
 	// get country code for number
 	char *telnum_cc(char *number);
 
