@@ -688,6 +688,8 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 	dlgs_item_t *it;
 	int tfield = 0;
 	int top = 0;
+	regex_t mre;
+	void *rdata = NULL;
 
 	if(_dlgs_htb == NULL) {
 		return -1;
@@ -704,6 +706,16 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 		return -1;
 	}
 
+	if(top == 2) {
+		memset(&mre, 0, sizeof(regex_t));
+		if(regcomp(&mre, vdata->s, REG_EXTENDED | REG_ICASE | REG_NEWLINE)
+				!= 0) {
+			LM_ERR("failed to compile regex: %.*s\n", vdata->len, vdata->s);
+			return -1;
+		}
+		rdata = &mre;
+	}
+
 	n = 0;
 	if(tfield == 0) {
 		/* count 'any' dialog not-yet-finished */
@@ -713,6 +725,8 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 			n += _dlgs_htb->slots[i].astats.c_answered;
 			n += _dlgs_htb->slots[i].astats.c_confirmed;
 		}
+		if(top == 2)
+			regfree(&mre);
 		return n;
 	}
 
@@ -721,13 +735,15 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 		for(it = _dlgs_htb->slots[i].first; it != NULL; it = it->next) {
 			if(it->state != DLGS_STATE_TERMINATED
 					&& it->state != DLGS_STATE_NOTANSWERED) {
-				if(dlgs_match_field(it, tfield, top, vdata, NULL) == 0) {
+				if(dlgs_match_field(it, tfield, top, vdata, rdata) == 0) {
 					n++;
 				}
 			}
 		}
 		lock_release(&_dlgs_htb->slots[i].lock);
 	}
+	if(top == 2)
+		regfree(&mre);
 
 	return n;
 }
