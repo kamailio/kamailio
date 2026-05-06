@@ -42,6 +42,10 @@
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
+#include "../../core/route.h"
+#include "../../core/dset.h"
+#include "../../core/fmsg.h"
+#include "../../core/action.h"
 
 #include "dmq.h"
 #include "dmq_funcs.h"
@@ -73,6 +77,7 @@ int dmq_fail_count_enabled = 0;
 int dmq_fail_count_threshold_not_active = 0;
 int dmq_fail_count_threshold_disabled = 1;
 int dmq_init_with_single = 0;
+str dmq_event_callback = STR_NULL;
 
 /* TM bind */
 struct tm_binds _dmq_tmb = {0};
@@ -135,6 +140,7 @@ static param_export_t params[] = {
 	{"fail_count_threshold_not_active", PARAM_INT, &dmq_fail_count_threshold_not_active},
 	{"fail_count_threshold_disabled", PARAM_INT, &dmq_fail_count_threshold_disabled},
 	{"init_with_single", PARAM_INT, &dmq_init_with_single},
+	{"event_callback", PARAM_STR, &dmq_event_callback},
 	{0, 0, 0}
 };
 
@@ -525,6 +531,108 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
+
+/**
+ * Run peer event route from @a node->status (DMQ_NODE_ACTIVE -> dmq:peer-up,
+ * DMQ_NODE_NOT_ACTIVE -> dmq:peer-down, DMQ_NODE_DISABLED -> dmq:peer-disabled).
+ * Callers must set node->status to the intended announcement before calling
+ * (e.g. under dmq_node_list lock, or after applying a transition).
+ * Duplicate for the same status are suppressed using last_peer_evt.
+ */
+void dmq_peer_run_event_route(dmq_node_t *node)
+{
+	const char *rtname;
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t *fmsg = NULL;
+	sr_kemi_eng_t *keng = NULL;
+	str evname;
+	int evt;
+
+	if(node == NULL || node->local)
+		return;
+	if(node->orig_uri.s == NULL || node->orig_uri.len <= 0)
+		return;
+
+	evt = node->status;
+
+	/* Same announcement twice (timer/body oscillation). */
+	if(node->last_peer_evt == evt) {
+		LM_DBG("peer event %d skipped (duplicate) for %.*s\n", evt,
+				STR_FMT(&node->orig_uri));
+		return;
+	}
+	/* After peer-disabled, only peer-up is a valid next announcement. */
+	if(node->last_peer_evt == DMQ_NODE_DISABLED && evt != DMQ_NODE_ACTIVE) {
+		LM_DBG("peer event %d skipped (post-disabled) for %.*s\n", evt,
+				STR_FMT(&node->orig_uri));
+		return;
+	}
+
+	/* Logical transition recorded even if no event_route (suppression still applies). */
+	node->last_peer_evt = evt;
+
+	switch(evt) {
+		case DMQ_NODE_ACTIVE:
+			rtname = "dmq:peer-up";
+			break;
+		case DMQ_NODE_NOT_ACTIVE:
+			rtname = "dmq:peer-down";
+			break;
+		case DMQ_NODE_DISABLED:
+			rtname = "dmq:peer-disabled";
+			break;
+		default:
+			LM_BUG("dmq peer event: unexpected evt %d\n", evt);
+			return;
+	}
+
+	LM_DBG("executing event_route[%s] for %.*s\n", rtname,
+			STR_FMT(&node->orig_uri));
+
+	rt = -1;
+	if(dmq_event_callback.s == NULL || dmq_event_callback.len <= 0) {
+		rt = route_lookup(&event_rt, (char *)rtname);
+		if(rt < 0 || event_rt.rlist[rt] == NULL) {
+			LM_DBG("event_route[%s] not defined - skip\n", rtname);
+			return;
+		}
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng == NULL) {
+			LM_DBG("dmq event_callback set but no kemi engine\n");
+			return;
+		}
+	}
+
+	if(faked_msg_init() < 0) {
+		LM_ERR("faked_msg_init failed\n");
+		return;
+	}
+	fmsg = faked_msg_next();
+	if(rewrite_uri(fmsg, &node->orig_uri) < 0) {
+		LM_ERR("rewrite_uri failed\n");
+		return;
+	}
+
+	if(rt >= 0 || dmq_event_callback.len > 0) {
+		backup_rt = get_route_type();
+		set_route_type(REQUEST_ROUTE);
+		init_run_actions_ctx(&ctx);
+		if(rt >= 0) {
+			run_top_route(event_rt.rlist[rt], fmsg, 0);
+		} else if(keng != NULL) {
+			evname.s = (char *)rtname;
+			evname.len = strlen(rtname);
+			if(sr_kemi_route(
+					   keng, fmsg, EVENT_ROUTE, &dmq_event_callback, &evname)
+					< 0)
+				LM_ERR("dmq kemi event route failed\n");
+		}
+		set_route_type(backup_rt);
+	}
+	reset_uri(fmsg);
+}
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
