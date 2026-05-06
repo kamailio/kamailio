@@ -476,8 +476,8 @@ int update_subs_db(subs_t *subs, int type)
 	return 0;
 }
 
-void delete_subs(
-		str *pres_uri, str *ev_name, str *to_tag, str *from_tag, str *callid)
+void delete_subs(str *pres_uri, str *ev_name, str *to_tag, str *from_tag,
+		str *callid, unsigned int received_time)
 {
 	subs_t subs;
 
@@ -486,6 +486,7 @@ void delete_subs(
 	subs.from_tag = *from_tag;
 	subs.to_tag = *to_tag;
 	subs.callid = *callid;
+	subs.received_time = received_time;
 
 	/* delete record from hash table also if not in dbonly mode */
 	if(pres_subs_dbmode != DB_ONLY) {
@@ -585,8 +586,12 @@ int update_subscription(
 		if(subs->expires == 0) {
 			LM_DBG("expires =0 -> deleting record\n");
 
+			if(subs->received_time == 0) {
+				subs->received_time = (unsigned int)time(NULL);
+			}
+
 			delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
-					&subs->from_tag, &subs->callid);
+					&subs->from_tag, &subs->callid, subs->received_time);
 
 			if(subs->event->type & PUBL_TYPE) {
 				reply_code = get_ok_reply_code();
@@ -741,8 +746,13 @@ int replace_subscription(subs_t *subs)
 
 	if(subs->expires == 0) {
 		LM_DBG("expires =0 -> deleting record\n");
+
+		if(subs->received_time == 0) {
+			subs->received_time = (unsigned int)time(NULL);
+		}
+
 		delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
-				&subs->from_tag, &subs->callid);
+				&subs->from_tag, &subs->callid, subs->received_time);
 		return 1;
 	} else {
 		/* if subscriptions are stored in memory, replace them */

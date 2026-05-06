@@ -2495,6 +2495,7 @@ int ps_cache_delete_presentity(presentity_t *pres, str *ruid)
 	ptc.domain = pres->domain;
 	ptc.event = pres->event->name;
 	ptc.etag = pres->etag;
+	ptc.received_time = pres->received_time;
 
 	if(ps_ptable_remove(&ptc) < 0) {
 		return -1;

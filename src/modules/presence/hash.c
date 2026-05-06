@@ -177,6 +177,7 @@ subs_t *mem_copy_subs(subs_t *s, int mem_type)
 	dest->expires = s->expires;
 	dest->db_flag = s->db_flag;
 	dest->flags = s->flags;
+	dest->received_time = s->received_time;
 
 	return dest;
 
@@ -233,6 +234,7 @@ subs_t *mem_copy_subs_noc(subs_t *s)
 	dest->expires = s->expires;
 	dest->db_flag = s->db_flag;
 	dest->flags = s->flags;
+	dest->received_time = s->received_time;
 
 	dest->contact.s = (char *)shm_malloc(s->contact.len * sizeof(char));
 	if(dest->contact.s == NULL) {
@@ -269,6 +271,10 @@ int insert_and_replace_shtable(
 
 	subs_t *rec = NULL, *prev_rec = NULL;
 
+	if(subs->received_time == 0) {
+		subs->received_time = (unsigned int)time(NULL);
+	}
+
 	new_rec = mem_copy_subs_noc(subs);
 	if(new_rec == NULL) {
 		LM_ERR("copying in share memory a subs_t structure\n");
@@ -297,6 +303,26 @@ int insert_and_replace_shtable(
 						new_rec->callid.len, new_rec->callid.s,
 						new_rec->from_tag.len, new_rec->from_tag.s,
 						new_rec->to_tag.len, new_rec->to_tag.s);
+
+				/* LWW: skip replace if local record is newer */
+				if(rec->received_time > new_rec->received_time) {
+					LM_DBG("LWW: skipping stale subscription replace "
+						   "for contact=[%.*s] pres_uri="
+						   "[%.*s] local_recv=%u incoming_recv=%u\n",
+							rec->contact.len, rec->contact.s, rec->pres_uri.len,
+							rec->pres_uri.s, rec->received_time,
+							new_rec->received_time);
+					lock_release(&htable[hash_code].lock);
+					if(new_rec->contact.s != NULL) {
+						shm_free(new_rec->contact.s);
+					}
+					if(new_rec->record_route.s != NULL) {
+						shm_free(new_rec->record_route.s);
+					}
+					shm_free(new_rec);
+					return 0;
+				}
+
 				/* delete this record */
 
 				if(prev_rec) {
@@ -352,6 +378,10 @@ int delete_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 	subs_t *s = NULL, *ps = NULL;
 	int found = -1;
 
+	if(subs->received_time == 0) {
+		subs->received_time = (unsigned int)time(NULL);
+	}
+
 	lock_get(&htable[hash_code].lock);
 
 	ps = htable[hash_code].entries;
@@ -381,6 +411,16 @@ int delete_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 			}
 		}
 		if(found == 0) {
+			/* LWW: skip delete if local record is newer */
+			if(s->received_time > subs->received_time) {
+				LM_DBG("LWW: skipping stale subscription delete for contact="
+					   "[%.*s] pres_uri="
+					   "[%.*s] local_recv=%u incoming_recv=%u\n",
+						s->contact.len, s->contact.s, s->pres_uri.len,
+						s->pres_uri.s, s->received_time, subs->received_time);
+				lock_release(&htable[hash_code].lock);
+				return 0;
+			}
 			found = s->local_cseq + 1;
 			ps->next = s->next;
 			if(s) {
@@ -434,6 +474,10 @@ int update_shtable(
 {
 	subs_t *s;
 
+	if(subs->received_time == 0) {
+		subs->received_time = (unsigned int)time(NULL);
+	}
+
 	lock_get(&htable[hash_code].lock);
 
 	s = search_shtable(
@@ -444,6 +488,17 @@ int update_shtable(
 		return -1;
 	}
 
+	/* LWW: skip update if local record is newer */
+	if((type & REMOTE_TYPE) && s->received_time > subs->received_time) {
+		LM_DBG("LWW: skipping stale subscription update for contact="
+			   "[%.*s] pres_uri="
+			   "[%.*s] local_recv=%u incoming_recv=%u\n",
+				s->contact.len, s->contact.s, s->pres_uri.len, s->pres_uri.s,
+				s->received_time, subs->received_time);
+		lock_release(&htable[hash_code].lock);
+		return 0;
+	}
+
 	if(type & REMOTE_TYPE) {
 		s->expires = subs->expires + ksr_time_sint(NULL, NULL);
 		s->remote_cseq = subs->remote_cseq;
@@ -451,6 +506,7 @@ int update_shtable(
 		subs->local_cseq = ++s->local_cseq;
 		subs->version = ++s->version;
 	}
+	s->received_time = subs->received_time;
 
 	if(presence_sip_uri_match(&s->contact, &subs->contact)) {
 		shm_free(s->contact.s);
@@ -793,6 +849,9 @@ ps_presentity_t *ps_presentity_new(ps_presentity_t *pt, int mtype)
 	ptn->hashid = core_case_hash(&pt->user, &pt->domain, 0);
 	ptn->expires = pt->expires;
 	ptn->received_time = pt->received_time;
+	if(ptn->received_time == 0) {
+		ptn->received_time = (int)time(NULL);
+	}
 	ptn->priority = pt->priority;
 
 	p = (char *)ptn + sizeof(ps_presentity_t);
@@ -1081,6 +1140,15 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn != NULL) {
 		if(ps_presentity_match(ptn, &ptc, 2) == 1) {
+			/* LWW: skip replace if local record is newer */
+			if(ptn->received_time > ptv.received_time) {
+				LM_DBG("LWW: skipping stale presentity replace for "
+					   "%.*s@%.*s local_recv=%d incoming_recv=%d\n",
+						ptn->user.len, ptn->user.s, ptn->domain.len,
+						ptn->domain.s, ptn->received_time, ptv.received_time);
+				lock_release(&_ps_ptable->slots[idx].lock);
+				return 0;
+			}
 			if(ptn->next) {
 				ptn->next->prev = ptn->prev;
 			}
@@ -1145,6 +1213,15 @@ int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn != NULL) {
 		if(ps_presentity_match(ptn, &ptc, 2) == 1) {
+			/* LWW: skip update if local record is newer */
+			if(ptn->received_time > ptv.received_time) {
+				LM_DBG("LWW: skipping stale presentity update for "
+					   "%.*s@%.*s local_recv=%d incoming_recv=%d\n",
+						ptn->user.len, ptn->user.s, ptn->domain.len,
+						ptn->domain.s, ptn->received_time, ptv.received_time);
+				lock_release(&_ps_ptable->slots[idx].lock);
+				return 0;
+			}
 			if(ptn->next) {
 				ptn->next->prev = ptn->prev;
 			}
@@ -1201,6 +1278,15 @@ int ps_ptable_remove(ps_presentity_t *pt)
 	ptn = _ps_ptable->slots[idx].plist;
 	while(ptn != NULL) {
 		if(ps_presentity_match(ptn, &ptc, 2) == 1) {
+			/* LWW: skip delete if local record is newer */
+			if(ptn->received_time > ptc.received_time) {
+				LM_DBG("LWW: skipping stale presentity delete for "
+					   "%.*s@%.*s local_recv=%d incoming_recv=%d\n",
+						ptn->user.len, ptn->user.s, ptn->domain.len,
+						ptn->domain.s, ptn->received_time, ptc.received_time);
+				lock_release(&_ps_ptable->slots[idx].lock);
+				return 0;
+			}
 			if(ptn->next) {
 				ptn->next->prev = ptn->prev;
 			}

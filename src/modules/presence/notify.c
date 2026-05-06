@@ -152,6 +152,7 @@ void printf_subs(subs_t *subs)
 	LM_DBG("reason: %.*s\n", subs->reason.len, subs->reason.s);
 	LM_DBG("version: %u\n", subs->version);
 	LM_DBG("expires: %u\n", subs->expires);
+	LM_DBG("recv: %u\n", subs->received_time);
 
 	LM_DBG("updated/updated_winfo: %d/%d\n", subs->updated,
 			subs->updated_winfo);
@@ -2000,8 +2001,13 @@ void p_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 			|| (ps->code == 408 && pres_timeout_rm_subs
 					&& subs->status != TERMINATED_STATUS)
 			|| pres_get_delete_sub()) {
+
+		if(subs->received_time == 0) {
+			subs->received_time = (unsigned int)time(NULL);
+		}
+
 		delete_subs(&subs->pres_uri, &subs->event->name, &subs->to_tag,
-				&subs->from_tag, &subs->callid);
+				&subs->from_tag, &subs->callid, subs->received_time);
 		if(pres_enable_dmq > 0 && pres_enable_subs_dmq > 0) {
 			subs->expires = 0;
 			pres_dmq_replicate_subscription(subs, NULL);
