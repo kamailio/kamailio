@@ -185,6 +185,24 @@ void print_cred(dig_cred_t *_c)
 			case ALG_MD5SESS:
 				printf("ALG_MD5SESS\n");
 				break;
+			case ALG_SHA256:
+				printf("ALG_SHA256\n");
+				break;
+			case ALG_SHA256SESS:
+				printf("ALG_SHA256SESS\n");
+				break;
+			case ALG_SHA512:
+				printf("ALG_SHA512\n");
+				break;
+			case ALG_SHA512SESS:
+				printf("ALG_SHA512SESS\n");
+				break;
+			case ALG_SHA512_256:
+				printf("ALG_SHA512_256\n");
+				break;
+			case ALG_SHA512_256SESS:
+				printf("ALG_SHA512_256SESS\n");
+				break;
 			case ALG_OTHER:
 				printf("ALG_OTHER\n");
 				break;

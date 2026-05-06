@@ -40,10 +40,16 @@
 /* Type of algorithm used */
 typedef enum alg
 {
-	ALG_UNSPEC = 0,	 /* Algorithm parameter not specified */
-	ALG_MD5 = 1,	 /* MD5 - default value*/
-	ALG_MD5SESS = 2, /* MD5-Session */
-	ALG_OTHER = 4	 /* Unknown */
+	ALG_UNSPEC = 0,			/* Algorithm parameter not specified */
+	ALG_MD5 = 1,			/* MD5 - default value*/
+	ALG_MD5SESS = 2,		/* MD5-Session */
+	ALG_SHA256 = 3,			/* SHA-256 */
+	ALG_SHA256SESS = 4,		/* SHA-256-sess */
+	ALG_SHA512 = 5,			/* SHA-512 */
+	ALG_SHA512SESS = 6,		/* SHA-512-sess */
+	ALG_SHA512_256 = 7,		/* SHA-512-256 */
+	ALG_SHA512_256SESS = 8, /* SHA-512-256-sess */
+	ALG_OTHER = 255			/* Unknown */
 } alg_t;
 
 
