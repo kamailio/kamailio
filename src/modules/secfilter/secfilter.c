@@ -57,6 +57,9 @@ void secf_free_data(secf_data_p secf_fdata);
 static void mod_destroy(void);
 static int sf_check_sqli(str *val, int check_quotes);
 static int check_user(struct sip_msg *msg, int type);
+static int check_username(struct sip_msg *msg, int type);
+static int check_name(struct sip_msg *msg, int type);
+static int check_domain(struct sip_msg *msg, int type);
 void secf_reset_stats(void);
 void secf_ht_timer(unsigned int ticks, void *);
 
@@ -70,6 +73,15 @@ static int w_check_country(struct sip_msg *msg, char *val);
 static int w_check_dst(struct sip_msg *msg, char *val);
 static int w_check_sqli_all(struct sip_msg *msg);
 static int w_check_sqli_hdr(struct sip_msg *msg, char *val);
+static int w_check_username_contact_hdr(struct sip_msg *msg);
+static int w_check_username_from_hdr(struct sip_msg *msg);
+static int w_check_username_to_hdr(struct sip_msg *msg);
+static int w_check_name_contact_hdr(struct sip_msg *msg);
+static int w_check_name_from_hdr(struct sip_msg *msg);
+static int w_check_name_to_hdr(struct sip_msg *msg);
+static int w_check_domain_contact_hdr(struct sip_msg *msg);
+static int w_check_domain_from_hdr(struct sip_msg *msg);
+static int w_check_domain_to_hdr(struct sip_msg *msg);
 
 /* Exported module parameters - default values */
 int secf_dst_exact_match = 1;
@@ -93,6 +105,15 @@ static cmd_export_t cmds[] = {
 	{"secf_check_dst", (cmd_function)w_check_dst, 1, 0, 0, ANY_ROUTE},
 	{"secf_check_sqli_all", (cmd_function)w_check_sqli_all, 0, 0, 0, ANY_ROUTE},
 	{"secf_check_sqli_hdr", (cmd_function)w_check_sqli_hdr, 1, 0, 0, ANY_ROUTE},
+	{"secf_check_username_from_hdr",(cmd_function)w_check_username_from_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_username_contact_hdr",(cmd_function)w_check_username_contact_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_username_to_hdr",(cmd_function)w_check_username_to_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_domain_from_hdr",(cmd_function)w_check_domain_from_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_domain_contact_hdr",(cmd_function)w_check_domain_contact_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_domain_to_hdr",(cmd_function)w_check_domain_to_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_name_from_hdr",(cmd_function)w_check_name_from_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_name_contact_hdr",(cmd_function)w_check_name_contact_hdr,0, 0, 0, ANY_ROUTE},
+	{"secf_check_name_to_hdr",(cmd_function)w_check_name_to_hdr,0, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -435,6 +456,97 @@ static int ki_check_ua(struct sip_msg *msg)
 	return 1;
 }
 
+static int w_check_username_from_hdr(struct sip_msg *msg)
+{
+	return check_username(msg, SECF_FROM_HEADER);
+}
+
+static int ki_check_username_from_hdr(struct sip_msg *msg)
+{
+	return check_username(msg, SECF_FROM_HEADER);
+}
+
+static int w_check_username_to_hdr(struct sip_msg *msg)
+{
+	return check_username(msg, SECF_TO_HEADER);
+}
+
+static int ki_check_username_to_hdr(struct sip_msg *msg)
+{
+	return check_username(msg, SECF_TO_HEADER);
+}
+
+static int w_check_username_contact_hdr(struct sip_msg *msg)
+{
+	return check_username(msg, SECF_CONTACT_HEADER);
+}
+
+static int ki_check_username_contact_hdr(struct sip_msg *msg)
+{
+	return check_username(msg, SECF_CONTACT_HEADER);
+}
+
+static int w_check_name_from_hdr(struct sip_msg *msg)
+{
+	return check_name(msg, SECF_FROM_HEADER);
+}
+
+static int ki_check_name_from_hdr(struct sip_msg *msg)
+{
+	return check_name(msg, SECF_FROM_HEADER);
+}
+
+static int w_check_name_to_hdr(struct sip_msg *msg)
+{
+	return check_name(msg, SECF_TO_HEADER);
+}
+
+static int ki_check_name_to_hdr(struct sip_msg *msg)
+{
+	return check_name(msg, SECF_TO_HEADER);
+}
+
+static int w_check_name_contact_hdr(struct sip_msg *msg)
+{
+	return check_name(msg, SECF_CONTACT_HEADER);
+}
+
+static int ki_check_name_contact_hdr(struct sip_msg *msg)
+{
+	return check_name(msg, SECF_CONTACT_HEADER);
+}
+
+static int w_check_domain_from_hdr(struct sip_msg *msg)
+{
+	return check_domain(msg, SECF_FROM_HEADER);
+}
+
+static int ki_check_domain_from_hdr(struct sip_msg *msg)
+{
+	return check_domain(msg, SECF_FROM_HEADER);
+}
+
+static int w_check_domain_to_hdr(struct sip_msg *msg)
+{
+	return check_domain(msg, SECF_TO_HEADER);
+}
+
+static int ki_check_domain_to_hdr(struct sip_msg *msg)
+{
+	return check_domain(msg, SECF_TO_HEADER);
+}
+
+static int w_check_domain_contact_hdr(struct sip_msg *msg)
+{
+	return check_domain(msg, SECF_CONTACT_HEADER);
+}
+
+static int ki_check_domain_contact_hdr(struct sip_msg *msg)
+{
+	return check_domain(msg, SECF_CONTACT_HEADER);
+}
+
+
 static int w_check_ua(struct sip_msg *msg)
 {
 	return ki_check_ua(msg);
@@ -473,6 +585,250 @@ static int w_check_contact_hdr(struct sip_msg *msg)
 {
 	return check_user(msg, 3);
 }
+
+
+static int check_generic(
+		struct sip_msg *msg, struct str_list *list, int type, int field)
+{
+	str name = STR_NULL, user = STR_NULL, domain = STR_NULL;
+	str *target = NULL;
+	int res, original_len;
+
+	switch(type) {
+		case SECF_FROM_HEADER:
+			res = secf_get_from(msg, &name, &user, &domain);
+			break;
+		case SECF_TO_HEADER:
+			res = secf_get_to(msg, &name, &user, &domain);
+			break;
+		case SECF_CONTACT_HEADER:
+			res = secf_get_contact_with_name(msg, &name, &user, &domain);
+			break;
+		default:
+			return -1;
+	}
+
+	if(res != 0)
+		return res;
+
+	switch(field) {
+		case SECF_FIELD_NAME:
+			target = &name;
+			break;
+		case SECF_FIELD_USER:
+			target = &user;
+			break;
+		case SECF_FIELD_DOMAIN:
+			target = &domain;
+			break;
+		default:
+			return -1;
+	}
+
+	if(target->s == NULL)
+		return -1;
+	original_len = target->len;
+
+	while(list) {
+		if(target->len > list->s.len)
+			target->len = list->s.len;
+
+		res = cmpi_str(&list->s, target);
+
+		if(res == 0) {
+			target->len = original_len;
+			return 1;
+		}
+
+		list = list->next;
+		target->len = original_len;
+	}
+
+	return 0;
+}
+
+
+static int check_username(struct sip_msg *msg, int type)
+{
+	int field = SECF_FIELD_USER;
+	struct str_list *list = NULL;
+	int res = -1;
+	// Check Whitelist
+	list = (*secf_data)->wl.user;
+
+	res = check_generic(msg, list, type, field);
+
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[WL_FUSER]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[WL_TUSER]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[WL_CUSER]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return 2;
+	}
+
+	// Check Blacklist
+	res = -1;
+	list = (*secf_data)->bl.user;
+	res = check_generic(msg, list, type, field);
+
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[BL_FUSER]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[BL_TUSER]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[BL_CUSER]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return -2;
+	}
+
+	return 1;
+}
+
+
+static int check_name(struct sip_msg *msg, int type)
+{
+
+	int field = SECF_FIELD_NAME;
+	struct str_list *list = NULL;
+	int res = -1;
+	// Check Whitelist
+	list = (*secf_data)->wl.user;
+	res = check_generic(msg, list, type, field);
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[WL_FNAME]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[WL_TNAME]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[WL_CNAME]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return 2;
+	}
+
+	// Check Blacklist
+	res = -1;
+	list = (*secf_data)->bl.user;
+	res = check_generic(msg, list, type, field);
+
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[BL_FNAME]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[BL_TNAME]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[BL_CNAME]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return -2;
+	}
+
+	return 1;
+}
+
+
+static int check_domain(struct sip_msg *msg, int type)
+{
+	int field = SECF_FIELD_DOMAIN;
+	struct str_list *list = NULL;
+	int res = -1;
+
+	// Check Whitelist
+	list = (*secf_data)->wl.user;
+	res = check_generic(msg, list, type, field);
+
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[WL_FDOMAIN]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[WL_TDOMAIN]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[WL_CDOMAIN]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return 2;
+	}
+
+	// Check Blacklist
+	res = -1;
+	list = (*secf_data)->bl.domain;
+	res = check_generic(msg, list, type, field);
+
+	if(res == -1) {
+		return -1;
+	}
+
+	if(res == 1) {
+		lock_get(secf_lock);
+		switch(type) {
+			case SECF_FROM_HEADER:
+				secf_stats[BL_FDOMAIN]++;
+				break;
+			case SECF_TO_HEADER:
+				secf_stats[BL_TDOMAIN]++;
+				break;
+			case SECF_CONTACT_HEADER:
+				secf_stats[BL_CDOMAIN]++;
+				break;
+		}
+		lock_release(secf_lock);
+		return -2;
+	}
+
+	return 1;
+}
+
 
 /*
 Check if the current user is allowed
@@ -1046,6 +1402,51 @@ static sr_kemi_t sr_kemi_secfilter_exports[] = {
 	},
 	{ str_init("secfilter"), str_init("secf_check_sqli_all"),
 		SR_KEMIP_INT, ki_check_sqli_all,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_username_from_hdr"),    
+		SR_KEMIP_INT, ki_check_username_from_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_name_from_hdr"),
+		SR_KEMIP_INT, ki_check_name_from_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+		{ str_init("secfilter"), str_init("ki_check_domain_from_hdr"),
+		SR_KEMIP_INT, ki_check_domain_from_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_username_to_hdr"),
+		SR_KEMIP_INT, ki_check_username_to_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_name_to_hdr"),
+		SR_KEMIP_INT, ki_check_name_to_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_domain_to_hdr"),
+		SR_KEMIP_INT, ki_check_domain_to_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_username_contact_hdr"),
+		SR_KEMIP_INT, ki_check_username_contact_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_name_contact_hdr"),
+		SR_KEMIP_INT, ki_check_name_contact_hdr,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("secfilter"), str_init("ki_check_domain_contact_hdr"),
+		SR_KEMIP_INT, ki_check_domain_contact_hdr,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
