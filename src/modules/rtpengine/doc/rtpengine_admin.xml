@@ -2935,6 +2935,11 @@ rtpengine_offer();
 				can be used to get call quality stats, see <quote>mos_A_label_pv</quote>
 				and <quote>mos_B_label_pv</quote> parameters.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>debug</emphasis> - enables debug logging (rtpengine log level 7) for this
+				call only. rtpengine will log everything related to that call
+				after parsing the flags. Useful in debugging scenarios.
+				</para></listitem>
 			</itemizedlist>
 			<para>
 			 Check also the documentation of RTPEngine, these flags are documented there as well:
