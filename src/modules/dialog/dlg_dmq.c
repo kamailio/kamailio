@@ -38,6 +38,7 @@ int dmq_send_all_dlgs(dmq_node_t *dmq_node);
 int dlg_dmq_request_sync(dmq_node_t *dmq_node);
 
 extern int dlg_enable_stats;
+extern str dlg_dmq_peer_id;
 
 /**
 * @brief add notification peer
@@ -56,10 +57,8 @@ int dlg_dmq_initialize()
 
 	not_peer.callback = dlg_dmq_handle_msg;
 	not_peer.init_callback = dlg_dmq_request_sync;
-	not_peer.description.s = "dialog";
-	not_peer.description.len = 6;
-	not_peer.peer_id.s = "dialog";
-	not_peer.peer_id.len = 6;
+	not_peer.peer_id = dlg_dmq_peer_id;
+	not_peer.description = dlg_dmq_peer_id;
 	dlg_dmq_peer = dlg_dmqb.register_dmq_peer(&not_peer);
 	if(!dlg_dmq_peer) {
 		LM_ERR("error in register_dmq_peer\n");

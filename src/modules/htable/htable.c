@@ -55,6 +55,7 @@ int ht_timer_interval = 20;
 int ht_db_expires_flag = 0;
 int ht_enable_dmq = 0;
 int ht_dmq_init_sync = 0;
+str ht_dmq_peer_id = str_init("htable");
 int ht_timer_procs = 0;
 static int ht_event_callback_mode = 0;
 
@@ -194,6 +195,7 @@ static param_export_t params[] = {
 	{"timer_procs", PARAM_INT, &ht_timer_procs},
 	{"event_callback", PARAM_STR, &ht_event_callback},
 	{"event_callback_mode", PARAM_INT, &ht_event_callback_mode},
+	{"dmq_peer_id", PARAM_STR, &ht_dmq_peer_id},
 	{0, 0, 0}
 };
 
