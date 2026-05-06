@@ -41,6 +41,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_expires.h"
+#include "../../core/parser/parse_param.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
@@ -60,7 +61,7 @@
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_TM_CALLID_SIZE 90
-#define UAC_REG_DB_COLS_NUM 15
+#define UAC_REG_DB_COLS_NUM 16
 
 int _uac_reg_gc_interval = 150;
 int _uac_reg_reload_delta = 30;
@@ -96,6 +97,7 @@ str flags_column = str_init("flags");
 str reg_delay_column = str_init("reg_delay");
 str socket_column = str_init("socket");
 str contact_addr_column = str_init("contact_addr");
+str contact_user_column = str_init("contact_user");
 
 str str_empty = str_init("");
 
@@ -464,7 +466,7 @@ int reg_ht_add(reg_uac_t *reg)
 		  + reg->r_username.len + 1 + reg->r_domain.len + 1 + reg->realm.len + 1
 		  + reg->auth_proxy.len + 1 + reg->auth_username.len + 1
 		  + reg->auth_password.len + 1 + reg->auth_ha1.len + 1 + reg->socket.len
-		  + 1 + reg->contact_addr.len + 1
+		  + 1 + reg->contact_addr.len + 1 + reg->contact_user.len + 1
 		  + (reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0) + 1;
 	nr = (reg_uac_t *)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr == NULL) {
@@ -498,6 +500,7 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->contact_addr, &reg->contact_addr, 0);
 	reg_copy_shm(&nr->callid, &str_empty,
 			reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
+	reg_copy_shm(&nr->contact_user, &reg->contact_user, 0);
 
 	for(i = 0; i < nr->auth_ha1.len; i++) {
 		/* ha1 to lowercase */
@@ -583,6 +586,107 @@ int reg_ht_rm(reg_uac_t *reg)
 		if(reg->flags & UAC_REG_DISABLED)
 			counter_add(regdisabled, -1);
 	}
+	return 0;
+}
+
+
+static int uac_reg_get_line_param(str *uri, str *line)
+{
+	/* returns 0 if the line param is found, 1 if not found, -1 in case of errors.
+	 * The returned line buffer is only valid until uri is not freed */
+	struct sip_uri puri;
+	param_hooks_t hooks;
+	param_t *params = NULL;
+	param_t *param = NULL;
+	int ret = 1;
+
+	if(uri == NULL || line == NULL) {
+		return -1;
+	}
+
+	memset(line, 0, sizeof(*line));
+	memset(&puri, 0, sizeof(puri));
+
+	if(parse_uri(uri->s, uri->len, &puri) < 0) {
+		LM_ERR("failed to parse contact uri: %.*s\n", uri->len, uri->s);
+		return -1;
+	}
+
+	if(puri.params.len <= 0) {
+		return 1;
+	}
+
+	memset(&hooks, 0, sizeof(hooks));
+	if(parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0) {
+		LM_ERR("failed to parse contact uri params: %.*s\n", puri.params.len,
+				puri.params.s);
+		return -1;
+	}
+
+	for(param = params; param; param = param->next) {
+		if(param->name.len == 4 && strncasecmp(param->name.s, "line", 4) == 0) {
+			*line = param->body;
+			ret = 0;
+			break;
+		}
+	}
+
+	free_params(params);
+	return ret;
+}
+
+static int uac_reg_build_contact_uri(
+		reg_uac_t *reg, char *buf, int size, str *out)
+{
+	char base_buf[MAX_URI_SIZE];
+	str base_uri;
+	int len;
+	str line = STR_NULL;
+	int rc_get_line;
+
+	if(reg->contact_user.s != NULL && reg->contact_user.len > 0) {
+		len = snprintf(base_buf, sizeof(base_buf), "sip:%.*s@%.*s",
+				reg->contact_user.len, reg->contact_user.s,
+				reg->contact_addr.len, reg->contact_addr.s);
+	} else {
+		len = snprintf(base_buf, sizeof(base_buf), "sip:%.*s@%.*s",
+				reg->l_uuid.len, reg->l_uuid.s, reg->contact_addr.len,
+				reg->contact_addr.s);
+	}
+
+	if(len <= 0 || len >= (int)sizeof(base_buf)) {
+		LM_ERR("contact uri buffer too small for [%.*s]\n", reg->l_uuid.len,
+				reg->l_uuid.s);
+		return -1;
+	}
+
+	base_uri.s = base_buf;
+	base_uri.len = len;
+
+	rc_get_line = uac_reg_get_line_param(&base_uri, &line);
+	if(rc_get_line < 0) {
+		return -1;
+	}
+	if(rc_get_line == 0) {
+		LM_ERR("contact already contains line param for [%.*s]\n",
+				reg->l_uuid.len, reg->l_uuid.s);
+		return -1;
+	}
+
+	if(reg->contact_user.s != NULL && reg->contact_user.len > 0) {
+		len = snprintf(buf, size, "<%.*s;line=%.*s>", base_uri.len, base_uri.s,
+				reg->l_uuid.len, reg->l_uuid.s);
+	} else {
+		len = snprintf(buf, size, "<%.*s>", base_uri.len, base_uri.s);
+	}
+	if(len <= 0 || len >= size) {
+		LM_ERR("contact uri buffer too small after line append for [%.*s]\n",
+				reg->l_uuid.len, reg->l_uuid.s);
+		return -1;
+	}
+
+	out->s = buf;
+	out->len = len;
 	return 0;
 }
 
@@ -753,6 +857,10 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	str method = {"REGISTER", 8};
 	int ret;
 	dlg_t tmdlg;
+	str contact_uri;
+	char contact_buf[MAX_URI_SIZE];
+	str reply_line_param = STR_NULL;
+	int ct_rc;
 
 	if(ps->param == NULL || *ps->param == 0) {
 		LM_DBG("uuid not received\n");
@@ -790,12 +898,21 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		if(contact_iterator(&c, ps->rpl, 0) < 0)
 			goto done;
 		while(c) {
+			ct_rc = uac_reg_get_line_param(&c->uri, &reply_line_param);
+			if(ct_rc < 0) {
+				goto error;
+			}
 			if(parse_uri(c->uri.s, c->uri.len, &puri) != 0) {
 				LM_ERR("failed to parse c-uri\n");
 				goto error;
 			}
-			if(suuid.len == puri.user.len
-					&& (strncmp(puri.user.s, suuid.s, suuid.len) == 0)) {
+			if((suuid.len == puri.user.len
+					   && (strncmp(puri.user.s, suuid.s, suuid.len) == 0))
+					|| ((ri->contact_user.len > 0) && (ct_rc == 0)
+							&& (reply_line_param.len == suuid.len)
+							&& (strncmp(reply_line_param.s, suuid.s,
+										reply_line_param.len)
+									== 0))) {
 				/* calculate expires */
 				expires = 0;
 				if(c->expires == NULL || c->expires->body.len <= 0) {
@@ -866,6 +983,13 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		s_ruri.s = b_ruri;
 		s_ruri.len = strlen(s_ruri.s);
 
+		if(uac_reg_build_contact_uri(
+				   ri, contact_buf, sizeof(contact_buf), &contact_uri)
+				< 0) {
+			LM_ERR("failed to build contact uri\n");
+			goto error;
+		}
+
 		do_uac_auth(&method, &s_ruri, &cred, &auth, response);
 		if(response[0] == '\0') {
 			LM_ERR("failed to calculate authentication response\n");
@@ -879,11 +1003,10 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		}
 
 		snprintf(b_hdrs, MAX_UACH_SIZE,
-				"Contact: <sip:%.*s@%.*s>\r\n"
+				"Contact: %.*s\r\n"
 				"Expires: %d\r\n"
 				"%.*s",
-				ri->l_uuid.len, ri->l_uuid.s, ri->contact_addr.len,
-				ri->contact_addr.s, ri->expires, new_auth_hdr->len,
+				contact_uri.len, contact_uri.s, ri->expires, new_auth_hdr->len,
 				new_auth_hdr->s);
 		s_hdrs.s = b_hdrs;
 		s_hdrs.len = strlen(s_hdrs.s);
@@ -993,6 +1116,8 @@ int uac_reg_send(reg_uac_t *reg, time_t tn)
 	char b_hdrs[MAX_UACH_SIZE];
 	str s_hdrs;
 	dlg_t tmdlg;
+	str contact_uri;
+	char contact_buf[MAX_URI_SIZE];
 
 	uuid = (char *)shm_malloc(reg->l_uuid.len + 1);
 	if(uuid == NULL) {
@@ -1016,11 +1141,23 @@ int uac_reg_send(reg_uac_t *reg, time_t tn)
 	s_turi.s = b_turi;
 	s_turi.len = strlen(s_turi.s);
 
+	if(uac_reg_build_contact_uri(
+			   reg, contact_buf, sizeof(contact_buf), &contact_uri)
+			< 0) {
+		LM_ERR("failed to build contact uri for [%.*s]\n", reg->l_uuid.len,
+				reg->l_uuid.s);
+		shm_free(uuid);
+		reg->flags &= ~(UAC_REG_ONGOING | UAC_REG_ONLINE);
+		reg->flags |= UAC_REG_DISABLED;
+		counter_inc(regdisabled);
+		counter_inc(regactive);
+		return -1;
+	}
+
 	snprintf(b_hdrs, MAX_UACH_SIZE,
-			"Contact: <sip:%.*s@%.*s>\r\n"
+			"Contact: %.*s\r\n"
 			"Expires: %d\r\n",
-			reg->l_uuid.len, reg->l_uuid.s, reg->contact_addr.len,
-			reg->contact_addr.s, reg->expires);
+			contact_uri.len, contact_uri.s, reg->expires);
 	s_hdrs.s = b_hdrs;
 	s_hdrs.len = strlen(s_hdrs.s);
 
@@ -1237,6 +1374,8 @@ static int uac_reg_db_to_reg(
 	reg_db_set_attr(contact_addr, 13, 1);
 	/* socket may be empty */
 	reg_db_set_attr(socket, 14, 1);
+	/*contact_user may be empty */
+	reg_db_set_attr(contact_user, 15, 1);
 
 	return 0;
 }
@@ -1255,7 +1394,7 @@ int uac_reg_load_db(void)
 			&realm_column, &auth_username_column, &auth_password_column,
 			&auth_ha1_column, &auth_proxy_column, &expires_column,
 			&flags_column, &reg_delay_column, &contact_addr_column,
-			&socket_column};
+			&socket_column, &contact_user_column};
 	db1_res_t *db_res = NULL;
 	int i, ret;
 
@@ -1374,7 +1513,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 			&realm_column, &auth_username_column, &auth_password_column,
 			&auth_ha1_column, &auth_proxy_column, &expires_column,
 			&flags_column, &reg_delay_column, &contact_addr_column,
-			&socket_column};
+			&socket_column, &contact_user_column};
 	db_key_t db_keys[1] = {&l_uuid_column};
 	db_val_t db_vals[1];
 
@@ -1739,7 +1878,7 @@ static int rpc_uac_reg_add_node_helper(
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if(rpc->struct_add(th, "SSSSSSSSSSJdddJdSS", "l_uuid", &reg->l_uuid,
+	if(rpc->struct_add(th, "SSSSSSSSSSJdddJdSSS", "l_uuid", &reg->l_uuid,
 			   "l_username", &reg->l_username, "l_domain", &reg->l_domain,
 			   "r_username", &reg->r_username, "r_domain", &reg->r_domain,
 			   "realm", &reg->realm, "auth_username", &reg->auth_username,
@@ -1752,7 +1891,8 @@ static int rpc_uac_reg_add_node_helper(
 			   (int)reg->timer_expires, "reg_init", (uint64_t)reg->reg_init,
 			   "reg_delay", (int)reg->reg_delay, "contact_addr",
 			   (reg->contact_addr.len) ? &reg->contact_addr : &none, "socket",
-			   &reg->socket)
+			   &reg->socket, "contact_user",
+			   (reg->contact_user.len) ? &reg->contact_user : &none)
 			< 0) {
 		rpc->fault(ctx, 500, "Internal error adding item");
 		return -1;
@@ -1967,12 +2107,16 @@ static void rpc_uac_reg_add(rpc_t *rpc, void *ctx)
 	reg_uac_t reg;
 	reg_uac_t *cur_reg;
 
-	if(rpc->scan(ctx, "SSSSSSSSSSdddSS", &reg.l_uuid, &reg.l_username,
-			   &reg.l_domain, &reg.r_username, &reg.r_domain, &reg.realm,
-			   &reg.auth_username, &reg.auth_password, &reg.auth_ha1,
-			   &reg.auth_proxy, &reg.expires, &reg.flags, &reg.reg_delay,
-			   &reg.socket, &reg.contact_addr)
-			< 1) {
+	int n;
+	memset(&reg, 0, sizeof(reg));
+
+	n = rpc->scan(ctx, "SSSSSSSSSSdddSS*S", &reg.l_uuid, &reg.l_username,
+			&reg.l_domain, &reg.r_username, &reg.r_domain, &reg.realm,
+			&reg.auth_username, &reg.auth_password, &reg.auth_ha1,
+			&reg.auth_proxy, &reg.expires, &reg.flags, &reg.reg_delay,
+			&reg.socket, &reg.contact_addr, &reg.contact_user);
+
+	if(n < 15) {
 		rpc->fault(ctx, 400, "Invalid Parameters");
 		return;
 	}
@@ -1999,6 +2143,11 @@ static void rpc_uac_reg_add(rpc_t *rpc, void *ctx)
 
 	if(reg.contact_addr.len == 1 && reg.contact_addr.s[0] == '.') {
 		reg.contact_addr = reg_contact_addr;
+	}
+
+	if(reg.contact_user.len == 1 && reg.contact_user.s[0] == '.') {
+		reg.contact_user.s = NULL;
+		reg.contact_user.len = 0;
 	}
 
 	if(uac_reg_check_password(&reg) < 0) {
