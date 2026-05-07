@@ -45,7 +45,7 @@ typedef struct peer_response
 
 typedef int (*peer_callback_t)(
 		struct sip_msg *, peer_reponse_t *resp, dmq_node_t *node);
-typedef int (*init_callback_t)();
+typedef int (*init_callback_t)(dmq_node_t *dmq_node);
 
 typedef struct dmq_peer
 {
