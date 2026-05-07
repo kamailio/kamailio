@@ -25,6 +25,12 @@
 #include "dmq_funcs.h"
 #include "notification_peer.h"
 #include "../../core/dset.h"
+#include "../../core/resolve.h"
+#include "../../core/forward.h"
+#include "../../core/globals.h"
+#include "../../core/rand/kam_rand.h"
+
+extern int dmq_sl_send;
 
 /**
  * @brief register a DMQ peer
@@ -221,7 +227,7 @@ int bcast_dmq_message(dmq_peer_t *peer, str *body, dmq_node_t *except,
  * node - we send the message to this node
  * resp_cback - a response callback that gets called when the transaction is complete
  */
-int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
+int dmq_tm_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type)
 {
 	uac_req_t uac_r;
@@ -580,4 +586,165 @@ void ping_servers(unsigned int ticks, void *param)
 str get_dmq_server_socket()
 {
 	return dmq_server_socket;
+}
+
+/**
+ * @brief send raw SIP message to a destination (stateless, protocol-aware)
+ */
+static int dmq_sl_send_proto(str *msg, dest_info_t *dst)
+{
+	if(dst->proto == PROTO_UDP) {
+		return udp_send(dst, msg->s, msg->len);
+	}
+
+#ifdef USE_TCP
+	else if(dst->proto == PROTO_TCP) {
+		/*tcp*/
+		return tcp_send(dst, 0, msg->s, msg->len);
+	}
+#endif
+#ifdef USE_TLS
+	else if(dst->proto == PROTO_TLS) {
+		/*tls*/
+		return tcp_send(dst, 0, msg->s, msg->len);
+	}
+#endif
+	else {
+		LM_ERR("unknown proto [%d] for sending dmq message\n", dst->proto);
+		return -1;
+	}
+}
+
+
+#define MAX_BRANCHID 9999999
+#define MIN_BRANCHID 1000000
+#define DMQ_SL_BUF_SIZE 65507
+
+int dmq_sl_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
+		int max_forwards, str *content_type)
+{
+	char buffer[DMQ_SL_BUF_SIZE];
+	str dmqmsg;
+	str sproto = STR_NULL;
+	str from = {0, 0}, to = {0, 0};
+	struct hostent *hostent;
+	socket_info_t *ssock;
+	struct dest_info dst;
+	int len;
+
+	if(!content_type) {
+		LM_ERR("content-type is null\n");
+		return -1;
+	}
+	if(!body) {
+		LM_ERR("body is null\n");
+		return -1;
+	}
+
+	if(build_uri_str(&peer->peer_id, &dmq_server_uri, &from) < 0) {
+		LM_ERR("error building from string\n");
+		goto error;
+	}
+	if(build_uri_str(&peer->peer_id, &node->uri, &to) < 0) {
+		LM_ERR("error building to string\n");
+		goto error;
+	}
+
+	if(node->uri.port_no == 0) {
+		node->uri.port_no = SIP_PORT;
+	}
+	get_valid_proto_string(node->uri.proto, 1, 1, &sproto);
+	hostent = sip_resolvehost(&node->uri.host, &node->uri.port_no, (char *)(void *)&node->uri.proto);
+	if(hostent == NULL) {
+		LM_ERR("cannot resolve destination\n");
+		goto error;
+	}
+	init_dest_info(&dst);
+	hostent2su(&dst.to, hostent, 0, node->uri.port_no);
+	ssock = lookup_local_socket(&dmq_server_socket);
+	if(ssock == NULL) {
+		LM_ERR("cannot get sending socket\n");
+		goto error;
+	}
+	dst.proto = node->uri.proto;
+	dst.send_sock = ssock;
+
+	len = snprintf(buffer, sizeof(buffer),
+			"%.*s %.*s SIP/2.0\r\n"
+			"Via: SIP/2.0/%.*s %.*s:%.*s;branch=z9hG4bK%ld\r\n"
+			"From: <%.*s>;tag=%ld\r\n"
+			"To: <%.*s>\r\n"
+			"Call-ID: %ld@%.*s\r\n"
+			"CSeq: 1 %.*s\r\n"
+			"Max-Forwards: %d\r\n"
+			"Content-Type: %.*s\r\n"
+			"Content-Length: %d\r\n\r\n"
+			"%.*s",
+			/* request line */
+			dmq_request_method.len, dmq_request_method.s,
+			to.len, to.s,
+			/* Via */
+			sproto.len, sproto.s,
+			ssock->address_str.len, ssock->address_str.s,
+			ssock->port_no_str.len, ssock->port_no_str.s,
+			(long)(kam_rand() / (float)KAM_RAND_MAX
+							* (MAX_BRANCHID - MIN_BRANCHID)
+					+ MIN_BRANCHID),
+			/* From */
+			from.len, from.s,
+			(long)(kam_rand() / (float)KAM_RAND_MAX
+							* (MAX_BRANCHID - MIN_BRANCHID)
+					+ MIN_BRANCHID),
+			/* To */
+			to.len, to.s,
+			/* Call-ID */
+			(long)(kam_rand() / (float)KAM_RAND_MAX
+							* (MAX_BRANCHID - MIN_BRANCHID)
+					+ MIN_BRANCHID),
+			ssock->address_str.len, ssock->address_str.s,
+			/* CSeq */
+			dmq_request_method.len, dmq_request_method.s,
+			/* Max-Forwards */
+			max_forwards,
+			/* Content-Type */
+			content_type->len, content_type->s,
+			/* Content-Length */
+			body->len,
+			/* body */
+			body->len, body->s);
+
+	if(len >= sizeof(buffer)) {
+		LM_ERR("dmq message is longer than %lu bytes\n",
+				(unsigned long)sizeof(buffer));
+		goto error;
+	}
+
+	LM_DBG("dmq sl request (len: %d) [[\n%.*s]]\n", len,
+			len, buffer);
+	dmqmsg.s = buffer;
+	dmqmsg.len = len;
+
+	if(dmq_sl_send_proto(&dmqmsg, &dst) < 0) {
+		LM_ERR("error sending dmq sl message\n");
+		goto error;
+	}
+
+	pkg_free(from.s);
+	pkg_free(to.s);
+	return 0;
+error:
+	if(from.s != NULL)
+		pkg_free(from.s);
+	if(to.s != NULL)
+		pkg_free(to.s);
+	return -1;
+}
+
+int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
+		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type)
+{
+	if (dmq_sl_send && !resp_cback)
+		dmq_sl_send_message(peer, body, node, max_forwards, content_type);
+	else
+		dmq_tm_send_message(peer, body, node, resp_cback, max_forwards, content_type);
 }
