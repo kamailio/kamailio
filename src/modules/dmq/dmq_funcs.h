@@ -72,4 +72,5 @@ int ki_dmq_t_replicate(struct sip_msg *msg);
 int ki_dmq_t_replicate_mode(struct sip_msg *msg, int mode);
 str get_dmq_server_socket();
 
+int build_uri_str(str *username, struct sip_uri *uri, str *from);
 #endif

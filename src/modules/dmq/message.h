@@ -38,4 +38,14 @@ int dmq_process_message(struct sip_msg *, char *str1, char *str2);
 int ki_dmq_process_message(sip_msg_t *msg);
 int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval);
 
+int dmq_process_custom(struct sip_msg *msg, char *peer, char *from,
+		char *body, char *content_type);
+int ki_dmq_process_custom(sip_msg_t *msg, str *peer, str *from,
+		str *body, str *content_type);
+
+int dmq_handle_custom(struct sip_msg *msg, char *peer, char *from,
+		char *body, char *content_type);
+int ki_dmq_handle_custom(sip_msg_t *msg, str *peer, str *from,
+		str *body, str *content_type);
+
 #endif
