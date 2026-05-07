@@ -80,6 +80,8 @@
 			+ (((unsigned int)(unsigned char)*((val) + 2)) << 16) \
 			+ (((unsigned int)(unsigned char)*((val) + 3)) << 24))
 
+#define HAVE_CHARS(_p, _n) ((end - (_p)) >= (_n))
+
 
 #define name_CASE                  \
 	switch(LOWER_DWORD(val)) {     \
@@ -90,15 +92,21 @@
 	}
 
 
-#define user_CASE  \
-	p += 4;        \
-	val = READ(p); \
-	name_CASE;     \
+#define user_CASE           \
+	p += 4;                 \
+	if(!HAVE_CHARS(p, 4)) { \
+		goto other;         \
+	}                       \
+	val = READ(p);          \
+	name_CASE;              \
 	goto other;
 
 
 #define real_CASE               \
 	p += 4;                     \
+	if(!HAVE_CHARS(p, 1)) {     \
+		goto other;             \
+	}                           \
 	if(LOWER_BYTE(*p) == 'm') { \
 		*_type = PAR_REALM;     \
 		p++;                    \
@@ -108,6 +116,9 @@
 
 #define nonc_CASE               \
 	p += 4;                     \
+	if(!HAVE_CHARS(p, 1)) {     \
+		goto other;             \
+	}                           \
 	if(LOWER_BYTE(*p) == 'e') { \
 		*_type = PAR_NONCE;     \
 		p++;                    \
@@ -124,15 +135,21 @@
 	}
 
 
-#define resp_CASE  \
-	p += 4;        \
-	val = READ(p); \
-	onse_CASE;     \
+#define resp_CASE           \
+	p += 4;                 \
+	if(!HAVE_CHARS(p, 4)) { \
+		goto other;         \
+	}                       \
+	val = READ(p);          \
+	onse_CASE;              \
 	goto other;
 
 
 #define cnon_CASE                   \
 	p += 4;                         \
+	if(!HAVE_CHARS(p, 2)) {         \
+		goto other;                 \
+	}                               \
 	if(LOWER_BYTE(*p) == 'c') {     \
 		p++;                        \
 		if(LOWER_BYTE(*p) == 'e') { \
@@ -146,6 +163,9 @@
 
 #define opaq_CASE                   \
 	p += 4;                         \
+	if(!HAVE_CHARS(p, 2)) {         \
+		goto other;                 \
+	}                               \
 	if(LOWER_BYTE(*p) == 'u') {     \
 		p++;                        \
 		if(LOWER_BYTE(*p) == 'e') { \
@@ -161,6 +181,9 @@
 	switch(LOWER_DWORD(val)) {          \
 		case _rith_:                    \
 			p += 4;                     \
+			if(!HAVE_CHARS(p, 1)) {     \
+				goto other;             \
+			}                           \
 			if(LOWER_BYTE(*p) == 'm') { \
 				*_type = PAR_ALGORITHM; \
 				p++;                    \
@@ -170,10 +193,13 @@
 	}
 
 
-#define algo_CASE  \
-	p += 4;        \
-	val = READ(p); \
-	rith_CASE;     \
+#define algo_CASE           \
+	p += 4;                 \
+	if(!HAVE_CHARS(p, 4)) { \
+		goto other;         \
+	}                       \
+	val = READ(p);          \
+	rith_CASE;              \
 	goto other
 
 
@@ -203,11 +229,10 @@ int parse_param_name(str *_s, dig_par_t *_type)
 	end = _s->s + _s->len;
 
 	p = _s->s;
-	val = READ(p);
-
 	if(_s->len < 4) {
 		goto other;
 	}
+	val = READ(p);
 
 	switch(LOWER_DWORD(val)) {
 		FIRST_QUATERNIONS;
@@ -221,7 +246,7 @@ end:
 	_s->s = p;
 
 	trim_leading(_s);
-	if(_s->s[0] == '=') {
+	if(_s->len > 0 && _s->s[0] == '=') {
 		return 0;
 	}
 
