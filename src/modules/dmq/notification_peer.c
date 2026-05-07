@@ -310,7 +310,8 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list)
 		while(server_list != NULL) {
 			LM_DBG("adding notification node %.*s\n", server_list->s.len,
 					server_list->s.s);
-			pfirst = add_dmq_node(dmq_node_list, &server_list->s);
+			if(!find_dmq_node_uri(dmq_node_list, &server_list->s)) // check for duplicates
+				pfirst = add_dmq_node(dmq_node_list, &server_list->s);
 			server_list = server_list->next;
 		}
 	} else {
