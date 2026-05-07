@@ -467,9 +467,70 @@ void rpc_dmq_remove(rpc_t *rpc, void *ctx)
 static const char *rpc_dmq_remove_doc[3] = {
 		"Remove a DMQ node", "address - the DMQ node address", 0};
 
+void rpc_dmq_add(rpc_t *rpc, void *ctx)
+{
+	str taddr = STR_NULL;
+
+	if(rpc->scan(ctx, ".S", &taddr) < 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(find_dmq_node_uri(dmq_node_list, &taddr)) {
+		rpc->fault(ctx, 500, "Node is already added");
+		return;
+	}
+	if(add_dmq_node(dmq_node_list, &taddr) == NULL) {
+		rpc->fault(ctx, 500, "Failure");
+		return;
+	}
+	rpc->rpl_printf(ctx, "Ok. DMQ node added.");
+}
+
+static const char *rpc_dmq_add_doc[3] = {
+		"Add a DMQ node", "address - the DMQ node address", 0};
+
+void rpc_dmq_change_status(rpc_t *rpc, void *ctx)
+{
+	str taddr = STR_NULL;
+	str tstatus = STR_NULL;
+	int status;
+	dmq_node_t *node;
+
+	if(rpc->scan(ctx, ".SS", &taddr, &tstatus) < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(!(status = dmq_get_status_int(&tstatus))) {
+		rpc->fault(ctx, 500, "Invalid Status - use: active, not_active, disabled");
+		return;
+	}
+	lock_get(&dmq_node_list->lock);
+	node = find_dmq_node_uri(dmq_node_list, &taddr);
+	if(node == NULL) {
+		rpc->fault(ctx, 500, "Node Not Found");
+	} else if(node->local) {
+		rpc->fault(ctx, 500, "Node is local");
+	} else if(node->status == status) {
+		rpc->rpl_printf(ctx, "Ok. DMQ node status is already %.*s.", tstatus.len, tstatus.s);
+	} else {
+		node->status = status;
+		rpc->rpl_printf(ctx, "Ok. DMQ node status changed.");
+	}
+	lock_release(&dmq_node_list->lock);
+}
+
+static const char *rpc_dmq_change_status_doc[3] = {
+		"Change the status of a DMQ node",
+		"address - the DMQ node address, status - active|not_active|disabled",
+		0};
+
 static rpc_export_t rpc_methods[] = {{"dmq.list_nodes", dmq_rpc_list_nodes,
 											 dmq_rpc_list_nodes_doc, RET_ARRAY},
-		{"dmq.remove", rpc_dmq_remove, rpc_dmq_remove_doc, 0}, {0, 0, 0, 0}};
+		{"dmq.add", rpc_dmq_add, rpc_dmq_add_doc, 0},
+		{"dmq.remove", rpc_dmq_remove, rpc_dmq_remove_doc, 0},
+		{"dmq.change_status", rpc_dmq_change_status,
+				rpc_dmq_change_status_doc, 0},
+		{0, 0, 0, 0}};
 
 /**
  *

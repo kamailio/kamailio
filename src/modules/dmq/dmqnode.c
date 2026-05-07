@@ -60,6 +60,22 @@ str *dmq_get_status_str(int status)
 }
 
 /**
+ * @brief get the integer status of the node
+ */
+int dmq_get_status_int(str *status)
+{
+	if(STR_EQ(*status, dmq_node_active_str)) {
+		return DMQ_NODE_ACTIVE;
+	} else if(STR_EQ(*status, dmq_node_not_active_str)) {
+		return DMQ_NODE_NOT_ACTIVE;
+	} else if(STR_EQ(*status, dmq_node_disabled_str)) {
+		return DMQ_NODE_DISABLED;
+	} else {
+		return 0;
+	}
+}
+
+/**
  * @brief initialize dmg node list
  */
 dmq_node_list_t *init_dmq_node_list()
@@ -121,21 +137,18 @@ str *get_param_value(param_t *params, str *param)
  */
 int set_dmq_node_params(dmq_node_t *node, param_t *params)
 {
-	str *status;
+	str *status_str;
+	int status_int;
 	if(!params) {
 		LM_DBG("no parameters given\n");
 		return 0;
 	}
-	status = get_param_value(params, &dmq_node_status_str);
-	if(status) {
-		if(STR_EQ(*status, dmq_node_active_str)) {
-			node->status = DMQ_NODE_ACTIVE;
-		} else if(STR_EQ(*status, dmq_node_not_active_str)) {
-			node->status = DMQ_NODE_NOT_ACTIVE;
-		} else if(STR_EQ(*status, dmq_node_disabled_str)) {
-			node->status = DMQ_NODE_DISABLED;
+	status_str = get_param_value(params, &dmq_node_status_str);
+	if(status_str) {
+		if(status_int = dmq_get_status_int(status_str)) {
+			node->status = status_int;
 		} else {
-			LM_ERR("invalid status parameter: %.*s\n", STR_FMT(status));
+			LM_ERR("invalid status parameter: %.*s\n", STR_FMT(status_str));
 			goto error;
 		}
 	}

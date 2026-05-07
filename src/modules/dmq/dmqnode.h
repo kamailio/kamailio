@@ -85,6 +85,7 @@ void pkg_free_node(dmq_node_t *node);
 int set_dmq_node_params(dmq_node_t *node, param_t *params);
 
 str *dmq_get_status_str(int status);
+int dmq_get_status_int(str *status);
 int build_node_str(dmq_node_t *node, char *buf, int buflen);
 
 int reset_dmq_node_fail_count(dmq_node_list_t *list, dmq_node_t *node);
