@@ -3103,11 +3103,15 @@ static int child_init(int rank)
 	/* Iterate known RTPEngine instances - create sockets */
 	if(rank == PROC_SIPINIT) {
 		/* probe rtpengines only in first worker */
-		if(build_rtpp_socks(0, rtpengine_ping_mode))
+		if(build_rtpp_socks(0, 0))
 			return -1;
 		else {
 			if(build_rtpp_socks(0, 0))
 				return -1;
+		}
+		if(rtpengine_ping_mode) {
+			/* test the rtpengine with ping */
+			rtpengine_ping_check_timer(0, NULL);
 		}
 	}
 
@@ -4071,6 +4075,243 @@ static bencode_item_t *rtpp_function_call_ok(bencode_buffer_t *bencbuf,
 }
 
 /**
+ * @brief Context for tracking parallel UDP ping state per node.
+ */
+struct rtpe_ping_ctx
+{
+	char cookie[COOKIE_SIZE]; /* unique cookie for this ping */
+	int cookie_len;			  /* length of cookie (including trailing space) */
+	int node_idx;			  /* index into nodes[] array */
+	int responded;			  /* 0=pending, 1=pong_ok, -1=failed */
+	char msg[COOKIE_SIZE + 20]; /* cookie + "d7:command4:pinge" */
+	int msg_len;
+};
+
+/**
+ * @brief Ping multiple UDP rtpengine nodes in parallel using poll().
+ *
+ * @details Instead of pinging nodes sequentially (which can take N * timeout
+ * seconds for N dead nodes), this function sends all pings first, then uses
+ * a single poll() call to wait for responses from all nodes simultaneously.
+ * Retries are only sent to nodes that haven't responded yet.
+ *
+ * @param nodes Local copy of rtpp_node array (safe to modify without locks).
+ * @param total_nodes Total number of entries in the nodes array.
+ */
+static void rtpengine_ping_nodes_udp_parallel(
+		struct rtpp_node *nodes, int total_nodes)
+{
+	struct rtpe_ping_ctx *ctx = NULL;
+	struct pollfd *fds = NULL;
+	char recv_buf[0x10000]; /* 64KB - pong replies are small */
+	char *ck;
+	int udp_count = 0;
+	int idx, j, n, len, pending;
+	int rtpengine_retr, rtpengine_tout_ms;
+	struct timeval tv_start, tv_now;
+	long elapsed_ms, time_left_ms;
+
+	/* Count pingable UDP nodes */
+	for(idx = 0; idx < total_nodes; idx++) {
+		if(!nodes[idx].rn_displayed)
+			continue;
+		if(nodes[idx].rn_disabled
+				&& nodes[idx].rn_recheck_ticks == RTPENGINE_MAX_RECHECK_TICKS)
+			continue;
+		if(nodes[idx].rn_umode != RNU_UDP && nodes[idx].rn_umode != RNU_UDP6)
+			continue;
+		udp_count++;
+	}
+
+	if(udp_count == 0)
+		return;
+
+	/* Allocate parallel tracking arrays */
+	fds = (struct pollfd *)pkg_malloc(sizeof(struct pollfd) * udp_count);
+	ctx = (struct rtpe_ping_ctx *)pkg_malloc(
+			sizeof(struct rtpe_ping_ctx) * udp_count);
+	if(!fds || !ctx) {
+		LM_ERR("not enough pkg memory for parallel ping (%d nodes)\n",
+				udp_count);
+		if(fds)
+			pkg_free(fds);
+		if(ctx)
+			pkg_free(ctx);
+		return;
+	}
+	memset(fds, 0, sizeof(struct pollfd) * udp_count);
+	memset(ctx, 0, sizeof(struct rtpe_ping_ctx) * udp_count);
+
+	/* BUILD phase: bencode dict + cookie + drain (once per node) */
+	j = 0;
+	for(idx = 0; idx < total_nodes; idx++) {
+		if(!nodes[idx].rn_displayed)
+			continue;
+		if(nodes[idx].rn_disabled
+				&& nodes[idx].rn_recheck_ticks == RTPENGINE_MAX_RECHECK_TICKS)
+			continue;
+		if(nodes[idx].rn_umode != RNU_UDP && nodes[idx].rn_umode != RNU_UDP6)
+			continue;
+
+		ctx[j].node_idx = idx;
+		ctx[j].responded = 0;
+
+		/* Build ping message: cookie (with trailing space) + fixed bencode body */
+		ck = gencookie();
+		ctx[j].cookie_len = strlen(ck);
+		memcpy(ctx[j].cookie, ck, ctx[j].cookie_len + 1);
+		memcpy(ctx[j].msg, ctx[j].cookie, ctx[j].cookie_len);
+		memcpy(ctx[j].msg + ctx[j].cookie_len, "d7:command4:pinge", 17);
+		ctx[j].msg_len = ctx[j].cookie_len + 17;
+
+		/* Setup pollfd */
+		fds[j].fd = rtpp_socks[nodes[idx].idx];
+		fds[j].events = POLLIN;
+		fds[j].revents = 0;
+
+		/* Drain stale data from socket (once) */
+		while((poll(&fds[j], 1, 0) == 1) && (fds[j].revents & POLLIN)) {
+			recv(fds[j].fd, recv_buf, sizeof(recv_buf), 0);
+			fds[j].revents = 0;
+		}
+
+		j++;
+	}
+
+	/* Get retry/timeout config */
+	rtpengine_retr = cfg_get(rtpengine, rtpengine_cfg, rtpengine_retr);
+	rtpengine_tout_ms = cfg_get(rtpengine, rtpengine_cfg, rtpengine_tout_ms);
+
+	/* Count initial pending (exclude build failures) */
+	pending = 0;
+	for(j = 0; j < udp_count; j++) {
+		if(ctx[j].responded == 0)
+			pending++;
+	}
+
+	/* RETRY LOOP */
+	for(n = 0; n < rtpengine_retr && pending > 0; n++) {
+
+		/* SEND phase: send ping to all pending nodes */
+		for(j = 0; j < udp_count; j++) {
+			if(ctx[j].responded != 0)
+				continue;
+
+			do {
+				len = send(fds[j].fd, ctx[j].msg, ctx[j].msg_len, 0);
+			} while(len == -1 && (errno == EINTR || errno == ENOBUFS));
+
+			if(len <= 0) {
+				LM_ERR("can't send ping to RTPEngine <%s> (%s:%d)\n",
+						nodes[ctx[j].node_idx].rn_url.s, strerror(errno),
+						errno);
+				ctx[j].responded = -1;
+				fds[j].fd = -1;
+				pending--;
+			}
+		}
+
+		if(pending <= 0)
+			break;
+
+		/* RECV phase: poll all pending sockets with timeout */
+		gettimeofday(&tv_start, NULL);
+
+		while(pending > 0) {
+			/* Compute remaining time for this retry round */
+			gettimeofday(&tv_now, NULL);
+			elapsed_ms = (tv_now.tv_sec - tv_start.tv_sec) * 1000
+						 + (tv_now.tv_usec - tv_start.tv_usec) / 1000;
+			time_left_ms = rtpengine_tout_ms - elapsed_ms;
+			if(time_left_ms <= 0)
+				break;
+
+			len = poll(fds, udp_count, (int)time_left_ms);
+			if(len <= 0)
+				break; /* timeout or error */
+
+			/* Process all ready sockets */
+			for(j = 0; j < udp_count; j++) {
+				if(!(fds[j].revents & POLLIN))
+					continue;
+
+				do {
+					len = recv(fds[j].fd, recv_buf, sizeof(recv_buf) - 1, 0);
+				} while(len == -1 && errno == EINTR);
+
+				if(len <= 0) {
+					LM_ERR("recv error from RTPEngine <%s> (%s:%d)\n",
+							nodes[ctx[j].node_idx].rn_url.s, strerror(errno),
+							errno);
+					ctx[j].responded = -1;
+					fds[j].fd = -1;
+					pending--;
+					continue;
+				}
+
+				/* Match cookie (len-1 to exclude trailing space) */
+				if(len >= (ctx[j].cookie_len - 1)
+						&& memcmp(recv_buf, ctx[j].cookie,
+								   ctx[j].cookie_len - 1)
+								   == 0) {
+					/* Cookie matched - strip cookie + space */
+					bencode_buffer_t bencbuf;
+					bencode_item_t *resp_dict;
+					char *cp = recv_buf + (ctx[j].cookie_len - 1);
+					len -= (ctx[j].cookie_len - 1);
+					if(len > 0) {
+						len--;
+						cp++;
+					}
+					cp[len] = '\0';
+
+					if(!bencode_buffer_init(&bencbuf)) {
+						resp_dict = bencode_decode_expect(
+								&bencbuf, cp, len, BENCODE_DICTIONARY);
+						if(resp_dict
+								&& !bencode_dictionary_get_strcmp(
+										resp_dict, "result", "pong")) {
+							ctx[j].responded = 1; /* pong received */
+						} else {
+							ctx[j].responded = -1; /* bad response */
+						}
+						bencode_buffer_free(&bencbuf);
+					} else {
+						ctx[j].responded = -1; /* bencode init failed */
+					}
+					fds[j].fd = -1;
+					pending--;
+				} else {
+					/* Stale reply, wrong cookie - ignore, keep waiting */
+					fds[j].revents = 0;
+				}
+			}
+		}
+	}
+
+	/* APPLY RESULTS to nodes[] array */
+	for(j = 0; j < udp_count; j++) {
+		idx = ctx[j].node_idx;
+		if(ctx[j].responded == 1) {
+			/* Ping success - enable node (unless manually disabled) */
+			if(nodes[idx].rn_recheck_ticks != RTPENGINE_MAX_RECHECK_TICKS) {
+				nodes[idx].rn_disabled = 0;
+				nodes[idx].rn_recheck_ticks = RTPENGINE_MIN_RECHECK_TICKS;
+			}
+		} else {
+			/* Ping failed - disable node with timeout for recheck */
+			nodes[idx].rn_disabled = 1;
+			nodes[idx].rn_recheck_ticks =
+					get_ticks()
+					+ cfg_get(rtpengine, rtpengine_cfg, rtpengine_disable_tout);
+		}
+	}
+
+	pkg_free(fds);
+	pkg_free(ctx);
+}
+
+/**
 * @brief Timer function to check the status of rtpengine nodes.
 * Check every node in the set and if it is not responding,
 * mark it as disabled.
@@ -4136,19 +4377,21 @@ static void rtpengine_ping_check_timer(unsigned int ticks, void *param)
 	}
 	lock_release(rtpp_set_list->rset_head_lock);
 
-	/* Ping the nodes, no locks */
-	LM_DBG("Ping nodes...\n");
+	/* Ping UDP nodes in parallel, no locks */
+	rtpengine_ping_nodes_udp_parallel(nodes, total_nodes);
+
+	/* Ping non-UDP nodes sequentially (LOCAL/WS/WSS), no locks */
 	for(idx = 0; idx < total_nodes; idx++) {
-		/* Skip not needed node */
 		if(!nodes[idx].rn_displayed
 				|| (nodes[idx].rn_disabled
 						&& nodes[idx].rn_recheck_ticks
 								   == RTPENGINE_MAX_RECHECK_TICKS)) {
 			continue;
 		}
-
-		/* Ping node */
-		LM_DBG("Ping node %s\n", nodes[idx].rn_url.s);
+		/* Skip UDP nodes - already handled above */
+		if(nodes[idx].rn_umode == RNU_UDP || nodes[idx].rn_umode == RNU_UDP6) {
+			continue;
+		}
 		crt_rtpp = &nodes[idx];
 		rtpengine_iter_cb_ping(crt_rtpp, rtpp_list, &rtpp_disabled);
 	}
