@@ -599,7 +599,7 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 
 done:
 	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
-			&& new_state > old_state) {
+			&& new_state >= old_state) {
 		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0, 0);
 	}
 
@@ -1579,7 +1579,7 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 
 done:
 	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
-			&& new_state > old_state) {
+			&& new_state >= old_state) {
 		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0, 0);
 	}
 
@@ -1699,7 +1699,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	}
 
 	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
-			&& new_state > old_state) {
+			&& new_state >= old_state) {
 		dlg_dmq_replicate_action(DLG_DMQ_STATE, dlg, 0, 0);
 	}
 
