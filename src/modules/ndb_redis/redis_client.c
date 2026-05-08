@@ -96,6 +96,27 @@ static inline void cleanup_redis_context(redisc_server_t *rsrv)
 #endif
 }
 
+static inline int redisc_ensure_connected(redisc_server_t *rsrv)
+{
+	if(rsrv == NULL) {
+		return -1;
+	}
+
+	if(rsrv->ctxRedis != NULL) {
+		return 0;
+	}
+
+	LM_NOTICE("redis server %.*s has no active context, trying reconnect\n",
+			rsrv->sname->len, rsrv->sname->s);
+	if(redisc_reconnect_server(rsrv) == 0 && rsrv->ctxRedis != NULL) {
+		return 0;
+	}
+
+	LM_ERR("unable to reconnect to redis server: %.*s\n", rsrv->sname->len,
+			rsrv->sname->s);
+	return -1;
+}
+
 /**
  *
  */
@@ -839,10 +860,6 @@ int redisc_append_cmd(str *srv, str *res, str *cmd, ...)
 		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
 		goto error_cmd;
 	}
-	if(rsrv->ctxRedis == NULL) {
-		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
-		goto error_cmd;
-	}
 	if(rsrv->piped.pending_commands >= MAXIMUM_PIPELINED_COMMANDS) {
 		LM_ERR("Too many pipelined commands, maximum is %d\n",
 				MAXIMUM_PIPELINED_COMMANDS);
@@ -895,10 +912,6 @@ int redisc_exec_pipelined_cmd(str *srv)
 		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
 		return -1;
 	}
-	if(rsrv->ctxRedis == NULL) {
-		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
-		return -1;
-	}
 	return redisc_exec_pipelined(rsrv);
 }
 
@@ -908,6 +921,10 @@ int redisc_exec_pipelined_cmd(str *srv)
 int redisc_create_pipelined_message(redisc_server_t *rsrv)
 {
 	int i;
+
+	if(redisc_ensure_connected(rsrv) < 0) {
+		return -1;
+	}
 
 	if(rsrv->ctxRedis->err) {
 		LOG(ndb_redis_debug, "Reconnecting server because of error %d: \"%s\"",
@@ -958,14 +975,14 @@ int redisc_exec_pipelined(redisc_server_t *rsrv)
 		goto srv_disabled;
 	}
 
+	if(redisc_ensure_connected(rsrv) < 0) {
+		redis_count_err_and_disable(rsrv);
+		goto error_exec;
+	}
+
 	if(rsrv->piped.pending_commands == 0) {
 		LM_WARN("call for redis_cmd without any pipelined commands\n");
 		return -1;
-	}
-	if(rsrv->ctxRedis == NULL) {
-		LM_ERR("no redis context for server: %.*s\n", rsrv->sname->len,
-				rsrv->sname->s);
-		goto error_exec;
 	}
 
 	/* send the commands and retrieve the first reply */
@@ -1175,14 +1192,6 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		goto error_exec;
 	}
 
-	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
-
-	if(rsrv->ctxRedis == NULL) {
-		LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
-		goto error_exec;
-	}
-	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
-
 	if(rsrv->piped.pending_commands != 0) {
 		LM_NOTICE("Calling redis_cmd with pipelined commands in the buffer."
 				  " Automatically call redis_execute");
@@ -1192,6 +1201,12 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	if(redis_check_server(rsrv)) {
 		goto srv_disabled;
 	}
+
+	if(redisc_ensure_connected(rsrv) < 0) {
+		redis_count_err_and_disable(rsrv);
+		goto error_exec;
+	}
+	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
 
 	rpl = redisc_get_reply(res);
 	if(rpl == NULL) {
@@ -1226,12 +1241,10 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	}
 
 	if(check_cluster_reply(rpl->rplRedis, &rsrv)) {
-		LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
-		if(rsrv->ctxRedis == NULL) {
-			LM_ERR("no redis context for server: %.*s\n", srv->len, srv->s);
+		if(redisc_ensure_connected(rsrv) < 0) {
+			redis_count_err_and_disable(rsrv);
 			goto error_exec;
 		}
-
 		LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
 
 		if(rpl->rplRedis != NULL) {
@@ -1318,9 +1331,7 @@ redisReply *redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
 	}
 
 	LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
-	if(rsrv->ctxRedis == NULL) {
-		LM_ERR("no redis context found for server %.*s\n",
-				(rsrv) ? rsrv->sname->len : 0, (rsrv) ? rsrv->sname->s : "");
+	if(redisc_ensure_connected(rsrv) < 0) {
 		return NULL;
 	}
 
