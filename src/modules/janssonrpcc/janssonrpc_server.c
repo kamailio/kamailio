@@ -133,6 +133,8 @@ int jsonrpc_parse_server(char *server_s, jsonrpc_server_group_t **group_ptr)
 	conn.s = NULL;
 	str addr;
 	addr.s = NULL;
+	str md5_password;
+	md5_password.s = NULL;
 	str srv;
 	srv.s = NULL;
 
@@ -165,6 +167,10 @@ int jsonrpc_parse_server(char *server_s, jsonrpc_server_group_t **group_ptr)
 		} else if PIT_MATCHES("addr") {
 			shm_str_dup(&addr, &pit->body);
 			CHECK_MALLOC(addr.s);
+
+		} else if PIT_MATCHES("md5_password") {
+			shm_str_dup(&md5_password, &pit->body);
+			CHECK_MALLOC(md5_password.s);
 
 		} else if PIT_MATCHES("port") {
 			port = atoi(pit->body.s);
@@ -223,6 +229,7 @@ int jsonrpc_parse_server(char *server_s, jsonrpc_server_group_t **group_ptr)
 		server->port = port;
 		server->priority = priority;
 		server->weight = weight;
+		server->md5_password = md5_password;
 		server->hwm = hwm;
 
 		if(jsonrpc_add_server(server, group_ptr) < 0)
