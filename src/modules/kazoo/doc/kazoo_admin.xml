@@ -470,7 +470,7 @@ modparam("kazoo", "amqp_query_timeout_micro", 200000)
 					<emphasis>Default value is NULL (no value).</emphasis>
 				</para>
 				<example>
-					<title>>Set <varname>amqp_query_timeout_avp</varname> parameter</title>
+					<title>Set <varname>amqp_query_timeout_avp</varname> parameter</title>
 					<programlisting format="linespecific">
 ...
 modparam("kazoo", "amqp_query_timeout_avp", "$var(kz_timeout)")
