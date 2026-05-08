@@ -2591,6 +2591,9 @@ rtpengine_offer();
           + label=... - adds a label to a current stream, that later can
             be used to get call quality stats, see “mos_A_label_pv” and
             “mos_B_label_pv” parameters.
+          + debug - enables debug logging (rtpengine log level 7) for this
+            call only. rtpengine will log everything related to that call
+            after parsing the flags. Useful in debugging scenarios.
        Check also the documentation of RTPEngine, these flags are
        documented there as well: https://github.com/sipwise/rtpengine.
      * via-branch - provide the via-branch taken from one of SIP message
