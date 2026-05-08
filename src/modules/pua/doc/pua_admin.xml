@@ -105,7 +105,7 @@ modparam("pua", "hash_size", 11)
 		Database url.
 		</para>
 		<para>
-		<emphasis>Default value is <quote>>&defaultdb;</quote>.
+		<emphasis>Default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
