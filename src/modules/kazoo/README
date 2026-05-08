@@ -108,7 +108,7 @@ Luis Azedo
    1.15. Set amqp_interprocess_timeout parameter
    1.16. Set amqp_waitframe_timeout parameter
    1.17. Set amqp_query_timeout parameter
-   1.18. >Set amqp_query_timeout_avp parameter
+   1.18. Set amqp_query_timeout_avp parameter
    1.19. Set db_url parameter
    1.20. Set presentity_table parameter
    1.21. Set pua_mode parameter
@@ -570,7 +570,7 @@ modparam("kazoo", "amqp_query_timeout_micro", 200000)
 
    Default value is NULL (no value).
 
-   Example 1.18. >Set amqp_query_timeout_avp parameter
+   Example 1.18. Set amqp_query_timeout_avp parameter
 ...
 modparam("kazoo", "amqp_query_timeout_avp", "$var(kz_timeout)")
 
