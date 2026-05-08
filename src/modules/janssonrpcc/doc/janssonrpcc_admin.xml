@@ -132,6 +132,9 @@ modparam("janssonrpcc", "result_pv", "$var(result)")
 						<emphasis>priority</emphasis> - server are grouped by priority. Servers with higher priority (lower number) are used first. Default is 0. (optional when using addr, invalid otherwise).
 					</listitem>
 					<listitem>
+						<emphasis>md5_password</emphasis> - password for tcp md5 authorization (optional).
+					</listitem>
+					<listitem>
 						<emphasis>weight</emphasis> - functions the same as a DNS SRV weight. Requests are distributed between servers of the same priority proportional to their weight. Default is 1. (optional when using addr, invalid otherwise).
 					</listitem>
 				</itemizedlist>

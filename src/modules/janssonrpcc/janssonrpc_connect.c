@@ -28,6 +28,10 @@
 #include <fcntl.h>
 #include <event.h>
 #include <netinet/tcp.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/route.h"
@@ -82,10 +86,10 @@ void force_disconnect(jsonrpc_server_t *server)
 	server->buffer = NULL;
 
 	server->status = JSONRPC_SERVER_DISCONNECTED;
-	if(server->keep_alive_socket_fd >= 0) {
+	if(server->socket_fd >= 0) {
 		INFO("closing socket");
-		close(server->keep_alive_socket_fd);
-		server->keep_alive_socket_fd = -1;
+		close(server->socket_fd);
+		server->socket_fd = -1;
 	}
 
 	// close bufferevent
@@ -255,10 +259,10 @@ void connect_failed(jsonrpc_server_t *server)
 
 	server->status = JSONRPC_SERVER_RECONNECTING;
 	// close socket
-	if(server->keep_alive_socket_fd >= 0) {
+	if(server->socket_fd >= 0) {
 		INFO("closing socket");
-		close(server->keep_alive_socket_fd);
-		server->keep_alive_socket_fd = -1;
+		close(server->socket_fd);
+		server->socket_fd = -1;
 	}
 	wait_server_backoff(JSONRPC_RECONNECT_INTERVAL, server, true);
 }
@@ -333,6 +337,41 @@ int set_keepalive(int fd, int keepalive, int cnt, int idle, int intvl)
 	return res;
 }
 
+int set_md5_password(int fd, str passwd, str addr_)
+{
+	struct tcp_md5sig md5sig;
+	struct addrinfo hints, *res = NULL;
+	struct sockaddr_in addr;
+	int ret;
+
+	memset(&md5sig, 0, sizeof(md5sig));
+	memset(&addr, 0, sizeof(addr));
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	ret = getaddrinfo(addr_.s, NULL, &hints, &res);
+	assert(ret == 0);
+	addr = *(struct sockaddr_in *)(res->ai_addr);
+
+	memcpy(&md5sig.tcpm_addr, &addr, sizeof(addr));
+
+	md5sig.tcpm_keylen = passwd.len;
+	if(md5sig.tcpm_keylen > TCP_MD5SIG_MAXKEYLEN) {
+		ERR("Password too long\n");
+		return -1;
+	}
+
+	memcpy(md5sig.tcpm_key, passwd.s, md5sig.tcpm_keylen);
+
+	ret = setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &md5sig, sizeof(md5sig));
+	assert(ret == 0);
+
+	freeaddrinfo(res);
+
+	return 0;
+}
+
 void bev_connect(jsonrpc_server_t *server)
 {
 	if(!server) {
@@ -340,17 +379,17 @@ void bev_connect(jsonrpc_server_t *server)
 		return;
 	}
 	int fd = -1;
-	if(jsonrpc_keep_alive > 0) {
-		if(server->keep_alive_socket_fd > 0) {
-			fd = server->keep_alive_socket_fd;
+	if(jsonrpc_keep_alive > 0 || server->md5_password.s) {
+		if(server->socket_fd > 0) {
+			fd = server->socket_fd;
 		} else {
 			INFO("setting up socket");
 			fd = socket(AF_INET, SOCK_STREAM, 0);
 			if(fd < 0) {
-				server->keep_alive_socket_fd = -1;
+				server->socket_fd = -1;
 				ERR("could not set up socket");
 			} else {
-				server->keep_alive_socket_fd = fd; // track fd to close later
+				server->socket_fd = fd; // track fd to close later
 			}
 		}
 		if(!fd_is_valid(fd)) { // make sure socket is valid
@@ -358,7 +397,7 @@ void bev_connect(jsonrpc_server_t *server)
 				close(fd);
 			}
 			fd = -1;
-			server->keep_alive_socket_fd = -1;
+			server->socket_fd = -1;
 		}
 	}
 
@@ -367,7 +406,10 @@ void bev_connect(jsonrpc_server_t *server)
 
 	if(fd > 0) {
 		set_linger(fd, 1, 0);
-		set_keepalive(fd, 1, 1, jsonrpc_keep_alive, jsonrpc_keep_alive);
+		if(jsonrpc_keep_alive > 0)
+			set_keepalive(fd, 1, 1, jsonrpc_keep_alive, jsonrpc_keep_alive);
+		if(server->md5_password.s)
+			set_md5_password(fd, server->md5_password, server->addr);
 	}
 
 	server->bev =
