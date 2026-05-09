@@ -176,22 +176,24 @@ int unescape_crlf(str *sin, str *sout)
 /*! \brief Unscape all printable ASCII characters */
 int unescape_user(str *sin, str *sout)
 {
-	char *at, *p, c;
+	char *at, c;
+	int i;
+	unsigned char h1;
+	unsigned char h2;
 
 	if(sin == NULL || sout == NULL || sin->s == NULL || sout->s == NULL
 			|| sin->len < 0 || sout->len < sin->len + 1)
 		return -1;
 
 	at = sout->s;
-	p = sin->s;
-	while(p < sin->s + sin->len) {
-		if(*p == '%') {
-			p++;
-			if(p >= sin->s + sin->len) {
+	for(i = 0; i < sin->len; i++) {
+		if(sin->s[i] == '%') {
+			if(i + 2 >= sin->len) {
 				LM_ERR("incomplete escaped sequence at end of string\n");
 				return -1;
 			}
-			switch(*p) {
+			h1 = (unsigned char)sin->s[++i];
+			switch(h1) {
 				case '0':
 				case '1':
 				case '2':
@@ -202,7 +204,7 @@ int unescape_user(str *sin, str *sout)
 				case '7':
 				case '8':
 				case '9':
-					c = (*p - '0') << 4;
+					c = (h1 - '0') << 4;
 					break;
 				case 'a':
 				case 'b':
@@ -210,7 +212,7 @@ int unescape_user(str *sin, str *sout)
 				case 'd':
 				case 'e':
 				case 'f':
-					c = (*p - 'a' + 10) << 4;
+					c = (h1 - 'a' + 10) << 4;
 					break;
 				case 'A':
 				case 'B':
@@ -218,18 +220,14 @@ int unescape_user(str *sin, str *sout)
 				case 'D':
 				case 'E':
 				case 'F':
-					c = (*p - 'A' + 10) << 4;
+					c = (h1 - 'A' + 10) << 4;
 					break;
 				default:
-					LM_ERR("invalid hex digit <%u>\n", (unsigned int)*p);
+					LM_ERR("invalid hex digit <%u>\n", (unsigned int)h1);
 					return -1;
 			}
-			p++;
-			if(p >= sin->s + sin->len) {
-				LM_ERR("incomplete escaped sequence at end of string\n");
-				return -1;
-			}
-			switch(*p) {
+			h2 = (unsigned char)sin->s[++i];
+			switch(h2) {
 				case '0':
 				case '1':
 				case '2':
@@ -240,7 +238,7 @@ int unescape_user(str *sin, str *sout)
 				case '7':
 				case '8':
 				case '9':
-					c = c + (*p - '0');
+					c = c + (h2 - '0');
 					break;
 				case 'a':
 				case 'b':
@@ -248,7 +246,7 @@ int unescape_user(str *sin, str *sout)
 				case 'd':
 				case 'e':
 				case 'f':
-					c = c + (*p - 'a' + 10);
+					c = c + (h2 - 'a' + 10);
 					break;
 				case 'A':
 				case 'B':
@@ -256,10 +254,10 @@ int unescape_user(str *sin, str *sout)
 				case 'D':
 				case 'E':
 				case 'F':
-					c = c + (*p - 'A' + 10);
+					c = c + (h2 - 'A' + 10);
 					break;
 				default:
-					LM_ERR("invalid hex digit <%u>\n", (unsigned int)*p);
+					LM_ERR("invalid hex digit <%u>\n", (unsigned int)h2);
 					return -1;
 			}
 			if((c < 32) || (c > 126)) {
@@ -268,9 +266,8 @@ int unescape_user(str *sin, str *sout)
 			}
 			*at++ = c;
 		} else {
-			*at++ = *p;
+			*at++ = sin->s[i];
 		}
-		p++;
 	}
 
 	*at = 0;
