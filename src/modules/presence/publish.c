@@ -501,9 +501,19 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 		}
 		body.len = msg->buf + msg->len - body.s;
 
-		if(pres_sphere_enable && event->evp->type == EVENT_PRESENCE
-				&& get_content_type(msg) == SUBTYPE_PIDFXML) {
-			sphere = extract_sphere(&body);
+		if(pres_sphere_enable && event->evp->type == EVENT_PRESENCE) {
+			int mime = 0;
+			mime = parse_content_type_hdr(msg);
+			if(mime < 0) {
+				LM_ERR("cannot parse Content-Type header\n");
+				reply_code = 400;
+				reply_str = pu_400a_rpl;
+				goto error;
+			}
+
+			if(mime == SUBTYPE_PIDFXML) {
+				sphere = extract_sphere(&body);
+			}
 		}
 	}
 	memset(&puri, 0, sizeof(struct sip_uri));
