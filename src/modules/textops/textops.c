@@ -3179,6 +3179,7 @@ int ki_append_multibody_cd(sip_msg_t *msg, str *txt, str *ct, str *cd)
 {
 	struct lump *l;
 	int off;
+	int mime;
 	str body = {0, 0};
 	str *nbb = NULL;
 	str delimiter = {0, 0};
@@ -3204,9 +3205,23 @@ int ki_append_multibody_cd(sip_msg_t *msg, str *txt, str *ct, str *cd)
 		return -1;
 	}
 
+	mime = parse_content_type_hdr(msg);
+	if(mime < 0) {
+		LM_ERR("failed to parse Content-Type header\n");
+		return -1;
+	}
+	if(msg->content_type == NULL) {
+		LM_ERR("missing Content-Type header for existing message body\n");
+		return -1;
+	}
+
 	off = body.s - msg->buf;
 	if((l = anchor_lump(msg, off + body.len, 0, 0)) == 0) {
-		LM_ERR("WTF\n");
+		LM_ERR("failed to anchor lump\n");
+		return -1;
+	}
+	if(mime != MIMETYPE(MULTIPART, MIXED)) {
+		LM_ERR("message body is not multipart/mixed\n");
 		return -1;
 	}
 	/* get delimiter no initial -- */
