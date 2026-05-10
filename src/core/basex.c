@@ -363,7 +363,7 @@ char *b58_decode(char *outb, int *outbszp, char *b58, int b58sz)
 	if(!b58sz)
 		b58sz = strlen(b58);
 
-	outb[outbsz - 1] = '\0';
+	outb[outbsz] = '\0';
 	memset(outi, 0, outisz * sizeof(*outi));
 
 	/* leading zeros, just count */
@@ -420,9 +420,8 @@ char *b58_decode(char *outb, int *outbszp, char *b58, int b58sz)
 	for(i = 0; i < outbsz; ++i) {
 		if(outu[i])
 			break;
-		--*outbszp;
 	}
-	*outbszp = strlen(outb + i);
+	*outbszp = (int)(outbsz - i);
 
 	return outb + i;
 }
