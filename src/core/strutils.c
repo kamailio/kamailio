@@ -907,26 +907,26 @@ int urlencode(str *sin, str *sout)
  */
 int urldecode(str *sin, str *sout)
 {
-	char *at, *p;
-	char *end;
+	char *at;
+	int i;
+
+	if(sin == NULL || sout == NULL || sin->s == NULL || sout->s == NULL
+			|| sin->len < 0 || sout->len < sin->len + 1)
+		return -1;
 
 	at = sout->s;
-	p = sin->s;
-	end = sin->s + sin->len;
-
-	while(p < end) {
-		if(*p == '%') {
-			if(p + 2 < end) {
-				*at++ = (((unsigned char)hex_to_char(p[1])) << 4)
-						| (unsigned char)hex_to_char(p[2]);
-				p += 2;
+	for(i = 0; i < sin->len; i++) {
+		if(sin->s[i] == '%') {
+			if(i + 2 < sin->len) {
+				*at++ = (((unsigned char)hex_to_char(sin->s[i + 1])) << 4)
+						| (unsigned char)hex_to_char(sin->s[i + 2]);
+				i += 2;
 			}
-		} else if(*p == '+') {
+		} else if(sin->s[i] == '+') {
 			*at++ = ' ';
 		} else {
-			*at++ = *p;
+			*at++ = sin->s[i];
 		}
-		p++;
 	}
 
 	*at = 0;
