@@ -57,7 +57,7 @@ if (has_credentials("myrealm")) {
     </section>
 	<section id="auth.f.www_challenge">
 		<title>
-			<function moreinfo="none">www_challenge(realm, flags)</function>
+			<function moreinfo="none">www_challenge(realm, flags [, algorithms])</function>
 		</title>
 		<para>
 		The function challenges a user agent. It will generate a
@@ -111,6 +111,15 @@ if (has_credentials("myrealm")) {
 			</listitem>
 			</itemizedlist>
 		</listitem>
+		<listitem>
+			<para><emphasis>algorithms</emphasis> - optional comma separated list
+			of digest hash algorithms to advertise by adding one
+			<literal>WWW-Authenticate</literal> header for each value, in the
+			provided order. Supported values are <literal>MD5</literal>,
+			<literal>SHA-256</literal>, <literal>SHA-512</literal> and
+			<literal>SHA-512-256</literal>. All generated headers share the same
+			nonce.</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -124,6 +133,11 @@ if (!www_authenticate("$td", "subscriber")) {
 	www_challenge("$td", "1");
 	exit;
 }
+
+if (!www_authenticate("$td", "subscriber")) {
+	www_challenge("$td", "1", "SHA-512-256,SHA-256,MD5");
+	exit;
+}
 ...
 </programlisting>
 		</example>
@@ -131,7 +145,7 @@ if (!www_authenticate("$td", "subscriber")) {
 
 	<section id="auth.f.proxy_challenge">
 		<title>
-			<function moreinfo="none">proxy_challenge(realm, flags)</function>
+			<function moreinfo="none">proxy_challenge(realm, flags [, algorithms])</function>
 		</title>
 		<para>
 		The function challenges a user agent. It will generate a
@@ -143,7 +157,7 @@ if (!www_authenticate("$td", "subscriber")) {
 		See module parameter force_stateless_reply regarding sending of the reply.
 		</para>
 		<para>Meaning of the parameters is the same as for function
-		www_challenge(realm, flags)</para>
+		www_challenge(realm, flags [, algorithms])</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
@@ -155,6 +169,11 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 	proxy_challenge("$fd", "1");
 	exit;
 }
+
+if (!proxy_authenticate("$fd", "subscriber")) {
+	proxy_challenge("$fd", "1", "SHA-512-256,SHA-256,MD5");
+	exit;
+}
 ...
 </programlisting>
 		</example>
@@ -162,7 +181,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 
 	<section id="auth.f.auth_challenge">
 		<title>
-			<function moreinfo="none">auth_challenge(realm, flags)</function>
+			<function moreinfo="none">auth_challenge(realm, flags [, algorithms])</function>
 		</title>
 		<para>
 		The function challenges a user agent for authentication. It combines
@@ -173,7 +192,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 		reply for the other types of SIP requests.
 		</para>
 		<para>Meaning of the parameters the same as for function
-		www_challenge(realm, flags)</para>
+		www_challenge(realm, flags [, algorithms])</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
@@ -183,6 +202,11 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
 	auth_challenge("$fd", "1");
+	exit;
+}
+
+if (!auth_check("$fd", "subscriber", "1")) {
+	auth_challenge("$fd", "1", "SHA-512-256,SHA-256,MD5");
 	exit;
 }
 ...
