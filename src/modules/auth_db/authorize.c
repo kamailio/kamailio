@@ -40,10 +40,70 @@
 #include "../../core/mod_fix.h"
 #include "../../core/mem/mem.h"
 #include "api.h"
+#include "../auth/rfc2617_sha256.h"
 #include "auth_db_mod.h"
 #include "authorize.h"
 
 #define AUTHDB_HA1BUF_SIZE 256
+
+static inline int authdb_hash_hex_len(alg_t alg)
+{
+	switch(alg) {
+		case ALG_UNSPEC:
+		case ALG_MD5:
+		case ALG_MD5SESS:
+			return HASHHEXLEN;
+		case ALG_SHA256:
+		case ALG_SHA256SESS:
+			return HASHHEXLEN_SHA256;
+		case ALG_SHA512:
+		case ALG_SHA512SESS:
+			return HASHHEXLEN_SHA512;
+		case ALG_SHA512_256:
+		case ALG_SHA512_256SESS:
+			return HASHHEXLEN_SHA512_256;
+		default:
+			return -1;
+	}
+}
+
+static inline ha_alg_t authdb_ha_alg(alg_t alg)
+{
+	switch(alg) {
+		case ALG_UNSPEC:
+		case ALG_MD5:
+			return HA_MD5;
+		case ALG_MD5SESS:
+			return HA_MD5_SESS;
+		case ALG_SHA256:
+			return HA_SHA256;
+		case ALG_SHA256SESS:
+			return HA_SHA256_SESS;
+		case ALG_SHA512:
+			return HA_SHA512;
+		case ALG_SHA512SESS:
+			return HA_SHA512_SESS;
+		case ALG_SHA512_256:
+			return HA_SHA512_256;
+		case ALG_SHA512_256SESS:
+			return HA_SHA512_256_SESS;
+		default:
+			return HA_MD5;
+	}
+}
+
+static inline int authdb_alg_is_sess(alg_t alg)
+{
+	switch(alg) {
+		case ALG_MD5SESS:
+		case ALG_SHA256SESS:
+		case ALG_SHA512SESS:
+		case ALG_SHA512_256SESS:
+			return 1;
+		default:
+			return 0;
+	}
+}
 
 int fetch_credentials(
 		sip_msg_t *msg, str *user, str *domain, str *table, int flags)
@@ -131,7 +191,8 @@ done:
 }
 
 static inline int get_ha1(struct username *_username, str *_domain,
-		const str *_table, char *_ha1, db1_res_t **res)
+		const str *_table, ha_alg_t ha_alg, int hash_hex_len, char *_ha1,
+		db1_res_t **res)
 {
 	pv_elem_t *cred;
 	db_val_t *dbv;
@@ -230,9 +291,18 @@ static inline int get_ha1(struct username *_username, str *_domain,
 		/* Only plaintext passwords are stored in database,
 		 * we have to calculate HA1 */
 		auth_api.calc_HA1(
-				HA_MD5, &_username->whole, _domain, &result, 0, 0, _ha1);
+				ha_alg, &_username->whole, _domain, &result, 0, 0, _ha1);
 		LM_DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
+		if(hash_hex_len <= 0) {
+			LM_ERR("unsupported digest algorithm for HA1\n");
+			return -1;
+		}
+		if(result.len != hash_hex_len) {
+			LM_ERR("HA1 value has invalid length: %d (expected %d)\n",
+					result.len, hash_hex_len);
+			return -1;
+		}
 		if(result.len >= AUTHDB_HA1BUF_SIZE) {
 			LM_ERR("HA1 value too long: %d (max %d)\n", result.len,
 					AUTHDB_HA1BUF_SIZE - 1);
@@ -278,6 +348,8 @@ static int digest_authenticate_hdr(sip_msg_t *msg, str *realm, str *table,
 	struct hdr_field *h = NULL;
 	auth_body_t *cred;
 	db1_res_t *result = NULL;
+	ha_alg_t ha_alg = HA_MD5;
+	int hash_hex_len = HASHHEXLEN;
 
 	cred = 0;
 	ret = AUTH_ERROR;
@@ -321,8 +393,23 @@ static int digest_authenticate_hdr(sip_msg_t *msg, str *realm, str *table,
 	}
 
 	cred = (auth_body_t *)h->parsed;
+	hash_hex_len = authdb_hash_hex_len(cred->digest.alg.alg_parsed);
+	if(hash_hex_len < 0) {
+		LM_ERR("unsupported digest algorithm: %.*s\n",
+				cred->digest.alg.alg_str.len, cred->digest.alg.alg_str.s);
+		ret = AUTH_ERROR;
+		goto end;
+	}
+	if(!calc_ha1 && authdb_alg_is_sess(cred->digest.alg.alg_parsed)) {
+		LM_ERR("precomputed HA1 values are not supported with *-sess "
+			   "digest algorithms\n");
+		ret = AUTH_ERROR;
+		goto end;
+	}
+	ha_alg = authdb_ha_alg(cred->digest.alg.alg_parsed);
 
-	rauth = get_ha1(&cred->digest.username, realm, table, ha1, &result);
+	rauth = get_ha1(&cred->digest.username, realm, table, ha_alg, hash_hex_len,
+			ha1, &result);
 	if(rauth < 0) {
 		/* Error while accessing the database */
 		ret = AUTH_ERROR;
