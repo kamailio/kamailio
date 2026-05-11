@@ -37,6 +37,7 @@
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/error.h"
+#include "../../core/trim.h"
 #include "../../core/ut.h"
 #include "../../core/pvapi.h"
 #include "../../core/lvalue.h"
@@ -97,6 +98,12 @@ static int fixup_pv_auth_check(void **param, int param_no);
 static int proxy_challenge(struct sip_msg *msg, char *realm, char *flags);
 static int www_challenge(struct sip_msg *msg, char *realm, char *flags);
 static int w_auth_challenge(struct sip_msg *msg, char *realm, char *flags);
+static int proxy_challenge_algs(
+		struct sip_msg *msg, char *realm, char *flags, char *algs);
+static int www_challenge_algs(
+		struct sip_msg *msg, char *realm, char *flags, char *algs);
+static int w_auth_challenge_algs(
+		struct sip_msg *msg, char *realm, char *flags, char *algs);
 static int fixup_auth_challenge(void **param, int param_no);
 
 static int w_auth_get_www_authenticate(
@@ -261,10 +268,19 @@ static cmd_export_t cmds[] = {
 	{"consume_credentials", w_consume_credentials, 0, 0, 0, REQUEST_ROUTE},
 	{"www_challenge", (cmd_function)www_challenge, 2, fixup_auth_challenge,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"www_challenge", (cmd_function)www_challenge_algs, 3,
+			fixup_auth_challenge, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"proxy_challenge", (cmd_function)proxy_challenge, 2,
 			fixup_auth_challenge, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"proxy_challenge", (cmd_function)proxy_challenge_algs, 3,
+			fixup_auth_challenge, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"auth_challenge", (cmd_function)w_auth_challenge, 2,
+			fixup_auth_challenge, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"auth_challenge", (cmd_function)w_auth_challenge_algs, 3,
 			fixup_auth_challenge, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"pv_www_authorize", (cmd_function)pv_www_authenticate, 3,
@@ -1175,11 +1191,124 @@ static int auth_send_reply(
 								 : _auth_slb.freply(msg, code, &reason_str);
 }
 
+static int auth_append_hf(str *dst, str *src)
+{
+	char *tmp;
+
+	if(src == NULL || src->s == NULL || src->len <= 0) {
+		return 0;
+	}
+
+	if(dst->s == NULL) {
+		dst->s = src->s;
+		dst->len = src->len;
+		src->s = NULL;
+		src->len = 0;
+		return 0;
+	}
+
+	tmp = pkg_realloc(dst->s, dst->len + src->len);
+	if(tmp == NULL) {
+		LM_ERR("no more pkg memory for challenge headers\n");
+		return -1;
+	}
+	memcpy(tmp + dst->len, src->s, src->len);
+	dst->s = tmp;
+	dst->len += src->len;
+	return 0;
+}
+
+static int auth_get_challenge_hf_list(struct sip_msg *msg, int stale,
+		str *realm, str *algs, struct qp *qop, int hftype, str *ahf)
+{
+	str hflist = STR_NULL;
+	str hf = STR_NULL;
+	str salgs;
+	str tok;
+	str snonce = STR_NULL;
+	char nonce_buf[MAX_NONCE_LEN];
+	char *comma;
+	int cfg;
+	int nonce_len;
+	const auth_alg_info_t *ainfo;
+
+	if(ahf == NULL) {
+		LM_ERR("invalid output parameter\n");
+		return -1;
+	}
+
+	if(algs == NULL || algs->s == NULL || algs->len == 0) {
+		return get_challenge_hf(msg, stale, realm, NULL,
+				(auth_algorithm.len ? &auth_algorithm : NULL), qop, hftype,
+				ahf);
+	}
+
+	cfg = get_auth_checks(msg);
+	nonce_len = MAX_NONCE_LEN;
+	if(calc_new_nonce(nonce_buf, &nonce_len, cfg, msg) != 0) {
+		LM_ERR("calc nonce failed (len %d, needed %d)\n", MAX_NONCE_LEN,
+				nonce_len);
+		return -1;
+	}
+	snonce.s = nonce_buf;
+	snonce.len = nonce_len;
+
+	salgs = *algs;
+	while(salgs.len > 0) {
+		comma = q_memchr(salgs.s, ',', salgs.len);
+		tok.s = salgs.s;
+		tok.len = (comma != NULL) ? (int)(comma - salgs.s) : salgs.len;
+		trim(&tok);
+		if(tok.len <= 0) {
+			LM_ERR("empty algorithm in challenge algorithm list\n");
+			goto error;
+		}
+		ainfo = auth_get_alg_info_by_name(&tok);
+		if(ainfo == NULL) {
+			LM_ERR("unsupported challenge algorithm: %.*s\n", tok.len, tok.s);
+			goto error;
+		}
+		if(get_challenge_hf(
+				   msg, stale, realm, &snonce, ainfo->name, qop, hftype, &hf)
+				< 0) {
+			LM_ERR("Error while creating challenge for algorithm %.*s\n",
+					ainfo->name->len, ainfo->name->s);
+			goto error;
+		}
+		if(auth_append_hf(&hflist, &hf) < 0) {
+			goto error;
+		}
+		if(hf.s != NULL) {
+			pkg_free(hf.s);
+			hf.s = NULL;
+			hf.len = 0;
+		}
+
+		if(comma == NULL) {
+			break;
+		}
+		salgs.len -= (int)(comma - salgs.s) + 1;
+		salgs.s = comma + 1;
+	}
+
+	*ahf = hflist;
+	return 0;
+
+error:
+	if(hf.s != NULL) {
+		pkg_free(hf.s);
+	}
+	if(hflist.s != NULL) {
+		pkg_free(hflist.s);
+	}
+	return -1;
+}
+
 /**
  *
  */
-int auth_challenge_helper(
-		struct sip_msg *msg, str *realm, int flags, int hftype, str *res)
+int auth_challenge_helper(struct sip_msg *msg, str *realm, int flags, str *algs,
+		int hftype, str *res)
 {
 	int ret, stale;
 	str hf = {0, 0};
@@ -1197,8 +1326,7 @@ int auth_challenge_helper(
 	} else {
 		stale = 0;
 	}
-	if(get_challenge_hf(msg, stale, realm, NULL,
-			   (auth_algorithm.len ? &auth_algorithm : NULL), qop, hftype, &hf)
+	if(auth_get_challenge_hf_list(msg, stale, realm, algs, qop, hftype, &hf)
 			< 0) {
 		LM_ERR("Error while creating challenge\n");
 		ret = -2;
@@ -1242,7 +1370,7 @@ error:
 int auth_challenge_hftype(
 		struct sip_msg *msg, str *realm, int flags, int hftype)
 {
-	return auth_challenge_helper(msg, realm, flags, hftype, NULL);
+	return auth_challenge_helper(msg, realm, flags, NULL, hftype, NULL);
 }
 
 /**
@@ -1260,7 +1388,7 @@ int auth_challenge(sip_msg_t *msg, str *realm, int flags)
 	else
 		htype = HDR_PROXYAUTH_T;
 
-	return auth_challenge_helper(msg, realm, flags, htype, NULL);
+	return auth_challenge_helper(msg, realm, flags, NULL, htype, NULL);
 }
 
 /**
@@ -1296,6 +1424,49 @@ error:
 	return -1;
 }
 
+static int proxy_challenge_algs(
+		struct sip_msg *msg, char *realm, char *flags, char *algs)
+{
+	int vflags = 0;
+	str srealm = {0, 0};
+	str salgs = {0, 0};
+
+	if(get_str_fparam(&srealm, msg, (fparam_t *)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len == 0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if(get_int_fparam(&vflags, msg, (fparam_t *)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	if(get_str_fparam(&salgs, msg, (fparam_t *)algs) < 0) {
+		LM_ERR("failed to get algorithms value\n");
+		goto error;
+	}
+
+	if(salgs.len == 0) {
+		LM_ERR("invalid algorithms value - empty content\n");
+		goto error;
+	}
+
+	return auth_challenge_helper(
+			msg, &srealm, vflags, &salgs, HDR_PROXYAUTH_T, NULL);
+
+error:
+	if(!(vflags & 4)) {
+		if(auth_send_reply(msg, 500, "Internal Server Error", 0, 0) < 0)
+			return -4;
+	}
+	return -1;
+}
+
 /**
  *
  */
@@ -1320,6 +1491,49 @@ static int www_challenge(struct sip_msg *msg, char *realm, char *flags)
 	}
 
 	return auth_challenge_hftype(msg, &srealm, vflags, HDR_AUTHORIZATION_T);
+
+error:
+	if(!(vflags & 4)) {
+		if(auth_send_reply(msg, 500, "Internal Server Error", 0, 0) < 0)
+			return -4;
+	}
+	return -1;
+}
+
+static int www_challenge_algs(
+		struct sip_msg *msg, char *realm, char *flags, char *algs)
+{
+	int vflags = 0;
+	str srealm = {0, 0};
+	str salgs = {0, 0};
+
+	if(get_str_fparam(&srealm, msg, (fparam_t *)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len == 0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if(get_int_fparam(&vflags, msg, (fparam_t *)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	if(get_str_fparam(&salgs, msg, (fparam_t *)algs) < 0) {
+		LM_ERR("failed to get algorithms value\n");
+		goto error;
+	}
+
+	if(salgs.len == 0) {
+		LM_ERR("invalid algorithms value - empty content\n");
+		goto error;
+	}
+
+	return auth_challenge_helper(
+			msg, &srealm, vflags, &salgs, HDR_AUTHORIZATION_T, NULL);
 
 error:
 	if(!(vflags & 4)) {
@@ -1385,6 +1599,58 @@ error:
 	return -1;
 }
 
+static int w_auth_challenge_algs(
+		struct sip_msg *msg, char *realm, char *flags, char *algs)
+{
+	int vflags = 0;
+	str srealm = {0, 0};
+	str salgs = {0, 0};
+	int htype;
+
+	if((msg->REQ_METHOD == METHOD_ACK) || (msg->REQ_METHOD == METHOD_CANCEL)) {
+		return 1;
+	}
+
+	if(get_str_fparam(&srealm, msg, (fparam_t *)realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		goto error;
+	}
+
+	if(srealm.len == 0) {
+		LM_ERR("invalid realm value - empty content\n");
+		goto error;
+	}
+
+	if(get_int_fparam(&vflags, msg, (fparam_t *)flags) < 0) {
+		LM_ERR("invalid flags value\n");
+		goto error;
+	}
+
+	if(get_str_fparam(&salgs, msg, (fparam_t *)algs) < 0) {
+		LM_ERR("failed to get algorithms value\n");
+		goto error;
+	}
+
+	if(salgs.len == 0) {
+		LM_ERR("invalid algorithms value - empty content\n");
+		goto error;
+	}
+
+	if(msg->REQ_METHOD == METHOD_REGISTER)
+		htype = HDR_AUTHORIZATION_T;
+	else
+		htype = HDR_PROXYAUTH_T;
+
+	return auth_challenge_helper(msg, &srealm, vflags, &salgs, htype, NULL);
+
+error:
+	if(!(vflags & 4)) {
+		if(auth_send_reply(msg, 500, "Internal Server Error", 0, 0) < 0)
+			return -4;
+	}
+	return -1;
+}
+
 
 /**
  * @brief fixup function for {www,proxy}_challenge
@@ -1398,6 +1664,7 @@ static int fixup_auth_challenge(void **param, int param_no)
 
 	switch(param_no) {
 		case 1:
+		case 3:
 			return fixup_var_str_12(param, 1);
 		case 2:
 			return fixup_var_int_12(param, 1);
@@ -1437,7 +1704,7 @@ static int w_auth_get_www_authenticate(
 	pv = (pv_spec_t *)dst;
 
 	ret = auth_challenge_helper(
-			NULL, &srealm, vflags, HDR_AUTHORIZATION_T, &hf);
+			NULL, &srealm, vflags, NULL, HDR_AUTHORIZATION_T, &hf);
 
 	if(ret < 0)
 		return ret;
@@ -1509,7 +1776,8 @@ static int ki_auth_get_www_authenticate(
 		return -1;
 	}
 
-	ret = auth_challenge_helper(NULL, realm, flags, HDR_AUTHORIZATION_T, &hf);
+	ret = auth_challenge_helper(
+			NULL, realm, flags, NULL, HDR_AUTHORIZATION_T, &hf);
 
 	if(ret < 0)
 		return ret;
