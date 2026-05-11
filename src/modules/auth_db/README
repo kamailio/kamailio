@@ -194,9 +194,11 @@ modparam("auth_db", "domain_column", "domain")
 
    This is the name of the column holding passwords. Passwords can be
    either stored as plain text or pre-calculated HA1 strings. HA1 strings
-   are MD5 hashes of username, password, and realm. HA1 strings are more
-   safe because the server doesn't need to know plaintext passwords and
-   they cannot be obtained from HA1 strings.
+   are hashes of username, password, and realm for the digest algorithm
+   used by authentication. When pre-calculated HA1 strings are used, they
+   must match the algorithm of the credentials being verified. HA1 strings
+   are safer because the server doesn't need to know plaintext passwords
+   and they cannot be obtained from HA1 strings.
 
    Default value is “ha1”.
 
@@ -233,7 +235,8 @@ modparam("auth_db", "password_column_2", "ha1_2")
    from the column given in the “password_column”parameter.
 
    If the parameter is set to 1 then the HA1 value will be calculated from
-   the column specified in the “password_column” parameter.
+   the column specified in the “password_column” parameter, using the
+   digest algorithm from the received credentials.
 
    The “password_column_2”column contain also HA1 strings but they should
    be calculated including the domain in the username parameter (as
