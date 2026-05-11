@@ -39,6 +39,14 @@
 static int auth_check_hdr_md5_default(
 		struct sip_msg *msg, auth_body_t *auth_body, auth_result_t *auth_res);
 
+static const auth_alg_info_t *auth_get_digest_alg_info(dig_cred_t *cred)
+{
+	if(cred == NULL) {
+		return auth_get_default_alg_info();
+	}
+	return auth_get_alg_info_by_parsed(cred->alg.alg_parsed);
+}
+
 /*
  * Purpose of this function is to find credentials with given realm,
  * do sanity check, validate credential correctness and determine if
@@ -157,9 +165,10 @@ static int auth_check_hdr_md5_default(
  * @returns 1 on success, 0 on error
  */
 static int add_authinfo_resp_hdr(struct sip_msg *msg, char *next_nonce,
-		int nonce_len, str qop, char *rspauth, str cnonce, str nc)
+		int nonce_len, str qop, char *rspauth, int rspauth_len, str cnonce,
+		str nc)
 {
-	str authinfo_hdr;
+	str authinfo_hdr = STR_NULL;
 	static const char authinfo_fmt[] = "Authentication-Info: "
 									   "nextnonce=\"%.*s\", "
 									   "qop=%.*s, "
@@ -168,7 +177,7 @@ static int add_authinfo_resp_hdr(struct sip_msg *msg, char *next_nonce,
 									   "nc=%.*s\r\n";
 
 	authinfo_hdr.len =
-			sizeof(authinfo_fmt) + nonce_len + qop.len + hash_hex_len
+			sizeof(authinfo_fmt) + nonce_len + qop.len + rspauth_len
 			+ cnonce.len + nc.len
 			- 20 /* format string parameters */ - 1 /* trailing \0 */;
 	authinfo_hdr.s = pkg_malloc(authinfo_hdr.len + 1);
@@ -178,7 +187,7 @@ static int add_authinfo_resp_hdr(struct sip_msg *msg, char *next_nonce,
 		goto error;
 	}
 	snprintf(authinfo_hdr.s, authinfo_hdr.len + 1, authinfo_fmt, nonce_len,
-			next_nonce, qop.len, qop.s, hash_hex_len, rspauth, cnonce.len,
+			next_nonce, qop.len, qop.s, rspauth_len, rspauth, cnonce.len,
 			cnonce.s, nc.len, nc.s);
 	LM_DBG("authinfo hdr built: %.*s", authinfo_hdr.len, authinfo_hdr.s);
 	if(add_lump_rpl(msg, authinfo_hdr.s, authinfo_hdr.len, LUMP_RPL_HDR) != 0) {
@@ -201,7 +210,8 @@ auth_result_t post_auth(struct sip_msg *msg, struct hdr_field *hdr, char *ha1)
 	int res = AUTHENTICATED;
 	auth_body_t *c;
 	dig_cred_t *d;
-	HASHHEX_SHA256 rspauth;
+	char rspauth[HASHHEXLEN_SHA512 + 1];
+	const auth_alg_info_t *ainfo;
 #ifdef USE_OT_NONCE
 	char next_nonce[MAX_NONCE_LEN];
 	int nonce_len;
@@ -230,10 +240,16 @@ auth_result_t post_auth(struct sip_msg *msg, struct hdr_field *hdr, char *ha1)
 				   "post_auth\n");
 		} else {
 			d = &c->digest;
+			ainfo = auth_get_digest_alg_info(d);
+			if(ainfo == NULL) {
+				LM_ERR("unsupported digest algorithm: %.*s\n",
+						d->alg.alg_str.len, d->alg.alg_str.s);
+				return ERROR;
+			}
 
 			/* calculate rspauth */
-			calc_response(ha1, &d->nonce, &d->nc, &d->cnonce, &d->qop.qop_str,
-					d->qop.qop_parsed == QOP_AUTHINT,
+			ainfo->calc_response(ha1, &d->nonce, &d->nc, &d->cnonce,
+					&d->qop.qop_str, d->qop.qop_parsed == QOP_AUTHINT,
 					0, /* method is empty for rspauth */
 					&d->uri,
 					NULL, /* TODO should be H(entity-body) if auth-int should be supported */
@@ -251,13 +267,15 @@ auth_result_t post_auth(struct sip_msg *msg, struct hdr_field *hdr, char *ha1)
 							(int)sizeof(next_nonce), nonce_len);
 				} else {
 					add_authinfo_resp_hdr(msg, next_nonce, nonce_len,
-							d->qop.qop_str, rspauth, d->cnonce, d->nc);
+							d->qop.qop_str, rspauth, ainfo->hash_hex_len,
+							d->cnonce, d->nc);
 				}
 			} else
 #endif
 				/* use current nonce as next nonce */
 				add_authinfo_resp_hdr(msg, d->nonce.s, d->nonce.len,
-						d->qop.qop_str, rspauth, d->cnonce, d->nc);
+						d->qop.qop_str, rspauth, ainfo->hash_hex_len, d->cnonce,
+						d->nc);
 		}
 	}
 
@@ -270,14 +288,22 @@ auth_result_t post_auth(struct sip_msg *msg, struct hdr_field *hdr, char *ha1)
  */
 int auth_check_response(dig_cred_t *cred, str *method, char *ha1)
 {
-	HASHHEX_SHA256 resp, hent;
+	char resp[HASHHEXLEN_SHA512 + 1];
+	char hent[HASHHEXLEN_SHA512 + 1];
+	const auth_alg_info_t *ainfo;
+
+	ainfo = auth_get_digest_alg_info(cred);
+	if(ainfo == NULL) {
+		LM_DBG("unsupported digest algorithm\n");
+		return BAD_CREDENTIALS;
+	}
 
 	/*
 	 * First, we have to verify that the response received has
 	 * the same length as responses created by us
 	 */
-	if(cred->response.len != hash_hex_len) {
-		LM_DBG("Receive response len != %d\n", hash_hex_len);
+	if(cred->response.len != ainfo->hash_hex_len) {
+		LM_DBG("Receive response len != %d\n", ainfo->hash_hex_len);
 		return BAD_CREDENTIALS;
 	}
 
@@ -285,7 +311,7 @@ int auth_check_response(dig_cred_t *cred, str *method, char *ha1)
 	 * Now, calculate our response from parameters received
 	 * from the user agent
 	 */
-	calc_response(ha1, &(cred->nonce), &(cred->nc), &(cred->cnonce),
+	ainfo->calc_response(ha1, &(cred->nonce), &(cred->nc), &(cred->cnonce),
 			&(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT, method,
 			&(cred->uri), hent, resp);
 
@@ -295,7 +321,7 @@ int auth_check_response(dig_cred_t *cred, str *method, char *ha1)
 	 * And simply compare the strings, the user is
 	 * authorized if they match
 	 */
-	if(!memcmp(resp, cred->response.s, hash_hex_len)) {
+	if(!memcmp(resp, cred->response.s, ainfo->hash_hex_len)) {
 		LM_DBG("Authorization is OK\n");
 		return AUTHENTICATED;
 	} else {
@@ -309,9 +335,34 @@ int auth_check_response(dig_cred_t *cred, str *method, char *ha1)
  * wrapper to calculate H(A1) as per spec
  */
 void auth_calc_HA1(ha_alg_t _alg, str *_username, str *_realm, str *_password,
-		str *_nonce, str *_cnonce, HASHHEX _sess_key)
+		str *_nonce, str *_cnonce, char *_sess_key)
 {
-	calc_HA1(_alg, _username, _realm, _password, _nonce, _cnonce, _sess_key);
+	switch(_alg) {
+		case HA_MD5:
+		case HA_MD5_SESS:
+			calc_HA1_md5(_alg, _username, _realm, _password, _nonce, _cnonce,
+					_sess_key);
+			break;
+		case HA_SHA256:
+		case HA_SHA256_SESS:
+			calc_HA1_sha256(_alg, _username, _realm, _password, _nonce, _cnonce,
+					_sess_key);
+			break;
+		case HA_SHA512:
+		case HA_SHA512_SESS:
+			calc_HA1_sha512(_alg, _username, _realm, _password, _nonce, _cnonce,
+					_sess_key);
+			break;
+		case HA_SHA512_256:
+		case HA_SHA512_256_SESS:
+			calc_HA1_sha512_256(_alg, _username, _realm, _password, _nonce,
+					_cnonce, _sess_key);
+			break;
+		default:
+			calc_HA1_md5(HA_MD5, _username, _realm, _password, _nonce, _cnonce,
+					_sess_key);
+			break;
+	}
 }
 
 /*

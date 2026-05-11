@@ -52,4 +52,17 @@ extern int hash_hex_len;
 extern calc_HA1_t calc_HA1;
 extern calc_response_t calc_response;
 
+typedef struct auth_alg_info
+{
+	str *name;
+	int hash_hex_len;
+	calc_HA1_t calc_HA1;
+	calc_response_t calc_response;
+} auth_alg_info_t;
+
+const auth_alg_info_t *auth_get_default_alg_info(void);
+const auth_alg_info_t *auth_get_alg_info_by_name(str *alg);
+const auth_alg_info_t *auth_get_alg_info_by_parsed(alg_t alg_parsed);
+ha_alg_t auth_get_ha_alg_by_parsed(alg_t alg_parsed);
+
 #endif /* AUTH_MOD_H */

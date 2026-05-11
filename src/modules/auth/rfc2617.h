@@ -44,8 +44,14 @@ typedef char HASHHEX[HASHHEXLEN + 1];
  */
 typedef enum
 {
-	HA_MD5,		/* Plain MD5 */
-	HA_MD5_SESS /* MD5-Session */
+	HA_MD5,			   /* Plain MD5 */
+	HA_MD5_SESS,	   /* MD5-Session */
+	HA_SHA256,		   /* SHA-256 */
+	HA_SHA256_SESS,	   /* SHA-256-Session */
+	HA_SHA512,		   /* SHA-512 */
+	HA_SHA512_SESS,	   /* SHA-512-Session */
+	HA_SHA512_256,	   /* SHA-512-256 */
+	HA_SHA512_256_SESS /* SHA-512-256-Session */
 } ha_alg_t;
 
 
@@ -64,7 +70,7 @@ typedef void (*calc_HA1_t)(ha_alg_t _alg, /* Type of algorithm */
 		str *_password,					  /* password */
 		str *_nonce,					  /* nonce string */
 		str *_cnonce,					  /* cnonce */
-		HASHHEX _sess_key);				  /* Result will be stored here */
+		char *_sess_key);				  /* Result will be stored here */
 void calc_HA1_md5(ha_alg_t _alg,		  /* Type of algorithm */
 		str *_username,					  /* username */
 		str *_realm,					  /* realm */

@@ -153,12 +153,101 @@ static str auth_algorithm_list[] = {
 };
 /* clang-format on */
 
+static auth_alg_info_t auth_alg_info_list[] = {
+		{&auth_algorithm_list[AUTH_ALG_MD5_IDX], HASHHEXLEN, calc_HA1_md5,
+				calc_response_md5},
+		{&auth_algorithm_list[AUTH_ALG_SHA256_IDX], HASHHEXLEN_SHA256,
+				calc_HA1_sha256, calc_response_sha256},
+		{&auth_algorithm_list[AUTH_ALG_SHA512_IDX], HASHHEXLEN_SHA512,
+				calc_HA1_sha512, calc_response_sha512},
+		{&auth_algorithm_list[AUTH_ALG_SHA512_256_IDX], HASHHEXLEN_SHA512_256,
+				calc_HA1_sha512_256, calc_response_sha512_256},
+		{NULL, 0, NULL, NULL}};
+
 int hash_hex_len;
 int add_authinfo_hdr =
 		0; /* should an Authentication-Info header be added on 200 OK responses? */
 
 calc_HA1_t calc_HA1;
 calc_response_t calc_response;
+
+const auth_alg_info_t *auth_get_default_alg_info(void)
+{
+	int i;
+
+	for(i = 0; auth_alg_info_list[i].name != NULL; i++) {
+		if(auth_algorithm.len == auth_alg_info_list[i].name->len
+				&& strncmp(auth_algorithm.s, auth_alg_info_list[i].name->s,
+						   auth_algorithm.len)
+						   == 0) {
+			return &auth_alg_info_list[i];
+		}
+	}
+	return &auth_alg_info_list[AUTH_ALG_MD5_IDX];
+}
+
+const auth_alg_info_t *auth_get_alg_info_by_name(str *alg)
+{
+	int i;
+
+	if(alg == NULL || alg->s == NULL || alg->len == 0) {
+		return &auth_alg_info_list[AUTH_ALG_MD5_IDX];
+	}
+	for(i = 0; auth_alg_info_list[i].name != NULL; i++) {
+		if(alg->len == auth_alg_info_list[i].name->len
+				&& strncmp(alg->s, auth_alg_info_list[i].name->s, alg->len)
+						   == 0) {
+			return &auth_alg_info_list[i];
+		}
+	}
+	return NULL;
+}
+
+const auth_alg_info_t *auth_get_alg_info_by_parsed(alg_t alg_parsed)
+{
+	switch(alg_parsed) {
+		case ALG_UNSPEC:
+		case ALG_MD5:
+		case ALG_MD5SESS:
+			return &auth_alg_info_list[AUTH_ALG_MD5_IDX];
+		case ALG_SHA256:
+		case ALG_SHA256SESS:
+			return &auth_alg_info_list[AUTH_ALG_SHA256_IDX];
+		case ALG_SHA512:
+		case ALG_SHA512SESS:
+			return &auth_alg_info_list[AUTH_ALG_SHA512_IDX];
+		case ALG_SHA512_256:
+		case ALG_SHA512_256SESS:
+			return &auth_alg_info_list[AUTH_ALG_SHA512_256_IDX];
+		default:
+			return NULL;
+	}
+}
+
+ha_alg_t auth_get_ha_alg_by_parsed(alg_t alg_parsed)
+{
+	switch(alg_parsed) {
+		case ALG_UNSPEC:
+		case ALG_MD5:
+			return HA_MD5;
+		case ALG_MD5SESS:
+			return HA_MD5_SESS;
+		case ALG_SHA256:
+			return HA_SHA256;
+		case ALG_SHA256SESS:
+			return HA_SHA256_SESS;
+		case ALG_SHA512:
+			return HA_SHA512;
+		case ALG_SHA512SESS:
+			return HA_SHA512_SESS;
+		case ALG_SHA512_256:
+			return HA_SHA512_256;
+		case ALG_SHA512_256SESS:
+			return HA_SHA512_256_SESS;
+		default:
+			return HA_MD5;
+	}
+}
 
 
 /*! SL API structure */
@@ -390,30 +479,20 @@ static int mod_init(void)
 #endif /* USE_OT_NONCE */
 	}
 
-	if(auth_algorithm.len == 0 || strcmp(auth_algorithm.s, "MD5") == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_MD5_IDX];
-		hash_hex_len = HASHHEXLEN;
-		calc_HA1 = calc_HA1_md5;
-		calc_response = calc_response_md5;
-	} else if(strcmp(auth_algorithm.s, "SHA-256") == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA256_IDX];
-		hash_hex_len = HASHHEXLEN_SHA256;
-		calc_HA1 = calc_HA1_sha256;
-		calc_response = calc_response_sha256;
-	} else if(strcmp(auth_algorithm.s, "SHA-512-256") == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_256_IDX];
-		hash_hex_len = HASHHEXLEN_SHA512_256;
-		calc_HA1 = calc_HA1_sha512_256;
-		calc_response = calc_response_sha512_256;
-	} else if(strcmp(auth_algorithm.s, "SHA-512") == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_IDX];
-		hash_hex_len = HASHHEXLEN_SHA512;
-		calc_HA1 = calc_HA1_sha512;
-		calc_response = calc_response_sha512;
-	} else {
-		LM_ERR("Invalid algorithm provided."
-			   " Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
-		return -1;
+	{
+		const auth_alg_info_t *ainfo;
+		ainfo = auth_get_alg_info_by_name(
+				(auth_algorithm.len > 0) ? &auth_algorithm : NULL);
+		if(ainfo == NULL) {
+			LM_ERR("Invalid algorithm provided."
+				   " Possible values are \"\", \"MD5\", \"SHA-256\","
+				   " \"SHA-512\" or \"SHA-512-256\"\n");
+			return -1;
+		}
+		auth_algorithm = *ainfo->name;
+		hash_hex_len = ainfo->hash_hex_len;
+		calc_HA1 = ainfo->calc_HA1;
+		calc_response = ainfo->calc_response;
 	}
 
 	return 0;
@@ -520,50 +599,19 @@ int w_has_credentials(sip_msg_t *msg, char *realm, char *s2)
  */
 static int ki_auth_algorithm(sip_msg_t *msg, str *alg)
 {
-	auth_algorithm = *alg;
+	const auth_alg_info_t *ainfo;
 
-	if(auth_algorithm.len == auth_algorithm_list[AUTH_ALG_MD5_IDX].len
-			&& strncmp(auth_algorithm.s,
-					   auth_algorithm_list[AUTH_ALG_MD5_IDX].s,
-					   auth_algorithm.len)
-					   == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_MD5_IDX];
-		hash_hex_len = HASHHEXLEN;
-		calc_HA1 = calc_HA1_md5;
-		calc_response = calc_response_md5;
-	} else if(auth_algorithm.len == auth_algorithm_list[AUTH_ALG_SHA256_IDX].len
-			  && strncmp(auth_algorithm.s,
-						 auth_algorithm_list[AUTH_ALG_SHA256_IDX].s,
-						 auth_algorithm.len)
-						 == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA256_IDX];
-		hash_hex_len = HASHHEXLEN_SHA256;
-		calc_HA1 = calc_HA1_sha256;
-		calc_response = calc_response_sha256;
-	} else if(auth_algorithm.len
-					  == auth_algorithm_list[AUTH_ALG_SHA512_256_IDX].len
-			  && strncmp(auth_algorithm.s,
-						 auth_algorithm_list[AUTH_ALG_SHA512_256_IDX].s,
-						 auth_algorithm.len)
-						 == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_256_IDX];
-		hash_hex_len = HASHHEXLEN_SHA512_256;
-		calc_HA1 = calc_HA1_sha512_256;
-		calc_response = calc_response_sha512_256;
-	} else if(auth_algorithm.len == auth_algorithm_list[AUTH_ALG_SHA512_IDX].len
-			  && strncmp(auth_algorithm.s,
-						 auth_algorithm_list[AUTH_ALG_SHA512_IDX].s,
-						 auth_algorithm.len)
-						 == 0) {
-		auth_algorithm = auth_algorithm_list[AUTH_ALG_SHA512_IDX];
-		hash_hex_len = HASHHEXLEN_SHA512;
-		calc_HA1 = calc_HA1_sha512;
-		calc_response = calc_response_sha512;
-	} else {
+	ainfo = auth_get_alg_info_by_name(alg);
+	if(ainfo == NULL) {
 		LM_ERR("Invalid algorithm provided."
-			   " Possible values are 'MD5', 'SHA-256' or 'SHA-512'\n");
+			   " Possible values are 'MD5', 'SHA-256', 'SHA-512' or "
+			   "'SHA-512-256'\n");
 		return -1;
 	}
+	auth_algorithm = *ainfo->name;
+	hash_hex_len = ainfo->hash_hex_len;
+	calc_HA1 = ainfo->calc_HA1;
+	calc_response = ainfo->calc_response;
 
 	return 1;
 }
@@ -610,6 +658,8 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 	static char ha1[256];
 	struct qp *qop = NULL;
 	check_auth_hdr_t check_auth_hdr = NULL;
+	const auth_alg_info_t *ainfo = NULL;
+	ha_alg_t ha_alg = HA_MD5;
 
 	cred = 0;
 	ret = AUTH_ERROR;
@@ -657,16 +707,35 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd, int flags,
 	}
 
 	cred = (auth_body_t *)h->parsed;
+	ainfo = auth_get_alg_info_by_parsed(cred->digest.alg.alg_parsed);
+	if(ainfo == NULL) {
+		LM_ERR("unsupported digest algorithm: %.*s\n",
+				cred->digest.alg.alg_str.len, cred->digest.alg.alg_str.s);
+		ret = AUTH_ERROR;
+		goto end;
+	}
+	ha_alg = auth_get_ha_alg_by_parsed(cred->digest.alg.alg_parsed);
 
 	/* compute HA1 if needed */
 	if((flags & AUTH_FLAG_PASSWDHA1) == 0) {
 		/* Plaintext password is stored in PV, calculate HA1 */
-		calc_HA1(
-				HA_MD5, &cred->digest.username.whole, realm, passwd, 0, 0, ha1);
+		ainfo->calc_HA1(
+				ha_alg, &cred->digest.username.whole, realm, passwd, 0, 0, ha1);
 		LM_DBG("HA1 string calculated: %s\n", ha1);
 	} else {
-		if(passwd->len >= (int)sizeof(ha1)) {
-			LM_ERR("HA1 value too long: %d (max %lu)\n", passwd->len,
+		if(cred->digest.alg.alg_parsed == ALG_MD5SESS
+				|| cred->digest.alg.alg_parsed == ALG_SHA256SESS
+				|| cred->digest.alg.alg_parsed == ALG_SHA512SESS
+				|| cred->digest.alg.alg_parsed == ALG_SHA512_256SESS) {
+			LM_ERR("precomputed HA1 values are not supported with *-sess "
+				   "digest algorithms\n");
+			ret = AUTH_ERROR;
+			goto end;
+		}
+		if(passwd->len != ainfo->hash_hex_len
+				|| passwd->len >= (int)sizeof(ha1)) {
+			LM_ERR("HA1 value has invalid length: %d (expected %d, max %lu)\n",
+					passwd->len, ainfo->hash_hex_len,
 					(unsigned long)(sizeof(ha1) - 1));
 			ret = AUTH_ERROR;
 			goto end;

@@ -82,7 +82,7 @@ void calc_HA1_sha256(ha_alg_t _alg, str *_username, str *_realm, str *_password,
 	SHA256_Update(&Sha256Ctx, _password->s, _password->len);
 	sr_SHA256_Final(HA1, &Sha256Ctx);
 
-	if(_alg == HA_MD5_SESS) {
+	if(_alg == HA_SHA256_SESS) {
 		sr_SHA256_Init(&Sha256Ctx);
 		sr_SHA256_Update(&Sha256Ctx, HA1, HASHLEN_SHA256);
 		SHA256_Update(&Sha256Ctx, ":", 1);
@@ -199,7 +199,7 @@ void calc_HA1_sha512(ha_alg_t _alg, str *_username, str *_realm, str *_password,
 	SHA512_Update(&Sha512Ctx, _password->s, _password->len);
 	sr_SHA512_Final(HA1, &Sha512Ctx);
 
-	if(_alg == HA_MD5_SESS) {
+	if(_alg == HA_SHA512_SESS) {
 		sr_SHA512_Init(&Sha512Ctx);
 		sr_SHA512_Update(&Sha512Ctx, HA1, HASHLEN_SHA512);
 		SHA512_Update(&Sha512Ctx, ":", 1);
@@ -316,7 +316,7 @@ void calc_HA1_sha512_256(ha_alg_t _alg, str *_username, str *_realm,
 	SHA512_256_Update(&Sha512Ctx, _password->s, _password->len);
 	sr_SHA512_256_Final(HA1, &Sha512Ctx);
 
-	if(_alg == HA_MD5_SESS) {
+	if(_alg == HA_SHA512_256_SESS) {
 		sr_SHA512_256_Init(&Sha512Ctx);
 		sr_SHA512_256_Update(&Sha512Ctx, HA1, HASHLEN_SHA512_256);
 		SHA512_256_Update(&Sha512Ctx, ":", 1);
