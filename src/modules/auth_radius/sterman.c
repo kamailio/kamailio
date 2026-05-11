@@ -229,6 +229,9 @@ int radius_authorize_sterman(
 	str method, user, user_name;
 	str *ruri;
 	int extra_cnt, offset, i;
+	size_t uname_len;
+	size_t realm_len;
+	size_t user_name_len;
 
 	send = received = 0;
 
@@ -239,6 +242,13 @@ int radius_authorize_sterman(
 
 	method = *_method;
 	user = *_user;
+
+	if(_cred->username.whole.len < 0 || _cred->username.user.len < 0
+			|| _cred->username.domain.len < 0 || _cred->realm.len < 0
+			|| _cred->nonce.len < 0 || _cred->uri.len < 0) {
+		LM_ERR("invalid negative digest field length\n");
+		return -1;
+	}
 
 	/*
 	 * Add all the user digest parameters according to the qop defined.
@@ -251,16 +261,27 @@ int radius_authorize_sterman(
 			goto err;
 		}
 	} else {
-		user_name.len = _cred->username.user.len + _cred->realm.len + 1;
-		user_name.s = pkg_mallocxz(user_name.len + 1);
+		if(_cred->username.user.s == NULL || _cred->realm.s == NULL) {
+			LM_ERR("invalid digest username or realm value\n");
+			return -1;
+		}
+		uname_len = (size_t)_cred->username.user.len;
+		realm_len = (size_t)_cred->realm.len;
+		if(uname_len > (size_t)MAX_URI_SIZE
+				|| realm_len > (size_t)MAX_URI_SIZE) {
+			LM_ERR("digest username/realm too large\n");
+			return -1;
+		}
+		user_name_len = uname_len + realm_len + 1;
+		user_name.len = (int)user_name_len;
+		user_name.s = pkg_mallocxz(user_name_len + 1);
 		if(!user_name.s) {
 			LM_ERR("no pkg memory left\n");
 			return -3;
 		}
-		memcpy(user_name.s, _cred->username.user.s, _cred->username.user.len);
-		user_name.s[_cred->username.user.len] = '@';
-		memcpy(user_name.s + _cred->username.user.len + 1, _cred->realm.s,
-				_cred->realm.len);
+		memcpy(user_name.s, _cred->username.user.s, uname_len);
+		user_name.s[uname_len] = '@';
+		memcpy(user_name.s + uname_len + 1, _cred->realm.s, realm_len);
 		if(!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user_name.s,
 				   user_name.len, 0)) {
 			LM_ERR("unable to add User-Name attribute\n");
