@@ -129,6 +129,8 @@ inline static gen_lock_t *lock_init(gen_lock_t *lock)
 
 #elif defined USE_POSIX_SEM
 #include <semaphore.h>
+#include <errno.h>
+#include "dprint.h"
 
 typedef sem_t gen_lock_t;
 
@@ -141,8 +143,30 @@ inline static gen_lock_t *lock_init(gen_lock_t *lock)
 	return lock;
 }
 
-#define lock_try(lock) sem_trywait(lock)
-#define lock_get(lock) sem_wait(lock)
+inline static int lock_try(gen_lock_t *lock)
+{
+	int ret;
+
+	do {
+		ret = sem_trywait(lock);
+		if(ret == -1 && errno != EINTR && errno != EAGAIN)
+			LM_CRIT("posix: %s (%d)\n", strerror(errno), errno);
+	} while(ret == -1 && errno == EINTR);
+
+	return ret;
+}
+
+inline static void lock_get(gen_lock_t *lock)
+{
+	while(sem_wait(lock) == -1) {
+		if(errno == EINTR) {
+			continue;
+		} else {
+			LM_CRIT("posix: %s (%d)\n", strerror(errno), errno);
+		}
+	}
+}
+
 #define lock_release(lock) sem_post(lock)
 
 
