@@ -85,6 +85,8 @@
 #define DS_DNS_MODE_TIMER  (1<<2)
 #define DS_DNS_MODE_QSRV   (1<<3)
 
+#define DS_DNS_MAX_ADDRS 32
+
 #define DS_STATE_MODE_SET  1
 #define DS_STATE_MODE_FUNC (1<<1)
 
@@ -269,7 +271,9 @@ typedef struct _ds_dest {
 	ds_latency_stats_t latency_stats; /*!< latency statistics */
 	int irmode;       /*!< internal runtime mode (flags) */
 	struct socket_info *sock; /*!< pointer to local socket */
-	struct ip_addr ip_address; 	/*!< IP of the address */
+	struct ip_addr ip_address; 	/*!< IP of the address (first resolved) */
+	struct ip_addr ip_addrs[DS_DNS_MAX_ADDRS]; /*!< all resolved IP addresses */
+	int ip_addrs_num;          /*!< number of resolved addresses in ip_addrs */
 	unsigned short int port; 	/*!< port of the URI */
 	unsigned short int proto; 	/*!< protocol of the URI */
 	int probing_count;
