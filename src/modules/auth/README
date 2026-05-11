@@ -50,9 +50,9 @@ Daniel-Constantin Mierla
 
               4.1. consume_credentials()
               4.2. has_credentials(realm)
-              4.3. www_challenge(realm, flags)
-              4.4. proxy_challenge(realm, flags)
-              4.5. auth_challenge(realm, flags)
+              4.3. www_challenge(realm, flags [, algorithms])
+              4.4. proxy_challenge(realm, flags [, algorithms])
+              4.5. auth_challenge(realm, flags [, algorithms])
               4.6. pv_www_authenticate(realm, passwd, flags [, method])
               4.7. pv_proxy_authenticate(realm, passwd, flags)
               4.8. pv_auth_check(realm, passwd, flags, checks)
@@ -121,9 +121,9 @@ Chapter 1. Admin Guide
 
         4.1. consume_credentials()
         4.2. has_credentials(realm)
-        4.3. www_challenge(realm, flags)
-        4.4. proxy_challenge(realm, flags)
-        4.5. auth_challenge(realm, flags)
+        4.3. www_challenge(realm, flags [, algorithms])
+        4.4. proxy_challenge(realm, flags [, algorithms])
+        4.5. auth_challenge(realm, flags [, algorithms])
         4.6. pv_www_authenticate(realm, passwd, flags [, method])
         4.7. pv_proxy_authenticate(realm, passwd, flags)
         4.8. pv_auth_check(realm, passwd, flags, checks)
@@ -683,9 +683,9 @@ modparam("auth", "add_authinfo_hdr", yes)
 
    4.1. consume_credentials()
    4.2. has_credentials(realm)
-   4.3. www_challenge(realm, flags)
-   4.4. proxy_challenge(realm, flags)
-   4.5. auth_challenge(realm, flags)
+   4.3. www_challenge(realm, flags [, algorithms])
+   4.4. proxy_challenge(realm, flags [, algorithms])
+   4.5. auth_challenge(realm, flags [, algorithms])
    4.6. pv_www_authenticate(realm, passwd, flags [, method])
    4.7. pv_proxy_authenticate(realm, passwd, flags)
    4.8. pv_auth_check(realm, passwd, flags, checks)
@@ -722,7 +722,7 @@ if (has_credentials("myrealm")) {
 }
 ...
 
-4.3.  www_challenge(realm, flags)
+4.3.  www_challenge(realm, flags [, algorithms])
 
    The function challenges a user agent. It will generate a WWW-Authorize
    header field containing a digest challenge, it will put the header
@@ -749,6 +749,11 @@ if (has_credentials("myrealm")) {
             automatically in failure cases (error code is returned to
             config)
           + 16 - build challenge header with stale=true
+     * algorithms - optional comma separated list of digest hash
+       algorithms to advertise by adding one WWW-Authenticate header for
+       each value, in the provided order. Supported values are MD5,
+       SHA-256, SHA-512 and SHA-512-256. All generated headers share the
+       same nonce.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -758,9 +763,14 @@ if (!www_authenticate("$td", "subscriber")) {
         www_challenge("$td", "1");
         exit;
 }
+
+if (!www_authenticate("$td", "subscriber")) {
+        www_challenge("$td", "1", "SHA-512-256,SHA-256,MD5");
+        exit;
+}
 ...
 
-4.4.  proxy_challenge(realm, flags)
+4.4.  proxy_challenge(realm, flags [, algorithms])
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it will put
@@ -771,7 +781,7 @@ if (!www_authenticate("$td", "subscriber")) {
    module parameter force_stateless_reply regarding sending of the reply.
 
    Meaning of the parameters is the same as for function
-   www_challenge(realm, flags)
+   www_challenge(realm, flags [, algorithms])
 
    This function can be used from REQUEST_ROUTE.
 
@@ -781,9 +791,14 @@ if (!proxy_authenticate("$fd", "subscriber")) {
         proxy_challenge("$fd", "1");
         exit;
 }
+
+if (!proxy_authenticate("$fd", "subscriber")) {
+        proxy_challenge("$fd", "1", "SHA-512-256,SHA-256,MD5");
+        exit;
+}
 ...
 
-4.5.  auth_challenge(realm, flags)
+4.5.  auth_challenge(realm, flags [, algorithms])
 
    The function challenges a user agent for authentication. It combines
    the functions www_challenge() and proxy_challenge(), by calling
@@ -793,7 +808,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
    reply for the other types of SIP requests.
 
    Meaning of the parameters the same as for function www_challenge(realm,
-   flags)
+   flags [, algorithms])
 
    This function can be used from REQUEST_ROUTE.
 
@@ -801,6 +816,11 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
         auth_challenge("$fd", "1");
+        exit;
+}
+
+if (!auth_check("$fd", "subscriber", "1")) {
+        auth_challenge("$fd", "1", "SHA-512-256,SHA-256,MD5");
         exit;
 }
 ...
