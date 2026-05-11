@@ -147,7 +147,7 @@ Chapter 1. Admin Guide
      * RFC3261 compliance related checks (32768 [0x8000 / 2^15]) - checks
        if the branch parameter of the first Via header starts with magic
        cookie: 'z9hG4bK'. Also checks that the lr parameter is present in
-       Record-Route headers if they are present.
+       Record-Route and Route headers if they are present.
      * size checks (65536 [0x10000 / 2^16]) - do the size checks for SIP
        message attributes (alternative to size_checks module parameter).
 
