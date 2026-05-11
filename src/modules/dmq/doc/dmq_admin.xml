@@ -654,6 +654,94 @@ modparam("dmq", "init_with_single", 1)
                 </programlisting>
                 </example>
         </section>
+        <section id="dmq.f.dmq_process_custom">
+                <title>
+                <function moreinfo="none">dmq_process_custom(peer, node, body, content_type)</function>
+                </title>
+                <para>
+				Immediately process a custom DMQ message by passing it to the appropriate
+				local peer (module).
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>peer</emphasis> - name of the local peer (module) that should handle the message.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>node</emphasis> - SIP URI of sender node.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>body</emphasis> - the message body.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>content_type</emphasis> - the MIME type of the message body.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_process_custom</function> usage</title>
+                <programlisting format="linespecific">
+...
+    dmq_process_custom("peer_id", "sip:192.168.1.101:5060;transport=tcp", "Message body...", "text/plain");
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_handle_custom">
+                <title>
+                <function moreinfo="none">dmq_handle_custom(peer, node, body, content_type)</function>
+                </title>
+                <para>
+				Similar to dmq_process_custom, but the processing is happening
+				in a DMQ worker process.
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>peer</emphasis> - name of the local peer (module) that should handle the message.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>node</emphasis> - SIP URI of sender node.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>body</emphasis> - the message body.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>content_type</emphasis> - the MIME type of the message body.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_handle_custom</function> usage</title>
+                <programlisting format="linespecific">
+...
+    dmq_handle_custom("peer_id", "sip:192.168.1.101:5060;transport=tcp", "Message body...", "text/plain");
+...
+</programlisting>
+                </example>
+        </section>
 
 	</section>
 

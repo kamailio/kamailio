@@ -116,6 +116,10 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, 0, REQUEST_ROUTE},
 	{"dmq_is_from_node", (cmd_function)cfg_dmq_is_from_node, 0,
 		0, 0, REQUEST_ROUTE},
+	{"dmq_process_custom", (cmd_function)dmq_process_custom, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"dmq_handle_custom", (cmd_function)dmq_handle_custom, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
 	{"bind_dmq", (cmd_function)bind_dmq, 0,
 		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -520,6 +524,16 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 		SR_KEMIP_INT, ki_dmq_bcast_message,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("process_custom_message"),
+		SR_KEMIP_INT, ki_dmq_process_custom,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("handle_custom_message"),
+		SR_KEMIP_INT, ki_dmq_handle_custom,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
