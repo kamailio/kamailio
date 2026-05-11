@@ -72,6 +72,7 @@ static int force_color = 0;
 static int long_format = 0;
 static int xlog_facility = DEFAULT_FACILITY;
 static char *xlog_facility_name = NULL;
+static int xlog_auto_newline = 0;
 
 /** cfg dynamic parameters */
 struct cfg_group_xlog
@@ -176,6 +177,7 @@ static param_export_t params[] = {
 	{"log_colors", PARAM_STRING | PARAM_USE_FUNC, (void *)xlog_log_colors_param},
 	{"methods_filter", PARAM_INT, &xlog_default_cfg.methods_filter},
 	{"prefix_mode", PARAM_INT, &_xlog_prefix_mode},
+	{"auto_newline", PARAM_INT, &xlog_auto_newline},
 	{0, 0, 0}
 };
 
@@ -253,6 +255,13 @@ static inline int xlog_helper(
 
 	if(xl_print_log(msg, xm->m, _xlog_buf, &txt.len) < 0)
 		return -1;
+
+	if(xlog_auto_newline != 0 && txt.len > 0 && txt.s[txt.len - 1] != '\n') {
+		if(txt.len < buf_size) {
+			txt.s[txt.len] = '\n';
+			txt.len++;
+		}
+	}
 
 	if(_xlog_prefix_mode) {
 		str _xlog_prefix_str;
