@@ -469,6 +469,25 @@ end
 </programlisting>
 		</example>
 	</section>
+	<section id="dmq.p.sl_send">
+		<title><varname>sl_send</varname>(int)</title>
+		<para>
+			A non-zero value enables stateless message sending.
+			This can be really useful when using TCP as a transport for SIP between nodes.
+			Only messages with a custom reply callback (such as "notification_peer" messages) will be sent statefully.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote> (disabled).</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sl_send</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "sl_send", 1)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
