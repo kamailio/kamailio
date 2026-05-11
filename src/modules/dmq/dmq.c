@@ -78,6 +78,7 @@ int dmq_fail_count_threshold_not_active = 0;
 int dmq_fail_count_threshold_disabled = 1;
 int dmq_init_with_single = 0;
 str dmq_event_callback = STR_NULL;
+int dmq_sl_send = 0;
 
 /* TM bind */
 struct tm_binds _dmq_tmb = {0};
@@ -141,6 +142,7 @@ static param_export_t params[] = {
 	{"fail_count_threshold_disabled", PARAM_INT, &dmq_fail_count_threshold_disabled},
 	{"init_with_single", PARAM_INT, &dmq_init_with_single},
 	{"event_callback", PARAM_STR, &dmq_event_callback},
+	{"sl_send", PARAM_INT, &dmq_sl_send},
 	{0, 0, 0}
 };
 
