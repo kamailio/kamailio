@@ -129,6 +129,7 @@ int ds_load_mode = 0;
 uint32_t ds_dns_mode = DS_DNS_MODE_INIT;
 static int ds_dns_interval = 600;
 int ds_dns_ttl = 0;
+int ds_dns_match_all = 0;
 
 str ds_outbound_proxy = STR_NULL;
 
@@ -333,6 +334,7 @@ static param_export_t params[]={
 	{"ds_dns_mode",        PARAM_INT, &ds_dns_mode},
 	{"ds_dns_interval",    PARAM_INT, &ds_dns_interval},
 	{"ds_dns_ttl",         PARAM_INT, &ds_dns_ttl},
+	{"ds_dns_match_all",   PARAM_INT, &ds_dns_match_all},
 	{0,0,0}
 };
 

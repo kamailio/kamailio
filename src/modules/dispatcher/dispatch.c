@@ -128,6 +128,7 @@ extern param_t *ds_db_extra_attrs_list;
 extern int ds_load_mode;
 extern uint32_t ds_dns_mode;
 extern int ds_dns_ttl;
+extern int ds_dns_match_all;
 extern int ds_event_callback_mode;
 
 static db_func_t ds_dbf;
@@ -157,6 +158,25 @@ void shuffle_char100array(char *arr);
 int ds_reinit_rweight_on_state_change(
 		int old_state, int new_state, ds_set_t *dset);
 
+
+/**
+ * Populate all resolved addresses from a hostent into a ds_dest_t.
+ * Stores up to DS_DNS_MAX_ADDRS addresses. The first address is also
+ * copied into dp->ip_address for backward compatibility.
+ */
+static int ds_hostent2ip_addrs(ds_dest_t *dp, struct hostent *he)
+{
+	int i;
+
+	for(i = 0; he->h_addr_list[i] != NULL && i < DS_DNS_MAX_ADDRS; i++) {
+		hostent2ip_addr(&dp->ip_addrs[i], he, i);
+	}
+	dp->ip_addrs_num = i;
+	if(i > 0) {
+		dp->ip_address = dp->ip_addrs[0];
+	}
+	return i;
+}
 
 /**
  *
@@ -753,8 +773,11 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 					puri.host.len, puri.host.s);
 			goto err;
 		} else {
-			/* Store hostent in the dispatcher structure */
-			hostent2ip_addr(&dp->ip_address, he, 0);
+			if(ds_dns_match_all) {
+				ds_hostent2ip_addrs(dp, he);
+			} else {
+				hostent2ip_addr(&dp->ip_address, he, 0);
+			}
 		}
 	}
 
@@ -4276,22 +4299,31 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		unsigned short tport, unsigned short tproto, ds_set_t *node, int mode,
 		int export_set_pv)
 {
-	ip_addr_t *ipa;
 	ip_addr_t ipaddress;
 	char hn[DS_HN_SIZE];
 	struct hostent *he;
-	int j;
+	int j, k;
+	int ip_matched;
 	int node_strictness;
 	unsigned short sport = 0;
 	char sproto = PROTO_NONE;
 
 	for(j = 0; j < node->nr; j++) {
 		if(node->dlist[j].irmode & DS_IRMODE_NOIPADDR) {
-			/* dst record using hotname with dns not done - no ip to match */
 			continue;
 		}
+		ip_matched = 0;
 		if(!(ds_dns_mode & DS_DNS_MODE_ALWAYS)) {
-			ipa = &node->dlist[j].ip_address;
+			if(ds_dns_match_all && node->dlist[j].ip_addrs_num > 0) {
+				for(k = 0; k < node->dlist[j].ip_addrs_num; k++) {
+					if(ip_addr_cmp(pipaddr, &node->dlist[j].ip_addrs[k])) {
+						ip_matched = 1;
+						break;
+					}
+				}
+			} else {
+				ip_matched = ip_addr_cmp(pipaddr, &node->dlist[j].ip_address);
+			}
 		} else {
 			dns_set_local_ttl(ds_dns_ttl);
 			if(ds_dns_mode & DS_DNS_MODE_QSRV) {
@@ -4322,13 +4354,21 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 				LM_WARN("could not resolve %.*s (skipping)\n",
 						node->dlist[j].host.len, node->dlist[j].host.s);
 				continue;
+			}
+			if(ds_dns_match_all) {
+				for(k = 0; he->h_addr_list[k] != NULL; k++) {
+					hostent2ip_addr(&ipaddress, he, k);
+					if(ip_addr_cmp(pipaddr, &ipaddress)) {
+						ip_matched = 1;
+						break;
+					}
+				}
 			} else {
-				/* Store hostent in the dispatcher structure */
 				hostent2ip_addr(&ipaddress, he, 0);
-				ipa = &ipaddress;
+				ip_matched = ip_addr_cmp(pipaddr, &ipaddress);
 			}
 		}
-		if(ip_addr_cmp(pipaddr, ipa)
+		if(ip_matched
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
 						|| tport == node->dlist[j].port
 						|| (mode & DS_MATCH_MIXSOCKPRPORT))
@@ -4422,8 +4462,9 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	char sproto = PROTO_NONE;
 	sip_uri_t puri;
 	char hn[DS_HN_SIZE];
-	struct hostent *he;
+	struct hostent *he = NULL;
 	int rc = -1;
+	int k, naddrs;
 
 	if(uri == NULL || uri->len <= 0) {
 		pipaddr = &_m->rcv.src_ip;
@@ -4464,19 +4505,45 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		pipaddr = &aipaddr;
 	}
 
+	naddrs = 0;
+	if(ds_dns_match_all && he != NULL) {
+		for(naddrs = 0; he->h_addr_list[naddrs] != NULL; naddrs++)
+			;
+	}
 
 	if(mode & DS_MATCH_MIXSOCKPRPORT) {
 		ds_strictest_match = 0;
 		ds_strictest_node = NULL;
 	}
 
-	if(group == -1) {
-		rc = ds_is_addr_from_set_r(
-				_m, pipaddr, tport, tproto, _ds_list, mode, 1);
+	if(naddrs > 1) {
+		for(k = 0; k < naddrs; k++) {
+			hostent2ip_addr(&aipaddr, he, k);
+			pipaddr = &aipaddr;
+			if(group == -1) {
+				rc = ds_is_addr_from_set_r(
+						_m, pipaddr, tport, tproto, _ds_list, mode, 1);
+			} else {
+				list = ds_avl_find(_ds_list, group);
+				if(list) {
+					rc = ds_is_addr_from_set(
+							_m, pipaddr, tport, tproto, list, mode, 0);
+				}
+			}
+			if(rc != -1) {
+				break;
+			}
+		}
 	} else {
-		list = ds_avl_find(_ds_list, group);
-		if(list) {
-			rc = ds_is_addr_from_set(_m, pipaddr, tport, tproto, list, mode, 0);
+		if(group == -1) {
+			rc = ds_is_addr_from_set_r(
+					_m, pipaddr, tport, tproto, _ds_list, mode, 1);
+		} else {
+			list = ds_avl_find(_ds_list, group);
+			if(list) {
+				rc = ds_is_addr_from_set(
+						_m, pipaddr, tport, tproto, list, mode, 0);
+			}
 		}
 	}
 
@@ -4958,8 +5025,11 @@ void ds_dns_update_set(ds_set_t *node)
 					node->dlist[j].host.s);
 			continue;
 		} else {
-			/* Store hostent in the dispatcher structure */
-			hostent2ip_addr(&node->dlist[j].ip_address, he, 0);
+			if(ds_dns_match_all) {
+				ds_hostent2ip_addrs(&node->dlist[j], he);
+			} else {
+				hostent2ip_addr(&node->dlist[j].ip_address, he, 0);
+			}
 			gettimeofday(&node->dlist[j].dnstime, NULL);
 		}
 	}
