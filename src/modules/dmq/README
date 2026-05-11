@@ -51,6 +51,7 @@ Charles Chance
               3.11. fail_count_threshold_not_active(int)
               3.12. fail_count_threshold_disabled(int)
               3.13. init_with_single(int)
+              3.14. event_callback (str)
 
         4. Functions
 
@@ -61,10 +62,16 @@ Charles Chance
               4.5. dmq_t_replicate([skip_loop_test])
               4.6. dmq_is_from_node()
 
-        5. RPC Commands
+        5. Event routes
 
-              5.1. dmq.list_nodes
-              5.2. dmq.remove
+              5.1. dmq:peer-down
+              5.2. dmq:peer-up
+              5.3. dmq:peer-disabled
+
+        6. RPC Commands
+
+              6.1. dmq.list_nodes
+              6.2. dmq.remove
 
    2. Developer Guide
 
@@ -94,14 +101,15 @@ Charles Chance
    1.12. Set fail_count_threshold_not_active parameter
    1.13. Set fail_count_threshold_disabled parameter
    1.14. Set init_with_single parameter
-   1.15. dmq_handle_message usage
-   1.16. dmq_process_message usage
-   1.17. dmq_send_message usage
-   1.18. dmq_bcast_message usage
-   1.19. dmq_t_replicate usage
-   1.20. dmq_is_from_node usage
-   1.21. dmq.list_nodes usage
-   1.22. dmq.remove usage
+   1.15. Set event_callback parameter
+   1.16. dmq_handle_message usage
+   1.17. dmq_process_message usage
+   1.18. dmq_send_message usage
+   1.19. dmq_bcast_message usage
+   1.20. dmq_t_replicate usage
+   1.21. dmq_is_from_node usage
+   1.22. dmq.list_nodes usage
+   1.23. dmq.remove usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -135,6 +143,7 @@ Chapter 1. Admin Guide
         3.11. fail_count_threshold_not_active(int)
         3.12. fail_count_threshold_disabled(int)
         3.13. init_with_single(int)
+        3.14. event_callback (str)
 
    4. Functions
 
@@ -145,10 +154,16 @@ Chapter 1. Admin Guide
         4.5. dmq_t_replicate([skip_loop_test])
         4.6. dmq_is_from_node()
 
-   5. RPC Commands
+   5. Event routes
 
-        5.1. dmq.list_nodes
-        5.2. dmq.remove
+        5.1. dmq:peer-down
+        5.2. dmq:peer-up
+        5.3. dmq:peer-disabled
+
+   6. RPC Commands
+
+        6.1. dmq.list_nodes
+        6.2. dmq.remove
 
 1. Overview
 
@@ -261,6 +276,7 @@ sip:192.168.40.17:5060;status=not_active
    3.11. fail_count_threshold_not_active(int)
    3.12. fail_count_threshold_disabled(int)
    3.13. init_with_single(int)
+   3.14. event_callback (str)
 
 3.1. server_address(str)
 
@@ -458,6 +474,28 @@ modparam("dmq", "fail_count_threshold_disabled", 105)
 modparam("dmq", "init_with_single", 1)
 ...
 
+3.14. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, …) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event,
+   the values are: dmq:peer-down, dmq:peer-up, dmq:peer-disabled.
+
+   Default value is empty (no function is executed for events).
+
+   Example 1.15. Set event_callback parameter
+...
+modparam("dmq", "event_callback", "ksr_dmq_event")
+...
+-- event callback function implemented in Lua
+function ksr_dmq_event(evname)
+        KSR.info("===== dmq module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
 4. Functions
 
    4.1. dmq_handle_message([continue])
@@ -480,7 +518,7 @@ modparam("dmq", "init_with_single", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.15. dmq_handle_message usage
+   Example 1.16. dmq_handle_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_handle_message();
@@ -501,7 +539,7 @@ modparam("dmq", "init_with_single", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.16. dmq_process_message usage
+   Example 1.17. dmq_process_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_process_message();
@@ -521,7 +559,7 @@ modparam("dmq", "init_with_single", 1)
 
    This function can be used from any route.
 
-   Example 1.17. dmq_send_message usage
+   Example 1.18. dmq_send_message usage
 ...
         dmq_send_message("channel1", "sip:10.0.0.21:5060", "Message body...", "t
 ext/plain");
@@ -539,7 +577,7 @@ ext/plain");
 
    This function can be used from any route.
 
-   Example 1.18. dmq_bcast_message usage
+   Example 1.19. dmq_bcast_message usage
 ...
     dmq_bcast_message("channel1", "Message body...", "text/plain");
 ...
@@ -561,7 +599,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.19. dmq_t_replicate usage
+   Example 1.20. dmq_t_replicate usage
 ...
     dmq_t_replicate();
 ...
@@ -573,7 +611,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.20. dmq_is_from_node usage
+   Example 1.21. dmq_is_from_node usage
 ...
         # basic example for REGISTER replication
     if(is_method("REGISTER")) {
@@ -587,28 +625,77 @@ ext/plain");
     }
 ...
 
-5. RPC Commands
+5. Event routes
 
-   5.1. dmq.list_nodes
-   5.2. dmq.remove
+   5.1. dmq:peer-down
+   5.2. dmq:peer-up
+   5.3. dmq:peer-disabled
 
-5.1. dmq.list_nodes
+5.1.  dmq:peer-down
+
+   When defined, the module calls event_route[dmq:peer-down] when a remote
+   peer (from notification_address or the learned list, not
+   server_address) transitions from active to not active (but not when it
+   becomes disabled; see dmq:peer-disabled).
+
+   Execution uses event_callback when that modparam is set, otherwise
+   event_route blocks.
+...
+event_route[dmq:peer-down] {
+        xlog("L_INFO", "DMQ peer down: $ru\n");
+}
+...
+
+5.2.  dmq:peer-up
+
+   When defined, the module calls event_route[dmq:peer-up] when such a
+   remote peer becomes active or is added as active (never for this
+   instance's own server entry).
+
+   Execution uses event_callback when that modparam is set, otherwise
+   event_route blocks.
+...
+event_route[dmq:peer-up] {
+        xlog("L_INFO", "DMQ peer up: $ru\n");
+}
+...
+
+5.3.  dmq:peer-disabled
+
+   When defined, the module calls event_route[dmq:peer-disabled] when a
+   remote peer enters the disabled state (DMQ_NODE_DISABLED), for example
+   after fail-count thresholds.
+
+   Execution uses event_callback when that modparam is set, otherwise
+   event_route blocks.
+...
+event_route[dmq:peer-disabled] {
+        xlog("L_INFO", "DMQ peer disabled: $ru\n");
+}
+...
+
+6. RPC Commands
+
+   6.1. dmq.list_nodes
+   6.2. dmq.remove
+
+6.1. dmq.list_nodes
 
    List the DMQ nodes. It has no parameters.
 
-   Example 1.21. dmq.list_nodes usage
+   Example 1.22. dmq.list_nodes usage
 ...
 kamctl rpc dmq.list_nodes
 ...
 
-5.2. dmq.remove
+6.2. dmq.remove
 
    Remove a DMQ node by address.
 
    Parameters:
      * address - the SIP address of the DMQ node to remove.
 
-   Example 1.22. dmq.remove usage
+   Example 1.23. dmq.remove usage
 ...
 kamctl rpc dmq.remove sip:1.2.3.4:5060
 ...

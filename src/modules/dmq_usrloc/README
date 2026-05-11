@@ -55,6 +55,7 @@ Emmanuel Schmidbauer
               3.9. replicate_cflags (int)
               3.10. usrloc_delete (int)
               3.11. usrloc_delete_expired (int)
+              3.12. dmq_peer_id (string)
 
    List of Examples
 
@@ -69,6 +70,7 @@ Emmanuel Schmidbauer
    1.9. Set replicate_cflags parameter
    1.10. Set usrloc_delete parameter
    1.11. Set usrloc_delete_expired parameter
+   1.12. Set dmq_peer_id parameter
 
 Chapter 1. Admin Guide
 
@@ -92,6 +94,7 @@ Chapter 1. Admin Guide
         3.9. replicate_cflags (int)
         3.10. usrloc_delete (int)
         3.11. usrloc_delete_expired (int)
+        3.12. dmq_peer_id (string)
 
 1. Overview
 
@@ -121,6 +124,7 @@ Chapter 1. Admin Guide
    3.9. replicate_cflags (int)
    3.10. usrloc_delete (int)
    3.11. usrloc_delete_expired (int)
+   3.12. dmq_peer_id (string)
 
 3.1. enable (int)
 
@@ -284,4 +288,17 @@ modparam("dmq_usrloc", "usrloc_delete", 0)
    Example 1.11. Set usrloc_delete_expired parameter
 ...
 modparam("dmq_usrloc", "usrloc_delete_expired", 1)
+...
+
+3.12. dmq_peer_id (string)
+
+   The DMQ peer identifier for usrloc replication. This allows customizing
+   the peer name used in DMQ communication, which can be useful to avoid
+   compatibility conflicts, and for a better partitioning.
+
+   Default value is “usrloc”.
+
+   Example 1.12. Set dmq_peer_id parameter
+...
+modparam("dmq_usrloc", "dmq_peer_id", "usrloc_6.1.1")
 ...
