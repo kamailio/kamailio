@@ -531,6 +531,7 @@ int check_self_uri(sip_uri_t *puri)
  *                 - send_info->send_flags is filled from the message
  *                 - if the send_socket member is null, a send_socket will be
  *                   chosen automatically
+ *   bindex    - branch index
  *   mbmode    - message build mode (for build_req_buf_from_sip_req())
  * WARNING: don't forget to zero-fill all the  unused members (a non-zero
  * random id along with proto==PROTO_TCP can have bad consequences, same for
@@ -539,7 +540,7 @@ int check_self_uri(sip_uri_t *puri)
  * return: 0 (E_OK) on success; negative (E_*) on failure
  */
 int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
-		struct dest_info *send_info, unsigned int mbmode)
+		struct dest_info *send_info, int bindex, unsigned int mbmode)
 {
 	unsigned int len;
 	char *buf;
@@ -598,7 +599,7 @@ int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
 		goto error;
 	}
 	msg->hash_index = hash(msg->callid->body, get_cseq(msg)->number);
-	if(!branch_builder(msg->hash_index, 0, md5, NULL, 0 /* 0-th branch */,
+	if(!branch_builder(msg->hash_index, 0, md5, NULL, bindex /* n-th branch */,
 			   msg->add_to_branch_s, &msg->add_to_branch_len)) {
 		LM_ERR("branch_builder failed\n");
 		ret = E_UNSPEC;
@@ -743,7 +744,7 @@ end:
 int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 		struct dest_info *send_info)
 {
-	return forward_request_mode(msg, dst, port, send_info, 0);
+	return forward_request_mode(msg, dst, port, send_info, 0, 0);
 }
 
 
@@ -776,7 +777,8 @@ int forward_request_uac(struct sip_msg *msg, str *dst, unsigned short port,
 
 	msg_flags_bk = msg->msg_flags;
 	msg->msg_flags |= FL_VIA_NORECEIVED;
-	ret = forward_request_mode(msg, dst, port, send_info, BUILD_NO_VIA1_UPDATE);
+	ret = forward_request_mode(
+			msg, dst, port, send_info, 0, BUILD_NO_VIA1_UPDATE);
 	msg->msg_flags = msg_flags_bk;
 
 	return ret;
@@ -785,7 +787,7 @@ int forward_request_uac(struct sip_msg *msg, str *dst, unsigned short port,
 /**
  * forward request like initial uac sender, with only one via
  */
-int forward_uac_uri(sip_msg_t *msg, str *vuri)
+int forward_uac_uri(sip_msg_t *msg, str *vuri, int bindex)
 {
 	int ret;
 	dest_info_t dst;
@@ -837,7 +839,7 @@ int forward_uac_uri(sip_msg_t *msg, str *vuri)
 	msg_flags_bk = msg->msg_flags;
 	msg->msg_flags |= FL_VIA_NORECEIVED;
 	ret = forward_request_mode(
-			msg, &u->host, u->port_no, &dst, BUILD_NO_VIA1_UPDATE);
+			msg, &u->host, u->port_no, &dst, bindex, BUILD_NO_VIA1_UPDATE);
 	msg->msg_flags = msg_flags_bk;
 
 	return ret;

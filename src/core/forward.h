@@ -85,10 +85,10 @@ int check_self_iuser(sip_uri_t *puri, str *iuser);
 int forward_request(struct sip_msg *msg, str *dst, unsigned short port,
 		struct dest_info *send_info);
 int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
-		struct dest_info *send_info, unsigned int mbmode);
+		struct dest_info *send_info, int bindex, unsigned int mbmode);
 int forward_request_uac(struct sip_msg *msg, str *dst, unsigned short port,
 		struct dest_info *send_info);
-int forward_uac_uri(sip_msg_t *msg, str *vuri);
+int forward_uac_uri(sip_msg_t *msg, str *vuri, int bindex);
 int update_sock_struct_from_via(
 		union sockaddr_union *to, struct sip_msg *msg, struct via_body *via);
 
