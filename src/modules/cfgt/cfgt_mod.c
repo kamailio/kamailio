@@ -42,11 +42,11 @@ extern int bind_cfgt(cfgt_api_t *api);
 /*! flag to protect against wrong initialization */
 unsigned _cfgt_init_flag = 0;
 _cfgt_params_t _cfgt_params = {
-		.hdr_prefix = {"NGCP%", 5},
-		.basedir = {"/tmp", 4},
-		.mask = CFGT_DP_ALL,
-		.skip_unknown = 0,
-		.route_log = 0,
+	.hdr_prefix = {"NGCP%", 5},
+	.basedir = {"/tmp", 4},
+	.mask = CFGT_DP_ALL,
+	.skip_unknown = 0,
+	.route_log = 0,
 };
 
 /* clang-format off */
