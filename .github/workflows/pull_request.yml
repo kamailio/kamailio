@@ -7,8 +7,19 @@ name: checks_pr
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 jobs:
+  depth-value:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate depth from Pull-Request commits
+        id: set_value
+        run: |
+          val=$(( ${{ github.event.pull_request.commits }} + 1 ))
+          echo "result=$val" >> .GITHUB_OUTPUT
+    outputs:
+      pr_depth: ${{ steps.set_value.outputs.result }}
   check-format:
     runs-on: ubuntu-latest
+    needs: depth-value
     permissions:
       contents: read # to fetch code (actions/checkout)
     steps:
@@ -19,8 +30,10 @@ jobs:
         with:
           target-ref: master
           clang-version: 18
+          fetch-depth: ${{ needs.depth-value.outputs.pr_depth }}
   check-cmake-format:
     runs-on: ubuntu-latest
+    needs: depth-value
     permissions:
       contents: read # to fetch code (actions/checkout)
     steps:
@@ -45,9 +58,10 @@ jobs:
         working-directory: ${{ github.workspace }}/source
         env:
           ref: ${{ github.event.pull_request.head.sha }}
-          FETCH_DEPTH: 50
+          FETCH_DEPTH: ${{ needs.depth-value.outputs.pr_depth }}
   check-commit:
     runs-on: ubuntu-latest
+    needs: depth-value
     permissions:
       contents: read # to fetch code (actions/checkout)
     steps:
@@ -69,7 +83,7 @@ jobs:
         working-directory: ${{ github.workspace }}/source
         env:
           ref: ${{ github.event.pull_request.head.sha }}
-          FETCH_DEPTH: 50
+          FETCH_DEPTH: ${{ needs.depth-value.outputs.pr_depth }}
   build:
     runs-on: ubuntu-latest
     permissions:
