@@ -312,6 +312,20 @@ static int ki_forward_uac(sip_msg_t *msg)
 }
 
 /**
+ * forward request like initial uac sender, with only one via with branch index
+ */
+static int ki_forward_uac_branch(sip_msg_t *msg, int bindex)
+{
+	int ret;
+
+	ret = forward_uac_uri(msg, NULL, bindex);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
  * forward request like initial uac sender, with only one via
  */
 static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
@@ -319,6 +333,20 @@ static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 	int ret;
 
 	ret = forward_uac_uri(msg, vuri, 0);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ * forward request like initial uac sender, with only one via with branch index
+ */
+static int ki_forward_uac_uri_branch(sip_msg_t *msg, str *vuri, int bindex)
+{
+	int ret;
+
+	ret = forward_uac_uri(msg, vuri, bindex);
 	if(ret >= 0) {
 		return 1;
 	}
@@ -1845,9 +1873,19 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("corex"), str_init("forward_uac_branch"),
+		SR_KEMIP_INT, ki_forward_uac_branch,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("corex"), str_init("forward_uac_uri"),
 		SR_KEMIP_INT, ki_forward_uac_uri,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("forward_uac_uri_branch"),
+		SR_KEMIP_INT, ki_forward_uac_uri_branch,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
