@@ -982,13 +982,15 @@ event_route[dispatcher:dst-down] {
     </section>
 	<section id="corex.f.forward_uac">
 		<title>
-			<function moreinfo="none">forward_uac()</function>
+			<function moreinfo="none">forward_uac([bindex])</function>
 		</title>
         <para>
 			Forward received request with a single Via header, the one added
 			by &kamailio;, the other ones being removed. Useful in cases when
 			its reply should not be sent back (e.g., the reply was already sent
-			out from &kamailio;).
+			out from &kamailio;). The optional bindex parameter can be used to
+			set a branch index in the local Via branch parameter (can be a number
+			or a variable).
         </para>
         <para>
         This function can be used in REQUEST_ROUTE.
@@ -1010,18 +1012,20 @@ request_route {
     </section>
 	<section id="corex.f.forward_uac_uri">
 		<title>
-			<function moreinfo="none">forward_uac_uri(vuri)</function>
+			<function moreinfo="none">forward_uac_uri(vuri [, bindex])</function>
 		</title>
         <para>
 			Similar to forward_uac() with the posibility to provide the target
 			address as a SIP URI via the parameter vuri. The parameter vuri can
-			contain variables.
+			contain variables. The optional bindex parameter can be used to
+			set a branch index in the local Via branch parameter (can be a number
+			or a variable).
         </para>
         <para>
         This function can be used in REQUEST_ROUTE.
         </para>
         <example>
-        <title><function>forward_uac</function> usage</title>
+        <title><function>forward_uac_uri</function> usage</title>
         <programlisting format="linespecific">
 ...
 request_route {
