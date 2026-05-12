@@ -203,6 +203,8 @@ static int fixup_dlg_refer(void **param, int param_no);
 static int fixup_dlg_bridge(void **param, int param_no);
 static int w_dlg_get(struct sip_msg *, char *, char *, char *);
 static int w_is_known_dlg(struct sip_msg *);
+static int w_dlg_remove_dialogs_from_node(
+		struct sip_msg *msg, char *uri, char *s2);
 static int w_dlg_set_ruri(sip_msg_t *, char *, char *);
 static int w_dlg_db_load_callid(sip_msg_t *msg, char *ci, char *p2);
 static int w_dlg_db_load_extra(sip_msg_t *msg, char *p1, char *p2);
@@ -277,6 +279,8 @@ static cmd_export_t cmds[]={
 	{"dlg_get",(cmd_function)w_dlg_get,                   3,fixup_dlg_bridge,
 			0, ANY_ROUTE },
 	{"is_known_dlg", (cmd_function)w_is_known_dlg,        0, NULL,
+			0, ANY_ROUTE },
+	{"dlg_remove_dialogs_from_node", (cmd_function)w_dlg_remove_dialogs_from_node, 1, fixup_spve_null,
 			0, ANY_ROUTE },
 	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  1,fixup_igp_null,
 			0, ANY_ROUTE },
@@ -2858,6 +2862,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dialog"), str_init("dlg_remove_dialogs_from_node"),
+		SR_KEMIP_INT, ki_dlg_remove_dialogs_from_node,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dialog"), str_init("dlg_set_timeout"),
 		SR_KEMIP_INT, ki_dlg_set_timeout,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -3420,6 +3429,19 @@ static void internal_rpc_profile_print_dlgs(
 static int w_is_known_dlg(sip_msg_t *msg)
 {
 	return is_known_dlg(msg);
+}
+
+static int w_dlg_remove_dialogs_from_node(
+		struct sip_msg *msg, char *uri, char *s2)
+{
+	str val;
+
+	if(fixup_get_svalue(msg, (gparam_t *)uri, &val) != 0) {
+		LM_ERR("no node_uri value\n");
+		return -1;
+	}
+
+	return ki_dlg_remove_dialogs_from_node(msg, &val);
 }
 
 static int w_dlg_set_ruri(sip_msg_t *msg, char *p1, char *p2)

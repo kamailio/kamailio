@@ -406,6 +406,8 @@ void destroy_dlg(struct dlg_cell *dlg)
 	if(dlg->toroute_name.s)
 		shm_free(dlg->toroute_name.s);
 
+	if(dlg->dmq_node_uri.s)
+		shm_free(dlg->dmq_node_uri.s);
 
 	while(dlg->vars) {
 		var = dlg->vars;

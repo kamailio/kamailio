@@ -48,4 +48,5 @@ int dlg_dmq_handle_msg(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *node);
 int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 		int needlock, dmq_node_t *node);
+int ki_dlg_remove_dialogs_from_node(sip_msg_t *msg, str *node_uri);
 #endif
