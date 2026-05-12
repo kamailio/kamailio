@@ -107,7 +107,6 @@ ref=${ref:-HEAD}
 git fetch -q "--depth=${fetch_depth}" origin "+${ref}"
 src_sha=$(git rev-parse -q --verify "${ref}") || die "fatal: couldn't find ref ${ref}"
 echo "Checking $(git rev-list --count "${src_sha}" "^${target_sha}") commits since revision ${target_sha}"
-exit 1
 for commit in $(git rev-list --reverse "${src_sha}" "^${target_sha}"); do
   COMMIT_MESSAGE_SUBJECT=$(git_log_format "${COMMIT_MESSAGE_SUBJECT_FORMAT}" "${commit}")
   check_subject "${commit}" "${COMMIT_MESSAGE_SUBJECT}"
