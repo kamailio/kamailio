@@ -14,7 +14,8 @@ jobs:
         id: set_value
         run: |
           val=$(( ${{ github.event.pull_request.commits }} + 1 ))
-          echo "result=$val" >> .GITHUB_OUTPUT
+          echo "val is $val"
+          echo "result=$val" >> "$GITHUB_OUTPUT"
     outputs:
       pr_depth: ${{ steps.set_value.outputs.result }}
   check-format:
