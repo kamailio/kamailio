@@ -440,6 +440,10 @@ char *b58_encode(char *b58, int *b58sz, char *data, int binsz)
 	ssize_t i, j, high, zcount = 0;
 	size_t size;
 
+	if(binsz > 16 * 1024 * 1024) {
+		return NULL;
+	}
+
 	while(zcount < binsz && !bin[zcount])
 		++zcount;
 
