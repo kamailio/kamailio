@@ -2695,6 +2695,46 @@ if(has_totag()) {
 		</example>
 	</section>
 
+	<section id="dialog.f.dlg_remove_dialogs_from_node">
+		<title>
+		<function moreinfo="none">dlg_remove_dialogs_from_node(node_uri)</function>
+		</title>
+		<para>
+			Remove all dialogs that were synced via DMQ from a specific
+			node, identified by its DMQ node URI. This is useful for
+			cleaning up stale dialogs when a DMQ peer node goes down
+			permanently and its synced dialogs are no longer needed
+			on the local node.
+		</para>
+		<para>
+			Only dialogs that have the DMQ sync flag set and whose
+			originating node URI matches the provided argument will
+			be removed. Locally created dialogs and dialogs synced
+			from other nodes are not affected.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>node_uri</emphasis> - the DMQ node URI of
+			the peer whose dialogs should be removed (e.g.,
+			"sip:10.0.0.2:5060"). The parameter can contain
+			pseudo-variables.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_remove_dialogs_from_node()</function> usage</title>
+		<programlisting format="linespecific">
+...
+dlg_remove_dialogs_from_node("sip:10.0.0.2:5060");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dialog.f.dlg_reset_property">
 		<title>
 		<function moreinfo="none">dlg_reset_property(attr)</function>
