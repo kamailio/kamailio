@@ -304,7 +304,7 @@ static int ki_forward_uac(sip_msg_t *msg)
 {
 	int ret;
 
-	ret = forward_uac_uri(msg, NULL);
+	ret = forward_uac_uri(msg, NULL, 0);
 	if(ret >= 0) {
 		return 1;
 	}
@@ -318,7 +318,7 @@ static int ki_forward_uac_uri(sip_msg_t *msg, str *vuri)
 {
 	int ret;
 
-	ret = forward_uac_uri(msg, vuri);
+	ret = forward_uac_uri(msg, vuri, 0);
 	if(ret >= 0) {
 		return 1;
 	}
@@ -332,7 +332,7 @@ static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
 {
 	int ret;
 
-	ret = forward_uac_uri(msg, NULL);
+	ret = forward_uac_uri(msg, NULL, 0);
 	if(ret >= 0) {
 		return 1;
 	}
@@ -352,7 +352,7 @@ static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2)
 		return -1;
 	}
 
-	ret = forward_uac_uri(msg, &vuri);
+	ret = forward_uac_uri(msg, &vuri, 0);
 	if(ret >= 0) {
 		return 1;
 	}
