@@ -52,7 +52,9 @@ MODULE_VERSION
 
 static int nio_intercept = 0;
 static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2);
+static int w_forward_uac_branch(sip_msg_t *msg, char *pbindex, char *p2);
 static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2);
+static int w_forward_uac_uri_branch(sip_msg_t *msg, char *puri, char *pbindex);
 static int w_forward_reply(sip_msg_t *msg, char *p1, char *p2);
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 static int w_send_udp(sip_msg_t *msg, char *su, char *sq);
@@ -132,8 +134,12 @@ static tr_export_t mod_trans[] = {
 static cmd_export_t cmds[] = {
 	{"forward_uac", (cmd_function)w_forward_uac, 0,
 		0, 0, REQUEST_ROUTE},
+	{"forward_uac", (cmd_function)w_forward_uac_branch, 1,
+		fixup_igp_null, fixup_free_igp_null, REQUEST_ROUTE},
 	{"forward_uac_uri", (cmd_function)w_forward_uac_uri, 1,
 		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+	{"forward_uac_uri", (cmd_function)w_forward_uac_uri_branch, 2,
+		fixup_spve_igp, fixup_free_spve_igp, REQUEST_ROUTE},
 	{"forward_reply", (cmd_function)w_forward_reply, 0,
 		0, 0, CORE_ONREPLY_ROUTE},
 	{"append_branch", (cmd_function)w_append_branch, 0,
@@ -368,6 +374,26 @@ static int w_forward_uac(sip_msg_t *msg, char *p1, char *p2)
 }
 
 /**
+ * forward request like initial uac sender, with only one via and branch index
+ */
+static int w_forward_uac_branch(sip_msg_t *msg, char *pbindex, char *p2)
+{
+	int ret;
+	int vbindex = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pbindex, &vbindex)) {
+		LM_ERR("cannot get the branch index parameter\n");
+		return -1;
+	}
+
+	ret = forward_uac_uri(msg, NULL, vbindex);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
  * forward request to uri like initial uac sender, with only one via
  */
 static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2)
@@ -381,6 +407,32 @@ static int w_forward_uac_uri(sip_msg_t *msg, char *puri, char *p2)
 	}
 
 	ret = forward_uac_uri(msg, &vuri, 0);
+	if(ret >= 0) {
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ * forward request to uri like initial uac sender, with only one via and branch
+ * index
+ */
+static int w_forward_uac_uri_branch(sip_msg_t *msg, char *puri, char *pbindex)
+{
+	int ret;
+	int vbindex = 0;
+	str vuri = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)puri, &vuri)) {
+		LM_ERR("cannot get the destination parameter\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)pbindex, &vbindex)) {
+		LM_ERR("cannot get the branch index parameter\n");
+		return -1;
+	}
+
+	ret = forward_uac_uri(msg, &vuri, vbindex);
 	if(ret >= 0) {
 		return 1;
 	}
