@@ -774,6 +774,30 @@ event_route[dmq:peer-disabled] {
                 </programlisting>
                 </example>
         </section>
+        <section id="dmq.r.add">
+            <title>dmq.add</title>
+			<para>
+				Add a DMQ node.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+					<listitem>
+					<para>
+						<emphasis>address</emphasis> - the SIP address
+						of the DMQ node to add.
+					</para>
+					</listitem>
+			</itemizedlist>
+
+               <example>
+                <title>dmq.add usage</title>
+                <programlisting format="linespecific">
+...
+&kamctl; rpc dmq.add sip:1.2.3.4:5060
+...
+                </programlisting>
+                </example>
+        </section>
         <section id="dmq.r.remove">
             <title>dmq.remove</title>
 			<para>
@@ -794,6 +818,30 @@ event_route[dmq:peer-disabled] {
                 <programlisting format="linespecific">
 ...
 &kamctl; rpc dmq.remove sip:1.2.3.4:5060
+...
+                </programlisting>
+                </example>
+        </section>
+        <section id="dmq.r.change_status">
+            <title>dmq.change_status</title>
+			<para>
+				Change the status of a DMQ node.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+					<listitem>
+					<para>
+						<emphasis>address</emphasis> - the DMQ node address
+						<emphasis>status</emphasis> - active|not_active|disabled
+					</para>
+					</listitem>
+			</itemizedlist>
+
+               <example>
+                <title>dmq.change_status usage</title>
+                <programlisting format="linespecific">
+...
+&kamctl; rpc dmq.change_status sip:1.2.3.4:5060 active
 ...
                 </programlisting>
                 </example>
