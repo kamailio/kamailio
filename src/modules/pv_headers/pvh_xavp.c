@@ -713,7 +713,13 @@ xavp_c_data_t *pvh_set_parsed(
 	return c_data;
 
 err:
-	// how can I call?? pvh_xavi_free_data(c_data, shm_free);
+	if(c_data != NULL) {
+		if(c_data->value.s != NULL) {
+			shm_free(c_data->value.s);
+		}
+		shm_free(c_data);
+		c_data = NULL;
+	}
 	return NULL;
 }
 
@@ -886,6 +892,13 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 err:
 	if(pv_format)
 		pv_elem_free_all(pv_format);
+	if(c_data != NULL) {
+		if(c_data->value.s != NULL) {
+			shm_free(c_data->value.s);
+		}
+		shm_free(c_data);
+		c_data = NULL;
+	}
 	return -1;
 }
 
