@@ -251,6 +251,9 @@ end:
 	}
 
 other:
+	if(unlikely(p > end)) {
+		return -1; /* Parse error */
+	}
 	p = q_memchr(p, '=', end - p);
 	if(!p) {
 		return -1; /* Parse error */
