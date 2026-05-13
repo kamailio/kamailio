@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2026 Stefan-Cristian Mititelu (net2phone.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -26,24 +26,14 @@
  * Module: \ref topos
  */
 
-#ifndef _TOPOS_MSG_H_
-#define _TOPOS_MSG_H_
+#ifndef _TOPOS_SN_H_
+#define _TOPOS_SN_H_
 
-#include "../../core/parser/msg_parser.h"
+#include "tps_storage.h"
+#include "../../core/parser/parse_rr.h"
 
-#define TPS_SPLIT_VIA (1 << 0)
-#define TPS_SPLIT_RECORD_ROUTE (1 << 1)
-#define TPS_SPLIT_ROUTE (1 << 2)
+void tps_refresh_scontacts_from_sn(
+		tps_data_t *mtsd, tps_data_t *stsd, rr_t *srr);
+void tps_refresh_srr_from_sn(tps_data_t *mtsd, rr_t *srr);
 
-int tps_update_hdr_replaces(sip_msg_t *msg);
-char *tps_msg_update(sip_msg_t *msg, unsigned int *olen);
-int tps_skip_msg(sip_msg_t *msg);
-
-int tps_request_received(sip_msg_t *msg, int dialog);
-int tps_response_received(sip_msg_t *msg);
-int tps_request_sent(sip_msg_t *msg, int dialog, int local);
-int tps_response_sent(sip_msg_t *msg);
-int tps_mask_callid(sip_msg_t *msg);
-int tps_unmask_callid(sip_msg_t *msg);
-int tps_get_param_value(str *in, str *name, str *value);
 #endif

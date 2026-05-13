@@ -69,6 +69,8 @@ extern int _tps_methods_update_time;
 extern str _tps_context_param;
 extern str _tps_context_value;
 
+extern int _tps_sn_refresh_topology;
+
 #define TPS_STORAGE_LOCK_SIZE 1 << 9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
 
@@ -1843,6 +1845,14 @@ int tps_db_update_dialog(
 				db_ucols, db_uvals, nr_ucols, td_col_b_contact, md->b_contact);
 	}
 
+	/* persist {a,b}s_contact */
+	if(mode & TPS_DBU_SCONTACT) {
+		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols, td_col_as_contact,
+				md->as_contact);
+		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols, td_col_bs_contact,
+				md->bs_contact);
+	}
+
 	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type == SIP_REPLY) {
 		if(sd->b_tag.len <= 0 && msg->first_line.u.reply.statuscode >= 200
 				&& msg->first_line.u.reply.statuscode < 300) {
@@ -1897,6 +1907,11 @@ int tps_db_update_dialog(
 		nr_ucols++;
 	}
 
+	/* persist s_rr */
+	if(mode & TPS_DBU_SRR) {
+		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols, td_col_s_rr, md->s_rr);
+	}
+
 	if(nr_ucols == 0) {
 		return 0;
 	}
@@ -1926,10 +1941,17 @@ int tps_storage_update_dialog(
 	if(msg == NULL || md == NULL || sd == NULL)
 		return -1;
 
-	if((md->s_method_id != METHOD_INVITE)
+	/* The sn_refresh_topology feature needs writes for any
+	 * in-dialog method (except OPTIONS) */
+	if((!_tps_sn_refresh_topology) && (md->s_method_id != METHOD_INVITE)
 			&& (md->s_method_id != METHOD_SUBSCRIBE)) {
 		return 0;
 	}
+
+	if(_tps_sn_refresh_topology && (md->s_method_id == METHOD_OPTIONS)) {
+		return 0;
+	}
+
 	if(msg->first_line.type == SIP_REPLY) {
 		if(msg->first_line.u.reply.statuscode < 200
 				|| msg->first_line.u.reply.statuscode >= 300) {

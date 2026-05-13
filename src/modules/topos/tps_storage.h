@@ -48,6 +48,8 @@
 #define TPS_DBU_ARR (1 << 2)
 #define TPS_DBU_BRR (1 << 3)
 #define TPS_DBU_TIME (1 << 4)
+#define TPS_DBU_SRR (1 << 5)
+#define TPS_DBU_SCONTACT (1 << 6)
 #define TPS_DBU_ALL (0xffffffff)
 
 #define TPS_DATA_SIZE 16384
