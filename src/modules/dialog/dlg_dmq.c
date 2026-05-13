@@ -387,6 +387,12 @@ int dlg_dmq_handle_msg(
 					/* keep dialog around for a bit, to prevent out-of-order
 					 * syncs to reestablish the dlg */
 					dlg->init_ts = ksr_time_uint(NULL, NULL);
+
+					if(dlg->state != DLG_STATE_DELETED) {
+						run_dlg_callbacks(DLGCB_TERMINATED, dlg, NULL, NULL,
+								DLG_DIR_NONE, 0);
+					}
+
 					break;
 				default:
 					LM_ERR("unhandled state update to state %u\n", state);
