@@ -510,6 +510,10 @@ int extract_bwidth(str *body, str *bwtype, str *bwwitdth)
 	cp = bwtype->s;
 	len = bwtype->len;
 	cp1 = (char *)ser_memmem(cp, ":", len, 1);
+	if(cp1 == NULL) {
+		LM_ERR("invalid encoding in `b=%.*s'\n", bwtype->len, bwtype->s);
+		return -1;
+	}
 	len -= cp1 - cp;
 	if(len <= 0) {
 		LM_ERR("invalid encoding in `b=%.*s'\n", bwtype->len, bwtype->s);
