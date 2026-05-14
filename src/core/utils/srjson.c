@@ -227,6 +227,24 @@ static char *print_number(srjson_doc_t *doc, srjson_t *item)
 /* Parse the input text into an unescaped cstring, and populate item. */
 static const unsigned char firstByteMark[7] = {
 		0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC};
+static int srjson_is_hex4(const char *ptr)
+{
+	int i;
+
+	if(ptr == NULL) {
+		return 0;
+	}
+
+	for(i = 0; i < 4; i++) {
+		if(!((ptr[i] >= '0' && ptr[i] <= '9')
+				   || (ptr[i] >= 'a' && ptr[i] <= 'f')
+				   || (ptr[i] >= 'A' && ptr[i] <= 'F'))) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
 static const char *parse_string(
 		srjson_doc_t *doc, srjson_t *item, const char *str)
 {
@@ -239,12 +257,30 @@ static const char *parse_string(
 		ep = str;
 		return 0;
 	} /* not a string! */
-	while(*ptr != '\"' && *ptr && ++len)
-		if(*ptr++ == '\\')
-			ptr++; /* Skip escaped quotes. */
+	while(*ptr != '\"' && *ptr) {
+		if(*ptr++ == '\\') {
+			if(*ptr == 'u') {
+				if(!srjson_is_hex4(ptr + 1)) {
+					ep = ptr;
+					return 0;
+				}
+				len += 6;
+				ptr += 5;
+				continue;
+			}
+			if(*ptr == '\0') {
+				ep = ptr;
+				return 0;
+			}
+			len += 2;
+			ptr++;
+			continue;
+		}
+		len++;
+	}
 
 	out = (char *)doc->malloc_fn(len + 1); /* This is how long we need
-						 * for the string, roughly. */
+							 * for the string, roughly. */
 	if(!out)
 		return 0;
 
@@ -273,8 +309,11 @@ static const char *parse_string(
 					break;
 				case 'u': /* transcode utf16 to utf8. */
 					uc = 0;
-					if(sscanf(ptr + 1, "%4x", &uc) < 1) {
-						break;
+					if(!srjson_is_hex4(ptr + 1)
+							|| sscanf(ptr + 1, "%4x", &uc) != 1) {
+						ep = ptr;
+						doc->free_fn(out);
+						return 0;
 					}
 					ptr += 4; /* get the unicode char. */
 
@@ -288,8 +327,11 @@ static const char *parse_string(
 							break;
 						uc2 = 0;
 						//missing second - half of surrogate.
-						if(sscanf(ptr + 3, "%4x", &uc2) < 1) {
-							break;
+						if(!srjson_is_hex4(ptr + 3)
+								|| sscanf(ptr + 3, "%4x", &uc2) != 1) {
+							ep = ptr;
+							doc->free_fn(out);
+							return 0;
 						}
 						ptr += 6;
 						if(uc2 < 0xDC00 || uc2 > 0xDFFF)
