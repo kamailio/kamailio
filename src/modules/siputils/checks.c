@@ -645,6 +645,7 @@ int tel2sip(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res)
 	int i, j, in_tel_parameters = 0;
 	pv_spec_t *res;
 	pv_value_t res_val;
+	struct sip_uri parsed_check;
 
 	/* get parameters */
 	if(get_str_fparam(&uri, _msg, (fparam_t *)_uri) < 0) {
@@ -708,6 +709,11 @@ int tel2sip(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res)
 
 	/* tel_uri is not needed anymore */
 	pkg_free(tel_uri.s);
+
+	if(parse_uri(sip_uri.s, sip_uri.len, &parsed_check) < 0) {
+		pkg_free(sip_uri.s);
+		return -1;
+	}
 
 	/* set result pv value and write sip uri to result pv */
 	res_val.rs = sip_uri;
@@ -823,6 +829,7 @@ int tel2sip2(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res)
 	pv_value_t res_val;
 	char *tmp_ptr = NULL;
 	tel_param_t params[MAX_TEL_PARAMS];
+	struct sip_uri parsed_check;
 
 	/* get parameters */
 	if(get_str_fparam(&uri, _msg, (fparam_t *)_uri) < 0) {
@@ -934,6 +941,11 @@ int tel2sip2(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res)
 
 	/* tel_uri is not needed anymore */
 	pkg_free(tel_uri.s);
+
+	if(parse_uri(sip_uri.s, sip_uri.len, &parsed_check) < 0) {
+		pkg_free(sip_uri.s);
+		return -1;
+	}
 
 	sip_uri.len = strlen(sip_uri.s);
 
