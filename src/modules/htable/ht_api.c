@@ -547,7 +547,7 @@ int ht_set_cell_ex(
 						if(exv <= 0) {
 							HT_COPY_EXPIRE(ht, cell, now, it);
 						} else {
-							it->expire = now + exv;
+							cell->expire = now + exv;
 						}
 						if(it->prev)
 							it->prev->next = cell;
@@ -583,7 +583,7 @@ int ht_set_cell_ex(
 					if(exv <= 0) {
 						HT_COPY_EXPIRE(ht, cell, now, it);
 					} else {
-						it->expire = now + exv;
+						cell->expire = now + exv;
 					}
 
 					cell->next = it->next;
