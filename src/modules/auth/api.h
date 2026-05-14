@@ -36,6 +36,7 @@
 #include "challenge.h"
 #include "rfc2617.h"
 
+#define AUTH_HDR_MAX_SIZE (8 * 1024)
 /**
  * return codes to config by auth functions
  */

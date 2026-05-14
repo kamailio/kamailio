@@ -83,8 +83,12 @@ auth_result_t pre_auth(struct sip_msg *msg, str *realm, hdr_types_t hftype,
 		LM_ERR("Error while looking for credentials\n");
 		return ERROR;
 	} else if(ret > 0) {
-		LM_DBG("Credentials with realm '%.*s' not found\n", realm->len,
-				ZSW(realm->s));
+		if(realm != NULL) {
+			LM_DBG("Credentials with realm '%.*s' not found\n", realm->len,
+					ZSW(realm->s));
+		} else {
+			LM_DBG("Credentials not found and realm is null\n");
+		}
 		return NO_CREDENTIALS;
 	}
 
@@ -169,6 +173,7 @@ static int add_authinfo_resp_hdr(struct sip_msg *msg, char *next_nonce,
 		str nc)
 {
 	str authinfo_hdr = STR_NULL;
+	size_t hdr_len;
 	static const char authinfo_fmt[] = "Authentication-Info: "
 									   "nextnonce=\"%.*s\", "
 									   "qop=%.*s, "
@@ -176,10 +181,28 @@ static int add_authinfo_resp_hdr(struct sip_msg *msg, char *next_nonce,
 									   "cnonce=\"%.*s\", "
 									   "nc=%.*s\r\n";
 
-	authinfo_hdr.len =
-			sizeof(authinfo_fmt) + nonce_len + qop.len + rspauth_len
-			+ cnonce.len + nc.len
-			- 20 /* format string parameters */ - 1 /* trailing \0 */;
+	if(nonce_len < 0 || rspauth_len < 0 || qop.len < 0 || cnonce.len < 0
+			|| nc.len < 0) {
+		LM_ERR("invalid Authentication-Info field length\n");
+		return 0;
+	}
+	if((nonce_len > 0 && next_nonce == NULL)
+			|| (rspauth_len > 0 && rspauth == NULL)
+			|| (qop.len > 0 && qop.s == NULL)
+			|| (cnonce.len > 0 && cnonce.s == NULL)
+			|| (nc.len > 0 && nc.s == NULL)) {
+		LM_ERR("invalid Authentication-Info field pointer\n");
+		return 0;
+	}
+
+	hdr_len = sizeof(authinfo_fmt) - 1 /* trailing \0 */ - 20
+			  + (size_t)nonce_len + (size_t)qop.len + (size_t)rspauth_len
+			  + (size_t)cnonce.len + (size_t)nc.len;
+	if(hdr_len > AUTH_HDR_MAX_SIZE) {
+		LM_ERR("Authentication-Info header too large\n");
+		return 0;
+	}
+	authinfo_hdr.len = (int)hdr_len;
 	authinfo_hdr.s = pkg_malloc(authinfo_hdr.len + 1);
 
 	if(!authinfo_hdr.s) {
@@ -187,12 +210,12 @@ static int add_authinfo_resp_hdr(struct sip_msg *msg, char *next_nonce,
 		goto error;
 	}
 	snprintf(authinfo_hdr.s, authinfo_hdr.len + 1, authinfo_fmt, nonce_len,
-			next_nonce, qop.len, qop.s, rspauth_len, rspauth, cnonce.len,
-			cnonce.s, nc.len, nc.s);
+			ZSW(next_nonce), qop.len, ZSW(qop.s), rspauth_len, ZSW(rspauth),
+			cnonce.len, ZSW(cnonce.s), nc.len, ZSW(nc.s));
 	LM_DBG("authinfo hdr built: %.*s", authinfo_hdr.len, authinfo_hdr.s);
 	if(add_lump_rpl(msg, authinfo_hdr.s, authinfo_hdr.len, LUMP_RPL_HDR) != 0) {
 		LM_DBG("authinfo hdr added");
-		pkg_free(authinfo_hdr.s);
+		authinfo_hdr.s = NULL;
 		return 1;
 	}
 error:

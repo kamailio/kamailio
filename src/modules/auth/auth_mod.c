@@ -1194,9 +1194,18 @@ static int auth_send_reply(
 static int auth_append_hf(str *dst, str *src)
 {
 	char *tmp;
+	size_t new_len;
 
 	if(src == NULL || src->s == NULL || src->len <= 0) {
 		return 0;
+	}
+	if(dst == NULL) {
+		LM_ERR("invalid destination buffer\n");
+		return -1;
+	}
+	if(dst->len < 0 || src->len < 0) {
+		LM_ERR("invalid challenge header length\n");
+		return -1;
 	}
 
 	if(dst->s == NULL) {
@@ -1207,14 +1216,19 @@ static int auth_append_hf(str *dst, str *src)
 		return 0;
 	}
 
-	tmp = pkg_realloc(dst->s, dst->len + src->len);
+	new_len = (size_t)dst->len + (size_t)src->len;
+	if(new_len > AUTH_HDR_MAX_SIZE) {
+		LM_ERR("challenge headers too large to concatenate\n");
+		return -1;
+	}
+	tmp = pkg_realloc(dst->s, new_len);
 	if(tmp == NULL) {
 		LM_ERR("no more pkg memory for challenge headers\n");
 		return -1;
 	}
 	memcpy(tmp + dst->len, src->s, src->len);
 	dst->s = tmp;
-	dst->len += src->len;
+	dst->len = (int)new_len;
 	return 0;
 }
 

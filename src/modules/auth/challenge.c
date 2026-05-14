@@ -63,6 +63,9 @@ extern str auth_realm_prefix;
  */
 void strip_realm(str *_realm)
 {
+	if(_realm == NULL || _realm->s == NULL || _realm->len <= 0)
+		return;
+
 	/* no param defined -- return */
 	if(!auth_realm_prefix.len)
 		return;
@@ -158,6 +161,7 @@ int get_challenge_hf(struct sip_msg *msg, int stale, str *realm, str *nonce,
 	char *p;
 	str *hfn, hf;
 	int nonce_len, l, cfg;
+	size_t hf_len;
 
 	if(!ahf) {
 		LM_ERR("invalid output parameter\n");
@@ -188,23 +192,75 @@ int get_challenge_hf(struct sip_msg *msg, int stale, str *realm, str *nonce,
 
 	nonce_len = get_nonce_len(cfg, nc_enabled || otn_enabled);
 
-	hf.len = hfn->len;
+	hf_len = hfn->len;
 	if(realm) {
-		hf.len += DIGEST_REALM_LEN + realm->len;
+		if(realm->len < 0) {
+			LM_ERR("invalid realm length %d\n", realm->len);
+			return -1;
+		}
+		if(hf_len > AUTH_HDR_MAX_SIZE - DIGEST_REALM_LEN - (size_t)realm->len) {
+			LM_ERR("challenge header length overflow (realm)\n");
+			return -1;
+		}
+		hf_len += DIGEST_REALM_LEN + (size_t)realm->len;
 	}
 
-	hf.len += DIGEST_NONCE_LEN;
+	if(hf_len > AUTH_HDR_MAX_SIZE - DIGEST_NONCE_LEN) {
+		LM_ERR("challenge header length overflow (nonce prefix)\n");
+		return -1;
+	}
+	hf_len += DIGEST_NONCE_LEN;
 
 	if(nonce) {
-		hf.len += nonce->len + 1; /* '"' */
+		if(nonce->len < 0) {
+			LM_ERR("invalid nonce length %d\n", nonce->len);
+			return -1;
+		}
+		if(hf_len > AUTH_HDR_MAX_SIZE - (size_t)nonce->len - 1) {
+			LM_ERR("challenge header length overflow (nonce)\n");
+			return -1;
+		}
+		hf_len += (size_t)nonce->len + 1; /* '"' */
 	} else {
-		hf.len += nonce_len + 1; /* '"' */
+		if(nonce_len < 0) {
+			LM_ERR("invalid generated nonce length %d\n", nonce_len);
+			return -1;
+		}
+		if(hf_len > AUTH_HDR_MAX_SIZE - (size_t)nonce_len - 1) {
+			LM_ERR("challenge header length overflow (generated nonce)\n");
+			return -1;
+		}
+		hf_len += (size_t)nonce_len + 1; /* '"' */
 	}
-	hf.len += ((stale) ? STALE_PARAM_LEN : 0);
+	if(stale) {
+		if(hf_len > AUTH_HDR_MAX_SIZE - STALE_PARAM_LEN) {
+			LM_ERR("challenge header length overflow (stale)\n");
+			return -1;
+		}
+		hf_len += STALE_PARAM_LEN;
+	}
 	if(algorithm) {
-		hf.len += DIGEST_ALGORITHM_LEN + algorithm->len;
+		if(algorithm->len < 0) {
+			LM_ERR("invalid algorithm length %d\n", algorithm->len);
+			return -1;
+		}
+		if(hf_len > AUTH_HDR_MAX_SIZE - DIGEST_ALGORITHM_LEN
+							- (size_t)algorithm->len) {
+			LM_ERR("challenge header length overflow (algorithm)\n");
+			return -1;
+		}
+		hf_len += DIGEST_ALGORITHM_LEN + (size_t)algorithm->len;
 	} else {
-		hf.len += 0
+		if(hf_len > AUTH_HDR_MAX_SIZE
+							- (0
+#ifdef _PRINT_MD5
+									+ DIGEST_MD5_LEN
+#endif
+									)) {
+			LM_ERR("challenge header length overflow (default algorithm)\n");
+			return -1;
+		}
+		hf_len += 0
 #ifdef _PRINT_MD5
 				  + DIGEST_MD5_LEN
 #endif
@@ -212,9 +268,24 @@ int get_challenge_hf(struct sip_msg *msg, int stale, str *realm, str *nonce,
 	}
 
 	if(qop && qop->qop_parsed != QOP_UNSPEC) {
-		hf.len += QOP_PARAM_START_LEN + qop->qop_str.len + QOP_PARAM_END_LEN;
+		if(qop->qop_str.len < 0) {
+			LM_ERR("invalid qop length %d\n", qop->qop_str.len);
+			return -1;
+		}
+		if(hf_len > AUTH_HDR_MAX_SIZE - QOP_PARAM_START_LEN
+							- (size_t)qop->qop_str.len - QOP_PARAM_END_LEN) {
+			LM_ERR("challenge header length overflow (qop)\n");
+			return -1;
+		}
+		hf_len += QOP_PARAM_START_LEN + (size_t)qop->qop_str.len
+				  + QOP_PARAM_END_LEN;
 	}
-	hf.len += CRLF_LEN;
+	if(hf_len > AUTH_HDR_MAX_SIZE - CRLF_LEN - 1) {
+		LM_ERR("challenge header length overflow (CRLF)\n");
+		return -1;
+	}
+	hf_len += CRLF_LEN;
+	hf.len = (int)hf_len;
 	p = hf.s = pkg_malloc(hf.len);
 	if(!hf.s) {
 		LM_ERR("No memory left (%d bytes)\n", hf.len);
