@@ -110,9 +110,14 @@ static str *build_headers(struct sip_msg *msg)
 	static char buf[1024];
 	static str rv = {NULL, 0};
 	str *callid;
+	str ctbody = STR_NULL;
 
 	rv.s = buf;
-	rv.len = all_hdrs.len + ctname.len + msg->content_type->body.len;
+	rv.len = all_hdrs.len;
+	if(msg->content_type != NULL) {
+		ctbody = msg->content_type->body;
+		rv.len += ctname.len + ctbody.len;
+	}
 
 	if(rv.len > sizeof(buf)) {
 		LM_ERR("headers too long\n");
@@ -120,9 +125,10 @@ static str *build_headers(struct sip_msg *msg)
 	}
 
 	memcpy(buf, all_hdrs.s, all_hdrs.len);
-	memcpy(buf + all_hdrs.len, ctname.s, ctname.len);
-	memcpy(buf + all_hdrs.len + ctname.len, msg->content_type->body.s,
-			msg->content_type->body.len);
+	if(ctbody.len > 0) {
+		memcpy(buf + all_hdrs.len, ctname.s, ctname.len);
+		memcpy(buf + all_hdrs.len + ctname.len, ctbody.s, ctbody.len);
+	}
 
 	if((callid = get_callid(msg)) == NULL) {
 		return &rv;
@@ -135,13 +141,10 @@ static str *build_headers(struct sip_msg *msg)
 		return &rv;
 	}
 
-	memcpy(buf + all_hdrs.len + ctname.len + msg->content_type->body.len, nl.s,
-			nl.len);
-	memcpy(buf + all_hdrs.len + ctname.len + msg->content_type->body.len
-					+ nl.len,
-			name.s, name.len);
-	memcpy(buf + all_hdrs.len + ctname.len + msg->content_type->body.len
-					+ nl.len + name.len,
+	memcpy(buf + all_hdrs.len + ctname.len + ctbody.len, nl.s, nl.len);
+	memcpy(buf + all_hdrs.len + ctname.len + ctbody.len + nl.len, name.s,
+			name.len);
+	memcpy(buf + all_hdrs.len + ctname.len + ctbody.len + nl.len + name.len,
 			callid->s, callid->len);
 	return &rv;
 }
