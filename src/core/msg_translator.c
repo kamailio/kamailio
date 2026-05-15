@@ -3161,8 +3161,9 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 
 		if(con == NULL) {
 			LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not be "
-					"found - likely it is gone (dst: [%s]:%d)\n",
-					send_info->id, (port) ? ip_addr2a(&ip) : "", port);
+					"found - likely it is gone (dst: [%s]:%d) (sock: [%s])\n",
+					send_info->id, (port) ? ip_addr2a(&ip) : "", port,
+					(from) ? send_info->send_sock->sock_str.s : "*");
 			pkg_free(line_buf);
 			return 0;
 		}
