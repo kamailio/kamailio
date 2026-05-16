@@ -59,7 +59,7 @@ MODULE_VERSION
 /** header variables */
 str imc_hdrs = str_init("Supported: kamailio/imc\r\n");
 char hdr_buf[1024];
-str all_hdrs;
+str all_hdrs = str_init("");
 
 /** parameters */
 db1_con_t *imc_db = NULL;
@@ -185,7 +185,7 @@ static int mod_init(void)
 	}
 
 	if(extra_hdrs.s) {
-		if(extra_hdrs.len + imc_hdrs.len > 1024) {
+		if(extra_hdrs.len + imc_hdrs.len >= 1024) {
 			LM_ERR("extra_hdrs too long\n");
 			return -1;
 		}
