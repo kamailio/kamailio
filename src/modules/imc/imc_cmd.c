@@ -112,22 +112,28 @@ static str *build_headers(struct sip_msg *msg)
 	str *callid;
 	str ctbody = STR_NULL;
 
+	buf[0] = '\0';
 	rv.s = buf;
 	rv.len = all_hdrs.len;
+	if(rv.len > sizeof(buf) - 1) {
+		LM_ERR("headers too long\n");
+		rv.len = 0;
+		return &rv;
+	}
+	memcpy(buf, all_hdrs.s, all_hdrs.len);
+
 	if(msg->content_type != NULL) {
 		ctbody = msg->content_type->body;
 		rv.len += ctname.len + ctbody.len;
-	}
-
-	if(rv.len > sizeof(buf)) {
-		LM_ERR("headers too long\n");
-		return &rv;
-	}
-
-	memcpy(buf, all_hdrs.s, all_hdrs.len);
-	if(ctbody.len > 0) {
-		memcpy(buf + all_hdrs.len, ctname.s, ctname.len);
-		memcpy(buf + all_hdrs.len + ctname.len, ctbody.s, ctbody.len);
+		if(rv.len > sizeof(buf) - 1) {
+			LM_ERR("buffer too small for Content-Type header\n");
+			rv.len -= ctname.len + ctbody.len;
+			return &rv;
+		}
+		if(ctbody.len > 0) {
+			memcpy(buf + all_hdrs.len, ctname.s, ctname.len);
+			memcpy(buf + all_hdrs.len + ctname.len, ctbody.s, ctbody.len);
+		}
 	}
 
 	if((callid = get_callid(msg)) == NULL) {
@@ -135,9 +141,9 @@ static str *build_headers(struct sip_msg *msg)
 	}
 
 	rv.len += nl.len + name.len + callid->len;
-
-	if(rv.len > sizeof(buf)) {
-		LM_ERR("Header buffer too small for In-Reply-To header\n");
+	if(rv.len > sizeof(buf) - 1) {
+		LM_ERR("buffer too small for In-Reply-To header\n");
+		rv.len -= nl.len + name.len + callid->len;
 		return &rv;
 	}
 
