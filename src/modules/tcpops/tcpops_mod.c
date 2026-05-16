@@ -600,7 +600,7 @@ static int ki_tcp_get_conid_helper(sip_msg_t *msg, str *saddr, pv_spec_t *pvs)
 	port = su_getport(&dst.to);
 	c = tcpconn_get(dst.id, &ip, port, NULL, clifetime);
 
-	if(unlikely(c <= 0)) {
+	if(unlikely(c == NULL)) {
 		goto setvalue;
 	}
 	conid = c->id;
