@@ -1018,10 +1018,11 @@ it helps to extract IP address family at c line from sdp
 */
 static int w_sdp_get_address_family(sip_msg_t *msg)
 {
-
 	sdp_session_cell_t *session;
+	sdp_stream_cell_t *stream;
 	int sdp_session_num;
 	int result = -1;
+
 	if(parse_sdp(msg) < 0) {
 		LM_ERR("Unable to parse sdp body \n");
 		return -1;
@@ -1030,23 +1031,44 @@ static int w_sdp_get_address_family(sip_msg_t *msg)
 	sdp_session_num = 0;
 
 	for(;;) {
-
 		session = get_sdp_session(msg, sdp_session_num);
 		if(!session)
 			break;
 
-		if(session->pf == AF_INET) {
-			result = 4;
-		} else if(session->pf == AF_INET6) {
-			result = 6;
+		if(session->ip_addr.s != NULL && session->ip_addr.len > 0) {
+			if(session->pf == AF_INET) {
+				result = 4;
+			} else if(session->pf == AF_INET6) {
+				result = 6;
+			} else {
+				result = -1;
+			}
 		} else {
-			result = -1;
+			stream = session->streams;
+			while(stream) {
+				if(stream->ip_addr.s != NULL && stream->ip_addr.len > 0) {
+					if(stream->pf == AF_INET) {
+						result = 4;
+					} else if(stream->pf == AF_INET6) {
+						result = 6;
+					} else {
+						result = -1;
+					}
+					break;
+				}
+				stream = stream->next;
+			}
+		}
+
+		if(result == 4 || result == 6) {
+			break;
 		}
 		sdp_session_num++;
 	}
 
 	return result;
 }
+
 /**
  * @brief remove streams matching the m='media'
  * @return -1 - error; 0 - not found; >=1 - found
