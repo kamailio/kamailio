@@ -2272,6 +2272,16 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		} else {
 			c = tcpconn_get(dst->id, &ip, port, from, con_lifetime);
 		}
+		/* force_socket local address may not match PROXY dst_ip on HAProxy conns */
+		if(unlikely(c == 0 && from != 0)) {
+			if(tcp_connection_match == TCPCONN_MATCH_STRICT
+					|| (dst->send_flags.f & SND_F_FORCE_PROTO)) {
+				c = tcpconn_lookup(dst->id, &ip, port, 0, try_local_port,
+						con_lifetime, dst->proto);
+			} else {
+				c = tcpconn_get(dst->id, &ip, port, 0, con_lifetime);
+			}
+		}
 	} else if(likely(dst->id)) {
 		c = tcpconn_get(dst->id, 0, 0, 0, con_lifetime);
 	} else {
@@ -2289,6 +2299,15 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 							con_lifetime, dst->proto);
 				} else {
 					c = tcpconn_get(0, &ip, port, from, con_lifetime);
+				}
+				if(unlikely(c == 0 && from != 0)) {
+					if(tcp_connection_match == TCPCONN_MATCH_STRICT
+							|| (dst->send_flags.f & SND_F_FORCE_PROTO)) {
+						c = tcpconn_lookup(0, &ip, port, 0, try_local_port,
+								con_lifetime, dst->proto);
+					} else {
+						c = tcpconn_get(0, &ip, port, 0, con_lifetime);
+					}
 				}
 			} else {
 				LM_ERR("id %d not found, dropping\n", dst->id);
