@@ -103,6 +103,14 @@ struct module_exports exports = {
 /* clang-format on */
 
 /**
+ * @brief JWT header name/value pair
+ */
+struct jwt3_token_hdr {
+    char *name;
+    char *value;
+};
+
+/**
  * @brief Destroy JWT string
  */
 static void jwt_free_str(char *s)
@@ -408,6 +416,7 @@ static int ki_jwt_generate_hdrs(
 	param_t *headers_list = NULL;
 	param_hooks_t phooks;
 	param_t *curr = NULL;
+	param_t *pkid = NULL;
 
 	jwt_builder_t *builder = NULL;
 	jwk_set_t *jwks = NULL;
@@ -419,7 +428,7 @@ static int ki_jwt_generate_hdrs(
 	(void)msg;
 
 	if(!key || !key->s || !alg || !claims) {
-		LM_ERR("invalid parameters\n");
+		LM_ERR("Invalid parameters\n");
 		return -1;
 	}
 
@@ -431,7 +440,7 @@ static int ki_jwt_generate_hdrs(
 
 	valg = jwt_str_alg(alg->s);
 	if(valg == JWT_ALG_INVAL) {
-		LM_ERR("not supported algorithm: %s\n", alg->s);
+		LM_ERR("Not supported algorithm: %s\n", alg->s);
 		return -1;
 	}
 
@@ -442,7 +451,7 @@ static int ki_jwt_generate_hdrs(
 	if(sparams.len > 0 && sparams.s[sparams.len - 1] == ';')
 		sparams.len--;
 	if(parse_params(&sparams, CLASS_ANY, &phooks, &params_list) < 0) {
-		LM_ERR("failed to parse claims\n");
+		LM_ERR("Failed to parse claims\n");
 		goto error;
 	}
 
@@ -454,7 +463,7 @@ static int ki_jwt_generate_hdrs(
 		if(sheaders.len > 0 && sheaders.s[sheaders.len - 1] == ';')
 			sheaders.len--;
 		if(parse_params(&sheaders, CLASS_ANY, &phooks, &headers_list) < 0) {
-			LM_ERR("failed to parse headers\n");
+			LM_ERR("Failed to parse headers\n");
 			goto error;
 		}
 	}
@@ -462,26 +471,8 @@ static int ki_jwt_generate_hdrs(
 	/* init builder */
 	builder = jwt_builder_new();
 	if(!builder) {
-		LM_ERR("failed to create jwt builder\n");
+		LM_ERR("Failed to create JWT builder\n");
 		goto error;
-	}
-
-	/* load keys - backwards compatible */
-	jwks = jwt_load_keys(key);
-
-	if(!jwks || jwks_error(jwks)) {
-		LM_ERR("failed to load key from: %s\n", key->s);
-		goto error;
-	}
-	const jwk_item_t *item = jwks_item_get(jwks, 0);
-	if(!item) {
-		LM_ERR("jwks empty\n");
-		goto error;
-	}
-
-	if(jwt_builder_setkey(builder, valg, item) != 0) {
-		LM_ERR("Failed to set key: %s (%d)\n", jwt_builder_error_msg(builder),
-				jwt_builder_error(builder));
 	}
 
 	/* set claims */
@@ -506,7 +497,7 @@ static int ki_jwt_generate_hdrs(
 		}
 
 		if(jwt_builder_claim_set(builder, &val) != 0) {
-			LM_ERR("failed to set claim: %s\n", curr->name.s);
+			LM_ERR("Failed to set claim: %s\n", curr->name.s);
 			goto error;
 		}
 	}
@@ -532,16 +523,50 @@ static int ki_jwt_generate_hdrs(
 			jwt_set_SET_STR(&val, curr->name.s, curr->body.s);
 		}
 
+		/* find and store kid param */
+		if((pkid == NULL) && (strncmp(curr->name.s, "kid", 3) == 0)) {
+			pkid = curr;
+			LM_DBG("%s=%s found\n", pkid->name.s, pkid->body.s);
+		}
+
 		if(jwt_builder_header_set(builder, &val) != 0) {
-			LM_ERR("failed to set header: %s\n", curr->name.s);
+			LM_ERR("Failed to set header: %s\n", curr->name.s);
 			goto error;
 		}
+	}
+
+	/* load keys - backwards compatible */
+	jwks = jwt_load_keys(key);
+
+	if(!jwks || jwks_error(jwks)) {
+		LM_ERR("Failed to load key from: %s\n", key->s);
+		goto error;
+	}
+
+  /* get key item */
+  const jwk_item_t *item = NULL;
+	/* find key item by kid in a JWKS ... */
+  if ((pkid) && (pkid->body.s)) {
+    item = jwks_find_bykid(jwks, pkid->body.s);
+  }
+	/* or use the first item */
+	if(item == NULL) {
+		item = jwks_item_get(jwks, 0);
+	}
+	if(!item) {
+		LM_ERR("Key item not found\n");
+		goto error;
+	}
+
+	if(jwt_builder_setkey(builder, valg, item) != 0) {
+		LM_ERR("Failed to set key: %s (%d)\n", jwt_builder_error_msg(builder),
+				jwt_builder_error(builder));
 	}
 
 	/* generate token */
 	out = jwt_builder_generate(builder);
 	if(!out) {
-		LM_ERR("jwt generation failed\n");
+		LM_ERR("JWT generation failed\n");
 		goto error;
 	}
 
@@ -644,6 +669,38 @@ static int w_jwt_generate_4(
 /**
  *
  */
+static int ki_jwt_verify_cb(jwt_t *jwt, void *cfg)
+{
+	jwt_value_t jval;
+	jwt_config_t *c = (jwt_config_t *)cfg;
+	struct jwt3_token_hdr *token = (struct jwt3_token_hdr *)c->ctx;
+
+	if(token->name == NULL) {
+		LM_ERR("Missing token\n");
+		return JWT_VALUE_ERR_EXIST;
+	}
+
+	token->value = NULL;
+	jwt_set_GET_STR(&jval, token->name);
+	if(jwt_header_get(jwt, &jval) != JWT_VALUE_ERR_NONE) {
+		LM_ERR("Couldn't find a value for header: %s\n", token->name);
+		return JWT_VALUE_ERR_EXIST;
+	} else {
+		if(jval.type == JWT_VALUE_STR) {
+			token->value = strdup(jval.str_val);
+		} else {
+			LM_ERR("Header value for '%s' is not a string\n", token->name);
+			return JWT_VALUE_ERR_EXIST;
+		}
+	}
+
+	return JWT_VALUE_ERR_NONE;
+}
+
+
+/**
+ *
+ */
 static int ki_jwt_check_cb(jwt_t *jwt, void *cfg)
 {
 	jwt_config_t *c = (jwt_config_t *)cfg;
@@ -710,10 +767,12 @@ static int ki_jwt_verify_key(
 	param_t *params_list = NULL;
 	param_hooks_t phooks;
 	param_t *pit = NULL;
-	int ret = JWT_VALUE_ERR_EXIST;
 	jwt_checker_t *checker = NULL;
+	jwt_checker_t *jwt_checker = NULL;
 	jwk_set_t *jwks = NULL;
 	str sparams = STR_NULL;
+	const jwk_item_t *item = NULL;
+	int ret = JWT_VALUE_ERR_EXIST;
 	(void)msg;
 
 	_jwt_verify_status = 0;
@@ -732,17 +791,57 @@ static int ki_jwt_verify_key(
 		return -1;
 	}
 
-	checker = jwt_checker_new();
-	if(!checker) {
-		LM_ERR("failed to create jwt checker\n");
-		goto error;
+	/* trim JWT string */
+	kdata = *jwtval;
+	trim(&kdata);
+
+	/* get KID from JWT */
+	struct jwt3_token_hdr hdr;
+	hdr.name = "kid";
+	hdr.value = NULL;
+	jwt_checker = jwt_checker_new();
+	if(jwt_checker) {
+		/* checker callback returns a copy of kid or NULL */
+		jwt_checker_setcb(
+				jwt_checker, (jwt_callback_t)ki_jwt_verify_cb, (void *)&hdr);
+
+		if(jwt_checker_verify(jwt_checker, kdata.s) != JWT_VALUE_ERR_NONE) {
+			LM_DBG("%s (%d)\n",
+					jwt_checker_error_msg(jwt_checker),
+					jwt_checker_error(jwt_checker));
+		}
+
+		jwt_checker_error_clear(jwt_checker);
+		jwt_checker_free(jwt_checker);
+	} else {
+		LM_WARN("Failed to create JWT checker\n");
 	}
 
+	/* load keys - backwards compatible */
 	jwks = jwt_load_keys(key);
 
 	if(jwks && !jwks_error(jwks)) {
-		const jwk_item_t *item = jwks_item_get(jwks, 0);
+		/* find key item by kid in a JWKS ... */
+		if(hdr.value) {
+			item = jwks_find_bykid(jwks, hdr.value);
+			free(hdr.value); /* clean up */
+		}
+		/* or use the first item */
+		if(item == NULL) {
+			item = jwks_item_get(jwks, 0);
+		}
+
+		if(!item) {
+			LM_ERR("Key item not found\n");
+			goto error;
+		}
+
 		if(item) {
+			checker = jwt_checker_new();
+			if(!checker) {
+				LM_ERR("Failed to create JWT checker\n");
+				goto error;
+			}
 			jwt_checker_time_leeway(checker, JWT_CLAIM_EXP, _jwt_leeway_sec);
 			jwt_checker_time_leeway(checker, JWT_CLAIM_NBF, _jwt_leeway_sec);
 			jwt_checker_setkey(checker, valg, item);
@@ -763,15 +862,12 @@ static int ki_jwt_verify_key(
 					jwt_checker_claim_set(checker, cid, pit->body.s);
 			}
 
-			kdata = *jwtval;
-			trim(&kdata);
-
 			jwt_checker_setcb(
 					checker, (jwt_callback_t)ki_jwt_check_cb, params_list);
 			ret = jwt_checker_verify(checker, kdata.s);
 			_jwt_verify_status = ret;
 			if(ret != 0) {
-				LM_ERR("failed to validate jwt: %s (%d)\n",
+				LM_ERR("%s (%d)\n",
 						jwt_checker_error_msg(checker),
 						jwt_checker_error(checker));
 			}

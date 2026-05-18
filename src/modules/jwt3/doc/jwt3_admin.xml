@@ -124,7 +124,10 @@ modparam("jwt", "leeway_sec", 30)
 			The string values can be enclosed in single or double quotes. If a
 			value is not eclosed in between quotes, it is added as numeric
 			value if it is successfully converted to a long value, otherwise is
-			added as string value.
+			added as string value. If prvkey points to a JWKS (JSON Web Key Set),
+			you can pass "kid=...;" in the header parameter to select a specific
+			key for signing. If no kid is specified, the first key in the set
+			will be used by default.
 			</para>
 			</listitem>
 		</itemizedlist>
@@ -166,14 +169,17 @@ modparam("jwt", "leeway_sec", 30)
 			</listitem>
 			<listitem>
 			<para>
-			claims - the list of claims to be checked they are in the JWT, in the format
-			"name1=value1;name2=value2;..." (same as the SIP parameters format,
+			claims - the list of claims to be checked they are in the JWT, in the
+			format "name1=value1;name2=value2;..." (same as the SIP parameters format,
 			see also the description of claims parameter for jwt3_generate()).
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-			jwtval - the value of the JWT to verify
+			jwtval - the value of the JWT to verify. If pubkeypath points to a JWKS,
+			and the incoming JWT header contains a kid, the key with the matching
+			identifier will be used for verification. If no kid is present, the
+			first key in the set is used by default.
 			</para>
 			</listitem>
 		</itemizedlist>
