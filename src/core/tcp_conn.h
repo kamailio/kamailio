@@ -437,6 +437,8 @@ struct tcp_connection *tcpconn_get(int id, struct ip_addr *ip, int port,
 struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
 		union sockaddr_union *local_addr, int try_local_port, ticks_t timeout,
 		sip_protos_t proto);
+void tcpconn_log_candidates(int id, struct ip_addr *ip, int port,
+		union sockaddr_union *local_addr, sip_protos_t proto);
 
 typedef struct tcp_event_info
 {

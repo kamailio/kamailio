@@ -1871,6 +1871,123 @@ struct tcp_connection *tcpconn_get(int id, struct ip_addr *ip, int port,
 	return tcpconn_lookup(id, ip, port, local_addr, 0, timeout, PROTO_NONE);
 }
 
+static const char *tcpconn_state_name(enum tcp_conn_states state)
+{
+	switch(state) {
+		case S_CONN_ERROR:
+			return "ERROR";
+		case S_CONN_BAD:
+			return "BAD";
+		case S_CONN_OK:
+			return "OK";
+		case S_CONN_INIT:
+			return "INIT";
+		case S_CONN_EOF:
+			return "EOF";
+		case S_CONN_ACCEPT:
+			return "ACCEPT";
+		case S_CONN_CONNECT:
+			return "CONNECT";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+void tcpconn_log_candidates(int id, struct ip_addr *ip, int port,
+		union sockaddr_union *local_addr, sip_protos_t proto)
+{
+	char ripbuf[IP_ADDR_MAX_STR_SIZE];
+	char lipbuf[IP_ADDR_MAX_STR_SIZE];
+	char cripbuf[IP_ADDR_MAX_STR_SIZE];
+	char clipbuf[IP_ADDR_MAX_STR_SIZE];
+	unsigned hash;
+	struct ip_addr local_ip;
+	struct tcp_conn_alias *a;
+	struct tcp_connection *c;
+	int len;
+	unsigned short local_port;
+
+	if(id != 0) {
+		hash = tcp_id_hash(id);
+		LM_WARN("tcpconn lookup miss: id=%d proto=%d id_hash=%u\n", id, proto,
+				hash);
+		TCPCONN_LOCK;
+		for(c = tcpconn_id_hash[hash]; c; c = c->id_next) {
+			if((len = ip_addr2sbuf(&c->rcv.src_ip, cripbuf, sizeof(cripbuf)))
+					<= 0)
+				strcpy(cripbuf, "?");
+			else
+				cripbuf[len] = '\0';
+			if((len = ip_addr2sbuf(&c->rcv.dst_ip, clipbuf, sizeof(clipbuf)))
+					<= 0)
+				strcpy(clipbuf, "?");
+			else
+				clipbuf[len] = '\0';
+			LM_WARN("tcpconn id-hash candidate: hash=%u conn=%p id=%d state=%s "
+					"proto=%d peer=[%s]:%u local=[%s]:%u cinfo_local=[%s]:%u\n",
+					hash, c, c->id, tcpconn_state_name(c->state), c->rcv.proto,
+					cripbuf, c->rcv.src_port, clipbuf, c->rcv.dst_port,
+					ip_addr2a(&c->cinfo.dst_ip), c->cinfo.dst_port);
+		}
+		TCPCONN_UNLOCK;
+		return;
+	}
+
+	if(ip == NULL) {
+		LM_WARN("tcpconn lookup miss: id=0 with null peer ip proto=%d\n",
+				proto);
+		return;
+	}
+
+	memset(&local_ip, 0, sizeof(local_ip));
+	local_port = 0;
+	if(local_addr != NULL) {
+		su2ip_addr(&local_ip, local_addr);
+		local_port = su_getport(local_addr);
+	} else {
+		ip_addr_mk_any(ip->af, &local_ip);
+	}
+
+	if((len = ip_addr2sbuf(ip, ripbuf, sizeof(ripbuf))) <= 0)
+		strcpy(ripbuf, "?");
+	else
+		ripbuf[len] = '\0';
+
+	if(local_addr != NULL) {
+		if((len = ip_addr2sbuf(&local_ip, lipbuf, sizeof(lipbuf))) <= 0)
+			strcpy(lipbuf, "?");
+		else
+			lipbuf[len] = '\0';
+	} else {
+		strcpy(lipbuf, "*");
+	}
+
+	hash = tcp_addr_hash(ip, port, &local_ip, local_port);
+	LM_WARN("tcpconn lookup miss: id=0 proto=%d peer=[%s]:%d local=[%s]:%u "
+			"addr_hash=%u\n",
+			proto, ripbuf, port, lipbuf, local_port, hash);
+
+	TCPCONN_LOCK;
+	for(a = tcpconn_aliases_hash[hash]; a; a = a->next) {
+		c = a->parent;
+		if((len = ip_addr2sbuf(&c->rcv.src_ip, cripbuf, sizeof(cripbuf))) <= 0)
+			strcpy(cripbuf, "?");
+		else
+			cripbuf[len] = '\0';
+		if((len = ip_addr2sbuf(&c->rcv.dst_ip, clipbuf, sizeof(clipbuf))) <= 0)
+			strcpy(clipbuf, "?");
+		else
+			clipbuf[len] = '\0';
+		LM_WARN("tcpconn addr-hash candidate: hash=%u alias=%p conn=%p id=%d "
+				"state=%s proto=%d alias_port=%u peer=[%s]:%u local=[%s]:%u "
+				"cinfo_local=[%s]:%u\n",
+				hash, a, c, c->id, tcpconn_state_name(c->state), c->rcv.proto,
+				a->port, cripbuf, c->rcv.src_port, clipbuf, c->rcv.dst_port,
+				ip_addr2a(&c->cinfo.dst_ip), c->cinfo.dst_port);
+	}
+	TCPCONN_UNLOCK;
+}
+
 
 /* add c->dst:port, local_addr as an alias for the "id" connection,
  * flags: TCP_ALIAS_FORCE_ADD  - add an alias even if a previous one exists

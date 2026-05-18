@@ -3159,6 +3159,10 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 
 		if(con == NULL) {
 			if(!(send_info->send_flags.f & SND_F_WSX_OUTBOUND)) {
+				if(is_printable(L_DBG)) {
+					tcpconn_log_candidates(send_info->id, (port) ? &ip : NULL,
+							port, from, proto);
+				}
 				LM_WARN("TCP/TLS connection (id: %d) for WebSocket could not "
 						"be found - likely it is gone (dst: [%s]:%d) (sock: "
 						"[%s])\n",
