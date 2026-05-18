@@ -12,9 +12,9 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2021 asipto.com
+   Copyright Â© 2021 asipto.com
 
-   Copyright © 2026 Wolfgang Kampichler, Frequentis AG
+   Copyright Â© 2026 Wolfgang Kampichler, Frequentis AG
      __________________________________________________________________
 
    Table of Contents
@@ -121,7 +121,7 @@ modparam("jwt", "leeway_sec", 30)
    4.2. jwt3_verify(pubkeypath, alg, claims, jwtval)
    4.3. jwt3_verify_key(pubkeyval, alg, claims, jwtval)
 
-4.1. jwt3_generate(prvkey, alg, claims[, headers])
+4.1.  jwt3_generate(prvkey, alg, claims[, headers])
 
    Generate the JWT, its value can be retrieved in the variable
    $jwt3(val).
@@ -141,7 +141,10 @@ modparam("jwt", "leeway_sec", 30)
        format). The string values can be enclosed in single or double
        quotes. If a value is not eclosed in between quotes, it is added as
        numeric value if it is successfully converted to a long value,
-       otherwise is added as string value.
+       otherwise is added as string value. If prvkey points to a JWKS
+       (JSON Web Key Set), you can pass "kid=...;" in the header parameter
+       to select a specific key for signing. If no kid is specified, the
+       first key in the set will be used by default.
 
    This function can be used from ANY_ROUTE.
 
@@ -151,7 +154,7 @@ modparam("jwt", "leeway_sec", 30)
         "caller='$fU';callee='$tU';callid='$ci';index=100");
 ...
 
-4.2. jwt3_verify(pubkeypath, alg, claims, jwtval)
+4.2.  jwt3_verify(pubkeypath, alg, claims, jwtval)
 
    Verify the JWT.
 
@@ -163,7 +166,10 @@ modparam("jwt", "leeway_sec", 30)
        the format "name1=value1;name2=value2;..." (same as the SIP
        parameters format, see also the description of claims parameter for
        jwt3_generate()).
-     * jwtval - the value of the JWT to verify
+     * jwtval - the value of the JWT to verify. If pubkeypath points to a
+       JWKS, and the incoming JWT header contains a kid, the key with the
+       matching identifier will be used for verification. If no kid is
+       present, the first key in the set is used by default.
 
    This function can be used from ANY_ROUTE.
 
@@ -176,7 +182,7 @@ modparam("jwt", "leeway_sec", 30)
   }
 ...
 
-4.3. jwt3_verify_key(pubkeyval, alg, claims, jwtval)
+4.3.  jwt3_verify_key(pubkeyval, alg, claims, jwtval)
 
    Verify the JWT.
 
@@ -205,7 +211,7 @@ modparam("jwt", "leeway_sec", 30)
 
    5.1. $jwt3(key)
 
-5.1. $jwt3(key)
+5.1.  $jwt3(key)
 
    Get the values and attributes after using JWT functions.
 
