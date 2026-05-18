@@ -163,6 +163,38 @@ modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 		</emphasis>
 		User generated statistics and label names are not parsed.
 	  </para>
+	  <para>
+		When core route latency telemetry is enabled in &kamailio;, the exported
+		<emphasis>core</emphasis> statistics include histogram-style metric families
+		with labels:
+		<itemizedlist>
+		  <listitem>
+			<para><emphasis>request_route_latency_usec_bucket</emphasis> with labels
+			<emphasis>method</emphasis> and <emphasis>le</emphasis></para>
+		  </listitem>
+		  <listitem>
+			<para><emphasis>request_route_latency_usec_sum</emphasis> and
+			<emphasis>request_route_latency_usec_count</emphasis> with label
+			<emphasis>method</emphasis></para>
+		  </listitem>
+		  <listitem>
+			<para><emphasis>reply_route_latency_usec_bucket</emphasis> with labels
+			<emphasis>method</emphasis>, <emphasis>status_class</emphasis> and
+			<emphasis>le</emphasis></para>
+		  </listitem>
+		  <listitem>
+			<para><emphasis>reply_route_latency_usec_sum</emphasis> and
+			<emphasis>reply_route_latency_usec_count</emphasis> with labels
+			<emphasis>method</emphasis> and <emphasis>status_class</emphasis></para>
+		  </listitem>
+		</itemizedlist>
+	  </para>
+	  <para>
+		Global request or reply latency can be computed by aggregating these
+		metric series across their labels (for example, aggregate over
+		<emphasis>method</emphasis> and <emphasis>status_class</emphasis> as
+		needed).
+	  </para>
 	  <example>
 		<title>Set <varname>xhttp_prom_stats</varname> parameter</title>
 		<programlisting format="linespecific">
