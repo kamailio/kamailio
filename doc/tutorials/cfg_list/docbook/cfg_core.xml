@@ -581,6 +581,10 @@
     <para>
         log level for printing latency of routing blocks.
     </para>
+    <para>
+        Route latency telemetry for core statistics is generated only when this
+        parameter is set to a printable log level.
+    </para>
     <para>Default value: 3.</para>
     <para>Type: integer.</para>
     <para>
@@ -615,6 +619,27 @@
         limit is ms for alerting on time consuming config actions.
     </para>
     <para>Default value: 0.</para>
+    <para>Type: integer.</para>
+    <para>
+    </para>
+</section>
+
+<section id="core.latency_sample_n">
+    <title>core.latency_sample_n</title>
+    <para>
+        sampling factor for route latency telemetry. One latency observation is
+        recorded for each N processed requests/replies.
+    </para>
+    <para>
+        This parameter applies only to route latency metrics sampling and does
+        not change existing latency log messages or their thresholds.
+    </para>
+    <para>
+        Sampling applies only when <emphasis>core.latency_cfg_log</emphasis>
+        enables route latency telemetry generation.
+    </para>
+    <para>Default value: 1.</para>
+    <para>Range: 1 - 2147483647.</para>
     <para>Type: integer.</para>
     <para>
     </para>
