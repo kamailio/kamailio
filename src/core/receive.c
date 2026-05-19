@@ -405,6 +405,9 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 				< 0)) {
 		LOG(cfg_get(core, core_cfg, sip_parser_log),
 				"parsing relevant headers failed\n");
+		if(sr_core_ert_run(msg, SR_CORE_ERT_RECEIVE_PARSE_ERROR) < 0) {
+			goto error02;
+		}
 	}
 	LM_DBG("--- received sip message - %s - call-id: [%.*s] - cseq: [%.*s]\n",
 			(msg->first_line.type == SIP_REQUEST) ? "request" : "reply",
