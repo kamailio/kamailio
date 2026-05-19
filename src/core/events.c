@@ -48,7 +48,7 @@ void sr_core_ert_init(void)
 	/* 0 - is not a valid index in event_route blocks list */
 	_sr_core_ert_list.init_parse_error =
 			route_get(&event_rt, "core:receive-parse-error");
-	if(_sr_core_ert_list.init_parse_error <= 0
+	if(_sr_core_ert_list.init_parse_error < 0
 			|| event_rt.rlist[_sr_core_ert_list.init_parse_error] == NULL) {
 		_sr_core_ert_list.init_parse_error = -1;
 	} else {
@@ -59,23 +59,29 @@ void sr_core_ert_init(void)
 /**
  *
  */
-void sr_core_ert_run(sip_msg_t *msg, int e)
+int sr_core_ert_run(sip_msg_t *msg, int e)
 {
 	struct run_act_ctx ctx;
 	int rtb;
 
 	switch(e) {
 		case SR_CORE_ERT_RECEIVE_PARSE_ERROR:
-			if(likely(_sr_core_ert_list.init_parse_error <= 0))
-				return;
+			if(likely(_sr_core_ert_list.init_parse_error < 0)) {
+				/* no event route defined */
+				return 0;
+			}
 			rtb = get_route_type();
 			set_route_type(REQUEST_ROUTE);
 			init_run_actions_ctx(&ctx);
 			run_top_route(event_rt.rlist[_sr_core_ert_list.init_parse_error],
 					msg, &ctx);
 			set_route_type(rtb);
+			if(ctx.run_flags & DROP_R_F) {
+				return -1;
+			}
 			break;
 	}
+	return 0;
 }
 
 /**
