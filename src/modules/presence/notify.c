@@ -187,7 +187,8 @@ int build_str_hdr(subs_t *subs, int is_body, str *hdr)
 			+ 1 /*>*/ + 15 /*";transport=xxxx"*/ + CRLF_LEN
 			+ 20 /*Subscription-State: */ + status.len
 			+ 10 /*reason/expires params*/
-			+ (subs->reason.len > expires.len ? subs->reason.len : expires.len)
+			+ (subs->status == TERMINATED_STATUS ? subs->reason.len
+												 : expires.len)
 			+ CRLF_LEN
 			+ (is_body ? (14 /*Content-Type: */ + subs->event->content_type.len
 								 + CRLF_LEN)
