@@ -1662,11 +1662,11 @@ static int db_redis_perform_query(const db1_con_t *_h, km_redis_con_t *con,
 
 	if(!(*keys_count) && do_table_scan) {
 		if(_n > 0) {
-			LM_WARN("performing full table scan on table '%.*s' while doing "
-					"the query\n",
+			LM_DBG("performing full table scan on table '%.*s' while doing "
+				   "the query\n",
 					CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 			for(i = 0; i < _n; ++i) {
-				LM_WARN("  scan key %d is '%.*s'\n", i, _k[i]->len, _k[i]->s);
+				LM_DBG("  scan key %d is '%.*s'\n", i, _k[i]->len, _k[i]->s);
 			}
 		} else {
 			LM_DBG("loading full table: '%.*s\n", CON_TABLE(_h)->len,
@@ -1854,8 +1854,8 @@ static int db_redis_perform_delete(const db1_con_t *_h, km_redis_con_t *con,
 
 	if(!*keys_count && do_table_scan) {
 		if(!ts_scan_start)
-			LM_WARN("performing full table scan on table '%.*s' while "
-					"performing delete\n",
+			LM_DBG("performing full table scan on table '%.*s' while "
+				   "performing delete\n",
 					CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		else
 			LM_DBG("performing table scan on table '%.*s' while performing "
@@ -2191,11 +2191,11 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 #endif
 
 	if(!(*keys_count) && do_table_scan) {
-		LM_WARN("performing full table scan on table '%.*s' while performing "
-				"update\n",
+		LM_DBG("performing full table scan on table '%.*s' while performing "
+			   "update\n",
 				CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		for(i = 0; i < _n; ++i) {
-			LM_WARN("  scan key %d is '%.*s'\n", i, _k[i]->len, _k[i]->s);
+			LM_DBG("  scan key %d is '%.*s'\n", i, _k[i]->len, _k[i]->s);
 		}
 		if(db_redis_scan_query_keys(con, CON_TABLE(_h), _n, keys, keys_count,
 				   manual_keys, manual_keys_count, ts_scan_start, ts_scan_key,
