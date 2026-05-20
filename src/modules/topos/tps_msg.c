@@ -248,6 +248,147 @@ int tps_get_uri_type(str *uri, int *mode, str *value)
 /**
  *
  */
+static int tps_extract_uuid_from_uri(str *uri, int ctmode, tps_data_t *ptsd)
+{
+	struct sip_uri puri;
+	int ret;
+	str tuuid = STR_NULL;
+
+	if(uri == NULL || uri->s == NULL || uri->len <= 0 || ptsd == NULL) {
+		return -1;
+	}
+
+	memset(ptsd, 0, sizeof(tps_data_t));
+
+	if(parse_uri(uri->s, uri->len, &puri) < 0) {
+		LM_ERR("failed to parse uri [%.*s]\n", uri->len, uri->s);
+		return -1;
+	}
+
+	if(ctmode == TPS_CONTACT_MODE_RURIUSER
+			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
+		if(puri.sip_params.len > 0) {
+			ret = tps_get_param_value(
+					&puri.sip_params, &_tps_cparam_name, &tuuid);
+		} else {
+			ret = tps_get_param_value(&puri.params, &_tps_cparam_name, &tuuid);
+		}
+		if(ret < 0) {
+			LM_ERR("failed to parse uri parameter from [%.*s]\n", uri->len,
+					uri->s);
+			return -1;
+		}
+		if(ret == 1 || tuuid.len <= 0) {
+			LM_DBG("topos uri parameter not found in [%.*s]\n", uri->len,
+					uri->s);
+			return 1;
+		}
+	} else {
+		if(puri.user.len < 6) {
+			LM_DBG("uri user too short for topos uuid in [%.*s]\n", uri->len,
+					uri->s);
+			return 1;
+		}
+		tuuid = puri.user;
+	}
+
+	if(memcmp(tuuid.s, "atpsh-", 6) == 0 || memcmp(tuuid.s, "btpsh-", 6) == 0) {
+		ptsd->a_uuid = tuuid;
+		return 0;
+	}
+
+	LM_DBG("uri [%.*s] does not contain a topos uuid\n", uri->len, uri->s);
+	return 1;
+}
+
+/**
+ *
+ */
+static int tps_unmask_refer_to(
+		sip_msg_t *msg, tps_data_t *stsd, uint32_t direction)
+{
+	tps_data_t ltsd;
+	tps_data_t rtsd;
+	str *uri;
+	str nuri;
+	struct lump *l;
+	int ulen;
+	int ret;
+
+	if(!((get_cseq(msg)->method_id) & METHOD_REFER)) {
+		return 0;
+	}
+
+	if(parse_refer_to_header(msg) == -1) {
+		LM_DBG("no Refer-To header\n");
+		return 0;
+	}
+	if(msg->refer_to == NULL || get_refer_to(msg) == NULL) {
+		LM_DBG("Refer-To header not found\n");
+		return 0;
+	}
+
+	uri = &(get_refer_to(msg)->uri);
+	memset(&ltsd, 0, sizeof(tps_data_t));
+	memset(&rtsd, 0, sizeof(tps_data_t));
+
+	ret = tps_extract_uuid_from_uri(uri, _tps_contact_mode, &ltsd);
+	if(ret != 0) {
+		return (ret > 0) ? 0 : -1;
+	}
+
+	if(stsd != NULL && stsd->x_context.len > 0) {
+		ltsd.x_context = stsd->x_context;
+	}
+
+	ret = tps_storage_load_dialog(msg, &ltsd, &rtsd);
+	if(ret < 0) {
+		LM_ERR("failed to load dialog for Refer-To target [%.*s]\n", uri->len,
+				uri->s);
+		return -1;
+	}
+	if(ret > 0) {
+		LM_DBG("no stored dialog for Refer-To target [%.*s]\n", uri->len,
+				uri->s);
+		return 0;
+	}
+
+	if(direction == TPS_DIR_UPSTREAM) {
+		nuri = rtsd.a_contact;
+	} else {
+		nuri = rtsd.b_contact;
+	}
+
+	if(nuri.s == NULL || nuri.len <= 0) {
+		LM_ERR("no stored contact for Refer-To target [%.*s]\n", uri->len,
+				uri->s);
+		return -1;
+	}
+
+	for(ulen = 0; ulen < uri->len; ulen++) {
+		if(uri->s[ulen] == '?') {
+			break;
+		}
+	}
+
+	l = del_lump(msg, uri->s - msg->buf, ulen, 0);
+	if(l == 0) {
+		LM_ERR("failed deleting Refer-To uri\n");
+		return -1;
+	}
+
+	if(insert_new_lump_after(l, nuri.s, nuri.len, 0) == 0) {
+		LM_ERR("could not insert new Refer-To uri\n");
+		return -1;
+	}
+
+	LM_DBG("Refer-To uri updated to [%.*s]\n", nuri.len, nuri.s);
+	return 0;
+}
+
+/**
+ *
+ */
 char *tps_msg_update(sip_msg_t *msg, unsigned int *olen)
 {
 	struct dest_info dst;
@@ -963,6 +1104,10 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		} else {
 			LM_DBG("r-uri updated to: [%.*s]\n", nuri.len, nuri.s);
 		}
+	}
+	if(tps_unmask_refer_to(msg, &stsd, direction) < 0) {
+		LM_ERR("failed to update Refer-To header\n");
+		return -1;
 	}
 
 	if(use_branch) {
