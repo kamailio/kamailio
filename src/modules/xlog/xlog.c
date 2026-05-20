@@ -217,7 +217,8 @@ static int mod_init(void)
 		}
 	}
 
-	_xlog_buf = (char *)pkg_malloc((buf_size + 1) * sizeof(char));
+	/* +2 - space for ending `\0` and `\n` when xlog_auto_newline != 0 */
+	_xlog_buf = (char *)pkg_malloc((buf_size + 2) * sizeof(char));
 	if(_xlog_buf == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
@@ -251,15 +252,16 @@ static inline int xlog_helper(
 	char *_xlog_prefix_val = _xlog_prefix;
 
 	txt.len = buf_size;
-	txt.s = _xlog_buf;
+	txt.s = _xlog_buf; /* real size: buf_size + 2 (`\n` + `\0`) */
 
 	if(xl_print_log(msg, xm->m, _xlog_buf, &txt.len) < 0)
 		return -1;
 
 	if(xlog_auto_newline != 0 && txt.len > 0 && txt.s[txt.len - 1] != '\n') {
-		if(txt.len < buf_size) {
+		if(txt.len <= buf_size) {
 			txt.s[txt.len] = '\n';
 			txt.len++;
+			txt.s[txt.len] = '\0';
 		}
 	}
 
