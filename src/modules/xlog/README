@@ -37,6 +37,7 @@ Elena-Ramona Modroiu
               4.6. log_facility (string)
               4.7. log_colors (string)
               4.8. methods_filter (int)
+              4.9. auto_newline (str)
 
         5. Functions
 
@@ -63,15 +64,16 @@ Elena-Ramona Modroiu
    1.6. log_facility example
    1.7. log_colors example
    1.8. Set methods_filter parameter
-   1.9. xlog usage
-   1.10. xdbg usage
-   1.11. xinfo usage
-   1.12. xnotice usage
-   1.13. xwarn usage
-   1.14. xerr usage
-   1.15. xbug usage
-   1.16. xcrit usage
-   1.17. xalert usage
+   1.9. Set auto_newline parameter
+   1.10. xlog usage
+   1.11. xdbg usage
+   1.12. xinfo usage
+   1.13. xnotice usage
+   1.14. xwarn usage
+   1.15. xerr usage
+   1.16. xbug usage
+   1.17. xcrit usage
+   1.18. xalert usage
 
 Chapter 1. Admin Guide
 
@@ -94,6 +96,7 @@ Chapter 1. Admin Guide
         4.6. log_facility (string)
         4.7. log_colors (string)
         4.8. methods_filter (int)
+        4.9. auto_newline (str)
 
    5. Functions
 
@@ -162,6 +165,7 @@ Chapter 1. Admin Guide
    4.6. log_facility (string)
    4.7. log_colors (string)
    4.8. methods_filter (int)
+   4.9. auto_newline (str)
 
 4.1. buf_size (integer)
 
@@ -269,6 +273,19 @@ kamctl rpc cfg.set_now_int xlog methods_filter 15
 modparam("xlog", "methods_filter", 15)
 ...
 
+4.9. auto_newline (str)
+
+   If set to 1, then all xlog logging functions will automatically append
+   a newline character (\n). Any lines that already end in \n should not
+   receive an additional newline.
+
+   Default value is 0 (no automatic newline).
+
+   Example 1.9. Set auto_newline parameter
+...
+modparam("xlog", "auto_newline", 1)
+...
+
 5. Functions
 
    5.1. xlog([ [facility,] level,] format)
@@ -313,7 +330,7 @@ modparam("xlog", "methods_filter", 15)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. xlog usage
+   Example 1.10. xlog usage
 ...
 xlog("L_ERR", "time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
 ...
@@ -335,7 +352,7 @@ CAL3\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. xdbg usage
+   Example 1.11. xdbg usage
 ...
 xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -349,7 +366,7 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. xinfo usage
+   Example 1.12. xinfo usage
 ...
 xinfo("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -363,7 +380,7 @@ xinfo("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. xnotice usage
+   Example 1.13. xnotice usage
 ...
 xnotice("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -377,7 +394,7 @@ xnotice("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. xwarn usage
+   Example 1.14. xwarn usage
 ...
 xwarn("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -391,7 +408,7 @@ xwarn("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. xerr usage
+   Example 1.15. xerr usage
 ...
 xerr("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -405,7 +422,7 @@ xerr("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. xbug usage
+   Example 1.16. xbug usage
 ...
 xbug("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -419,7 +436,7 @@ xbug("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.16. xcrit usage
+   Example 1.17. xcrit usage
 ...
 xcrit("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
@@ -433,7 +450,7 @@ xcrit("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17. xalert usage
+   Example 1.18. xalert usage
 ...
 xalert("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...

@@ -52,6 +52,7 @@ Charles Chance
               3.12. fail_count_threshold_disabled(int)
               3.13. init_with_single(int)
               3.14. event_callback (str)
+              3.15. sl_send(int)
 
         4. Functions
 
@@ -61,6 +62,8 @@ Charles Chance
               4.4. dmq_bcast_message(channel, body, content_type)
               4.5. dmq_t_replicate([skip_loop_test])
               4.6. dmq_is_from_node()
+              4.7. dmq_process_custom(peer, node, body, content_type)
+              4.8. dmq_handle_custom(peer, node, body, content_type)
 
         5. Event routes
 
@@ -71,7 +74,9 @@ Charles Chance
         6. RPC Commands
 
               6.1. dmq.list_nodes
-              6.2. dmq.remove
+              6.2. dmq.add
+              6.3. dmq.remove
+              6.4. dmq.change_status
 
    2. Developer Guide
 
@@ -102,14 +107,19 @@ Charles Chance
    1.13. Set fail_count_threshold_disabled parameter
    1.14. Set init_with_single parameter
    1.15. Set event_callback parameter
-   1.16. dmq_handle_message usage
-   1.17. dmq_process_message usage
-   1.18. dmq_send_message usage
-   1.19. dmq_bcast_message usage
-   1.20. dmq_t_replicate usage
-   1.21. dmq_is_from_node usage
-   1.22. dmq.list_nodes usage
-   1.23. dmq.remove usage
+   1.16. Set sl_send parameter
+   1.17. dmq_handle_message usage
+   1.18. dmq_process_message usage
+   1.19. dmq_send_message usage
+   1.20. dmq_bcast_message usage
+   1.21. dmq_t_replicate usage
+   1.22. dmq_is_from_node usage
+   1.23. dmq_process_custom usage
+   1.24. dmq_handle_custom usage
+   1.25. dmq.list_nodes usage
+   1.26. dmq.add usage
+   1.27. dmq.remove usage
+   1.28. dmq.change_status usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -144,6 +154,7 @@ Chapter 1. Admin Guide
         3.12. fail_count_threshold_disabled(int)
         3.13. init_with_single(int)
         3.14. event_callback (str)
+        3.15. sl_send(int)
 
    4. Functions
 
@@ -153,6 +164,8 @@ Chapter 1. Admin Guide
         4.4. dmq_bcast_message(channel, body, content_type)
         4.5. dmq_t_replicate([skip_loop_test])
         4.6. dmq_is_from_node()
+        4.7. dmq_process_custom(peer, node, body, content_type)
+        4.8. dmq_handle_custom(peer, node, body, content_type)
 
    5. Event routes
 
@@ -163,7 +176,9 @@ Chapter 1. Admin Guide
    6. RPC Commands
 
         6.1. dmq.list_nodes
-        6.2. dmq.remove
+        6.2. dmq.add
+        6.3. dmq.remove
+        6.4. dmq.change_status
 
 1. Overview
 
@@ -277,6 +292,7 @@ sip:192.168.40.17:5060;status=not_active
    3.12. fail_count_threshold_disabled(int)
    3.13. init_with_single(int)
    3.14. event_callback (str)
+   3.15. sl_send(int)
 
 3.1. server_address(str)
 
@@ -496,6 +512,20 @@ function ksr_dmq_event(evname)
 end
 ...
 
+3.15. sl_send(int)
+
+   A non-zero value enables stateless message sending. This can be really
+   useful when using TCP as a transport for SIP between nodes. Only
+   messages with a custom reply callback (such as "notification_peer"
+   messages) will be sent statefully.
+
+   Default value is “0” (disabled).
+
+   Example 1.16. Set sl_send parameter
+...
+modparam("dmq", "sl_send", 1)
+...
+
 4. Functions
 
    4.1. dmq_handle_message([continue])
@@ -504,6 +534,8 @@ end
    4.4. dmq_bcast_message(channel, body, content_type)
    4.5. dmq_t_replicate([skip_loop_test])
    4.6. dmq_is_from_node()
+   4.7. dmq_process_custom(peer, node, body, content_type)
+   4.8. dmq_handle_custom(peer, node, body, content_type)
 
 4.1.  dmq_handle_message([continue])
 
@@ -518,7 +550,7 @@ end
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.16. dmq_handle_message usage
+   Example 1.17. dmq_handle_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_handle_message();
@@ -539,7 +571,7 @@ end
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.17. dmq_process_message usage
+   Example 1.18. dmq_process_message usage
 ...
     if(is_method("KDMQ")) {
         dmq_process_message();
@@ -559,7 +591,7 @@ end
 
    This function can be used from any route.
 
-   Example 1.18. dmq_send_message usage
+   Example 1.19. dmq_send_message usage
 ...
         dmq_send_message("channel1", "sip:10.0.0.21:5060", "Message body...", "t
 ext/plain");
@@ -577,7 +609,7 @@ ext/plain");
 
    This function can be used from any route.
 
-   Example 1.19. dmq_bcast_message usage
+   Example 1.20. dmq_bcast_message usage
 ...
     dmq_bcast_message("channel1", "Message body...", "text/plain");
 ...
@@ -599,7 +631,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.20. dmq_t_replicate usage
+   Example 1.21. dmq_t_replicate usage
 ...
     dmq_t_replicate();
 ...
@@ -611,7 +643,7 @@ ext/plain");
 
    This function can be used from REQUEST_ROUTE only.
 
-   Example 1.21. dmq_is_from_node usage
+   Example 1.22. dmq_is_from_node usage
 ...
         # basic example for REGISTER replication
     if(is_method("REGISTER")) {
@@ -623,6 +655,46 @@ ext/plain");
             dmq_t_replicate("1"); # source address checked, skip the loop test
         }
     }
+...
+
+4.7.  dmq_process_custom(peer, node, body, content_type)
+
+   Immediately process a custom DMQ message by passing it to the
+   appropriate local peer (module).
+
+   Meaning of parameters:
+     * peer - name of the local peer (module) that should handle the
+       message.
+     * node - SIP URI of sender node.
+     * body - the message body.
+     * content_type - the MIME type of the message body.
+
+   This function can be used from any route.
+
+   Example 1.23. dmq_process_custom usage
+...
+    dmq_process_custom("peer_id", "sip:192.168.1.101:5060;transport=tcp", "Messa
+ge body...", "text/plain");
+...
+
+4.8.  dmq_handle_custom(peer, node, body, content_type)
+
+   Similar to dmq_process_custom, but the processing is happening in a DMQ
+   worker process.
+
+   Meaning of parameters:
+     * peer - name of the local peer (module) that should handle the
+       message.
+     * node - SIP URI of sender node.
+     * body - the message body.
+     * content_type - the MIME type of the message body.
+
+   This function can be used from any route.
+
+   Example 1.24. dmq_handle_custom usage
+...
+    dmq_handle_custom("peer_id", "sip:192.168.1.101:5060;transport=tcp", "Messag
+e body...", "text/plain");
 ...
 
 5. Event routes
@@ -677,27 +749,53 @@ event_route[dmq:peer-disabled] {
 6. RPC Commands
 
    6.1. dmq.list_nodes
-   6.2. dmq.remove
+   6.2. dmq.add
+   6.3. dmq.remove
+   6.4. dmq.change_status
 
 6.1. dmq.list_nodes
 
    List the DMQ nodes. It has no parameters.
 
-   Example 1.22. dmq.list_nodes usage
+   Example 1.25. dmq.list_nodes usage
 ...
 kamctl rpc dmq.list_nodes
 ...
 
-6.2. dmq.remove
+6.2. dmq.add
+
+   Add a DMQ node.
+
+   Parameters:
+     * address - the SIP address of the DMQ node to add.
+
+   Example 1.26. dmq.add usage
+...
+kamctl rpc dmq.add sip:1.2.3.4:5060
+...
+
+6.3. dmq.remove
 
    Remove a DMQ node by address.
 
    Parameters:
      * address - the SIP address of the DMQ node to remove.
 
-   Example 1.23. dmq.remove usage
+   Example 1.27. dmq.remove usage
 ...
 kamctl rpc dmq.remove sip:1.2.3.4:5060
+...
+
+6.4. dmq.change_status
+
+   Change the status of a DMQ node.
+
+   Parameters:
+     * address - the DMQ node address status - active|not_active|disabled
+
+   Example 1.28. dmq.change_status usage
+...
+kamctl rpc dmq.change_status sip:1.2.3.4:5060 active
 ...
 
 Chapter 2. Developer Guide
