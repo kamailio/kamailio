@@ -81,7 +81,7 @@ static int sdp_get_sess_version(
 		sip_msg_t *msg, str *sess_version, long *sess_version_num);
 static int sdp_set_sess_version(
 		sip_msg_t *msg, str *sess_version, long *sess_version_num);
-static int w_sdp_get_address_family(sip_msg_t *msg);
+static int w_sdp_get_address_family(sip_msg_t *msg, char *p1, char *p2);
 
 static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_set_sdp(
@@ -1016,7 +1016,7 @@ it helps to extract IP address family at c line from sdp
 			6 for  IP6
 
 */
-static int w_sdp_get_address_family(sip_msg_t *msg)
+static int ki_sdp_get_address_family(sip_msg_t *msg)
 {
 	sdp_session_cell_t *session;
 	sdp_stream_cell_t *stream;
@@ -1067,6 +1067,11 @@ static int w_sdp_get_address_family(sip_msg_t *msg)
 	}
 
 	return result;
+}
+
+static int w_sdp_get_address_family(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_sdp_get_address_family(msg);
 }
 
 /**
@@ -3043,6 +3048,11 @@ static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("sdp_iterator_value"),
 		SR_KEMIP_XVAL, ki_sdp_iterator_value,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("sdp_get_address_family"),
+		SR_KEMIP_INT, ki_sdp_get_address_family,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
