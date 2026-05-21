@@ -478,9 +478,10 @@ Chapter 1. Admin Guide
    The dialog module provides dialog awareness for the Kamailio proxy. Its
    functionality is to keep track of the current dialogs, to offer
    information about them (e.g. how many dialogs are active), and to
-   manage various characteristics of dialogs. The module exports several
-   functions that can be used directly from the configuration route script
-   as well as functions for the RPC interface.
+   manage various characteristics of dialogs. It can also store variables
+   in dialog context, allowing to track CSeq updates. The module exports
+   several functions that can be used directly from the configuration
+   route script as well as functions for the RPC interface.
 
    This module also provides an API foundation on which to build more
    complex dialog-oriented functionality in other Kamailio modules.
