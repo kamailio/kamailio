@@ -89,5 +89,10 @@ static void rpc_reload(rpc_t *rpc, void *c)
 }
 
 
-rpc_export_t pr_rpc[] = {{"prefix_route.reload", rpc_reload, rpc_reload_doc, 0},
-		{"prefix_route.dump", rpc_dump, rpc_dump_doc, 0}, {0, 0, 0, 0}};
+/* clang-format off */
+rpc_export_t pr_rpc[] = {
+	{"prefix_route.reload", rpc_reload, rpc_reload_doc, 0},
+	{"prefix_route.dump", rpc_dump, rpc_dump_doc, 0},
+	{0, 0, 0, 0}
+};
+/* clang-format on */
