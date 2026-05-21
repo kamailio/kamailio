@@ -49,7 +49,7 @@ enum
 struct tree_item
 {
 	struct tree_item *digits[DIGITS]; /**< Child items for each digit */
-	char name[16];					  /**< Route name (for dump)      */
+	char name[64];					  /**< Route name (for dump)      */
 	int route;						  /**< Valid route number if >0   */
 };
 
