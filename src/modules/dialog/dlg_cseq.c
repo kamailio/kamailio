@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <limits.h>
 
 #include "../../core/events.h"
 #include "../../core/ut.h"
@@ -50,6 +52,189 @@
 extern struct tm_binds d_tmb;
 
 static str _dlg_cseq_diff_var_name = str_init("cseq_diff");
+
+typedef struct dlg_cseq_edit
+{
+	char *start;
+	char *end;
+	str value;
+} dlg_cseq_edit_t;
+
+/**
+ *
+ */
+static hdr_field_t *dlg_cseq_get_rack_hdr(sip_msg_t *msg)
+{
+	hdr_field_t *hdr = NULL;
+
+	for(hdr = msg->headers; hdr != NULL; hdr = hdr->next) {
+		if(hdr->name.len == 4 && strncasecmp(hdr->name.s, "RAck", 4) == 0) {
+			return hdr;
+		}
+	}
+
+	return NULL;
+}
+
+/**
+ *
+ */
+static int dlg_cseq_get_rack_cseq(hdr_field_t *hdr, str *tok, unsigned int *val)
+{
+	str body;
+	char *p = NULL;
+	char *end = NULL;
+
+	if(hdr == NULL || tok == NULL || val == NULL) {
+		return -1;
+	}
+
+	body = hdr->body;
+	trim(&body);
+	if(body.len <= 0) {
+		return -1;
+	}
+
+	p = body.s;
+	end = body.s + body.len;
+
+	/* response-num */
+	if(p >= end || !isdigit((unsigned char)*p)) {
+		return -1;
+	}
+	while(p < end && isdigit((unsigned char)*p)) {
+		p++;
+	}
+	while(p < end && (*p == ' ' || *p == '\t')) {
+		p++;
+	}
+
+	/* CSeq-num */
+	if(p >= end || !isdigit((unsigned char)*p)) {
+		return -1;
+	}
+	tok->s = p;
+	while(p < end && isdigit((unsigned char)*p)) {
+		p++;
+	}
+	tok->len = (int)(p - tok->s);
+
+	if(str2int(tok, val) < 0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int dlg_cseq_add_edit(
+		dlg_cseq_edit_t *edits, int *ecnt, char *start, char *end, str *value)
+{
+	if(edits == NULL || ecnt == NULL || value == NULL || start == NULL
+			|| end == NULL || end < start || *ecnt >= 4) {
+		return -1;
+	}
+
+	edits[*ecnt].start = start;
+	edits[*ecnt].end = end;
+	edits[*ecnt].value = *value;
+	(*ecnt)++;
+
+	return 0;
+}
+
+/**
+ *
+ */
+static void dlg_cseq_sort_edits(dlg_cseq_edit_t *edits, int ecnt)
+{
+	dlg_cseq_edit_t tmp;
+	int i;
+	int j;
+
+	for(i = 1; i < ecnt; i++) {
+		tmp = edits[i];
+		j = i - 1;
+		while(j >= 0
+				&& (edits[j].start > tmp.start
+						|| (edits[j].start == tmp.start
+								&& edits[j].end > tmp.end))) {
+			edits[j + 1] = edits[j];
+			j--;
+		}
+		edits[j + 1] = tmp;
+	}
+}
+
+/**
+ *
+ */
+static int dlg_cseq_apply_edits(
+		sip_msg_t *msg, dlg_cseq_edit_t *edits, int ecnt, str *obuf)
+{
+	char tbuf[BUF_SIZE];
+	char *src = NULL;
+	char *msgend = NULL;
+	int tbuf_len = 0;
+	int i;
+	int clen;
+	str nbuf = STR_NULL;
+
+	if(msg == NULL || obuf == NULL || (ecnt > 0 && edits == NULL)) {
+		return -1;
+	}
+
+	src = msg->buf;
+	msgend = msg->buf + msg->len;
+
+	for(i = 0; i < ecnt; i++) {
+		if(edits[i].start < src || edits[i].start > edits[i].end
+				|| edits[i].end > msgend || edits[i].value.len < 0) {
+			LM_ERR("invalid cseq rewrite edit\n");
+			return -1;
+		}
+		clen = (int)(edits[i].start - src);
+		if(tbuf_len + clen + edits[i].value.len >= BUF_SIZE) {
+			LM_ERR("new message is too big\n");
+			return -1;
+		}
+		if(clen > 0) {
+			memcpy(tbuf + tbuf_len, src, clen);
+			tbuf_len += clen;
+		}
+		if(edits[i].value.len > 0) {
+			memcpy(tbuf + tbuf_len, edits[i].value.s, edits[i].value.len);
+			tbuf_len += edits[i].value.len;
+		}
+		src = edits[i].end;
+	}
+
+	clen = (int)(msgend - src);
+	if(tbuf_len + clen >= BUF_SIZE) {
+		LM_ERR("new message is too big\n");
+		return -1;
+	}
+	if(clen > 0) {
+		memcpy(tbuf + tbuf_len, src, clen);
+		tbuf_len += clen;
+	}
+
+	nbuf.s = pkg_malloc((tbuf_len + 1) * sizeof(char));
+	if(nbuf.s == NULL) {
+		LM_ERR("not enough memory for new message\n");
+		return -1;
+	}
+
+	pkg_free(obuf->s);
+	obuf->s = nbuf.s;
+	memcpy(obuf->s, tbuf, tbuf_len);
+	obuf->s[tbuf_len] = '\0';
+	obuf->len = tbuf_len;
+
+	return 0;
+}
 
 /**
  *
@@ -347,14 +532,24 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 	sip_msg_t msg;
 	str *obuf;
 	unsigned int direction;
+	unsigned int old_cseq = 0;
+	unsigned int new_cseq = 0;
+	unsigned int cseq_diff = 0;
+	unsigned int rack_cseq = 0;
 	dlg_cell_t *dlg = NULL;
 	str nval = STR_NULL;
-	char tbuf[BUF_SIZE];
-	int tbuf_len = 0;
+	str emval = STR_NULL;
+	str rack_tok = STR_NULL;
 	struct via_body *via;
 	hdr_field_t *hfk = NULL;
+	hdr_field_t *rack = NULL;
 	sr_cfgenv_t *cenv = NULL;
-	str nbuf = STR_NULL;
+	str via_cookie = STR_NULL;
+	str rack_nval = STR_NULL;
+	dlg_cseq_edit_t edits[4];
+	int ecnt = 0;
+	char via_cookie_buf[64];
+	char rack_nval_buf[INT2STR_MAX_LEN];
 
 	obuf = (str *)evp->data;
 	memset(&msg, 0, sizeof(sip_msg_t));
@@ -435,113 +630,85 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 		goto done;
 	}
 
-	if(msg.len + 3 + 2 * nval.len >= BUF_SIZE) {
-		LM_ERR("new messages is too big\n");
+	if(str2int(&get_cseq(&msg)->number, &old_cseq) < 0) {
+		LM_ERR("failed to parse original cseq number\n");
 		goto done;
 	}
+	if(str2int(&nval, &new_cseq) < 0 || new_cseq < old_cseq) {
+		LM_ERR("failed to parse new cseq number\n");
+		goto done;
+	}
+	cseq_diff = new_cseq - old_cseq;
 	LM_DBG("updating cseq to: %.*s\n", nval.len, nval.s);
 
 	/* new cseq value */
 	dlg->iflags |= DLG_IFLAG_CSEQ_DIFF;
 
-	if(via->branch->value.s < get_cseq(&msg)->number.s) {
-		/* Via is before CSeq */
-		/* copy first part till after via branch */
-		tbuf_len = via->branch->value.s + via->branch->value.len - msg.buf;
-		memcpy(tbuf, msg.buf, tbuf_len);
-		/* complete via branch */
-		tbuf[tbuf_len++] = '.';
-		tbuf[tbuf_len++] = 'c';
-		tbuf[tbuf_len++] = 's';
-		memcpy(tbuf + tbuf_len, get_cseq(&msg)->number.s,
-				get_cseq(&msg)->number.len);
-		tbuf_len += get_cseq(&msg)->number.len;
-		/* copy till beginning of cseq number */
-		memcpy(tbuf + tbuf_len, via->branch->value.s + via->branch->value.len,
-				get_cseq(&msg)->number.s - via->branch->value.s
-						- via->branch->value.len);
-		tbuf_len += get_cseq(&msg)->number.s - via->branch->value.s
-					- via->branch->value.len;
-		/* add new value */
-		memcpy(tbuf + tbuf_len, nval.s, nval.len);
-		tbuf_len += nval.len;
-		if(hfk && hfk->name.s > get_cseq(&msg)->number.s) {
-			/* copy from after cseq number to the beginning of hfk */
-			memcpy(tbuf + tbuf_len,
-					get_cseq(&msg)->number.s + get_cseq(&msg)->number.len,
-					hfk->name.s - get_cseq(&msg)->number.s
-							- get_cseq(&msg)->number.len);
-			tbuf_len += hfk->name.s - get_cseq(&msg)->number.s
-						- get_cseq(&msg)->number.len;
-			/* copy from after hfk to the end of sip message */
-			memcpy(tbuf + tbuf_len, hfk->name.s + hfk->len,
-					msg.buf + msg.len - hfk->name.s - hfk->len);
-			tbuf_len += msg.buf + msg.len - hfk->name.s - hfk->len;
-		} else {
-			/* copy from after cseq number to the end of sip message */
-			memcpy(tbuf + tbuf_len,
-					get_cseq(&msg)->number.s + get_cseq(&msg)->number.len,
-					msg.buf + msg.len - get_cseq(&msg)->number.s
-							- get_cseq(&msg)->number.len);
-			tbuf_len += msg.buf + msg.len - get_cseq(&msg)->number.s
-						- get_cseq(&msg)->number.len;
-		}
-	} else {
-		/* CSeq is before Via */
-		/* copy till beginning of cseq number */
-		tbuf_len = get_cseq(&msg)->number.s - msg.buf;
-		memcpy(tbuf, msg.buf, tbuf_len);
-		/* add new value */
-		memcpy(tbuf + tbuf_len, nval.s, nval.len);
-		tbuf_len += nval.len;
-		/* copy from after cseq number to the after via branch */
-		memcpy(tbuf + tbuf_len,
-				get_cseq(&msg)->number.s + get_cseq(&msg)->number.len,
-				via->branch->value.s + via->branch->value.len
-						- get_cseq(&msg)->number.s
-						- get_cseq(&msg)->number.len);
-		tbuf_len += via->branch->value.s + via->branch->value.len
-					- get_cseq(&msg)->number.s - get_cseq(&msg)->number.len;
-		/* complete via branch */
-		tbuf[tbuf_len++] = '.';
-		tbuf[tbuf_len++] = 'c';
-		tbuf[tbuf_len++] = 's';
-		memcpy(tbuf + tbuf_len, get_cseq(&msg)->number.s,
-				get_cseq(&msg)->number.len);
-		tbuf_len += get_cseq(&msg)->number.len;
-		if(hfk && hfk->name.s > get_cseq(&msg)->number.s) {
-			/* copy from after via to the beginning of hfk */
-			memcpy(tbuf + tbuf_len,
-					via->branch->value.s + via->branch->value.len,
-					hfk->name.s - via->branch->value.s
-							- via->branch->value.len);
-			tbuf_len +=
-					hfk->name.s - via->branch->value.s - via->branch->value.len;
-			/* copy from after hfk to the end of sip message */
-			memcpy(tbuf + tbuf_len, hfk->name.s + hfk->len,
-					msg.buf + msg.len - hfk->name.s - hfk->len);
-			tbuf_len += msg.buf + msg.len - hfk->name.s - hfk->len;
-		} else {
-			/* copy from after via to the end of sip message */
-			memcpy(tbuf + tbuf_len,
-					via->branch->value.s + via->branch->value.len,
-					msg.buf + msg.len - via->branch->value.s
-							- via->branch->value.len);
-			tbuf_len += msg.buf + msg.len - via->branch->value.s
-						- via->branch->value.len;
-		}
-	}
-	/* replace old msg content */
-	nbuf.s = pkg_malloc((tbuf_len + 1) * sizeof(char));
-	if(nbuf.s == NULL) {
-		LM_ERR("not enough memory for new message\n");
+	if(sizeof(via_cookie_buf) <= (size_t)(3 + get_cseq(&msg)->number.len)) {
+		LM_ERR("via cseq cookie buffer too small\n");
 		goto done;
 	}
-	pkg_free(obuf->s);
-	obuf->s = nbuf.s;
-	memcpy(obuf->s, tbuf, tbuf_len);
-	obuf->s[tbuf_len] = 0;
-	obuf->len = tbuf_len;
+	memcpy(via_cookie_buf, ".cs", 3);
+	memcpy(via_cookie_buf + 3, get_cseq(&msg)->number.s,
+			get_cseq(&msg)->number.len);
+	via_cookie.s = via_cookie_buf;
+	via_cookie.len = 3 + get_cseq(&msg)->number.len;
+
+	if(dlg_cseq_add_edit(edits, &ecnt,
+			   via->branch->value.s + via->branch->value.len,
+			   via->branch->value.s + via->branch->value.len, &via_cookie)
+			< 0) {
+		LM_ERR("failed to add via cseq cookie edit\n");
+		goto done;
+	}
+
+	if(dlg_cseq_add_edit(edits, &ecnt, get_cseq(&msg)->number.s,
+			   get_cseq(&msg)->number.s + get_cseq(&msg)->number.len, &nval)
+			< 0) {
+		LM_ERR("failed to add cseq rewrite edit\n");
+		goto done;
+	}
+
+	if(msg.first_line.u.request.method_value == METHOD_PRACK && cseq_diff > 0) {
+		rack = dlg_cseq_get_rack_hdr(&msg);
+		if(rack != NULL
+				&& dlg_cseq_get_rack_cseq(rack, &rack_tok, &rack_cseq) == 0) {
+			if(UINT_MAX - rack_cseq < cseq_diff) {
+				LM_ERR("rack cseq would overflow on rewrite\n");
+				goto done;
+			}
+			rack_nval.s = int2str(rack_cseq + cseq_diff, &rack_nval.len);
+			if(rack_nval.len <= 0
+					|| rack_nval.len >= (int)sizeof(rack_nval_buf)) {
+				LM_ERR("invalid rack cseq rewrite value\n");
+				goto done;
+			}
+			memcpy(rack_nval_buf, rack_nval.s, rack_nval.len);
+			rack_nval_buf[rack_nval.len] = '\0';
+			rack_nval.s = rack_nval_buf;
+			if(dlg_cseq_add_edit(edits, &ecnt, rack_tok.s,
+					   rack_tok.s + rack_tok.len, &rack_nval)
+					< 0) {
+				LM_ERR("failed to add rack rewrite edit\n");
+				goto done;
+			}
+			LM_DBG("updating rack cseq to: %.*s\n", rack_nval.len, rack_nval.s);
+		}
+	}
+
+	if(hfk != NULL) {
+		if(dlg_cseq_add_edit(
+				   edits, &ecnt, hfk->name.s, hfk->name.s + hfk->len, &emval)
+				< 0) {
+			LM_ERR("failed to add helper header removal edit\n");
+			goto done;
+		}
+	}
+
+	dlg_cseq_sort_edits(edits, ecnt);
+	if(dlg_cseq_apply_edits(&msg, edits, ecnt, obuf) < 0) {
+		goto done;
+	}
 
 done:
 	if(dlg != NULL)
