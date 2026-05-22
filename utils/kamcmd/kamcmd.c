@@ -476,14 +476,14 @@ int connect_unix_sock(char *name, int type)
 				goto error;
 			}
 		} else {
-			if(strlen(reply_socket) > UNIX_PATH_MAX) {
+			ret = snprintf(mysun.sun_path, UNIX_PATH_MAX, "%s", reply_socket);
+			if((ret < 0) || (ret >= UNIX_PATH_MAX)) {
 				fprintf(stderr,
 						"ERROR: buffer overflow while trying to"
 						"use the provided unix datagram socket name (%s)",
 						reply_socket);
 				goto error;
 			}
-			strcpy(mysun.sun_path, reply_socket);
 		}
 		mysun.sun_family = AF_UNIX;
 		if(bind(s, (struct sockaddr *)&mysun, sizeof(mysun)) == -1) {
@@ -1013,11 +1013,12 @@ static int parse_line(struct binrpc_cmd *cmd, char *line)
 	char *p;
 	int count;
 
-	cmd->method = strtok(line, " \t");
+	char *strtok_saveptr = NULL;
+	cmd->method = strtok_r(line, " \t", &strtok_saveptr);
 	if(cmd->method == 0)
 		goto error_no_method;
 	count = 0;
-	for(p = strtok(0, " \t"); p; p = strtok(0, " \t")) {
+	for(p = strtok_r(0, " \t", &strtok_saveptr); p; p = strtok_r(0, " \t", &strtok_saveptr)) {
 		if(count >= MAX_BINRPC_ARGS)
 			goto error_too_many;
 		if(parse_arg(&cmd->argv[count], p) < 0) {
@@ -1133,7 +1134,7 @@ static struct binrpc_val *parse_reply_body(int *records,
 	if(*records == 0) {
 		*records = 100; /* start with a reasonable size */
 	};
-	a = malloc(*records * sizeof(struct binrpc_val));
+	a = calloc(*records, sizeof(struct binrpc_val));
 	if(a == 0)
 		goto error_mem;
 	p = body;
@@ -1369,7 +1370,7 @@ static int get_cfgvars_list(int s)
 	}
 	/* alloc the var arrays per group */
 	for(grp = cfg_grp_lst; grp; grp = grp->next) {
-		grp->var_names = malloc(sizeof(str) * grp->var_no);
+		grp->var_names = calloc(grp->var_no, sizeof(str));
 		if(grp->var_names == 0)
 			goto error_mem;
 		memset(grp->var_names, 0, sizeof(str) * grp->var_no);
@@ -1559,7 +1560,7 @@ static int get_counters_list(int s)
 				goto error;
 		}
 		grp->var_no = 0;
-		grp->var_names = malloc(sizeof(str) * grp->cnt_vars_no);
+		grp->var_names = calloc(grp->cnt_vars_no, sizeof(str));
 		if(grp->var_names == 0)
 			goto error_mem;
 		memset(grp->var_names, 0, sizeof(str) * grp->cnt_vars_no);
