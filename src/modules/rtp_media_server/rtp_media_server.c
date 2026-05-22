@@ -32,6 +32,7 @@ str playback_fn = {0, 0};
 str log_fn = {0, 0};
 static char *rms_bridge_default_route = "rms:bridged";
 static char *rms_answer_default_route = "rms:start";
+static int rms_contact_user = 0;
 
 int in_rms_process = 0;
 rms_t *rms = NULL;
@@ -81,7 +82,9 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t mod_params[] = {
-		{"log_file_name", PARAM_STR, &log_fn}, {0, 0, 0}};
+		{"log_file_name", PARAM_STR, &log_fn},
+		{"contact_user", PARAM_INT, &rms_contact_user},
+		{0, 0, 0}};
 
 struct module_exports exports = {
 		"rtp_media_server",
@@ -450,6 +453,24 @@ static void rms_link_user(str *suri, str *suser)
 	suser->len = puri.user.len;
 }
 
+static void rms_get_contact_user(rms_dialog_info_t *di, str *suser)
+{
+	if(di == NULL) {
+		suser->s = _rms_default_user.s;
+		suser->len = _rms_default_user.len;
+		return;
+	}
+
+	if(rms_contact_user != 0 && di != NULL && di->contact_user.s != NULL
+			&& di->contact_user.len > 0) {
+		suser->s = di->contact_user.s;
+		suser->len = di->contact_user.len;
+		return;
+	}
+
+	rms_link_user(&di->local_uri, suser);
+}
+
 static int rms_answer_call(
 		struct cell *cell, rms_dialog_info_t *di, rms_sdp_info_t *sdp_info)
 {
@@ -471,7 +492,7 @@ static int rms_answer_call(
 	sdp_info->local_ip.s = di->local_ip.s;
 	sdp_info->local_ip.len = di->local_ip.len;
 
-	rms_link_user(&di->local_uri, &luser);
+	rms_get_contact_user(di, &luser);
 	snprintf(buffer, 256,
 			"Contact: <sip:%.*s@%s:%d>\r\nContent-Type: application/sdp\r\n",
 			luser.len, luser.s, di->local_ip.s, di->local_port);
@@ -654,7 +675,7 @@ static int rms_bridging_call(rms_dialog_info_t *di, rms_action_t *a)
 		goto error;
 	}
 
-	rms_link_user(&di->local_uri, &luser);
+	rms_get_contact_user(di, &luser);
 	snprintf(buff, 256,
 			"Max-Forwards: 70\r\nContact: "
 			"<sip:%.*s@%s:%d>\r\nContent-Type: application/sdp\r\n",
@@ -754,6 +775,10 @@ static rms_dialog_info_t *rms_dialog_create_leg(
 	}
 	if(!rms_str_dup(&di->bridged_di->local_uri, &di->local_uri, 1))
 		goto error;
+	if(di->contact_user.s != NULL && di->contact_user.len > 0) {
+		if(!rms_str_dup(&di->bridged_di->contact_user, &di->contact_user, 1))
+			goto error;
+	}
 	if(!rms_str_dup(&di->bridged_di->local_ip, &di->local_ip, 1))
 		goto error;
 
@@ -1067,7 +1092,7 @@ static int rms_sip_forward(
 		return 0;
 	}
 
-	rms_link_user(&di->local_uri, &luser);
+	rms_get_contact_user(di, &luser);
 	snprintf(buff, 256,
 			"Max-Forwards: 70\r\nContact: "
 			"<sip:%.*s@%s:%d>\r\nContent-Type: application/sdp\r\n",

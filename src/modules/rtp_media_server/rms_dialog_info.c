@@ -194,6 +194,10 @@ int rms_dialog_free(rms_dialog_info_t *si)
 		shm_free(si->local_uri.s);
 		si->local_uri.s = NULL;
 	}
+	if(si->contact_user.s) {
+		shm_free(si->contact_user.s);
+		si->contact_user.s = NULL;
+	}
 	shm_free(si);
 	si = NULL;
 	return 1;
@@ -263,6 +267,15 @@ rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg)
 		goto error;
 	if(!rms_str_dup(&si->local_uri, &msg->to->body, 1))
 		goto error;
+	if(parse_to_header(msg) < 0 || get_to(msg) == NULL) {
+		LM_ERR("can not parse To header.\n");
+		goto error;
+	}
+	if(get_to(msg)->parsed_uri.user.s != NULL
+			&& get_to(msg)->parsed_uri.user.len > 0) {
+		if(!rms_str_dup(&si->contact_user, &get_to(msg)->parsed_uri.user, 1))
+			goto error;
+	}
 	str ip;
 	ip.s = ip_addr2a(&msg->rcv.dst_ip);
 	ip.len = strlen(ip.s);
