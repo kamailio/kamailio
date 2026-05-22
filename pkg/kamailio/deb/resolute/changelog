@@ -1,0 +1,47 @@
+kamailio (6.1.2) unstable; urgency=medium
+
+  * version set 6.1.2
+
+ -- Victor Seva <vseva@debian.org>  Wed, 22 Apr 2026 08:41:27 +0200
+
+kamailio (6.1.1) unstable; urgency=medium
+
+  * version set 6.1.1
+
+ -- Victor Seva <vseva@debian.org>  Wed, 04 Mar 2026 09:00:15 +0100
+
+kamailio (6.1.0) unstable; urgency=medium
+
+  * version set 6.1.0
+
+ -- Victor Seva <vseva@debian.org>  Wed, 18 Feb 2026 10:45:51 +0100
+
+kamailio (6.1.0~rc0) unstable; urgency=medium
+
+  * version set 6.1.0~rc0
+
+ -- Victor Seva <vseva@debian.org>  Tue, 27 Jan 2026 09:29:50 +0100
+
+kamailio (6.1.0~pre1) unstable; urgency=medium
+
+  * version set 6.1.0~pre1
+
+ -- Victor Seva <vseva@debian.org>  Tue, 27 Jan 2026 09:28:41 +0100
+
+kamailio (6.1.0~pre0) unstable; urgency=medium
+
+  * version set 6.1.0~pre0
+
+ -- Victor Seva <vseva@debian.org>  Fri, 09 Jan 2026 08:55:11 +0100
+
+kamailio (6.1.0~dev1) unstable; urgency=medium
+
+  * version set 6.1.0~dev1
+
+ -- Victor Seva <vseva@debian.org>  Tue, 06 May 2025 15:37:46 +0200
+
+kamailio (6.1.0~dev0) unstable; urgency=medium
+
+  * version set 6.1.0~dev0
+
+ -- Victor Seva <vseva@debian.org>  Thu, 23 Jan 2025 08:51:36 +0100
