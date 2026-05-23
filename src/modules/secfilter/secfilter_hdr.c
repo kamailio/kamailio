@@ -164,7 +164,7 @@ int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain)
 }
 
 
-void secf_trim_quotes(str *input)
+static void secf_trim_quotes(str *input)
 {
 	if(!input || input->len < 2 || input->s == NULL) {
 		return;
@@ -176,7 +176,7 @@ void secf_trim_quotes(str *input)
 	}
 }
 
-int parse_name(char *_s, int _len, str *name)
+static int parse_name(char *_s, int _len, str *name)
 {
 	if(_s == NULL || _len <= 0) {
 		if(name) {
