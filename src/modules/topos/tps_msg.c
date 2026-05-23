@@ -283,6 +283,11 @@ static int tps_extract_uuid_from_uri(str *uri, int ctmode, tps_data_t *ptsd)
 					uri->s);
 			return 1;
 		}
+		if(tuuid.len < 6) {
+			LM_DBG("topos uri parameter too short in [%.*s]\n", uri->len,
+					uri->s);
+			return 1;
+		}
 	} else {
 		if(puri.user.len < 6) {
 			LM_DBG("uri user too short for topos uuid in [%.*s]\n", uri->len,
@@ -486,6 +491,10 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 		}
 		if(ret == 1) {
 			LM_DBG("prefix para not found\n");
+			return 1;
+		}
+		if(tuuid.len < 6) {
+			LM_DBG("prefix param too short\n");
 			return 1;
 		}
 	} else {
