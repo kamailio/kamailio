@@ -745,12 +745,6 @@ static inline char *run_redirect(struct cpl_interpreter *intr)
 	else
 		i = cpl_fct.slb.freply(intr->msg, 302, &cpl_302_reason);
 
-	/* msg which I'm working on can be in private memory or is a clone into
-	 * shared memory (if I'm after a failed proxy); So, it's better to removed
-	 * by myself the lump that I added previously */
-	unlink_lump_rpl(intr->msg, lump);
-	free_lump_rpl(lump);
-
 	if(i != 1) {
 		LM_ERR("unable to send redirect reply!\n");
 		goto runtime_error;
