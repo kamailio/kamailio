@@ -3060,6 +3060,9 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 		if(likely(port)) {
 			su2ip_addr(&ip, &send_info->to);
 			con = tcpconn_get(send_info->id, &ip, port, from, 0);
+			if(con == NULL && from != NULL) {
+				con = tcpconn_get(send_info->id, &ip, port, NULL, 0);
+			}
 		} else if(likely(send_info->id))
 			con = tcpconn_get(send_info->id, 0, 0, 0, 0);
 		else {
