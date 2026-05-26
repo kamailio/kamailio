@@ -89,7 +89,6 @@ Replaces:
  kamailio-carrierroute-modules,
 Suggests:
  kamailio-cpl-modules,
- kamailio-dbg,
  kamailio-ldap-modules,
  kamailio-lua-modules,
  kamailio-mysql-modules,
@@ -129,24 +128,6 @@ Description: very fast, dynamic and configurable SIP server
  .
  This package contains the main Kamailio binary along with the principal modules
  and support binaries.
-
-Package: kamailio-dbg
-Priority: extra
-Section: debug
-Architecture: any
-Multi-Arch: same
-Pre-Depends:
- ${misc:Pre-Depends},
-Depends:
- kamailio (= ${binary:Version}),
- ${misc:Depends},
-Description: very fast and configurable SIP server [debug symbols]
- Kamailio is a very fast and flexible SIP (RFC3261)
- server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package contains the debugging symbols for the Kamailio binaries and
- modules. You only need to install it if you need to debug Kamailio.
 
 Package: kamailio-geoip2-modules
 Architecture: any
