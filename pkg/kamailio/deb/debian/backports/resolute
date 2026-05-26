@@ -25,6 +25,10 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 # libncurses
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
+# remove alien tags
+while read -r f ; do
+  sed -i -e '/library-not-linked-against-libc/d' "${f}"
+done < <(find ${DIST} -type f -name '*.lintian-overrides')
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
