@@ -257,6 +257,7 @@ int tps_storage_fill_contact(
 	size_t host_len;
 	size_t scheme_len;
 	int append_port_proto;
+	int metid;
 	sr_xavp_t *vavu = NULL;
 	sr_xavp_t *uavu = NULL;
 	str *field;
@@ -292,9 +293,15 @@ int tps_storage_fill_contact(
 
 	if(ctmode == TPS_CONTACT_MODE_RURIUSER) {
 		if(dir == TPS_DIR_DOWNSTREAM) {
+			if(parse_headers(msg, HDR_CSEQ_F, 0) != 0 || msg->cseq == NULL
+					|| get_cseq(msg) == NULL) {
+				LM_ERR("bad sip message or missing CSeq header\n");
+				return -1;
+			}
+			metid = get_cseq(msg)->method_id;
 			if(parse_headers(msg, HDR_CONTACT_F, 0) < 0
 					|| msg->contact == NULL) {
-				if(get_cseq(msg)->method_id != METHOD_BYE) {
+				if(metid != METHOD_BYE) {
 					LM_WARN("bad sip message or missing Contact header\n");
 					return -1;
 				}
@@ -694,14 +701,21 @@ error:
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 {
 	int ret = -1; /* error if dialog == 0 */
+	int metid;
 	str suid;
 	str *sx = NULL;
 
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		return -1;
 	}
+	if(parse_headers(msg, HDR_CSEQ_F, 0) != 0 || msg->cseq == NULL
+			|| get_cseq(msg) == NULL) {
+		LM_ERR("bad sip message or missing CSeq header\n");
+		return -1;
+	}
+	metid = get_cseq(msg)->method_id;
 
-	if(get_cseq(msg)->method_id == METHOD_ACK) {
+	if(metid == METHOD_ACK) {
 		if(parse_headers(msg, HDR_CONTACT_F, 0) < 0 || msg->contact == NULL) {
 			/* ACK with no Contact - nothing to store */
 			return 0;
