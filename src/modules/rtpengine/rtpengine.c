@@ -2860,6 +2860,9 @@ static int build_rtpp_socks(int lmode, int rtest)
 
 		rtpe_reload_lock_get(rtpp_list->rset_lock);
 		for(pnode = rtpp_list->rn_first; pnode != 0; pnode = pnode->rn_next) {
+			if(!pnode->rn_displayed) {
+				continue;
+			}
 			char *hostname;
 			char *hp;
 
