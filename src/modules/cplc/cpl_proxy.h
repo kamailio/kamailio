@@ -149,7 +149,13 @@ static void reply_callback(struct cell *t, int type, struct tmcb_params *ps)
 	int rez;
 
 	if(intr == 0) {
-		LM_WARN("param=0 for callback %d, transaction=%p \n", type, t);
+		if((1 == cpl_env.ignore3xx) && (type & TMCB_RESPONSE_OUT)) {
+			LM_DBG("param=0 for callback %d, transaction=%p, due to a 3XX "
+				   "ignored \n",
+					type, t);
+		} else {
+			LM_WARN("param=0 for callback %d, transaction=%p \n", type, t);
+		}
 		return;
 	}
 

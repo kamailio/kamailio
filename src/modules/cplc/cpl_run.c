@@ -109,7 +109,7 @@ static str cpl_302_reason = str_init("Moved temporarily");
 		} else {                                                      \
 			check_overflow_by_ptr((_p_) + (_len_), _intr_, _error_);  \
 			_s_ = _p_;                                                \
-			(_p_) += (_len_) + 1 * (((_len_)&0x0001) == 1);           \
+			(_p_) += (_len_) + 1 * (((_len_) & 0x0001) == 1);         \
 			(_len_) -= (_FIXUP_);                                     \
 		}                                                             \
 	} while(0)
@@ -744,12 +744,6 @@ static inline char *run_redirect(struct cpl_interpreter *intr)
 		i = cpl_fct.slb.freply(intr->msg, 301, &cpl_301_reason);
 	else
 		i = cpl_fct.slb.freply(intr->msg, 302, &cpl_302_reason);
-
-	/* msg which I'm working on can be in private memory or is a clone into
-	 * shared memory (if I'm after a failed proxy); So, it's better to removed
-	 * by myself the lump that I added previously */
-	unlink_lump_rpl(intr->msg, lump);
-	free_lump_rpl(lump);
 
 	if(i != 1) {
 		LM_ERR("unable to send redirect reply!\n");
