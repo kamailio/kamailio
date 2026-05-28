@@ -255,10 +255,13 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 				reply_status =
 						relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1);
 				if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
+					LM_DBG("skip sending cancel - reply status: %d\n",
+							reply_status);
 					return -1;
 				}
 			}
 			/* do nothing, hope that the caller will clean up */
+			LM_DBG("skip sending cancel - flags: F_CANCEL_B_KILL\n");
 			return ret;
 		}
 	} else {
@@ -277,11 +280,16 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 					reply_status = relay_reply(
 							t, FAKED_REPLY, branch, 487, &tmp_cd, 1);
 					if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
+						LM_DBG("skip sending cancel - reply status: %d\n",
+								reply_status);
 						return -1;
 					}
+					LM_DBG("skip sending cancel - flags: "
+						   "F_CANCEL_B_FAKE_REPLY\n");
 					return 0; /* should be inactive after the 487 */
 				}
 				/* do nothing, just wait for the final timeout */
+				LM_DBG("skip sending cancel - wait for the final timeout\n");
 				return 1;
 			}
 		}
