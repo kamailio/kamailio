@@ -262,7 +262,7 @@ modparam("sqlops", "connect_mode", 1)
 		<para>
 		Note that a result container can be used for different SQL queries, it
 		is not required to have result container per SQL query. Use different
-		containers when the result records are needed at the same time (e.g.,
+		containers when the result records are needed at the same time (e.g.
 		compare a field from one result with a field from another result).
 		</para>
 		<para>
@@ -301,6 +301,8 @@ modparam("sqlops", "results_maxsize", 64)
 		<para>
 			<emphasis>2</emphasis> - query successful, no rows returned
 		</para>
+		</listitem>
+		<listitem>
 		<para>
 			<emphasis>3</emphasis> - query successful, at least one row
             returned, but result parameter was not given
@@ -492,9 +494,9 @@ sql_result_free("ra");
 		</title>
 		<para>
 			Make an async SQL query using 'connection', if implemented by db
-			driver module (e.g., db_mysql). The query is executed in another
+			driver module (e.g. db_mysql). The query is executed in another
 			process and result is not available back to config, thus it should
-			be used only for sql statements that don't return values (e.g.,
+			be used only for sql statements that don't return values (e.g.
 			insert, delete, update...). Note that async_workers core parameter
 			must be set in order to enable the asynchronous framework
 			needed by this function.
