@@ -2664,12 +2664,13 @@ kamcli dispatcher.oclist 1
 								of the corresponding algorithm parameter for ds_select_dst().</para>
 						</listitem>
 						<listitem>
-							<para>'socket' - used to set the sending socket for the gateway. It is
-								used for sending the SIP traffic as well as OPTIONS
-								keepalives.</para>
+							<para>'socket' - used to set the sending socket for the gateway, overwriting
+								ds_default_socket parameter. It is used for sending the SIP traffic
+								as well as OPTIONS pings/keepalives (if no specific ds_ping_socket
+								parameter or per record ping_socket is set).</para>
 						</listitem>
 						<listitem>
-							<para>'ping_socket' - used to set the sending socket for ping requests.
+							<para>'ping_socket' - used to set specific sending socket for ping requests.
 								It overwrites the general ds_ping_socket parameter.</para>
 						</listitem>
 						<listitem>
