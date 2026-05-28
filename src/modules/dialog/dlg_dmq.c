@@ -337,16 +337,24 @@ int dlg_dmq_handle_msg(
 				case DLG_STATE_EARLY:
 					dlg->start_ts = start_ts;
 					dlg->lifetime = lifetime;
-					dlg_set_leg_info(
-							dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
+					/* apply leg info if it carries data */
+					if(tag1.len > 0) {
+						dlg_set_leg_info(
+								dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
+					}
 					break;
 				case DLG_STATE_CONFIRMED:
 					dlg->start_ts = start_ts;
 					dlg->lifetime = lifetime;
-					dlg_set_leg_info(
-							dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
-					dlg_set_leg_info(
-							dlg, &tag2, &route_set2, &contact2, &cseq2, 1);
+					/* apply leg info if it carries data */
+					if(tag1.len > 0) {
+						dlg_set_leg_info(
+								dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
+					}
+					if(tag2.len > 0) {
+						dlg_set_leg_info(
+								dlg, &tag2, &route_set2, &contact2, &cseq2, 1);
+					}
 					if(insert_dlg_timer(&dlg->tl, dlg->lifetime) != 0) {
 						LM_CRIT("Unable to insert dlg timer %p [%u:%u]\n", dlg,
 								dlg->h_entry, dlg->h_id);
