@@ -216,7 +216,7 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 	int ret;
 	struct cancel_info tmp_cd;
 	void *pcbuf;
-	int reply_status;
+	int reply_status = 0;
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t msg;
@@ -285,11 +285,14 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 						return -1;
 					}
 					LM_DBG("skip sending cancel - flags: "
-						   "F_CANCEL_B_FAKE_REPLY\n");
+						   "F_CANCEL_B_FAKE_REPLY (reply status: %d)\n",
+							reply_status);
 					return 0; /* should be inactive after the 487 */
 				}
 				/* do nothing, just wait for the final timeout */
-				LM_DBG("skip sending cancel - wait for the final timeout\n");
+				LM_DBG("skip sending cancel - wait for the final timeout"
+					   " (last received: %d reply status: %d)\n",
+						t->uac[branch].last_received, reply_status);
 				return 1;
 			}
 		}
