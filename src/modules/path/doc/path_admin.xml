@@ -239,6 +239,33 @@ modparam("path", "sockname_mode", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="path.p.advertised_address">
+		<title><varname>advertised_address</varname> (str)</title>
+		<para>
+		If set to a valid IP address or hostname, optionally followed by a port
+		(e.g. <quote>proxy.example.com</quote> or <quote>1.2.3.4:5080</quote>),
+		the Path URI host part is built from this value instead of the outgoing
+		socket address.
+		</para>
+		<para>
+		When not set or empty, <function>add_path()</function> and
+		<function>add_path_received()</function> keep the default behaviour of
+		using the outgoing interface address.
+		</para>
+		<para>
+		<emphasis>
+			Default value is empty (not set).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>advertised_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("path", "advertised_address", "proxy.example.com")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

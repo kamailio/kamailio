@@ -69,6 +69,8 @@ int path_received_format = 0;
 int path_enable_r2 = 0;
 int path_sockname_mode = 0;
 str path_received_name = str_init("received");
+str path_advertised_address = STR_NULL;
+int path_advertised_address_ok = 0;
 
 /*! \brief
  * Module initialization function prototype
@@ -114,6 +116,7 @@ static param_export_t params[] = {
 	{"enable_r2", PARAM_INT, &path_enable_r2},
 	{"sockname_mode", PARAM_INT, &path_sockname_mode},
 	{"received_name", PARAM_STR, &path_received_name},
+	{"advertised_address", PARAM_STR, &path_advertised_address},
 	{0, 0, 0}
 };
 
@@ -153,6 +156,9 @@ static int mod_init(void)
 		LM_INFO("outbound module not available\n");
 		memset(&path_obb, 0, sizeof(ob_api_t));
 	}
+
+	if(path_advertised_address_init(&path_advertised_address) < 0)
+		return -1;
 
 	return 0;
 }

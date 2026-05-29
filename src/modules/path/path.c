@@ -37,6 +37,7 @@
 #include "../../core/data_lump.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/config.h"
 #include "../../core/strutils.h"
 #include "../../core/dset.h"
 
@@ -62,6 +63,8 @@ const static char *proto_strings[] = {
 };
 
 extern int path_sockname_mode;
+extern int path_advertised_address_ok;
+extern str path_advertised_address;
 extern str path_received_name;
 
 static char *path_strzdup(char *src, int len)
@@ -101,6 +104,39 @@ static int handleOutbound(sip_msg_t *_m, str *user, path_param_t *param)
 	}
 
 	return 1;
+}
+
+int path_advertised_address_init(str *addr)
+{
+	char buf[MAX_URI_SIZE];
+	struct sip_uri uri;
+	int len;
+
+	if(addr == NULL || addr->len <= 0 || addr->s == NULL) {
+		path_advertised_address_ok = 0;
+		return 0;
+	}
+
+	if(addr->len > MAX_URI_SIZE - 7) {
+		LM_ERR("advertised_address is too long (%d)\n", addr->len);
+		return -1;
+	}
+
+	memcpy(buf, "sip:", 4);
+	memcpy(buf + 4, addr->s, addr->len);
+	memcpy(buf + 4 + addr->len, ";lr", 3);
+	len = 4 + addr->len + 3;
+
+	memset(&uri, 0, sizeof(uri));
+	if(parse_uri(buf, len, &uri) < 0 || uri.host.len <= 0) {
+		LM_ERR("invalid advertised_address: %.*s\n", addr->len, addr->s);
+		return -1;
+	}
+
+	path_advertised_address_ok = 1;
+	LM_DBG("using advertised_address %.*s for Path headers\n", addr->len,
+			addr->s);
+	return 0;
 }
 
 static int prepend_path(
@@ -206,10 +242,19 @@ static int prepend_path(
 	l = insert_new_lump_before(l, prefix, prefix_len, 0);
 	if(!l)
 		goto out3;
-	l = insert_subst_lump_before(
-			l, (path_sockname_mode) ? SUBST_SND_ALL_EX : SUBST_SND_ALL, 0);
-	if(!l)
-		goto out2;
+	if(path_advertised_address_ok) {
+		dp = path_strzdup(path_advertised_address.s, path_advertised_address.len);
+		if(dp == NULL)
+			goto out2;
+		l = insert_new_lump_before(l, dp, path_advertised_address.len, 0);
+		if(!l)
+			goto out2;
+	} else {
+		l = insert_subst_lump_before(
+				l, (path_sockname_mode) ? SUBST_SND_ALL_EX : SUBST_SND_ALL, 0);
+		if(!l)
+			goto out2;
+	}
 	l = insert_new_lump_before(l, suffix, cp.len, 0);
 	if(!l)
 		goto out2;
@@ -221,10 +266,20 @@ static int prepend_path(
 		l = insert_new_lump_before(l, dp, prefix_len, 0);
 		if(!l)
 			goto out1;
-		l = insert_subst_lump_before(
-				l, (path_sockname_mode) ? SUBST_RCV_ALL_EX : SUBST_RCV_ALL, 0);
-		if(!l)
-			goto out1;
+		if(path_advertised_address_ok) {
+			dp = path_strzdup(
+					path_advertised_address.s, path_advertised_address.len);
+			if(dp == NULL)
+				goto out1;
+			l = insert_new_lump_before(l, dp, path_advertised_address.len, 0);
+			if(!l)
+				goto out1;
+		} else {
+			l = insert_subst_lump_before(
+					l, (path_sockname_mode) ? SUBST_RCV_ALL_EX : SUBST_RCV_ALL, 0);
+			if(!l)
+				goto out1;
+		}
 		dp = path_strzdup(suffix, cp.len);
 		if(dp == NULL)
 			goto out1;

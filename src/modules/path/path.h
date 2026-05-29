@@ -70,6 +70,11 @@ int ki_add_path_received_user(sip_msg_t *_msg, str *_user);
 int ki_add_path_received_user_params(sip_msg_t *_msg, str *_user, str *_params);
 
 /*
+ * Validate and enable the advertised_address module parameter.
+ */
+int path_advertised_address_init(str *addr);
+
+/*
  * rr callback for setting dst-uri
  */
 void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param);
