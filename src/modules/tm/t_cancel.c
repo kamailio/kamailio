@@ -444,8 +444,9 @@ void rpc_cancel(rpc_t *rpc, void *c)
 	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	/* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");
-	i = cancel_uacs(trans, &cancel_data, F_CANCEL_LOCAL); /* don't fake 487s,
-										 just wait for timeout */
+	/* F_CANCEL_LOCAL: don't fake 487s, just wait for timeout */
+	i = cancel_uacs(trans, &cancel_data,
+			F_CANCEL_LOCAL | cfg_get(tm, tm_cfg, cancel_b_flags));
 
 	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
 	UNREF(trans);
