@@ -314,7 +314,6 @@ int sipdump_event_route(sipdump_data_t *sdi)
 		}
 	}
 	sipdump_event_data = NULL;
-	ksr_msg_env_reset();
 	ksr_msg_env_pop(&menv);
 	if(ctx.run_flags & DROP_R_F) {
 		return DROP_R_F;
