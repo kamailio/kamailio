@@ -47,6 +47,16 @@
 #ifndef VENDOR
 #define VENDOR(x) (((x) >> 16) & 0xffff)
 #endif
+#ifndef ATTRID
+#define ATTRID(x) ((x) & 0xffff)
+#endif
+#endif
+
+#ifndef VENDOR
+#define VENDOR(x) (((x) >> 16) & 0xffff)
+#endif
+#ifndef ATTRID
+#define ATTRID(x) ((x) & 0xffff)
 #endif
 
 
@@ -55,6 +65,7 @@ struct attr
 	const char *n;
 	int v;
 	unsigned int t; /* type of attribute */
+	unsigned vendor;
 };
 
 struct val
@@ -124,8 +135,9 @@ struct val
 						fn, at[i].n);                 \
 				return e1;                            \
 			}                                         \
-			at[i].v = da->value;                      \
+			at[i].v = ATTRID(da->value);              \
 			at[i].t = da->type;                       \
+			at[i].vendor = VENDOR(da->value);         \
 		}                                             \
 		for(i = 0; i < nr_vl; i++) {                  \
 			if(vl[i].n == NULL)                       \
