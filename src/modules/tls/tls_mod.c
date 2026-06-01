@@ -438,6 +438,25 @@ static int mod_init(void)
 	}
 #endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+	/* Detect the OpenSSL version DYNAMICALLY (the linked libssl at runtime, not the
+	 * build-time header): with OpenSSL >= 3.x the per-thread OpenSSL state inherited
+	 * by forked workers is not fork-safe and can corrupt/SIGSEGV (e.g. when
+	 * http_client/libcurl also uses OpenSSL) unless it is cleaned up at fork. That
+	 * cleanup is enabled by the core parameter tls_threads_mode; the default (0,
+	 * KSR_TLS_THREADS_MNONE) leaves it off. Warn so the operator sets a safe value. */
+	if(OpenSSL_version_num() >= 0x30000000L
+			&& ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE) {
+		LM_WARN("OpenSSL runtime version '%s' (>= 3.0) with tls_threads_mode=0 "
+				"is"
+				" unsafe and can crash worker processes - set "
+				"'tls_threads_mode=2'"
+				" in the global section of kamailio.cfg for production (or"
+				" 'tls_threads_mode=1' for development/troubleshooting)\n",
+				OpenSSL_version(OPENSSL_VERSION));
+	}
+#endif
+
 	if(tls_disable) {
 		LM_WARN("tls support is disabled "
 				"(set enable_tls=1 in the config to enable it)\n");
