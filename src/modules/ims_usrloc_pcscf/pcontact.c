@@ -114,8 +114,7 @@ void free_ppublic(ppublic_t *_p)
 
 
 // The same piece of code also lives in modules/ims_registrar_pcscf/sec_agree.c
-// Function - parse_sec_agree()
-// goto label - cleanup
+// Function - free_security_t()
 // Keep them in sync!
 void free_security(security_t *_p)
 {
