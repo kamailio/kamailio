@@ -823,6 +823,34 @@ int add_security_server_header(struct sip_msg *m, ipsec_t *s)
 	return 0;
 }
 
+// Free an ipsec_t (the struct and its sec-agree string fields). Used to release
+// the old data.ipsec that gets replaced on the contact at registration, and the
+// request ipsec_t that is not stored on re-registration - both were previously
+// orphaned and leaked.
+static void free_ipsec_data(ipsec_t *p)
+{
+	if(!p) {
+		return;
+	}
+	if(p->ealg.s)
+		shm_free(p->ealg.s);
+	if(p->r_ealg.s)
+		shm_free(p->r_ealg.s);
+	if(p->ck.s)
+		shm_free(p->ck.s);
+	if(p->alg.s)
+		shm_free(p->alg.s);
+	if(p->r_alg.s)
+		shm_free(p->r_alg.s);
+	if(p->ik.s)
+		shm_free(p->ik.s);
+	if(p->prot.s)
+		shm_free(p->prot.s);
+	if(p->mod.s)
+		shm_free(p->mod.s);
+	shm_free(p);
+}
+
 int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 {
 	pcontact_t *pcontact = NULL;
@@ -834,6 +862,10 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	security_t *req_sec_params = NULL;
 	ipsec_t *s = NULL;
 	ipsec_t *old_s = NULL;
+	// set to 1 once req_sec_params->data.ipsec is handed to the contact (initial
+	// registration); if it stays 0 that ipsec_t was only used to build the
+	// tunnel and must be freed before returning, otherwise it leaks
+	int ipsec_swapped = 0;
 
 	if(m->first_line.type == SIP_REPLY) {
 		t = tmb.t_gett();
@@ -925,7 +957,17 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	if(ci.via_port == SIP_PORT) {
 		if(req_sec_params != NULL) {
+			ipsec_t *old_ipsec = pcontact->security_temp->data.ipsec;
 			pcontact->security_temp->data.ipsec = s;
+			// s is now owned by the contact (freed at contact expiry by
+			// free_security()); do not free it on the cleanup path
+			ipsec_swapped = 1;
+			// free the ipsec_t we just replaced on the contact - it was
+			// stored by save_pending() (or a prior ipsec_create()) and was
+			// previously orphaned on every registration
+			if(old_ipsec && old_ipsec != s) {
+				free_ipsec_data(old_ipsec);
+			}
 		}
 		// Update temp security parameters
 		if(ul.update_temp_security(d, pcontact->security_temp->type,
@@ -966,6 +1008,16 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	ret = IPSEC_CMD_SUCCESS; // all good, set ret to SUCCESS, and exit
 
 cleanup:
+	// On the re-registration path the swap did not happen, so
+	// req_sec_params->data.ipsec was only used to build the tunnel and is never
+	// stored on the contact. Free it here, otherwise it leaks on every
+	// re-registration. On the initial path ipsec_swapped==1 and data.ipsec is
+	// now owned by the contact - do NOT free it.
+	// sec_header is intentionally left alone (freed via the data_lump path).
+	if(req_sec_params && !ipsec_swapped && req_sec_params->data.ipsec) {
+		free_ipsec_data(req_sec_params->data.ipsec);
+		req_sec_params->data.ipsec = NULL;
+	}
 	// Do not free str* sec_header! It will be freed in data_lump.c -> free_lump()
 	ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 	pkg_free(ci.received_host.s);
