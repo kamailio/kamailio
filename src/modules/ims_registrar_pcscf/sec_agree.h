@@ -42,4 +42,13 @@ security_t *cscf_get_security(struct sip_msg *msg);
  */
 security_t *cscf_get_security_verify(struct sip_msg *msg);
 
+/**
+ * Free a security_t allocated by parse_sec_agree() / cscf_get_security[_verify]().
+ * Safe to call with NULL. Frees the struct, its sec_header, the ipsec_t and all
+ * of its parsed string fields. Mirrors free_security() in
+ * ims_usrloc_pcscf/pcontact.c - keep the two in sync.
+ * @param params - the security_t to free (may be NULL)
+ */
+void free_security_t(security_t *params);
+
 #endif // SEC_AGREE_H
