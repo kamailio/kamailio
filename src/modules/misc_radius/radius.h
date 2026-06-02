@@ -44,19 +44,9 @@
 #else
 #include <freeradius-client.h>
 #define DEFAULT_RADIUSCLIENT_CONF ""
-#ifndef VENDOR
-#define VENDOR(x) (((x) >> 16) & 0xffff)
-#endif
 #ifndef ATTRID
 #define ATTRID(x) ((x) & 0xffff)
 #endif
-#endif
-
-#ifndef VENDOR
-#define VENDOR(x) (((x) >> 16) & 0xffff)
-#endif
-#ifndef ATTRID
-#define ATTRID(x) ((x) & 0xffff)
 #endif
 
 
