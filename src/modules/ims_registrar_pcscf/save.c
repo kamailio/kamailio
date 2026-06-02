@@ -442,6 +442,9 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 
 	// Parse security parameters
 	security_t *sec_params = NULL;
+	// set to 1 once sec_params ownership is handed to the contact; if it stays 0
+	// sec_params must be freed before returning, otherwise it leaks
+	int sec_params_stored = 0;
 	if((sec_params = cscf_get_security(_m)) == NULL) {
 		LM_DBG("Will save pending contact without security parameters\n");
 	}
@@ -474,6 +477,14 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 		}
 	}
 
+	// sec_verify_params is only used to copy the SPI/port values into sec_params
+	// above; it is never stored on the contact, so free it here - otherwise it
+	// leaks a security_t on every REGISTER that carries a Security-Verify header
+	if(sec_verify_params) {
+		free_security_t(sec_verify_params);
+		sec_verify_params = NULL;
+	}
+
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if(ul.get_pcontact(_d, &ci, &pcontact, 0)
 			!= 0) { //need to insert new contact
@@ -498,6 +509,10 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 						   _d, sec_params->type, sec_params, pcontact)
 						!= 0) {
 					LM_ERR("Error updating temp security\n");
+				} else {
+					// ownership handed to contact->security_temp; it is freed
+					// later by free_pcontact() when the contact expires
+					sec_params_stored = 1;
 				}
 			}
 		}
@@ -509,6 +524,8 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 							&& (pcontact->expires + window_for_notify
 									> local_time_now))) {
 				ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
+				if(sec_params && !sec_params_stored)
+					free_security_t(sec_params);
 				return -2;
 			}
 			if((pcontact->expires + window_for_notify) <= local_time_now) {
@@ -517,6 +534,8 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 				ci_.num_service_routes = 0;
 				ul.update_pcontact(_d, &ci_, pcontact);
 				ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
+				if(sec_params && !sec_params_stored)
+					free_security_t(sec_params);
 				return -2;
 			}
 		} else if(pcontact->reg_state == PCONTACT_DEREG_PENDING_PUBLISH) {
@@ -533,6 +552,11 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 
 	ul.unlock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 
+	// free sec_params if it was not handed to the contact (re-registration,
+	// failed insert, ...) - otherwise it leaks a security_t on every such
+	// REGISTER. This is the path that previously leaked on each re-REGISTER.
+	if(sec_params && !sec_params_stored)
+		free_security_t(sec_params);
 
 	return 1;
 
