@@ -1794,7 +1794,14 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 
 /* fallback matcher for cases where the generic wildcard-local alias
  * could not be installed due to alias collisions; it scans existing
- * connections for the same peer tuple regardless of local binding */
+ * connections for the same peer tuple regardless of local binding
+ * params:
+ *   ip - peer ip address to match (must not be NULL)
+ *   port - peer port to match (host byte order)
+ *   proto - protocol to match, PROTO_NONE for any protocol
+ * return:
+ *   matching tcp connection pointer if found, NULL otherwise
+ */
 static struct tcp_connection *_tcpconn_find_any_local(
 		struct ip_addr *ip, int port, sip_protos_t proto)
 {
@@ -1802,7 +1809,7 @@ static struct tcp_connection *_tcpconn_find_any_local(
 	int i;
 
 	if(ip == NULL) {
-		return 0;
+		return NULL;
 	}
 
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
@@ -1831,7 +1838,7 @@ static struct tcp_connection *_tcpconn_find_any_local(
 		}
 	}
 
-	return 0;
+	return NULL;
 }
 
 
