@@ -49,6 +49,15 @@ inline static int char2int(char *p, int *t)
 	return 0;
 }
 
+inline static int onechar2int(char *p, int *t)
+{
+	if(*p < '0' || *p > '9')
+		return -1;
+	*t = *p - '0';
+
+	return 0;
+}
+
 /*! \brief
  * Converts a RFC 1123 formatted date string to stuct tm
  */
@@ -96,10 +105,15 @@ static int rfc1123totm(char *stime, struct tm *ttm)
 	if(*(ptime++) != ' ')
 		return -3;
 
-
-	if(char2int(ptime, &ttm->tm_mday) || ttm->tm_mday > 31)
-		return -4;
-	ptime += 2;
+	if(*(ptime + 1) == ' ') {
+		if(onechar2int(ptime, &ttm->tm_mday) || ttm->tm_mday > 9)
+			return -4;
+		ptime += 1;
+	} else {
+		if(char2int(ptime, &ttm->tm_mday) || ttm->tm_mday > 31)
+			return -4;
+		ptime += 2;
+	}
 
 	if(*(ptime++) != ' ')
 		return -5;
