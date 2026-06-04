@@ -1167,9 +1167,13 @@ static sr_kemi_xval_t *ki_kx_get_def(sip_msg_t *msg, str *dname)
 {
 	str *val;
 
-	val = pp_define_get(dname->len, dname->s);
-
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
+	if(dname == NULL || dname->s == NULL || dname->len <= 0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	val = pp_define_get(dname->len, dname->s);
 	if(val == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
@@ -1189,6 +1193,10 @@ static int ki_kx_get_defn(sip_msg_t *msg, str *dname)
 	str *val;
 	int n = 0;
 
+	if(dname == NULL || dname->s == NULL || dname->len <= 0) {
+		return 0;
+	}
+
 	val = pp_define_get(dname->len, dname->s);
 
 	if(val != NULL) {
@@ -1205,6 +1213,10 @@ static int ki_kx_ifdef(sip_msg_t *msg, str *dname)
 {
 	str *val;
 
+	if(dname == NULL || dname->s == NULL || dname->len <= 0) {
+		return SR_KEMI_FALSE;
+	}
+
 	val = pp_define_get(dname->len, dname->s);
 
 	if(val != NULL) {
@@ -1219,6 +1231,10 @@ static int ki_kx_ifdef(sip_msg_t *msg, str *dname)
 static int ki_kx_ifndef(sip_msg_t *msg, str *dname)
 {
 	str *val;
+
+	if(dname == NULL || dname->s == NULL || dname->len <= 0) {
+		return SR_KEMI_TRUE;
+	}
 
 	val = pp_define_get(dname->len, dname->s);
 
