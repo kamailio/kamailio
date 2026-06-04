@@ -304,8 +304,16 @@ int insert_and_replace_shtable(
 						new_rec->from_tag.len, new_rec->from_tag.s,
 						new_rec->to_tag.len, new_rec->to_tag.s);
 
-				/* LWW: skip replace if local record is newer */
-				if(rec->received_time > new_rec->received_time) {
+				/* LWW: skip replace if local record is newer, for same dialog */
+				if(rec->received_time > new_rec->received_time
+						&& rec->from_tag.len == new_rec->from_tag.len
+						&& rec->to_tag.len == new_rec->to_tag.len
+						&& memcmp(rec->from_tag.s, new_rec->from_tag.s,
+								   new_rec->from_tag.len)
+								   == 0
+						&& memcmp(rec->to_tag.s, new_rec->to_tag.s,
+								   new_rec->to_tag.len)
+								   == 0) {
 					LM_DBG("LWW: skipping stale subscription replace "
 						   "for contact=[%.*s] pres_uri="
 						   "[%.*s] local_recv=%u incoming_recv=%u\n",
@@ -502,11 +510,11 @@ int update_shtable(
 	if(type & REMOTE_TYPE) {
 		s->expires = subs->expires + ksr_time_sint(NULL, NULL);
 		s->remote_cseq = subs->remote_cseq;
+		s->received_time = subs->received_time;
 	} else {
 		subs->local_cseq = ++s->local_cseq;
 		subs->version = ++s->version;
 	}
-	s->received_time = subs->received_time;
 
 	if(presence_sip_uri_match(&s->contact, &subs->contact)) {
 		shm_free(s->contact.s);
@@ -1141,7 +1149,8 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 	while(ptn != NULL) {
 		if(ps_presentity_match(ptn, &ptc, 2) == 1) {
 			/* LWW: skip replace if local record is newer */
-			if(ptn->received_time > ptv.received_time) {
+			if(ptv.received_time > 0
+					&& ptn->received_time > ptv.received_time) {
 				LM_DBG("LWW: skipping stale presentity replace for "
 					   "%.*s@%.*s local_recv=%d incoming_recv=%d\n",
 						ptn->user.len, ptn->user.s, ptn->domain.len,
@@ -1214,7 +1223,8 @@ int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 	while(ptn != NULL) {
 		if(ps_presentity_match(ptn, &ptc, 2) == 1) {
 			/* LWW: skip update if local record is newer */
-			if(ptn->received_time > ptv.received_time) {
+			if(ptv.received_time > 0
+					&& ptn->received_time > ptv.received_time) {
 				LM_DBG("LWW: skipping stale presentity update for "
 					   "%.*s@%.*s local_recv=%d incoming_recv=%d\n",
 						ptn->user.len, ptn->user.s, ptn->domain.len,
@@ -1279,7 +1289,8 @@ int ps_ptable_remove(ps_presentity_t *pt)
 	while(ptn != NULL) {
 		if(ps_presentity_match(ptn, &ptc, 2) == 1) {
 			/* LWW: skip delete if local record is newer */
-			if(ptn->received_time > ptc.received_time) {
+			if(ptc.received_time > 0
+					&& ptn->received_time > ptc.received_time) {
 				LM_DBG("LWW: skipping stale presentity delete for "
 					   "%.*s@%.*s local_recv=%d incoming_recv=%d\n",
 						ptn->user.len, ptn->user.s, ptn->domain.len,

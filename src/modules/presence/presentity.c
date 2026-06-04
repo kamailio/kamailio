@@ -482,10 +482,12 @@ int ps_cache_delete_presentity_if_dialog_id_exists(
 		if(check_if_dialog(ptx->body, &db_is_dialog, &db_dialog_id) == 0) {
 			// If ID from DB matches the one we supplied
 			if(db_dialog_id && !strcmp(db_dialog_id, dialog_id)) {
+				memset(&old_presentity, 0, sizeof(presentity_t));
 				old_presentity.domain = presentity->domain;
 				old_presentity.user = presentity->user;
 				old_presentity.event = presentity->event;
 				old_presentity.etag = ptx->etag;
+				old_presentity.received_time = ptx->received_time;
 
 				LM_DBG("Presentity found - deleting it\n");
 
