@@ -2020,6 +2020,10 @@ static int pv_get_keepalive_socket(
 		return -1;
 	}
 
+	if(nat_table == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
 	strncpy(uri, tv.rs.s, tv.rs.len);
 	uri[tv.rs.len] = 0;
 
