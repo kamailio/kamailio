@@ -33,7 +33,7 @@ static int str_toklen(str *str, const char *delims)
 {
 	int len;
 
-	if((str == NULL) || (str->s == NULL)) {
+	if((str == NULL) || (str->s == NULL) || (str->len <= 0)) {
 		/* No more tokens */
 		return -1;
 	}
@@ -376,14 +376,13 @@ int get_rpc_opts(str *buf, rpc_opt_t *opts, unsigned int opt_set[])
 	int i, op = -1;
 	unsigned int used_opts = 0;
 	int toklen;
+	char prob_buf[256];
 
 	memset(opt_argv, 0, sizeof(opt_argv));
 	memset(opts, 0, sizeof(rpc_opt_t));
 	opts->prob = -1;
 
 	while((toklen = str_toklen(buf, " \t\r\n")) >= 0 && opt_argc < 20) {
-		buf->s[toklen] =
-				'\0'; /* insert zero termination, since strtod might be used later on it */
 		opt_argv[opt_argc].len = toklen;
 		opt_argv[opt_argc].s = buf->s;
 		buf->s += toklen + 1;
@@ -475,8 +474,16 @@ int get_rpc_opts(str *buf, rpc_opt_t *opts, unsigned int opt_set[])
 							op = -1;
 							break;
 						case OPT_PROB:
-							opts->prob = strtod(opt_argv[i].s,
-									NULL); /* we can use str.s since we zero terminated it earlier */
+							// copy the opt[i] string to a zero-terminated buffer since strtod needs that
+							if(opt_argv[i].len >= (int)sizeof(prob_buf)) {
+								FIFO_ERR(E_WRONGOPT);
+								LM_ERR("probability value too long: %.*s\n",
+										opt_argv[i].len, opt_argv[i].s);
+								return -1;
+							}
+							memcpy(prob_buf, opt_argv[i].s, opt_argv[i].len);
+							prob_buf[opt_argv[i].len] = '\0';
+							opts->prob = strtod(prob_buf, NULL);
 							op = -1;
 							break;
 						case OPT_R_PREFIX:
