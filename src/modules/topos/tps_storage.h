@@ -88,6 +88,7 @@ typedef struct tps_data
 	int32_t iflags;
 	int32_t direction;
 	uint32_t s_method_id;
+	unsigned char expires_valid; /*!< Expires header was parsed into expires */
 	int32_t expires;
 } tps_data_t;
 

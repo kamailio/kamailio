@@ -65,6 +65,7 @@ extern str _tps_xavu_field_contact_host;
 extern str _tps_xavu_field_acontact_host;
 extern str _tps_xavu_field_bcontact_host;
 extern int _tps_methods_update_time;
+extern int _tps_reg_pub_multi_contact;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -627,12 +628,15 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 	}
 	td->s_method = get_cseq(msg)->method;
 	td->s_cseq = get_cseq(msg)->number;
+	td->s_method_id = get_cseq(msg)->method_id;
 
 	/* extract the contact address */
 	if(parse_headers(msg, HDR_CONTACT_F, 0) < 0 || msg->contact == NULL) {
 		if((td->s_method_id != METHOD_INVITE)
-				&& (td->s_method_id != METHOD_SUBSCRIBE)) {
-			/* no mandatory contact unless is INVITE or SUBSCRIBE - done */
+				&& (td->s_method_id != METHOD_SUBSCRIBE)
+				&& (td->s_method_id != METHOD_REGISTER)
+				&& (td->s_method_id != METHOD_PUBLISH)) {
+			/* no mandatory contact unless dialog-creating / reg / publish - done */
 			return 0;
 		}
 		if(msg->first_line.type == SIP_REPLY) {
@@ -650,11 +654,28 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		goto error;
 	}
 	if(parse_contact(msg->contact) < 0
-			|| ((contact_body_t *)msg->contact->parsed)->contacts == NULL
-			|| ((contact_body_t *)msg->contact->parsed)->contacts->next
-					   != NULL) {
+			|| ((contact_body_t *)msg->contact->parsed)->contacts == NULL) {
 		LM_ERR("bad Contact header\n");
 		return -1;
+	}
+	if(((contact_body_t *)msg->contact->parsed)->contacts->next != NULL) {
+		if((td->s_method_id == METHOD_REGISTER)
+				|| (td->s_method_id == METHOD_PUBLISH)) {
+			if(_tps_reg_pub_multi_contact == 1) {
+				LM_ERR("topos: multi-Contact body rejected "
+					   "(reg_pub_multi_contact=1), method %u\n",
+						td->s_method_id);
+				return -1;
+			}
+			LM_NOTICE("topos: multi-Contact body — using first URI only for "
+					  "topology storage (method %u); full bindings belong to "
+					  "registrar/usrloc (e.g. ims_registrar_pcscf / "
+					  "ims_usrloc_pcscf)\n",
+					td->s_method_id);
+		} else {
+			LM_ERR("bad Contact header (multiple contacts)\n");
+			return -1;
+		}
 	}
 
 	if(msg->first_line.type == SIP_REQUEST) {
@@ -675,11 +696,14 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		}
 	}
 
-	if(td->s_method_id == METHOD_SUBSCRIBE) {
+	if(td->s_method_id == METHOD_SUBSCRIBE || td->s_method_id == METHOD_PUBLISH
+			|| td->s_method_id == METHOD_REGISTER) {
+		td->expires_valid = 0;
 		if(msg->expires && (msg->expires->body.len > 0)
 				&& (msg->expires->parsed
 						|| (parse_expires(msg->expires) >= 0))) {
 			td->expires = ((exp_body_t *)msg->expires->parsed)->val;
+			td->expires_valid = 1;
 		}
 	}
 
@@ -1282,6 +1306,12 @@ int tps_db_load_branch(
 	if(get_cseq(msg)->method_id == METHOD_SUBSCRIBE) {
 		sMethodDlg.s = "SUBSCRIBE";
 		sMethodDlg.len = 9;
+	} else if(get_cseq(msg)->method_id == METHOD_REGISTER) {
+		sMethodDlg.s = "REGISTER";
+		sMethodDlg.len = 8;
+	} else if(get_cseq(msg)->method_id == METHOD_PUBLISH) {
+		sMethodDlg.s = "PUBLISH";
+		sMethodDlg.len = 7;
 	} else if(get_cseq(msg)->method_id == METHOD_NOTIFY) {
 		/* NOTIFY can be also sent during call setup - ignore dialog method */
 		sMethodDlg.s = "";
@@ -1769,7 +1799,9 @@ int tps_storage_update_branch(
 		return -1;
 
 	if((md->s_method_id != METHOD_INVITE)
-			&& (md->s_method_id != METHOD_SUBSCRIBE)) {
+			&& (md->s_method_id != METHOD_SUBSCRIBE)
+			&& (md->s_method_id != METHOD_REGISTER)
+			&& (md->s_method_id != METHOD_PUBLISH)) {
 		return 0;
 	}
 
@@ -1927,7 +1959,9 @@ int tps_storage_update_dialog(
 		return -1;
 
 	if((md->s_method_id != METHOD_INVITE)
-			&& (md->s_method_id != METHOD_SUBSCRIBE)) {
+			&& (md->s_method_id != METHOD_SUBSCRIBE)
+			&& (md->s_method_id != METHOD_REGISTER)
+			&& (md->s_method_id != METHOD_PUBLISH)) {
 		return 0;
 	}
 	if(msg->first_line.type == SIP_REPLY) {
@@ -1961,7 +1995,12 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		return -1;
 
 	if((md->s_method_id != METHOD_BYE)
-			&& !((md->s_method_id == METHOD_SUBSCRIBE) && (md->expires == 0))) {
+			&& !((md->s_method_id == METHOD_SUBSCRIBE) && (md->expires_valid)
+					&& (md->expires == 0))
+			&& !((md->s_method_id == METHOD_REGISTER) && (md->expires_valid)
+					&& (md->expires == 0))
+			&& !((md->s_method_id == METHOD_PUBLISH) && (md->expires_valid)
+					&& (md->expires == 0))) {
 		return 0;
 	}
 

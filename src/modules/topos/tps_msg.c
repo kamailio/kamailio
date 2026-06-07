@@ -42,6 +42,7 @@
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_via.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_expires.h"
 #include "../../core/parser/parse_refer_to.h"
 
 
@@ -49,6 +50,7 @@
 #include "tps_storage.h"
 
 extern int _tps_param_mask_callid;
+extern int _tps_enable_reg_pub;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
@@ -414,8 +416,10 @@ int tps_skip_msg(sip_msg_t *msg)
 		return 1;
 	}
 
-	if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH))
-		return 1;
+	if(_tps_enable_reg_pub == 0) {
+		if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH))
+			return 1;
+	}
 
 	if(_tps_methods_noinitial != 0 && msg->first_line.type == SIP_REQUEST
 			&& get_to(msg)->tag_value.len <= 0) {
@@ -728,6 +732,18 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 		ptsd->x_context = _tps_context_value;
 	} else if(_tps_context_param.len > 0) {
 		ptsd->x_context = _tps_context_param;
+	}
+
+	if(ptsd->s_method_id == METHOD_SUBSCRIBE || ptsd->s_method_id == METHOD_PUBLISH
+			|| ptsd->s_method_id == METHOD_REGISTER) {
+		ptsd->expires_valid = 0;
+		if(parse_headers(msg, HDR_EOH_F, 0) != -1 && msg->expires
+				&& msg->expires->body.len > 0
+				&& (msg->expires->parsed
+						|| (parse_expires(msg->expires) >= 0))) {
+			ptsd->expires = ((exp_body_t *)msg->expires->parsed)->val;
+			ptsd->expires_valid = 1;
+		}
 	}
 	return 0;
 }
@@ -1243,7 +1259,8 @@ int tps_response_received(sip_msg_t *msg)
 
 	if(msg->first_line.u.reply.statuscode > 299
 			&& (get_cseq(msg)->method_id
-					& (METHOD_INVITE | METHOD_SUBSCRIBE))) {
+					& (METHOD_INVITE | METHOD_SUBSCRIBE | METHOD_REGISTER
+							| METHOD_PUBLISH))) {
 		LM_DBG("%d reply end dialog storage\n",
 				msg->first_line.u.reply.statuscode);
 		tps_storage_end_dialog(msg, &mtsd, &stsd);

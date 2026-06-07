@@ -34,26 +34,28 @@ Frederic Gaisnon
               3.1. storage (str)
               3.2. db_url (str)
               3.3. mask_callid (int)
-              3.4. sanity_checks (int)
-              3.5. branch_expire (int)
-              3.6. dialog_expire (int)
-              3.7. clean_interval (int)
-              3.8. event_callback (str)
-              3.9. event_mode (int)
-              3.10. contact_host (str)
-              3.11. contact_mode (int)
-              3.12. cparam_name (int)
-              3.13. xavu_cfg (str)
-              3.14. xavu_field_a_contact (str)
-              3.15. xavu_field_b_contact (str)
-              3.16. xavu_field_contact_host (str)
-              3.17. rr_update (int)
-              3.18. context (str)
-              3.19. methods_nocontact (str)
-              3.20. header_mode (int)
-              3.21. methods_noinitial (str)
-              3.22. version_table (integer)
-              3.23. methods_update_time (str)
+              3.4. enable_reg_pub (int)
+              3.5. reg_pub_multi_contact (int)
+              3.6. sanity_checks (int)
+              3.7. branch_expire (int)
+              3.8. dialog_expire (int)
+              3.9. clean_interval (int)
+              3.10. event_callback (str)
+              3.11. event_mode (int)
+              3.12. contact_host (str)
+              3.13. contact_mode (int)
+              3.14. cparam_name (int)
+              3.15. xavu_cfg (str)
+              3.16. xavu_field_a_contact (str)
+              3.17. xavu_field_b_contact (str)
+              3.18. xavu_field_contact_host (str)
+              3.19. rr_update (int)
+              3.20. context (str)
+              3.21. methods_nocontact (str)
+              3.22. header_mode (int)
+              3.23. methods_noinitial (str)
+              3.24. version_table (integer)
+              3.25. methods_update_time (str)
 
         4. Functions
 
@@ -71,31 +73,33 @@ Frederic Gaisnon
    1.1. Set storage parameter
    1.2. Set db_url parameter
    1.3. Set mask_callid parameter
-   1.4. Set sanity_checks parameter
-   1.5. Set branch_expire parameter
-   1.6. Set dialog_expire parameter
-   1.7. Set clean_interval parameter
-   1.8. Set event_callback parameter
-   1.9. Set event_mode parameter
-   1.10. Set contact_host parameter
-   1.11. Set contact_mode parameter
-   1.12. Set cparam_name parameter
-   1.13. Set xavu_cfg parameter
-   1.14. Set xavu_field_a_contact parameter
-   1.15. Set xavu_field_b_contact parameter
-   1.16. Set xavu_field_contact_host parameter
-   1.17. Set rr_update parameter
-   1.18. Set context parameter
-   1.19. Set methods_nocontact parameter
-   1.20. Set header_mode parameter
-   1.21. Set methods_noinitial parameter
-   1.22. version_table parameter usage
-   1.23. Set methods_update_time parameter
-   1.24. tps_set_context usage
-   1.25. Usage of event_route[topos:msg-outgoing]
-   1.26. Usage of event_route[topos:msg-sending]
-   1.27. Usage of event_route[topos:msg-incoming]
-   1.28. Usage of event_route[topos:msg-receiving]
+   1.4. Set enable_reg_pub parameter
+   1.5. Set reg_pub_multi_contact parameter
+   1.6. Set sanity_checks parameter
+   1.7. Set branch_expire parameter
+   1.8. Set dialog_expire parameter
+   1.9. Set clean_interval parameter
+   1.10. Set event_callback parameter
+   1.11. Set event_mode parameter
+   1.12. Set contact_host parameter
+   1.13. Set contact_mode parameter
+   1.14. Set cparam_name parameter
+   1.15. Set xavu_cfg parameter
+   1.16. Set xavu_field_a_contact parameter
+   1.17. Set xavu_field_b_contact parameter
+   1.18. Set xavu_field_contact_host parameter
+   1.19. Set rr_update parameter
+   1.20. Set context parameter
+   1.21. Set methods_nocontact parameter
+   1.22. Set header_mode parameter
+   1.23. Set methods_noinitial parameter
+   1.24. version_table parameter usage
+   1.25. Set methods_update_time parameter
+   1.26. tps_set_context usage
+   1.27. Usage of event_route[topos:msg-outgoing]
+   1.28. Usage of event_route[topos:msg-sending]
+   1.29. Usage of event_route[topos:msg-incoming]
+   1.30. Usage of event_route[topos:msg-receiving]
 
 Chapter 1. Admin Guide
 
@@ -112,26 +116,28 @@ Chapter 1. Admin Guide
         3.1. storage (str)
         3.2. db_url (str)
         3.3. mask_callid (int)
-        3.4. sanity_checks (int)
-        3.5. branch_expire (int)
-        3.6. dialog_expire (int)
-        3.7. clean_interval (int)
-        3.8. event_callback (str)
-        3.9. event_mode (int)
-        3.10. contact_host (str)
-        3.11. contact_mode (int)
-        3.12. cparam_name (int)
-        3.13. xavu_cfg (str)
-        3.14. xavu_field_a_contact (str)
-        3.15. xavu_field_b_contact (str)
-        3.16. xavu_field_contact_host (str)
-        3.17. rr_update (int)
-        3.18. context (str)
-        3.19. methods_nocontact (str)
-        3.20. header_mode (int)
-        3.21. methods_noinitial (str)
-        3.22. version_table (integer)
-        3.23. methods_update_time (str)
+        3.4. enable_reg_pub (int)
+        3.5. reg_pub_multi_contact (int)
+        3.6. sanity_checks (int)
+        3.7. branch_expire (int)
+        3.8. dialog_expire (int)
+        3.9. clean_interval (int)
+        3.10. event_callback (str)
+        3.11. event_mode (int)
+        3.12. contact_host (str)
+        3.13. contact_mode (int)
+        3.14. cparam_name (int)
+        3.15. xavu_cfg (str)
+        3.16. xavu_field_a_contact (str)
+        3.17. xavu_field_b_contact (str)
+        3.18. xavu_field_contact_host (str)
+        3.19. rr_update (int)
+        3.20. context (str)
+        3.21. methods_nocontact (str)
+        3.22. header_mode (int)
+        3.23. methods_noinitial (str)
+        3.24. version_table (integer)
+        3.25. methods_update_time (str)
 
    4. Functions
 
@@ -161,8 +167,10 @@ Chapter 1. Admin Guide
    side. This module is designed to work for presence (SUBSCRIBE-based)
    dialogs too.
 
-   The REGISTER and PUBLISH requests are skipped from processing by this
-   module, expected to be terminated on a local SIP server.
+   By default, REGISTER and PUBLISH requests are skipped from processing
+   by this module. When modparam enable_reg_pub is set to 1, REGISTER and
+   PUBLISH follow the same TOPOS encoding as INVITE-based dialogs (with
+   mask_callid and topoh as for INVITE).
 
 2. Dependencies
 
@@ -190,26 +198,28 @@ Chapter 1. Admin Guide
    3.1. storage (str)
    3.2. db_url (str)
    3.3. mask_callid (int)
-   3.4. sanity_checks (int)
-   3.5. branch_expire (int)
-   3.6. dialog_expire (int)
-   3.7. clean_interval (int)
-   3.8. event_callback (str)
-   3.9. event_mode (int)
-   3.10. contact_host (str)
-   3.11. contact_mode (int)
-   3.12. cparam_name (int)
-   3.13. xavu_cfg (str)
-   3.14. xavu_field_a_contact (str)
-   3.15. xavu_field_b_contact (str)
-   3.16. xavu_field_contact_host (str)
-   3.17. rr_update (int)
-   3.18. context (str)
-   3.19. methods_nocontact (str)
-   3.20. header_mode (int)
-   3.21. methods_noinitial (str)
-   3.22. version_table (integer)
-   3.23. methods_update_time (str)
+   3.4. enable_reg_pub (int)
+   3.5. reg_pub_multi_contact (int)
+   3.6. sanity_checks (int)
+   3.7. branch_expire (int)
+   3.8. dialog_expire (int)
+   3.9. clean_interval (int)
+   3.10. event_callback (str)
+   3.11. event_mode (int)
+   3.12. contact_host (str)
+   3.13. contact_mode (int)
+   3.14. cparam_name (int)
+   3.15. xavu_cfg (str)
+   3.16. xavu_field_a_contact (str)
+   3.17. xavu_field_b_contact (str)
+   3.18. xavu_field_contact_host (str)
+   3.19. rr_update (int)
+   3.20. context (str)
+   3.21. methods_nocontact (str)
+   3.22. header_mode (int)
+   3.23. methods_noinitial (str)
+   3.24. version_table (integer)
+   3.25. methods_update_time (str)
 
 3.1. storage (str)
 
@@ -251,7 +261,53 @@ modparam("topos", "db_url", "dbdriver://username:password@dbhost/dbname")
 modparam("topos", "mask_callid", 1)
 ...
 
-3.4. sanity_checks (int)
+3.4. enable_reg_pub (int)
+
+   If set to 0 (default), REGISTER and PUBLISH are not processed by TOPOS
+   (same as legacy behavior). If set to 1, REGISTER and PUBLISH use the
+   same topology stripping, storage updates, and Call-ID masking rules as
+   INVITE (when mask_callid is enabled and topoh is loaded as for INVITE).
+
+   The methods_noinitial check runs afterward in the same skip function: if
+   REGISTER or PUBLISH matches that bitmask on an initial request, the
+   message can still be skipped even when this parameter is 1.
+
+   Optionally add REGISTER or PUBLISH to methods_update_time so in-dialog
+   requests refresh rectime in topos_d, as for SUBSCRIBE.
+
+   Multiple Contact URIs in one header: TOPOS uses the first entry only and
+   logs LM_NOTICE (see also reg_pub_multi_contact); full multi-binding
+   REGISTER is modeled in registrar/usrloc, not as separate TOPOS rows per
+   URI.
+
+   Default value is 0.
+
+   Example 1.4. Set enable_reg_pub parameter
+...
+modparam("topos", "enable_reg_pub", 1)
+...
+
+3.5. reg_pub_multi_contact (int)
+
+   When enable_reg_pub is active, REGISTER and PUBLISH messages whose
+   Contact header lists multiple URIs are handled as follows.
+
+   0 (default) — Use the first Contact URI for TOPOS storage and emit
+   LM_NOTICE naming registrar/usrloc for full bindings.
+
+   1 — Reject linking for multi-Contact REGISTER/PUBLISH (LM_ERR); strict
+   policy when multi-Contact must not pass TOPOS storage.
+
+   The methods_noinitial skip logic runs separately on the message path.
+
+   Default value is 0.
+
+   Example 1.5. Set reg_pub_multi_contact parameter
+...
+modparam("topos", "reg_pub_multi_contact", 0)
+...
+
+3.6. sanity_checks (int)
 
    If set to 1, topos module will bind to sanity module in order to
    perform sanity checks over received SIP request. Default sanity checks
@@ -260,23 +316,23 @@ modparam("topos", "mask_callid", 1)
 
    Default value is 0 (do not bind to sanity module).
 
-   Example 1.4. Set sanity_checks parameter
+   Example 1.6. Set sanity_checks parameter
 ...
 modparam("topos", "sanity_checks", 1)
 ...
 
-3.5. branch_expire (int)
+3.7. branch_expire (int)
 
    Interval in seconds after which the branch records are deleted.
 
    Default value is 180 (3 min).
 
-   Example 1.5. Set branch_expire parameter
+   Example 1.7. Set branch_expire parameter
 ...
 modparam("topos", "branch_expire", 300)
 ...
 
-3.6. dialog_expire (int)
+3.8. dialog_expire (int)
 
    Interval in seconds after which the dialog records are deleted. Keep in
    mind that the module does not update the dialog timestamp after the
@@ -289,23 +345,23 @@ modparam("topos", "branch_expire", 300)
 
    Default value is 10800 (3 hours).
 
-   Example 1.6. Set dialog_expire parameter
+   Example 1.8. Set dialog_expire parameter
 ...
 modparam("topos", "dialog_expire", 3600)
 ...
 
-3.7. clean_interval (int)
+3.9. clean_interval (int)
 
    Interval in seconds to run the clean up of stored records.
 
    Default value is 60 (1 min).
 
-   Example 1.7. Set clean_interval parameter
+   Example 1.9. Set clean_interval parameter
 ...
 modparam("topos", "clean_interval", 30)
 ...
 
-3.8. event_callback (str)
+3.10. event_callback (str)
 
    The name of the function in the KEMI configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -315,7 +371,7 @@ modparam("topos", "clean_interval", 30)
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.8. Set event_callback parameter
+   Example 1.10. Set event_callback parameter
 ...
 modparam("topos", "event_callback", "ksr_topos_event")
 ...
@@ -326,7 +382,7 @@ function ksr_topos_event(evname)
 end
 ...
 
-3.9. event_mode (int)
+3.11. event_mode (int)
 
    Control what event_route blocks to be executed. It is a bitmask of:
      * 1 - execute event_route[topos:msg-outgoing]
@@ -336,12 +392,12 @@ end
 
    Default value is 15 (execute all event_route blocks).
 
-   Example 1.9. Set event_mode parameter
+   Example 1.11. Set event_mode parameter
 ...
 modparam("topos", "event_mode", 2)
 ...
 
-3.10. contact_host (str)
+3.12. contact_host (str)
 
    You may need to control the host part of the Contact header added by
    topos. If the xavu_field_contact_host parameter is set, this value is
@@ -352,12 +408,12 @@ modparam("topos", "event_mode", 2)
 
    Default value is taken from the Record-Route URI.
 
-   Example 1.10. Set contact_host parameter
+   Example 1.12. Set contact_host parameter
 ...
 modparam("topos", "contact_host", "proxy.domain.com")
 ...
 
-3.11. contact_mode (int)
+3.13. contact_mode (int)
 
    Control the mode where the key to lookup the message data from the
    database or redis server is stored. The default is to use the Contact
@@ -385,12 +441,12 @@ modparam("topos", "contact_host", "proxy.domain.com")
 
    Default value is 0 - use the Contact user
 
-   Example 1.11. Set contact_mode parameter
+   Example 1.13. Set contact_mode parameter
 ...
 modparam("topos", "contact_mode", 1)
 ...
 
-3.12. cparam_name (int)
+3.14. cparam_name (int)
 
    Name of the Contact URI parameter to store the database or redis server
    key for message lookup.
@@ -400,12 +456,12 @@ modparam("topos", "contact_mode", 1)
 
    Default value is “tps”.
 
-   Example 1.12. Set cparam_name parameter
+   Example 1.14. Set cparam_name parameter
 ...
 modparam("topos", "cparam_name", "xyz")
 ...
 
-3.13. xavu_cfg (str)
+3.15. xavu_cfg (str)
 
    Name of root XAVU to hold config-specific values to be used by module
    at runtime.
@@ -415,7 +471,7 @@ modparam("topos", "cparam_name", "xyz")
 
    Default value is “NULL” (disabled).
 
-   Example 1.13. Set xavu_cfg parameter
+   Example 1.15. Set xavu_cfg parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
 modparam("topos", "xavu_field_a_contact", "a_contact")
@@ -423,7 +479,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
     $xavu(_tps_=>a_contact) = "...";
 ...
 
-3.14. xavu_field_a_contact (str)
+3.16. xavu_field_a_contact (str)
 
    Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
    for the A-side Contact Header user part. This parameter is only
@@ -431,7 +487,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 
    Default value is “NULL” (disabled).
 
-   Example 1.14. Set xavu_field_a_contact parameter
+   Example 1.16. Set xavu_field_a_contact parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
 modparam("topos", "xavu_field_a_contact", "a_contact")
@@ -439,7 +495,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
     $xavu(_tps_=>a_contact) = "...";
 ...
 
-3.15. xavu_field_b_contact (str)
+3.17. xavu_field_b_contact (str)
 
    Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
    for the B-side Contact Header user part. This parameter is only
@@ -447,7 +503,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 
    Default value is “NULL” (disabled).
 
-   Example 1.15. Set xavu_field_b_contact parameter
+   Example 1.17. Set xavu_field_b_contact parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
 modparam("topos", "xavu_field_b_contact", "b_contact")
@@ -456,7 +512,7 @@ modparam("topos", "xavu_field_b_contact", "b_contact")
 
 ...
 
-3.16. xavu_field_contact_host (str)
+3.18. xavu_field_contact_host (str)
 
    Control from where to take the host part of the Contact header added by
    topos. This parameter allows to take the value from an XAVU during
@@ -468,7 +524,7 @@ modparam("topos", "xavu_field_b_contact", "b_contact")
 
    Default value is empty, not set.
 
-   Example 1.16. Set xavu_field_contact_host parameter
+   Example 1.18. Set xavu_field_contact_host parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
 modparam("topos", "xavu_field_contact_host", "contact_host")
@@ -476,19 +532,19 @@ modparam("topos", "xavu_field_contact_host", "contact_host")
     $xavu(_tps_=>contact_host) = "kamailio.org";
 ...
 
-3.17. rr_update (int)
+3.19. rr_update (int)
 
    If set to 1, topos module will track and update record route changes on
    re-invite.
 
    Default value is 0 (do not update record route changes within dialog).
 
-   Example 1.17. Set rr_update parameter
+   Example 1.19. Set rr_update parameter
 ...
 modparam("topos", "rr_update", 1)
 ...
 
-3.18. context (str)
+3.20. context (str)
 
    Set the global context for topos instance.
 
@@ -496,23 +552,23 @@ modparam("topos", "rr_update", 1)
 
    Default value is “NULL” (disabled).
 
-   Example 1.18. Set context parameter
+   Example 1.20. Set context parameter
 ...
 modparam("topos", "context", "srvone")
 ...
 
-3.19. methods_nocontact (str)
+3.21. methods_nocontact (str)
 
    List of SIP methods to skip adding Contact header for.
 
    Default value is “BYE,CANCEL,PRACK”.
 
-   Example 1.19. Set methods_nocontact parameter
+   Example 1.21. Set methods_nocontact parameter
 ...
 modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 ...
 
-3.20. header_mode (int)
+3.22. header_mode (int)
 
    List of headers to disable multiple comma separated values inserted in
    compact form. Altough compact form is RFC compliant this parameter
@@ -524,35 +580,35 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 
    Default value is “0”.
 
-   Example 1.20. Set header_mode parameter
+   Example 1.22. Set header_mode parameter
 ...
 modparam("topos", "header_mode", 1)
 ...
 
-3.21. methods_noinitial (str)
+3.23. methods_noinitial (str)
 
    List of SIP methods to skip doing topos if it is an initial request (no
    To-tag).
 
    Default value is “” (no method).
 
-   Example 1.21. Set methods_noinitial parameter
+   Example 1.23. Set methods_noinitial parameter
 ...
 modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
 ...
 
-3.22. version_table (integer)
+3.24. version_table (integer)
 
    If set to 0, the module will skip checking the version of the tables.
 
    Default value is “1 (check for table version)”.
 
-   Example 1.22. version_table parameter usage
+   Example 1.24. version_table parameter usage
 ...
 modparam("topos", "version_table", 0)
 ...
 
-3.23. methods_update_time (str)
+3.25. methods_update_time (str)
 
    List of SIP methods (comma separated) for which the dialog timestamp
    (rectime) should be updated in the topos_d table when processing
@@ -561,7 +617,7 @@ modparam("topos", "version_table", 0)
 
    Default value is “SUBSCRIBE”.
 
-   Example 1.23. Set methods_update_time parameter
+   Example 1.25. Set methods_update_time parameter
 ...
 modparam("topos", "methods_update_time", "SUBSCRIBE,UPDATE,INVITE")
 ...
@@ -577,7 +633,7 @@ modparam("topos", "methods_update_time", "SUBSCRIBE,UPDATE,INVITE")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. tps_set_context usage
+   Example 1.26. tps_set_context usage
 ...
 request_route {
     ...
@@ -606,7 +662,7 @@ request_route {
    $sndto(ip), $sndto(port) and $sndto(proto) point to the real
    destination of the SIP message.
 
-   Example 1.25. Usage of event_route[topos:msg-outgoing]
+   Example 1.27. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -629,7 +685,7 @@ event_route[topos:msg-outgoing] {
    $sndto(ip), $sndto(port) and $sndto(proto) point to the real
    destination of the SIP message.
 
-   Example 1.26. Usage of event_route[topos:msg-sending]
+   Example 1.28. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {
@@ -651,7 +707,7 @@ event_route[topos:msg-sending] {
    $si, $sp and $proto point to the real source address of the SIP
    message, as well as the keywords src_port and dst_port.
 
-   Example 1.27. Usage of event_route[topos:msg-incoming]
+   Example 1.29. Usage of event_route[topos:msg-incoming]
 ...
 event_route[topos:msg-incoming] {
   if($si=="10.1.1.10") {
@@ -673,7 +729,7 @@ event_route[topos:msg-incoming] {
    $proto point to the real source address of the SIP message, as well as
    the keywords src_port and dst_port.
 
-   Example 1.28. Usage of event_route[topos:msg-receiving]
+   Example 1.30. Usage of event_route[topos:msg-receiving]
 ...
 event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {

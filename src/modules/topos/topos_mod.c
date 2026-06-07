@@ -85,6 +85,9 @@ extern str td_table_name;
 /** module parameters */
 static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
+int _tps_enable_reg_pub = 0;
+/** 0 = first Contact only (+ NOTICE if multi); 1 = reject multi-Contact REGISTER/PUBLISH */
+int _tps_reg_pub_multi_contact = 0;
 int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
 int _tps_header_mode = 0;
@@ -172,6 +175,8 @@ static param_export_t params[] = {
 	{"storage", PARAM_STR, &_tps_storage},
 	{"db_url", PARAM_STR, &_tps_db_url},
 	{"mask_callid", PARAM_INT, &_tps_param_mask_callid},
+	{"enable_reg_pub", PARAM_INT, &_tps_enable_reg_pub},
+	{"reg_pub_multi_contact", PARAM_INT, &_tps_reg_pub_multi_contact},
 	{"sanity_checks", PARAM_INT, &_tps_sanity_checks},
 	{"header_mode", PARAM_INT, &_tps_header_mode},
 	{"branch_expire", PARAM_INT, &_tps_branch_expire},
@@ -275,6 +280,12 @@ static int mod_init(void)
 			LM_ERR("failed to parse methods_update_time parameter\n");
 			return -1;
 		}
+	}
+
+	if(_tps_reg_pub_multi_contact < 0 || _tps_reg_pub_multi_contact > 1) {
+		LM_ERR("invalid reg_pub_multi_contact %d (use 0=first or 1=reject)\n",
+				_tps_reg_pub_multi_contact);
+		return -1;
 	}
 
 	if(_tps_storage.len == 2 && strncmp(_tps_storage.s, "db", 2) == 0) {
