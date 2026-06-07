@@ -640,6 +640,11 @@ static int ki_evapi_relay(sip_msg_t *msg, str *sdata)
 {
 	int ret;
 
+	if(sdata == NULL || sdata->s == NULL || sdata->len <= 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+
 	ret = evapi_relay(sdata);
 
 	if(ret < 0)
@@ -798,6 +803,16 @@ static int ki_evapi_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
 {
 	int ret;
 
+	if(sdata == NULL || sdata->s == NULL || sdata->len <= 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+
+	if(stag == NULL || stag->s == NULL || stag->len <= 0) {
+		LM_ERR("invalid tag parameter\n");
+		return -1;
+	}
+
 	ret = evapi_relay_unicast(sdata, stag);
 
 	if(ret < 0)
@@ -812,6 +827,16 @@ static int ki_evapi_relay_unicast(sip_msg_t *msg, str *sdata, str *stag)
 static int ki_evapi_relay_multicast(sip_msg_t *msg, str *sdata, str *stag)
 {
 	int ret;
+
+	if(sdata == NULL || sdata->s == NULL || sdata->len <= 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+
+	if(stag == NULL || stag->s == NULL || stag->len <= 0) {
+		LM_ERR("invalid tag parameter\n");
+		return -1;
+	}
 
 	ret = evapi_relay_multicast(sdata, stag);
 
