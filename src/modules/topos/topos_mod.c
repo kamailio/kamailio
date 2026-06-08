@@ -288,6 +288,31 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(_tps_enable_reg_pub < 0 || _tps_enable_reg_pub > 1) {
+		LM_ERR("invalid enable_reg_pub %d (use 0=off or 1=on)\n",
+				_tps_enable_reg_pub);
+		return -1;
+	}
+
+	if(_tps_enable_reg_pub == 1) {
+		unsigned int added = 0;
+
+		if((_tps_methods_update_time & METHOD_REGISTER) == 0) {
+			_tps_methods_update_time |= METHOD_REGISTER;
+			added |= METHOD_REGISTER;
+		}
+		if((_tps_methods_update_time & METHOD_PUBLISH) == 0) {
+			_tps_methods_update_time |= METHOD_PUBLISH;
+			added |= METHOD_PUBLISH;
+		}
+		if(added != 0) {
+			LM_NOTICE("enable_reg_pub=1: REGISTER/PUBLISH added to "
+					  "methods_update_time for storage TTL refresh "
+					  "(0x%x)\n",
+					added);
+		}
+	}
+
 	if(_tps_storage.len == 2 && strncmp(_tps_storage.s, "db", 2) == 0) {
 		/* Find a database module */
 		if(db_bind_mod(&_tps_db_url, &_tpsdbf)) {
@@ -593,8 +618,12 @@ int tps_msg_received(sr_event_param_t *evp)
 		}
 		dialog = (get_to(&msg)->tag_value.len > 0) ? 1 : 0;
 		if(dialog) {
-			/* dialog request */
+			/* SUBSCRIBE/INVITE in-dialog; REGISTER/PUBLISH with To-tag (interop) */
 			tps_request_received(&msg, dialog);
+		} else if(_tps_enable_reg_pub
+				&& tps_data_is_reg_pub(get_cseq(&msg)->method_id)) {
+			/* REGISTER/PUBLISH refresh/de-register without SIP dialog (RFC) */
+			tps_request_received(&msg, 0);
 		}
 	} else {
 		/* reply */

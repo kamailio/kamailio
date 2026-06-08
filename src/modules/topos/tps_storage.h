@@ -31,6 +31,8 @@
 
 #include "../../core/parser/msg_parser.h"
 
+typedef struct contact contact_t;
+
 #define TPS_DIR_DOWNSTREAM 0
 #define TPS_DIR_UPSTREAM 1
 
@@ -48,6 +50,7 @@
 #define TPS_DBU_ARR (1 << 2)
 #define TPS_DBU_BRR (1 << 3)
 #define TPS_DBU_TIME (1 << 4)
+#define TPS_DBU_PUBETAG (1 << 5)
 #define TPS_DBU_ALL (0xffffffff)
 
 #define TPS_DATA_SIZE 16384
@@ -106,6 +109,8 @@ int tps_storage_load_branch(
 int tps_storage_update_branch(
 		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_storage_load_dialog_by_tags(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_storage_update_dialog(
 		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
@@ -116,6 +121,14 @@ int tps_storage_lock_release(str *lkey);
 int tps_storage_lock_set_destroy(void);
 
 int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir);
+
+int tps_data_is_reg_pub(unsigned int method_id);
+void tps_data_fill_expires(sip_msg_t *msg, tps_data_t *td, contact_t *ct);
+int tps_data_end_dialog_match(sip_msg_t *msg, tps_data_t *md);
+int tps_data_dialog_expire_ttl(tps_data_t *td, int default_expire);
+int tps_reg_pub_is_initial(tps_data_t *td);
+int tps_data_get_sipifmatch(sip_msg_t *msg, str *etag);
+int tps_data_get_sipetag_hdr(sip_msg_t *msg, str *etag);
 
 void tps_storage_clean(unsigned int ticks, void *param);
 

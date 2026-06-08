@@ -37,9 +37,11 @@
 #include "../../core/hashes.h"
 #include "../../core/locking.h"
 #include "../../core/trim.h"
+#include "../../core/ut.h"
 #include "../../core/xavp.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/contact/contact.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_expires.h"
@@ -83,6 +85,7 @@ int tps_db_clean_branches(void);
 int tps_db_load_branch(
 		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_db_load_dialog_by_tags(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_db_update_branch(
 		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_db_update_dialog(
@@ -106,6 +109,7 @@ static tps_storage_api_t _tps_storage_api = {
 		.clean_branches = tps_db_clean_branches,
 		.load_branch = tps_db_load_branch,
 		.load_dialog = tps_db_load_dialog,
+		.load_dialog_by_tags = tps_db_load_dialog_by_tags,
 		.update_branch = tps_db_update_branch,
 		.update_dialog = tps_db_update_dialog,
 		.end_dialog = tps_db_end_dialog};
@@ -698,13 +702,11 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 
 	if(td->s_method_id == METHOD_SUBSCRIBE || td->s_method_id == METHOD_PUBLISH
 			|| td->s_method_id == METHOD_REGISTER) {
-		td->expires_valid = 0;
-		if(msg->expires && (msg->expires->body.len > 0)
-				&& (msg->expires->parsed
-						|| (parse_expires(msg->expires) >= 0))) {
-			td->expires = ((exp_body_t *)msg->expires->parsed)->val;
-			td->expires_valid = 1;
+		contact_t *ct = NULL;
+		if(msg->contact != NULL && msg->contact->parsed != NULL) {
+			ct = ((contact_body_t *)msg->contact->parsed)->contacts;
 		}
+		tps_data_fill_expires(msg, td, ct);
 	}
 
 
@@ -1280,6 +1282,56 @@ int tps_db_clean_branches(void)
 		}                                                                    \
 	} while(0);
 
+#define TPS_DATA_APPEND_DB_R(_sd, _res, _r, _c, _s)                          \
+	do {                                                                     \
+		if(RES_ROWS(_res)[(_r)].values[_c].nul == 0) {                       \
+			str tmp;                                                         \
+			switch(RES_ROWS(_res)[(_r)].values[_c].type) {                    \
+				case DB1_STRING:                                             \
+					tmp.s = (char *)RES_ROWS(_res)[(_r)]                    \
+									.values[_c]                              \
+									.val.string_val;                         \
+					if(tmp.s) {                                              \
+						tmp.len = strlen(tmp.s);                             \
+					} else {                                                 \
+						tmp.len = 0;                                         \
+					}                                                        \
+					break;                                                   \
+				case DB1_STR:                                                \
+					tmp.len = RES_ROWS(_res)[(_r)]                          \
+									.values[_c]                              \
+									.val.str_val.len;                        \
+					tmp.s = (char *)RES_ROWS(_res)[(_r)]                    \
+									.values[_c]                              \
+									.val.str_val.s;                          \
+					break;                                                   \
+				case DB1_BLOB:                                               \
+					tmp.len = RES_ROWS(_res)[(_r)]                          \
+									.values[_c]                              \
+									.val.blob_val.len;                       \
+					tmp.s = (char *)RES_ROWS(_res)[(_r)]                    \
+									.values[_c]                              \
+									.val.blob_val.s;                         \
+					break;                                                   \
+				default:                                                     \
+					tmp.len = 0;                                             \
+					tmp.s = NULL;                                            \
+			}                                                                \
+			if((_sd)->cp + tmp.len >= (_sd)->cbuf + TPS_DATA_SIZE) {         \
+				LM_ERR("not enough space for %d\n", _c);                     \
+				goto error;                                                  \
+			}                                                                \
+			if(tmp.len > 0) {                                                \
+				(_s)->s = (_sd)->cp;                                         \
+				(_s)->len = tmp.len;                                         \
+				memcpy((_sd)->cp, tmp.s, tmp.len);                           \
+				(_sd)->cp += tmp.len;                                        \
+				(_sd)->cp[0] = '\0';                                         \
+				(_sd)->cp++;                                                 \
+			}                                                                \
+		}                                                                    \
+	} while(0);
+
 /**
  *
  */
@@ -1440,9 +1492,9 @@ int tps_db_load_branch(
 			LM_DBG("no stored record for <%.*s>\n", md->x_vbranch1.len,
 					ZSW(md->x_vbranch1.s));
 		} else {
-			LM_DBG("no stored record for INVITE <%.*s ~ %.*s>\n",
-					md->a_callid.len, ZSW(md->a_callid.s), md->b_tag.len,
-					ZSW(md->b_tag.s));
+			LM_DBG("no stored record for %.*s <%.*s ~ %.*s>\n",
+					sMethodDlg.len, ZSW(sMethodDlg.s), md->a_callid.len,
+					ZSW(md->a_callid.s), md->b_tag.len, ZSW(md->b_tag.s));
 		}
 		ret = 1;
 		goto done;
@@ -1684,11 +1736,232 @@ error:
 }
 
 /**
+ * Load active reg/pub/sub state by call-id (+ optional tags for SUBSCRIBE)
+ */
+int tps_db_load_dialog_by_tags(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	db_key_t db_keys[6];
+	db_op_t db_ops[6];
+	db_val_t db_vals[6];
+	db_key_t db_cols[TPS_NR_KEYS];
+	db1_res_t *db_res = NULL;
+	int nr_keys;
+	int nr_cols;
+	int n;
+	int ret = 0;
+
+	if(msg == NULL || md == NULL || sd == NULL || _tps_db_handle == NULL)
+		return -1;
+
+	if(md->s_method.len <= 0) {
+		LM_DBG("no method for tag lookup\n");
+		return 1;
+	}
+
+	nr_keys = 0;
+	nr_cols = 0;
+
+	if(md->s_method_id == METHOD_PUBLISH && md->b_uri.len > 0) {
+		/* PUBLISH refresh by SIP-If-Match (stored in b_uri, RFC 3903) */
+		db_keys[nr_keys] = &td_col_b_uri;
+		db_ops[nr_keys] = OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uri);
+		nr_keys++;
+	} else {
+		if(md->a_callid.len <= 0) {
+			LM_DBG("no call-id for tag lookup\n");
+			return 1;
+		}
+		db_keys[nr_keys] = &td_col_a_callid;
+		db_ops[nr_keys] = OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_callid);
+		nr_keys++;
+	}
+
+	/* REGISTER/PUBLISH: correlate by Call-ID + method only (RFC 3261/3903) */
+	if(!tps_data_is_reg_pub(md->s_method_id)) {
+		if(md->a_tag.len > 0) {
+			db_keys[nr_keys] = &td_col_a_tag;
+			db_ops[nr_keys] = OP_EQ;
+			db_vals[nr_keys].type = DB1_STR;
+			db_vals[nr_keys].nul = 0;
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_tag);
+			nr_keys++;
+		}
+
+		if(md->b_tag.len > 0) {
+			db_keys[nr_keys] = &td_col_b_tag;
+			db_ops[nr_keys] = OP_EQ;
+			db_vals[nr_keys].type = DB1_STR;
+			db_vals[nr_keys].nul = 0;
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_tag);
+			nr_keys++;
+		}
+	}
+
+	db_keys[nr_keys] = &td_col_s_method;
+	db_ops[nr_keys] = OP_EQ;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(md->s_method);
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_iflags;
+	db_ops[nr_keys] = OP_GT;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.int_val = 0;
+	nr_keys++;
+
+	db_cols[nr_cols++] = &td_col_rectime;
+	db_cols[nr_cols++] = &td_col_a_callid;
+	db_cols[nr_cols++] = &td_col_a_uuid;
+	db_cols[nr_cols++] = &td_col_b_uuid;
+	db_cols[nr_cols++] = &td_col_a_contact;
+	db_cols[nr_cols++] = &td_col_b_contact;
+	db_cols[nr_cols++] = &td_col_as_contact;
+	db_cols[nr_cols++] = &td_col_bs_contact;
+	db_cols[nr_cols++] = &td_col_a_tag;
+	db_cols[nr_cols++] = &td_col_b_tag;
+	db_cols[nr_cols++] = &td_col_a_rr;
+	db_cols[nr_cols++] = &td_col_b_rr;
+	db_cols[nr_cols++] = &td_col_s_rr;
+	db_cols[nr_cols++] = &td_col_iflags;
+	db_cols[nr_cols++] = &td_col_a_uri;
+	db_cols[nr_cols++] = &td_col_b_uri;
+	db_cols[nr_cols++] = &td_col_r_uri;
+	db_cols[nr_cols++] = &td_col_a_srcaddr;
+	db_cols[nr_cols++] = &td_col_b_srcaddr;
+	db_cols[nr_cols++] = &td_col_s_method;
+	db_cols[nr_cols++] = &td_col_s_cseq;
+	if(md->x_context.len > 0) {
+		db_cols[nr_cols++] = &td_col_x_context;
+	}
+
+	if(_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
+		LM_ERR("failed to perform use table\n");
+		return -1;
+	}
+
+	if(_tpsdbf.query(_tps_db_handle, db_keys, db_ops, db_vals, db_cols, nr_keys,
+			   nr_cols, &td_col_rectime, &db_res)
+			< 0) {
+		LM_ERR("failed to query database\n");
+		goto error;
+	}
+
+	if(RES_ROW_N(db_res) <= 0) {
+		LM_DBG("no active dialog for <%.*s ~ %.*s ~ %.*s>\n", md->a_callid.len,
+				ZSW(md->a_callid.s), md->a_tag.len, ZSW(md->a_tag.s),
+				md->b_tag.len, ZSW(md->b_tag.s));
+		ret = 1;
+		goto done;
+	}
+
+	{
+		int row = 0;
+		int i;
+		time_t best_t = 0;
+		time_t t;
+
+		if(RES_ROW_N(db_res) > 1) {
+			for(i = 0; i < RES_ROW_N(db_res); i++) {
+				if(RES_ROWS(db_res)[i].values[0].type == DB1_DATETIME) {
+					t = RES_ROWS(db_res)[i].values[0].val.time_val;
+					if(t >= best_t) {
+						best_t = t;
+						row = i;
+					}
+				}
+			}
+			LM_WARN("multiple active %.*s rows, using newest (rectime)\n",
+					md->s_method.len, md->s_method.s);
+		}
+
+		sd->cp = sd->cbuf;
+
+		n = 0;
+		n++; /*rectime*/
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->a_callid);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->a_uuid);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->b_uuid);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->a_contact);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->b_contact);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->as_contact);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->bs_contact);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->a_tag);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->b_tag);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->a_rr);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->b_rr);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->s_rr);
+		n++;
+		n++; /*iflags*/
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->a_uri);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->b_uri);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->r_uri);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->a_srcaddr);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->b_srcaddr);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->s_method);
+		n++;
+		TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->s_cseq);
+		n++;
+		if(md->x_context.len > 0) {
+			TPS_DATA_APPEND_DB_R(sd, db_res, row, n, &sd->x_context);
+			n++;
+		}
+	}
+
+done:
+	if((db_res != NULL) && _tpsdbf.free_result(_tps_db_handle, db_res) < 0)
+		LM_ERR("failed to free result of query\n");
+
+	return ret;
+
+error:
+	if((db_res != NULL) && _tpsdbf.free_result(_tps_db_handle, db_res) < 0)
+		LM_ERR("failed to free result of query\n");
+
+	return -1;
+}
+
+/**
  *
  */
 int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
 	return _tps_storage_api.load_dialog(msg, md, sd);
+}
+
+/**
+ *
+ */
+int tps_storage_load_dialog_by_tags(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	if(_tps_storage_api.load_dialog_by_tags == NULL) {
+		return 1;
+	}
+	return _tps_storage_api.load_dialog_by_tags(msg, md, sd);
 }
 
 #define TPS_DB_ADD_STRV(dcol, dval, cnr, cname, cval) \
@@ -1920,13 +2193,20 @@ int tps_db_update_dialog(
 		}
 	}
 	if((mode & TPS_DBU_TIME)
-			&& ((sd->b_tag.len > 0) && (msg->first_line.type == SIP_REQUEST)
-					&& (msg->first_line.u.request.method_value
-							& _tps_methods_update_time))) {
+			&& (msg->first_line.type == SIP_REQUEST)
+			&& (msg->first_line.u.request.method_value
+					& _tps_methods_update_time)
+			&& (sd->b_tag.len > 0
+					|| tps_data_is_reg_pub(md->s_method_id))) {
 		db_ucols[nr_ucols] = &td_col_rectime;
 		db_uvals[nr_ucols].type = DB1_DATETIME;
 		db_uvals[nr_ucols].val.time_val = time(NULL);
 		nr_ucols++;
+	}
+
+	if((mode & TPS_DBU_PUBETAG) && sd->b_uri.len > 0) {
+		TPS_DB_ADD_STRV(
+				db_ucols, db_uvals, nr_ucols, td_col_b_uri, sd->b_uri);
 	}
 
 	if(nr_ucols == 0) {
@@ -1994,13 +2274,7 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	if(msg == NULL || md == NULL || sd == NULL || _tps_db_handle == NULL)
 		return -1;
 
-	if((md->s_method_id != METHOD_BYE)
-			&& !((md->s_method_id == METHOD_SUBSCRIBE) && (md->expires_valid)
-					&& (md->expires == 0))
-			&& !((md->s_method_id == METHOD_REGISTER) && (md->expires_valid)
-					&& (md->expires == 0))
-			&& !((md->s_method_id == METHOD_PUBLISH) && (md->expires_valid)
-					&& (md->expires == 0))) {
+	if(!tps_data_end_dialog_match(msg, md)) {
 		return 0;
 	}
 
@@ -2056,6 +2330,7 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 				md->a_uuid.s);
 		return -1;
 	}
+	LM_DBG("ended dialog storage\n");
 	return 0;
 }
 
