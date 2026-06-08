@@ -414,7 +414,7 @@ static int xhttp_send_reply(
 			pkg_free(tbuf.s);
 			return -1;
 		}
-		pkg_free(tbuf.s);
+		tbuf.s = NULL;
 		LM_DBG("response with content-type: %.*s\n", ctype->len, ctype->s);
 	}
 
