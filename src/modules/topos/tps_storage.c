@@ -1282,54 +1282,51 @@ int tps_db_clean_branches(void)
 		}                                                                    \
 	} while(0);
 
-#define TPS_DATA_APPEND_DB_R(_sd, _res, _r, _c, _s)                          \
-	do {                                                                     \
-		if(RES_ROWS(_res)[(_r)].values[_c].nul == 0) {                       \
-			str tmp;                                                         \
-			switch(RES_ROWS(_res)[(_r)].values[_c].type) {                    \
-				case DB1_STRING:                                             \
-					tmp.s = (char *)RES_ROWS(_res)[(_r)]                    \
-									.values[_c]                              \
-									.val.string_val;                         \
-					if(tmp.s) {                                              \
-						tmp.len = strlen(tmp.s);                             \
-					} else {                                                 \
-						tmp.len = 0;                                         \
-					}                                                        \
-					break;                                                   \
-				case DB1_STR:                                                \
-					tmp.len = RES_ROWS(_res)[(_r)]                          \
-									.values[_c]                              \
-									.val.str_val.len;                        \
-					tmp.s = (char *)RES_ROWS(_res)[(_r)]                    \
-									.values[_c]                              \
-									.val.str_val.s;                          \
-					break;                                                   \
-				case DB1_BLOB:                                               \
-					tmp.len = RES_ROWS(_res)[(_r)]                          \
-									.values[_c]                              \
-									.val.blob_val.len;                       \
-					tmp.s = (char *)RES_ROWS(_res)[(_r)]                    \
-									.values[_c]                              \
-									.val.blob_val.s;                         \
-					break;                                                   \
-				default:                                                     \
-					tmp.len = 0;                                             \
-					tmp.s = NULL;                                            \
-			}                                                                \
-			if((_sd)->cp + tmp.len >= (_sd)->cbuf + TPS_DATA_SIZE) {         \
-				LM_ERR("not enough space for %d\n", _c);                     \
-				goto error;                                                  \
-			}                                                                \
-			if(tmp.len > 0) {                                                \
-				(_s)->s = (_sd)->cp;                                         \
-				(_s)->len = tmp.len;                                         \
-				memcpy((_sd)->cp, tmp.s, tmp.len);                           \
-				(_sd)->cp += tmp.len;                                        \
-				(_sd)->cp[0] = '\0';                                         \
-				(_sd)->cp++;                                                 \
-			}                                                                \
-		}                                                                    \
+#define TPS_DATA_APPEND_DB_R(_sd, _res, _r, _c, _s)                            \
+	do {                                                                       \
+		if(RES_ROWS(_res)[(_r)].values[_c].nul == 0) {                         \
+			str tmp;                                                           \
+			switch(RES_ROWS(_res)[(_r)].values[_c].type) {                     \
+				case DB1_STRING:                                               \
+					tmp.s = (char *)RES_ROWS(_res)[(_r)]                       \
+									.values[_c]                                \
+									.val.string_val;                           \
+					if(tmp.s) {                                                \
+						tmp.len = strlen(tmp.s);                               \
+					} else {                                                   \
+						tmp.len = 0;                                           \
+					}                                                          \
+					break;                                                     \
+				case DB1_STR:                                                  \
+					tmp.len = RES_ROWS(_res)[(_r)].values[_c].val.str_val.len; \
+					tmp.s = (char *)RES_ROWS(_res)[(_r)]                       \
+									.values[_c]                                \
+									.val.str_val.s;                            \
+					break;                                                     \
+				case DB1_BLOB:                                                 \
+					tmp.len =                                                  \
+							RES_ROWS(_res)[(_r)].values[_c].val.blob_val.len;  \
+					tmp.s = (char *)RES_ROWS(_res)[(_r)]                       \
+									.values[_c]                                \
+									.val.blob_val.s;                           \
+					break;                                                     \
+				default:                                                       \
+					tmp.len = 0;                                               \
+					tmp.s = NULL;                                              \
+			}                                                                  \
+			if((_sd)->cp + tmp.len >= (_sd)->cbuf + TPS_DATA_SIZE) {           \
+				LM_ERR("not enough space for %d\n", _c);                       \
+				goto error;                                                    \
+			}                                                                  \
+			if(tmp.len > 0) {                                                  \
+				(_s)->s = (_sd)->cp;                                           \
+				(_s)->len = tmp.len;                                           \
+				memcpy((_sd)->cp, tmp.s, tmp.len);                             \
+				(_sd)->cp += tmp.len;                                          \
+				(_sd)->cp[0] = '\0';                                           \
+				(_sd)->cp++;                                                   \
+			}                                                                  \
+		}                                                                      \
 	} while(0);
 
 /**
@@ -1492,9 +1489,9 @@ int tps_db_load_branch(
 			LM_DBG("no stored record for <%.*s>\n", md->x_vbranch1.len,
 					ZSW(md->x_vbranch1.s));
 		} else {
-			LM_DBG("no stored record for %.*s <%.*s ~ %.*s>\n",
-					sMethodDlg.len, ZSW(sMethodDlg.s), md->a_callid.len,
-					ZSW(md->a_callid.s), md->b_tag.len, ZSW(md->b_tag.s));
+			LM_DBG("no stored record for %.*s <%.*s ~ %.*s>\n", sMethodDlg.len,
+					ZSW(sMethodDlg.s), md->a_callid.len, ZSW(md->a_callid.s),
+					md->b_tag.len, ZSW(md->b_tag.s));
 		}
 		ret = 1;
 		goto done;
@@ -2192,12 +2189,10 @@ int tps_db_update_dialog(
 			}
 		}
 	}
-	if((mode & TPS_DBU_TIME)
-			&& (msg->first_line.type == SIP_REQUEST)
+	if((mode & TPS_DBU_TIME) && (msg->first_line.type == SIP_REQUEST)
 			&& (msg->first_line.u.request.method_value
 					& _tps_methods_update_time)
-			&& (sd->b_tag.len > 0
-					|| tps_data_is_reg_pub(md->s_method_id))) {
+			&& (sd->b_tag.len > 0 || tps_data_is_reg_pub(md->s_method_id))) {
 		db_ucols[nr_ucols] = &td_col_rectime;
 		db_uvals[nr_ucols].type = DB1_DATETIME;
 		db_uvals[nr_ucols].val.time_val = time(NULL);
@@ -2205,8 +2200,7 @@ int tps_db_update_dialog(
 	}
 
 	if((mode & TPS_DBU_PUBETAG) && sd->b_uri.len > 0) {
-		TPS_DB_ADD_STRV(
-				db_ucols, db_uvals, nr_ucols, td_col_b_uri, sd->b_uri);
+		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols, td_col_b_uri, sd->b_uri);
 	}
 
 	if(nr_ucols == 0) {

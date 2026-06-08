@@ -621,7 +621,7 @@ int tps_msg_received(sr_event_param_t *evp)
 			/* SUBSCRIBE/INVITE in-dialog; REGISTER/PUBLISH with To-tag (interop) */
 			tps_request_received(&msg, dialog);
 		} else if(_tps_enable_reg_pub
-				&& tps_data_is_reg_pub(get_cseq(&msg)->method_id)) {
+				  && tps_data_is_reg_pub(get_cseq(&msg)->method_id)) {
 			/* REGISTER/PUBLISH refresh/de-register without SIP dialog (RFC) */
 			tps_request_received(&msg, 0);
 		}

@@ -318,8 +318,8 @@ static int tps_redis_store_tag_index(tps_data_t *md, tps_data_t *sd)
 
 	rp = _tps_redis_cbuf;
 	rlen = snprintf(rp, TPS_REDIS_DATA_SIZE - 128, "%.*s%.*s|%.*s",
-			_tps_redis_iprefix.len, _tps_redis_iprefix.s, callid.len,
-			callid.s, md->b_tag.len, md->b_tag.s);
+			_tps_redis_iprefix.len, _tps_redis_iprefix.s, callid.len, callid.s,
+			md->b_tag.len, md->b_tag.s);
 	if(rlen < 0 || rlen >= TPS_REDIS_DATA_SIZE - 128) {
 		return -1;
 	}
@@ -1500,8 +1500,7 @@ int tps_redis_update_branch(
 		return -1;
 	}
 
-	if(md->s_method_id == METHOD_INVITE
-			|| md->s_method_id == METHOD_SUBSCRIBE
+	if(md->s_method_id == METHOD_INVITE || md->s_method_id == METHOD_SUBSCRIBE
 			|| md->s_method_id == METHOD_REGISTER
 			|| md->s_method_id == METHOD_PUBLISH) {
 		if(tps_redis_insert_initial_method_branch(md, sd) < 0) {

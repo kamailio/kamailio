@@ -101,7 +101,8 @@ int tps_data_end_dialog_match(sip_msg_t *msg, tps_data_t *md)
  */
 int tps_data_dialog_expire_ttl(tps_data_t *td, int default_expire)
 {
-	if((td->s_method_id == METHOD_SUBSCRIBE || td->s_method_id == METHOD_REGISTER
+	if((td->s_method_id == METHOD_SUBSCRIBE
+			   || td->s_method_id == METHOD_REGISTER
 			   || td->s_method_id == METHOD_PUBLISH)
 			&& td->expires_valid && td->expires > 0) {
 		return td->expires;
