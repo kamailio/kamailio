@@ -145,7 +145,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libev - http://software.schmorp.de/pkg/libev
+     * libevent - https://github.com/libevent/libevent
 
 3. Parameters
 
