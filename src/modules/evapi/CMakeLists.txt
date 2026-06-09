@@ -2,6 +2,8 @@ file(GLOB MODULE_SOURCES "*.c")
 
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
-find_package(Libev REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(EVENT REQUIRED IMPORTED_TARGET libevent)
+add_library(event::event ALIAS PkgConfig::EVENT)
 
-target_link_libraries(${module_name} PRIVATE Libev::Libev)
+target_link_libraries(${module_name} PRIVATE event::event)
