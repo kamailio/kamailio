@@ -302,8 +302,8 @@ switch($rc) {
      * ip - String or pseudo-variable containing the IP to evaluate.
      * result - String or pseudo-variable containing the detailed type of
        the IP.
-          + IPv4 - PUBLIC, RIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED,
-            TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST
+          + IPv4 - PUBLIC, PRIVATE, SHARED, LOOPBACK, LINK-LOCAL,
+            RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST
           + IPv6 - UNSPECIFIED, LOOPBACK, IPV4MAP, RESERVED, DISCARD,
             GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4,
             UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST
