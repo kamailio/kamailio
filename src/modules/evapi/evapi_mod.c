@@ -25,8 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ev.h>
-
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"

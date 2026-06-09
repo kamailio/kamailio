@@ -32,7 +32,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 
-#include <ev.h>
+#include <event2/event.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
@@ -73,6 +73,7 @@ typedef struct _evapi_client
 {
 	int connected;
 	int sock;
+	struct event *watcher;
 	unsigned short af;
 	unsigned short src_port;
 	char src_addr[EVAPI_IPADDR_SIZE];
@@ -538,7 +539,7 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 /**
  *
  */
-void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
+void evapi_recv_client(evutil_socket_t fd, short events, void *arg)
 {
 	ssize_t rlen;
 	int i, k;
@@ -547,36 +548,35 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 	char *sfp;
 	char *efp;
 	char drainbuf[CLIENT_BUFFER_SIZE];
+	evapi_client_t *client = (evapi_client_t *)arg;
 
-	if(EV_ERROR & revents) {
-		LM_ERR("received invalid event (%d)\n", revents);
-		return;
-	}
+	(void)events;
+
 	if(_evapi_clients == NULL) {
 		LM_ERR("no client structures\n");
 		return;
 	}
-
-	for(i = 0; i < EVAPI_MAX_CLIENTS; i++) {
-		if(_evapi_clients[i].connected == 1
-				&& _evapi_clients[i].sock == watcher->fd) {
-			break;
-		}
-	}
-	if(i == EVAPI_MAX_CLIENTS) {
-		LM_ERR("cannot lookup client socket %d\n", watcher->fd);
+	if(client == NULL || client < _evapi_clients
+			|| client >= (_evapi_clients + EVAPI_MAX_CLIENTS)) {
+		LM_ERR("cannot lookup client socket %d\n", (int)fd);
 		/* try to empty the socket anyhow */
-		rlen = recv(watcher->fd, drainbuf, sizeof(drainbuf) - 1, 0);
+		rlen = recv(fd, drainbuf, sizeof(drainbuf) - 1, 0);
+		return;
+	}
+	i = (int)(client - _evapi_clients);
+	if(client->connected != 1 || client->sock != (int)fd) {
+		LM_ERR("stale client watcher for socket %d at pos %d\n", (int)fd, i);
+		rlen = recv(fd, drainbuf, sizeof(drainbuf) - 1, 0);
 		return;
 	}
 
 	/* read message from client */
-	rlen = recv(watcher->fd, _evapi_clients[i].rbuffer + _evapi_clients[i].rpos,
-			CLIENT_BUFFER_SIZE - 1 - _evapi_clients[i].rpos, 0);
+	rlen = recv(fd, client->rbuffer + client->rpos,
+			CLIENT_BUFFER_SIZE - 1 - client->rpos, 0);
 
 	if(rlen < 0) {
 		LM_ERR("cannot read the client message\n");
-		_evapi_clients[i].rpos = 0;
+		client->rpos = 0;
 		return;
 	}
 
@@ -590,111 +590,106 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		evenv.conidx = i;
 		evapi_run_cfg_route(
 				&evenv, _evapi_rts.con_closed, &_evapi_rts.con_closed_name);
-		_evapi_clients[i].connected = 0;
-		if(_evapi_clients[i].sock >= 0) {
-			close(_evapi_clients[i].sock);
+		client->connected = 0;
+		if(client->sock >= 0) {
+			close(client->sock);
 		}
-		_evapi_clients[i].sock = -1;
-		_evapi_clients[i].rpos = 0;
-		ev_io_stop(loop, watcher);
-		free(watcher);
+		client->sock = -1;
+		client->rpos = 0;
+		if(client->watcher != NULL) {
+			event_free(client->watcher);
+			client->watcher = NULL;
+		}
 		LM_INFO("client closing connection - pos [%d] addr [%s:%d]\n", i,
-				_evapi_clients[i].src_addr, _evapi_clients[i].src_port);
+				client->src_addr, client->src_port);
 		return;
 	}
 
-	_evapi_clients[i].rbuffer[_evapi_clients[i].rpos + rlen] = '\0';
+	client->rbuffer[client->rpos + rlen] = '\0';
 
-	LM_DBG("{%d} [%s:%d] - received [%.*s] (%d) (%d)\n", i,
-			_evapi_clients[i].src_addr, _evapi_clients[i].src_port, (int)rlen,
-			_evapi_clients[i].rbuffer + _evapi_clients[i].rpos, (int)rlen,
-			(int)_evapi_clients[i].rpos);
+	LM_DBG("{%d} [%s:%d] - received [%.*s] (%d) (%d)\n", i, client->src_addr,
+			client->src_port, (int)rlen, client->rbuffer + client->rpos,
+			(int)rlen, (int)client->rpos);
 	evenv.conidx = i;
 	evenv.eset = 1;
 	if(_evapi_netstring_format) {
 		/* netstring decapsulation */
 		k = 0;
-		while(k < _evapi_clients[i].rpos + rlen) {
+		while(k < client->rpos + rlen) {
 			frame.len = 0;
-			while(k < _evapi_clients[i].rpos + rlen) {
-				if(_evapi_clients[i].rbuffer[k] == ' '
-						|| _evapi_clients[i].rbuffer[k] == '\t'
-						|| _evapi_clients[i].rbuffer[k] == '\r'
-						|| _evapi_clients[i].rbuffer[k] == '\n')
+			while(k < client->rpos + rlen) {
+				if(client->rbuffer[k] == ' ' || client->rbuffer[k] == '\t'
+						|| client->rbuffer[k] == '\r'
+						|| client->rbuffer[k] == '\n')
 					k++;
 				else
 					break;
 			}
-			if(k == _evapi_clients[i].rpos + rlen) {
-				_evapi_clients[i].rpos = 0;
+			if(k == client->rpos + rlen) {
+				client->rpos = 0;
 				LM_DBG("empty content\n");
 				return;
 			}
 			/* pointer to start of whole frame */
-			sfp = _evapi_clients[i].rbuffer + k;
-			while(k < _evapi_clients[i].rpos + rlen) {
-				if(_evapi_clients[i].rbuffer[k] >= '0'
-						&& _evapi_clients[i].rbuffer[k] <= '9') {
+			sfp = client->rbuffer + k;
+			while(k < client->rpos + rlen) {
+				if(client->rbuffer[k] >= '0' && client->rbuffer[k] <= '9') {
 					if(frame.len > INT_MAX / 10
-							|| (_evapi_clients[i].rbuffer[k] - '0')
+							|| (client->rbuffer[k] - '0')
 									   > (INT_MAX - frame.len * 10)) {
 						/* overflow - invalid frame */
 						LM_ERR("frame length overflow. 10+ digits \n");
-						_evapi_clients[i].rpos = 0;
+						client->rpos = 0;
 						return;
 					}
-					frame.len =
-							frame.len * 10 + _evapi_clients[i].rbuffer[k] - '0';
+					frame.len = frame.len * 10 + client->rbuffer[k] - '0';
 				} else {
-					if(_evapi_clients[i].rbuffer[k] == ':')
+					if(client->rbuffer[k] == ':')
 						break;
 					/* invalid character - discard the rest */
-					_evapi_clients[i].rpos = 0;
+					client->rpos = 0;
 					LM_DBG("invalid char when searching for size [%c] [%.*s] "
 						   "(%d) (%d)\n",
-							_evapi_clients[i].rbuffer[k],
-							(int)(_evapi_clients[i].rpos + rlen),
-							_evapi_clients[i].rbuffer,
-							(int)(_evapi_clients[i].rpos + rlen), k);
+							client->rbuffer[k], (int)(client->rpos + rlen),
+							client->rbuffer, (int)(client->rpos + rlen), k);
 					return;
 				}
 				k++;
 			}
-			if(k == _evapi_clients[i].rpos + rlen || frame.len <= 0) {
+			if(k == client->rpos + rlen || frame.len <= 0) {
 				LM_DBG("invalid frame len: %d kpos: %d rpos: %u rlen: %lu\n",
-						frame.len, k, _evapi_clients[i].rpos, rlen);
-				_evapi_clients[i].rpos = 0;
+						frame.len, k, client->rpos, rlen);
+				client->rpos = 0;
 				return;
 			}
-			if(frame.len + k >= _evapi_clients[i].rpos + rlen) {
+			if(frame.len + k >= client->rpos + rlen) {
 				/* partial data - shift back in buffer and wait to read more */
-				efp = _evapi_clients[i].rbuffer + _evapi_clients[i].rpos + rlen;
+				efp = client->rbuffer + client->rpos + rlen;
 				if(efp <= sfp) {
-					_evapi_clients[i].rpos = 0;
+					client->rpos = 0;
 					LM_DBG("weird - invalid size for residual data\n");
 					return;
 				}
-				_evapi_clients[i].rpos = (unsigned int)(efp - sfp);
-				if(efp - sfp > sfp - _evapi_clients[i].rbuffer) {
-					memcpy(_evapi_clients[i].rbuffer, sfp,
-							_evapi_clients[i].rpos);
+				client->rpos = (unsigned int)(efp - sfp);
+				if(efp - sfp > sfp - client->rbuffer) {
+					memcpy(client->rbuffer, sfp, client->rpos);
 				} else {
-					for(k = 0; k < _evapi_clients[i].rpos; k++) {
-						_evapi_clients[i].rbuffer[k] = sfp[k];
+					for(k = 0; k < client->rpos; k++) {
+						client->rbuffer[k] = sfp[k];
 					}
 				}
-				LM_DBG("residual data [%.*s] (%d)\n", _evapi_clients[i].rpos,
-						_evapi_clients[i].rbuffer, _evapi_clients[i].rpos);
+				LM_DBG("residual data [%.*s] (%d)\n", client->rpos,
+						client->rbuffer, client->rpos);
 				return;
 			}
 			k++;
-			frame.s = _evapi_clients[i].rbuffer + k;
+			frame.s = client->rbuffer + k;
 			if(frame.s[frame.len] != ',') {
 				/* invalid data - discard and reset buffer */
 				LM_DBG("frame size mismatch the ending char (%c): [%.*s] "
 					   "(%d)\n",
 						frame.s[frame.len], frame.len, frame.s, frame.len);
-				_evapi_clients[i].rpos = 0;
+				client->rpos = 0;
 				return;
 			}
 			frame.s[frame.len] = '\0';
@@ -713,9 +708,9 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			}
 			k++;
 		}
-		_evapi_clients[i].rpos = 0;
+		client->rpos = 0;
 	} else {
-		evenv.msg.s = _evapi_clients[i].rbuffer;
+		evenv.msg.s = client->rbuffer;
 		evenv.msg.len = rlen;
 		if(_evapi_workers <= 0) {
 			evapi_run_cfg_route(&evenv, _evapi_rts.msg_received,
@@ -729,43 +724,37 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 /**
  *
  */
-void evapi_accept_client(
-		struct ev_loop *loop, struct ev_io *watcher, int revents)
+void evapi_accept_client(evutil_socket_t fd, short events, void *arg)
 {
 	struct sockaddr caddr;
 	socklen_t clen = sizeof(caddr);
 	int csock;
-	struct ev_io *evapi_client;
+	struct event_base *evbase = (struct event_base *)arg;
+	struct event *evapi_client;
 	int i;
 	evapi_env_t evenv;
 	int optval;
 	socklen_t optlen;
 
+	(void)events;
+
 	if(_evapi_clients == NULL) {
 		LM_ERR("no client structures\n");
 		return;
 	}
-	evapi_client = (struct ev_io *)malloc(sizeof(struct ev_io));
-	if(evapi_client == NULL) {
-		LM_ERR("no more memory\n");
-		return;
-	}
-
-	if(EV_ERROR & revents) {
-		LM_ERR("received invalid event\n");
-		free(evapi_client);
+	if(evbase == NULL) {
+		LM_ERR("no dispatcher event base\n");
 		return;
 	}
 
 	cfg_update();
 
 	/* accept new client connection */
-	csock = accept(watcher->fd, (struct sockaddr *)&caddr, &clen);
+	csock = accept(fd, (struct sockaddr *)&caddr, &clen);
 
 	if(csock < 0) {
 		LM_ERR("cannot accept the client '%s' err='%d'\n", gai_strerror(csock),
 				csock);
-		free(evapi_client);
 		return;
 	}
 	for(i = 0; i < EVAPI_MAX_CLIENTS; i++) {
@@ -778,7 +767,6 @@ void evapi_accept_client(
 						== NULL) {
 					LM_ERR("cannot convert ipv4 address\n");
 					close(csock);
-					free(evapi_client);
 					return;
 				}
 			} else {
@@ -790,7 +778,6 @@ void evapi_accept_client(
 						== NULL) {
 					LM_ERR("cannot convert ipv6 address\n");
 					close(csock);
-					free(evapi_client);
 					return;
 				}
 			}
@@ -809,7 +796,6 @@ void evapi_accept_client(
 	if(i >= EVAPI_MAX_CLIENTS) {
 		LM_ERR("too many clients\n");
 		close(csock);
-		free(evapi_client);
 		return;
 	}
 
@@ -822,36 +808,50 @@ void evapi_accept_client(
 	evapi_run_cfg_route(&evenv, _evapi_rts.con_new, &_evapi_rts.con_new_name);
 
 	if(_evapi_clients[i].connected == 0) {
-		free(evapi_client);
 		return;
 	}
 
 	/* start watcher to read messages from watchers */
-	ev_io_init(evapi_client, evapi_recv_client, csock, EV_READ);
-	ev_io_start(loop, evapi_client);
+	evapi_client = event_new(evbase, csock, EV_READ | EV_PERSIST,
+			evapi_recv_client, &_evapi_clients[i]);
+	if(evapi_client == NULL) {
+		LM_ERR("cannot create client event watcher\n");
+		close(csock);
+		_evapi_clients[i].connected = 0;
+		_evapi_clients[i].sock = -1;
+		return;
+	}
+	_evapi_clients[i].watcher = evapi_client;
+	if(event_add(evapi_client, NULL) < 0) {
+		LM_ERR("cannot start client event watcher\n");
+		event_free(evapi_client);
+		_evapi_clients[i].watcher = NULL;
+		close(csock);
+		_evapi_clients[i].connected = 0;
+		_evapi_clients[i].sock = -1;
+		return;
+	}
 }
 
 /**
  *
  */
-void evapi_recv_notify(struct ev_loop *loop, struct ev_io *watcher, int revents)
+void evapi_recv_notify(evutil_socket_t fd, short events, void *arg)
 {
 	evapi_msg_t *emsg = NULL;
 	int rlen;
 
-	if(EV_ERROR & revents) {
-		perror("received invalid event\n");
-		return;
-	}
+	(void)events;
+	(void)arg;
 
 	cfg_update();
 
-	if(watcher->fd != _evapi_notify_sockets[0]) {
-		LM_INFO("unexpected socket descriptors: [%d / %d]\n", watcher->fd,
+	if(fd != _evapi_notify_sockets[0]) {
+		LM_INFO("unexpected socket descriptors: [%d / %d]\n", (int)fd,
 				_evapi_notify_sockets[0]);
 	}
 	/* read message to dispatch */
-	rlen = read(watcher->fd, &emsg, sizeof(evapi_msg_t *));
+	rlen = read(fd, &emsg, sizeof(evapi_msg_t *));
 
 	evapi_context_mcount_dec();
 	if(rlen != sizeof(evapi_msg_t *) || emsg == NULL) {
@@ -871,12 +871,12 @@ void evapi_recv_notify(struct ev_loop *loop, struct ev_io *watcher, int revents)
 int evapi_run_dispatcher(char *laddr, int lport)
 {
 	int evapi_srv_sock;
-	struct ev_loop *loop;
+	struct event_base *base = NULL;
 	struct addrinfo ai_hints;
 	struct addrinfo *ai_res = NULL;
 	int ai_ret = 0;
-	struct ev_io io_server;
-	struct ev_io io_notify;
+	struct event *io_server = NULL;
+	struct event *io_notify = NULL;
 	int yes_true = 1;
 	int fflags = 0;
 
@@ -887,10 +887,10 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		exit(-1);
 	}
 
-	loop = ev_default_loop(0);
+	base = event_base_new();
 
-	if(loop == NULL) {
-		LM_ERR("cannot get libev loop\n");
+	if(base == NULL) {
+		LM_ERR("cannot create libevent base\n");
 		return -1;
 	}
 
@@ -900,6 +900,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	ai_ret = getaddrinfo(laddr, int2str(lport, NULL), &ai_hints, &ai_res);
 	if(ai_ret != 0) {
 		LM_ERR("getaddrinfo failed: %d %s\n", ai_ret, gai_strerror(ai_ret));
+		event_base_free(base);
 		return -1;
 	}
 	evapi_srv_sock =
@@ -907,6 +908,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	if(evapi_srv_sock < 0) {
 		LM_ERR("cannot create server socket (family %d)\n", ai_res->ai_family);
 		freeaddrinfo(ai_res);
+		event_base_free(base);
 		return -1;
 	}
 
@@ -916,12 +918,14 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		LM_ERR("failed to get the srv socket flags\n");
 		close(evapi_srv_sock);
 		freeaddrinfo(ai_res);
+		event_base_free(base);
 		return -1;
 	}
 	if(fcntl(evapi_srv_sock, F_SETFL, fflags | O_NONBLOCK) < 0) {
 		LM_ERR("failed to set srv socket flags\n");
 		close(evapi_srv_sock);
 		freeaddrinfo(ai_res);
+		event_base_free(base);
 		return -1;
 	}
 
@@ -936,6 +940,7 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		LM_ERR("cannot set SO_REUSEADDR option on descriptor\n");
 		close(evapi_srv_sock);
 		freeaddrinfo(ai_res);
+		event_base_free(base);
 		return -1;
 	}
 
@@ -943,24 +948,62 @@ int evapi_run_dispatcher(char *laddr, int lport)
 		LM_ERR("cannot bind to local address and port [%s:%d]\n", laddr, lport);
 		close(evapi_srv_sock);
 		freeaddrinfo(ai_res);
+		event_base_free(base);
 		return -1;
 	}
 	freeaddrinfo(ai_res);
 	if(listen(evapi_srv_sock, 4) < 0) {
 		LM_ERR("listen error\n");
 		close(evapi_srv_sock);
+		event_base_free(base);
 		return -1;
 	}
-	ev_io_init(&io_server, evapi_accept_client, evapi_srv_sock, EV_READ);
-	ev_io_start(loop, &io_server);
-	ev_io_init(
-			&io_notify, evapi_recv_notify, _evapi_notify_sockets[0], EV_READ);
-	ev_io_start(loop, &io_notify);
-
-	while(1) {
-		ev_loop(loop, 0);
+	io_server = event_new(base, evapi_srv_sock, EV_READ | EV_PERSIST,
+			evapi_accept_client, base);
+	if(io_server == NULL) {
+		LM_ERR("cannot create server event watcher\n");
+		close(evapi_srv_sock);
+		event_base_free(base);
+		return -1;
+	}
+	if(event_add(io_server, NULL) < 0) {
+		LM_ERR("cannot start server event watcher\n");
+		event_free(io_server);
+		close(evapi_srv_sock);
+		event_base_free(base);
+		return -1;
+	}
+	io_notify = event_new(base, _evapi_notify_sockets[0], EV_READ | EV_PERSIST,
+			evapi_recv_notify, NULL);
+	if(io_notify == NULL) {
+		LM_ERR("cannot create notify event watcher\n");
+		event_free(io_server);
+		close(evapi_srv_sock);
+		event_base_free(base);
+		return -1;
+	}
+	if(event_add(io_notify, NULL) < 0) {
+		LM_ERR("cannot start notify event watcher\n");
+		event_free(io_notify);
+		event_free(io_server);
+		close(evapi_srv_sock);
+		event_base_free(base);
+		return -1;
 	}
 
+	if(event_base_dispatch(base) < 0) {
+		LM_ERR("dispatcher event loop failed\n");
+		event_free(io_notify);
+		event_free(io_server);
+		close(evapi_srv_sock);
+		event_base_free(base);
+		return -1;
+	}
+
+	event_free(io_notify);
+	event_free(io_server);
+	close(evapi_srv_sock);
+	event_base_free(base);
 	return 0;
 }
 
