@@ -54,7 +54,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libev</emphasis> - <ulink url="http://software.schmorp.de/pkg/libev">http://software.schmorp.de/pkg/libev</ulink>
+				<emphasis>libevent</emphasis> - <ulink url="https://github.com/libevent/libevent">https://github.com/libevent/libevent</ulink>
 			</para>
 			</listitem>
 			</itemizedlist>
