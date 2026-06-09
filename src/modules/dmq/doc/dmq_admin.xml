@@ -469,6 +469,25 @@ end
 </programlisting>
 		</example>
 	</section>
+	<section id="dmq.p.sl_send">
+		<title><varname>sl_send</varname>(int)</title>
+		<para>
+			A non-zero value enables stateless message sending.
+			This can be really useful when using TCP as a transport for SIP between nodes.
+			Only messages with a custom reply callback (such as "notification_peer" messages) will be sent statefully.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote> (disabled).</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sl_send</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "sl_send", 1)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -686,6 +705,94 @@ end
                 </programlisting>
                 </example>
         </section>
+        <section id="dmq.f.dmq_process_custom">
+                <title>
+                <function moreinfo="none">dmq_process_custom(peer, node, body, content_type)</function>
+                </title>
+                <para>
+				Immediately process a custom DMQ message by passing it to the appropriate
+				local peer (module).
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>peer</emphasis> - name of the local peer (module) that should handle the message.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>node</emphasis> - SIP URI of sender node.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>body</emphasis> - the message body.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>content_type</emphasis> - the MIME type of the message body.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_process_custom</function> usage</title>
+                <programlisting format="linespecific">
+...
+    dmq_process_custom("peer_id", "sip:192.168.1.101:5060;transport=tcp", "Message body...", "text/plain");
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_handle_custom">
+                <title>
+                <function moreinfo="none">dmq_handle_custom(peer, node, body, content_type)</function>
+                </title>
+                <para>
+				Similar to dmq_process_custom, but the processing is happening
+				in a DMQ worker process.
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para>
+                                <emphasis>peer</emphasis> - name of the local peer (module) that should handle the message.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>node</emphasis> - SIP URI of sender node.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>body</emphasis> - the message body.
+                                </para>
+                        </listitem>
+                        <listitem>
+                                <para>
+                                <emphasis>content_type</emphasis> - the MIME type of the message body.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from any route.
+                </para>
+
+                <example>
+                <title><function>dmq_handle_custom</function> usage</title>
+                <programlisting format="linespecific">
+...
+    dmq_handle_custom("peer_id", "sip:192.168.1.101:5060;transport=tcp", "Message body...", "text/plain");
+...
+</programlisting>
+                </example>
+        </section>
 
 	</section>
 
@@ -774,6 +881,30 @@ event_route[dmq:peer-disabled] {
                 </programlisting>
                 </example>
         </section>
+        <section id="dmq.r.add">
+            <title>dmq.add</title>
+			<para>
+				Add a DMQ node.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+					<listitem>
+					<para>
+						<emphasis>address</emphasis> - the SIP address
+						of the DMQ node to add.
+					</para>
+					</listitem>
+			</itemizedlist>
+
+               <example>
+                <title>dmq.add usage</title>
+                <programlisting format="linespecific">
+...
+&kamctl; rpc dmq.add sip:1.2.3.4:5060
+...
+                </programlisting>
+                </example>
+        </section>
         <section id="dmq.r.remove">
             <title>dmq.remove</title>
 			<para>
@@ -794,6 +925,30 @@ event_route[dmq:peer-disabled] {
                 <programlisting format="linespecific">
 ...
 &kamctl; rpc dmq.remove sip:1.2.3.4:5060
+...
+                </programlisting>
+                </example>
+        </section>
+        <section id="dmq.r.change_status">
+            <title>dmq.change_status</title>
+			<para>
+				Change the status of a DMQ node.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+					<listitem>
+					<para>
+						<emphasis>address</emphasis> - the DMQ node address
+						<emphasis>status</emphasis> - active|not_active|disabled
+					</para>
+					</listitem>
+			</itemizedlist>
+
+               <example>
+                <title>dmq.change_status usage</title>
+                <programlisting format="linespecific">
+...
+&kamctl; rpc dmq.change_status sip:1.2.3.4:5060 active
 ...
                 </programlisting>
                 </example>

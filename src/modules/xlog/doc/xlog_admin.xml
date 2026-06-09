@@ -262,6 +262,28 @@ modparam("xlog", "methods_filter", 15)
 		</example>
 	</section>
 
+
+	<section id="xlog.p.auto_newline">
+		<title><varname>auto_newline</varname> (str)</title>
+        <para>
+            If set to 1, then all xlog logging functions will automatically append a newline character (<varname>\n</varname>). Any lines that already end in <varname>\n</varname> should not receive an additional newline.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no automatic newline).
+		</emphasis>
+		</para>
+		<example>
+		    <title>Set <varname>auto_newline</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("xlog", "auto_newline", 1)
+...
+            </programlisting>
+		</example>
+	</section>
+
+
 	</section>
 	<section>
 	<title>Functions</title>

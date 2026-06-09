@@ -102,6 +102,7 @@ typedef struct rms_dialog_info
 	str local_ip;
 	int local_port;
 	str local_uri;
+	str contact_user;
 	str local_tag;
 	str remote_uri;
 	str remote_tag;

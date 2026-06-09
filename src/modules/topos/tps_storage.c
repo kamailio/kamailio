@@ -94,9 +94,6 @@ static void append_host_info(tps_data_t *td, sip_uri_t *puri, sr_xavp_t *vavu,
 		int append_port_proto);
 static void add_uuid_param(tps_data_t *td, str *uuid, int dir);
 static sr_xavp_t *get_xavu_host(int dir);
-static int handle_ruri_user_mode(
-		sip_msg_t *msg, tps_data_t *td, int dir, int *cuser_len);
-static int handle_xavu_user_mode(tps_data_t *td, int dir, int *cuser_len);
 
 /**
  *
@@ -228,15 +225,42 @@ int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td)
 /**
  *
  */
+static size_t tps_contact_host_len(sip_uri_t *puri, sr_xavp_t *vavu)
+{
+	if((vavu == NULL || vavu->val.v.s.len <= 0) && _tps_xavu_cfg.len > 0
+			&& _tps_xavu_field_contact_host.len > 0) {
+		vavu = xavu_get_child_with_sval(
+				&_tps_xavu_cfg, &_tps_xavu_field_contact_host);
+	}
+
+	if(vavu != NULL && vavu->val.v.s.len > 0) {
+		return (size_t)vavu->val.v.s.len;
+	}
+	if(_tps_contact_host.len > 0) {
+		return (size_t)_tps_contact_host.len;
+	}
+	return (size_t)puri->host.len;
+}
+
+/**
+ *
+ */
 int tps_storage_fill_contact(
 		sip_msg_t *msg, tps_data_t *td, str *uuid, int dir, int ctmode)
 {
 	str sv;
+	str cuser = STR_NULL;
 	sip_uri_t puri;
-	int contact_len;
-	int cparam_len;
-	int cuser_len = 0;
+	sip_uri_t curi;
+	contact_body_t *cb;
+	size_t needed;
+	size_t host_len;
+	size_t scheme_len;
+	int append_port_proto;
+	int metid;
 	sr_xavp_t *vavu = NULL;
+	sr_xavp_t *uavu = NULL;
+	str *field;
 
 	if(dir == TPS_DIR_DOWNSTREAM) {
 		sv = td->bs_contact;
@@ -253,20 +277,116 @@ int tps_storage_fill_contact(
 		return -1;
 	}
 
-	contact_len = sv.len;
-	if(_tps_contact_host.len) {
-		contact_len = sv.len - puri.host.len + _tps_contact_host.len;
+	scheme_len = 0;
+	while(scheme_len < (size_t)sv.len) {
+		scheme_len++;
+		if(sv.s[scheme_len - 1] == ':') {
+			break;
+		}
 	}
+
+	append_port_proto = (ctmode == TPS_CONTACT_MODE_SKEYUSER
+								|| ctmode == TPS_CONTACT_MODE_RURIUSER
+								|| ctmode == TPS_CONTACT_MODE_XAVPUSER)
+								? 1
+								: 0;
+
+	if(ctmode == TPS_CONTACT_MODE_RURIUSER) {
+		if(dir == TPS_DIR_DOWNSTREAM) {
+			if(parse_headers(msg, HDR_CSEQ_F, 0) != 0 || msg->cseq == NULL
+					|| get_cseq(msg) == NULL) {
+				LM_ERR("bad sip message or missing CSeq header\n");
+				return -1;
+			}
+			metid = get_cseq(msg)->method_id;
+			if(parse_headers(msg, HDR_CONTACT_F, 0) < 0
+					|| msg->contact == NULL) {
+				if(metid != METHOD_BYE) {
+					LM_WARN("bad sip message or missing Contact header\n");
+					return -1;
+				}
+				LM_DBG("BYE with no contact - skipping it\n");
+				return 0;
+			}
+
+			if(parse_contact(msg->contact) < 0
+					|| ((contact_body_t *)msg->contact->parsed)->contacts
+							   == NULL
+					|| ((contact_body_t *)msg->contact->parsed)->contacts->next
+							   != NULL) {
+				LM_ERR("bad Contact header\n");
+				return -1;
+			}
+
+			cb = (contact_body_t *)msg->contact->parsed;
+			if(parse_uri(cb->contacts->uri.s, cb->contacts->uri.len, &curi)
+					< 0) {
+				LM_ERR("failed to parse the contact uri\n");
+				return -1;
+			}
+
+			if(curi.user.len > 0) {
+				cuser = curi.user;
+			}
+		} else {
+			if(parse_sip_msg_uri(msg) < 0) {
+				LM_ERR("failed to parse r-uri\n");
+				return -1;
+			}
+			if(msg->parsed_uri.user.len > 0) {
+				cuser = msg->parsed_uri.user;
+			}
+		}
+	} else if(ctmode == TPS_CONTACT_MODE_XAVPUSER) {
+		if(dir == TPS_DIR_DOWNSTREAM) {
+			field = &_tps_xavu_field_acontact;
+		} else {
+			field = &_tps_xavu_field_bcontact;
+		}
+		uavu = xavu_get_child_with_sval(&_tps_xavu_cfg, field);
+		if(uavu == NULL || uavu->val.v.s.len <= 0) {
+			LM_ERR("could not evaluate %s contact xavu\n",
+					(dir == TPS_DIR_DOWNSTREAM) ? "a" : "b");
+			return -1;
+		}
+		cuser = uavu->val.v.s;
+	} else if(ctmode == TPS_CONTACT_MODE_XAVPHOST) {
+		/* extract the contact host from xavp */
+		vavu = get_xavu_host(dir);
+	}
+
+	host_len = tps_contact_host_len(&puri, vavu);
+	needed = 0;
+	needed += 1 + (size_t)uuid->len; /* saved a/b uuid */
+	needed += 1 + scheme_len;		 /* '<' + scheme */
 
 	if(ctmode == TPS_CONTACT_MODE_RURIUSER
 			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
-		cparam_len = _tps_cparam_name.len;
+		needed += (size_t)cuser.len;
+		if(cuser.len > 0) {
+			needed += 1; /* '@' */
+		}
+		needed += host_len;
+		if(append_port_proto && puri.port.len > 0) {
+			needed += 1 + (size_t)puri.port.len;
+		}
+		if(append_port_proto && puri.transport_val.len > 0) {
+			needed += 11 + (size_t)puri.transport_val.len;
+		}
+		needed += 1 + (size_t)_tps_cparam_name.len + 1 + 1 + (size_t)uuid->len;
 	} else {
-		cparam_len = 0;
+		needed += 1 + (size_t)uuid->len + 1; /* a|b + uuid + '@' */
+		needed += host_len;
+		if(append_port_proto && puri.port.len > 0) {
+			needed += 1 + (size_t)puri.port.len;
+		}
+		if(append_port_proto && puri.transport_val.len > 0) {
+			needed += 11 + (size_t)puri.transport_val.len;
+		}
 	}
+	needed += 1; /* '>' */
 
-	if(td->cp + 8 + (2 * uuid->len) + cparam_len + contact_len
-			>= td->cbuf + TPS_DATA_SIZE) {
+	if(td->cp + needed > td->cbuf + TPS_DATA_SIZE) {
 		LM_ERR("insufficient data buffer\n");
 		return -1;
 	}
@@ -278,17 +398,12 @@ int tps_storage_fill_contact(
 	if(ctmode == TPS_CONTACT_MODE_RURIUSER
 			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
 		/* create new URI parameter for Contact header */
-		if(ctmode == TPS_CONTACT_MODE_RURIUSER) {
-			if(handle_ruri_user_mode(msg, td, dir, &cuser_len) < 0) {
-				return -1;
-			}
-		} else {
-			if(handle_xavu_user_mode(td, dir, &cuser_len) < 0) {
-				return -1;
-			}
+		if(cuser.len > 0) {
+			memcpy(td->cp, cuser.s, cuser.len);
+			td->cp += cuser.len;
 		}
 
-		if(cuser_len > 0) {
+		if(cuser.len > 0) {
 			*td->cp = '@';
 			td->cp++;
 		}
@@ -310,13 +425,6 @@ int tps_storage_fill_contact(
 		*td->cp = '@';
 		td->cp++;
 
-		/* contact_host xavu takes preference */
-		vavu = NULL;
-		if(ctmode == TPS_CONTACT_MODE_XAVPHOST) {
-			/* extract the contact host from xavp*/
-			vavu = get_xavu_host(dir);
-		}
-
 		/* ctmode=0 preserves port/transport from original URI; ctmode=3 does not */
 		append_host_info(
 				td, &puri, vavu, (ctmode == TPS_CONTACT_MODE_SKEYUSER) ? 1 : 0);
@@ -332,90 +440,6 @@ int tps_storage_fill_contact(
 		td->as_contact.len = td->cp - td->as_contact.s;
 		LM_DBG("td->as %.*s\n", td->as_contact.len, td->as_contact.s);
 	}
-	return 0;
-}
-
-/* Handle contact_mode=1 */
-static int handle_ruri_user_mode(
-		sip_msg_t *msg, tps_data_t *td, int dir, int *cuser_len)
-{
-	sip_uri_t curi;
-	contact_body_t *cb;
-
-	if(dir == TPS_DIR_DOWNSTREAM) {
-		/* extract the contact address */
-		if(parse_headers(msg, HDR_CONTACT_F, 0) < 0 || msg->contact == NULL) {
-			if(get_cseq(msg)->method_id != METHOD_BYE) {
-				LM_WARN("bad sip message or missing Contact header\n");
-				return -1;
-			}
-			LM_DBG("BYE with no contact - skipping it\n");
-			return 0;
-		}
-
-		if(msg->contact != NULL) {
-			if(parse_contact(msg->contact) < 0
-					|| ((contact_body_t *)msg->contact->parsed)->contacts
-							   == NULL
-					|| ((contact_body_t *)msg->contact->parsed)->contacts->next
-							   != NULL) {
-				LM_ERR("bad Contact header\n");
-				return -1;
-			}
-
-			cb = (contact_body_t *)msg->contact->parsed;
-			if(parse_uri(cb->contacts->uri.s, cb->contacts->uri.len, &curi)
-					< 0) {
-				LM_ERR("failed to parse the contact uri\n");
-				return -1;
-			}
-
-			if(curi.user.len > 0) {
-				memcpy(td->cp, curi.user.s, curi.user.len);
-				td->cp += curi.user.len;
-				*cuser_len = curi.user.len;
-			} else {
-				LM_DBG("no contact user - skipping it\n");
-			}
-		}
-	} else {
-		/* extract the ruri */
-		if(parse_sip_msg_uri(msg) < 0) {
-			LM_ERR("failed to parse r-uri\n");
-			return -1;
-		}
-		if(msg->parsed_uri.user.len > 0) {
-			memcpy(td->cp, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
-			td->cp += msg->parsed_uri.user.len;
-			*cuser_len = msg->parsed_uri.user.len;
-		} else {
-			LM_DBG("no r-uri user - skipping it\n");
-		}
-	}
-	return 0;
-}
-
-/* Handle contact_mode=2 */
-static int handle_xavu_user_mode(tps_data_t *td, int dir, int *cuser_len)
-{
-	sr_xavp_t *vavu;
-	str *field;
-
-	if(dir == TPS_DIR_DOWNSTREAM) {
-		field = &_tps_xavu_field_acontact;
-	} else {
-		field = &_tps_xavu_field_bcontact;
-	}
-	vavu = xavu_get_child_with_sval(&_tps_xavu_cfg, field);
-	if(vavu == NULL || vavu->val.v.s.len <= 0) {
-		LM_ERR("could not evaluate %s contact xavu\n",
-				(dir == TPS_DIR_DOWNSTREAM) ? "a" : "b");
-		return -1;
-	}
-
-	memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
-	td->cp += vavu->val.v.s.len;
-	*cuser_len = vavu->val.v.s.len;
 	return 0;
 }
 
@@ -677,14 +701,21 @@ error:
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 {
 	int ret = -1; /* error if dialog == 0 */
+	int metid;
 	str suid;
 	str *sx = NULL;
 
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		return -1;
 	}
+	if(parse_headers(msg, HDR_CSEQ_F, 0) != 0 || msg->cseq == NULL
+			|| get_cseq(msg) == NULL) {
+		LM_ERR("bad sip message or missing CSeq header\n");
+		return -1;
+	}
+	metid = get_cseq(msg)->method_id;
 
-	if(get_cseq(msg)->method_id == METHOD_ACK) {
+	if(metid == METHOD_ACK) {
 		if(parse_headers(msg, HDR_CONTACT_F, 0) < 0 || msg->contact == NULL) {
 			/* ACK with no Contact - nothing to store */
 			return 0;

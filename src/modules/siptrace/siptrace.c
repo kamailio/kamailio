@@ -2271,7 +2271,6 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 	}
 	siptrace_event_data = NULL;
 
-	ksr_msg_env_reset();
 	free_sip_msg(&msg);
 	ksr_msg_env_pop(&menv);
 	if(ctx.run_flags & DROP_R_F) {

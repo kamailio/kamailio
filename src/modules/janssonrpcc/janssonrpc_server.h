@@ -40,13 +40,13 @@
 
 typedef struct jsonrpc_server
 {
-	str conn, addr, srv; /* shared mem */
+	str conn, addr, srv, md5_password; /* shared mem */
 	int port;
 	unsigned int status, ttl, hwm;
 	unsigned int req_count;
 	unsigned int priority, weight;
 	bool added;
-	int keep_alive_socket_fd;
+	int socket_fd;
 	struct bufferevent *bev; /* local mem */
 	netstring_t *buffer;
 } jsonrpc_server_t;

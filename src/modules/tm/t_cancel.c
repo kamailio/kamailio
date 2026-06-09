@@ -216,7 +216,7 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 	int ret;
 	struct cancel_info tmp_cd;
 	void *pcbuf;
-	int reply_status;
+	int reply_status = 0;
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t msg;
@@ -255,10 +255,13 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 				reply_status =
 						relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1);
 				if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
+					LM_DBG("skip sending cancel - reply status: %d\n",
+							reply_status);
 					return -1;
 				}
 			}
 			/* do nothing, hope that the caller will clean up */
+			LM_DBG("skip sending cancel - flags: F_CANCEL_B_KILL\n");
 			return ret;
 		}
 	} else {
@@ -277,11 +280,19 @@ int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,
 					reply_status = relay_reply(
 							t, FAKED_REPLY, branch, 487, &tmp_cd, 1);
 					if(reply_status == RPS_ERROR || reply_status == RPS_TGONE) {
+						LM_DBG("skip sending cancel - reply status: %d\n",
+								reply_status);
 						return -1;
 					}
+					LM_DBG("skip sending cancel - flags: "
+						   "F_CANCEL_B_FAKE_REPLY (reply status: %d)\n",
+							reply_status);
 					return 0; /* should be inactive after the 487 */
 				}
 				/* do nothing, just wait for the final timeout */
+				LM_DBG("skip sending cancel - wait for the final timeout"
+					   " (last received: %d reply status: %d)\n",
+						t->uac[branch].last_received, reply_status);
 				return 1;
 			}
 		}
@@ -433,8 +444,9 @@ void rpc_cancel(rpc_t *rpc, void *c)
 	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	/* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");
-	i = cancel_uacs(trans, &cancel_data, F_CANCEL_LOCAL); /* don't fake 487s,
-										 just wait for timeout */
+	/* F_CANCEL_LOCAL: don't fake 487s, just wait for timeout */
+	i = cancel_uacs(trans, &cancel_data,
+			F_CANCEL_LOCAL | cfg_get(tm, tm_cfg, cancel_b_flags));
 
 	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
 	UNREF(trans);

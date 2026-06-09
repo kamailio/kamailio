@@ -1,0 +1,3 @@
+kamailio-tls-modules binary: possible-gpl-code-linked-with-openssl
+# error only on stretch
+kamailio-tls-modules binary: embedded-library

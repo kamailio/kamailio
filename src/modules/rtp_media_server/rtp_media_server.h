@@ -28,6 +28,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/parser/sdp/sdp_helpr_funcs.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/clist.h"

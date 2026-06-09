@@ -25,16 +25,17 @@
 	be made concurrently by an endpoint, account, user group, etc.  In order
 	to count the number of calls in progress, it is necessary for the proxy
 	to be aware of whole dialogs, not just transactions, and to provide some
-	means of programmatically classifying these dialogs.  This is just one
+	means of programmatically classifying these dialogs. This is just one
 	common application discussed for illustrative purposes; there are many others.
 	</para>
 	<para>
 	The dialog module provides dialog awareness for the &kamailio; proxy. Its
 	functionality is to keep track of the current dialogs, to offer information
 	about them (e.g. how many dialogs are active), and to manage various
-	characteristics of dialogs. The module exports several functions that can be
-	used directly from the configuration route script as well as functions for
-	the RPC interface.
+	characteristics of dialogs. It can also store variables in dialog context,
+	allowing to track CSeq updates. The module exports several functions that
+	can be used directly from the configuration route script as well as functions
+	for the RPC interface.
 	</para>
 	<para>
 	This module also provides an API foundation on which to build

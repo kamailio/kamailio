@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Target dist: Ubuntu Resolute
+DIST=resolute
+
+rm -rf ${DIST}
+cp -r debian ${DIST}
+
+# missing dependency at libphonenumber-dev
+sed -i -e '/^ libphonenumber-dev/a\ libicu-dev,' ${DIST}/control
+
+# missing dependency for tlsa
+sed -i -e '/^ libssl-dev/a\ libjitterentropy3-dev,' ${DIST}/control
+
+# no python2
+sed -i -e '/^ python,/d' -e '/python-dev/d' \
+  -e '/^Package: kamailio-python-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += python$/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += python' ${DIST}/rules
+
+# no lsb-base
+sed -i -e '/lsb-base/d' ${DIST}/control
+
+# libncurses
+sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
+
+# remove alien tags
+while read -r f ; do
+  sed -i -e '/library-not-linked-against-libc/d' "${f}"
+done < <(find ${DIST} -type f -name '*.lintian-overrides')
+wrap-and-sort -sat -d ${DIST}
+
+# clean backports scripts
+rm -rf ${DIST}/backports
+exit 0

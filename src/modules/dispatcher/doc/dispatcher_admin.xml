@@ -1270,6 +1270,37 @@ modparam("dispatcher", "ds_interval_mode", 1800)
 		</example>
 	</section>
 
+	<section id="dispatcher.p.ds_dns_match_all">
+		<title><varname>ds_dns_match_all</varname> (int)</title>
+		<para>
+			When set to 1, enables matching against all IP addresses resolved
+			from a DNS lookup for dispatcher destinations. By default, only the
+			first resolved address from the DNS response is used when comparing
+			against the source IP address in functions like ds_is_from_list().
+			If a destination hostname resolves to multiple A/AAAA records (e.g.,
+			round-robin DNS or multi-homed hosts), enabling this parameter
+			ensures that a request from any of those addresses is correctly
+			recognized as coming from a dispatcher destination.
+		</para>
+		<para>
+			When enabled, up to 32 resolved addresses per destination are
+			stored and checked during matching.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_dns_match_all</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_dns_match_all", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_dns_ttl">
 		<title><varname>ds_dns_ttl</varname> (int)</title>
 		<para>
@@ -2633,12 +2664,13 @@ kamcli dispatcher.oclist 1
 								of the corresponding algorithm parameter for ds_select_dst().</para>
 						</listitem>
 						<listitem>
-							<para>'socket' - used to set the sending socket for the gateway. It is
-								used for sending the SIP traffic as well as OPTIONS
-								keepalives.</para>
+							<para>'socket' - used to set the sending socket for the gateway, overwriting
+								ds_default_socket parameter. It is used for sending the SIP traffic
+								as well as OPTIONS pings/keepalives (if no specific ds_ping_socket
+								parameter or per record ping_socket is set).</para>
 						</listitem>
 						<listitem>
-							<para>'ping_socket' - used to set the sending socket for ping requests.
+							<para>'ping_socket' - used to set specific sending socket for ping requests.
 								It overwrites the general ds_ping_socket parameter.</para>
 						</listitem>
 						<listitem>

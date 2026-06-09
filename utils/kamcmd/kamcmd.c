@@ -38,7 +38,7 @@
 #include <sys/un.h>		/* unix sock*/
 #include <netinet/in.h> /* udp sock */
 #include <sys/uio.h>	/* writev */
-#include <netdb.h>		/* gethostbyname */
+#include <netdb.h>		/* getaddrinfo */
 #include <fcntl.h>
 #include <time.h> /* time */
 #include <sys/time.h>
@@ -515,33 +515,51 @@ error:
 
 int connect_tcpudp_socket(char *address, int port, int type)
 {
-	struct sockaddr_in addr;
-	struct hostent *he;
+	struct addrinfo hints;
+	struct addrinfo *res;
+	struct addrinfo *ai;
+	char service[16];
 	int sock;
+	int ret;
 
 	sock = -1;
-	/* resolve destination */
-	he = gethostbyname(address);
-	if(he == 0) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = type;
+
+	ret = snprintf(service, sizeof(service), "%d", port);
+	if(ret < 0 || ret >= (int)sizeof(service)) {
+		fprintf(stderr, "ERROR: invalid port value %d\n", port);
+		goto error;
+	}
+
+	res = NULL;
+	ret = getaddrinfo(address, service, &hints, &res);
+	if(ret != 0 || res == NULL) {
 		fprintf(stderr, "ERROR: could not resolve %s\n", address);
 		goto error;
 	}
-	/* open socket*/
-	addr.sin_family = he->h_addrtype;
-	addr.sin_port = htons(port);
-	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
 
-	sock = socket(he->h_addrtype, type, 0);
-	if(sock == -1) {
-		fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
-		goto error;
+	for(ai = res; ai != NULL; ai = ai->ai_next) {
+		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if(sock == -1) {
+			continue;
+		}
+		if(connect(sock, ai->ai_addr, ai->ai_addrlen) == 0) {
+			freeaddrinfo(res);
+			return sock;
+		}
+		close(sock);
+		sock = -1;
 	}
-	if(connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)) != 0) {
-		fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
-		goto error;
-	}
-	return sock;
+
+	fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
+	freeaddrinfo(res);
+	return -1;
+
 error:
+	if(res != NULL)
+		freeaddrinfo(res);
 	if(sock != -1)
 		close(sock);
 	return -1;

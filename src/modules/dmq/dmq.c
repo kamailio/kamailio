@@ -78,6 +78,7 @@ int dmq_fail_count_threshold_not_active = 0;
 int dmq_fail_count_threshold_disabled = 1;
 int dmq_init_with_single = 0;
 str dmq_event_callback = STR_NULL;
+int dmq_sl_send = 0;
 
 /* TM bind */
 struct tm_binds _dmq_tmb = {0};
@@ -121,6 +122,10 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, 0, REQUEST_ROUTE},
 	{"dmq_is_from_node", (cmd_function)cfg_dmq_is_from_node, 0,
 		0, 0, REQUEST_ROUTE},
+	{"dmq_process_custom", (cmd_function)dmq_process_custom, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"dmq_handle_custom", (cmd_function)dmq_handle_custom, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
 	{"bind_dmq", (cmd_function)bind_dmq, 0,
 		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -141,6 +146,7 @@ static param_export_t params[] = {
 	{"fail_count_threshold_disabled", PARAM_INT, &dmq_fail_count_threshold_disabled},
 	{"init_with_single", PARAM_INT, &dmq_init_with_single},
 	{"event_callback", PARAM_STR, &dmq_event_callback},
+	{"sl_send", PARAM_INT, &dmq_sl_send},
 	{0, 0, 0}
 };
 
@@ -473,9 +479,72 @@ void rpc_dmq_remove(rpc_t *rpc, void *ctx)
 static const char *rpc_dmq_remove_doc[3] = {
 		"Remove a DMQ node", "address - the DMQ node address", 0};
 
+void rpc_dmq_add(rpc_t *rpc, void *ctx)
+{
+	str taddr = STR_NULL;
+
+	if(rpc->scan(ctx, ".S", &taddr) < 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(find_dmq_node_uri(dmq_node_list, &taddr)) {
+		rpc->fault(ctx, 500, "Node is already added");
+		return;
+	}
+	if(add_dmq_node(dmq_node_list, &taddr, 0) == NULL) {
+		rpc->fault(ctx, 500, "Failure");
+		return;
+	}
+	rpc->rpl_printf(ctx, "Ok. DMQ node added.");
+}
+
+static const char *rpc_dmq_add_doc[3] = {
+		"Add a DMQ node", "address - the DMQ node address", 0};
+
+void rpc_dmq_change_status(rpc_t *rpc, void *ctx)
+{
+	str taddr = STR_NULL;
+	str tstatus = STR_NULL;
+	int status;
+	dmq_node_t *node;
+
+	if(rpc->scan(ctx, ".SS", &taddr, &tstatus) < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(!(status = dmq_get_status_int(&tstatus))) {
+		rpc->fault(
+				ctx, 500, "Invalid Status - use: active, not_active, disabled");
+		return;
+	}
+	lock_get(&dmq_node_list->lock);
+	node = find_dmq_node_uri(dmq_node_list, &taddr);
+	if(node == NULL) {
+		rpc->fault(ctx, 500, "Node Not Found");
+	} else if(node->local) {
+		rpc->fault(ctx, 500, "Node is local");
+	} else if(node->status == status) {
+		rpc->rpl_printf(ctx, "Ok. DMQ node status is already %.*s.",
+				tstatus.len, tstatus.s);
+	} else {
+		node->status = status;
+		rpc->rpl_printf(ctx, "Ok. DMQ node status changed.");
+	}
+	lock_release(&dmq_node_list->lock);
+}
+
+static const char *rpc_dmq_change_status_doc[3] = {
+		"Change the status of a DMQ node",
+		"address - the DMQ node address, status - active|not_active|disabled",
+		0};
+
 static rpc_export_t rpc_methods[] = {{"dmq.list_nodes", dmq_rpc_list_nodes,
 											 dmq_rpc_list_nodes_doc, RET_ARRAY},
-		{"dmq.remove", rpc_dmq_remove, rpc_dmq_remove_doc, 0}, {0, 0, 0, 0}};
+		{"dmq.add", rpc_dmq_add, rpc_dmq_add_doc, 0},
+		{"dmq.remove", rpc_dmq_remove, rpc_dmq_remove_doc, 0},
+		{"dmq.change_status", rpc_dmq_change_status, rpc_dmq_change_status_doc,
+				0},
+		{0, 0, 0, 0}};
 
 /**
  *
@@ -526,6 +595,16 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 		SR_KEMIP_INT, ki_dmq_bcast_message,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("process_custom_message"),
+		SR_KEMIP_INT, ki_dmq_process_custom,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("handle_custom_message"),
+		SR_KEMIP_INT, ki_dmq_handle_custom,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

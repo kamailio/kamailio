@@ -318,12 +318,13 @@ static inline uint32_t rad_status(struct sip_msg *req, int code)
 	return rd_vals[RV_STATUS_FAILED].v;
 }
 
-#define ADD_RAD_AVPAIR(_attr, _val, _len)                                 \
-	do {                                                                  \
-		if(!rc_avpair_add(rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
-			LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n, _attr);   \
-			goto error;                                                   \
-		}                                                                 \
+#define ADD_RAD_AVPAIR(_attr, _val, _len)                               \
+	do {                                                                \
+		if(!rc_avpair_add(rh, &send, rd_attrs[_attr].v, _val, _len,     \
+				   rd_attrs[_attr].vendor)) {                           \
+			LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n, _attr); \
+			goto error;                                                 \
+		}                                                               \
 	} while(0)
 
 int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
