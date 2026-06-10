@@ -462,7 +462,7 @@ int connect_unix_sock(char *name, int type)
 				goto error;
 			}
 		} else {
-			if(strlen(reply_socket) > UNIX_PATH_MAX) {
+			if(strlen(reply_socket) >= UNIX_PATH_MAX) {
 				fprintf(stderr,
 						"ERROR: buffer overflow while trying to"
 						"use the provided unix datagram socket name (%s)",
