@@ -625,7 +625,7 @@ static int ki_hdr_date_check(sip_msg_t *msg, int tdiff)
 				TIME_T_CAST(tnow - tmsg + tdiff));
 		return -4;
 	} else {
-		LM_ERR("Date header value OK\n");
+		LM_DBG("Date header value OK\n");
 	}
 
 	return 1;
