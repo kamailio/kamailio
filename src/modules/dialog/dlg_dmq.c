@@ -40,6 +40,7 @@ int dlg_dmq_request_sync(dmq_node_t *dmq_node);
 
 extern int dlg_enable_stats;
 extern str dlg_dmq_peer_id;
+extern int dlg_enable_dmq_ka_iflags_sync;
 
 /**
 * @brief add notification peer
@@ -116,6 +117,7 @@ int dlg_dmq_handle_msg(
 	unsigned int init_ts = 0, start_ts = 0, lifetime = 0;
 	unsigned int state = 1;
 	unsigned int lm = 0;
+	unsigned int iflags = 0;
 	srjson_t *vj;
 	int newdlg = 0;
 	dlg_entry_t *d_entry = NULL;
@@ -175,6 +177,8 @@ int dlg_dmq_handle_msg(
 			state = SRJSON_GET_UINT(it);
 		} else if(strcmp(it->string, "lifetime") == 0) {
 			lifetime = SRJSON_GET_UINT(it);
+		} else if(strcmp(it->string, "iflags") == 0) {
+			iflags = SRJSON_GET_UINT(it);
 		} else if(strcmp(it->string, "callid") == 0) {
 			callid.s = it->valuestring;
 			callid.len = strlen(callid.s);
@@ -295,6 +299,11 @@ int dlg_dmq_handle_msg(
 			dlg->init_ts = init_ts;
 			dlg->start_ts = start_ts;
 
+			if(dlg_enable_dmq_ka_iflags_sync != 0 && iflags > 0) {
+				/* sync only keep-alive flags from owner */
+				dlg->iflags |= (iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_DST));
+			}
+
 			vj = srjson_GetObjectItem(&jdoc, jdoc.root, "vars");
 			if(vj != NULL) {
 				for(it = vj->child; it; it = it->next) {
@@ -362,6 +371,11 @@ int dlg_dmq_handle_msg(
 					} else if(ret == 0) {
 						/* dialog pointer inserted in timer list */
 						dlg_ref(dlg, 1);
+					}
+					/* register keep-alive on the replicated CONFIRMED dialog */
+					if(dlg_enable_dmq_ka_iflags_sync != 0
+							&& dlg->state != DLG_STATE_CONFIRMED) {
+						dlg_ka_add(dlg);
 					}
 					break;
 				case DLG_STATE_DELETED:
@@ -573,6 +587,11 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 			dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
 			dlg->dflags &= ~DLG_FLAG_CHANGED_PROF;
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts", dlg->init_ts);
+			if(dlg_enable_dmq_ka_iflags_sync != 0) {
+				/* send iflags from owner */
+				srjson_AddNumberToObject(
+						&jdoc, jdoc.root, "iflags", dlg->iflags);
+			}
 			srjson_AddStrToObject(
 					&jdoc, jdoc.root, "callid", dlg->callid.s, dlg->callid.len);
 

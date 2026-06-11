@@ -118,6 +118,7 @@ int dlg_end_timeout = 300;
 
 int dlg_enable_dmq = 0;
 str dlg_dmq_peer_id = str_init("dialog");
+int dlg_enable_dmq_ka_iflags_sync = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 str dlg_event_callback = STR_NULL;
@@ -380,6 +381,7 @@ static param_export_t mod_params[]={
 	{ "db_skip_load",          PARAM_INT, &db_skip_load             },
 	{ "ka_failed_limit",       PARAM_INT, &dlg_ka_failed_limit      },
 	{ "enable_dmq",            PARAM_INT, &dlg_enable_dmq           },
+	{ "enable_dmq_ka_iflags_sync",    PARAM_INT, &dlg_enable_dmq_ka_iflags_sync   },
 	{ "event_callback",        PARAM_STR, &dlg_event_callback       },
 	{ "early_timeout",         PARAM_INT, &dlg_early_timeout        },
 	{ "noack_timeout",         PARAM_INT, &dlg_noack_timeout        },
