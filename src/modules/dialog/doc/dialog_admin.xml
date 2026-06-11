@@ -1464,6 +1464,28 @@ modparam("dialog", "enable_dmq", 1)
 	</example>
     </section>
 
+	<section id="dialog.p.enable_dmq_ka_iflags_sync">
+		<title><varname>enable_dmq_ka_iflags_sync</varname> (int)</title>
+		<para>
+			If set to 1, the keepalive internal flags, set with
+			dlg_set_property("ka-src"/"ka-dst"), are carried in the dmq
+			dialog replication and applied on the receiving nodes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_dmq_ka_iflags_sync</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "enable_dmq_ka_iflags_sync", 1)
+...
+</programlisting>
+	</example>
+    </section>
+
 	<section id="dialog.p.track_cseq_updates">
 		<title><varname>track_cseq_updates</varname> (int)</title>
 		<para>
