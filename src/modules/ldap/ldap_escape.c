@@ -59,6 +59,11 @@ int ldap_rfc4515_escape(str *sin, str *sout, int url_encode)
 
 	while(src < (sin->s + sin->len)) {
 		switch(*src) {
+			case '\0':
+				*dst++ = '\\';
+				*dst++ = '0';
+				*dst = '0';
+				break;
 			case '*':
 				*dst++ = '\\';
 				*dst++ = '2';
