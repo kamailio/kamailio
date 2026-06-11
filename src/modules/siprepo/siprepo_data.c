@@ -285,12 +285,13 @@ int siprepo_msg_rm(str *callid, str *msgid)
 /**
  *
  */
-int siprepo_msg_check(sip_msg_t *msg)
+int siprepo_msg_check(sip_msg_t *msg, unsigned int mode)
 {
 	unsigned int hid;
 	unsigned int slotid;
 	str scallid;
 	siprepo_msg_t *it = NULL;
+	int ret = 0;
 
 	if(_siprepo_table == NULL) {
 		LM_ERR("hash table not initialized\n");
@@ -327,13 +328,24 @@ int siprepo_msg_check(sip_msg_t *msg)
 	for(it=_siprepo_table[slotid].plist; it!=NULL; it=it->next) {
 		if(hid==it->hid && scallid.len==it->callid.len
 				&& memcmp(scallid.s, it->callid.s, scallid.len)==0) {
-			lock_release(&_siprepo_table[slotid].lock);
-			return 1;
+			if(mode & SIPREPO_CHECK_VIA) {
+				if(msg->via1->branch==NULL || it->vbranch.len==0) {
+					ret = 1;
+				} else if (msg->via1->branch->value.len==it->vbranch.len
+								&& memcmp(msg->via1->branch->value.s,
+										it->vbranch.s, it->vbranch.len)==0) {
+					lock_release(&_siprepo_table[slotid].lock);
+					return 2;
+				}
+			} else {
+				lock_release(&_siprepo_table[slotid].lock);
+				return 1;
+			}
 		}
 	}
 	lock_release(&_siprepo_table[slotid].lock);
 
-	return 0;
+	return ret;
 }
 
 /**

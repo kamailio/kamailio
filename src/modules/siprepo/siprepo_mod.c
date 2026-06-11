@@ -55,6 +55,7 @@ static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
 		char *pgname, char *prname, char *prmode);
 static int w_sr_msg_rm(sip_msg_t *msg, char *pcallid, char *pmsgid);
 static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2);
+static int w_sr_msg_match(sip_msg_t *msg, char *pmode, char *p2);
 
 static void siprepo_timer_exec(unsigned int ticks, int worker, void *param);
 
@@ -73,6 +74,8 @@ static cmd_export_t cmds[]={
 		fixup_free_spve_spve, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
 	{"sr_msg_check", (cmd_function)w_sr_msg_check, 0, 0,
 		0, ANY_ROUTE},
+	{"sr_msg_match", (cmd_function)w_sr_msg_match, 1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -338,7 +341,7 @@ static int ki_sr_msg_check(sip_msg_t *msg)
 {
 	int ret;
 
-	ret = siprepo_msg_check(msg);
+	ret = siprepo_msg_check(msg, 0);
 
 	if(ret <= 0) {
 		return (ret - 1);
@@ -352,6 +355,36 @@ static int ki_sr_msg_check(sip_msg_t *msg)
 static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2)
 {
 	return ki_sr_msg_check(msg);
+}
+
+/**
+ *
+ */
+static int ki_sr_msg_match(sip_msg_t *msg, int mode)
+{
+	int ret;
+
+	ret = siprepo_msg_check(msg, (unsigned int)mode);
+
+	if(ret <= 0) {
+		return (ret - 1);
+	}
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_sr_msg_match(sip_msg_t *msg, char *pmode, char *p2)
+{
+	int vmode = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pmode, &vmode) != 0) {
+		LM_ERR("cannot get mode value\n");
+		return -1;
+	}
+
+	return ki_sr_msg_match(msg, vmode);
 }
 
 static void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
@@ -387,6 +420,11 @@ static sr_kemi_t sr_kemi_sworker_exports[] = {
 	{ str_init("siprepo"), str_init("sr_msg_check"),
 		SR_KEMIP_INT, ki_sr_msg_check,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siprepo"), str_init("sr_msg_match"),
+		SR_KEMIP_INT, ki_sr_msg_match,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
