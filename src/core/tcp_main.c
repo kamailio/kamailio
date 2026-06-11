@@ -214,8 +214,9 @@ static int tcp_sockets_gworkers = 0;
 
 static ticks_t tcpconn_main_timeout(ticks_t, struct timer_ln *, void *);
 
-inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
-		struct ip_addr *l_ip, int l_port, int flags);
+inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c,
+		struct ip_addr *peer_ip, int port, struct ip_addr *l_ip, int l_port,
+		int flags);
 
 
 /**
@@ -1027,6 +1028,9 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 	src_ip = &c->rcv.src_ip;
 	dst_ip = &c->rcv.dst_ip;
 
+	c->haproxy_rcv = c->rcv;
+	c->haproxy_rcv.proto = PROTO_TCP;
+
 	if(bytes >= 16 && memcmp(&hdr.v2, v2sig, 12) == 0
 			&& (hdr.v2.ver_cmd & 0xF0) == 0x20) {
 		LM_DBG("received PROXY protocol v2 header\n");
@@ -1220,7 +1224,8 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 		int state)
 {
 	struct tcp_connection *c;
-	int rd_b_size, ret;
+	int rd_b_size;
+	int ret = -1;
 
 	rd_b_size = cfg_get(tcp, tcp_cfg, rd_buf_size);
 	c = shm_malloc(sizeof(struct tcp_connection) + rd_b_size);
@@ -1270,7 +1275,7 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	init_tcp_req(&c->req, (char *)c + sizeof(struct tcp_connection), rd_b_size);
 	c->id = (*connection_id)++;
 	c->rcv.proto_reserved1 = 0; /* this will be filled before receive_message*/
-	c->rcv.proto_reserved2 = 0;
+	c->rcv.proto_reserved2 = !ret ? 1 : 0; /* haproxy msg marker */
 	c->state = state;
 	c->initstate = state;
 	c->extra_data = 0;
@@ -1585,8 +1590,8 @@ int tcpconn_finish_connect(struct tcp_connection *c, union sockaddr_union *from)
 		/* add aliases */
 		TCPCONN_LOCK;
 		_tcpconn_add_alias_unsafe(
-				c, c->rcv.src_port, &c->rcv.dst_ip, 0, new_conn_alias_flags);
-		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
+				c, 0, c->rcv.src_port, &c->rcv.dst_ip, 0, new_conn_alias_flags);
+		_tcpconn_add_alias_unsafe(c, 0, c->rcv.src_port, &c->rcv.dst_ip,
 				c->rcv.dst_port, new_conn_alias_flags);
 		TCPCONN_UNLOCK;
 	} else if(su_cmp(from, &local_addr) != 1) {
@@ -1604,8 +1609,8 @@ int tcpconn_finish_connect(struct tcp_connection *c, union sockaddr_union *from)
 		}
 		/* add the local_ip:0 and local_ip:local_port aliases */
 		_tcpconn_add_alias_unsafe(
-				c, c->rcv.src_port, &c->rcv.dst_ip, 0, new_conn_alias_flags);
-		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
+				c, 0, c->rcv.src_port, &c->rcv.dst_ip, 0, new_conn_alias_flags);
+		_tcpconn_add_alias_unsafe(c, 0, c->rcv.src_port, &c->rcv.dst_ip,
 				c->rcv.dst_port, new_conn_alias_flags);
 		TCPCONN_UNLOCK;
 	}
@@ -1644,19 +1649,35 @@ inline static struct tcp_connection *tcpconn_add(struct tcp_connection *c)
 		 *   -- for finding if a fully specified connection exists using address
 		 *      and port stored into cinfo*/
 		_tcpconn_add_alias_unsafe(
-				c, c->rcv.src_port, &zero_ip, 0, new_conn_alias_flags);
+				c, 0, c->rcv.src_port, &zero_ip, 0, new_conn_alias_flags);
 		if(likely(c->rcv.dst_ip.af && !ip_addr_any(&c->rcv.dst_ip))) {
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip, 0,
+			_tcpconn_add_alias_unsafe(c, 0, c->rcv.src_port, &c->rcv.dst_ip, 0,
 					new_conn_alias_flags);
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
+			_tcpconn_add_alias_unsafe(c, 0, c->rcv.src_port, &c->rcv.dst_ip,
 					c->rcv.dst_port, new_conn_alias_flags);
 		}
 		if(unlikely(c->cinfo.dst_ip.af && !ip_addr_any(&c->cinfo.dst_ip)
 					&& !ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))) {
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, 0,
-					new_conn_alias_flags);
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip,
-					c->cinfo.dst_port, new_conn_alias_flags);
+			_tcpconn_add_alias_unsafe(c, 0, c->haproxy_rcv.src_port,
+					&c->cinfo.dst_ip, 0, new_conn_alias_flags);
+			_tcpconn_add_alias_unsafe(c, 0, c->haproxy_rcv.src_port,
+					&c->cinfo.dst_ip, c->cinfo.dst_port, new_conn_alias_flags);
+		}
+		/* aliases keyed on haproxy_rcv peer (pre-PROXY tunnel) address */
+		if(unlikely(c->rcv.proto_reserved2
+					&& (!ip_addr_cmp(&c->rcv.src_ip, &c->haproxy_rcv.src_ip)
+							|| c->rcv.src_port != c->haproxy_rcv.src_port))) {
+			_tcpconn_add_alias_unsafe(c, &c->haproxy_rcv.src_ip,
+					c->haproxy_rcv.src_port, &zero_ip, 0, new_conn_alias_flags);
+			if(likely(c->haproxy_rcv.dst_ip.af
+					   && !ip_addr_any(&c->haproxy_rcv.dst_ip))) {
+				_tcpconn_add_alias_unsafe(c, &c->haproxy_rcv.src_ip,
+						c->haproxy_rcv.src_port, &c->haproxy_rcv.dst_ip, 0,
+						new_conn_alias_flags);
+				_tcpconn_add_alias_unsafe(c, &c->haproxy_rcv.src_ip,
+						c->haproxy_rcv.src_port, &c->haproxy_rcv.dst_ip,
+						c->haproxy_rcv.dst_port, new_conn_alias_flags);
+			}
 		}
 
 		/* ignore add_alias errors, there are some valid cases when one
@@ -1728,6 +1749,90 @@ void tcpconn_rm(struct tcp_connection *c)
 }
 
 
+static int tcpconn_peer_ip_match(struct ip_addr *ip, struct tcp_connection *p)
+{
+	if(ip_addr_cmp(ip, &p->rcv.src_ip))
+		return 1;
+	if(ip_addr_cmp(ip, &p->cinfo.src_ip))
+		return 1;
+	if(likely(!p->rcv.proto_reserved2))
+		return 0;
+	if(ip_addr_cmp(ip, &p->haproxy_rcv.src_ip))
+		return 1;
+	return 0;
+}
+
+static int tcpconn_peer_port_match(
+		int port, struct tcp_connection *p, struct tcp_conn_alias *a)
+{
+	if(port == a->port)
+		return 1;
+	if(port == p->rcv.src_port)
+		return 1;
+	if(p->rcv.proto_reserved2 && port == p->haproxy_rcv.src_port)
+		return 1;
+	return 0;
+}
+
+static int tcpconn_local_ip_match(
+		struct ip_addr *l_ip, int is_local_ip_any, struct tcp_connection *p)
+{
+	if(is_local_ip_any)
+		return 1;
+	if(ip_addr_cmp(l_ip, &p->rcv.dst_ip))
+		return 1;
+	if(ip_addr_cmp(l_ip, &p->cinfo.dst_ip))
+		return 1;
+	if(p->rcv.bind_address && ip_addr_cmp(l_ip, &p->rcv.bind_address->address))
+		return 1;
+	if(p->rcv.proto_reserved2 && ip_addr_cmp(l_ip, &p->haproxy_rcv.dst_ip))
+		return 1;
+	return 0;
+}
+
+static int tcpconn_local_port_match(int l_port, struct tcp_connection *p)
+{
+	if(l_port == 0)
+		return 1;
+	if(l_port == p->rcv.dst_port)
+		return 1;
+	if(l_port == p->cinfo.dst_port)
+		return 1;
+	if(p->rcv.proto_reserved2 && l_port == p->haproxy_rcv.dst_port)
+		return 1;
+	return 0;
+}
+
+/* scan id-hash when alias lookup misses (HAProxy peer / client port mismatch) */
+static struct tcp_connection *_tcpconn_find_haproxy_rcv(struct ip_addr *ip,
+		int port, struct ip_addr *l_ip, int l_port, sip_protos_t proto)
+{
+	struct tcp_connection *c;
+	int h;
+	int is_local_ip_any;
+
+	is_local_ip_any = ip_addr_any(l_ip);
+	for(h = 0; h < TCP_ID_HASH_SIZE; h++) {
+		for(c = tcpconn_id_hash[h]; c; c = c->id_next) {
+			if(c->state == S_CONN_BAD || !c->rcv.proto_reserved2)
+				continue;
+			if(!tcpconn_peer_ip_match(ip, c))
+				continue;
+			if(port != c->rcv.src_port && port != c->haproxy_rcv.src_port)
+				continue;
+			if(!tcpconn_local_ip_match(l_ip, is_local_ip_any, c))
+				continue;
+			if(!tcpconn_local_port_match(l_port, c))
+				continue;
+			if(proto != PROTO_NONE && c->rcv.proto != proto)
+				continue;
+			LM_DBG("found connection by haproxy_rcv address (id: %d)\n", c->id);
+			return c;
+		}
+	}
+	return 0;
+}
+
 /* finds a connection, if id=0 uses the ip addr, port, local_ip and local port
  *  (host byte order) and tries to find the connection that matches all of
  *   them. Wild cards can be used for local_ip, local_port and proto (a 0 filled
@@ -1760,7 +1865,8 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 				return c;
 			}
 		}
-	} else if(likely(ip)) {
+	}
+	if(likely(ip)) {
 		hash = tcp_addr_hash(ip, port, l_ip, l_port);
 		is_local_ip_any = ip_addr_any(l_ip);
 		for(a = tcpconn_aliases_hash[hash]; a; a = a->next) {
@@ -1769,13 +1875,11 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 					a->parent, a->parent->id, a->port, a->parent->rcv.src_port);
 			print_ip("ip=", &a->parent->rcv.src_ip, "\n");
 #endif
-			if((a->parent->state != S_CONN_BAD) && (port == a->port)
-					&& ((l_port == 0) || (l_port == a->parent->rcv.dst_port)
-							|| (l_port == a->parent->cinfo.dst_port))
-					&& (ip_addr_cmp(ip, &a->parent->rcv.src_ip))
-					&& (is_local_ip_any
-							|| ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip)
-							|| ip_addr_cmp(l_ip, &a->parent->cinfo.dst_ip))
+			if((a->parent->state != S_CONN_BAD)
+					&& tcpconn_peer_port_match(port, a->parent, a)
+					&& tcpconn_local_port_match(l_port, a->parent)
+					&& tcpconn_peer_ip_match(ip, a->parent)
+					&& tcpconn_local_ip_match(l_ip, is_local_ip_any, a->parent)
 					&& (proto == PROTO_NONE || a->parent->rcv.proto == proto)) {
 				LM_DBG("found connection by peer address (id: %d)\n",
 						a->parent->id);
@@ -1788,6 +1892,7 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 				return a->parent;
 			}
 		}
+		return _tcpconn_find_haproxy_rcv(ip, port, l_ip, l_port, proto);
 	}
 	return 0;
 }
@@ -2049,13 +2154,15 @@ void tcpconn_log_candidates(int id, struct ip_addr *ip, int port,
  * returns 0 on success, <0 on failure ( -1  - null c, -2 too many aliases,
  *  -3 alias already present and pointing to another connection)
  * WARNING: must be called with TCPCONN_LOCK held */
-inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
-		struct ip_addr *l_ip, int l_port, int flags)
+inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c,
+		struct ip_addr *peer_ip, int port, struct ip_addr *l_ip, int l_port,
+		int flags)
 {
 	unsigned hash;
 	struct tcp_conn_alias *a;
 	struct tcp_conn_alias *nxt;
 	struct tcp_connection *p;
+	struct ip_addr *peer;
 	int is_local_ip_any;
 	int i;
 	int r;
@@ -2063,13 +2170,18 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
 	a = 0;
 	is_local_ip_any = ip_addr_any(l_ip);
 	if(likely(c)) {
-		hash = tcp_addr_hash(&c->rcv.src_ip, port, l_ip, l_port);
+		peer = peer_ip ? peer_ip : &c->rcv.src_ip;
+		hash = tcp_addr_hash(peer, port, l_ip, l_port);
+
 		/* search the aliases for an already existing one */
 		for(a = tcpconn_aliases_hash[hash], nxt = 0; a; a = nxt) {
 			nxt = a->next;
 			if((a->parent->state != S_CONN_BAD) && (port == a->port)
 					&& ((l_port == 0) || (l_port == a->parent->rcv.dst_port))
-					&& (ip_addr_cmp(&c->rcv.src_ip, &a->parent->rcv.src_ip))
+					&& (ip_addr_cmp(peer, &a->parent->rcv.src_ip)
+							|| (peer_ip && peer_ip != &c->rcv.src_ip
+									&& ip_addr_cmp(peer,
+											&a->parent->haproxy_rcv.src_ip)))
 					&& (is_local_ip_any
 							|| ip_addr_cmp(&a->parent->rcv.dst_ip, l_ip))) {
 				/* found */
@@ -2177,17 +2289,17 @@ int tcpconn_add_alias(int id, int port, int proto)
 		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
 		alias_flags = cfg_get(tcp, tcp_cfg, alias_flags);
 		/* alias src_ip:port, 0, 0 */
-		ret = _tcpconn_add_alias_unsafe(c, port, &zero_ip, 0, alias_flags);
+		ret = _tcpconn_add_alias_unsafe(c, 0, port, &zero_ip, 0, alias_flags);
 		if(ret < 0 && ret != -3)
 			goto error;
 		/* alias src_ip:port, local_ip, 0 */
 		ret = _tcpconn_add_alias_unsafe(
-				c, port, &c->rcv.dst_ip, 0, alias_flags);
+				c, 0, port, &c->rcv.dst_ip, 0, alias_flags);
 		if(ret < 0 && ret != -3)
 			goto error;
 		/* alias src_ip:port, local_ip, local_port */
 		ret = _tcpconn_add_alias_unsafe(
-				c, port, &c->rcv.dst_ip, c->rcv.dst_port, alias_flags);
+				c, 0, port, &c->rcv.dst_ip, c->rcv.dst_port, alias_flags);
 		if(unlikely(ret < 0))
 			goto error;
 	} else
@@ -2330,6 +2442,16 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		} else {
 			c = tcpconn_get(dst->id, &ip, port, from, con_lifetime);
 		}
+		/* force_socket local address may not match PROXY dst_ip on HAProxy conns */
+		if(unlikely(c == 0 && from != 0)) {
+			if(tcp_connection_match == TCPCONN_MATCH_STRICT
+					|| (dst->send_flags.f & SND_F_FORCE_PROTO)) {
+				c = tcpconn_lookup(dst->id, &ip, port, 0, try_local_port,
+						con_lifetime, dst->proto);
+			} else {
+				c = tcpconn_get(dst->id, &ip, port, 0, con_lifetime);
+			}
+		}
 	} else if(likely(dst->id)) {
 		c = tcpconn_get(dst->id, 0, 0, 0, con_lifetime);
 	} else {
@@ -2347,6 +2469,15 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 							con_lifetime, dst->proto);
 				} else {
 					c = tcpconn_get(0, &ip, port, from, con_lifetime);
+				}
+				if(unlikely(c == 0 && from != 0)) {
+					if(tcp_connection_match == TCPCONN_MATCH_STRICT
+							|| (dst->send_flags.f & SND_F_FORCE_PROTO)) {
+						c = tcpconn_lookup(0, &ip, port, 0, try_local_port,
+								con_lifetime, dst->proto);
+					} else {
+						c = tcpconn_get(0, &ip, port, 0, con_lifetime);
+					}
 				}
 			} else {
 				LM_ERR("id %d not found, dropping\n", dst->id);

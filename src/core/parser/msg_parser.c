@@ -804,6 +804,10 @@ void free_sip_msg(struct sip_msg *const msg)
 	reset_new_uri(msg);
 	reset_dst_uri(msg);
 	reset_path_vector(msg);
+	if(msg->haproxy_rcv) {
+		pkg_free(msg->haproxy_rcv);
+		msg->haproxy_rcv = NULL;
+	}
 	reset_instance(msg);
 	reset_ruid(msg);
 	reset_ua(msg);
