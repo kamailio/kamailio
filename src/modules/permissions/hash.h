@@ -86,18 +86,6 @@ void get_tag_avp(int_str *tag_avp_p, int *tag_avp_type_p);
 
 
 /*
- * Create and initialize a hash table
- */
-struct trusted_list **new_hash_table(void);
-
-
-/*
- * Release all memory allocated for a hash table
- */
-void free_hash_table(struct trusted_list **table);
-
-
-/*
  * Add <src_ip, proto, pattern, ruri_pattern, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
@@ -118,11 +106,6 @@ int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *m
  * Print entries stored in hash table
  */
 int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c);
-
-/*
- * Empty hash table
- */
-void empty_hash_table(struct trusted_list **hash_table);
 
 
 /*
