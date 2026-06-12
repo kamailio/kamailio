@@ -231,7 +231,9 @@ void bye_reply_cb(struct cell *t, int type, struct tmcb_params *ps)
 		/* derefering the dialog */
 		dlg_unref(dlg, unref + 1);
 
-		if_update_stat(dlg_enable_stats, active_dlgs, -1);
+		if(old_state == DLG_STATE_CONFIRMED_NA
+				|| old_state == DLG_STATE_CONFIRMED)
+			if_update_stat(dlg_enable_stats, active_dlgs, -1);
 	}
 
 	if(new_state == DLG_STATE_DELETED && old_state == DLG_STATE_DELETED) {

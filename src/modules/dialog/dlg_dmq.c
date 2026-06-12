@@ -399,12 +399,21 @@ int dlg_dmq_handle_msg(
 					dlg_unref(dlg, unref);
 					goto error;
 			}
-			if(newdlg == 1) {
-				if(state == DLG_STATE_CONFIRMED_NA
-						|| state == DLG_STATE_CONFIRMED) {
-					if_update_stat(dlg_enable_stats, active_dlgs, 1);
-				} else if(dlg->state == DLG_STATE_EARLY) {
+			/* update node-local stats for the dlg dmq synced state transition */
+			if(dlg->state != state) {
+				if(dlg->state == DLG_STATE_EARLY) {
+					if_update_stat(dlg_enable_stats, early_dlgs, -1);
+				}
+				if(state == DLG_STATE_EARLY) {
 					if_update_stat(dlg_enable_stats, early_dlgs, 1);
+				} else if((state == DLG_STATE_CONFIRMED_NA
+								  || state == DLG_STATE_CONFIRMED)
+						  && dlg->state < DLG_STATE_CONFIRMED_NA) {
+					if_update_stat(dlg_enable_stats, active_dlgs, 1);
+				} else if(state == DLG_STATE_DELETED
+						  && (dlg->state == DLG_STATE_CONFIRMED_NA
+								  || dlg->state == DLG_STATE_CONFIRMED)) {
+					if_update_stat(dlg_enable_stats, active_dlgs, -1);
 				}
 			}
 			dlg->state = state;
@@ -429,8 +438,9 @@ int dlg_dmq_handle_msg(
 							dlg, dlg->h_entry, dlg->h_id);
 				}
 			}
-			if(state == DLG_STATE_CONFIRMED_NA
-					|| state == DLG_STATE_CONFIRMED) {
+			/* update node-local stats for the dlg dmq synced removal */
+			if(dlg->state == DLG_STATE_CONFIRMED_NA
+					|| dlg->state == DLG_STATE_CONFIRMED) {
 				if_update_stat(dlg_enable_stats, active_dlgs, -1);
 			} else if(dlg->state == DLG_STATE_EARLY) {
 				if_update_stat(dlg_enable_stats, early_dlgs, -1);
