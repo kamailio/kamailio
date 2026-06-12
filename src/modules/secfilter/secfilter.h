@@ -30,6 +30,12 @@
 #define WL_CUSER 23
 #define BL_DST 24
 #define BL_SQL 25
+#define SECF_FIELD_DOMAIN 3
+#define SECF_FIELD_NAME 1
+#define SECF_FIELD_USER 2
+#define SECF_CONTACT_HEADER 3
+#define SECF_FROM_HEADER 1
+#define SECF_TO_HEADER 2
 
 typedef struct _secf_info
 {
@@ -65,6 +71,8 @@ int secf_get_ua(struct sip_msg *msg, str *ua);
 int secf_get_from(struct sip_msg *msg, str *name, str *user, str *domain);
 int secf_get_to(struct sip_msg *msg, str *name, str *user, str *domain);
 int secf_get_contact(struct sip_msg *msg, str *user, str *domain);
+int secf_get_contact_with_name(
+		struct sip_msg *msg, str *name, str *user, str *domain);
 
 /* Database functions */
 int secf_init_db(void);
