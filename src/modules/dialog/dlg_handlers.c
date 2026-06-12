@@ -1462,6 +1462,16 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 	if(new_state == DLG_STATE_CONFIRMED && old_state != DLG_STATE_CONFIRMED)
 		dlg_ka_add(dlg);
 
+	/* for dmq replicated dlg: count CONFIRMED due to REQACK bump */
+	if(new_state == DLG_STATE_CONFIRMED && old_state < DLG_STATE_CONFIRMED_NA
+			&& (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
+			&& !(dlg->dflags & DLG_FLAG_TM)) {
+		if(old_state == DLG_STATE_EARLY) {
+			if_update_stat(dlg_enable_stats, early_dlgs, -1);
+		}
+		if_update_stat(dlg_enable_stats, active_dlgs, 1);
+	}
+
 	/* run actions for the transition */
 	if(event == DLG_EVENT_REQBYE && new_state == DLG_STATE_DELETED
 			&& old_state != DLG_STATE_DELETED) {
@@ -1495,7 +1505,9 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 		_dlg_ctx.expect_t = 1;
 		dlg_set_ctx_iuid(dlg);
 
-		if_update_stat(dlg_enable_stats, active_dlgs, -1);
+		if(old_state == DLG_STATE_CONFIRMED_NA
+				|| old_state == DLG_STATE_CONFIRMED)
+			if_update_stat(dlg_enable_stats, active_dlgs, -1);
 		goto done;
 	}
 
@@ -1707,7 +1719,9 @@ void dlg_ontimeout(struct dlg_tl *tl)
 
 		unref++;
 		if_update_stat(dlg_enable_stats, expired_dlgs, 1);
-		if_update_stat(dlg_enable_stats, active_dlgs, -1);
+		if(old_state == DLG_STATE_CONFIRMED_NA
+				|| old_state == DLG_STATE_CONFIRMED)
+			if_update_stat(dlg_enable_stats, active_dlgs, -1);
 	} else {
 		unref = 1;
 	}
