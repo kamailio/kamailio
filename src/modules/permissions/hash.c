@@ -51,6 +51,46 @@ extern int _perm_subnet_match_mode;
 
 #define PERM_MAX_SUBNETS _perm_max_subnets
 
+/**
+ * Helpers for duplicates detection.
+ */
+static int trusted_cstr_eq(const char *a, const char *b)
+{
+	if(!a || !b)
+		return a == b;
+
+	return strcmp(a, b) == 0;
+}
+static int trusted_str_eq(const str *a, const str *b)
+{
+	if(!a || !b)
+		return a == b;
+
+	if(a->len != b->len)
+		return 0;
+
+	if(a->len == 0)
+		return 1;
+
+	if(!a->s || !b->s)
+		return a->s == b->s;
+
+	return strncmp(a->s, b->s, a->len) == 0;
+}
+static int trusted_entry_is_same(const struct trusted_list *a,
+		const struct trusted_list *b)
+{
+	if(!a || !b)
+		return 0;
+
+	return STR_EQ(a->src_ip, b->src_ip)
+		   && a->proto == b->proto
+		   && trusted_cstr_eq(a->pattern, b->pattern)
+		   && trusted_cstr_eq(a->ruri_pattern, b->ruri_pattern)
+		   && trusted_str_eq(&a->tag, &b->tag)
+		   && a->priority == b->priority;
+}
+
 /*
  * Parse and set tag AVP specs
  */
@@ -582,25 +622,15 @@ int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char 
 
 	while(cur_entry)
 	{
-		/* check always if already added before */
-		if(STR_EQ(cur_entry->src_ip, new_entry->src_ip) && /* compare source ip */
-			/* compare From patern (both equal or both null) */
-			((!cur_entry->pattern && !new_entry->pattern) ||
-			(cur_entry->pattern && new_entry->pattern &&
-			strcmp(cur_entry->pattern, new_entry->pattern) == 0)) &&
-			/* compare ruri patern (both equal or both null) */
-			((!cur_entry->ruri_pattern && !new_entry->ruri_pattern) ||
-			(cur_entry->ruri_pattern && new_entry->ruri_pattern &&
-			strcmp(cur_entry->ruri_pattern, new_entry->ruri_pattern) == 0)) &&
-			/* compare protocol */
-			cur_entry->proto == new_entry->proto)
-		{
+		/* Suppress only exact duplicate DB rows. Rows with different
+		 * tags or priorities are semantically distinct and must stay.
+		 */
+		if(trusted_entry_is_same(cur_entry, new_entry)) {
 			lock_release(hash_table->row_locks[hash_index]);
 			trusted_table_free_entry(new_entry);
-			LM_NOTICE("source IP = '%.*s', was already added before, ingore new entry.\n",
+			LM_NOTICE("source IP = '%.*s', duplicate trusted entry ignored\n",
 					cur_entry->src_ip.len, cur_entry->src_ip.s);
 			return 0;
-			/* TODO: we should actually return -1, but the caller is quite strict! */
 		}
 
 		/* stop by the first entry with a lower priority */
