@@ -553,8 +553,13 @@ static int read_line(char **b, int *read, struct readline_handle *rh)
 		/* end, nothing more to read */
 		return -1;
 	}
-	for(eol = rh->crt; (eol < rh->end) && (*eol != '\n'); eol++)
+	for(eol = rh->crt; (eol < rh->end) && (*eol != '\n') && (*eol != '\r');
+			eol++)
 		;
+	if(eol >= rh->end) {
+		/* request buffer ended without a line delimiter */
+		return -1;
+	}
 	*eol = 0;
 	trim = eol;
 	/* trim spaces at the end */
