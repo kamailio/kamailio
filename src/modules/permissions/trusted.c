@@ -781,7 +781,17 @@ int allow_trusted(struct sip_msg *msg, char *src_ip, int proto, char *from_uri)
 		perm_dbf.free_result(perm_db_handle, res);
 		return result;
 	} else {
-		return match_hash_table(*current_trusted_table, msg, src_ip, proto, from_uri);
+		/* take a local snapshot of the current table pointer before matching */
+		struct trusted_hash_table *trusted_table = NULL;
+
+		if(!current_trusted_table || !*current_trusted_table) {
+			LM_ERR("trusted table not initialized\n");
+			return -1;
+		}
+
+		trusted_table = *current_trusted_table;
+
+		return match_hash_table(trusted_table, msg, src_ip, proto, from_uri);
 	}
 }
 
