@@ -48,6 +48,67 @@ struct trusted_hash_table **current_trusted_table = NULL; /* pointer to the curr
 struct trusted_hash_table * trusted_table_1 = NULL; /* hash table 1 */
 struct trusted_hash_table * trusted_table_2 = NULL; /* hash table 2 */
 
+/**
+ * Serializes trusted table maintenance operations:
+ * - explicit RPC reloads
+ * - timer cleanup of the inactive table
+ *
+ * It must not be used in the normal lookup path (SIP traffic),
+ * e.g. for `allow_trusted()` / `match_hash_table()`
+ */
+static gen_lock_t *trusted_table_reload_lock = NULL;
+
+
+/**
+ * Locks design.
+ *
+ * Reload path:
+ * 1. take global maintenance lock;
+ * 2. use per-bucket locks internally through reinit/insert;
+ * 3. swap current table (global pointer);
+ * 4. release global maintenance lock;
+ *
+ * Timer handling:
+ * 1. take global maintenance lock;
+ * 2. clean inactive table through per-bucket locks;
+ * 3. release global maintenance lock;
+ *
+ * `allow_trusted()`/`match_hash_table()`:
+ * 1. no global lock;
+ * 2. only per-bucket lock for the matched bucket;
+ *
+ * `hash_table_rpc_print()`:
+ * 1. no global lock;
+ * 2. per-bucket locks while dumping;
+ */
+
+static int trusted_table_reload_lock_init(void)
+{
+	trusted_table_reload_lock = lock_alloc();
+	if(!trusted_table_reload_lock) {
+		LM_ERR("failed to allocate trusted table reload lock\n");
+		return -1;
+	}
+
+	if(!lock_init(trusted_table_reload_lock)) {
+		LM_ERR("failed to initialize trusted table reload lock\n");
+		lock_dealloc(trusted_table_reload_lock);
+		trusted_table_reload_lock = NULL;
+		return -1;
+	}
+
+	return 0;
+}
+static void trusted_table_reload_lock_destroy(void)
+{
+	if(!trusted_table_reload_lock)
+		return;
+
+	lock_destroy(trusted_table_reload_lock);
+	lock_dealloc(trusted_table_reload_lock);
+	trusted_table_reload_lock = NULL;
+}
+
 /*
  * Reload trusted table to new hash table and when done, make new hash table
  * current one.
@@ -62,15 +123,27 @@ int reload_trusted_table(void)
 	struct trusted_hash_table * new_trusted_table = NULL;
 	int i;
 	int priority;
-	int ret;
+	int ret = -1;
 
 	char *pattern, *ruri_pattern, *tag;
 #define TAG_BUF_SIZE 32
 	char tag_buf[TAG_BUF_SIZE];
 
+	if(!trusted_table_reload_lock) {
+		LM_ERR("trusted table reload lock not initialized\n");
+		return -1;
+	}
+
+	lock_get(trusted_table_reload_lock);
+
 	if(current_trusted_table == NULL) {
 		LM_ERR("in-memory hash table not initialized\n");
-		return -1;
+		goto done;
+	}
+
+	if(*current_trusted_table == NULL) {
+		LM_ERR("current trusted table not selected\n");
+		goto done;
 	}
 
 	if(perm_db_handle == 0) {
@@ -87,17 +160,17 @@ int reload_trusted_table(void)
 
 	if(perm_dbf.use_table(perm_db_handle, &perm_trusted_table) < 0) {
 		LM_ERR("failed to use trusted table\n");
-		return -1;
+		goto done;
 	}
 
 	if(perm_dbf.query(perm_db_handle, NULL, 0, NULL, cols, 0, 6, 0, &res) < 0) {
 		LM_ERR("failed to query database\n");
-		return -1;
+		goto done;
 	}
 
 	if(!trusted_table_1 || !trusted_table_2) {
 		LM_ERR("NULL pointer to one of the tables, critical error\n");
-		return -1;
+		goto done;
 	}
 
 	/* Choose new hash table and clean its old contents */
@@ -111,7 +184,7 @@ int reload_trusted_table(void)
 	 * then re-initialize buckets
 	 * for further usage with the new data */
 	if (trusted_table_reinit(new_trusted_table, PERM_HASH_SIZE)) {
-		return -1;
+		goto done;
 	}
 
 	row = RES_ROWS(res);
@@ -265,13 +338,11 @@ int reload_trusted_table(void)
 					(char *)VAL_STRING(val + 1), pattern, ruri_pattern, tag,
 					priority))
 		{
-			/* anything apart 0 means it has failed */
-
 			LM_WARN("could not insert a new entry\n");
-			perm_dbf.free_result(perm_db_handle, res);
-			/* is it so critical that we have to clean the whole table? */
-			trusted_table_free_buckets(new_trusted_table, true, false);
-			return -1;
+
+			/* drop the partially populated inactive table */
+			trusted_table_free_buckets(new_trusted_table, false, true);
+			goto done;
 		}
 		LM_DBG("tuple <%s, %s, %s, %s, %s> inserted into trusted hash "
 			   "table\n",
@@ -279,19 +350,24 @@ int reload_trusted_table(void)
 				tag);
 	}
 
-	perm_dbf.free_result(perm_db_handle, res);
-
 	*current_trusted_table = new_trusted_table;
 
 	LM_DBG("trusted table reloaded successfully.\n");
 
-	return 1;
+	ret = 1;
+	goto done;
 
 dberror:
 	LM_ERR("database problem - invalid record\n");
-	perm_dbf.free_result(perm_db_handle, res);
-	trusted_table_free_buckets(new_trusted_table, true, false);
-	return -1;
+	if(new_trusted_table)
+		trusted_table_free_buckets(new_trusted_table, false, true);
+
+done:
+	if(res)
+		perm_dbf.free_result(perm_db_handle, res);
+
+	lock_release(trusted_table_reload_lock);
+	return ret;
 }
 
 void perm_ht_timer(unsigned int ticks, void *);
@@ -336,6 +412,12 @@ int init_trusted(void)
 			perm_dbf.close(perm_db_handle);
 			perm_db_handle = 0;
 			return -1;
+		}
+
+		/* initialize the reload lock */
+		if(trusted_table_reload_lock_init()) {
+			LM_ERR("failed to initialize trusted table reload lock\n");
+			goto error;
 		}
 
 		/* allocate both tables */
@@ -395,6 +477,9 @@ error:
 		shm_free(current_trusted_table);
 		current_trusted_table = NULL;
 	}
+
+	trusted_table_reload_lock_destroy();
+
 	perm_dbf.close(perm_db_handle);
 	perm_db_handle = 0;
 	return -1;
@@ -443,8 +528,18 @@ void perm_ht_timer(unsigned int ticks, void *param)
 			&& *perm_rpc_reload_time > time(NULL) - perm_trusted_table_interval)
 		return;
 
-	if(!trusted_table_1 || !trusted_table_2 || !*current_trusted_table) {
+	if(!trusted_table_reload_lock) {
+		LM_ERR("trusted table reload lock not initialized\n");
+		return;
+	}
+
+	lock_get(trusted_table_reload_lock);
+
+	if(!trusted_table_1 || !trusted_table_2 || !current_trusted_table
+			|| !*current_trusted_table)
+	{
 		LM_ERR("NULL pointer to one of the tables, critical error\n");
+		lock_release(trusted_table_reload_lock);
 		return;
 	}
 
@@ -454,6 +549,8 @@ void perm_ht_timer(unsigned int ticks, void *param)
 	} else {
 		trusted_table_free_buckets(trusted_table_1, false, true);
 	}
+
+	lock_release(trusted_table_reload_lock);
 }
 
 /*
@@ -473,6 +570,7 @@ void clean_trusted(void)
 		shm_free(current_trusted_table);
 		current_trusted_table = NULL;
 	}
+	trusted_table_reload_lock_destroy();
 }
 
 

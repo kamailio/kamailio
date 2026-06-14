@@ -185,8 +185,11 @@ void trusted_table_free_entries(struct trusted_list *given_entry)
  * Destroy hash table content,
  * keep_dummy_head=true: frees dummy->next chain, then resets the dummy itself;
  * keep_dummy_head=false: frees the entire chain, including the dummy;
+ *
  * Locks can be left intact,
  * e.g. in case this is just a table re-initialization.
+ *
+ * For a reload failure, keep the table reusable, so `keep_dummy_head=true`.
  */
 void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool free_locks,
 		bool keep_dummy_head)
