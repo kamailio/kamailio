@@ -144,6 +144,7 @@ typedef struct dlg_cell
 	unsigned int ka_src_counter; /*!< keepalive src (caller) counter */
 	unsigned int ka_dst_counter; /*!< keepalive dst (callee) counter */
 	unsigned int last_modified;	 /*!< LWW timestamp for DMQ sync */
+	str dmq_node_uri;			 /*!< URI of DMQ node that synced this dialog */
 } dlg_cell_t;
 
 

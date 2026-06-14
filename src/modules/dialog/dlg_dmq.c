@@ -267,6 +267,19 @@ int dlg_dmq_handle_msg(
 				/* prevent DB sync */
 				dlg->dflags &= ~(DLG_FLAG_NEW | DLG_FLAG_CHANGED);
 				dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
+				if(node && node->orig_uri.s && node->orig_uri.len > 0) {
+					dlg->dmq_node_uri.s =
+							(char *)shm_malloc(node->orig_uri.len + 1);
+					if(dlg->dmq_node_uri.s) {
+						memcpy(dlg->dmq_node_uri.s, node->orig_uri.s,
+								node->orig_uri.len);
+						dlg->dmq_node_uri.s[node->orig_uri.len] = '\0';
+						dlg->dmq_node_uri.len = node->orig_uri.len;
+					} else {
+						LM_ERR("no shm memory for dmq_node_uri\n");
+						dlg->dmq_node_uri.len = 0;
+					}
+				}
 				if(lm > 0) {
 					dlg->last_modified = lm;
 				}
@@ -702,4 +715,73 @@ int dmq_send_all_dlgs(dmq_node_t *dmq_node)
 	}
 
 	return 0;
+}
+
+
+int ki_dlg_remove_dialogs_from_node(sip_msg_t *msg, str *node_uri)
+{
+	unsigned int i;
+	dlg_cell_t *dlg;
+	dlg_cell_t *tdlg;
+	int ret;
+	int count = 0;
+
+	if(node_uri == NULL || node_uri->s == NULL || node_uri->len <= 0) {
+		LM_ERR("invalid node_uri parameter\n");
+		return -1;
+	}
+
+	if(d_table == NULL) {
+		LM_ERR("dialog table not initialized\n");
+		return -1;
+	}
+
+	LM_DBG("removing DMQ-synced dialogs from node [%.*s]\n", node_uri->len,
+			node_uri->s);
+
+	for(i = 0; i < d_table->size; i++) {
+		dlg_lock(d_table, &d_table->entries[i]);
+		dlg = d_table->entries[i].first;
+		while(dlg) {
+			tdlg = dlg;
+			dlg = dlg->next;
+			if(!(tdlg->iflags & DLG_IFLAG_DMQ_SYNC)) {
+				continue;
+			}
+			if(tdlg->dmq_node_uri.len != node_uri->len
+					|| strncmp(tdlg->dmq_node_uri.s, node_uri->s, node_uri->len)
+							   != 0) {
+				continue;
+			}
+			LM_DBG("removing dlg [%u:%u] callid [%.*s] state [%u] "
+				   "from node [%.*s]\n",
+					tdlg->h_entry, tdlg->h_id, tdlg->callid.len, tdlg->callid.s,
+					tdlg->state, node_uri->len, node_uri->s);
+			if(tdlg->state == DLG_STATE_CONFIRMED
+					|| tdlg->state == DLG_STATE_EARLY) {
+				ret = remove_dialog_timer(&tdlg->tl);
+				if(ret < 0) {
+					LM_CRIT("unable to unlink timer on dlg %p [%u:%u]\n", tdlg,
+							tdlg->h_entry, tdlg->h_id);
+				}
+			}
+			if(tdlg->state == DLG_STATE_CONFIRMED
+					|| tdlg->state == DLG_STATE_CONFIRMED_NA) {
+				if_update_stat(dlg_enable_stats, active_dlgs, -1);
+			} else if(tdlg->state == DLG_STATE_EARLY) {
+				if_update_stat(dlg_enable_stats, early_dlgs, -1);
+			}
+			/* prevent DB sync and DMQ re-broadcast */
+			tdlg->dflags |= DLG_FLAG_NEW;
+			tdlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
+			unlink_unsafe_dlg(&d_table->entries[i], tdlg);
+			destroy_dlg(tdlg);
+			count++;
+		}
+		dlg_unlock(d_table, &d_table->entries[i]);
+	}
+
+	LM_INFO("removed %d DMQ-synced dialogs from node [%.*s]\n", count,
+			node_uri->len, node_uri->s);
+	return count > 0 ? 1 : -1;
 }
