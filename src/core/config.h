@@ -61,7 +61,7 @@
 
 #define MAX_URI_SIZE 1024 /*!< Max URI size used when rewriting URIs */
 
-#define MAX_PATH_SIZE 256 /*!< Maximum length of path header buffer */
+#define MAX_PATH_SIZE 512 /*!< Maximum length of path header buffer */
 
 #define MAX_INSTANCE_SIZE \
 	256 /*!< Maximum length of +sip.instance contact header param value buffer */
