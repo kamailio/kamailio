@@ -70,9 +70,30 @@ int ki_add_path_received_user(sip_msg_t *_msg, str *_user);
 int ki_add_path_received_user_params(sip_msg_t *_msg, str *_user, str *_params);
 
 /*
- * Validate and enable the advertised_address module parameter.
+ * Prepend own uri to Path header using the given advertised address as the
+ * host part instead of the outgoing socket address.
  */
-int path_advertised_address_init(str *addr);
+int add_path_advertised_address(
+		struct sip_msg *_msg, char *_addr, char *_usr, char *_parms);
+
+int ki_add_path_advertised_address(sip_msg_t *_msg, str *_addr);
+int ki_add_path_advertised_address_user(
+		sip_msg_t *_msg, str *_addr, str *_user);
+int ki_add_path_advertised_address_user_params(
+		sip_msg_t *_msg, str *_addr, str *_user, str *_params);
+
+/*
+ * Prepend own uri to Path header using the given advertised address as the
+ * host part and append the received address as "received"-param.
+ */
+int add_path_received_advertised_address(
+		struct sip_msg *_msg, char *_addr, char *_usr, char *_parms);
+
+int ki_add_path_received_advertised_address(sip_msg_t *_msg, str *_addr);
+int ki_add_path_received_advertised_address_user(
+		sip_msg_t *_msg, str *_addr, str *_user);
+int ki_add_path_received_advertised_address_user_params(
+		sip_msg_t *_msg, str *_addr, str *_user, str *_params);
 
 /*
  * rr callback for setting dst-uri
