@@ -64,6 +64,8 @@ int tps_htable_clean_branches(void);
 int tps_htable_load_branch(
 		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_htable_load_dialog_by_tags(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_htable_update_branch(
 		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_htable_update_dialog(
