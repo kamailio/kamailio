@@ -246,10 +246,11 @@ if(XSLTPROC_EXECUTABLE
 )
   add_custom_target(dbschema_xhttp_pi)
   add_dependencies(dbschema_xhttp_pi dbschema_pi_framework_table dbschema_pi_framework_mod)
+  add_dependencies(dbschema_pi_framework_mod dbschema_pi_framework_table)
 
   add_custom_target(dbschema_xhttp_pi_clean)
   add_dependencies(
-    dbschema_xhttp_pi dbschema_pi_framework_table_clean dbschema_pi_framework_mod_clean
+    dbschema_xhttp_pi_clean dbschema_pi_framework_table_clean dbschema_pi_framework_mod_clean
   )
 
   add_dependencies(dbschema dbschema_pi_framework_table dbschema_pi_framework_mod)
