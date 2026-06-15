@@ -1157,7 +1157,7 @@ static int rpc_rpl_printf(struct binrpc_ctx *ctx, char *fmt, ...)
 	va_start(ap, fmt);
 	len = vsnprintf(buf, RPC_PRINTF_BUF_SIZE, fmt, ap);
 	va_end(ap);
-	if((len < 0) || (len > RPC_PRINTF_BUF_SIZE)) {
+	if((len < 0) || (len >= RPC_PRINTF_BUF_SIZE)) {
 		LOG(L_ERR, "ERROR: binrpc: rpc_rpl_printf: buffer size exceeded(%d)\n",
 				RPC_PRINTF_BUF_SIZE);
 		goto error;
@@ -1415,7 +1415,7 @@ static int rpc_struct_printf(struct rpc_struct_l *s, char *name, char *fmt, ...)
 	va_start(ap, fmt);
 	len = vsnprintf(buf, RPC_PRINTF_BUF_SIZE, fmt, ap);
 	va_end(ap);
-	if((len < 0) || (len > RPC_PRINTF_BUF_SIZE)) {
+	if((len < 0) || (len >= RPC_PRINTF_BUF_SIZE)) {
 		LOG(L_ERR,
 				"ERROR: binrpc: rpc_struct_printf:"
 				" buffer size exceeded(%d)\n",
