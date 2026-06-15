@@ -69,8 +69,6 @@ int path_received_format = 0;
 int path_enable_r2 = 0;
 int path_sockname_mode = 0;
 str path_received_name = str_init("received");
-str path_advertised_address = STR_NULL;
-int path_advertised_address_ok = 0;
 
 /*! \brief
  * Module initialization function prototype
@@ -104,6 +102,21 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"add_path_received", (cmd_function)add_path_received_usr, 2,
 		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE},
+	{"add_path_advertised_address", (cmd_function)add_path_advertised_address, 1,
+		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
+	{"add_path_advertised_address", (cmd_function)add_path_advertised_address, 2,
+		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
+	{"add_path_advertised_address", (cmd_function)add_path_advertised_address, 3,
+		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
+	{"add_path_received_advertised_address",
+		(cmd_function)add_path_received_advertised_address, 1,
+		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
+	{"add_path_received_advertised_address",
+		(cmd_function)add_path_received_advertised_address, 2,
+		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
+	{"add_path_received_advertised_address",
+		(cmd_function)add_path_received_advertised_address, 3,
+		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -116,7 +129,6 @@ static param_export_t params[] = {
 	{"enable_r2", PARAM_INT, &path_enable_r2},
 	{"sockname_mode", PARAM_INT, &path_sockname_mode},
 	{"received_name", PARAM_STR, &path_received_name},
-	{"advertised_address", PARAM_STR, &path_advertised_address},
 	{0, 0, 0}
 };
 
@@ -157,9 +169,6 @@ static int mod_init(void)
 		memset(&path_obb, 0, sizeof(ob_api_t));
 	}
 
-	if(path_advertised_address_init(&path_advertised_address) < 0)
-		return -1;
-
 	return 0;
 }
 
@@ -196,6 +205,36 @@ static sr_kemi_t sr_kemi_path_exports[] = {
 	{ str_init("path"), str_init("add_path_received_user_params"),
 		SR_KEMIP_INT, ki_add_path_received_user_params,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_advertised_address"),
+		SR_KEMIP_INT, ki_add_path_advertised_address,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_advertised_address_user"),
+		SR_KEMIP_INT, ki_add_path_advertised_address_user,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_advertised_address_user_params"),
+		SR_KEMIP_INT, ki_add_path_advertised_address_user_params,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received_advertised_address"),
+		SR_KEMIP_INT, ki_add_path_received_advertised_address,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received_advertised_address_user"),
+		SR_KEMIP_INT, ki_add_path_received_advertised_address_user,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("path"), str_init("add_path_received_advertised_address_user_params"),
+		SR_KEMIP_INT, ki_add_path_received_advertised_address_user_params,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

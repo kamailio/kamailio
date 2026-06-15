@@ -239,33 +239,6 @@ modparam("path", "sockname_mode", 1)
 </programlisting>
 		</example>
 	</section>
-	<section id="path.p.advertised_address">
-		<title><varname>advertised_address</varname> (str)</title>
-		<para>
-		If set to a valid IP address or hostname, optionally followed by a port
-		(e.g. <quote>proxy.example.com</quote> or <quote>1.2.3.4:5080</quote>),
-		the Path URI host part is built from this value instead of the outgoing
-		socket address.
-		</para>
-		<para>
-		When not set or empty, <function>add_path()</function> and
-		<function>add_path_received()</function> keep the default behaviour of
-		using the outgoing interface address.
-		</para>
-		<para>
-		<emphasis>
-			Default value is empty (not set).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>advertised_address</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("path", "advertised_address", "proxy.example.com")
-...
-</programlisting>
-		</example>
-	</section>
 	</section>
 
 	<section>
@@ -461,6 +434,114 @@ if (!add_path_received("inbound", "ob")) {
 	sl_send_reply("503", "Internal Path Error");
 	...
 };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="path.f.add_path_advertised_address">
+		<title>
+		<function moreinfo="none">add_path_advertised_address(address [, user [, parameters]])</function>
+		</title>
+		<para>
+		This function behaves like <function>add_path()</function>,
+		<function>add_path(user)</function> or
+		<function>add_path(user, parameters)</function> depending on the number
+		of arguments given, with one difference: the host part of the Path URI
+		is built from the given <emphasis>address</emphasis> instead of the
+		outgoing socket address (no socket/lump substitution is applied).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>address</emphasis> - The host (and optional port) used as
+			domain part of the Path URI, e.g.
+			<quote>proxy.example.com</quote> or <quote>1.2.3.4:5080</quote>.
+			SPVE is supported.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>user</emphasis> - The username to be inserted as user part.
+			SPVE is supported. Optional.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>parameters</emphasis> - Additional parameters appended to
+			the Path URI. SPVE is supported. Optional.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path_advertised_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path_advertised_address("proxy.example.com")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+# with user and parameters
+add_path_advertised_address("1.2.3.4:5080", "inbound", "ob");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="path.f.add_path_received_advertised_address">
+		<title>
+		<function moreinfo="none">add_path_received_advertised_address(address [, user [, parameters]])</function>
+		</title>
+		<para>
+		This function behaves like <function>add_path_received()</function>,
+		<function>add_path_received(user)</function> or
+		<function>add_path_received(user, parameters)</function> depending on the
+		number of arguments given, with one difference: the host part of the
+		Path URI is built from the given <emphasis>address</emphasis> instead of
+		the outgoing socket address (no socket/lump substitution is applied). The
+		address the request was received from is still appended as
+		received-parameter.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>address</emphasis> - The host (and optional port) used as
+			domain part of the Path URI, e.g.
+			<quote>proxy.example.com</quote> or <quote>1.2.3.4:5080</quote>.
+			SPVE is supported.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>user</emphasis> - The username to be inserted as user part.
+			SPVE is supported. Optional.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>parameters</emphasis> - Additional parameters appended to
+			the Path URI. SPVE is supported. Optional.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>add_path_received_advertised_address</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!add_path_received_advertised_address("proxy.example.com")) {
+	sl_send_reply("503", "Internal Path Error");
+	...
+};
+# with user and parameters
+add_path_received_advertised_address("1.2.3.4:5080", "inbound", "ob");
 ...
 </programlisting>
 		</example>
