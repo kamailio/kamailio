@@ -1160,7 +1160,7 @@ static int print_value(rpc_ctx_t *ctx, char fmt, va_list *ap)
 		case 'f':
 			str_val.s = buf;
 			str_val.len = snprintf(buf, 256, "%f", va_arg(*ap, double));
-			if(str_val.len < 0) {
+			if(str_val.len < 0 || str_val.len >= (int)sizeof(buf)) {
 				rpc_fault(ctx, 400, "Error While Converting double");
 				ERR("Error while converting double\n");
 				goto err;
@@ -1551,7 +1551,7 @@ static int rpc_struct_add(struct text_chunk *s, char *fmt, ...)
 				case 'f':
 					st.s = buf;
 					st.len = snprintf(buf, 256, "%f", va_arg(ap, double));
-					if(st.len < 0) {
+					if(st.len < 0 || st.len >= (int)sizeof(buf)) {
 						rpc_fault(ctx, 400, "Error While Converting double");
 						ERR("Error while converting double\n");
 						goto err;
