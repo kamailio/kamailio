@@ -127,12 +127,12 @@ ipv6:
 				p++;
 				*p = 0;
 				goto find_port;
-			} else if(*(p + 1) == 0)
+			} else if(*(p + 1) == 0) {
 				goto end;
-		} else {
-			goto error;
+			}
 		}
 	}
+	goto error;
 
 find_port:
 	p++;
