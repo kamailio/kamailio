@@ -1777,48 +1777,6 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 	return 0;
 }
 
-/* fallback matcher for cases where the generic wildcard-local alias
- * could not be installed due to alias collisions; it scans existing
- * connections for the same peer tuple regardless of local binding */
-static struct tcp_connection *_tcpconn_find_any_local(
-		struct ip_addr *ip, int port, sip_protos_t proto)
-{
-	struct tcp_connection *c;
-	int i;
-
-	if(ip == NULL) {
-		return 0;
-	}
-
-	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
-		for(c = tcpconn_id_hash[i]; c; c = c->id_next) {
-			if(c->state == S_CONN_BAD) {
-				continue;
-			}
-			if(c->rcv.src_port != port) {
-				continue;
-			}
-			if(!ip_addr_cmp(ip, &c->rcv.src_ip)) {
-				continue;
-			}
-			if(proto != PROTO_NONE && c->rcv.proto != proto) {
-				continue;
-			}
-#ifdef USE_TLS
-			if(tls_connection_match_domain && c->type == PROTO_TLS
-					&& !tls_hook_call(match_domain, 1, c, ip, port)) {
-				continue;
-			}
-#endif
-			LM_DBG("found connection by peer address fallback (id: %d)\n",
-					c->id);
-			return c;
-		}
-	}
-
-	return 0;
-}
-
 
 /**
  * find if a tcp connection exits by id or remote+local address/port and protocol
@@ -1871,10 +1829,6 @@ struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
 	}
 	if(unlikely(c == NULL)) {
 		c = _tcpconn_find(id, ip, port, &local_ip, local_port, proto);
-	}
-	if(unlikely(c == NULL) && likely(id == 0 && ip != NULL)
-			&& likely(local_addr == NULL) && likely(local_port == 0)) {
-		c = _tcpconn_find_any_local(ip, port, proto);
 	}
 	if(likely(c)) {
 		atomic_inc(&c->refcnt);
