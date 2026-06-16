@@ -8,6 +8,8 @@
 package log
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -25,6 +27,11 @@ func Int(key string, val int) zap.Field {
 // Uint16 creates a uint16 zap.Field
 func Uint16(key string, val uint16) zap.Field {
 	return zap.Uint16(key, val)
+}
+
+// Time creates a time zap.Field
+func Time(key string, val time.Time) zap.Field {
+	return zap.Time(key, val)
 }
 
 var (
