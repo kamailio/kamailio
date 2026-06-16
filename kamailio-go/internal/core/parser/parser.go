@@ -8,13 +8,10 @@
 package parser
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
-
-	"github.com/kamailio/kamailio-go/internal/core/str"
 )
 
 // ParseMsg parses a complete SIP message from a byte buffer
@@ -267,29 +264,10 @@ func ParseContentLength(h *HdrField) (int, error) {
 	return val, nil
 }
 
-// ParseCSeq parses the CSeq header value
-func ParseCSeq(h *HdrField) (*CSeqBody, error) {
+// ParseCSeqHeader parses the CSeq from a HdrField - delegates to ParseCSeq in parse_cseq.go
+func ParseCSeqHeader(h *HdrField) (*CSeqBody, error) {
 	if h == nil || h.Type != HdrCSeq {
 		return nil, errors.New("not a CSeq header")
 	}
-
-	body := h.Body.String()
-	parts := bytes.Fields([]byte(body))
-	if len(parts) != 2 {
-		return nil, errors.New("invalid CSeq format")
-	}
-
-	num, err := strconv.ParseUint(string(parts[0]), 10, 32)
-	if err != nil {
-		return nil, err
-	}
-
-	method := str.MkBytes(parts[1])
-	methodValue := ParseMethod(parts[1])
-
-	return &CSeqBody{
-		Number:      uint32(num),
-		Method:      method,
-		MethodValue: methodValue,
-	}, nil
+	return ParseCSeq(h.Body)
 }

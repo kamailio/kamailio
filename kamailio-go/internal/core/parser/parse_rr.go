@@ -42,9 +42,9 @@ const (
 // RRBody represents a parsed Route/Record-Route body
 // C: struct rr_body
 type RRBody struct {
-	First  *RRUrl  // first route URL
-	Last   *RRUrl  // last route URL
-	Body   str.Str // raw body
+	FirstURL  *RRUrl  // first route URL
+	LastURL   *RRUrl  // last route URL
+	Body      str.Str // raw body
 }
 
 // RRUrl represents a single Route URL
@@ -215,8 +215,8 @@ func parseRRBody(body str.Str, isRecordRoute bool) (*RRBody, error) {
 		}
 	}
 
-	rrb.First = first
-	rrb.Last = last
+	rrb.FirstURL = first
+	rrb.LastURL = last
 
 	return rrb, nil
 }
@@ -366,7 +366,7 @@ func parseRRParams(rr *RRUrl, params string) {
 // RRCount returns the number of routes in the body
 func (rrb *RRBody) RRCount() int {
 	count := 0
-	for r := rrb.First; r != nil; r = r.Next {
+	for r := rrb.FirstURL; r != nil; r = r.Next {
 		count++
 	}
 	return count
@@ -374,23 +374,23 @@ func (rrb *RRBody) RRCount() int {
 
 // IsEmpty returns true if there are no routes
 func (rrb *RRBody) IsEmpty() bool {
-	return rrb.First == nil
+	return rrb.FirstURL == nil
 }
 
 // First returns the first route URL
 func (rrb *RRBody) First() *RRUrl {
-	return rrb.First
+	return rrb.FirstURL
 }
 
 // Last returns the last route URL
 func (rrb *RRBody) Last() *RRUrl {
-	return rrb.Last
+	return rrb.LastURL
 }
 
 // GetAll returns all route URLs
 func (rrb *RRBody) GetAll() []*RRUrl {
 	var routes []*RRUrl
-	for r := rrb.First; r != nil; r = r.Next {
+	for r := rrb.FirstURL; r != nil; r = r.Next {
 		routes = append(routes, r)
 	}
 	return routes
@@ -399,7 +399,7 @@ func (rrb *RRBody) GetAll() []*RRUrl {
 // String returns the Route body as a string
 func (rrb *RRBody) String() string {
 	var sb strings.Builder
-	for r := rrb.First; r != nil; r = r.Next {
+	for r := rrb.FirstURL; r != nil; r = r.Next {
 		if sb.Len() > 0 {
 			sb.WriteString(", ")
 		}

@@ -161,7 +161,7 @@ func (r *Registrar) sendChallenge(msg *parser.SIPMsg, impu string) (*RegisterRes
 		callID = msg.CallID.Body.String()
 	}
 	if msg.CSeq != nil {
-		cseqBody, _ := parser.ParseCSeq(msg.CSeq)
+		cseqBody, _ := parser.ParseCSeqHeader(msg.CSeq)
 		if cseqBody != nil {
 			cseq = fmt.Sprintf("%d", cseqBody.Number)
 		}
