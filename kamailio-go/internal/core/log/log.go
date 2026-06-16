@@ -12,6 +12,21 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// String creates a string zap.Field
+func String(key, val string) zap.Field {
+	return zap.String(key, val)
+}
+
+// Int creates an int zap.Field
+func Int(key string, val int) zap.Field {
+	return zap.Int(key, val)
+}
+
+// Uint16 creates a uint16 zap.Field
+func Uint16(key string, val uint16) zap.Field {
+	return zap.Uint16(key, val)
+}
+
 var (
 	// global logger instance
 	logger *zap.Logger
@@ -96,6 +111,11 @@ func Warn(msg string, fields ...zap.Field) {
 // Error logs a message at ErrorLevel
 func Error(msg string, fields ...zap.Field) {
 	Get().Error(msg, fields...)
+}
+
+// ErrField creates an error zap.Field
+func ErrField(err error) zap.Field {
+	return zap.Error(err)
 }
 
 // Fatal logs a message at FatalLevel and then calls os.Exit(1)
