@@ -2063,10 +2063,12 @@ kamcli dispatcher.oclist 1
        relative weight distribution type - its rweight is set to 0. See
        also the description of the corresponding algorithm parameter for
        ds_select_dst().
-     * 'socket' - used to set the sending socket for the gateway. It is
-       used for sending the SIP traffic as well as OPTIONS keepalives.
-     * 'ping_socket' - used to set the sending socket for ping requests.
-       It overwrites the general ds_ping_socket parameter.
+     * 'socket' - used to set the sending socket for the gateway,
+       overwriting ds_default_socket parameter. It is used for sending the
+       SIP traffic as well as OPTIONS pings/keepalives (if no specific
+       ds_ping_socket parameter or per record ping_socket is set).
+     * 'ping_socket' - used to set specific sending socket for ping
+       requests. It overwrites the general ds_ping_socket parameter.
      * 'sockname' - used to set by name the sending socket for the
        gateway. It is used for sending the SIP traffic as well as OPTIONS
        keepalives and has priority over 'socket' attribute.
