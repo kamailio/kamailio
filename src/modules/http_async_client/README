@@ -497,7 +497,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
      * $http_mb and $http_ml: HTTP response buffer (including headers) and
        length
      * $http_rb and $http_bs: HTTP response body and body length
-     * $http_time: provides access to broken-down transfer time in
+     * $http_time(name): provides access to broken-down transfer time in
        microseconds calculated by cURL
        (https://curl.se/libcurl/c/curl_easy_getinfo.html).
        'name' can be:
