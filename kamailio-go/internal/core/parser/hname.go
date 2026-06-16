@@ -280,6 +280,8 @@ type HdrField struct {
 	Parsed     interface{} // type-specific parsed body
 	Next       *HdrField   // next header of same type
 	Siblings   *HdrField   // next sibling header
+	Offset     int         // offset in original buffer
+	Len        int         // total header length including CRLF
 }
 
 // ParseHeaders parses all headers from the given buffer
