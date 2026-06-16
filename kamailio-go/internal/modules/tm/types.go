@@ -330,7 +330,7 @@ func (t *Table) LookupByMsg(msg *parser.SIPMsg) *Cell {
 	}
 
 	callID := msg.CallID.Body
-	cseqBody, err := parser.ParseCSeq(msg.CSeq)
+	cseqBody, err := parser.ParseCSeqHeader(msg.CSeq)
 	if err != nil {
 		return nil
 	}

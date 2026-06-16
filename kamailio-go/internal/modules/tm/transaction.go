@@ -90,7 +90,7 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 		cell.CallIDVal = msg.CallID.Body
 	}
 	if msg.CSeq != nil {
-		cseqBody, err := parser.ParseCSeq(msg.CSeq)
+		cseqBody, err := parser.ParseCSeqHeader(msg.CSeq)
 		if err == nil {
 			cell.CSeqHdrN = cseqBody.Method
 			cell.CSeqNum = str.Mk(fmt.Sprintf("%d", cseqBody.Number))
