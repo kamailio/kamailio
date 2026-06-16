@@ -54,6 +54,7 @@
 #include "ws_handshake.h"
 #include "websocket.h"
 #include "config.h"
+#include <stdarg.h>
 #include <strings.h>
 
 #define WS_VERSION (13)
@@ -105,6 +106,27 @@ static str str_status_service_unavailable = str_init("Service Unavailable");
 static char headers_buf[HDR_BUF_LEN];
 
 static char key_buf[base64_enc_len(SHA1_DIGEST_LENGTH)];
+
+static int ws_append_header(str *headers, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+	int rem;
+
+	if(headers == NULL || headers->s == NULL || headers->len < 0
+			|| headers->len >= HDR_BUF_LEN)
+		return -1;
+
+	rem = HDR_BUF_LEN - headers->len;
+	va_start(ap, fmt);
+	ret = vsnprintf(headers->s + headers->len, rem, fmt, ap);
+	va_end(ap);
+	if(ret < 0 || ret >= rem)
+		return -1;
+
+	headers->len += ret;
+	return 0;
+}
 
 static int ws_token_contains(const str *value, const str *token)
 {
@@ -609,9 +631,16 @@ int ws_handle_handshake(struct sip_msg *msg)
 				LM_WARN("Unsupported protocol version %.*s\n", hdr->body.len,
 						hdr->body.s);
 				headers.s = headers_buf;
-				headers.len = snprintf(headers.s, HDR_BUF_LEN, "%.*s: %d\r\n",
-						str_hdr_sec_websocket_version.len,
-						str_hdr_sec_websocket_version.s, WS_VERSION);
+				headers.len = 0;
+				if(ws_append_header(&headers, "%.*s: %d\r\n",
+						   str_hdr_sec_websocket_version.len,
+						   str_hdr_sec_websocket_version.s, WS_VERSION)
+						< 0) {
+					LM_ERR("failed to build websocket version reply header\n");
+					ws_send_reply(
+							msg, 500, &str_status_internal_server_error, NULL);
+					goto end;
+				}
 				ws_send_reply(msg, 426, &str_status_upgrade_required, &headers);
 				goto end;
 			}
@@ -650,21 +679,25 @@ int ws_handle_handshake(struct sip_msg *msg)
 		headers.len = 0;
 
 		if(ws_sub_protocols & SUB_PROTOCOL_SIP)
-			headers.len += snprintf(headers.s + headers.len,
-					HDR_BUF_LEN - headers.len, "%.*s: %.*s\r\n",
-					str_hdr_sec_websocket_protocol.len,
-					str_hdr_sec_websocket_protocol.s, str_sip.len, str_sip.s);
+			if(ws_append_header(&headers, "%.*s: %.*s\r\n",
+					   str_hdr_sec_websocket_protocol.len,
+					   str_hdr_sec_websocket_protocol.s, str_sip.len, str_sip.s)
+					< 0)
+				goto error;
 
 		if(ws_sub_protocols & SUB_PROTOCOL_MSRP)
-			headers.len += snprintf(headers.s + headers.len,
-					HDR_BUF_LEN - headers.len, "%.*s: %.*s\r\n",
-					str_hdr_sec_websocket_protocol.len,
-					str_hdr_sec_websocket_protocol.s, str_msrp.len, str_msrp.s);
+			if(ws_append_header(&headers, "%.*s: %.*s\r\n",
+					   str_hdr_sec_websocket_protocol.len,
+					   str_hdr_sec_websocket_protocol.s, str_msrp.len,
+					   str_msrp.s)
+					< 0)
+				goto error;
 
-		headers.len +=
-				snprintf(headers.s + headers.len, HDR_BUF_LEN - headers.len,
-						"%.*s: %d\r\n", str_hdr_sec_websocket_version.len,
-						str_hdr_sec_websocket_version.s, WS_VERSION);
+		if(ws_append_header(&headers, "%.*s: %d\r\n",
+				   str_hdr_sec_websocket_version.len,
+				   str_hdr_sec_websocket_version.s, WS_VERSION)
+				< 0)
+			goto error;
 		ws_send_reply(msg, 400, &str_status_bad_request, &headers);
 		goto end;
 	}
@@ -686,6 +719,50 @@ int ws_handle_handshake(struct sip_msg *msg)
 	reply_key.len = base64_enc(sha1, SHA1_DIGEST_LENGTH,
 			(unsigned char *)reply_key.s, base64_enc_len(SHA1_DIGEST_LENGTH));
 
+	/* Build the 101 reply headers before promoting the connection to
+	   WebSocket mode. */
+	headers.s = headers_buf;
+	headers.len = 0;
+
+	if(ws_cors_mode == CORS_MODE_ANY) {
+		if(ws_append_header(&headers, "%.*s: *\r\n",
+				   str_hdr_access_control_allow_origin.len,
+				   str_hdr_access_control_allow_origin.s)
+				< 0)
+			goto error;
+	} else if(ws_cors_mode == CORS_MODE_ORIGIN && origin.len > 0) {
+		if(ws_append_header(&headers, "%.*s: %.*s\r\n",
+				   str_hdr_access_control_allow_origin.len,
+				   str_hdr_access_control_allow_origin.s, origin.len, origin.s)
+				< 0)
+			goto error;
+	}
+
+	if(sub_protocol & SUB_PROTOCOL_SIP) {
+		if(ws_append_header(&headers, "%.*s: %.*s\r\n",
+				   str_hdr_sec_websocket_protocol.len,
+				   str_hdr_sec_websocket_protocol.s, str_sip.len, str_sip.s)
+				< 0)
+			goto error;
+	} else if(sub_protocol & SUB_PROTOCOL_MSRP) {
+		if(ws_append_header(&headers, "%.*s: %.*s\r\n",
+				   str_hdr_sec_websocket_protocol.len,
+				   str_hdr_sec_websocket_protocol.s, str_msrp.len, str_msrp.s)
+				< 0)
+			goto error;
+	}
+
+	if(ws_append_header(&headers,
+			   "%.*s: %.*s\r\n"
+			   "%.*s: %.*s\r\n"
+			   "%.*s: %.*s\r\n",
+			   str_hdr_upgrade.len, str_hdr_upgrade.s, str_websocket.len,
+			   str_websocket.s, str_hdr_connection.len, str_hdr_connection.s,
+			   str_upgrade.len, str_upgrade.s, str_hdr_sec_websocket_accept.len,
+			   str_hdr_sec_websocket_accept.s, reply_key.len, reply_key.s)
+			< 0)
+		goto error;
+
 	/* Add the connection to the WebSocket connection table */
 	wsconn_add(&msg->rcv, sub_protocol);
 
@@ -695,42 +772,6 @@ int ws_handle_handshake(struct sip_msg *msg)
 		con->type = con->rcv.proto = PROTO_WSS;
 	else
 		con->type = con->rcv.proto = PROTO_WS;
-
-	/* Now Kamailio is ready to receive WebSocket frames build and send a
-	   101 reply */
-	headers.s = headers_buf;
-	headers.len = 0;
-
-	if(ws_cors_mode == CORS_MODE_ANY)
-		headers.len +=
-				snprintf(headers.s + headers.len, HDR_BUF_LEN - headers.len,
-						"%.*s: *\r\n", str_hdr_access_control_allow_origin.len,
-						str_hdr_access_control_allow_origin.s);
-	else if(ws_cors_mode == CORS_MODE_ORIGIN && origin.len > 0)
-		headers.len += snprintf(headers.s + headers.len,
-				HDR_BUF_LEN - headers.len, "%.*s: %.*s\r\n",
-				str_hdr_access_control_allow_origin.len,
-				str_hdr_access_control_allow_origin.s, origin.len, origin.s);
-
-	if(sub_protocol & SUB_PROTOCOL_SIP)
-		headers.len += snprintf(headers.s + headers.len,
-				HDR_BUF_LEN - headers.len, "%.*s: %.*s\r\n",
-				str_hdr_sec_websocket_protocol.len,
-				str_hdr_sec_websocket_protocol.s, str_sip.len, str_sip.s);
-	else if(sub_protocol & SUB_PROTOCOL_MSRP)
-		headers.len += snprintf(headers.s + headers.len,
-				HDR_BUF_LEN - headers.len, "%.*s: %.*s\r\n",
-				str_hdr_sec_websocket_protocol.len,
-				str_hdr_sec_websocket_protocol.s, str_msrp.len, str_msrp.s);
-
-	headers.len += snprintf(headers.s + headers.len, HDR_BUF_LEN - headers.len,
-			"%.*s: %.*s\r\n"
-			"%.*s: %.*s\r\n"
-			"%.*s: %.*s\r\n",
-			str_hdr_upgrade.len, str_hdr_upgrade.s, str_websocket.len,
-			str_websocket.s, str_hdr_connection.len, str_hdr_connection.s,
-			str_upgrade.len, str_upgrade.s, str_hdr_sec_websocket_accept.len,
-			str_hdr_sec_websocket_accept.s, reply_key.len, reply_key.s);
 	msg->rpl_send_flags.f &= ~SND_F_CON_CLOSE;
 	if(ws_send_reply(msg, 101, &str_status_switching_protocols, &headers) < 0) {
 		if((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL) {
@@ -747,6 +788,10 @@ int ws_handle_handshake(struct sip_msg *msg)
 
 	tcpconn_put(con);
 	return 1;
+error:
+	LM_WARN("failed to build websocket handshake response headers\n");
+	ws_send_reply(msg, 400, &str_status_bad_request, NULL);
+	goto end;
 end:
 	if(con)
 		tcpconn_put(con);
