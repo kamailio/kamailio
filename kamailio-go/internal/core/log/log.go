@@ -34,6 +34,11 @@ func Time(key string, val time.Time) zap.Field {
 	return zap.Time(key, val)
 }
 
+// Bool creates a bool zap.Field
+func Bool(key string, val bool) zap.Field {
+	return zap.Bool(key, val)
+}
+
 var (
 	// global logger instance
 	logger *zap.Logger
