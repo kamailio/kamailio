@@ -2662,6 +2662,64 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 </programlisting>
 		</example>
 	</section>
+	<section id="dialog.f.dlg_update_contact">
+		<title>
+		<function moreinfo="none">dlg_update_contact()</function>
+		</title>
+		<para>
+		Update the stored Contact of the current dialog leg, from the Contact
+		header of the message being processed. Useful to update in-dialog legs
+		for a client that moves between different nodes of a cluster.
+		</para>
+		<para>
+		Returns 1 on success, -1 if there is no matching dialog or no Contact header
+		or more than one Contact header.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_update_contact()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(loose_route()) {
+	route(NATMANAGE);
+	if(dlg_update_contact()!=-1) {
+		dlg_update_socket();
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dialog.f.dlg_update_socket">
+		<title>
+		<function moreinfo="none">dlg_update_socket()</function>
+		</title>
+		<para>
+		Update the stored leg socket (bind address) of the current dialog, from
+		the receive socket of the message being processed.
+		</para>
+		<para>
+		Returns 1 on success, -1 if there is no matching dialog or no usable receive socket.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_update_socket()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(loose_route()) {
+	route(NATMANAGE);
+	if(dlg_update_contact()!=-1) {
+		dlg_update_socket();
+	}
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="dialog.f.dlg_db_load_callid">
 		<title>
 		<function moreinfo="none">dlg_db_load_callid(cival)</function>

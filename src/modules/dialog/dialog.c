@@ -67,6 +67,7 @@
 #include "../../core/lvalue.h"
 #include "../../core/globals.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/contact/parse_contact.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/srapi.h"
@@ -207,6 +208,10 @@ static int w_is_known_dlg(struct sip_msg *);
 static int w_dlg_remove_dialogs_from_node(
 		struct sip_msg *msg, char *uri, char *s2);
 static int w_dlg_set_ruri(sip_msg_t *, char *, char *);
+static int w_dlg_update_contact(sip_msg_t *, char *, char *);
+static int ki_dlg_update_contact(sip_msg_t *msg);
+static int w_dlg_update_socket(sip_msg_t *, char *, char *);
+static int ki_dlg_update_socket(sip_msg_t *msg);
 static int w_dlg_db_load_callid(sip_msg_t *msg, char *ci, char *p2);
 static int w_dlg_db_load_extra(sip_msg_t *msg, char *p1, char *p2);
 static int fixup_dlg_get_var(void **param, int param_no);
@@ -300,6 +305,10 @@ static cmd_export_t cmds[]={
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
+			0, ANY_ROUTE },
+	{"dlg_update_contact", (cmd_function)w_dlg_update_contact, 0, NULL,
+			0, ANY_ROUTE },
+	{"dlg_update_socket",  (cmd_function)w_dlg_update_socket, 0, NULL,
 			0, ANY_ROUTE },
 	{"dlg_db_load_callid", (cmd_function)w_dlg_db_load_callid, 1, fixup_spve_null,
 			0, ANY_ROUTE },
@@ -2884,6 +2893,16 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dialog"), str_init("dlg_update_contact"),
+		SR_KEMIP_INT, ki_dlg_update_contact,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_update_socket"),
+		SR_KEMIP_INT, ki_dlg_update_socket,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dialog"), str_init("dlg_reset_property"),
 		SR_KEMIP_INT, ki_dlg_reset_property,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -3449,6 +3468,98 @@ static int w_dlg_remove_dialogs_from_node(
 static int w_dlg_set_ruri(sip_msg_t *msg, char *p1, char *p2)
 {
 	return dlg_set_ruri(msg);
+}
+
+/**
+ * Update the stored contact of the current dialog leg from the message's
+ * Contact header.
+ */
+static int ki_dlg_update_contact(sip_msg_t *msg)
+{
+	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+	str contact = STR_NULL;
+	contact_body_t *cb = NULL;
+	int leg;
+	int ret = 1;
+
+	dlg = dlg_lookup_msg_dialog(msg, &dir);
+	if(dlg == NULL) {
+		LM_DBG("no dialog for this message - contact not updated\n");
+		return -1;
+	}
+
+	if(parse_headers(msg, HDR_CONTACT_F, 0) < 0 || msg->contact == NULL) {
+		LM_DBG("no contact header - nothing to update\n");
+		dlg_release(dlg);
+		return -1;
+	}
+	if(parse_contact(msg->contact) < 0) {
+		LM_DBG("bad contact header - contact not updated\n");
+		dlg_release(dlg);
+		return -1;
+	}
+	cb = (contact_body_t *)msg->contact->parsed;
+	if(cb == NULL || cb->contacts == NULL || cb->contacts->next != NULL) {
+		LM_DBG("no usable contact - contact not updated\n");
+		dlg_release(dlg);
+		return -1;
+	}
+	contact = cb->contacts->uri;
+
+	/* leg direction is reversed for replies vs requests */
+	if(msg->first_line.type == SIP_REPLY) {
+		leg = (dir == DLG_DIR_UPSTREAM) ? DLG_CALLER_LEG : DLG_CALLEE_LEG;
+	} else {
+		leg = (dir == DLG_DIR_UPSTREAM) ? DLG_CALLEE_LEG : DLG_CALLER_LEG;
+	}
+	if(contact.len <= 0 || dlg_update_contact(dlg, leg, &contact) != 0) {
+		ret = -1;
+	}
+	dlg_release(dlg);
+	return ret;
+}
+
+static int w_dlg_update_contact(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_dlg_update_contact(msg);
+}
+
+/**
+ * Update the stored leg socket (bind_addr) of the current dialog from the
+ * receive socket of this message
+ */
+static int ki_dlg_update_socket(sip_msg_t *msg)
+{
+	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+	int leg;
+
+	if(msg->rcv.bind_address == NULL) {
+		LM_DBG("no receive socket - leg socket not updated\n");
+		return -1;
+	}
+
+	dlg = dlg_lookup_msg_dialog(msg, &dir);
+	if(dlg == NULL) {
+		LM_DBG("no dialog for this message - leg socket not updated\n");
+		return -1;
+	}
+
+	/* leg direction is reversed for replies vs requests */
+	if(msg->first_line.type == SIP_REPLY) {
+		leg = (dir == DLG_DIR_UPSTREAM) ? DLG_CALLER_LEG : DLG_CALLEE_LEG;
+	} else {
+		leg = (dir == DLG_DIR_UPSTREAM) ? DLG_CALLEE_LEG : DLG_CALLER_LEG;
+	}
+	dlg->bind_addr[leg] = msg->rcv.bind_address;
+	dlg_release(dlg);
+	return 1;
+}
+
+static int w_dlg_update_socket(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_dlg_update_socket(msg);
 }
 
 static const char *rpc_print_dlgs_doc[2] = {"Print all dialogs", 0};
