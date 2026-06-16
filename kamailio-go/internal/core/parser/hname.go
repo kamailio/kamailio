@@ -321,9 +321,8 @@ func ParseHeaders(buf []byte) ([]*HdrField, int, error) {
 			return nil, 0, errors.New("invalid header name")
 		}
 
-		// Extract body
+		// Extract body (after colon)
 		body := headerLine[bodyOffset:]
-		body = bytes.TrimSpace(body)
 
 		// Calculate name length (trim trailing whitespace before colon)
 		nameLen := bodyOffset - 1
@@ -331,9 +330,13 @@ func ParseHeaders(buf []byte) ([]*HdrField, int, error) {
 			nameLen--
 		}
 
+		// Trim leading whitespace from body
+		bodyTrimmed := bytes.TrimLeft(body, " \t")
+		bodyOffsetTrimmed := bodyOffset + (len(body) - len(bodyTrimmed))
+
 		hdr := &HdrField{
 			Name: str.Str{S: buf[pos:], Len: nameLen},
-			Body: str.Str{S: buf[pos+bodyOffset:], Len: len(body)},
+			Body: str.Str{S: buf[pos+bodyOffsetTrimmed:], Len: len(bodyTrimmed)},
 			Type: hdrType,
 		}
 
