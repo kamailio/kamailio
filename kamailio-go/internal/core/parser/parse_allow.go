@@ -13,6 +13,8 @@ package parser
 
 import (
 	"strings"
+
+	"github.com/kamailio/kamailio-go/internal/core/str"
 )
 
 // AllowBody represents a parsed Allow header body
@@ -115,7 +117,7 @@ func (ab *AllowBody) HasUpdate() bool {
 
 // HasPrack returns true if PRACK is allowed
 func (ab *AllowBody) HasPrack() bool {
-	return ab.HasMethod(MethodPrack)
+	return ab.HasMethod(MethodPRACK)
 }
 
 // String returns the Allow body as a string
