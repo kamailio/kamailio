@@ -398,7 +398,7 @@ error_len:
 /* double format:  FIXME: for now a hack: fixed point represented in
  *  a long long (=> max 3 decimals, < MAX_LLONG/1000) */
 #define binrpc_add_double_type(pkt, f, type) \
-	binrpc_add_llong_type((pkt), (long long)((f)*1000), (type))
+	binrpc_add_llong_type((pkt), (long long)((f) * 1000), (type))
 
 
 /* skip bytes bytes (leaves an empty space, for possible future use)
@@ -604,6 +604,20 @@ static inline unsigned char *binrpc_read_int(
 	return s;
 }
 
+static inline int binrpc_check_len(
+		unsigned char *p, unsigned char *end, int len, int *err)
+{
+	if(len < 0) {
+		*err = E_BINRPC_BADPKT;
+		return -1;
+	}
+	if(len > (int)(end - p)) {
+		*err = E_BINRPC_MORE_DATA;
+		return -1;
+	}
+	return 0;
+}
+
 
 /* initialize parsing context, it tries to read the whole message header,
  * if there is not enough data, sets *err to E_BINRPC_MORE_DATA. In this
@@ -648,6 +662,12 @@ static inline unsigned char *binrpc_parse_init(
 	}
 	p = binrpc_read_int((int *)&ctx->tlen, len_len, &buf[BINRPC_TLEN_OFFSET],
 			&buf[len], err);
+	if(*err < 0)
+		goto error;
+	if(ctx->tlen < 0) {
+		*err = E_BINRPC_BADPKT;
+		goto error;
+	}
 	/* empty packets (replies) are allowed
 	   if (ctx->tlen==0){
 		*err=E_BINRPC_BADPKT;
@@ -717,8 +737,7 @@ inline static unsigned char *binrpc_read_record(struct binrpc_parse_ctx *ctx,
 		if(*err < 0)
 			goto error;
 	}
-	if((p + len) > end) {
-		*err = E_BINRPC_MORE_DATA;
+	if(binrpc_check_len(p, end, len, err) < 0) {
 		goto error;
 	}
 	if(!(v->type == BINRPC_T_DOUBLE && type == BINRPC_T_INT)) {
@@ -886,6 +905,9 @@ inline static unsigned char *binrpc_read_struct(struct binrpc_parse_ctx *ctx,
 		if(*err < 0)
 			goto error;
 	}
+	if(binrpc_check_len(p, end, len, err) < 0) {
+		goto error;
+	}
 	if((p + len) >= end) {
 		*err = E_BINRPC_MORE_DATA;
 		goto error;
@@ -912,6 +934,8 @@ inline static unsigned char *binrpc_read_struct(struct binrpc_parse_ctx *ctx,
 			if(*err < 0)
 				goto error;
 		}
+		if(binrpc_check_len(p, end, len, err) < 0)
+			goto error;
 		if((type == BINRPC_T_STRUCT) && end_tag) {
 			in_struct--;
 			if(in_struct < 0)
@@ -937,6 +961,8 @@ inline static unsigned char *binrpc_read_struct(struct binrpc_parse_ctx *ctx,
 			if(*err < 0)
 				goto error;
 		}
+		if(binrpc_check_len(p, end, len, err) < 0)
+			goto error;
 		if(type == BINRPC_T_STRUCT) {
 			if(end_tag)
 				goto error_record;
