@@ -502,7 +502,6 @@ int reload_tables(void)
 
 		if(hash_table_install(new_hash_table, &did, &domain) == -1) {
 			LM_ERR("could not install domain into hash table\n");
-			domain_dbf.free_result(db_handle, res);
 			goto err;
 		}
 	}
