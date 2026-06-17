@@ -10,6 +10,7 @@
 #include "../../lib/srdb1/db.h"
 #include "usrloc.h"
 #include "usrloc_db.h"
+#include "ims_usrloc_pcscf_mod.h"
 
 str id_col = str_init(ID_COL);
 str domain_col = str_init(DOMAIN_COL);
@@ -28,6 +29,12 @@ str expires_col = str_init(EXPIRES_COL);
 str service_routes_col = str_init(SERVICE_ROUTES_COL);
 str socket_col = str_init(SOCKET_COL);
 str public_ids_col = str_init(PUBLIC_IDS_COL);
+str instance_id_col = str_init(INSTANCE_ID_COL);
+str pub_gruu_col = str_init(PUB_GRUU_COL);
+str temp_gruu_col = str_init(TEMP_GRUU_COL);
+str public_ids_barred_col = str_init(PUBLIC_IDS_BARRED_COL);
+static str location_id_col = str_init("location_id");
+static str pcscf_temp_gruu_history_table = str_init("pcscf_temp_gruu_history");
 str security_type_col = str_init(SECURITY_TYPE_COL);
 str mode_col = str_init(MODE_COL);
 str ck_col = str_init(CK_COL);
@@ -60,6 +67,12 @@ str t_spi_us_col = str_init(T_SPIUS_COL);
 
 t_reusable_buffer service_route_buffer = {0, 0, 0};
 t_reusable_buffer impu_buffer = {0, 0, 0};
+t_reusable_buffer impu_barred_buffer = {0, 0, 0};
+
+extern str db_url;
+
+static int impus_barred_as_string(
+		struct pcontact *_c, t_reusable_buffer *buffer);
 
 int connect_db(const str *db_url)
 {
@@ -131,15 +144,17 @@ db1_con_t *get_db_handle()
 
 int db_update_pcontact(pcontact_t *_c)
 {
-	str impus, service_routes;
+	str impus, impus_barred, service_routes;
 
 	db_val_t match_values[2];
 	db_key_t match_keys[2] = {&aor_col, &received_port_col};
 	db_op_t op[2];
-	db_key_t update_keys[8] = {&expires_col, &reg_state_col,
+	db_key_t update_keys[12] = {&expires_col, &reg_state_col,
 			&service_routes_col, &received_col, &received_port_col,
-			&received_proto_col, &rx_session_id_col, &public_ids_col};
-	db_val_t values[8];
+			&received_proto_col, &rx_session_id_col, &public_ids_col,
+			&public_ids_barred_col, &instance_id_col, &pub_gruu_col,
+			&temp_gruu_col};
+	db_val_t values[12];
 
 	LM_DBG("updating pcontact: aor[%.*s], received port %u\n", _c->aor.len,
 			_c->aor.s, _c->received_port);
@@ -204,9 +219,26 @@ int db_update_pcontact(pcontact_t *_c)
 	VAL_TYPE(values + 7) = DB1_STR;
 	SET_PROPER_NULL_FLAG(impus, values, 7);
 	SET_STR_VALUE(values + 7, impus);
+	impus_barred.len = impus_barred_as_string(_c, &impu_barred_buffer);
+	impus_barred.s = impu_barred_buffer.buf;
+	VAL_TYPE(values + 8) = DB1_STR;
+	SET_PROPER_NULL_FLAG(impus_barred, values, 8);
+	SET_STR_VALUE(values + 8, impus_barred);
 
-	if((ul_dbf.update(
-			   ul_dbh, match_keys, op, match_values, update_keys, values, 2, 8))
+	VAL_TYPE(values + 9) = DB1_STR;
+	SET_PROPER_NULL_FLAG(_c->instance_id, values, 9);
+	SET_STR_VALUE(values + 9, _c->instance_id);
+
+	VAL_TYPE(values + 10) = DB1_STR;
+	SET_PROPER_NULL_FLAG(_c->pub_gruu, values, 10);
+	SET_STR_VALUE(values + 10, _c->pub_gruu);
+
+	VAL_TYPE(values + 11) = DB1_STR;
+	SET_PROPER_NULL_FLAG(_c->temp_gruu, values, 11);
+	SET_STR_VALUE(values + 11, _c->temp_gruu);
+
+	if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys, values,
+			   2, 12))
 			!= 0) {
 		LM_ERR("could not update database info\n");
 		return -1;
@@ -258,14 +290,15 @@ int db_delete_pcontact(pcontact_t *_c)
 int db_insert_pcontact(struct pcontact *_c)
 {
 	str empty_str = str_init("");
-	str impus, service_routes;
+	str impus, impus_barred, service_routes;
 
-	db_key_t keys[16] = {&domain_col, &aor_col, &received_col,
+	db_key_t keys[20] = {&domain_col, &aor_col, &received_col,
 			&received_port_col, &received_proto_col, &path_col, &rinstance_col,
 			&rx_session_id_col, &reg_state_col, &expires_col,
 			&service_routes_col, &socket_col, &public_ids_col, &host_col,
-			&port_col, &protocol_col};
-	db_val_t values[16];
+			&port_col, &protocol_col, &instance_id_col, &pub_gruu_col,
+			&temp_gruu_col, &public_ids_barred_col};
+	db_val_t values[20];
 
 	VAL_TYPE(GET_FIELD_IDX(values, LP_DOMAIN_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_AOR_IDX)) = DB1_STR;
@@ -283,6 +316,10 @@ int db_insert_pcontact(struct pcontact *_c)
 	VAL_TYPE(GET_FIELD_IDX(values, LP_HOST_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PORT_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = DB1_INT;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_INSTANCE_ID_IDX)) = DB1_STR;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_PUB_GRUU_IDX)) = DB1_STR;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_TEMP_GRUU_IDX)) = DB1_STR;
+	VAL_TYPE(GET_FIELD_IDX(values, LP_PUBLIC_IDS_BARRED_IDX)) = DB1_STR;
 
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_DOMAIN_IDX), (*_c->domain));
@@ -343,6 +380,11 @@ int db_insert_pcontact(struct pcontact *_c)
 	impus.s = impu_buffer.buf;
 	SET_PROPER_NULL_FLAG(impus, values, LP_PUBLIC_IPS_IDX);
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_PUBLIC_IPS_IDX), impus);
+	impus_barred.len = impus_barred_as_string(_c, &impu_barred_buffer);
+	impus_barred.s = impu_barred_buffer.buf;
+	SET_PROPER_NULL_FLAG(impus_barred, values, LP_PUBLIC_IDS_BARRED_IDX);
+	SET_STR_VALUE(
+			GET_FIELD_IDX(values, LP_PUBLIC_IDS_BARRED_IDX), impus_barred);
 
 	/* add service routes */
 	service_routes.len = service_routes_as_string(_c, &service_route_buffer);
@@ -350,13 +392,20 @@ int db_insert_pcontact(struct pcontact *_c)
 	SET_PROPER_NULL_FLAG(service_routes, values, LP_SERVICE_ROUTES_IDX);
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_SERVICE_ROUTES_IDX), service_routes);
 
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_INSTANCE_ID_IDX), _c->instance_id);
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_PUB_GRUU_IDX), _c->pub_gruu);
+	SET_STR_VALUE(GET_FIELD_IDX(values, LP_TEMP_GRUU_IDX), _c->temp_gruu);
+	SET_PROPER_NULL_FLAG(_c->instance_id, values, LP_INSTANCE_ID_IDX);
+	SET_PROPER_NULL_FLAG(_c->pub_gruu, values, LP_PUB_GRUU_IDX);
+	SET_PROPER_NULL_FLAG(_c->temp_gruu, values, LP_TEMP_GRUU_IDX);
+
 	if(use_location_pcscf_table(_c->domain) < 0) {
 		LM_ERR("Error trying to use table %.*s\n", _c->domain->len,
 				_c->domain->s);
 		return -1;
 	}
 
-	if(ul_dbf.insert(ul_dbh, keys, values, 16) < 0) {
+	if(ul_dbf.insert(ul_dbh, keys, values, 20) < 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}
@@ -607,6 +656,121 @@ int db_update_pcontact_security(
 	return 0;
 }
 
+int db_insert_temp_gruu_history(
+		unsigned int location_id, str *temp_gruu, time_t expires)
+{
+	db_key_t keys[3] = {&location_id_col, &temp_gruu_col, &expires_col};
+	db_val_t values[3];
+
+	if(location_id == 0 || !temp_gruu || !temp_gruu->s || temp_gruu->len <= 0) {
+		return -1;
+	}
+
+	if(ul_dbf.use_table(ul_dbh, &pcscf_temp_gruu_history_table) < 0) {
+		LM_ERR("failed to use temp GRUU history table\n");
+		return -1;
+	}
+
+	VAL_TYPE(values) = DB1_INT;
+	VAL_NULL(values) = 0;
+	VAL_INT(values) = location_id;
+
+	VAL_TYPE(values + 1) = DB1_STR;
+	VAL_NULL(values + 1) = 0;
+	VAL_STR(values + 1) = *temp_gruu;
+
+	VAL_TYPE(values + 2) = DB1_DATETIME;
+	VAL_NULL(values + 2) = (expires > 0) ? 0 : 1;
+	VAL_TIME(values + 2) = expires;
+
+	if(ul_dbf.insert(ul_dbh, keys, values, 3) < 0) {
+		LM_ERR("failed to insert temp GRUU history row\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int db_lookup_temp_gruu_history(str *temp_gruu, unsigned int *location_id)
+{
+	db_key_t keys[2] = {&temp_gruu_col, &expires_col};
+	db_op_t op[2] = {OP_EQ, OP_GT};
+	db_key_t cols[1] = {&location_id_col};
+	db_val_t vals[2];
+	db1_res_t *res = NULL;
+	db_row_t *row;
+
+	if(!temp_gruu || !temp_gruu->s || temp_gruu->len <= 0 || !location_id)
+		return -1;
+
+	*location_id = 0;
+
+	if(!ul_dbh && connect_db(&db_url) < 0) {
+		LM_ERR("failed to connect DB for temp GRUU history lookup\n");
+		return -1;
+	}
+
+	if(ul_dbf.use_table(ul_dbh, &pcscf_temp_gruu_history_table) < 0) {
+		LM_ERR("failed to use temp GRUU history table\n");
+		return -1;
+	}
+
+	VAL_TYPE(vals) = DB1_STR;
+	VAL_NULL(vals) = 0;
+	VAL_STR(vals) = *temp_gruu;
+
+	VAL_TYPE(vals + 1) = DB1_DATETIME;
+	VAL_NULL(vals + 1) = 0;
+	VAL_TIME(vals + 1) = time(NULL);
+
+	if(ul_dbf.query(ul_dbh, keys, op, vals, cols, 2, 1, 0, &res) < 0) {
+		LM_ERR("failed to query temp GRUU history\n");
+		return -1;
+	}
+
+	if(!res || RES_ROW_N(res) == 0) {
+		if(res)
+			ul_dbf.free_result(ul_dbh, res);
+		return 1;
+	}
+
+	row = RES_ROWS(res);
+	if(VAL_NULL(ROW_VALUES(row))
+			|| (VAL_TYPE(ROW_VALUES(row)) != DB1_INT
+					&& VAL_TYPE(ROW_VALUES(row)) != DB1_UINT)) {
+		ul_dbf.free_result(ul_dbh, res);
+		return 1;
+	}
+	*location_id = (VAL_TYPE(ROW_VALUES(row)) == DB1_UINT)
+						   ? (unsigned int)VAL_UINT(ROW_VALUES(row))
+						   : (unsigned int)VAL_INT(ROW_VALUES(row));
+	ul_dbf.free_result(ul_dbh, res);
+	return 0;
+}
+
+int db_cleanup_temp_gruu_history(void)
+{
+	db_key_t keys[1] = {&expires_col};
+	db_op_t op[1] = {OP_LT};
+	db_val_t vals[1];
+
+	if(ul_dbf.use_table(ul_dbh, &pcscf_temp_gruu_history_table) < 0) {
+		LM_ERR("failed to use temp GRUU history table\n");
+		return -1;
+	}
+
+	VAL_TYPE(vals) = DB1_DATETIME;
+	VAL_NULL(vals) = 0;
+	VAL_TIME(vals) = time(NULL);
+
+	if(ul_dbf.delete(ul_dbh, keys, op, vals, 1) < 0) {
+		LM_ERR("failed to cleanup temp GRUU history\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 /* take a contact structure and a pointer to some memory and returns a list of public identities in the format
  * <impu1><impu2>....<impu(n)>
  * make sure p already has memory allocated
@@ -644,6 +808,48 @@ int impus_as_string(struct pcontact *_c, t_reusable_buffer *buffer)
 		memcpy(p, impu->public_identity.s, impu->public_identity.len);
 		p += impu->public_identity.len;
 		*p++ = '>';
+		impu = impu->next;
+	}
+
+	return len;
+}
+
+static int impus_barred_as_string(
+		struct pcontact *_c, t_reusable_buffer *buffer)
+{
+	ppublic_t *impu;
+	int len = 0;
+	char *p;
+
+	impu = _c->head;
+	while(impu) {
+		if(impu->barred) {
+			len += 2 + impu->public_identity.len;
+		}
+		impu = impu->next;
+	}
+
+	if(!buffer->buf || buffer->buf_len == 0 || len > buffer->buf_len) {
+		if(buffer->buf) {
+			pkg_free(buffer->buf);
+		}
+		buffer->buf = (char *)pkg_malloc(len);
+		if(!buffer->buf) {
+			LM_CRIT("unable to allocate pkg memory\n");
+			return 0;
+		}
+		buffer->buf_len = len;
+	}
+
+	impu = _c->head;
+	p = buffer->buf;
+	while(impu) {
+		if(impu->barred) {
+			*p++ = '<';
+			memcpy(p, impu->public_identity.s, impu->public_identity.len);
+			p += impu->public_identity.len;
+			*p++ = '>';
+		}
 		impu = impu->next;
 	}
 
@@ -707,5 +913,11 @@ void free_impu_buf(void)
 		impu_buffer.data_len = 0;
 		impu_buffer.buf_len = 0;
 		impu_buffer.buf = 0;
+	}
+	if(impu_barred_buffer.buf) {
+		pkg_free(impu_barred_buffer.buf);
+		impu_barred_buffer.data_len = 0;
+		impu_barred_buffer.buf_len = 0;
+		impu_barred_buffer.buf = 0;
 	}
 }

@@ -47,12 +47,26 @@
 
 #include "../../core/ip_addr.h"
 #include "../../core/dprint.h"
+#include "../../core/mem/pkg.h"
 
 #include "ul_rpc.h"
 #include "dlist.h"
 #include "udomain.h"
 #include "pcontact.h"
 #include "utime.h"
+
+static udomain_t *ul_rpc_find_domain(str *name)
+{
+	dlist_t *dl;
+
+	for(dl = root; dl; dl = dl->next) {
+		if(dl->name.len == name->len
+				&& (name->len == 0
+						|| strncmp(dl->name.s, name->s, name->len) == 0))
+			return dl->d;
+	}
+	return NULL;
+}
 
 static const char *ul_rpc_dump_doc[2] = {
 		"Dump PCSCF contacts and associated identitites", 0};
@@ -135,6 +149,32 @@ static void ul_rpc_dump(rpc_t *rpc, void *ctx)
 					rpc->fault(ctx, 500, "Internal error creating path struct");
 					return;
 				}
+				if(rpc->struct_add(ah, "d", "LocationID", (int)c->location_id)
+						< 0) {
+					unlock_ulslot(dom, i);
+					rpc->fault(ctx, 500,
+							"Internal error creating location_id struct");
+					return;
+				}
+				if(rpc->struct_add(ah, "S", "PubGruu", &c->pub_gruu) < 0) {
+					unlock_ulslot(dom, i);
+					rpc->fault(
+							ctx, 500, "Internal error creating pub_gruu field");
+					return;
+				}
+				if(rpc->struct_add(ah, "S", "TempGruu", &c->temp_gruu) < 0) {
+					unlock_ulslot(dom, i);
+					rpc->fault(ctx, 500,
+							"Internal error creating temp_gruu field");
+					return;
+				}
+				if(rpc->struct_add(ah, "S", "InstanceId", &c->instance_id)
+						< 0) {
+					unlock_ulslot(dom, i);
+					rpc->fault(ctx, 500,
+							"Internal error creating instance_id field");
+					return;
+				}
 
 				//		if (rpc->struct_add(ah, "{", "Service Routes", &sr) < 0) {
 				//			unlock_ulslot(dom, i);
@@ -175,5 +215,107 @@ static void ul_rpc_dump(rpc_t *rpc, void *ctx)
 	}
 }
 
-rpc_export_t ul_rpc[] = {
-		{"ulpcscf.status", ul_rpc_dump, ul_rpc_dump_doc, 0}, {0, 0, 0, 0}};
+static const char *ul_rpc_lookup_temp_gruu_doc[2] = {
+		"Lookup P-CSCF contact by temp-GRUU (index, LRU, or DB history)", 0};
+
+static int ul_rpc_decode_gruu_param(str *gruu, str *decoded)
+{
+	char *dst;
+	int i, j, out_len;
+
+	if(!gruu || !gruu->s || gruu->len <= 0 || !decoded)
+		return -1;
+
+	out_len = gruu->len;
+	for(i = 0; i + 2 < gruu->len; i++) {
+		if(gruu->s[i] == '%' && gruu->s[i + 1] == '3'
+				&& (gruu->s[i + 2] == 'B' || gruu->s[i + 2] == 'b'))
+			out_len -= 2;
+	}
+
+	dst = (char *)pkg_malloc(out_len + 1);
+	if(!dst)
+		return -1;
+
+	for(i = 0, j = 0; i < gruu->len; i++) {
+		if(i + 2 < gruu->len && gruu->s[i] == '%' && gruu->s[i + 1] == '3'
+				&& (gruu->s[i + 2] == 'B' || gruu->s[i + 2] == 'b')) {
+			dst[j++] = ';';
+			i += 2;
+			continue;
+		}
+		dst[j++] = gruu->s[i];
+	}
+	dst[j] = '\0';
+	decoded->s = dst;
+	decoded->len = j;
+	return 0;
+}
+
+static void ul_rpc_lookup_temp_gruu(rpc_t *rpc, void *ctx)
+{
+	str domain = {0, 0};
+	str gruu = {0, 0};
+	str gruu_dec = {0, 0};
+	udomain_t *dom;
+	pcontact_t *c;
+	void *th;
+	int ret;
+
+	if(rpc->scan(ctx, "S", &domain) != 1) {
+		rpc->fault(ctx, 500, "Missing domain parameter");
+		return;
+	}
+	if(rpc->scan(ctx, "S", &gruu) != 1) {
+		rpc->fault(ctx, 500, "Missing temp-GRUU parameter");
+		return;
+	}
+
+	if(ul_rpc_decode_gruu_param(&gruu, &gruu_dec) < 0) {
+		rpc->fault(ctx, 500, "Failed to decode temp-GRUU parameter");
+		return;
+	}
+
+	dom = ul_rpc_find_domain(&domain);
+	if(!dom) {
+		pkg_free(gruu_dec.s);
+		rpc->fault(ctx, 404, "Domain not found");
+		return;
+	}
+
+	ret = get_pcontact_by_temp_gruu(dom, &gruu_dec, &c);
+	pkg_free(gruu_dec.s);
+	if(ret < 0) {
+		rpc->fault(ctx, 500, "Temp-GRUU lookup failed");
+		return;
+	}
+
+	if(rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating rpc struct");
+		return;
+	}
+	if(ret != 0 || !c) {
+		if(rpc->struct_add(th, "d", "Found", 0) < 0) {
+			rpc->fault(ctx, 500, "Internal error creating Found field");
+		}
+		return;
+	}
+
+	if(rpc->struct_add(th, "d", "Found", 1) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating Found field");
+		return;
+	}
+	if(rpc->struct_add(th, "S", "AoR", &c->aor) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating AoR field");
+		return;
+	}
+	if(rpc->struct_add(th, "d", "LocationID", (int)c->location_id) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating LocationID field");
+		return;
+	}
+}
+
+rpc_export_t ul_rpc[] = {{"ulpcscf.status", ul_rpc_dump, ul_rpc_dump_doc, 0},
+		{"ulpcscf.lookup_temp_gruu", ul_rpc_lookup_temp_gruu,
+				ul_rpc_lookup_temp_gruu_doc, 0},
+		{0, 0, 0, 0}};
