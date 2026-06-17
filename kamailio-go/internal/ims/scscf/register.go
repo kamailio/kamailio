@@ -401,3 +401,14 @@ func (r *Registrar) GetContact(impu string) string {
 
 	return record.ContactURI
 }
+
+// SetRecordForTest creates a registration record bypassing the auth handshake.
+// Intended for unit/integration tests that need to seed registered users
+// without going through the 401 challenge flow.
+func (r *Registrar) SetRecordForTest(impu, contactURI string) {
+	r.setRecord(impu, &RegistrationRecord{
+		IMPU:       impu,
+		ContactURI: contactURI,
+		State:      RegStateRegistered,
+	})
+}

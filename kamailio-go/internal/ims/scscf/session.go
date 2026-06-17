@@ -99,14 +99,24 @@ func (sh *SessionHandler) HandleInvite(msg *parser.SIPMsg) (*SessionResult, erro
 		log.String("to", toURI),
 	)
 
-	// Check if caller is registered (for MO calls)
-	if fromURI != "" && !sh.registrar.IsRegistered(fromURI) {
-		// Caller not registered - reject
+	// Check if caller is registered (for MO calls).
+	// MT calls are accepted even if the caller is external - we only
+	// reject when neither caller nor callee are registered locally.
+	callerRegistered := fromURI != "" && sh.registrar.IsRegistered(fromURI)
+	calleeRegistered := toURI != "" && sh.registrar.IsRegistered(toURI)
+	if !callerRegistered && !calleeRegistered {
+		// Neither side registered with us - reject.
 		return &SessionResult{
 			StatusCode:   403,
 			StatusReason: "Forbidden - Not Registered",
 		}, nil
 	}
+
+	// Determine call direction:
+	//   MO -> From URI is registered with us
+	//   MT -> To URI is registered with us (caller is external)
+	isMO := callerRegistered
+	isMT := calleeRegistered && !isMO
 
 	// Create session record
 	session := &SessionRecord{
@@ -114,7 +124,8 @@ func (sh *SessionHandler) HandleInvite(msg *parser.SIPMsg) (*SessionResult, erro
 		FromURI:  fromURI,
 		ToURI:    toURI,
 		State:    SessionStateInit,
-		IsMO:     true,
+		IsMO:     isMO,
+		IsMT:     isMT,
 	}
 
 	// Extract From tag
@@ -134,6 +145,9 @@ func (sh *SessionHandler) HandleInvite(msg *parser.SIPMsg) (*SessionResult, erro
 	}
 
 	// Merge PAI result
+	if routeResult.Headers == nil {
+		routeResult.Headers = make(map[string]str.Str)
+	}
 	for k, v := range paiResult {
 		routeResult.Headers[k] = v
 	}

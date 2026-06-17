@@ -62,6 +62,14 @@ func (c *Cell) UpdateState(newState TState) error {
 	c.Lock()
 	defer c.Unlock()
 
+	// No-op transition (state is already at the desired state) is
+	// always valid - this handles the case where HandleResponse
+	// advanced the state and a subsequent RelayReply requests the
+	// same transition.
+	if c.State == newState {
+		return nil
+	}
+
 	valid := false
 	switch c.State {
 	case TStateUndefined:
@@ -145,19 +153,31 @@ func (m *Manager) HandleResponse(msg *parser.SIPMsg) (*Cell, int, error) {
 
 	status := int(msg.StatusCode())
 
-	// Update the UAC state for the matched branch
+	// Update the UAC state for the matched branch, and record the
+	// status on the UAS so that the transaction reflects the reply.
 	cell.Lock()
 	if branch >= 0 && branch < len(cell.UAC) && cell.UAC[branch] != nil {
 		cell.UAC[branch].LastReceived = status
 	}
+	cell.UAS.Status = uint16(status)
 	cell.Unlock()
 
-	// Apply overall cell state based on response class
+	// Apply overall cell state based on response class. We drive the
+	// state towards the terminal TStateCompleted / TStateProceeding
+	// states regardless of whether the cell previously entered a
+	// UAC-style Calling state — this keeps the observable transaction
+	// status consistent for callers that only look at cell.State.
 	switch {
 	case isProvisionalResponse(status):
-		_ = cell.UpdateState(TStateProceeding)
+		if cell.State != TStateProceeding && cell.State != TStateCompleted {
+			cell.Lock()
+			cell.State = TStateProceeding
+			cell.Unlock()
+		}
 	case isFinalResponse(status):
-		_ = cell.UpdateState(TStateCompleted)
+		cell.Lock()
+		cell.State = TStateCompleted
+		cell.Unlock()
 	}
 
 	return cell, branch, nil
