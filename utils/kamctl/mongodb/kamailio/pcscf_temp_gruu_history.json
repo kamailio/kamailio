@@ -1,0 +1,31 @@
+{
+  "name": "pcscf_temp_gruu_history",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "location_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "temp_gruu": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "created": {
+      "type": "datetime",
+      "default": null,
+      "null": false
+    },
+    "expires": {
+      "type": "datetime",
+      "default": null,
+      "null": false
+    }
+  ]
+}

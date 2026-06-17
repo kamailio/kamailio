@@ -1,0 +1,2 @@
+id(int,auto) location_id(int) temp_gruu(string) created(int) expires(int) 
+0:pcscf_temp_gruu_history:1

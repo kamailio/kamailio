@@ -1,6 +1,6 @@
 {
   "name": "pcscf_location",
-  "version": 7,
+  "version": 8,
   "columns": [
     "id": {
       "type": "int",
@@ -229,6 +229,26 @@
     },
     "t_spi_us": {
       "type": "int",
+      "default": null,
+      "null": true
+    },
+    "instance_id": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "pub_gruu": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "temp_gruu": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "public_ids_barred": {
+      "type": "string",
       "default": null,
       "null": true
     }

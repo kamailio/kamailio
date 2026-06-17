@@ -48,4 +48,18 @@
 		<column><field>t_spi_ps</field><type>DB1_INT</type></column>
 		<column><field>t_spi_uc</field><type>DB1_INT</type></column>
 		<column><field>t_spi_us</field><type>DB1_INT</type></column>
+		<column><field>instance_id</field><type>DB1_STR</type></column>
+		<column><field>pub_gruu</field><type>DB1_STR</type></column>
+		<column><field>temp_gruu</field><type>DB1_STR</type></column>
+		<column><field>public_ids_barred</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of pcscf_temp_gruu_history table-->
+	<db_table id="pcscf_temp_gruu_history">
+		<table_name>pcscf_temp_gruu_history</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>location_id</field><type>DB1_INT</type></column>
+		<column><field>temp_gruu</field><type>DB1_STR</type></column>
+		<column><field>created</field><type>DB1_DATETIME</type></column>
+		<column><field>expires</field><type>DB1_DATETIME</type></column>
 	</db_table>
