@@ -361,7 +361,8 @@ static int ki_record_route_preset(sip_msg_t *msg, str *addr1, str *addr2)
 done:
 	reset_rr_param();
 
-	msg->msg_flags |= FL_RR_ADDED;
+	if(get_route_type() != BRANCH_ROUTE)
+		msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -379,7 +380,8 @@ static int ki_record_route_preset_one(sip_msg_t *msg, str *addr1)
 		return -1;
 	}
 
-	msg->msg_flags |= FL_RR_ADDED;
+	if(get_route_type() != BRANCH_ROUTE)
+		msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -436,7 +438,8 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *key2)
 		return -1;
 
 done:
-	msg->msg_flags |= FL_RR_ADDED;
+	if(get_route_type() != BRANCH_ROUTE)
+		msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -461,7 +464,8 @@ static int w_record_route_advertised_address(
 	if(record_route_advertised_address(msg, &s) < 0)
 		return -1;
 
-	msg->msg_flags |= FL_RR_ADDED;
+	if(get_route_type() != BRANCH_ROUTE)
+		msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
@@ -478,7 +482,8 @@ static int ki_record_route_advertised_address(sip_msg_t *msg, str *addr)
 	if(record_route_advertised_address(msg, addr) < 0)
 		return -1;
 
-	msg->msg_flags |= FL_RR_ADDED;
+	if(get_route_type() != BRANCH_ROUTE)
+		msg->msg_flags |= FL_RR_ADDED;
 	return 1;
 }
 
