@@ -51,8 +51,10 @@
 #include "ims_registrar_pcscf_mod.h"
 #include "ul_callback.h"
 #include "subscribe.h"
+#include "path.h"
 
 #include "../pua/pua_bind.h"
+#include "gruu.h"
 #include "../ims_ipsec_pcscf/cmd.h"
 #include "sec_agree.h"
 
@@ -65,6 +67,7 @@ extern int subscription_expires;
 extern int trust_bottom_via;
 extern pua_api_t pua;
 extern ipsec_pcscf_api_t ipsec_pcscf;
+extern str pcscf_uri;
 
 extern ims_registrar_pcscf_params_t _imsregp_params;
 
@@ -288,6 +291,15 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 							if(ul.update_pcontact(_d, &ci, pcontact) != 0) {
 								LM_DBG("failed to update pcscf contact on "
 									   "de-register\n");
+							} else if(public_id && public_id_cnt > 0) {
+								if(ul.update_contact_impus(_d, pcontact,
+										   public_id, public_id_cnt, 0, NULL, 0)
+										!= 0) {
+									LM_ERR("update_contact_impus failed\n");
+									ul.unlock_udomain(
+											_d, &puri.host, port, puri.proto);
+									return -1;
+								}
 							}
 						}
 						//TODO_LATEST replace above
@@ -320,6 +332,26 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 							// After successful registration try to unregister all callbacks for pending contacts related to this contact.
 							ul.unreg_pending_contacts_cb(
 									_d, pcontact, PCSCF_CONTACT_EXPIRE);
+							/* Extract and apply any GRUU/instance parameters from the Contact. */
+							{
+								gruu_fields_t gf;
+								if(extract_gruu_from_contact(c, &gf) == 0) {
+									if(pcscf_apply_gruu(_d, pcontact, &gf)
+											!= 0) {
+										LM_DBG("pcscf_apply_gruu failed\n");
+									}
+								}
+							}
+							if(public_id && public_id_cnt > 0) {
+								if(ul.update_contact_impus(_d, pcontact,
+										   public_id, public_id_cnt, 0, NULL, 0)
+										!= 0) {
+									LM_ERR("update_contact_impus failed\n");
+									ul.unlock_udomain(
+											_d, &puri.host, port, puri.proto);
+									return -1;
+								}
+							}
 						}
 						pcontact->expires = expires;
 					}
@@ -488,11 +520,26 @@ int save_pending(struct sip_msg *_m, udomain_t *_d)
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if(ul.get_pcontact(_d, &ci, &pcontact, 0)
 			!= 0) { //need to insert new contact
+		str path_uri = {0, 0};
+		char path_buf[512];
 		// try to clean all ipsec SAs/Policies if there is no registered contacts
 		if(ipsec_pcscf.ipsec_reconfig != NULL)
 			ipsec_pcscf.ipsec_reconfig();
 
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
+		if(insert_path_on_register) {
+			if(pcscf_build_path_uri(
+					   &pcscf_uri, &path_uri, path_buf, sizeof(path_buf))
+					!= 0) {
+				LM_ERR("failed to build Path URI\n");
+				goto error;
+			}
+			if(pcscf_insert_path_on_register(_m, &path_uri) != 0) {
+				LM_ERR("failed to insert Path header\n");
+				goto error;
+			}
+			ci.path = &path_uri;
+		}
 		ci.reg_state = PCONTACT_REG_PENDING;
 		if(ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
 			LM_ERR("Failed inserting new pcontact\n");

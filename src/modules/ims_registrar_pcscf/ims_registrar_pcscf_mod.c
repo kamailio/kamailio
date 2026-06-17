@@ -71,6 +71,7 @@
 #include "ims_registrar_pcscf_mod.h"
 #include "ul_callback.h"
 #include "save.h"
+#include "gruu.h"
 #include "service_routes.h"
 MODULE_VERSION
 
@@ -94,6 +95,7 @@ int ignore_contact_rxport_check = 0;
 int ignore_contact_rxproto_check = 1;
 /** If set, this uses the bottom Via for identification of UE, always, on both requests and responses, over Contact. */
 int trust_bottom_via = 0;
+int insert_path_on_register = 1;
 
 time_t time_now;
 
@@ -129,6 +131,7 @@ static int w_save_pending(struct sip_msg *_m, char *_d, char *_cflags);
 static int w_follows_service_routes(struct sip_msg *_m, char *_d, char *_foo);
 static int w_force_service_routes(struct sip_msg *_m, char *_d, char *_foo);
 static int w_is_registered(struct sip_msg *_m, char *_d, char *_foo);
+static int w_pcscf_gruu_lookup(struct sip_msg *_m, char *_d, char *_foo);
 static int w_reginfo_handle_notify(struct sip_msg *_m, char *_d, char *_foo);
 
 static int w_assert_identity(
@@ -168,6 +171,7 @@ static cmd_export_t cmds[] = {
 		{"pcscf_follows_service_routes", (cmd_function)w_follows_service_routes, 1, save_fixup2, 0, REQUEST_ROUTE},
 		{"pcscf_force_service_routes", (cmd_function)w_force_service_routes, 1, save_fixup2, 0, REQUEST_ROUTE},
 		{"pcscf_is_registered", (cmd_function)w_is_registered, 1, save_fixup2, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"pcscf_gruu_lookup", (cmd_function)w_pcscf_gruu_lookup, 1, save_fixup2, 0, REQUEST_ROUTE},
 		{"pcscf_assert_identity", (cmd_function)w_assert_identity, 2, assert_identity_fixup, 0, REQUEST_ROUTE},
 		{"pcscf_assert_called_identity", (cmd_function)w_assert_called_identity, 1, assert_identity_fixup, 0, ONREPLY_ROUTE},
 		{"reginfo_handle_notify", (cmd_function)w_reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE},
@@ -192,6 +196,7 @@ static param_export_t params[] = {{"pcscf_uri", PARAM_STR, &pcscf_uri},
 	{"reginfo_queue_size_threshold", PARAM_INT, &reginfo_queue_size_threshold},
 	{"delete_delay", PARAM_INT, &_imsregp_params.delete_delay},
 	{"trust_bottom_via", PARAM_INT, &trust_bottom_via},
+	{"insert_path_on_register", PARAM_INT, &insert_path_on_register},
 	//	{"store_profile_dereg",	PARAM_INT, &store_data_on_dereg},
 	{0, 0, 0}
 };
@@ -464,6 +469,11 @@ static int w_force_service_routes(struct sip_msg *_m, char *_d, char *_foo)
 static int w_is_registered(struct sip_msg *_m, char *_d, char *_foo)
 {
 	return is_registered(_m, (udomain_t *)_d);
+}
+
+static int w_pcscf_gruu_lookup(struct sip_msg *_m, char *_d, char *_foo)
+{
+	return pcscf_gruu_lookup(_m, (udomain_t *)_d);
 }
 
 static int w_reginfo_handle_notify(struct sip_msg *_m, char *_d, char *_foo)
