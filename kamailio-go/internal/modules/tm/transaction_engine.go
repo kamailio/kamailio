@@ -108,6 +108,10 @@ func (c *Cell) UpdateState(newState TState) error {
 // on the method. For CANCEL and ACK it looks up the existing transaction.
 // For other methods, it creates a new transaction if one does not exist yet
 // or returns an error on a duplicate.
+//
+// When an INVITE transaction is created and the Manager has an integrated
+// TimerManager, the FR timer for branch 0 is started to cover the UAS side
+// (awaiting an upstream response after relaying).
 func (m *Manager) HandleRequest(msg *parser.SIPMsg) (*Cell, error) {
 	if msg == nil {
 		return nil, fmt.Errorf("nil message")
@@ -132,11 +136,24 @@ func (m *Manager) HandleRequest(msg *parser.SIPMsg) (*Cell, error) {
 	}
 
 	// Create a new transaction
-	return m.NewTransaction(msg)
+	cell, err := m.NewTransaction(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	// If this Manager has timers and this is an INVITE, start the FR timer
+	// for the initial branch (branch 0).
+	if m.timerMgr != nil && cell.IsInvite() {
+		m.timerMgr.StartFRTimer(cell, 0)
+	}
+
+	return cell, nil
 }
 
 // HandleResponse dispatches a response to LookupReply and updates the
-// UAC state for the matched branch.
+// UAC state for the matched branch. When a final response is received,
+// the FR and retransmit timers are stopped; for non-2xx a wait timer
+// is started, and for 2xx a delete timer is started.
 func (m *Manager) HandleResponse(msg *parser.SIPMsg) (*Cell, int, error) {
 	if msg == nil {
 		return nil, -1, fmt.Errorf("nil message")
@@ -178,6 +195,19 @@ func (m *Manager) HandleResponse(msg *parser.SIPMsg) (*Cell, int, error) {
 		cell.Lock()
 		cell.State = TStateCompleted
 		cell.Unlock()
+
+		// Stop the FR/retransmit timers on final response and start
+		// the appropriate post-final timer (wait for non-2xx, delete
+		// for 2xx).
+		if m.timerMgr != nil {
+			m.timerMgr.StopFRTimer(cell)
+			m.timerMgr.StopRetransmitTimer(cell)
+			if is2xx(status) {
+				m.timerMgr.StartDeleteTimer(cell)
+			} else {
+				m.timerMgr.StartWaitTimer(cell)
+			}
+		}
 	}
 
 	return cell, branch, nil
@@ -185,7 +215,9 @@ func (m *Manager) HandleResponse(msg *parser.SIPMsg) (*Cell, int, error) {
 
 // Reply implements the t_reply() equivalent: it updates the UAS state of
 // the current transaction and records the response status + reason.
-// This does not actually transmit a reply; it manages the transaction state.
+// When a final response is sent, the FR and retransmit timers are stopped
+// and a wait/delete timer is started so the transaction eventually gets
+// cleaned up.
 func (m *Manager) Reply(msg *parser.SIPMsg, status int, reason string) error {
 	if msg == nil {
 		return fmt.Errorf("nil message")
@@ -212,7 +244,19 @@ func (m *Manager) Reply(msg *parser.SIPMsg, status int, reason string) error {
 	case isProvisionalResponse(status):
 		return cell.UpdateState(TStateProceeding)
 	case isFinalResponse(status):
-		return cell.UpdateState(TStateCompleted)
+		if err := cell.UpdateState(TStateCompleted); err != nil {
+			return err
+		}
+		if m.timerMgr != nil {
+			m.timerMgr.StopFRTimer(cell)
+			m.timerMgr.StopRetransmitTimer(cell)
+			if is2xx(status) {
+				m.timerMgr.StartDeleteTimer(cell)
+			} else {
+				m.timerMgr.StartWaitTimer(cell)
+			}
+		}
+		return nil
 	default:
 		return fmt.Errorf("invalid status code: %d", status)
 	}
@@ -252,7 +296,20 @@ func (m *Manager) RelayReply(msg *parser.SIPMsg, branch int, status int, reason 
 	case isProvisionalResponse(status):
 		return cell.UpdateState(TStateProceeding)
 	case isFinalResponse(status):
-		return cell.UpdateState(TStateCompleted)
+		if err := cell.UpdateState(TStateCompleted); err != nil {
+			return err
+		}
+		// Stop timers on final response and schedule cleanup
+		if m.timerMgr != nil {
+			m.timerMgr.StopFRTimer(cell)
+			m.timerMgr.StopRetransmitTimer(cell)
+			if is2xx(status) {
+				m.timerMgr.StartDeleteTimer(cell)
+			} else {
+				m.timerMgr.StartWaitTimer(cell)
+			}
+		}
+		return nil
 	default:
 		return fmt.Errorf("invalid status code: %d", status)
 	}
@@ -261,13 +318,13 @@ func (m *Manager) RelayReply(msg *parser.SIPMsg, branch int, status int, reason 
 // Cancel marks the cell as canceled and records the reason. When active
 // branches exist, this triggers CANCEL semantics (flag-only at this layer;
 // actual CANCEL request generation is handled by the transport layer).
+// All timers associated with the transaction are stopped.
 func (m *Manager) Cancel(cell *Cell, reason string) error {
 	if cell == nil {
 		return fmt.Errorf("nil cell")
 	}
 
 	cell.Lock()
-	defer cell.Unlock()
 
 	cell.Flags |= TCanceled
 	cell.UAS.CancelReason = reason
@@ -276,12 +333,19 @@ func (m *Manager) Cancel(cell *Cell, reason string) error {
 	// is effectively completed from the UAS perspective.
 	cell.State = TStateCompleted
 
+	cell.Unlock()
+
+	if m.timerMgr != nil {
+		m.timerMgr.StopAllTimers(cell)
+	}
+
 	return nil
 }
 
 // RelayRequest implements t_relay() core: add a new branch to the current
 // transaction and mark it as relayed. Returns the cell, branch index, and
-// any error.
+// any error. If the Manager has a TimerManager the branch FR timer is
+// started.
 func (m *Manager) RelayRequest(msg *parser.SIPMsg, dstAddr string, dstPort int) (*Cell, int, error) {
 	if msg == nil {
 		return nil, -1, fmt.Errorf("nil message")
@@ -322,6 +386,11 @@ func (m *Manager) RelayRequest(msg *parser.SIPMsg, dstAddr string, dstPort int) 
 	if err := cell.UpdateState(TStateCalling); err != nil {
 		// It's acceptable if we cannot transition (e.g., already in
 		// TStateCalling) - we still have the branch.
+	}
+
+	// Start the branch FR timer if available
+	if m.timerMgr != nil {
+		m.timerMgr.StartFRTimer(cell, branch)
 	}
 
 	return cell, branch, nil

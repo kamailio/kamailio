@@ -286,3 +286,22 @@ func (u *SIPURI) String() string {
 
 	return sb.String()
 }
+
+// ExtractHostPortFromURI returns the host, port and user from a parsed SIP URI.
+// Defaults: port falls back to 5060 for sip and 5061 for sips; user may be empty.
+func ExtractHostPortFromURI(uri *SIPURI) (host string, port uint16, user string) {
+	if uri == nil {
+		return "", 0, ""
+	}
+	host = strings.TrimSpace(uri.Host.String())
+	user = strings.TrimSpace(uri.User.String())
+	port = uri.PortNo
+	if port == 0 {
+		if uri.Type == SIPSURIT {
+			port = 5061
+		} else {
+			port = 5060
+		}
+	}
+	return host, port, user
+}

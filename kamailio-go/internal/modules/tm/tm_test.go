@@ -299,7 +299,7 @@ func TestTimerManagerStartStop(t *testing.T) {
 	tm.StopRetransmitTimer(cell)
 
 	// Start FR timer
-	tm.StartFRTimer(cell)
+	tm.StartFRTimer(cell, 0)
 
 	// Stop it
 	tm.StopFRTimer(cell)

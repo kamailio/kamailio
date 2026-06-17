@@ -12,6 +12,7 @@ package dns
 
 import (
 	"context"
+	"errors"
 	"net"
 	"sort"
 	"strings"
@@ -197,7 +198,11 @@ func (r *Resolver) Resolve(domain string, proto Proto, port uint16) ([]*Addr, er
 	}
 
 	// Fall back to A/AAAA lookup
-	return r.resolveA(domain, proto, port)
+	addrs, err = r.resolveA(domain, proto, port)
+	if err == nil && len(addrs) > 0 && r.cache != nil {
+		r.cache.Set(cacheKey, addrs)
+	}
+	return addrs, err
 }
 
 // resolveNAPTR performs NAPTR lookup
@@ -320,27 +325,103 @@ func (r *Resolver) LookupSRV(service, proto, domain string) ([]*SRVRecord, error
 }
 
 // ResolveSIPURI resolves a SIP URI to addresses
-// RFC 3263
+// RFC 3263 - supports sip:user@domain.com -> NAPTR -> SRV -> A,
+// sip:user@host:port -> A, sip:user@ip:port -> direct use
 func (r *Resolver) ResolveSIPURI(uri string) ([]*Addr, error) {
-	// Parse URI to extract host, port, and transport
-	// This is a simplified implementation
-
-	// Remove sip: prefix
-	if strings.HasPrefix(strings.ToLower(uri), "sips:") {
-		// SIPS URI - use TLS
-		uri = uri[5:]
-		return r.Resolve(extractHost(uri), ProtoTLS, 5061)
-	} else if strings.HasPrefix(strings.ToLower(uri), "sip:") {
-		uri = uri[4:]
+	if uri == "" {
+		return nil, errors.New("empty URI")
 	}
 
-	// Extract host and port
+	proto := ProtoUDP
+	defaultPort := uint16(5060)
+	rest := uri
+
+	// Handle scheme
+	lower := strings.ToLower(uri)
+	switch {
+	case strings.HasPrefix(lower, "sips:"):
+		proto = ProtoTLS
+		defaultPort = 5061
+		rest = uri[5:]
+	case strings.HasPrefix(lower, "sip:"):
+		rest = uri[4:]
+	case strings.HasPrefix(lower, "tel:"):
+		return nil, errors.New("tel: URIs not supported for DNS resolution")
+	}
+
+	// Strip user info (everything before the last '@')
+	if at := strings.LastIndex(rest, "@"); at != -1 {
+		rest = rest[at+1:]
+	}
+
+	// Strip URI parameters and headers
+	if semi := strings.Index(rest, ";"); semi != -1 {
+		// Check for transport= parameter before stripping
+		paramsPart := rest[semi+1:]
+		if idx := strings.Index(strings.ToLower(paramsPart), "transport="); idx != -1 {
+			remain := paramsPart[idx+len("transport="):]
+			end := strings.IndexAny(remain, ";?")
+			var t string
+			if end == -1 {
+				t = strings.ToLower(remain)
+			} else {
+				t = strings.ToLower(remain[:end])
+			}
+			proto = ProtoFromString(t)
+			if proto == ProtoUDP && t != "udp" {
+				proto = ProtoUDP
+			}
+			if proto == ProtoTLS {
+				defaultPort = 5061
+			}
+		}
+		rest = rest[:semi]
+	}
+	if quest := strings.Index(rest, "?"); quest != -1 {
+		rest = rest[:quest]
+	}
+
+	// Extract host and port from what remains
+	host, port := extractHostPort(rest)
+	if port == 0 {
+		port = defaultPort
+	}
+
+	return r.Resolve(host, proto, port)
+}
+
+// ResolveNextHop is a high-level API that parses a next hop URI and returns
+// a list of resolved addresses. It automatically detects the URI format
+// and applies the NAPTR -> SRV -> A downgrade strategy.
+func (r *Resolver) ResolveNextHop(uri string) ([]*Addr, error) {
+	if uri == "" {
+		return nil, errors.New("empty next hop URI")
+	}
+
+	// If it contains :// or sip:/sips: treat as SIP URI
+	lower := strings.ToLower(uri)
+	if strings.Contains(lower, "sip:") || strings.Contains(lower, "sips:") {
+		return r.ResolveSIPURI(uri)
+	}
+
+	// Plain host:port format
 	host, port := extractHostPort(uri)
 	if port == 0 {
 		port = 5060
 	}
-
 	return r.Resolve(host, ProtoUDP, port)
+}
+
+// ResolveWithPriority returns addresses resolved from the given host/proto/port
+// with priority ordering preserved (SRV priority/weight, otherwise first address first).
+func (r *Resolver) ResolveWithPriority(host string, proto Proto, port uint16) ([]*Addr, error) {
+	if host == "" {
+		return nil, errors.New("empty host")
+	}
+	if port == 0 {
+		port = 5060
+	}
+	return r.Resolve(host, proto, port)
 }
 
 // extractHost extracts host from URI

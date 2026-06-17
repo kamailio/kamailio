@@ -8,6 +8,7 @@
 package tm
 
 import (
+	"net"
 	"sync"
 	"time"
 
@@ -34,22 +35,26 @@ const (
 // TimerManager manages transaction timers
 // C: timer.c / timer.h
 type TimerManager struct {
-	t1        time.Duration
-	t2        time.Duration
-	t4        time.Duration
-	frTimeout time.Duration
+	t1         time.Duration
+	t2         time.Duration
+	t4         time.Duration
+	frTimeout  time.Duration
 	frInvTimeout time.Duration
 
-	mu        sync.RWMutex
-	timers    map[*Cell]*cellTimers
+	// manager is a reference to the owning Manager for callbacks
+	// (send buffer, remove transaction from table, etc.)
+	manager *Manager
+
+	mu     sync.RWMutex
+	timers map[*Cell]*cellTimers
 }
 
 // cellTimers holds timers for a specific cell
 type cellTimers struct {
-	retrTimer    *time.Timer
-	frTimer      *time.Timer
-	waitTimer    *time.Timer
-	deleteTimer  *time.Timer
+	retrTimer   *time.Timer
+	frTimer     *time.Timer
+	waitTimer   *time.Timer
+	deleteTimer *time.Timer
 }
 
 // NewTimerManager creates a new timer manager
@@ -62,6 +67,14 @@ func NewTimerManager() *TimerManager {
 		frInvTimeout: DefaultFRInvTimeout,
 		timers:       make(map[*Cell]*cellTimers),
 	}
+}
+
+// SetManager links a Manager to this TimerManager so that timer
+// callbacks can invoke send/remove operations.
+func (tm *TimerManager) SetManager(mgr *Manager) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	tm.manager = mgr
 }
 
 // StartRetransmitTimer starts the retransmission timer for a branch
@@ -100,9 +113,9 @@ func (tm *TimerManager) StopRetransmitTimer(cell *Cell) {
 	}
 }
 
-// StartFRTimer starts the final response timer
+// StartFRTimer starts the final response timer for a branch
 // C: start_fr(rb)
-func (tm *TimerManager) StartFRTimer(cell *Cell) {
+func (tm *TimerManager) StartFRTimer(cell *Cell, branch int) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -122,7 +135,7 @@ func (tm *TimerManager) StartFRTimer(cell *Cell) {
 	}
 
 	ct.frTimer = time.AfterFunc(timeout, func() {
-		tm.handleFRTimeout(cell)
+		tm.handleFRTimeout(cell, branch)
 	})
 }
 
@@ -181,18 +194,21 @@ func (tm *TimerManager) StartDeleteTimer(cell *Cell) {
 	})
 }
 
-// handleRetransmit handles retransmission timeout
+// handleRetransmit handles retransmission timeout.
+// If the transaction is still active and the branch has a retransmit
+// buffer, the buffer is re-sent via the Manager's registered listeners.
 func (tm *TimerManager) handleRetransmit(cell *Cell, branch int, lastInterval time.Duration) {
 	cell.RLock()
-	defer cell.RUnlock()
 
 	// Check if transaction is still active
 	if cell.State == TStateCompleted || cell.State == TStateConfirmed {
+		cell.RUnlock()
 		return
 	}
 
 	// Check if branch exists
 	if branch >= len(cell.UAC) || cell.UAC[branch] == nil {
+		cell.RUnlock()
 		return
 	}
 
@@ -200,22 +216,39 @@ func (tm *TimerManager) handleRetransmit(cell *Cell, branch int, lastInterval ti
 
 	// Don't retransmit if we already have a final response
 	if uac.LastReceived >= 200 {
+		cell.RUnlock()
 		return
 	}
 
+	// Capture buffer info under the read lock
+	var sendBuf []byte
+	var dst *net.UDPAddr
+	if uac.Request != nil && len(uac.Request.Buffer) > 0 {
+		sendBuf = uac.Request.Buffer
+		if uac.Request.Dest != nil {
+			if addr, ok := uac.Request.Dest.To.(*net.UDPAddr); ok {
+				dst = addr
+			}
+		}
+	}
+	cell.RUnlock()
+
 	// Calculate next retransmission interval
-	// RFC 3261: double the interval up to T2
 	nextInterval := lastInterval * 2
 	if nextInterval > tm.t2 {
 		nextInterval = tm.t2
 	}
 
-	// TODO: M4 - Actually retransmit the request buffer
-	log.Debug("Retransmitting request",
-		log.String("callid", cell.CallIDVal.String()),
-		log.Int("branch", branch),
-		log.Int("status", uac.LastReceived),
-	)
+	// Actually retransmit if we have a buffer
+	if len(sendBuf) > 0 {
+		if tm.manager != nil {
+			tm.manager.sendBuffer(sendBuf, dst)
+		}
+		log.Debug("Retransmitting request",
+			log.String("callid", cell.CallIDVal.String()),
+			log.Int("branch", branch),
+		)
+	}
 
 	// Schedule next retransmission
 	tm.mu.Lock()
@@ -227,51 +260,73 @@ func (tm *TimerManager) handleRetransmit(cell *Cell, branch int, lastInterval ti
 	tm.mu.Unlock()
 }
 
-// handleFRTimeout handles final response timeout
-func (tm *TimerManager) handleFRTimeout(cell *Cell) {
+// handleFRTimeout handles final response timeout.
+// Marks the transaction as timed out and schedules cleanup.
+func (tm *TimerManager) handleFRTimeout(cell *Cell, branch int) {
 	cell.Lock()
-	defer cell.Unlock()
 
-	// Transaction timed out - send 408 or 504
+	// Transaction timed out
 	log.Warn("Transaction timeout",
 		log.String("callid", cell.CallIDVal.String()),
 		log.String("method", cell.Method.String()),
+		log.Int("branch", branch),
 	)
 
-	// TODO: M4 - Send timeout response
 	cell.State = TStateCompleted
+	cell.Unlock()
+
+	// Schedule cleanup via wait timer
+	if tm.manager != nil {
+		tm.manager.removeCell(cell)
+	}
+
+	// Clean up our internal timer tracking
+	tm.mu.Lock()
+	if ct, ok := tm.timers[cell]; ok {
+		if ct.retrTimer != nil {
+			ct.retrTimer.Stop()
+		}
+	}
+	tm.mu.Unlock()
 }
 
-// handleWaitTimeout handles wait timeout
+// handleWaitTimeout handles wait timeout - removes the transaction
+// from the manager's table so it can be garbage collected.
 func (tm *TimerManager) handleWaitTimeout(cell *Cell) {
 	cell.Lock()
-	defer cell.Unlock()
-
-	// Move to delete state
 	cell.State = TStateUndefined
+	cell.Unlock()
 
-	// TODO: M4 - Clean up transaction
-	log.Debug("Transaction wait timeout",
+	log.Debug("Transaction wait timeout, removing from table",
 		log.String("callid", cell.CallIDVal.String()),
 	)
+
+	if tm.manager != nil {
+		tm.manager.removeCell(cell)
+	}
+
+	tm.mu.Lock()
+	delete(tm.timers, cell)
+	tm.mu.Unlock()
 }
 
-// handleDeleteTimeout handles delete timeout
+// handleDeleteTimeout handles delete timeout - removes the transaction
+// from the manager's table.
 func (tm *TimerManager) handleDeleteTimeout(cell *Cell) {
-	// Transaction can be safely deleted
 	log.Debug("Transaction delete timeout",
 		log.String("callid", cell.CallIDVal.String()),
 	)
 
-	// Clean up timers
+	if tm.manager != nil {
+		tm.manager.removeCell(cell)
+	}
+
 	tm.mu.Lock()
 	delete(tm.timers, cell)
 	tm.mu.Unlock()
-
-	// TODO: M4 - Remove from table if ref count is 0
 }
 
-// StopAllTimers stops all timers for a cell
+// StopAllTimers stops all timers for a cell and removes its entry.
 func (tm *TimerManager) StopAllTimers(cell *Cell) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
@@ -291,4 +346,13 @@ func (tm *TimerManager) StopAllTimers(cell *Cell) {
 		}
 		delete(tm.timers, cell)
 	}
+}
+
+// HasTimers returns true if there are any active timers for the cell.
+// Used by tests to verify timer lifecycle.
+func (tm *TimerManager) HasTimers(cell *Cell) bool {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	_, ok := tm.timers[cell]
+	return ok
 }

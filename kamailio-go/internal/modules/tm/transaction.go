@@ -10,20 +10,24 @@ package tm
 import (
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
 	"github.com/kamailio/kamailio-go/internal/core/parser"
 	"github.com/kamailio/kamailio-go/internal/core/str"
+	"github.com/kamailio/kamailio-go/internal/core/transport"
 )
 
 // Manager manages SIP transactions
 // C: global tm state
 type Manager struct {
-	table      *Table
-	mutex      sync.RWMutex
-	currentT   *Cell
-	globalCtx  uint32
+	table     *Table
+	mutex     sync.RWMutex
+	currentT  *Cell
+	globalCtx uint32
+	timerMgr  *TimerManager
+	listeners []*transport.UDPListener
 }
 
 // NewManager creates a new transaction manager
@@ -31,6 +35,35 @@ func NewManager(tableSize uint32) *Manager {
 	return &Manager{
 		table: NewTable(tableSize),
 	}
+}
+
+// NewManagerWithTimers creates a new transaction manager with an integrated
+// TimerManager. The TimerManager is linked back to this Manager so that
+// timer callbacks (retransmit, timeout, cleanup) can invoke send/remove
+// operations.
+func NewManagerWithTimers(tableSize uint32) *Manager {
+	mgr := &Manager{
+		table:    NewTable(tableSize),
+		timerMgr: NewTimerManager(),
+	}
+	if mgr.timerMgr != nil {
+		mgr.timerMgr.SetManager(mgr)
+	}
+	return mgr
+}
+
+// TimerManager returns the integrated TimerManager, or nil if this
+// Manager was created without timers.
+func (m *Manager) TimerManager() *TimerManager {
+	return m.timerMgr
+}
+
+// AddListener registers a UDP listener that can be used for sending
+// replies and forwarded requests.
+func (m *Manager) AddListener(listener *transport.UDPListener) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	m.listeners = append(m.listeners, listener)
 }
 
 // GetTable returns the transaction table
@@ -59,6 +92,136 @@ func (m *Manager) UnsetT() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.currentT = nil
+}
+
+// sendBuffer sends raw bytes to the given UDP destination via registered
+// listeners. If no listeners are registered, it is a no-op (useful in
+// unit tests that don't exercise the network stack).
+func (m *Manager) sendBuffer(data []byte, dst *net.UDPAddr) {
+	if dst == nil {
+		return
+	}
+	m.mutex.RLock()
+	listeners := make([]*transport.UDPListener, len(m.listeners))
+	copy(listeners, m.listeners)
+	m.mutex.RUnlock()
+	for _, l := range listeners {
+		_ = l.Send(dst, data)
+	}
+}
+
+// removeCell removes a transaction cell from the table. Safe to call
+// from timer callbacks.
+func (m *Manager) removeCell(cell *Cell) {
+	if cell == nil {
+		return
+	}
+	m.table.Remove(cell)
+}
+
+// sendReply builds a reply from the given request and status code,
+// serializes it, and sends it via registered UDP listeners.
+//
+// If no listeners are registered, only the serialization step is
+// performed (useful for unit tests that verify message construction
+// without network operations).
+func (m *Manager) sendReply(request *parser.SIPMsg, reply *parser.SIPMsg, dstHost string, dstPort uint16) error {
+	if reply == nil {
+		return errors.New("nil reply")
+	}
+
+	data, err := parser.BuildMessage(reply)
+	if err != nil {
+		return fmt.Errorf("build message: %w", err)
+	}
+
+	m.mutex.RLock()
+	hasListeners := len(m.listeners) > 0
+	listeners := make([]*transport.UDPListener, len(m.listeners))
+	copy(listeners, m.listeners)
+	m.mutex.RUnlock()
+
+	if !hasListeners {
+		return nil
+	}
+
+	dst := &net.UDPAddr{
+		IP:   net.ParseIP(dstHost),
+		Port: int(dstPort),
+	}
+	if dst.IP == nil {
+		ips, err := net.LookupIP(dstHost)
+		if err != nil || len(ips) == 0 {
+			return fmt.Errorf("resolve destination host %q", dstHost)
+		}
+		dst.IP = ips[0]
+	}
+
+	for _, l := range listeners {
+		_ = l.Send(dst, data)
+	}
+	return nil
+}
+
+// SendReply creates a reply for the given request with the specified
+// status code and reason, and sends it through registered UDP listeners
+// to the destination host/port.
+func (m *Manager) SendReply(request *parser.SIPMsg, statusCode int, reason string, dstHost string, dstPort uint16) error {
+	if request == nil {
+		return errors.New("nil request")
+	}
+
+	opts := parser.ReplyOptions{
+		StatusCode:   statusCode,
+		ReasonPhrase: reason,
+	}
+	reply, err := parser.CreateReply(request, opts)
+	if err != nil {
+		return fmt.Errorf("create reply: %w", err)
+	}
+
+	return m.sendReply(request, reply, dstHost, dstPort)
+}
+
+// ForwardRequest builds a forwarded request (decrement Max-Forwards,
+// prepend a new Via, update R-URI to next hop), serializes it, and
+// sends it through registered UDP listeners to the specified next hop.
+func (m *Manager) ForwardRequest(msg *parser.SIPMsg, nextHopURI string, proxyHost string, proxyPort int, dstHost string, dstPort uint16) error {
+	if msg == nil {
+		return errors.New("nil message")
+	}
+
+	fwd, err := parser.BuildForwardRequest(msg, "UDP", proxyHost, proxyPort, nextHopURI)
+	if err != nil {
+		return fmt.Errorf("build forward request: %w", err)
+	}
+
+	data, err := parser.BuildMessage(fwd)
+	if err != nil {
+		return fmt.Errorf("build message: %w", err)
+	}
+
+	m.mutex.RLock()
+	listeners := make([]*transport.UDPListener, len(m.listeners))
+	copy(listeners, m.listeners)
+	m.mutex.RUnlock()
+
+	dst := &net.UDPAddr{
+		IP:   net.ParseIP(dstHost),
+		Port: int(dstPort),
+	}
+	if dst.IP == nil {
+		ips, err := net.LookupIP(dstHost)
+		if err != nil || len(ips) == 0 {
+			return fmt.Errorf("resolve destination host %q", dstHost)
+		}
+		dst.IP = ips[0]
+	}
+
+	for _, l := range listeners {
+		_ = l.Send(dst, data)
+	}
+	return nil
 }
 
 // NewTransaction creates a new transaction from a SIP message

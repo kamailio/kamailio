@@ -1,0 +1,598 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * Kamailio-Go
+ *
+ * Dialog management module (Phase 6-1)
+ *
+ * Tracks SIP dialog state (Early -> Confirmed -> Terminated) and provides
+ * helpers for:
+ *   - building dialogs from incoming INVITEs (UAS) or outgoing INVITE responses (UAC),
+ *   - route-set computation from Route / Record-Route headers,
+ *   - CSeq management and validation,
+ *   - tag generation and header extraction.
+ */
+
+package dialog
+
+import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/kamailio/kamailio-go/internal/core/parser"
+	"github.com/kamailio/kamailio-go/internal/core/str"
+)
+
+// ---------------------------------------------------------------------------
+// Dialog state
+// ---------------------------------------------------------------------------
+
+// DialogState represents the lifecycle state of a SIP dialog.
+type DialogState int
+
+const (
+	DialogStateEarly      DialogState = iota // dialog created, not yet confirmed
+	DialogStateConfirmed                     // 200 OK received/sent
+	DialogStateTerminated                    // BYE received/sent
+)
+
+func (s DialogState) String() string {
+	switch s {
+	case DialogStateEarly:
+		return "Early"
+	case DialogStateConfirmed:
+		return "Confirmed"
+	case DialogStateTerminated:
+		return "Terminated"
+	default:
+		return "Unknown"
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Dialog direction
+// ---------------------------------------------------------------------------
+
+// DialogDirection identifies whether the local party is the UAS or UAC.
+type DialogDirection int
+
+const (
+	DialogDirectionUAS DialogDirection = iota
+	DialogDirectionUAC
+)
+
+func (d DialogDirection) String() string {
+	if d == DialogDirectionUAS {
+		return "UAS"
+	}
+	return "UAC"
+}
+
+// ---------------------------------------------------------------------------
+// Dialog
+// ---------------------------------------------------------------------------
+
+// Dialog represents a single SIP dialog, identified uniquely by
+// (Call-ID + local-tag + remote-tag).
+type Dialog struct {
+	mu sync.RWMutex
+
+	CallID    string
+	LocalTag  string
+	RemoteTag string
+
+	Direction DialogDirection
+
+	LocalURI  string
+	RemoteURI string
+
+	RemoteTarget string
+	RouteSet     []string
+
+	LocalCSeq  uint32
+	RemoteCSeq uint32
+
+	State DialogState
+
+	CreatedAt time.Time
+
+	ActiveTransactions map[string]bool
+}
+
+// ---------------------------------------------------------------------------
+// Manager
+// ---------------------------------------------------------------------------
+
+// Manager maintains a collection of active Dialogs keyed by a deterministic
+// combination of Call-ID and tags.
+type Manager struct {
+	mu      sync.RWMutex
+	dialogs map[string]*Dialog
+}
+
+// NewManager creates a new, empty dialog manager.
+func NewManager() *Manager {
+	return &Manager{
+		dialogs: make(map[string]*Dialog),
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+// dialogKey produces a stable key from a Call-ID and two tag values.
+// The tag positions are normalized (lexicographically) so that the same key
+// is produced regardless of which argument is "local" or "remote".
+func dialogKey(callID, a, b string) string {
+	first, second := a, b
+	if a > b {
+		first, second = b, a
+	}
+	return callID + "|" + first + "|" + second
+}
+
+// generateTag creates a short, random tag string.
+func generateTag() string {
+	buf := make([]byte, 8)
+	if _, err := rand.Read(buf); err != nil {
+		return fmt.Sprintf("tag-%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(buf)
+}
+
+// extractTag scans a From/To header body and returns the value of the "tag"
+// parameter, or an empty string if not found.
+//
+// Example input:
+//   "Alice <sip:alice@ims.example.com>;tag=abc123"
+//   returns: "abc123"
+func extractTag(body str.Str) string {
+	if body.IsEmpty() {
+		return ""
+	}
+	s := body.String()
+
+	idx := strings.Index(s, ";tag=")
+	if idx < 0 {
+		idx = strings.Index(s, ";TAG=")
+	}
+	if idx < 0 {
+		// also tolerate "tag=" without leading semicolon (first parameter)
+		if strings.HasPrefix(strings.ToLower(s), "tag=") {
+			rest := s[4:]
+			if semi := strings.IndexByte(rest, ';'); semi >= 0 {
+				return strings.TrimSpace(rest[:semi])
+			}
+			return strings.TrimSpace(rest)
+		}
+		return ""
+	}
+	rest := s[idx+5:]
+	if semi := strings.IndexByte(rest, ';'); semi >= 0 {
+		return strings.TrimSpace(rest[:semi])
+	}
+	return strings.TrimSpace(rest)
+}
+
+// extractURIFromAddrSpec scans an address-spec header body and returns the
+// URI portion (the part inside angle brackets, or the whole trimmed body if
+// no angle brackets are present).
+//
+// Example input:
+//   "Alice <sip:alice@ims.example.com>;tag=abc123"
+//   returns: "sip:alice@ims.example.com"
+func extractURIFromAddrSpec(body str.Str) string {
+	if body.IsEmpty() {
+		return ""
+	}
+	s := body.String()
+	lt := strings.IndexByte(s, '<')
+	gt := strings.LastIndexByte(s, '>')
+	if lt >= 0 && gt > lt {
+		return strings.TrimSpace(s[lt+1 : gt])
+	}
+	// no angle brackets – use the portion before any ';'
+	if semi := strings.IndexByte(s, ';'); semi >= 0 {
+		return strings.TrimSpace(s[:semi])
+	}
+	return strings.TrimSpace(s)
+}
+
+// parseRouteValues returns the individual URIs from a Route / Record-Route
+// header body. The body may be a single value or a comma-separated list.
+// Each value is returned without surrounding angle brackets.
+func parseRouteValues(body str.Str) []string {
+	if body.IsEmpty() {
+		return nil
+	}
+	s := body.String()
+
+	// split on commas that are not inside < > brackets
+	var out []string
+	depth := 0
+	start := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '<':
+			depth++
+		case '>':
+			if depth > 0 {
+				depth--
+			}
+		case ',':
+			if depth == 0 {
+				out = append(out, trimRouteToken(s[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	if start < len(s) {
+		out = append(out, trimRouteToken(s[start:]))
+	}
+	// filter empty tokens
+	filtered := out[:0]
+	for _, v := range out {
+		if v != "" {
+			filtered = append(filtered, v)
+		}
+	}
+	return filtered
+}
+
+// trimRouteToken strips surrounding whitespace and optional angle brackets.
+func trimRouteToken(token string) string {
+	t := strings.TrimSpace(token)
+	lt := strings.IndexByte(t, '<')
+	gt := strings.LastIndexByte(t, '>')
+	if lt >= 0 && gt > lt {
+		return strings.TrimSpace(t[lt+1 : gt])
+	}
+	return t
+}
+
+// collectRouteURIs gathers all Route / Record-Route URIs from a message.
+// Both multiple header instances and comma-separated bodies are supported.
+func collectRouteURIs(msg *parser.SIPMsg, hdrType parser.HdrType) []string {
+	if msg == nil {
+		return nil
+	}
+	var out []string
+	msg.ForEachHeader(hdrType, func(h *parser.HdrField) bool {
+		for _, uri := range parseRouteValues(h.Body) {
+			if uri != "" {
+				out = append(out, uri)
+			}
+		}
+		return true
+	})
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// UAS dialog creation
+// ---------------------------------------------------------------------------
+
+// CreateUASDialog builds a Dialog for an incoming INVITE received by the
+// local party (UAS role). The Route headers from the incoming request form
+// the dialog's route set (per RFC 3261 §12).
+func CreateUASDialog(msg *parser.SIPMsg, localContact string) (*Dialog, error) {
+	if msg == nil {
+		return nil, fmt.Errorf("nil SIP message")
+	}
+	if msg.CallID == nil {
+		return nil, fmt.Errorf("missing Call-ID header")
+	}
+	if msg.From == nil {
+		return nil, fmt.Errorf("missing From header")
+	}
+	if msg.To == nil {
+		return nil, fmt.Errorf("missing To header")
+	}
+
+	callID := strings.TrimSpace(msg.CallID.Body.String())
+	if callID == "" {
+		return nil, fmt.Errorf("empty Call-ID")
+	}
+
+	fromTag := extractTag(msg.From.Body)
+	toTag := extractTag(msg.To.Body)
+	if toTag == "" {
+		toTag = generateTag()
+	}
+
+	// UAS view: the remote provided From-tag (remote tag); our local tag is
+	// the To-tag (possibly auto-generated above).
+	localTag := toTag
+	remoteTag := fromTag
+
+	localURI := extractURIFromAddrSpec(msg.To.Body)
+	remoteURI := extractURIFromAddrSpec(msg.From.Body)
+
+	remoteTarget := ""
+	if contacts, err := parser.ParseContactList(msg.Contact.Body); err == nil && len(contacts) > 0 {
+		if contacts[0] != nil && contacts[0].URI != nil {
+			remoteTarget = contacts[0].URI.String()
+		}
+	}
+	if remoteTarget == "" {
+		remoteTarget = remoteURI
+	}
+
+	// UAS: the route set is built from the Route headers of the INVITE.
+	routeSet := collectRouteURIs(msg, parser.HdrRoute)
+
+	localCSeq := uint32(0)
+	remoteCSeq := uint32(0)
+	if msg.CSeq != nil {
+		if cs, err := parser.ParseCSeqHeader(msg.CSeq); err == nil {
+			remoteCSeq = cs.Number
+		}
+	}
+
+	d := &Dialog{
+		CallID:             callID,
+		LocalTag:           localTag,
+		RemoteTag:          remoteTag,
+		Direction:          DialogDirectionUAS,
+		LocalURI:           localURI,
+		RemoteURI:          remoteURI,
+		RemoteTarget:       remoteTarget,
+		RouteSet:           routeSet,
+		LocalCSeq:          localCSeq,
+		RemoteCSeq:         remoteCSeq,
+		State:              DialogStateEarly,
+		CreatedAt:          time.Now(),
+		ActiveTransactions: make(map[string]bool),
+	}
+
+	_ = localContact
+	return d, nil
+}
+
+// ---------------------------------------------------------------------------
+// UAC dialog creation
+// ---------------------------------------------------------------------------
+
+// CreateUACDialog builds a Dialog from a response received for an INVITE
+// that the local party (UAC role) sent. The Record-Route headers from the
+// response form the dialog's route set (per RFC 3261 §12).
+func CreateUACDialog(msg *parser.SIPMsg, localTag, localContact string) (*Dialog, error) {
+	if msg == nil {
+		return nil, fmt.Errorf("nil SIP message")
+	}
+	if msg.CallID == nil {
+		return nil, fmt.Errorf("missing Call-ID header")
+	}
+	if msg.From == nil {
+		return nil, fmt.Errorf("missing From header")
+	}
+	if msg.To == nil {
+		return nil, fmt.Errorf("missing To header")
+	}
+
+	callID := strings.TrimSpace(msg.CallID.Body.String())
+	if callID == "" {
+		return nil, fmt.Errorf("empty Call-ID")
+	}
+
+	fromTag := extractTag(msg.From.Body)
+	if fromTag == "" {
+		fromTag = localTag
+	}
+	toTag := extractTag(msg.To.Body)
+
+	// UAC view: the local tag is the From-tag; the remote tag is the To-tag.
+	loTag := fromTag
+	remTag := toTag
+
+	localURI := extractURIFromAddrSpec(msg.From.Body)
+	remoteURI := extractURIFromAddrSpec(msg.To.Body)
+
+	remoteTarget := ""
+	if contacts, err := parser.ParseContactList(msg.Contact.Body); err == nil && len(contacts) > 0 {
+		if contacts[0] != nil && contacts[0].URI != nil {
+			remoteTarget = contacts[0].URI.String()
+		}
+	}
+	if remoteTarget == "" {
+		remoteTarget = remoteURI
+	}
+
+	// UAC: the route set is built from the Record-Route headers of the response.
+	routeSet := collectRouteURIs(msg, parser.HdrRecordRoute)
+	// UAC reverse the route set to get proper outbound order.
+	if len(routeSet) > 1 {
+		for i, j := 0, len(routeSet)-1; i < j; i, j = i+1, j-1 {
+			routeSet[i], routeSet[j] = routeSet[j], routeSet[i]
+		}
+	}
+
+	localCSeq := uint32(0)
+	remoteCSeq := uint32(0)
+	if msg.CSeq != nil {
+		if cs, err := parser.ParseCSeqHeader(msg.CSeq); err == nil {
+			localCSeq = cs.Number
+		}
+	}
+
+	d := &Dialog{
+		CallID:             callID,
+		LocalTag:           loTag,
+		RemoteTag:          remTag,
+		Direction:          DialogDirectionUAC,
+		LocalURI:           localURI,
+		RemoteURI:          remoteURI,
+		RemoteTarget:       remoteTarget,
+		RouteSet:           routeSet,
+		LocalCSeq:          localCSeq,
+		RemoteCSeq:         remoteCSeq,
+		State:              DialogStateEarly,
+		CreatedAt:          time.Now(),
+		ActiveTransactions: make(map[string]bool),
+	}
+
+	_ = localContact
+	return d, nil
+}
+
+// ---------------------------------------------------------------------------
+// Manager operations
+// ---------------------------------------------------------------------------
+
+// Add stores dialog in the manager. If a dialog with the same key already
+// exists, an error is returned.
+func (m *Manager) Add(d *Dialog) error {
+	if m == nil || d == nil {
+		return fmt.Errorf("nil manager or dialog")
+	}
+	key := dialogKey(d.CallID, d.LocalTag, d.RemoteTag)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, exists := m.dialogs[key]; exists {
+		return fmt.Errorf("dialog already exists for key %s", key)
+	}
+	m.dialogs[key] = d
+	return nil
+}
+
+// Lookup returns the Dialog matching the given Call-ID and tags, or nil.
+// The ordering of localTag/remoteTag does not affect the result.
+func (m *Manager) Lookup(callID, localTag, remoteTag string) *Dialog {
+	if m == nil {
+		return nil
+	}
+	key := dialogKey(callID, localTag, remoteTag)
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.dialogs[key]
+}
+
+// Remove deletes the Dialog identified by the given Call-ID and tags.
+func (m *Manager) Remove(callID, localTag, remoteTag string) {
+	if m == nil {
+		return
+	}
+	key := dialogKey(callID, localTag, remoteTag)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.dialogs, key)
+}
+
+// Count returns the number of dialogs currently managed.
+func (m *Manager) Count() int {
+	if m == nil {
+		return 0
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.dialogs)
+}
+
+// ---------------------------------------------------------------------------
+// Dialog state transitions
+// ---------------------------------------------------------------------------
+
+// Confirm transitions the dialog from Early to Confirmed.
+// Idempotent – calling Confirm on an already Confirmed dialog is a no-op.
+func (d *Dialog) Confirm() {
+	if d == nil {
+		return
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.State == DialogStateEarly {
+		d.State = DialogStateConfirmed
+	}
+}
+
+// Terminate transitions the dialog to Terminated.
+func (d *Dialog) Terminate() {
+	if d == nil {
+		return
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.State = DialogStateTerminated
+}
+
+// IsConfirmed reports whether the dialog has reached the Confirmed state.
+func (d *Dialog) IsConfirmed() bool {
+	if d == nil {
+		return false
+	}
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.State == DialogStateConfirmed
+}
+
+// IsTerminated reports whether the dialog has been terminated.
+func (d *Dialog) IsTerminated() bool {
+	if d == nil {
+		return false
+	}
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.State == DialogStateTerminated
+}
+
+// ---------------------------------------------------------------------------
+// CSeq management
+// ---------------------------------------------------------------------------
+
+// NextLocalCSeq returns the CSeq number to use for the next locally-originated
+// request within this dialog, and increments the stored counter.
+func (d *Dialog) NextLocalCSeq() uint32 {
+	if d == nil {
+		return 0
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.LocalCSeq++
+	return d.LocalCSeq
+}
+
+// UpdateRemoteCSeq records a CSeq number from a remotely-originated request
+// received in this dialog. Returns an error if the supplied CSeq is not
+// strictly greater than the last known remote CSeq.
+func (d *Dialog) UpdateRemoteCSeq(cseq uint32) error {
+	if d == nil {
+		return fmt.Errorf("nil dialog")
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.RemoteCSeq > 0 && cseq <= d.RemoteCSeq {
+		return fmt.Errorf("invalid remote CSeq: %d is not strictly greater than %d", cseq, d.RemoteCSeq)
+	}
+	d.RemoteCSeq = cseq
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Route header construction
+// ---------------------------------------------------------------------------
+
+// BuildRouteHeaders returns the Route header entries (name, value) that an
+// in-dialog request sent from the local party should carry. Each entry is
+// derived directly from the Route Set stored in the dialog.
+func (d *Dialog) BuildRouteHeaders() [][2]string {
+	if d == nil {
+		return nil
+	}
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	if len(d.RouteSet) == 0 {
+		return nil
+	}
+	out := make([][2]string, 0, len(d.RouteSet))
+	for _, uri := range d.RouteSet {
+		if uri == "" {
+			continue
+		}
+		out = append(out, [2]string{"Route", fmt.Sprintf("<%s>", uri)})
+	}
+	return out
+}

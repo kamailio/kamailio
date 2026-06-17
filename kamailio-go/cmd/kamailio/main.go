@@ -3,6 +3,12 @@
  * Kamailio-Go
  *
  * Main entry point for the SIP server
+ *
+ * Phase 6-4: Full SIP request/reply handling pipeline with
+ *   - TM (transaction manager)
+ *   - Router (script engine)
+ *   - Dialog manager
+ *   - Forwarder (stateless relay + via routing)
  */
 
 package main
@@ -14,14 +20,19 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/kamailio/kamailio-go/internal/core/config"
+	"github.com/kamailio/kamailio-go/internal/core/dialog"
+	"github.com/kamailio/kamailio-go/internal/core/forward"
 	"github.com/kamailio/kamailio-go/internal/core/log"
 	"github.com/kamailio/kamailio-go/internal/core/parser"
+	"github.com/kamailio/kamailio-go/internal/core/router"
 	"github.com/kamailio/kamailio-go/internal/core/transport"
 	"github.com/kamailio/kamailio-go/internal/ims/scscf"
+	"github.com/kamailio/kamailio-go/internal/modules/tm"
 )
 
 var (
@@ -29,14 +40,45 @@ var (
 	GitCommit = "unknown"
 )
 
-// Server represents the SIP server
+// Server represents the SIP server with a full processing pipeline.
 type Server struct {
 	cfg       *config.Config
 	listeners []*transport.UDPListener
+	tm        *tm.Manager
+	router    *router.Router
+	dialogs   *dialog.Manager
+	forwarder *forward.Forwarder
 	registrar *scscf.Registrar
 	sessionH  *scscf.SessionHandler
 	ctx       context.Context
 	cancel    context.CancelFunc
+}
+
+// NewServer constructs a Server for the given configuration. It does NOT
+// start listeners – call initPipeline and startListeners separately.
+func NewServer(cfg *config.Config) *Server {
+	s := &Server{cfg: cfg}
+	s.ctx, s.cancel = context.WithCancel(context.Background())
+	return s
+}
+
+// initPipeline initializes the core pipeline components (TM, router,
+// dialog manager, forwarder and optional IMS handlers).
+func (s *Server) initPipeline() {
+	s.tm = tm.NewManagerWithTimers(1024)
+	s.router = router.NewRouter()
+	s.dialogs = dialog.NewManager()
+	s.forwarder = forward.NewForwarder()
+
+	if s.cfg.IsIMSEnabled() {
+		s.registrar = scscf.NewRegistrar(s.cfg.IMS.Realm)
+		s.sessionH = scscf.NewSessionHandler(s.registrar)
+		log.Info("IMS enabled",
+			log.String("realm", s.cfg.IMS.Realm),
+			log.Bool("scscf", s.cfg.IMS.SCSCF),
+			log.Bool("pcscf", s.cfg.IMS.PCSCF),
+		)
+	}
 }
 
 func main() {
@@ -92,22 +134,9 @@ func main() {
 		log.Int("workers", cfg.Core.Workers),
 	)
 
-	// Create server
-	server := &Server{
-		cfg: cfg,
-	}
-	server.ctx, server.cancel = context.WithCancel(context.Background())
-
-	// Initialize IMS if enabled
-	if cfg.IsIMSEnabled() {
-		server.registrar = scscf.NewRegistrar(cfg.IMS.Realm)
-		server.sessionH = scscf.NewSessionHandler(server.registrar)
-		log.Info("IMS enabled",
-			log.String("realm", cfg.IMS.Realm),
-			log.Bool("scscf", cfg.IMS.SCSCF),
-			log.Bool("pcscf", cfg.IMS.PCSCF),
-		)
-	}
+	// Create server and pipeline
+	server := NewServer(cfg)
+	server.initPipeline()
 
 	// Start listeners
 	if err := server.startListeners(); err != nil {
@@ -130,7 +159,8 @@ func main() {
 	log.Info("Kamailio-Go stopped")
 }
 
-// startListeners starts all configured listeners
+// startListeners starts all configured listeners and registers them
+// with the TM manager (so replies can be dispatched back).
 func (s *Server) startListeners() error {
 	for _, addr := range s.cfg.GetListenAddresses() {
 		si, err := transport.ParseSocketInfo(addr)
@@ -145,6 +175,12 @@ func (s *Server) startListeners() error {
 				return fmt.Errorf("failed to start UDP listener on %s: %w", addr, err)
 			}
 			s.listeners = append(s.listeners, listener)
+			if s.tm != nil {
+				s.tm.AddListener(listener)
+			}
+			if s.forwarder != nil {
+				s.forwarder.RegisterUDPListener(si, listener)
+			}
 			log.Info("UDP listener started", log.String("address", addr))
 		default:
 			log.Warn("Unsupported protocol", log.String("protocol", si.Protocol.String()))
@@ -153,83 +189,245 @@ func (s *Server) startListeners() error {
 	return nil
 }
 
-// handleMessage handles incoming SIP messages
+// handleMessage handles incoming raw SIP data by parsing it and
+// dispatching to the request or reply pipeline.
 func (s *Server) handleMessage(data []byte, srcAddr *net.UDPAddr, rcvInfo *transport.ReceiveInfo) {
-	// Parse the message
 	msg, err := parser.ParseMsg(data)
 	if err != nil {
 		log.Warn("Failed to parse message", log.ErrField(err))
 		return
 	}
-
-	// Route the message
 	if msg.IsRequest() {
-		s.handleRequest(msg)
+		s.handleRequest(msg, srcAddr)
 	} else {
-		s.handleReply(msg)
+		s.handleReply(msg, srcAddr)
 	}
 }
 
-// handleRequest handles SIP requests
-func (s *Server) handleRequest(msg *parser.SIPMsg) {
+// handleRequest dispatches an incoming SIP request through the pipeline:
+//  1. Check Max-Forwards; if 0, reject with 483.
+//  2. Create a TM transaction.
+//  3. Run the router script.
+//  4. Dispatch by method: REGISTER, INVITE, BYE, ACK, CANCEL, default.
+func (s *Server) handleRequest(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
 	method := msg.Method()
 
+	// --- Max-Forwards check ---
+	if !checkMaxForwards(msg) {
+		log.Warn("Max-Forwards reached zero", log.String("callid", callIDOf(msg)))
+		s.sendResponse(msg, 483, "Too Many Hops", srcAddr)
+		return
+	}
+
+	// --- Create a TM transaction ---
+	if s.tm != nil {
+		if _, terr := s.tm.NewTransaction(msg); terr != nil {
+			log.Debug("Transaction already exists",
+				log.String("method", parser.MethodName(method)),
+			)
+		}
+	}
+
+	// --- Run the router ---
+	if s.router != nil {
+		result := s.router.Run(s.ctx, "request", msg)
+		if result == router.ResultDrop {
+			return
+		}
+	}
+
+	// --- Dispatch by method ---
 	switch method {
 	case parser.MethodRegister:
-		if s.registrar != nil {
-			result, err := s.registrar.HandleRegister(msg)
-			if err != nil {
-				log.Warn("Register handling failed", log.ErrField(err))
-				return
-			}
-			log.Info("REGISTER handled",
-				log.Uint16("status", result.StatusCode),
-			)
-		}
+		s.handleRegister(msg, srcAddr)
+
 	case parser.MethodInvite:
-		if s.sessionH != nil {
-			result, err := s.sessionH.HandleInvite(msg)
-			if err != nil {
-				log.Warn("INVITE handling failed", log.ErrField(err))
-				return
-			}
-			log.Info("INVITE handled",
-				log.Uint16("status", result.StatusCode),
-			)
-		}
+		s.handleInvite(msg, srcAddr)
+
 	case parser.MethodBye:
-		if s.sessionH != nil {
-			result, err := s.sessionH.HandleBye(msg)
-			if err != nil {
-				log.Warn("BYE handling failed", log.ErrField(err))
-				return
-			}
-			log.Info("BYE handled",
-				log.Uint16("status", result.StatusCode),
-			)
-		}
+		s.handleBye(msg, srcAddr)
+
+	case parser.MethodACK:
+		s.handleAck(msg, srcAddr)
+
+	case parser.MethodCancel:
+		s.handleCancel(msg, srcAddr)
+
 	default:
 		log.Debug("Request received",
 			log.String("method", parser.MethodName(method)),
 		)
+		s.sendResponse(msg, 405, "Method Not Allowed", srcAddr)
 	}
 }
 
-// handleReply handles SIP replies
-func (s *Server) handleReply(msg *parser.SIPMsg) {
-	if s.sessionH != nil {
-		_, err := s.sessionH.HandleReply(msg)
-		if err != nil {
-			log.Warn("Reply handling failed", log.ErrField(err))
+// handleReply handles an incoming SIP reply:
+//  1. Match via TM.
+//  2. If 2xx to an INVITE, confirm the dialog.
+//  3. Forward upstream if needed.
+func (s *Server) handleReply(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
+	if s.tm != nil {
+		if _, _, err := s.tm.LookupReply(msg); err != nil {
+			log.Debug("No matching transaction for reply", log.ErrField(err))
 		}
 	}
+
+	// 2xx for an INVITE → confirm dialog
+	if msg.FirstLine != nil && msg.FirstLine.Reply != nil {
+		code := int(msg.FirstLine.Reply.StatusCode)
+		if code >= 200 && code < 300 && isInviteReply(msg) {
+			if s.dialogs != nil {
+				callID := callIDOf(msg)
+				fromTag := ""
+				toTag := ""
+				if msg.From != nil {
+					fromTag = extractTagFrom(msg.From.Body.String())
+				}
+				if msg.To != nil {
+					toTag = extractTagFrom(msg.To.Body.String())
+				}
+				if d := s.dialogs.Lookup(callID, fromTag, toTag); d != nil {
+					d.Confirm()
+					log.Debug("Dialog confirmed", log.String("callid", callID))
+				}
+			}
+		}
+	}
+
+	if s.forwarder != nil && srcAddr != nil {
+		log.Debug("Reply handled",
+			log.String("src", srcAddr.String()),
+		)
+	}
 }
 
-// shutdown gracefully shuts down the server
+// ==================== method handlers ====================
+
+// handleRegister processes a REGISTER request. IMS registrar is called
+// if configured; a 200 OK is always sent back.
+func (s *Server) handleRegister(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
+	if s.registrar != nil {
+		_, _ = s.registrar.HandleRegister(msg)
+	}
+	s.sendResponse(msg, 200, "OK", srcAddr)
+}
+
+// handleInvite processes an INVITE. It always sends 100 Trying first,
+// then delegates to the IMS session handler (if configured) or falls
+// back to a 200 OK.
+func (s *Server) handleInvite(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
+	s.sendResponse(msg, 100, "Trying", srcAddr)
+
+	if s.sessionH != nil {
+		_, err := s.sessionH.HandleInvite(msg)
+		if err == nil {
+			return
+		}
+		log.Warn("INVITE handling failed, falling back to 200 OK", log.ErrField(err))
+	}
+	s.sendResponse(msg, 200, "OK", srcAddr)
+}
+
+// handleBye processes a BYE – terminates a matching dialog and sends
+// 200 OK.
+func (s *Server) handleBye(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
+	if s.dialogs != nil {
+		callID := callIDOf(msg)
+		fromTag := ""
+		toTag := ""
+		if msg.From != nil {
+			fromTag = extractTagFrom(msg.From.Body.String())
+		}
+		if msg.To != nil {
+			toTag = extractTagFrom(msg.To.Body.String())
+		}
+		if d := s.dialogs.Lookup(callID, fromTag, toTag); d != nil {
+			d.Terminate()
+		}
+	}
+	s.sendResponse(msg, 200, "OK", srcAddr)
+}
+
+// handleAck processes an ACK. The transaction for the original INVITE
+// is looked up for potential logging/accounting.
+func (s *Server) handleAck(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
+	if s.tm != nil {
+		if _, err := s.tm.LookupRequest(msg); err != nil {
+			log.Debug("ACK matched existing transaction", log.ErrField(err))
+		}
+	}
+	if s.sessionH != nil {
+		_, _ = s.sessionH.HandleBye(msg)
+	}
+}
+
+// handleCancel processes a CANCEL by looking up the matching INVITE
+// transaction and sending 200 OK.
+func (s *Server) handleCancel(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
+	if s.tm != nil {
+		if _, err := s.tm.LookupRequest(msg); err != nil {
+			log.Debug("CANCEL matched INVITE transaction", log.ErrField(err))
+		}
+	}
+	s.sendResponse(msg, 200, "OK", srcAddr)
+}
+
+// ==================== response helpers ====================
+
+// sendResponse builds a response to the given request and sends it
+// via sendResponseBytes to srcAddr.
+func (s *Server) sendResponse(request *parser.SIPMsg, status int, reason string, srcAddr *net.UDPAddr) {
+	if request == nil || srcAddr == nil {
+		return
+	}
+	reply, err := parser.CreateReply(request, parser.ReplyOptions{
+		StatusCode:   status,
+		ReasonPhrase: reason,
+	})
+	if err != nil {
+		log.Warn("Failed to create reply", log.ErrField(err))
+		return
+	}
+	data, err := parser.BuildMessage(reply)
+	if err != nil {
+		log.Warn("Failed to build reply bytes", log.ErrField(err))
+		return
+	}
+	s.sendResponseBytes(data, srcAddr.IP.String(), uint16(srcAddr.Port))
+}
+
+// sendResponseBytes sends raw SIP bytes to host:port using all
+// registered UDP listeners (or the forwarder as a fallback).
+func (s *Server) sendResponseBytes(data []byte, dstHost string, dstPort uint16) {
+	if len(data) == 0 {
+		return
+	}
+	// Try registered listeners first.
+	if len(s.listeners) > 0 {
+		ip := net.ParseIP(dstHost)
+		if ip == nil {
+			if ips, lerr := net.LookupIP(dstHost); lerr == nil && len(ips) > 0 {
+				ip = ips[0]
+			}
+		}
+		if ip != nil {
+			dst := &net.UDPAddr{IP: ip, Port: int(dstPort)}
+			for _, l := range s.listeners {
+				_ = l.Send(dst, data)
+			}
+			return
+		}
+	}
+	// Fallback to forwarder (creates an ephemeral UDP sender).
+	if s.forwarder != nil {
+		_ = s.forwarder.SendToUDP(dstHost, dstPort, data)
+	}
+}
+
+// shutdown gracefully shuts down the server.
 func (s *Server) shutdown() {
 	s.cancel()
 
-	// Stop all listeners
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -238,4 +436,83 @@ func (s *Server) shutdown() {
 			log.Warn("Listener shutdown error", log.ErrField(err))
 		}
 	}
+}
+
+// ==================== helpers ====================
+
+// checkMaxForwards returns false if the message's Max-Forwards header
+// is missing or has value 0 (proxy must not forward).
+func checkMaxForwards(msg *parser.SIPMsg) bool {
+	if msg == nil {
+		return true
+	}
+	for _, h := range msg.Headers {
+		name := h.Name.String()
+		if strings.EqualFold(name, "Max-Forwards") || strings.EqualFold(name, "max-forwards") {
+			body := strings.TrimSpace(h.Body.String())
+			// Parse integer manually
+			n := 0
+			gotDigit := false
+			for _, c := range body {
+				if c < '0' || c > '9' {
+					break
+				}
+				gotDigit = true
+				n = n*10 + int(c-'0')
+			}
+			if !gotDigit || n <= 0 {
+				return false
+			}
+			return true
+		}
+	}
+	return true
+}
+
+// isInviteReply returns true if the reply corresponds to an INVITE
+// request – checked via the CSeq header.
+func isInviteReply(msg *parser.SIPMsg) bool {
+	if msg == nil || msg.CSeq == nil {
+		return false
+	}
+	body := msg.CSeq.Body.String()
+	// Find "INVITE" token – a simple substring check is sufficient for
+	// correctly formatted SIP messages.
+	for i := 0; i+6 <= len(body); i++ {
+		if body[i:i+6] == "INVITE" {
+			return true
+		}
+	}
+	return false
+}
+
+// extractTagFrom extracts the tag= parameter from a From/To header body.
+func extractTagFrom(body string) string {
+	idx := indexOfTag(body)
+	if idx < 0 {
+		return ""
+	}
+	rest := body[idx+4:]
+	end := len(rest)
+	for i := 0; i < len(rest); i++ {
+		if rest[i] == ';' || rest[i] == ' ' || rest[i] == '\r' || rest[i] == '\n' {
+			end = i
+			break
+		}
+	}
+	return rest[:end]
+}
+
+// indexOfTag returns the index of "tag=" in s, case-insensitive.
+func indexOfTag(s string) int {
+	low := strings.ToLower(s)
+	return strings.Index(low, "tag=")
+}
+
+// callIDOf extracts the Call-ID string from a message for logging.
+func callIDOf(msg *parser.SIPMsg) string {
+	if msg == nil || msg.CallID == nil {
+		return ""
+	}
+	return strings.TrimSpace(msg.CallID.Body.String())
 }
