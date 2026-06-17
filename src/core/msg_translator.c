@@ -725,6 +725,13 @@ static inline int lumps_len(
 				LM_CRIT("null bind_address (SUBST_RCV_ALL)\n");              \
 			};                                                               \
 			break;                                                           \
+		case SUBST_RCV_SOCKNAME:                                             \
+			if(msg->rcv.bind_address                                         \
+					&& msg->rcv.bind_address->sockname.len > 0) {            \
+				new_len += SOCKNAME_PARAM_LEN                                \
+						   + msg->rcv.bind_address->sockname.len;            \
+			}                                                                \
+			break;                                                           \
 		case SUBST_SND_IP:                                                   \
 			if(send_sock) {                                                  \
 				new_len += send_address_str->len;                            \
@@ -820,6 +827,11 @@ static inline int lumps_len(
 			} else {                                                         \
 				LM_CRIT("null send_sock (SUBST_SND_ALL)\n");                 \
 			};                                                               \
+			break;                                                           \
+		case SUBST_SND_SOCKNAME:                                             \
+			if(send_sock && send_sock->sockname.len > 0) {                   \
+				new_len += SOCKNAME_PARAM_LEN + send_sock->sockname.len;     \
+			}                                                                \
 			break;                                                           \
 		case SUBST_NOP: /* do nothing */                                     \
 			break;                                                           \
@@ -1172,6 +1184,16 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 						msg->rcv.bind_address, recv_address_str);              \
 			};                                                                 \
 			break;                                                             \
+		case SUBST_RCV_SOCKNAME:                                               \
+			if(msg->rcv.bind_address                                           \
+					&& msg->rcv.bind_address->sockname.len > 0) {              \
+				memcpy(new_buf + offset, SOCKNAME_PARAM, SOCKNAME_PARAM_LEN);  \
+				offset += SOCKNAME_PARAM_LEN;                                  \
+				memcpy(new_buf + offset, msg->rcv.bind_address->sockname.s,    \
+						msg->rcv.bind_address->sockname.len);                  \
+				offset += msg->rcv.bind_address->sockname.len;                 \
+			}                                                                  \
+			break;                                                             \
 		case SUBST_SND_IP:                                                     \
 			if(send_sock) {                                                    \
 				if((send_af == AF_INET6) && (send_address_str->s[0] != '[')) { \
@@ -1287,6 +1309,15 @@ void process_lumps(struct sip_msg *msg, struct lump *lumps, char *new_buf,
 			} else {                                                           \
 				LM_CRIT("null send_sock (SUBST_SND_ALL)\n");                   \
 			};                                                                 \
+			break;                                                             \
+		case SUBST_SND_SOCKNAME:                                               \
+			if(send_sock && send_sock->sockname.len > 0) {                     \
+				memcpy(new_buf + offset, SOCKNAME_PARAM, SOCKNAME_PARAM_LEN);  \
+				offset += SOCKNAME_PARAM_LEN;                                  \
+				memcpy(new_buf + offset, send_sock->sockname.s,                \
+						send_sock->sockname.len);                              \
+				offset += send_sock->sockname.len;                             \
+			}                                                                  \
 			break;                                                             \
 		case SUBST_RCV_PROTO:                                                  \
 			if(msg->rcv.bind_address) {                                        \

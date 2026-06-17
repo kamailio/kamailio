@@ -57,7 +57,9 @@ enum lump_subst
 	SUBST_RCV_ALL,
 	SUBST_SND_ALL, /* ip:port;transport=proto */
 	SUBST_RCV_ALL_EX,
-	SUBST_SND_ALL_EX /* ip:port;transport=proto;sn=xyz */
+	SUBST_SND_ALL_EX, /* ip:port;transport=proto;sn=xyz */
+	SUBST_RCV_SOCKNAME,
+	SUBST_SND_SOCKNAME /* ;sn=xyz (socket name parameter only) */
 };
 /* Where:
 				 * SND = sending, e.g the src ip of the outgoing message
