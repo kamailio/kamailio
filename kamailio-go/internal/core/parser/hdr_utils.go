@@ -308,9 +308,13 @@ func (m *SIPMsg) GetContactExpires() int {
 // R-URI helpers
 // ---------------------------------------------------------------------------
 
-// SetRURI updates the request URI (used in routing / forwarding paths).
+// SetRURI updates the request URI - this is the "real" Request URI
+// (used in the request line) as well as m.NewURI for routing decisions.
 func (m *SIPMsg) SetRURI(uri string) {
 	m.NewURI = str.Mk(uri)
+	if m.FirstLine != nil && m.FirstLine.Req != nil {
+		m.FirstLine.Req.URI = str.Mk(uri)
+	}
 }
 
 // SetDestinationURI updates the destination / next-hop URI.
