@@ -22,10 +22,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <sys/ipc.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -561,6 +559,8 @@ loop:
 	current_worker->pstate = 0;
 	for(;;) {
 		sleep_fn(current_timer->ival);
+		// bounded by nslices -> same datatype, ignore scanner false positive
+		// coverity[overflow : FALSE]
 		current_worker->slice =
 				(current_worker->slice + 1) % current_worker->nslices;
 		current_worker->tasks = INTERVAL_SPLIT(current_worker->slice,
@@ -649,11 +649,16 @@ loop:
 	current_worker->cstate = PTIMER_STATE_LOOP;
 	current_worker->pstate = 0;
 	// account for first iteration (even if we jumped here)
-	current_worker->slice = current_worker->slice - 1U;
+	// bounded by nslices to make the scanners happy
+	current_worker->slice = (current_worker->slice == 0)
+									? current_worker->nslices - 1U
+									: current_worker->slice - 1U;
 	current_worker->tnext = time_fn() + iscaled;
 	for(;;) {
+		// bounded by nslices -> same datatype, ignore scanner false positive
+		// coverity[overflow : FALSE]
 		current_worker->slice =
-				(current_worker->slice + 1) % current_worker->nslices;
+				(current_worker->slice + 1U) % current_worker->nslices;
 		current_worker->tasks = INTERVAL_SPLIT(current_worker->slice,
 				current_worker->ntasks, current_worker->nslices);
 		cfg_update();
@@ -762,6 +767,52 @@ static inline short is_valid_nslices(const unsigned int nslices)
 {
 	if(nslices == 0) {
 		LM_ERR("nslices can not be 0\n");
+		return 0;
+	}
+	return 1;
+}
+
+static inline short is_pvint_valid_nslices(const long nslices)
+{
+	if(nslices < 1 || nslices > UINT_MAX) {
+		LM_ERR("nslices must be > 0 and <= %u\n", UINT_MAX);
+		return 0;
+	}
+	return 1;
+}
+
+static inline short is_pvint_valid_slice(
+		const long slice, const unsigned int nslices)
+{
+	if(slice < 0 || slice > UINT_MAX) {
+		LM_ERR("slice must be >= 0 and <= %u\n", UINT_MAX);
+		return 0;
+	}
+	if(slice > nslices) {
+		LM_ERR("can not assign worker a slice > nslices (%u)\n", nslices);
+		return 0;
+	}
+	return 1;
+}
+
+static inline short is_pvint_valid_ntasks(const long ntasks)
+{
+	if(ntasks < 0 || ntasks > UINT_MAX) {
+		LM_ERR("ntasks must be >= 0 and <= %u\n", UINT_MAX);
+		return 0;
+	}
+	return 1;
+}
+
+static inline short is_pvint_valid_tasks(
+		const long tasks, const unsigned int ntasks)
+{
+	if(tasks < 0 || tasks > UINT_MAX) {
+		LM_ERR("tasks must be >= 0 and <= %u\n", UINT_MAX);
+		return 0;
+	}
+	if(tasks > ntasks) {
+		LM_ERR("can not assign more tasks than total tasks (%u)\n", ntasks);
 		return 0;
 	}
 	return 1;
@@ -1271,7 +1322,10 @@ static int pv_set_ptimer(
 			if(val == NULL || val->flags & PV_VAL_NULL) {
 				current_worker->ntasks = 0;
 			} else if(val->flags & PV_VAL_INT) {
-				current_worker->ntasks = val->ri;
+				if(!is_pvint_valid_ntasks(val->ri)) {
+					goto err;
+				}
+				current_worker->ntasks = (unsigned int)val->ri;
 			} else {
 				LM_WARN("ptimer(ntasks) can only be set to an integer\n");
 				goto err;
@@ -1281,7 +1335,10 @@ static int pv_set_ptimer(
 			if(val == NULL || val->flags & PV_VAL_NULL) {
 				current_worker->tasks = 0;
 			} else if(val->flags & PV_VAL_INT) {
-				current_worker->tasks = val->ri;
+				if(!is_pvint_valid_tasks(val->ri, current_worker->ntasks)) {
+					goto err;
+				}
+				current_worker->tasks = (unsigned int)val->ri;
 			} else {
 				LM_WARN("ptimer(tasks) can only be set to an integer\n");
 				goto err;
@@ -1289,9 +1346,12 @@ static int pv_set_ptimer(
 			break;
 		case 9:
 			if(val == NULL || val->flags & PV_VAL_NULL) {
-				current_worker->nslices = 0;
+				current_worker->nslices = 1;
 			} else if(val->flags & PV_VAL_INT) {
-				current_worker->nslices = val->ri;
+				if(!is_pvint_valid_nslices(val->ri)) {
+					goto err;
+				}
+				current_worker->nslices = (unsigned int)val->ri;
 			} else {
 				LM_WARN("ptimer(nslices) can only be set to an integer\n");
 				goto err;
@@ -1301,7 +1361,10 @@ static int pv_set_ptimer(
 			if(val == NULL || val->flags & PV_VAL_NULL) {
 				current_worker->slice = 0;
 			} else if(val->flags & PV_VAL_INT) {
-				current_worker->slice = val->ri;
+				if(!is_pvint_valid_slice(val->ri, current_worker->nslices)) {
+					goto err;
+				}
+				current_worker->slice = (unsigned int)val->ri;
 			} else {
 				LM_WARN("ptimer(slice) can only be set to an integer\n");
 				goto err;
