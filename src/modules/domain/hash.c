@@ -81,6 +81,7 @@ int hash_table_attr_install(struct domain_list **hash_table, str *did,
 			LM_ERR("no shm memory left for attribute value\n");
 			shm_free(attr->name.s);
 			shm_free(attr);
+			return -1;
 		}
 		memcpy(attr->val.s.s, val->s.s, val->s.len);
 		attr->val.s.len = val->s.len;
