@@ -36,6 +36,7 @@
 #include "../../core/ip_addr.h"
 #include "../../core/resolve.h"
 #include "../../core/mem/shm_mem.h"
+#include "../../core/locking.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/usr_avp.h"
@@ -60,6 +61,59 @@ static db1_con_t *perm_db_handle = 0;
 static db_func_t perm_dbf;
 
 extern str perm_address_file;
+
+/**
+ * Serializes address table maintenance operations:
+ * - explicit RPC reloads
+ * - timer cleanup of the inactive table
+ *
+ * It must not be used in the normal lookup path (SIP traffic),
+ * only reloading.
+ */
+static gen_lock_t *perm_address_tables_lock = NULL;
+
+/**
+ * Locks design.
+ *
+ * Reload path:
+ * 1. take global maintenance lock;
+ * 2. use per-bucket locks internally through reinit/insert;
+ * 3. swap current table (global pointer);
+ * 4. release global maintenance lock;
+ */
+
+static int address_tables_lock_init(void)
+{
+	gen_lock_t *table_lock;
+
+	if(perm_address_tables_lock)
+		return 0;
+
+	table_lock = lock_alloc();
+	if(!table_lock) {
+		LM_ERR("failed to allocate address tables lock\n");
+		return -1;
+	}
+
+	if(!lock_init(table_lock)) {
+		LM_ERR("failed to initialize address tables lock\n");
+		lock_dealloc(table_lock);
+		return -1;
+	}
+
+	perm_address_tables_lock = table_lock;
+	return 0;
+}
+
+static void address_tables_lock_destroy(void)
+{
+	if(!perm_address_tables_lock)
+		return;
+
+	lock_destroy(perm_address_tables_lock);
+	lock_dealloc(perm_address_tables_lock);
+	perm_address_tables_lock = NULL;
+}
 
 typedef struct address_tables_group
 {
@@ -450,11 +504,10 @@ error:
 	return -1;
 }
 
-/*
- * Reload addr table to new hash table and when done, make new hash table
- * current one.
+/**
+ * Caller must hold `perm_address_tables_lock`.
  */
-int reload_address_table(void)
+static int reload_address_table_unlocked(void)
 {
 	int ret = 0;
 	address_tables_group_t atg;
@@ -500,50 +553,80 @@ int reload_address_table(void)
 	*perm_domain_table = atg.domain_table;
 
 	LM_DBG("address table reloaded successfully.\n");
+	return ret;
+}
 
+/**
+ * Reload addr table to new hash table and when done,
+ * make new hash table current one.
+ *
+ * Acquires the global `perm_address_tables_lock` lock.
+ */
+int reload_address_table(void)
+{
+	int ret;
+
+	if(!perm_address_tables_lock) {
+		LM_ERR("address tables lock is not initialized\n");
+		return -1;
+	}
+
+	lock_get(perm_address_tables_lock);
+	ret = reload_address_table_unlocked();
+	lock_release(perm_address_tables_lock);
 
 	return ret;
 }
 
-/*
+/**
  * Wrapper to reload addr table from mi or rpc
- * we need to open the db_handle
+ * we need to open the db_handle.
+ *
+ * Acquires the global `perm_address_tables_lock` lock.
  */
 int reload_address_table_cmd(void)
 {
+	int ret = -1;
+
+	if(!perm_address_tables_lock) {
+		LM_ERR("address tables lock is not initialized\n");
+		return -1;
+	}
+
+	lock_get(perm_address_tables_lock);
+
 	if(perm_address_file.s == NULL) {
 		if(!perm_db_url.s) {
 			LM_ERR("db_url not set\n");
-			return -1;
+			goto done;
 		}
 
 		if(!perm_db_handle) {
 			perm_db_handle = perm_dbf.init(&perm_db_url);
 			if(!perm_db_handle) {
 				LM_ERR("unable to connect database\n");
-				return -1;
+				goto done;
 			}
 		}
 	}
 
-	if(reload_address_table() != 1) {
-		if(perm_address_file.s == NULL) {
-			perm_dbf.close(perm_db_handle);
-			perm_db_handle = 0;
-		}
-		return -1;
-	}
+	if(reload_address_table_unlocked() != 1)
+		goto done;
 
-	if(perm_address_file.s == NULL) {
+	ret = 1;
+
+done:
+	if(perm_address_file.s == NULL && perm_db_handle) {
 		perm_dbf.close(perm_db_handle);
 		perm_db_handle = 0;
 	}
 
-	return 1;
+	lock_release(perm_address_tables_lock);
+	return ret;
 }
 
 /*
- * Initialize data structures
+ * Initialize data structures for address table.
  */
 int init_addresses(void)
 {
@@ -582,6 +665,9 @@ int init_addresses(void)
 			return -1;
 		}
 	}
+
+	if(address_tables_lock_init() < 0)
+		goto error;
 
 	perm_addr_table_1 = address_table_allocate(PERM_HASH_SIZE);
 	if(!perm_addr_table_1)
@@ -684,9 +770,12 @@ error:
 	}
 
 	if(perm_address_file.s == NULL) {
-		perm_dbf.close(perm_db_handle);
+		if(perm_db_handle)
+			perm_dbf.close(perm_db_handle);
 		perm_db_handle = 0;
 	}
+
+	address_tables_lock_destroy();
 	return -1;
 }
 
@@ -726,6 +815,7 @@ void clean_addresses(void)
 		shm_free(perm_domain_table);
 		perm_domain_table = NULL;
 	}
+	address_tables_lock_destroy();
 }
 
 
