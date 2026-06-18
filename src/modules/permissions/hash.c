@@ -1025,6 +1025,224 @@ int address_table_destroy(struct address_hash_table *table)
 	return 0;
 }
 
+int address_table_insert(struct address_hash_table *table, unsigned int grp,
+		ip_addr_t *addr, unsigned int port, str *tagv)
+{
+	struct addr_list *entry;
+	unsigned int hash_index;
+	str addr_str;
+	int len;
+
+	if(!table || !table->row_entry_list || !table->row_locks
+			|| table->size == 0 || !addr) {
+		LM_ERR("invalid address table insert arguments\n");
+		return -1;
+	}
+
+	len = sizeof(*entry);
+	if(tagv && tagv->s)
+		len += tagv->len + 1;
+
+	entry = shm_malloc(len);
+	if(!entry) {
+		LM_ERR("no shared memory for address table entry\n");
+		return -1;
+	}
+	memset(entry, 0, len);
+
+	entry->grp = grp;
+	memcpy(&entry->addr, addr, sizeof(entry->addr));
+	entry->port = port;
+
+	if(tagv && tagv->s) {
+		entry->tag.s = (char *)entry + sizeof(*entry);
+		entry->tag.len = tagv->len;
+		memcpy(entry->tag.s, tagv->s, tagv->len);
+		entry->tag.s[entry->tag.len] = '\0';
+	}
+
+	/*
+	 * Preserve the legacy bucket mapping. Existing code hashes the first
+	 * four bytes for both IPv4 and IPv6 and compares the full address after
+	 * selecting the bucket.
+	 */
+	addr_str.s = (char *)addr->u.addr;
+	addr_str.len = 4;
+	hash_index = core_hash(&addr_str, 0, table->size);
+
+	if(hash_index >= table->size || !table->row_locks[hash_index]) {
+		LM_ERR("invalid or uninitialized address bucket[%u]\n", hash_index);
+		shm_free(entry);
+		return -1;
+	}
+
+	lock_get(table->row_locks[hash_index]);
+	entry->next = table->row_entry_list[hash_index];
+	table->row_entry_list[hash_index] = entry;
+	lock_release(table->row_locks[hash_index]);
+
+	return 1;
+}
+
+int match_address_table(struct address_hash_table *table, unsigned int group,
+		ip_addr_t *addr, unsigned int port)
+{
+	struct addr_list *entry;
+	unsigned int hash_index;
+	str addr_str;
+	avp_value_t val;
+	int ret = -1;
+
+	if(!table || !table->row_entry_list || !table->row_locks || !addr)
+		return -1;
+
+	addr_str.s = (char *)addr->u.addr;
+	addr_str.len = 4;
+	hash_index = core_hash(&addr_str, 0, table->size);
+
+	if(hash_index >= table->size || !table->row_locks[hash_index]) {
+		LM_ERR("invalid or uninitialized address bucket[%u]\n", hash_index);
+		return -1;
+	}
+
+	lock_get(table->row_locks[hash_index]);
+
+	for(entry = table->row_entry_list[hash_index]; entry;
+			entry = entry->next) {
+		if(entry->grp != group)
+			continue;
+		if(entry->port != 0 && entry->port != port)
+			continue;
+		if(!ip_addr_cmp(&entry->addr, addr))
+			continue;
+
+		if(tag_avp.n && entry->tag.s) {
+			val.s = entry->tag;
+			if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
+				LM_ERR("setting of tag_avp failed\n");
+				goto done;
+			}
+		}
+
+		ret = 1;
+		goto done;
+	}
+
+done:
+	lock_release(table->row_locks[hash_index]);
+	return ret;
+}
+
+int find_group_in_address_table(struct address_hash_table *table,
+		ip_addr_t *addr, unsigned int port)
+{
+	struct addr_list *entry;
+	unsigned int hash_index;
+	str addr_str;
+	avp_value_t val;
+	int ret = -1;
+
+	if(!table || !table->row_entry_list || !table->row_locks || !addr)
+		return -1;
+
+	addr_str.s = (char *)addr->u.addr;
+	addr_str.len = 4;
+	hash_index = core_hash(&addr_str, 0, table->size);
+
+	if(hash_index >= table->size || !table->row_locks[hash_index]) {
+		LM_ERR("invalid or uninitialized address bucket[%u]\n", hash_index);
+		return -1;
+	}
+
+	lock_get(table->row_locks[hash_index]);
+
+	for(entry = table->row_entry_list[hash_index]; entry;
+			entry = entry->next) {
+		if(entry->port != 0 && entry->port != port)
+			continue;
+		if(!ip_addr_cmp(&entry->addr, addr))
+			continue;
+
+		if(tag_avp.n && entry->tag.s) {
+			val.s = entry->tag;
+			if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
+				LM_ERR("setting of tag_avp failed\n");
+				goto done;
+			}
+		}
+
+		ret = entry->grp;
+		goto done;
+	}
+
+done:
+	lock_release(table->row_locks[hash_index]);
+	return ret;
+}
+
+int address_table_rpc_print(
+		struct address_hash_table *table, rpc_t *rpc, void *c)
+{
+	struct addr_list *entry;
+	void *th;
+	void *ih;
+
+	if(!table || !table->row_entry_list || !table->row_locks)
+		return -1;
+
+	for(unsigned int i = 0; i < table->size; i++) {
+		if(!table->row_locks[i]) {
+			LM_ERR("uninitialized address bucket lock[%u]\n", i);
+			return -1;
+		}
+
+		lock_get(table->row_locks[i]);
+
+		for(entry = table->row_entry_list[i]; entry;
+				entry = entry->next) {
+			if(rpc->add(c, "{", &th) < 0) {
+				rpc->fault(c, 500, "Internal error creating rpc");
+				lock_release(table->row_locks[i]);
+				return -1;
+			}
+
+			if(rpc->struct_add(th, "dd{", "table", i, "group",
+					   entry->grp, "item", &ih)
+					< 0) {
+				rpc->fault(c, 500, "Internal error creating rpc ih");
+				lock_release(table->row_locks[i]);
+				return -1;
+			}
+
+			if(rpc->struct_add(
+					   ih, "s", "ip", ip_addr2a(&entry->addr))
+					< 0) {
+				rpc->fault(c, 500,
+						"Internal error creating rpc data (ip)");
+				lock_release(table->row_locks[i]);
+				return -1;
+			}
+
+			if(rpc->struct_add(ih, "ds", "port", entry->port, "tag",
+					   entry->tag.len ? entry->tag.s : "NULL")
+					< 0) {
+				rpc->fault(c, 500, "Internal error creating rpc data");
+				lock_release(table->row_locks[i]);
+				return -1;
+			}
+		}
+
+		lock_release(table->row_locks[i]);
+	}
+
+	return 0;
+}
+
+void empty_address_table(struct address_hash_table *table)
+{
+	address_table_free_buckets(table, false);
+}
+
 /*
  * Create and initialize an address hash table
  */

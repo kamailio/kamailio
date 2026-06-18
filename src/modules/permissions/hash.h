@@ -145,6 +145,16 @@ void address_table_free_buckets(
 		struct address_hash_table *table, bool free_locks);
 int address_table_destroy(struct address_hash_table *table);
 
+int address_table_insert(struct address_hash_table *table, unsigned int grp,
+		ip_addr_t *addr, unsigned int port, str *tagv);
+int match_address_table(struct address_hash_table *table, unsigned int grp,
+		ip_addr_t *addr, unsigned int port);
+int find_group_in_address_table(struct address_hash_table *table,
+		ip_addr_t *addr, unsigned int port);
+int address_table_rpc_print(
+		struct address_hash_table *table, rpc_t *rpc, void *c);
+void empty_address_table(struct address_hash_table *table);
+
 /*
  * Create and initialize a hash table
  */
