@@ -102,16 +102,20 @@ int hash_table_attr_install(struct domain_list **hash_table, str *did,
 	np = (struct domain_list *)shm_malloc(sizeof(struct domain_list));
 	if(np == NULL) {
 		LM_ERR("no shm memory left for domain list\n");
-		if(type == 2)
-			shm_free(attr->name.s);
+		if(type == 2) {
+			shm_free(attr->val.s.s);
+		}
+		shm_free(attr->name.s);
 		shm_free(attr);
 		return -1;
 	}
 	np->did.s = (char *)shm_malloc(did->len);
 	if(np->did.s == NULL) {
 		LM_ERR("no shm memory left for did\n");
-		if(type == 2)
-			shm_free(attr->name.s);
+		if(type == 2) {
+			shm_free(attr->val.s.s);
+		}
+		shm_free(attr->name.s);
 		shm_free(attr);
 		shm_free(np);
 		return -1;
@@ -150,6 +154,7 @@ int hash_table_install(struct domain_list **hash_table, str *did, str *domain)
 	np->domain.s = (char *)shm_malloc(domain->len);
 	if(np->domain.s == NULL) {
 		LM_ERR("no shared memory for domain\n");
+		shm_free(np->did.s);
 		shm_free(np);
 		return -1;
 	}
