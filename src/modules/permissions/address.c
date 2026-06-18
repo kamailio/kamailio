@@ -63,7 +63,9 @@ static db_func_t perm_dbf;
 extern str perm_address_file;
 
 /**
- * Serializes address table maintenance operations:
+ * These locks serializes address and domain tables
+ * maintenance operations accordingly.
+ *
  * - explicit RPC reloads
  * - timer cleanup of the inactive table
  *
@@ -71,6 +73,7 @@ extern str perm_address_file;
  * only reloading.
  */
 static gen_lock_t *perm_address_tables_lock = NULL;
+static gen_lock_t *perm_domain_tables_lock = NULL;
 
 /**
  * Locks design.
@@ -113,6 +116,45 @@ static void address_tables_lock_destroy(void)
 	lock_destroy(perm_address_tables_lock);
 	lock_dealloc(perm_address_tables_lock);
 	perm_address_tables_lock = NULL;
+}
+
+/**
+ * TODO: a separate global lock for domain table
+ * is introduced to be able split API in the future
+ * and make address and domain tables be independent
+ * in terms of handling. (for users it's transparent)
+ */
+static int domain_tables_lock_init(void)
+{
+	gen_lock_t *table_lock;
+
+	if(perm_domain_tables_lock)
+		return 0;
+
+	table_lock = lock_alloc();
+	if(!table_lock) {
+		LM_ERR("failed to allocate domain tables lock\n");
+		return -1;
+	}
+
+	if(!lock_init(table_lock)) {
+		LM_ERR("failed to initialize domain tables lock\n");
+		lock_dealloc(table_lock);
+		return -1;
+	}
+
+	perm_domain_tables_lock = table_lock;
+	return 0;
+}
+
+static void domain_tables_lock_destroy(void)
+{
+	if(!perm_domain_tables_lock)
+		return;
+
+	lock_destroy(perm_domain_tables_lock);
+	lock_dealloc(perm_domain_tables_lock);
+	perm_domain_tables_lock = NULL;
 }
 
 typedef struct address_tables_group
@@ -566,13 +608,17 @@ int reload_address_table(void)
 {
 	int ret;
 
-	if(!perm_address_tables_lock) {
-		LM_ERR("address tables lock is not initialized\n");
+	if(!perm_address_tables_lock || !perm_domain_tables_lock) {
+		LM_ERR("address/domain tables locks are not initialized\n");
 		return -1;
 	}
 
+	/* Global lock order:
+	 * address tables -> domain tables -> per-bucket lock. */
 	lock_get(perm_address_tables_lock);
+	lock_get(perm_domain_tables_lock);
 	ret = reload_address_table_unlocked();
+	lock_release(perm_domain_tables_lock);
 	lock_release(perm_address_tables_lock);
 
 	return ret;
@@ -588,12 +634,13 @@ int reload_address_table_cmd(void)
 {
 	int ret = -1;
 
-	if(!perm_address_tables_lock) {
-		LM_ERR("address tables lock is not initialized\n");
+	if(!perm_address_tables_lock || !perm_domain_tables_lock) {
+		LM_ERR("address/domain tables locks are not initialized\n");
 		return -1;
 	}
 
 	lock_get(perm_address_tables_lock);
+	lock_get(perm_domain_tables_lock);
 
 	if(perm_address_file.s == NULL) {
 		if(!perm_db_url.s) {
@@ -621,6 +668,7 @@ done:
 		perm_db_handle = 0;
 	}
 
+	lock_release(perm_domain_tables_lock);
 	lock_release(perm_address_tables_lock);
 	return ret;
 }
@@ -667,6 +715,8 @@ int init_addresses(void)
 	}
 
 	if(address_tables_lock_init() < 0)
+		goto error;
+	if(domain_tables_lock_init() < 0)
 		goto error;
 
 	perm_addr_table_1 = address_table_allocate(PERM_HASH_SIZE);
@@ -775,6 +825,7 @@ error:
 		perm_db_handle = 0;
 	}
 
+	domain_tables_lock_destroy();
 	address_tables_lock_destroy();
 	return -1;
 }
@@ -815,6 +866,7 @@ void clean_addresses(void)
 		shm_free(perm_domain_table);
 		perm_domain_table = NULL;
 	}
+	domain_tables_lock_destroy();
 	address_tables_lock_destroy();
 }
 
