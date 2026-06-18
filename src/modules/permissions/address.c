@@ -52,12 +52,9 @@ struct subnet **perm_subnet_table = NULL;  /* Ptr to current subnet table */
 struct subnet *perm_subnet_table_1 = NULL; /* Ptr to subnet table 1 */
 struct subnet *perm_subnet_table_2 = NULL; /* Ptr to subnet table 2 */
 
-struct domain_name_list ***perm_domain_table =
-		NULL; /* Ptr to current domain name table */
-static struct domain_name_list **perm_domain_table_1 =
-		NULL; /* Ptr to domain name table 1 */
-static struct domain_name_list **perm_domain_table_2 =
-		NULL; /* Ptr to domain name table 2 */
+struct domain_hash_table **perm_domain_table = NULL; /* pointer to the current hash table (to its pointer) */
+static struct domain_hash_table *perm_domain_table_1 = NULL; /* hash table 1 */
+static struct domain_hash_table *perm_domain_table_2 = NULL; /* hash table 2 */
 
 static db1_con_t *perm_db_handle = 0;
 static db_func_t perm_dbf;
@@ -68,7 +65,7 @@ typedef struct address_tables_group
 {
 	struct address_hash_table *address_table;
 	struct subnet *subnet_table;
-	struct domain_name_list **domain_table;
+	struct domain_hash_table *domain_table;
 
 } address_tables_group_t;
 
@@ -134,7 +131,7 @@ int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
 					ips->len, ips->s, port, mask);
 		}
 	} else {
-		if(domain_name_table_insert(atg->domain_table, gid, ips, port, tagv)
+		if(domain_table_insert(atg->domain_table, gid, ips, port, tagv)
 				== -1) {
 			LM_ERR("domain name table problem\n");
 			return -1;
@@ -482,10 +479,10 @@ int reload_address_table(void)
 
 	/* Choose new domain name table */
 	if(*perm_domain_table == perm_domain_table_1) {
-		empty_domain_name_table(perm_domain_table_2);
+		empty_domain_table(perm_domain_table_2);
 		atg.domain_table = perm_domain_table_2;
 	} else {
-		empty_domain_name_table(perm_domain_table_1);
+		empty_domain_table(perm_domain_table_1);
 		atg.domain_table = perm_domain_table_1;
 	}
 
@@ -618,16 +615,15 @@ int init_addresses(void)
 
 	*perm_subnet_table = perm_subnet_table_1;
 
-	perm_domain_table_1 = new_domain_name_table();
+	perm_domain_table_1 = domain_table_allocate(PERM_HASH_SIZE);
 	if(!perm_domain_table_1)
 		goto error;
 
-	perm_domain_table_2 = new_domain_name_table();
+	perm_domain_table_2 = domain_table_allocate(PERM_HASH_SIZE);
 	if(!perm_domain_table_2)
 		goto error;
 
-	perm_domain_table = (struct domain_name_list ***)shm_malloc(
-			sizeof(struct domain_name_list **));
+	perm_domain_table = shm_malloc(sizeof(*perm_domain_table));
 	if(!perm_domain_table) {
 		LM_ERR("no more shm memory for domain name table\n");
 		goto error;
@@ -675,11 +671,11 @@ error:
 	}
 
 	if(perm_domain_table_1) {
-		free_domain_name_table(perm_domain_table_1);
+		domain_table_destroy(perm_domain_table_1);
 		perm_domain_table_1 = 0;
 	}
 	if(perm_domain_table_2) {
-		free_domain_name_table(perm_domain_table_2);
+		domain_table_destroy(perm_domain_table_2);
 		perm_domain_table_2 = 0;
 	}
 	if(perm_domain_table) {
@@ -718,12 +714,18 @@ void clean_addresses(void)
 		free_subnet_table(perm_subnet_table_2);
 	if(perm_subnet_table)
 		shm_free(perm_subnet_table);
-	if(perm_domain_table_1)
-		free_domain_name_table(perm_domain_table_1);
-	if(perm_domain_table_2)
-		free_domain_name_table(perm_domain_table_2);
-	if(perm_domain_table)
+	if(perm_domain_table_1) {
+		domain_table_destroy(perm_domain_table_1);
+		perm_domain_table_1 = NULL;
+	}
+	if(perm_domain_table_2) {
+		domain_table_destroy(perm_domain_table_2);
+		perm_domain_table_2 = NULL;
+	}
+	if(perm_domain_table) {
 		shm_free(perm_domain_table);
+		perm_domain_table = NULL;
+	}
 }
 
 
@@ -747,7 +749,7 @@ int allow_address(sip_msg_t *_msg, int addr_group, str *ips, int port)
 		}
 	} else {
 		if(perm_domain_table) {
-			return match_domain_name_table(
+			return match_domain_table(
 					*perm_domain_table, addr_group, ips, (unsigned int)port);
 		}
 	}
@@ -898,7 +900,7 @@ int ki_allow_address_group(sip_msg_t *_msg, str *_addr, int _port)
 		LM_DBG("looking for <%.*s, %u> in domain_name table\n", _addr->len,
 				_addr->s, (unsigned int)_port);
 		if(perm_domain_table) {
-			group = find_group_in_domain_name_table(
+			group = find_group_in_domain_table(
 					*perm_domain_table, _addr, (unsigned int)_port);
 			LM_DBG("Found a match of domain_name in group <%d>\n", group);
 		}

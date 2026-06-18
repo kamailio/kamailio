@@ -28,6 +28,7 @@
 #include "../../core/parser/msg_parser.h"
 
 struct address_hash_table;
+struct domain_hash_table;
 
 /* Pointer to current address hash table pointer */
 extern struct address_hash_table **perm_addr_table;
@@ -38,7 +39,7 @@ extern struct subnet **perm_subnet_table;
 
 
 /* Pointer to current domain name table */
-extern struct domain_name_list ***perm_domain_table;
+extern struct domain_hash_table **perm_domain_table;
 
 /*
  * Initialize data structures

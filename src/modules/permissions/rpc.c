@@ -157,7 +157,7 @@ void rpc_domain_name_dump(rpc_t *rpc, void *c)
 		rpc->fault(c, 500, "No domain list table");
 		return;
 	}
-	if(domain_name_table_rpc_print(*perm_domain_table, rpc, c) < 0) {
+	if(domain_table_rpc_print(*perm_domain_table, rpc, c) < 0) {
 		LM_DBG("failed to print domain table dump\n");
 	}
 	return;
