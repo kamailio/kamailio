@@ -105,9 +105,10 @@ struct module_exports exports = {
 /**
  * @brief JWT header name/value pair
  */
-struct jwt3_token_hdr {
-    char *name;
-    char *value;
+struct jwt3_token_hdr
+{
+	char *name;
+	char *value;
 };
 
 /**
@@ -202,9 +203,101 @@ static int jwt_bn_to_bin(const BIGNUM *bn, unsigned char *out, int size)
 }
 
 /**
- * @brief Convert PEM to JWKS (openssl 3.0 compliant)
+ * @brief Convert RSA EVP_PKEY to JWKS JSON (openssl 3.0 compliant)
  */
-static char *jwt_pkey_to_jwks(EVP_PKEY *pkey, const char *kid)
+static char *jwt_rsa_pkey_to_jwks(EVP_PKEY *pkey, const char *kid)
+{
+	BIGNUM *n_bn = NULL, *e_bn = NULL, *d_bn = NULL;
+	unsigned char *bin_n = NULL, *bin_e = NULL, *bin_d = NULL;
+	char *b64_n = NULL, *b64_e = NULL, *b64_d = NULL;
+	char *json_out = NULL;
+	int n_len = 0, e_len = 0, d_len = 0;
+	int is_private = 0;
+
+	if(!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &n_bn)
+			|| !EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &e_bn)) {
+		LM_ERR("Failed to extract RSA modulus/exponent\n");
+		goto cleanup;
+	}
+
+	if(EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_D, &d_bn)) {
+		is_private = 1;
+	}
+
+	n_len = BN_num_bytes(n_bn);
+	e_len = BN_num_bytes(e_bn);
+	bin_n = pkg_malloc(n_len);
+	bin_e = pkg_malloc(e_len);
+	if(!bin_n || !bin_e) {
+		LM_ERR("No memory for RSA key binary buffers\n");
+		goto cleanup;
+	}
+	BN_bn2bin(n_bn, bin_n);
+	BN_bn2bin(e_bn, bin_e);
+
+	if(is_private) {
+		d_len = BN_num_bytes(d_bn);
+		bin_d = pkg_malloc(d_len);
+		if(!bin_d) {
+			LM_ERR("No memory for RSA private exponent buffer\n");
+			goto cleanup;
+		}
+		BN_bn2bin(d_bn, bin_d);
+	}
+
+	b64_n = jwt_base64url_encode(bin_n, n_len);
+	b64_e = jwt_base64url_encode(bin_e, e_len);
+	if(is_private)
+		b64_d = jwt_base64url_encode(bin_d, d_len);
+
+	if(!b64_n || !b64_e || (is_private && !b64_d)) {
+		LM_ERR("Base64url encoding failed for RSA key\n");
+		goto cleanup;
+	}
+
+	int len = 1024 + strlen(b64_n) + strlen(b64_e)
+			  + (is_private ? strlen(b64_d) : 0);
+	json_out = pkg_malloc(len);
+	if(!json_out) {
+		LM_ERR("No memory for RSA JWKS JSON string\n");
+		goto cleanup;
+	}
+
+	if(is_private) {
+		snprintf(json_out, len,
+				"{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\","
+				"\"kid\":\"%s\",\"n\":\"%s\",\"e\":\"%s\",\"d\":\"%s\"}]}",
+				kid, b64_n, b64_e, b64_d);
+	} else {
+		snprintf(json_out, len,
+				"{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\","
+				"\"kid\":\"%s\",\"n\":\"%s\",\"e\":\"%s\"}]}",
+				kid, b64_n, b64_e);
+	}
+
+cleanup:
+	BN_free(n_bn);
+	BN_free(e_bn);
+	BN_free(d_bn);
+	if(bin_n)
+		pkg_free(bin_n);
+	if(bin_e)
+		pkg_free(bin_e);
+	if(bin_d)
+		pkg_free(bin_d);
+	if(b64_n)
+		pkg_free(b64_n);
+	if(b64_e)
+		pkg_free(b64_e);
+	if(b64_d)
+		pkg_free(b64_d);
+	return json_out;
+}
+
+/**
+ * @brief Convert EC EVP_PKEY to JWKS JSON (openssl 3.0 compliant)
+ */
+static char *jwt_ec_pkey_to_jwks(EVP_PKEY *pkey, const char *kid)
 {
 	BIGNUM *x_bn = NULL, *y_bn = NULL, *d_bn = NULL;
 	unsigned char *bin_x = NULL, *bin_y = NULL, *bin_d = NULL;
@@ -212,12 +305,6 @@ static char *jwt_pkey_to_jwks(EVP_PKEY *pkey, const char *kid)
 	char *json_out = NULL;
 	int order_len = 0;
 	int is_private = 0;
-
-	/* check if it is an EC Key */
-	if(!EVP_PKEY_is_a(pkey, "EC")) {
-		LM_ERR("Key is not an Elliptic Curve Key\n");
-		return NULL;
-	}
 
 	/* extract Public Key X, Y */
 	if(!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_EC_PUB_X, &x_bn)
@@ -298,6 +385,20 @@ cleanup:
 	if(b64_d)
 		pkg_free(b64_d);
 	return json_out;
+}
+
+/**
+ * @brief Convert PEM to JWKS — dispatches to RSA or EC handler
+ */
+static char *jwt_pkey_to_jwks(EVP_PKEY *pkey, const char *kid)
+{
+	if(EVP_PKEY_is_a(pkey, "RSA")) {
+		return jwt_rsa_pkey_to_jwks(pkey, kid);
+	} else if(EVP_PKEY_is_a(pkey, "EC")) {
+		return jwt_ec_pkey_to_jwks(pkey, kid);
+	}
+	LM_ERR("Unsupported key type (not RSA or EC)\n");
+	return NULL;
 }
 
 /**
@@ -543,12 +644,12 @@ static int ki_jwt_generate_hdrs(
 		goto error;
 	}
 
-  /* get key item */
-  const jwk_item_t *item = NULL;
+	/* get key item */
+	const jwk_item_t *item = NULL;
 	/* find key item by kid in a JWKS ... */
-  if ((pkid) && (pkid->body.s)) {
-    item = jwks_find_bykid(jwks, pkid->body.s);
-  }
+	if((pkid) && (pkid->body.s)) {
+		item = jwks_find_bykid(jwks, pkid->body.s);
+	}
 	/* or use the first item */
 	if(item == NULL) {
 		item = jwks_item_get(jwks, 0);
@@ -806,8 +907,7 @@ static int ki_jwt_verify_key(
 				jwt_checker, (jwt_callback_t)ki_jwt_verify_cb, (void *)&hdr);
 
 		if(jwt_checker_verify(jwt_checker, kdata.s) != JWT_VALUE_ERR_NONE) {
-			LM_DBG("%s (%d)\n",
-					jwt_checker_error_msg(jwt_checker),
+			LM_DBG("%s (%d)\n", jwt_checker_error_msg(jwt_checker),
 					jwt_checker_error(jwt_checker));
 		}
 
@@ -867,8 +967,7 @@ static int ki_jwt_verify_key(
 			ret = jwt_checker_verify(checker, kdata.s);
 			_jwt_verify_status = ret;
 			if(ret != 0) {
-				LM_ERR("%s (%d)\n",
-						jwt_checker_error_msg(checker),
+				LM_ERR("%s (%d)\n", jwt_checker_error_msg(checker),
 						jwt_checker_error(checker));
 			}
 		}
