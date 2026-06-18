@@ -267,6 +267,31 @@ struct domain_name_list
 	struct domain_name_list *next;
 };
 
+/**
+ * Domain-name hash table guarded with one lock per bucket.
+ *
+ * `row_entry_list` contains the first real entry of each bucket. Domain
+ * buckets do not use dummy heads.
+ *
+ * size is the immutable number of allocated buckets.
+ */
+struct domain_hash_table
+{
+	struct domain_name_list **row_entry_list;
+	gen_lock_t **row_locks;
+	unsigned int size;
+};
+
+struct domain_hash_table *domain_table_allocate(
+		unsigned int hash_table_size);
+int domain_table_init(struct domain_hash_table *table,
+		unsigned int hash_table_size);
+int domain_table_reinit(struct domain_hash_table *table,
+		unsigned int hash_table_size);
+void domain_table_free_buckets(
+		struct domain_hash_table *table, bool free_locks);
+int domain_table_destroy(struct domain_hash_table *table);
+
 /*
  * Create a domain_name table
  */

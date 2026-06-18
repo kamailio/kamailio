@@ -1482,6 +1482,209 @@ void free_subnet_table(struct subnet *table)
 	shm_free(table);
 }
 
+static void domain_table_free_row_lock(gen_lock_t *row_lock)
+{
+	if(!row_lock)
+		return;
+
+	lock_destroy(row_lock);
+	lock_dealloc(row_lock);
+}
+
+static void domain_table_free_entries(struct domain_name_list *entry)
+{
+	struct domain_name_list *next;
+
+	while(entry) {
+		next = entry->next;
+		/* domain and tag are stored inline in this allocation */
+		shm_free(entry);
+		entry = next;
+	}
+}
+
+/**
+ * Destroy domain hash table content,
+ * so free all entries from all address buckets.
+ *
+ * Locks can be left intact (free_locks=flase),
+ * e.g. in case this is just a table re-initialization.
+ *
+ * Deliberately tolerates a partially initialized table.
+ */
+void domain_table_free_buckets(
+		struct domain_hash_table *table, bool free_locks)
+{
+	gen_lock_t *row_lock;
+
+	if(!table)
+		return;
+
+	for(unsigned int i = 0; i < table->size; i++) {
+		row_lock = NULL;
+
+		if(table->row_locks)
+			row_lock = table->row_locks[i];
+
+		if(row_lock)
+			lock_get(row_lock);
+
+		if(table->row_entry_list && table->row_entry_list[i]) {
+			domain_table_free_entries(table->row_entry_list[i]);
+			table->row_entry_list[i] = NULL;
+		}
+
+		if(row_lock)
+			lock_release(row_lock);
+
+		if(free_locks && row_lock) {
+			domain_table_free_row_lock(row_lock);
+			table->row_locks[i] = NULL;
+		}
+	}
+}
+
+/**
+ * Initialize missing domain bucket locks.
+ *
+ * Ownership policy:
+ *  - the caller owns the `domain_hash_table` object;
+ *  - this function does not destroy or unwind the table on failure;
+ *  - locks initialized by earlier iterations remain installed;
+ *  - the caller is responsible to call `domain_table_destroy()` after any failure
+ */
+int domain_table_init(
+		struct domain_hash_table *table, unsigned int hash_table_size)
+{
+	gen_lock_t *row_lock;
+
+	if(!table || !table->row_entry_list || !table->row_locks) {
+		LM_ERR("invalid domain hash table\n");
+		return -1;
+	}
+
+	DBG("init domain size = %d\n", hash_table_size);
+
+	if(hash_table_size == 0 || table->size != hash_table_size) {
+		LM_ERR("invalid domain hash table size: table=%u requested=%u\n",
+				table->size, hash_table_size);
+		return -1;
+	}
+
+	for(unsigned int i = 0; i < hash_table_size; i++) {
+		if(table->row_locks[i])
+			continue;
+
+		row_lock = lock_alloc();
+		if(!row_lock) {
+			LM_ERR("no shared memory for domain bucket lock[%u]\n", i);
+			return -1;
+		}
+
+		if(!lock_init(row_lock)) {
+			LM_ERR("failed to initialize domain bucket lock[%u]\n", i);
+			lock_dealloc(row_lock);
+			return -1;
+		}
+
+		table->row_locks[i] = row_lock;
+	}
+
+	return 0;
+}
+
+/**
+ * Allocate space (shm) for the domain table and init members.
+ */
+struct domain_hash_table *domain_table_allocate(
+		unsigned int hash_table_size)
+{
+	struct domain_hash_table *table;
+
+	if(hash_table_size == 0) {
+		LM_ERR("cannot allocate an empty domain hash table\n");
+		return NULL;
+	}
+
+	table = shm_malloc(sizeof(*table));
+	if(!table) {
+		LM_ERR("no shared memory for domain hash table\n");
+		return NULL;
+	}
+	memset(table, 0, sizeof(*table));
+	table->size = hash_table_size;
+
+	table->row_entry_list = shm_malloc(
+			hash_table_size * sizeof(*table->row_entry_list));
+	if(!table->row_entry_list) {
+		LM_ERR("no shared memory for domain bucket array\n");
+		domain_table_destroy(table);
+		return NULL;
+	}
+	memset(table->row_entry_list, 0,
+			hash_table_size * sizeof(*table->row_entry_list));
+
+	table->row_locks =
+			shm_malloc(hash_table_size * sizeof(*table->row_locks));
+	if(!table->row_locks) {
+		LM_ERR("no shared memory for domain lock array\n");
+		domain_table_destroy(table);
+		return NULL;
+	}
+	memset(table->row_locks, 0,
+			hash_table_size * sizeof(*table->row_locks));
+
+	if(domain_table_init(table, hash_table_size) < 0) {
+		domain_table_destroy(table);
+		return NULL;
+	}
+
+	return table;
+}
+
+int domain_table_reinit(
+		struct domain_hash_table *table, unsigned int hash_table_size)
+{
+	if(!table)
+		return -1;
+
+	if(table->size != hash_table_size) {
+		LM_ERR("cannot reinitialize domain table with a different size "
+			   "(table=%u requested=%u)\n",
+				table->size, hash_table_size);
+		return -1;
+	}
+
+	domain_table_free_buckets(table, false);
+
+	/* Repair missing locks if this is a partially initialized table. */
+	return domain_table_init(table, hash_table_size);
+}
+
+/**
+ * Clean domain table (frees all previously allocated shm).
+ */
+int domain_table_destroy(struct domain_hash_table *table)
+{
+	if(!table)
+		return 0;
+
+	domain_table_free_buckets(table, true);
+
+	if(table->row_entry_list) {
+		shm_free(table->row_entry_list);
+		table->row_entry_list = NULL;
+	}
+
+	if(table->row_locks) {
+		shm_free(table->row_locks);
+		table->row_locks = NULL;
+	}
+
+	shm_free(table);
+	return 0;
+}
+
 /*
  * Create and initialize a domain_name table
  */
