@@ -44,12 +44,9 @@
 
 #define TABLE_VERSION 6
 
-struct addr_list ***perm_addr_table =
-		NULL; /* Ptr to current address hash table ptr */
-struct addr_list **perm_addr_table_1 =
-		NULL; /* Pointer to address hash table 1 */
-struct addr_list **perm_addr_table_2 =
-		NULL; /* Pointer to address hash table 2 */
+struct address_hash_table **perm_addr_table = NULL;  /* pointer to the current hash table (to its pointer) */
+struct address_hash_table *perm_addr_table_1 = NULL; /* hash table 1 */
+struct address_hash_table *perm_addr_table_2 = NULL; /* hash table 2 */
 
 struct subnet **perm_subnet_table = NULL;  /* Ptr to current subnet table */
 struct subnet *perm_subnet_table_1 = NULL; /* Ptr to subnet table 1 */
@@ -69,7 +66,7 @@ extern str perm_address_file;
 
 typedef struct address_tables_group
 {
-	struct addr_list **address_table;
+	struct address_hash_table *address_table;
 	struct subnet *subnet_table;
 	struct domain_name_list **domain_table;
 
@@ -119,7 +116,7 @@ int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
 	if(ipa != NULL) {
 		if((ipa->af == AF_INET6 && mask == 128)
 				|| (ipa->af == AF_INET && mask == 32)) {
-			if(addr_hash_table_insert(atg->address_table, gid, ipa, port, tagv)
+			if(address_table_insert(atg->address_table, gid, ipa, port, tagv)
 					== -1) {
 				LM_ERR("hash table problem\n");
 				return -1;
@@ -467,10 +464,10 @@ int reload_address_table(void)
 
 	/* Choose new hash table and free its old contents */
 	if(*perm_addr_table == perm_addr_table_1) {
-		empty_addr_hash_table(perm_addr_table_2);
+		empty_address_table(perm_addr_table_2);
 		atg.address_table = perm_addr_table_2;
 	} else {
-		empty_addr_hash_table(perm_addr_table_1);
+		empty_address_table(perm_addr_table_1);
 		atg.address_table = perm_addr_table_1;
 	}
 
@@ -589,16 +586,15 @@ int init_addresses(void)
 		}
 	}
 
-	perm_addr_table_1 = new_addr_hash_table();
+	perm_addr_table_1 = address_table_allocate(PERM_HASH_SIZE);
 	if(!perm_addr_table_1)
 		return -1;
 
-	perm_addr_table_2 = new_addr_hash_table();
+	perm_addr_table_2 = address_table_allocate(PERM_HASH_SIZE);
 	if(!perm_addr_table_2)
 		goto error;
 
-	perm_addr_table =
-			(struct addr_list ***)shm_malloc(sizeof(struct addr_list **));
+	perm_addr_table = shm_malloc(sizeof(*perm_addr_table));
 	if(!perm_addr_table) {
 		LM_ERR("no more shm memory for addr_hash_table\n");
 		goto error;
@@ -654,11 +650,11 @@ int init_addresses(void)
 
 error:
 	if(perm_addr_table_1) {
-		free_addr_hash_table(perm_addr_table_1);
+		address_table_destroy(perm_addr_table_1);
 		perm_addr_table_1 = 0;
 	}
 	if(perm_addr_table_2) {
-		free_addr_hash_table(perm_addr_table_2);
+		address_table_destroy(perm_addr_table_2);
 		perm_addr_table_2 = 0;
 	}
 	if(perm_addr_table) {
@@ -704,12 +700,18 @@ error:
  */
 void clean_addresses(void)
 {
-	if(perm_addr_table_1)
-		free_addr_hash_table(perm_addr_table_1);
-	if(perm_addr_table_2)
-		free_addr_hash_table(perm_addr_table_2);
-	if(perm_addr_table)
+	if(perm_addr_table_1) {
+		address_table_destroy(perm_addr_table_1);
+		perm_addr_table_1 = NULL;
+	}
+	if(perm_addr_table_2) {
+		address_table_destroy(perm_addr_table_2);
+		perm_addr_table_2 = NULL;
+	}
+	if(perm_addr_table) {
 		shm_free(perm_addr_table);
+		perm_addr_table = NULL;
+	}
 	if(perm_subnet_table_1)
 		free_subnet_table(perm_subnet_table_1);
 	if(perm_subnet_table_2)
@@ -733,7 +735,7 @@ int allow_address(sip_msg_t *_msg, int addr_group, str *ips, int port)
 
 	if(ipa) {
 		if(perm_addr_table
-				&& match_addr_hash_table(*perm_addr_table, addr_group, ipa,
+				&& match_address_table(*perm_addr_table, addr_group, ipa,
 						   (unsigned int)port)
 						   == 1) {
 			return 1;
@@ -790,7 +792,7 @@ int allow_source_address(sip_msg_t *_msg, int addr_group)
 			_msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
 
 	if(perm_addr_table
-			&& match_addr_hash_table(*perm_addr_table, addr_group,
+			&& match_address_table(*perm_addr_table, addr_group,
 					   &_msg->rcv.src_ip, _msg->rcv.src_port)
 					   == 1) {
 		return 1;
@@ -833,7 +835,7 @@ int ki_allow_source_address_group(sip_msg_t *_msg)
 	LM_DBG("looking for <%x, %u> in address table\n",
 			_msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
 	if(perm_addr_table) {
-		group = find_group_in_addr_hash_table(
+		group = find_group_in_address_table(
 				*perm_addr_table, &_msg->rcv.src_ip, _msg->rcv.src_port);
 		LM_DBG("Found <%d>\n", group);
 
@@ -878,7 +880,7 @@ int ki_allow_address_group(sip_msg_t *_msg, str *_addr, int _port)
 		LM_DBG("looking for <%.*s, %u> in address table\n", _addr->len,
 				_addr->s, (unsigned int)_port);
 		if(perm_addr_table) {
-			group = find_group_in_addr_hash_table(
+			group = find_group_in_address_table(
 					*perm_addr_table, ipa, (unsigned int)_port);
 			LM_DBG("Found address in group <%d>\n", group);
 

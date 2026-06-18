@@ -123,7 +123,7 @@ void rpc_address_dump(rpc_t *rpc, void *c)
 		rpc->fault(c, 500, "No address table");
 		return;
 	}
-	if(addr_hash_table_rpc_print(*perm_addr_table, rpc, c) < 0) {
+	if(address_table_rpc_print(*perm_addr_table, rpc, c) < 0) {
 		LM_DBG("failed to print address table dump\n");
 	}
 	return;

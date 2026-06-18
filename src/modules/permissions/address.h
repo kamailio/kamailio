@@ -27,9 +27,10 @@
 
 #include "../../core/parser/msg_parser.h"
 
+struct address_hash_table;
 
 /* Pointer to current address hash table pointer */
-extern struct addr_list ***perm_addr_table;
+extern struct address_hash_table **perm_addr_table;
 
 
 /* Pointer to current subnet table */
