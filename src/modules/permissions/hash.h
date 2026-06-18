@@ -302,6 +302,16 @@ void domain_table_free_buckets(
 		struct domain_hash_table *table, bool free_locks);
 int domain_table_destroy(struct domain_hash_table *table);
 
+int domain_table_insert(struct domain_hash_table *table, unsigned int grp,
+		str *domain_name, unsigned int port, str *tagv);
+int match_domain_table(struct domain_hash_table *table, unsigned int group,
+		str *domain_name, unsigned int port);
+int find_group_in_domain_table(struct domain_hash_table *table,
+		str *domain_name, unsigned int port);
+int domain_table_rpc_print(
+		struct domain_hash_table *table, rpc_t *rpc, void *c);
+void empty_domain_table(struct domain_hash_table *table);
+
 /*
  * Create a domain_name table
  */

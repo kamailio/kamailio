@@ -1903,6 +1903,208 @@ int domain_table_destroy(struct domain_hash_table *table)
 	return 0;
 }
 
+int domain_table_insert(struct domain_hash_table *table, unsigned int grp,
+		str *domain_name, unsigned int port, str *tagv)
+{
+	struct domain_name_list *entry;
+	unsigned int hash_index;
+	int len;
+
+	if(!table || !table->row_entry_list || !table->row_locks
+			|| !domain_name || !domain_name->s || domain_name->len <= 0) {
+		LM_ERR("invalid domain table insert arguments\n");
+		return -1;
+	}
+
+	len = sizeof(*entry) + domain_name->len;
+	if(tagv && tagv->s)
+		len += tagv->len + 1;
+
+	entry = shm_malloc(len);
+	if(!entry) {
+		LM_ERR("no shared memory for domain table entry\n");
+		return -1;
+	}
+	memset(entry, 0, len);
+
+	entry->grp = grp;
+	entry->domain.s = (char *)entry + sizeof(*entry);
+	entry->domain.len = domain_name->len;
+	memcpy(entry->domain.s, domain_name->s, domain_name->len);
+	entry->port = port;
+
+	if(tagv && tagv->s) {
+		entry->tag.s =
+				(char *)entry + sizeof(*entry) + domain_name->len;
+		entry->tag.len = tagv->len;
+		memcpy(entry->tag.s, tagv->s, tagv->len);
+		entry->tag.s[entry->tag.len] = '\0';
+	}
+
+	hash_index = core_hash(domain_name, 0, table->size);
+	if(hash_index >= table->size || !table->row_locks[hash_index]) {
+		LM_ERR("invalid or uninitialized domain bucket[%u]\n", hash_index);
+		shm_free(entry);
+		return -1;
+	}
+
+	lock_get(table->row_locks[hash_index]);
+	entry->next = table->row_entry_list[hash_index];
+	table->row_entry_list[hash_index] = entry;
+	LM_DBG("** Added domain name: %.*s\n", entry->domain.len,
+			entry->domain.s);
+	lock_release(table->row_locks[hash_index]);
+
+	return 1;
+}
+
+int match_domain_table(struct domain_hash_table *table, unsigned int group,
+		str *domain_name, unsigned int port)
+{
+	struct domain_name_list *entry;
+	unsigned int hash_index;
+	avp_value_t val;
+	int ret = -1;
+
+	if(!table || !table->row_entry_list || !table->row_locks
+			|| !domain_name || !domain_name->s || domain_name->len <= 0)
+		return -1;
+
+	hash_index = core_hash(domain_name, 0, table->size);
+	if(hash_index >= table->size || !table->row_locks[hash_index]) {
+		LM_ERR("invalid or uninitialized domain bucket[%u]\n", hash_index);
+		return -1;
+	}
+
+	lock_get(table->row_locks[hash_index]);
+
+	for(entry = table->row_entry_list[hash_index]; entry;
+			entry = entry->next) {
+		if(entry->grp != group)
+			continue;
+		if(entry->port != 0 && entry->port != port)
+			continue;
+		if(entry->domain.len != domain_name->len)
+			continue;
+		if(strncmp(entry->domain.s, domain_name->s, domain_name->len) != 0)
+			continue;
+
+		if(tag_avp.n && entry->tag.s) {
+			val.s = entry->tag;
+			if(add_avp(tag_avp_type | AVP_VAL_STR, tag_avp, val) != 0) {
+				LM_ERR("setting of tag_avp failed\n");
+				goto done;
+			}
+		}
+
+		ret = 1;
+		goto done;
+	}
+
+done:
+	lock_release(table->row_locks[hash_index]);
+	return ret;
+}
+
+int find_group_in_domain_table(struct domain_hash_table *table,
+		str *domain_name, unsigned int port)
+{
+	struct domain_name_list *entry;
+	unsigned int hash_index;
+	int ret = -1;
+
+	if(!table || !table->row_entry_list || !table->row_locks
+			|| !domain_name || !domain_name->s || domain_name->len <= 0)
+		return -1;
+
+	hash_index = core_hash(domain_name, 0, table->size);
+	if(hash_index >= table->size || !table->row_locks[hash_index]) {
+		LM_ERR("invalid or uninitialized domain bucket[%u]\n", hash_index);
+		return -1;
+	}
+
+	lock_get(table->row_locks[hash_index]);
+
+	for(entry = table->row_entry_list[hash_index]; entry;
+			entry = entry->next) {
+		if(entry->port != 0 && entry->port != port)
+			continue;
+		if(entry->domain.len != domain_name->len)
+			continue;
+		if(strncmp(entry->domain.s, domain_name->s, domain_name->len) != 0)
+			continue;
+
+		ret = entry->grp;
+		break;
+	}
+
+	lock_release(table->row_locks[hash_index]);
+	return ret;
+}
+
+int domain_table_rpc_print(
+		struct domain_hash_table *table, rpc_t *rpc, void *c)
+{
+	struct domain_name_list *entry;
+	void *th;
+	void *ih;
+
+	if(!table || !table->row_entry_list || !table->row_locks)
+		return -1;
+
+	/* Preserve the legacy RPC response shape. */
+	if(rpc->add(c, "{", &th) < 0) {
+		rpc->fault(c, 500, "Internal error creating rpc");
+		return -1;
+	}
+
+	for(unsigned int i = 0; i < table->size; i++) {
+		if(!table->row_locks[i]) {
+			rpc->fault(c, 500, "Uninitialized domain bucket lock");
+			return -1;
+		}
+
+		lock_get(table->row_locks[i]);
+
+		for(entry = table->row_entry_list[i]; entry;
+				entry = entry->next) {
+			if(rpc->struct_add(th, "dd{", "table", i, "group",
+					   entry->grp, "item", &ih)
+					< 0) {
+				rpc->fault(c, 500, "Internal error creating rpc ih");
+				lock_release(table->row_locks[i]);
+				return -1;
+			}
+
+			if(rpc->struct_add(
+					   ih, "S", "domain_name", &entry->domain)
+					< 0) {
+				rpc->fault(c, 500,
+						"Internal error creating rpc data (domain_name)");
+				lock_release(table->row_locks[i]);
+				return -1;
+			}
+
+			if(rpc->struct_add(ih, "ds", "port", entry->port, "tag",
+					   entry->tag.len ? entry->tag.s : "NULL")
+					< 0) {
+				rpc->fault(c, 500, "Internal error creating rpc data");
+				lock_release(table->row_locks[i]);
+				return -1;
+			}
+		}
+
+		lock_release(table->row_locks[i]);
+	}
+
+	return 0;
+}
+
+void empty_domain_table(struct domain_hash_table *table)
+{
+	domain_table_free_buckets(table, false);
+}
+
 /*
  * Create and initialize a domain_name table
  */
