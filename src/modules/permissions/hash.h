@@ -120,6 +120,30 @@ struct addr_list
 	struct addr_list *next; /* Next element in the list */
 };
 
+/**
+ * Address hash table guarded with one lock per bucket.
+ *
+ * `row_entry_list` contains the first real entry of each bucket. Address
+ * buckets do not use dummy heads.
+ *
+ * size is the immutable number of allocated buckets.
+ */
+struct address_hash_table
+{
+	struct addr_list **row_entry_list;
+	gen_lock_t **row_locks;
+	unsigned int size;
+};
+
+struct address_hash_table *address_table_allocate(
+		unsigned int hash_table_size);
+int address_table_init(struct address_hash_table *table,
+		unsigned int hash_table_size);
+int address_table_reinit(struct address_hash_table *table,
+		unsigned int hash_table_size);
+void address_table_free_buckets(
+		struct address_hash_table *table, bool free_locks);
+int address_table_destroy(struct address_hash_table *table);
 
 /*
  * Create and initialize a hash table

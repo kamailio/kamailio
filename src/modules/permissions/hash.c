@@ -812,6 +812,219 @@ int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, v
 }
 
 
+
+static void address_table_free_row_lock(gen_lock_t *row_lock)
+{
+	if(!row_lock)
+		return;
+
+	lock_destroy(row_lock);
+	lock_dealloc(row_lock);
+}
+
+static void address_table_free_entries(struct addr_list *entry)
+{
+	struct addr_list *next;
+
+	while(entry) {
+		next = entry->next;
+		shm_free(entry);
+		entry = next;
+	}
+}
+
+/**
+ * Destroy address hash table content,
+ * so free all entries from all address buckets.
+ *
+ * Locks can be left intact (free_locks=flase),
+ * e.g. in case this is just a table re-initialization.
+ *
+ * Deliberately tolerates a partially initialized table.
+ */
+void address_table_free_buckets(
+		struct address_hash_table *table, bool free_locks)
+{
+	gen_lock_t *row_lock;
+
+	if(!table)
+		return;
+
+	for(unsigned int i = 0; i < table->size; i++) {
+		row_lock = NULL;
+
+		if(table->row_locks)
+			row_lock = table->row_locks[i];
+
+		if(row_lock)
+			lock_get(row_lock);
+
+		if(table->row_entry_list && table->row_entry_list[i]) {
+			address_table_free_entries(table->row_entry_list[i]);
+			table->row_entry_list[i] = NULL;
+		}
+
+		if(row_lock)
+			lock_release(row_lock);
+
+		if(free_locks && row_lock) {
+			address_table_free_row_lock(row_lock);
+			table->row_locks[i] = NULL;
+		}
+	}
+}
+
+/**
+ * Initialize main members and bucket locks.
+ *
+ * Allocates row locks.
+ * It doesn't destroy/clean up the address table on failure.
+ *
+ * Ownership policy:
+ *   - the caller owns the `addr_hash_table` object;
+ *   - on failure, the caller is responsible for calling `addr_hash_table_destroy()`
+ *     if the whole table must be discarded;
+ *   - existing row locks are left untouched;
+ *
+ * Reinitialization/cleanup of existing bucket content is handled by
+ * `addr_hash_table_reinit()` / `addr_hash_table_free_buckets()`.
+ */
+int address_table_init(
+		struct address_hash_table *table, unsigned int hash_table_size)
+{
+	gen_lock_t *row_lock;
+
+	if(!table || !table->row_entry_list || !table->row_locks) {
+		LM_ERR("invalid address hash table\n");
+		return -1;
+	}
+
+	DBG("init address size = %d\n", hash_table_size);
+
+	if(hash_table_size == 0 || table->size != hash_table_size) {
+		LM_ERR("invalid address hash table size: table=%u requested=%u\n",
+				table->size, hash_table_size);
+		return -1;
+	}
+
+	for(unsigned int i = 0; i < hash_table_size; i++) {
+		if(table->row_locks[i])
+			continue;
+
+		row_lock = lock_alloc();
+		if(!row_lock) {
+			LM_ERR("no shared memory for address bucket lock[%u]\n", i);
+			return -1;
+		}
+
+		/*
+		 * Publish the lock only after successful initialization. This keeps
+		 * address_table_destroy() safe after a partial init failure.
+		 */
+		if(!lock_init(row_lock)) {
+			LM_ERR("failed to initialize address bucket lock[%u]\n", i);
+			lock_dealloc(row_lock);
+			return -1;
+		}
+
+		table->row_locks[i] = row_lock;
+	}
+
+	return 0;
+}
+
+/**
+ * Allocate space (shm) for the address table and init members.
+ */
+struct address_hash_table *address_table_allocate(
+		unsigned int hash_table_size)
+{
+	struct address_hash_table *table;
+
+	if(hash_table_size == 0) {
+		LM_ERR("cannot allocate an empty address hash table\n");
+		return NULL;
+	}
+
+	table = shm_malloc(sizeof(*table));
+	if(!table) {
+		LM_ERR("no shared memory for address hash table\n");
+		return NULL;
+	}
+	memset(table, 0, sizeof(*table));
+	table->size = hash_table_size;
+
+	table->row_entry_list = shm_malloc(
+			hash_table_size * sizeof(*table->row_entry_list));
+	if(!table->row_entry_list) {
+		LM_ERR("no shared memory for address bucket array\n");
+		address_table_destroy(table);
+		return NULL;
+	}
+	memset(table->row_entry_list, 0,
+			hash_table_size * sizeof(*table->row_entry_list));
+
+	table->row_locks =
+			shm_malloc(hash_table_size * sizeof(*table->row_locks));
+	if(!table->row_locks) {
+		LM_ERR("no shared memory for address lock array\n");
+		address_table_destroy(table);
+		return NULL;
+	}
+	memset(table->row_locks, 0,
+			hash_table_size * sizeof(*table->row_locks));
+
+	if(address_table_init(table, hash_table_size) < 0) {
+		address_table_destroy(table);
+		return NULL;
+	}
+
+	return table;
+}
+
+int address_table_reinit(
+		struct address_hash_table *table, unsigned int hash_table_size)
+{
+	if(!table)
+		return -1;
+
+	if(table->size != hash_table_size) {
+		LM_ERR("cannot reinitialize address table with a different size "
+			   "(table=%u requested=%u)\n",
+				table->size, hash_table_size);
+		return -1;
+	}
+
+	address_table_free_buckets(table, false);
+
+	/* Repair missing locks if this is a partially initialized table. */
+	return address_table_init(table, hash_table_size);
+}
+
+/**
+ * Clean address table (frees all previously allocated shm).
+ */
+int address_table_destroy(struct address_hash_table *table)
+{
+	if(!table)
+		return 0;
+
+	address_table_free_buckets(table, true);
+
+	if(table->row_entry_list) {
+		shm_free(table->row_entry_list);
+		table->row_entry_list = NULL;
+	}
+
+	if(table->row_locks) {
+		shm_free(table->row_locks);
+		table->row_locks = NULL;
+	}
+
+	shm_free(table);
+	return 0;
+}
+
 /*
  * Create and initialize an address hash table
  */
