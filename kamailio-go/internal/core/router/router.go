@@ -510,8 +510,21 @@ func (r *Router) evalExpr(expr *Expression, msg *parser.SIPMsg) bool {
 		return true
 
 	case ExprSrcIP:
-		// TODO: Implement source IP check
-		return false
+		// Source IP check: compare against the first Via header's received
+		// parameter (if present) or the host part of the sent-by.
+		if msg == nil || msg.Via1 == nil {
+			return false
+		}
+		srcIP := ""
+		if msg.Via1.Received != nil && msg.Via1.Received.Value.Len > 0 {
+			srcIP = msg.Via1.Received.Value.String()
+		} else if msg.Via1.Host.Len > 0 {
+			srcIP = msg.Via1.Host.String()
+		}
+		if expr.Operand != nil {
+			return srcIP == expr.Operand.(string)
+		}
+		return srcIP != ""
 
 	case ExprString:
 		return expr.Operand != nil && expr.Operand.(string) != ""
