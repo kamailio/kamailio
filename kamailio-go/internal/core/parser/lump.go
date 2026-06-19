@@ -281,6 +281,59 @@ func (lm *LumpManager) ReplaceHeaderLump(hdr *HdrField, newValue string) *Lump {
 	return lump
 }
 
+// ToMsgLumps converts the LumpManager's collections into a MsgLumps
+// suitable for RebuildMsg.
+func (lm *LumpManager) ToMsgLumps() *MsgLumps {
+	return &MsgLumps{
+		AddRM:      *lm.AddRM,
+		BodyLumps:  *lm.BodyLumps,
+		ReplyLumps: *lm.ReplyLumps,
+		HeadLumps:  *lm.HeadLumps,
+	}
+}
+
+// AppendBodyLump appends data to the message body using a lump.
+// C: append_body_lump
+func (lm *LumpManager) AppendBodyLump(data []byte) *Lump {
+	lump := AddLump(0, data, false)
+	lump.Flags |= LumpFlagBody
+	lm.BodyLumps.Append(lump)
+	return lump
+}
+
+// ReplaceBodyLump replaces the entire message body.
+func (lm *LumpManager) ReplaceBodyLump(offset, len int, newBody []byte) *Lump {
+	lump := ReplaceLump(offset, len, newBody)
+	lump.Flags |= LumpFlagBody
+	lm.BodyLumps.Append(lump)
+	return lump
+}
+
+// InsertHeaderLumpAfter inserts a header lump after a specific header.
+// C: insert_new_lump_after
+func (lm *LumpManager) InsertHeaderLumpAfter(hdr *HdrField, value []byte) *Lump {
+	if hdr == nil {
+		return nil
+	}
+	offset := hdr.Offset + hdr.Len
+	lump := AddLump(offset, value, false)
+	lump.Flags |= LumpFlagHeader | LumpFlagIsAfter
+	lm.AddRM.Append(lump)
+	return lump
+}
+
+// InsertHeaderLumpBefore inserts a header lump before a specific header.
+// C: insert_new_lump_before
+func (lm *LumpManager) InsertHeaderLumpBefore(hdr *HdrField, value []byte) *Lump {
+	if hdr == nil {
+		return nil
+	}
+	lump := AddLump(hdr.Offset, value, true)
+	lump.Flags |= LumpFlagHeader | LumpFlagIsBefore
+	lm.AddRM.Prepend(lump)
+	return lump
+}
+
 // AddHeaderLump adds a new header
 func (lm *LumpManager) AddHeaderLump(msg *SIPMsg, header string, after bool) *Lump {
 	if msg == nil {

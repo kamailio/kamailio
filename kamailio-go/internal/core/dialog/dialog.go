@@ -37,6 +37,7 @@ const (
 	DialogStateEarly      DialogState = iota // dialog created, not yet confirmed
 	DialogStateConfirmed                     // 200 OK received/sent
 	DialogStateTerminated                    // BYE received/sent
+	DialogStateExpired                       // dialog lifetime expired
 )
 
 func (s DialogState) String() string {
@@ -47,6 +48,8 @@ func (s DialogState) String() string {
 		return "Confirmed"
 	case DialogStateTerminated:
 		return "Terminated"
+	case DialogStateExpired:
+		return "Expired"
 	default:
 		return "Unknown"
 	}
@@ -109,15 +112,21 @@ type Dialog struct {
 // Manager maintains a collection of active Dialogs keyed by a deterministic
 // combination of Call-ID and tags.
 type Manager struct {
-	mu      sync.RWMutex
-	dialogs map[string]*Dialog
+	mu       sync.RWMutex
+	dialogs  map[string]*Dialog
+	profiles *ProfileManager
+	callbacks *CallbackManager
+	timers   *TimerManager
 }
 
 // NewManager creates a new, empty dialog manager.
 func NewManager() *Manager {
-	return &Manager{
-		dialogs: make(map[string]*Dialog),
+	mgr := &Manager{
+		dialogs:  make(map[string]*Dialog),
+		profiles: NewProfileManager(),
+		callbacks: NewCallbackManager(),
 	}
+	return mgr
 }
 
 // ---------------------------------------------------------------------------
@@ -595,4 +604,31 @@ func (d *Dialog) BuildRouteHeaders() [][2]string {
 		out = append(out, [2]string{"Route", fmt.Sprintf("<%s>", uri)})
 	}
 	return out
+}
+
+// ---------------------------------------------------------------------------
+// Profile / Callback / Timer accessors
+// ---------------------------------------------------------------------------
+
+// Profiles returns the profile manager.
+func (m *Manager) Profiles() *ProfileManager { return m.profiles }
+
+// Callbacks returns the callback manager.
+func (m *Manager) Callbacks() *CallbackManager { return m.callbacks }
+
+// Timers returns the timer manager.
+func (m *Manager) Timers() *TimerManager { return m.timers }
+
+// CleanupExpired removes expired dialogs.
+func (m *Manager) CleanupExpired() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	count := 0
+	for id, dlg := range m.dialogs {
+		if dlg.State == DialogStateTerminated || dlg.State == DialogStateExpired {
+			delete(m.dialogs, id)
+			count++
+		}
+	}
+	return count
 }

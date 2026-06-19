@@ -401,3 +401,181 @@ func BuildErrorResponse(request *SIPMsg, status int, reason string, errorMessage
 		ContentType: "application/json",
 	})
 }
+
+// ============================================================
+// Stateful reply / ACK construction (TM integration)
+// ============================================================
+
+// BuildStatefulReply creates a stateful reply for a request within a TM
+// transaction context. It automatically:
+//   - Copies all Via headers from the request (topmost Via removed for UAS)
+//   - Copies Record-Route headers
+//   - Generates a To tag if not already present (for provisional/first final)
+//   - Sets the proper CSeq from the request
+//
+// This mirrors Kamailio's t_build_res() from t_reply.c.
+func BuildStatefulReply(request *SIPMsg, statusCode int, reasonPhrase string, localTag string) (*SIPMsg, error) {
+	if request == nil {
+		return nil, errors.New("nil request")
+	}
+
+	// Use the existing CreateReply as the base
+	opts := ReplyOptions{
+		StatusCode:   statusCode,
+		ReasonPhrase: reasonPhrase,
+	}
+	reply, err := CreateReply(request, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Auto-generate To tag if not present and a local tag was provided
+	if localTag != "" && reply.To != nil {
+		toBody := reply.To.Body.String()
+		if !strings.Contains(strings.ToLower(toBody), ";tag=") {
+			// Append tag to the To header body
+			newToBody := toBody + ";tag=" + localTag
+			reply.To.Body = str.Mk(newToBody)
+		}
+	}
+
+	return reply, nil
+}
+
+// BuildCancelResponse creates a 200 OK response for a CANCEL request.
+// Per RFC 3261 §9.2, the UAS MUST respond to CANCEL with 200 OK.
+func BuildCancelResponse(cancel *SIPMsg) (*SIPMsg, error) {
+	if cancel == nil {
+		return nil, errors.New("nil cancel message")
+	}
+	return CreateReply(cancel, ReplyOptions{
+		StatusCode:   200,
+		ReasonPhrase: "OK",
+	})
+}
+
+// BuildAckRequest constructs an ACK for a non-2xx final response to INVITE.
+// The ACK is built within the same transaction (branch matching).
+// C: build_ack() from t_funcs.c
+func BuildAckRequest(invite *SIPMsg, statusReply *SIPMsg) (*SIPMsg, error) {
+	if invite == nil {
+		return nil, errors.New("nil invite")
+	}
+
+	// Build ACK from the original INVITE
+	ack := &SIPMsg{
+		Buf:     nil,
+		Len:     0,
+		Headers: []*HdrField{},
+	}
+
+	// Request URI: copy from original INVITE
+	ack.NewURI = invite.NewURI
+	if ack.NewURI.Len == 0 && invite.FirstLine != nil && invite.FirstLine.Req != nil {
+		ack.NewURI = invite.FirstLine.Req.URI
+	}
+
+	// Build ACK first line
+	ack.FirstLine = &MsgStart{
+		Type: MsgRequest,
+		Req: &RequestLine{
+			Method:      str.Mk("ACK"),
+			MethodValue: MethodACK,
+			URI:         ack.NewURI,
+			Version:     str.Mk(SIPVersion),
+		},
+	}
+
+	// Copy Via headers from the original INVITE
+	for _, h := range invite.Headers {
+		if h.Type == HdrVia {
+			ack.Headers = append(ack.Headers, &HdrField{
+				Type:   HdrVia,
+				Name:   h.Name,
+				Body:   h.Body,
+				Offset: h.Offset,
+				Len:    h.Len,
+			})
+		}
+	}
+
+	// Copy From header (with tag)
+	if invite.From != nil {
+		ack.Headers = append(ack.Headers, &HdrField{
+			Type:   HdrFrom,
+			Name:   invite.From.Name,
+			Body:   invite.From.Body,
+		})
+		ack.From = ack.Headers[len(ack.Headers)-1]
+	}
+
+	// Copy To header - use the tag from the response (not the original INVITE)
+	if statusReply != nil && statusReply.To != nil {
+		ack.Headers = append(ack.Headers, &HdrField{
+			Type:   HdrTo,
+			Name:   statusReply.To.Name,
+			Body:   statusReply.To.Body,
+		})
+		ack.To = ack.Headers[len(ack.Headers)-1]
+	} else if invite.To != nil {
+		ack.Headers = append(ack.Headers, &HdrField{
+			Type:   HdrTo,
+			Name:   invite.To.Name,
+			Body:   invite.To.Body,
+		})
+		ack.To = ack.Headers[len(ack.Headers)-1]
+	}
+
+	// Copy Call-ID
+	if invite.CallID != nil {
+		ack.Headers = append(ack.Headers, &HdrField{
+			Type:   HdrCallID,
+			Name:   invite.CallID.Name,
+			Body:   invite.CallID.Body,
+		})
+		ack.CallID = ack.Headers[len(ack.Headers)-1]
+	}
+
+	// Copy CSeq (replace method with ACK)
+	if invite.CSeq != nil {
+		ack.Headers = append(ack.Headers, &HdrField{
+			Type: HdrCSeq,
+			Name: invite.CSeq.Name,
+			Body: str.Mk(fmt.Sprintf("%d ACK", extractCSeqNumber(invite.CSeq.Body.String()))),
+		})
+		ack.CSeq = ack.Headers[len(ack.Headers)-1]
+	}
+
+	// Copy Max-Forwards
+	if invite.MaxForwards != nil {
+		ack.Headers = append(ack.Headers, &HdrField{
+			Type:   HdrMaxForwards,
+			Name:   invite.MaxForwards.Name,
+			Body:   invite.MaxForwards.Body,
+		})
+		ack.MaxForwards = ack.Headers[len(ack.Headers)-1]
+	}
+
+	// Content-Length: 0
+	ack.Headers = append(ack.Headers, &HdrField{
+		Type: HdrContentLength,
+		Name: str.Mk("Content-Length"),
+		Body: str.Mk("0"),
+	})
+	ack.ContentLength = ack.Headers[len(ack.Headers)-1]
+
+	return ack, nil
+}
+
+// extractCSeqNumber parses the numeric part of a CSeq header body.
+func extractCSeqNumber(body string) uint32 {
+	n := uint32(0)
+	for i := 0; i < len(body); i++ {
+		if body[i] >= '0' && body[i] <= '9' {
+			n = n*10 + uint32(body[i]-'0')
+		} else {
+			break
+		}
+	}
+	return n
+}

@@ -29,6 +29,7 @@ type Manager struct {
 	globalCtx uint32
 	timerMgr  *TimerManager
 	listeners []*transport.UDPListener
+	callbacks RouteCallbacks
 }
 
 // NewManager creates a new transaction manager
@@ -315,6 +316,9 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 		}
 	}
 
+	// Check if this is a local transaction (e.g., locally generated CANCEL or ACK)
+	// Local transactions have the TIsLocal flag set externally.
+
 	// Set hash index using the request's Via branch (same branch will appear
 	// in the response, so LookupReply can find this cell by the same hash).
 	cell.HashIndex = m.table.Hash(cell.CallIDVal, cell.CSeqNum, cell.ViaBranch)
@@ -326,6 +330,82 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 	m.SetT(cell)
 
 	return cell, nil
+}
+
+// NewLocalTransaction creates a local transaction (e.g., for locally
+// generated CANCEL or ACK requests). Local transactions are marked with
+// TIsLocal and skip the duplicate detection check.
+// C: t_newtran() with T_IS_LOCAL
+func (m *Manager) NewLocalTransaction(msg *parser.SIPMsg) (*Cell, error) {
+	if msg == nil {
+		return nil, errors.New("null message")
+	}
+
+	cell := &Cell{
+		CreatedAt: time.Now(),
+		State:     TStateTrying,
+	}
+
+	// Extract key fields
+	if msg.From != nil {
+		cell.FromHdr = msg.From.Body
+	}
+	if msg.CallID != nil {
+		cell.CallIDHdr = msg.CallID.Body
+		cell.CallIDVal = msg.CallID.Body
+	}
+	if msg.CSeq != nil {
+		cseqBody, err := parser.ParseCSeqHeader(msg.CSeq)
+		if err == nil {
+			cell.CSeqHdrN = cseqBody.Method
+			cell.CSeqNum = str.Mk(fmt.Sprintf("%d", cseqBody.Number))
+			cell.CSeqMet = cseqBody.Method
+		}
+	}
+	if msg.To != nil {
+		cell.ToHdr = msg.To.Body
+	}
+
+	// Extract Via branch
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		cell.ViaBranch = vb.Branch.Value
+	} else if msg.HdrVia1 != nil {
+		rawBody := msg.HdrVia1.Body.String()
+		idx := strings.Index(rawBody, "branch=")
+		if idx >= 0 {
+			val := rawBody[idx+7:]
+			if end := strings.IndexAny(val, "; \r\n"); end >= 0 {
+				val = val[:end]
+			}
+			cell.ViaBranch = str.Mk(val)
+		}
+	}
+
+	// Set method
+	if msg.IsRequest() {
+		cell.Method = msg.FirstLine.Req.Method
+		cell.MethodValue = msg.Method()
+		if msg.Method() == parser.MethodInvite {
+			cell.Flags |= TIsInvite
+		}
+	}
+
+	// Mark as local transaction
+	cell.Flags |= TIsLocal
+
+	// Set hash and insert
+	cell.HashIndex = m.table.Hash(cell.CallIDVal, cell.CSeqNum, cell.ViaBranch)
+	m.table.Insert(cell)
+	m.SetT(cell)
+
+	return cell, nil
+}
+
+// IsLocalTransaction returns true if the current transaction is local.
+// C: int t_is_local(struct sip_msg *p_msg)
+func (m *Manager) IsLocalTransaction() bool {
+	cell := m.GetT()
+	return cell != nil && cell.IsLocal()
 }
 
 // LookupRequest looks up a transaction for a request.
@@ -646,4 +726,19 @@ func (m *Manager) TransactionCount() int {
 		entry.RUnlock()
 	}
 	return count
+}
+
+// SetCallbacks registers route callbacks for reply, failure, and branch-failure
+// events. Pass nil for any callback you don't need.
+func (m *Manager) SetCallbacks(cb RouteCallbacks) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	m.callbacks = cb
+}
+
+// GetCallbacks returns the currently registered route callbacks.
+func (m *Manager) GetCallbacks() RouteCallbacks {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	return m.callbacks
 }

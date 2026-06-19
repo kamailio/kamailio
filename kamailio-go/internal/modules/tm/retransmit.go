@@ -32,6 +32,53 @@ const (
 	DefaultDeleteTimeout = 30 * time.Second
 )
 
+// TMConfig holds configurable timer parameters for the transaction module.
+// C: tm module parameters (fr_timer, fr_inv_timer, wt_timer, etc.)
+type TMConfig struct {
+	// T1: initial retransmission interval (RFC 3261 T1, default 500ms)
+	T1 time.Duration
+	// T2: maximum retransmission interval (RFC 3261 T2, default 4s)
+	T2 time.Duration
+	// T4: maximum transaction lifetime for INVITE (RFC 3261 T4, default 5s)
+	T4 time.Duration
+	// FRTimeout: final response timeout for non-INVITE (default 30s)
+	FRTimeout time.Duration
+	// FRInvTimeout: final response timeout for INVITE (default 64*T1 = 32s)
+	FRInvTimeout time.Duration
+	// WaitTimeout: time to keep transaction in Completed state (default 5s)
+	WaitTimeout time.Duration
+	// DeleteTimeout: time before deleting confirmed transaction (default 30s)
+	DeleteTimeout time.Duration
+	// MaxInvLifetime: maximum INVITE transaction lifetime (default 180s)
+	MaxInvLifetime time.Duration
+	// MaxNonInvLifetime: maximum non-INVITE transaction lifetime (default 32s)
+	MaxNonInvLifetime time.Duration
+	// NoisyCTimer: enable noisy C-timer (default false)
+	NoisyCTimer bool
+	// AutoInv100: automatically send 100 Trying for INVITEs (default true)
+	AutoInv100 bool
+	// ReplicateTimer: enable timer replication (default false)
+	ReplicateTimer bool
+}
+
+// DefaultTMConfig returns a TMConfig with RFC 3261 default values.
+func DefaultTMConfig() *TMConfig {
+	return &TMConfig{
+		T1:                DefaultT1,
+		T2:                DefaultT2,
+		T4:                DefaultT4,
+		FRTimeout:         DefaultFRTimeout,
+		FRInvTimeout:      DefaultFRInvTimeout,
+		WaitTimeout:       DefaultWaitTimeout,
+		DeleteTimeout:      DefaultDeleteTimeout,
+		MaxInvLifetime:    180 * time.Second,
+		MaxNonInvLifetime: 32 * time.Second,
+		NoisyCTimer:       false,
+		AutoInv100:        true,
+		ReplicateTimer:    false,
+	}
+}
+
 // TimerManager manages transaction timers
 // C: timer.c / timer.h
 type TimerManager struct {
@@ -57,15 +104,23 @@ type cellTimers struct {
 	deleteTimer *time.Timer
 }
 
-// NewTimerManager creates a new timer manager
+// NewTimerManager creates a new timer manager with default settings.
 func NewTimerManager() *TimerManager {
+	return NewTimerManagerWithConfig(DefaultTMConfig())
+}
+
+// NewTimerManagerWithConfig creates a new timer manager with the given config.
+func NewTimerManagerWithConfig(cfg *TMConfig) *TimerManager {
+	if cfg == nil {
+		cfg = DefaultTMConfig()
+	}
 	return &TimerManager{
-		t1:           DefaultT1,
-		t2:           DefaultT2,
-		t4:           DefaultT4,
-		frTimeout:    DefaultFRTimeout,
-		frInvTimeout: DefaultFRInvTimeout,
-		timers:       make(map[*Cell]*cellTimers),
+		t1:            cfg.T1,
+		t2:            cfg.T2,
+		t4:            cfg.T4,
+		frTimeout:     cfg.FRTimeout,
+		frInvTimeout:  cfg.FRInvTimeout,
+		timers:        make(map[*Cell]*cellTimers),
 	}
 }
 
@@ -357,4 +412,53 @@ func (tm *TimerManager) HasTimers(cell *Cell) bool {
 	defer tm.mu.RUnlock()
 	_, ok := tm.timers[cell]
 	return ok
+}
+
+// StartMaxLifetimeTimer starts a timer that forcibly removes the transaction
+// after the maximum allowed lifetime. For INVITE transactions this is
+// MaxInvLifetime; for non-INVITE it is MaxNonInvLifetime.
+func (tm *TimerManager) StartMaxLifetimeTimer(cell *Cell, maxLifetime time.Duration) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	ct, ok := tm.timers[cell]
+	if !ok {
+		ct = &cellTimers{}
+		tm.timers[cell] = ct
+	}
+
+	if ct.deleteTimer != nil {
+		ct.deleteTimer.Stop()
+	}
+
+	ct.deleteTimer = time.AfterFunc(maxLifetime, func() {
+		tm.handleDeleteTimeout(cell)
+	})
+}
+
+// SetConfig updates timer parameters at runtime.
+func (tm *TimerManager) SetConfig(cfg *TMConfig) {
+	if cfg == nil {
+		return
+	}
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	tm.t1 = cfg.T1
+	tm.t2 = cfg.T2
+	tm.t4 = cfg.T4
+	tm.frTimeout = cfg.FRTimeout
+	tm.frInvTimeout = cfg.FRInvTimeout
+}
+
+// GetConfig returns the current timer configuration.
+func (tm *TimerManager) GetConfig() TMConfig {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	return TMConfig{
+		T1:           tm.t1,
+		T2:           tm.t2,
+		T4:           tm.t4,
+		FRTimeout:    tm.frTimeout,
+		FRInvTimeout: tm.frInvTimeout,
+	}
 }

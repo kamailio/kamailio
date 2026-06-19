@@ -14,6 +14,19 @@ import (
 	"github.com/kamailio/kamailio-go/internal/core/str"
 )
 
+// RouteCallback is a function called by the TM engine when a specific
+// event occurs (reply received, failure, branch failure). It receives
+// the transaction cell, the branch index (if applicable), and the SIP
+// message that triggered the event.
+type RouteCallback func(cell *Cell, branch int, msg *parser.SIPMsg)
+
+// RouteCallbacks holds all registered route callbacks.
+type RouteCallbacks struct {
+	OnReply         RouteCallback // called when a reply is received
+	OnFailure       RouteCallback // called on final failure (timeout/3xx-6xx)
+	OnBranchFailure RouteCallback // called when a specific branch fails
+}
+
 // isFinalResponse returns true if the status code is a final response
 // RFC 3261: status >= 200 && status < 700
 func isFinalResponse(status int) bool {
@@ -191,10 +204,25 @@ func (m *Manager) HandleResponse(msg *parser.SIPMsg) (*Cell, int, error) {
 			cell.State = TStateProceeding
 			cell.Unlock()
 		}
+		// Trigger on_reply callback for provisional responses
+		if cb := m.GetCallbacks(); cb.OnReply != nil {
+			cb.OnReply(cell, branch, msg)
+		}
 	case isFinalResponse(status):
 		cell.Lock()
 		cell.State = TStateCompleted
 		cell.Unlock()
+
+		// Trigger on_reply callback for final responses
+		if cb := m.GetCallbacks(); cb.OnReply != nil {
+			cb.OnReply(cell, branch, msg)
+		}
+		// Trigger on_failure callback for non-2xx final responses
+		if !is2xx(status) {
+			if cb := m.GetCallbacks(); cb.OnFailure != nil {
+				cb.OnFailure(cell, branch, msg)
+			}
+		}
 
 		// Stop the FR/retransmit timers on final response and start
 		// the appropriate post-final timer (wait for non-2xx, delete

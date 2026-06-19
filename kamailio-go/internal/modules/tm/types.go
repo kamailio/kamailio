@@ -33,6 +33,11 @@ const (
 	TStateCalling     // request sent, no response
 	TStateProceedingUAC // 1xx received
 	TStateCompletedUAC  // final response received
+	// Additional UAS states
+	TStateACKCalled          // ACK sent for non-2xx (UAS only)
+	TStateDestroyed          // transaction destroyed (waiting for GC)
+	// Additional UAC states
+	TStateCompletedUACNoACK  // UAC received non-2xx, waiting for ACK timer
 )
 
 // Transaction flags
@@ -136,6 +141,7 @@ type Cell struct {
 	CSeqNum    str.Str
 	CSeqMet    str.Str
 	Method     str.Str
+	MethodValue parser.RequestMethod
 
 	// Via branch for transaction matching
 	ViaBranch  str.Str
@@ -182,6 +188,38 @@ func (c *Cell) IsCanceled() bool {
 // IsLocal returns true if this is a locally generated transaction
 func (c *Cell) IsLocal() bool {
 	return c.Flags&TIsLocal != 0
+}
+
+// StateString returns a human-readable name for the transaction state.
+func (c *Cell) StateString() string {
+	switch c.State {
+	case TStateTrying:
+		return "Trying"
+	case TStateProceeding:
+		return "Proceeding"
+	case TStateCompleted:
+		return "Completed"
+	case TStateConfirmed:
+		return "Confirmed"
+	case TStateCalling:
+		return "Calling"
+	case TStateProceedingUAC:
+		return "ProceedingUAC"
+	case TStateCompletedUAC:
+		return "CompletedUAC"
+	case TStateACKCalled:
+		return "ACKCalled"
+	case TStateDestroyed:
+		return "Destroyed"
+	default:
+		return "Undefined"
+	}
+}
+
+// SetState sets the transaction state directly (used by timer callbacks).
+// C: t_set_state()
+func (c *Cell) SetState(s TState) {
+	c.State = s
 }
 
 // Ref increments the reference count
