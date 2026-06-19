@@ -166,9 +166,6 @@ func (tm *TimerManager) StartWaitTimer(cell *Cell) {
 		ct.waitTimer.Stop()
 	}
 
-	cell.State = TStateCompleted
-	cell.WaitStart = time.Now()
-
 	ct.waitTimer = time.AfterFunc(DefaultWaitTimeout, func() {
 		tm.handleWaitTimeout(cell)
 	})
@@ -197,6 +194,11 @@ func (tm *TimerManager) StartDeleteTimer(cell *Cell) {
 // handleRetransmit handles retransmission timeout.
 // If the transaction is still active and the branch has a retransmit
 // buffer, the buffer is re-sent via the Manager's registered listeners.
+//
+// IMPORTANT: This callback must NOT blindly reschedule itself. It only
+// reschedules when the TimerManager still has a live retrTimer for this
+// cell — if the timer was stopped (e.g. by StopAllTimers / StopRetransmitTimer /
+// handleFRTimeout), ct.retrTimer will be nil and we must stop.
 func (tm *TimerManager) handleRetransmit(cell *Cell, branch int, lastInterval time.Duration) {
 	cell.RLock()
 
@@ -250,18 +252,25 @@ func (tm *TimerManager) handleRetransmit(cell *Cell, branch int, lastInterval ti
 		)
 	}
 
-	// Schedule next retransmission
+	// Only reschedule if the TimerManager still tracks this cell AND the
+	// retrTimer is still live. If StopRetransmitTimer / StopAllTimers was
+	// called between the fire and this point, ct.retrTimer will be nil and
+	// we must NOT create a new timer (that would loop forever).
 	tm.mu.Lock()
-	if ct, ok := tm.timers[cell]; ok {
+	ct, ok := tm.timers[cell]
+	if ok && ct.retrTimer != nil {
 		ct.retrTimer = time.AfterFunc(nextInterval, func() {
 			tm.handleRetransmit(cell, branch, nextInterval)
 		})
 	}
+	// If !ok or ct.retrTimer == nil → timer was stopped, do NOT reschedule
 	tm.mu.Unlock()
 }
 
 // handleFRTimeout handles final response timeout.
-// Marks the transaction as timed out and schedules cleanup.
+// Marks the transaction as timed out, stops all remaining timers (to
+// prevent handleRetransmit from firing after the cell is removed),
+// and schedules cleanup.
 func (tm *TimerManager) handleFRTimeout(cell *Cell, branch int) {
 	cell.Lock()
 
@@ -275,19 +284,14 @@ func (tm *TimerManager) handleFRTimeout(cell *Cell, branch int) {
 	cell.State = TStateCompleted
 	cell.Unlock()
 
-	// Schedule cleanup via wait timer
+	// Stop ALL timers first to prevent handleRetransmit from
+	// scheduling new callbacks after we remove the cell.
+	tm.StopAllTimers(cell)
+
+	// Schedule cleanup via the manager
 	if tm.manager != nil {
 		tm.manager.removeCell(cell)
 	}
-
-	// Clean up our internal timer tracking
-	tm.mu.Lock()
-	if ct, ok := tm.timers[cell]; ok {
-		if ct.retrTimer != nil {
-			ct.retrTimer.Stop()
-		}
-	}
-	tm.mu.Unlock()
 }
 
 // handleWaitTimeout handles wait timeout - removes the transaction
@@ -301,13 +305,12 @@ func (tm *TimerManager) handleWaitTimeout(cell *Cell) {
 		log.String("callid", cell.CallIDVal.String()),
 	)
 
+	// Stop all timers and clean up tracking
+	tm.StopAllTimers(cell)
+
 	if tm.manager != nil {
 		tm.manager.removeCell(cell)
 	}
-
-	tm.mu.Lock()
-	delete(tm.timers, cell)
-	tm.mu.Unlock()
 }
 
 // handleDeleteTimeout handles delete timeout - removes the transaction
@@ -317,13 +320,12 @@ func (tm *TimerManager) handleDeleteTimeout(cell *Cell) {
 		log.String("callid", cell.CallIDVal.String()),
 	)
 
+	// Stop all timers and clean up tracking
+	tm.StopAllTimers(cell)
+
 	if tm.manager != nil {
 		tm.manager.removeCell(cell)
 	}
-
-	tm.mu.Lock()
-	delete(tm.timers, cell)
-	tm.mu.Unlock()
 }
 
 // StopAllTimers stops all timers for a cell and removes its entry.
