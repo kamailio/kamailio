@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -265,8 +266,21 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 	}
 
 	// Extract Via branch for transaction matching
-	if msg.Via1 != nil && msg.Via1.Branch != nil {
-		cell.ViaBranch = msg.Via1.Branch.Value
+	// The parsed Via body may be available via GetParsedVia(); otherwise fall
+	// back to manually scanning the raw Via header body for the branch= param.
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		cell.ViaBranch = vb.Branch.Value
+	} else if msg.HdrVia1 != nil {
+		// Fallback: scan the raw header body for branch=
+		rawBody := msg.HdrVia1.Body.String()
+		idx := strings.Index(rawBody, "branch=")
+		if idx >= 0 {
+			val := rawBody[idx+7:]
+			if end := strings.IndexAny(val, "; \r\n"); end >= 0 {
+				val = val[:end]
+			}
+			cell.ViaBranch = str.Mk(val)
+		}
 	}
 
 	// Set method

@@ -31,6 +31,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Session represents an SDP session description
@@ -625,4 +626,338 @@ func (m *Media) HasAttribute(attr string) bool {
 		}
 	}
 	return false
+}
+
+// ============================================================
+// SDP Builder (Session -> string)
+// ============================================================
+
+// NewSession creates a minimal SDP session ready to be built upon
+func NewSession(username, sessionID, address string) *Session {
+	return &Session{
+		Version: 0,
+		Origin: &Origin{
+			Username:     username,
+			SessionID:    mustParseUint(sessionID),
+			Version:      1,
+			NetType:      "IN",
+			AddrType:     "IP4",
+			UnicastAddr:  address,
+		},
+		SessionName: "-",
+		Connection: &Connection{
+			NetType:      "IN",
+			AddrType:     "IP4",
+			ConnectionAddr: address,
+		},
+		Timing: []*Timing{{Start: 0, Stop: 0}},
+	}
+}
+
+// AddAudio adds a basic audio media line to the session
+func (s *Session) AddAudio(port int, formats []string) *Media {
+	m := &Media{
+		MediaType: "audio",
+		Port:      port,
+		PortCount: 1,
+		Proto:     "RTP/AVP",
+		Formats:   formats,
+		RTPMap:    make(map[int]*RTPMap),
+		FMTP:      make(map[int]string),
+	}
+	// Default PCMU/PCMA mappings
+	for _, f := range formats {
+		if pt, err := strconv.Atoi(f); err == nil {
+			switch pt {
+			case 0:
+				m.RTPMap[pt] = &RTPMap{PayloadType: pt, Encoding: "PCMU", ClockRate: 8000}
+			case 8:
+				m.RTPMap[pt] = &RTPMap{PayloadType: pt, Encoding: "PCMA", ClockRate: 8000}
+			case 18:
+				m.RTPMap[pt] = &RTPMap{PayloadType: pt, Encoding: "G729", ClockRate: 8000}
+			}
+		}
+	}
+	s.Media = append(s.Media, m)
+	return m
+}
+
+// AddSendrecvDirection sets the audio media direction attribute
+func (m *Media) SetDirection(direction string) {
+	m.Direction = direction
+}
+
+// Build serializes an SDP Session back to its text form (RFC 4566).
+//
+//	v=0\r\n
+//	o=<username> <sess-id> <sess-version> <nettype> <addrtype> <unicast-address>\r\n
+//	s=<session-name>\r\n
+//	i=<session-information>\r\n  (optional)
+//	u=<uri>\r\n                   (optional)
+//	e=<email-address>\r\n        (optional)
+//	p=<phone-number>\r\n         (optional)
+//	c=<nettype> <addrtype> <connection-address>\r\n
+//	b=<bwtype>:<bandwidth>\r\n   (optional, may repeat)
+//	t=<start-time> <stop-time>\r\n
+//	z=<adjustment-time> <offset> (optional)
+//	k=<method>[:<encryption-key>]\r\n (optional)
+//	a=<attribute>\r\n             (optional, may repeat)
+//	m=<media> <port> <transport> <fmt list>\r\n
+//	i=<session-information>\r\n   (optional, media-level)
+//	c=<nettype> <addrtype> <connection-address>\r\n (optional, media-level)
+//	b=<bwtype>:<bandwidth>\r\n   (optional, media-level)
+//	k=<method>[:<encryption-key>]\r\n (optional, media-level)
+//	a=<attribute>\r\n             (optional, media-level)
+func (s *Session) Build() (string, error) {
+	if s == nil {
+		return "", fmt.Errorf("nil session")
+	}
+	if s.Origin == nil {
+		return "", fmt.Errorf("missing origin")
+	}
+	if len(s.Timing) == 0 {
+		return "", fmt.Errorf("missing timing")
+	}
+
+	var sb strings.Builder
+
+	// v=
+	sb.WriteString("v=")
+	sb.WriteString(strconv.Itoa(s.Version))
+	sb.WriteString("\r\n")
+
+	// o=
+	sb.WriteString("o=")
+	sb.WriteString(s.Origin.Username)
+	sb.WriteByte(' ')
+	sb.WriteString(strconv.FormatUint(s.Origin.SessionID, 10))
+	sb.WriteByte(' ')
+	sb.WriteString(strconv.FormatUint(s.Origin.Version, 10))
+	sb.WriteByte(' ')
+	sb.WriteString(s.Origin.NetType)
+	sb.WriteByte(' ')
+	sb.WriteString(s.Origin.AddrType)
+	sb.WriteByte(' ')
+	sb.WriteString(s.Origin.UnicastAddr)
+	sb.WriteString("\r\n")
+
+	// s=
+	sb.WriteString("s=")
+	if s.SessionName == "" {
+		sb.WriteString("-")
+	} else {
+		sb.WriteString(s.SessionName)
+	}
+	sb.WriteString("\r\n")
+
+	// i= (optional)
+	if s.Info != "" {
+		sb.WriteString("i=")
+		sb.WriteString(s.Info)
+		sb.WriteString("\r\n")
+	}
+
+	// u= (optional)
+	if s.URI != "" {
+		sb.WriteString("u=")
+		sb.WriteString(s.URI)
+		sb.WriteString("\r\n")
+	}
+
+	// e= (optional)
+	if s.Email != "" {
+		sb.WriteString("e=")
+		sb.WriteString(s.Email)
+		sb.WriteString("\r\n")
+	}
+
+	// p= (optional)
+	if s.Phone != "" {
+		sb.WriteString("p=")
+		sb.WriteString(s.Phone)
+		sb.WriteString("\r\n")
+	}
+
+	// c= (session-level)
+	if s.Connection != nil {
+		sb.WriteString("c=")
+		sb.WriteString(s.Connection.NetType)
+		sb.WriteByte(' ')
+		sb.WriteString(s.Connection.AddrType)
+		sb.WriteByte(' ')
+		sb.WriteString(s.Connection.ConnectionAddr)
+		if s.Connection.TTL > 0 {
+			sb.WriteString("/" + strconv.Itoa(s.Connection.TTL))
+			if s.Connection.NumAddr > 0 {
+				sb.WriteString("/" + strconv.Itoa(s.Connection.NumAddr))
+			}
+		}
+		sb.WriteString("\r\n")
+	}
+
+	// b= (session-level bandwidth)
+	for _, bw := range s.Bandwidth {
+		sb.WriteString("b=")
+		sb.WriteString(bw.Type)
+		sb.WriteString(":")
+		sb.WriteString(strconv.Itoa(bw.Value))
+		sb.WriteString("\r\n")
+	}
+
+	// t= (timing)
+	for _, t := range s.Timing {
+		sb.WriteString("t=")
+		sb.WriteString(strconv.FormatUint(t.Start, 10))
+		sb.WriteByte(' ')
+		sb.WriteString(strconv.FormatUint(t.Stop, 10))
+		sb.WriteString("\r\n")
+
+		// r= (repeat times)
+		for _, r := range t.Repeat {
+			sb.WriteString("r=")
+			sb.WriteString(strconv.Itoa(r.Interval))
+			sb.WriteByte(' ')
+			sb.WriteString(strconv.Itoa(r.Duration))
+			for _, off := range r.Offsets {
+				sb.WriteByte(' ')
+				sb.WriteString(strconv.Itoa(off))
+			}
+			sb.WriteString("\r\n")
+		}
+	}
+
+	// a= (session-level attributes)
+	for _, attr := range s.Attributes {
+		sb.WriteString("a=")
+		sb.WriteString(attr)
+		sb.WriteString("\r\n")
+	}
+
+	// m= (media sections)
+	for _, m := range s.Media {
+		sb.WriteString("m=")
+		sb.WriteString(m.MediaType)
+		sb.WriteByte(' ')
+		sb.WriteString(strconv.Itoa(m.Port))
+		if m.PortCount > 1 {
+			sb.WriteString("/" + strconv.Itoa(m.PortCount))
+		}
+		sb.WriteByte(' ')
+		sb.WriteString(m.Proto)
+		for _, fmt := range m.Formats {
+			sb.WriteByte(' ')
+			sb.WriteString(fmt)
+		}
+		sb.WriteString("\r\n")
+
+		// c= (media-level connection)
+		if m.Connection != nil {
+			sb.WriteString("c=")
+			sb.WriteString(m.Connection.NetType)
+			sb.WriteByte(' ')
+			sb.WriteString(m.Connection.AddrType)
+			sb.WriteByte(' ')
+			sb.WriteString(m.Connection.ConnectionAddr)
+			sb.WriteString("\r\n")
+		}
+
+		// b= (media-level bandwidth)
+		for _, bw := range m.Bandwidth {
+			sb.WriteString("b=")
+			sb.WriteString(bw.Type)
+			sb.WriteString(":")
+			sb.WriteString(strconv.Itoa(bw.Value))
+			sb.WriteString("\r\n")
+		}
+
+		// rtpmap attributes
+		for pt, rtpmap := range m.RTPMap {
+			sb.WriteString("a=rtpmap:")
+			sb.WriteString(strconv.Itoa(pt))
+			sb.WriteByte(' ')
+			sb.WriteString(rtpmap.Encoding)
+			sb.WriteString("/")
+			sb.WriteString(strconv.Itoa(rtpmap.ClockRate))
+			if rtpmap.Params != "" {
+				sb.WriteString("/")
+				sb.WriteString(rtpmap.Params)
+			}
+			sb.WriteString("\r\n")
+		}
+
+		// fmtp attributes
+		for pt, fmtp := range m.FMTP {
+			sb.WriteString("a=fmtp:")
+			sb.WriteString(strconv.Itoa(pt))
+			sb.WriteByte(' ')
+			sb.WriteString(fmtp)
+			sb.WriteString("\r\n")
+		}
+
+		// direction attribute (sendrecv/sendonly/recvonly/inactive)
+		if m.Direction != "" {
+			sb.WriteString("a=")
+			sb.WriteString(m.Direction)
+			sb.WriteString("\r\n")
+		}
+
+		// crypto attributes
+		for _, crypto := range m.Crypto {
+			sb.WriteString("a=crypto:")
+			sb.WriteString(strconv.Itoa(crypto.Tag))
+			sb.WriteByte(' ')
+			sb.WriteString(crypto.CryptoSuite)
+			sb.WriteByte(' ')
+			sb.WriteString(crypto.KeyParams)
+			if crypto.SessionParams != "" {
+				sb.WriteByte(' ')
+				sb.WriteString(crypto.SessionParams)
+			}
+			sb.WriteString("\r\n")
+		}
+
+		// remaining a= (general media attributes)
+		for _, attr := range m.Attributes {
+			// skip those already handled above
+			if strings.HasPrefix(attr, "rtpmap") ||
+				strings.HasPrefix(attr, "fmtp") ||
+				attr == "sendrecv" || attr == "sendonly" ||
+				attr == "recvonly" || attr == "inactive" ||
+				strings.HasPrefix(attr, "crypto") {
+				continue
+			}
+			sb.WriteString("a=")
+			sb.WriteString(attr)
+			sb.WriteString("\r\n")
+		}
+	}
+
+	return sb.String(), nil
+}
+
+// BuildBytes returns the SDP as raw bytes (convenience for []byte users)
+func (s *Session) BuildBytes() ([]byte, error) {
+	out, err := s.Build()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(out), nil
+}
+
+// mustParseUint parses a string to uint64, defaulting to 1 on failure.
+func mustParseUint(s string) uint64 {
+	if v, err := strconv.ParseUint(s, 10, 64); err == nil {
+		return v
+	}
+	return 1
+}
+
+// FormatAudioSDP is a convenience function to build a standard audio SDP body
+// for a typical VoIP call. Returns the raw SDP string ready to be embedded
+// into a SIP body.
+func FormatAudioSDP(callerAddress string, rtpPort int, username string) (string, error) {
+	s := NewSession(username, fmt.Sprintf("%d", time.Now().Unix()), callerAddress)
+	s.SessionName = "SDP Call"
+	s.AddAudio(rtpPort, []string{"0", "8"})
+	return s.Build()
 }
