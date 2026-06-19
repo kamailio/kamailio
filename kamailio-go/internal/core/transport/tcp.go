@@ -55,7 +55,7 @@ func NewTCPListener(si *SocketInfo, handler TCPMessageHandler) *TCPListener {
 func (t *TCPListener) ListenAndServe() error {
 	addr := t.si.TCPAddr()
 
-	listener, err := net.Listen(t.si.Network(), addr.String())
+	listener, err := net.Listen(t.si.TCPNetwork(), addr.String())
 	if err != nil {
 		return fmt.Errorf("failed to listen TCP on %s: %w", addr.String(), err)
 	}
@@ -165,8 +165,10 @@ func (t *TCPListener) handleConnection(conn net.Conn) {
 	}
 }
 
-// readSIPMessage reads a complete SIP message from the TCP connection
-// TODO: M3 - Proper SIP message framing using Content-Length
+// readSIPMessage reads a complete SIP message from the TCP connection.
+// It reads headers until the empty line (CRLF CRLF), then parses the
+// Content-Length header to read the message body. This implements proper
+// SIP-over-TCP framing per RFC 3261 §18.3.
 func (t *TCPListener) readSIPMessage(reader *bufio.Reader) ([]byte, error) {
 	// Read headers until empty line
 	var headers []byte
@@ -187,9 +189,95 @@ func (t *TCPListener) readSIPMessage(reader *bufio.Reader) ([]byte, error) {
 		}
 	}
 
-	// TODO: Parse Content-Length and read body
-	// For now, just return headers
+	// Parse Content-Length from headers to read the body
+	contentLength := parseContentLength(headers)
+	if contentLength > 0 {
+		body := make([]byte, contentLength)
+		n, err := reader.Read(body)
+		if err != nil {
+			return nil, err
+		}
+		if n < contentLength {
+			// Need to read remaining bytes
+			for total := n; total < contentLength; {
+				nn, err := reader.Read(body[total:])
+				if err != nil {
+					return nil, err
+				}
+				total += nn
+			}
+		}
+		headers = append(headers, body...)
+	}
+
 	return headers, nil
+}
+
+// parseContentLength extracts the Content-Length value from raw SIP headers.
+// It scans for "Content-Length:" or "l:" (compact form) and returns the
+// parsed integer value, or 0 if not found.
+func parseContentLength(headers []byte) int {
+	// Look for Content-Length header (case-insensitive)
+	cl := 0
+	for i := 0; i < len(headers); i++ {
+		// Check for "Content-Length:" or compact "l:"
+		if (i+15 <= len(headers) && matchCI(headers[i:], []byte("Content-Length:"))) ||
+			(i+2 <= len(headers) && headers[i] == 'l' && headers[i+1] == ':') {
+			// Skip header name
+			colon := i
+			for colon < len(headers) && headers[colon] != ':' {
+				colon++
+			}
+			if colon >= len(headers) {
+				break
+			}
+			// Skip colon and whitespace
+			valStart := colon + 1
+			for valStart < len(headers) && (headers[valStart] == ' ' || headers[valStart] == '\t') {
+				valStart++
+			}
+			// Parse number
+			valEnd := valStart
+			for valEnd < len(headers) && headers[valEnd] >= '0' && headers[valEnd] <= '9' {
+				valEnd++
+			}
+			if valEnd > valStart {
+				v := 0
+				for j := valStart; j < valEnd; j++ {
+					v = v*10 + int(headers[j]-'0')
+				}
+				cl = v
+			}
+			// Continue scanning — in case of multiple Content-Length headers,
+			// the last one wins (per RFC 3261).
+		}
+		// Skip to end of line
+		for i < len(headers) && headers[i] != '\n' {
+			i++
+		}
+	}
+	return cl
+}
+
+// matchCI checks if data starts with prefix (case-insensitive).
+func matchCI(data, prefix []byte) bool {
+	if len(data) < len(prefix) {
+		return false
+	}
+	for i := range prefix {
+		c1 := data[i]
+		c2 := prefix[i]
+		if c1 >= 'A' && c1 <= 'Z' {
+			c1 = c1 - 'A' + 'a'
+		}
+		if c2 >= 'A' && c2 <= 'Z' {
+			c2 = c2 - 'A' + 'a'
+		}
+		if c1 != c2 {
+			return false
+		}
+	}
+	return true
 }
 
 // Shutdown stops the TCP listener
@@ -223,8 +311,8 @@ func (t *TCPListener) Shutdown(ctx context.Context) error {
 	select {
 	case <-done:
 		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	case <-t.stopCh:
+		return nil
 	}
 }
 

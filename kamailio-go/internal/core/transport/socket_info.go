@@ -108,12 +108,20 @@ func (si *SocketInfo) String() string {
 	return fmt.Sprintf("%s:%s:%d", si.Protocol.String(), si.Address.String(), si.Port)
 }
 
-// Network returns the network type for net.Listen
+// Network returns the network type for net.Listen (UDP).
 func (si *SocketInfo) Network() string {
 	if si.Address.To4() != nil {
 		return "udp4"
 	}
 	return "udp6"
+}
+
+// TCPNetwork returns the network type for net.Listen (TCP).
+func (si *SocketInfo) TCPNetwork() string {
+	if si.Address.To4() != nil {
+		return "tcp4"
+	}
+	return "tcp6"
 }
 
 // UDPAddr returns the UDP address for this socket

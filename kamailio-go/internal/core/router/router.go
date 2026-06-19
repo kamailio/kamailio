@@ -14,7 +14,10 @@ package router
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
+	"github.com/kamailio/kamailio-go/internal/core/forward"
 	"github.com/kamailio/kamailio-go/internal/core/parser"
 )
 
@@ -89,11 +92,13 @@ type RouteBlock struct {
 
 // Router represents the routing engine
 type Router struct {
-	routes    map[string]*RouteBlock
-	routeByID map[int]*RouteBlock
-	vars      map[string]interface{}
-	flags     uint32
-	avps      map[string][]interface{}
+	routes     map[string]*RouteBlock
+	routeByID  map[int]*RouteBlock
+	vars       map[string]interface{}
+	flags      uint32
+	avps       map[string][]interface{}
+	forwarder  *forward.Forwarder // 新增
+	defaultDst string             // 默认下一跳 "host:port"
 }
 
 // NewRouter creates a new routing engine
@@ -104,6 +109,16 @@ func NewRouter() *Router {
 		vars:      make(map[string]interface{}),
 		avps:      make(map[string][]interface{}),
 	}
+}
+
+// SetForwarder sets the forwarder for the router
+func (r *Router) SetForwarder(f *forward.Forwarder) {
+	r.forwarder = f
+}
+
+// SetDefaultDestination sets the default destination for forwarding
+func (r *Router) SetDefaultDestination(dst string) {
+	r.defaultDst = dst
 }
 
 // AddRoute adds a routing block
@@ -196,10 +211,10 @@ func (r *Router) runAction(ctx context.Context, act *Action, msg *parser.SIPMsg)
 		r.logMessage(act, msg)
 
 	case ActionForward:
-		// TODO: Implement forwarding
+		r.runActionForward(act, msg)
 
 	case ActionSend:
-		// TODO: Implement sending
+		r.runActionSend(act, msg)
 	}
 
 	return ResultContinue
@@ -301,6 +316,81 @@ func (r *Router) resetFlag(act *Action, msg *parser.SIPMsg) {
 	}
 
 	msg.Flags &^= uint32(1 << flag)
+}
+
+// runActionForward executes ActionForward
+func (r *Router) runActionForward(act *Action, msg *parser.SIPMsg) RunResult {
+	if r.forwarder == nil {
+		return ResultContinue
+	}
+
+	var nextHopURI string
+	if len(act.Elements) > 0 {
+		nextHopURI, _ = act.Elements[0].Value.(string)
+	}
+	if nextHopURI == "" {
+		nextHopURI = r.defaultDst
+	}
+
+	if nextHopURI == "" {
+		return ResultContinue
+	}
+
+	_ = r.forwarder.ForwardRequest(msg, nextHopURI, nil)
+	return ResultContinue
+}
+
+// runActionSend executes ActionSend
+func (r *Router) runActionSend(act *Action, msg *parser.SIPMsg) RunResult {
+	if r.forwarder == nil {
+		return ResultContinue
+	}
+
+	if len(act.Elements) == 0 {
+		return ResultContinue
+	}
+
+	dst, _ := act.Elements[0].Value.(string)
+	if dst == "" {
+		return ResultContinue
+	}
+
+	host, port := parseHostPortForSend(dst)
+
+	data, err := parser.BuildMessage(msg)
+	if err != nil {
+		return ResultContinue
+	}
+
+	_ = r.forwarder.SendToUDP(host, uint16(port), data)
+	return ResultContinue
+}
+
+// parseHostPortForSend parses "host:port" or "host" for send action
+func parseHostPortForSend(s string) (string, int) {
+	s = strings.TrimSpace(s)
+	if strings.HasPrefix(s, "[") {
+		end := strings.Index(s, "]")
+		if end == -1 {
+			return s, 5060
+		}
+		host := s[1:end]
+		rest := s[end+1:]
+		if strings.HasPrefix(rest, ":") {
+			if p, err := strconv.Atoi(rest[1:]); err == nil {
+				return host, p
+			}
+		}
+		return host, 5060
+	}
+	if colon := strings.LastIndex(s, ":"); colon != -1 {
+		host := s[:colon]
+		portStr := s[colon+1:]
+		if p, err := strconv.Atoi(portStr); err == nil {
+			return host, p
+		}
+	}
+	return s, 5060
 }
 
 // logMessage logs a message
@@ -534,6 +624,28 @@ func (rb *RouteBuilder) Log(level int, message string) *RouteBuilder {
 		Elements: []*ActionElem{
 			{Type: ElemNumber, Value: int64(level)},
 			{Type: ElemString, Value: message},
+		},
+	})
+	return rb
+}
+
+// Forward adds a forward action
+func (rb *RouteBuilder) Forward(dst string) *RouteBuilder {
+	rb.addAction(&Action{
+		Type: ActionForward,
+		Elements: []*ActionElem{
+			{Type: ElemString, Value: dst},
+		},
+	})
+	return rb
+}
+
+// Send adds a send action
+func (rb *RouteBuilder) Send(dst string) *RouteBuilder {
+	rb.addAction(&Action{
+		Type: ActionSend,
+		Elements: []*ActionElem{
+			{Type: ElemString, Value: dst},
 		},
 	})
 	return rb
