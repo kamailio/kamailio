@@ -28,9 +28,10 @@
 #include "../../core/parser/msg_parser.h"
 
 
-extern struct trusted_hash_table **current_trusted_table; /* pointer to the current hash table (to its pointer) */
-extern struct trusted_hash_table * trusted_table_1; /* hash table 1 */
-extern struct trusted_hash_table * trusted_table_2; /* hash table 2 */
+extern struct trusted_hash_table **
+		current_trusted_table; /* pointer to the current hash table (to its pointer) */
+extern struct trusted_hash_table *trusted_table_1; /* hash table 1 */
+extern struct trusted_hash_table *trusted_table_2; /* hash table 2 */
 
 
 /*

@@ -77,18 +77,16 @@ static int trusted_str_eq(const str *a, const str *b)
 
 	return strncmp(a->s, b->s, a->len) == 0;
 }
-static int trusted_entry_is_same(const struct trusted_list *a,
-		const struct trusted_list *b)
+static int trusted_entry_is_same(
+		const struct trusted_list *a, const struct trusted_list *b)
 {
 	if(!a || !b)
 		return 0;
 
-	return STR_EQ(a->src_ip, b->src_ip)
-		   && a->proto == b->proto
+	return STR_EQ(a->src_ip, b->src_ip) && a->proto == b->proto
 		   && trusted_cstr_eq(a->pattern, b->pattern)
 		   && trusted_cstr_eq(a->ruri_pattern, b->ruri_pattern)
-		   && trusted_str_eq(&a->tag, &b->tag)
-		   && a->priority == b->priority;
+		   && trusted_str_eq(&a->tag, &b->tag) && a->priority == b->priority;
 }
 
 /*
@@ -209,8 +207,7 @@ void trusted_table_free_entries(struct trusted_list *given_entry)
 		return;
 
 	entry = given_entry;
-	while(entry)
-	{
+	while(entry) {
 		last_entry = entry;
 		entry = entry->next;
 		trusted_table_free_entry(last_entry);
@@ -231,8 +228,8 @@ void trusted_table_free_entries(struct trusted_list *given_entry)
  *
  * For a reload failure, keep the table reusable, so `keep_dummy_head=true`.
  */
-void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool free_locks,
-		bool keep_dummy_head)
+void trusted_table_free_buckets(struct trusted_hash_table *trusted_table,
+		bool free_locks, bool keep_dummy_head)
 {
 	if(!trusted_table) {
 		LM_ERR("Nothing to de-allocate! Empty trusted table pointer.");
@@ -241,10 +238,11 @@ void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool f
 
 	unsigned int orig_size = trusted_table->size;
 
-	for(int i = 0; i < orig_size; i++)
-	{
+	for(int i = 0; i < orig_size; i++) {
 		if(!trusted_table->row_locks[i]) {
-			LM_ERR("Absent table row lock[%d], cannot acquire it and de-allocate members.\n", i);
+			LM_ERR("Absent table row lock[%d], cannot acquire it and "
+				   "de-allocate members.\n",
+					i);
 			continue;
 		} else {
 			lock_get(trusted_table->row_locks[i]);
@@ -252,10 +250,12 @@ void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool f
 
 		/* now clean the bucket */
 		if(!trusted_table->row_entry_list[i]) {
-			LM_DBG("Table bucket[%d] is already empty, cannot de-allocate its content.\n", i);
+			LM_DBG("Table bucket[%d] is already empty, cannot de-allocate its "
+				   "content.\n",
+					i);
 		} else {
 			/* in case of bucket re-init, leave the dummy head (list is never NULL when using) */
-			if (keep_dummy_head) {
+			if(keep_dummy_head) {
 				struct trusted_list *dummy = trusted_table->row_entry_list[i];
 				trusted_table_free_entries(dummy->next);
 
@@ -276,7 +276,7 @@ void trusted_table_free_buckets(struct trusted_hash_table *trusted_table, bool f
 		lock_release(trusted_table->row_locks[i]);
 
 		/* and accordingly a lock */
-		if (free_locks) {
+		if(free_locks) {
 			trusted_table_free_row_lock(trusted_table->row_locks[i]);
 			trusted_table->row_locks[i] = NULL;
 		}
@@ -296,7 +296,8 @@ int trusted_table_destroy(struct trusted_hash_table *trusted_table)
 
 	/* de-allocate row locks */
 	if(!trusted_table->row_locks) {
-		LM_ERR("Empty row locks, cannot acquire it and de-allocate trusted table members.\n");
+		LM_ERR("Empty row locks, cannot acquire it and de-allocate trusted "
+			   "table members.\n");
 		shm_free(trusted_table);
 		return -1;
 	}
@@ -324,8 +325,8 @@ int trusted_table_destroy(struct trusted_hash_table *trusted_table)
 }
 
 
-int trusted_table_reinit(struct trusted_hash_table * trusted_table,
-		unsigned int hash_table_size)
+int trusted_table_reinit(
+		struct trusted_hash_table *trusted_table, unsigned int hash_table_size)
 {
 	DBG("re-initializing table.\n");
 
@@ -338,7 +339,7 @@ int trusted_table_reinit(struct trusted_hash_table * trusted_table,
 	 * This should normally be a no-op for a fully initialized table,
 	 * but keeps the function tolerant to partially initialized state.
 	 */
-	if (trusted_table_init(trusted_table, hash_table_size)) {
+	if(trusted_table_init(trusted_table, hash_table_size)) {
 		LM_ERR("failed to re-initialize the new trusted table.\n");
 		return -1;
 	}
@@ -362,8 +363,8 @@ int trusted_table_reinit(struct trusted_hash_table * trusted_table,
  * Reinitialization/cleanup of existing bucket content is handled by
  * `trusted_table_reinit()` / `trusted_table_free_buckets()`.
  */
-int trusted_table_init(struct trusted_hash_table * trusted_table,
-		unsigned int hash_table_size)
+int trusted_table_init(
+		struct trusted_hash_table *trusted_table, unsigned int hash_table_size)
 {
 	if(!trusted_table) {
 		LM_ERR("Cannot initialize this table, empty trusted table pointer.");
@@ -372,33 +373,40 @@ int trusted_table_init(struct trusted_hash_table * trusted_table,
 
 	DBG("init trusted_table size = %d\n", hash_table_size);
 
-	for(unsigned int i = 0; i < hash_table_size; i++)
-	{
+	for(unsigned int i = 0; i < hash_table_size; i++) {
 		/* init locks (can be already in place, e.g. re-init) */
-		if (!trusted_table->row_locks[i]) {
+		if(!trusted_table->row_locks[i]) {
 			trusted_table->row_locks[i] = lock_alloc();
 
 			if(!trusted_table->row_locks[i]) {
-				LM_ERR("no shared memory left to allocate a row lock[%d] for this trusted table\n", i);
+				LM_ERR("no shared memory left to allocate a row lock[%d] for "
+					   "this trusted table\n",
+						i);
 				/* only the caller is responsible to call `trusted_table_destroy()` */
 				return -1;
 			}
 			if(!lock_init(trusted_table->row_locks[i])) {
-				LM_ERR("failed to initialize a row lock[%d] for this trusted table\n", i);
+				LM_ERR("failed to initialize a row lock[%d] for this trusted "
+					   "table\n",
+						i);
 				/* only the caller is responsible to call `trusted_table_destroy()` */
 				return -1;
 			}
 		}
 
 		/* initialize each trusted_list entry (dummy head can already be in place, e.g. re-init) */
-		if (!trusted_table->row_entry_list[i]) {
-			trusted_table->row_entry_list[i] = shm_malloc(sizeof(struct trusted_list));
+		if(!trusted_table->row_entry_list[i]) {
+			trusted_table->row_entry_list[i] =
+					shm_malloc(sizeof(struct trusted_list));
 			if(!trusted_table->row_entry_list[i]) {
-				LM_ERR("no shared memory left to allocate trusted list entry[%d] for this trusted table\n", i);
+				LM_ERR("no shared memory left to allocate trusted list "
+					   "entry[%d] for this trusted table\n",
+						i);
 				/* only the caller is responsible to call `trusted_table_destroy()` */
 				return -1;
 			}
-			memset(trusted_table->row_entry_list[i], 0, sizeof(struct trusted_list));
+			memset(trusted_table->row_entry_list[i], 0,
+					sizeof(struct trusted_list));
 
 			/* track real table size */
 			trusted_table->size++;
@@ -413,10 +421,11 @@ int trusted_table_init(struct trusted_hash_table * trusted_table,
 /**
  * Allocate space (shm) for the table.
  */
-struct trusted_hash_table * trusted_table_allocate(unsigned int hash_table_size)
+struct trusted_hash_table *trusted_table_allocate(unsigned int hash_table_size)
 {
 	/* init the main hash table structure */
-	struct trusted_hash_table * trusted_table = shm_malloc(sizeof(struct trusted_hash_table));
+	struct trusted_hash_table *trusted_table =
+			shm_malloc(sizeof(struct trusted_hash_table));
 	if(!trusted_table) {
 		LM_ERR("no shared memory left to create this trusted table\n");
 		return NULL;
@@ -424,22 +433,27 @@ struct trusted_hash_table * trusted_table_allocate(unsigned int hash_table_size)
 	memset(trusted_table, 0, sizeof(struct trusted_hash_table));
 
 	/* init the row locks for it */
-	trusted_table->row_locks = shm_malloc(hash_table_size * sizeof(gen_lock_t *));
+	trusted_table->row_locks =
+			shm_malloc(hash_table_size * sizeof(gen_lock_t *));
 	if(!trusted_table->row_locks) {
-		LM_ERR("no shared memory left to create row locks for this trusted table\n");
+		LM_ERR("no shared memory left to create row locks for this trusted "
+			   "table\n");
 		trusted_table_destroy(trusted_table);
 		return NULL;
 	}
 	memset(trusted_table->row_locks, 0, hash_table_size * sizeof(gen_lock_t *));
 
 	/* allocate space for the list */
-	trusted_table->row_entry_list = shm_malloc(hash_table_size * sizeof(struct trusted_list *));
+	trusted_table->row_entry_list =
+			shm_malloc(hash_table_size * sizeof(struct trusted_list *));
 	if(!trusted_table->row_entry_list) {
-		LM_ERR("no shared memory left to create entry list for this trusted table\n");
+		LM_ERR("no shared memory left to create entry list for this trusted "
+			   "table\n");
 		trusted_table_destroy(trusted_table);
 		return NULL;
 	}
-	memset(trusted_table->row_entry_list, 0, hash_table_size * sizeof(struct trusted_list *));
+	memset(trusted_table->row_entry_list, 0,
+			hash_table_size * sizeof(struct trusted_list *));
 
 	LM_DBG("successfully allocated new trusted table\n");
 	return trusted_table;
@@ -450,10 +464,11 @@ struct trusted_hash_table * trusted_table_allocate(unsigned int hash_table_size)
  * Add <src_ip, proto, pattern, ruri_pattern, tag, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char *proto,
-		char *pattern, char *ruri_pattern, char *tag, int priority)
+int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip,
+		char *proto, char *pattern, char *ruri_pattern, char *tag, int priority)
 {
-	struct trusted_list *cur_entry, *prev_entry, *new_entry, *bucket_head = NULL;
+	struct trusted_list *cur_entry, *prev_entry, *new_entry,
+			*bucket_head = NULL;
 
 	unsigned int hash_index;
 
@@ -557,7 +572,7 @@ int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char 
 	hash_index = perm_hash(new_entry->src_ip);
 
 	/* ensure to have a correct index within boundaries */
-	if (hash_index >= PERM_HASH_SIZE) {
+	if(hash_index >= PERM_HASH_SIZE) {
 		trusted_table_free_entry(new_entry);
 		LM_ERR("hash index out of bounds [%d]\n", hash_index);
 		return -1;
@@ -570,7 +585,8 @@ int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char 
 		lock_get(hash_table->row_locks[hash_index]);
 	} else {
 		trusted_table_free_entry(new_entry);
-		LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n", hash_index);
+		LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n",
+				hash_index);
 		return -1;
 	}
 
@@ -587,8 +603,7 @@ int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char 
 	prev_entry = bucket_head;
 	cur_entry = bucket_head->next;
 
-	while(cur_entry)
-	{
+	while(cur_entry) {
 		/* Suppress only exact duplicate DB rows. Rows with different
 		 * tags or priorities are semantically distinct and must stay.
 		 */
@@ -601,7 +616,7 @@ int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char 
 		}
 
 		/* stop by the first entry with a lower priority */
-		if (cur_entry->priority < new_entry->priority)
+		if(cur_entry->priority < new_entry->priority)
 			break;
 
 		/* find the next available slot in the list */
@@ -625,8 +640,8 @@ int hash_table_insert(struct trusted_hash_table *hash_table, char *src_ip, char 
  * has been defined, tag of the entry is added as a value to tag_avp.
  * Returns number of matches or -1 if none matched.
  */
-int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *msg,
-		char *src_ip_c_str, int proto, char *from_uri)
+int match_hash_table(struct trusted_hash_table *trusted_table,
+		struct sip_msg *msg, char *src_ip_c_str, int proto, char *from_uri)
 {
 	LM_DBG("match_hash_table src_ip: %s, proto: %d, uri: %s\n", src_ip_c_str,
 			proto, from_uri);
@@ -641,13 +656,13 @@ int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *m
 	unsigned int hash_index;
 	struct trusted_list **table = NULL;
 
-	if (!trusted_table) {
+	if(!trusted_table) {
 		LM_ERR("empty table used for comparison.\n");
 		return -1;
 	}
 
 	/* detect source IP */
-	if (!src_ip_c_str) {
+	if(!src_ip_c_str) {
 		LM_ERR("empty source IP given\n");
 		return -1;
 	}
@@ -670,12 +685,12 @@ int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *m
 	if(trusted_table->row_locks[hash_index]) {
 		lock_get(trusted_table->row_locks[hash_index]);
 	} else {
-		LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n", hash_index);
+		LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n",
+				hash_index);
 		return -1;
 	}
 
-	if(!trusted_table->row_entry_list[hash_index])
-	{
+	if(!trusted_table->row_entry_list[hash_index]) {
 		LM_ERR("Non-initialized bucket, hash table slot[%d]\n", hash_index);
 		lock_release(trusted_table->row_locks[hash_index]);
 		return -1;
@@ -746,14 +761,15 @@ int match_hash_table(struct trusted_hash_table *trusted_table, struct sip_msg *m
 /*! \brief
  * RPC interface :: Print trusted entries stored in hash table
  */
-int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c)
+int hash_table_rpc_print(
+		struct trusted_hash_table *trusted_table, rpc_t *rpc, void *c)
 {
 	int i;
 	struct trusted_list *np = NULL;
 	void *th;
 	void *ih;
 
-	if (!trusted_table) {
+	if(!trusted_table) {
 		LM_ERR("empty table used for comparison.\n");
 		return -1;
 	}
@@ -764,15 +780,14 @@ int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, v
 	}
 
 	for(i = 0; i < PERM_HASH_SIZE; i++) {
-		if (trusted_table->row_locks[i]) {
+		if(trusted_table->row_locks[i]) {
 			lock_get(trusted_table->row_locks[i]);
 		} else {
 			LM_ERR("Cannot acquire the bucket lock, hash table slot[%d]\n", i);
 			continue;
 		}
 
-		if (!trusted_table->row_entry_list[i])
-		{
+		if(!trusted_table->row_entry_list[i]) {
 			LM_WARN("Non-initialized bucket, hash table slot[%d]\n", i);
 			lock_release(trusted_table->row_locks[i]);
 			continue;
@@ -798,8 +813,7 @@ int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, v
 					   np->ruri_pattern ? np->ruri_pattern : "NULL", "tag",
 					   np->tag.len ? np->tag.s : "NULL", "priority",
 					   np->priority)
-					< 0)
-			{
+					< 0) {
 				rpc->fault(c, 500, "Internal error creating rpc data");
 				lock_release(trusted_table->row_locks[i]);
 				return -1;
@@ -810,7 +824,6 @@ int hash_table_rpc_print(struct trusted_hash_table *trusted_table, rpc_t *rpc, v
 	}
 	return 0;
 }
-
 
 
 static void address_table_free_row_lock(gen_lock_t *row_lock)
@@ -936,8 +949,7 @@ int address_table_init(
 /**
  * Allocate space (shm) for the address table and init members.
  */
-struct address_hash_table *address_table_allocate(
-		unsigned int hash_table_size)
+struct address_hash_table *address_table_allocate(unsigned int hash_table_size)
 {
 	struct address_hash_table *table;
 
@@ -954,8 +966,8 @@ struct address_hash_table *address_table_allocate(
 	memset(table, 0, sizeof(*table));
 	table->size = hash_table_size;
 
-	table->row_entry_list = shm_malloc(
-			hash_table_size * sizeof(*table->row_entry_list));
+	table->row_entry_list =
+			shm_malloc(hash_table_size * sizeof(*table->row_entry_list));
 	if(!table->row_entry_list) {
 		LM_ERR("no shared memory for address bucket array\n");
 		address_table_destroy(table);
@@ -964,15 +976,13 @@ struct address_hash_table *address_table_allocate(
 	memset(table->row_entry_list, 0,
 			hash_table_size * sizeof(*table->row_entry_list));
 
-	table->row_locks =
-			shm_malloc(hash_table_size * sizeof(*table->row_locks));
+	table->row_locks = shm_malloc(hash_table_size * sizeof(*table->row_locks));
 	if(!table->row_locks) {
 		LM_ERR("no shared memory for address lock array\n");
 		address_table_destroy(table);
 		return NULL;
 	}
-	memset(table->row_locks, 0,
-			hash_table_size * sizeof(*table->row_locks));
+	memset(table->row_locks, 0, hash_table_size * sizeof(*table->row_locks));
 
 	if(address_table_init(table, hash_table_size) < 0) {
 		address_table_destroy(table);
@@ -1033,8 +1043,8 @@ int address_table_insert(struct address_hash_table *table, unsigned int grp,
 	str addr_str;
 	int len;
 
-	if(!table || !table->row_entry_list || !table->row_locks
-			|| table->size == 0 || !addr) {
+	if(!table || !table->row_entry_list || !table->row_locks || table->size == 0
+			|| !addr) {
 		LM_ERR("invalid address table insert arguments\n");
 		return -1;
 	}
@@ -1107,8 +1117,7 @@ int match_address_table(struct address_hash_table *table, unsigned int group,
 
 	lock_get(table->row_locks[hash_index]);
 
-	for(entry = table->row_entry_list[hash_index]; entry;
-			entry = entry->next) {
+	for(entry = table->row_entry_list[hash_index]; entry; entry = entry->next) {
 		if(entry->grp != group)
 			continue;
 		if(entry->port != 0 && entry->port != port)
@@ -1133,8 +1142,8 @@ done:
 	return ret;
 }
 
-int find_group_in_address_table(struct address_hash_table *table,
-		ip_addr_t *addr, unsigned int port)
+int find_group_in_address_table(
+		struct address_hash_table *table, ip_addr_t *addr, unsigned int port)
 {
 	struct addr_list *entry;
 	unsigned int hash_index;
@@ -1156,8 +1165,7 @@ int find_group_in_address_table(struct address_hash_table *table,
 
 	lock_get(table->row_locks[hash_index]);
 
-	for(entry = table->row_entry_list[hash_index]; entry;
-			entry = entry->next) {
+	for(entry = table->row_entry_list[hash_index]; entry; entry = entry->next) {
 		if(entry->port != 0 && entry->port != port)
 			continue;
 		if(!ip_addr_cmp(&entry->addr, addr))
@@ -1198,27 +1206,23 @@ int address_table_rpc_print(
 
 		lock_get(table->row_locks[i]);
 
-		for(entry = table->row_entry_list[i]; entry;
-				entry = entry->next) {
+		for(entry = table->row_entry_list[i]; entry; entry = entry->next) {
 			if(rpc->add(c, "{", &th) < 0) {
 				rpc->fault(c, 500, "Internal error creating rpc");
 				lock_release(table->row_locks[i]);
 				return -1;
 			}
 
-			if(rpc->struct_add(th, "dd{", "table", i, "group",
-					   entry->grp, "item", &ih)
+			if(rpc->struct_add(
+					   th, "dd{", "table", i, "group", entry->grp, "item", &ih)
 					< 0) {
 				rpc->fault(c, 500, "Internal error creating rpc ih");
 				lock_release(table->row_locks[i]);
 				return -1;
 			}
 
-			if(rpc->struct_add(
-					   ih, "s", "ip", ip_addr2a(&entry->addr))
-					< 0) {
-				rpc->fault(c, 500,
-						"Internal error creating rpc data (ip)");
+			if(rpc->struct_add(ih, "s", "ip", ip_addr2a(&entry->addr)) < 0) {
+				rpc->fault(c, 500, "Internal error creating rpc data (ip)");
 				lock_release(table->row_locks[i]);
 				return -1;
 			}
@@ -1521,8 +1525,7 @@ static void domain_table_free_entries(struct domain_name_list *entry)
  *
  * Deliberately tolerates a partially initialized table.
  */
-void domain_table_free_buckets(
-		struct domain_hash_table *table, bool free_locks)
+void domain_table_free_buckets(struct domain_hash_table *table, bool free_locks)
 {
 	gen_lock_t *row_lock;
 
@@ -1605,8 +1608,7 @@ int domain_table_init(
 /**
  * Allocate space (shm) for the domain table and init members.
  */
-struct domain_hash_table *domain_table_allocate(
-		unsigned int hash_table_size)
+struct domain_hash_table *domain_table_allocate(unsigned int hash_table_size)
 {
 	struct domain_hash_table *table;
 
@@ -1623,8 +1625,8 @@ struct domain_hash_table *domain_table_allocate(
 	memset(table, 0, sizeof(*table));
 	table->size = hash_table_size;
 
-	table->row_entry_list = shm_malloc(
-			hash_table_size * sizeof(*table->row_entry_list));
+	table->row_entry_list =
+			shm_malloc(hash_table_size * sizeof(*table->row_entry_list));
 	if(!table->row_entry_list) {
 		LM_ERR("no shared memory for domain bucket array\n");
 		domain_table_destroy(table);
@@ -1633,15 +1635,13 @@ struct domain_hash_table *domain_table_allocate(
 	memset(table->row_entry_list, 0,
 			hash_table_size * sizeof(*table->row_entry_list));
 
-	table->row_locks =
-			shm_malloc(hash_table_size * sizeof(*table->row_locks));
+	table->row_locks = shm_malloc(hash_table_size * sizeof(*table->row_locks));
 	if(!table->row_locks) {
 		LM_ERR("no shared memory for domain lock array\n");
 		domain_table_destroy(table);
 		return NULL;
 	}
-	memset(table->row_locks, 0,
-			hash_table_size * sizeof(*table->row_locks));
+	memset(table->row_locks, 0, hash_table_size * sizeof(*table->row_locks));
 
 	if(domain_table_init(table, hash_table_size) < 0) {
 		domain_table_destroy(table);
@@ -1701,8 +1701,8 @@ int domain_table_insert(struct domain_hash_table *table, unsigned int grp,
 	unsigned int hash_index;
 	int len;
 
-	if(!table || !table->row_entry_list || !table->row_locks
-			|| !domain_name || !domain_name->s || domain_name->len <= 0) {
+	if(!table || !table->row_entry_list || !table->row_locks || !domain_name
+			|| !domain_name->s || domain_name->len <= 0) {
 		LM_ERR("invalid domain table insert arguments\n");
 		return -1;
 	}
@@ -1725,8 +1725,7 @@ int domain_table_insert(struct domain_hash_table *table, unsigned int grp,
 	entry->port = port;
 
 	if(tagv && tagv->s) {
-		entry->tag.s =
-				(char *)entry + sizeof(*entry) + domain_name->len;
+		entry->tag.s = (char *)entry + sizeof(*entry) + domain_name->len;
 		entry->tag.len = tagv->len;
 		memcpy(entry->tag.s, tagv->s, tagv->len);
 		entry->tag.s[entry->tag.len] = '\0';
@@ -1742,8 +1741,7 @@ int domain_table_insert(struct domain_hash_table *table, unsigned int grp,
 	lock_get(table->row_locks[hash_index]);
 	entry->next = table->row_entry_list[hash_index];
 	table->row_entry_list[hash_index] = entry;
-	LM_DBG("** Added domain name: %.*s\n", entry->domain.len,
-			entry->domain.s);
+	LM_DBG("** Added domain name: %.*s\n", entry->domain.len, entry->domain.s);
 	lock_release(table->row_locks[hash_index]);
 
 	return 1;
@@ -1757,8 +1755,8 @@ int match_domain_table(struct domain_hash_table *table, unsigned int group,
 	avp_value_t val;
 	int ret = -1;
 
-	if(!table || !table->row_entry_list || !table->row_locks
-			|| !domain_name || !domain_name->s || domain_name->len <= 0)
+	if(!table || !table->row_entry_list || !table->row_locks || !domain_name
+			|| !domain_name->s || domain_name->len <= 0)
 		return -1;
 
 	hash_index = core_hash(domain_name, 0, table->size);
@@ -1769,8 +1767,7 @@ int match_domain_table(struct domain_hash_table *table, unsigned int group,
 
 	lock_get(table->row_locks[hash_index]);
 
-	for(entry = table->row_entry_list[hash_index]; entry;
-			entry = entry->next) {
+	for(entry = table->row_entry_list[hash_index]; entry; entry = entry->next) {
 		if(entry->grp != group)
 			continue;
 		if(entry->port != 0 && entry->port != port)
@@ -1797,15 +1794,15 @@ done:
 	return ret;
 }
 
-int find_group_in_domain_table(struct domain_hash_table *table,
-		str *domain_name, unsigned int port)
+int find_group_in_domain_table(
+		struct domain_hash_table *table, str *domain_name, unsigned int port)
 {
 	struct domain_name_list *entry;
 	unsigned int hash_index;
 	int ret = -1;
 
-	if(!table || !table->row_entry_list || !table->row_locks
-			|| !domain_name || !domain_name->s || domain_name->len <= 0)
+	if(!table || !table->row_entry_list || !table->row_locks || !domain_name
+			|| !domain_name->s || domain_name->len <= 0)
 		return -1;
 
 	hash_index = core_hash(domain_name, 0, table->size);
@@ -1816,8 +1813,7 @@ int find_group_in_domain_table(struct domain_hash_table *table,
 
 	lock_get(table->row_locks[hash_index]);
 
-	for(entry = table->row_entry_list[hash_index]; entry;
-			entry = entry->next) {
+	for(entry = table->row_entry_list[hash_index]; entry; entry = entry->next) {
 		if(entry->port != 0 && entry->port != port)
 			continue;
 		if(entry->domain.len != domain_name->len)
@@ -1833,8 +1829,7 @@ int find_group_in_domain_table(struct domain_hash_table *table,
 	return ret;
 }
 
-int domain_table_rpc_print(
-		struct domain_hash_table *table, rpc_t *rpc, void *c)
+int domain_table_rpc_print(struct domain_hash_table *table, rpc_t *rpc, void *c)
 {
 	struct domain_name_list *entry;
 	void *th;
@@ -1857,19 +1852,16 @@ int domain_table_rpc_print(
 
 		lock_get(table->row_locks[i]);
 
-		for(entry = table->row_entry_list[i]; entry;
-				entry = entry->next) {
-			if(rpc->struct_add(th, "dd{", "table", i, "group",
-					   entry->grp, "item", &ih)
+		for(entry = table->row_entry_list[i]; entry; entry = entry->next) {
+			if(rpc->struct_add(
+					   th, "dd{", "table", i, "group", entry->grp, "item", &ih)
 					< 0) {
 				rpc->fault(c, 500, "Internal error creating rpc ih");
 				lock_release(table->row_locks[i]);
 				return -1;
 			}
 
-			if(rpc->struct_add(
-					   ih, "S", "domain_name", &entry->domain)
-					< 0) {
+			if(rpc->struct_add(ih, "S", "domain_name", &entry->domain) < 0) {
 				rpc->fault(c, 500,
 						"Internal error creating rpc data (domain_name)");
 				lock_release(table->row_locks[i]);

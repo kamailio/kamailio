@@ -45,7 +45,8 @@
 
 #define TABLE_VERSION 6
 
-struct address_hash_table **perm_addr_table = NULL;  /* pointer to the current hash table (to its pointer) */
+struct address_hash_table **perm_addr_table =
+		NULL; /* pointer to the current hash table (to its pointer) */
 struct address_hash_table *perm_addr_table_1 = NULL; /* hash table 1 */
 struct address_hash_table *perm_addr_table_2 = NULL; /* hash table 2 */
 
@@ -53,7 +54,8 @@ struct subnet **perm_subnet_table = NULL;  /* Ptr to current subnet table */
 struct subnet *perm_subnet_table_1 = NULL; /* Ptr to subnet table 1 */
 struct subnet *perm_subnet_table_2 = NULL; /* Ptr to subnet table 2 */
 
-struct domain_hash_table **perm_domain_table = NULL; /* pointer to the current hash table (to its pointer) */
+struct domain_hash_table **perm_domain_table =
+		NULL; /* pointer to the current hash table (to its pointer) */
 static struct domain_hash_table *perm_domain_table_1 = NULL; /* hash table 1 */
 static struct domain_hash_table *perm_domain_table_2 = NULL; /* hash table 2 */
 
@@ -227,8 +229,7 @@ int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
 					ips->len, ips->s, port, mask);
 		}
 	} else {
-		if(domain_table_insert(atg->domain_table, gid, ips, port, tagv)
-				== -1) {
+		if(domain_table_insert(atg->domain_table, gid, ips, port, tagv) == -1) {
 			LM_ERR("domain name table problem\n");
 			return -1;
 		}
