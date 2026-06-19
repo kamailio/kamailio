@@ -9,17 +9,16 @@
  *   - CreateReply 200 OK (from a parsed INVITE)
  *   - BuildForwardRequest (new Via + Max-Forwards--)
  *   - Parse → Build round-trip (serialise and re-parse)
- *   - dialog.Manager.CreateUASDialog
- *   - tm.Manager transaction lookup and creation+reply
+ *
+ * Higher-level benchmarks (dialog.Manager, tm.Manager) live in
+ * internal/integration/bench_test.go to avoid import cycles with
+ * the parser package.
  */
 
 package parser
 
 import (
 	"testing"
-
-	"github.com/kamailio/kamailio-go/internal/core/dialog"
-	"github.com/kamailio/kamailio-go/internal/modules/tm"
 )
 
 // ---- simple INVITE (<1k) ----
@@ -215,75 +214,5 @@ func BenchmarkBuildAndParseRoundtrip(b *testing.B) {
 			b.Fatalf("re-parse failed: %v", err)
 		}
 		_ = msg2
-	}
-}
-
-// ============================================================
-// Benchmark 7: dialog.Manager.CreateUASDialog
-// ============================================================
-
-func BenchmarkDialogCreation(b *testing.B) {
-	b.ReportAllocs()
-	raw := benchLargeINVITE()
-	msg, err := ParseMsg(raw)
-	if err != nil {
-		b.Fatalf("ParseMsg failed: %v", err)
-	}
-	mgr := dialog.NewManager()
-	for i := 0; i < b.N; i++ {
-		d, err := dialog.CreateUASDialog(msg, "<sip:proxy@example.com>")
-		if err != nil {
-			b.Fatalf("CreateUASDialog failed: %v", err)
-		}
-		if err := mgr.Add(d); err != nil {
-			// Dialog already exists with same key - fine for benchmark,
-			// just keep going
-			_ = err
-		}
-	}
-}
-
-// ============================================================
-// Benchmark 8: tm.Manager.LookupRequest
-// ============================================================
-
-func BenchmarkTMTransaction_Lookup(b *testing.B) {
-	b.ReportAllocs()
-	raw := benchLargeINVITE()
-	msg, err := ParseMsg(raw)
-	if err != nil {
-		b.Fatalf("ParseMsg failed: %v", err)
-	}
-	mgr := tm.NewManager(1024)
-	// Pre-populate some transactions to make lookups meaningful
-	if _, err := mgr.NewTransaction(msg); err != nil {
-		b.Fatalf("NewTransaction failed: %v", err)
-	}
-	for i := 0; i < b.N; i++ {
-		if _, err := mgr.LookupRequest(msg); err != nil {
-			b.Fatalf("LookupRequest failed: %v", err)
-		}
-	}
-}
-
-// ============================================================
-// Benchmark 9: tm.Manager.NewTransaction + SendReply
-// ============================================================
-
-func BenchmarkTMTransaction_CreateAndReply(b *testing.B) {
-	b.ReportAllocs()
-	raw := benchLargeINVITE()
-	msg, err := ParseMsg(raw)
-	if err != nil {
-		b.Fatalf("ParseMsg failed: %v", err)
-	}
-	for i := 0; i < b.N; i++ {
-		mgr := tm.NewManager(1024)
-		if _, err := mgr.NewTransaction(msg); err != nil {
-			b.Fatalf("NewTransaction failed: %v", err)
-		}
-		if err := mgr.SendReply(msg, 200, "OK", "127.0.0.1", 5080); err != nil {
-			b.Fatalf("SendReply failed: %v", err)
-		}
 	}
 }

@@ -348,16 +348,34 @@ func (s *Server) handleBye(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
 	s.sendResponse(msg, 200, "OK", srcAddr)
 }
 
-// handleAck processes an ACK. The transaction for the original INVITE
-// is looked up for potential logging/accounting.
+// handleAck processes an ACK. An ACK confirms the final response to
+// an INVITE transaction. If a matching dialog exists it is
+// confirmed (if not already) so subsequent re-INVITEs can be accepted).
+// Any transactional activity is logged for accounting/debugging purposes.
 func (s *Server) handleAck(msg *parser.SIPMsg, srcAddr *net.UDPAddr) {
+	// Confirm the dialog (if any). Note: for UAC side the 2xx reply
+	// already triggers Confirm; for UAS side the ACK arriving here
+	// confirms from-the-dialog.
+	if s.dialogs != nil {
+		callID := callIDOf(msg)
+		fromTag := ""
+		toTag := ""
+		if msg.From != nil {
+			fromTag = extractTagFrom(msg.From.Body.String())
+		}
+		if msg.To != nil {
+			toTag = extractTagFrom(msg.To.Body.String())
+		}
+		if d := s.dialogs.Lookup(callID, fromTag, toTag); d != nil {
+			d.Confirm()
+		}
+	}
+
+	// Also try to look up the original transaction for accounting.
 	if s.tm != nil {
 		if _, err := s.tm.LookupRequest(msg); err != nil {
 			log.Debug("ACK matched existing transaction", log.ErrField(err))
 		}
-	}
-	if s.sessionH != nil {
-		_, _ = s.sessionH.HandleBye(msg)
 	}
 }
 
