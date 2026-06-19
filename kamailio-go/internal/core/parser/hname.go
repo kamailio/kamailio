@@ -342,9 +342,13 @@ func ParseHeaders(buf []byte) ([]*HdrField, int, error) {
 			Type: hdrType,
 		}
 
-		// For Via headers, also set the parsed Via1 reference
+		// For Via headers, eagerly parse the body and cache it in h.Parsed.
+		// This mirrors Kamailio's parse_headers() behaviour for HdrViaF and
+		// eliminates the need for every caller to lazily parse later.
 		if hdrType == HdrVia {
-			// TODO: M2 - parse Via body properly
+			if vb, _, err := ParseMultiVia(hdr.Body); err == nil && vb != nil {
+				hdr.Parsed = vb
+			}
 		}
 
 		headers = append(headers, hdr)

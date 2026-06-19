@@ -55,14 +55,22 @@ func ParseMsg(buf []byte) (*SIPMsg, error) {
 	return msg, nil
 }
 
-// setHeaderRef sets the quick reference for a header field
+// setHeaderRef sets the quick reference for a header field.
+// For Via headers it also populates the legacy Via1/Via2 *ViaBody pointers
+// so callers can use msg.Via1 directly instead of msg.HdrVia1.Parsed.
 func (m *SIPMsg) setHeaderRef(h *HdrField) {
 	switch h.Type {
 	case HdrVia:
 		if m.HdrVia1 == nil {
 			m.HdrVia1 = h
+			if vb, ok := h.Parsed.(*ViaBody); ok {
+				m.Via1 = vb
+			}
 		} else if m.HdrVia2 == nil {
 			m.HdrVia2 = h
+			if vb, ok := h.Parsed.(*ViaBody); ok {
+				m.Via2 = vb
+			}
 		}
 	case HdrFrom:
 		m.From = h

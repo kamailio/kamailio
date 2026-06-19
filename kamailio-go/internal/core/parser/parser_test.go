@@ -170,10 +170,19 @@ func TestParseMsgRequest(t *testing.T) {
 	if msg.CSeq == nil {
 		t.Error("expected CSeq header to be set")
 	}
-	// Via1 is set when Via body is parsed (TODO: M2 - Via body parsing)
-	// For now, just check HdrVia1 is set
+	// Via body is now eagerly parsed during header parsing (M2 resolved).
 	if msg.HdrVia1 == nil {
 		t.Error("expected HdrVia1 to be set")
+	}
+	if msg.Via1 == nil {
+		t.Error("expected Via1 body to be eagerly parsed")
+	} else {
+		if msg.Via1.Host.String() != "pc33.example.com" {
+			t.Errorf("Via1 host = %q, want pc33.example.com", msg.Via1.Host.String())
+		}
+		if msg.Via1.Branch == nil || msg.Via1.Branch.Value.String() != "z9hG4bK776asdhds" {
+			t.Errorf("Via1 branch missing or wrong")
+		}
 	}
 }
 
