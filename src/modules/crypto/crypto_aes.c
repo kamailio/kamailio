@@ -107,6 +107,11 @@ int crypto_aes_init(unsigned char *key_data, int key_data_len,
 			LM_DBG("salt: %x\n", salt[x]);
 		cipher = EVP_aes_256_cbc();
 	} else {
+		if(key_data_len != 16 && key_data_len != 32) {
+			LM_ERR("invalid raw AES key length %d - expected 16 or 32 bytes\n",
+					key_data_len);
+			return -1;
+		}
 		cipher = (key_data_len == 16) ? EVP_aes_128_cbc() : EVP_aes_256_cbc();
 		LM_DBG("got %d bytes key\n", key_data_len * 8);
 		memcpy(key, key_data, key_data_len);
