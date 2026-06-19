@@ -264,6 +264,11 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 		cell.ToHdr = msg.To.Body
 	}
 
+	// Extract Via branch for transaction matching
+	if msg.Via1 != nil && msg.Via1.Branch != nil {
+		cell.ViaBranch = msg.Via1.Branch.Value
+	}
+
 	// Set method
 	if msg.IsRequest() {
 		cell.Method = msg.FirstLine.Req.Method
@@ -318,11 +323,29 @@ func (m *Manager) LookupReply(msg *parser.SIPMsg) (*Cell, int, error) {
 		return nil, -1, errors.New("null message")
 	}
 
-	// Reply matching uses Via branch, Call-ID, CSeq, and From tag
-	// TODO: M4 - Implement proper reply matching
-	cell := m.table.LookupByMsg(msg)
+	// Extract Call-ID
+	if msg.CallID == nil {
+		return nil, -1, errors.New("missing Call-ID")
+	}
+	callID := msg.CallID.Body
+
+	// Extract CSeq number
+	cseqBody, err := parser.ParseCSeqHeader(msg.CSeq)
+	if err != nil {
+		return nil, -1, errors.New("missing CSeq")
+	}
+	cseqStr := str.Mk(fmt.Sprintf("%d", cseqBody.Number))
+
+	// Extract Via branch for proper reply matching (RFC 3261)
+	var viaBranch str.Str
+	if msg.Via1 != nil && msg.Via1.Branch != nil {
+		viaBranch = msg.Via1.Branch.Value
+	}
+
+	// Lookup transaction with branch for proper reply matching
+	cell := m.table.Lookup(callID, cseqStr, viaBranch)
 	if cell != nil {
-		// Find matching branch
+		// Find matching branch (first UAC without reply)
 		for i, uac := range cell.UAC {
 			if uac != nil && uac.Reply == nil {
 				return cell, i, nil

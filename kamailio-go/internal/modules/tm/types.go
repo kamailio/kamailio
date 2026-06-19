@@ -137,6 +137,9 @@ type Cell struct {
 	CSeqMet    str.Str
 	Method     str.Str
 
+	// Via branch for transaction matching
+	ViaBranch  str.Str
+
 	// UAS and UAC
 	UAS        UAServer
 	UAC        []*UAClient
@@ -309,8 +312,8 @@ func (t *Table) Lookup(callID str.Str, cseq str.Str, viaBranch str.Str) *Cell {
 	for cell := entry.NextC; cell != nil; cell = cell.NextC {
 		if cell.CallIDVal.Equal(callID) && cell.CSeqNum.Equal(cseq) {
 			// Additional check for branch if provided
-			if viaBranch.Len > 0 {
-				// TODO: M4 - Check branch parameter
+			if viaBranch.Len > 0 && !cell.ViaBranch.Equal(viaBranch) {
+				continue // Branch doesn't match, skip this cell
 			}
 			cell.Ref()
 			return cell
