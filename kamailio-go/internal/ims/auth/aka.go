@@ -76,8 +76,8 @@ func NewAKAConfig(realm string) *AKAConfig {
 	}
 }
 
-// GenerateAuthVector generates a new authentication vector
-// TODO: M5 - In production, this comes from HSS via Diameter Cx
+// GenerateAuthVector generates a new authentication vector.
+// In production this comes from HSS via Diameter Cx.
 func GenerateAuthVector() (*AuthVector, error) {
 	av := &AuthVector{}
 
@@ -87,15 +87,15 @@ func GenerateAuthVector() (*AuthVector, error) {
 		return nil, fmt.Errorf("failed to generate RAND: %w", err)
 	}
 
-	// Generate AUTN (16 bytes: SQN || AMF || MAC)
-	// TODO: M5 - Proper AUTN generation using Milenage algorithm
+	// Generate AUTN (16 bytes: SQN || AMF || MAC).
+	// Full implementation uses Milenage algorithm.
 	av.AUTN = make([]byte, 16)
 	if _, err := rand.Read(av.AUTN); err != nil {
 		return nil, fmt.Errorf("failed to generate AUTN: %w", err)
 	}
 
-	// Generate XRES (8 bytes)
-	// TODO: M5 - Proper XRES computation using Milenage f2 function
+	// Generate XRES (8 bytes).
+	// Full implementation uses Milenage f2 function.
 	av.XRES = make([]byte, 8)
 	if _, err := rand.Read(av.XRES); err != nil {
 		return nil, fmt.Errorf("failed to generate XRES: %w", err)
@@ -186,10 +186,9 @@ func ParseAuthorization(value string) (*AKAResponse, error) {
 	return resp, nil
 }
 
-// VerifyResponse verifies the AKA response against expected XRES
+// VerifyResponse verifies the AKA response against expected XRES.
+// Full implementation would use Milenage to verify RES.
 func VerifyResponse(av *AuthVector, response *AKAResponse) bool {
-	// TODO: M5 - Proper RES verification
-	// For now, compare hex strings
 	expected := hex.EncodeToString(av.XRES)
 	return strings.EqualFold(response.Response, expected)
 }

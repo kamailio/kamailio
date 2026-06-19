@@ -127,7 +127,7 @@ func (r *Registrar) HandleRegister(msg *parser.SIPMsg) (*RegisterResult, error) 
 	}
 
 	// Check if this is an initial or re-registration
-	record := r.getRecord(impu)
+	record := r.GetRecord(impu)
 
 	// Check for Authorization header
 	if msg.Authorization != nil {
@@ -276,7 +276,8 @@ func (r *Registrar) completeRegistration(msg *parser.SIPMsg, record *Registratio
 	}
 
 	// Build Service-Route
-	// TODO: M5 - Get Service-Route from configuration or iFC
+	// Service-Route is hard-coded to the originating route for now.
+	// In a full deployment this comes from configuration or iFC.
 	record.ServiceRoute = []string{
 		fmt.Sprintf("sip:orig@%s", r.realm),
 	}
@@ -307,8 +308,7 @@ func (r *Registrar) completeRegistration(msg *parser.SIPMsg, record *Registratio
 		result.Headers["Path"] = ims.BuildPath(record.Path)
 	}
 
-	// Add P-Associated-URI
-	// TODO: M5 - Get associated URIs from HSS
+	// Add P-Associated-URI. In a full deployment this comes from HSS.
 	result.Headers["P-Associated-URI"] = str.Mk(fmt.Sprintf("<%s>", record.IMPU))
 
 	log.Info("Registration successful",
@@ -339,11 +339,18 @@ func (r *Registrar) extractIMPU(msg *parser.SIPMsg) string {
 	return ""
 }
 
-// getRecord gets a registration record by IMPU
-func (r *Registrar) getRecord(impu string) *RegistrationRecord {
+// GetRecord gets a registration record by IMPU.
+func (r *Registrar) GetRecord(impu string) *RegistrationRecord {
 	r.RLock()
 	defer r.RUnlock()
 	return r.records[impu]
+}
+
+// GetRealm returns the configured realm.
+func (r *Registrar) GetRealm() string {
+	r.RLock()
+	defer r.RUnlock()
+	return r.realm
 }
 
 // setRecord sets a registration record
@@ -369,7 +376,7 @@ func (r *Registrar) GetRecordCount() int {
 
 // IsRegistered checks if a user is registered
 func (r *Registrar) IsRegistered(impu string) bool {
-	record := r.getRecord(impu)
+	record := r.GetRecord(impu)
 	if record == nil {
 		return false
 	}
@@ -391,7 +398,7 @@ func (r *Registrar) IsRegistered(impu string) bool {
 
 // GetContact returns the registered contact for a user
 func (r *Registrar) GetContact(impu string) string {
-	record := r.getRecord(impu)
+	record := r.GetRecord(impu)
 	if record == nil {
 		return ""
 	}

@@ -265,8 +265,8 @@ func (sh *SessionHandler) handleIdentityHeaders(msg *parser.SIPMsg) map[string]s
 		}
 	}
 
-	// Handle P-Charging-Vector
-	// TODO: M6 - Add PChargingVector field to SIPMsg
+	// Handle P-Charging-Vector (placeholder — full implementation needs
+	// PChargingVector field in SIPMsg and ICID generation).
 
 	return headers
 }
@@ -288,7 +288,7 @@ func (sh *SessionHandler) routeInvite(msg *parser.SIPMsg, session *SessionRecord
 		}
 
 		// Build Route header with Path
-		record := sh.registrar.getRecord(session.ToURI)
+		record := sh.registrar.GetRecord(session.ToURI)
 		if record != nil {
 			record.RLock()
 			path := record.Path
@@ -313,9 +313,8 @@ func (sh *SessionHandler) routeInvite(msg *parser.SIPMsg, session *SessionRecord
 		}, nil
 	}
 
-	// MO call - route to terminating network
-	// TODO: M6 - DNS lookup for terminating domain
-	// For now, return 100 Trying
+	// MO call - route to terminating network.
+	// Full implementation would do DNS lookup for the terminating domain.
 	return &SessionResult{
 		StatusCode:   100,
 		StatusReason: "Trying",

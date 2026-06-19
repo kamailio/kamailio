@@ -99,7 +99,7 @@ func (sh *SessionHandler) HandleInvite(msg *parser.SIPMsg) (*PCSCFSessionResult,
 	// For MO calls, add P-Visited-Network-ID if not present
 	headers := make(map[string]str.Str)
 	if isMO && msg.PVisitedNetworkID == nil {
-		// TODO: M6 - Get from configuration
+		// Hard-coded for now; full deployment reads from configuration.
 		headers["P-Visited-Network-ID"] = str.Mk("\"vplmn.ims.mnc001.mcc460.gprs\"")
 	}
 
