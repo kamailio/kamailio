@@ -232,8 +232,32 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 		return nil, errors.New("null message")
 	}
 
-	// Check if transaction already exists
-	existing := m.table.LookupByMsg(msg)
+	// Check if transaction already exists (use branch-aware lookup to match storage hash)
+	var dupCallID str.Str
+	var dupCSeq str.Str
+	var dupViaBranch str.Str
+	if msg.CallID != nil {
+		dupCallID = msg.CallID.Body
+	}
+	if msg.CSeq != nil {
+		if cb, err := parser.ParseCSeqHeader(msg.CSeq); err == nil {
+			dupCSeq = str.Mk(fmt.Sprintf("%d", cb.Number))
+		}
+	}
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		dupViaBranch = vb.Branch.Value
+	} else if msg.HdrVia1 != nil {
+		rawBody := msg.HdrVia1.Body.String()
+		idx := strings.Index(rawBody, "branch=")
+		if idx >= 0 {
+			val := rawBody[idx+7:]
+			if end := strings.IndexAny(val, "; \r\n"); end >= 0 {
+				val = val[:end]
+			}
+			dupViaBranch = str.Mk(val)
+		}
+	}
+	existing := m.table.Lookup(dupCallID, dupCSeq, dupViaBranch)
 	if existing != nil {
 		existing.Unref()
 		return nil, errors.New("transaction already exists")
@@ -291,8 +315,9 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 		}
 	}
 
-	// Set hash index
-	cell.HashIndex = m.table.Hash(cell.CallIDVal, cell.CSeqNum, str.Str{})
+	// Set hash index using the request's Via branch (same branch will appear
+	// in the response, so LookupReply can find this cell by the same hash).
+	cell.HashIndex = m.table.Hash(cell.CallIDVal, cell.CSeqNum, cell.ViaBranch)
 
 	// Insert into table
 	m.table.Insert(cell)
@@ -303,25 +328,45 @@ func (m *Manager) NewTransaction(msg *parser.SIPMsg) (*Cell, error) {
 	return cell, nil
 }
 
-// LookupRequest looks up a transaction for a request
-// C: int t_lookup_request(struct sip_msg *p_msg, int leave_new_locked, int *canceled)
+// LookupRequest looks up a transaction for a request.
+// For INVITE/CANCEL/etc. the Via branch is used to find the matching transaction,
+// matching the branch-aware hash that NewTransaction uses when inserting.
 func (m *Manager) LookupRequest(msg *parser.SIPMsg) (*Cell, error) {
 	if msg == nil {
 		return nil, errors.New("null message")
 	}
 
-	// For ACK, need special handling
+	// For ACK, need special handling (ACK to 2xx has no branch; other ACKs use branch)
 	if msg.Method() == parser.MethodACK {
 		return m.LookupACK(msg)
 	}
 
-	// For CANCEL, look up the INVITE transaction
+	// For CANCEL, look up the INVITE transaction (same branch)
 	if msg.Method() == parser.MethodCancel {
 		return m.LookupCancel(msg)
 	}
 
-	// Regular lookup
-	cell := m.table.LookupByMsg(msg)
+	// Extract Via branch for branch-aware lookup (same hash as NewTransaction)
+	var viaBranch str.Str
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		viaBranch = vb.Branch.Value
+	} else if msg.Via1 != nil && msg.Via1.Branch != nil {
+		viaBranch = msg.Via1.Branch.Value
+	}
+
+	// Extract Call-ID and CSeq
+	if msg.CallID == nil || msg.CSeq == nil {
+		return nil, errors.New("missing Call-ID or CSeq")
+	}
+	callID := msg.CallID.Body
+	cseqBody, err := parser.ParseCSeqHeader(msg.CSeq)
+	if err != nil {
+		return nil, errors.New("missing CSeq")
+	}
+	cseqStr := str.Mk(fmt.Sprintf("%d", cseqBody.Number))
+
+	// Use branch-aware lookup to match NewTransaction's hash
+	cell := m.table.Lookup(callID, cseqStr, viaBranch)
 	if cell != nil {
 		m.SetT(cell)
 		return cell, nil
@@ -330,8 +375,11 @@ func (m *Manager) LookupRequest(msg *parser.SIPMsg) (*Cell, error) {
 	return nil, errors.New("transaction not found")
 }
 
-// LookupReply looks up a transaction for a reply
-// C: int t_reply_matching(struct sip_msg *, int *)
+// LookupReply looks up a transaction for a reply.
+// It first tries branch-aware lookup (matching NewTransaction's storage hash).
+// If that fails and a Via branch was provided, it falls back to branch-agnostic
+// lookup in the collision list — this handles proxy scenarios where the response's
+// Via branch differs from the stored transaction's branch (proxy adds its own Via).
 func (m *Manager) LookupReply(msg *parser.SIPMsg) (*Cell, int, error) {
 	if msg == nil {
 		return nil, -1, errors.New("null message")
@@ -350,40 +398,78 @@ func (m *Manager) LookupReply(msg *parser.SIPMsg) (*Cell, int, error) {
 	}
 	cseqStr := str.Mk(fmt.Sprintf("%d", cseqBody.Number))
 
-	// Extract Via branch for proper reply matching (RFC 3261)
+	// Extract Via branch for proper reply matching (RFC 3261).
+	// Prefer the eagerly-parsed Via1; fall back to lazy parsing if needed.
 	var viaBranch str.Str
-	if msg.Via1 != nil && msg.Via1.Branch != nil {
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		viaBranch = vb.Branch.Value
+	} else if msg.Via1 != nil && msg.Via1.Branch != nil {
 		viaBranch = msg.Via1.Branch.Value
 	}
 
-	// Lookup transaction with branch for proper reply matching
+	// Try branch-aware lookup first (same hash as NewTransaction uses)
 	cell := m.table.Lookup(callID, cseqStr, viaBranch)
 	if cell != nil {
-		// Find matching branch (first UAC without reply)
-		for i, uac := range cell.UAC {
-			if uac != nil && uac.Reply == nil {
-				return cell, i, nil
-			}
+		goto found
+	}
+
+	// Fallback: if a branch was provided but didn't match, search all entries
+	// by Call-ID + CSeq. This handles proxy responses where the response's Via
+	// branch differs from the stored transaction's branch.
+	if viaBranch.Len > 0 {
+		cell = m.table.LookupByCallIDCSeq(callID, cseqStr)
+		if cell != nil {
+			goto found
 		}
-		cell.Unref()
 	}
 
 	return nil, -1, errors.New("no matching transaction")
+
+found:
+	// Find matching branch (first UAC without reply)
+	for i, uac := range cell.UAC {
+		if uac != nil && uac.Reply == nil {
+			return cell, i, nil
+		}
+	}
+	cell.Unref()
+	return nil, -1, errors.New("no matching branch in transaction")
 }
 
-// LookupACK looks up a transaction for an ACK
-// C: special handling for ACK
+// LookupACK looks up a transaction for an ACK.
+// ACK to 2xx responses does not create a transaction; it is matched
+// to the original INVITE transaction using the Via branch.
 func (m *Manager) LookupACK(msg *parser.SIPMsg) (*Cell, error) {
 	if msg == nil {
 		return nil, errors.New("null message")
 	}
 
-	// ACK matching is complex:
-	// 1. For 2xx responses, ACK is a new transaction
-	// 2. For non-2xx responses, ACK matches the INVITE transaction
+	// Extract Via branch for branch-aware lookup
+	var viaBranch str.Str
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		viaBranch = vb.Branch.Value
+	} else if msg.Via1 != nil && msg.Via1.Branch != nil {
+		viaBranch = msg.Via1.Branch.Value
+	}
 
-	// Try to find matching INVITE transaction
-	cell := m.table.LookupByMsg(msg)
+	// Extract Call-ID and CSeq
+	if msg.CallID == nil || msg.CSeq == nil {
+		return nil, errors.New("missing Call-ID or CSeq")
+	}
+	callID := msg.CallID.Body
+	cseqBody, err := parser.ParseCSeqHeader(msg.CSeq)
+	if err != nil {
+		return nil, errors.New("missing CSeq")
+	}
+	cseqStr := str.Mk(fmt.Sprintf("%d", cseqBody.Number))
+
+	cell := m.table.Lookup(callID, cseqStr, viaBranch)
+	if cell == nil && viaBranch.Len > 0 {
+		// Fallback: if a branch was provided but didn't match, search all entries
+		// by Call-ID + CSeq. This handles proxy scenarios where the ACK's Via
+		// branch differs from the stored INVITE's branch (proxy added its own Via).
+		cell = m.table.LookupByCallIDCSeq(callID, cseqStr)
+	}
 	if cell != nil {
 		if cell.IsInvite() {
 			m.SetT(cell)
@@ -395,15 +481,33 @@ func (m *Manager) LookupACK(msg *parser.SIPMsg) (*Cell, error) {
 	return nil, errors.New("no matching INVITE transaction for ACK")
 }
 
-// LookupCancel looks up a transaction for a CANCEL
-// C: special handling for CANCEL
+// LookupCancel looks up a transaction for a CANCEL.
+// CANCEL must use the same Via branch as the INVITE it cancels.
 func (m *Manager) LookupCancel(msg *parser.SIPMsg) (*Cell, error) {
 	if msg == nil {
 		return nil, errors.New("null message")
 	}
 
-	// CANCEL matches the INVITE transaction
-	cell := m.table.LookupByMsg(msg)
+	// Extract Via branch for branch-aware lookup
+	var viaBranch str.Str
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		viaBranch = vb.Branch.Value
+	} else if msg.Via1 != nil && msg.Via1.Branch != nil {
+		viaBranch = msg.Via1.Branch.Value
+	}
+
+	// Extract Call-ID and CSeq
+	if msg.CallID == nil || msg.CSeq == nil {
+		return nil, errors.New("missing Call-ID or CSeq")
+	}
+	callID := msg.CallID.Body
+	cseqBody, err := parser.ParseCSeqHeader(msg.CSeq)
+	if err != nil {
+		return nil, errors.New("missing CSeq")
+	}
+	cseqStr := str.Mk(fmt.Sprintf("%d", cseqBody.Number))
+
+	cell := m.table.Lookup(callID, cseqStr, viaBranch)
 	if cell != nil {
 		m.SetT(cell)
 		return cell, nil

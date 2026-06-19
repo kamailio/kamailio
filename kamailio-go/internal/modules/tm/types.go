@@ -326,7 +326,32 @@ func (t *Table) Lookup(callID str.Str, cseq str.Str, viaBranch str.Str) *Cell {
 	return nil
 }
 
-// LookupByMsg finds a transaction from a SIP message
+// LookupByCallIDCSeq searches all entries in the table for a transaction
+// matching the given Call-ID and CSeq, ignoring the Via branch.
+// This is used as a fallback when the branch-aware hash lookup fails
+// (e.g., in proxy scenarios where the response's Via branch differs
+// from the stored transaction's branch).
+func (t *Table) LookupByCallIDCSeq(callID str.Str, cseq str.Str) *Cell {
+	for i := range t.Entries {
+		entry := t.Entries[i]
+		entry.RLock()
+		for cell := entry.NextC; cell != nil; cell = cell.NextC {
+			if cell.CallIDVal.Equal(callID) && cell.CSeqNum.Equal(cseq) {
+				cell.Ref()
+				entry.RUnlock()
+				return cell
+			}
+			if cell.NextC == entry.NextC {
+				break
+			}
+		}
+		entry.RUnlock()
+	}
+	return nil
+}
+
+// LookupByMsg finds a transaction from a SIP message.
+// It uses branch-aware lookup to match NewTransaction's storage hash.
 func (t *Table) LookupByMsg(msg *parser.SIPMsg) *Cell {
 	if msg == nil || msg.CallID == nil || msg.CSeq == nil {
 		return nil
@@ -340,5 +365,13 @@ func (t *Table) LookupByMsg(msg *parser.SIPMsg) *Cell {
 	// Convert cseq number to str
 	cseqStr := str.Mk(fmt.Sprintf("%d", cseqBody.Number))
 
-	return t.Lookup(callID, cseqStr, str.Str{})
+	// Extract Via branch for branch-aware lookup (same as NewTransaction)
+	var viaBranch str.Str
+	if vb, err := msg.GetParsedVia(); err == nil && vb != nil && vb.Branch != nil {
+		viaBranch = vb.Branch.Value
+	} else if msg.Via1 != nil && msg.Via1.Branch != nil {
+		viaBranch = msg.Via1.Branch.Value
+	}
+
+	return t.Lookup(callID, cseqStr, viaBranch)
 }
