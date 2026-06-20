@@ -29,6 +29,7 @@ import (
 	"github.com/kamailio/kamailio-go/internal/core/forward"
 	"github.com/kamailio/kamailio-go/internal/core/log"
 	"github.com/kamailio/kamailio-go/internal/core/parser"
+	"github.com/kamailio/kamailio-go/internal/core/proxy"
 	"github.com/kamailio/kamailio-go/internal/core/router"
 	"github.com/kamailio/kamailio-go/internal/core/transport"
 	"github.com/kamailio/kamailio-go/internal/ims/scscf"
@@ -42,16 +43,18 @@ var (
 
 // Server represents the SIP server with a full processing pipeline.
 type Server struct {
-	cfg       *config.Config
-	listeners []*transport.UDPListener
-	tm        *tm.Manager
-	router    *router.Router
-	dialogs   *dialog.Manager
-	forwarder *forward.Forwarder
-	registrar *scscf.Registrar
-	sessionH  *scscf.SessionHandler
-	ctx       context.Context
-	cancel    context.CancelFunc
+	cfg        *config.Config
+	listeners  []*transport.UDPListener
+	tcpListen  []*transport.TCPListener
+	tm         *tm.Manager
+	router     *router.Router
+	dialogs    *dialog.Manager
+	forwarder  *forward.Forwarder
+	registrar  *scscf.Registrar
+	sessionH   *scscf.SessionHandler
+	proxyCore  *proxy.ProxyCore
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 // NewServer constructs a Server for the given configuration. It does NOT
@@ -63,12 +66,20 @@ func NewServer(cfg *config.Config) *Server {
 }
 
 // initPipeline initializes the core pipeline components (TM, router,
-// dialog manager, forwarder and optional IMS handlers).
+// dialog manager, forwarder, proxy core and optional IMS handlers).
 func (s *Server) initPipeline() {
 	s.tm = tm.NewManagerWithTimers(1024)
 	s.router = router.NewRouter()
 	s.dialogs = dialog.NewManager()
 	s.forwarder = forward.NewForwarder()
+	s.proxyCore = proxy.NewProxyCore(&proxy.ProxyConfig{
+		Realm:               "kamailio-go.local",
+		AuthRequired:        false,
+		NATDetectionEnabled: false,
+		MediaProxyEnabled:   false,
+		PresenceEnabled:     false,
+		RecordRouteEnabled:  false,
+	})
 
 	if s.cfg.IsIMSEnabled() {
 		s.registrar = scscf.NewRegistrar(s.cfg.IMS.Realm)
@@ -181,7 +192,24 @@ func (s *Server) startListeners() error {
 			if s.forwarder != nil {
 				s.forwarder.RegisterUDPListener(si, listener)
 			}
+			if s.proxyCore != nil {
+				s.proxyCore.AddListener(&proxy.UDPListenerAdapter{L: listener, SI: si})
+			}
 			log.Info("UDP listener started", log.String("address", addr))
+
+		case transport.ProtoTCP:
+			listener := transport.NewTCPListener(si, func(data []byte, conn *transport.TCPConnection, rcvInfo *transport.ReceiveInfo) {
+				s.handleTCPMessage(data, conn, rcvInfo)
+			})
+			if err := listener.ListenAndServe(); err != nil {
+				return fmt.Errorf("failed to start TCP listener on %s: %w", addr, err)
+			}
+			s.tcpListen = append(s.tcpListen, listener)
+			if s.proxyCore != nil {
+				s.proxyCore.AddListener(&proxy.TCPListenerAdapter{L: listener, SI: si})
+			}
+			log.Info("TCP listener started", log.String("address", addr))
+
 		default:
 			log.Warn("Unsupported protocol", log.String("protocol", si.Protocol.String()))
 		}
@@ -197,10 +225,58 @@ func (s *Server) handleMessage(data []byte, srcAddr *net.UDPAddr, rcvInfo *trans
 		log.Warn("Failed to parse message", log.ErrField(err))
 		return
 	}
+
 	if msg.IsRequest() {
+		// Let the proxy core take the first pass. If the core returns
+		// a non-zero action we honour it by sending back the matching
+		// response; otherwise we continue with the legacy pipeline.
+		if s.proxyCore != nil {
+			action := s.proxyCore.ProcessRequest(msg, srcAddr, rcvInfo)
+			if action.Status != 0 && action.Reason != "" {
+				s.sendResponse(msg, action.Status, action.Reason, srcAddr)
+				return
+			}
+		}
 		s.handleRequest(msg, srcAddr)
 	} else {
 		s.handleReply(msg, srcAddr)
+	}
+}
+
+// handleTCPMessage is the TCP counterpart of handleMessage. It accepts
+// messages arriving over a TCP connection and re-uses the request
+// pipeline by converting the connection's remote address to a
+// net.UDPAddr for the legacy handlers.
+func (s *Server) handleTCPMessage(data []byte, conn *transport.TCPConnection, rcvInfo *transport.ReceiveInfo) {
+	msg, err := parser.ParseMsg(data)
+	if err != nil {
+		log.Warn("Failed to parse TCP message", log.ErrField(err))
+		return
+	}
+
+	var tcpAddr *net.TCPAddr
+	if conn != nil {
+		if addr, ok := conn.RemoteAddr.(*net.TCPAddr); ok {
+			tcpAddr = addr
+		}
+	}
+	udpSrc := &net.UDPAddr{}
+	if tcpAddr != nil {
+		udpSrc.IP = tcpAddr.IP
+		udpSrc.Port = tcpAddr.Port
+	}
+
+	if msg.IsRequest() {
+		if s.proxyCore != nil {
+			action := s.proxyCore.ProcessRequest(msg, tcpAddr, rcvInfo)
+			if action.Status != 0 && action.Reason != "" {
+				s.sendResponse(msg, action.Status, action.Reason, udpSrc)
+				return
+			}
+		}
+		s.handleRequest(msg, udpSrc)
+	} else {
+		s.handleReply(msg, udpSrc)
 	}
 }
 
@@ -452,6 +528,11 @@ func (s *Server) shutdown() {
 	for _, listener := range s.listeners {
 		if err := listener.Shutdown(ctx); err != nil {
 			log.Warn("Listener shutdown error", log.ErrField(err))
+		}
+	}
+	for _, listener := range s.tcpListen {
+		if err := listener.Shutdown(ctx); err != nil {
+			log.Warn("TCP listener shutdown error", log.ErrField(err))
 		}
 	}
 }
