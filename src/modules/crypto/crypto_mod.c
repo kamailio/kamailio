@@ -496,6 +496,12 @@ static int ki_crypto_aes_decrypt_helper(
 		}
 		lkey.s = (char *)decoded_key;
 		/* IV is prefix of cipher text, 128 bits for AES */
+		if(etext.len < 16) {
+			LM_ERR("decoded ciphertext is too short for IV prefix: %d\n",
+					etext.len);
+			EVP_CIPHER_CTX_free(de);
+			return -1;
+		}
 		iv = etext.s;
 		etext.s += 16;
 		etext.len -= 16;
