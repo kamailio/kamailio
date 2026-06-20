@@ -53,6 +53,18 @@ func (a *UDPListenerAdapter) SendSocketInfo() *transport.SocketInfo {
 	return a.SI
 }
 
+// AddrString returns the listener's local address as a string.
+func (a *UDPListenerAdapter) AddrString() string {
+	if a.L == nil {
+		return ""
+	}
+	loc := a.L.LocalAddr()
+	if loc == nil {
+		return ""
+	}
+	return "udp:" + loc.String()
+}
+
 // TCPListenerAdapter wraps transport.TCPListener to implement Listener.
 //
 // TCP responses are dispatched by opening a fresh outbound TCP
@@ -94,4 +106,16 @@ func (a *TCPListenerAdapter) LocalAddr() net.Addr {
 // outgoing Via / Record-Route headers.
 func (a *TCPListenerAdapter) SendSocketInfo() *transport.SocketInfo {
 	return a.SI
+}
+
+// AddrString returns the listener's local address as a string.
+func (a *TCPListenerAdapter) AddrString() string {
+	if a.L == nil {
+		return ""
+	}
+	loc := a.L.LocalAddr()
+	if loc == nil {
+		return ""
+	}
+	return "tcp:" + loc.String()
 }

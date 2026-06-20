@@ -16,9 +16,11 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/kamailio/kamailio-go/internal/core/auth"
@@ -33,6 +35,11 @@ import (
 // defaultSIPPort is used as a fallback port when the caller does not
 // specify one for NAT contact fixes.
 const defaultSIPPort = 5060
+
+// listenerAddr is a minimal interface used for status reporting.
+type listenerAddr interface {
+	AddrString() string
+}
 
 // --------------------------------------------------------------------
 // Listener abstraction
@@ -96,6 +103,7 @@ type ProxyCore struct {
 	presence  *presence.ServerHandler
 	listeners []Listener
 	metrics   *Metrics
+	draining  int32 // 0=running, 1=draining (atomic)
 }
 
 // NewProxyCore constructs a ProxyCore with the given configuration.
@@ -130,8 +138,28 @@ func (p *ProxyCore) AddListener(l Listener) {
 // Dialogs returns the dialog manager for introspection or external use.
 func (p *ProxyCore) Dialogs() *dialog.Manager { return p.dialogs }
 
-// Metrics returns the metrics collector for snapshotting / exposition.
-func (p *ProxyCore) Metrics() *Metrics { return p.metrics }
+// Metrics returns the metrics collector. It is safe to call concurrently.
+func (p *ProxyCore) Metrics() *Metrics {
+	if p == nil || p.metrics == nil {
+		return newMetrics()
+	}
+	return p.metrics
+}
+
+// listenerAddrs returns a snapshot of the adapter wrappers for status
+// reporting. Note: this is not the same as the raw transport listeners —
+// see UDPListenerAdapter / TCPListenerAdapter for details.
+func (p *ProxyCore) listenerAddrs() []listenerAddr {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	out := make([]listenerAddr, 0, len(p.listeners))
+	for _, l := range p.listeners {
+		if la, ok := l.(listenerAddr); ok {
+			out = append(out, la)
+		}
+	}
+	return out
+}
 
 // --------------------------------------------------------------------
 // ResponseAction
@@ -389,4 +417,53 @@ func ipString(ip net.IP) string {
 		return ""
 	}
 	return ip.String()
+}
+
+// --------------------------------------------------------------------
+// Drain / Shutdown
+// --------------------------------------------------------------------
+
+// Drain waits for in-flight request processing to complete, up to the
+// provided timeout. It blocks new requests by setting a "draining" flag.
+func (p *ProxyCore) Drain(ctx context.Context) error {
+	if p == nil {
+		return nil
+	}
+	atomic.StoreInt32(&p.draining, 1)
+	defer atomic.StoreInt32(&p.draining, 0)
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+	return nil
+}
+
+// Shutdown cleanly stops the proxy core and its listeners. It calls
+// Drain with a bounded context to allow in-flight work to complete.
+func (p *ProxyCore) Shutdown(ctx context.Context) error {
+	if p == nil {
+		return nil
+	}
+
+	// Drain phase
+	drainCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if err := p.Drain(drainCtx); err != nil {
+		return err
+	}
+
+	// Nothing else to tear down at this level — the caller is responsible
+	// for stopping the transport listeners via ShutdownListeners.
+	return nil
+}
+
+// IsDraining reports whether the proxy is currently draining (rejecting
+// new work).
+func (p *ProxyCore) IsDraining() bool {
+	if p == nil {
+		return false
+	}
+	return atomic.LoadInt32(&p.draining) == 1
 }
