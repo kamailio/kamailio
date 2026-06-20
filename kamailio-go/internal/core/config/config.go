@@ -26,6 +26,19 @@ type Config struct {
 	IMS      IMSConfig      `yaml:"ims,omitempty"`
 	Modules  []ModuleConfig `yaml:"modules,omitempty"`
 	Routes   RouteConfig    `yaml:"routes,omitempty"`
+
+	// Flat fields for simple key/value configuration overlays used by
+	// the boot manager.
+	ListenIP         string `yaml:"listen_ip,omitempty"`
+	ListenPort       int    `yaml:"listen_port,omitempty"`
+	Realm            string `yaml:"realm,omitempty"`
+	LogLevel         string `yaml:"log_level,omitempty"`
+	EnableMediaProxy bool   `yaml:"enable_media_proxy,omitempty"`
+	MediaProxyHost   string `yaml:"media_proxy_host,omitempty"`
+	MediaProxyPort   int    `yaml:"media_proxy_port,omitempty"`
+	AuthEnabled      bool   `yaml:"auth_enabled,omitempty"`
+	NATEnabled       bool   `yaml:"nat_enabled,omitempty"`
+	PresenceEnabled  bool   `yaml:"presence_enabled,omitempty"`
 }
 
 // CoreConfig represents core server settings
