@@ -40,6 +40,10 @@
 #include "../../core/parser/parse_param.h"
 #include "../../core/mem/mem.h"
 #include "../../core/dset.h"
+#include "../../core/parser/msg_parser.h"
+#ifdef USE_TCP
+#include "../../core/tcp_conn.h"
+#endif
 #include "loose.h"
 #include "rr_cb.h"
 #include "rr_mod.h"
@@ -519,8 +523,7 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token)
 		return -1;
 	} else if(!ip_addr_cmp(&rcv->src_ip, &_m->rcv.src_ip)
 			  || rcv->src_port != _m->rcv.src_port) {
-		LM_DBG("\"incoming\" request found. Using flow-token for "
-			   "routing\n");
+		LM_DBG("outbound request: using flow-token for routing\n");
 
 		/* First, force the local socket */
 		si = find_si(&rcv->dst_ip, rcv->dst_port, rcv->proto);
@@ -550,6 +553,31 @@ static inline int process_outbound(struct sip_msg *_m, str flow_token)
 			return -1;
 		}
 		ruri_mark_new();
+
+#ifdef USE_TCP
+		/* Reuse existing TCP/TLS/WebSocket connection when available */
+		if(rcv->proto == PROTO_TCP || rcv->proto == PROTO_WS
+#ifdef USE_TLS
+				|| rcv->proto == PROTO_TLS || rcv->proto == PROTO_WSS
+#endif
+		) {
+			struct tcp_connection *con;
+			union sockaddr_union from;
+
+			from = si->su;
+			su_setport(&from, 0);
+			con = tcpconn_get(0, &rcv->src_ip, rcv->src_port, &from, 0);
+			if(con == NULL)
+				con = tcpconn_get(0, &rcv->src_ip, rcv->src_port, 0, 0);
+			if(con) {
+				_m->otcpid = con->id;
+				_m->msg_flags |= FL_USE_OTCPID;
+				tcpconn_put(con);
+				LM_DBG("reusing tcp connection id %d for flow-token dst\n",
+						_m->otcpid);
+			}
+		}
+#endif
 
 		return 1;
 	}

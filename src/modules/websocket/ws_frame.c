@@ -587,6 +587,14 @@ static int handle_pong(ws_frame_t *frame)
 	return 0;
 }
 
+static int ws_receive_sip_msg(
+		char *buf, unsigned int len, tcp_event_info_t *tcpinfo)
+{
+	if(unlikely(tcpinfo->rcv->proto_reserved2 && tcpinfo->con))
+		return _receive_msg(buf, len, tcpinfo->rcv, &tcpinfo->con->haproxy_rcv);
+	return receive_msg(buf, len, tcpinfo->rcv);
+}
+
 int ws_frame_receive(sr_event_param_t *evp)
 {
 	ws_frame_t frame;
@@ -640,8 +648,8 @@ int ws_frame_receive(sr_event_param_t *evp)
 				frame.wsc->frag_buf.s[frame.wsc->frag_buf.len] = '\0';
 
 				if(frame.fin) {
-					ret = receive_msg(frame.wsc->frag_buf.s,
-							frame.wsc->frag_buf.len, tcpinfo->rcv);
+					ret = ws_receive_sip_msg(frame.wsc->frag_buf.s,
+							frame.wsc->frag_buf.len, tcpinfo);
 					wsconn_put(frame.wsc);
 					return ret;
 				}
@@ -673,8 +681,8 @@ int ws_frame_receive(sr_event_param_t *evp)
 
 					wsconn_put(frame.wsc);
 
-					return receive_msg(frame.payload_data, frame.payload_len,
-							tcpinfo->rcv);
+					return ws_receive_sip_msg(
+							frame.payload_data, frame.payload_len, tcpinfo);
 				} else {
 					memcpy(frame.wsc->frag_buf.s, frame.payload_data,
 							frame.payload_len);
