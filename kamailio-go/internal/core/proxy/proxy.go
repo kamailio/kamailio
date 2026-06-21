@@ -38,9 +38,11 @@ import (
 	"github.com/kamailio/kamailio-go/internal/core/parser"
 	"github.com/kamailio/kamailio-go/internal/core/pike"
 	"github.com/kamailio/kamailio-go/internal/core/presence"
+	"github.com/kamailio/kamailio-go/internal/core/registrar"
 	"github.com/kamailio/kamailio-go/internal/core/script"
 	"github.com/kamailio/kamailio-go/internal/core/topoh"
 	"github.com/kamailio/kamailio-go/internal/core/transport"
+	"github.com/kamailio/kamailio-go/internal/modules/tm"
 )
 
 // defaultSIPPort is used as a fallback port when the caller does not
@@ -124,6 +126,8 @@ type ProxyCore struct {
 	msilo     *msilo.Msilo
 	auth      *auth.DBAuthStore
 	avps      *avp.Store
+	registrar *registrar.Registrar
+	tmMgr     *tm.Manager
 }
 
 // SetAccounting attaches an accounting service to the proxy. When non-nil,
@@ -215,6 +219,22 @@ func (p *ProxyCore) SetAVPs(a *avp.Store) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.avps = a
+}
+
+// SetRegistrar attaches a registrar to the proxy. When non-nil, REGISTER
+// requests are dispatched to the registrar instead of the built-in stub.
+func (p *ProxyCore) SetRegistrar(r *registrar.Registrar) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.registrar = r
+}
+
+// SetTM attaches a transaction manager to the proxy. When non-nil, INVITE
+// and non-INVITE requests are tracked through the TM layer.
+func (p *ProxyCore) SetTM(m *tm.Manager) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.tmMgr = m
 }
 
 // SetMediaPipeline attaches a NAT/media rewrite pipeline. When attached,
@@ -769,16 +789,15 @@ func (p *ProxyCore) ProcessRequest(msg *parser.SIPMsg, src net.Addr, rcvInfo *tr
 	var action ResponseAction
 	switch msg.Method() {
 	case parser.MethodRegister:
-		action = p.handleRegister(msg)
+		action = p.dispatchRegister(msg, src)
 	case parser.MethodInvite:
-		action = p.handleInvite(msg)
-	case parser.MethodBye:
-		action = p.handleBye(msg)
+		action = p.dispatchInvite(msg, src)
 	case parser.MethodACK:
-		// ACK does not receive a reply - we just record it.
-		action = ResponseAction{Status: 0, Reason: ""}
+		action = p.dispatchACK(msg)
+	case parser.MethodBye:
+		action = p.dispatchBye(msg, src)
 	case parser.MethodCancel:
-		action = p.handleCancel(msg)
+		action = p.dispatchCancel(msg)
 	case parser.MethodSubscribe:
 		action = p.handleSubscribe(msg)
 	case parser.MethodNotify:
@@ -789,8 +808,7 @@ func (p *ProxyCore) ProcessRequest(msg *parser.SIPMsg, src net.Addr, rcvInfo *tr
 		// Keep-alive ping - always accepted.
 		action = ResponseAction{Status: 200, Reason: "OK"}
 	case parser.MethodInfo, parser.MethodMessage, parser.MethodRefer, parser.MethodUpdate, parser.MethodPRACK:
-		// In-dialog / feature extensions - accept but do not forward.
-		action = ResponseAction{Status: 200, Reason: "OK"}
+		action = p.dispatchNonInvite(msg, src)
 	default:
 		p.metrics.incError(405)
 		action = ResponseAction{Status: 405, Reason: "Method Not Allowed"}
@@ -817,6 +835,8 @@ func (p *ProxyCore) ProcessReply(msg *parser.SIPMsg, src net.Addr) ResponseActio
 	p.mu.RLock()
 	ac := p.acc
 	mediaPipeline := p.media
+	dm := p.dialogs
+	tmMgr := p.tmMgr
 	p.mu.RUnlock()
 	if ac != nil {
 		ac.OnReply(msg)
@@ -827,6 +847,29 @@ func (p *ProxyCore) ProcessReply(msg *parser.SIPMsg, src net.Addr) ResponseActio
 	if mediaPipeline != nil && msg.StatusCode() == 200 {
 		if _, err := mediaPipeline.OnAnswer(msg); err != nil {
 			// Best-effort - keep forwarding.
+		}
+	}
+
+	// Phase 44: dialog state transitions on INVITE replies.
+	if dm != nil {
+		statusCode := int(msg.StatusCode())
+		// INVITE replies in the 1xx-6xx range drive dialog state.
+		if statusCode >= 100 && statusCode < 700 {
+			reason := ""
+			if msg.FirstLine != nil && msg.FirstLine.Reply != nil {
+				reason = msg.FirstLine.Reply.Reason.String()
+			}
+			if _, err := dm.HandleReply(msg, statusCode, reason); err != nil {
+				log.Warn("dialog handle reply error", log.String("err", err.Error()))
+			}
+		}
+	}
+
+	// Phase 44: TM lookup for reply tracking.
+	if tmMgr != nil {
+		if _, err := tm.TLookup(tmMgr, msg); err != nil {
+			// No matching transaction cell is not fatal for reply passthrough.
+			log.Warn("tm lookup error", log.String("err", err.Error()))
 		}
 	}
 
@@ -1026,6 +1069,141 @@ func (p *ProxyCore) handlePublish(msg *parser.SIPMsg) ResponseAction {
 		entityTag,
 		3600*time.Second,
 	)
+	return ResponseAction{Status: 200, Reason: "OK"}
+}
+
+// --------------------------------------------------------------------
+// Phase 44 dispatchers (registrar / dialog / tm integration)
+// --------------------------------------------------------------------
+
+// dispatchRegister delegates REGISTER to the registrar module when one is
+// attached; otherwise it falls back to the built-in stub behaviour.
+func (p *ProxyCore) dispatchRegister(msg *parser.SIPMsg, src net.Addr) ResponseAction {
+	p.mu.RLock()
+	reg := p.registrar
+	p.mu.RUnlock()
+	if reg != nil {
+		status, reason, extraHeaders, err := reg.Process(msg, src)
+		if err != nil {
+			// Log the error but still return the registrar's intended reply.
+			log.Warn("registrar process error", log.String("err", err.Error()))
+		}
+		return ResponseAction{
+			Status:       status,
+			Reason:       reason,
+			ExtraHeaders: extraHeaders,
+		}
+	}
+	// Fallback stub: challenge if auth is required, else 200 OK.
+	if p.config.AuthRequired && !hasAuthHeader(msg) {
+		challenge := auth.BuildWWWAuthenticate(auth.ChallengeOptions{Realm: p.config.Realm})
+		return ResponseAction{
+			Status:       401,
+			Reason:       "Unauthorized",
+			ExtraHeaders: []string{challenge},
+		}
+	}
+	return ResponseAction{Status: 200, Reason: "OK"}
+}
+
+// dispatchInvite drives dialog creation and TM relay for INVITE requests.
+// After TM/dialog bookkeeping the request continues through the normal
+// forward/fork/media pipeline.
+func (p *ProxyCore) dispatchInvite(msg *parser.SIPMsg, src net.Addr) ResponseAction {
+	if p.config.AuthRequired && !hasAuthHeader(msg) {
+		challenge := auth.BuildProxyAuthenticate(auth.ChallengeOptions{Realm: p.config.Realm})
+		return ResponseAction{
+			Status:       407,
+			Reason:       "Proxy Authentication Required",
+			ExtraHeaders: []string{challenge},
+		}
+	}
+
+	p.mu.RLock()
+	dm := p.dialogs
+	tmMgr := p.tmMgr
+	p.mu.RUnlock()
+
+	if dm != nil {
+		if _, err := dm.HandleInvite(msg); err != nil {
+			log.Warn("dialog handle invite error", log.String("err", err.Error()))
+		}
+	}
+	if tmMgr != nil {
+		if _, err := tm.TRelay(tmMgr, msg); err != nil {
+			log.Warn("tm relay error", log.String("err", err.Error()))
+		}
+	}
+
+	if p.config.RecordRouteEnabled {
+		if sock := p.firstSendSocket(); sock != nil {
+			AddRecordRoute(msg, sock)
+		}
+	}
+
+	return ResponseAction{Status: 100, Reason: "Trying"}
+}
+
+// dispatchACK records the ACK on the matching dialog and drops it (no
+// reply is generated for ACK by a stateful proxy).
+func (p *ProxyCore) dispatchACK(msg *parser.SIPMsg) ResponseAction {
+	p.mu.RLock()
+	dm := p.dialogs
+	p.mu.RUnlock()
+	if dm != nil {
+		if _, err := dm.HandleACK(msg); err != nil {
+			log.Warn("dialog handle ack error", log.String("err", err.Error()))
+		}
+	}
+	return ResponseAction{Status: 0, Reason: ""}
+}
+
+// dispatchBye terminates the matching dialog and tracks the request through
+// TM before continuing with normal forwarding.
+func (p *ProxyCore) dispatchBye(msg *parser.SIPMsg, src net.Addr) ResponseAction {
+	p.mu.RLock()
+	dm := p.dialogs
+	tmMgr := p.tmMgr
+	p.mu.RUnlock()
+
+	if dm != nil {
+		if _, err := dm.HandleBye(msg); err != nil {
+			log.Warn("dialog handle bye error", log.String("err", err.Error()))
+		}
+	}
+	if tmMgr != nil {
+		if _, err := tm.TForwardNonInvite(tmMgr, msg); err != nil {
+			log.Warn("tm forward non-invite error", log.String("err", err.Error()))
+		}
+	}
+	return ResponseAction{Status: 200, Reason: "OK"}
+}
+
+// dispatchCancel cancels the matching INVITE dialog and returns a 200 OK
+// response to the CANCEL itself.
+func (p *ProxyCore) dispatchCancel(msg *parser.SIPMsg) ResponseAction {
+	p.mu.RLock()
+	dm := p.dialogs
+	p.mu.RUnlock()
+	if dm != nil {
+		if _, err := dm.HandleCancel(msg); err != nil {
+			log.Warn("dialog handle cancel error", log.String("err", err.Error()))
+		}
+	}
+	return ResponseAction{Status: 200, Reason: "OK"}
+}
+
+// dispatchNonInvite handles MESSAGE, OPTIONS, INFO, SUBSCRIBE, PUBLISH and
+// other non-INVITE requests through TM before continuing with forwarding.
+func (p *ProxyCore) dispatchNonInvite(msg *parser.SIPMsg, src net.Addr) ResponseAction {
+	p.mu.RLock()
+	tmMgr := p.tmMgr
+	p.mu.RUnlock()
+	if tmMgr != nil {
+		if _, err := tm.TForwardNonInvite(tmMgr, msg); err != nil {
+			log.Warn("tm forward non-invite error", log.String("err", err.Error()))
+		}
+	}
 	return ResponseAction{Status: 200, Reason: "OK"}
 }
 

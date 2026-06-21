@@ -23,9 +23,11 @@ import (
 	"github.com/kamailio/kamailio-go/internal/core/nat"
 	"github.com/kamailio/kamailio-go/internal/core/pike"
 	"github.com/kamailio/kamailio-go/internal/core/proxy"
+	"github.com/kamailio/kamailio-go/internal/core/registrar"
 	"github.com/kamailio/kamailio-go/internal/core/rtpengine"
 	"github.com/kamailio/kamailio-go/internal/core/rpc"
 	"github.com/kamailio/kamailio-go/internal/core/script"
+	"github.com/kamailio/kamailio-go/internal/modules/tm"
 )
 
 // FullStack represents a fully-wired Kamailio-Go server plus a runtime
@@ -118,6 +120,17 @@ func NewFullStack(cfg FullStackConfig) (*FullStack, error) {
 
 	fs.Acc = acc.NewAccountingService()
 	fs.Proxy.SetAccounting(fs.Acc)
+
+	// Phase 44: wire registrar and transaction manager into ProxyCore.
+	tmMgr := tm.NewManager(1024)
+	fs.Proxy.SetTM(tmMgr)
+	reg := registrar.New(&registrar.Config{
+		Realm:          cfg.Realm,
+		DefaultExpires: 3600 * time.Second,
+		MaxExpires:     86400 * time.Second,
+		MinExpires:     60 * time.Second,
+	})
+	fs.Proxy.SetRegistrar(reg)
 
 	if cfg.RTPEngineURL != "" {
 		rtp := rtpengine.NewRTPEngineClient(rtpengine.RTPEngineConfig{ControlURL: cfg.RTPEngineURL})

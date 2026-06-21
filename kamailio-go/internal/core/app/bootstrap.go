@@ -16,8 +16,10 @@ import (
 	"github.com/kamailio/kamailio-go/internal/core/msilo"
 	"github.com/kamailio/kamailio-go/internal/core/pike"
 	"github.com/kamailio/kamailio-go/internal/core/proxy"
+	"github.com/kamailio/kamailio-go/internal/core/registrar"
 	"github.com/kamailio/kamailio-go/internal/core/rpc"
 	"github.com/kamailio/kamailio-go/internal/core/script"
+	"github.com/kamailio/kamailio-go/internal/modules/tm"
 )
 
 // BootstrapOptions configures the bootstrap process.
@@ -125,6 +127,17 @@ func NewBootstrap(opts BootstrapOptions) (*Bootstrap, error) {
 	pcore.SetDialogs(dm)
 	ac := acc.NewAccountingService()
 	pcore.SetAccounting(ac)
+
+	// Phase 44: wire registrar and transaction manager into ProxyCore.
+	tmMgr := tm.NewManager(1024)
+	pcore.SetTM(tmMgr)
+	reg := registrar.New(&registrar.Config{
+		Realm:          cfg.Realm,
+		DefaultExpires: 3600 * time.Second,
+		MaxExpires:     86400 * time.Second,
+		MinExpires:     60 * time.Second,
+	})
+	pcore.SetRegistrar(reg)
 
 	var sc *script.Script
 	if opts.ScriptFile != "" {
