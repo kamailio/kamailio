@@ -103,6 +103,10 @@ type Dialog struct {
 	CreatedAt time.Time
 
 	ActiveTransactions map[string]bool
+
+	NextExpectedCSeq uint32
+	InviteStart       time.Time
+	LastResponseCode  int
 }
 
 // ---------------------------------------------------------------------------
@@ -529,6 +533,9 @@ func (m *Manager) List(limit int) []*Dialog {
 			RemoteCSeq:         d.RemoteCSeq,
 			State:              d.State,
 			CreatedAt:          d.CreatedAt,
+			NextExpectedCSeq:   d.NextExpectedCSeq,
+			InviteStart:        d.InviteStart,
+			LastResponseCode:   d.LastResponseCode,
 			ActiveTransactions: nil,
 		}
 		out = append(out, copy)
@@ -669,4 +676,274 @@ func (m *Manager) CleanupExpired() int {
 		}
 	}
 	return count
+}
+
+// Stats returns the total number of managed dialogs and a breakdown by state.
+func (m *Manager) Stats() (count int, early int, confirmed int, terminated int) {
+	if m == nil {
+		return 0, 0, 0, 0
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	count = len(m.dialogs)
+	for _, d := range m.dialogs {
+		switch d.State {
+		case DialogStateEarly:
+			early++
+		case DialogStateConfirmed:
+			confirmed++
+		case DialogStateTerminated, DialogStateExpired:
+			terminated++
+		}
+	}
+	return count, early, confirmed, terminated
+}
+
+// ---------------------------------------------------------------------------
+// High-level message handlers (Phase 40)
+// ---------------------------------------------------------------------------
+
+// lookupDialogByMsg extracts the call-id and tag values from a request
+// message and returns the matching dialog in the manager, or nil.
+func (m *Manager) lookupDialogByMsg(msg *parser.SIPMsg) (*Dialog, string, string) {
+	if msg == nil || msg.CallID == nil || msg.From == nil || msg.To == nil {
+		return nil, "", ""
+	}
+	callID := strings.TrimSpace(msg.CallID.Body.String())
+	fromTag := extractTag(msg.From.Body)
+	toTag := extractTag(msg.To.Body)
+
+	// If the dialog is UAS, our local tag is the To-tag; if UAC, our local
+	// tag is the From-tag. We try both orientations.
+	d := m.Lookup(callID, fromTag, toTag)
+	if d != nil {
+		return d, fromTag, toTag
+	}
+	d = m.Lookup(callID, toTag, fromTag)
+	return d, fromTag, toTag
+}
+
+// extractBranch returns the branch parameter from the topmost Via header, or
+// an empty string if none is present.
+func extractBranch(msg *parser.SIPMsg) string {
+	if msg == nil || msg.HdrVia1 == nil {
+		return ""
+	}
+	body := msg.HdrVia1.Body.String()
+	idx := strings.Index(strings.ToLower(body), "branch=")
+	if idx < 0 {
+		return ""
+	}
+	rest := body[idx+len("branch="):]
+	if semi := strings.IndexAny(rest, "; \t\r\n"); semi >= 0 {
+		return strings.TrimSpace(rest[:semi])
+	}
+	return strings.TrimSpace(rest)
+}
+
+// HandleInvite processes an incoming INVITE request. It creates a new UAS
+// dialog if one does not yet exist, or updates the state of an existing
+// dialog for re-INVITEs.
+func (m *Manager) HandleInvite(msg *parser.SIPMsg) (*Dialog, error) {
+	if m == nil {
+		return nil, fmt.Errorf("nil manager")
+	}
+	if msg == nil {
+		return nil, fmt.Errorf("nil SIP message")
+	}
+	if msg.Method() != parser.MethodInvite {
+		return nil, fmt.Errorf("expected INVITE, got %s", parser.MethodName(msg.Method()))
+	}
+	if msg.CallID == nil || msg.From == nil {
+		return nil, fmt.Errorf("INVITE missing required headers")
+	}
+
+	callID := strings.TrimSpace(msg.CallID.Body.String())
+	fromTag := extractTag(msg.From.Body)
+	toTag := extractTag(msg.To.Body)
+	if callID == "" {
+		return nil, fmt.Errorf("INVITE with empty Call-ID")
+	}
+
+	// Determine whether an existing dialog matches this INVITE. We try
+	// both tag orderings to support UAS and UAC dialogs stored in the
+	// manager.
+	var existing *Dialog
+	if toTag != "" {
+		existing = m.Lookup(callID, toTag, fromTag)
+	}
+	if existing == nil {
+		existing = m.Lookup(callID, fromTag, toTag)
+	}
+
+	if existing != nil {
+		existing.mu.Lock()
+		defer existing.mu.Unlock()
+		if existing.State == DialogStateTerminated || existing.State == DialogStateExpired {
+			return nil, fmt.Errorf("re-INVITE on terminated/expired dialog")
+		}
+		// re-INVITE: move back to Early until final response.
+		existing.State = DialogStateEarly
+		existing.InviteStart = time.Now()
+		if branch := extractBranch(msg); branch != "" {
+			if existing.ActiveTransactions == nil {
+				existing.ActiveTransactions = make(map[string]bool)
+			}
+			existing.ActiveTransactions[branch] = true
+		}
+		if cs, err := parser.ParseCSeqHeader(msg.CSeq); err == nil {
+			existing.NextExpectedCSeq = cs.Number + 1
+		}
+		return existing, nil
+	}
+
+	// New dialog: construct a UAS dialog.
+	newDlg, err := CreateUASDialog(msg, "")
+	if err != nil {
+		return nil, err
+	}
+	newDlg.InviteStart = time.Now()
+	if cs, err := parser.ParseCSeqHeader(msg.CSeq); err == nil {
+		newDlg.LocalCSeq = cs.Number
+		newDlg.RemoteCSeq = cs.Number
+		newDlg.NextExpectedCSeq = cs.Number + 1
+	}
+	if branch := extractBranch(msg); branch != "" {
+		if newDlg.ActiveTransactions == nil {
+			newDlg.ActiveTransactions = make(map[string]bool)
+		}
+		newDlg.ActiveTransactions[branch] = true
+	}
+
+	if err := m.Add(newDlg); err != nil {
+		return nil, err
+	}
+	return newDlg, nil
+}
+
+// HandleReply processes a reply for an INVITE dialog. It locates the
+// matching dialog (possibly creating a new UAC dialog on a 2xx response
+// when no dialog exists yet) and updates its state.
+func (m *Manager) HandleReply(msg *parser.SIPMsg, statusCode int, reason string) (*Dialog, error) {
+	if m == nil {
+		return nil, fmt.Errorf("nil manager")
+	}
+	if msg == nil {
+		return nil, fmt.Errorf("nil SIP message")
+	}
+
+	d, _, _ := m.lookupDialogByMsg(msg)
+
+	if d == nil {
+		// If no existing dialog but we received a 2xx (e.g. as UAC for an
+		// outgoing INVITE), lazily create a UAC dialog from the reply.
+		if statusCode >= 200 && statusCode < 300 {
+			newDlg, err := CreateUACDialog(msg, "", "")
+			if err != nil {
+				return nil, err
+			}
+			newDlg.LastResponseCode = statusCode
+			newDlg.State = DialogStateConfirmed
+			if err := m.Add(newDlg); err != nil {
+				return nil, err
+			}
+			return newDlg, nil
+		}
+		return nil, fmt.Errorf("no dialog found for reply %d %s", statusCode, reason)
+	}
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.LastResponseCode = statusCode
+
+	switch {
+	case statusCode >= 100 && statusCode < 200:
+		// provisional: keep Early (or move into Early if still in an earlier state)
+		if d.State != DialogStateConfirmed {
+			d.State = DialogStateEarly
+		}
+	case statusCode >= 200 && statusCode < 300:
+		d.State = DialogStateConfirmed
+		if cs, err := parser.ParseCSeqHeader(msg.CSeq); err == nil {
+			d.RemoteCSeq = cs.Number
+		}
+	default:
+		// 3xx-6xx: treat as terminated for an INVITE dialog.
+		d.State = DialogStateTerminated
+	}
+	return d, nil
+}
+
+// HandleBye terminates the dialog matching the BYE request.
+func (m *Manager) HandleBye(msg *parser.SIPMsg) (*Dialog, error) {
+	if m == nil {
+		return nil, fmt.Errorf("nil manager")
+	}
+	if msg == nil {
+		return nil, fmt.Errorf("nil SIP message")
+	}
+	if msg.Method() != parser.MethodBye {
+		return nil, fmt.Errorf("expected BYE, got %s", parser.MethodName(msg.Method()))
+	}
+	d, _, _ := m.lookupDialogByMsg(msg)
+	if d == nil {
+		return nil, fmt.Errorf("no dialog found for BYE")
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.State = DialogStateTerminated
+	d.LastResponseCode = 200
+	return d, nil
+}
+
+// HandleCancel cancels the INVITE dialog matching the CANCEL request.
+func (m *Manager) HandleCancel(msg *parser.SIPMsg) (*Dialog, error) {
+	if m == nil {
+		return nil, fmt.Errorf("nil manager")
+	}
+	if msg == nil {
+		return nil, fmt.Errorf("nil SIP message")
+	}
+	if msg.Method() != parser.MethodCancel {
+		return nil, fmt.Errorf("expected CANCEL, got %s", parser.MethodName(msg.Method()))
+	}
+	d, _, _ := m.lookupDialogByMsg(msg)
+	if d == nil {
+		return nil, fmt.Errorf("no dialog found for CANCEL")
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.State = DialogStateTerminated
+	return d, nil
+}
+
+// HandleACK records an ACK on the matching dialog. For UAS dialogs that
+// have reached the non-2xx Completed state, this transitions the dialog
+// to Terminated. For 2xx ACKs the dialog remains or becomes Confirmed.
+func (m *Manager) HandleACK(msg *parser.SIPMsg) (*Dialog, error) {
+	if m == nil {
+		return nil, fmt.Errorf("nil manager")
+	}
+	if msg == nil {
+		return nil, fmt.Errorf("nil SIP message")
+	}
+	if msg.Method() != parser.MethodACK {
+		return nil, fmt.Errorf("expected ACK, got %s", parser.MethodName(msg.Method()))
+	}
+	d, _, _ := m.lookupDialogByMsg(msg)
+	if d == nil {
+		return nil, fmt.Errorf("no dialog found for ACK")
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	switch d.State {
+	case DialogStateEarly:
+		// 2xx ACK: confirm the dialog.
+		d.State = DialogStateConfirmed
+	case DialogStateConfirmed:
+		// no-op – already confirmed.
+	default:
+		// Completed or Terminated – leave state alone for non-2xx ACKs.
+	}
+	return d, nil
 }

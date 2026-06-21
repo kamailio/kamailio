@@ -106,17 +106,33 @@ func (a *AOR) ActiveContacts() []*Contact {
 
 // Domain represents a registration domain.
 // C: struct udomain
+//
+// When a non-nil Backend is attached, Domain additionally forwards
+// AddContact / RemoveContact / PurgeExpired writes to it.  The in-memory
+// map always remains authoritative for local lookups.
 type Domain struct {
 	Name    string
 	aors    map[string]*AOR
 	mu      sync.RWMutex
+	backend Backend
 }
 
-// NewDomain creates a new registration domain.
+// NewDomain creates a new registration domain without a persistence backend.
 func NewDomain(name string) *Domain {
 	return &Domain{
 		Name: name,
 		aors: make(map[string]*AOR),
+	}
+}
+
+// NewDomainWithBackend creates a new registration domain that additionally
+// forwards contacts to the given Backend.  Passing nil is equivalent to
+// NewDomain.
+func NewDomainWithBackend(name string, backend Backend) *Domain {
+	return &Domain{
+		Name:    name,
+		aors:    make(map[string]*AOR),
+		backend: backend,
 	}
 }
 
@@ -142,29 +158,46 @@ func (d *Domain) GetOrCreateAOR(aor string) *AOR {
 // AddContact adds or updates a contact for the given AOR.
 // If a contact with the same URI exists, it is updated.
 // Returns the contact and true if new, false if updated.
+//
+// When a Backend is attached the contact is also persisted to it.
+// Backend write errors are swallowed so the in-memory state always
+// advances; callers that need to observe them can call
+// Backend.UpsertContact() explicitly.
 func (d *Domain) AddContact(aor string, contact *Contact) (*Contact, bool) {
 	a := d.GetOrCreateAOR(aor)
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	isNew := true
 	// Check if contact already exists (by URI)
 	for i, existing := range a.Contacts {
 		if existing.URI == contact.URI {
 			// Update existing contact
 			a.Contacts[i] = contact
-			return contact, false
+			isNew = false
+			break
 		}
 	}
 
-	// Add new contact
-	a.Contacts = append(a.Contacts, contact)
-	return contact, true
+	if isNew {
+		a.Contacts = append(a.Contacts, contact)
+	}
+
+	if d.backend != nil {
+		_ = d.backend.UpsertContact(d.Name, aor, contact)
+	}
+
+	return contact, isNew
 }
 
 // RemoveContact removes a contact from an AOR by URI.
+// If a Backend is attached, the contact is also removed from it.
 func (d *Domain) RemoveContact(aor, contactURI string) bool {
 	a := d.GetAOR(aor)
 	if a == nil {
+		if d.backend != nil {
+			_ = d.backend.RemoveContact(d.Name, aor, contactURI)
+		}
 		return false
 	}
 	a.mu.Lock()
@@ -173,6 +206,9 @@ func (d *Domain) RemoveContact(aor, contactURI string) bool {
 	for i, c := range a.Contacts {
 		if c.URI == contactURI {
 			a.Contacts = append(a.Contacts[:i], a.Contacts[i+1:]...)
+			if d.backend != nil {
+				_ = d.backend.RemoveContact(d.Name, aor, contactURI)
+			}
 			return true
 		}
 	}
@@ -181,6 +217,9 @@ func (d *Domain) RemoveContact(aor, contactURI string) bool {
 
 // PurgeExpired removes all expired contacts from all AORs.
 // Returns the number of purged contacts.
+//
+// If a Backend is attached it is asked to purge stale records too.
+// Backend errors are swallowed.
 func (d *Domain) PurgeExpired() int {
 	d.mu.RLock()
 	aorKeys := make([]string, 0, len(d.aors))
@@ -207,6 +246,11 @@ func (d *Domain) PurgeExpired() int {
 		a.Contacts = remaining
 		a.mu.Unlock()
 	}
+
+	if d.backend != nil {
+		_, _ = d.backend.PurgeExpired(d.Name, time.Now())
+	}
+
 	return purged
 }
 
