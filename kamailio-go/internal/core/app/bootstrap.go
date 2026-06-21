@@ -72,6 +72,7 @@ func NewBootstrap(opts BootstrapOptions) (*Bootstrap, error) {
 	if opts.PrintConfig {
 		fmt.Printf("Realm: %s\nListen: %v\nLogLevel: %s\nWorkers: %d\n",
 			cfg.Realm, cfg.Core.Listen, cfg.Core.LogLevel, cfg.Core.Workers)
+		fmt.Printf("HealthListenAddr: %s\n", cfg.HealthListenAddr)
 	}
 
 	if err := log.Init(&log.Config{Level: cfg.Core.LogLevel, Encoding: "console"}); err != nil {

@@ -20,6 +20,9 @@ type ShutdownResult struct {
 // call on a nil or already-stopped ProxyCore.
 func ShutdownProxy(ctx context.Context, core *ProxyCore, health *HealthServer, extraListeners ...interface{ Shutdown(context.Context) error }) ShutdownResult {
 	result := ShutdownResult{}
+	if core == nil && health == nil && len(extraListeners) == 0 {
+		return result
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}

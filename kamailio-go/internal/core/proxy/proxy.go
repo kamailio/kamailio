@@ -19,6 +19,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -182,6 +184,290 @@ type ResponseAction struct {
 	// ExtraHeaders contains additional header rows that should be
 	// appended to the response, e.g. "WWW-Authenticate: Digest ...".
 	ExtraHeaders []string
+
+	// Target is the downstream host:port used when the action is a
+	// forward.
+	Target string
+
+	// SendTo is an explicit destination (useful when replies should
+	// bypass normal routing).
+	SendTo string
+
+	// StopRouting, when true, signals that further script-like
+	// pipeline processing should stop for this message.
+	StopRouting bool
+
+	// NATRewritten is true when the contact/route information has
+	// been rewritten for NAT traversal.
+	NATRewritten bool
+
+	// ForwardedBy records the listener host:port that forwarded this
+	// request.
+	ForwardedBy string
+
+	// RouteSet contains Route headers to add to forwarded requests.
+	RouteSet []string
+
+	// Headers contains extra header name/value pairs to inject into
+	// the generated reply.
+	Headers map[string]string
+
+	// Body, if non-empty, is used as the SIP response body and
+	// overrides the Content-Length header.
+	Body string
+}
+
+// --------------------------------------------------------------------
+// Response building
+// --------------------------------------------------------------------
+
+// BuildReply serialises a SIP reply for msg based on action. It merges
+// the caller-provided extra headers and body (if any) on top of the
+// required start-line / Via / From / To / Call-ID / CSeq headers.
+func (p *ProxyCore) BuildReply(msg *parser.SIPMsg, action *ResponseAction) []byte {
+	if msg == nil || action == nil {
+		return nil
+	}
+	status := action.Status
+	if status == 0 {
+		status = 200
+	}
+	reason := action.Reason
+	if reason == "" {
+		reason = reasonPhrase(status)
+	}
+
+	// start-line + required headers.
+	var b strings.Builder
+	b.WriteString("SIP/2.0 ")
+	b.WriteString(strconv.Itoa(status))
+	b.WriteString(" ")
+	b.WriteString(reason)
+	b.WriteString("\r\n")
+
+	if via := msg.GetAllHeadersByType(parser.HdrVia); len(via) > 0 {
+		for _, v := range via {
+			b.WriteString("Via: ")
+			b.WriteString(v.Body.String())
+			b.WriteString("\r\n")
+		}
+	} else if msg.Via1 != nil {
+		b.WriteString("Via: ")
+		b.WriteString(msg.Via1.Hdr.String())
+		b.WriteString("\r\n")
+		if msg.Via2 != nil {
+			b.WriteString("Via: ")
+			b.WriteString(msg.Via2.Hdr.String())
+			b.WriteString("\r\n")
+		}
+	}
+
+	if from := msg.From; from != nil {
+		b.WriteString("From: ")
+		b.WriteString(from.Body.String())
+		b.WriteString("\r\n")
+	}
+	if to := msg.To; to != nil {
+		b.WriteString("To: ")
+		if status >= 300 {
+			// RFC 3261: tag required on final responses.
+			toText := to.Body.String()
+			if !strings.Contains(strings.ToLower(toText), "tag=") {
+				toText += ";tag=" + fmt.Sprintf("%x", time.Now().UnixNano())
+			}
+			b.WriteString(toText)
+		} else {
+			b.WriteString(to.Body.String())
+		}
+		b.WriteString("\r\n")
+	}
+	if callID := msg.CallID; callID != nil {
+		b.WriteString("Call-ID: ")
+		b.WriteString(callID.Body.String())
+		b.WriteString("\r\n")
+	}
+	if cseq := msg.CSeq; cseq != nil {
+		b.WriteString("CSeq: ")
+		b.WriteString(cseq.Body.String())
+		b.WriteString("\r\n")
+	}
+
+	b.WriteString("Server: kamailio-go\r\n")
+	b.WriteString("Content-Length: 0\r\n")
+
+	// preserve legacy ExtraHeaders list.
+	for _, h := range action.ExtraHeaders {
+		if h == "" {
+			continue
+		}
+		b.WriteString(h)
+		if !strings.HasSuffix(h, "\r\n") {
+			b.WriteString("\r\n")
+		}
+	}
+
+	// merge caller-supplied extra headers.
+	if action.Headers != nil {
+		for k, v := range action.Headers {
+			if k == "" {
+				continue
+			}
+			b.WriteString(k)
+			b.WriteString(": ")
+			b.WriteString(v)
+			b.WriteString("\r\n")
+		}
+	}
+
+	// body content if any overrides Content-Length.
+	if action.Body != "" {
+		raw := b.String()
+		raw = strings.Replace(raw, "Content-Length: 0\r\n", "Content-Length: "+strconv.Itoa(len(action.Body))+"\r\n", 1)
+		var out strings.Builder
+		out.WriteString(raw)
+		out.WriteString("\r\n")
+		out.WriteString(action.Body)
+		return []byte(out.String())
+	}
+
+	b.WriteString("\r\n")
+	return []byte(b.String())
+}
+
+// reasonPhrase returns a default reason phrase for a given SIP status
+// code. It is intentionally minimal and covers only the codes the
+// proxy core actually emits.
+func reasonPhrase(status int) string {
+	switch {
+	case status >= 100 && status < 200:
+		switch status {
+		case 100:
+			return "Trying"
+		case 180:
+			return "Ringing"
+		case 181:
+			return "Call is Being Forwarded"
+		case 182:
+			return "Queued"
+		case 183:
+			return "Session Progress"
+		}
+		return "Ringing"
+	case status >= 200 && status < 300:
+		if status == 202 {
+			return "Accepted"
+		}
+		return "OK"
+	case status >= 300 && status < 400:
+		switch status {
+		case 301:
+			return "Moved Permanently"
+		case 302:
+			return "Moved Temporarily"
+		case 305:
+			return "Use Proxy"
+		}
+		return "Redirection"
+	case status >= 400 && status < 500:
+		switch status {
+		case 401:
+			return "Unauthorized"
+		case 403:
+			return "Forbidden"
+		case 404:
+			return "Not Found"
+		case 405:
+			return "Method Not Allowed"
+		case 407:
+			return "Proxy Authentication Required"
+		case 408:
+			return "Request Timeout"
+		case 483:
+			return "Too Many Hops"
+		case 488:
+			return "Not Acceptable Here"
+		case 489:
+			return "Bad Event"
+		}
+		return "Client Error"
+	case status >= 500 && status < 600:
+		switch status {
+		case 500:
+			return "Server Internal Error"
+		case 501:
+			return "Not Implemented"
+		case 503:
+			return "Service Unavailable"
+		}
+		return "Server Failure"
+	case status >= 600:
+		switch status {
+		case 603:
+			return "Decline"
+		case 604:
+			return "Does Not Exist Anywhere"
+		case 606:
+			return "Not Acceptable"
+		}
+		return "Global Failure"
+	default:
+		return "Unknown"
+	}
+}
+
+// Send is a lightweight helper that writes data to the given address
+// using the first registered listener. It is kept simple because the
+// actual transport layers have their own fancier send paths.
+func (p *ProxyCore) Send(data []byte, dst net.Addr) error {
+	if p == nil || dst == nil {
+		return fmt.Errorf("nil proxy core or destination")
+	}
+	p.mu.RLock()
+	listeners := p.listeners
+	p.mu.RUnlock()
+	for _, l := range listeners {
+		if err := l.SendTo(dst, data); err == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("no listener available for send")
+}
+
+// processAction dispatches a ResponseAction: for replies it serialises
+// the SIP message, updates metrics, and emits a log line. For forwards
+// it records the target in the log for later inspection. Returning the
+// raw bytes lets callers decide whether to actually push them onto the
+// wire.
+// processAction records the action's side effects: it updates counters and emits
+// structured log lines. It does NOT send bytes onto the wire - that remains the
+// caller's responsibility so that higher level logic (see cmd/kamailio/server.go) can
+// control the transport-level response. Returning raw bytes is still useful for
+// ad-hoc callers that want to send replies straight away.
+func (p *ProxyCore) processAction(msg *parser.SIPMsg, action *ResponseAction, rcvInfo *transport.ReceiveInfo) []byte {
+	if msg == nil || action == nil {
+		return nil
+	}
+	if action.Status > 0 {
+		p.metrics.countResponse(msg.Method(), action.Status)
+		logResponse(msg, action.Status, action.Reason)
+		return p.BuildReply(msg, action)
+	}
+	if action.Target != "" {
+		logForwardedRequest(msg, action.Target)
+	}
+	return nil
+}
+
+// rcvInfoRemote extracts a net.Addr from a ReceiveInfo when possible.
+// Returns nil if the receive info or the source fields are missing.
+func rcvInfoRemote(rcv *transport.ReceiveInfo) net.Addr {
+	if rcv == nil || len(rcv.SrcIP) == 0 {
+		return nil
+	}
+	if rcv.Proto == transport.ProtoTCP || rcv.Proto == transport.ProtoTLS {
+		return &net.TCPAddr{IP: rcv.SrcIP, Port: int(rcv.SrcPort)}
+	}
+	return &net.UDPAddr{IP: rcv.SrcIP, Port: int(rcv.SrcPort)}
 }
 
 // --------------------------------------------------------------------
@@ -193,16 +479,24 @@ type ResponseAction struct {
 // The returned ResponseAction tells the caller what reply to generate.
 func (p *ProxyCore) ProcessRequest(msg *parser.SIPMsg, src net.Addr, rcvInfo *transport.ReceiveInfo) ResponseAction {
 	start := time.Now()
-	p.metrics.incRequest()
 
 	if msg == nil || !msg.IsRequest() {
 		return ResponseAction{Status: 400, Reason: "Bad Request"}
 	}
 
+	logRequest(msg)
+	p.metrics.countRequest(msg.Method())
+	defer func() {
+		p.metrics.recordLatency(time.Since(start))
+		logLatency("request", start)
+	}()
+
 	// RFC 3261 §16.3: decrement / verify Max-Forwards.
 	if !checkMaxForwards(msg) {
 		p.metrics.incError(483)
-		return ResponseAction{Status: 483, Reason: "Too Many Hops"}
+		action := &ResponseAction{Status: 483, Reason: "Too Many Hops"}
+		p.processAction(msg, action, rcvInfo)
+		return *action
 	}
 
 	// RFC 3261 §16.4: strip self-referencing Route headers.
@@ -248,7 +542,10 @@ func (p *ProxyCore) ProcessRequest(msg *parser.SIPMsg, src net.Addr, rcvInfo *tr
 		action = ResponseAction{Status: 405, Reason: "Method Not Allowed"}
 	}
 
-	p.metrics.recordLatency(msg.Method(), time.Since(start))
+	// Fire side effects (log, metrics, optional send). The caller still
+	// gets to decide whether to push bytes down the wire - we only write
+	// here when rcvInfo has source address information available.
+	p.processAction(msg, &action, rcvInfo)
 	return action
 }
 
