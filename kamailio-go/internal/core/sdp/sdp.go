@@ -29,6 +29,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -870,8 +871,14 @@ func (s *Session) Build() (string, error) {
 			sb.WriteString("\r\n")
 		}
 
-		// rtpmap attributes
-		for pt, rtpmap := range m.RTPMap {
+		// rtpmap attributes (sorted by payload type for deterministic output)
+		rtpmapKeys := make([]int, 0, len(m.RTPMap))
+		for pt := range m.RTPMap {
+			rtpmapKeys = append(rtpmapKeys, pt)
+		}
+		sort.Ints(rtpmapKeys)
+		for _, pt := range rtpmapKeys {
+			rtpmap := m.RTPMap[pt]
 			sb.WriteString("a=rtpmap:")
 			sb.WriteString(strconv.Itoa(pt))
 			sb.WriteByte(' ')
@@ -885,8 +892,14 @@ func (s *Session) Build() (string, error) {
 			sb.WriteString("\r\n")
 		}
 
-		// fmtp attributes
-		for pt, fmtp := range m.FMTP {
+		// fmtp attributes (sorted by payload type for deterministic output)
+		fmtpKeys := make([]int, 0, len(m.FMTP))
+		for pt := range m.FMTP {
+			fmtpKeys = append(fmtpKeys, pt)
+		}
+		sort.Ints(fmtpKeys)
+		for _, pt := range fmtpKeys {
+			fmtp := m.FMTP[pt]
 			sb.WriteString("a=fmtp:")
 			sb.WriteString(strconv.Itoa(pt))
 			sb.WriteByte(' ')
