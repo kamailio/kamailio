@@ -199,6 +199,7 @@ static int ki_crypto_aes_encrypt_helper(
 			LM_ERR("base64 key input has wrong length %d, only supports 128 "
 				   "or 256 bit keys\n",
 					lkey.len);
+			EVP_CIPHER_CTX_free(en);
 			return -1;
 		}
 		lkey.s = (char *)decoded_key;
@@ -215,12 +216,14 @@ static int ki_crypto_aes_encrypt_helper(
 					   "%d, needs to be "
 					   "16 bytes\n",
 						iv.len);
+				EVP_CIPHER_CTX_free(en);
 				return -1;
 			}
 			iv.s = (char *)decoded_iv;
 		} else { /* random IV */
 			if(RAND_bytes(tmpiv, sizeof(tmpiv)) != 1) {
 				LM_ERR("could not set initialization vector\n");
+				EVP_CIPHER_CTX_free(en);
 				return -1;
 			}
 			iv.s = (char *)tmpiv;
@@ -492,6 +495,7 @@ static int ki_crypto_aes_decrypt_helper(
 			LM_ERR("base64 key input has wrong length %d, only 128 or 256 "
 				   " bit keys are supported\n",
 					lkey.len);
+			EVP_CIPHER_CTX_free(de);
 			return -1;
 		}
 		lkey.s = (char *)decoded_key;
