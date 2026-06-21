@@ -14,8 +14,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kamailio/kamailio-go/internal/core/acc"
 	"github.com/kamailio/kamailio-go/internal/core/auth"
 	"github.com/kamailio/kamailio-go/internal/core/db"
+	"github.com/kamailio/kamailio-go/internal/core/dialog"
 	"github.com/kamailio/kamailio-go/internal/core/htable"
 	"github.com/kamailio/kamailio-go/internal/core/msilo"
 	"github.com/kamailio/kamailio-go/internal/core/nat"
@@ -32,6 +34,8 @@ import (
 // of crashing.
 type FullStack struct {
 	Proxy   *proxy.ProxyCore
+	Dialogs *dialog.Manager
+	Acc     *acc.AccountingService
 	Pike    *pike.Pike
 	HTables *htable.Manager
 	Msilo   *msilo.Msilo
@@ -109,6 +113,12 @@ func NewFullStack(cfg FullStackConfig) (*FullStack, error) {
 	fs.Msilo = msilo.New(nil, "msilo")
 	fs.Proxy.SetMsilo(fs.Msilo)
 
+	fs.Dialogs = dialog.NewManager()
+	fs.Proxy.SetDialogs(fs.Dialogs)
+
+	fs.Acc = acc.NewAccountingService()
+	fs.Proxy.SetAccounting(fs.Acc)
+
 	if cfg.RTPEngineURL != "" {
 		rtp := rtpengine.NewRTPEngineClient(rtpengine.RTPEngineConfig{ControlURL: cfg.RTPEngineURL})
 		pl := nat.NewPipeline(rtp, cfg.PublicMediaIP)
@@ -132,7 +142,14 @@ func NewFullStack(cfg FullStackConfig) (*FullStack, error) {
 	}
 
 	if cfg.RPCEndpoint != "" {
-		fs.RPC = rpc.New(fs.Proxy, fs.Pike, fs.HTables, fs.Msilo)
+		fs.RPC = rpc.NewExtended(rpc.ServerConfig{
+			Core:    fs.Proxy,
+			Dialogs: fs.Dialogs,
+			Acc:     fs.Acc,
+			Pike:    fs.Pike,
+			HTables: fs.HTables,
+			Msilo:   fs.Msilo,
+		})
 		addr := cfg.RPCEndpoint
 		go func() {
 			_ = fs.RPC.ListenAndServe(addr)

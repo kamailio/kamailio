@@ -88,6 +88,10 @@ func ParseScript(text string) (*Script, error) {
 	return p.parseTopLevel()
 }
 
+// Parse is a convenience alias for ParseScript so callers can write
+// script.Parse(text) without remembering the longer name.
+func Parse(text string) (*Script, error) { return ParseScript(text) }
+
 // ---------------------------------------------------------------------------
 // tokenizer
 // ---------------------------------------------------------------------------

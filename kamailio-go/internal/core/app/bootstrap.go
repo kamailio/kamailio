@@ -8,9 +8,16 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kamailio/kamailio-go/internal/core/acc"
 	"github.com/kamailio/kamailio-go/internal/core/config"
+	"github.com/kamailio/kamailio-go/internal/core/dialog"
+	"github.com/kamailio/kamailio-go/internal/core/htable"
 	"github.com/kamailio/kamailio-go/internal/core/log"
+	"github.com/kamailio/kamailio-go/internal/core/msilo"
+	"github.com/kamailio/kamailio-go/internal/core/pike"
 	"github.com/kamailio/kamailio-go/internal/core/proxy"
+	"github.com/kamailio/kamailio-go/internal/core/rpc"
+	"github.com/kamailio/kamailio-go/internal/core/script"
 )
 
 // BootstrapOptions configures the bootstrap process.
@@ -19,6 +26,8 @@ type BootstrapOptions struct {
 	LogLevel        string
 	ShutdownTimeout time.Duration
 	PrintConfig     bool
+	RPCAddr         string
+	ScriptFile      string
 }
 
 // Bootstrap holds the runtime state produced by a successful bootstrap.
@@ -27,6 +36,8 @@ type Bootstrap struct {
 	Server       *Engine
 	ProxyCore    *proxy.ProxyCore
 	HealthServer *proxy.HealthServer
+	RPCServer    *rpc.Server
+	Script       *script.Script
 
 	ctx     context.Context
 	cancel  context.CancelFunc
@@ -104,6 +115,32 @@ func NewBootstrap(opts BootstrapOptions) (*Bootstrap, error) {
 	}
 	pcore := proxy.NewProxyCore(pcoreCfg)
 
+	pk := pike.New(20, 5*time.Second)
+	pcore.SetPike(pk)
+	hm := htable.NewManager()
+	pcore.SetHTables(hm)
+	ms := msilo.New(nil, "msilo")
+	pcore.SetMsilo(ms)
+	dm := dialog.NewManager()
+	pcore.SetDialogs(dm)
+	ac := acc.NewAccountingService()
+	pcore.SetAccounting(ac)
+
+	var sc *script.Script
+	if opts.ScriptFile != "" {
+		content, err := os.ReadFile(opts.ScriptFile)
+		if err != nil {
+			log.Sync()
+			return nil, fmt.Errorf("read script file: %w", err)
+		}
+		sc, err = script.Parse(string(content))
+		if err != nil {
+			log.Sync()
+			return nil, fmt.Errorf("parse script: %w", err)
+		}
+		pcore.SetScript(sc)
+	}
+
 	started, err := engine.StartListeners(pcore)
 	if err != nil {
 		log.Sync()
@@ -127,12 +164,33 @@ func NewBootstrap(opts BootstrapOptions) (*Bootstrap, error) {
 		log.Info("Health server listening", log.String("addr", "http://"+hsAddr+"/status"))
 	}
 
+	var rpcServer *rpc.Server
+	if opts.RPCAddr != "" {
+		rpcServer = rpc.NewExtended(rpc.ServerConfig{
+			Core:    pcore,
+			Dialogs: dm,
+			Pike:    pk,
+			HTables: hm,
+			Msilo:   ms,
+			Acc:     ac,
+		})
+		go func() {
+			_ = rpcServer.ListenAndServe(opts.RPCAddr)
+		}()
+		time.Sleep(20 * time.Millisecond)
+		if rpcAddr := rpcServer.Addr(); rpcAddr != "" {
+			log.Info("JSON-RPC server listening", log.String("addr", "http://"+rpcAddr+"/rpc"))
+		}
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	b := &Bootstrap{
 		Config:       cfg,
 		Server:       engine,
 		ProxyCore:    pcore,
 		HealthServer: hs,
+		RPCServer:    rpcServer,
+		Script:       sc,
 		ctx:          ctx,
 		cancel:       cancel,
 	}
@@ -164,6 +222,11 @@ func (b *Bootstrap) Shutdown() {
 	if b.HealthServer != nil {
 		if err := b.HealthServer.Shutdown(stopCtx); err != nil {
 			log.Warn("Health server shutdown error", log.ErrField(err))
+		}
+	}
+	if b.RPCServer != nil {
+		if err := b.RPCServer.Shutdown(); err != nil {
+			log.Warn("RPC server shutdown error", log.ErrField(err))
 		}
 	}
 	if b.Server != nil {

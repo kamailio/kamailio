@@ -19,10 +19,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kamailio/kamailio-go/internal/core/dialog"
 	"github.com/kamailio/kamailio-go/internal/core/htable"
 	"github.com/kamailio/kamailio-go/internal/core/msilo"
 	"github.com/kamailio/kamailio-go/internal/core/parser"
 	"github.com/kamailio/kamailio-go/internal/core/pike"
+	"github.com/kamailio/kamailio-go/internal/core/proxy"
 )
 
 // rpcBody encodes a JSON-RPC 2.0 request.
@@ -296,5 +298,164 @@ func TestRPC_MethodNotFound(t *testing.T) {
 	msg, _ := errObj["message"].(string)
 	if msg == "" {
 		t.Fatalf("error message empty")
+	}
+}
+
+// ------------------------------------------------------------------
+// Test 6: kamailio.stats returns proxy metrics snapshot
+// ------------------------------------------------------------------
+
+func TestRPC_Stats(t *testing.T) {
+	pc := proxy.NewProxyCore(&proxy.ProxyConfig{Realm: "test.local"})
+	s := NewExtended(ServerConfig{Core: pc})
+	ts := httptest.NewServer(s.handler)
+	defer ts.Close()
+
+	status, body := rpcCall(ts, "kamailio.stats")
+	if status != http.StatusOK {
+		t.Fatalf("status: got %d", status)
+	}
+	_, result := mustParseRPC(t, body)
+	res, ok := result.(map[string]interface{})
+	if !ok {
+		t.Fatalf("result is not map: %T", result)
+	}
+	if ok, _ := res["ok"].(bool); !ok {
+		t.Fatalf("ok: got %v want true", res["ok"])
+	}
+	metrics, ok := res["metrics"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("metrics missing or wrong type: %T", res["metrics"])
+	}
+	if _, hasTotal := metrics["TotalRequests"]; !hasTotal {
+		t.Fatalf("metrics.TotalRequests missing: got %v", metrics)
+	}
+	if _, has := metrics["Uptime"]; !has {
+		t.Fatalf("metrics.Uptime missing: got %v", metrics)
+	}
+}
+
+// ------------------------------------------------------------------
+// Test 7: kamailio.dialog.list lists dialogs added to the dialog manager
+// ------------------------------------------------------------------
+
+func TestRPC_DialogList(t *testing.T) {
+	pc := proxy.NewProxyCore(&proxy.ProxyConfig{Realm: "test.local"})
+	dm := dialog.NewManager()
+	pc.SetDialogs(dm)
+
+	// Use the manager's Add method to manually create a couple of tracked
+	// dialogs (short dialogs) for listing.
+	d1, err := dialog.CreateUASDialog(buildInviteMsg(t, "alice", "bob", "call-1"), "")
+	if err != nil {
+		t.Fatalf("create dialog 1: %v", err)
+	}
+	if err := dm.Add(d1); err != nil {
+		t.Fatalf("add dialog 1: %v", err)
+	}
+	d2, err := dialog.CreateUASDialog(buildInviteMsg(t, "alice", "bob", "call-2"), "")
+	if err != nil {
+		t.Fatalf("create dialog 2: %v", err)
+	}
+	if err := dm.Add(d2); err != nil {
+		t.Fatalf("add dialog 2: %v", err)
+	}
+
+	s := NewExtended(ServerConfig{Core: pc, Dialogs: dm})
+	ts := httptest.NewServer(s.handler)
+	defer ts.Close()
+
+	status, body := rpcCall(ts, "kamailio.dialog.list")
+	if status != http.StatusOK {
+		t.Fatalf("status: got %d", status)
+	}
+	_, result := mustParseRPC(t, body)
+	res := result.(map[string]interface{})
+	count, _ := res["count"].(float64)
+	if int(count) != 2 {
+		t.Fatalf("count: got %v want 2", count)
+	}
+	list, _ := res["dialogs"].([]interface{})
+	if len(list) != 2 {
+		t.Fatalf("dialogs length: got %d want 2", len(list))
+	}
+	// Ensure each entry has call_id and state fields.
+	for i, entry := range list {
+		m, ok := entry.(map[string]interface{})
+		if !ok {
+			t.Fatalf("dialogs[%d] not map: %T", i, entry)
+		}
+		if _, has := m["call_id"]; !has {
+			t.Fatalf("dialogs[%d] missing call_id: %v", i, m)
+		}
+		if _, has := m["state"]; !has {
+			t.Fatalf("dialogs[%d] missing state: %v", i, m)
+		}
+	}
+}
+
+func buildInviteMsg(t *testing.T, from, to, callID string) *parser.SIPMsg {
+	t.Helper()
+	raw := "INVITE sip:" + to + "@example.com SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP 10.0.0.1:5060;branch=z9hG4bK-" + callID + "\r\n" +
+		"From: <sip:" + from + "@example.com>;tag=tag-" + from + "\r\n" +
+		"To: <sip:" + to + "@example.com>\r\n" +
+		"Call-ID: " + callID + "\r\n" +
+		"CSeq: 1 INVITE\r\n" +
+		"Contact: <sip:" + from + "@10.0.0.1:5060>\r\n" +
+		"Content-Length: 0\r\n" +
+		"\r\n"
+	msg, err := parser.ParseMsg([]byte(raw))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	return msg
+}
+
+// ------------------------------------------------------------------
+// Test 8: kamailio.script.reload parses + installs a script
+// ------------------------------------------------------------------
+
+func TestRPC_ScriptReload(t *testing.T) {
+	pc := proxy.NewProxyCore(&proxy.ProxyConfig{Realm: "test.local"})
+	s := NewExtended(ServerConfig{Core: pc})
+	ts := httptest.NewServer(s.handler)
+	defer ts.Close()
+
+	scriptText := "request_route { xlog(\"reloaded\"); }"
+	_, body := rpcCall(ts, "kamailio.script.reload", scriptText)
+	_, result := mustParseRPC(t, body)
+	res := result.(map[string]interface{})
+	if ok, _ := res["ok"].(bool); !ok {
+		t.Fatalf("ok: got false want true, result=%v", res)
+	}
+	if errMsg, _ := res["error"].(string); errMsg != "" {
+		t.Fatalf("error: got %q want empty", errMsg)
+	}
+
+	// Error path: invalid script text
+	_, body = rpcCall(ts, "kamailio.script.reload", "this is not a valid script")
+	_, result = mustParseRPC(t, body)
+	res = result.(map[string]interface{})
+	if ok, _ := res["ok"].(bool); ok {
+		t.Fatalf("ok: got true want false for malformed script")
+	}
+}
+
+// ------------------------------------------------------------------
+// Test 9: kamailio.shutdown returns ok
+// ------------------------------------------------------------------
+
+func TestRPC_Shutdown(t *testing.T) {
+	pc := proxy.NewProxyCore(&proxy.ProxyConfig{Realm: "test.local"})
+	s := NewExtended(ServerConfig{Core: pc})
+	ts := httptest.NewServer(s.handler)
+	defer ts.Close()
+
+	_, body := rpcCall(ts, "kamailio.shutdown")
+	_, result := mustParseRPC(t, body)
+	res := result.(map[string]interface{})
+	if ok, _ := res["ok"].(bool); !ok {
+		t.Fatalf("ok: got false want true, result=%v", res)
 	}
 }

@@ -501,6 +501,44 @@ func (m *Manager) Count() int {
 	return len(m.dialogs)
 }
 
+// List returns a copy of the currently tracked dialogs. If limit is
+// positive, only the first `limit` entries (in iteration order) are
+// returned. The returned slice is owned by the caller - safe to mutate.
+func (m *Manager) List(limit int) []*Dialog {
+	if m == nil {
+		return nil
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if len(m.dialogs) == 0 {
+		return nil
+	}
+	out := make([]*Dialog, 0, len(m.dialogs))
+	for _, d := range m.dialogs {
+		// Build a shallow copy so callers can't race with the manager.
+		copy := &Dialog{
+			CallID:             d.CallID,
+			LocalTag:           d.LocalTag,
+			RemoteTag:          d.RemoteTag,
+			Direction:          d.Direction,
+			LocalURI:           d.LocalURI,
+			RemoteURI:          d.RemoteURI,
+			RemoteTarget:       d.RemoteTarget,
+			RouteSet:           append([]string(nil), d.RouteSet...),
+			LocalCSeq:          d.LocalCSeq,
+			RemoteCSeq:         d.RemoteCSeq,
+			State:              d.State,
+			CreatedAt:          d.CreatedAt,
+			ActiveTransactions: nil,
+		}
+		out = append(out, copy)
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out
+}
+
 // ---------------------------------------------------------------------------
 // Dialog state transitions
 // ---------------------------------------------------------------------------

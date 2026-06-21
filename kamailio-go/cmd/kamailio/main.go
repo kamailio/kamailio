@@ -19,29 +19,39 @@ func buildCLI() *app.CLI {
 	cli := app.NewCLI("kamailio-go", Version, GitCommit)
 
 	cli.Register(&app.Command{
-		Name:        "run",
-		Aliases:     []string{"start"},
-		Description: "Start the SIP proxy server (default)",
-		Usage:       "run [-f CONFIG] [-L LEVEL]",
-		Run: func(args []string) int {
-			opts := app.BootstrapOptions{}
-			for i := 0; i < len(args); i++ {
-				switch args[i] {
-				case "-f", "--config", "-config":
-					if i+1 < len(args) {
-						opts.ConfigFile = args[i+1]
-						i++
-					}
-				case "-L", "--log-level", "-log-level":
-					if i+1 < len(args) {
-						opts.LogLevel = args[i+1]
-						i++
-					}
-				case "-h", "--help":
-					fmt.Printf("Usage: kamailio-go run [-f CONFIG] [-L LEVEL]\n\nOptions:\n  -f, --config   Path to a configuration file (YAML or key=value)\n  -L, --log-level   Log level (debug, info, warn, error)\n")
-					return 0
+	Name:        "run",
+	Aliases:     []string{"start"},
+	Description: "Start the SIP proxy server (default)",
+	Usage:       "run [-f CONFIG] [-L LEVEL] [--rpc-addr HOST:PORT] [--script PATH]",
+	Run: func(args []string) int {
+		opts := app.BootstrapOptions{}
+		for i := 0; i < len(args); i++ {
+			switch args[i] {
+			case "-f", "--config", "-config":
+				if i+1 < len(args) {
+					opts.ConfigFile = args[i+1]
+					i++
 				}
+			case "-L", "--log-level", "-log-level":
+				if i+1 < len(args) {
+					opts.LogLevel = args[i+1]
+					i++
+				}
+			case "--rpc-addr", "-rpc":
+				if i+1 < len(args) {
+					opts.RPCAddr = args[i+1]
+					i++
+				}
+			case "--script", "-s":
+				if i+1 < len(args) {
+					opts.ScriptFile = args[i+1]
+					i++
+				}
+			case "-h", "--help":
+				fmt.Printf("Usage: kamailio-go run [-f CONFIG] [-L LEVEL] [--rpc-addr HOST:PORT] [--script PATH]\n\nOptions:\n  -f, --config       Path to a configuration file (YAML or key=value)\n  -L, --log-level    Log level (debug, info, warn, error)\n      --rpc-addr, -rpc   host:port for the JSON-RPC HTTP endpoint\n      --script, -s       Path to a Kamailio-Go routing script\n")
+				return 0
 			}
+		}
 
 			boot, err := app.NewBootstrap(opts)
 			if err != nil {

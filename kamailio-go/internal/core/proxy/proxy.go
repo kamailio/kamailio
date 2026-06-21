@@ -135,6 +135,16 @@ func (p *ProxyCore) SetAccounting(ac *acc.AccountingService) {
 	p.acc = ac
 }
 
+// SetDialogs attaches a dialog manager. When attached, the dialog manager is
+// also re-used by the RPC endpoint for `kamailio.dialog.list`.
+func (p *ProxyCore) SetDialogs(dm *dialog.Manager) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if dm != nil {
+		p.dialogs = dm
+	}
+}
+
 // SetPike attaches a rate limiter. When non-nil, incoming requests are
 // counted per source IP and rejected with 503 once the configured rate
 // threshold is exceeded.
@@ -287,6 +297,15 @@ func (p *ProxyCore) Metrics() *Metrics {
 		return newMetrics()
 	}
 	return p.metrics
+}
+
+// MetricsSnapshot returns a stable snapshot of the current metrics. The
+// returned value can be marshalled to JSON without races.
+func (p *ProxyCore) MetricsSnapshot() interface{} {
+	if p == nil || p.metrics == nil {
+		return newMetrics().Snapshot()
+	}
+	return p.metrics.Snapshot()
 }
 
 // listenerAddrs returns a snapshot of the adapter wrappers for status

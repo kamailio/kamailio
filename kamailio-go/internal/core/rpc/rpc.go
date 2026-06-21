@@ -13,6 +13,7 @@
 package rpc
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -21,18 +22,35 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/kamailio/kamailio-go/internal/core/acc"
+	"github.com/kamailio/kamailio-go/internal/core/dialog"
 	"github.com/kamailio/kamailio-go/internal/core/htable"
 	"github.com/kamailio/kamailio-go/internal/core/msilo"
 	"github.com/kamailio/kamailio-go/internal/core/pike"
 	"github.com/kamailio/kamailio-go/internal/core/proxy"
+	"github.com/kamailio/kamailio-go/internal/core/script"
 )
+
+// ServerConfig captures the subsystem dependencies for a Server. Any
+// field may be nil — the corresponding RPC methods will return a
+// JSON-RPC error instead of panicking.
+type ServerConfig struct {
+	Core    *proxy.ProxyCore
+	Dialogs *dialog.Manager
+	Pike    *pike.Pike
+	HTables *htable.Manager
+	Msilo   *msilo.Msilo
+	Acc     *acc.AccountingService
+}
 
 // Server exposes a JSON-RPC 2.0 HTTP endpoint. Handlers are registered
 // per method on an internal map. The zero value is not usable — call
 // New() to wire subsystems.
 type Server struct {
 	mu         sync.RWMutex
-	proxy      *proxy.ProxyCore
+	core       *proxy.ProxyCore
+	dialogs    *dialog.Manager
+	acc        *acc.AccountingService
 	pike       *pike.Pike
 	htables    *htable.Manager
 	msilo      *msilo.Msilo
@@ -42,11 +60,26 @@ type Server struct {
 	started    bool
 }
 
-// New constructs a Server wired to existing proxy subsystems. Any
-// subsystem can be nil — the corresponding methods will return a
-// JSON-RPC error instead of crashing.
+// New constructs a Server wired to existing proxy subsystems. Kept for
+// backwards compatibility — consider NewExtended() or passing a
+// ServerConfig for access to dialog/accounting subsystems.
 func New(p *proxy.ProxyCore, pk *pike.Pike, hm *htable.Manager, ms *msilo.Msilo) *Server {
-	s := &Server{proxy: p, pike: pk, htables: hm, msilo: ms, handler: http.NewServeMux()}
+	return NewExtended(ServerConfig{Core: p, Pike: pk, HTables: hm, Msilo: ms})
+}
+
+// NewExtended constructs a Server from a full ServerConfig. Use this
+// constructor when dialog listing or accounting-aware RPC methods are
+// needed.
+func NewExtended(cfg ServerConfig) *Server {
+	s := &Server{
+		core:    cfg.Core,
+		dialogs: cfg.Dialogs,
+		acc:     cfg.Acc,
+		pike:    cfg.Pike,
+		htables: cfg.HTables,
+		msilo:   cfg.Msilo,
+		handler: http.NewServeMux(),
+	}
 	s.handler.HandleFunc("/rpc", s.handleRPC)
 	s.handler.HandleFunc("/healthz", s.handleHealthz)
 	s.handler.HandleFunc("/status", s.handleStatus)
@@ -232,6 +265,82 @@ func (s *Server) dispatch(method string, params []interface{}) (interface{}, *me
 			"at":   time.Now().Format(time.RFC3339),
 		}, nil
 
+	case "kamailio.stats":
+		if s.core == nil {
+			return nil, &methodErr{Code: ErrDisabled, Message: "proxy core not wired up"}
+		}
+		return map[string]interface{}{
+			"ok":      true,
+			"metrics": s.core.MetricsSnapshot(),
+		}, nil
+
+	case "kamailio.dialog.list":
+		if s.dialogs == nil {
+			return nil, &methodErr{Code: ErrDisabled, Message: "dialog manager not wired up"}
+		}
+		limit := 0
+		if len(params) >= 1 {
+			switch v := params[0].(type) {
+			case float64:
+				limit = int(v)
+			case int:
+				limit = v
+			}
+		}
+		list := s.dialogs.List(limit)
+		out := make([]map[string]interface{}, 0, len(list))
+		for _, d := range list {
+			entry := map[string]interface{}{
+				"call_id":       d.CallID,
+				"from":          d.RemoteURI,
+				"to":            d.LocalURI,
+				"state":         d.State.String(),
+				"duration_ms":   int64(time.Since(d.CreatedAt).Milliseconds()),
+				"direction":     d.Direction.String(),
+				"local_tag":     d.LocalTag,
+				"remote_tag":    d.RemoteTag,
+				"remote_target": d.RemoteTarget,
+			}
+			out = append(out, entry)
+		}
+		return map[string]interface{}{
+			"ok":     true,
+			"count":  len(out),
+			"dialogs": out,
+		}, nil
+
+	case "kamailio.script.reload":
+		if s.core == nil {
+			return nil, &methodErr{Code: ErrDisabled, Message: "proxy core not wired up"}
+		}
+		if len(params) < 1 {
+			return nil, &methodErr{Code: ErrParams, Message: "usage: [script_text]"}
+		}
+		text, ok := params[0].(string)
+		if !ok {
+			return nil, &methodErr{Code: ErrParams, Message: "script_text must be a string"}
+		}
+		parsed, err := script.Parse(text)
+		if err != nil {
+			return map[string]interface{}{
+				"ok":    false,
+				"error": err.Error(),
+			}, nil
+		}
+		s.core.SetScript(parsed)
+		return map[string]interface{}{
+			"ok":    true,
+			"error": "",
+		}, nil
+
+	case "kamailio.shutdown":
+		if s.core != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			_ = s.core.Shutdown(ctx)
+			cancel()
+		}
+		return map[string]interface{}{"ok": true}, nil
+
 	case "kamailio.pike.status":
 		if s.pike == nil {
 			return nil, &methodErr{Code: ErrDisabled, Message: "pike disabled"}
@@ -321,6 +430,9 @@ func (s *Server) dispatch(method string, params []interface{}) (interface{}, *me
 		}
 		if s.htables != nil {
 			out["htables"] = s.htables.TableNames()
+		}
+		if s.core != nil {
+			out["metrics"] = s.core.MetricsSnapshot()
 		}
 		return out, nil
 	}
