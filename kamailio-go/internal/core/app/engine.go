@@ -11,6 +11,9 @@
 package app
 
 import (
+	"context"
+	"fmt"
+	"net"
 	"sync"
 	"time"
 
@@ -20,6 +23,8 @@ import (
 	"github.com/kamailio/kamailio-go/internal/core/nat"
 	"github.com/kamailio/kamailio-go/internal/core/parser"
 	"github.com/kamailio/kamailio-go/internal/core/presence"
+	"github.com/kamailio/kamailio-go/internal/core/proxy"
+	"github.com/kamailio/kamailio-go/internal/core/transport"
 	"github.com/kamailio/kamailio-go/internal/core/usrloc"
 )
 
@@ -40,6 +45,9 @@ type Engine struct {
 	registrar *usrloc.Registrar
 	presence  *presence.ServerHandler
 	dialogMgr *dialog.Manager
+
+	listeners    []*transport.UDPListener
+	tcpListeners []*transport.TCPListener
 
 	authRealm   string
 	startedAt   time.Time
@@ -75,15 +83,115 @@ func (e *Engine) Start() error {
 	return nil
 }
 
-// Stop shuts down all subsystems.
+// Stop shuts down all subsystems and listeners.
 func (e *Engine) Stop() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	if e.state != EngineStateRunning {
+	if e.state == EngineStateStopped {
 		return
 	}
+
+	for _, l := range e.listeners {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		if err := l.Shutdown(ctx); err != nil {
+			_ = err
+		}
+		cancel()
+	}
+	for _, l := range e.tcpListeners {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		if err := l.Shutdown(ctx); err != nil {
+			_ = err
+		}
+		cancel()
+	}
 	e.state = EngineStateStopped
+}
+
+// StartListeners walks cfg.Core.Listen and starts a UDP or TCP
+// listener for each address. It registers the listeners with proxy
+// core so status reporting works correctly.
+//
+// Returns the number of successfully started listeners, or an error
+// if any address could not be parsed or listened on.
+func (e *Engine) StartListeners(pcore *proxy.ProxyCore) (int, error) {
+	if e == nil || e.config == nil {
+		return 0, fmt.Errorf("nil engine or config")
+	}
+	addresses := e.config.GetListenAddresses()
+	if len(addresses) == 0 {
+		return 0, nil
+	}
+	started := 0
+	seenErr := false
+	var firstErr error
+	for _, addr := range addresses {
+		si, err := transport.ParseSocketInfo(addr)
+		if err != nil {
+			if firstErr == nil {
+				firstErr = fmt.Errorf("parse socket info %s: %w", addr, err)
+			}
+			seenErr = true
+			continue
+		}
+
+		switch si.Protocol {
+		case transport.ProtoUDP:
+			listener := transport.NewUDPListener(si, func(data []byte, srcAddr *net.UDPAddr, rcvInfo *transport.ReceiveInfo) {
+				msg, err := parser.ParseMsg(data)
+				if err != nil {
+					return
+				}
+				if msg.IsRequest() {
+					action := pcore.ProcessRequest(msg, srcAddr, rcvInfo)
+					_ = action
+				}
+			})
+			if err := listener.ListenAndServe(); err != nil {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("start UDP listener %s: %w", addr, err)
+				}
+				seenErr = true
+				continue
+			}
+			e.listeners = append(e.listeners, listener)
+			pcore.AddListener(&proxy.UDPListenerAdapter{L: listener, SI: si})
+			started++
+
+		case transport.ProtoTCP:
+			listener := transport.NewTCPListener(si, func(data []byte, conn *transport.TCPConnection, rcvInfo *transport.ReceiveInfo) {
+				msg, err := parser.ParseMsg(data)
+				if err != nil {
+					return
+				}
+				if msg.IsRequest() {
+					action := pcore.ProcessRequest(msg, conn.RemoteAddr, rcvInfo)
+					_ = action
+				}
+			})
+			if err := listener.ListenAndServe(); err != nil {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("start TCP listener %s: %w", addr, err)
+				}
+				seenErr = true
+				continue
+			}
+			e.tcpListeners = append(e.tcpListeners, listener)
+			pcore.AddListener(&proxy.TCPListenerAdapter{L: listener, SI: si})
+			started++
+
+		default:
+			if firstErr == nil {
+				firstErr = fmt.Errorf("unsupported protocol %q for %s", si.Protocol.String(), addr)
+			}
+			seenErr = true
+		}
+	}
+	if seenErr && started == 0 {
+		return 0, firstErr
+	}
+	return started, nil
 }
 
 // Registrar returns the user location manager.

@@ -39,6 +39,7 @@ type Config struct {
 	AuthEnabled      bool   `yaml:"auth_enabled,omitempty"`
 	NATEnabled       bool   `yaml:"nat_enabled,omitempty"`
 	PresenceEnabled  bool   `yaml:"presence_enabled,omitempty"`
+	HealthListenAddr string `yaml:"health_listen_addr,omitempty"`
 }
 
 // CoreConfig represents core server settings
