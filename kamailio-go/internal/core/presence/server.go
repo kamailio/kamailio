@@ -69,6 +69,40 @@ func NewServerHandler() *ServerHandler {
 	return &ServerHandler{server: NewServer()}
 }
 
+// NotifyPresentity pushes a presence state change event: it updates
+// the presentity's records and invokes the configured OnNotify
+// callback (if any). Returns the current state after publication and
+// the list of subscribers that were notified.
+//
+// This can be called on its own (for externally triggered notifies)
+// or implicitly by Publish when OnNotify is set.
+func (h *ServerHandler) NotifyPresentity(presentityURI string, state PresenceState, note, contactURI string, entityTag string, expires time.Duration) (PresenceState, []*Subscription, error) {
+	if h == nil || h.server == nil {
+		return PresenceStateClosed, nil, fmt.Errorf("nil presence server")
+	}
+	if presentityURI == "" {
+		return PresenceStateClosed, nil, fmt.Errorf("empty presentity URI")
+	}
+
+	h.mu.RLock()
+	server := h.server
+	notifyCallback := h.OnNotify
+	h.mu.RUnlock()
+
+	server.HandlePublish(presentityURI, state, note, contactURI, entityTag, expires)
+
+	p := server.GetPresentity(presentityURI)
+	if p == nil {
+		return PresenceStateClosed, nil, fmt.Errorf("presentity %q missing after publish", presentityURI)
+	}
+	subscribers := p.Subscribers()
+
+	if notifyCallback != nil && len(subscribers) > 0 {
+		notifyCallback(presentityURI, state, subscribers)
+	}
+	return state, subscribers, nil
+}
+
 func (h *ServerHandler) Publish(presentityURI string, state PresenceState, note, contactURI string, entityTag string, expires time.Duration) {
 	h.mu.Lock()
 	server := h.server
