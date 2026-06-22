@@ -184,7 +184,7 @@ static int ki_posops_pos_append(sip_msg_t *msg, int idx, str *val)
 	} else {
 		offset = idx;
 	}
-	if(offset > msg->len) {
+	if(offset < 0 || offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
@@ -243,7 +243,7 @@ static int ki_posops_pos_insert(sip_msg_t *msg, int idx, str *val)
 	} else {
 		offset = idx;
 	}
-	if(offset > msg->len) {
+	if(offset < 0 || offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
@@ -302,7 +302,7 @@ static int ki_posops_pos_rm(sip_msg_t *msg, int idx, int len)
 	} else {
 		offset = idx;
 	}
-	if(offset > msg->len) {
+	if(offset < 0 || offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
@@ -364,7 +364,7 @@ static int ki_posops_pos_set_char(sip_msg_t *msg, int idx, str *val)
 	} else {
 		offset = idx;
 	}
-	if(offset > msg->len) {
+	if(offset < 0 || offset > msg->len) {
 		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
 		return -1;
 	}
