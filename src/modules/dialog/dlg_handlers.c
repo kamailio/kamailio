@@ -449,6 +449,7 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 	dlg_cell_t *dlg = NULL;
 	dlg_iuid_t *iuid = NULL;
 	int new_state, old_state, unref, event;
+	int ret;
 	str tag;
 	sip_msg_t *req = param->req;
 	sip_msg_t *rpl = param->rpl;
@@ -549,14 +550,15 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 		if(dlg_db_mode == DB_MODE_REALTIME)
 			update_dialog_dbinfo(dlg);
 
-		if(0 != insert_dlg_timer(&dlg->tl, dlg->lifetime)) {
+		ret = insert_dlg_timer(&dlg->tl, dlg->lifetime);
+		if(ret < 0) {
 			LM_CRIT("Unable to insert dlg %p [%u:%u] on event %d [%d->%d] "
 					"with clid '%.*s' and tags '%.*s' '%.*s'\n",
 					dlg, dlg->h_entry, dlg->h_id, event, old_state, new_state,
 					dlg->callid.len, dlg->callid.s,
 					dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-		} else {
+		} else if(ret == 0) {
 			/* dialog pointer inserted in timer list */
 			dlg_ref(dlg, 1);
 		}
@@ -1511,9 +1513,24 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 
 		if((new_state != DLG_STATE_EARLY)
 				&& (old_state != DLG_STATE_CONFIRMED || reset)) {
-			if(update_dlg_timer(&dlg->tl, dlg->lifetime) == -1) {
+			ret = update_dlg_timer(&dlg->tl, dlg->lifetime);
+			if(ret < 0) {
 				LM_ERR("failed to update dialog lifetime\n");
 			} else {
+				if(ret == 1) {
+					/* for dmq replicated dlg: insert lifetime timer after REQACK bump */
+					if(new_state == DLG_STATE_CONFIRMED
+							&& old_state < DLG_STATE_CONFIRMED_NA
+							&& (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
+							&& !(dlg->dflags & DLG_FLAG_TM)) {
+						LM_NOTICE("insert dlg timer on REQACK for replicated "
+								  "dlg %p [%u:%u]\n",
+								dlg, dlg->h_entry, dlg->h_id);
+						if(insert_dlg_timer(&dlg->tl, dlg->lifetime) == 0) {
+							dlg_ref(dlg, 1);
+						}
+					}
+				}
 				dlg->dflags |= DLG_FLAG_CHANGED;
 			}
 		}
