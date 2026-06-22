@@ -281,6 +281,7 @@ int load_dialog_info_from_db(
 	db_val_t *values;
 	db_row_t *rows;
 	int i, nr_rows;
+	int ret;
 	struct dlg_cell *dlg;
 	str callid, from_uri, to_uri, from_tag, to_tag, req_uri;
 	str cseq1, cseq2, contact1, contact2, rroute1, rroute2;
@@ -495,7 +496,8 @@ int load_dialog_info_from_db(
 				dlg->end_ts = ksr_time_uint(NULL, NULL);
 			}
 			/*restore the timer values */
-			if(0 != insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout)) {
+			ret = insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout);
+			if(ret < 0) {
 				LM_CRIT("Unable to insert dlg %p [%u:%u] "
 						"with clid '%.*s' and tags '%.*s' '%.*s'\n",
 						dlg, dlg->h_entry, dlg->h_id, dlg->callid.len,
@@ -506,7 +508,8 @@ int load_dialog_info_from_db(
 				dlg_unref(dlg, 1);
 				continue;
 			}
-			dlg_ref(dlg, 1);
+			if(ret == 0)
+				dlg_ref(dlg, 1);
 			LM_DBG("current dialog timeout is %u (%u)\n", dlg->tl.timeout,
 					get_ticks());
 

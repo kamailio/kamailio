@@ -76,7 +76,7 @@ void destroy_dlg_timer(void);
  * \brief Insert a dialog timer to the list
  * \param tl dialog timer list
  * \param interval timeout value in seconds
- * \return 0 on success, -1 when the input timer list is invalid
+ * \return 0 when inserted, 1 when already linked (skipped, no reference), -1 when the link is corrupt
  */
 int insert_dlg_timer(struct dlg_tl *tl, int interval);
 
@@ -94,7 +94,7 @@ int remove_dialog_timer(struct dlg_tl *tl);
  * \brief Update a dialog timer on the list
  * \param tl dialog timer
  * \param timeout new timeout value in seconds
- * \return 0 on success, -1 when the input list is invalid
+ * \return 0 when updated in place, 1 when not linked, -1 when the link is corrupt
  * \note the update is implemented as a remove, insert
  */
 int update_dlg_timer(struct dlg_tl *tl, int timeout);
