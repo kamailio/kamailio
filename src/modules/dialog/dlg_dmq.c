@@ -355,10 +355,11 @@ int dlg_dmq_handle_msg(
 						dlg_set_leg_info(
 								dlg, &tag2, &route_set2, &contact2, &cseq2, 1);
 					}
-					if(insert_dlg_timer(&dlg->tl, dlg->lifetime) != 0) {
+					ret = insert_dlg_timer(&dlg->tl, dlg->lifetime);
+					if(ret < 0) {
 						LM_CRIT("Unable to insert dlg timer %p [%u:%u]\n", dlg,
 								dlg->h_entry, dlg->h_id);
-					} else {
+					} else if(ret == 0) {
 						/* dialog pointer inserted in timer list */
 						dlg_ref(dlg, 1);
 					}

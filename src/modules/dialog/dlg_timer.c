@@ -121,17 +121,24 @@ static inline void insert_dialog_timer_unsafe(struct dlg_tl *tl)
  * \brief Insert a dialog timer to the list
  * \param tl dialog timer list
  * \param interval timeout value in seconds
- * \return 0 on success, -1 when the input timer list is invalid
+ * \return 0 when inserted, 1 when already linked, -1 when the link is corrupt
  */
 int insert_dlg_timer(struct dlg_tl *tl, int interval)
 {
 	lock_get(d_timer->lock);
 
-	if(tl->next != 0 || tl->prev != 0) {
+	if((tl->next == 0) != (tl->prev == 0)) {
+		/* only one of next/prev set => genuinely corrupt link */
 		LM_CRIT("Trying to insert a bogus dlg tl=%p tl->next=%p tl->prev=%p\n",
 				tl, tl->next, tl->prev);
 		lock_release(d_timer->lock);
 		return -1;
+	}
+	if(tl->next != 0) {
+		/* already linked - nothing to insert */
+		lock_release(d_timer->lock);
+		LM_NOTICE("dlg timer already linked on insert - skipped tl=%p\n", tl);
+		return 1;
 	}
 	tl->timeout = get_ticks() + interval;
 	insert_dialog_timer_unsafe(tl);
@@ -190,18 +197,25 @@ int remove_dialog_timer(struct dlg_tl *tl)
  * \brief Update a dialog timer on the list
  * \param tl dialog timer
  * \param timeout new timeout value in seconds
- * \return 0 on success, -1 when the input list is invalid
+ * \return 0 when updated in place, 1 when not linked, -1 when the link is corrupt
  * \note the update is implemented as a remove, insert
  */
 int update_dlg_timer(struct dlg_tl *tl, int timeout)
 {
 	lock_get(d_timer->lock);
 
-	if(tl->next == 0 || tl->prev == 0) {
+	if((tl->next == 0) != (tl->prev == 0)) {
+		/* only one of next/prev set => genuinely corrupt link */
 		LM_CRIT("Trying to update a bogus dlg tl=%p tl->next=%p tl->prev=%p\n",
 				tl, tl->next, tl->prev);
 		lock_release(d_timer->lock);
 		return -1;
+	}
+	if(tl->next == 0) {
+		/* not linked - nothing to update */
+		lock_release(d_timer->lock);
+		LM_NOTICE("dlg timer not linked on update - skipped tl=%p\n", tl);
+		return 1;
 	}
 	remove_dialog_timer_unsafe(tl);
 	tl->timeout = get_ticks() + timeout;
