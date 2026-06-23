@@ -249,8 +249,15 @@ static int prepend_path(sip_msg_t *_m, str *user, path_param_t param,
 		l = insert_new_lump_before(l, dp, adv_addr->len, 0);
 		if(!l)
 			goto out2;
-		/* the advertised address replaces the host part only, so the socket
-		 * name still has to be appended at send time if sockname_mode is on */
+		dp = path_strzdup(TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		if(dp == NULL)
+			goto out2;
+		l = insert_new_lump_before(l, dp, TRANSPORT_PARAM_LEN, 0);
+		if(!l)
+			goto out2;
+		l = insert_subst_lump_before(l, SUBST_SND_PROTO, 0);
+		if(!l)
+			goto out2;
 		if(path_sockname_mode) {
 			l = insert_subst_lump_before(l, SUBST_SND_SOCKNAME, 0);
 			if(!l)
@@ -278,6 +285,15 @@ static int prepend_path(sip_msg_t *_m, str *user, path_param_t param,
 			if(dp == NULL)
 				goto out1;
 			l = insert_new_lump_before(l, dp, adv_addr->len, 0);
+			if(!l)
+				goto out1;
+			dp = path_strzdup(TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+			if(dp == NULL)
+				goto out1;
+			l = insert_new_lump_before(l, dp, TRANSPORT_PARAM_LEN, 0);
+			if(!l)
+				goto out1;
+			l = insert_subst_lump_before(l, SUBST_RCV_PROTO, 0);
 			if(!l)
 				goto out1;
 			if(path_sockname_mode) {
