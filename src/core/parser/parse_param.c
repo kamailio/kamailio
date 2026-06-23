@@ -207,7 +207,7 @@ static inline void parse_uri_class(param_hooks_t *_h, param_t *_p)
 					&& (!strncasecmp(_p->name.s + 1, "ransport", 8))) {
 				_p->type = P_TRANSPORT;
 				_h->uri.transport = _p;
-			} else if(_p->name.len == 2) {
+			} else if(_p->name.len == 3) {
 				if(((_p->name.s[1] == 't') || (_p->name.s[1] == 'T'))
 						&& ((_p->name.s[2] == 'l') || (_p->name.s[2] == 'L'))) {
 					_p->type = P_TTL;
