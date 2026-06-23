@@ -310,6 +310,10 @@ int crypto_nio_in(sip_msg_t *msg)
 	crypto_env_t *evenv;
 
 	evenv = crypto_get_msg_env(msg);
+	if(evenv == NULL) {
+		LM_ERR("crypto netio environment not available\n");
+		return -1;
+	}
 	if(evenv->mflags & CRYPTO_NIO_OUT) {
 		return -1;
 	}
@@ -325,6 +329,10 @@ int crypto_nio_out(sip_msg_t *msg)
 	crypto_env_t *evenv;
 
 	evenv = crypto_get_msg_env(msg);
+	if(evenv == NULL) {
+		LM_ERR("crypto netio environment not available\n");
+		return -1;
+	}
 	if(evenv->mflags & CRYPTO_NIO_OUT) {
 		return 1;
 	}
@@ -340,6 +348,10 @@ int crypto_nio_encrypt(sip_msg_t *msg)
 	crypto_env_t *evenv;
 
 	evenv = crypto_get_msg_env(msg);
+	if(evenv == NULL) {
+		LM_ERR("crypto netio environment not available\n");
+		return -1;
+	}
 
 	evenv->mflags |= CRYPTO_NIO_ENCRYPT;
 
@@ -354,6 +366,10 @@ int crypto_nio_decrypt(sip_msg_t *msg)
 	crypto_env_t *evenv;
 
 	evenv = crypto_get_msg_env(msg);
+	if(evenv == NULL) {
+		LM_ERR("crypto netio environment not available\n");
+		return -1;
+	}
 
 	evenv->mflags |= CRYPTO_NIO_DECRYPT;
 
