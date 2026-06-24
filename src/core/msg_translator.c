@@ -1911,6 +1911,16 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 			}
 			return -1;
 		}
+		/* get_boundary() returns success with an empty boundary when the
+		 * Content-Type has parameters but no "boundary=" value. Rewriting with
+		 * an empty boundary would spin forever in the scan loop below, because
+		 * find_line_start() matches a zero-length boundary on every line and
+		 * never advances. Treat it like the no-boundary case and bail out. */
+		if(ob.s == NULL || ob.len == 0) {
+			LM_INFO("no boundary value in Content-Type, skipping multipart "
+					"rewrite\n");
+			return -2;
+		}
 		buf.s = build_body(msg, (unsigned int *)&buf.len, &ret, send_info);
 		if(ret) {
 			LM_ERR("Can't get body\n");
