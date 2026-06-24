@@ -741,9 +741,11 @@ error:
 int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 		dmq_resp_cback_t *resp_cback, int max_forwards, str *content_type)
 {
-	if(dmq_sl_send && !resp_cback)
-		dmq_sl_send_message(peer, body, node, max_forwards, content_type);
-	else
-		dmq_tm_send_message(
+	if(dmq_sl_send && !resp_cback) {
+		return dmq_sl_send_message(
+				peer, body, node, max_forwards, content_type);
+	} else {
+		return dmq_tm_send_message(
 				peer, body, node, resp_cback, max_forwards, content_type);
+	}
 }
