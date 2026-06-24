@@ -761,7 +761,8 @@ static void dlg_on_send(struct cell *t, int type, struct tmcb_params *param)
 	if(dlg == NULL)
 		return;
 
-	dlg->last_modified = (unsigned int)time(NULL);
+	dlg->last_modified = ksr_time_uint(NULL, NULL);
+	;
 
 	/* sync over dmq */
 	if(dlg_enable_dmq) {

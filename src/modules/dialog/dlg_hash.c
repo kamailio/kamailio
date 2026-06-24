@@ -1329,7 +1329,7 @@ void next_state_dlg(
 	}
 	*new_state = dlg->state;
 
-	dlg->last_modified = (unsigned int)time(NULL);
+	dlg->last_modified = ksr_time_uint(NULL, NULL);
 
 	/* remove the dialog from profiles when is not no longer active */
 	if(*new_state == DLG_STATE_DELETED && dlg->profile_links != NULL
