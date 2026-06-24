@@ -91,6 +91,7 @@ typedef struct ws_connection
 	ws_send_item_t *sendq_head;
 	ws_send_item_t *sendq_tail;
 
+	int frag_progress;
 	str frag_buf;
 } ws_connection_t;
 

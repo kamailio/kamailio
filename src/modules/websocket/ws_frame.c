@@ -626,6 +626,15 @@ int ws_frame_receive(sr_event_param_t *evp)
 	switch(opcode) {
 		case OPCODE_CONTINUATION:
 			if(likely(frame.wsc->sub_protocol == SUB_PROTOCOL_SIP)) {
+				if(frame.wsc->frag_progress == 0) {
+					LM_WARN("received continuation frame without fragmented "
+							"message in progress\n");
+					if(close_connection(&frame.wsc, LOCAL_CLOSE, 1002,
+							   str_status_protocol_error)
+							< 0)
+						LM_ERR("closing connection\n");
+					return -1;
+				}
 				if(frame.wsc->frag_buf.len + frame.payload_len >= BUF_SIZE) {
 					LM_ERR("Buffer overflow assembling websocket fragments %d "
 						   "+ %d = %d\n",
@@ -642,6 +651,8 @@ int ws_frame_receive(sr_event_param_t *evp)
 				if(frame.fin) {
 					ret = receive_msg(frame.wsc->frag_buf.s,
 							frame.wsc->frag_buf.len, tcpinfo->rcv);
+					frame.wsc->frag_buf.len = 0;
+					frame.wsc->frag_progress = 0;
 					wsconn_put(frame.wsc);
 					return ret;
 				}
@@ -655,6 +666,15 @@ int ws_frame_receive(sr_event_param_t *evp)
 		case OPCODE_TEXT_FRAME:
 		case OPCODE_BINARY_FRAME:
 			if(likely(frame.wsc->sub_protocol == SUB_PROTOCOL_SIP)) {
+				if(frame.wsc->frag_progress != 0) {
+					LM_WARN("received new data frame while fragmented message "
+							"is still in progress\n");
+					if(close_connection(&frame.wsc, LOCAL_CLOSE, 1002,
+							   str_status_protocol_error)
+							< 0)
+						LM_ERR("closing connection\n");
+					return -1;
+				}
 				LM_DBG("Rx SIP (or text) message:\n%.*s\n", frame.payload_len,
 						frame.payload_data);
 				update_stat(ws_sip_received_frames, 1);
@@ -679,6 +699,7 @@ int ws_frame_receive(sr_event_param_t *evp)
 					memcpy(frame.wsc->frag_buf.s, frame.payload_data,
 							frame.payload_len);
 					frame.wsc->frag_buf.len = frame.payload_len;
+					frame.wsc->frag_progress = 1;
 					frame.wsc->frag_buf.s[frame.wsc->frag_buf.len] = '\0';
 					wsconn_put(frame.wsc);
 					return 0;
