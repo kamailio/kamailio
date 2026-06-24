@@ -43,16 +43,19 @@ Jose Luis Verdeguer
 
         5. RPC commands
 
-              5.1. secfilter.reload
-              5.2. secfilter.print
-              5.3. secfilter.stats
-              5.4. secfilter.stats_reset
-              5.5. secfilter.add_dst
-              5.6. secfilter.del_dst
-              5.7. secfilter.add_bl
-              5.8. secfilter.del_bl
-              5.9. secfilter.add_wl
-              5.10. secfilter.del_wl
+              5.1. secf_check_username_[from|to|contact]_hdr()
+              5.2. secf_check_name_[from|to|contact]_hdr()
+              5.3. secf_check_domain_[from|to|contact]_hdr()
+              5.4. secfilter.reload
+              5.5. secfilter.print
+              5.6. secfilter.stats
+              5.7. secfilter.stats_reset
+              5.8. secfilter.add_dst
+              5.9. secfilter.del_dst
+              5.10. secfilter.add_bl
+              5.11. secfilter.del_bl
+              5.12. secfilter.add_wl
+              5.13. secfilter.del_wl
 
         6. Installation
 
@@ -82,19 +85,22 @@ Jose Luis Verdeguer
    1.15. secf_check_dst usage
    1.16. secf_check_sqli_hdr usage
    1.17. secf_check_sqli_all usage
-   1.18. secfilter.reload usage
-   1.19. secfilter.print usage
-   1.20. secfilter.stats usage
-   1.21. secfilter.stats_reset usage
-   1.22. secfilter.add_dst usage
-   1.23. secfilter.del_dst usage
-   1.24. secfilter.add_bl usage
-   1.25. secfilter.del_bl usage
-   1.26. secfilter.add_wl usage
-   1.27. secfilter.del_wl usage
-   1.28. Example database content - secfilter table
-   1.29. kamctl rpc secfilter.print ua
-   1.30. kamctl rpc secfilter.stats
+   1.18. secf_check_username_from_hdr usage
+   1.19. secf_check_name_from_hdr usage
+   1.20. secf_check_domain_from_hdr usage
+   1.21. secfilter.reload usage
+   1.22. secfilter.print usage
+   1.23. secfilter.stats usage
+   1.24. secfilter.stats_reset usage
+   1.25. secfilter.add_dst usage
+   1.26. secfilter.del_dst usage
+   1.27. secfilter.add_bl usage
+   1.28. secfilter.del_bl usage
+   1.29. secfilter.add_wl usage
+   1.30. secfilter.del_wl usage
+   1.31. Example database content - secfilter table
+   1.32. kamctl rpc secfilter.print ua
+   1.33. kamctl rpc secfilter.stats
 
 Chapter 1. Admin Guide
 
@@ -131,16 +137,19 @@ Chapter 1. Admin Guide
 
    5. RPC commands
 
-        5.1. secfilter.reload
-        5.2. secfilter.print
-        5.3. secfilter.stats
-        5.4. secfilter.stats_reset
-        5.5. secfilter.add_dst
-        5.6. secfilter.del_dst
-        5.7. secfilter.add_bl
-        5.8. secfilter.del_bl
-        5.9. secfilter.add_wl
-        5.10. secfilter.del_wl
+        5.1. secf_check_username_[from|to|contact]_hdr()
+        5.2. secf_check_name_[from|to|contact]_hdr()
+        5.3. secf_check_domain_[from|to|contact]_hdr()
+        5.4. secfilter.reload
+        5.5. secfilter.print
+        5.6. secfilter.stats
+        5.7. secfilter.stats_reset
+        5.8. secfilter.add_dst
+        5.9. secfilter.del_dst
+        5.10. secfilter.add_bl
+        5.11. secfilter.del_bl
+        5.12. secfilter.add_wl
+        5.13. secfilter.del_wl
 
    6. Installation
 
@@ -561,27 +570,84 @@ d in the user-agent header ($ua)");
 
 5. RPC commands
 
-   5.1. secfilter.reload
-   5.2. secfilter.print
-   5.3. secfilter.stats
-   5.4. secfilter.stats_reset
-   5.5. secfilter.add_dst
-   5.6. secfilter.del_dst
-   5.7. secfilter.add_bl
-   5.8. secfilter.del_bl
-   5.9. secfilter.add_wl
-   5.10. secfilter.del_wl
+   5.1. secf_check_username_[from|to|contact]_hdr()
+   5.2. secf_check_name_[from|to|contact]_hdr()
+   5.3. secf_check_domain_[from|to|contact]_hdr()
+   5.4. secfilter.reload
+   5.5. secfilter.print
+   5.6. secfilter.stats
+   5.7. secfilter.stats_reset
+   5.8. secfilter.add_dst
+   5.9. secfilter.del_dst
+   5.10. secfilter.add_bl
+   5.11. secfilter.del_bl
+   5.12. secfilter.add_wl
+   5.13. secfilter.del_wl
 
-5.1.  secfilter.reload
+5.1.  secf_check_username_[from|to|contact]_hdr()
+
+   These three functions (secf_check_username_from_hdr,
+   secf_check_username_to_hdr, and secf_check_username_contact_hdr) check
+   only the username part of the respective SIP URI.
+
+   Return values:
+     * 2 = username is whitelisted
+     * 1 = username not found (neutral)
+     * -1 = error (parsing failed)
+     * -2 = username is blacklisted
+
+   Example 1.18. secf_check_username_from_hdr usage
+                        if (secf_check_username_from_hdr() == -2) {
+                                sl_send_reply("403", "Forbidden User");
+                                exit;
+                        }
+
+5.2.  secf_check_name_[from|to|contact]_hdr()
+
+   These three functions (secf_check_name_from_hdr,
+   secf_check_name_to_hdr, and secf_check_name_contact_hdr) check only the
+   name part of the respective SIP URI.
+
+   Return values:
+     * 2 = name is whitelisted
+     * 1 = name not found (neutral)
+     * -1 = error (parsing failed)
+     * -2 = name is blacklisted
+
+   Example 1.19. secf_check_name_from_hdr usage
+                if (secf_check_name_from_hdr() == -2) {
+                    sl_send_reply("403", "Forbidden name");
+                    exit;
+                }
+
+5.3.  secf_check_domain_[from|to|contact]_hdr()
+
+   These three functions (secf_check_domain_from_hdr,
+   secf_check_domain_to_hdr, and secf_check_domain_contact_hdr) check only
+   the domain part of the respective SIP URI.
+
+   Return values:
+     * 2 = domain is whitelisted
+     * 1 = domain not found (neutral)
+     * -1 = error (parsing failed)
+     * -2 = domain is blacklisted
+
+   Example 1.20. secf_check_domain_from_hdr usage
+                if (secf_check_domain_from_hdr() == -2) {
+                    sl_send_reply("403", "Forbidden domain");
+                    exit;
+                }
+
+5.4.  secfilter.reload
 
    Reload all blacklisted and whitelisted values from database.
 
-   Example 1.18. secfilter.reload usage
+   Example 1.21. secfilter.reload usage
                 ...
                 kamctl rpc secfilter.reload
                 ...
 
-5.2.  secfilter.print
+5.5.  secfilter.print
 
    Print blacklisted and whitelisted values. Without parameters it will
    print all values. If you enter a type it will print this type values
@@ -596,7 +662,7 @@ d in the user-agent header ($ua)");
      * ip (show blacklisted and whitelisted IP addresses)
      * dst (show blacklisted destinations)
 
-   Example 1.19. secfilter.print usage
+   Example 1.22. secfilter.print usage
                 ...
                 kamctl rpc secfilter.print
                 kamctl rpc secfilter.print ua
@@ -604,25 +670,25 @@ d in the user-agent header ($ua)");
                 kamctl rpc secfilter.print dst
                 ...
 
-5.3.  secfilter.stats
+5.6.  secfilter.stats
 
    Print statistics of blocked and allowed messages.
 
-   Example 1.20. secfilter.stats usage
+   Example 1.23. secfilter.stats usage
                 ...
                 kamctl rpc secfilter.stats
                 ...
 
-5.4.  secfilter.stats_reset
+5.7.  secfilter.stats_reset
 
    Reset all statistics.
 
-   Example 1.21. secfilter.stats_reset usage
+   Example 1.24. secfilter.stats_reset usage
                 ...
                 kamctl rpc secfilter.stats_reset
                 ...
 
-5.5.  secfilter.add_dst
+5.8.  secfilter.add_dst
 
    Insert values into destination blacklist. These values will be checked
    with the function secf_check_dst to verify if the destination number
@@ -631,24 +697,24 @@ d in the user-agent header ($ua)");
    Parameters:
      * number (number to add to the destination blacklist)
 
-   Example 1.22. secfilter.add_dst usage
+   Example 1.25. secfilter.add_dst usage
                 ...
                 kamctl rpc secfilter.add_dst 555123123
                 ...
 
-5.6.  secfilter.del_dst
+5.9.  secfilter.del_dst
 
    Delete value from destination blacklist.
 
    Parameters:
      * number (number to remove from the destination blacklist)
 
-   Example 1.23. secfilter.del_dst usage
+   Example 1.26. secfilter.del_dst usage
                 ...
                 kamctl rpc secfilter.del_dst 555123123
                 ...
 
-5.7.  secfilter.add_bl
+5.10.  secfilter.add_bl
 
    Insert values into blacklist.
 
@@ -656,13 +722,13 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to the blacklist)
 
-   Example 1.24. secfilter.add_bl usage
+   Example 1.27. secfilter.add_bl usage
                 ...
                 kamctl rpc secfilter.add_bl ua friendly-scanner
                 kamctl rpc secfilter.add_bl user sipvicious
                 ...
 
-5.8.  secfilter.del_bl
+5.11.  secfilter.del_bl
 
    Delete value from blacklist.
 
@@ -670,13 +736,13 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to remove from the blacklist)
 
-   Example 1.25. secfilter.del_bl usage
+   Example 1.28. secfilter.del_bl usage
                 ...
                 kamctl rpc secfilter.del_bl ua friendly-scanner
                 kamctl rpc secfilter.del_bl user sipvicious
                 ...
 
-5.9.  secfilter.add_wl
+5.12.  secfilter.add_wl
 
    Insert values into whitelist.
 
@@ -684,13 +750,13 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to the whitelist)
 
-   Example 1.26. secfilter.add_wl usage
+   Example 1.29. secfilter.add_wl usage
                 ...
                 kamctl rpc secfilter.add_wl country es
                 kamctl rpc secfilter.add_wl user trusted_user
                 ...
 
-5.10.  secfilter.del_wl
+5.13.  secfilter.del_wl
 
    Delete value from whitelist.
 
@@ -698,7 +764,7 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to remove from the blacklist)
 
-   Example 1.27. secfilter.del_wl usage
+   Example 1.30. secfilter.del_wl usage
                 ...
                 kamctl rpc secfilter.del_wl country es
                 kamctl rpc secfilter.del_wl user trusted_user
@@ -721,7 +787,7 @@ d in the user-agent header ($ua)");
    the complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.28. Example database content - secfilter table
+   Example 1.31. Example database content - secfilter table
                 ...
                 +----+-----------+-----------+------------------+
                 | id | action    | type      | data             |
@@ -759,7 +825,7 @@ d in the user-agent header ($ua)");
 
 7.1. Print data
 
-   Example 1.29. kamctl rpc secfilter.print ua
+   Example 1.32. kamctl rpc secfilter.print ua
                 ...
 {
         User-Agent: {
@@ -793,7 +859,7 @@ d in the user-agent header ($ua)");
 
 7.2. Statistics
 
-   Example 1.30. kamctl rpc secfilter.stats
+   Example 1.33. kamctl rpc secfilter.stats
                 ...
 {
         Blacklist: {
