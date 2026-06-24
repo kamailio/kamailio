@@ -98,41 +98,46 @@ static inline int parse_option_tag_body(str *body, unsigned int *tags)
 		for(; pos < len && IS_DELIM(p); ++pos, ++p)
 			;
 
-		val = LOWER_DWORD(READ(p));
 		case_found = 0;
-		switch(val) {
+		if(pos >= len) {
+			break;
+		}
+		if(len - pos >= 4) {
+			val = LOWER_DWORD(READ(p));
+			switch(val) {
 
-			/* "path" */
-			case _path_:
-				if(pos + 4 <= len && IS_DELIM(p + 4)) {
-					*tags |= F_OPTION_TAG_PATH;
-					pos += 5;
-					p += 5;
-					case_found = 1;
-				}
-				break;
+				/* "path" */
+				case _path_:
+					if(pos + 4 <= len && IS_DELIM(p + 4)) {
+						*tags |= F_OPTION_TAG_PATH;
+						pos += 5;
+						p += 5;
+						case_found = 1;
+					}
+					break;
 
-			/* "100rel" */
-			case _100r_:
-				if(pos + 6 <= len && LOWER_BYTE(*(p + 4)) == 'e'
-						&& LOWER_BYTE(*(p + 5)) == 'l' && IS_DELIM(p + 6)) {
-					*tags |= F_OPTION_TAG_100REL;
-					pos += OPTION_TAG_100REL_LEN + 1;
-					p += OPTION_TAG_100REL_LEN + 1;
-					case_found = 1;
-				}
-				break;
+				/* "100rel" */
+				case _100r_:
+					if(pos + 6 <= len && LOWER_BYTE(*(p + 4)) == 'e'
+							&& LOWER_BYTE(*(p + 5)) == 'l' && IS_DELIM(p + 6)) {
+						*tags |= F_OPTION_TAG_100REL;
+						pos += OPTION_TAG_100REL_LEN + 1;
+						p += OPTION_TAG_100REL_LEN + 1;
+						case_found = 1;
+					}
+					break;
 
-			/* "timer" */
-			case _time_:
-				if(pos + 5 <= len && LOWER_BYTE(*(p + 4)) == 'r'
-						&& IS_DELIM(p + 5)) {
-					*tags |= F_OPTION_TAG_TIMER;
-					pos += OPTION_TAG_TIMER_LEN + 1;
-					p += OPTION_TAG_TIMER_LEN + 1;
-					case_found = 1;
-				}
-				break;
+				/* "timer" */
+				case _time_:
+					if(pos + 5 <= len && LOWER_BYTE(*(p + 4)) == 'r'
+							&& IS_DELIM(p + 5)) {
+						*tags |= F_OPTION_TAG_TIMER;
+						pos += OPTION_TAG_TIMER_LEN + 1;
+						p += OPTION_TAG_TIMER_LEN + 1;
+						case_found = 1;
+					}
+					break;
+			}
 		}
 		if(case_found == 0) {
 			/* extra require or unknown */
