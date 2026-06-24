@@ -1928,6 +1928,7 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 	int t, ret;
 	int lb_size = 0;
 	char *pb;
+	char *pe;
 
 	if(!(msg->msg_flags & FL_BODY_MULTIPART)) {
 		LM_DBG("no multi-part body\n");
@@ -1987,31 +1988,46 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 			LM_ERR("found[%d] wrong number of boundaries\n", lb_found);
 			goto error;
 		}
-		/* adding 2 chars in advance */
-		body.len = buf.len + 2;
+		/* old "buf.len + 2" was too small: the closing boundary may be
+		 * rewritten to the longer final form "fb"; reserve fb.len extra and
+		 * bound-check every copy below so the buffer can never be overrun */
+		body.len = buf.len + fb.len;
 		body.s = pkg_malloc(sizeof(char) * body.len);
 		if(!body.s) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
 		pb = body.s;
+		pe = body.s + body.len; /* one past the end of the allocation */
 		body.len = 0;
 		lb_t = lb_f;
 		while(lb_t) {
+			if(lb_t->next == NULL) {
+				LM_ERR("malformed boundary list\n");
+				goto error;
+			}
 			tmp.s = lb_t->s.s;
 			tmp.len = lb_t->s.len;
 			tmp.len = get_line(lb_t->s);
 			if(tmp.len != b.len || strncmp(b.s, tmp.s, b.len) != 0) {
 				LM_DBG("malformed boundary in the middle\n");
+				t = lb_t->next->s.s - (lb_t->s.s + tmp.len);
+				if(t < 0 || pb + b.len + t > pe) {
+					LM_ERR("body rebuild would overflow buffer\n");
+					goto error;
+				}
 				memcpy(pb, b.s, b.len);
 				body.len = body.len + b.len;
 				pb = pb + b.len;
-				t = lb_t->next->s.s - (lb_t->s.s + tmp.len);
 				memcpy(pb, lb_t->s.s + tmp.len, t);
 				pb = pb + t;
 				/*LM_DBG("new chunk[%d][%.*s]\n", t, t, pb-t);*/
 			} else {
 				t = lb_t->next->s.s - lb_t->s.s;
+				if(t < 0 || pb + t > pe) {
+					LM_ERR("body rebuild would overflow buffer\n");
+					goto error;
+				}
 				memcpy(pb, lb_t->s.s, t);
 				/*LM_DBG("copy[%d][%.*s]\n", t, t, pb);*/
 				pb = pb + t;
@@ -2028,11 +2044,19 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 		tmp.len = get_line(lb_l->s);
 		if(tmp.len != fb.len || strncmp(fb.s, tmp.s, fb.len) != 0) {
 			LM_DBG("last bondary without -- at the end\n");
+			if(pb + fb.len > pe) {
+				LM_ERR("body rebuild would overflow buffer\n");
+				goto error;
+			}
 			memcpy(pb, fb.s, fb.len);
 			/*LM_DBG("new chunk[%d][%.*s]\n", fb.len, fb.len, pb);*/
 			pb = pb + fb.len;
 			body.len = body.len + fb.len;
 		} else {
+			if(lb_l->s.len < 0 || pb + lb_l->s.len > pe) {
+				LM_ERR("body rebuild would overflow buffer\n");
+				goto error;
+			}
 			memcpy(pb, lb_l->s.s, lb_l->s.len);
 			pb = pb + lb_l->s.len;
 			body.len = body.len + lb_l->s.len;
