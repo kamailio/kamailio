@@ -4477,7 +4477,22 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 			return -1;
 		}
 		tport = puri.port_no;
-		tproto = puri.proto;
+
+		if(puri.proto == PROTO_NONE) {
+			if(str2ipx(&puri.host) != NULL) {
+				tproto = PROTO_UDP;
+			} else {
+				if(puri.port_no != 0) {
+					tproto = (puri.type == SIP_URI_T) ? PROTO_UDP : PROTO_TCP;
+				} else {
+					tproto = PROTO_NONE;
+				}
+			}
+		} else {
+			/* Copy the proto out of the URI */
+			tproto = puri.proto;
+		}
+
 		dns_set_local_ttl(ds_dns_ttl);
 		if(ds_dns_mode & DS_DNS_MODE_QSRV) {
 			sport = tport;
