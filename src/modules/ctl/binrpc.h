@@ -629,7 +629,7 @@ static inline int binrpc_check_len(
 static inline unsigned char *binrpc_parse_init(
 		struct binrpc_parse_ctx *ctx, unsigned char *buf, int len, int *err)
 {
-	int len_len, c_len;
+	int len_len, c_len, t_len;
 	unsigned char *p;
 
 	*err = 0;
@@ -660,14 +660,15 @@ static inline unsigned char *binrpc_parse_init(
 		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
-	p = binrpc_read_int((int *)&ctx->tlen, len_len, &buf[BINRPC_TLEN_OFFSET],
-			&buf[len], err);
+	p = binrpc_read_int(
+			&t_len, len_len, &buf[BINRPC_TLEN_OFFSET], &buf[len], err);
 	if(*err < 0)
 		goto error;
-	if(ctx->tlen < 0) {
+	if(t_len < 0) {
 		*err = E_BINRPC_BADPKT;
 		goto error;
 	}
+	ctx->tlen = t_len;
 	/* empty packets (replies) are allowed
 	   if (ctx->tlen==0){
 		*err=E_BINRPC_BADPKT;
