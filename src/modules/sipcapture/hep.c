@@ -251,6 +251,44 @@ int hepv3_received(char *buf, unsigned int len, struct receive_info *ri)
 	return -1;
 }
 
+/*
+ * Return the advertised HEPv3 total length after checking the control header
+ * fits and does not claim more bytes than were received, so the chunk loop
+ * stays inside the datagram. Returns -1 on a malformed/oversized header.
+ */
+static int hepv3_total_length(const char *buf, unsigned int len)
+{
+	int total_length;
+
+	if(len < sizeof(hep_ctrl_t))
+		return -1;
+	total_length = ntohs(((const hep_ctrl_t *)buf)->length);
+	if((unsigned int)total_length > len)
+		return -1;
+	return total_length;
+}
+
+/*
+ * Verify the chunk at offset off is safe to read before it is cast and its
+ * fields are dereferenced: the 6-byte generic header must lie within the
+ * blen-byte buffer, it must advertise at least that header (so the loop
+ * advances), and the whole chunk must fit. Returns 0 if in bounds, -1 if not.
+ */
+static int hepv3_chunk_ok(const char *buf, unsigned int blen, unsigned int off)
+{
+	unsigned int chunk_length;
+
+	if(off + sizeof(hep_chunk_t) > blen)
+		return -1;
+	chunk_length = ntohs(((const hep_chunk_t *)(buf + off))->length);
+	/* the on-wire chunk length includes the 6-byte generic header (see the
+	 * encoder in hep.h), so a valid chunk is never shorter than that and the
+	 * loop, which advances by chunk_length, always makes progress */
+	if(chunk_length < sizeof(hep_chunk_t) || off + chunk_length > blen)
+		return -1;
+	return 0;
+}
+
 int parsing_hepv3_message(char *buf, unsigned int len)
 {
 
@@ -287,8 +325,10 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	/* HEADER */
 	hg->header = (hep_ctrl_t *)(buf);
 
-	/*Packet size */
-	total_length = ntohs(hg->header->length);
+	/* bound parsing by the bytes actually received (see hepv3_total_length) */
+	total_length = hepv3_total_length(buf, len);
+	if(total_length < 0)
+		goto error;
 
 	ri.src_port = 0;
 	ri.dst_port = 0;
@@ -306,18 +346,15 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 		/*OUR TMP DATA */
 		tmp = buf + i;
 
+		/* bounds-check the chunk before dereferencing any field */
+		if(hepv3_chunk_ok(buf, total_length, i) < 0)
+			goto error;
+
 		chunk = (struct hep_chunk *)tmp;
 
 		chunk_vendor = ntohs(chunk->vendor_id);
 		chunk_type = ntohs(chunk->type_id);
 		chunk_length = ntohs(chunk->length);
-
-
-		/* if chunk_length */
-		if(chunk_length == 0) {
-			/* BAD LEN we drop this packet */
-			goto error;
-		}
 
 		/* SKIP not general Chunks */
 		if(chunk_vendor != 0) {
@@ -571,8 +608,10 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 	/* HEADER */
 	hg->header = (hep_ctrl_t *)(buf);
 
-	/*Packet size */
-	total_length = ntohs(hg->header->length);
+	/* bound parsing by the bytes actually received (see hepv3_total_length) */
+	total_length = hepv3_total_length(buf, len);
+	if(total_length < 0)
+		goto error;
 
 	dst_ip.af = 0;
 	src_ip.af = 0;
@@ -588,17 +627,15 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 		/*OUR TMP DATA */
 		tmp = buf + i;
 
+		/* bounds-check the chunk before dereferencing any field */
+		if(hepv3_chunk_ok(buf, total_length, i) < 0)
+			goto error;
+
 		chunk = (struct hep_chunk *)tmp;
 
 		chunk_vendor = ntohs(chunk->vendor_id);
 		chunk_type = ntohs(chunk->type_id);
 		chunk_length = ntohs(chunk->length);
-
-		/* if chunk_length */
-		if(chunk_length == 0) {
-			/* BAD LEN we drop this packet */
-			goto error;
-		}
 
 		/* SKIP not general Chunks */
 		if(chunk_vendor != 0) {
@@ -939,8 +976,10 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len,
 	/* HEADER */
 	hg->header = (hep_ctrl_t *)(buf);
 
-	/*Packet size */
-	total_length = ntohs(hg->header->length);
+	/* bound parsing by the bytes actually received (see hepv3_total_length) */
+	total_length = hepv3_total_length(buf, len);
+	if(total_length < 0)
+		goto error;
 
 	i = sizeof(hep_ctrl_t);
 
@@ -949,17 +988,15 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len,
 		/*OUR TMP DATA */
 		tmp = buf + i;
 
+		/* bounds-check the chunk before dereferencing any field */
+		if(hepv3_chunk_ok(buf, total_length, i) < 0)
+			goto error;
+
 		chunk = (struct hep_chunk *)tmp;
 
 		chunk_vendor = ntohs(chunk->vendor_id);
 		chunk_type = ntohs(chunk->type_id);
 		chunk_length = ntohs(chunk->length);
-
-		/* if chunk_length */
-		if(chunk_length == 0) {
-			/* BAD LEN we drop this packet */
-			goto error;
-		}
 
 		/* SKIP not general Chunks */
 		if(chunk_vendor != 0) {
