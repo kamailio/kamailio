@@ -251,6 +251,104 @@ int hepv3_received(char *buf, unsigned int len, struct receive_info *ri)
 	return -1;
 }
 
+/*
+ * Smallest valid on-wire size of a HEPv3 chunk of the given vendor-0 type.
+ * It is the 6-byte generic chunk header (hep_chunk_t) plus the fixed-width
+ * value the parser later dereferences for that type. The sizes are taken
+ * from the on-wire structures in hep.h, so they stay in sync if those change.
+ * The chunk type ids follow the HEP3 specification and match the switch
+ * statements in the parsers below:
+ *   1  IP protocol family    2  IP protocol id      11 protocol type   (u8)
+ *   3  IPv4 source address   4  IPv4 dest address                      (ip4)
+ *   5  IPv6 source address   6  IPv6 dest address                      (ip6)
+ *   7  source port           8  destination port    13 keep-alive tmr  (u16)
+ *   9  timestamp seconds     10 timestamp usec       12 capture agent  (u32)
+ * Types carrying a variable-length payload (14 auth key, 15 captured
+ * payload, 17 correlation id) and unknown types only require the generic
+ * header. Used to reject truncated chunks before they are cast to a typed
+ * struct and dereferenced.
+ */
+static unsigned int hepv3_chunk_minlen(int chunk_type)
+{
+	switch(chunk_type) {
+		case 1:
+		case 2:
+		case 11:
+			return sizeof(hep_chunk_uint8_t);
+		case 3:
+		case 4:
+			return sizeof(hep_chunk_ip4_t);
+		case 5:
+		case 6:
+			return sizeof(hep_chunk_ip6_t);
+		case 7:
+		case 8:
+		case 13:
+			return sizeof(hep_chunk_uint16_t);
+		case 9:
+		case 10:
+		case 12:
+			return sizeof(hep_chunk_uint32_t);
+		default:
+			return sizeof(hep_chunk_t);
+	}
+}
+
+/*
+ * Verify the HEPv3 chunk at byte offset off of a blen-byte buffer is safe to
+ * dereference: the generic chunk header must be present, the advertised
+ * length must cover the header and (for a known vendor-0 chunk) the fixed-
+ * width value the parser reads for that type, and the whole chunk must lie
+ * within the buffer. Returns 0 if the chunk is safe, -1 otherwise.
+ */
+static int hepv3_chunk_ok(const char *buf, unsigned int blen, unsigned int off)
+{
+	const hep_chunk_t *chunk;
+	unsigned int minlen;
+	int chunk_vendor, chunk_length;
+
+	/* the generic chunk header must lie within the buffer */
+	if(off + sizeof(hep_chunk_t) > blen)
+		return -1;
+
+	chunk = (const hep_chunk_t *)(buf + off);
+	chunk_vendor = ntohs(chunk->vendor_id);
+	chunk_length = ntohs(chunk->length);
+
+	/* a chunk must advertise at least its header and, for a known vendor-0
+	 * chunk, the fixed-width value its type is later read as */
+	minlen = sizeof(hep_chunk_t);
+	if(chunk_vendor == 0)
+		minlen = hepv3_chunk_minlen(ntohs(chunk->type_id));
+	if(chunk_length < (int)minlen)
+		return -1;
+
+	/* the whole chunk must lie within the buffer */
+	if(off + (unsigned int)chunk_length > blen)
+		return -1;
+
+	return 0;
+}
+
+/*
+ * Validate the HEPv3 control header of a len-byte datagram and return the
+ * advertised total length, which must not exceed the bytes actually received
+ * so the chunk loop can never read past the datagram. Returns -1 if the
+ * header is missing or the advertised length is larger than the datagram.
+ */
+static int hepv3_total_length(const char *buf, unsigned int len)
+{
+	int total_length;
+
+	if(len < sizeof(hep_ctrl_t))
+		return -1;
+	total_length = ntohs(((const hep_ctrl_t *)buf)->length);
+	/* compare in unsigned space; total_length fits 16 bits */
+	if((unsigned int)total_length > len)
+		return -1;
+	return total_length;
+}
+
 int parsing_hepv3_message(char *buf, unsigned int len)
 {
 
@@ -287,8 +385,12 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	/* HEADER */
 	hg->header = (hep_ctrl_t *)(buf);
 
-	/*Packet size */
-	total_length = ntohs(hg->header->length);
+	/* validate header and bound parsing by the received datagram size */
+	total_length = hepv3_total_length(buf, len);
+	if(total_length < 0) {
+		LM_ERR("invalid HEPv3 header, received %u bytes\n", len);
+		goto error;
+	}
 
 	ri.src_port = 0;
 	ri.dst_port = 0;
@@ -306,18 +408,17 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 		/*OUR TMP DATA */
 		tmp = buf + i;
 
+		/* bounds-check the chunk before any field is dereferenced */
+		if(hepv3_chunk_ok(buf, total_length, i) < 0) {
+			LM_ERR("malformed HEPv3 chunk at offset %d\n", i);
+			goto error;
+		}
+
 		chunk = (struct hep_chunk *)tmp;
 
 		chunk_vendor = ntohs(chunk->vendor_id);
 		chunk_type = ntohs(chunk->type_id);
 		chunk_length = ntohs(chunk->length);
-
-
-		/* if chunk_length */
-		if(chunk_length == 0) {
-			/* BAD LEN we drop this packet */
-			goto error;
-		}
 
 		/* SKIP not general Chunks */
 		if(chunk_vendor != 0) {
@@ -571,8 +672,12 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 	/* HEADER */
 	hg->header = (hep_ctrl_t *)(buf);
 
-	/*Packet size */
-	total_length = ntohs(hg->header->length);
+	/* validate header and bound parsing by the received datagram size */
+	total_length = hepv3_total_length(buf, len);
+	if(total_length < 0) {
+		LM_ERR("invalid HEPv3 header, received %u bytes\n", len);
+		goto error;
+	}
 
 	dst_ip.af = 0;
 	src_ip.af = 0;
@@ -588,17 +693,17 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 		/*OUR TMP DATA */
 		tmp = buf + i;
 
+		/* bounds-check the chunk before any field is dereferenced */
+		if(hepv3_chunk_ok(buf, total_length, i) < 0) {
+			LM_ERR("malformed HEPv3 chunk at offset %d\n", i);
+			goto error;
+		}
+
 		chunk = (struct hep_chunk *)tmp;
 
 		chunk_vendor = ntohs(chunk->vendor_id);
 		chunk_type = ntohs(chunk->type_id);
 		chunk_length = ntohs(chunk->length);
-
-		/* if chunk_length */
-		if(chunk_length == 0) {
-			/* BAD LEN we drop this packet */
-			goto error;
-		}
 
 		/* SKIP not general Chunks */
 		if(chunk_vendor != 0) {
@@ -939,8 +1044,12 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len,
 	/* HEADER */
 	hg->header = (hep_ctrl_t *)(buf);
 
-	/*Packet size */
-	total_length = ntohs(hg->header->length);
+	/* validate header and bound parsing by the received datagram size */
+	total_length = hepv3_total_length(buf, len);
+	if(total_length < 0) {
+		LM_ERR("invalid HEPv3 header, received %u bytes\n", len);
+		goto error;
+	}
 
 	i = sizeof(hep_ctrl_t);
 
@@ -949,17 +1058,17 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len,
 		/*OUR TMP DATA */
 		tmp = buf + i;
 
+		/* bounds-check the chunk before any field is dereferenced */
+		if(hepv3_chunk_ok(buf, total_length, i) < 0) {
+			LM_ERR("malformed HEPv3 chunk at offset %d\n", i);
+			goto error;
+		}
+
 		chunk = (struct hep_chunk *)tmp;
 
 		chunk_vendor = ntohs(chunk->vendor_id);
 		chunk_type = ntohs(chunk->type_id);
 		chunk_length = ntohs(chunk->length);
-
-		/* if chunk_length */
-		if(chunk_length == 0) {
-			/* BAD LEN we drop this packet */
-			goto error;
-		}
 
 		/* SKIP not general Chunks */
 		if(chunk_vendor != 0) {
