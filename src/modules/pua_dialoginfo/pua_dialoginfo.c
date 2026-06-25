@@ -582,8 +582,10 @@ static void __dialog_sendpublish(
 	}
 
 	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1) && (request != NULL)
-			&& (request->flags
-					& (1U << (unsigned int)refresh_pubruri_avps_flag))) {
+		&& (request
+				&& request->flags
+						& (1U << (unsigned int)
+								refresh_pubruri_avps_flag))) {
 		lock_release(&dlginfo->lock);
 	}
 }
