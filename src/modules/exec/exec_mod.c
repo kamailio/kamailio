@@ -271,7 +271,7 @@ static int exec_avp_fixup_free(void **param, int param_no)
 	if(param_no == 1) {
 		return fixup_free_spve_null(param, 1);
 	} else if(param_no == 2) {
-		free_pvname_list((pvname_list_t *)param);
+		free_pvname_list((pvname_list_t *)(*param));
 	}
 	return 0;
 }
