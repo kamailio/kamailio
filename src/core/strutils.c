@@ -768,6 +768,8 @@ int cmp_aor_str(str *s1, str *s2)
 	return cmp_aor(&uri1, &uri2);
 }
 
+#define SR_RE_MAX_MATCH 6
+
 /*! \brief Replace in replacement tokens \\d with substrings of string pointed by
  * pmatch.
  */
@@ -783,9 +785,9 @@ int replace(regmatch_t *pmatch, char *string, char *replacement, str *result)
 			if(i < len - 1) {
 				if(isdigit((unsigned char)replacement[i + 1])) {
 					digit = replacement[i + 1] - '0';
-					if(pmatch[digit].rm_so != -1) {
+					if(digit < SR_RE_MAX_MATCH && pmatch[digit].rm_so != -1) {
 						size = pmatch[digit].rm_eo - pmatch[digit].rm_so;
-						if(j + size < result->len) {
+						if(size >= 0 && j + size < result->len) {
 							memcpy(&(result->s[j]),
 									string + pmatch[digit].rm_so, size);
 							j = j + size;
@@ -815,8 +817,6 @@ int replace(regmatch_t *pmatch, char *string, char *replacement, str *result)
 	return 1;
 }
 
-
-#define SR_RE_MAX_MATCH 6
 
 /*! \brief Match pattern against string and store result in pmatch */
 int reg_match(char *pattern, char *string, regmatch_t *pmatch)
