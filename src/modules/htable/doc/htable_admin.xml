@@ -419,6 +419,14 @@ $ kamctl rpc htable.dump htable
 			peers). Please note, module parameter <quote>enable_dmq</quote> must also be set in
 			order for this to apply (see below). Default is 0 (no replication).
 		</para>
+		<para>
+			When replication is enabled for a htable, each cell carries a 'last_modified'
+			timestamp with millisecond precision, updated on every value change. This
+			is included in <emphasis>SET_CELL</emphasis> and <emphasis>SYNC</emphasis>
+			DMQ payloads. A receiving peer applies an incoming value only if its 'last_modified'
+			timestamp is newer than the local cell's one (Last-Write-Wins); otherwise it keeps the local value.
+			All other DMQ actions carry no 'last_modified' timestamp and remain last-arrived-wins.
+		</para>
 		</listitem>
 		<listitem>
 			<para>

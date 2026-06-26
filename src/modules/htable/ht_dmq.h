@@ -24,6 +24,8 @@
 #ifndef _HT_DMQ_H_
 #define _HT_DMQ_H_
 
+#include <stdint.h>
+
 #include "../dmq/bind_dmq.h"
 #include "../../core/utils/srjson.h"
 #include "../../core/parser/msg_parser.h"
@@ -49,9 +51,9 @@ int ht_dmq_initialize();
 int ht_dmq_handle_msg(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *dmq_node);
 int ht_dmq_replicate_action(ht_dmq_action_t action, str *htname, str *cname,
-		int type, int_str *val, int mode);
+		int type, int_str *val, int mode, uint64_t lm);
 int ht_dmq_replay_action(ht_dmq_action_t action, str *htname, str *cname,
-		int type, int_str *val, int mode);
+		int type, int_str *val, int mode, uint64_t lm);
 int ht_dmq_request_sync(str *htname, dmq_node_t *dmq_node);
 int ht_dmq_request_sync_all(dmq_node_t *dmq_node);
 

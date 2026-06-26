@@ -91,8 +91,8 @@ int pv_set_ht_cell(
 	if((val == NULL) || (val->flags & PV_VAL_NULL)) {
 		/* delete it */
 		if(hpv->ht->dmqreplicate > 0
-				&& ht_dmq_replicate_action(
-						   HT_DMQ_DEL_CELL, &hpv->htname, &htname, 0, NULL, 0)
+				&& ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &hpv->htname,
+						   &htname, 0, NULL, 0, 0)
 						   != 0) {
 			LM_ERR("dmq replication failed\n");
 		}
@@ -102,25 +102,17 @@ int pv_set_ht_cell(
 
 	if(val->flags & PV_TYPE_INT) {
 		isval.n = val->ri;
-		if(hpv->ht->dmqreplicate > 0
-				&& ht_dmq_replicate_action(
-						   HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &isval, 1)
-						   != 0) {
-			LM_ERR("dmq replication failed\n");
-		}
-		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1) != 0) {
+		if(ht_set_cell_and_replicate(
+				   hpv->ht, &hpv->htname, &htname, 0, &isval, 1, 0)
+				!= 0) {
 			LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
 	} else {
 		isval.s = val->rs;
-		if(hpv->ht->dmqreplicate > 0
-				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname,
-						   &htname, AVP_VAL_STR, &isval, 1)
-						   != 0) {
-			LM_ERR("dmq replication failed\n");
-		}
-		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1) != 0) {
+		if(ht_set_cell_and_replicate(
+				   hpv->ht, &hpv->htname, &htname, AVP_VAL_STR, &isval, 1, 0)
+				!= 0) {
 			LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
@@ -259,7 +251,7 @@ int pv_set_ht_cell_expire(
 	}
 	if(hpv->ht->dmqreplicate > 0
 			&& ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, &hpv->htname,
-					   &htname, 0, &isval, 0)
+					   &htname, 0, &isval, 0, 0)
 					   != 0) {
 		LM_ERR("dmq replication failed\n");
 	}
@@ -351,8 +343,8 @@ int pv_get_ht_add(
 
 	/* integer */
 	if(hpv->ht->dmqreplicate > 0) {
-		if(ht_dmq_replicate_action(
-				   HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &htc->value, 1)
+		if(ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, 0,
+				   &htc->value, 1, htc->last_modified)
 				!= 0) {
 			LM_ERR("dmq replication failed\n");
 		}

@@ -37,6 +37,7 @@
 
 #include "ht_api.h"
 #include "ht_db.h"
+#include "ht_dmq.h"
 
 
 extern str ht_event_callback;
@@ -174,6 +175,16 @@ void ht_slot_unlock(ht_t *ht, int idx)
 		/* recursive locked => decrease lock count */
 		ht->entries[idx].rec_lock_level--;
 	}
+}
+
+/* returns current wall-clock time in milliseconds */
+static uint64_t ht_now_ms(void)
+{
+	struct timespec ts;
+	if(ksr_clock_gettime(&ts) != 0) {
+		return (uint64_t)time(NULL) * 1000;
+	}
+	return (uint64_t)ts.tv_sec * 1000 + (uint64_t)(ts.tv_nsec / 1000000);
 }
 
 ht_cell_t *ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
@@ -484,11 +495,15 @@ int ht_destroy(void)
 }
 
 
-int ht_set_cell_ex(
-		ht_t *ht, str *name, int type, int_str *val, int mode, int exv)
+/* core set_cell: setlm>0 = remote gated set; outlm!=NULL = local set returning new ts */
+static int ht_set_cell_core(ht_t *ht, str *name, int type, int_str *val,
+		int mode, int exv, uint64_t setlm, uint64_t *outlm)
 {
 	unsigned int idx;
 	unsigned int hid;
+	uint64_t newlm = 0;
+	int dolm = (ht != NULL && ht->dmqreplicate > 0
+				&& (setlm > 0 || outlm != NULL));
 	ht_cell_t *it, *prev, *cell;
 	time_t now;
 
@@ -519,6 +534,30 @@ int ht_set_cell_ex(
 	while(it != NULL && it->cellid == hid) {
 		if(name->len == it->name.len
 				&& strncmp(name->s, it->name.s, name->len) == 0) {
+			/* decide the timestamp (or reject a stale remote) */
+			if(dolm) {
+				if(setlm > 0) {
+					if(setlm <= it->last_modified) {
+						/* stale write, keep current timestamp */
+						LM_DBG("LWW: skipping stale set for "
+							   "[%.*s]=>[%.*s] local=%llu incoming=%llu\n",
+								ht->name.len, ht->name.s, name->len, name->s,
+								(unsigned long long)it->last_modified,
+								(unsigned long long)setlm);
+						if(mode)
+							ht_slot_unlock(ht, idx);
+						return 0;
+					}
+					newlm = setlm;
+				} else {
+					/* new write, get timestamp */
+					newlm = ht_now_ms();
+					if(newlm <= it->last_modified)
+						newlm = it->last_modified + 1;
+				}
+				if(outlm)
+					*outlm = newlm;
+			}
 			/* update value */
 			if(it->flags & AVP_VAL_STR) {
 				if(type & AVP_VAL_STR) {
@@ -533,6 +572,8 @@ int ht_set_cell_ex(
 						} else {
 							it->expire = now + exv;
 						}
+						if(dolm)
+							it->last_modified = newlm;
 					} else {
 						/* new */
 						cell = ht_cell_new(name, type, val, hid);
@@ -542,6 +583,8 @@ int ht_set_cell_ex(
 								ht_slot_unlock(ht, idx);
 							return -1;
 						}
+						if(dolm)
+							cell->last_modified = newlm;
 						cell->next = it->next;
 						cell->prev = it->prev;
 						if(exv <= 0) {
@@ -566,6 +609,8 @@ int ht_set_cell_ex(
 					} else {
 						it->expire = now + exv;
 					}
+					if(dolm)
+						it->last_modified = newlm;
 				}
 				if(mode)
 					ht_slot_unlock(ht, idx);
@@ -580,6 +625,8 @@ int ht_set_cell_ex(
 							ht_slot_unlock(ht, idx);
 						return -1;
 					}
+					if(dolm)
+						cell->last_modified = newlm;
 					if(exv <= 0) {
 						HT_COPY_EXPIRE(ht, cell, now, it);
 					} else {
@@ -603,6 +650,8 @@ int ht_set_cell_ex(
 					} else {
 						it->expire = now + exv;
 					}
+					if(dolm)
+						it->last_modified = newlm;
 				}
 				if(mode)
 					ht_slot_unlock(ht, idx);
@@ -612,7 +661,12 @@ int ht_set_cell_ex(
 		prev = it;
 		it = it->next;
 	}
-	/* add */
+	/* add - no existing cell, nothing to compare against */
+	if(dolm) {
+		newlm = (setlm > 0) ? setlm : ht_now_ms();
+		if(outlm)
+			*outlm = newlm;
+	}
 	cell = ht_cell_new(name, type, val, hid);
 	if(cell == NULL) {
 		LM_ERR("cannot create new cell.\n");
@@ -620,6 +674,8 @@ int ht_set_cell_ex(
 			ht_slot_unlock(ht, idx);
 		return -1;
 	}
+	if(dolm)
+		cell->last_modified = newlm;
 	if(exv <= 0) {
 		cell->expire = now + ht->htexpire;
 	} else {
@@ -644,9 +700,41 @@ int ht_set_cell_ex(
 	return 0;
 }
 
+int ht_set_cell_ex(
+		ht_t *ht, str *name, int type, int_str *val, int mode, int exv)
+{
+	return ht_set_cell_core(ht, name, type, val, mode, exv, 0, NULL);
+}
+
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 {
-	return ht_set_cell_ex(ht, name, type, val, mode, 0);
+	return ht_set_cell_core(ht, name, type, val, mode, 0, 0, NULL);
+}
+
+int ht_set_cell_lww(ht_t *ht, str *name, int type, int_str *val, int mode,
+		int exv, uint64_t setlm)
+{
+	return ht_set_cell_core(ht, name, type, val, mode, exv, setlm, NULL);
+}
+
+int ht_set_cell_and_replicate(ht_t *ht, str *hname, str *name, int type,
+		int_str *val, int mode, int exv)
+{
+	uint64_t lm = 0;
+	int ret;
+
+	if(ht == NULL) {
+		return -1;
+	}
+	/* local set assigns the timestamp; replicate only on success */
+	ret = ht_set_cell_core(ht, name, type, val, mode, exv, 0, &lm);
+	if(ret == 0 && ht->dmqreplicate > 0
+			&& ht_dmq_replicate_action(
+					   HT_DMQ_SET_CELL, hname, name, type, val, mode, lm)
+					   != 0) {
+		LM_ERR("dmq replication failed\n");
+	}
+	return ret;
 }
 
 static void ht_cell_unlink(ht_t *ht, int idx, ht_cell_t *it)
@@ -730,6 +818,7 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
+	uint64_t newlm = 0;
 	ht_cell_t *it, *prev, *cell;
 	time_t now;
 	int_str isval;
@@ -785,6 +874,14 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 				it->value.n += val;
 				if(ht->updateexpire)
 					it->expire = now + ht->htexpire;
+				/* timestamp the inc/dec so replication converges by LWW */
+				/* stamp only on replicated tables */
+				if(ht->dmqreplicate > 0) {
+					newlm = ht_now_ms();
+					if(newlm <= it->last_modified)
+						newlm = it->last_modified + 1;
+					it->last_modified = newlm;
+				}
 				if(old != NULL) {
 					if(old->msize >= it->msize) {
 						memcpy(old, it, it->msize);
@@ -815,6 +912,9 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
+	/* stamp only on replicated tables */
+	if(ht->dmqreplicate > 0)
+		it->last_modified = ht_now_ms();
 	it->expire = now + ht->htexpire;
 	if(prev == NULL) {
 		if(ht->entries[idx].first != NULL) {
