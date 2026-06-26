@@ -40,14 +40,7 @@ int ht_api_set_cell(str *hname, str *name, int type, int_str *val, int mode)
 	if(ht == NULL)
 		return -1;
 
-	if(ht->dmqreplicate > 0
-			&& ht_dmq_replicate_action(
-					   HT_DMQ_SET_CELL, hname, name, type, val, mode)
-					   != 0) {
-		LM_ERR("dmq replication failed\n");
-	}
-
-	return ht_set_cell(ht, name, type, val, mode);
+	return ht_set_cell_and_replicate(ht, hname, name, type, val, mode, 0);
 }
 
 /**
@@ -60,7 +53,8 @@ int ht_api_del_cell(str *hname, str *name)
 	if(ht == NULL)
 		return -1;
 	if(ht->dmqreplicate > 0
-			&& ht_dmq_replicate_action(HT_DMQ_DEL_CELL, hname, name, 0, NULL, 0)
+			&& ht_dmq_replicate_action(
+					   HT_DMQ_DEL_CELL, hname, name, 0, NULL, 0, 0)
 					   != 0) {
 		LM_ERR("dmq replication failed\n");
 	}
@@ -78,7 +72,7 @@ int ht_api_set_cell_expire(str *hname, str *name, int type, int_str *val)
 		return -1;
 	if(ht->dmqreplicate > 0
 			&& ht_dmq_replicate_action(
-					   HT_DMQ_SET_CELL_EXPIRE, hname, name, type, val, 0)
+					   HT_DMQ_SET_CELL_EXPIRE, hname, name, type, val, 0, 0)
 					   != 0) {
 		LM_ERR("dmq replication failed\n");
 	}
@@ -124,7 +118,7 @@ int ht_api_rm_cell_re(str *hname, str *sre, int mode)
 		isval.s.s = sre->s;
 		isval.s.len = sre->len;
 		if(ht_dmq_replicate_action(
-				   HT_DMQ_RM_CELL_RE, hname, NULL, AVP_VAL_STR, &isval, mode)
+				   HT_DMQ_RM_CELL_RE, hname, NULL, AVP_VAL_STR, &isval, mode, 0)
 				!= 0) {
 			LM_ERR("dmq replication failed\n");
 		}

@@ -409,7 +409,7 @@ static int ht_rm_re_helper(sip_msg_t *msg, ht_t *ht, str *rexp, int rmode)
 	if(ht->dmqreplicate > 0) {
 		isval.s = *rexp;
 		if(ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &ht->name, NULL,
-				   AVP_VAL_STR, &isval, rmode)
+				   AVP_VAL_STR, &isval, rmode, 0)
 				!= 0) {
 			LM_ERR("dmq replication failed for [%.*s]\n", ht->name.len,
 					ht->name.s);
@@ -515,7 +515,7 @@ static int ht_rm_items(sip_msg_t *msg, str *hname, str *op, str *val, int mkey)
 				isval.s = *val;
 				if((ht->dmqreplicate > 0)
 						&& ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &ht->name,
-								   NULL, AVP_VAL_STR, &isval, mkey)
+								   NULL, AVP_VAL_STR, &isval, mkey, 0)
 								   != 0) {
 					LM_ERR("dmq replication failed (op %d)\n", mkey);
 				}
@@ -527,7 +527,7 @@ static int ht_rm_items(sip_msg_t *msg, str *hname, str *op, str *val, int mkey)
 				isval.s = *val;
 				if((ht->dmqreplicate > 0)
 						&& ht_dmq_replicate_action(HT_DMQ_RM_CELL_SW, &ht->name,
-								   NULL, AVP_VAL_STR, &isval, mkey)
+								   NULL, AVP_VAL_STR, &isval, mkey, 0)
 								   != 0) {
 					LM_ERR("dmq replication failed (op %d)\n", mkey);
 				}
@@ -539,7 +539,7 @@ static int ht_rm_items(sip_msg_t *msg, str *hname, str *op, str *val, int mkey)
 				isval.s = *val;
 				if((ht->dmqreplicate > 0)
 						&& ht_dmq_replicate_action(HT_DMQ_RM_CELL_EW, &ht->name,
-								   NULL, AVP_VAL_STR, &isval, mkey)
+								   NULL, AVP_VAL_STR, &isval, mkey, 0)
 								   != 0) {
 					LM_ERR("dmq replication failed (op %d)\n", mkey);
 				}
@@ -551,7 +551,7 @@ static int ht_rm_items(sip_msg_t *msg, str *hname, str *op, str *val, int mkey)
 				isval.s = *val;
 				if((ht->dmqreplicate > 0)
 						&& ht_dmq_replicate_action(HT_DMQ_RM_CELL_IN, &ht->name,
-								   NULL, AVP_VAL_STR, &isval, mkey)
+								   NULL, AVP_VAL_STR, &isval, mkey, 0)
 								   != 0) {
 					LM_ERR("dmq replication failed (op %d)\n", mkey);
 				}
@@ -624,7 +624,7 @@ static int ki_ht_rm(sip_msg_t *msg, str *hname, str *iname)
 	/* delete it */
 	if(ht->dmqreplicate > 0
 			&& ht_dmq_replicate_action(
-					   HT_DMQ_DEL_CELL, hname, iname, 0, NULL, 0)
+					   HT_DMQ_DEL_CELL, hname, iname, 0, NULL, 0, 0)
 					   != 0) {
 		LM_ERR("dmq replication failed\n");
 	}
@@ -1233,14 +1233,9 @@ static int ki_ht_sets(sip_msg_t *msg, str *htname, str *itname, str *itval)
 
 	isvalue.s = *itval;
 
-	if(ht->dmqreplicate > 0
-			&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, itname,
-					   AVP_VAL_STR, &isvalue, 1)
-					   != 0) {
-		LM_ERR("dmq replication failed\n");
-	}
-
-	if(ht_set_cell(ht, itname, AVP_VAL_STR, &isvalue, 1) != 0) {
+	if(ht_set_cell_and_replicate(
+			   ht, &ht->name, itname, AVP_VAL_STR, &isvalue, 1, 0)
+			!= 0) {
 		LM_ERR("cannot set sht: %.*s key: %.*s\n", htname->len, htname->s,
 				itname->len, itname->s);
 		return -1;
@@ -1266,14 +1261,8 @@ static int ki_ht_seti(sip_msg_t *msg, str *htname, str *itname, int itval)
 
 	isvalue.n = itval;
 
-	if(ht->dmqreplicate > 0
-			&& ht_dmq_replicate_action(
-					   HT_DMQ_SET_CELL, &ht->name, itname, 0, &isvalue, 1)
-					   != 0) {
-		LM_ERR("dmq replication failed\n");
-	}
-
-	if(ht_set_cell(ht, itname, 0, &isvalue, 1) != 0) {
+	if(ht_set_cell_and_replicate(ht, &ht->name, itname, 0, &isvalue, 1, 0)
+			!= 0) {
 		LM_ERR("cannot set sht: %.*s key: %.*s\n", htname->len, htname->s,
 				itname->len, itname->s);
 		return -1;
@@ -1303,7 +1292,7 @@ static int ki_ht_setex(sip_msg_t *msg, str *htname, str *itname, int itval)
 	isval.n = itval;
 	if(ht->dmqreplicate > 0
 			&& ht_dmq_replicate_action(
-					   HT_DMQ_SET_CELL_EXPIRE, htname, itname, 0, &isval, 0)
+					   HT_DMQ_SET_CELL_EXPIRE, htname, itname, 0, &isval, 0, 0)
 					   != 0) {
 		LM_ERR("dmq replication failed\n");
 	}
@@ -1336,27 +1325,22 @@ static int ki_ht_setxs(
 			htname->len, htname->s, itname->len, itname->s,
 			(itval->len > 100) ? 100 : itval->len, itval->s, exval);
 
-	if(ht->dmqreplicate > 0) {
-		isval.s = *itval;
-		if(ht->dmqreplicate > 0
-				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, itname,
-						   AVP_VAL_STR, &isval, 1)
-						   != 0) {
-			LM_ERR("dmq set value replication failed\n");
-		} else {
-			isval.n = exval;
-			if(ht_dmq_replicate_action(
-					   HT_DMQ_SET_CELL_EXPIRE, htname, itname, 0, &isval, 0)
-					!= 0) {
-				LM_ERR("dmq set expire relication failed\n");
-			}
-		}
-	}
 	isval.s = *itval;
-	if(ht_set_cell_ex(ht, itname, AVP_VAL_STR, &isval, 1, exval) != 0) {
+	/* set the value (timestamped) and replicate it as a SET_CELL */
+	if(ht_set_cell_and_replicate(
+			   ht, &ht->name, itname, AVP_VAL_STR, &isval, 1, exval)
+			!= 0) {
 		LM_ERR("cannot set hash table: %.*s key: %.*s\n", htname->len,
 				htname->s, itname->len, itname->s);
 		return -1;
+	}
+	if(ht->dmqreplicate > 0) {
+		isval.n = exval;
+		if(ht_dmq_replicate_action(
+				   HT_DMQ_SET_CELL_EXPIRE, &ht->name, itname, 0, &isval, 0, 0)
+				!= 0) {
+			LM_ERR("dmq set expire replication failed\n");
+		}
 	}
 
 	return 1;
@@ -1414,27 +1398,21 @@ static int ki_ht_setxi(
 	LM_DBG("set value and expire for sht: %.*s key: %.*s val: %d exp: %d\n",
 			htname->len, htname->s, itname->len, itname->s, itval, exval);
 
-	if(ht->dmqreplicate > 0) {
-		isval.n = itval;
-		if(ht_dmq_replicate_action(
-				   HT_DMQ_SET_CELL, &ht->name, itname, 0, &isval, 1)
-				!= 0) {
-			LM_ERR("dmq set value relication failed\n");
-		} else {
-			isval.n = exval;
-			if(ht_dmq_replicate_action(
-					   HT_DMQ_SET_CELL_EXPIRE, htname, itname, 0, &isval, 0)
-					!= 0) {
-				LM_ERR("dmq set expire replication failed\n");
-			}
-		}
-	}
 	isval.n = itval;
-
-	if(ht_set_cell_ex(ht, itname, 0, &isval, 1, exval) != 0) {
+	/* set the value (timestamped) and replicate it as a SET_CELL */
+	if(ht_set_cell_and_replicate(ht, &ht->name, itname, 0, &isval, 1, exval)
+			!= 0) {
 		LM_ERR("cannot set value and expire for sht: %.*s key: %.*s\n",
 				htname->len, htname->s, itname->len, itname->s);
 		return -1;
+	}
+	if(ht->dmqreplicate > 0) {
+		isval.n = exval;
+		if(ht_dmq_replicate_action(
+				   HT_DMQ_SET_CELL_EXPIRE, &ht->name, itname, 0, &isval, 0, 0)
+				!= 0) {
+			LM_ERR("dmq set expire replication failed\n");
+		}
 	}
 
 	return 1;
@@ -1515,8 +1493,8 @@ static int w_ht_add_opp(sip_msg_t *msg, char *htname, char *itname, int ival)
 	}
 
 	if(ht->dmqreplicate > 0) {
-		if(ht_dmq_replicate_action(
-				   HT_DMQ_SET_CELL, &shtname, &sitname, 0, &htc->value, 1)
+		if(ht_dmq_replicate_action(HT_DMQ_SET_CELL, &shtname, &sitname, 0,
+				   &htc->value, 1, htc->last_modified)
 				!= 0) {
 			LM_ERR("dmq replication failed\n");
 		}
@@ -1559,8 +1537,8 @@ static int ki_ht_add_op(sip_msg_t *msg, str *htname, str *itname, int itval)
 
 	/* integer */
 	if(ht->dmqreplicate > 0) {
-		if(ht_dmq_replicate_action(
-				   HT_DMQ_SET_CELL, htname, itname, 0, &htc->value, 1)
+		if(ht_dmq_replicate_action(HT_DMQ_SET_CELL, htname, itname, 0,
+				   &htc->value, 1, htc->last_modified)
 				!= 0) {
 			LM_ERR("dmq replication failed\n");
 		}
@@ -1706,7 +1684,7 @@ static void htable_rpc_delete(rpc_t *rpc, void *c)
 
 	if(ht->dmqreplicate > 0
 			&& ht_dmq_replicate_action(
-					   HT_DMQ_DEL_CELL, &ht->name, &keyname, 0, NULL, 0)
+					   HT_DMQ_DEL_CELL, &ht->name, &keyname, 0, NULL, 0, 0)
 					   != 0) {
 		LM_ERR("dmq replication failed\n");
 	}
@@ -1815,14 +1793,9 @@ static void htable_rpc_sets(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(ht->dmqreplicate > 0
-			&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname,
-					   AVP_VAL_STR, &keyvalue, 1)
-					   != 0) {
-		LM_ERR("dmq replication failed\n");
-	}
-
-	if(ht_set_cell(ht, &keyname, AVP_VAL_STR, &keyvalue, 1) != 0) {
+	if(ht_set_cell_and_replicate(
+			   ht, &ht->name, &keyname, AVP_VAL_STR, &keyvalue, 1, 0)
+			!= 0) {
 		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
 				keyname.len, keyname.s);
 		rpc->fault(c, 500, "Failed to set the item");
@@ -1853,14 +1826,8 @@ static void htable_rpc_seti(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(ht->dmqreplicate > 0
-			&& ht_dmq_replicate_action(
-					   HT_DMQ_SET_CELL, &ht->name, &keyname, 0, &keyvalue, 1)
-					   != 0) {
-		LM_ERR("dmq replication failed\n");
-	}
-
-	if(ht_set_cell(ht, &keyname, 0, &keyvalue, 1) != 0) {
+	if(ht_set_cell_and_replicate(ht, &ht->name, &keyname, 0, &keyvalue, 1, 0)
+			!= 0) {
 		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
 				keyname.len, keyname.s);
 		rpc->fault(c, 500, "Failed to set the item");
