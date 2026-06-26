@@ -195,8 +195,8 @@ static int mod_init(void)
 		LM_ERR("failed to register core statistics\n");
 		return -1;
 	}
-	return 0;
 #endif
+	return 0;
 }
 
 /**
