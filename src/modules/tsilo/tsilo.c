@@ -432,6 +432,7 @@ static int w_ts_append_by_contact2(
 
 	str contact = STR_NULL;
 	str tmp_contact = STR_NULL;
+	contact_body_t *cb = NULL;
 	struct sip_uri curi;
 
 	int rc;
@@ -473,28 +474,25 @@ static int w_ts_append_by_contact2(
 			LM_WARN("failed to parse Contact header.\n");
 			goto error;
 		}
-		if(parse_uri(((struct contact_body *)_msg->contact->parsed)
-							 ->contacts->uri.s,
-				   ((struct contact_body *)_msg->contact->parsed)
-						   ->contacts->uri.len,
-				   &curi)
-				!= 0) {
+		cb = (contact_body_t *)_msg->contact->parsed;
+		if(cb == NULL || cb->contacts == NULL) {
+			LM_WARN("missing contact item in Contact header.\n");
+			goto error;
+		}
+		if(parse_uri(cb->contacts->uri.s, cb->contacts->uri.len, &curi) != 0) {
 			if(ts_check_uri(&_msg->contact->body) < 0) { /* one more attempt */
 				LM_WARN("failed to parse Contact header.\n");
 				goto error;
 			}
 		}
 
-		tmp_contact.len = ((struct contact_body *)_msg->contact->parsed)
-								  ->contacts->uri.len;
+		tmp_contact.len = cb->contacts->uri.len;
 		tmp_contact.s = (char *)pkg_malloc(tmp_contact.len + 1);
 		if(tmp_contact.s == NULL) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
-		memcpy(tmp_contact.s,
-				((struct contact_body *)_msg->contact->parsed)->contacts->uri.s,
-				tmp_contact.len);
+		memcpy(tmp_contact.s, cb->contacts->uri.s, tmp_contact.len);
 		tmp_contact.s[tmp_contact.len] = '\0';
 
 		if(pkg_str_dup(&contact, &tmp_contact) < 0) {
@@ -538,6 +536,7 @@ static int ki_ts_append_by_contact(sip_msg_t *_msg, str *_table, str *_ruri)
 	str ruri = STR_NULL;
 	str contact = STR_NULL;
 	str tmp_contact = STR_NULL;
+	contact_body_t *cb = NULL;
 	struct sip_uri curi;
 	int rc;
 
@@ -555,26 +554,21 @@ static int ki_ts_append_by_contact(sip_msg_t *_msg, str *_table, str *_ruri)
 	if(_msg->contact) {
 		if(parse_contact(_msg->contact) < 0)
 			goto error;
-		if(parse_uri(((struct contact_body *)_msg->contact->parsed)
-							 ->contacts->uri.s,
-				   ((struct contact_body *)_msg->contact->parsed)
-						   ->contacts->uri.len,
-				   &curi)
-				!= 0) {
+		cb = (contact_body_t *)_msg->contact->parsed;
+		if(cb == NULL || cb->contacts == NULL)
+			goto error;
+		if(parse_uri(cb->contacts->uri.s, cb->contacts->uri.len, &curi) != 0) {
 			if(ts_check_uri(&_msg->contact->body) < 0) /* one more attempt */
 				goto error;
 		}
 
-		tmp_contact.len = ((struct contact_body *)_msg->contact->parsed)
-								  ->contacts->uri.len;
+		tmp_contact.len = cb->contacts->uri.len;
 		tmp_contact.s = (char *)pkg_malloc(tmp_contact.len + 1);
 		if(tmp_contact.s == NULL) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
-		memcpy(tmp_contact.s,
-				((struct contact_body *)_msg->contact->parsed)->contacts->uri.s,
-				tmp_contact.len);
+		memcpy(tmp_contact.s, cb->contacts->uri.s, tmp_contact.len);
 		tmp_contact.s[tmp_contact.len] = '\0';
 
 		if(pkg_str_dup(&contact, &tmp_contact) < 0) {
