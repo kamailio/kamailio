@@ -218,7 +218,7 @@ int ts_append_branches(sip_msg_t *msg, str *ruri)
 		/* lookup a transaction based on its identifier (hash_index:label) */
 		if(_tmb.t_lookup_ident(&t, ptr->tindex, ptr->tlabel) < 0 || t == NULL) {
 			LM_ERR("transaction [%u:%u] not found\n", ptr->tindex, ptr->tlabel);
-			continue;
+			goto done;
 		}
 
 		/* check if the dialog is still in the early stage */
@@ -246,8 +246,10 @@ int ts_append_branches(sip_msg_t *msg, str *ruri)
 	done:
 		/* unref the transaction which had been referred by t_lookup_ident() call.
 		 * Restore the original transaction (if any) */
-		_tmb.unref_cell(t);
+		if(t != NULL)
+			_tmb.unref_cell(t);
 		_tmb.set_tb(orig_t, orig_branch);
+		t = NULL;
 	}
 
 	unlock_entry_by_ruri(t_uri);
