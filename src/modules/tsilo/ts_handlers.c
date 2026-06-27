@@ -55,6 +55,7 @@ int ts_set_tm_callbacks(struct cell *t, sip_msg_t *req, ts_transaction_t *ts)
 			< 0) {
 		LM_ERR("failed to register TMCB for transaction %d:%d\n", t->hash_index,
 				t->label);
+		free_ts_transaction(ts_clone);
 		return -1;
 	}
 	LM_DBG("registered TMCB for transaction %d:%d\n", ts_clone->tindex,
