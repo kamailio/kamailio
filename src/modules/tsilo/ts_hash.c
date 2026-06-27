@@ -347,6 +347,13 @@ int insert_ts_transaction(
 
 	if(ts_set_tm_callbacks(t, msg, ts) < 0) {
 		LM_ERR("failed to set transaction %d:%d callbacks\n", tindex, tlabel);
+		if(prev) {
+			prev->next = NULL;
+		} else {
+			_r->transactions = NULL;
+		}
+		free_ts_transaction(ts);
+		return -1;
 	}
 
 	update_stat(stored_transactions, 1);
