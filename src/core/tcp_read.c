@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 
 
@@ -78,6 +79,35 @@
 #ifdef READ_HTTP11
 #define HTTP11CONTINUE "HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
 #define HTTP11CONTINUE_LEN (sizeof(HTTP11CONTINUE) - 1)
+
+#define KSR_HTTP11_BODY_SIZE 524288U /* 2^19 */
+
+static inline int tcp_http11_update_chunk_size(tcp_req_t *r, unsigned int digit)
+{
+	unsigned int chunk_size;
+
+	chunk_size = (unsigned int)r->chunk_size;
+	if(unlikely(chunk_size > ((KSR_HTTP11_BODY_SIZE - digit) >> 4))) {
+		LM_ERR("large chunk size value %u in state %d\n", chunk_size, r->state);
+		r->chunk_size = 0;
+		r->error = TCP_REQ_BAD_LEN;
+		r->state = H_SKIP;
+		return -1;
+	}
+
+	chunk_size = (chunk_size << 4) + digit;
+	if(unlikely(chunk_size >= r->b_size)) {
+		LM_WARN("chunk size %u exceeds buffer size %u in state %d\n",
+				chunk_size, r->b_size, r->state);
+		r->chunk_size = 0;
+		r->error = TCP_REQ_BAD_LEN;
+		r->state = H_SKIP;
+		return -1;
+	}
+
+	r->chunk_size = (int)chunk_size;
+	return 0;
+}
 #endif
 
 #define TCPCONN_TIMEOUT_MIN_RUN 1 /* run the timers each new tick */
@@ -1059,8 +1089,10 @@ int tcp_read_headers(
 					case '7':
 					case '8':
 					case '9':
-						r->chunk_size <<= 4;
-						r->chunk_size += *p - '0';
+						if(tcp_http11_update_chunk_size(
+								   r, (unsigned int)(*p - '0'))
+								< 0)
+							goto skip;
 						break;
 					case 'a':
 					case 'b':
@@ -1068,8 +1100,10 @@ int tcp_read_headers(
 					case 'd':
 					case 'e':
 					case 'f':
-						r->chunk_size <<= 4;
-						r->chunk_size += *p - 'a' + 10;
+						if(tcp_http11_update_chunk_size(
+								   r, (unsigned int)(*p - 'a' + 10))
+								< 0)
+							goto skip;
 						break;
 					case 'A':
 					case 'B':
@@ -1077,8 +1111,10 @@ int tcp_read_headers(
 					case 'D':
 					case 'E':
 					case 'F':
-						r->chunk_size <<= 4;
-						r->chunk_size += *p - 'A' + 10;
+						if(tcp_http11_update_chunk_size(
+								   r, (unsigned int)(*p - 'A' + 10))
+								< 0)
+							goto skip;
 						break;
 					case '\r':
 					case ' ':
