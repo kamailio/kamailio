@@ -4533,10 +4533,17 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			break;
 		case CONN_WRITE_REQ: {
 			/* mode 2: worker queued a write; response[0] is the write request,
-			 * not a tcp_connection. tcp_main appends to the wbuf_q and enables
-			 * write watching, mirroring the CONN_QUEUED_WRITE logic above. */
+			 * not a tcp_connection. tcp_main queues the payload into the wbuf_q
+			 * (encrypting it first for TLS, since OpenSSL must run here) and
+			 * enables write watching, mirroring the CONN_QUEUED_WRITE logic. */
 			tcp_reactor_write_req_t *wreq =
 					(tcp_reactor_write_req_t *)response[0];
+#ifdef USE_TLS
+			const char *t_buf, *rest_buf;
+			unsigned t_len, rest_len;
+			snd_flags_t t_send_flags;
+			int wn;
+#endif /* USE_TLS */
 			tcpconn = wreq->conn;
 			/* release the worker's refcnt; if it was the last, conn is gone */
 			if(unlikely(tcpconn_put(tcpconn))) {
@@ -4553,14 +4560,45 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 				break;
 			}
 			lock_get(&tcpconn->write_lock);
-			if(unlikely(_wbufq_add(tcpconn, wreq->buf, wreq->len) < 0)) {
-				lock_release(&tcpconn->write_lock);
-				tcpconn->state = S_CONN_BAD;
-				tcpconn->timeout = get_ticks_raw(); /* force timeout */
-				shm_free(wreq->buf);
-				shm_free(wreq);
-				break;
-			}
+#ifdef USE_TLS
+			if(unlikely(tcpconn->type == PROTO_TLS
+						|| tcpconn->type == PROTO_WSS)) {
+				/* encrypt in tcp_main: tls_encode() runs OpenSSL through the
+				 * mode-2 direct-call trampoline (is_tcp_main() is true here).
+				 * The wire bytes go into the wbuf_q, mirroring the TLS branch
+				 * of tcpconn_send_put(). */
+				t_buf = wreq->buf;
+				t_len = wreq->len;
+				do {
+					t_send_flags = wreq->send_flags;
+					wn = tls_encode(tcpconn, &t_buf, &t_len, &rest_buf,
+							&rest_len, &t_send_flags);
+					if(unlikely((wn < 0)
+								|| (t_len
+										&& (_wbufq_add(tcpconn, t_buf, t_len)
+												< 0)))) {
+						lock_release(&tcpconn->write_lock);
+						tcpconn->state = S_CONN_BAD;
+						tcpconn->timeout = get_ticks_raw(); /* force timeout */
+						shm_free(wreq->buf);
+						shm_free(wreq);
+						goto write_req_end;
+					}
+					t_buf = rest_buf;
+					t_len = rest_len;
+				} while(unlikely(rest_len && wn > 0));
+			} else
+#endif /* USE_TLS */
+				if(unlikely(wreq->len
+							&& (_wbufq_add(tcpconn, wreq->buf, wreq->len)
+									< 0))) {
+					lock_release(&tcpconn->write_lock);
+					tcpconn->state = S_CONN_BAD;
+					tcpconn->timeout = get_ticks_raw(); /* force timeout */
+					shm_free(wreq->buf);
+					shm_free(wreq);
+					goto write_req_end;
+				}
 			lock_release(&tcpconn->write_lock);
 			shm_free(wreq->buf);
 			shm_free(wreq);
@@ -4610,6 +4648,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 					}
 				}
 			}
+		write_req_end:
 			break;
 		}
 #ifdef TCP_CONNECT_WAIT
