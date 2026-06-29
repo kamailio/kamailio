@@ -68,7 +68,7 @@ static inline int gcrypt_bytes2hex(
 	if(sbuf_len < 2 * buf_len)
 		return -1;
 	for(i = 0, j = (2 * buf_len) - 1; i < sbuf_len; i++, j--) {
-		sbuf[i] = gcrypt_byte2hex((buf[j / 2] >> (j % 2 ? 0 : 4)) % 0x0f);
+		sbuf[i] = gcrypt_byte2hex((buf[j / 2] >> (j % 2 ? 0 : 4)) & 0x0f);
 		if(j == 0)
 			break;
 	}
@@ -120,7 +120,7 @@ static inline int gcrypt_format_rfc4122_uuid(
 			sbuf[i] = '-';
 			continue;
 		}
-		sbuf[i] = gcrypt_byte2hex((buf[j / 2] >> (j % 2 ? 0 : 4)) % 0x0f);
+		sbuf[i] = gcrypt_byte2hex((buf[j / 2] >> (j % 2 ? 0 : 4)) & 0x0f);
 		if(!(++j / 2 < buf_len))
 			break;
 	}
