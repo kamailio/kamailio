@@ -41,6 +41,7 @@
 
 #include <unistd.h>
 #include <stdlib.h> /* for abort() */
+#include <stdint.h> /* for uintptr_t */
 
 #include "dprint.h"
 #include "tcp_conn.h"
@@ -49,7 +50,9 @@
 #include "tcp_ev.h"
 #include "pass_fd.h"
 #include "globals.h"
+#include "tcp_server.h"
 #include "tcp_reactor.h"
+#include "mem/shm_mem.h"
 #include "receive.h"
 #include "timer.h"
 #include "local_timer.h"
@@ -118,7 +121,8 @@ enum fd_types
 {
 	F_NONE,
 	F_TCPMAIN,
-	F_TCPCONN
+	F_TCPCONN,
+	F_TCP_REACTOR /* mode 2: shared dispatch socket carrying SIP task pointers */
 };
 
 /* list of tcp connections handled by this process */
@@ -2096,6 +2100,43 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 				goto con_error;
 			}
 			break;
+		case F_TCP_REACTOR: {
+			/* mode 2: PROC_TCP_MAIN dispatched a reassembled SIP message as a
+			 * shm task pointer over the shared dgram socket. Consume it, run
+			 * the message, and free the task. */
+			tcp_reactor_task_t *task;
+			uintptr_t task_ptr;
+		again_reactor:
+			ret = n = recv(fm->fd, &task_ptr, sizeof(task_ptr), MSG_DONTWAIT);
+			if(unlikely(n < 0)) {
+				if(errno == EWOULDBLOCK || errno == EAGAIN) {
+					ret = 0;
+					break;
+				} else if(errno == EINTR) {
+					goto again_reactor;
+				} else {
+					LM_CRIT("recv on reactor dispatch socket failed: %s [%d]\n",
+							strerror(errno), errno);
+					goto error;
+				}
+			}
+			if(unlikely(n == 0)) {
+				LM_ERR("EOF on reactor dispatch socket\n");
+				goto error;
+			}
+			if(unlikely(n != (int)sizeof(task_ptr))) {
+				LM_CRIT("short read on reactor dispatch socket: %d bytes\n", n);
+				goto error;
+			}
+			task = (tcp_reactor_task_t *)(uintptr_t)task_ptr;
+			if(unlikely(task == NULL)) {
+				LM_CRIT("null task pointer from tcp main\n");
+				break;
+			}
+			receive_msg(task->msg_buf, task->msg_len, &task->rcv);
+			shm_free(task);
+			break;
+		}
 		case F_TCPCONN:
 			con = (struct tcp_connection *)fm->data;
 			if(unlikely(con->state == S_CONN_BAD)) {
@@ -2206,9 +2247,22 @@ void tcp_receive_loop(int unix_sock)
 	if(init_local_timer(&tcp_reader_ltimer, get_ticks_raw()) != 0)
 		goto error;
 	/* add the unix socket */
-	if(io_watch_add(&io_w, tcpmain_sock, POLLIN, F_TCPMAIN, 0) < 0) {
-		LM_CRIT("failed to add tcp main socket to the fd list\n");
-		goto error;
+	if(ksr_tcp_main_threads == 2) {
+		/* mode 2: this worker is a pure SIP engine - it does not own tcp fds
+		 * and never receives them via fd-passing. Instead it consumes
+		 * reassembled SIP messages dispatched by PROC_TCP_MAIN over the shared
+		 * dgram socket. */
+		if(io_watch_add(&io_w, ksr_tcp_reactor_get_dispatch_rfd(), POLLIN,
+				   F_TCP_REACTOR, 0)
+				< 0) {
+			LM_CRIT("failed to add reactor dispatch socket to the fd list\n");
+			goto error;
+		}
+	} else {
+		if(io_watch_add(&io_w, tcpmain_sock, POLLIN, F_TCPMAIN, 0) < 0) {
+			LM_CRIT("failed to add tcp main socket to the fd list\n");
+			goto error;
+		}
 	}
 
 	/* initialize the config framework */
