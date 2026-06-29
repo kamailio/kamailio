@@ -476,7 +476,11 @@ static jwk_set_t *jwt_load_keys(str *key_in)
 	char *dot_last = strrchr(key_in->s, '.');
 	jwk_set_t *jwks = NULL;
 
-	if(!dot) {
+	if(key_in->s[0] == '{') {
+		/* inline JWKS JSON */
+		LM_DBG("Starts with '{'. Treating as inline JWKS JSON.\n");
+		jwks = jwks_load(NULL, key_in->s);
+	} else if(!dot) {
 		/* raw PEM (content) */
 		LM_DBG("No dot found. Treating as Raw PEM content.\n");
 		char *json = jwt_raw_to_jwks(key_in->s, key_in->len, "legacy-raw");
