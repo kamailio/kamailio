@@ -2348,6 +2348,52 @@ static int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 	}
 	return (int)len;
 }
+
+/* mode 2: no usable connection exists - ask PROC_TCP_MAIN to open a new
+ * outbound connection and send on it. The worker opens no socket and creates no
+ * tcp_connection. Returns len on success (optimistic), -1 on error. */
+static int tcp_reactor_connect_put(struct dest_info *dst,
+		union sockaddr_union *from, const char *buf, unsigned len)
+{
+	tcp_reactor_connect_req_t *creq;
+	long response[2];
+
+	creq = shm_malloc(sizeof(tcp_reactor_connect_req_t));
+	if(unlikely(creq == NULL)) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	creq->buf = shm_malloc(len);
+	if(unlikely(creq->buf == NULL)) {
+		SHM_MEM_ERROR;
+		shm_free(creq);
+		return -1;
+	}
+	memcpy(creq->buf, buf, len);
+	creq->len = len;
+	creq->dst = dst->to;
+	if(from != NULL) {
+		creq->from = *from;
+		creq->have_from = 1;
+	} else {
+		creq->have_from = 0;
+	}
+	creq->proto = dst->proto;
+	creq->id = dst->id;
+	creq->try_local_port = (dst->send_sock) ? dst->send_sock->port_no : 0;
+	creq->send_flags = dst->send_flags;
+
+	response[0] = (long)(uintptr_t)creq;
+	response[1] = CONN_CONNECT_REQ;
+	if(unlikely(send_all(unix_tcp_sock, response, sizeof(response)) <= 0)) {
+		LM_ERR("failed to send connect request to tcp main: %s (%d)\n",
+				strerror(errno), errno);
+		shm_free(creq->buf);
+		shm_free(creq);
+		return -1;
+	}
+	return (int)len;
+}
 #endif /* TCP_ASYNC */
 
 /* finds a tcpconn & sends on it
@@ -2446,6 +2492,13 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 					break;
 			}
 		}
+#ifdef TCP_ASYNC
+		if(unlikely(ksr_tcp_main_threads == 2)) {
+			/* mode 2: workers do not open sockets - ask PROC_TCP_MAIN to create
+			 * the outbound connection and send on it. */
+			return tcp_reactor_connect_put(dst, from, buf, len);
+		}
+#endif /* TCP_ASYNC */
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
 		if(likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait)
 				   && cfg_get(tcp, tcp_cfg, async))) {
@@ -4273,6 +4326,101 @@ error:
 }
 
 
+#ifdef TCP_ASYNC
+/* mode 2: queue a payload into c's wbuf_q, encrypting first for TLS (tls_encode
+ * runs OpenSSL via the direct-call trampoline, valid here in PROC_TCP_MAIN).
+ * The caller must NOT hold c->write_lock. Returns 0 on success, -1 on error
+ * (marks c bad and forces timeout). Mirrors the TLS branch of
+ * tcpconn_send_put(). */
+static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
+		unsigned len, snd_flags_t send_flags)
+{
+#ifdef USE_TLS
+	const char *t_buf, *rest_buf;
+	unsigned t_len, rest_len;
+	snd_flags_t t_send_flags;
+	int wn;
+#endif /* USE_TLS */
+
+	lock_get(&c->write_lock);
+#ifdef USE_TLS
+	if(unlikely(c->type == PROTO_TLS || c->type == PROTO_WSS)) {
+		t_buf = buf;
+		t_len = len;
+		do {
+			t_send_flags = send_flags;
+			wn = tls_encode(
+					c, &t_buf, &t_len, &rest_buf, &rest_len, &t_send_flags);
+			if(unlikely((wn < 0)
+						|| (t_len && (_wbufq_add(c, t_buf, t_len) < 0)))) {
+				lock_release(&c->write_lock);
+				c->state = S_CONN_BAD;
+				c->timeout = get_ticks_raw(); /* force timeout */
+				return -1;
+			}
+			t_buf = rest_buf;
+			t_len = rest_len;
+		} while(unlikely(rest_len && wn > 0));
+	} else
+#endif /* USE_TLS */
+		if(unlikely(len && (_wbufq_add(c, buf, len) < 0))) {
+			lock_release(&c->write_lock);
+			c->state = S_CONN_BAD;
+			c->timeout = get_ticks_raw(); /* force timeout */
+			return -1;
+		}
+	lock_release(&c->write_lock);
+	return 0;
+}
+
+/* mode 2: enable POLLOUT watching on an already-hashed, read-watched connection
+ * (mirrors the CONN_QUEUED_WRITE logic). Returns 0 on success, -1 on error
+ * (connection is unhashed and destroyed on io_watch failure). */
+static int tcp_reactor_watch_write(struct tcp_connection *c)
+{
+	ticks_t t;
+
+	if(c->flags & F_CONN_WANTS_WR)
+		return 0;
+	c->flags |= F_CONN_WANTS_WR;
+	t = get_ticks_raw();
+	if(likely((c->flags & F_CONN_MAIN_TIMER)
+			   && (TICKS_LT(c->wbuf_q.wr_timeout, c->timeout))
+			   && TICKS_LT(t, c->wbuf_q.wr_timeout))) {
+		local_timer_del(&tcp_main_ltimer, &c->timer);
+		local_timer_reinit(&c->timer);
+		local_timer_add(
+				&tcp_main_ltimer, &c->timer, c->wbuf_q.wr_timeout - t, t);
+	}
+	if(!(c->flags & F_CONN_WRITE_W)) {
+		c->flags |= F_CONN_WRITE_W;
+		if(!(c->flags & F_CONN_READ_W)) {
+			if(unlikely(io_watch_add(&io_h, c->s, POLLOUT, F_TCPCONN, c) < 0)) {
+				LM_CRIT("failed to enable write watch (reactor)\n");
+				if(tcpconn_try_unhash(c))
+					tcpconn_put_destroy(c);
+				return -1;
+			}
+		} else {
+			if(unlikely(io_watch_chg(&io_h, c->s, POLLIN | POLLOUT, -1) < 0)) {
+				LM_CRIT("failed to change socket watch events (reactor)\n");
+				if(tcpconn_try_unhash(c)) {
+					io_watch_del(&io_h, c->s, -1, IO_FD_CLOSING);
+					c->flags &= ~F_CONN_READ_W;
+					tcpconn_put_destroy(c);
+				} else {
+					BUG("unhashed connection watched for IO\n");
+					io_watch_del(&io_h, c->s, -1, 0);
+					c->flags &= ~F_CONN_READ_W;
+				}
+				return -1;
+			}
+		}
+	}
+	return 0;
+}
+#endif /* TCP_ASYNC */
+
 /* handles io from a "generic" process (get fd or new_fd from a tcp_send)
  *
  * params: p     - pointer in the processes array (pt[]), to the entry for
@@ -4534,16 +4682,9 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 		case CONN_WRITE_REQ: {
 			/* mode 2: worker queued a write; response[0] is the write request,
 			 * not a tcp_connection. tcp_main queues the payload into the wbuf_q
-			 * (encrypting it first for TLS, since OpenSSL must run here) and
-			 * enables write watching, mirroring the CONN_QUEUED_WRITE logic. */
+			 * (encrypting it first for TLS) and enables write watching. */
 			tcp_reactor_write_req_t *wreq =
 					(tcp_reactor_write_req_t *)response[0];
-#ifdef USE_TLS
-			const char *t_buf, *rest_buf;
-			unsigned t_len, rest_len;
-			snd_flags_t t_send_flags;
-			int wn;
-#endif /* USE_TLS */
 			tcpconn = wreq->conn;
 			/* release the worker's refcnt; if it was the last, conn is gone */
 			if(unlikely(tcpconn_put(tcpconn))) {
@@ -4559,96 +4700,112 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 				shm_free(wreq);
 				break;
 			}
-			lock_get(&tcpconn->write_lock);
-#ifdef USE_TLS
-			if(unlikely(tcpconn->type == PROTO_TLS
-						|| tcpconn->type == PROTO_WSS)) {
-				/* encrypt in tcp_main: tls_encode() runs OpenSSL through the
-				 * mode-2 direct-call trampoline (is_tcp_main() is true here).
-				 * The wire bytes go into the wbuf_q, mirroring the TLS branch
-				 * of tcpconn_send_put(). */
-				t_buf = wreq->buf;
-				t_len = wreq->len;
-				do {
-					t_send_flags = wreq->send_flags;
-					wn = tls_encode(tcpconn, &t_buf, &t_len, &rest_buf,
-							&rest_len, &t_send_flags);
-					if(unlikely((wn < 0)
-								|| (t_len
-										&& (_wbufq_add(tcpconn, t_buf, t_len)
-												< 0)))) {
-						lock_release(&tcpconn->write_lock);
-						tcpconn->state = S_CONN_BAD;
-						tcpconn->timeout = get_ticks_raw(); /* force timeout */
-						shm_free(wreq->buf);
-						shm_free(wreq);
-						goto write_req_end;
-					}
-					t_buf = rest_buf;
-					t_len = rest_len;
-				} while(unlikely(rest_len && wn > 0));
-			} else
-#endif /* USE_TLS */
-				if(unlikely(wreq->len
-							&& (_wbufq_add(tcpconn, wreq->buf, wreq->len)
-									< 0))) {
-					lock_release(&tcpconn->write_lock);
-					tcpconn->state = S_CONN_BAD;
-					tcpconn->timeout = get_ticks_raw(); /* force timeout */
-					shm_free(wreq->buf);
-					shm_free(wreq);
-					goto write_req_end;
-				}
-			lock_release(&tcpconn->write_lock);
+			if(unlikely(tcp_reactor_wbuf_enqueue(
+								tcpconn, wreq->buf, wreq->len, wreq->send_flags)
+						< 0)) {
+				shm_free(wreq->buf);
+				shm_free(wreq);
+				break;
+			}
 			shm_free(wreq->buf);
 			shm_free(wreq);
-			/* enable write watching if not already (same idiom as
-			 * CONN_QUEUED_WRITE) */
-			if(!(tcpconn->flags & F_CONN_WANTS_WR)) {
-				tcpconn->flags |= F_CONN_WANTS_WR;
-				t = get_ticks_raw();
-				if(likely((tcpconn->flags & F_CONN_MAIN_TIMER)
-						   && (TICKS_LT(tcpconn->wbuf_q.wr_timeout,
-								   tcpconn->timeout))
-						   && TICKS_LT(t, tcpconn->wbuf_q.wr_timeout))) {
-					local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
-					local_timer_reinit(&tcpconn->timer);
-					local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
-							tcpconn->wbuf_q.wr_timeout - t, t);
-				}
-				if(!(tcpconn->flags & F_CONN_WRITE_W)) {
-					tcpconn->flags |= F_CONN_WRITE_W;
-					if(!(tcpconn->flags & F_CONN_READ_W)) {
-						if(unlikely(io_watch_add(&io_h, tcpconn->s, POLLOUT,
-											F_TCPCONN, tcpconn)
-									< 0)) {
-							LM_CRIT("failed to enable write watch (reactor)\n");
-							if(tcpconn_try_unhash(tcpconn))
-								tcpconn_put_destroy(tcpconn);
-							break;
-						}
-					} else {
-						if(unlikely(io_watch_chg(&io_h, tcpconn->s,
-											POLLIN | POLLOUT, -1)
-									< 0)) {
-							LM_CRIT("failed to change socket watch events "
-									"(reactor)\n");
-							if(tcpconn_try_unhash(tcpconn)) {
-								io_watch_del(
-										&io_h, tcpconn->s, -1, IO_FD_CLOSING);
-								tcpconn->flags &= ~F_CONN_READ_W;
-								tcpconn_put_destroy(tcpconn);
-							} else {
-								BUG("unhashed connection watched for IO\n");
-								io_watch_del(&io_h, tcpconn->s, -1, 0);
-								tcpconn->flags &= ~F_CONN_READ_W;
-							}
-							break;
-						}
-					}
-				}
+			tcp_reactor_watch_write(tcpconn);
+			break;
+		}
+		case CONN_CONNECT_REQ: {
+			/* mode 2: worker has no usable connection - open a new outbound
+			 * one here in PROC_TCP_MAIN. response[0] is the connect request. */
+			tcp_reactor_connect_req_t *creq =
+					(tcp_reactor_connect_req_t *)response[0];
+			struct tcp_connection *cc;
+			union sockaddr_union *cfrom;
+			struct ip_addr cip;
+			int cport;
+
+			cfrom = creq->have_from ? &creq->from : NULL;
+			su2ip_addr(&cip, &creq->dst);
+			cport = su_getport(&creq->dst);
+			con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
+			/* dedup: another worker may have created a matching connection
+			 * since this worker's lookup missed => reuse it if so */
+			if(tcp_connection_match == TCPCONN_MATCH_STRICT
+					|| (creq->send_flags.f & SND_F_FORCE_PROTO)) {
+				cc = tcpconn_lookup(creq->id, &cip, cport, cfrom,
+						creq->try_local_port, con_lifetime, creq->proto);
+			} else {
+				cc = tcpconn_get(creq->id, &cip, cport, cfrom, con_lifetime);
 			}
-		write_req_end:
+			if(cc != NULL) {
+				/* reuse: queue the payload onto the existing connection */
+				if(unlikely(tcpconn_put(cc))) {
+					tcpconn_destroy(cc);
+					shm_free(creq->buf);
+					shm_free(creq);
+					break;
+				}
+				if(likely(!(cc->state == S_CONN_BAD)
+						   && (cc->flags & F_CONN_HASHED))) {
+					if(likely(tcp_reactor_wbuf_enqueue(cc, creq->buf, creq->len,
+									  creq->send_flags)
+							   == 0))
+						tcp_reactor_watch_write(cc);
+				}
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			/* open the connection (socket + non-blocking connect) here */
+			cc = tcpconn_connect(
+					&creq->dst, cfrom, creq->proto, &creq->send_flags);
+			if(unlikely(cc == NULL)) {
+				LM_ERR("failed to open outbound connection to %s\n",
+						su2a(&creq->dst, sizeof(creq->dst)));
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			atomic_set(&cc->refcnt, 1); /* owned solely by tcp_main (hash) */
+			if(unlikely(tcpconn_add(cc) == 0)) {
+				LM_ERR("failed to hash outbound connection %p\n", cc);
+				tcp_safe_close(cc->s);
+				cc->flags |= F_CONN_FD_CLOSED;
+				_tcpconn_free(cc);
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			(*tcp_connections_no)++;
+			if(unlikely(cc->type == PROTO_TLS))
+				(*tls_connections_no)++;
+			/* queue the payload (for TLS, tls_encode() buffers it until the
+			 * handshake completes - Step 12 drives the handshake) */
+			if(unlikely(tcp_reactor_wbuf_enqueue(
+								cc, creq->buf, creq->len, creq->send_flags)
+						< 0)) {
+				tcpconn_try_unhash(cc);
+				tcpconn_put_destroy(cc);
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			shm_free(creq->buf);
+			shm_free(creq);
+			/* register in the reactor: watch read + write. The POLLOUT event
+			 * completes the connect and drains the wbuf_q. */
+			t = get_ticks_raw();
+			cc->timeout = t + con_lifetime;
+			local_timer_add(&tcp_main_ltimer, &cc->timer, con_lifetime, t);
+			cc->flags |= F_CONN_MAIN_TIMER | F_CONN_READ_W | F_CONN_WANTS_RD
+						 | F_CONN_WRITE_W | F_CONN_WANTS_WR;
+			cc->flags &= ~F_CONN_FD_CLOSED;
+			if(unlikely(io_watch_add(
+								&io_h, cc->s, POLLIN | POLLOUT, F_TCPCONN, cc)
+						< 0)) {
+				LM_CRIT("failed to add outbound connection to the fd list\n");
+				cc->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
+				tcpconn_try_unhash(cc);
+				tcpconn_put_destroy(cc);
+			}
 			break;
 		}
 #ifdef TCP_CONNECT_WAIT
@@ -5109,14 +5266,21 @@ inline static int handle_tcpconn_ev(
 		return 0;
 
 	reactor_close:
-		if(unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, IO_FD_CLOSING) < 0)) {
-			LM_ERR("io_watch_del (reactor) failed for %p fd %d\n", tcpconn,
-					tcpconn->s);
-		}
-		tcpconn->flags &= ~(F_CONN_MAIN_TIMER | F_CONN_READ_W | F_CONN_WRITE_W
-							| F_CONN_WANTS_RD | F_CONN_WANTS_WR);
+		/* unhash first, while F_CONN_MAIN_TIMER is still set, so the local
+		 * timer is removed before the connection is freed (try_unhash only
+		 * deletes the timer when the flag is set). Then stop watching the fd. */
 		if(tcpconn_try_unhash(tcpconn))
 			tcpconn_put(tcpconn);
+		if((tcpconn->flags & (F_CONN_WRITE_W | F_CONN_READ_W))
+				&& (tcpconn->s != -1)) {
+			if(unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, IO_FD_CLOSING)
+						< 0)) {
+				LM_ERR("io_watch_del (reactor) failed for %p fd %d\n", tcpconn,
+						tcpconn->s);
+			}
+			tcpconn->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
+		}
+		tcpconn->flags &= ~(F_CONN_WANTS_RD | F_CONN_WANTS_WR);
 		tcpconn_put_destroy(tcpconn);
 		return -1;
 	}
