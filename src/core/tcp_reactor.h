@@ -23,7 +23,9 @@
 #ifndef _TCP_REACTOR_H_
 #define _TCP_REACTOR_H_
 
-#include "ip_addr.h" /* struct receive_info */
+#include "ip_addr.h" /* struct receive_info, snd_flags_t */
+
+struct tcp_connection;
 
 /*
  * Task dispatched from PROC_TCP_MAIN to a TCP worker (mode 2).
@@ -41,6 +43,23 @@ typedef struct tcp_reactor_task
 	unsigned int msg_len;
 	char msg_buf[0]; /* inline message buffer, null-terminated */
 } tcp_reactor_task_t;
+
+/*
+ * Write request sent from a TCP worker to PROC_TCP_MAIN (mode 2).
+ *
+ * Allocated in shared memory by the worker in tcp_send(); the pointer is
+ * passed to tcp_main via pt[process_no].unix_sock as response[0] with
+ * command CONN_WRITE_REQ. tcp_main queues buf into conn->wbuf_q, enables
+ * POLLOUT watching, releases the worker's connection refcnt, and frees
+ * both buf and the request struct.
+ */
+typedef struct tcp_reactor_write_req
+{
+	struct tcp_connection *conn; /* refcnt held by worker; tcp_main releases */
+	char *buf;					 /* shm-allocated payload */
+	unsigned int len;
+	snd_flags_t send_flags;
+} tcp_reactor_write_req_t;
 
 /* Allocate a tcp_reactor_task_t in shm, copy buf+rcv into it, and write
  * the pointer to the dispatch socketpair write end. Called from

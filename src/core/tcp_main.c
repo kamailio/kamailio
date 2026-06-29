@@ -99,6 +99,7 @@
 #include "tcp_options.h"
 #include "tcp_mtops.h"
 #include "tcp_read.h"
+#include "tcp_reactor.h"
 #include "ut.h"
 #include "events.h"
 #include "cfg/cfg_struct.h"
@@ -4477,6 +4478,87 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 				LM_WARN("connection %p already watched for write\n", tcpconn);
 			}
 			break;
+		case CONN_WRITE_REQ: {
+			/* mode 2: worker queued a write; response[0] is the write request,
+			 * not a tcp_connection. tcp_main appends to the wbuf_q and enables
+			 * write watching, mirroring the CONN_QUEUED_WRITE logic above. */
+			tcp_reactor_write_req_t *wreq =
+					(tcp_reactor_write_req_t *)response[0];
+			tcpconn = wreq->conn;
+			/* release the worker's refcnt; if it was the last, conn is gone */
+			if(unlikely(tcpconn_put(tcpconn))) {
+				tcpconn_destroy(tcpconn);
+				shm_free(wreq->buf);
+				shm_free(wreq);
+				break;
+			}
+			if(unlikely((tcpconn->state == S_CONN_BAD)
+						|| !(tcpconn->flags & F_CONN_HASHED))) {
+				/* in the process of being destroyed => drop the write */
+				shm_free(wreq->buf);
+				shm_free(wreq);
+				break;
+			}
+			lock_get(&tcpconn->write_lock);
+			if(unlikely(_wbufq_add(tcpconn, wreq->buf, wreq->len) < 0)) {
+				lock_release(&tcpconn->write_lock);
+				tcpconn->state = S_CONN_BAD;
+				tcpconn->timeout = get_ticks_raw(); /* force timeout */
+				shm_free(wreq->buf);
+				shm_free(wreq);
+				break;
+			}
+			lock_release(&tcpconn->write_lock);
+			shm_free(wreq->buf);
+			shm_free(wreq);
+			/* enable write watching if not already (same idiom as
+			 * CONN_QUEUED_WRITE) */
+			if(!(tcpconn->flags & F_CONN_WANTS_WR)) {
+				tcpconn->flags |= F_CONN_WANTS_WR;
+				t = get_ticks_raw();
+				if(likely((tcpconn->flags & F_CONN_MAIN_TIMER)
+						   && (TICKS_LT(tcpconn->wbuf_q.wr_timeout,
+								   tcpconn->timeout))
+						   && TICKS_LT(t, tcpconn->wbuf_q.wr_timeout))) {
+					local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
+					local_timer_reinit(&tcpconn->timer);
+					local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
+							tcpconn->wbuf_q.wr_timeout - t, t);
+				}
+				if(!(tcpconn->flags & F_CONN_WRITE_W)) {
+					tcpconn->flags |= F_CONN_WRITE_W;
+					if(!(tcpconn->flags & F_CONN_READ_W)) {
+						if(unlikely(io_watch_add(&io_h, tcpconn->s, POLLOUT,
+											F_TCPCONN, tcpconn)
+									< 0)) {
+							LM_CRIT("failed to enable write watch (reactor)\n");
+							if(tcpconn_try_unhash(tcpconn))
+								tcpconn_put_destroy(tcpconn);
+							break;
+						}
+					} else {
+						if(unlikely(io_watch_chg(&io_h, tcpconn->s,
+											POLLIN | POLLOUT, -1)
+									< 0)) {
+							LM_CRIT("failed to change socket watch events "
+									"(reactor)\n");
+							if(tcpconn_try_unhash(tcpconn)) {
+								io_watch_del(
+										&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+								tcpconn->flags &= ~F_CONN_READ_W;
+								tcpconn_put_destroy(tcpconn);
+							} else {
+								BUG("unhashed connection watched for IO\n");
+								io_watch_del(&io_h, tcpconn->s, -1, 0);
+								tcpconn->flags &= ~F_CONN_READ_W;
+							}
+							break;
+						}
+					}
+				}
+			}
+			break;
+		}
 #ifdef TCP_CONNECT_WAIT
 		case CONN_NEW_COMPLETE:
 		case CONN_NEW_PENDING_WRITE:

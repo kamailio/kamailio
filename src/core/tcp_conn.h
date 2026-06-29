@@ -182,6 +182,10 @@ typedef enum conn_cmds
 	,
 	CONN_NEW_COMPLETE /* like CONN_NEW_PENDING_WRITE, but there is no
 						* pending write (the write queue might be empty) */
+	,
+	CONN_WRITE_REQ /* mode 2: worker asks tcp_main to queue a write on an
+						* existing connection; response[0] is a
+						* tcp_reactor_write_req_t*, not a tcp_connection* */
 } conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
