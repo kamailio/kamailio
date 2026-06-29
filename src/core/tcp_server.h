@@ -32,6 +32,10 @@
 int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		unsigned len);
 
+/* mode 2 reactor: returns the read end of the dispatch socketpair.
+ * Workers call this once during init to obtain the fd to watch. */
+int ksr_tcp_reactor_get_dispatch_rfd(void);
+
 int tcpconn_add_alias(int id, int port, int proto);
 
 
