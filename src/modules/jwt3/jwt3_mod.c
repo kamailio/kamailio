@@ -928,10 +928,16 @@ static int ki_jwt_verify_key(
 		/* find key item by kid in a JWKS ... */
 		if(hdr.value) {
 			item = jwks_find_bykid(jwks, hdr.value);
+			if(item == NULL) {
+				/* kid present but not found - fall back to first key */
+				LM_DBG("kid '%s' not found in JWKS, falling back to first "
+					   "key\n",
+						hdr.value);
+				item = jwks_item_get(jwks, 0);
+			}
 			free(hdr.value); /* clean up */
-		}
-		/* or use the first item */
-		if(item == NULL) {
+		} else {
+			/* no kid in JWT - use first key */
 			item = jwks_item_get(jwks, 0);
 		}
 
