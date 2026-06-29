@@ -207,6 +207,11 @@ int ksr_tcp_reactor_get_dispatch_rfd(void)
 	return ksr_tcp_reactor_dsock[0];
 }
 
+int ksr_tcp_reactor_get_dispatch_wfd(void)
+{
+	return ksr_tcp_reactor_dsock[1];
+}
+
 static int tcp_proto_no = -1; /* tcp protocol number as returned by
 							   getprotobyname */
 

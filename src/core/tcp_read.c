@@ -49,6 +49,7 @@
 #include "tcp_ev.h"
 #include "pass_fd.h"
 #include "globals.h"
+#include "tcp_reactor.h"
 #include "receive.h"
 #include "timer.h"
 #include "local_timer.h"
@@ -1822,26 +1823,43 @@ again:
 			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
 			if(unlikely(req->state == H_MSRP_FINISH)) {
 				/* msrp frame */
-				ret = receive_tcp_msg(
-						req->start, req->parsed - req->start, &con->rcv, con);
+				if(ksr_tcp_main_threads == 2)
+					ret = tcp_reactor_dispatch_msg(
+							req->start, req->parsed - req->start, &con->rcv);
+				else
+					ret = receive_tcp_msg(req->start, req->parsed - req->start,
+							&con->rcv, con);
 			} else
 #endif
 #ifdef READ_HTTP11
 					if(unlikely(req->state == H_HTTP11_CHUNK_FINISH)) {
 				/* http chunked request */
 				req->body[req->content_len] = 0;
-				ret = receive_tcp_msg(req->start,
-						req->body + req->content_len - req->start, &con->rcv,
-						con);
+				if(ksr_tcp_main_threads == 2)
+					ret = tcp_reactor_dispatch_msg(req->start,
+							req->body + req->content_len - req->start,
+							&con->rcv);
+				else
+					ret = receive_tcp_msg(req->start,
+							req->body + req->content_len - req->start,
+							&con->rcv, con);
 			} else
 #endif
 #ifdef READ_WS
 					if(unlikely(con->type == PROTO_WS
 								|| con->type == PROTO_WSS)) {
-				ret = receive_tcp_msg(
-						req->start, req->parsed - req->start, &con->rcv, con);
+				if(ksr_tcp_main_threads == 2)
+					ret = tcp_reactor_dispatch_msg(
+							req->start, req->parsed - req->start, &con->rcv);
+				else
+					ret = receive_tcp_msg(req->start, req->parsed - req->start,
+							&con->rcv, con);
 			} else
 #endif
+					if(ksr_tcp_main_threads == 2)
+				ret = tcp_reactor_dispatch_msg(
+						req->start, req->parsed - req->start, &con->rcv);
+			else
 				ret = receive_tcp_msg(
 						req->start, req->parsed - req->start, &con->rcv, con);
 

@@ -42,4 +42,10 @@ typedef struct tcp_reactor_task
 	char msg_buf[0]; /* inline message buffer, null-terminated */
 } tcp_reactor_task_t;
 
+/* Allocate a tcp_reactor_task_t in shm, copy buf+rcv into it, and write
+ * the pointer to the dispatch socketpair write end. Called from
+ * PROC_TCP_MAIN in mode 2 wherever receive_tcp_msg() would be called. */
+int tcp_reactor_dispatch_msg(
+		char *buf, unsigned int len, struct receive_info *rcv);
+
 #endif /* _TCP_REACTOR_H_ */
