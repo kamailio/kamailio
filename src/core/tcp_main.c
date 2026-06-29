@@ -98,6 +98,7 @@
 #include "tcp_info.h"
 #include "tcp_options.h"
 #include "tcp_mtops.h"
+#include "tcp_read.h"
 #include "ut.h"
 #include "events.h"
 #include "cfg/cfg_struct.h"
@@ -4864,6 +4865,87 @@ inline static int handle_tcpconn_ev(
 	int empty_q;
 	int bytes;
 #endif /* TCP_ASYNC */
+
+	if(unlikely(ksr_tcp_main_threads == 2)) {
+		/* full reactor mode: tcp_main owns the fd permanently, reads and
+		 * reassembles SIP messages directly (no fd-passing, no send2child).
+		 * busy tracking is intentionally bypassed (see send2child). */
+		rd_conn_flags_t read_flags;
+		int n;
+		int resp;
+
+#ifdef TCP_ASYNC
+		/* drain pending writes first if the fd is write-watched */
+		if((ev & (POLLOUT | POLLERR | POLLHUP))
+				&& (tcpconn->flags & F_CONN_WRITE_W)) {
+			int wempty_q = 0;
+			if(unlikely((ev & (POLLERR | POLLHUP))
+						|| (wbufq_run(tcpconn->s, tcpconn, &wempty_q) < 0))) {
+				/* write error or peer gone: tear the connection down */
+				goto reactor_close;
+			}
+			if(wempty_q) {
+				tcpconn->flags &= ~F_CONN_WANTS_WR;
+				if(!(tcpconn->flags & F_CONN_READ_W)) {
+					if(unlikely(io_watch_chg(&io_h, tcpconn->s, POLLIN, fd_i)
+								== -1)) {
+						LM_ERR("io_watch_chg (reactor wr) failed for %p fd "
+							   "%d\n",
+								tcpconn, tcpconn->s);
+						goto reactor_close;
+					}
+				}
+				tcpconn->flags &= ~F_CONN_WRITE_W;
+				if(tcpconn_close_after_send(tcpconn))
+					goto reactor_close;
+			}
+		}
+#endif /* TCP_ASYNC */
+
+		if(ev & (POLLIN | POLLERR | POLLHUP)) {
+			/* fold any error/EOF event into a forced EOF so a final buffered
+			 * message is still drained before the connection is closed */
+			read_flags =
+					((
+#ifdef POLLRDHUP
+							 (ev & POLLRDHUP) |
+#endif /* POLLRDHUP */
+							 (ev & (POLLHUP | POLLERR))
+							 | (tcpconn->flags
+									 & (F_CONN_EOF_SEEN | F_CONN_FORCE_EOF)))
+							&& !(ev & POLLPRI))
+							? RD_CONN_FORCE_EOF
+							: 0;
+		repeat_read:
+			resp = tcp_read_req(tcpconn, &n, &read_flags);
+			/* tcp_read_req() dispatches complete messages to workers via
+			 * tcp_reactor_dispatch_msg(); for TLS it may run OpenSSL through
+			 * the direct-call trampoline (KSR_TCPX_MAIN_PIDX). */
+			if(unlikely(resp < 0)) {
+				if(resp != CONN_EOF)
+					tcpconn->state = S_CONN_BAD;
+				goto reactor_close;
+			}
+			if(unlikely(read_flags & RD_CONN_REPEAT_READ))
+				goto repeat_read;
+			/* partial or complete read: keep the fd, refresh idle timeout */
+			tcpconn->timeout =
+					get_ticks_raw() + cfg_get(tcp, tcp_cfg, con_lifetime);
+		}
+		return 0;
+
+	reactor_close:
+		if(unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, IO_FD_CLOSING) < 0)) {
+			LM_ERR("io_watch_del (reactor) failed for %p fd %d\n", tcpconn,
+					tcpconn->s);
+		}
+		tcpconn->flags &= ~(F_CONN_MAIN_TIMER | F_CONN_READ_W | F_CONN_WRITE_W
+							| F_CONN_WANTS_RD | F_CONN_WANTS_WR);
+		if(tcpconn_try_unhash(tcpconn))
+			tcpconn_put(tcpconn);
+		tcpconn_put_destroy(tcpconn);
+		return -1;
+	}
 
 	/* pass it to child, so remove it from the io watch list  and the local
 	 *  timer */
