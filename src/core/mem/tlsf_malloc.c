@@ -1030,8 +1030,8 @@ void tlsf_free(tlsf_t tlsf, void *ptr)
 #endif
 {
 #ifdef DBG_TLSF_MALLOC
-	MDBG("tlsf_free(%p, %p), called from %s: %s(%u)\n", tlsf, ptr, file,
-			function, line);
+	MDBG("tlsf_free(%p, %p), called from %s:%u %s()\n", tlsf, ptr, file, line,
+			function);
 #endif
 	/* Don't attempt to free a NULL pointer. */
 	if(ptr) {
@@ -1041,10 +1041,10 @@ void tlsf_free(tlsf_t tlsf, void *ptr)
 			LOG(L_CRIT,
 					"BUG: tlsf_free: freeing already freed pointer (%p)"
 #ifdef DBG_TLSF_MALLOC
-					", called from %s: %s(%u)"
-					", first free %s: %s(%u)\n",
-					ptr, file, function, line, block->alloc_info.file,
-					block->alloc_info.func, block->alloc_info.line);
+					", called from %s:%u %s()"
+					", first free %s:%u %s()\n",
+					ptr, file, line, function, block->alloc_info.file,
+					block->alloc_info.line, block->alloc_info.func);
 #else
 					"\n",
 					ptr);
@@ -1075,8 +1075,8 @@ void tlsf_free(tlsf_t tlsf, void *ptr)
 		block_insert(control, block);
 	} else {
 #ifdef DBG_TLSF_MALLOC
-		LOG(L_WARN, "tlsf_free: free(0) called from %s: %s(%u)\n", file,
-				function, line);
+		LOG(L_WARN, "tlsf_free: free(0) called from %s:%u %s()\n", file, line,
+				function);
 #else
 		LOG(L_WARN, "tlsf_free: free(0) called\n");
 #endif
