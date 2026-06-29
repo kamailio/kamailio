@@ -2305,6 +2305,51 @@ static int tcpconn_1st_send(int fd, struct tcp_connection *c, const char *buf,
 		}                                          \
 	} while(0)
 
+#ifdef TCP_ASYNC
+/* mode 2: ship a write payload to PROC_TCP_MAIN, which queues it (and, for TLS,
+ * encrypts it - Step 10) and drives the async write. The refcnt held by the
+ * caller on c is transferred to the write request and released by tcp_main on
+ * completion (see the CONN_WRITE_REQ handler in handle_ser_child()).
+ * Returns len on success (optimistic - tcp_main owns the actual send), or -1 on
+ * error (in which case c is released here). */
+static int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
+		unsigned len, snd_flags_t send_flags)
+{
+	tcp_reactor_write_req_t *wreq;
+	long response[2];
+
+	wreq = shm_malloc(sizeof(tcp_reactor_write_req_t));
+	if(unlikely(wreq == NULL)) {
+		SHM_MEM_ERROR;
+		tcpconn_chld_put(c);
+		return -1;
+	}
+	wreq->buf = shm_malloc(len);
+	if(unlikely(wreq->buf == NULL)) {
+		SHM_MEM_ERROR;
+		shm_free(wreq);
+		tcpconn_chld_put(c);
+		return -1;
+	}
+	memcpy(wreq->buf, buf, len);
+	wreq->len = len;
+	wreq->conn = c; /* refcnt transferred to tcp_main */
+	wreq->send_flags = send_flags;
+
+	response[0] = (long)(uintptr_t)wreq;
+	response[1] = CONN_WRITE_REQ;
+	if(unlikely(send_all(unix_tcp_sock, response, sizeof(response)) <= 0)) {
+		LM_ERR("failed to send write request to tcp main: %s (%d)\n",
+				strerror(errno), errno);
+		shm_free(wreq->buf);
+		shm_free(wreq);
+		tcpconn_chld_put(c);
+		return -1;
+	}
+	return (int)len;
+}
+#endif /* TCP_ASYNC */
+
 /* finds a tcpconn & sends on it
  * uses the dst members to, proto (TCP|TLS) and id and tries to send
  *  from the "from" address (if non null and id==0)
@@ -2715,6 +2760,14 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		goto release_c;
 	} /* if (c==0 or unusable) new connection */
 	tcp_dst_ephemeral_set(n, c, dst);
+#ifdef TCP_ASYNC
+	if(unlikely(ksr_tcp_main_threads == 2)) {
+		/* mode 2: existing connection - dispatch the write to PROC_TCP_MAIN
+		 * instead of getting the fd and writing here. New-connection (c==0)
+		 * handling is Step 11. */
+		return tcp_reactor_send_put(c, buf, len, dst->send_flags);
+	}
+#endif /* TCP_ASYNC */
 	/* existing connection, send on it */
 	n = tcpconn_send_put(c, buf, len, dst->send_flags);
 	/* no deref needed (automatically done inside tcpconn_send_put() */
