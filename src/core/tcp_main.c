@@ -5283,7 +5283,17 @@ inline static int handle_tcpconn_ev(
 	if(unlikely(ksr_tcp_main_threads == 2)) {
 		/* full reactor mode: tcp_main owns the fd permanently, reads and
 		 * reassembles SIP messages directly (no fd-passing, no send2child).
-		 * busy tracking is intentionally bypassed (see send2child). */
+		 *
+		 * Worker busy-tracking (tcp_children[].busy) is intentionally bypassed:
+		 * .busy is only ever mutated by send2child() (increment, when a fd is
+		 * handed to a worker) and by its decrement counterparts in
+		 * handle_tcp_child() / the send2child() error paths. None of those run
+		 * in mode 2 -- this branch returns before the send2child() call below,
+		 * and the tcp_children[] unix sockets carry no fd-passing traffic -- so
+		 * every .busy stays 0. That is harmless: .busy only feeds the
+		 * least-busy worker selection in send2child(), which mode 2 does not
+		 * use (the kernel load-balances the shared dispatch DGRAM socket across
+		 * workers instead). No load-balancing fidelity is lost. */
 		rd_conn_flags_t read_flags;
 		int n;
 		int resp;
