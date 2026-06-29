@@ -4469,6 +4469,39 @@ static int tcp_reactor_watch_write(struct tcp_connection *c)
 	}
 	return 0;
 }
+
+/* mode 2: while a SIP message is mid-read on c (tvrstart set), cap the
+ * connection timeout to the message-read deadline
+ * (tvrstart + ksr_tcp_msg_read_timeout) and re-arm the local timer so tcp_main
+ * reaps a stalled partial read by itself, without relying on the cross-process
+ * tcp_timer_check_connections() scan. No-op when no message is in flight
+ * (tvrstart == 0) or the timeout is disabled, so completed/idle connections
+ * keep the normal con_lifetime idle timeout. t must be the current tick. */
+static void tcp_reactor_arm_read_timeout(struct tcp_connection *c, ticks_t t)
+{
+	struct timeval tvnow;
+	long long elapsed_us, remaining_ms;
+	ticks_t deadline;
+
+	if(likely(ksr_tcp_msg_read_timeout <= 0 || c->state != S_CONN_OK
+			   || c->req.tvrstart.tv_sec == 0))
+		return;
+	gettimeofday(&tvnow, NULL);
+	elapsed_us = 1000000LL * (tvnow.tv_sec - c->req.tvrstart.tv_sec)
+				 + (tvnow.tv_usec - c->req.tvrstart.tv_usec);
+	remaining_ms = (1000000LL * ksr_tcp_msg_read_timeout - elapsed_us) / 1000LL;
+	if(remaining_ms < 0)
+		remaining_ms = 0;
+	deadline = t + MS_TO_TICKS((ticks_t)remaining_ms);
+	if(TICKS_LT(deadline, c->timeout))
+		c->timeout = deadline;
+	/* re-arm the local timer to (possibly) fire earlier at the read deadline */
+	if(likely(c->flags & F_CONN_MAIN_TIMER)) {
+		local_timer_del(&tcp_main_ltimer, &c->timer);
+		local_timer_reinit(&c->timer);
+		local_timer_add(&tcp_main_ltimer, &c->timer, c->timeout - t, t);
+	}
+}
 #endif /* TCP_ASYNC */
 
 /* handles io from a "generic" process (get fd or new_fd from a tcp_send)
@@ -5309,9 +5342,16 @@ inline static int handle_tcpconn_ev(
 			}
 			if(unlikely(read_flags & RD_CONN_REPEAT_READ))
 				goto repeat_read;
-			/* partial or complete read: keep the fd, refresh idle timeout */
-			tcpconn->timeout =
-					get_ticks_raw() + cfg_get(tcp, tcp_cfg, con_lifetime);
+			/* partial or complete read: keep the fd, refresh the idle timeout.
+			 * If a message is still mid-read, also bound the timeout to the
+			 * message-read deadline so a stalled partial read is reaped. */
+			{
+				ticks_t tnow = get_ticks_raw();
+				tcpconn->timeout = tnow + cfg_get(tcp, tcp_cfg, con_lifetime);
+#ifdef TCP_ASYNC
+				tcp_reactor_arm_read_timeout(tcpconn, tnow);
+#endif /* TCP_ASYNC */
+			}
 		}
 		return 0;
 
@@ -5555,6 +5595,25 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 		else
 			return (ticks_t)(c->timeout - t);
 	}
+	/* mode 2: reap a connection whose partial SIP message stalled past the
+	 * read deadline. The read path (tcp_reactor_arm_read_timeout) bounds
+	 * c->timeout to that deadline, so reaching here with a message still
+	 * mid-read (tvrstart set) and the read window elapsed means a stalled
+	 * partial read; report it as such instead of idle/send timeout. */
+	if(unlikely(ksr_tcp_main_threads == 2 && ksr_tcp_msg_read_timeout > 0
+				&& c->state == S_CONN_OK && c->req.tvrstart.tv_sec > 0)) {
+		struct timeval tvnow;
+		long long tvdiff;
+		gettimeofday(&tvnow, NULL);
+		tvdiff = 1000000LL * (tvnow.tv_sec - c->req.tvrstart.tv_sec)
+				 + (tvnow.tv_usec - c->req.tvrstart.tv_usec);
+		if(tvdiff >= 1000000LL * ksr_tcp_msg_read_timeout) {
+			LM_DBG("reactor: message read timeout for %p after %lld us\n", c,
+					tvdiff);
+			TCP_STATS_CON_TIMEOUT();
+			goto reap;
+		}
+	}
 	/* if time out due to write, add it to the blocklist */
 	if(tcp_async && _wbufq_non_empty(c) && TICKS_GE(t, c->wbuf_q.wr_timeout)) {
 		if(unlikely(c->state == S_CONN_CONNECT)) {
@@ -5586,6 +5645,9 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	/* idle timeout */
 	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
 	TCP_STATS_CON_TIMEOUT();
+#endif /* TCP_ASYNC */
+#ifdef TCP_ASYNC
+reap:
 #endif /* TCP_ASYNC */
 	LM_DBG("timeout for %p\n", c);
 	if(likely(c->flags & F_CONN_HASHED)) {
