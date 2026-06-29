@@ -29,9 +29,9 @@
 typedef void *(*gcrypt_aes128_context_init_f)(uint8_t key[16]);
 typedef void (*gcrypt_aes128_context_destroy_f)(void **context);
 typedef int (*gcrypt_aes128_encrypt_f)(
-		uint8_t *output, uint8_t *input, void *context);
+		void *context, uint8_t *input, uint8_t *output);
 typedef int (*gcrypt_aes128_decrypt_f)(
-		uint8_t *output, uint8_t *input, void *context);
+		void *context, uint8_t *input, uint8_t *output);
 
 typedef struct gcrypt_api
 {
