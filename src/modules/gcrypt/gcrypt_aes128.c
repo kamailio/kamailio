@@ -50,7 +50,7 @@ void *aes128_context_init(uint8_t key[16])
 
 void aes128_context_destroy(void **context)
 {
-	if(context != NULL) {
+	if(context != NULL && *context != NULL) {
 		gcry_cipher_close(*context);
 		*context = NULL;
 	}
