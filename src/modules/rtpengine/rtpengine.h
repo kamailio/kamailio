@@ -80,7 +80,6 @@ struct rtpp_node
 	enum
 	{
 		RNU_UNKNOWN = -1,
-		RNU_LOCAL = 0,
 		RNU_UDP = 1,
 		RNU_UDP6 = 6,
 		RNU_WS = 2,

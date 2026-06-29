@@ -37,7 +37,6 @@
 #include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <sys/uio.h>
-#include <sys/un.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
@@ -96,13 +95,6 @@
 #include "api.h"
 
 MODULE_VERSION
-
-#if !defined(AF_LOCAL)
-#define AF_LOCAL AF_UNIX
-#endif
-#if !defined(PF_LOCAL)
-#define PF_LOCAL PF_UNIX
-#endif
 
 /* NAT UAC test constants */
 #define NAT_UAC_TEST_C_1918 0x01
@@ -1336,16 +1328,13 @@ int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 		} else if(strncasecmp(pnode->rn_address, "udp6:", 5) == 0) {
 			pnode->rn_umode = RNU_UDP6;
 			pnode->rn_address += 5;
-		} else if(strncasecmp(pnode->rn_address, "unix:", 5) == 0) {
-			pnode->rn_umode = RNU_LOCAL;
-			pnode->rn_address += 5;
 		} else if(strncasecmp(pnode->rn_address, "ws://", 5) == 0) {
 			pnode->rn_umode = RNU_WS;
 		} else if(strncasecmp(pnode->rn_address, "wss://", 6) == 0) {
 			pnode->rn_umode = RNU_WSS;
 		} else {
 			lock_release(rtpp_no_lock);
-			LM_WARN("Node address must start with 'udp:' or 'udp6:' or 'unix:' "
+			LM_WARN("Node address must start with 'udp:' or 'udp6:' "
 					"or 'ws://' or 'wss://'. Ignore '%s'.\n",
 					pnode->rn_address);
 			shm_free(pnode->rn_url.s);
@@ -2866,7 +2855,7 @@ static int build_rtpp_socks(int lmode, int rtest)
 			char *hostname;
 			char *hp;
 
-			if(pnode->rn_umode == RNU_LOCAL || pnode->rn_umode == RNU_WS
+			if(pnode->rn_umode == RNU_WS
 					|| pnode->rn_umode == RNU_WSS) {
 				rtpp_socks[pnode->idx] = -1;
 				goto rptest;
@@ -4531,7 +4520,6 @@ error:
 static char *send_rtpp_command(
 		struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 {
-	struct sockaddr_un addr;
 	int fd = -1, len, i, vcnt;
 	int rtpengine_retr, rtpengine_tout_ms = 1000;
 	char *cp;
@@ -4552,43 +4540,7 @@ static char *send_rtpp_command(
 	cp = buf;
 	rtpengine_tout_ms = cfg_get(rtpengine, rtpengine_cfg, rtpengine_tout_ms);
 
-	if(node->rn_umode == RNU_LOCAL) {
-		memset(&addr, 0, sizeof(addr));
-		addr.sun_family = AF_LOCAL;
-		strncpy(addr.sun_path, node->rn_address, sizeof(addr.sun_path) - 1);
-#ifdef HAVE_SOCKADDR_SA_LEN
-		addr.sun_len = strlen(addr.sun_path);
-#endif
-
-		fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-		if(fd < 0) {
-			LM_ERR("can't create socket\n");
-			goto badproxy;
-		}
-		if(connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-			LM_ERR("can't connect to RTPEngine <%s> (%s:%d)\n", node->rn_url.s,
-					strerror(errno), errno);
-			goto badproxy;
-		}
-
-		do {
-			len = writev(fd, v + 1, vcnt);
-		} while(len == -1 && errno == EINTR);
-		if(len <= 0) {
-			LM_ERR("can't send command to RTPEngine <%s> (%s:%d)\n",
-					node->rn_url.s, strerror(errno), errno);
-			goto badproxy;
-		}
-		do {
-			len = read(fd, buf, sizeof(buf) - 1);
-		} while(len == -1 && errno == EINTR);
-		if(len <= 0) {
-			LM_ERR("can't read reply from RTPEngine <%s> (%s:%d)\n",
-					node->rn_url.s, strerror(errno), errno);
-			goto badproxy;
-		}
-		close(fd);
-	} else if(node->rn_umode == RNU_WS || node->rn_umode == RNU_WSS) {
+	if(node->rn_umode == RNU_WS || node->rn_umode == RNU_WSS) {
 		/* assemble full request string, flatten iovec */
 		v[0].iov_base = gencookie();
 		v[0].iov_len = strlen(v[0].iov_base);
