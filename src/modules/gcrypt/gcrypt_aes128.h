@@ -29,7 +29,7 @@
 void *aes128_context_init(uint8_t key[16]);
 void aes128_context_destroy(void **context);
 
-int aes128_encrypt(uint8_t *output, uint8_t *input, void *context);
-int aes128_decrypt(uint8_t *output, uint8_t *input, void *context);
+int aes128_encrypt(void *context, uint8_t *input, uint8_t *output);
+int aes128_decrypt(void *context, uint8_t *input, uint8_t *output);
 
 #endif
