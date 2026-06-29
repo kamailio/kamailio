@@ -39,6 +39,7 @@
 #include "dprint.h"
 #include "pt.h"
 #include "mem/shm.h"
+#include "globals.h"
 
 #include "tcp_mtops.h"
 
@@ -169,6 +170,11 @@ int ksr_tcpx_proc_list_init(void)
 		return 0;
 	}
 
+	if(ksr_tcp_main_threads == 2) {
+		/* mode 2: no per-process trampoline threads or socketpairs needed */
+		return 0;
+	}
+
 	_ksr_tcpx_proc_list_size = get_max_procs();
 
 	if(_ksr_tcpx_proc_list_size <= 0) {
@@ -214,6 +220,11 @@ error:
 int ksr_tcpx_proc_list_prepare(void)
 {
 	int i;
+
+	if(ksr_tcp_main_threads == 2) {
+		/* mode 2: direct-call path (step 4) replaces per-process threads */
+		return 0;
+	}
 
 	for(i = 0; i < _ksr_tcpx_proc_list_size; i++) {
 		if(pthread_create(&_ksr_tcpx_proc_list[i].ethread, NULL,
