@@ -411,15 +411,18 @@ static int w_gcrypt_aes_decrypt(
 
 /**
  *
+ * outs->s has to point to an existing output buffer to store the 0-terminated
+ *   computed SHA256 value in base64-url format
+ * outs->len has to be the size of the existing output buffer and it is updated
+ *   to the output value length
  */
-static int ki_gcrypt_hmac_sha256_helper(
-		sip_msg_t *msg, str *ins, str *key, pv_spec_t *dst)
+int ksr_gcrypt_hmac_sha256_compute(str *ins, str *key, str *outs)
 {
-	pv_value_t val;
 	gcry_error_t gcry_ret;
 	gcry_md_hd_t md_hd = NULL;
 	unsigned char *digest = NULL;
 	int digest_len = 0;
+	int outs_len = 0;
 
 	LM_DBG("ins: %.*s, key: %.*s\n", STR_FMT(ins), STR_FMT(key));
 
@@ -450,27 +453,24 @@ static int ki_gcrypt_hmac_sha256_helper(
 		goto error;
 	}
 
-	memset(&val, 0, sizeof(pv_value_t));
-	val.rs.s = pv_get_buffer();
-	val.rs.len = base64url_enc(
-			(char *)digest, digest_len, val.rs.s, pv_get_buffer_size() - 1);
-	if(val.rs.len < 0) {
+	outs_len =
+			base64url_enc((char *)digest, digest_len, outs->s, outs->len - 1);
+	if(outs_len < 0) {
 		LM_ERR("base64 output of digest value is too large (need %d)\n",
-				-val.rs.len);
+				-outs_len);
 		goto error;
 	}
 
-	if(val.rs.len > 1 && val.rs.s[val.rs.len - 1] == '=') {
-		val.rs.len--;
-		if(val.rs.len > 1 && val.rs.s[val.rs.len - 1] == '=') {
-			val.rs.len--;
+	if(outs_len > 1 && outs->s[outs_len - 1] == '=') {
+		outs_len--;
+		if(outs_len > 1 && outs->s[outs_len - 1] == '=') {
+			outs_len--;
 		}
 	}
-	val.rs.s[val.rs.len] = '\0';
+	outs->s[outs_len] = '\0';
+	outs->len = outs_len;
 
-	LM_DBG("base64 digest result: [%.*s]\n", val.rs.len, val.rs.s);
-	val.flags = PV_VAL_STR;
-	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+	LM_DBG("base64 digest result: [%.*s]\n", outs->len, outs->s);
 
 	gcry_md_close(md_hd);
 	return 1;
@@ -479,6 +479,32 @@ error:
 	if(md_hd != NULL) {
 		gcry_md_close(md_hd);
 	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_gcrypt_hmac_sha256_helper(
+		sip_msg_t *msg, str *ins, str *key, pv_spec_t *dst)
+{
+	pv_value_t val;
+	int rc;
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.rs.s = pv_get_buffer();
+	val.rs.len = pv_get_buffer_size();
+	rc = ksr_gcrypt_hmac_sha256_compute(ins, key, &val.rs);
+	if(rc < 0) {
+		LM_ERR("failed to compute hmac sha256 (rc %d)\n", rc);
+		goto error;
+	}
+	val.flags = PV_VAL_STR;
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+
+	return 1;
+
+error:
 	return -1;
 }
 
