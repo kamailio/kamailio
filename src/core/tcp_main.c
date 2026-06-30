@@ -1717,6 +1717,15 @@ static inline void _tcpconn_free(struct tcp_connection *c)
 #ifdef TCP_ASYNC
 	if(unlikely(_wbufq_non_empty(c)))
 		_wbufq_destroy(&c->wbuf_q);
+	/* mode 2 (Phase 2): free any plaintext write chunks that were staged on the
+	 * connection but never drained (e.g. a write arrived just before close). */
+	while(c->wsq_head != NULL) {
+		struct tcp_wchunk *ch = c->wsq_head;
+		c->wsq_head = ch->next;
+		shm_free(ch->buf);
+		shm_free(ch);
+	}
+	c->wsq_tail = NULL;
 #endif
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
@@ -4815,6 +4824,21 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 					tcpconn, tcpconn->id, atomic_get(&tcpconn->refcnt),
 					tcpconn->flags);
 		case CONN_EOF: /* forced EOF after full send, due to send flags */
+#ifdef TCP_ASYNC
+			/* mode 2 (Phase 2): if a pool thread currently owns this conn (a
+			 * read/write job is in flight), do NOT unhash/io_watch_del/free it
+			 * here - that would race the pool thread. The in-pool refcount keeps
+			 * it alive; mark it bad and let the job completion close it (its
+			 * !HASHED/S_CONN_BAD check routes to tcp_reactor_read_close). Only
+			 * release the sender's reference. */
+			if(unlikely(tcpconn->flags & F_CONN_POOL_BUSY)) {
+				tcpconn->state = S_CONN_BAD;
+				tcpconn->timeout = get_ticks_raw();
+				if(unlikely(tcpconn_put(tcpconn)))
+					tcpconn_destroy(tcpconn); /* can't happen while busy */
+				break;
+			}
+#endif /* TCP_ASYNC */
 #ifdef TCP_CONNECT_WAIT
 			/* if the connection is marked as pending => it might be on
 			 *  the way of reaching tcp_main (e.g. CONN_NEW_COMPLETE or
