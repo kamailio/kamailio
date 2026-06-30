@@ -6178,6 +6178,17 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 			c, t, c->timeout, TICKS_TO_S(c->timeout - t), c->wbuf_q.wr_timeout,
 			TICKS_TO_S(c->wbuf_q.wr_timeout - t), c->wbuf_q.queued);
 
+	/* mode 2 (Phase 2): a connection owned by a pool job is shielded out of the
+	 * local timer (tcp_reactor_shield does local_timer_del + clears
+	 * F_CONN_MAIN_TIMER), so this callback must not run for a busy conn. Guard
+	 * defensively: never reap a conn a pool thread is still using - re-arm and
+	 * let the job completion own its lifetime. */
+	if(unlikely(c->flags & F_CONN_POOL_BUSY)) {
+		LM_WARN("tcp reactor: timer fired on pool-busy conn %p - deferring\n",
+				c);
+		return (ticks_t)cfg_get(tcp, tcp_cfg, con_lifetime);
+	}
+
 	tcp_async = cfg_get(tcp, tcp_cfg, async);
 	if(likely(TICKS_LT(t, c->timeout)
 			   && (!tcp_async || _wbufq_empty(c)
