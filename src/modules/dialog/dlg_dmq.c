@@ -298,6 +298,9 @@ int dlg_dmq_handle_msg(
 
 			dlg->init_ts = init_ts;
 			dlg->start_ts = start_ts;
+			/* lifetime from UPDATE, needed for UNCONFIRMED state of the dialog */
+			if(lifetime > 0)
+				dlg->lifetime = lifetime;
 
 			if(dlg_enable_dmq_ka_iflags_sync != 0 && iflags > 0) {
 				/* sync only keep-alive flags from owner */
@@ -345,7 +348,8 @@ int dlg_dmq_handle_msg(
 			switch(state) {
 				case DLG_STATE_EARLY:
 					dlg->start_ts = start_ts;
-					dlg->lifetime = lifetime;
+					if(lifetime > 0)
+						dlg->lifetime = lifetime;
 					/* apply leg info if it carries data */
 					if(tag1.len > 0) {
 						dlg_set_leg_info(
@@ -354,7 +358,8 @@ int dlg_dmq_handle_msg(
 					break;
 				case DLG_STATE_CONFIRMED:
 					dlg->start_ts = start_ts;
-					dlg->lifetime = lifetime;
+					if(lifetime > 0)
+						dlg->lifetime = lifetime;
 					/* apply leg info if it carries data */
 					if(tag1.len > 0) {
 						dlg_set_leg_info(
@@ -695,6 +700,9 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 					//dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
 					break;
 				default:
+					/* lifetime on UPDATE fallthrough */
+					srjson_AddNumberToObject(
+							&jdoc, jdoc.root, "lifetime", dlg->lifetime);
 					LM_DBG("not syncing state %u\n", dlg->state);
 			}
 			break;
