@@ -4472,16 +4472,19 @@ static int tcp_reactor_enable_write_watch(struct tcp_connection *c)
 {
 	ticks_t t;
 
+	/* mode 2 (Phase 2): if the conn is currently shielded for an in-flight pool
+	 * read job it is owned exclusively by that pool thread - it is in neither
+	 * io_h nor the local timer. Return immediately WITHOUT touching c->flags or
+	 * io_h: a pool thread (this may be called from its TLS / CRLF-pong
+	 * write-back) must not race the io_wait thread on c->flags. The data is
+	 * already staged in wbuf_q and tcp_reactor_read_rearm() re-arms POLLOUT
+	 * from wbuf_q at completion. This check MUST come before any c->flags
+	 * write below. */
+	if(c->flags & F_CONN_REMOVED_READ)
+		return 0;
 	if(c->flags & F_CONN_WANTS_WR)
 		return 0;
 	c->flags |= F_CONN_WANTS_WR;
-	/* mode 2 (Phase 2): if the conn is currently shielded for an in-flight pool
-	 * read job, its fd is not in io_h and only the io_wait thread may touch
-	 * io_h anyway. Just record the write intent; the read completion
-	 * (tcp_reactor_read_rearm) re-arms POLLOUT from the wbuf_q. This makes the
-	 * function safe to call from a pool thread's TLS write-back too. */
-	if(c->flags & F_CONN_REMOVED_READ)
-		return 0;
 	t = get_ticks_raw();
 	if(likely((c->flags & F_CONN_MAIN_TIMER)
 			   && (TICKS_LT(c->wbuf_q.wr_timeout, c->timeout))
@@ -4612,6 +4615,14 @@ static int tcp_reactor_read_rearm(struct tcp_connection *c)
 	}
 	t = get_ticks_raw();
 	c->timeout = t + cfg_get(tcp, tcp_cfg, con_lifetime);
+	/* re-arm the local timer disarmed by the shield (it was removed from the
+	 * timer list, so reinit + add - no del). arm_read_timeout() below may then
+	 * shorten it to the partial-read deadline if a message is mid-read. */
+	if(!(c->flags & F_CONN_MAIN_TIMER)) {
+		local_timer_reinit(&c->timer);
+		local_timer_add(&tcp_main_ltimer, &c->timer, c->timeout - t, t);
+		c->flags |= F_CONN_MAIN_TIMER;
+	}
 	tcp_reactor_arm_read_timeout(c, t);
 	return 0;
 }
@@ -5472,6 +5483,14 @@ inline static int handle_tcpconn_ev(
 						   "fd %d\n",
 							tcpconn, tcpconn->s);
 					goto reactor_close;
+				}
+				/* disarm the local timer too: while the pool thread owns the
+				 * conn, the io_wait thread must not run tcpconn_main_timeout()
+				 * on it (that would race c->flags / unhash under the reader).
+				 * The completion re-arms it. */
+				if(tcpconn->flags & F_CONN_MAIN_TIMER) {
+					local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
+					tcpconn->flags &= ~F_CONN_MAIN_TIMER;
 				}
 				tcpconn->flags &= ~(F_CONN_READ_W | F_CONN_WRITE_W
 									| F_CONN_WANTS_RD | F_CONN_WANTS_WR);
