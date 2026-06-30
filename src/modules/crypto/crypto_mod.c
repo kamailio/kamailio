@@ -340,13 +340,16 @@ static int w_crypto_aes_encrypt(
 
 /**
  *
+ * outs->s has to point to an existing output buffer to store the 0-terminated
+ *   computed SHA256 value in base64-url format
+ * outs->len has to be the size of the existing output buffer and it is updated
+ *   to the output value length
  */
-static int ki_crypto_hmac_sha256_helper(
-		sip_msg_t *msg, str *ins, str *key, pv_spec_t *dst)
+int ksr_crypto_hmac_sha256_compute(str *ins, str *key, str *outs)
 {
-	pv_value_t val;
 	unsigned char digest[EVP_MAX_MD_SIZE];
 	unsigned int digest_len;
+	int outs_len;
 
 	LM_DBG("ins: %.*s, key: %.*s\n", STR_FMT(ins), STR_FMT(key));
 
@@ -356,25 +359,47 @@ static int ki_crypto_hmac_sha256_helper(
 		goto error;
 	}
 
-	memset(&val, 0, sizeof(pv_value_t));
-	val.rs.s = pv_get_buffer();
-	val.rs.len = base64url_enc(
-			(char *)digest, digest_len, val.rs.s, pv_get_buffer_size() - 1);
-	if(val.rs.len < 0) {
+	outs_len =
+			base64url_enc((char *)digest, digest_len, outs->s, outs->len - 1);
+	if(outs_len < 0) {
 		LM_ERR("base64 output of digest value is too large (need %d)\n",
-				-val.rs.len);
+				-outs_len);
 		goto error;
 	}
 
-	if(val.rs.len > 1 && val.rs.s[val.rs.len - 1] == '=') {
-		val.rs.len--;
-		if(val.rs.len > 1 && val.rs.s[val.rs.len - 1] == '=') {
-			val.rs.len--;
+	if(outs_len > 1 && outs->s[outs_len - 1] == '=') {
+		outs_len--;
+		if(outs_len > 1 && outs->s[outs_len - 1] == '=') {
+			outs_len--;
 		}
 	}
-	val.rs.s[val.rs.len] = '\0';
+	outs->s[outs_len] = '\0';
+	outs->len = outs_len;
 
-	LM_DBG("base64 digest result: [%.*s]\n", val.rs.len, val.rs.s);
+	LM_DBG("base64 digest result: [%.*s]\n", outs->len, outs->s);
+
+	return 1;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_crypto_hmac_sha256_helper(
+		sip_msg_t *msg, str *ins, str *key, pv_spec_t *dst)
+{
+	pv_value_t val;
+	int rc;
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.rs.s = pv_get_buffer();
+	rc = ksr_crypto_hmac_sha256_compute(ins, key, &val.rs);
+	if(rc < 0) {
+		LM_ERR("failed to compute hmac sha256 (rc %d)\n", rc);
+		goto error;
+	}
 	val.flags = PV_VAL_STR;
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
