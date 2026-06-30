@@ -24,6 +24,7 @@
 #define _TCP_REACTOR_H_
 
 #include "ip_addr.h" /* struct receive_info, snd_flags_t */
+#include "tcp_cond.h" /* tcp_cond_t (pulls in <pthread.h>) - mode 2 thread pool */
 
 struct tcp_connection;
 
@@ -87,5 +88,65 @@ typedef struct tcp_reactor_connect_req
  * PROC_TCP_MAIN in mode 2 wherever receive_tcp_msg() would be called. */
 int tcp_reactor_dispatch_msg(
 		char *buf, unsigned int len, struct receive_info *rcv);
+
+/* =========================================================================
+ * Phase 2 - tcp_main_threads == 2 thread pool (OpenSIPS-style)
+ *
+ * The reactor (single io_wait thread in PROC_TCP_MAIN) owns epoll exclusively;
+ * pool threads only run read/write callbacks on connections handed to them and
+ * signal completion back over a notify pipe. Read/run jobs are enqueued by the
+ * reactor thread (pkg memory); write jobs are submitted by TCP worker processes
+ * by linking the connection onto the shm write queue and signalling the
+ * PROCESS_SHARED condvar.
+ * ========================================================================= */
+
+/* job kinds (cf. OpenSIPS TCP_READ_JOB / TCP_WRITE_JOB / TCP_RUN_JOB) */
+enum tcp_reactor_op
+{
+	TCP_R_READ = 1,	 /* run the read callback on conn (reactor-enqueued) */
+	TCP_R_WRITE = 2, /* drain conn's write staging (worker-submitted) */
+	TCP_R_RUN = 3	 /* run an arbitrary fn(data) on a pool thread */
+};
+
+/* A job references only the connection (+op); it never carries a payload -
+ * write data lives on the connection's wsq staging list. The job holds a
+ * refcount on conn (taken at enqueue, released in completion). Read/run jobs
+ * are pkg-allocated by the reactor thread. */
+struct tcp_reactor_job
+{
+	struct tcp_connection *conn;
+	enum tcp_reactor_op op;
+	int (*run)(void *data); /* TCP_R_RUN only */
+	void *data;				/* TCP_R_RUN only */
+	int resp;				/* callback result (e.g. wbuf still pending) */
+	int ret;				/* completion disposition */
+	struct tcp_reactor_job *next;
+};
+
+/* shared-memory write queue: a deduped list of CONNECTIONS (linked via
+ * conn->wq_next), not jobs. Worker processes signal cond to submit; pool
+ * threads in PROC_TCP_MAIN wait on it. Allocated in shm before fork. */
+struct tcp_shared_write_queue
+{
+	tcp_cond_t cond; /* PROCESS_SHARED + ROBUST mutex + cond */
+	struct tcp_connection *head;
+	struct tcp_connection *tail;
+};
+extern struct tcp_shared_write_queue *tcp_reactor_wq;
+
+/* thread pool state, local to PROC_TCP_MAIN (pkg / process-private memory) */
+struct tcp_reactor_pool
+{
+	pthread_t *threads;
+	int threads_no;
+	int stop;
+	struct tcp_reactor_job *task_head; /* read/run jobs (reactor-enqueued) */
+	struct tcp_reactor_job *task_tail;
+	pthread_mutex_t done_lock; /* plain mutex: same process only */
+	struct tcp_reactor_job *done_head;
+	struct tcp_reactor_job *done_tail;
+	int notify_pipe[2]; /* [0] watched by reactor, [1] written by threads */
+};
+extern struct tcp_reactor_pool tcp_rpool;
 
 #endif /* _TCP_REACTOR_H_ */

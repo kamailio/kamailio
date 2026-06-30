@@ -66,6 +66,13 @@
 #define F_CONN_CLOSE_EV 32768 /* explicitely call tcpops ev route when closed */
 #define F_CONN_NOSEND 65536	  /* do not send data on this connection */
 #define F_CONN_NORECV (1 << 17) /* do not receive data on this connection */
+/* mode 2 (tcp reactor thread pool) flags */
+#define F_CONN_REMOVED_READ \
+	(1 << 18) /* read interest shielded: handed to a pool thread */
+#define F_CONN_REMOVED_WRITE \
+	(1 << 19) /* write interest shielded: handed to a pool thread */
+#define F_CONN_WRITE_QUEUED \
+	(1 << 20) /* conn is linked in the shm write queue (dedup) */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
@@ -298,6 +305,19 @@ typedef struct ksr_coninfo
 } ksr_coninfo_t;
 
 
+/* mode 2 (tcp reactor thread pool): per-connection plaintext write staging
+ * chunk. A TCP worker process appends plaintext here (under write_lock) instead
+ * of touching wbuf_q; a pool thread in PROC_TCP_MAIN later encodes it (TLS) or
+ * copies it (plain) into wbuf_q and writes it out. shm-allocated. */
+struct tcp_wchunk
+{
+	char *buf;
+	unsigned int len;
+	snd_flags_t send_flags;
+	struct tcp_wchunk *next;
+};
+
+
 typedef struct tcp_connection
 {
 	int s;	/*socket, used by "tcp main" */
@@ -330,6 +350,12 @@ typedef struct tcp_connection
 	int aliases; /* aliases number, at least 1 */
 #ifdef TCP_ASYNC
 	struct tcp_wbuffer_queue wbuf_q;
+	/* mode 2 (tcp reactor) write path: linkage in the shared write queue, and
+	 * the per-connection plaintext staging list. All guarded by write_lock /
+	 * the write-queue condvar; unused (NULL) in modes 0/1. */
+	struct tcp_connection *wq_next;
+	struct tcp_wchunk *wsq_head;
+	struct tcp_wchunk *wsq_tail;
 #endif
 } tcp_connection_t;
 

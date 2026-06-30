@@ -149,7 +149,8 @@ enum fd_types
 	F_SOCKINFO /* a tcp_listen fd */,
 	F_TCPCONN,
 	F_TCPCHILD,
-	F_PROC
+	F_PROC,
+	F_TCP_REACTOR_NOTIFY /* mode 2: pool->reactor completion pipe (Phase 2) */
 };
 
 
@@ -213,6 +214,13 @@ int ksr_tcp_reactor_get_dispatch_wfd(void)
 {
 	return ksr_tcp_reactor_dsock[1];
 }
+
+/* mode 2 (Phase 2 thread pool): cross-process write-job queue (shm, allocated
+ * pre-fork) and the PROC_TCP_MAIN-local thread pool state. Declared in
+ * tcp_reactor.h. Unused until the pool is wired up (Step 2+); NULL/zero in
+ * modes 0/1. */
+struct tcp_shared_write_queue *tcp_reactor_wq = NULL;
+struct tcp_reactor_pool tcp_rpool;
 
 static int tcp_proto_no = -1; /* tcp protocol number as returned by
 							   getprotobyname */
@@ -6188,6 +6196,24 @@ static int ksr_tcp_reactor_dsock_init(void)
 	}
 	LM_INFO("tcp reactor dispatch socketpair created (rfd=%d wfd=%d)\n",
 			ksr_tcp_reactor_dsock[0], ksr_tcp_reactor_dsock[1]);
+
+	/* Phase 2 thread pool: the cross-process write-job queue must also live in
+	 * shm and be initialised before fork so workers and PROC_TCP_MAIN share the
+	 * same PROCESS_SHARED condvar. The pool threads + notify pipe (tcp_rpool)
+	 * are created later, inside PROC_TCP_MAIN (Step 2). */
+	tcp_reactor_wq = shm_malloc(sizeof(*tcp_reactor_wq));
+	if(tcp_reactor_wq == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(tcp_reactor_wq, 0, sizeof(*tcp_reactor_wq));
+	if(tcp_cond_init(&tcp_reactor_wq->cond) != 0) {
+		LM_ERR("failed to init reactor write-queue condvar\n");
+		shm_free(tcp_reactor_wq);
+		tcp_reactor_wq = NULL;
+		return -1;
+	}
+	LM_INFO("tcp reactor shared write queue initialized\n");
 	return 0;
 }
 

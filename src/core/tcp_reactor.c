@@ -24,11 +24,19 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "dprint.h"
 #include "mem/shm_mem.h"
 #include "tcp_reactor.h"
 #include "tcp_server.h" /* ksr_tcp_reactor_get_dispatch_wfd() */
+
+/* The dispatch socket carries a single task pointer per datagram, and the
+ * Phase 2 notify pipe carries single bytes - both must be written atomically.
+ * A write of at most PIPE_BUF bytes is guaranteed atomic; a pointer is far
+ * smaller, but assert it so a hypothetical exotic platform can't slip by. */
+_Static_assert(sizeof(uintptr_t) <= PIPE_BUF,
+		"task pointer too wide for atomic dispatch write");
 
 /*
  * Allocate a tcp_reactor_task_t in shm, copy the reassembled SIP message
