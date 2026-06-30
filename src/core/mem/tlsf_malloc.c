@@ -13,6 +13,7 @@
 #include "memdbg.h"
 #include "memapi.h"
 #include "../dprint.h"
+#include "../action.h"
 #include "../cfg/cfg.h"
 #include "../globals.h"
 
@@ -1030,8 +1031,8 @@ void tlsf_free(tlsf_t tlsf, void *ptr)
 #endif
 {
 #ifdef DBG_TLSF_MALLOC
-	MDBG("tlsf_free(%p, %p), called from %s:%u %s()\n", tlsf, ptr, file, line,
-			function);
+	MDBG("tlsf_free(%p, %p), called from %s:%u %s() [cl: %d]\n", tlsf, ptr,
+			file, line, function, get_cfg_crt_line());
 #endif
 	/* Don't attempt to free a NULL pointer. */
 	if(ptr) {
@@ -1042,12 +1043,13 @@ void tlsf_free(tlsf_t tlsf, void *ptr)
 					"BUG: tlsf_free: freeing already freed pointer (%p)"
 #ifdef DBG_TLSF_MALLOC
 					", called from %s:%u %s()"
-					", first free %s:%u %s()\n",
+					", first free %s:%u %s() [cl: %d]\n",
 					ptr, file, line, function, block->alloc_info.file,
-					block->alloc_info.line, block->alloc_info.func);
+					block->alloc_info.line, block->alloc_info.func,
+					get_cfg_crt_line());
 #else
-					"\n",
-					ptr);
+					" [cl: %d]\n",
+					ptr, get_cfg_crt_line());
 #endif
 			if(likely(cfg_get(core, core_cfg, mem_safety) == 0)) {
 				abort();
@@ -1075,10 +1077,10 @@ void tlsf_free(tlsf_t tlsf, void *ptr)
 		block_insert(control, block);
 	} else {
 #ifdef DBG_TLSF_MALLOC
-		LOG(L_WARN, "tlsf_free: free(0) called from %s:%u %s()\n", file, line,
-				function);
+		LOG(L_WARN, "tlsf_free: free(0) called from %s:%u %s() [cl:%d]\n", file,
+				line, function, get_cfg_crt_line());
 #else
-		LOG(L_WARN, "tlsf_free: free(0) called\n");
+		LOG(L_WARN, "tlsf_free: free(0) called [cl:%d]\n", get_cfg_crt_line());
 #endif
 	}
 }
