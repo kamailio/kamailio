@@ -595,6 +595,7 @@ int bind_gcrypt(gcrypt_api_t *api)
 	api->aes128_context_destroy = aes128_context_destroy;
 	api->aes128_encrypt = aes128_encrypt;
 	api->aes128_decrypt = aes128_decrypt;
+	api->hmac_sha256 = ksr_gcrypt_hmac_sha256_compute;
 
 	return 0;
 }
