@@ -73,6 +73,9 @@
 	(1 << 19) /* write interest shielded: handed to a pool thread */
 #define F_CONN_WRITE_QUEUED \
 	(1 << 20) /* conn is linked in the shm write queue (dedup) */
+#define F_CONN_POOL_BUSY \
+	(1 << 21) /* owned by a pool job: shielded out of io_h + local timer.
+			   * Serializes read/write jobs per conn (one owner at a time). */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
