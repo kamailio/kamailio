@@ -28,9 +28,13 @@
 
 typedef int (*SHA1_hash_f)(str *, str *);
 
+typedef int (*hmac_sha256_f)(str *, str *, str *);
+int ksr_crypto_hmac_sha256_compute(str *ins, str *key, str *outs);
+
 typedef struct crypto_binds
 {
 	SHA1_hash_f SHA1;
+	hmac_sha256_f hmac_sha256;
 } crypto_api_t;
 
 

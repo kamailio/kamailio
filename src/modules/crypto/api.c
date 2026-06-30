@@ -27,6 +27,7 @@
 int load_crypto(struct crypto_binds *cb)
 {
 	cb->SHA1 = crypto_generate_SHA1;
+	cb->hmac_sha256 = ksr_crypto_hmac_sha256_compute;
 
 	return 1;
 }
