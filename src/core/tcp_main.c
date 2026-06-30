@@ -2286,6 +2286,7 @@ inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
 
 
 inline static int tcpconn_chld_put(struct tcp_connection *tcpconn);
+inline static void tcpconn_destroy(struct tcp_connection *tcpconn);
 
 static int tcpconn_send_put(struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags);
@@ -2299,6 +2300,11 @@ static int tcpconn_1st_send(int fd, struct tcp_connection *c, const char *buf,
 /* mode 2: enable POLLOUT watching on a hashed connection without freeing it on
  * io_watch failure (defined later, used from tcpconn_send_unsafe()). */
 static int tcp_reactor_enable_write_watch(struct tcp_connection *c);
+/* mode 2 write helpers (defined later, used from tcp_reactor_send_put() when it
+ * runs inside PROC_TCP_MAIN itself - e.g. a core read-path CRLF pong). */
+static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
+		unsigned len, snd_flags_t send_flags);
+static int tcp_reactor_watch_write(struct tcp_connection *c);
 #endif /* TCP_ASYNC */
 
 #define tcp_dst_ephemeral_set(n, c, dst)           \
@@ -2323,6 +2329,29 @@ static int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 {
 	tcp_reactor_write_req_t *wreq;
 	long response[2];
+
+	if(unlikely(is_tcp_main())) {
+		/* called from within PROC_TCP_MAIN's own read path (e.g. a core CRLF
+		 * keepalive pong or an HTTP/1.1 100-continue, both sent via tcp_send()
+		 * from tcp_read_req()). We are already in the io_wait thread, so there
+		 * is no unix_tcp_sock self-send - queue the payload and arm POLLOUT
+		 * directly, mirroring the CONN_WRITE_REQ handler. Release the refcnt the
+		 * caller (tcp_send) took on c. */
+		if(unlikely(tcpconn_put(c))) {
+			tcpconn_destroy(c); /* was the last ref */
+			return -1;
+		}
+		if(unlikely((c->state == S_CONN_BAD) || !(c->flags & F_CONN_HASHED))) {
+			/* in the process of being destroyed => drop the write */
+			return -1;
+		}
+		if(unlikely(tcp_reactor_wbuf_enqueue(c, (char *)buf, len, send_flags)
+					< 0)) {
+			return -1;
+		}
+		tcp_reactor_watch_write(c);
+		return (int)len;
+	}
 
 	wreq = shm_malloc(sizeof(tcp_reactor_write_req_t));
 	if(unlikely(wreq == NULL)) {
@@ -2363,6 +2392,20 @@ static int tcp_reactor_connect_put(struct dest_info *dst,
 {
 	tcp_reactor_connect_req_t *creq;
 	long response[2];
+
+	if(unlikely(is_tcp_main())) {
+		/* A new outbound connection requested by code running inside
+		 * PROC_TCP_MAIN itself. The unix_tcp_sock self-send below is invalid
+		 * here. The known in-tcp_main senders (core read-path CRLF pong /
+		 * HTTP 100-continue) always target an already-established connection
+		 * (handled by tcp_reactor_send_put), so this path is not expected to be
+		 * reached; fail loudly rather than emit a confusing "send on 0" error.
+		 * (Full inline connect-from-tcp_main is left for the Phase 2 reactor.) */
+		LM_ERR("outbound connect requested from within PROC_TCP_MAIN to %s -"
+			   " not supported in mode 2, dropping\n",
+				su2a(&dst->to, sizeof(dst->to)));
+		return -1;
+	}
 
 	creq = shm_malloc(sizeof(tcp_reactor_connect_req_t));
 	if(unlikely(creq == NULL)) {
