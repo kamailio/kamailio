@@ -434,7 +434,11 @@ int tcp_read(struct tcp_connection *c, rd_conn_flags_t *flags)
 	unsigned int len;
 
 	r = &c->req;
-	fd = c->fd;
+	/* mode 2: tcp_main owns and reads the connection, where the socket fd is
+	 * c->s (c->fd is the fd-passing copy, only valid in a worker). _tconfd()
+	 * selects c->s in tcp_main and c->fd in a worker, so modes 0/1 are
+	 * unchanged. Matches the TLS read path, which already uses _tconfd(c). */
+	fd = _tconfd(c);
 	bytes_free = r->b_size - (unsigned int)(r->pos - r->buf);
 
 	if(unlikely(bytes_free <= 0)) {
