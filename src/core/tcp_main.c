@@ -5850,13 +5850,55 @@ error:
  *            queued -- the receive buffer might still be non-empty)
  */
 /* ========================================================================
- * mode 2 (Phase 2): reactor thread pool living inside PROC_TCP_MAIN.
- * The io_wait thread (this process's main thread) owns epoll exclusively;
- * pool threads only run read/write callbacks and signal completion back over
- * notify_pipe. At this step the job-execution bodies are stubs - reads are
- * still done inline (Phase 1) and writes still go via CONN_WRITE_REQ - so the
- * threads simply spawn and block in tcp_cond_wait until Steps 3-4 wire up the
- * enqueue paths.
+ * mode 2 (Phase 2): reactor thread pool inside PROC_TCP_MAIN - concurrency
+ * contract (plain TCP; TLS/WS still inline pending the per-thread TLS buffers).
+ *
+ * Threads: one io_wait thread (this process's main thread) + N pool threads.
+ *
+ * Ownership / serialization:
+ *  - epoll (io_h) and the local timer (tcp_main_ltimer): io_wait thread ONLY.
+ *    Pool threads never call io_watch_*() or local_timer_*().
+ *  - F_CONN_POOL_BUSY = "a pool job owns this conn": set by the io_wait thread
+ *    when it shields the conn (removes it from io_h + the timer) and enqueues a
+ *    read/write job; cleared by the io_wait completion. While set, the conn has
+ *    at most ONE owner (one read OR write job at a time; chained jobs are
+ *    sequential), so its read/write callbacks never run concurrently with each
+ *    other or with the reactor.
+ *  - A single "in-pool" refcount is taken at shield and released at
+ *    unshield/close; it spans chained jobs and pins the conn so it cannot be
+ *    freed while a pool thread uses it.
+ *
+ * Per-field synchronization:
+ *  - c->flags        : io_wait thread ONLY (pool jobs never write c->flags;
+ *                      reads/buffers/state only). No race.
+ *  - c->req          : the read job exclusively while it runs (conn shielded).
+ *  - c->wbuf_q,c->wsq: c->write_lock (gen_lock). The completion's unlocked
+ *                      peeks (_wbufq_non_empty / wsq_head) are safe via the
+ *                      done_lock happens-before edge.
+ *  - c->refcnt       : atomic.
+ *  - handoff pool->io_wait: push to done_head under done_lock + a notify byte;
+ *                      io_wait reads done_head under done_lock - a
+ *                      release/acquire barrier, so completion sees the job's
+ *                      final writes.
+ *
+ * Known benign data races (safe on the target arch; would be flagged by
+ * tsan/helgrind, which also don't understand gen_lock or cross-process shm):
+ *  - c->state / c->send_flags / c->wbuf_q.wr_timeout are written non-atomically
+ *    by a pool job and read by the io_wait thread (e.g. the CONN_WRITE_REQ
+ *    "state==S_CONN_BAD" guard). They are word-aligned (atomic load/store on
+ *    x86-64, no torn value) and the logically-relevant decision is safe
+ *    (a stale read just stages the write; the completion handles the real
+ *    state). Convert to atomic accessors if/when strict tsan-cleanliness is
+ *    required (natural to do alongside the TLS step).
+ *  - The cross-process tcp_timer_check_connections() scan (PROC_INT) reads
+ *    c->req.tvrstart / c->state from the shm hash; benign, cross-process.
+ *
+ * Note: the shm write queue (tcp_reactor_wq->head/tail, tcp_reactor_wq_pop())
+ * is UNUSED in this POOL_BUSY design - writes route worker -> CONN_WRITE_REQ ->
+ * io_wait -> task_head so the conn is shielded before any pool thread sees it.
+ * tcp_reactor_wq->cond is just the in-process io_wait->pool wakeup. The wq_pop
+ * dequeue branch is neutered (LM_CRIT); it could be removed (left in place to
+ * minimise churn on validated code).
  * ======================================================================== */
 
 /* hardcoded for now (Phase2v2 §7.4); not a cfg param yet */
