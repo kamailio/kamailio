@@ -140,6 +140,37 @@ modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
 </programlisting>
 		</example>
 	</section>
+	<section id="auth_xkeys.p.hmac_engine">
+		<title><varname>hmac_engine</varname> (str)</title>
+		<para>
+			Specify the module to use for computing HMAC signature. Values:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>crypto</emphasis>
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>gcrypt</emphasis>
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is empty.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hmac_engine</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_xkeys", "hmac_engine", "gcrypt")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
@@ -154,7 +185,7 @@ modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
 		include variables.
 		</para>
 		<para>
-		The algorithm can be: sha256, sha384, sha512.
+		The algorithm can be: sha256, sha384, sha512, hmac-sha256.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -179,7 +210,7 @@ auth_xkeys_add("X-My-Key", "abc", "sha256", "$Ri:$fu:$ru:$hdr(CSeq)");
 		of parameter data. The parameters can include variables.
 		</para>
 		<para>
-		The algorithm can be: sha256, sha384, sha512.
+		The algorithm can be: sha256, sha384, sha512, hmac-sha256.
 		</para>
 		<para>
 		Note that the header is not removed by the function, it is recommended
@@ -204,4 +235,3 @@ remove_hf("X-My-Key");
 
 	</section>
 </chapter>
-
