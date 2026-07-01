@@ -19,6 +19,7 @@ IMPORTANT:
 - [ ] Commit message has the format required by CONTRIBUTING guide
 - [ ] Commits are split per component (core, individual modules, libs, utils, ...)
 - [ ] Each component has a single commit (if not, squash them into one commit)
+- [ ] LLM/AI Coding Assistants were involved in creating the C code or other included content
 - [ ] Code is formatted with `clang-format` using the config file `.clang-format`
   from source code folder
 - [ ] No commits to README files for modules (changes must be done to docbook files
