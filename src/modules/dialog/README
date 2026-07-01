@@ -146,11 +146,12 @@ Julien Klingenmeyer
               7.22. dlg_set_ruri()
               7.23. dlg_db_load_callid(cival)
               7.24. dlg_db_load_extra()
-              7.25. dlg_reset_property(attr)
-              7.26. dlg_req_within(side, method, [headers], [content_type,
+              7.25. dlg_remove_dialogs_from_node(node_uri)
+              7.26. dlg_reset_property(attr)
+              7.27. dlg_req_within(side, method, [headers], [content_type,
                       content])
 
-              7.27. dlg_set_state(newstate)
+              7.28. dlg_set_state(newstate)
 
         8. Statistics
 
@@ -298,9 +299,10 @@ Julien Klingenmeyer
    1.90. dlg_set_ruri() usage
    1.91. dlg_db_load_callid() usage
    1.92. dlg_db_load_extra() usage
-   1.93. dlg_reset_property usage
-   1.94. dlg_req_within usage
-   1.95. dlg_set_state usage
+   1.93. dlg_remove_dialogs_from_node() usage
+   1.94. dlg_reset_property usage
+   1.95. dlg_req_within usage
+   1.96. dlg_set_state usage
 
 Chapter 1. Admin Guide
 
@@ -412,11 +414,12 @@ Chapter 1. Admin Guide
         7.22. dlg_set_ruri()
         7.23. dlg_db_load_callid(cival)
         7.24. dlg_db_load_extra()
-        7.25. dlg_reset_property(attr)
-        7.26. dlg_req_within(side, method, [headers], [content_type,
+        7.25. dlg_remove_dialogs_from_node(node_uri)
+        7.26. dlg_reset_property(attr)
+        7.27. dlg_req_within(side, method, [headers], [content_type,
                 content])
 
-        7.27. dlg_set_state(newstate)
+        7.28. dlg_set_state(newstate)
 
    8. Statistics
 
@@ -1581,9 +1584,10 @@ modparam("dialog", "dmq_peer_id", "dialog_6.1.1")
    7.22. dlg_set_ruri()
    7.23. dlg_db_load_callid(cival)
    7.24. dlg_db_load_extra()
-   7.25. dlg_reset_property(attr)
-   7.26. dlg_req_within(side, method, [headers], [content_type, content])
-   7.27. dlg_set_state(newstate)
+   7.25. dlg_remove_dialogs_from_node(node_uri)
+   7.26. dlg_reset_property(attr)
+   7.27. dlg_req_within(side, method, [headers], [content_type, content])
+   7.28. dlg_set_state(newstate)
 
 7.1.  set_dlg_profile(profile[, value])
 
@@ -2099,7 +2103,30 @@ if(has_totag()) {
 }
 ...
 
-7.25.  dlg_reset_property(attr)
+7.25.  dlg_remove_dialogs_from_node(node_uri)
+
+   Remove all dialogs that were synced via DMQ from a specific node,
+   identified by its DMQ node URI. This is useful for cleaning up stale
+   dialogs when a DMQ peer node goes down permanently and its synced
+   dialogs are no longer needed on the local node.
+
+   Only dialogs that have the DMQ sync flag set and whose originating node
+   URI matches the provided argument will be removed. Locally created
+   dialogs and dialogs synced from other nodes are not affected.
+
+   Meaning of the parameters is as follows:
+     * node_uri - the DMQ node URI of the peer whose dialogs should be
+       removed (e.g., "sip:10.0.0.2:5060"). The parameter can contain
+       pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.93. dlg_remove_dialogs_from_node() usage
+...
+dlg_remove_dialogs_from_node("sip:10.0.0.2:5060");
+...
+
+7.26.  dlg_reset_property(attr)
 
    Reset a dialog property - an attribute that enable/disable various
    behaviours (e.g., sending keep alive requests).
@@ -2113,14 +2140,14 @@ if(has_totag()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.93. dlg_reset_property usage
+   Example 1.94. dlg_reset_property usage
 ...
 dlg_reset_property("ka-src");
 dlg_reset_property("ka-dst");
 dlg_reset_property("timeout-noreset");
 ...
 
-7.26.  dlg_req_within(side, method, [headers], [content_type, content])
+7.27.  dlg_req_within(side, method, [headers], [content_type, content])
 
    Sends an in-dialog SIP Request with method to a party of a dialog
    indicated by the side parameter.
@@ -2136,7 +2163,7 @@ dlg_reset_property("timeout-noreset");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.94. dlg_req_within usage
+   Example 1.95. dlg_req_within usage
 ...
         # Send a simple request:
         dlg_req_within("all", "OPTIONS");
@@ -2153,7 +2180,7 @@ dlg_reset_property("timeout-noreset");
 cation/sdp", "...some SDP...");
 ...
 
-7.27.  dlg_set_state(newstate)
+7.28.  dlg_set_state(newstate)
 
    Set the state for dialog matching current message.
 
@@ -2167,7 +2194,7 @@ cation/sdp", "...some SDP...");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.95. dlg_set_state usage
+   Example 1.96. dlg_set_state usage
 ...
 dlg_set_state("early");
 ...
