@@ -26,6 +26,7 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. xkey (str)
+              3.2. hmac_engine (str)
 
         4. Functions
 
@@ -35,8 +36,9 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set xkey parameter
-   1.2. auth_xkeys_add usage
-   1.3. auth_xkeys_check usage
+   1.2. Set hmac_engine parameter
+   1.3. auth_xkeys_add usage
+   1.4. auth_xkeys_check usage
 
 Chapter 1. Admin Guide
 
@@ -51,6 +53,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. xkey (str)
+        3.2. hmac_engine (str)
 
    4. Functions
 
@@ -119,6 +122,7 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. xkey (str)
+   3.2. hmac_engine (str)
 
 3.1. xkey (str)
 
@@ -136,6 +140,19 @@ Chapter 1. Admin Guide
 modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
 ...
 
+3.2. hmac_engine (str)
+
+   Specify the module to use for computing HMAC signature. Values:
+     * crypto
+     * gcrypt
+
+   Default value is empty.
+
+   Example 1.2. Set hmac_engine parameter
+...
+modparam("auth_xkeys", "hmac_engine", "gcrypt")
+...
+
 4. Functions
 
    4.1. auth_xkeys_add(hdr, kid, alg, data)
@@ -147,11 +164,11 @@ modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
    algorithm alg over the content of parameter data. The parameters can
    include variables.
 
-   The algorithm can be: sha256, sha384, sha512.
+   The algorithm can be: sha256, sha384, sha512, hmac-sha256.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.2. auth_xkeys_add usage
+   Example 1.3. auth_xkeys_add usage
 ...
 auth_xkeys_add("X-My-Key", "abc", "sha256", "$Ri:$fu:$ru:$hdr(CSeq)");
 ...
@@ -162,14 +179,14 @@ auth_xkeys_add("X-My-Key", "abc", "sha256", "$Ri:$fu:$ru:$hdr(CSeq)");
    first key in the group kid, hashing with algorithm alg over the content
    of parameter data. The parameters can include variables.
 
-   The algorithm can be: sha256, sha384, sha512.
+   The algorithm can be: sha256, sha384, sha512, hmac-sha256.
 
    Note that the header is not removed by the function, it is recommended
    to remove it if sending to untrusted destination.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.3. auth_xkeys_check usage
+   Example 1.4. auth_xkeys_check usage
 ...
 if(!auth_xkeys_check("X-My-Key", "abc", "sha256", "$si:$fu:$ru:$hdr(CSeq)")) {
     send_reply("403", "Forbidden");
