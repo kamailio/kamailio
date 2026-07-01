@@ -574,7 +574,8 @@ modparam("uac", "reg_db_table", "uacreg")
    Address to be used to build contact address. Must be at least host
    part, can have port and parameters. Must not include 'sip:'. The
    username part of the Contact: URI will be the L_UUID field in the
-   database.
+   database, unless contact_user is set for the record in the uacreg
+   table.
 
    A contact_addr value in the uacreg table will override the parameter
    for this particular entry.
@@ -1330,9 +1331,10 @@ event_route[uac:reply] {
      * reg_delay
      * socket
      * contact_addr
+     * contact_user
 
    Use a dot (.) if no value should be set for realm, auth_password,
-   auth_ha1, socket or contact_addr.
+   auth_ha1, socket, contact_addr or contact_user.
 
    Example 1.54. uac.reg_add usage
 ...
@@ -1391,6 +1393,11 @@ event_route[uac:reply] {
        of reg_contact_addr module parameter, e.g.:, 192.168.0.125:5060. It
        can be set to '' (empty string) to skip setting it and then
        reg_contact_addr modparam is used.
+
+     * contact_user - contact username to be used for this record instead
+       of l_uuid in the Contact URI. If set, the REGISTER request will
+       also add the Contact URI parameter line=<l_uuid> so replies can be
+       matched to the correct binding.
 
      * socket - Used socket for sending out registration requests, e.g.:,
        udp:192.168.0.125:5060
