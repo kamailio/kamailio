@@ -72,6 +72,8 @@ void tls_ct_wq_destroy()
  */
 unsigned int tls_ct_wq_total_bytes()
 {
+	if(unlikely(tls_total_ct_wq == 0))
+		return 0;
 	return (unsigned)atomic_get(tls_total_ct_wq);
 }
 
