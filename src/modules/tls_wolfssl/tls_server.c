@@ -27,6 +27,7 @@
 
 
 #include <poll.h>
+#include <pthread.h>
 #include <wolfssl/options.h>
 #include <wolfssl/ssl.h>
 
@@ -1904,6 +1905,13 @@ void tls_lookup_event_routes(void)
 /**
  *
  */
+/* See the openssl tls module for the rationale: in the full tcp reactor
+ * (tcp_main_threads == 2) TLS reads run on PROC_TCP_MAIN pool threads, so this
+ * config-script event route can run on any of them. It touches process-global
+ * state (the faked sip_msg, route type, $tls PVs) that is not thread-safe, so it
+ * is serialized here. Uncontended/harmless in modes 0/1. */
+static pthread_mutex_t _ksr_tls_evrt_lock = PTHREAD_MUTEX_INITIALIZER;
+
 int tls_run_event_routes(struct tcp_connection *c)
 {
 	int backup_rt;
@@ -1918,8 +1926,11 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(p_onsend == 0 || p_onsend->msg == 0)
 		return 0;
 
-	if(faked_msg_init() < 0)
+	pthread_mutex_lock(&_ksr_tls_evrt_lock);
+	if(faked_msg_init() < 0) {
+		pthread_mutex_unlock(&_ksr_tls_evrt_lock);
 		return -1;
+	}
 	fmsg = faked_msg_next();
 
 	backup_rt = get_route_type();
@@ -1935,6 +1946,9 @@ int tls_run_event_routes(struct tcp_connection *c)
 					   &sr_tls_event_callback, &evname)
 					< 0) {
 				LM_ERR("error running event route kemi callback\n");
+				tls_set_pv_con(0);
+				set_route_type(backup_rt);
+				pthread_mutex_unlock(&_ksr_tls_evrt_lock);
 				return -1;
 			}
 		}
@@ -1945,5 +1959,6 @@ int tls_run_event_routes(struct tcp_connection *c)
 	}
 	tls_set_pv_con(0);
 	set_route_type(backup_rt);
+	pthread_mutex_unlock(&_ksr_tls_evrt_lock);
 	return 0;
 }
