@@ -56,26 +56,34 @@ static int fixup_auth_xkeys_check(void **param, int param_no);
 /* int auth_xkeys_timer_mode = 0; */
 
 
-static cmd_export_t cmds[] = {{"auth_xkeys_add", (cmd_function)w_auth_xkeys_add,
-									  4, fixup_auth_xkeys_add, 0, ANY_ROUTE},
-		{"auth_xkeys_check", (cmd_function)w_auth_xkeys_check, 4,
-				fixup_auth_xkeys_check, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"auth_xkeys_add", (cmd_function)w_auth_xkeys_add, 4,
+		fixup_auth_xkeys_add, 0, ANY_ROUTE},
+	{"auth_xkeys_check", (cmd_function)w_auth_xkeys_check, 4,
+		fixup_auth_xkeys_check, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"xkey", PARAM_STRING | PARAM_USE_FUNC, (void *)authx_xkey_param},
-		/* {"timer_mode",     PARAM_INT,   &auth_xkeys_timer_mode}, */
-		{0, 0, 0}};
+	{"xkey", PARAM_STRING | PARAM_USE_FUNC, (void *)authx_xkey_param},
+	/* {"timer_mode",     PARAM_INT,   &auth_xkeys_timer_mode}, */
+	{0, 0, 0}
+};
 
 struct module_exports exports = {
-		"auth_xkeys", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds, params, 0,			   /* exported RPC methods */
-		0,							   /* exported pseudo-variables */
-		0,							   /* response function */
-		mod_init,					   /* module initialization function */
-		child_init,					   /* per child init function */
-		mod_destroy					   /* destroy function */
+	"auth_xkeys",
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	cmds,
+	params,
+	0,					/* exported RPC methods */
+	0,					/* exported pseudo-variables */
+	0,					/* response function */
+	mod_init,			/* module initialization function */
+	child_init,			/* per child init function */
+	mod_destroy			/* destroy function */
 };
+/* clang-format on */
 
 
 /**
