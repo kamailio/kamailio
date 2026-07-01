@@ -31,6 +31,8 @@ TAGS
 # vi swaps
 .*.swp
 .*.swo
+# FUSE hidden temp files on some mounted filesystems
+.fuse_hidden*
 # various other binaries
 test/udp_flood
 utils/gen_ha1/gen_ha1

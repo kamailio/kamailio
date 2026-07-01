@@ -1,0 +1,12 @@
+# unit test binaries
+test_db_layout
+test_pcontact_serialize
+test_pcontact_index
+test_impu_match
+test_parse_uri_stub
+test_temp_gruu_lru
+
+# build artifacts
+*.o
+*.d
+.DS_Store
