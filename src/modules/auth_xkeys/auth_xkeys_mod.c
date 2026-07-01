@@ -56,6 +56,8 @@ static int fixup_auth_xkeys_check(void **param, int param_no);
 /* int auth_xkeys_timer_mode = 0; */
 
 
+str authx_hmac_engine = STR_NULL;
+
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"auth_xkeys_add", (cmd_function)w_auth_xkeys_add, 4,
@@ -67,6 +69,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"xkey", PARAM_STRING | PARAM_USE_FUNC, (void *)authx_xkey_param},
+	{"hmac_engine", PARAM_STR, &authx_hmac_engine},
 	/* {"timer_mode",     PARAM_INT,   &auth_xkeys_timer_mode}, */
 	{0, 0, 0}
 };
@@ -95,6 +98,10 @@ static int mod_init(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	if(auth_xkeys_init_hmac_engine(&authx_hmac_engine) < 0) {
+		return -1;
+	}
+
 	return 0;
 }
 

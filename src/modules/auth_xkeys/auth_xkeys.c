@@ -39,6 +39,9 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
+#include "../crypto/api.h"
+#include "../gcrypt/api.h"
+
 #include "auth_xkeys.h"
 
 typedef struct _auth_xkey
@@ -52,6 +55,36 @@ typedef struct _auth_xkey
 } auth_xkey_t;
 
 static auth_xkey_t **_auth_xkeys_list = NULL;
+
+static crypto_api_t cryptoapi = {0};
+static gcrypt_api_t gcryptapi = {0};
+
+/**
+ *
+ */
+int auth_xkeys_init_hmac_engine(str *heng)
+{
+	if(heng == NULL || heng->s == NULL || heng->len <= 0) {
+		return 0;
+	}
+	if(heng->s[0] == 'c' || heng->s[0] == 'C') {
+		/* load the Crypto API */
+		if(load_crypto_api(&cryptoapi) != 0) {
+			LM_ERR("cannot load Crypto API\n");
+			return -1;
+		}
+	} else if(heng->s[0] == 'g' || heng->s[0] == 'G') {
+		/* load the GCrypt API */
+		if(gcrypt_load_api(&gcryptapi) != 0) {
+			LM_ERR("cannot load GCrypt API\n");
+			return -1;
+		}
+	} else {
+		LM_ERR("unknown HMAC engine\n");
+		return -1;
+	}
+	return 0;
+}
 
 /**
  *
@@ -199,6 +232,7 @@ int auth_xkeys_add(sip_msg_t *msg, str *hdr, str *key, str *alg, str *data)
 	str xdata;
 	auth_xkey_t *itc;
 	char xout[SHA512_DIGEST_STRING_LENGTH];
+	str sout;
 	struct lump *anchor;
 	char *p;
 
@@ -222,30 +256,50 @@ int auth_xkeys_add(sip_msg_t *msg, str *hdr, str *key, str *alg, str *data)
 	}
 
 	xdata.s = pv_get_buffer();
-	xdata.len = data->len + itc->kvalue.len + 1;
-	if(xdata.len + 1 >= pv_get_buffer_size()) {
-		LM_ERR("size of data and key is too big\n");
-		return -1;
-	}
-
-	strncpy(xdata.s, itc->kvalue.s, itc->kvalue.len);
-	xdata.s[itc->kvalue.len] = ':';
-	strncpy(xdata.s + itc->kvalue.len + 1, data->s, data->len);
-	if(alg->len == 6 && strncasecmp(alg->s, "sha256", 6) == 0) {
-		compute_sha256(xout, (u_int8_t *)xdata.s, xdata.len);
-		xdata.len = SHA256_DIGEST_STRING_LENGTH - 1;
-	} else if(alg->len == 6 && strncasecmp(alg->s, "sha384", 6) == 0) {
-		compute_sha384(xout, (u_int8_t *)xdata.s, xdata.len);
-		xdata.len = SHA384_DIGEST_STRING_LENGTH - 1;
-	} else if(alg->len == 6 && strncasecmp(alg->s, "sha512", 6) == 0) {
-		compute_sha512(xout, (u_int8_t *)xdata.s, xdata.len);
-		xdata.len = SHA512_DIGEST_STRING_LENGTH - 1;
+	sout.s = xout;
+	if(alg->len == 11 && strncasecmp(alg->s, "hmac-sha256", 6) == 0) {
+		if(cryptoapi.hmac_sha256 == NULL || cryptoapi.hmac_sha256 == NULL) {
+			LM_ERR("no HMAC engine was set\n");
+			return -1;
+		}
+		sout.len = SHA512_DIGEST_STRING_LENGTH;
+		if(cryptoapi.hmac_sha256 != NULL) {
+			if(cryptoapi.hmac_sha256(data, &itc->kvalue, &sout) < 0) {
+				LM_ERR("failed to compute crypto hmac-sha256\n");
+				return -1;
+			}
+		} else {
+			if(gcryptapi.hmac_sha256(data, &itc->kvalue, &sout) < 0) {
+				LM_ERR("failed to compute gcrypt hmac-sha256\n");
+				return -1;
+			}
+		}
 	} else {
-		LM_ERR("unknown algorithm [%.*s]\n", alg->len, alg->s);
-		return -1;
+		xdata.len = data->len + itc->kvalue.len + 1;
+		if(xdata.len + 1 >= pv_get_buffer_size()) {
+			LM_ERR("size of data and key is too big\n");
+			return -1;
+		}
+
+		strncpy(xdata.s, itc->kvalue.s, itc->kvalue.len);
+		xdata.s[itc->kvalue.len] = ':';
+		strncpy(xdata.s + itc->kvalue.len + 1, data->s, data->len);
+		if(alg->len == 6 && strncasecmp(alg->s, "sha256", 6) == 0) {
+			compute_sha256(sout.s, (u_int8_t *)xdata.s, xdata.len);
+			sout.len = SHA256_DIGEST_STRING_LENGTH - 1;
+		} else if(alg->len == 6 && strncasecmp(alg->s, "sha384", 6) == 0) {
+			compute_sha384(sout.s, (u_int8_t *)xdata.s, xdata.len);
+			sout.len = SHA384_DIGEST_STRING_LENGTH - 1;
+		} else if(alg->len == 6 && strncasecmp(alg->s, "sha512", 6) == 0) {
+			compute_sha512(sout.s, (u_int8_t *)xdata.s, xdata.len);
+			sout.len = SHA512_DIGEST_STRING_LENGTH - 1;
+		} else {
+			LM_ERR("unknown algorithm [%.*s]\n", alg->len, alg->s);
+			return -1;
+		}
 	}
 
-	if(xdata.len + hdr->len + 6 >= pv_get_buffer_size()) {
+	if(sout.len + hdr->len + 6 >= pv_get_buffer_size()) {
 		LM_ERR("size of new header is too big for pv buffer\n");
 		return -1;
 	}
@@ -253,8 +307,8 @@ int auth_xkeys_add(sip_msg_t *msg, str *hdr, str *key, str *alg, str *data)
 	memcpy(xdata.s, hdr->s, hdr->len);
 	xdata.s[hdr->len] = ':';
 	xdata.s[hdr->len + 1] = ' ';
-	memcpy(xdata.s + hdr->len + 2, xout, xdata.len);
-	xdata.len += hdr->len + 2;
+	memcpy(xdata.s + hdr->len + 2, sout.s, sout.len);
+	xdata.len = hdr->len + 2 + sout.len;
 	xdata.s[xdata.len] = '\r';
 	xdata.s[xdata.len + 1] = '\n';
 	xdata.s[xdata.len + 2] = '\0';
