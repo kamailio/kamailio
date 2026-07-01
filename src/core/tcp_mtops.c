@@ -69,10 +69,19 @@ static int _ksr_tcpx_proc_list_size = 0;
 
 /* mode 2: tcp_main-local write buffer and synchronous result slot.
  * Used by the direct-call path (KSR_TCPX_MAIN_PIDX) instead of the
- * per-process socketpair relay used in mode 1. */
+ * per-process socketpair relay used in mode 1.
+ *
+ * In the full reactor (mode 2) the direct-call trampoline runs OpenSSL on
+ * whichever PROC_TCP_MAIN thread owns the connection: the io_wait thread for
+ * inline WSS / outbound-connect encode, or a pool thread for an offloaded TLS
+ * read/write job. Several such threads encode concurrently (on different
+ * connections), so each needs its OWN scratch buffer and result slot - a single
+ * process-global would let them clobber each other. _Thread_local supplies one
+ * copy per thread automatically; F_CONN_POOL_BUSY already guarantees a single
+ * thread per SSL object at a time, so per-thread (not per-conn) is sufficient. */
 extern int is_tcp_main(void);
-static unsigned char ksr_tcp_main_wrbuf[TLS_WR_MBUF_SZ];
-static tcpx_task_result_t *ksr_tcp_main_eresult = NULL;
+static _Thread_local unsigned char ksr_tcp_main_wrbuf[TLS_WR_MBUF_SZ];
+static _Thread_local tcpx_task_result_t *ksr_tcp_main_eresult = NULL;
 
 /**
  * Set a unique id per thread
@@ -284,7 +293,11 @@ error:
  */
 unsigned char *ksr_tcpx_thread_wrbuf(int pidx)
 {
-	if(pidx == KSR_TCPX_MAIN_PIDX)
+	/* mode 2: the encode trampoline passes pidx == process_no (a single value
+	 * for PROC_TCP_MAIN), but the work runs on many threads. Return the
+	 * thread-local buffer for every mode-2 caller, regardless of pidx, so
+	 * concurrent pool-thread TLS encodes do not share one buffer. */
+	if(ksr_tcp_main_threads == 2 || pidx == KSR_TCPX_MAIN_PIDX)
 		return ksr_tcp_main_wrbuf;
 	if(_ksr_tcpx_proc_list == NULL)
 		return NULL;

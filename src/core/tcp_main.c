@@ -4432,7 +4432,15 @@ error:
  * The caller must NOT hold c->write_lock. Returns 0 on success, -1 on error
  * (marks c bad and forces timeout). Mirrors the TLS branch of
  * tcpconn_send_put(). */
-static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
+/* mode 2 (Phase 2): append a write payload to c's wbuf_q - encrypting first for
+ * TLS/WSS via tls_encode(), plain copy otherwise. The caller MUST already hold
+ * c->write_lock (the lock is left held on every path; the caller releases it).
+ * On a buffer/encode error the connection is marked bad + timed-out and -1 is
+ * returned. Shared by the inline tcp_reactor_wbuf_enqueue() path (io_wait
+ * thread) and the pool TCP_R_WRITE job, so TLS encode runs on whichever
+ * PROC_TCP_MAIN thread owns the connection. The direct-call trampoline used by
+ * tls_encode() picks up a per-thread scratch buffer (see tcp_mtops.c). */
+static int tcp_reactor_wbuf_add_locked(struct tcp_connection *c, char *buf,
 		unsigned len, snd_flags_t send_flags)
 {
 #ifdef USE_TLS
@@ -4440,10 +4448,7 @@ static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 	unsigned t_len, rest_len;
 	snd_flags_t t_send_flags;
 	int wn;
-#endif /* USE_TLS */
 
-	lock_get(&c->write_lock);
-#ifdef USE_TLS
 	if(unlikely(c->type == PROTO_TLS || c->type == PROTO_WSS)) {
 		t_buf = buf;
 		t_len = len;
@@ -4453,7 +4458,6 @@ static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 					c, &t_buf, &t_len, &rest_buf, &rest_len, &t_send_flags);
 			if(unlikely((wn < 0)
 						|| (t_len && (_wbufq_add(c, t_buf, t_len) < 0)))) {
-				lock_release(&c->write_lock);
 				c->state = S_CONN_BAD;
 				c->timeout = get_ticks_raw(); /* force timeout */
 				return -1;
@@ -4461,16 +4465,27 @@ static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 			t_buf = rest_buf;
 			t_len = rest_len;
 		} while(unlikely(rest_len && wn > 0));
-	} else
+		return 0;
+	}
 #endif /* USE_TLS */
-		if(unlikely(len && (_wbufq_add(c, buf, len) < 0))) {
-			lock_release(&c->write_lock);
-			c->state = S_CONN_BAD;
-			c->timeout = get_ticks_raw(); /* force timeout */
-			return -1;
-		}
-	lock_release(&c->write_lock);
+	if(unlikely(len && (_wbufq_add(c, buf, len) < 0))) {
+		c->state = S_CONN_BAD;
+		c->timeout = get_ticks_raw(); /* force timeout */
+		return -1;
+	}
+	tcpconn_set_send_flags(c, send_flags);
 	return 0;
+}
+
+static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
+		unsigned len, snd_flags_t send_flags)
+{
+	int ret;
+
+	lock_get(&c->write_lock);
+	ret = tcp_reactor_wbuf_add_locked(c, buf, len, send_flags);
+	lock_release(&c->write_lock);
+	return ret;
 }
 
 /* mode 2: enable POLLOUT watching on an already-hashed connection (mirrors the
@@ -5030,12 +5045,16 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 				break;
 			}
 #ifdef TCP_ASYNC
-			/* Step 4: plain TCP writes are offloaded to a pool thread. Stage the
-			 * plaintext, then - if the conn is not already owned by a pool job -
-			 * shield it and enqueue a write job. If it is busy, the data waits in
-			 * wsq and the running job's completion chains a write job. TLS keeps
-			 * the inline encode+watch path below. */
-			if(likely(tcpconn->type == PROTO_TCP)) {
+			/* Step 4/3b: plain TCP and TLS writes are offloaded to a pool thread.
+			 * Stage the plaintext, then - if the conn is not already owned by a
+			 * pool job - shield it and enqueue a write job; for TLS the job
+			 * tls_encode()s each staged chunk before flushing wbuf_q (the conn is
+			 * shielded, so that pool thread owns the SSL object exclusively). If
+			 * the conn is busy, the data waits in wsq and the running job's
+			 * completion chains a write job. WS / WSS keep the inline
+			 * encode+watch path below. */
+			if(likely(tcpconn->type == PROTO_TCP
+					   || tcpconn->type == PROTO_TLS)) {
 				if(unlikely(tcp_reactor_wsq_add(tcpconn, wreq->buf, wreq->len,
 									wreq->send_flags)
 							< 0)) {
@@ -5607,11 +5626,14 @@ inline static int handle_tcpconn_ev(
 
 		if(ev & (POLLIN | POLLERR | POLLHUP)) {
 #ifdef TCP_ASYNC
-			/* Step 3: plain TCP reads are offloaded to a pool thread. TLS / WS /
-			 * WSS stay inline for now (Step 3b) - they share the single TLS
-			 * scratch buffer with the io_wait thread's TLS encode and/or run
-			 * sr_event callbacks not yet made thread-safe. */
-			if(likely(tcpconn->type == PROTO_TCP)) {
+			/* Step 3/3b: plain TCP and TLS reads are offloaded to a pool thread.
+			 * The shield gives that thread exclusive ownership of the conn
+			 * (F_CONN_POOL_BUSY), so it may drive OpenSSL on it: the SSL object is
+			 * touched by a single thread at a time and the encode trampoline uses
+			 * a per-thread scratch buffer (see tcp_mtops.c). WS / WSS stay inline
+			 * for now - their websocket framing layer is not yet offloaded. */
+			if(likely(tcpconn->type == PROTO_TCP
+					   || tcpconn->type == PROTO_TLS)) {
 				/* shield the conn from the (level-triggered) reactor + timer so
 				 * a pool thread can own it exclusively, then enqueue the read */
 				if(ev
@@ -6041,18 +6063,20 @@ static void *tcp_reactor_thread_routine(void *arg)
 			}
 			case TCP_R_WRITE: {
 				/* drain the connection's plaintext staging list into wbuf_q
-				 * (PROTO_TCP: plain copy; no TLS at this step) and flush wbuf_q
-				 * to the socket. No c->flags writes here (the io_wait completion
-				 * owns those); only buffers/state under write_lock. */
+				 * (PROTO_TCP: plain copy; PROTO_TLS: tls_encode via the
+				 * direct-call trampoline on this pool thread) and flush wbuf_q to
+				 * the socket. No c->flags writes here (the io_wait completion owns
+				 * those); only buffers/state under write_lock. */
 				struct tcp_wchunk *ch;
 				int werr = 0, wempty = 0;
 				conn = job->conn;
 				lock_get(&conn->write_lock);
 				while((ch = conn->wsq_head) != NULL) {
 					conn->wsq_head = ch->next;
-					if(ch->len && _wbufq_add(conn, ch->buf, ch->len) < 0)
+					if(tcp_reactor_wbuf_add_locked(
+							   conn, ch->buf, ch->len, ch->send_flags)
+							< 0)
 						werr = 1;
-					tcpconn_set_send_flags(conn, ch->send_flags);
 					shm_free(ch->buf);
 					shm_free(ch);
 				}
