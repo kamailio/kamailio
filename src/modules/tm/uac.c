@@ -627,7 +627,9 @@ static inline int t_uac_prepare(
 		if(likely(t_build_msg_from_buf(&lreq, buf, buf_len, uac_r, &dst)
 				   == 0)) {
 			if(parse_headers(&lreq, HDR_EOH_F, 0) == -1) {
-				LM_ERR("failed to parse headers on uas for failover\n");
+				LM_ERR("failed to parse headers on uas for failover - dns"
+					   " failover disabled for this transaction\n");
+				new_cell->flags |= T_DISABLE_FAILOVER;
 			} else {
 				new_cell->uas.request = sip_msg_cloner(&lreq, &sip_msg_len);
 				lreq.buf = 0;
@@ -640,7 +642,9 @@ static inline int t_uac_prepare(
 						((char *)new_cell->uas.request) + sip_msg_len;
 			}
 		} else {
-			LM_WARN("failed to build uas for failover\n");
+			LM_WARN("failed to build uas for failover - dns failover"
+					" disabled for this transaction\n");
+			new_cell->flags |= T_DISABLE_FAILOVER;
 		}
 	}
 #endif /* USE_DNS_FAILOVER */

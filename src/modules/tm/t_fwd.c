@@ -342,6 +342,11 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	memset(&bbak, 0, sizeof(tm_branch_bak_t));
 	dst = &t->uac[branch].request.dst;
 
+	if(unlikely(i_req == NULL)) {
+		LM_BUG("null input sip msg\n");
+		return E_BUG;
+	}
+
 	/* ... we calculate branch ... */
 	if(!t_calc_branch(
 			   t, branch, i_req->add_to_branch_s, &i_req->add_to_branch_len)) {
@@ -709,6 +714,11 @@ static char *print_uac_request_from_buf(struct cell *t, struct sip_msg *i_req,
 
 	shbuf = 0;
 
+	if(unlikely(i_req == NULL)) {
+		LM_BUG("null input sip msg\n");
+		goto error00;
+	}
+
 	/* ... we calculate branch ... */
 	if(!t_calc_branch(
 			   t, branch, i_req->add_to_branch_s, &i_req->add_to_branch_len)) {
@@ -921,6 +931,12 @@ static int add_uac_from_buf(struct cell *t, struct sip_msg *request, str *uri,
 	char *shbuf;
 	unsigned int len;
 
+	if(unlikely(request == NULL)) {
+		LM_BUG("null input sip msg\n");
+		ret = ser_error = E_BUG;
+		goto error;
+	}
+
 	branch = t->nr_of_outgoings;
 	if(branch == sr_dst_max_branches) {
 		LM_ERR("maximum number of branches exceeded\n");
@@ -1076,6 +1092,18 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg *msg,
 	int ret;
 
 	ret = -1;
+	/* The failover paths require the originating request: with
+	 * reparse_on_dns_failover print_uac_request_from_buf() and
+	 * add_uac_from_buf() dereference it, otherwise add_uac() ->
+	 * prepare_new_uac() does; msg->rcv is also read when
+	 * dns_reuse_rcv_socket is set. msg is NULL for a locally generated
+	 * transaction (t_uac(), uac module, ...) when its uas.request could
+	 * not be built from the outgoing buffer - decline dns failover. */
+	if(unlikely(msg == NULL)) {
+		LM_DBG("no originating request - skipping dns failover for a"
+			   " locally generated transaction\n");
+		return ret;
+	}
 	if(cfg_get(core, core_cfg, use_dns_failover)
 			&& !((t->flags & (T_DONT_FORK | T_DISABLE_FAILOVER))
 					|| uac_dont_fork(old_uac))
