@@ -555,6 +555,7 @@ extern char *default_routename;
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
 %token LATENCY_LIMIT_CFG
+%token LATENCY_SAMPLE_N
 %token RPC_EXEC_DELTA_CFG
 %token MSG_TIME
 %token ONSEND_RT_REPLY
@@ -2159,6 +2160,8 @@ assign_stm:
 	| LATENCY_LIMIT_ACTION EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_CFG EQUAL NUMBER { default_core_cfg.latency_limit_cfg=$3; }
 	| LATENCY_LIMIT_CFG EQUAL error  { yyerror("number  expected"); }
+	| LATENCY_SAMPLE_N EQUAL NUMBER { default_core_cfg.latency_sample_n=$3; }
+	| LATENCY_SAMPLE_N EQUAL error  { yyerror("number  expected"); }
     | RPC_EXEC_DELTA_CFG EQUAL NUMBER { ksr_rpc_exec_delta=$3; }
 	| RPC_EXEC_DELTA_CFG EQUAL error  { yyerror("number  expected"); }
     | MSG_TIME EQUAL NUMBER { sr_msg_time=$3; }

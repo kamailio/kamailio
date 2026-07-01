@@ -72,6 +72,21 @@ str default_via_port = {0, 0};
 
 int ksr_route_locks_size = 0;
 static rec_lock_set_t *ksr_route_locks_set = NULL;
+static unsigned int ksr_latency_sample_seq = 0;
+
+static inline int ksr_latency_sample_hit(unsigned int sample_n)
+{
+	if(sample_n <= 1) {
+		return 1;
+	}
+
+	ksr_latency_sample_seq++;
+	if((ksr_latency_sample_seq % sample_n) == 0) {
+		return 1;
+	}
+
+	return 0;
+}
 
 int ksr_route_locks_set_init(void)
 {
@@ -316,12 +331,16 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	int ret = -1;
 	struct timeval tvb = {0}, tve = {0};
 	unsigned int diff = 0;
+	unsigned int sample_n = 1;
 	str inb = STR_NULL;
 	sr_net_info_t netinfo = {0};
 	sr_kemi_eng_t *keng = NULL;
 	sr_event_param_t evp = {0};
 	unsigned int cidlockidx = 0;
 	unsigned int cidlockset = 0;
+	unsigned int rpl_method = METHOD_OTHER;
+	unsigned int rpl_status_class = 0;
+	struct cseq_body *cseqb = NULL;
 	int errsipmsg = 0;
 	int exectime = 0;
 
@@ -442,6 +461,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))) {
 		exectime = 1;
 	}
+	sample_n = cfg_get(core, core_cfg, latency_sample_n);
 
 	if(msg->first_line.type == SIP_REQUEST) {
 		ruri_mark_new(); /* ruri is usable for forking (not consumed yet) */
@@ -546,6 +566,10 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 			gettimeofday(&tve, NULL);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
+			if(ksr_latency_sample_hit(sample_n)) {
+				STATS_REQ_ROUTE_LATENCY(
+						msg->first_line.u.request.method_value, diff);
+			}
 			if(cfg_get(core, core_cfg, latency_limit_cfg) == 0
 					|| cfg_get(core, core_cfg, latency_limit_cfg) <= diff) {
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
@@ -574,6 +598,18 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 
 		if(exectime) {
 			gettimeofday(&tvb, NULL);
+		}
+
+		rpl_method = METHOD_OTHER;
+		if(msg->cseq && msg->cseq->parsed) {
+			cseqb = get_cseq(msg);
+			if(cseqb != NULL) {
+				rpl_method = cseqb->method_id;
+			}
+		}
+		rpl_status_class = msg->first_line.u.reply.statuscode / 100;
+		if(rpl_status_class < 1 || rpl_status_class > 6) {
+			rpl_status_class = 0;
 		}
 
 		/* execute pre-script callbacks, if any; -jiri */
@@ -639,6 +675,9 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 			gettimeofday(&tve, NULL);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
+			if(ksr_latency_sample_hit(sample_n)) {
+				STATS_RPL_ROUTE_LATENCY(rpl_method, rpl_status_class, diff);
+			}
 			if(cfg_get(core, core_cfg, latency_limit_cfg) == 0
 					|| cfg_get(core, core_cfg, latency_limit_cfg) <= diff) {
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
