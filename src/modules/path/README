@@ -43,6 +43,11 @@ Richard Fuchs
               4.4. add_path_received()
               4.5. add_path_received(user)
               4.6. add_path_received(user, parameters)
+              4.7. add_path_advertised_address(address [, user [,
+                      parameters]])
+
+              4.8. add_path_received_advertised_address(address [, user [,
+                      parameters]])
 
    List of Examples
 
@@ -58,6 +63,8 @@ Richard Fuchs
    1.10. add_path_received() usage
    1.11. add_path_received(user) usage
    1.12. add_path_received(user, parameters) usage
+   1.13. add_path_advertised_address usage
+   1.14. add_path_received_advertised_address usage
 
 Chapter 1. Admin Guide
 
@@ -89,6 +96,9 @@ Chapter 1. Admin Guide
         4.4. add_path_received()
         4.5. add_path_received(user)
         4.6. add_path_received(user, parameters)
+        4.7. add_path_advertised_address(address [, user [, parameters]])
+        4.8. add_path_received_advertised_address(address [, user [,
+                parameters]])
 
 1. Overview
 
@@ -250,6 +260,9 @@ modparam("path", "sockname_mode", 1)
    4.4. add_path_received()
    4.5. add_path_received(user)
    4.6. add_path_received(user, parameters)
+   4.7. add_path_advertised_address(address [, user [, parameters]])
+   4.8. add_path_received_advertised_address(address [, user [,
+          parameters]])
 
 4.1.  add_path()
 
@@ -370,4 +383,63 @@ if (!add_path_received("inbound", "ob")) {
         sl_send_reply("503", "Internal Path Error");
         ...
 };
+...
+
+4.7.  add_path_advertised_address(address [, user [, parameters]])
+
+   This function behaves like add_path(), add_path(user) or add_path(user,
+   parameters) depending on the number of arguments given, with one
+   difference: the host part of the Path URI is built from the given
+   address instead of the outgoing socket address (no socket/lump
+   substitution is applied).
+
+   Meaning of the parameters is as follows:
+     * address - The host (and optional port) used as domain part of the
+       Path URI, e.g. “proxy.example.com” or “1.2.3.4:5080”. SPVE is
+       supported.
+     * user - The username to be inserted as user part. SPVE is supported.
+       Optional.
+     * parameters - Additional parameters appended to the Path URI. SPVE
+       is supported. Optional.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.13. add_path_advertised_address usage
+...
+if (!add_path_advertised_address("proxy.example.com")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+# with user and parameters
+add_path_advertised_address("1.2.3.4:5080", "inbound", "ob");
+...
+
+4.8.  add_path_received_advertised_address(address [, user [, parameters]])
+
+   This function behaves like add_path_received(), add_path_received(user)
+   or add_path_received(user, parameters) depending on the number of
+   arguments given, with one difference: the host part of the Path URI is
+   built from the given address instead of the outgoing socket address (no
+   socket/lump substitution is applied). The address the request was
+   received from is still appended as received-parameter.
+
+   Meaning of the parameters is as follows:
+     * address - The host (and optional port) used as domain part of the
+       Path URI, e.g. “proxy.example.com” or “1.2.3.4:5080”. SPVE is
+       supported.
+     * user - The username to be inserted as user part. SPVE is supported.
+       Optional.
+     * parameters - Additional parameters appended to the Path URI. SPVE
+       is supported. Optional.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.14. add_path_received_advertised_address usage
+...
+if (!add_path_received_advertised_address("proxy.example.com")) {
+        sl_send_reply("503", "Internal Path Error");
+        ...
+};
+# with user and parameters
+add_path_received_advertised_address("1.2.3.4:5080", "inbound", "ob");
 ...
