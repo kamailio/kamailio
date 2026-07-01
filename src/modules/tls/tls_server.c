@@ -27,6 +27,7 @@
 
 
 #include <poll.h>
+#include <pthread.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include "../../core/dprint.h"
@@ -2143,6 +2144,17 @@ void tls_lookup_event_routes(void)
 /**
  *
  */
+/* Serializes tls_run_event_routes(). In the full tcp reactor (tcp_main_threads
+ * == 2) TLS reads run on pool threads, so an outbound handshake can complete on
+ * any pool thread and this function runs config script (the tls:connection-out
+ * event route). That script touches process-global state - the faked sip_msg
+ * (core/fmsg.c _faked_msg), the current route type, the $tls PVs - none of which
+ * is thread-safe. PROC_TCP_MAIN runs no other config script, so a single
+ * process-local lock makes all such execution single-threaded again, restoring
+ * the property the inline (single io_wait thread) path had. Uncontended and
+ * harmless in modes 0/1 (workers are separate processes). */
+static pthread_mutex_t _ksr_tls_evrt_lock = PTHREAD_MUTEX_INITIALIZER;
+
 int tls_run_event_routes(struct tcp_connection *c)
 {
 	int backup_rt;
@@ -2157,8 +2169,11 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(p_onsend == 0 || p_onsend->msg == 0)
 		return 0;
 
-	if(faked_msg_init() < 0)
+	pthread_mutex_lock(&_ksr_tls_evrt_lock);
+	if(faked_msg_init() < 0) {
+		pthread_mutex_unlock(&_ksr_tls_evrt_lock);
 		return -1;
+	}
 	fmsg = faked_msg_next();
 
 	backup_rt = get_route_type();
@@ -2174,6 +2189,9 @@ int tls_run_event_routes(struct tcp_connection *c)
 					   &sr_tls_event_callback, &evname)
 					< 0) {
 				LM_ERR("error running event route kemi callback\n");
+				tls_set_pv_con(0);
+				set_route_type(backup_rt);
+				pthread_mutex_unlock(&_ksr_tls_evrt_lock);
 				return -1;
 			}
 		}
@@ -2184,5 +2202,6 @@ int tls_run_event_routes(struct tcp_connection *c)
 	}
 	tls_set_pv_con(0);
 	set_route_type(backup_rt);
+	pthread_mutex_unlock(&_ksr_tls_evrt_lock);
 	return 0;
 }
