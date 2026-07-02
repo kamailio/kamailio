@@ -94,6 +94,11 @@ If you found a solution or workaround for the issue, describe it. Ideally, provi
 
 ### Additional Information
 
+- [ ] LLM/AI Assistants were involved in discovery, analysis or submitting of the issue
+- [ ] It happened in a production deployment
+- [ ] It happened in a testing or development deployment
+- [ ] Testing or fuzzing tools were used to generate SIP traffic when it happened
+
   * **Kamailio Version** - output of `kamailio -v`
 
 ```
