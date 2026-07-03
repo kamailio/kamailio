@@ -5,6 +5,6 @@ are available at:
 
 - https://github.com/kamailio-security/reports/security
 
-For calrification questions or assitance, contact Kamailio Security Team via email:
+For clarification questions or assistance, contact the Kamailio Security Team via email:
 
 - https://www.kamailio.org/w/contact-us/
