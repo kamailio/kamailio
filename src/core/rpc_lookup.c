@@ -25,6 +25,7 @@
 #include "str_hash.h"
 #include "ut.h"
 #include "dprint.h"
+#include "locking.h"
 #include "mem/shm.h"
 
 #define RPC_HASH_SIZE 32
@@ -39,6 +40,81 @@ int rpc_sarray_crt_size;		/* used */
 static int rpc_sarray_max_size; /* number of entries alloc'ed */
 
 int ksr_rpc_exec_delta = 0;
+int ksr_rpc_exec_locks = 0;
+
+static rec_lock_set_t *ksr_rpc_exec_locks_set = NULL;
+
+/**
+ *
+ */
+int ksr_rpc_exec_locks_set_init(void)
+{
+	if(ksr_rpc_exec_locks_set != NULL || ksr_rpc_exec_locks <= 0)
+		return 0;
+
+	ksr_rpc_exec_locks_set = rec_lock_set_alloc(ksr_rpc_exec_locks);
+	if(ksr_rpc_exec_locks_set == NULL) {
+		LM_ERR("failed to allocate rpc exec locks set\n");
+		return -1;
+	}
+	if(rec_lock_set_init(ksr_rpc_exec_locks_set) == NULL) {
+		LM_ERR("failed to init rpc exec locks set\n");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+void ksr_rpc_exec_locks_set_destroy(void)
+{
+	if(ksr_rpc_exec_locks_set == NULL)
+		return;
+
+	rec_lock_set_destroy(ksr_rpc_exec_locks_set);
+	rec_lock_set_dealloc(ksr_rpc_exec_locks_set);
+	ksr_rpc_exec_locks_set = NULL;
+}
+
+/**
+ *
+ */
+void ksr_rpc_exec_locks_set_get(str *name)
+{
+	unsigned int lockidx = 0;
+
+	if(likely(ksr_rpc_exec_locks_set == NULL)) {
+		return;
+	}
+
+	if(name == NULL || name->s == NULL || name->len <= 0) {
+		return;
+	}
+	lockidx = get_hash1_raw(name->s, name->len);
+	lockidx = lockidx % ksr_rpc_exec_locks;
+	rec_lock_set_get(ksr_rpc_exec_locks_set, lockidx);
+}
+
+/**
+ *
+ */
+void ksr_rpc_exec_locks_set_release(str *name)
+{
+	unsigned int lockidx = 0;
+
+	if(likely(ksr_rpc_exec_locks_set == NULL)) {
+		return;
+	}
+
+	if(name == NULL || name->s == NULL || name->len <= 0) {
+		return;
+	}
+
+	lockidx = get_hash1_raw(name->s, name->len);
+	lockidx = lockidx % ksr_rpc_exec_locks;
+	rec_lock_set_release(ksr_rpc_exec_locks_set, lockidx);
+}
 
 /** init the rpc hash table.
  * @return 0 on success, -1 on error

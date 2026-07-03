@@ -38,6 +38,10 @@ rpc_exportx_t *rpc_lookupx(const char *name, int len, unsigned int *rdata);
 int rpc_register(rpc_export_t *rpc);
 int rpc_register_array(rpc_export_t *rpc_array);
 
+int ksr_rpc_exec_locks_set_init(void);
+void ksr_rpc_exec_locks_set_get(str *name);
+void ksr_rpc_exec_locks_set_release(str *name);
+
 #endif /*_RPC_LOOKUP_H_*/
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

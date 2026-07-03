@@ -3226,6 +3226,10 @@ int main(int argc, char **argv)
 	if(ksr_route_locks_set_init() < 0)
 		goto error;
 
+	if(ksr_rpc_exec_locks_set_init() < 0) {
+		goto error;
+	}
+
 	ksr_shutdown_phase_init();
 
 	if(init_atomic_ops() == -1)
