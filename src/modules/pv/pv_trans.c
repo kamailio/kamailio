@@ -452,7 +452,7 @@ int tr_eval_string(
 		case TR_S_ENCODE7BIT:
 			if(!(val->flags & PV_VAL_STR))
 				val->rs.s = int2str(val->ri, &val->rs.len);
-			if(val->rs.len > (TR_BUFFER_SIZE * 7 / 8) - 1)
+			if(val->rs.len > TR_BUFFER_SIZE * 2 - 1)
 				return -1;
 			i = pdu_7bit_encode(val->rs);
 			memset(val, 0, sizeof(pv_value_t));
