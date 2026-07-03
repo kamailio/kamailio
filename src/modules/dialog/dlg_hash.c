@@ -1300,6 +1300,14 @@ void next_state_dlg(
 				case DLG_STATE_DELETED:
 					break;
 				default:
+					/* if dmq replicated dialog received BYE in unconfirmed state */
+					if((dlg->iflags & DLG_IFLAG_DMQ_SYNC)
+							&& !(dlg->dflags & DLG_FLAG_TM)) {
+						dlg->dflags |= DLG_FLAG_HASBYE;
+						dlg->state = DLG_STATE_DELETED;
+						*unref = 1;
+						break;
+					}
 					log_next_state_dlg(event, dlg);
 			}
 			break;
