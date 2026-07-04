@@ -39,8 +39,9 @@ int rpc_register(rpc_export_t *rpc);
 int rpc_register_array(rpc_export_t *rpc_array);
 
 int ksr_rpc_exec_locks_set_init(void);
-void ksr_rpc_exec_locks_set_get(str *name);
+int ksr_rpc_exec_locks_set_get(str *name);
 void ksr_rpc_exec_locks_set_release(str *name);
+void ksr_rpc_exec_locks_set_release_idx(int idx);
 
 #endif /*_RPC_LOOKUP_H_*/
 
