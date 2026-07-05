@@ -32,6 +32,9 @@
 #include "str_list.h"
 
 
+/* 16 * 1024 * 1024 */
+#define STR_LIST_MAX_SIZE 16777216
+
 /**
  * @brief Add a new allocated list element to an existing list
  *
@@ -47,6 +50,13 @@ struct str_list *append_str_list(
 		char *s, int len, struct str_list **last, int *total)
 {
 	struct str_list *nv;
+
+	if(len < 0 || total == NULL || *total > STR_LIST_MAX_SIZE - len) {
+		LM_ERR("invalid params or too large str list: total=%d len=%d\n",
+				(total != NULL) ? *total : -1, len);
+		return NULL;
+	}
+
 	nv = pkg_malloc(sizeof(struct str_list));
 	if(!nv) {
 		PKG_MEM_ERROR;
