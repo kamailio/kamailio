@@ -1367,6 +1367,7 @@ static int ki_jsonrpcs_dispatch(sip_msg_t *msg)
 	srjson_t *nj = NULL;
 	str val;
 	unsigned int rdata;
+	int lidx = -1;
 
 	if(!IS_HTTP(msg)) {
 		LM_DBG("Got non HTTP msg\n");
@@ -1443,6 +1444,7 @@ static int ki_jsonrpcs_dispatch(sip_msg_t *msg)
 	}
 	if(nj != NULL)
 		ctx->req_node = nj->child;
+	lidx = ksr_rpc_exec_locks_set_get(&val);
 	rpce->r.function(&func_param, ctx);
 
 send_reply:
@@ -1450,6 +1452,7 @@ send_reply:
 		ret = jsonrpc_send(ctx);
 	}
 	jsonrpc_clean_context(ctx);
+	ksr_rpc_exec_locks_set_release_idx(lidx);
 	if(ret < 0)
 		return -1;
 	return 1;
@@ -1474,6 +1477,7 @@ int jsonrpc_exec_ex(str *cmd, str *rpath, str *spath)
 	str scmd;
 	unsigned int rdata = 0;
 	int mode;
+	int lidx = -1;
 
 	scmd = *cmd;
 
@@ -1591,6 +1595,7 @@ int jsonrpc_exec_ex(str *cmd, str *rpath, str *spath)
 	}
 	if(nj != NULL)
 		ctx->req_node = nj->child;
+	lidx = ksr_rpc_exec_locks_set_get(&val);
 	rpce->r.function(&func_param, ctx);
 	ret = 1;
 
@@ -1599,6 +1604,7 @@ send_reply:
 		ret = jsonrpc_send_mode(ctx, mode);
 	}
 	jsonrpc_clean_context(ctx);
+	ksr_rpc_exec_locks_set_release_idx(lidx);
 	if(ret < 0)
 		return -1;
 	return 1;
