@@ -1500,7 +1500,7 @@ modparam("usrloc", "ka_interval", 30)
 		<title>Set <varname>ka_randomize</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "ka_interval", 30)
+modparam("usrloc", "ka_randomize", 30)
 ...
 </programlisting>
 		</example>
