@@ -2676,11 +2676,15 @@ static int ki_dispatch_rpc(sip_msg_t *msg)
 	rpc_exportx_t *exp;
 	int ret = 1;
 	unsigned int rdata;
+	int lidx = -1;
+	str method;
 
 	if(init_context(&ctx, msg) < 0)
 		goto skip;
 
-	exp = rpc_lookupx(ctx.method, strlen(ctx.method), &rdata);
+	method.s = ctx.method;
+	method.len = strlen(ctx.method);
+	exp = rpc_lookupx(method.s, method.len, &rdata);
 	if(!exp || !exp->r.function) {
 		rpc_fault(&ctx, 500, "Method Not Found");
 		goto skip;
@@ -2695,6 +2699,7 @@ static int ki_dispatch_rpc(sip_msg_t *msg)
 	if((exp->r.flags & RET_ARRAY)
 			&& add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0)
 		goto skip;
+	lidx = ksr_rpc_exec_locks_set_get(&method);
 	exp->r.function(&func_param, &ctx);
 
 skip:
@@ -2702,6 +2707,7 @@ skip:
 	if(!ctx.reply_sent && !(ctx.flags & XMLRPC_DELAYED_REPLY_F)) {
 		ret = rpc_send(&ctx);
 	}
+	ksr_rpc_exec_locks_set_release_idx(lidx);
 	clean_context(&ctx);
 	collect_garbage();
 	if(ret < 0)
