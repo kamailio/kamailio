@@ -1984,6 +1984,10 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 					lb_t = lb_f;
 				} else {
 					lb_t = append_str_list(tmp.s, tmp.len, &lb_t, &lb_size);
+					if(lb_t == NULL) {
+						LM_ERR("failed to append boundary match to list\n");
+						goto error;
+					}
 				}
 				lb_found = lb_found + 1;
 				tmp.s = tmp.s + ret;
