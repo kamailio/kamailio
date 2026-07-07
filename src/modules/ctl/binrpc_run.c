@@ -642,6 +642,7 @@ int process_rpc_req(unsigned char *buf, int size, int *bytes_needed, void *sh,
 	struct binrpc_ctx f_ctx;
 	struct binrpc_parse_ctx *ctx;
 	unsigned int rdata;
+	int lidx = -1;
 
 	if(ksr_shutdown_phase()) {
 		/* during shutdown - no more RPC command handling */
@@ -702,6 +703,7 @@ int process_rpc_req(unsigned char *buf, int size, int *bytes_needed, void *sh,
 		goto end;
 	}
 	f_ctx.method = val.u.strval.s;
+	lidx = ksr_rpc_exec_locks_set_get(&val.u.strval);
 	rpc_e->r.function(&binrpc_callbacks, &f_ctx);
 	if(f_ctx.replied == 0) {
 		if((binrpc_pkt_len(&f_ctx.out.pkt) == 0) && f_ctx.err_code
@@ -719,6 +721,7 @@ int process_rpc_req(unsigned char *buf, int size, int *bytes_needed, void *sh,
 			rpc_send(&f_ctx);
 		}
 	}
+	ksr_rpc_exec_locks_set_release_idx(lidx);
 end:
 	*bytes_needed = 0; /* full read */
 	destroy_binrpc_ctx(&f_ctx);

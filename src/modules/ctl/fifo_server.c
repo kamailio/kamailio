@@ -742,6 +742,8 @@ int fifo_process(char *msg_buf, int size, int *bytes_needed, void *sh,
 	int req_size;
 	static rpc_ctx_t context;
 	unsigned int rdata;
+	int lidx = -1;
+	str method;
 
 	log_prefix_set(NULL);
 	DBG("process_fifo: called with %d bytes, offset %d: %.*s\n", size,
@@ -825,7 +827,9 @@ process:
 	/* make command zero-terminated */
 	*file_sep = 0;
 
-	exp = rpc_lookupx(context.method, strlen(context.method), &rdata);
+	method.s = context.method;
+	method.len = strlen(context.method);
+	exp = rpc_lookupx(method.s, method.len, &rdata);
 	if((exp == NULL) || (exp->r.function == NULL)) {
 		DBG("Command %s not found\n", context.method);
 		rpc_fault(&context, 500, "Command '%s' not found", context.method);
@@ -838,12 +842,14 @@ process:
 		goto consume;
 	}
 
+	lidx = ksr_rpc_exec_locks_set_get(&method);
 	exp->r.function(&func_param, &context);
 
 consume:
 	if(!context.reply_sent) {
 		rpc_send(&context);
 	}
+	ksr_rpc_exec_locks_set_release_idx(lidx);
 
 	if(context.reply_file) {
 		ctl_free(context.reply_file);
