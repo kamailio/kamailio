@@ -351,6 +351,9 @@ modparam("topos", "contact_host", "proxy.domain.com")
 		Contact mode (3) is similar to mode 2, but for the case when we want
 		to alter the domain part.
 
+		Contact mode (4) is similar to mode 3, but expects only host FQDN part
+		and adds the port and transport by itself.
+
 		This can be useful for interoperating which
 		gateways that need a certain user part in the Contact URI.
 		</para>
@@ -364,7 +367,7 @@ modparam("topos", "contact_host", "proxy.domain.com")
 		the processing of the initial SIP request.
 		</para>
 		<para>
-		If you use the mode (3), you need to configure the
+		If you use the mode (3) or (4), you need to configure the
 		<emphasis>xavu_field_a_contact_host</emphasis> and <emphasis>xavu_field_b_contact_host</emphasis>
 		parameter. Furthermore you need to assign values to them during
 		the processing of the initial SIP request.
