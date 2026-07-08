@@ -34,6 +34,7 @@ Daniel-Constantin Mierla
               4.1. gcrypt_aes_encrypt(text, key, res)
               4.2. gcrypt_aes_decrypt(text, key, res)
               4.3. gcrypt_hmac_sha256(text, key, res)
+              4.4. gcrypt_hmac_sha512(text, key, res)
 
    List of Examples
 
@@ -43,6 +44,7 @@ Daniel-Constantin Mierla
    1.4. gcrypt_aes_encrypt usage
    1.5. gcrypt_aes_decrypt usage
    1.6. gcrypt_hmac_sha256 usage
+   1.7. gcrypt_hmac_sha512 usage
 
 Chapter 1. Admin Guide
 
@@ -65,6 +67,7 @@ Chapter 1. Admin Guide
         4.1. gcrypt_aes_encrypt(text, key, res)
         4.2. gcrypt_aes_decrypt(text, key, res)
         4.3. gcrypt_hmac_sha256(text, key, res)
+        4.4. gcrypt_hmac_sha512(text, key, res)
 
 1. Overview
 
@@ -140,6 +143,7 @@ modparam("gcrypt", "register_callid", 1)
    4.1. gcrypt_aes_encrypt(text, key, res)
    4.2. gcrypt_aes_decrypt(text, key, res)
    4.3. gcrypt_hmac_sha256(text, key, res)
+   4.4. gcrypt_hmac_sha512(text, key, res)
 
 4.1.  gcrypt_aes_encrypt(text, key, res)
 
@@ -181,4 +185,18 @@ gcrypt_aes_decrypt("$var(encrypted)", "my-secret-key", "$var(text)");
    Example 1.6. gcrypt_hmac_sha256 usage
 ...
 gcrypt_hmac_sha256("$var(text)", "my-secret-key", "$var(hmac)");
+...
+
+4.4.  gcrypt_hmac_sha512(text, key, res)
+
+   Computes the HMAC-SHA512 of the text using the key and stores the
+   result encoded in base64url format in res. The parameter res must be a
+   read-write variable. The parameters text and key can be static strings
+   or strings with variables (dynamic strings).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. gcrypt_hmac_sha512 usage
+...
+gcrypt_hmac_sha512("$var(text)", "my-secret-key", "$var(hmac)");
 ...
