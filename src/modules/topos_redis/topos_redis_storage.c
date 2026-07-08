@@ -1339,6 +1339,14 @@ int tps_redis_update_dialog(
 				&md->b_contact, argc, &td_key_b_contact, argv, argvlen);
 	}
 
+	/* persist {a,b}s_contact */
+	if(mode & TPS_DBU_SCONTACT) {
+		TPS_REDIS_SET_ARGS(
+				&md->as_contact, argc, &td_key_as_contact, argv, argvlen);
+		TPS_REDIS_SET_ARGS(
+				&md->bs_contact, argc, &td_key_bs_contact, argv, argvlen);
+	}
+
 	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type == SIP_REPLY) {
 		if(sd->b_tag.len <= 0 && msg->first_line.u.reply.statuscode >= 200
 				&& msg->first_line.u.reply.statuscode < 300) {
@@ -1379,6 +1387,11 @@ int tps_redis_update_dialog(
 		lval = (unsigned long)time(NULL);
 		TPS_REDIS_SET_ARGN(
 				lval, rp, &rval, argc, &td_key_rectime, argv, argvlen);
+	}
+
+	/* persist s_rr */
+	if(mode & TPS_DBU_SRR) {
+		TPS_REDIS_SET_ARGS(&md->s_rr, argc, &td_key_s_rr, argv, argvlen);
 	}
 
 	if(argc <= 2) {
