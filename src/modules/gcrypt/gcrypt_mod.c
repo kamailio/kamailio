@@ -51,6 +51,8 @@ static int w_gcrypt_aes_decrypt(
 		sip_msg_t *msg, char *inb, char *keyb, char *outb);
 static int w_gcrypt_hmac_sha256(
 		sip_msg_t *msg, char *inb, char *keyb, char *outb);
+static int w_gcrypt_hmac_sha512(
+		sip_msg_t *msg, char *inb, char *keyb, char *outb);
 static int fixup_gcrypt_hmac(void **param, int param_no);
 static int fixup_free_gcrypt_hmac(void **param, int param_no);
 
@@ -69,6 +71,8 @@ static cmd_export_t cmds[] = {
 	{"gcrypt_aes_decrypt", (cmd_function)w_gcrypt_aes_decrypt, 3,
 			fixup_spve2_pvar, fixup_free_spve2_pvar, ANY_ROUTE},
 	{"gcrypt_hmac_sha256", (cmd_function)w_gcrypt_hmac_sha256, 3,
+			fixup_gcrypt_hmac, fixup_free_gcrypt_hmac, ANY_ROUTE},
+	{"gcrypt_hmac_sha512", (cmd_function)w_gcrypt_hmac_sha512, 3,
 			fixup_gcrypt_hmac, fixup_free_gcrypt_hmac, ANY_ROUTE},
 	{"bind_gcrypt", (cmd_function)bind_gcrypt, 0, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
@@ -412,11 +416,12 @@ static int w_gcrypt_aes_decrypt(
 /**
  *
  * outs->s has to point to an existing output buffer to store the 0-terminated
- *   computed SHA256 value in base64-url format
+ *   computed HMAC value in base64-url format
  * outs->len has to be the size of the existing output buffer and it is updated
  *   to the output value length
  */
-int ksr_gcrypt_hmac_sha256_compute(str *ins, str *key, str *outs)
+static int ksr_gcrypt_hmac_compute(
+		int algo, const char *algoname, str *ins, str *key, str *outs)
 {
 	gcry_error_t gcry_ret;
 	gcry_md_hd_t md_hd = NULL;
@@ -424,40 +429,41 @@ int ksr_gcrypt_hmac_sha256_compute(str *ins, str *key, str *outs)
 	int digest_len = 0;
 	int outs_len = 0;
 
-	LM_DBG("ins: %.*s, key: %.*s\n", STR_FMT(ins), STR_FMT(key));
+	LM_DBG("algo: %s, ins: %.*s, key: %.*s\n", algoname, STR_FMT(ins),
+			STR_FMT(key));
 
 	if(!gcry_control(GCRYCTL_ANY_INITIALIZATION_P)) {
 		/* before calling any other functions */
 		gcry_check_version(NULL);
 	}
 
-	gcry_ret = gcry_md_open(&md_hd, GCRY_MD_SHA256, GCRY_MD_FLAG_HMAC);
+	gcry_ret = gcry_md_open(&md_hd, algo, GCRY_MD_FLAG_HMAC);
 	if(gcry_ret) {
-		LM_ERR("gcry_md_open failed: %s/%s\n", gcry_strsource(gcry_ret),
-				gcry_strerror(gcry_ret));
+		LM_ERR("gcry_md_open failed for %s: %s/%s\n", algoname,
+				gcry_strsource(gcry_ret), gcry_strerror(gcry_ret));
 		return -1;
 	}
 
 	gcry_ret = gcry_md_setkey(md_hd, key->s, key->len);
 	if(gcry_ret) {
-		LM_ERR("gcry_md_setkey failed: %s/%s\n", gcry_strsource(gcry_ret),
-				gcry_strerror(gcry_ret));
+		LM_ERR("gcry_md_setkey failed for %s: %s/%s\n", algoname,
+				gcry_strsource(gcry_ret), gcry_strerror(gcry_ret));
 		goto error;
 	}
 
 	gcry_md_write(md_hd, ins->s, ins->len);
-	digest = gcry_md_read(md_hd, GCRY_MD_SHA256);
-	digest_len = gcry_md_get_algo_dlen(GCRY_MD_SHA256);
+	digest = gcry_md_read(md_hd, algo);
+	digest_len = gcry_md_get_algo_dlen(algo);
 	if(digest == NULL || digest_len <= 0) {
-		LM_ERR("unable to read hmac digest\n");
+		LM_ERR("unable to read %s digest\n", algoname);
 		goto error;
 	}
 
 	outs_len =
 			base64url_enc((char *)digest, digest_len, outs->s, outs->len - 1);
 	if(outs_len < 0) {
-		LM_ERR("base64 output of digest value is too large (need %d)\n",
-				-outs_len);
+		LM_ERR("base64 output of %s digest value is too large (need %d)\n",
+				algoname, -outs_len);
 		goto error;
 	}
 
@@ -470,7 +476,7 @@ int ksr_gcrypt_hmac_sha256_compute(str *ins, str *key, str *outs)
 	outs->s[outs_len] = '\0';
 	outs->len = outs_len;
 
-	LM_DBG("base64 digest result: [%.*s]\n", outs->len, outs->s);
+	LM_DBG("base64 %s digest result: [%.*s]\n", algoname, outs->len, outs->s);
 
 	gcry_md_close(md_hd);
 	return 1;
@@ -480,6 +486,30 @@ error:
 		gcry_md_close(md_hd);
 	}
 	return -1;
+}
+
+/**
+ *
+ * outs->s has to point to an existing output buffer to store the 0-terminated
+ *   computed SHA256 value in base64-url format
+ * outs->len has to be the size of the existing output buffer and it is updated
+ *   to the output value length
+ */
+int ksr_gcrypt_hmac_sha256_compute(str *ins, str *key, str *outs)
+{
+	return ksr_gcrypt_hmac_compute(GCRY_MD_SHA256, "sha256", ins, key, outs);
+}
+
+/**
+ *
+ * outs->s has to point to an existing output buffer to store the 0-terminated
+ *   computed SHA512 value in base64-url format
+ * outs->len has to be the size of the existing output buffer and it is updated
+ *   to the output value length
+ */
+int ksr_gcrypt_hmac_sha512_compute(str *ins, str *key, str *outs)
+{
+	return ksr_gcrypt_hmac_compute(GCRY_MD_SHA512, "sha512", ins, key, outs);
 }
 
 /**
@@ -527,6 +557,48 @@ static int ki_gcrypt_hmac_sha256(sip_msg_t *msg, str *ins, str *keys, str *dpv)
 /**
  *
  */
+static int ki_gcrypt_hmac_sha512_helper(
+		sip_msg_t *msg, str *ins, str *key, pv_spec_t *dst)
+{
+	pv_value_t val;
+	int rc;
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.rs.s = pv_get_buffer();
+	val.rs.len = pv_get_buffer_size();
+	rc = ksr_gcrypt_hmac_sha512_compute(ins, key, &val.rs);
+	if(rc < 0) {
+		LM_ERR("failed to compute hmac sha512 (rc %d)\n", rc);
+		goto error;
+	}
+	val.flags = PV_VAL_STR;
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+
+	return 1;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_gcrypt_hmac_sha512(sip_msg_t *msg, str *ins, str *keys, str *dpv)
+{
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst == NULL) {
+		LM_ERR("failed getting pv: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+
+	return ki_gcrypt_hmac_sha512_helper(msg, ins, keys, dst);
+}
+
+/**
+ *
+ */
 static int w_gcrypt_hmac_sha256(
 		sip_msg_t *msg, char *inb, char *keyb, char *outb)
 {
@@ -545,6 +617,29 @@ static int w_gcrypt_hmac_sha256(
 	dst = (pv_spec_t *)outb;
 
 	return ki_gcrypt_hmac_sha256_helper(msg, &ins, &keys, dst);
+}
+
+/**
+ *
+ */
+static int w_gcrypt_hmac_sha512(
+		sip_msg_t *msg, char *inb, char *keyb, char *outb)
+{
+	str ins;
+	str keys;
+	pv_spec_t *dst;
+
+	if(fixup_get_svalue(msg, (gparam_t *)inb, &ins) != 0) {
+		LM_ERR("cannot get input value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)keyb, &keys) != 0) {
+		LM_ERR("cannot get key value\n");
+		return -1;
+	}
+	dst = (pv_spec_t *)outb;
+
+	return ki_gcrypt_hmac_sha512_helper(msg, &ins, &keys, dst);
 }
 
 /**
@@ -596,6 +691,7 @@ int bind_gcrypt(gcrypt_api_t *api)
 	api->aes128_encrypt = aes128_encrypt;
 	api->aes128_decrypt = aes128_decrypt;
 	api->hmac_sha256 = ksr_gcrypt_hmac_sha256_compute;
+	api->hmac_sha512 = ksr_gcrypt_hmac_sha512_compute;
 
 	return 0;
 }
@@ -617,6 +713,11 @@ static sr_kemi_t sr_kemi_gcrypt_exports[] = {
 	},
 	{ str_init("gcrypt"), str_init("hmac_sha256"),
 		SR_KEMIP_INT, ki_gcrypt_hmac_sha256,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("gcrypt"), str_init("hmac_sha512"),
+		SR_KEMIP_INT, ki_gcrypt_hmac_sha512,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

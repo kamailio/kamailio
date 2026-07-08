@@ -34,7 +34,9 @@ typedef int (*gcrypt_aes128_encrypt_f)(
 typedef int (*gcrypt_aes128_decrypt_f)(
 		void *context, uint8_t *input, uint8_t *output);
 typedef int (*gcrypt_hmac_sha256_f)(str *ins, str *key, str *outs);
+typedef int (*gcrypt_hmac_sha512_f)(str *ins, str *key, str *outs);
 int ksr_gcrypt_hmac_sha256_compute(str *ins, str *key, str *outs);
+int ksr_gcrypt_hmac_sha512_compute(str *ins, str *key, str *outs);
 
 typedef struct gcrypt_api
 {
@@ -43,6 +45,7 @@ typedef struct gcrypt_api
 	gcrypt_aes128_encrypt_f aes128_encrypt;
 	gcrypt_aes128_decrypt_f aes128_decrypt;
 	gcrypt_hmac_sha256_f hmac_sha256;
+	gcrypt_hmac_sha512_f hmac_sha512;
 } gcrypt_api_t;
 
 typedef int (*bind_gcrypt_f)(gcrypt_api_t *api);
