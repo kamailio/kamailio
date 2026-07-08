@@ -1035,7 +1035,8 @@ int tps_htable_update_dialog(
 	memset(&hval, 0, sizeof(tps_data_t));
 	hval.cp = hval.cbuf;
 
-	if(mode & TPS_DBU_CONTACT) {
+	if((mode & TPS_DBU_CONTACT)
+			&& (md->a_contact.len > 0 || md->b_contact.len > 0)) {
 		if(!do_update) {
 			ret = tps_htable_load_dialog(msg, sd, &hval);
 			if(ret != 0) {
@@ -1050,6 +1051,26 @@ int tps_htable_update_dialog(
 		}
 		if(md->b_contact.len > 0) {
 			hval.b_contact = md->b_contact;
+		}
+	}
+
+	/* persist {a,b}s_contact */
+	if((mode & TPS_DBU_SCONTACT)
+			&& (md->as_contact.len > 0 || md->bs_contact.len > 0)) {
+		if(!do_update) {
+			ret = tps_htable_load_dialog(msg, sd, &hval);
+			if(ret != 0) {
+				LM_ERR("dialog not loaded\n");
+				return -1;
+			}
+		}
+		do_update = 1;
+
+		if(md->as_contact.len > 0) {
+			hval.as_contact = md->as_contact;
+		}
+		if(md->bs_contact.len > 0) {
+			hval.bs_contact = md->bs_contact;
 		}
 	}
 
@@ -1131,6 +1152,19 @@ int tps_htable_update_dialog(
 		if(md->expires > 0) {
 			hval.expires = md->expires;
 		}
+	}
+
+	/* persist s_rr */
+	if((mode & TPS_DBU_SRR) && md->s_rr.len > 0) {
+		if(!do_update) {
+			ret = tps_htable_load_dialog(msg, sd, &hval);
+			if(ret != 0) {
+				LM_ERR("dialog not loaded\n");
+				return -1;
+			}
+		}
+		do_update = 1;
+		hval.s_rr = md->s_rr;
 	}
 
 	if(!do_update) {
