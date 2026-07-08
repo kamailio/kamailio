@@ -195,5 +195,28 @@ gcrypt_hmac_sha256("$var(text)", "my-secret-key", "$var(hmac)");
 </programlisting>
 	    </example>
 	</section>
+
+	<section id="gcrypt.f.gcrypt_hmac_sha512">
+	    <title>
+		<function moreinfo="none">gcrypt_hmac_sha512(text, key, res)</function>
+	    </title>
+	    <para>
+		Computes the HMAC-SHA512 of the text using the key and stores the
+		result encoded in base64url format in res. The parameter res must
+		be a read-write variable. The parameters text and key can be static
+		strings or strings with variables (dynamic strings).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>gcrypt_hmac_sha512</function> usage</title>
+		<programlisting format="linespecific">
+...
+gcrypt_hmac_sha512("$var(text)", "my-secret-key", "$var(hmac)");
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 </chapter>
