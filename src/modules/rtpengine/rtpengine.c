@@ -5073,150 +5073,171 @@ static int decode_mos_vals_dict(
 	return 1;
 }
 
+static int parse_call_stats_ssrc(bencode_item_t *ssrc_dict,
+		struct minmax_stats_vals *min_vals, struct minmax_stats_vals *max_vals,
+		struct minmax_stats_vals *average_vals)
+{
+	int ok = 0;
+	struct minmax_stats_vals vals_decoded;
+
+	if(decode_mos_vals_dict(&vals_decoded, ssrc_dict, "average MOS")) {
+		if(vals_decoded.mos > 0) {
+			average_vals->avg_samples++;
+			average_vals->mos += vals_decoded.mos;
+			average_vals->packetloss += vals_decoded.packetloss;
+			average_vals->jitter += vals_decoded.jitter;
+			average_vals->roundtrip += vals_decoded.roundtrip;
+			average_vals->roundtrip_leg += vals_decoded.roundtrip_leg;
+			average_vals->samples += vals_decoded.samples;
+		}
+		ok = 1;
+	}
+
+	if(decode_mos_vals_dict(&vals_decoded, ssrc_dict, "highest MOS")) {
+		if(vals_decoded.mos > max_vals->mos)
+			*max_vals = vals_decoded;
+		ok = 1;
+	}
+	if(decode_mos_vals_dict(&vals_decoded, ssrc_dict, "lowest MOS")) {
+		if(vals_decoded.mos > 0 && vals_decoded.mos < min_vals->mos)
+			*min_vals = vals_decoded;
+		ok = 1;
+	}
+
+	return ok;
+}
+
+static void parse_call_stats_glob(unsigned long long ssrc,
+		bencode_item_t *ssrc_list, struct minmax_stats_vals *min_vals,
+		struct minmax_stats_vals *max_vals,
+		struct minmax_stats_vals *average_vals)
+{
+	char ssrc_str[32];
+	bencode_item_t *ssrc_dict;
+
+	snprintf(ssrc_str, sizeof(ssrc_str), "%llu", ssrc);
+	ssrc_dict = bencode_dictionary_get_expect(
+			ssrc_list, ssrc_str, BENCODE_DICTIONARY);
+	if(!ssrc_dict)
+		return;
+	LM_DBG("rtpengine stats: found SSRC stats");
+
+	if(parse_call_stats_ssrc(ssrc_dict, min_vals, max_vals, average_vals))
+		LM_DBG("rtpengine stats: consumed");
+}
+
 static void parse_call_stats_1(struct minmax_mos_label_stats *mmls,
 		bencode_item_t *dict, struct sip_msg *msg)
 {
 	long long created;
 	str label, check;
-	long long ssrcs[4];
-	unsigned int num_ssrcs = 0, i;
 	long long ssrc;
-	char *endp;
-	bencode_item_t *ssrc_list, *ssrc_key, *ssrc_dict, *tags, *tag_key,
-			*tag_dict, *medias, *media, *streams, *stream, *ingress_ssrcs,
-			*ingress_ssrc;
+	bencode_item_t *ssrc_list, *tags, *tag_key, *tag_dict, *medias, *media,
+			*streams, *stream, *ingress_ssrcs, *ingress_ssrc;
 	struct minmax_stats_vals min_vals = {.mos = 100}, max_vals = {.mos = -1},
-							 average_vals = {.avg_samples = 0}, vals_decoded;
+							 average_vals = {.avg_samples = 0};
 
 	if(!mmls->got_any_pvs)
 		return;
 
 	/* check if only a subset of info is requested */
-	if(!mmls->label_pv)
-		goto ssrcs_done;
-
-	if(pv_printf_s(msg, mmls->label_pv, &label)) {
-		LM_ERR("error printing label PV\n");
-		return;
+	if(mmls->label_pv) {
+		if(pv_printf_s(msg, mmls->label_pv, &label)) {
+			LM_ERR("error printing label PV\n");
+			return;
+		}
+		LM_DBG("rtpengine stats: looking for label '%.*s'\n", label.len,
+				label.s);
 	}
-	LM_DBG("rtpengine: looking for label '%.*s'\n", label.len, label.s);
+
+	ssrc_list = bencode_dictionary_get_expect(dict, "SSRC", BENCODE_DICTIONARY);
+	created = bencode_dictionary_get_integer(dict, "created", 0);
 
 	/* walk through tags to find the label we're looking for */
 	tags = bencode_dictionary_get_expect(dict, "tags", BENCODE_DICTIONARY);
 	if(!tags)
-		return; /* label wanted but no tags found - return nothing */
-	LM_DBG("rtpengine: XXX got tags\n");
+		return; /* no tags found - return nothing */
+	LM_DBG("rtpengine stats: got tags\n");
 
 	for(tag_key = tags->child; tag_key; tag_key = tag_key->sibling->sibling) {
-		LM_DBG("rtpengine: XXX got tag\n");
 		tag_dict = tag_key->sibling;
-		/* compare label */
-		if(!bencode_dictionary_get_str(tag_dict, "label", &check))
-			continue;
-		LM_DBG("rtpengine: XXX got label %.*s\n", check.len, check.s);
-		if(str_strcmp(&check, &label))
-			continue;
-		LM_DBG("rtpengine: XXX label match\n");
+
+		if(mmls->label_pv) {
+			/* compare label */
+			if(!bencode_dictionary_get_str(tag_dict, "label", &check))
+				continue;
+			LM_DBG("rtpengine stats: got label %.*s\n", check.len, check.s);
+			if(str_strcmp(&check, &label))
+				continue;
+			LM_DBG("rtpengine stats: label match\n");
+		}
+
 		medias =
 				bencode_dictionary_get_expect(tag_dict, "medias", BENCODE_LIST);
 		if(!medias)
 			continue;
-		LM_DBG("rtpengine: XXX got medias\n");
+		LM_DBG("rtpengine stats: got medias\n");
+
 		for(media = medias->child; media; media = media->sibling) {
-			LM_DBG("rtpengine: XXX got media\n");
+			LM_DBG("rtpengine stats: got media\n");
+
 			streams = bencode_dictionary_get_expect(
 					media, "streams", BENCODE_LIST);
 			if(!streams)
 				continue;
-			LM_DBG("rtpengine: XXX got streams\n");
+
+			LM_DBG("rtpengine stats: got streams\n");
 			/* only check the first stream (RTP) */
 			stream = streams->child;
 			if(!stream)
 				continue;
-			LM_DBG("rtpengine: XXX got stream type %i\n", stream->type);
-			LM_DBG("rtpengine: XXX stream child '%.*s'\n",
-					(int)stream->child->iov[1].iov_len,
-					(char *)stream->child->iov[1].iov_base);
-			LM_DBG("rtpengine: XXX stream child val type %i\n",
-					stream->child->sibling->type);
-			ssrc = bencode_dictionary_get_integer(stream, "SSRC", -1);
-			if(ssrc == -1) {
+
+			LM_DBG("rtpengine stats: got stream type %i\n", stream->type);
+			LM_DBG("rtpengine stats: stream child '%.*s'\n",
+					stream->child ? (int)stream->child->iov[1].iov_len : 0,
+					stream->child ? (char *)stream->child->iov[1].iov_base
+								  : "");
+			LM_DBG("rtpengine stats: stream child val type %i\n",
+					stream->child && stream->child->sibling
+							? stream->child->sibling->type
+							: -1);
+
+			ingress_ssrcs = bencode_dictionary_get_expect(
+					media, "ingress SSRCs", BENCODE_LIST);
+
+			if(!ingress_ssrcs)
 				ingress_ssrcs = bencode_dictionary_get_expect(
 						stream, "ingress SSRCs", BENCODE_LIST);
-				if(!ingress_ssrcs || !ingress_ssrcs->child)
-					continue;
-				LM_DBG("rtpengine: XXX got ingress SSRCs\n");
-				ingress_ssrc = ingress_ssrcs->child;
-				if((ssrc = bencode_dictionary_get_integer(
-							ingress_ssrc, "SSRC", -1))
-						== -1) {
-					continue;
+
+			if(ingress_ssrcs) {
+				/* we have a full list of SSRCs */
+				LM_DBG("rtpengine stats: got ingress SSRCs\n");
+				for(ingress_ssrc = ingress_ssrcs->child; ingress_ssrc;
+						ingress_ssrc = ingress_ssrc->sibling) {
+					if((ssrc = bencode_dictionary_get_integer(
+								ingress_ssrc, "SSRC", -1))
+							== -1)
+						continue;
+					LM_DBG("rtpengine stats: found ingress SSRC '%lli'\n",
+							ssrc);
+
+					/* use directly if it's a full dict, otherwise look up
+					 * in global list */
+					if(parse_call_stats_ssrc(ingress_ssrc, &min_vals, &max_vals,
+							   &average_vals))
+						LM_DBG("rtpengine stats: consumed");
+					else
+						parse_call_stats_glob(ssrc, ssrc_list, &min_vals,
+								&max_vals, &average_vals);
 				}
+			} else {
+				ssrc = bencode_dictionary_get_integer(stream, "SSRC", -1);
+				if(ssrc == -1)
+					continue;
+				LM_DBG("rtpengine stats: found single SSRC '%lli'\n", ssrc);
+				parse_call_stats_glob(
+						ssrc, ssrc_list, &min_vals, &max_vals, &average_vals);
 			}
-
-			/* got a valid SSRC to watch for */
-			ssrcs[num_ssrcs] = ssrc;
-			LM_DBG("rtpengine: found SSRC '%lli' for label '%.*s'\n", ssrc,
-					label.len, label.s);
-			num_ssrcs++;
-			/* see if we can do more */
-			if(num_ssrcs >= (sizeof(ssrcs) / sizeof(*ssrcs)))
-				goto ssrcs_done;
-		}
-	}
-	/* if we get here, we were looking for label. see if we found one. if not, return nothing */
-	if(num_ssrcs == 0)
-		return;
-
-ssrcs_done:
-	/* now look for the stats values */
-	created = bencode_dictionary_get_integer(dict, "created", 0);
-	ssrc_list = bencode_dictionary_get_expect(dict, "SSRC", BENCODE_DICTIONARY);
-	if(!ssrc_list)
-		return;
-
-	for(ssrc_key = ssrc_list->child; ssrc_key;
-			ssrc_key = ssrc_key->sibling->sibling) {
-		/* see if this is a SSRC we're interested in */
-		if(num_ssrcs == 0)
-			goto ssrc_ok;
-		if(!bencode_get_str(ssrc_key, &check))
-			continue;
-		ssrc = strtoll(check.s, &endp, 10);
-		for(i = 0; i < num_ssrcs; i++) {
-			if(ssrcs[i] != ssrc)
-				continue;
-			/* it's a match */
-			LM_DBG("rtpengine: considering SSRC '%.*s'\n", check.len, check.s);
-			goto ssrc_ok;
-		}
-		/* no match */
-		continue;
-
-	ssrc_ok:
-		ssrc_dict = ssrc_key->sibling;
-		if(!ssrc_dict)
-			continue;
-
-		if(decode_mos_vals_dict(&vals_decoded, ssrc_dict, "average MOS")) {
-			if(vals_decoded.mos > 0) {
-				average_vals.avg_samples++;
-				average_vals.mos += vals_decoded.mos;
-				average_vals.packetloss += vals_decoded.packetloss;
-				average_vals.jitter += vals_decoded.jitter;
-				average_vals.roundtrip += vals_decoded.roundtrip;
-				average_vals.roundtrip_leg += vals_decoded.roundtrip_leg;
-				average_vals.samples += vals_decoded.samples;
-			}
-		}
-
-		if(decode_mos_vals_dict(&vals_decoded, ssrc_dict, "highest MOS")) {
-			if(vals_decoded.mos > max_vals.mos)
-				max_vals = vals_decoded;
-		}
-		if(decode_mos_vals_dict(&vals_decoded, ssrc_dict, "lowest MOS")) {
-			if(vals_decoded.mos > 0 && vals_decoded.mos < min_vals.mos)
-				min_vals = vals_decoded;
 		}
 	}
 
