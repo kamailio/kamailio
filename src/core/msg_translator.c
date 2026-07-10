@@ -1774,6 +1774,10 @@ error:
 	return -1;
 }
 
+/**
+ * find the line that starts with text
+ * - update *buf to the start of the line and adjust *buf_len
+ */
 static inline int find_line_start(
 		char *text, unsigned int text_len, char **buf, unsigned int *buf_len)
 {
@@ -1791,8 +1795,10 @@ static inline int find_line_start(
 		}
 		if((ch = memchr(start, 13, len - 1))) {
 			if(*(ch + 1) != 10) {
-				LM_ERR("No LF after CR\n");
-				return 0;
+				/* allow single CR (0x0D) byte inside a body part */
+				len = len - (ch - start + 1);
+				start = ch + 1;
+				continue;
 			}
 			len = len - (ch - start + 2);
 			start = ch + 2;
