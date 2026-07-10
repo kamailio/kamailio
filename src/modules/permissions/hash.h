@@ -49,6 +49,16 @@ struct trusted_list
 
 
 /*
+ * Wrapper structure for a trusted hash table with reference count
+ */
+struct trusted_table
+{
+	unsigned int ref;
+	struct trusted_list *table[PERM_HASH_SIZE];
+};
+
+
+/*
  * Parse and init tag avp specification
  */
 int init_tag_avp(str *tag_avp_param);
@@ -63,19 +73,13 @@ void get_tag_avp(int_str *tag_avp_p, int *tag_avp_type_p);
 /*
  * Create and initialize a hash table
  */
-struct trusted_list **new_hash_table(void);
+struct trusted_table *new_hash_table(void);
 
 
 /*
  * Release all memory allocated for a hash table
  */
-void free_hash_table(struct trusted_list **table);
-
-
-/*
- * Destroy a hash table
- */
-void destroy_hash_table(struct trusted_list **table);
+void free_hash_table(struct trusted_table *table);
 
 
 /*
@@ -98,13 +102,7 @@ int match_hash_table(struct trusted_list **table, struct sip_msg *msg,
 /*
  * Print entries stored in hash table
  */
-void hash_table_print(struct trusted_list **hash_table, FILE *reply_file);
 int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c);
-
-/*
- * Empty hash table
- */
-void empty_hash_table(struct trusted_list **hash_table);
 
 
 /*
@@ -121,21 +119,25 @@ struct addr_list
 
 
 /*
+ * Wrapper structure for a address hash table with reference count
+ */
+struct addr_table
+{
+	unsigned int ref;
+	struct addr_list *table[PERM_HASH_SIZE];
+};
+
+
+/*
  * Create and initialize a hash table
  */
-struct addr_list **new_addr_hash_table(void);
+struct addr_table *new_addr_hash_table(void);
 
 
 /*
  * Release all memory allocated for a hash table
  */
-void free_addr_hash_table(struct addr_list **table);
-
-
-/*
- * Destroy a hash table
- */
-void destroy_addr_hash_table(struct addr_list **table);
+void free_addr_hash_table(struct addr_table *table);
 
 
 /*
@@ -165,14 +167,7 @@ int find_group_in_addr_hash_table(
 /*
  * Print addresses stored in hash table
  */
-void addr_hash_table_print(struct addr_list **hash_table, FILE *reply_file);
 int addr_hash_table_rpc_print(struct addr_list **table, rpc_t *rpc, void *c);
-
-
-/*
- * Empty hash table
- */
-void empty_addr_hash_table(struct addr_list **hash_table);
 
 
 /*
@@ -180,7 +175,7 @@ void empty_addr_hash_table(struct addr_list **hash_table);
  */
 struct subnet
 {
-	unsigned int grp; /* address group, subnet count in last record */
+	unsigned int grp; /* address group */
 	ip_addr_t
 			subnet; /* IP subnet in host byte order with host bits shifted out */
 	unsigned int port; /* port or 0 */
@@ -190,17 +185,29 @@ struct subnet
 
 
 /*
+ * Wrapper structure for a subnet table with reference count
+ */
+struct subnet_table
+{
+	unsigned int ref;
+	unsigned int count;
+	struct subnet
+			table[0]; // variable size at runtime, _perm_max_subnets elements
+};
+
+
+/*
  * Create a subnet table
  */
-struct subnet *new_subnet_table(void);
+struct subnet_table *new_subnet_table(void);
 
 
 /*
  * Check if an entry exists in subnet table that matches given group, ip_addr,
  * and port.  Port 0 in subnet table matches any port.
  */
-int match_subnet_table(struct subnet *table, unsigned int group,
-		ip_addr_t *addr, unsigned int port);
+int match_subnet_table(struct subnet *table, unsigned int count,
+		unsigned int group, ip_addr_t *addr, unsigned int port);
 
 
 /*
@@ -208,34 +215,29 @@ int match_subnet_table(struct subnet *table, unsigned int group,
  * and port.  Port 0 in subnet table matches any port.  Returns group of
  * the first match or -1 if no match is found.
  */
-int find_group_in_subnet_table(
-		struct subnet *table, ip_addr_t *addr, unsigned int port);
-
-/*
- * Empty contents of subnet table
- */
-void empty_subnet_table(struct subnet *table);
-
+int find_group_in_subnet_table(struct subnet *table, unsigned int count,
+		ip_addr_t *addr, unsigned int port);
 
 /*
  * Release memory allocated for a subnet table
  */
-void free_subnet_table(struct subnet *table);
+void free_subnet_table(struct subnet_table *table);
 
 
 /*
  * Add <grp, subnet, mask, port> into subnet table so that table is
  * kept ordered according to subnet, port, grp.
  */
-int subnet_table_insert(struct subnet *table, unsigned int grp,
-		ip_addr_t *subnet, unsigned int mask, unsigned int port, str *tagv);
+int subnet_table_insert(struct subnet *table, unsigned int *count,
+		unsigned int grp, ip_addr_t *subnet, unsigned int mask,
+		unsigned int port, str *tagv);
 
 
 /*
  * Print subnets stored in subnet table
  */
-void subnet_table_print(struct subnet *table, FILE *reply_file);
-int subnet_table_rpc_print(struct subnet *table, rpc_t *rpc, void *c);
+int subnet_table_rpc_print(
+		struct subnet *table, unsigned int count, rpc_t *rpc, void *c);
 
 
 /*
@@ -250,20 +252,27 @@ struct domain_name_list
 	struct domain_name_list *next;
 };
 
+
+/*
+ * Wrapper structure for a domain name table with reference count
+ */
+struct domain_name_table
+{
+	unsigned int ref;
+	struct domain_name_list *table[PERM_HASH_SIZE];
+};
+
+
 /*
  * Create a domain_name table
  */
-struct domain_name_list **new_domain_name_table(void);
+struct domain_name_table *new_domain_name_table(void);
 
 /*
  * Release memory allocated for a subnet table
  */
-void free_domain_name_table(struct domain_name_list **table);
+void free_domain_name_table(struct domain_name_table *table);
 
-/*
- * Empty contents of domain_name hash table
- */
-void empty_domain_name_table(struct domain_name_list **table);
 
 /*
  * Check if an entry exists in domain_name table that matches given group, domain_name,
@@ -289,8 +298,44 @@ int find_group_in_domain_name_table(
 /*! \brief
  * RPC: Print addresses stored in hash table
  */
-void domain_name_table_print(struct subnet *table, FILE *reply_file);
 int domain_name_table_rpc_print(
 		struct domain_name_list **table, rpc_t *rpc, void *c);
+
+
+/*
+ * Sleeps until the given reference count, protected by the given lock, drops
+ * to zero
+ */
+void ref_cnt_wait_zero(unsigned int *ref, gen_lock_t *lock);
+
+/*
+ * Generic helper macro to obtain reference to an object and return it
+ */
+#define GENERIC_LOCK_REF_GET_RETURN(type, global_ptr, lock) \
+	do {                                                    \
+		type *__ret = NULL;                                 \
+                                                            \
+		if(!(lock))                                         \
+			return NULL;                                    \
+                                                            \
+		lock_get(lock);                                     \
+		if(global_ptr)                                      \
+			__ret = *global_ptr;                            \
+		if(__ret)                                           \
+			__ret->ref++;                                   \
+		lock_release(lock);                                 \
+                                                            \
+		return __ret;                                       \
+	} while(0)
+
+
+#define GENERIC_LOCK_REF_PUT(object, lock) \
+	do {                                   \
+		if(object) {                       \
+			lock_get(lock);                \
+			(object)->ref--;               \
+			lock_release(lock);            \
+		}                                  \
+	} while(0)
 
 #endif /* _PERM_HASH_H_ */

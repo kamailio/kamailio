@@ -30,6 +30,7 @@
 
 #include "permissions.h"
 #include "hash.h"
+#include "address.h"
 #include "../../core/config.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_ut.h"
@@ -44,23 +45,13 @@
 
 #define TABLE_VERSION 6
 
-struct addr_list ***perm_addr_table =
+static struct addr_table **perm_addr_table =
 		NULL; /* Ptr to current address hash table ptr */
-struct addr_list **perm_addr_table_1 =
-		NULL; /* Pointer to address hash table 1 */
-struct addr_list **perm_addr_table_2 =
-		NULL; /* Pointer to address hash table 2 */
-
-struct subnet **perm_subnet_table = NULL;  /* Ptr to current subnet table */
-struct subnet *perm_subnet_table_1 = NULL; /* Ptr to subnet table 1 */
-struct subnet *perm_subnet_table_2 = NULL; /* Ptr to subnet table 2 */
-
-struct domain_name_list ***perm_domain_table =
+static struct subnet_table **perm_subnet_table =
+		NULL; /* Ptr to current subnet table */
+static struct domain_name_table **perm_domain_table =
 		NULL; /* Ptr to current domain name table */
-static struct domain_name_list **perm_domain_table_1 =
-		NULL; /* Ptr to domain name table 1 */
-static struct domain_name_list **perm_domain_table_2 =
-		NULL; /* Ptr to domain name table 2 */
+static gen_lock_t *perm_addr_tables_lock;
 
 static db1_con_t *perm_db_handle = 0;
 static db_func_t perm_dbf;
@@ -69,9 +60,9 @@ extern str perm_address_file;
 
 typedef struct address_tables_group
 {
-	struct addr_list **address_table;
-	struct subnet *subnet_table;
-	struct domain_name_list **domain_table;
+	struct addr_table *address_table;
+	struct subnet_table *subnet_table;
+	struct domain_name_table *domain_table;
 
 } address_tables_group_t;
 
@@ -87,7 +78,21 @@ static inline ip_addr_t *strtoipX(str *ips)
 	}
 }
 
-int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
+static void get_addr_tables(address_tables_group_t *atg)
+{
+	atg->address_table = get_addr_hash_table();
+	atg->subnet_table = get_subnet_table();
+	atg->domain_table = get_domain_name_table();
+}
+
+static void put_addr_tables(address_tables_group_t *atg)
+{
+	put_addr_hash_table(atg->address_table);
+	put_subnet_table(atg->subnet_table);
+	put_domain_name_table(atg->domain_table);
+}
+
+static int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
 		str *ips, unsigned int mask, unsigned int port, str *tagv)
 {
 	ip_addr_t *ipa;
@@ -119,7 +124,8 @@ int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
 	if(ipa != NULL) {
 		if((ipa->af == AF_INET6 && mask == 128)
 				|| (ipa->af == AF_INET && mask == 32)) {
-			if(addr_hash_table_insert(atg->address_table, gid, ipa, port, tagv)
+			if(addr_hash_table_insert(
+					   atg->address_table->table, gid, ipa, port, tagv)
 					== -1) {
 				LM_ERR("hash table problem\n");
 				return -1;
@@ -127,8 +133,8 @@ int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
 			LM_DBG("Tuple <%u, %.*s, %u> inserted into address hash table\n",
 					gid, ips->len, ips->s, port);
 		} else {
-			if(subnet_table_insert(
-					   atg->subnet_table, gid, ipa, mask, port, tagv)
+			if(subnet_table_insert(atg->subnet_table->table,
+					   &atg->subnet_table->count, gid, ipa, mask, port, tagv)
 					== -1) {
 				LM_ERR("subnet table problem\n");
 				return -1;
@@ -137,7 +143,8 @@ int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
 					ips->len, ips->s, port, mask);
 		}
 	} else {
-		if(domain_name_table_insert(atg->domain_table, gid, ips, port, tagv)
+		if(domain_name_table_insert(
+				   atg->domain_table->table, gid, ips, port, tagv)
 				== -1) {
 			LM_ERR("domain name table problem\n");
 			return -1;
@@ -152,7 +159,7 @@ int reload_address_insert(address_tables_group_t *atg, unsigned int gid,
  * Reload addr table from database to new hash table and when done, make new hash table
  * current one.
  */
-int reload_address_db_table(address_tables_group_t *atg)
+static int reload_address_db_table(address_tables_group_t *atg)
 {
 	db_key_t cols[5];
 	db1_res_t *res = NULL;
@@ -373,7 +380,7 @@ dberror:
  * Reload addr table from file to new hash table and when done, make new hash table
  * current one.
  */
-int reload_address_file_table(address_tables_group_t *atg)
+static int reload_address_file_table(address_tables_group_t *atg)
 {
 	char line[1024], *p;
 	FILE *f = NULL;
@@ -463,34 +470,12 @@ error:
 int reload_address_table(void)
 {
 	int ret = 0;
-	address_tables_group_t atg;
+	address_tables_group_t atg, old_atg;
 
-	/* Choose new hash table and free its old contents */
-	if(*perm_addr_table == perm_addr_table_1) {
-		empty_addr_hash_table(perm_addr_table_2);
-		atg.address_table = perm_addr_table_2;
-	} else {
-		empty_addr_hash_table(perm_addr_table_1);
-		atg.address_table = perm_addr_table_1;
-	}
-
-	/* Choose new subnet table */
-	if(*perm_subnet_table == perm_subnet_table_1) {
-		empty_subnet_table(perm_subnet_table_2);
-		atg.subnet_table = perm_subnet_table_2;
-	} else {
-		empty_subnet_table(perm_subnet_table_1);
-		atg.subnet_table = perm_subnet_table_1;
-	}
-
-	/* Choose new domain name table */
-	if(*perm_domain_table == perm_domain_table_1) {
-		empty_domain_name_table(perm_domain_table_2);
-		atg.domain_table = perm_domain_table_2;
-	} else {
-		empty_domain_name_table(perm_domain_table_1);
-		atg.domain_table = perm_domain_table_1;
-	}
+	/* Create new set of tables */
+	atg.address_table = new_addr_hash_table();
+	atg.subnet_table = new_subnet_table();
+	atg.domain_table = new_domain_name_table();
 
 	if(perm_address_file.s == NULL) {
 		ret = reload_address_db_table(&atg);
@@ -501,9 +486,32 @@ int reload_address_table(void)
 		return ret;
 	}
 
+	/* switch out global pointers */
+
+	lock_get(perm_addr_tables_lock);
+
+	old_atg.address_table = *perm_addr_table;
+	old_atg.subnet_table = *perm_subnet_table;
+	old_atg.domain_table = *perm_domain_table;
+
 	*perm_addr_table = atg.address_table;
 	*perm_subnet_table = atg.subnet_table;
 	*perm_domain_table = atg.domain_table;
+
+	lock_release(perm_addr_tables_lock);
+
+	/* wait for all references to be dropped, then free old tables */
+
+	if(old_atg.address_table)
+		ref_cnt_wait_zero(&old_atg.address_table->ref, perm_addr_tables_lock);
+	if(old_atg.subnet_table)
+		ref_cnt_wait_zero(&old_atg.subnet_table->ref, perm_addr_tables_lock);
+	if(old_atg.domain_table)
+		ref_cnt_wait_zero(&old_atg.domain_table->ref, perm_addr_tables_lock);
+
+	free_addr_hash_table(old_atg.address_table);
+	free_subnet_table(old_atg.subnet_table);
+	free_domain_name_table(old_atg.domain_table);
 
 	LM_DBG("address table reloaded successfully.\n");
 
@@ -553,7 +561,6 @@ int reload_address_table_cmd(void)
  */
 int init_addresses(void)
 {
-	perm_addr_table_1 = perm_addr_table_2 = 0;
 	perm_addr_table = 0;
 
 	if(perm_address_file.s == NULL) {
@@ -589,56 +596,40 @@ int init_addresses(void)
 		}
 	}
 
-	perm_addr_table_1 = new_addr_hash_table();
-	if(!perm_addr_table_1)
-		return -1;
-
-	perm_addr_table_2 = new_addr_hash_table();
-	if(!perm_addr_table_2)
-		goto error;
-
 	perm_addr_table =
-			(struct addr_list ***)shm_malloc(sizeof(struct addr_list **));
+			(struct addr_table **)shm_malloc(sizeof(struct addr_table *));
 	if(!perm_addr_table) {
 		LM_ERR("no more shm memory for addr_hash_table\n");
 		goto error;
 	}
+	*perm_addr_table = NULL;
 
-	*perm_addr_table = perm_addr_table_1;
-
-	perm_subnet_table_1 = new_subnet_table();
-	if(!perm_subnet_table_1)
-		goto error;
-
-	perm_subnet_table_2 = new_subnet_table();
-	if(!perm_subnet_table_2)
-		goto error;
-
-	perm_subnet_table = (struct subnet **)shm_malloc(sizeof(struct subnet *));
+	perm_subnet_table =
+			(struct subnet_table **)shm_malloc(sizeof(struct subnet_table *));
 	if(!perm_subnet_table) {
 		LM_ERR("no more shm memory for subnet_table\n");
 		goto error;
 	}
+	*perm_subnet_table = NULL;
 
-	*perm_subnet_table = perm_subnet_table_1;
-
-	perm_domain_table_1 = new_domain_name_table();
-	if(!perm_domain_table_1)
-		goto error;
-
-	perm_domain_table_2 = new_domain_name_table();
-	if(!perm_domain_table_2)
-		goto error;
-
-	perm_domain_table = (struct domain_name_list ***)shm_malloc(
-			sizeof(struct domain_name_list **));
+	perm_domain_table = (struct domain_name_table **)shm_malloc(
+			sizeof(struct domain_name_table *));
 	if(!perm_domain_table) {
 		LM_ERR("no more shm memory for domain name table\n");
 		goto error;
 	}
+	*perm_domain_table = NULL;
 
-	*perm_domain_table = perm_domain_table_1;
+	perm_addr_tables_lock = lock_alloc();
+	if(!perm_addr_tables_lock) {
+		LM_ERR("no more shm memory for address tables lock\n");
+		goto error;
+	}
 
+	if(!lock_init(perm_addr_tables_lock)) {
+		LM_ERR("failed to init address tables lock\n");
+		goto error;
+	}
 
 	if(reload_address_table() == -1) {
 		LM_CRIT("reload of address table failed\n");
@@ -653,42 +644,25 @@ int init_addresses(void)
 	return 0;
 
 error:
-	if(perm_addr_table_1) {
-		free_addr_hash_table(perm_addr_table_1);
-		perm_addr_table_1 = 0;
-	}
-	if(perm_addr_table_2) {
-		free_addr_hash_table(perm_addr_table_2);
-		perm_addr_table_2 = 0;
-	}
 	if(perm_addr_table) {
+		free_addr_hash_table(*perm_addr_table);
 		shm_free(perm_addr_table);
 		perm_addr_table = 0;
 	}
-	if(perm_subnet_table_1) {
-		free_subnet_table(perm_subnet_table_1);
-		perm_subnet_table_1 = 0;
-	}
-	if(perm_subnet_table_2) {
-		free_subnet_table(perm_subnet_table_2);
-		perm_subnet_table_2 = 0;
-	}
 	if(perm_subnet_table) {
+		free_subnet_table(*perm_subnet_table);
 		shm_free(perm_subnet_table);
 		perm_subnet_table = 0;
 	}
-
-	if(perm_domain_table_1) {
-		free_domain_name_table(perm_domain_table_1);
-		perm_domain_table_1 = 0;
-	}
-	if(perm_domain_table_2) {
-		free_domain_name_table(perm_domain_table_2);
-		perm_domain_table_2 = 0;
-	}
 	if(perm_domain_table) {
+		free_domain_name_table(*perm_domain_table);
 		shm_free(perm_domain_table);
 		perm_domain_table = 0;
+	}
+	if(perm_addr_tables_lock) {
+		lock_destroy(perm_addr_tables_lock);
+		shm_free(perm_addr_tables_lock);
+		perm_addr_tables_lock = 0;
 	}
 
 	if(perm_address_file.s == NULL) {
@@ -704,52 +678,58 @@ error:
  */
 void clean_addresses(void)
 {
-	if(perm_addr_table_1)
-		free_addr_hash_table(perm_addr_table_1);
-	if(perm_addr_table_2)
-		free_addr_hash_table(perm_addr_table_2);
-	if(perm_addr_table)
+	if(perm_addr_table) {
+		free_addr_hash_table(*perm_addr_table);
 		shm_free(perm_addr_table);
-	if(perm_subnet_table_1)
-		free_subnet_table(perm_subnet_table_1);
-	if(perm_subnet_table_2)
-		free_subnet_table(perm_subnet_table_2);
-	if(perm_subnet_table)
+	}
+	if(perm_subnet_table) {
+		free_subnet_table(*perm_subnet_table);
 		shm_free(perm_subnet_table);
-	if(perm_domain_table_1)
-		free_domain_name_table(perm_domain_table_1);
-	if(perm_domain_table_2)
-		free_domain_name_table(perm_domain_table_2);
-	if(perm_domain_table)
+	}
+	if(perm_domain_table) {
+		free_domain_name_table(*perm_domain_table);
 		shm_free(perm_domain_table);
+	}
+	if(perm_addr_tables_lock) {
+		lock_destroy(perm_addr_tables_lock);
+		shm_free(perm_addr_tables_lock);
+	}
 }
 
 
 int allow_address(sip_msg_t *_msg, int addr_group, str *ips, int port)
 {
 	struct ip_addr *ipa;
+	address_tables_group_t atg;
+	int retval = -1;
+
+	get_addr_tables(&atg);
 
 	ipa = strtoipX(ips);
 
 	if(ipa) {
 		if(perm_addr_table
-				&& match_addr_hash_table(*perm_addr_table, addr_group, ipa,
-						   (unsigned int)port)
+				&& match_addr_hash_table(atg.address_table->table, addr_group,
+						   ipa, (unsigned int)port)
 						   == 1) {
-			return 1;
+			retval = 1;
 		} else {
 			if(perm_subnet_table) {
-				return match_subnet_table(*perm_subnet_table, addr_group, ipa,
+				retval = match_subnet_table(atg.subnet_table->table,
+						atg.subnet_table->count, addr_group, ipa,
 						(unsigned int)port);
 			}
 		}
 	} else {
 		if(perm_domain_table) {
-			return match_domain_name_table(
-					*perm_domain_table, addr_group, ips, (unsigned int)port);
+			retval = match_domain_name_table(atg.domain_table->table,
+					addr_group, ips, (unsigned int)port);
 		}
 	}
-	return -1;
+
+	put_addr_tables(&atg);
+
+	return retval;
 }
 
 /*
@@ -786,21 +766,30 @@ int w_allow_address(
 
 int allow_source_address(sip_msg_t *_msg, int addr_group)
 {
+	int retval = -1;
+	address_tables_group_t atg;
+
+	get_addr_tables(&atg);
+
 	LM_DBG("looking for <%u, %x, %u>\n", addr_group,
 			_msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
 
-	if(perm_addr_table
-			&& match_addr_hash_table(*perm_addr_table, addr_group,
+	if(atg.address_table
+			&& match_addr_hash_table(atg.address_table->table, addr_group,
 					   &_msg->rcv.src_ip, _msg->rcv.src_port)
 					   == 1) {
-		return 1;
+		retval = 1;
 	} else {
-		if(perm_subnet_table) {
-			return match_subnet_table(*perm_subnet_table, addr_group,
-					&_msg->rcv.src_ip, _msg->rcv.src_port);
+		if(atg.subnet_table) {
+			retval = match_subnet_table(atg.subnet_table->table,
+					atg.subnet_table->count, addr_group, &_msg->rcv.src_ip,
+					_msg->rcv.src_port);
 		}
 	}
-	return -1;
+
+	put_addr_tables(&atg);
+
+	return retval;
 }
 
 /*
@@ -829,25 +818,32 @@ int w_allow_source_address(struct sip_msg *_msg, char *_addr_group, char *_str2)
 int ki_allow_source_address_group(sip_msg_t *_msg)
 {
 	int group = -1;
+	address_tables_group_t atg;
+
+	get_addr_tables(&atg);
 
 	LM_DBG("looking for <%x, %u> in address table\n",
 			_msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
-	if(perm_addr_table) {
-		group = find_group_in_addr_hash_table(
-				*perm_addr_table, &_msg->rcv.src_ip, _msg->rcv.src_port);
+	if(atg.address_table) {
+		group = find_group_in_addr_hash_table(atg.address_table->table,
+				&_msg->rcv.src_ip, _msg->rcv.src_port);
 		LM_DBG("Found <%d>\n", group);
 
 		if(group != -1)
-			return group;
+			goto out;
 	}
 
 	LM_DBG("looking for <%x, %u> in subnet table\n",
 			_msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
-	if(perm_subnet_table) {
-		group = find_group_in_subnet_table(
-				*perm_subnet_table, &_msg->rcv.src_ip, _msg->rcv.src_port);
+	if(atg.subnet_table) {
+		group = find_group_in_subnet_table(atg.subnet_table->table,
+				atg.subnet_table->count, &_msg->rcv.src_ip, _msg->rcv.src_port);
 	}
 	LM_DBG("Found <%d>\n", group);
+
+out:
+	put_addr_tables(&atg);
+
 	return group;
 }
 
@@ -869,40 +865,46 @@ int allow_source_address_group(struct sip_msg *_msg, char *_str1, char *_str2)
 int ki_allow_address_group(sip_msg_t *_msg, str *_addr, int _port)
 {
 	int group = -1;
-
+	address_tables_group_t atg;
 	ip_addr_t *ipa;
+
+	get_addr_tables(&atg);
 
 	ipa = strtoipX(_addr);
 
 	if(ipa) {
 		LM_DBG("looking for <%.*s, %u> in address table\n", _addr->len,
 				_addr->s, (unsigned int)_port);
-		if(perm_addr_table) {
+		if(atg.address_table) {
 			group = find_group_in_addr_hash_table(
-					*perm_addr_table, ipa, (unsigned int)_port);
+					atg.address_table->table, ipa, (unsigned int)_port);
 			LM_DBG("Found address in group <%d>\n", group);
 
 			if(group != -1)
-				return group;
+				goto out;
 		}
-		if(perm_subnet_table) {
+		if(atg.subnet_table) {
 			LM_DBG("looking for <%.*s, %u> in subnet table\n", _addr->len,
 					_addr->s, _port);
-			group = find_group_in_subnet_table(
-					*perm_subnet_table, ipa, (unsigned int)_port);
+			group = find_group_in_subnet_table(atg.subnet_table->table,
+					atg.subnet_table->count, ipa, (unsigned int)_port);
 			LM_DBG("Found a match of subnet in group <%d>\n", group);
 		}
 	} else {
 		LM_DBG("looking for <%.*s, %u> in domain_name table\n", _addr->len,
 				_addr->s, (unsigned int)_port);
-		if(perm_domain_table) {
+		if(atg.domain_table) {
 			group = find_group_in_domain_name_table(
-					*perm_domain_table, _addr, (unsigned int)_port);
+					atg.domain_table->table, _addr, (unsigned int)_port);
 			LM_DBG("Found a match of domain_name in group <%d>\n", group);
 		}
 	}
 
 	LM_DBG("Found <%d>\n", group);
+
+out:
+	put_addr_tables(&atg);
+
 	return group;
 }
 
@@ -921,4 +923,56 @@ int allow_address_group(struct sip_msg *_msg, char *_addr, char *_port)
 	}
 
 	return ki_allow_address_group(_msg, &ips, port);
+}
+
+
+/*
+ * Obtain reference to global table
+ */
+struct addr_table *get_addr_hash_table(void)
+{
+	GENERIC_LOCK_REF_GET_RETURN(
+			struct addr_table, perm_addr_table, perm_addr_tables_lock);
+}
+
+/*
+ * Release reference after get_*()
+ */
+void put_addr_hash_table(struct addr_table *table)
+{
+	GENERIC_LOCK_REF_PUT(table, perm_addr_tables_lock);
+}
+
+/*
+ * Obtain reference to global table
+ */
+struct subnet_table *get_subnet_table(void)
+{
+	GENERIC_LOCK_REF_GET_RETURN(
+			struct subnet_table, perm_subnet_table, perm_addr_tables_lock);
+}
+
+/*
+ * Release reference after get_*()
+ */
+void put_subnet_table(struct subnet_table *table)
+{
+	GENERIC_LOCK_REF_PUT(table, perm_addr_tables_lock);
+}
+
+/*
+ * Obtain reference to global table
+ */
+struct domain_name_table *get_domain_name_table(void)
+{
+	GENERIC_LOCK_REF_GET_RETURN(
+			struct domain_name_table, perm_domain_table, perm_addr_tables_lock);
+}
+
+/*
+ * Release reference after get_*()
+ */
+void put_domain_name_table(struct domain_name_table *table)
+{
+	GENERIC_LOCK_REF_PUT(table, perm_addr_tables_lock);
 }
