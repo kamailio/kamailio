@@ -612,7 +612,7 @@ static int mt_load_db(m_tree_t *pt)
 		}
 	} else {
 		if((ret = mt_dbf.query(db_con, key_cols, op, vals, db_cols, pt->multi,
-					2, 0, &db_res))
+					c, 0, &db_res))
 						!= 0
 				|| RES_ROW_N(db_res) <= 0) {
 			if(ret == 0) {
