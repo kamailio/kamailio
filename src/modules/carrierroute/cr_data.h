@@ -31,7 +31,6 @@
 #define CR_DATA_H
 
 #include <sys/types.h>
-#include "../../core/locking.h"
 #include "../../core/flags.h"
 #include "cr_map.h"
 
@@ -50,8 +49,7 @@ struct route_data_t
 	size_t first_empty_carrier; /*!< the index of the first empty entry in carriers */
 	size_t domain_num;			/*!< total number of different domains */
 	int default_carrier_id;
-	int proc_cnt;	 /*!< a ref counter for the shm data */
-	gen_lock_t lock; /*!< lock for ref counter updates */
+	int proc_cnt; /*!< a ref counter for the shm data */
 };
 
 /**

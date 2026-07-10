@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include "../../core/mem/shm_mem.h"
+#include "../../core/locking.h"
 #include "cr_data.h"
 #include "carrierroute.h"
 #include "cr_config.h"
@@ -41,7 +42,9 @@
 /**
  * Pointer to the routing data.
  */
-struct route_data_t **global_data = NULL;
+static struct route_data_t **global_data = NULL;
+// lock to protect the *global_data pointer itself, and each table's proc_cnt
+static gen_lock_t *global_data_lock;
 
 
 static int carrier_data_fixup(struct route_data_t *rd)
@@ -78,6 +81,13 @@ int init_route_data(void)
 			SHM_MEM_ERROR;
 			return -1;
 		}
+		global_data_lock = lock_alloc();
+		if(!global_data_lock) {
+			SHM_MEM_ERROR;
+			shm_free(global_data);
+			return -1;
+		}
+		lock_init(global_data_lock);
 	}
 	*global_data = NULL;
 	return 0;
@@ -95,6 +105,11 @@ void destroy_route_data(void)
 		*global_data = NULL;
 		shm_free(global_data);
 		global_data = NULL;
+	}
+	if(global_data_lock) {
+		lock_destroy(global_data_lock);
+		lock_dealloc(global_data_lock);
+		global_data_lock = NULL;
 	}
 }
 
@@ -228,17 +243,29 @@ int reload_route_data(void)
 
 	new_data->proc_cnt = 0;
 
+	lock_get(global_data_lock);
+
 	if(*global_data == NULL) {
 		*global_data = new_data;
+		lock_release(global_data_lock);
 	} else {
+		// swap out pointers with lock held
 		old_data = *global_data;
 		*global_data = new_data;
 		i = 0;
+		// lock still held for proc_cnt
 		while(old_data->proc_cnt > 0) {
+			// release lock while sleeping so other threads can drop reference.
+			// no other thread can be checking the same table as the pointers were
+			// swapped with the lock held
+			lock_release(global_data_lock);
 			LM_ERR("data is still locked after %i seconds\n", i);
 			sleep_us(i * 1000000);
 			i++;
+			// re-obtain lock to check proc_cnt again
+			lock_get(global_data_lock);
 		}
+		lock_release(global_data_lock);
 		clear_route_data(old_data);
 	}
 	return 0;
@@ -259,21 +286,18 @@ errout:
 struct route_data_t *get_data(void)
 {
 	struct route_data_t *ret;
+	if(!global_data_lock)
+		return NULL;
+	lock_get(global_data_lock);
 	if(!global_data || !*global_data) {
+		lock_release(global_data_lock);
 		return NULL;
 	}
 	ret = *global_data;
-	lock_get(&ret->lock);
 	++ret->proc_cnt;
-	lock_release(&ret->lock);
-	if(ret == *global_data) {
-		return ret;
-	} else {
-		lock_get(&ret->lock);
-		--ret->proc_cnt;
-		lock_release(&ret->lock);
-		return NULL;
-	}
+	lock_release(global_data_lock);
+	// safe reference to "ret" held here
+	return ret;
 }
 
 
@@ -284,9 +308,9 @@ struct route_data_t *get_data(void)
  */
 void release_data(struct route_data_t *data)
 {
-	lock_get(&data->lock);
+	lock_get(global_data_lock);
 	--data->proc_cnt;
-	lock_release(&data->lock);
+	lock_release(global_data_lock);
 }
 
 
