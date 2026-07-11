@@ -92,8 +92,13 @@ int ksr_rpc_exec_locks_set_get(str *name)
 		return -1;
 	}
 
-	lockidx = get_hash1_raw(name->s, name->len);
-	lockidx = lockidx % ksr_rpc_exec_locks;
+	if(ksr_rpc_exec_locks == 1) {
+		lockidx = 0;
+	} else {
+		lockidx = get_hash1_raw(name->s, name->len);
+		lockidx = lockidx % ksr_rpc_exec_locks;
+	}
+
 	rec_lock_set_get(ksr_rpc_exec_locks_set, lockidx);
 
 	return (int)lockidx;
@@ -114,8 +119,13 @@ void ksr_rpc_exec_locks_set_release(str *name)
 		return;
 	}
 
-	lockidx = get_hash1_raw(name->s, name->len);
-	lockidx = lockidx % ksr_rpc_exec_locks;
+	if(ksr_rpc_exec_locks == 1) {
+		lockidx = 0;
+	} else {
+		lockidx = get_hash1_raw(name->s, name->len);
+		lockidx = lockidx % ksr_rpc_exec_locks;
+	}
+
 	rec_lock_set_release(ksr_rpc_exec_locks_set, lockidx);
 }
 
