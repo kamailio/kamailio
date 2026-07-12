@@ -457,6 +457,19 @@ static inline char *q_memrchr(char *p, int c, unsigned int size)
 	return 0;
 }
 
+/* index of the char */
+static inline int q_memidx(char *p, int c, unsigned int size)
+{
+	int i;
+
+	for(i = 0; i < (int)size; i++) {
+		if((unsigned char)p[i] == (unsigned char)c) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 /* returns -1 on error, 1! on success (consistent with int2reverse_hex) */
 inline static int reverse_hex2int(char *c, int len, unsigned int *res)
 {
