@@ -75,6 +75,7 @@
 #include "locking.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
+#include "tcp_reactor_mem.h" /* mode 2: pkg allocator serialization */
 #include "timer.h"
 #include "sr_module.h"
 #include "tcp_server.h"
@@ -2321,6 +2322,16 @@ static int tcp_reactor_enable_write_watch(struct tcp_connection *c);
 static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 		unsigned len, snd_flags_t send_flags);
 static int tcp_reactor_watch_write(struct tcp_connection *c);
+/* stage a write onto the connection's wsq list (shm, under write_lock) without
+ * touching io_h - safe to call from a pool thread (defined later). */
+static int tcp_reactor_wsq_add(struct tcp_connection *c, const char *buf,
+		unsigned len, snd_flags_t send_flags);
+/* per-pool-thread index (0..N-1); -1 in the io_wait/main thread and any other
+ * thread. Set at pool-thread start. Two uses: selecting the per-thread TLS
+ * encode scratch buffer (see tcp_mtops.c) so concurrent pool encodes never
+ * collide, and letting tcp_reactor_send_put() tell a pool thread from the
+ * io_wait thread (both satisfy is_tcp_main()). */
+static _Thread_local int tcp_reactor_thread_idx = -1;
 #endif /* TCP_ASYNC */
 
 #define tcp_dst_ephemeral_set(n, c, dst)           \
@@ -2357,12 +2368,11 @@ static int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 	long response[2];
 
 	if(unlikely(is_tcp_main())) {
-		/* called from within PROC_TCP_MAIN's own read path (e.g. a core CRLF
-		 * keepalive pong or an HTTP/1.1 100-continue, both sent via tcp_send()
-		 * from tcp_read_req()). We are already in the io_wait thread, so there
-		 * is no unix_tcp_sock self-send - queue the payload and arm POLLOUT
-		 * directly, mirroring the CONN_WRITE_REQ handler. Release the refcnt the
-		 * caller (tcp_send) took on c. */
+		/* Called from within PROC_TCP_MAIN itself - no unix_tcp_sock self-send.
+		 * BUT is_tcp_main() is true for the whole process, i.e. BOTH the io_wait
+		 * thread AND the reactor pool threads. Only the io_wait thread owns io_h,
+		 * so the two cases must be handled differently. Release the refcnt the
+		 * caller (tcp_send) took on c either way. */
 		if(unlikely(tcpconn_put(c))) {
 			tcpconn_destroy(c); /* was the last ref */
 			return -1;
@@ -2371,6 +2381,24 @@ static int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 			/* in the process of being destroyed => drop the write */
 			return -1;
 		}
+		if(tcp_reactor_thread_idx >= 0) {
+			/* On a POOL thread: e.g. WS ws_send_crlf()/pong/close issued inline
+			 * from the read path (ws_frame_receive) while this thread owns the
+			 * shielded conn. We must NOT touch io_h or c's watch flags here -
+			 * that races the io_wait thread and can re-arm the fd while a read
+			 * job owns it, letting a second thread run on the same con->req
+			 * (torn WS frames / double-unmask -> garbage to workers). Stage the
+			 * payload on the conn's wsq (shm, under write_lock); the read job's
+			 * completion (tcp_reactor_unshield_or_chain) drains it via a chained
+			 * write job. */
+			if(unlikely(tcp_reactor_wsq_add(c, buf, len, send_flags) < 0))
+				return -1;
+			return (int)len;
+		}
+		/* io_wait thread (e.g. a core CRLF keepalive pong or HTTP/1.1
+		 * 100-continue sent via tcp_send() from the reactor's own read path):
+		 * safe to queue the payload and arm POLLOUT directly, mirroring the
+		 * CONN_WRITE_REQ handler. */
 		if(unlikely(tcp_reactor_wbuf_enqueue(c, (char *)buf, len, send_flags)
 					< 0)) {
 			return -1;
@@ -3238,7 +3266,17 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 			case CONN_NOP:
 				break;
 			case CONN_QUEUED_WRITE:
-				if(unlikely(tcp_reactor_enable_write_watch(c) < 0)) {
+				/* is_tcp_main() is true for the whole process. On a POOL thread
+				 * (this path is reached from tls_read() flushing handshake /
+				 * renegotiation ciphertext, which runs on a pool thread in
+				 * mode 2) we must NOT touch io_h: the conn is shielded out of
+				 * io_h for the duration of the read job, and io_watch_* from a
+				 * pool thread races the io_wait thread. The ciphertext is already
+				 * queued in wbuf_q; tcp_reactor_read_rearm() arms POLLOUT from
+				 * wbuf_q when the read job completes, so the flush is deferred
+				 * safely. Only the io_wait thread arms the watch directly. */
+				if(tcp_reactor_thread_idx < 0
+						&& unlikely(tcp_reactor_enable_write_watch(c) < 0)) {
 					c->state = S_CONN_BAD;
 					c->timeout = get_ticks_raw(); /* force timeout reaper */
 				}
@@ -5589,6 +5627,27 @@ inline static int handle_tcpconn_ev(
 		int n;
 		int resp;
 
+		/* A pool job already owns this conn (F_CONN_POOL_BUSY): a shield should
+		 * have removed its fd from io_h, so we should not see events for it. We
+		 * can still get here if the fd stayed armed while busy (e.g. the WS
+		 * handshake con->type flip happens in the worker, out of step with the
+		 * io_wait thread's read-watch bookkeeping, so the shield's conditional
+		 * io_watch_del was skipped). Enqueuing a second read job here would put
+		 * two pool threads on the same con->req buffer -> torn frames / garbage
+		 * dispatched to workers. Defensively drop the fd from the watch set and
+		 * return; the in-flight job's completion (unshield/re-arm) re-adds it,
+		 * and level-triggered epoll re-fires for any still-buffered data. */
+		if(unlikely(tcpconn->flags & F_CONN_POOL_BUSY)) {
+			if(tcpconn->s != -1) {
+				if(unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0) < 0))
+					LM_ERR("reactor: io_watch_del (busy re-arm) failed for %p "
+						   "fd %d\n",
+							tcpconn, tcpconn->s);
+			}
+			tcpconn->flags &= ~(F_CONN_READ_W | F_CONN_WRITE_W);
+			return 0;
+		}
+
 #ifdef TCP_ASYNC
 		/* drain pending writes first if the fd is write-watched */
 		if((ev & (POLLOUT | POLLERR | POLLHUP))
@@ -5619,11 +5678,19 @@ inline static int handle_tcpconn_ev(
 
 		if(ev & (POLLIN | POLLERR | POLLHUP)) {
 #ifdef TCP_ASYNC
-			/* Only plain TCP/TLS reads are offloaded to a pool thread here.
-                         * WS/WSS will be handled later
-                         **/
-			if(likely(tcpconn->type == PROTO_TCP
-					   || tcpconn->type == PROTO_TLS)) {
+			/* All four transports' reads are offloaded to a pool thread. The
+			 * shield hands that thread exclusive ownership of the conn
+			 * (F_CONN_POOL_BUSY), which is what makes it safe to run TLS
+			 * and to run the WS frame codec: the SSL object and the WS codec
+			 * are each touched by one thread at a time, and tls_encode()'s
+			 * trampoline uses a per-thread scratch buffer (see tcp_mtops.c). For
+			 * WSS the WS codec stacks above the TLS transform terminated on the
+			 * same thread. During the pre-upgrade handshake the conn is still
+			 * PROTO_TCP/PROTO_TLS, so it is already covered; it stays covered after
+			 * the con->type flip to WS/WSS. */
+			if(likely(tcpconn->type == PROTO_TCP || tcpconn->type == PROTO_TLS
+					   || tcpconn->type == PROTO_WS
+					   || tcpconn->type == PROTO_WSS)) {
 				/* shield the conn from the (level-triggered) reactor + timer so
 				 * a pool thread can own it exclusively, then enqueue the read */
 				if(ev
@@ -5896,11 +5963,8 @@ error:
 
 /* hardcoded for now */
 static int tcp_reactor_threads = 8;
-
-/* per-pool-thread index (0..N-1); -1 in the reactor/main thread and any other
- * thread. Set at thread start; selects the per-thread TLS encode scratch buffer
- * (see tcp_mtops.c) so concurrent pool encodes never collide. */
-static _Thread_local int tcp_reactor_thread_idx = -1;
+/* tcp_reactor_thread_idx is defined near the top (needed earlier by
+ * tcp_reactor_send_put's pool-thread detection). */
 
 /* runs in the io_wait thread on notify_pipe readiness: process all completed
  * jobs (coalesced). Only the io_wait thread touches io_h, so all re-arm / close
@@ -6008,10 +6072,11 @@ static void *tcp_reactor_thread_routine(void *arg)
 				pkg_free(job); /* RUN frees in-thread, no completion needed */
 				continue;
 			case TCP_R_READ: {
-				/* read + reassemble on conn->s (PROTO_TCP only at this step).
-				 * tcp_read_req() reads via _tconfd(conn)==conn->s and dispatches
-				 * complete SIP messages to workers via tcp_reactor_dispatch_msg().
-				 * No io_watch / no free here - the io_wait thread completes. */
+				/* read + reassemble on conn->s (all of PROTO_TCP/TLS/WS/WSS).
+				 * tcp_read_req() reads via _tconfd(conn)==conn->s; for WS the frame
+				 * codec runs here under the shield and dispatches the defragmented
+				 * payload to workers via tcp_reactor_dispatch_msg(). No io_watch /
+				 * no free here - the io_wait thread completes. */
 				rd_conn_flags_t read_flags;
 				int n, resp;
 				conn = job->conn;
@@ -6087,6 +6152,24 @@ static void *tcp_reactor_thread_routine(void *arg)
 static int tcp_reactor_pool_init(void)
 {
 	int i;
+	char *env;
+
+	/* HACK/debug: override the pool thread count via env var so the reactor
+	 * pkg-concurrency hypothesis can be bisected without a rebuild, e.g.
+	 * KAMAILIO_DEBUG_TCP_REACTOR_THREAD=1 forces a single pool thread. */
+	if((env = getenv("KAMAILIO_DEBUG_TCP_REACTOR_THREAD")) != NULL) {
+		int n = atoi(env);
+		if(n >= 1) {
+			LM_WARN("tcp reactor pool threads overridden by "
+					"KAMAILIO_DEBUG_TCP_REACTOR_THREAD: %d -> %d\n",
+					tcp_reactor_threads, n);
+			tcp_reactor_threads = n;
+		} else {
+			LM_WARN("ignoring bad KAMAILIO_DEBUG_TCP_REACTOR_THREAD='%s' "
+					"(keeping %d)\n",
+					env, tcp_reactor_threads);
+		}
+	}
 
 	/* pool_init() runs on PROC_TCP_MAIN's io_wait/main thread; name it here (pool
 	 * threads name themselves in tcp_reactor_thread_routine). OS thread comm only,
@@ -6127,6 +6210,9 @@ static int tcp_reactor_pool_init(void)
 	}
 	tcp_rpool.threads_no = 0;
 	tcp_rpool.stop = 0;
+	/* serialize this process's pkg heap before any pool thread runs: from here
+	 * on the io_wait thread and the pool threads share pkg concurrently */
+	tcp_reactor_pkg_lock_install();
 	for(i = 0; i < tcp_reactor_threads; i++) {
 		if(pthread_create(&tcp_rpool.threads[i], NULL,
 				   tcp_reactor_thread_routine, (void *)(long)i)

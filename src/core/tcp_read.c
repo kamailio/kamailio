@@ -1588,8 +1588,14 @@ int receive_tcp_msg(char *tcpbuf, unsigned int len,
 {
 	int ret = 0;
 #ifdef TCP_CLONE_RCVBUF
-	static char *buf = NULL;
-	static unsigned int bsize = 0;
+	/* mode 2: PROC_TCP_MAIN runs a pool of reader threads that all execute
+	 * receive_tcp_msg(). A process-global static clone buffer would be shared
+	 * across those threads - two of them memcpy their frame in and (for WS)
+	 * unmask in place, clobbering each other (garbage dispatched to workers).
+	 * _Thread_local gives each pool thread its own clone buffer. Harmless for
+	 * modes 0/1, where each reader is a single-threaded process. */
+	static _Thread_local char *buf = NULL;
+	static _Thread_local unsigned int bsize = 0;
 	int blen;
 
 	/* cloning is disabled via parameter */
@@ -1809,15 +1815,6 @@ again:
 							   previous char, req->parsed should be ok
 							   because we always alloc BUF_SIZE+1 */
 		*req->parsed = 0;
-
-		if(unlikely(ksr_tcp_main_threads == 2
-					&& (con->type == PROTO_WS || con->type == PROTO_WSS))) {
-			LM_ERR("protocol not supported with tcp_main_threads=2"
-				   " (WS/WSS): dropping connection\n");
-			*req->parsed = c;
-			resp = CONN_ERROR;
-			goto end_req;
-		}
 
 		if(req->state == H_PING_CRLF) {
 			init_dst_from_rcv(&dst, &con->rcv);
