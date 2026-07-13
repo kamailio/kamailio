@@ -145,7 +145,7 @@ int set_dmq_node_params(dmq_node_t *node, param_t *params)
 	}
 	status_str = get_param_value(params, &dmq_node_status_str);
 	if(status_str) {
-		if(status_int = dmq_get_status_int(status_str)) {
+		if((status_int = dmq_get_status_int(status_str)) != 0) {
 			node->status = status_int;
 		} else {
 			LM_ERR("invalid status parameter: %.*s\n", STR_FMT(status_str));
