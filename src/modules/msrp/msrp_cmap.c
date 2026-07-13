@@ -249,7 +249,12 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	it->sock.s[it->sock.len] = '\0';
 
 	it->expires = time(NULL) + expires;
-	it->conid = mf->tcpinfo->con->id;
+	/* con is NULL under the tcp reactor (tcp_main_threads=2): the frame is
+	 * decoded in a worker with no local tcp_connection. The connection id is
+	 * carried in rcv->proto_reserved1 (set == con->id before dispatch), which
+	 * is what the reply path (init_dst_from_rcv) keys off anyway. */
+	it->conid = (mf->tcpinfo->con != NULL) ? mf->tcpinfo->con->id
+										   : mf->tcpinfo->rcv->proto_reserved1;
 
 	/* insert item in cmap */
 	lock_get(&_msrp_cmap_head->cslots[idx].lock);
