@@ -186,7 +186,6 @@ int ds_mark_dst(struct sip_msg *msg, int state);
 int ds_mark_dst_mode(struct sip_msg *msg, int state, int mode);
 int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode);
 int ds_print_list(FILE *fout);
-int ds_log_sets(void);
 int ds_list_exist(int set);
 int ds_is_active_uri(sip_msg_t *msg, int group, str *uri);
 
@@ -301,6 +300,12 @@ typedef struct _ds_set {
 	gen_lock_t lock;
 } ds_set_t;
 
+typedef struct _ds_list {
+	ds_set_t *head; /*!< top of AVL tree */
+	int nr; /*!< number of sets */
+	unsigned int refs;
+} ds_list_t;
+
 typedef struct _ds_select_state {
 	int setid;  /* dispatcher set id (group id) */
 	int alg;    /* algorithm to select destinations */
@@ -314,7 +319,7 @@ typedef struct _ds_select_state {
 struct ds_filter_dest_cb_arg {
 	int setid;
 	ds_dest_t *dest;
-	int *setn;
+	ds_list_t *list;
 };
 
 /* clang-format on */
@@ -324,10 +329,11 @@ struct ds_filter_dest_cb_arg {
 #define AVL_NEITHER -1
 #define AVL_BALANCED(n) (n->longer < 0)
 
-ds_set_t *ds_get_list(void);
+ds_list_t *ds_get_list(void);
+void ds_put_list(ds_list_t *);
 int ds_get_list_nr(void);
 
-ds_set_t *ds_list_lookup(int set);
+ds_set_t *ds_list_lookup(ds_list_t *list, int set);
 
 int ds_ping_active_init(void);
 int ds_ping_active_get(void);
