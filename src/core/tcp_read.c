@@ -1840,11 +1840,11 @@ again:
 			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
 			if(unlikely(req->state == H_MSRP_FINISH)) {
 				/* msrp frame */
-				if(ksr_tcp_main_threads == 2) {
-					LM_ERR("MSRP not supported with tcp_main_threads=2:"
-						   " dropping connection\n");
-					ret = -1;
-				} else
+				if(ksr_tcp_main_threads == 2)
+					ret = tcp_reactor_dispatch_msg(req->start,
+							req->parsed - req->start,
+							req->flags & F_TCP_REQ_MSRP_FRAME, &con->rcv);
+				else
 					ret = receive_tcp_msg(req->start, req->parsed - req->start,
 							&con->rcv, con);
 			} else
@@ -2145,11 +2145,18 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 				break;
 			}
 			/* The message buffer is self-describing; task->flags only picks
-			 * the entry point. HEP3 packets carry their own header + TLVs and
-			 * go through the SREV_RCV_NOSIP path, exactly as in modes 0/1. */
+			 * the entry point. HEP3/MSRP carry their own framing and go through
+			 * the same sr_event decoders as in modes 0/1. The worker has no
+			 * local tcp_connection, so con is NULL; the decoders that need the
+			 * connection id read it from rcv->proto_reserved1 (== con->id). */
 			if(unlikely(task->flags & F_TCP_REQ_HEP3))
 				hep3_process_msg(
 						task->msg_buf, task->msg_len, &task->rcv, NULL);
+#ifdef READ_MSRP
+			else if(unlikely(task->flags & F_TCP_REQ_MSRP_FRAME))
+				msrp_process_msg(
+						task->msg_buf, task->msg_len, &task->rcv, NULL);
+#endif
 			else
 				receive_msg(task->msg_buf, task->msg_len, &task->rcv);
 			shm_free(task);
