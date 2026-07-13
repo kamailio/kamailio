@@ -1811,10 +1811,9 @@ again:
 		*req->parsed = 0;
 
 		if(unlikely(ksr_tcp_main_threads == 2
-					&& (con->type == PROTO_WS || con->type == PROTO_WSS
-							|| (req->flags & F_TCP_REQ_HEP3)))) {
+					&& (con->type == PROTO_WS || con->type == PROTO_WSS))) {
 			LM_ERR("protocol not supported with tcp_main_threads=2"
-				   " (WS/WSS/HEP3): dropping connection\n");
+				   " (WS/WSS): dropping connection\n");
 			*req->parsed = c;
 			resp = CONN_ERROR;
 			goto end_req;
@@ -1856,7 +1855,7 @@ again:
 				req->body[req->content_len] = 0;
 				if(ksr_tcp_main_threads == 2)
 					ret = tcp_reactor_dispatch_msg(req->start,
-							req->body + req->content_len - req->start,
+							req->body + req->content_len - req->start, 0,
 							&con->rcv);
 				else
 					ret = receive_tcp_msg(req->start,
@@ -1872,8 +1871,9 @@ again:
 			} else
 #endif
 					if(ksr_tcp_main_threads == 2)
-				ret = tcp_reactor_dispatch_msg(
-						req->start, req->parsed - req->start, &con->rcv);
+				ret = tcp_reactor_dispatch_msg(req->start,
+						req->parsed - req->start, req->flags & F_TCP_REQ_HEP3,
+						&con->rcv);
 			else
 				ret = receive_tcp_msg(
 						req->start, req->parsed - req->start, &con->rcv, con);
@@ -2144,7 +2144,14 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 				LM_CRIT("null task pointer from tcp main\n");
 				break;
 			}
-			receive_msg(task->msg_buf, task->msg_len, &task->rcv);
+			/* The message buffer is self-describing; task->flags only picks
+			 * the entry point. HEP3 packets carry their own header + TLVs and
+			 * go through the SREV_RCV_NOSIP path, exactly as in modes 0/1. */
+			if(unlikely(task->flags & F_TCP_REQ_HEP3))
+				hep3_process_msg(
+						task->msg_buf, task->msg_len, &task->rcv, NULL);
+			else
+				receive_msg(task->msg_buf, task->msg_len, &task->rcv);
 			shm_free(task);
 			break;
 		}

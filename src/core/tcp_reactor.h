@@ -35,14 +35,18 @@ struct tcp_connection;
  *   shm_malloc(sizeof(tcp_reactor_task_t) + msg_len + 1)
  *
  * The pointer is written to ksr_tcp_reactor_dsock[1] as a uintptr_t.
- * Workers recvfrom ksr_tcp_reactor_dsock[0], cast back, call
- * receive_msg(), then shm_free the task.
+ * Workers recvfrom ksr_tcp_reactor_dsock[0], cast back, dispatch on
+ * flags (plain SIP -> receive_msg(), F_TCP_REQ_HEP3 -> hep3_process_msg()),
+ * then shm_free the task.
  */
 typedef struct tcp_reactor_task
 {
 	struct receive_info rcv; /* copied from con->rcv at reassembly time */
 	unsigned int msg_len;
-	char msg_buf[0]; /* inline message buffer, null-terminated */
+	unsigned int flags; /* framing discriminator (F_TCP_REQ_HEP3, ...); the
+						 * message buffer is self-describing, so this only
+						 * selects the worker entry point, it carries no state */
+	char msg_buf[0];	/* inline message buffer, null-terminated */
 } tcp_reactor_task_t;
 
 /*
@@ -84,11 +88,13 @@ typedef struct tcp_reactor_connect_req
 	unsigned int len;
 } tcp_reactor_connect_req_t;
 
-/* Allocate a tcp_reactor_task_t in shm, copy buf+rcv into it, and write
+/* Allocate a tcp_reactor_task_t in shm, copy buf+rcv+flags into it, and write
  * the pointer to the dispatch socketpair write end. Called from
- * PROC_TCP_MAIN in mode 2 wherever receive_tcp_msg() would be called. */
-int tcp_reactor_dispatch_msg(
-		char *buf, unsigned int len, struct receive_info *rcv);
+ * PROC_TCP_MAIN in mode 2 wherever receive_tcp_msg() would be called. flags
+ * carries the framing discriminator (e.g. F_TCP_REQ_HEP3) the worker uses to
+ * pick the message entry point. */
+int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
+		struct receive_info *rcv);
 
 /* =========================================================================
  * tcp_main_threads == 2
