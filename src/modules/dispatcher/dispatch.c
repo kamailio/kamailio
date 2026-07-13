@@ -135,6 +135,7 @@ static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
 
 static ds_set_t **ds_lists = NULL;
+static gen_lock_t *ds_list_write_lock = NULL;
 
 static int *ds_list_nr = NULL;
 static int *ds_crt_idx = NULL;
@@ -347,6 +348,15 @@ int ds_init_data(void)
 		return -1;
 	}
 	memset(p, 0, 3 * sizeof(int));
+
+	ds_list_write_lock = lock_alloc();
+	if(!ds_list_write_lock) {
+		shm_free(ds_lists);
+		shm_free(p);
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	lock_init(ds_list_write_lock);
 
 	ds_crt_idx = p;
 	ds_next_idx = p + 1;
@@ -1241,18 +1251,17 @@ int ds_load_list(char *lfile)
 	str attrs;
 	ds_latency_stats_t *latency_stats;
 
-	if((*ds_crt_idx) != (*ds_next_idx)) {
-		LM_WARN("load command already generated, aborting reload...\n");
-		return 0;
-	}
+	lock_get(ds_list_write_lock);
 
 	if(lfile == NULL || strlen(lfile) <= 0) {
+		lock_release(ds_list_write_lock);
 		LM_ERR("bad list file\n");
 		return -1;
 	}
 
 	f = fopen(lfile, "r");
 	if(f == NULL) {
+		lock_release(ds_list_write_lock);
 		LM_ERR("can't open list file [%s]\n", lfile);
 		return -1;
 	}
@@ -1380,12 +1389,15 @@ int ds_load_list(char *lfile)
 	_ds_list_nr = setn;
 	*ds_crt_idx = *ds_next_idx;
 
+	lock_release(ds_list_write_lock);
+
 	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
 	ds_log_sets();
 	return 0;
 
 error:
+	lock_release(ds_list_write_lock);
 	if(f != NULL)
 		fclose(f);
 	ds_avl_destroy(&ds_lists[*ds_next_idx]);
@@ -1529,17 +1541,16 @@ int ds_load_db(void)
 		}
 	}
 
-	if((*ds_crt_idx) != (*ds_next_idx)) {
-		LM_WARN("load command already generated, aborting reload...\n");
-		return 0;
-	}
+	lock_get(ds_list_write_lock);
 
 	if(ds_db_handle == NULL) {
+		lock_release(ds_list_write_lock);
 		LM_ERR("invalid DB handler\n");
 		return -1;
 	}
 
 	if(ds_dbf.use_table(ds_db_handle, &ds_table_name) < 0) {
+		lock_release(ds_list_write_lock);
 		LM_ERR("error in use_table\n");
 		return -1;
 	}
@@ -1549,6 +1560,7 @@ int ds_load_db(void)
 	/*select the whole table and all the columns*/
 	if(ds_dbf.query(ds_db_handle, 0, 0, 0, query_cols, 0, nrcols, 0, &res)
 			< 0) {
+		lock_release(ds_list_write_lock);
 		LM_ERR("error while querying database\n");
 		return -1;
 	}
@@ -1708,6 +1720,8 @@ int ds_load_db(void)
 	_ds_list_nr = setn;
 	*ds_crt_idx = *ds_next_idx;
 
+	lock_release(ds_list_write_lock);
+
 	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
 	ds_log_sets();
@@ -1717,6 +1731,7 @@ int ds_load_db(void)
 	return 0;
 
 err2:
+	lock_release(ds_list_write_lock);
 	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 	ds_dbf.free_result(ds_db_handle, res);
 	*ds_next_idx = *ds_crt_idx;
@@ -1735,6 +1750,11 @@ int ds_destroy_list(void)
 
 	if(ds_crt_idx)
 		shm_free(ds_crt_idx);
+
+	if(ds_list_write_lock) {
+		lock_destroy(ds_list_write_lock);
+		lock_dealloc(ds_list_write_lock);
+	}
 
 	return 0;
 }
@@ -3369,6 +3389,8 @@ int ds_add_dst(int group, str *address, int flags, int priority, str *attrs)
 {
 	int setn;
 
+	lock_get(ds_list_write_lock);
+
 	setn = _ds_list_nr;
 
 	*ds_next_idx = (*ds_crt_idx + 1) % 2;
@@ -3396,10 +3418,13 @@ int ds_add_dst(int group, str *address, int flags, int priority, str *attrs)
 	_ds_list_nr = setn;
 	*ds_crt_idx = *ds_next_idx;
 
+	lock_release(ds_list_write_lock);
+
 	ds_log_sets();
 	return 0;
 
 error:
+	lock_release(ds_list_write_lock);
 	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 	*ds_next_idx = *ds_crt_idx;
 	return -1;
@@ -3453,6 +3478,8 @@ int ds_remove_dst(int group, str *address)
 	filter_arg.dest = dp;
 	filter_arg.setn = &setn;
 
+	lock_get(ds_list_write_lock);
+
 	*ds_next_idx = (*ds_crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 
@@ -3467,10 +3494,13 @@ int ds_remove_dst(int group, str *address)
 	_ds_list_nr = setn;
 	*ds_crt_idx = *ds_next_idx;
 
+	lock_release(ds_list_write_lock);
+
 	ds_log_sets();
 	return 0;
 
 error:
+	lock_release(ds_list_write_lock);
 	ds_avl_destroy(&ds_lists[*ds_next_idx]);
 	*ds_next_idx = *ds_crt_idx;
 	return -1;
