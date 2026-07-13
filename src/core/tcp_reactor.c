@@ -28,6 +28,7 @@
 
 #include "dprint.h"
 #include "mem/shm_mem.h"
+#include "tcp_conn.h" /* struct tcp_connection, tcpconn_ref/put, F_TCP_REQ_* */
 #include "tcp_reactor.h"
 #include "tcp_server.h" /* ksr_tcp_reactor_get_dispatch_wfd() */
 
@@ -73,6 +74,45 @@ int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 		LM_ERR("failed to dispatch SIP task to workers (%s)\n",
 				(sent < 0) ? strerror(errno) : "short write");
 		shm_free(task);
+		return -1;
+	}
+	return 0;
+}
+
+int tcp_reactor_dispatch_tls_event(struct tcp_connection *c)
+{
+	tcp_reactor_task_t *task;
+	uintptr_t ptr;
+	ssize_t sent;
+
+	/* Keep the connection alive across the hop to the worker; the worker only
+	 * reads c's shm-cached TLS metadata and hands the refcnt back to
+	 * PROC_TCP_MAIN (CONN_TLS_EVENT_DONE), which drops it. We run on a
+	 * PROC_TCP_MAIN thread with the connection still owned there (the read job
+	 * that reached us holds it), so our extra ref is never the last one - the
+	 * error-path tcpconn_put() below therefore cannot reach zero, and no
+	 * cross-process destroy is needed here. */
+	tcpconn_ref(c);
+
+	task = shm_malloc(sizeof(tcp_reactor_task_t) + 1);
+	if(task == NULL) {
+		SHM_MEM_ERROR;
+		tcpconn_put(c);
+		return -1;
+	}
+	task->rcv = c->rcv;
+	task->con = c;
+	task->msg_len = 0;
+	task->flags = F_TCP_REQ_TLS_EVENT;
+	task->msg_buf[0] = '\0';
+
+	ptr = (uintptr_t)task;
+	sent = send(ksr_tcp_reactor_get_dispatch_wfd(), &ptr, sizeof(ptr), 0);
+	if(sent != (ssize_t)sizeof(ptr)) {
+		LM_ERR("failed to dispatch tls event to workers (%s)\n",
+				(sent < 0) ? strerror(errno) : "short write");
+		shm_free(task);
+		tcpconn_put(c);
 		return -1;
 	}
 	return 0;

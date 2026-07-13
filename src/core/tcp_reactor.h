@@ -41,7 +41,12 @@ struct tcp_connection;
  */
 typedef struct tcp_reactor_task
 {
-	struct receive_info rcv; /* copied from con->rcv at reassembly time */
+	struct receive_info rcv;	/* copied from con->rcv at reassembly time */
+	struct tcp_connection *con; /* F_TCP_REQ_TLS_EVENT only: the connection
+								 * whose tls:connection-out route the worker runs;
+								 * NULL for message tasks. A dispatch refcnt is
+								 * held on it until the worker hands it back via
+								 * CONN_TLS_EVENT_DONE. */
 	unsigned int msg_len;
 	unsigned int flags; /* framing discriminator (F_TCP_REQ_HEP3, ...); the
 						 * message buffer is self-describing, so this only
@@ -95,6 +100,20 @@ typedef struct tcp_reactor_connect_req
  * pick the message entry point. */
 int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 		struct receive_info *rcv);
+
+/* Dispatch a tls:connection-out event to a TCP worker (mode 2).
+ * Takes a refcnt on c, allocates a F_TCP_REQ_TLS_EVENT
+ * task in shm carrying c, and writes the pointer to the dispatch socket.
+ * The worker runs the route and hands the refcnt back via CONN_TLS_EVENT_DONE.
+ *
+ * Returns 0 on success, -1 on error  */
+int tcp_reactor_dispatch_tls_event(struct tcp_connection *c);
+
+/* Reactor pool thread index of the calling thread: 0..N-1 on a PROC_TCP_MAIN
+ * pool thread, -1 otherwise (io_wait/main thread, or any other process/mode).
+ * Exposed so the pkg-allocator guard (tcp_reactor_mem.c) can flag pkg use on a
+ * pool thread without the reactor thread-local leaking outside core. */
+int tcp_reactor_pool_thread_idx(void);
 
 /* =========================================================================
  * tcp_main_threads == 2

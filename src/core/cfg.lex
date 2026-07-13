@@ -395,6 +395,7 @@ TCP_MSG_READ_TIMEOUT tcp_msg_read_timeout
 TCP_MSG_DATA_TIMEOUT tcp_msg_data_timeout
 TCP_ACCEPT_IPLIMIT tcp_accept_iplimit
 TCP_MAIN_THREADS tcp_main_threads
+TCP_REACTOR_THREADS tcp_reactor_threads
 TCP_CHECK_TIMER tcp_check_timer
 CHILDREN children
 SOCKET socket
@@ -904,6 +905,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{TCP_MSG_DATA_TIMEOUT}	{ count(); yylval.strval=yytext; return TCP_MSG_DATA_TIMEOUT; }
 <INITIAL>{TCP_ACCEPT_IPLIMIT}	{ count(); yylval.strval=yytext; return TCP_ACCEPT_IPLIMIT; }
 <INITIAL>{TCP_MAIN_THREADS}	{ count(); yylval.strval=yytext; return TCP_MAIN_THREADS; }
+<INITIAL>{TCP_REACTOR_THREADS}	{ count(); yylval.strval=yytext; return TCP_REACTOR_THREADS; }
 <INITIAL>{TCP_CHECK_TIMER}	{ count(); yylval.strval=yytext; return TCP_CHECK_TIMER; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }

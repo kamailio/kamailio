@@ -180,6 +180,7 @@ int tcp_max_connections = DEFAULT_TCP_MAX_CONNECTIONS;
 int tls_max_connections = DEFAULT_TLS_MAX_CONNECTIONS;
 int tcp_accept_unique = 0;
 int ksr_tcp_main_threads = 0;
+int ksr_tcp_reactor_threads = 8;
 int ksr_tcp_listen_backlog = TCP_LISTEN_BACKLOG;
 int tcp_connection_match = TCPCONN_MATCH_DEFAULT;
 
@@ -4260,6 +4261,14 @@ static int tcp_emit_closed_event(struct tcp_connection *con)
 	sr_event_param_t evp = {0};
 	enum tcp_closed_reason reason;
 
+	/* Fire at most once per connection. In mode 2 a single reset can reach more
+	 * than one teardown path.
+	 * All emits for a conn run on that one thread, so a
+	 * plain flag test-and-set is sufficient. */
+	if(con->flags & F_CONN_CLOSE_EV_SENT)
+		return 0;
+	con->flags |= F_CONN_CLOSE_EV_SENT;
+
 	if(con->event) {
 		reason = con->event;
 	} else {
@@ -4807,6 +4816,8 @@ static void tcp_reactor_read_close(struct tcp_connection *c)
 		tcpconn_put(c);
 	c->flags &= ~(F_CONN_POOL_BUSY | F_CONN_REMOVED_READ | F_CONN_WANTS_RD
 				  | F_CONN_WANTS_WR);
+
+	tcp_emit_closed_event(c);
 	tcpconn_put_destroy(c);
 }
 
@@ -5110,6 +5121,15 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			} else {
 				LM_WARN("connection %p already watched for write\n", tcpconn);
 			}
+			break;
+		case CONN_TLS_EVENT_DONE:
+			/* mode 2: a worker finished a dispatched tls:connection-out event
+			 * (tcp_reactor_dispatch_tls_event). response[0] is the connection;
+			 * drop the dispatch refcnt taken there. Doing it here, in
+			 * PROC_TCP_MAIN, keeps connection destruction on the owner. */
+			tcpconn = (struct tcp_connection *)response[0];
+			if(unlikely(tcpconn_put(tcpconn)))
+				tcpconn_destroy(tcpconn);
 			break;
 		case CONN_WRITE_REQ: {
 			/* mode 2: worker queued a write; response[0] is the write request,
@@ -5856,6 +5876,10 @@ inline static int handle_tcpconn_ev(
 			tcpconn->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
 		}
 		tcpconn->flags &= ~(F_CONN_WANTS_RD | F_CONN_WANTS_WR);
+		/* mode 2 inline read teardown (shield/enqueue not taken): same as
+		 * tcp_reactor_read_close - the reader detected an EOF/error/reset, so
+		 * emit the tcpops close event here too. Fire-once guarded. */
+		tcp_emit_closed_event(tcpconn);
 		tcpconn_put_destroy(tcpconn);
 		return -1;
 	}
@@ -6055,7 +6079,6 @@ error:
  *                      final writes.
  **/
 
-static int ksr_tcp_reactor_threads = 8;
 /* tcp_reactor_thread_idx is defined near the top (needed earlier by
  * tcp_reactor_send_put's pool-thread detection). */
 
@@ -6245,7 +6268,8 @@ static void *tcp_reactor_thread_routine(void *arg)
 static int tcp_reactor_pool_init(void)
 {
 	int i;
-	char *env;
+
+	LM_WARN("TCP reactor: using %d threads\n", ksr_tcp_reactor_threads);
 
 	/* pool_init() runs on PROC_TCP_MAIN's io_wait/main thread; name it here (pool
 	 * threads name themselves in tcp_reactor_thread_routine). OS thread comm only,
@@ -6289,12 +6313,12 @@ static int tcp_reactor_pool_init(void)
 	/* serialize this process's pkg heap before any pool thread runs: from here
 	 * on the io_wait thread and the pool threads share pkg concurrently */
 	tcp_reactor_pkg_lock_install();
-	for(i = 0; i < tcp_reactor_threads; i++) {
+	for(i = 0; i < ksr_tcp_reactor_threads; i++) {
 		if(pthread_create(&tcp_rpool.threads[i], NULL,
 				   tcp_reactor_thread_routine, (void *)(long)i)
 				!= 0) {
 			LM_ERR("failed to create reactor pool thread %d/%d\n", i,
-					tcp_reactor_threads);
+					ksr_tcp_reactor_threads);
 			return -1; /* threads_no counts started threads for destroy/join */
 		}
 		tcp_rpool.threads_no++;
