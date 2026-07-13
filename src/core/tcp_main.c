@@ -2410,6 +2410,64 @@ static int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 	return (int)len;
 }
 
+/* mode 2: no usable connection exists - ask PROC_TCP_MAIN to open a new
+ * outbound connection and send on it. The worker opens no socket and creates no
+ * tcp_connection. Returns len on success (optimistic), -1 on error. */
+static int tcp_reactor_connect_put(struct dest_info *dst,
+		union sockaddr_union *from, const char *buf, unsigned len)
+{
+	tcp_reactor_connect_req_t *creq;
+	long response[2];
+
+	if(unlikely(is_tcp_main())) {
+		/* A new outbound connection requested by code running inside
+		 * PROC_TCP_MAIN itself. The unix_tcp_sock self-send below is invalid
+		 * here. The known in-tcp_main senders (core read-path CRLF pong /
+		 * HTTP 100-continue) always target an already-established connection
+		 * (handled by tcp_reactor_send_put), so this path is not expected to be
+		 * reached; fail loudly rather than emit a confusing "send on 0" error. */
+		LM_ERR("outbound connect requested from within PROC_TCP_MAIN to %s -"
+			   " not supported in mode 2, dropping\n",
+				su2a(&dst->to, sizeof(dst->to)));
+		return -1;
+	}
+
+	creq = shm_malloc(sizeof(tcp_reactor_connect_req_t));
+	if(unlikely(creq == NULL)) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	creq->buf = shm_malloc(len);
+	if(unlikely(creq->buf == NULL)) {
+		SHM_MEM_ERROR;
+		shm_free(creq);
+		return -1;
+	}
+	memcpy(creq->buf, buf, len);
+	creq->len = len;
+	creq->dst = dst->to;
+	if(from != NULL) {
+		creq->from = *from;
+		creq->have_from = 1;
+	} else {
+		creq->have_from = 0;
+	}
+	creq->proto = dst->proto;
+	creq->id = dst->id;
+	creq->try_local_port = (dst->send_sock) ? dst->send_sock->port_no : 0;
+	creq->send_flags = dst->send_flags;
+
+	response[0] = (long)(uintptr_t)creq;
+	response[1] = CONN_CONNECT_REQ;
+	if(unlikely(send_all(unix_tcp_sock, response, sizeof(response)) <= 0)) {
+		LM_ERR("failed to send connect request to tcp main: %s (%d)\n",
+				strerror(errno), errno);
+		shm_free(creq->buf);
+		shm_free(creq);
+		return -1;
+	}
+	return (int)len;
+}
 #endif /* TCP_ASYNC */
 
 /* finds a tcpconn & sends on it
@@ -2508,6 +2566,13 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 					break;
 			}
 		}
+#ifdef TCP_ASYNC
+		if(unlikely(ksr_tcp_main_threads == 2)) {
+			/* mode 2: workers do not open sockets - ask PROC_TCP_MAIN to create
+			 * the outbound connection and send on it. */
+			return tcp_reactor_connect_put(dst, from, buf, len);
+		}
+#endif /* TCP_ASYNC */
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
 		if(likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait)
 				   && cfg_get(tcp, tcp_cfg, async))) {
@@ -2825,8 +2890,8 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 #ifdef TCP_ASYNC
 	if(unlikely(ksr_tcp_main_threads == 2)) {
 		/* mode 2: existing connection - dispatch the write to PROC_TCP_MAIN
-		 * instead of getting the fd and writing here. Opening a brand-new
-		 * outbound connection (c==0) is handled in a later commit. */
+		 * instead of getting the fd and writing here. (Opening a new outbound
+		 * connection, c==0, was handled in the branch above.) */
 		return tcp_reactor_send_put(c, buf, len, dst->send_flags);
 	}
 #endif /* TCP_ASYNC */
@@ -5027,6 +5092,103 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			tcp_reactor_watch_write(tcpconn);
 			break;
 		}
+		case CONN_CONNECT_REQ: {
+			/* mode 2: worker has no usable connection - open a new outbound
+			 * one here in PROC_TCP_MAIN. response[0] is the connect request. */
+			tcp_reactor_connect_req_t *creq =
+					(tcp_reactor_connect_req_t *)response[0];
+			struct tcp_connection *cc;
+			union sockaddr_union *cfrom;
+			struct ip_addr cip;
+			int cport;
+
+			cfrom = creq->have_from ? &creq->from : NULL;
+			su2ip_addr(&cip, &creq->dst);
+			cport = su_getport(&creq->dst);
+			con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
+			/* dedup: another worker may have created a matching connection
+			 * since this worker's lookup missed => reuse it if so */
+			if(tcp_connection_match == TCPCONN_MATCH_STRICT
+					|| (creq->send_flags.f & SND_F_FORCE_PROTO)) {
+				cc = tcpconn_lookup(creq->id, &cip, cport, cfrom,
+						creq->try_local_port, con_lifetime, creq->proto);
+			} else {
+				cc = tcpconn_get(creq->id, &cip, cport, cfrom, con_lifetime);
+			}
+			if(cc != NULL) {
+				/* reuse: queue the payload onto the existing connection */
+				if(unlikely(tcpconn_put(cc))) {
+					tcpconn_destroy(cc);
+					shm_free(creq->buf);
+					shm_free(creq);
+					break;
+				}
+				if(likely(!(cc->state == S_CONN_BAD)
+						   && (cc->flags & F_CONN_HASHED))) {
+					if(likely(tcp_reactor_wbuf_enqueue(cc, creq->buf, creq->len,
+									  creq->send_flags)
+							   == 0))
+						tcp_reactor_watch_write(cc);
+				}
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			/* open the connection (socket + non-blocking connect) here */
+			cc = tcpconn_connect(
+					&creq->dst, cfrom, creq->proto, &creq->send_flags);
+			if(unlikely(cc == NULL)) {
+				LM_ERR("failed to open outbound connection to %s\n",
+						su2a(&creq->dst, sizeof(creq->dst)));
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			atomic_set(&cc->refcnt, 1); /* owned solely by tcp_main (hash) */
+			if(unlikely(tcpconn_add(cc) == 0)) {
+				LM_ERR("failed to hash outbound connection %p\n", cc);
+				tcp_safe_close(cc->s);
+				cc->flags |= F_CONN_FD_CLOSED;
+				_tcpconn_free(cc);
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			(*tcp_connections_no)++;
+			if(unlikely(cc->type == PROTO_TLS))
+				(*tls_connections_no)++;
+			/* queue the payload; for TLS, tls_encode() buffers it until the
+			 * handshake completes (the handshake is driven on the read/write
+			 * events registered just below). */
+			if(unlikely(tcp_reactor_wbuf_enqueue(
+								cc, creq->buf, creq->len, creq->send_flags)
+						< 0)) {
+				tcpconn_try_unhash(cc);
+				tcpconn_put_destroy(cc);
+				shm_free(creq->buf);
+				shm_free(creq);
+				break;
+			}
+			shm_free(creq->buf);
+			shm_free(creq);
+			/* register in the reactor: watch read + write. The POLLOUT event
+			 * completes the connect and drains the wbuf_q. */
+			t = get_ticks_raw();
+			cc->timeout = t + con_lifetime;
+			local_timer_add(&tcp_main_ltimer, &cc->timer, con_lifetime, t);
+			cc->flags |= F_CONN_MAIN_TIMER | F_CONN_READ_W | F_CONN_WANTS_RD
+						 | F_CONN_WRITE_W | F_CONN_WANTS_WR;
+			cc->flags &= ~F_CONN_FD_CLOSED;
+			if(unlikely(io_watch_add(
+								&io_h, cc->s, POLLIN | POLLOUT, F_TCPCONN, cc)
+						< 0)) {
+				LM_CRIT("failed to add outbound connection to the fd list\n");
+				cc->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
+				tcpconn_try_unhash(cc);
+				tcpconn_put_destroy(cc);
+			}
+			break;
+		}
 #ifdef TCP_CONNECT_WAIT
 		case CONN_NEW_COMPLETE:
 		case CONN_NEW_PENDING_WRITE:
@@ -6079,6 +6241,25 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 		else
 			return (ticks_t)(c->timeout - t);
 	}
+	/* mode 2: reap a connection whose partial SIP message stalled past the
+	 * read deadline. The read path (tcp_reactor_arm_read_timeout) bounds
+	 * c->timeout to that deadline, so reaching here with a message still
+	 * mid-read (tvrstart set) and the read window elapsed means a stalled
+	 * partial read; report it as such instead of idle/send timeout. */
+	if(unlikely(ksr_tcp_main_threads == 2 && ksr_tcp_msg_read_timeout > 0
+				&& c->state == S_CONN_OK && c->req.tvrstart.tv_sec > 0)) {
+		struct timeval tvnow;
+		long long tvdiff;
+		gettimeofday(&tvnow, NULL);
+		tvdiff = 1000000LL * (tvnow.tv_sec - c->req.tvrstart.tv_sec)
+				 + (tvnow.tv_usec - c->req.tvrstart.tv_usec);
+		if(tvdiff >= 1000000LL * ksr_tcp_msg_read_timeout) {
+			LM_DBG("reactor: message read timeout for %p after %lld us\n", c,
+					tvdiff);
+			TCP_STATS_CON_TIMEOUT();
+			goto reap;
+		}
+	}
 	/* if time out due to write, add it to the blocklist */
 	if(tcp_async && _wbufq_non_empty(c) && TICKS_GE(t, c->wbuf_q.wr_timeout)) {
 		if(unlikely(c->state == S_CONN_CONNECT)) {
@@ -6110,6 +6291,9 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	/* idle timeout */
 	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
 	TCP_STATS_CON_TIMEOUT();
+#endif /* TCP_ASYNC */
+#ifdef TCP_ASYNC
+reap:
 #endif /* TCP_ASYNC */
 	LM_DBG("timeout for %p\n", c);
 	if(likely(c->flags & F_CONN_HASHED)) {
