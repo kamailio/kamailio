@@ -46,10 +46,11 @@ _Static_assert(sizeof(uintptr_t) <= PIPE_BUF,
  * receive_tcp_msg() would be called inline in modes 0/1. WS delivers here too
  * (ws_deliver_sip), likewise from a pool thread.
  *
- * The receiving worker calls receive_msg() then shm_free()s the task.
+ * The receiving worker dispatches on task->flags (plain SIP -> receive_msg(),
+ * F_TCP_REQ_HEP3 -> hep3_process_msg()) then shm_free()s the task.
  */
-int tcp_reactor_dispatch_msg(
-		char *buf, unsigned int len, struct receive_info *rcv)
+int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
+		struct receive_info *rcv)
 {
 	tcp_reactor_task_t *task;
 	uintptr_t ptr;
@@ -62,6 +63,7 @@ int tcp_reactor_dispatch_msg(
 	}
 	task->rcv = *rcv;
 	task->msg_len = len;
+	task->flags = flags;
 	memcpy(task->msg_buf, buf, len);
 	task->msg_buf[len] = '\0';
 

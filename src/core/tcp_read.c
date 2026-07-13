@@ -1620,8 +1620,14 @@ int receive_tcp_msg(char *tcpbuf, unsigned int len,
 {
 	int ret = 0;
 #ifdef TCP_CLONE_RCVBUF
-	static char *buf = NULL;
-	static unsigned int bsize = 0;
+	/* mode 2: PROC_TCP_MAIN runs a pool of reader threads that all execute
+	 * receive_tcp_msg(). A process-global static clone buffer would be shared
+	 * across those threads - two of them memcpy their frame in and (for WS)
+	 * unmask in place, clobbering each other (garbage dispatched to workers).
+	 * _Thread_local gives each pool thread its own clone buffer. Harmless for
+	 * modes 0/1, where each reader is a single-threaded process. */
+	static _Thread_local char *buf = NULL;
+	static _Thread_local unsigned int bsize = 0;
 	int blen;
 
 	/* cloning is disabled via parameter */
@@ -1842,16 +1848,6 @@ again:
 							   because we always alloc BUF_SIZE+1 */
 		*req->parsed = 0;
 
-		if(unlikely(ksr_tcp_main_threads == 2
-					&& (con->type == PROTO_WS || con->type == PROTO_WSS
-							|| (req->flags & F_TCP_REQ_HEP3)))) {
-			LM_ERR("protocol not supported with tcp_main_threads=2"
-				   " (WS/WSS/HEP3): dropping connection\n");
-			*req->parsed = c;
-			resp = CONN_ERROR;
-			goto end_req;
-		}
-
 		if(req->state == H_PING_CRLF) {
 			init_dst_from_rcv(&dst, &con->rcv);
 
@@ -1873,11 +1869,11 @@ again:
 			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
 			if(unlikely(req->state == H_MSRP_FINISH)) {
 				/* msrp frame */
-				if(ksr_tcp_main_threads == 2) {
-					LM_ERR("MSRP not supported with tcp_main_threads=2:"
-						   " dropping connection\n");
-					ret = -1;
-				} else
+				if(ksr_tcp_main_threads == 2)
+					ret = tcp_reactor_dispatch_msg(req->start,
+							req->parsed - req->start,
+							req->flags & F_TCP_REQ_MSRP_FRAME, &con->rcv);
+				else
 					ret = receive_tcp_msg(req->start, req->parsed - req->start,
 							&con->rcv, con);
 			} else
@@ -1888,7 +1884,7 @@ again:
 				req->body[req->content_len] = 0;
 				if(ksr_tcp_main_threads == 2)
 					ret = tcp_reactor_dispatch_msg(req->start,
-							req->body + req->content_len - req->start,
+							req->body + req->content_len - req->start, 0,
 							&con->rcv);
 				else
 					ret = receive_tcp_msg(req->start,
@@ -1904,8 +1900,9 @@ again:
 			} else
 #endif
 					if(ksr_tcp_main_threads == 2)
-				ret = tcp_reactor_dispatch_msg(
-						req->start, req->parsed - req->start, &con->rcv);
+				ret = tcp_reactor_dispatch_msg(req->start,
+						req->parsed - req->start, req->flags & F_TCP_REQ_HEP3,
+						&con->rcv);
 			else
 				ret = receive_tcp_msg(
 						req->start, req->parsed - req->start, &con->rcv, con);
@@ -2176,7 +2173,21 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 				LM_CRIT("null task pointer from tcp main\n");
 				break;
 			}
-			receive_msg(task->msg_buf, task->msg_len, &task->rcv);
+			/* The message buffer is self-describing; task->flags only picks
+			 * the entry point. HEP3/MSRP carry their own framing and go through
+			 * the same sr_event decoders as in modes 0/1. The worker has no
+			 * local tcp_connection, so con is NULL; the decoders that need the
+			 * connection id read it from rcv->proto_reserved1 (== con->id). */
+			if(unlikely(task->flags & F_TCP_REQ_HEP3))
+				hep3_process_msg(
+						task->msg_buf, task->msg_len, &task->rcv, NULL);
+#ifdef READ_MSRP
+			else if(unlikely(task->flags & F_TCP_REQ_MSRP_FRAME))
+				msrp_process_msg(
+						task->msg_buf, task->msg_len, &task->rcv, NULL);
+#endif
+			else
+				receive_msg(task->msg_buf, task->msg_len, &task->rcv);
 			shm_free(task);
 			break;
 		}
