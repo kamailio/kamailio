@@ -198,6 +198,10 @@ typedef enum conn_cmds
 	CONN_CONNECT_REQ /* mode 2: worker asks tcp_main to open a new outbound
 						* connection and send on it; response[0] is a
 						* tcp_reactor_connect_req_t*, not a tcp_connection* */
+	,
+	CONN_TLS_EVENT_DONE /* mode 2: worker finished a dispatched
+						 * tls:connection-out event; response[0] is the
+						 * tcp_connection*, tcp_main drops the dispatch refcnt */
 } conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
@@ -217,6 +221,10 @@ typedef enum tcp_req_flags
 #endif
 	F_TCP_REQ_HEP3 = (1 << 6),
 	F_TCP_REQ_WS_HANDSHAKE = (1 << 7),
+	/* mode 2: reactor dispatch task carries a tls:connection-out event to run
+	 * in a worker, not a message. task->con is the connection; msg_buf is
+	 * empty. See tcp_reactor_dispatch_tls_event(). */
+	F_TCP_REQ_TLS_EVENT = (1 << 8),
 } tcp_req_flags_t;
 
 #define TCP_REQ_HAS_CLEN(tr) ((tr)->flags & F_TCP_REQ_HAS_CLEN)

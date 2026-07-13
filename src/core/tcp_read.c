@@ -2141,6 +2141,24 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 				LM_CRIT("null task pointer from tcp main\n");
 				break;
 			}
+			if(unlikely(task->flags & F_TCP_REQ_TLS_EVENT)) {
+				/* mode 2: run the dispatched tls:connection-out route here in
+				 * the worker - a single-threaded config context. The route
+				 * reads TLS metadata cached in shm (task->con->extra_data), so
+				 * no OpenSSL runs in the worker. Then hand the connection back
+				 * to PROC_TCP_MAIN, which drops the dispatch refcnt. */
+				long tls_resp[2];
+				if(likely(tls_hook.run_event_route != NULL))
+					tls_hook.run_event_route(task->con);
+				tls_resp[0] = (long)(uintptr_t)task->con;
+				tls_resp[1] = CONN_TLS_EVENT_DONE;
+				if(unlikely(tsend_stream(unix_tcp_sock, (char *)tls_resp,
+									sizeof(tls_resp), -1)
+							<= 0))
+					LM_ERR("failed to return tls-event conn to tcp main\n");
+				shm_free(task);
+				break;
+			}
 			/* The message buffer is self-describing; task->flags only picks
 			 * the entry point. HEP3/MSRP carry their own framing and go through
 			 * the same sr_event decoders as in modes 0/1. The worker has no
