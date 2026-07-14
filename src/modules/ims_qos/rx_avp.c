@@ -1332,7 +1332,7 @@ unsigned int rx_get_abort_cause(AAAMessage *msg)
 	//getting abort cause
 	avp = cdpb.AAAFindMatchingAVP(msg, msg->avpList.head, AVP_IMS_Abort_Cause,
 			IMS_vendor_id_3GPP, AAA_FORWARD_SEARCH);
-	if(avp) {
+	if(avp && avp->data.s && avp->data.len >= 4) {
 		code = get_4bytes(avp->data.s);
 	}
 	return code;
@@ -1357,17 +1357,21 @@ inline int rx_get_result_code(AAAMessage *msg, unsigned int *data)
 	for(avp = msg->avpList.tail; avp; avp = avp->prev) {
 		//LOG(L_INFO,"pcc_get_result_code: looping with avp code %i\n",avp->code);
 		if(avp->code == AVP_Result_Code) {
-			*data = get_4bytes(avp->data.s);
-			ret = 1;
+			if(avp->data.s && avp->data.len >= 4) {
+				*data = get_4bytes(avp->data.s);
+				ret = 1;
+			}
 
 		} else if(avp->code == AVP_Experimental_Result) {
 			list = cdpb.AAAUngroupAVPS(avp->data);
 			for(avp = list.head; avp; avp = avp->next) {
 				//LOG(L_CRIT,"in the loop with avp code %i\n",avp->code);
 				if(avp->code == AVP_IMS_Experimental_Result_Code) {
-					*data = get_4bytes(avp->data.s);
-					cdpb.AAAFreeAVPList(&list);
-					ret = 1;
+					if(avp->data.s && avp->data.len >= 4) {
+						*data = get_4bytes(avp->data.s);
+						cdpb.AAAFreeAVPList(&list);
+						ret = 1;
+					}
 					break;
 				}
 			}
