@@ -41,6 +41,7 @@ static int rpc_sarray_max_size; /* number of entries alloc'ed */
 
 int ksr_rpc_exec_delta = 0;
 int ksr_rpc_exec_locks = 0;
+int ksr_rpc_exec_locks_mode = 0;
 
 static rec_lock_set_t *ksr_rpc_exec_locks_set = NULL;
 
@@ -83,6 +84,8 @@ void ksr_rpc_exec_locks_set_destroy(void)
 int ksr_rpc_exec_locks_set_get(str *name)
 {
 	unsigned int lockidx = 0;
+	str lkey = STR_NULL;
+	int pidx = 0;
 
 	if(likely(ksr_rpc_exec_locks_set == NULL)) {
 		return -1;
@@ -95,7 +98,14 @@ int ksr_rpc_exec_locks_set_get(str *name)
 	if(ksr_rpc_exec_locks == 1) {
 		lockidx = 0;
 	} else {
-		lockidx = get_hash1_raw(name->s, name->len);
+		lkey = *name;
+		if(ksr_rpc_exec_locks_mode == 1) {
+			pidx = q_memidx(name->s, '.', name->len);
+			if(pidx > 0) {
+				lkey.len = pidx;
+			}
+		}
+		lockidx = get_hash1_raw(lkey.s, lkey.len);
 		lockidx = lockidx % ksr_rpc_exec_locks;
 	}
 
@@ -110,6 +120,8 @@ int ksr_rpc_exec_locks_set_get(str *name)
 void ksr_rpc_exec_locks_set_release(str *name)
 {
 	unsigned int lockidx = 0;
+	str lkey = STR_NULL;
+	int pidx = 0;
 
 	if(likely(ksr_rpc_exec_locks_set == NULL)) {
 		return;
@@ -122,7 +134,14 @@ void ksr_rpc_exec_locks_set_release(str *name)
 	if(ksr_rpc_exec_locks == 1) {
 		lockidx = 0;
 	} else {
-		lockidx = get_hash1_raw(name->s, name->len);
+		lkey = *name;
+		if(ksr_rpc_exec_locks_mode == 1) {
+			pidx = q_memidx(name->s, '.', name->len);
+			if(pidx > 0) {
+				lkey.len = pidx;
+			}
+		}
+		lockidx = get_hash1_raw(lkey.s, lkey.len);
 		lockidx = lockidx % ksr_rpc_exec_locks;
 	}
 

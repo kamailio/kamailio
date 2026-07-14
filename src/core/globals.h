@@ -250,6 +250,7 @@ extern int ksr_local_rport;
 
 extern int ksr_rpc_exec_delta;
 extern int ksr_rpc_exec_locks;
+extern int ksr_rpc_exec_locks_mode;
 
 extern int ksr_udp_receiver_mode;
 extern int ksr_msg_clone_extra_size;
