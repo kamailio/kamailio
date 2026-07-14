@@ -365,10 +365,14 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 	while(avp != NULL) {
 		switch(avp->code) {
 			case AVP_CC_Request_Type:
+				if(!avp->data.s || avp->data.len < 4)
+					break;
 				x = get_4bytes(avp->data.s);
 				ro_cca_data->cc_request_type = x;
 				break;
 			case AVP_CC_Request_Number:
+				if(!avp->data.s || avp->data.len < 4)
+					break;
 				x = get_4bytes(avp->data.s);
 				ro_cca_data->cc_request_number = x;
 				break;
@@ -388,6 +392,8 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 							while(z) {
 								switch(z->code) {
 									case AVP_CC_Time:
+										if(!z->data.s || z->data.len < 4)
+											break;
 										mscc->granted_service_unit->cc_time =
 												get_4bytes(z->data.s);
 										break;
@@ -401,13 +407,19 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 							cdp_avp->cdp->AAAFreeAVPList(&y);
 							break;
 						case AVP_Validity_Time:
+							if(!mscc_avp->data.s || mscc_avp->data.len < 4)
+								break;
 							mscc->validity_time = get_4bytes(mscc_avp->data.s);
 							break;
 						case AVP_Time_Quota_Threshold:
+							if(!mscc_avp->data.s || mscc_avp->data.len < 4)
+								break;
 							mscc->time_quota_threshold =
 									get_4bytes(mscc_avp->data.s);
 							break;
 						case AVP_Result_Code:
+							if(!mscc_avp->data.s || mscc_avp->data.len < 4)
+								break;
 							mscc->resultcode = get_4bytes(mscc_avp->data.s);
 							break;
 						case AVP_Final_Unit_Indication:
@@ -416,6 +428,8 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 							while(z) {
 								switch(z->code) {
 									case AVP_Final_Unit_Action:
+										if(!z->data.s || z->data.len < 4)
+											break;
 										mscc->final_unit_action->action =
 												get_4bytes(z->data.s);
 										break;
@@ -439,6 +453,9 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 												case AVP_Redirect_Address_Type:
 													LM_DBG("Received redirect "
 														   "address type\n");
+													if(!zz->data.s
+															|| zz->data.len < 4)
+														break;
 													mscc->final_unit_action
 															->redirect_server
 															->address_type =
@@ -480,6 +497,8 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca)
 				cdp_avp->cdp->AAAFreeAVPList(mscc_avp_list_ptr);
 				break;
 			case AVP_Result_Code:
+				if(!avp->data.s || avp->data.len < 4)
+					break;
 				x = get_4bytes(avp->data.s);
 				ro_cca_data->resultcode = x;
 				break;
