@@ -66,8 +66,11 @@ int getRecordNummber(AAAMessage *msg)
 	if(avp == 0) {
 		LM_DBG("Failed finding avp\n");
 		return 0;
-	} else
+	} else {
+		if(!avp->data.s || avp->data.len < 4)
+			return 0;
 		return get_4bytes(avp->data.s);
+	}
 }
 
 str getSubscriptionId1(AAAMessage *msg, int *type)
@@ -83,7 +86,10 @@ str getSubscriptionId1(AAAMessage *msg, int *type)
 			list, list.head, AVP_Subscription_Id_Data, 0, 0);
 
 	if(avp_type) {
-		*type = get_4bytes(avp_type->data.s);
+		if(!avp_type->data.s || avp_type->data.len < 4)
+			*type = 0;
+		else
+			*type = get_4bytes(avp_type->data.s);
 	} else {
 		LM_DBG("Failed finding type\n");
 		*type = 0;
@@ -113,7 +119,7 @@ int isOrig(AAAMessage *msg)
 			list2 = cdp_avp->cdp->AAAUngroupAVPS(imsinfo->data);
 			role = cdpb.AAAFindMatchingAVPList(list2, list2.head,
 					AVP_IMS_Role_Of_Node, IMS_vendor_id_3GPP, 0);
-			if(role) {
+			if(role && role->data.s && role->data.len >= 4) {
 				result = get_4bytes(role->data.s);
 			}
 			cdpb.AAAFreeAVPList(&list2);
@@ -208,13 +214,13 @@ int getUnits(AAAMessage *msg, int *used, int *service, int *group)
 			list2 = cdp_avp->cdp->AAAUngroupAVPS(req_units->data);
 			value = cdpb.AAAFindMatchingAVPList(
 					list2, list2.head, AVP_CC_Time, 0, 0);
-			if(value && value->data.len >= 4)
+			if(value && value->data.s && value->data.len >= 4)
 				units = get_4bytes(value->data.s);
 			cdpb.AAAFreeAVPList(&list2);
 		}
 		service_avp = cdpb.AAAFindMatchingAVPList(
 				list, list.head, AVP_Service_Identifier, 0, 0);
-		if(service_avp) {
+		if(service_avp && service_avp->data.s && service_avp->data.len >= 4) {
 			*service = get_4bytes(service_avp->data.s);
 		}
 		used_units = cdpb.AAAFindMatchingAVPList(
@@ -223,13 +229,14 @@ int getUnits(AAAMessage *msg, int *used, int *service, int *group)
 			list2 = cdp_avp->cdp->AAAUngroupAVPS(used_units->data);
 			value = cdpb.AAAFindMatchingAVPList(
 					list2, list2.head, AVP_CC_Time, 0, 0);
-			if(value)
+			if(value && value->data.s && value->data.len >= 4)
 				*used = get_4bytes(value->data.s);
 			cdpb.AAAFreeAVPList(&list2);
 		}
 		rating_group = cdpb.AAAFindMatchingAVPList(
 				list, list.head, AVP_Rating_Group, 0, 0);
-		if(rating_group) {
+		if(rating_group && rating_group->data.s
+				&& rating_group->data.len >= 4) {
 			*group = get_4bytes(rating_group->data.s);
 		}
 		cdpb.AAAFreeAVPList(&list);
