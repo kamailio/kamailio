@@ -55,7 +55,7 @@ int getMethod(AAAMessage *msg, str **method)
 {
 	str s;
 	s = get_avp(msg, AVP_IMS_CCR_Type, 0, __FUNCTION__);
-	if(!s.s)
+	if(!s.s || s.len < 4)
 		return -1;
 	switch(get_4bytes(s.s)) {
 		case RO_CC_START:
