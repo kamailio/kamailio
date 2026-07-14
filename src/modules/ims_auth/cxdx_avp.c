@@ -305,7 +305,7 @@ int cxdx_get_result_code(AAAMessage *msg, int *data)
 {
 	str s;
 	s = cxdx_get_avp(msg, AVP_Result_Code, 0, __FUNCTION__);
-	if(!s.s)
+	if(!s.s || s.len < 4)
 		return 0;
 	*data = get_4bytes(s.s);
 	return 1;
@@ -329,7 +329,7 @@ int cxdx_get_experimental_result_code(AAAMessage *msg, int *data)
 
 	avp = cdpb.AAAFindMatchingAVPList(
 			list, 0, AVP_IMS_Experimental_Result_Code, 0, 0);
-	if(!avp || !avp->data.s) {
+	if(!avp || !avp->data.s || avp->data.len < 4) {
 		cdpb.AAAFreeAVPList(&list);
 		return 0;
 	}
@@ -407,12 +407,21 @@ int cxdx_get_capabilities(AAAMessage *msg, int **m, int *m_cnt, int **o,
 	*o_cnt = 0;
 	*p_cnt = 0;
 	while(avp) {
-		if(avp->code == AVP_IMS_Mandatory_Capability)
-			(*m)[(*m_cnt)++] = get_4bytes(avp->data.s);
-		if(avp->code == AVP_IMS_Optional_Capability)
-			(*o)[(*o_cnt)++] = get_4bytes(avp->data.s);
-		if(avp->code == AVP_IMS_Server_Name)
-			(*p)[(*p_cnt)++] = avp->data;
+		switch(avp->code) {
+			case AVP_IMS_Mandatory_Capability:
+				if(!avp->data.s || avp->data.len < 4)
+					break;
+				(*m)[(*m_cnt)++] = get_4bytes(avp->data.s);
+				break;
+			case AVP_IMS_Optional_Capability:
+				if(!avp->data.s || avp->data.len < 4)
+					break;
+				(*o)[(*o_cnt)++] = get_4bytes(avp->data.s);
+				break;
+			case AVP_IMS_Server_Name:
+				(*p)[(*p_cnt)++] = avp->data;
+				break;
+		}
 		avp = avp->next;
 	}
 	cdpb.AAAFreeAVPList(&list);
@@ -539,7 +548,7 @@ int cxdx_get_sip_number_auth_items(AAAMessage *msg, int *data)
 	str s;
 	s = cxdx_get_avp(msg, AVP_IMS_SIP_Number_Auth_Items, IMS_vendor_id_3GPP,
 			__FUNCTION__);
-	if(!s.s)
+	if(!s.s || s.len < 4)
 		return 0;
 	*data = get_4bytes(s.s);
 	return 1;
