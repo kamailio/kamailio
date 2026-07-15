@@ -176,3 +176,32 @@ if(HAVE_PTHREAD_MUTEX_ROBUST)
 else()
   message(STATUS "Robust process-shared mutex: NOT supported (tcp_cond uses non-robust fallback)")
 endif()
+
+# Per-thread names: pthread_setname_np() lets the tcp reactor label its io_wait
+# and pool threads so profilers / top -H / gdb show distinct threads instead of
+# one opaque "kamailio" comm. The symbol exists on Linux and macOS but with
+# different arity - Linux/glibc/musl take (pthread_t, name); macOS takes (name)
+# and renames only the caller. Probe the actual signature rather than guess by OS.
+include(CheckCSourceCompiles)
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+set(CMAKE_REQUIRED_LIBRARIES pthread)
+check_c_source_compiles(
+  "#include <pthread.h>
+int main(void) { pthread_setname_np(pthread_self(), \"x\"); return 0; }"
+  HAVE_PTHREAD_SETNAME_NP_2ARG
+)
+check_c_source_compiles(
+  "#include <pthread.h>
+int main(void) { pthread_setname_np(\"x\"); return 0; }" HAVE_PTHREAD_SETNAME_NP_1ARG
+)
+unset(CMAKE_REQUIRED_DEFINITIONS)
+unset(CMAKE_REQUIRED_LIBRARIES)
+if(HAVE_PTHREAD_SETNAME_NP_2ARG)
+  target_compile_definitions(common INTERFACE HAVE_PTHREAD_SETNAME_NP_2ARG)
+  message(STATUS "pthread_setname_np: 2-arg (tcp reactor threads named)")
+elseif(HAVE_PTHREAD_SETNAME_NP_1ARG)
+  target_compile_definitions(common INTERFACE HAVE_PTHREAD_SETNAME_NP_1ARG)
+  message(STATUS "pthread_setname_np: 1-arg self (tcp reactor threads named)")
+else()
+  message(STATUS "pthread_setname_np: not available (tcp reactor threads unnamed)")
+endif()

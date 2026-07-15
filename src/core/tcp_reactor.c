@@ -75,16 +75,3 @@ int tcp_reactor_dispatch_msg(
 	}
 	return 0;
 }
-
-/* stub implemetation - will be replaced by a real function
- * from tcp_main.c to obtain the dispatch socket
- */
-int ksr_tcp_reactor_get_dispatch_wfd(void)
-{
-	return -1;
-}
-
-int ksr_tcp_reactor_get_dispatch_rfd(void)
-{
-	return -1;
-}
