@@ -106,6 +106,10 @@ typedef enum
 #define OPCODE_PONG (0xa)
 /* 0xb - 0xf are reserved for further control frames */
 
+/* RFC 6455 5.5: control frames (CLOSE/PING/PONG) carry at most 125 payload
+ * bytes and must not be fragmented. */
+#define WS_CTRL_PAYLOAD_MAX (125)
+
 int ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;
 str ws_ping_application_data = STR_NULL;
 
@@ -506,6 +510,17 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 				frame->payload_len);
 		*err_code = 1009;
 		*err_text = str_status_message_too_big;
+		return -1;
+	}
+
+	/* RFC 6455 5.5: All control frames (opcodes 0x8 to 0xF) must have a
+        * payload length of 125 bytes or less. Reject over-long control frames
+        * to prevent protocol violations and potential PING->PONG reflection amplification. */
+	if((frame->opcode & 0x08) && frame->payload_len > WS_CTRL_PAYLOAD_MAX) {
+		LM_WARN("control frame too long (opcode 0x%x, len %u)\n",
+				(unsigned int)frame->opcode, frame->payload_len);
+		*err_code = 1002;
+		*err_text = str_status_protocol_error;
 		return -1;
 	}
 	if(frame->mask) {
