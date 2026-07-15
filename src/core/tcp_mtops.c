@@ -39,6 +39,7 @@
 #include "dprint.h"
 #include "pt.h"
 #include "mem/shm.h"
+#include "globals.h"
 
 #include "tcp_mtops.h"
 
@@ -65,6 +66,17 @@ static ksr_tcpx_proc_t *_ksr_tcpx_proc_list = NULL;
  *
  */
 static int _ksr_tcpx_proc_list_size = 0;
+
+/* mode 2: tcp_main-local write buffer and synchronous result slot.
+ * Used by the direct-call path (KSR_TCPX_MAIN_PIDX) instead of the
+ * per-process socketpair relay used in mode 1.
+ *
+ * Provide a scratch buffer for TLS per thread.
+ */
+
+extern int is_tcp_main(void);
+static _Thread_local unsigned char ksr_tcp_main_wrbuf[TLS_WR_MBUF_SZ];
+static _Thread_local tcpx_task_result_t *ksr_tcp_main_eresult = NULL;
 
 /**
  * Set a unique id per thread
@@ -110,6 +122,13 @@ static void *ksr_tcpx_thread_etask(void *param)
 int ksr_tcpx_thread_eresult(tcpx_task_result_t *rtask, int pidx)
 {
 	int len;
+
+	if(pidx == KSR_TCPX_MAIN_PIDX) {
+		/* mode 2 direct-call path: store result for synchronous retrieval */
+		ksr_tcp_main_eresult = rtask;
+		return 0;
+	}
+
 	len = write(_ksr_tcpx_proc_list[pidx].rcvsock[1], &rtask,
 			sizeof(tcpx_task_result_t *));
 	if(len <= 0) {
@@ -127,6 +146,20 @@ int ksr_tcpx_thread_eresult(tcpx_task_result_t *rtask, int pidx)
 int ksr_tcpx_task_send(tcpx_task_t *task, int pidx)
 {
 	int len;
+
+	if(ksr_tcp_main_threads == 2) {
+		if(!is_tcp_main()) {
+			/* worker calling trampoline in mode 2 — socketpair not allocated */
+			LM_ERR("tcpx task send from non-main process unsupported in"
+				   " mode 2\n");
+			return -1;
+		}
+		/* already in PROC_TCP_MAIN: call exec() directly, no relay needed */
+		if(task->exec)
+			task->exec(task->param, KSR_TCPX_MAIN_PIDX);
+		return 0;
+	}
+
 	len = write(
 			_ksr_tcpx_proc_list[pidx].sndsock[1], &task, sizeof(tcpx_task_t *));
 	if(len <= 0) {
@@ -143,6 +176,14 @@ int ksr_tcpx_task_send(tcpx_task_t *task, int pidx)
 int ksr_tcpx_task_result_recv(tcpx_task_result_t **rtask, int pidx)
 {
 	int received;
+
+	if(ksr_tcp_main_threads == 2) {
+		/* mode 2: exec() ran synchronously; result already in the slot */
+		*rtask = ksr_tcp_main_eresult;
+		ksr_tcp_main_eresult = NULL;
+		return 0;
+	}
+
 	if((received = recvfrom(_ksr_tcpx_proc_list[pidx].rcvsock[0], rtask,
 				sizeof(tcpx_task_result_t *), 0, NULL, 0))
 			< 0) {
@@ -166,6 +207,11 @@ int ksr_tcpx_proc_list_init(void)
 	int i;
 
 	if(_ksr_tcpx_proc_list != NULL) {
+		return 0;
+	}
+
+	if(ksr_tcp_main_threads == 2) {
+		/* mode 2: no per-process trampoline threads or socketpairs needed */
 		return 0;
 	}
 
@@ -215,6 +261,11 @@ int ksr_tcpx_proc_list_prepare(void)
 {
 	int i;
 
+	if(ksr_tcp_main_threads == 2) {
+		/* mode 2: direct-call path (step 4) replaces per-process threads */
+		return 0;
+	}
+
 	for(i = 0; i < _ksr_tcpx_proc_list_size; i++) {
 		if(pthread_create(&_ksr_tcpx_proc_list[i].ethread, NULL,
 				   ksr_tcpx_thread_etask, (void *)(long)i)) {
@@ -237,6 +288,12 @@ error:
  */
 unsigned char *ksr_tcpx_thread_wrbuf(int pidx)
 {
+	/* mode 2: the encode trampoline passes pidx == process_no (a single value
+	 * for PROC_TCP_MAIN), but the work runs on many threads. Return the
+	 * thread-local buffer for every mode-2 caller, regardless of pidx, so
+	 * concurrent pool-thread TLS encodes do not share one buffer. */
+	if(ksr_tcp_main_threads == 2 || pidx == KSR_TCPX_MAIN_PIDX)
+		return ksr_tcp_main_wrbuf;
 	if(_ksr_tcpx_proc_list == NULL)
 		return NULL;
 	if(pidx >= _ksr_tcpx_proc_list_size)
