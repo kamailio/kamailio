@@ -544,6 +544,7 @@ LATENCY_LIMIT_CFG		latency_limit_cfg
 
 RPC_EXEC_DELTA_CFG		"rpc_exec_delta"
 RPC_EXEC_LOCKS_CFG		"rpc_exec_locks"
+RPC_EXEC_LOCKS_MODE_CFG		"rpc_exec_locks_mode"
 
 URI_HOST_EXTRA_CHARS	"uri_host_extra_chars"
 HDR_NAME_EXTRA_CHARS	"hdr_name_extra_chars"
@@ -1116,6 +1117,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LATENCY_LIMIT_CFG}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_CFG;}
 <INITIAL>{RPC_EXEC_DELTA_CFG}  { count(); yylval.strval=yytext; return RPC_EXEC_DELTA_CFG;}
 <INITIAL>{RPC_EXEC_LOCKS_CFG}  { count(); yylval.strval=yytext; return RPC_EXEC_LOCKS_CFG;}
+<INITIAL>{RPC_EXEC_LOCKS_MODE_CFG}  { count(); yylval.strval=yytext; return RPC_EXEC_LOCKS_MODE_CFG;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADMODULEX}	{ count(); yylval.strval=yytext; return LOADMODULEX; }

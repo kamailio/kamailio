@@ -557,6 +557,7 @@ extern char *default_routename;
 %token LATENCY_LIMIT_CFG
 %token RPC_EXEC_DELTA_CFG
 %token RPC_EXEC_LOCKS_CFG
+%token RPC_EXEC_LOCKS_MODE_CFG
 %token MSG_TIME
 %token ONSEND_RT_REPLY
 %token URI_HOST_EXTRA_CHARS
@@ -2164,6 +2165,8 @@ assign_stm:
 	| RPC_EXEC_DELTA_CFG EQUAL error  { yyerror("number  expected"); }
     | RPC_EXEC_LOCKS_CFG EQUAL NUMBER { ksr_rpc_exec_locks=$3; }
 	| RPC_EXEC_LOCKS_CFG EQUAL error  { yyerror("number  expected"); }
+    | RPC_EXEC_LOCKS_MODE_CFG EQUAL NUMBER { ksr_rpc_exec_locks_mode=$3; }
+	| RPC_EXEC_LOCKS_MODE_CFG EQUAL error  { yyerror("number  expected"); }
     | MSG_TIME EQUAL NUMBER { sr_msg_time=$3; }
 	| MSG_TIME EQUAL error  { yyerror("number  expected"); }
 	| ONSEND_RT_REPLY EQUAL NUMBER { onsend_route_reply=$3; }
