@@ -159,3 +159,20 @@ set(LOCK_METHOD_FINAL
     "${_SELECTED_LOCK_METHOD}"
     CACHE INTERNAL "Final locking method selected"
 )
+
+# Robust process-shared mutexes: PTHREAD_MUTEX_ROBUST / pthread_mutex_consistent()
+# are a POSIX option glibc and musl provide but some platforms (notably macOS) do
+# not. src/core/tcp_cond.c uses them for the tcp reactor condvar and guards them
+# on HAVE_PTHREAD_MUTEX_ROBUST. Probe the capability instead of guessing by OS.
+include(CheckSymbolExists)
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+set(CMAKE_REQUIRED_LIBRARIES pthread)
+check_symbol_exists(pthread_mutex_consistent "pthread.h" HAVE_PTHREAD_MUTEX_ROBUST)
+unset(CMAKE_REQUIRED_DEFINITIONS)
+unset(CMAKE_REQUIRED_LIBRARIES)
+if(HAVE_PTHREAD_MUTEX_ROBUST)
+  target_compile_definitions(common INTERFACE HAVE_PTHREAD_MUTEX_ROBUST)
+  message(STATUS "Robust process-shared mutex: supported")
+else()
+  message(STATUS "Robust process-shared mutex: NOT supported (tcp_cond uses non-robust fallback)")
+endif()
