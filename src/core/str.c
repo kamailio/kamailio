@@ -79,15 +79,17 @@ char *_strnstr(const char *s, const char *find, size_t slen)
 char *_strnistr(const char *s, const char *find, size_t slen)
 {
 	char c, sc;
+	char c_alt;
 	size_t len;
 
 	if((c = *find++) != '\0') {
+		c_alt = (c >= 'a' && c <= 'z') ? (c - 32) : ((c >= 'A' && c <= 'Z') ? (c + 32) : c);
 		len = strlen(find);
 		do {
 			do {
 				if((sc = *s++) == '\0' || slen-- < 1)
 					return (NULL);
-			} while(sc != c);
+			} while(sc != c && sc != c_alt);
 			if(len > slen)
 				return (NULL);
 		} while(strncasecmp(s, find, len) != 0);
