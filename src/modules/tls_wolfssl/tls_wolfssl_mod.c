@@ -361,9 +361,6 @@ static int mod_init(void)
 #ifndef OPENSSL_NO_DH
 	LM_INFO("With Diffie Hellman\n");
 #endif
-	if(sr_tls_event_callback.s == NULL || sr_tls_event_callback.len <= 0) {
-		tls_lookup_event_routes();
-	}
 
 	return 0;
 error:

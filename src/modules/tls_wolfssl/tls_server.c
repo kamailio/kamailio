@@ -65,8 +65,6 @@
 
 #include "tls_cfg.h"
 
-int tls_run_event_routes(struct tcp_connection *c);
-
 #define TLS_RD_MBUF_SZ 65536
 #define TLS_WR_MBUF_SZ 65536
 
@@ -608,7 +606,6 @@ int tls_connect(struct tcp_connection *c, int *error)
 			LOG(tls_log, "tls_connect: server did not "
 						 "present a certificate\n");
 		}
-		tls_run_event_routes(c);
 	} else { /* 0 or < 0 */
 		*error = wolfSSL_get_error(ssl, ret);
 	}
@@ -1885,65 +1882,8 @@ int tls_h_read_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	return tls_h_read_mt_f(c, flags);
 }
 
-static int _tls_evrt_connection_out = -1; /* default disabled */
+/* The tls:connection-out event route was never functional in this module (it
+ * was gated behind a p_onsend check that is always NULL at handshake time) and
+ * has been removed. sr_tls_event_callback is retained only so the long-standing
+ * "event_callback" modparam still parses; it has no effect. */
 str sr_tls_event_callback = STR_NULL;
-
-/*!
- * lookup tls event routes
- */
-void tls_lookup_event_routes(void)
-{
-	_tls_evrt_connection_out = route_lookup(&event_rt, "tls:connection-out");
-	if(_tls_evrt_connection_out >= 0
-			&& event_rt.rlist[_tls_evrt_connection_out] == 0)
-		_tls_evrt_connection_out = -1; /* disable */
-	if(_tls_evrt_connection_out != -1)
-		forward_set_send_info(1);
-}
-
-/**
- *
- */
-int tls_run_event_routes(struct tcp_connection *c)
-{
-	int backup_rt;
-	struct run_act_ctx ctx;
-	sip_msg_t *fmsg = NULL;
-	str evname = str_init("tls:connection-out");
-	sr_kemi_eng_t *keng = NULL;
-
-	if(_tls_evrt_connection_out < 0 && sr_tls_event_callback.len <= 0)
-		return 0;
-
-	if(p_onsend == 0 || p_onsend->msg == 0)
-		return 0;
-
-	if(faked_msg_init() < 0)
-		return -1;
-	fmsg = faked_msg_next();
-
-	backup_rt = get_route_type();
-	set_route_type(LOCAL_ROUTE);
-	init_run_actions_ctx(&ctx);
-	tls_set_pv_con(c);
-	if(_tls_evrt_connection_out >= 0) {
-		run_top_route(event_rt.rlist[_tls_evrt_connection_out], fmsg, 0);
-	} else {
-		keng = sr_kemi_eng_get();
-		if(keng != NULL) {
-			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
-					   &sr_tls_event_callback, &evname)
-					< 0) {
-				LM_ERR("error running event route kemi callback\n");
-				return -1;
-			}
-		}
-	}
-	/* drop() executed in the event route - set nosend flag */
-	if(unlikely(ctx.run_flags & DROP_R_F)) {
-		c->flags |= F_CONN_NOSEND;
-	}
-	tls_set_pv_con(0);
-	set_route_type(backup_rt);
-	return 0;
-}

@@ -56,7 +56,8 @@
 			<para>
 	This user is referred to the documentation of the &tls-url; module for configuration
 	and other information. Not all configuration keys are implemented (e.g., protocol
-	versions — defaults to 1.2+ and cipher suites).
+	versions — defaults to 1.2+ and cipher suites). The event route <code>tls:connection-out</code>
+        is not supported.
 			</para>
 		</section>
 		<section id="tls_wolfssl.quick_start">
