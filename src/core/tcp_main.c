@@ -1895,7 +1895,7 @@ struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
 		c = _tcpconn_find(id, ip, port, &local_ip, local_port, proto);
 	}
 	if(unlikely(c == NULL) && likely(id == 0 && ip != NULL)
-			&& likely(local_addr == NULL) && likely(local_port == 0)) {
+			&& likely(local_port == 0)) {
 		c = _tcpconn_find_any_local(ip, port, proto);
 	}
 	if(likely(c)) {
