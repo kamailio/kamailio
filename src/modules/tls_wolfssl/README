@@ -64,7 +64,7 @@ Chapter 1. Admin Guide
    This user is referred to the documentation of the tls module for
    configuration and other information. Not all configuration keys are
    implemented (e.g., protocol versions — defaults to 1.2+ and cipher
-   suites).
+   suites). The event route tls:connection-out is not supported.
 
 2. Quick Start
 
