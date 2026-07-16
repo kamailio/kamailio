@@ -24,6 +24,7 @@
  * Module: \ref core
  */
 
+#include <ctype.h>
 #include <string.h>
 #include "str.h"
 #include "mem/mem.h"
@@ -78,20 +79,35 @@ char *_strnstr(const char *s, const char *find, size_t slen)
  */
 char *_strnistr(const char *s, const char *find, size_t slen)
 {
-	char c, sc;
+	const char *p, *q;
 	size_t len;
+	const char *last;
 
-	if((c = *find++) != '\0') {
-		len = strlen(find);
-		do {
-			do {
-				if((sc = *s++) == '\0' || slen-- < 1)
-					return (NULL);
-			} while(sc != c);
-			if(len > slen)
-				return (NULL);
-		} while(strncasecmp(s, find, len) != 0);
-		s--;
+	if(s == NULL || find == NULL || slen == 0) {
+		return NULL;
 	}
-	return ((char *)s);
+
+	len = strlen(find);
+	if(len == 0) {
+		return (char *)s;
+	}
+
+	if(len > slen) {
+		return NULL;
+	}
+
+	last = s + slen - len + 1;
+	while(s < last) {
+		q = find;
+		p = s;
+		while(*q && tolower((unsigned char)*p) == tolower((unsigned char)*q)) {
+			p++;
+			q++;
+		}
+		if(!*q) {
+			return (char *)s;
+		}
+		s++;
+	}
+	return NULL;
 }
