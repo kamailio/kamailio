@@ -25,6 +25,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 #include "str.h"
 #include "mem/mem.h"
 
@@ -80,14 +81,17 @@ char *_strnistr(const char *s, const char *find, size_t slen)
 {
 	char c, sc;
 	size_t len;
+	char c_lower, c_upper;
 
 	if((c = *find++) != '\0') {
 		len = strlen(find);
+		c_lower = tolower((unsigned char)c);
+		c_upper = toupper((unsigned char)c);
 		do {
 			do {
-				if((sc = *s++) == '\0' || slen-- < 1)
+				if(slen-- < 1 || (sc = *s++) == '\0')
 					return (NULL);
-			} while(sc != c);
+			} while(sc != c_lower && sc != c_upper);
 			if(len > slen)
 				return (NULL);
 		} while(strncasecmp(s, find, len) != 0);
