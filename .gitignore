@@ -57,3 +57,5 @@ libiname.lst
 # compiling tools files
 .clangd
 compile_commands.json
+# local design / brainstorm docs (not for upstream)
+docs/
