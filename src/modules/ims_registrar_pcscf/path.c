@@ -1,4 +1,4 @@
-#/*
+/*
  * Copyright (C) 2026 toharishs@gmail.com
  *
  * The initial version of this code is written by Harish S
@@ -25,6 +25,8 @@
 #include "path.h"
 #include "../../core/data_lump.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include <stdio.h>
 
 int pcscf_build_path_uri(str *uri, str *out, char *buf, int buf_len)
@@ -33,7 +35,7 @@ int pcscf_build_path_uri(str *uri, str *out, char *buf, int buf_len)
 
 	if(!uri || !uri->s || !out || !buf)
 		return -1;
-	len = snprintf(buf, buf_len, "sip:%.*s;lr", uri->len, uri->s);
+	len = snprintf(buf, buf_len, "%.*s;lr", uri->len, uri->s);
 	if(len <= 0 || len >= buf_len)
 		return -1;
 	out->s = buf;
@@ -55,20 +57,34 @@ int pcscf_format_route_header(str *path, char *buf, int buf_len)
 
 int pcscf_insert_path_on_register(struct sip_msg *msg, str *path_uri)
 {
-	char hdr[512];
+	char *hdr;
 	int hdr_len;
+	int need;
 	struct lump *anchor;
 
 	if(!msg || !path_uri || !path_uri->s)
 		return -1;
-	hdr_len = snprintf(
-			hdr, sizeof(hdr), "Path: <%.*s>\r\n", path_uri->len, path_uri->s);
-	if(hdr_len <= 0 || hdr_len >= (int)sizeof(hdr))
+	need = path_uri->len + 32;
+	hdr = (char *)pkg_malloc(need);
+	if(!hdr) {
+		LM_ERR("no more pkg memory\n");
 		return -1;
+	}
+	hdr_len =
+			snprintf(hdr, need, "Path: <%.*s>\r\n", path_uri->len, path_uri->s);
+	if(hdr_len <= 0 || hdr_len >= need) {
+		pkg_free(hdr);
+		return -1;
+	}
 	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0, HDR_PATH_T);
-	if(!anchor)
+	if(!anchor) {
+		pkg_free(hdr);
 		return -1;
-	if(!insert_new_lump_before(anchor, hdr, hdr_len, HDR_PATH_T))
+	}
+	if(!insert_new_lump_before(anchor, hdr, hdr_len, HDR_PATH_T)) {
+		pkg_free(hdr);
 		return -1;
+	}
+	/* lump now owns hdr and will pkg_free it */
 	return 0;
 }

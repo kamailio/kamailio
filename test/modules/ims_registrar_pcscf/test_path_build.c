@@ -19,13 +19,14 @@ int pcscf_build_path_uri(str *uri, str *out, char *buf, int buf_len);
 
 static int test_build_path(void)
 {
-	str uri = str_init("pcscf.ims.local:4060");
+	str uri = str_init("sip:pcscf.ims.local:4060");
 	str out = {0, 0};
 	char buf[256];
 
 	TEST_ASSERT(pcscf_build_path_uri(&uri, &out, buf, sizeof(buf)) == 0);
 	TEST_ASSERT(out.len > 0);
 	TEST_ASSERT(strstr(out.s, "sip:pcscf.ims.local:4060;lr") != NULL);
+	TEST_ASSERT(strstr(out.s, "sip:sip:") == NULL);
 	return 0;
 }
 

@@ -1,6 +1,3 @@
-#ifndef IMS_REGISTRAR_PCSCF_PATH_H
-#define IMS_REGISTRAR_PCSCF_PATH_H
-
 /*
  * Copyright (C) 2026 toharishs@gmail.com
  *
@@ -23,6 +20,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+
+#ifndef IMS_REGISTRAR_PCSCF_PATH_H
+#define IMS_REGISTRAR_PCSCF_PATH_H
 
 #include "../../core/parser/msg_parser.h"
 #include "../../core/str.h"
