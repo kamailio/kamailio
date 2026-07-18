@@ -95,7 +95,7 @@ int ignore_contact_rxport_check = 0;
 int ignore_contact_rxproto_check = 1;
 /** If set, this uses the bottom Via for identification of UE, always, on both requests and responses, over Contact. */
 int trust_bottom_via = 0;
-int insert_path_on_register = 1;
+int insert_path_on_register = 0;
 
 time_t time_now;
 

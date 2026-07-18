@@ -368,7 +368,11 @@ modparam("ims_registrar_pcscf", "trust_bottom_via", 1)
       Path header on outgoing REGISTER requests and store the Path URI for the
       contact. When set to <emphasis>0</emphasis>, Path insertion is disabled.</para>
 
-      <para><emphasis>Default value is 1.</emphasis></para>
+      <para>If set to <emphasis>1</emphasis>, the module will insert a
+      Path header on outgoing REGISTER requests and store the Path URI for the
+      contact. When set to <emphasis>0</emphasis> (default), Path insertion is disabled.</para>
+
+      <para><emphasis>Default value is 0.</emphasis></para>
 
       <example>
         <title>Set <varname>insert_path_on_register</varname> parameter</title>
