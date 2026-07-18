@@ -9,5 +9,5 @@
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>IMS_USRLOC_PCSCF Module</name>
     <xi:include href="location_pcscf.xml"/>
-    <xi:include href="pcscf_temp_gruu_history.xml"/>
+    <xi:include href="pcscf_gruu_history.xml"/>
 </database>

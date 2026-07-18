@@ -7,12 +7,12 @@
 
 ]> 
 
-<table id="pcscf_temp_gruu_history" xmlns:db="http://docbook.org/ns/docbook">
-    <name>pcscf_temp_gruu_history</name>
+<table id="pcscf_gruu_history" xmlns:db="http://docbook.org/ns/docbook">
+    <name>pcscf_gruu_history</name>
     <version>1</version>
     <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Temporary GRUU history for pcscf temp gruu management.</db:para>
+        <db:para>Temporary GRUU history.</db:para>
     </description>
 
     <column id="id">

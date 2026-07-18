@@ -53,9 +53,9 @@
 		<column><field>temp_gruu</field><type>DB1_STR</type></column>
 		<column><field>public_ids_barred</field><type>DB1_STR</type></column>
 	</db_table>
-	<!-- Declaration of pcscf_temp_gruu_history table-->
-	<db_table id="pcscf_temp_gruu_history">
-		<table_name>pcscf_temp_gruu_history</table_name>
+	<!-- Declaration of pcscf_gruu_history table-->
+	<db_table id="pcscf_gruu_history">
+		<table_name>pcscf_gruu_history</table_name>
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>location_id</field><type>DB1_INT</type></column>

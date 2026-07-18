@@ -55,7 +55,7 @@ CREATE INDEX aor_idx ON pcscf_location (`aor`);
 
 INSERT INTO version (table_name, table_version) values ('pcscf_location','8');
 
-CREATE TABLE `pcscf_temp_gruu_history` (
+CREATE TABLE `pcscf_gruu_history` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `location_id` INT(10) UNSIGNED NOT NULL,
     `temp_gruu` VARCHAR(255) NOT NULL,
@@ -63,9 +63,9 @@ CREATE TABLE `pcscf_temp_gruu_history` (
     `expires` DATETIME NOT NULL
 );
 
-CREATE INDEX idx_loc ON pcscf_temp_gruu_history (`location_id`);
-CREATE INDEX idx_tgruu ON pcscf_temp_gruu_history (`temp_gruu`);
-CREATE INDEX idx_exp ON pcscf_temp_gruu_history (`expires`);
+CREATE INDEX idx_loc ON pcscf_gruu_history (`location_id`);
+CREATE INDEX idx_tgruu ON pcscf_gruu_history (`temp_gruu`);
+CREATE INDEX idx_exp ON pcscf_gruu_history (`expires`);
 
-INSERT INTO version (table_name, table_version) values ('pcscf_temp_gruu_history','1');
+INSERT INTO version (table_name, table_version) values ('pcscf_gruu_history','1');
 
