@@ -109,7 +109,7 @@ echo "=== T3: GRUU + history checks ==="
 assert_sql "T3 location_id present" \
     "SELECT id FROM pcscf_location WHERE aor='sip:gruu-user@ims.local';" "2"
 assert_sql "T3 temp_gruu history FK" \
-    "SELECT location_id FROM pcscf_temp_gruu_history WHERE temp_gruu LIKE '%old-tgruu%';" "2"
+    "SELECT location_id FROM pcscf_gruu_history WHERE temp_gruu LIKE '%old-tgruu%';" "2"
 
 echo "=== Kamailio preload integration (db_mode=WRITE_THROUGH) ==="
 if [ ! -x "$KAMBIN" ]; then

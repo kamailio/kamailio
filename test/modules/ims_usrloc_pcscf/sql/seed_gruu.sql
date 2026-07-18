@@ -25,7 +25,7 @@ INSERT INTO pcscf_location (
   'sip:new-tgruu@ims.local;gr=urn:uuid:3333-4444'
 );
 
-INSERT INTO pcscf_temp_gruu_history (location_id, temp_gruu, created, expires)
+INSERT INTO pcscf_gruu_history (location_id, temp_gruu, created, expires)
 VALUES (
   2,
   'sip:old-tgruu@ims.local;gr=urn:uuid:3333-4444',
