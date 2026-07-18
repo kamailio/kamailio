@@ -10,3 +10,9 @@ test_temp_gruu_lru
 *.o
 *.d
 .DS_Store
+
+# staged copies of production .c/.h used to compile unit tests without
+# pulling real Kamailio core headers - see Makefile "stage" target
+stubs/modules/ims_usrloc_pcscf/pcontact_index.c
+stubs/modules/ims_usrloc_pcscf/impu_match.c
+stubs/modules/ims_usrloc_pcscf/impu_match.h

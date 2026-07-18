@@ -1,16 +1,9 @@
-#ifdef UNIT_TEST
 #include "../../core/str.h"
+#include "../../core/parser/parse_uri.h"
 #include <string.h>
 
 #define SIP_URI_T 1
 #define TEL_URI_T 2
-
-struct sip_uri
-{
-	int type;
-	str user;
-	str host;
-};
 
 int parse_uri(char *buf, int len, struct sip_uri *uri)
 {
@@ -40,4 +33,3 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 	}
 	return -1;
 }
-#endif

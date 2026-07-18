@@ -1,5 +1,6 @@
 #include "test_common.h"
 #include "pcontact_index.h"
+#include "usrloc.h"
 #include "../../core/str.h"
 
 static int test_index_add_get_remove(void)

@@ -34,7 +34,7 @@ str pub_gruu_col = str_init(PUB_GRUU_COL);
 str temp_gruu_col = str_init(TEMP_GRUU_COL);
 str public_ids_barred_col = str_init(PUBLIC_IDS_BARRED_COL);
 static str location_id_col = str_init("location_id");
-static str pcscf_temp_gruu_history_table = str_init("pcscf_temp_gruu_history");
+static str pcscf_gruu_history_table = str_init("pcscf_gruu_history");
 str security_type_col = str_init(SECURITY_TYPE_COL);
 str mode_col = str_init(MODE_COL);
 str ck_col = str_init(CK_COL);
@@ -666,7 +666,7 @@ int db_insert_temp_gruu_history(
 		return -1;
 	}
 
-	if(ul_dbf.use_table(ul_dbh, &pcscf_temp_gruu_history_table) < 0) {
+	if(ul_dbf.use_table(ul_dbh, &pcscf_gruu_history_table) < 0) {
 		LM_ERR("failed to use temp GRUU history table\n");
 		return -1;
 	}
@@ -710,7 +710,7 @@ int db_lookup_temp_gruu_history(str *temp_gruu, unsigned int *location_id)
 		return -1;
 	}
 
-	if(ul_dbf.use_table(ul_dbh, &pcscf_temp_gruu_history_table) < 0) {
+	if(ul_dbf.use_table(ul_dbh, &pcscf_gruu_history_table) < 0) {
 		LM_ERR("failed to use temp GRUU history table\n");
 		return -1;
 	}
@@ -754,7 +754,7 @@ int db_cleanup_temp_gruu_history(void)
 	db_op_t op[1] = {OP_LT};
 	db_val_t vals[1];
 
-	if(ul_dbf.use_table(ul_dbh, &pcscf_temp_gruu_history_table) < 0) {
+	if(ul_dbf.use_table(ul_dbh, &pcscf_gruu_history_table) < 0) {
 		LM_ERR("failed to use temp GRUU history table\n");
 		return -1;
 	}

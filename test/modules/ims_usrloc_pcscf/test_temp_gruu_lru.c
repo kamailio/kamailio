@@ -1,5 +1,6 @@
 #include "test_common.h"
 #include "pcontact_index.h"
+#include "usrloc.h"
 #include <time.h>
 
 static int test_lru_add_get(void)

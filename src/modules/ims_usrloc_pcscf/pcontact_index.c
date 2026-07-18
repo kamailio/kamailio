@@ -1,28 +1,37 @@
 /*
- * pcontact_index.c
+ * Copyright (C) 2026 toharishs@gmail.com
+ *
+ * The initial version of this code is written by Harish S
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  */
+
+/* P-CSCF contact hash indexes (IMPU / pub-GRUU / temp-GRUU) and temp-GRUU LRU cache */
 
 #include "pcontact_index.h"
 #include "../../core/hashes.h"
-#ifdef UNIT_TEST
-#define LM_ERR(fmt, ...) ((void)0)
-#else
 #include "../../core/dprint.h"
-#endif
-#ifndef UNIT_TEST
 #include "usrloc.h"
-#endif
 #include <string.h>
 #include <strings.h>
 
-#ifdef UNIT_TEST
-#include <stdlib.h>
-#define PCSCF_IDX_MALLOC malloc
-#define PCSCF_IDX_FREE free
-#else
 #define PCSCF_IDX_MALLOC shm_malloc
 #define PCSCF_IDX_FREE shm_free
-#endif
 
 typedef struct pcscf_temp_gruu_lru_entry
 {
@@ -306,7 +315,6 @@ int pcscf_index_remove_contact(pcscf_index_t *idx, pcontact_t *c)
 	return (removed > 0) ? 0 : -1;
 }
 
-#ifndef UNIT_TEST
 int pcscf_index_sync_contact(udomain_t *d, pcontact_t *c)
 {
 	ppublic_t *p;
@@ -339,4 +347,3 @@ int pcscf_index_sync_contact(udomain_t *d, pcontact_t *c)
 	}
 	return 0;
 }
-#endif
