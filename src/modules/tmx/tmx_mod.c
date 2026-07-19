@@ -176,12 +176,12 @@ static pv_export_t mod_pvs[] = {
 };
 
 static cmd_export_t cmds[] = {
-		{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_2, 2,
-				fixup_cancel_callid, 0, ANY_ROUTE },
-		{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_3, 3,
-				fixup_cancel_callid, 0, ANY_ROUTE },
-		{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_4, 4,
-				fixup_cancel_callid, 0, ANY_ROUTE },
+	{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_2, 2,
+			fixup_cancel_callid, 0, ANY_ROUTE },
+	{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_3, 3,
+			fixup_cancel_callid, 0, ANY_ROUTE },
+	{"t_uac_ack_local", (cmd_function)w_t_uac_ack_local_4, 4,
+			fixup_cancel_callid, 0, ANY_ROUTE },
 	{"t_cancel_branches", (cmd_function)t_cancel_branches, 1,
 			fixup_cancel_branches, 0, ONREPLY_ROUTE},
 	{"t_cancel_callid", (cmd_function)w_t_cancel_callid_3, 3,
