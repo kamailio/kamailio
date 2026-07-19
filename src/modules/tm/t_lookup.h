@@ -94,6 +94,8 @@ typedef int (*tislocal_f)(struct sip_msg *);
 typedef int (*tnewtran_f)(struct sip_msg *);
 typedef int (*tget_ti_f)(struct sip_msg *, unsigned int *, unsigned int *);
 typedef int (*tlookup_ident_f)(struct cell **, unsigned int, unsigned int);
+typedef int (*tlookup_ident_filter_f)(
+		struct cell **, unsigned int, unsigned int, int);
 typedef int (*trelease_f)(struct sip_msg *);
 typedef int (*tlookup_callid_f)(struct cell **, str, str);
 typedef int (*tset_fr_f)(struct sip_msg *, unsigned int, unsigned int);

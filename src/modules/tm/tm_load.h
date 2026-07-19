@@ -61,6 +61,7 @@ struct tm_binds
 	tislocal_f t_is_local;
 	tget_ti_f t_get_trans_ident;
 	tlookup_ident_f t_lookup_ident;
+	tlookup_ident_filter_f t_lookup_ident_filter;
 	taddblind_f t_addblind;
 	treply_f t_reply_unsafe;
 	treply_trans_f t_reply_trans;

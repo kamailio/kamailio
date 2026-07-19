@@ -82,6 +82,7 @@ int load_tm(struct tm_binds *tmb)
 	tmb->t_is_local = t_is_local;
 	tmb->t_get_trans_ident = t_get_trans_ident;
 	tmb->t_lookup_ident = t_lookup_ident;
+	tmb->t_lookup_ident_filter = t_lookup_ident_filter;
 	tmb->t_addblind = add_blind_uac;
 	tmb->t_request_within = req_within;
 	tmb->t_request_outside = req_outside;
