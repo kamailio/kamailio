@@ -2108,6 +2108,18 @@ int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 
 	shm_free(ptask);
 	shm_free(rtask);
+
+	/* tcp_main_threads > 0: if the handshake just completed,
+	 * tls_run_event_routes() ran in a PROC_TCP_MAIN thread and
+	 * deferred the event route - we are back in the worker
+	 * so run the route now */
+	{
+		struct tls_extra_data *tls_c = (struct tls_extra_data *)c->extra_data;
+		if(tls_c != NULL && tls_c->run_conn_out_pending) {
+			tls_c->run_conn_out_pending = 0;
+			tls_run_event_routes(c);
+		}
+	}
 	return ret;
 }
 
@@ -2154,8 +2166,15 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(_tls_evrt_connection_out < 0 && sr_tls_event_callback.len <= 0)
 		return 0;
 
-	if(p_onsend == 0 || p_onsend->msg == 0)
+	/* With tcp_main_threads > 0 - mtops - ensure the route function
+	 * runs in the worker and not PROC_TCP_MAIN; we flag this for
+	 * deferred execution. */
+	if(is_tcp_main()) {
+		struct tls_extra_data *tls_c = (struct tls_extra_data *)c->extra_data;
+		if(tls_c != NULL)
+			tls_c->run_conn_out_pending = 1;
 		return 0;
+	}
 
 	if(faked_msg_init() < 0)
 		return -1;

@@ -66,6 +66,9 @@ typedef struct tls_extra_data
 	struct tls_rd_buf *enc_rd_buf;
 	unsigned int flags;
 	enum tls_conn_states state;
+	int run_conn_out_pending; /* tcp_main_threads>0: tls:connection-out should not
+							   * run on a PROC_TCP_MAIN mtops thread; this flag
+							   * is marks deferred execution */
 
 	char *ssl_servername;
 	char *ssl_cipher_name;
