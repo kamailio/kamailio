@@ -23,6 +23,25 @@
   	It relies on libjwt (at least v3.2.0) library
    	(https://github.com/benmcollins/libjwt).
 	</para>
+	<para>
+		The key parameter of jwt3_verify() and jwt3_verify_key() accepts
+		three formats: a raw PEM string, a path to a local PEM or JWKS
+		(.json) file, or an HTTP/HTTPS URL pointing to a remote JWKS
+		endpoint. When a URL is provided, the JWKS is fetched and cached
+		in shared memory. The cache TTL is controlled by the
+		jwks_cache_ttl parameter or, when available, by the
+		Cache-Control: max-age directive returned by the server.
+	</para>
+	<para>
+		When a JWT contains a kid (Key ID) header that is not found in
+		the loaded JWKS, the module will attempt to re-fetch the JWKS
+		from the remote URL once and retry the lookup. If the kid is
+		still not found, verification fails. To protect against DoS
+		attacks using JWTs with unknown kid values that would trigger
+		continuous re-fetches, the number of re-fetch attempts is
+		rate-limited per URL using the jwks_miss_window and
+		jwks_max_misses parameters.
+	</para>
 	</section>
 
 	<section>
@@ -51,6 +70,11 @@
 				<emphasis>libjwt</emphasis> - version 3.2.0 or higher.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>libcurl</emphasis> - required for remote JWKS URL support.
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 	</section>
@@ -75,7 +99,79 @@
 		<title>Set <varname>leeway_sec</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jwt", "leeway_sec", 30)
+modparam("jwt3", "leeway_sec", 30)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jwt.p.jwks_cache_ttl">
+		<title><varname>jwks_cache_ttl</varname> (int)</title>
+		<para>
+			Time-to-live in seconds for cached remote JWKS documents. When the
+			remote JWKS endpoint returns a Cache-Control: max-age response header,
+			that value takes precedence over this parameter. This fallback TTL is
+			used when no Cache-Control header is present.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3600.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_cache_ttl</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_cache_ttl", 600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jwt.p.jwks_miss_window">
+		<title><varname>jwks_miss_window</varname> (int)</title>
+		<para>
+			Time window in seconds used by the DoS protection mechanism. When a
+			JWT contains a kid that is not found in the cached JWKS, the module
+			re-fetches the remote endpoint. This parameter defines the sliding
+			window within which re-fetch attempts are counted per URL. Once the
+			count reaches jwks_max_misses, further re-fetches are blocked until
+			the window expires.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 60.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_miss_window</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_miss_window", 120)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jwt.p.jwks_max_misses">
+		<title><varname>jwks_max_misses</varname> (int)</title>
+		<para>
+			Maximum number of remote JWKS re-fetch attempts allowed per URL
+			within the jwks_miss_window. This limits the impact of DoS attacks
+			that send JWTs with unknown kid values to trigger continuous HTTP
+			requests to the JWKS endpoint. Once the limit is reached, further
+			re-fetches for that URL are rejected until the window resets.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_max_misses</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_max_misses", 3)
 ...
 </programlisting>
 		</example>
@@ -158,7 +254,9 @@ modparam("jwt", "leeway_sec", 30)
 		<itemizedlist>
 			<listitem>
 			<para>
-			pubkeypath - path to public key file (PEM or JWKS)
+			pubkeypath - path to public key file (PEM or JWKS), or an
+			HTTP/HTTPS URL pointing to a remote JWKS endpoint. When a URL
+			is provided, the JWKS is fetched and cached in shared memory.
 			</para>
 			</listitem>
 			<listitem>
@@ -213,7 +311,10 @@ modparam("jwt", "leeway_sec", 30)
 		<itemizedlist>
 			<listitem>
 			<para>
-			pubkeyval - public key value
+			pubkeyval - public key value. Can be a raw PEM string, a path
+			to a local PEM or JWKS (.json) file, or an HTTP/HTTPS URL pointing
+			to a remote JWKS endpoint. When a URL is provided, the JWKS is
+			fetched and cached in shared memory.
 			</para>
 			</listitem>
 			<listitem>
@@ -244,6 +345,13 @@ modparam("jwt", "leeway_sec", 30)
 ...
   if(!jwt3_verify_key("...", "RS256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
+        "$var(jwt)") {
+    xwarn("failed to verify jwt\n");
+  }
+
+  # remote JWKS URL - fetched and cached automatically
+  if(!jwt3_verify_key("https://auth.example.com/.well-known/jwks.json", "RS256",
+         "iss='https://auth.example.com'",
         "$var(jwt)") {
     xwarn("failed to verify jwt\n");
   }
