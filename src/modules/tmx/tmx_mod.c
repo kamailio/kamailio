@@ -63,6 +63,8 @@ static int w_t_cancel_callid_3(
 static int w_t_cancel_callid_4(
 		sip_msg_t *msg, char *cid, char *cseq, char *flag, char *creason);
 static int fixup_cancel_callid(void **param, int param_no);
+static int w_t_cancel_branch_idx(
+		sip_msg_t *msg, char *tidx, char *tlbl, char *bidx);
 static int w_t_uac_ack_local_2(sip_msg_t *msg, char *cid, char *cseq);
 static int w_t_uac_ack_local_3(
 		sip_msg_t *msg, char *cid, char *cseq, char *phdrs);
@@ -188,6 +190,8 @@ static cmd_export_t cmds[] = {
 			fixup_cancel_callid, 0, ANY_ROUTE},
 	{"t_cancel_callid", (cmd_function)w_t_cancel_callid_4, 4,
 			fixup_cancel_callid, 0, ANY_ROUTE},
+	{"t_cancel_branch_idx", (cmd_function)w_t_cancel_branch_idx, 3,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"t_reply_callid", (cmd_function)t_reply_callid, 4,
 			fixup_reply_callid,	0, ANY_ROUTE},
 	{"t_flush_flags", (cmd_function)t_flush_flags, 0, 0, 0, ANY_ROUTE},
@@ -499,6 +503,66 @@ static int w_t_cancel_callid_4(
 		sip_msg_t *msg, char *cid, char *cseq, char *flag, char *creason)
 {
 	return t_cancel_callid(msg, cid, cseq, flag, creason);
+}
+
+/**
+ *
+ */
+static int ki_t_cancel_branch_idx(sip_msg_t *msg, int tidx, int tlbl, int bidx)
+{
+	tm_cell_t *t = NULL;
+	tm_cell_t *backup_T = T_UNDEFINED;
+	int backup_T_branch = T_BR_UNDEFINED;
+	struct cancel_info cancel_data;
+
+	backup_T = get_t();
+	backup_T_branch = get_t_branch();
+
+	if(_tmx_tmb.t_lookup_ident_filter(&t, tidx, tlbl, 1) < 0) {
+		_tmx_tmb.t_sett(backup_T, backup_T_branch);
+		LM_WARN("active transaction not found\n");
+		return -1;
+	}
+
+	if(t->flags & T_CANCELED) {
+		_tmx_tmb.unref_cell(t);
+		_tmx_tmb.t_sett(backup_T, backup_T_branch);
+		return 1;
+	}
+
+	init_cancel_info(&cancel_data);
+	cancel_data.cancel_bitmap = 1 << bidx;
+	_tmx_tmb.prepare_to_cancel(t, &cancel_data.cancel_bitmap, 0);
+	_tmx_tmb.cancel_uacs(t, &cancel_data, F_CANCEL_LOCAL);
+	_tmx_tmb.t_sett(backup_T, backup_T_branch);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_t_cancel_branch_idx(
+		sip_msg_t *msg, char *tidx, char *tlbl, char *bidx)
+{
+	int t_idx;
+	int t_lbl;
+	int b_idx;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)tidx, &t_idx) < 0) {
+		LM_ERR("cannot get transaction index\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)tlbl, &t_lbl) < 0) {
+		LM_ERR("cannot get transaction label\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t *)bidx, &b_idx) < 0) {
+		LM_ERR("cannot get branch index\n");
+		return -1;
+	}
+
+	return ki_t_cancel_branch_idx(msg, t_idx, t_lbl, b_idx);
 }
 
 static int ki_t_uac_ack_local(
