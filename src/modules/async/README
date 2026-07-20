@@ -397,6 +397,9 @@ route[RESUME] {
 
    The parameters can contain variables.
 
+   Return: positive value (true) on success; negative value (false) on
+   failure.
+
    This function can be used from ANY_ROUTE.
 
    Example 1.12. async_task_data usage
@@ -416,9 +419,12 @@ route[RESUME] {
 
 4.8.  async_task_group_data(routename, groupname, data)
 
-   Similar to async_task_route(), but allows to specify the name of the
+   Similar to async_task_data(), but allows to specify the name of the
    group for asynchronous workers. See also 'async_workers_group' core
    global parameter.
+
+   Return: positive value (true) on success; negative value (false) on
+   failure.
 
    This function can be used from ANY_ROUTE.
 
