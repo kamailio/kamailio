@@ -337,13 +337,17 @@ static int parse_sip_header(xmlDocPtr doc, xmlNodePtr node, ims_sip_header *sh)
 	sh->content.s = NULL;
 	sh->content.len = 0;
 
-	for(child = node->children; child; child = child->next)
+	for(child = node->children; child; child = child->next) {
 		if(child->type == XML_ELEMENT_NODE)
 			switch(child->name[0]) {
 				case 'H':
 				case 'h': //Header
 					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
+					if(!x)
+						break;
 					len = strlen((char *)x);
+					if(len > sizeof(c) - 2)
+						len = sizeof(c) - 2; /* leave room for ':' and NULL */
 					memcpy(c, x, len);
 					c[len++] = ':';
 					c[len] = 0;
@@ -356,10 +360,13 @@ static int parse_sip_header(xmlDocPtr doc, xmlNodePtr node, ims_sip_header *sh)
 				case 'C':
 				case 'c': //Content
 					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
+					if(!x)
+						break;
 					space_quotes_trim_dup(&(sh->content), (char *)x);
 					xmlFree(x);
 					break;
 			}
+	}
 	return 1;
 }
 
