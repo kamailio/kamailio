@@ -23,6 +23,7 @@
 #define _HT_API_H_
 
 #include <time.h>
+#include <stdint.h>
 
 #include "../../core/usr_avp.h"
 #include "../../core/locking.h"
@@ -30,7 +31,7 @@
 #include "../../core/atomic_ops.h"
 
 #define ht_compute_hash(_s) core_case_hash(_s, 0, 0)
-#define ht_get_entry(_h, _size) (_h) & ((_size)-1)
+#define ht_get_entry(_h, _size) (_h) & ((_size) - 1)
 
 typedef struct _ht_cell
 {
@@ -40,6 +41,7 @@ typedef struct _ht_cell
 	str name;
 	int_str value;
 	time_t expire;
+	uint64_t last_modified; /* per-cell write ms timestamp */
 	struct _ht_cell *prev;
 	struct _ht_cell *next;
 } ht_cell_t;
@@ -97,6 +99,12 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 int ht_init_tables(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
+/* remote set with timestamp: set only if setlm > the stored last_modified */
+int ht_set_cell_lww(ht_t *ht, str *name, int type, int_str *val, int mode,
+		int exv, uint64_t setlm);
+/* local set with timestamp AND dmq replicate */
+int ht_set_cell_and_replicate(ht_t *ht, str *hname, str *name, int type,
+		int_str *val, int mode, int exv);
 int ht_del_cell(ht_t *ht, str *name);
 int ht_del_cell_confirm(ht_t *ht, str *name);
 ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old);
