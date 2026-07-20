@@ -10,4 +10,6 @@ if(NOT libjwt_FOUND)
   add_library(jwt::libjwt ALIAS PkgConfig::jwt)
 endif()
 
-target_link_libraries(${module_name} PRIVATE jwt::libjwt)
+find_package(CURL REQUIRED)
+
+target_link_libraries(${module_name} PRIVATE jwt::libjwt CURL::libcurl)
