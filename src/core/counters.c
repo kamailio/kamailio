@@ -24,6 +24,7 @@
 #include "str_hash.h"
 #include "str.h"
 #include "compiler_opt.h"
+#include "atomic_ops.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 
@@ -84,6 +85,25 @@ static int grp_no = 0; /* number of groups */
   _cnst_vals[proc_no*cnts_no+counter_id] */
 counter_array_t *_cnts_vals = 0;
 int _cnts_row_len = 0;			   /* number of elements per row */
+int _cnts_threaded = 0; /* atomic counter updates (multi-thread proc) */
+
+/* Switch this process's counter updates to atomic.
+ * Used by processes with multiple threads updating counters, e.g.,
+ * PROC_TCP_MAIN with ksr_tcp_main_threads > 0 */
+void counter_set_threaded(void)
+{
+	_cnts_threaded = 1;
+}
+
+void counter_inc_atomic(counter_handle_t handle)
+{
+	atomic_add_long(&counter_pprocess_val(process_no, handle), 1);
+}
+
+void counter_add_atomic(counter_handle_t handle, int v)
+{
+	atomic_add_long(&counter_pprocess_val(process_no, handle), v);
+}
 static unsigned short cnts_no = 0; /* number of registered counters */
 static int cnts_max_rows = 0;	   /* set to 0 if not yet fully init */
 char *ksr_stats_namesep = KSR_STATS_NAMESEP;

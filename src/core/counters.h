@@ -82,6 +82,13 @@ typedef struct counter_def_s counter_def_t;
 extern counter_array_t *_cnts_vals;
 extern int _cnts_row_len; /* number of elements per row */
 
+/* When non-zero, counter updates will use atomic operations;
+ * used by processes with multi-thread */
+extern int _cnts_threaded;
+void counter_set_threaded(void);
+void counter_inc_atomic(counter_handle_t handle);
+void counter_add_atomic(counter_handle_t handle, int v);
+
 
 int counters_initialized(void);
 int init_counters(void);
@@ -117,7 +124,10 @@ char *counter_get_doc(counter_handle_t handle);
  */
 inline static void counter_inc(counter_handle_t handle)
 {
-	counter_pprocess_val(process_no, handle)++;
+	if(_cnts_threaded)
+		counter_inc_atomic(handle);
+	else
+		counter_pprocess_val(process_no, handle)++;
 }
 
 
@@ -127,7 +137,10 @@ inline static void counter_inc(counter_handle_t handle)
  */
 inline static void counter_add(counter_handle_t handle, int v)
 {
-	counter_pprocess_val(process_no, handle) += v;
+	if(_cnts_threaded)
+		counter_add_atomic(handle, v);
+	else
+		counter_pprocess_val(process_no, handle) += v;
 }
 
 

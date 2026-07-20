@@ -5230,6 +5230,11 @@ void tcp_main_loop()
 #endif /* TCP_FD_CACHE */
 
 	if(ksr_tcp_main_threads != 0) {
+		/* This process is about to run several threads that share its single
+		 * per-process statistics counter row; make counter updates atomic so
+		 * concurrent increments from those threads are not lost. Must be set
+		 * before the threads are started. */
+		counter_set_threaded();
 		if(ksr_tcpx_proc_list_prepare() < 0) {
 			LM_ERR("failed to prepare multi-thread processing list\n");
 			goto error;
