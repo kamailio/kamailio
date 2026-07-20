@@ -435,6 +435,10 @@ route[RESUME] {
 		The parameters can contain variables.
 		</para>
 		<para>
+		Return: positive value (true) on success; negative value (false) on
+		failure.
+		</para>
+		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
@@ -461,9 +465,13 @@ route[RESUME] {
 			<function moreinfo="none">async_task_group_data(routename, groupname, data)</function>
 		</title>
 		<para>
-		Similar to async_task_route(), but allows to specify the name of the group
+		Similar to async_task_data(), but allows to specify the name of the group
 		for asynchronous workers. See also 'async_workers_group' core global
 		parameter.
+		</para>
+		<para>
+		Return: positive value (true) on success; negative value (false) on
+		failure.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
