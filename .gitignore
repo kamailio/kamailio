@@ -55,3 +55,11 @@ libiname.lst
 # compiling tools files
 .clangd
 compile_commands.json
+
+# ignore docs directory
+docs/
+
+# unit test binaries
+test_dbg
+test_ims_ipsec_rel18
+

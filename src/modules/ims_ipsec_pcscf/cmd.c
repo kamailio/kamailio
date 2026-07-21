@@ -2,6 +2,7 @@
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  * Copyright (C) 2019 Aleksandar Yosifov
+ * Copyright (C) 2026 Harish S <toharishs@gmail.com>
  *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
@@ -78,6 +79,56 @@ const int IPSEC_CMD_SUCCESS = 1;
 
 extern usrloc_api_t ul;
 extern struct tm_binds tmb;
+
+int ipsec_sa_params_changed(ipsec_t *old_sa, ipsec_t *new_sa)
+{
+	if(!old_sa || !new_sa)
+		return 1;
+	if(old_sa->prot.len != new_sa->prot.len)
+		return 1;
+	if(old_sa->prot.len > 0
+			&& (!old_sa->prot.s || !new_sa->prot.s
+					|| strncasecmp(
+							   old_sa->prot.s, new_sa->prot.s, old_sa->prot.len)
+							   != 0)) {
+		return 1;
+	}
+	if(old_sa->r_alg.len != new_sa->r_alg.len)
+		return 1;
+	if(old_sa->r_alg.len > 0
+			&& (!old_sa->r_alg.s || !new_sa->r_alg.s
+					|| strncasecmp(old_sa->r_alg.s, new_sa->r_alg.s,
+							   old_sa->r_alg.len)
+							   != 0)) {
+		return 1;
+	}
+	if(old_sa->r_ealg.len != new_sa->r_ealg.len)
+		return 1;
+	if(old_sa->r_ealg.len > 0
+			&& (!old_sa->r_ealg.s || !new_sa->r_ealg.s
+					|| strncasecmp(old_sa->r_ealg.s, new_sa->r_ealg.s,
+							   old_sa->r_ealg.len)
+							   != 0)) {
+		return 1;
+	}
+	if(old_sa->ik.len != new_sa->ik.len)
+		return 1;
+	if(old_sa->ik.len > 0
+			&& (!old_sa->ik.s || !new_sa->ik.s
+					|| memcmp(old_sa->ik.s, new_sa->ik.s, old_sa->ik.len)
+							   != 0)) {
+		return 1;
+	}
+	if(old_sa->ck.len != new_sa->ck.len)
+		return 1;
+	if(old_sa->ck.len > 0
+			&& (!old_sa->ck.s || !new_sa->ck.s
+					|| memcmp(old_sa->ck.s, new_sa->ck.s, old_sa->ck.len)
+							   != 0)) {
+		return 1;
+	}
+	return 0;
+}
 
 /* if set - set send force socket for request messages */
 #define IPSEC_SEND_FORCE_SOCKET 1

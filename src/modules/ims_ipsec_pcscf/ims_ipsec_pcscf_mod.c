@@ -30,8 +30,10 @@
 #include "../../modules/tm/tm_load.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
+#include "../../core/pt.h"
 #include "cmd.h"
 #include "spi_gen.h"
+#include "ipsec_evt.h"
 
 MODULE_VERSION
 
@@ -52,6 +54,7 @@ int spi_id_range = 1000;
 str ipsec_preferred_alg = STR_NULL;
 str ipsec_preferred_ealg = STR_NULL;
 int xfrm_user_selector = 143956232;
+int ipsec_enable_netlink_events = 1;
 
 ip_addr_t ipsec_listen_ip_addr;
 ip_addr_t ipsec_listen_ip_addr6;
@@ -119,6 +122,7 @@ static param_export_t params[] = {
 	{"ipsec_spi_id_range",		PARAM_INT, &spi_id_range			},
 	{"ipsec_preferred_alg",		PARAM_STR, &ipsec_preferred_alg		},
 	{"ipsec_preferred_ealg",	PARAM_STR, &ipsec_preferred_ealg	},
+	{"ipsec_enable_netlink_events", PARAM_INT, &ipsec_enable_netlink_events},
 	{0, 0, 0}
 };
 
@@ -416,6 +420,10 @@ static int mod_init(void)
 	atomic_set(ipsec_reconfig_flag, 0);
 	ipsec_init_flag = 1;
 
+	if(ipsec_enable_netlink_events) {
+		register_procs(1);
+	}
+
 	return 0;
 }
 
@@ -436,6 +444,17 @@ static void mod_destroy(void)
 
 static int child_init(int rank)
 {
+	if(rank == PROC_MAIN && ipsec_enable_netlink_events) {
+		int pid = fork_process(PROC_RPC, "IPSEC XFRM Expire Listener", 1);
+		if(pid < 0) {
+			LM_ERR("Failed to fork IPSEC XFRM Expire Listener process\n");
+			return -1;
+		}
+		if(pid == 0) {
+			ipsec_start_expire_listener();
+			exit(0);
+		}
+	}
 	return 0;
 }
 
