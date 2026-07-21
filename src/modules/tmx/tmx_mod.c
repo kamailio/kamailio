@@ -515,8 +515,8 @@ static int ki_t_cancel_branch_idx(sip_msg_t *msg, int tidx, int tlbl, int bidx)
 	int backup_T_branch = T_BR_UNDEFINED;
 	struct cancel_info cancel_data;
 
-	backup_T = get_t();
-	backup_T_branch = get_t_branch();
+	backup_T = _tmx_tmb.t_gett();
+	backup_T_branch = _tmx_tmb.t_gett_branch();
 
 	if(_tmx_tmb.t_lookup_ident_filter(&t, tidx, tlbl, 1) < 0) {
 		_tmx_tmb.t_sett(backup_T, backup_T_branch);
