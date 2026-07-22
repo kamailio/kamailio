@@ -391,15 +391,9 @@ static void ws_mark_failed_client(ws_connection_t *wsc)
 
 static int ws_send_buffer(int conid, char *buf, unsigned int len)
 {
-	ws_event_info_t wsev;
-	sr_event_param_t evp = {0};
-
-	memset(&wsev, 0, sizeof(ws_event_info_t));
-	wsev.type = SREV_TCP_WS_FRAME_OUT;
-	wsev.buf = buf;
-	wsev.len = len;
-	wsev.id = conid;
-	evp.data = (void *)&wsev;
+	ws_event_info_t wsev = {
+			.type = SREV_TCP_WS_FRAME_OUT, .buf = buf, .len = len, .id = conid};
+	sr_event_param_t evp = {.data = &wsev};
 
 	return (sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp) < 0) ? -1 : 1;
 }
