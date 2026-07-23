@@ -87,7 +87,13 @@ static int process_sec_agree_param(
 	if(strncasecmp(name.s, "alg", name.len) == 0) {
 		SEC_COPY_STR_PARAM(ret->r_alg, value);
 
-		if(ipsec_preferred_alg.len && STR_EQ(value, ipsec_preferred_alg)) {
+		if((ipsec_preferred_alg.len && STR_EQ(value, ipsec_preferred_alg))
+				|| (value.len == 16
+						&& strncasecmp(value.s, "hmac-sha-256-128", 16) == 0)
+				|| (value.len == 13
+						&& strncasecmp(value.s, "hmac-sha-1-96", 13) == 0)
+				|| (value.len == 11
+						&& strncasecmp(value.s, "hmac-md5-96", 11) == 0)) {
 			*alg_found = 1;
 		}
 	} else if(strncasecmp(name.s, "prot", name.len) == 0) {
@@ -97,7 +103,15 @@ static int process_sec_agree_param(
 	} else if(strncasecmp(name.s, "ealg", name.len) == 0) {
 		SEC_COPY_STR_PARAM(ret->r_ealg, value);
 
-		if(ipsec_preferred_ealg.len && STR_EQ(value, ipsec_preferred_ealg)) {
+		if((ipsec_preferred_ealg.len && STR_EQ(value, ipsec_preferred_ealg))
+				|| (value.len == 7 && strncasecmp(value.s, "aes-gcm", 7) == 0)
+				|| (value.len == 11
+						&& strncasecmp(value.s, "aes-256-gcm", 11) == 0)
+				|| (value.len == 11
+						&& strncasecmp(value.s, "aes-cbc-128", 11) == 0)
+				|| (value.len == 8 && strncasecmp(value.s, "3des-cbc", 8) == 0)
+				|| (value.len == 9
+						&& strncasecmp(value.s, "null-ealg", 9) == 0)) {
 			*ealg_found = 1;
 		}
 	} else if(strncasecmp(name.s, "spi-c", name.len) == 0) {
