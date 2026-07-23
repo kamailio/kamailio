@@ -75,6 +75,86 @@ modparam("db_mysql", "ping_interval", 600)
 </programlisting>
 		</example>
 	</section>
+	<section id="db_mysql.p.connect_timeout">
+		<title><varname>connect_timeout</varname> (integer)</title>
+		<para>
+		Connection timeout in seconds for MySQL server connection attempts.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 (2 sec).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>connect_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "connect_timeout", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="db_mysql.p.send_timeout">
+		<title><varname>send_timeout</varname> (integer)</title>
+		<para>
+		Send timeout in seconds for MySQL server operations. This option is only
+		enabled for MySQL client library versions >= 5.0.25 or >= 4.1.22.
+		If set to 0 and the client library supports it, the default value is 2 seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (0 - use default 2 sec if supported).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>send_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "send_timeout", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="db_mysql.p.receive_timeout">
+		<title><varname>receive_timeout</varname> (integer)</title>
+		<para>
+		Receive timeout in seconds for MySQL server operations. This option is only
+		enabled for MySQL client library versions >= 5.0.25 or >= 4.1.22.
+		If set to 0 and the client library supports it, the default value is 4 seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (0 - use default 4 sec if supported).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>receive_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "receive_timeout", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="db_mysql.p.retries">
+		<title><varname>retries</varname> (integer)</title>
+		<para>
+		Number of retries when a MySQL command fails.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (1 retry).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>retries</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "retries", 3)
+...
+</programlisting>
+		</example>
+	</section>
 	<section>
 		<title><varname>server_timezone</varname> (integer)</title>
 		<para>
@@ -178,6 +258,26 @@ modparam("db_mysql", "insert_delayed", 1)
 		<programlisting format="linespecific">
 ...
 modparam("db_mysql", "update_affected_found", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="db_mysql.p.unsigned_type">
+		<title><varname>unsigned_type</varname> (integer)</title>
+		<para>
+		If set to 1, unsigned integer types from MySQL are mapped to
+		unsigned types in the internal DB API.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (0 - off).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>unsigned_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "unsigned_type", 1)
 ...
 </programlisting>
 		</example>
