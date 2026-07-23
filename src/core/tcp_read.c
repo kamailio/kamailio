@@ -41,6 +41,7 @@
 
 #include <unistd.h>
 #include <stdlib.h> /* for abort() */
+#include <stdint.h> /* for uintptr_t */
 
 #include "dprint.h"
 #include "tcp_conn.h"
@@ -49,6 +50,9 @@
 #include "tcp_ev.h"
 #include "pass_fd.h"
 #include "globals.h"
+#include "tcp_server.h"
+#include "tcp_reactor.h"
+#include "mem/shm_mem.h"
 #include "receive.h"
 #include "timer.h"
 #include "local_timer.h"
@@ -117,7 +121,8 @@ enum fd_types
 {
 	F_NONE,
 	F_TCPMAIN,
-	F_TCPCONN
+	F_TCPCONN,
+	F_TCP_REACTOR /* mode 2: shared dispatch socket carrying SIP task pointers */
 };
 
 /* list of tcp connections handled by this process */
@@ -429,7 +434,11 @@ int tcp_read(struct tcp_connection *c, rd_conn_flags_t *flags)
 	unsigned int len;
 
 	r = &c->req;
-	fd = c->fd;
+	/* mode 2: tcp_main owns and reads the connection, where the socket fd is
+	 * c->s (c->fd is the fd-passing copy, only valid in a worker). _tconfd()
+	 * selects c->s in tcp_main and c->fd in a worker, so modes 0/1 are
+	 * unchanged. Matches the TLS read path, which already uses _tconfd(c). */
+	fd = _tconfd(c);
 	bytes_free = r->b_size - (unsigned int)(r->pos - r->buf);
 
 	if(unlikely(bytes_free <= 0)) {
@@ -1579,8 +1588,14 @@ int receive_tcp_msg(char *tcpbuf, unsigned int len,
 {
 	int ret = 0;
 #ifdef TCP_CLONE_RCVBUF
-	static char *buf = NULL;
-	static unsigned int bsize = 0;
+	/* mode 2: PROC_TCP_MAIN runs a pool of reader threads that all execute
+	 * receive_tcp_msg(). A process-global static clone buffer would be shared
+	 * across those threads - two of them memcpy their frame in and (for WS)
+	 * unmask in place, clobbering each other (garbage dispatched to workers).
+	 * _Thread_local gives each pool thread its own clone buffer. Harmless for
+	 * modes 0/1, where each reader is a single-threaded process. */
+	static _Thread_local char *buf = NULL;
+	static _Thread_local unsigned int bsize = 0;
 	int blen;
 
 	/* cloning is disabled via parameter */
@@ -1822,17 +1837,27 @@ again:
 			// if (unlikely(req->flags&F_TCP_REQ_MSRP_FRAME)){
 			if(unlikely(req->state == H_MSRP_FINISH)) {
 				/* msrp frame */
-				ret = receive_tcp_msg(
-						req->start, req->parsed - req->start, &con->rcv, con);
+				if(ksr_tcp_main_threads == 2)
+					ret = tcp_reactor_dispatch_msg(req->start,
+							req->parsed - req->start,
+							req->flags & F_TCP_REQ_MSRP_FRAME, &con->rcv);
+				else
+					ret = receive_tcp_msg(req->start, req->parsed - req->start,
+							&con->rcv, con);
 			} else
 #endif
 #ifdef READ_HTTP11
 					if(unlikely(req->state == H_HTTP11_CHUNK_FINISH)) {
 				/* http chunked request */
 				req->body[req->content_len] = 0;
-				ret = receive_tcp_msg(req->start,
-						req->body + req->content_len - req->start, &con->rcv,
-						con);
+				if(ksr_tcp_main_threads == 2)
+					ret = tcp_reactor_dispatch_msg(req->start,
+							req->body + req->content_len - req->start, 0,
+							&con->rcv);
+				else
+					ret = receive_tcp_msg(req->start,
+							req->body + req->content_len - req->start,
+							&con->rcv, con);
 			} else
 #endif
 #ifdef READ_WS
@@ -1842,6 +1867,11 @@ again:
 						req->start, req->parsed - req->start, &con->rcv, con);
 			} else
 #endif
+					if(ksr_tcp_main_threads == 2)
+				ret = tcp_reactor_dispatch_msg(req->start,
+						req->parsed - req->start, req->flags & F_TCP_REQ_HEP3,
+						&con->rcv);
+			else
 				ret = receive_tcp_msg(
 						req->start, req->parsed - req->start, &con->rcv, con);
 
@@ -2078,6 +2108,75 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 				goto con_error;
 			}
 			break;
+		case F_TCP_REACTOR: {
+			/* mode 2: PROC_TCP_MAIN dispatched a reassembled SIP message as a
+			 * shm task pointer over the shared dgram socket. Consume it, run
+			 * the message, and free the task. */
+			tcp_reactor_task_t *task;
+			uintptr_t task_ptr;
+		again_reactor:
+			ret = n = recv(fm->fd, &task_ptr, sizeof(task_ptr), MSG_DONTWAIT);
+			if(unlikely(n < 0)) {
+				if(errno == EWOULDBLOCK || errno == EAGAIN) {
+					ret = 0;
+					break;
+				} else if(errno == EINTR) {
+					goto again_reactor;
+				} else {
+					LM_CRIT("recv on reactor dispatch socket failed: %s [%d]\n",
+							strerror(errno), errno);
+					goto error;
+				}
+			}
+			if(unlikely(n == 0)) {
+				LM_ERR("EOF on reactor dispatch socket\n");
+				goto error;
+			}
+			if(unlikely(n != (int)sizeof(task_ptr))) {
+				LM_CRIT("short read on reactor dispatch socket: %d bytes\n", n);
+				goto error;
+			}
+			task = (tcp_reactor_task_t *)(uintptr_t)task_ptr;
+			if(unlikely(task == NULL)) {
+				LM_CRIT("null task pointer from tcp main\n");
+				break;
+			}
+			if(unlikely(task->flags & F_TCP_REQ_TLS_EVENT)) {
+				/* mode 2: run the dispatched tls:connection-out route here in
+				 * the worker - a single-threaded config context. The route
+				 * reads TLS metadata cached in shm (task->con->extra_data), so
+				 * no OpenSSL runs in the worker. Then hand the connection back
+				 * to PROC_TCP_MAIN, which drops the dispatch refcnt. */
+				long tls_resp[2];
+				if(likely(tls_hook.run_event_route != NULL))
+					tls_hook.run_event_route(task->con);
+				tls_resp[0] = (long)(uintptr_t)task->con;
+				tls_resp[1] = CONN_TLS_EVENT_DONE;
+				if(unlikely(tsend_stream(unix_tcp_sock, (char *)tls_resp,
+									sizeof(tls_resp), -1)
+							<= 0))
+					LM_ERR("failed to return tls-event conn to tcp main\n");
+				shm_free(task);
+				break;
+			}
+			/* The message buffer is self-describing; task->flags only picks
+			 * the entry point. HEP3/MSRP carry their own framing and go through
+			 * the same sr_event decoders as in modes 0/1. The worker has no
+			 * local tcp_connection, so con is NULL; the decoders that need the
+			 * connection id read it from rcv->proto_reserved1 (== con->id). */
+			if(unlikely(task->flags & F_TCP_REQ_HEP3))
+				hep3_process_msg(
+						task->msg_buf, task->msg_len, &task->rcv, NULL);
+#ifdef READ_MSRP
+			else if(unlikely(task->flags & F_TCP_REQ_MSRP_FRAME))
+				msrp_process_msg(
+						task->msg_buf, task->msg_len, &task->rcv, NULL);
+#endif
+			else
+				receive_msg(task->msg_buf, task->msg_len, &task->rcv);
+			shm_free(task);
+			break;
+		}
 		case F_TCPCONN:
 			con = (struct tcp_connection *)fm->data;
 			if(unlikely(con->state == S_CONN_BAD)) {
@@ -2188,9 +2287,22 @@ void tcp_receive_loop(int unix_sock)
 	if(init_local_timer(&tcp_reader_ltimer, get_ticks_raw()) != 0)
 		goto error;
 	/* add the unix socket */
-	if(io_watch_add(&io_w, tcpmain_sock, POLLIN, F_TCPMAIN, 0) < 0) {
-		LM_CRIT("failed to add tcp main socket to the fd list\n");
-		goto error;
+	if(ksr_tcp_main_threads == 2) {
+		/* mode 2: this worker is a pure SIP engine - it does not own tcp fds
+		 * and never receives them via fd-passing. Instead it consumes
+		 * reassembled SIP messages dispatched by PROC_TCP_MAIN over the shared
+		 * dgram socket. */
+		if(io_watch_add(&io_w, ksr_tcp_reactor_get_dispatch_rfd(), POLLIN,
+				   F_TCP_REACTOR, 0)
+				< 0) {
+			LM_CRIT("failed to add reactor dispatch socket to the fd list\n");
+			goto error;
+		}
+	} else {
+		if(io_watch_add(&io_w, tcpmain_sock, POLLIN, F_TCPMAIN, 0) < 0) {
+			LM_CRIT("failed to add tcp main socket to the fd list\n");
+			goto error;
+		}
 	}
 
 	/* initialize the config framework */

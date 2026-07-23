@@ -85,6 +85,12 @@ typedef struct tls_hooks
 	 * see: _tcpconn_add_alias_unsafe */
 	int (*match_connections_domain)(
 			struct tcp_connection *l_c, struct tcp_connection *r_c);
+	/* mode 2: run the tls:connection-out event route for c in the calling
+	 * (worker) process - a single-threaded config context. Set by the tls
+	 * module to tls_run_event_routes. Invoked by the reactor worker when it
+	 * receives a F_TCP_REQ_TLS_EVENT dispatch task (the SSL metadata the route
+	 * reads is already cached in shm c->extra_data). */
+	int (*run_event_route)(struct tcp_connection *c);
 } tls_hooks_t;
 
 
