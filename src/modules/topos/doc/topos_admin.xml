@@ -538,6 +538,41 @@ modparam("topos", "rr_update", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.sn_refresh_topology">
+		<title><varname>sn_refresh_topology</varname> (int)</title>
+		<para>
+			When set to 1, topos module will get local IPs based on
+			<emphasis>;sn=&lt;sockname&gt;</emphasis> embedded in the already stored s_rr.
+			Will compare them with the host:port part of the as_/bs_/s_rr.
+			Will do this for ANY in-dialog method except <emphasis>OPTIONS</emphasis>.
+			Will write to storage only if client "roamed" to different topos node.
+			(e.g. when "sn=" local IPs differ from what is already stored)
+		</para>
+		<para>
+			The masked user part (<emphasis>atpsh-/btpsh-&lt;uuid&gt;</emphasis> for the
+			as_/bs_contact) and all original URI parameters (e.g.
+			<emphasis>;sn=</emphasis> or <emphasis>;transport=</emphasis>) are preserved verbatim;
+			only the host:port slice is updated.
+		</para>
+		<para>
+			Also, if FQDN is found among as_/bs_/s_rr, refresh is skipped for them and same FQDN used.
+			This is useful in deployments where listen advertised address is IP (needed for Via),
+			but as_/bs_/s_rr host part is FQDN.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no refresh on in-dialog requests).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sn_refresh_topology</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "sn_refresh_topology", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="topos.p.context">
 		<title><varname>context</varname> (str)</title>
 		<para>

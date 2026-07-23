@@ -21,9 +21,9 @@
 
 /*!
  * \file
- * \brief SIP-router topoh ::
- * \ingroup topoh
- * Module: \ref topoh
+ * \brief SIP-router topos ::
+ * \ingroup topos
+ * Module: \ref topos
  */
 
 #include <string.h>
@@ -43,6 +43,7 @@
 #include "../../core/parser/parse_via.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_refer_to.h"
+#include "tps_sn.h"
 
 
 #include "tps_msg.h"
@@ -54,6 +55,7 @@ extern str _tps_cparam_name;
 extern int _tps_rr_update;
 extern int _tps_header_mode;
 extern unsigned int _tps_methods_update_time;
+extern int _tps_sn_refresh_topology;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -1032,6 +1034,8 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	int ret;
 	int use_branch = 0;
 	unsigned int metid = 0;
+	uint32_t up_mode = 0;
+	rr_t *srr = NULL;
 
 	LM_DBG("handling incoming request\n");
 
@@ -1174,6 +1178,55 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 					< 0) {
 				goto error;
 			}
+		}
+
+		/* refresh topology */
+		if(_tps_sn_refresh_topology && !(metid & METHOD_OPTIONS)) {
+
+			/* reset all interesting headers needed for refresh */
+			mtsd.s_rr.s = mtsd.as_contact.s = mtsd.bs_contact.s = 0;
+			mtsd.s_rr.len = mtsd.as_contact.len = mtsd.bs_contact.len = 0;
+
+			if(stsd.s_rr.len > 0
+					&& parse_rr_body(stsd.s_rr.s, stsd.s_rr.len, &srr) < 0) {
+				LM_ERR("failed to parse stored s_rr [%.*s]\n", stsd.s_rr.len,
+						stsd.s_rr.s);
+				srr = NULL;
+			}
+
+			/* refresh mtsd's s_rr */
+			tps_refresh_srr_from_sn(&mtsd, srr);
+			if(mtsd.s_rr.len > 0) {
+				up_mode |= TPS_DBU_SRR;
+			}
+
+			/* refresh mtsd's as/bs contacts */
+			tps_refresh_scontacts_from_sn(&mtsd, &stsd, srr);
+			if(mtsd.as_contact.len > 0 || mtsd.bs_contact.len > 0) {
+				up_mode |= TPS_DBU_SCONTACT;
+			}
+
+			/* store mtsd's s_rr/as/bs contacts if refreshed */
+			if(up_mode != 0) {
+				LM_DBG("dialog refresh call_id=%.*s method=%.*s cseq=%.*s: "
+					   "do persist, mode=0x%x\n",
+						msg->callid->body.len, msg->callid->body.s,
+						get_cseq(msg)->method.len, get_cseq(msg)->method.s,
+						get_cseq(msg)->number.len, get_cseq(msg)->number.s,
+						up_mode);
+				if(tps_storage_update_dialog(msg, &mtsd, &stsd, up_mode) < 0) {
+					free_rr(&srr);
+					goto error;
+				}
+			} else {
+				LM_DBG("dialog refresh call_id=%.*s method=%.*s cseq=%.*s: "
+					   "skip persist\n",
+						msg->callid->body.len, msg->callid->body.s,
+						get_cseq(msg)->method.len, get_cseq(msg)->method.s,
+						get_cseq(msg)->number.len, get_cseq(msg)->number.s);
+			}
+
+			free_rr(&srr);
 		}
 	}
 	return 0;
