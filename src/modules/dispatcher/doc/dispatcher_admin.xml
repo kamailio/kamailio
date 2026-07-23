@@ -2118,14 +2118,25 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">ds_load_unset()</function>
+		<function moreinfo="none">ds_load_unset([callid])</function>
 		</title>
 		<para>
 		Remove the call load for the destination that routed the call.
 		</para>
 		<para>
+		Without a parameter, the call is identified by the Call-ID of the current
+		message. The optional <emphasis>callid</emphasis> parameter (which may
+		contain pseudo-variables) identifies the call by an explicit Call-ID
+		instead of the current message, so the load can be released from a context
+		that does not carry the original Call-ID - for example the
+		<function>dialog:failed</function> event route, which may run with a
+		synthetic message: passing <emphasis>$dlg(callid)</emphasis> there
+		releases the load reliably regardless of the message that triggered the
+		event.
+		</para>
+		<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE and ONREPLY_ROUTE.
+			BRANCH_ROUTE, ONREPLY_ROUTE and EVENT_ROUTE.
 		</para>
 		<example>
 		<title><function>ds_load_unset</function> usage</title>
@@ -2150,6 +2161,12 @@ onreply_route {
             ds_load_unset();
     }
     ...
+}
+
+event_route[dialog:failed] {
+    # release the load by the dialog Call-ID, independent of the
+    # message that triggered the event
+    ds_load_unset("$dlg(callid)");
 }
 ...
 </programlisting>
