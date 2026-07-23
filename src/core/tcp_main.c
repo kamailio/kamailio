@@ -217,6 +217,38 @@ static ticks_t tcpconn_main_timeout(ticks_t, struct timer_ln *, void *);
 inline static int _tcpconn_add_alias_unsafe(struct tcp_connection *c, int port,
 		struct ip_addr *l_ip, int l_port, int flags);
 
+static void tcp_log_action(
+		struct tcp_connection *c, const char *action, const char *reason)
+{
+	char remote_ip[IP_ADDR_MAX_STRZ_SIZE];
+	char local_ip[IP_ADDR_MAX_STRZ_SIZE];
+	int len;
+
+	if(c == NULL) {
+		return;
+	}
+
+	if((len = ip_addr2sbufz(&c->rcv.src_ip, remote_ip, sizeof(remote_ip)))
+			<= 0) {
+		strcpy(remote_ip, "?");
+	} else {
+		remote_ip[len] = '\0';
+	}
+
+	if(c->rcv.dst_port != 0
+			&& (len = ip_addr2sbufz(&c->rcv.dst_ip, local_ip, sizeof(local_ip)))
+					   > 0) {
+		local_ip[len] = '\0';
+	} else {
+		strcpy(local_ip, "?");
+	}
+
+	LM_INFO("tcp action %s: id=%d state=%d flags=0x%x fd=%d local=%s:%u "
+			"remote=%s:%u reason=%s\n",
+			action, c->id, c->state, c->flags, c->s, local_ip, c->rcv.dst_port,
+			remote_ip, c->rcv.src_port, (reason != NULL) ? reason : "-");
+}
+
 
 /**
  *
@@ -2432,6 +2464,8 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 						su2a(&dst->to, sizeof(dst->to)), c);
 				goto conn_wait_error;
 			}
+			tcp_log_action(
+					c, "created", "pending outbound connect initialized");
 			if(c->flags & F_CONN_NOSEND) {
 				/* connection marked as no-send data
 				 * (e.g., drop() from tls event route)*/
@@ -2728,6 +2762,10 @@ conn_wait_close:
 	 * (if refcnt>2 it will be destroyed when the last sender releases the
 	 * connection (tcpconn_chld_put(c))) or when tcp_main receives a
 	 * CONN_ERROR it*/
+	if(unlikely(c->state == S_CONN_CONNECT)) {
+		tcp_log_action(c, "destroy",
+				"pending outbound connect aborted before promotion");
+	}
 	c->state = S_CONN_BAD;
 	/* we are here only if we opened a new fd (and not reused a cached or
 	 * a reader one) => if the connect was successful close the fd */
@@ -3643,6 +3681,10 @@ inline static void tcpconn_destroy(struct tcp_connection *tcpconn)
 {
 	LM_DBG("destroying connection %p (%d, %d) flags %04x\n", tcpconn,
 			tcpconn->id, tcpconn->s, tcpconn->flags);
+	if(unlikely(tcpconn->state == S_CONN_CONNECT)) {
+		tcp_log_action(tcpconn, "destroy",
+				"destroying connection still in S_CONN_CONNECT");
+	}
 	if(unlikely(tcpconn->flags & F_CONN_HASHED)) {
 		LM_CRIT("called with hashed connection (%p)\n", tcpconn);
 		/* try to continue */
@@ -4095,6 +4137,9 @@ inline static int handle_tcp_child(struct tcp_child *tcp_c, int fd_i)
 							(void *)tcpconn, atomic_get(&tcpconn->refcnt));
 					/* timeout */
 					if(unlikely(tcpconn->state == S_CONN_CONNECT)) {
+						tcp_log_action(tcpconn, "timed-out",
+								"pending outbound connect write timeout on "
+								"release");
 #ifdef USE_DST_BLOCKLIST
 						(void)dst_blocklist_su(BLST_ERR_CONNECT,
 								tcpconn->rcv.proto, &tcpconn->rcv.src_su,
@@ -4486,6 +4531,11 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			if(unlikely(tcpconn->type == PROTO_TLS))
 				(*tls_connections_no)++;
 			tcpconn->s = fd;
+			tcp_log_action(tcpconn, "promoted",
+					(cmd == CONN_NEW_PENDING_WRITE)
+							? "pending outbound connect promoted with queued "
+							  "write"
+							: "pending outbound connect promoted");
 			/* update the timeout*/
 			t = get_ticks_raw();
 			con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
@@ -4891,6 +4941,8 @@ inline static int handle_tcpconn_ev(
 								| F_CONN_WANTS_WR);
 			if(unlikely(ev & POLLERR)) {
 				if(unlikely(tcpconn->state == S_CONN_CONNECT)) {
+					tcp_log_action(tcpconn, "destroy",
+							"pending outbound connect got POLLERR");
 #ifdef USE_DST_BLOCKLIST
 					(void)dst_blocklist_su(BLST_ERR_CONNECT, tcpconn->rcv.proto,
 							&tcpconn->rcv.src_su, &tcpconn->send_flags, 0);
@@ -5073,6 +5125,8 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	/* if time out due to write, add it to the blocklist */
 	if(tcp_async && _wbufq_non_empty(c) && TICKS_GE(t, c->wbuf_q.wr_timeout)) {
 		if(unlikely(c->state == S_CONN_CONNECT)) {
+			tcp_log_action(
+					c, "timed out", "pending outbound connect timer expired");
 #ifdef USE_DST_BLOCKLIST
 			(void)dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto,
 					&c->rcv.src_su, &c->send_flags, 0);
