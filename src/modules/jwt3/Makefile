@@ -11,6 +11,10 @@ JWT_BUILDER=$(shell \
 	if pkg-config --exists libjwt; then \
 		echo 'pkg-config libjwt'; \
 	fi)
+CURL_BUILDER=$(shell \
+	if pkg-config --exists libcurl; then \
+		echo 'pkg-config libcurl'; \
+	fi)
 endif
 
 ifneq ($(JWT_BUILDER),)
@@ -19,6 +23,13 @@ ifneq ($(JWT_BUILDER),)
 else
 	DEFS += -I$(LOCALBASE)/include
 	LIBS += -L$(LOCALBASE)/lib -ljwt
+endif
+
+ifneq ($(CURL_BUILDER),)
+	DEFS += $(shell $(CURL_BUILDER) --cflags)
+	LIBS += $(shell $(CURL_BUILDER) --libs)
+else
+	LIBS += -lcurl
 endif
 
 include ../../Makefile.modules
