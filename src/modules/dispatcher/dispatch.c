@@ -2380,24 +2380,33 @@ int ds_load_remove_byid(int set, str *duid)
 /**
  *
  */
-int ds_load_remove(struct sip_msg *msg)
+static int ds_load_remove_bycallid(str *callid)
 {
 	ds_cell_t *it;
 
-	if((it = ds_get_cell(_dsht_load, &msg->callid->body)) == NULL) {
-		LM_ERR("cannot find load for (%.*s)\n", msg->callid->body.len,
-				msg->callid->body.s);
+	if((it = ds_get_cell(_dsht_load, callid)) == NULL) {
+		LM_ERR("cannot find load for (%.*s)\n", callid->len, callid->s);
 		return -1;
 	}
 
 	if(ds_load_remove_byid(it->dset, &it->duid) < 0) {
-		ds_unlock_cell(_dsht_load, &msg->callid->body);
+		ds_unlock_cell(_dsht_load, callid);
 		return -1;
 	}
-	ds_unlock_cell(_dsht_load, &msg->callid->body);
-	ds_del_cell(_dsht_load, &msg->callid->body);
+	ds_unlock_cell(_dsht_load, callid);
+	ds_del_cell(_dsht_load, callid);
 
 	return 0;
+}
+
+int ds_load_remove(struct sip_msg *msg)
+{
+	if(parse_headers(msg, HDR_CALLID_F, 0) != 0 || msg->callid == NULL
+			|| msg->callid->body.s == NULL || msg->callid->body.len <= 0) {
+		LM_ERR("cannot get Call-ID header\n");
+		return -1;
+	}
+	return ds_load_remove_bycallid(&msg->callid->body);
 }
 
 /**
@@ -2465,6 +2474,24 @@ int ds_load_unset(struct sip_msg *msg)
 			return 0;
 	}
 	return ds_load_remove(msg);
+}
+
+/**
+ * Off-load a call identified by an explicit Call-ID, independent of the
+ * current message. Useful where load must be released from a context that does
+ * not carry the original Call-ID (e.g. the dialog:failed event route, which may
+ * run with a synthetic message), by passing the dialog Call-ID instead.
+ */
+int ds_load_unset_callid(struct sip_msg *msg, str *callid)
+{
+	if(ds_xavp_dst.len <= 0)
+		return 0;
+
+	if(callid == NULL || callid->s == NULL || callid->len <= 0) {
+		LM_ERR("invalid Call-ID value\n");
+		return -1;
+	}
+	return ds_load_remove_bycallid(callid);
 }
 
 /**

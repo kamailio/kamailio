@@ -182,6 +182,7 @@ static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
 static int w_ds_mark_addr(struct sip_msg *msg, char *state, char *group,
 		char *uri);
 static int w_ds_load_unset(struct sip_msg*, char*, char*);
+static int w_ds_load_unset_cid(struct sip_msg*, char*, char*);
 static int w_ds_load_update(struct sip_msg*, char*, char*);
 
 static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
@@ -265,6 +266,8 @@ static cmd_export_t cmds[]={
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
+	{"ds_load_unset",    (cmd_function)w_ds_load_unset_cid, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
 		0, 0, ANY_ROUTE},
 	{"ds_is_active",  (cmd_function)w_ds_is_active, 1,
@@ -939,6 +942,19 @@ static int w_ds_mark_addr(
 static int w_ds_load_unset(struct sip_msg *msg, char *str1, char *str2)
 {
 	if(ds_load_unset(msg) < 0)
+		return -1;
+	return 1;
+}
+
+static int w_ds_load_unset_cid(struct sip_msg *msg, char *pcid, char *str2)
+{
+	str scid = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pcid, &scid) < 0) {
+		LM_ERR("failed to get Call-ID parameter\n");
+		return -1;
+	}
+	if(ds_load_unset_callid(msg, &scid) < 0)
 		return -1;
 	return 1;
 }
@@ -1794,6 +1810,11 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 	{ str_init("dispatcher"), str_init("ds_load_unset"),
 		SR_KEMIP_INT, ds_load_unset,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_load_unset_callid"),
+		SR_KEMIP_INT, ds_load_unset_callid,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dispatcher"), str_init("ds_reload"),
