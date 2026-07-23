@@ -287,7 +287,8 @@ int tps_storage_fill_contact(
 
 	append_port_proto = (ctmode == TPS_CONTACT_MODE_SKEYUSER
 								|| ctmode == TPS_CONTACT_MODE_RURIUSER
-								|| ctmode == TPS_CONTACT_MODE_XAVPUSER)
+								|| ctmode == TPS_CONTACT_MODE_XAVPUSER
+								|| ctmode == TPS_CONTACT_MODE_XAVPHOSTONLY)
 								? 1
 								: 0;
 
@@ -350,7 +351,8 @@ int tps_storage_fill_contact(
 			return -1;
 		}
 		cuser = uavu->val.v.s;
-	} else if(ctmode == TPS_CONTACT_MODE_XAVPHOST) {
+	} else if(ctmode == TPS_CONTACT_MODE_XAVPHOST
+			  || ctmode == TPS_CONTACT_MODE_XAVPHOSTONLY) {
 		/* extract the contact host from xavp */
 		vavu = get_xavu_host(dir);
 	}
@@ -412,7 +414,7 @@ int tps_storage_fill_contact(
 		add_uuid_param(td, uuid, dir);
 
 	} else {
-		/* contact_mode=0 or contact_mode=3 */
+		/* contact_mode=0 or contact_mode=3 or contact_mode=4 */
 		/* create new user part for Contact header URI */
 		if(dir == TPS_DIR_DOWNSTREAM) {
 			*td->cp = 'b';
@@ -425,9 +427,8 @@ int tps_storage_fill_contact(
 		*td->cp = '@';
 		td->cp++;
 
-		/* ctmode=0 preserves port/transport from original URI; ctmode=3 does not */
-		append_host_info(
-				td, &puri, vavu, (ctmode == TPS_CONTACT_MODE_SKEYUSER) ? 1 : 0);
+		/* ctmode=0 or 4 preserves port/transport from original URI; ctmode=3 does not */
+		append_host_info(td, &puri, vavu, append_port_proto);
 	}
 
 	/* Finalize the contact header */

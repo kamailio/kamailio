@@ -342,10 +342,11 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(_tps_contact_mode == TPS_CONTACT_MODE_XAVPHOST
+	if((_tps_contact_mode == TPS_CONTACT_MODE_XAVPHOST
+			   || _tps_contact_mode == TPS_CONTACT_MODE_XAVPHOSTONLY)
 			&& (_tps_xavu_cfg.len <= 0 || _tps_xavu_field_acontact_host.len <= 0
 					|| _tps_xavu_field_bcontact_host.len <= 0)) {
-		LM_ERR("contact_mode parameter is 3,"
+		LM_ERR("contact_mode parameter is 3 or 4,"
 			   " but a_contact_host or b_contact_host xavu fields not "
 			   "defined\n");
 		return -1;
