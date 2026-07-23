@@ -34,6 +34,7 @@
 #include "../../core/ut.h"
 #include "../../core/basex.h"
 #include "../topos/api.h"
+#include "../topos/tps_storage.h"
 #include "topos_htable_storage.h"
 
 extern topos_api_t _tps_api;
@@ -103,6 +104,171 @@ static int helper_htable_set_expire(str table, int n)
 /**
  *		TRANSACTION/DIALOG HELPER FUNCTIONS
  */
+static int tps_htable_store_callid_index(tps_data_t *td)
+{
+	char *ptr;
+	int ret = 0;
+	unsigned long expire = 0;
+	str callid = STR_NULL;
+	str auuid = STR_NULL;
+
+	if(td == NULL || !tps_data_is_reg_pub(td->s_method_id)) {
+		return 0;
+	}
+	if(td->a_callid.len <= 0 || td->s_method.len <= 0 || td->a_uuid.len <= 0) {
+		return 0;
+	}
+
+	callid = td->a_callid;
+	auuid = td->a_uuid;
+	expire = (unsigned long)tps_data_dialog_expire_ttl(
+			td, _tps_api.get_dialog_expire());
+	if(expire == 0) {
+		return 0;
+	}
+
+	ptr = _tps_htable_key_buf;
+	if(_tps_base64) {
+		base64url_enc(
+				callid.s, callid.len, _tps_base64_buf[0], TPS_BASE64_SIZE - 1);
+		base64url_enc(td->s_method.s, td->s_method.len, _tps_base64_buf[1],
+				TPS_BASE64_SIZE - 1);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s", _tps_base64_buf[0],
+				_tps_base64_buf[1]);
+	} else {
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s", callid.len,
+				callid.s, td->s_method.len, td->s_method.s);
+	}
+	if(ret <= 0 || ret >= TPS_HTABLE_SIZE_KEY) {
+		return -1;
+	}
+
+	ptr = _tps_htable_val_buf;
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL, "%.*s", auuid.len, auuid.s);
+	if(ret <= 0 || ret >= TPS_HTABLE_SIZE_VAL) {
+		return -1;
+	}
+
+	if(helper_htable_insert(_tps_htable_transaction) < 0) {
+		return -1;
+	}
+
+	return helper_htable_set_expire(_tps_htable_transaction, expire);
+}
+
+static int tps_htable_store_etag_index(tps_data_t *td)
+{
+	char *ptr;
+	int ret = 0;
+	unsigned long expire = 0;
+
+	if(td == NULL || td->s_method_id != METHOD_PUBLISH) {
+		return 0;
+	}
+	if(td->b_uri.len <= 0 || td->a_uuid.len <= 0) {
+		return 0;
+	}
+
+	expire = (unsigned long)tps_data_dialog_expire_ttl(
+			td, _tps_api.get_dialog_expire());
+	if(expire == 0) {
+		return 0;
+	}
+
+	ptr = _tps_htable_key_buf;
+	if(_tps_base64) {
+		base64url_enc(td->b_uri.s, td->b_uri.len, _tps_base64_buf[0],
+				TPS_BASE64_SIZE - 1);
+		base64url_enc(td->s_method.s, td->s_method.len, _tps_base64_buf[1],
+				TPS_BASE64_SIZE - 1);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "e|%s|%s", _tps_base64_buf[0],
+				_tps_base64_buf[1]);
+	} else {
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "e|%.*s|%.*s", td->b_uri.len,
+				td->b_uri.s, td->s_method.len, td->s_method.s);
+	}
+	if(ret <= 0 || ret >= TPS_HTABLE_SIZE_KEY) {
+		return -1;
+	}
+
+	ptr = _tps_htable_val_buf;
+	ret = snprintf(
+			ptr, TPS_HTABLE_SIZE_VAL, "%.*s", td->a_uuid.len, td->a_uuid.s);
+	if(ret <= 0 || ret >= TPS_HTABLE_SIZE_VAL) {
+		return -1;
+	}
+
+	if(helper_htable_insert(_tps_htable_transaction) < 0) {
+		return -1;
+	}
+
+	return helper_htable_set_expire(_tps_htable_transaction, expire);
+}
+
+static int tps_htable_store_tag_index(tps_data_t *md, tps_data_t *sd)
+{
+	char *ptr;
+	int ret = 0;
+	unsigned long expire = 0;
+	str auuid = STR_NULL;
+	str callid = STR_NULL;
+
+	if(md == NULL || sd == NULL || md->b_tag.len <= 0) {
+		return 0;
+	}
+
+	if(sd->a_callid.len > 0) {
+		callid = sd->a_callid;
+	} else if(md->a_callid.len > 0) {
+		callid = md->a_callid;
+	}
+	if(callid.len <= 0) {
+		return 0;
+	}
+
+	if(md->a_uuid.len > 0) {
+		auuid = md->a_uuid;
+	} else if(sd->a_uuid.len > 0) {
+		auuid = sd->a_uuid;
+	}
+	if(auuid.len <= 0) {
+		return 0;
+	}
+
+	expire = (unsigned long)_tps_api.get_branch_expire();
+	if(expire == 0) {
+		return 0;
+	}
+
+	ptr = _tps_htable_key_buf;
+	if(_tps_base64) {
+		base64url_enc(
+				callid.s, callid.len, _tps_base64_buf[0], TPS_BASE64_SIZE - 1);
+		base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[1],
+				TPS_BASE64_SIZE - 1);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s", _tps_base64_buf[0],
+				_tps_base64_buf[1]);
+	} else {
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s", callid.len,
+				callid.s, md->b_tag.len, md->b_tag.s);
+	}
+	if(ret <= 0 || ret >= TPS_HTABLE_SIZE_KEY) {
+		return -1;
+	}
+
+	ptr = _tps_htable_val_buf;
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL, "%.*s", auuid.len, auuid.s);
+	if(ret <= 0 || ret >= TPS_HTABLE_SIZE_VAL) {
+		return -1;
+	}
+
+	if(helper_htable_insert(_tps_htable_transaction) < 0) {
+		return -1;
+	}
+
+	return helper_htable_set_expire(_tps_htable_transaction, expire);
+}
+
 static int tps_htable_insert_initial_method_branch(
 		tps_data_t *md, tps_data_t *sd)
 {
@@ -204,6 +370,12 @@ static int tps_htable_insert_initial_method_branch(
 	ret = helper_htable_set_expire(_tps_htable_transaction, expire);
 	if(ret < 0) {
 		LM_ERR("failed to set expire\n");
+		return -1;
+	}
+
+	/* tag-only index for in-dialog lookup without uuid */
+	if(tps_htable_store_tag_index(md, sd) < 0) {
+		LM_ERR("failed to store tag index\n");
 		return -1;
 	}
 
@@ -641,8 +813,9 @@ int tps_htable_update_branch(
 
 	LM_DBG("HERE\n");
 
-	if(md->s_method_id == METHOD_INVITE
-			|| md->s_method_id == METHOD_SUBSCRIBE) {
+	if(md->s_method_id == METHOD_INVITE || md->s_method_id == METHOD_SUBSCRIBE
+			|| md->s_method_id == METHOD_REGISTER
+			|| md->s_method_id == METHOD_PUBLISH) {
 		if(tps_htable_insert_initial_method_branch(md, sd) < 0) {
 			LM_ERR("failed to insert %.*s extra initial branch data\n",
 					md->s_method.len, md->s_method.s);
@@ -743,9 +916,9 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 	// build key
 	ptr = _tps_htable_key_buf;
 	ret = (td->a_uuid.len > 0) ? snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-				  td->a_uuid.len, td->a_uuid.s)
+										 td->a_uuid.len, td->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-									   td->b_uuid.len, td->b_uuid.s);
+										 td->b_uuid.len, td->b_uuid.s);
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
@@ -857,19 +1030,24 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 
 
 	// set expire for key/val
-	if(td->s_method.len == 9 && strncmp(td->s_method.s, "SUBSCRIBE", 9) == 0) {
-		expire = td->expires;
-	} else {
-		expire = _tps_api.get_dialog_expire();
-	}
+	expire = tps_data_dialog_expire_ttl(td, _tps_api.get_dialog_expire());
 
 	if(expire == 0 || set_expire == 0) {
+		if(tps_htable_store_callid_index(td) < 0) {
+			LM_ERR("failed to store call-id index\n");
+			return -1;
+		}
 		return 0;
 	}
 
 	ret = helper_htable_set_expire(_tps_htable_dialog, expire);
 	if(ret < 0) {
 		LM_ERR("failed to set expire\n");
+		return -1;
+	}
+
+	if(tps_htable_store_callid_index(td) < 0) {
+		LM_ERR("failed to store call-id index\n");
 		return -1;
 	}
 
@@ -881,6 +1059,146 @@ int tps_htable_insert_dialog(tps_data_t *td)
 	return tps_htable_insert_dialog_helper(td, 1);
 }
 
+
+/**
+ *
+ */
+int tps_htable_load_dialog_by_tags(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	tps_data_t lmd;
+	char *ptr;
+	int ret = 0;
+	str hkey;
+	ht_cell_t *hval;
+
+	if(msg == NULL || md == NULL || sd == NULL) {
+		return -1;
+	}
+
+	if(md->s_method_id == METHOD_PUBLISH && md->b_uri.len > 0
+			&& md->s_method.len > 0) {
+		ptr = _tps_htable_key_buf;
+		if(_tps_base64) {
+			base64url_enc(md->b_uri.s, md->b_uri.len, _tps_base64_buf[0],
+					TPS_BASE64_SIZE - 1);
+			base64url_enc(md->s_method.s, md->s_method.len, _tps_base64_buf[1],
+					TPS_BASE64_SIZE - 1);
+			ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "e|%s|%s",
+					_tps_base64_buf[0], _tps_base64_buf[1]);
+		} else {
+			ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "e|%.*s|%.*s",
+					md->b_uri.len, md->b_uri.s, md->s_method.len,
+					md->s_method.s);
+		}
+		if(ret > 0 && ret < TPS_HTABLE_SIZE_KEY) {
+			hkey.s = _tps_htable_key_buf;
+			hkey.len = strlen(_tps_htable_key_buf);
+			hval = _tps_htable_api.get_clone(&_tps_htable_transaction, &hkey);
+			if(hval != NULL && hval->value.s.len > 0) {
+				memset(&lmd, 0, sizeof(tps_data_t));
+				lmd.cp = lmd.cbuf;
+				if(hval->value.s.len + 1 < TPS_DATA_SIZE) {
+					memcpy(lmd.cbuf, hval->value.s.s, hval->value.s.len);
+					lmd.cbuf[hval->value.s.len] = '\0';
+					lmd.a_uuid.s = lmd.cbuf;
+					lmd.a_uuid.len = hval->value.s.len;
+					pkg_free(hval);
+					return tps_htable_load_dialog(msg, &lmd, sd);
+				}
+				pkg_free(hval);
+			} else if(hval != NULL) {
+				pkg_free(hval);
+			}
+		}
+	}
+
+	if(tps_data_is_reg_pub(md->s_method_id) && md->a_callid.len > 0
+			&& md->s_method.len > 0) {
+		ptr = _tps_htable_key_buf;
+		if(_tps_base64) {
+			base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
+					TPS_BASE64_SIZE - 1);
+			base64url_enc(md->s_method.s, md->s_method.len, _tps_base64_buf[1],
+					TPS_BASE64_SIZE - 1);
+			ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s",
+					_tps_base64_buf[0], _tps_base64_buf[1]);
+		} else {
+			ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s",
+					md->a_callid.len, md->a_callid.s, md->s_method.len,
+					md->s_method.s);
+		}
+		if(ret > 0 && ret < TPS_HTABLE_SIZE_KEY) {
+			hkey.s = _tps_htable_key_buf;
+			hkey.len = strlen(_tps_htable_key_buf);
+			hval = _tps_htable_api.get_clone(&_tps_htable_transaction, &hkey);
+			if(hval != NULL && hval->value.s.len > 0) {
+				memset(&lmd, 0, sizeof(tps_data_t));
+				lmd.cp = lmd.cbuf;
+				if(hval->value.s.len + 1 < TPS_DATA_SIZE) {
+					memcpy(lmd.cbuf, hval->value.s.s, hval->value.s.len);
+					lmd.cbuf[hval->value.s.len] = '\0';
+					lmd.a_uuid.s = lmd.cbuf;
+					lmd.a_uuid.len = hval->value.s.len;
+					pkg_free(hval);
+					return tps_htable_load_dialog(msg, &lmd, sd);
+				}
+				pkg_free(hval);
+			} else if(hval != NULL) {
+				pkg_free(hval);
+			}
+		}
+	}
+
+	if(md->a_callid.len <= 0 || md->b_tag.len <= 0) {
+		LM_DBG("no call-id or to-tag for tag lookup\n");
+		return 1;
+	}
+
+	ptr = _tps_htable_key_buf;
+	if(_tps_base64) {
+		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
+				TPS_BASE64_SIZE - 1);
+		base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[1],
+				TPS_BASE64_SIZE - 1);
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s", _tps_base64_buf[0],
+				_tps_base64_buf[1]);
+	} else {
+		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s", md->a_callid.len,
+				md->a_callid.s, md->b_tag.len, md->b_tag.s);
+	}
+	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
+		LM_ERR("failed to build htable tag key\n");
+		return -1;
+	}
+
+	hkey.s = _tps_htable_key_buf;
+	hkey.len = strlen(_tps_htable_key_buf);
+
+	hval = _tps_htable_api.get_clone(&_tps_htable_transaction, &hkey);
+	if(hval == NULL || hval->value.s.len <= 0) {
+		LM_DBG("no tag index for <%.*s ~ %.*s>\n", md->a_callid.len,
+				md->a_callid.s, md->b_tag.len, md->b_tag.s);
+		if(hval != NULL) {
+			pkg_free(hval);
+		}
+		return 1;
+	}
+
+	memset(&lmd, 0, sizeof(tps_data_t));
+	lmd.cp = lmd.cbuf;
+	if(hval->value.s.len + 1 >= TPS_DATA_SIZE) {
+		pkg_free(hval);
+		return -1;
+	}
+	memcpy(lmd.cbuf, hval->value.s.s, hval->value.s.len);
+	lmd.cbuf[hval->value.s.len] = '\0';
+	lmd.a_uuid.s = lmd.cbuf;
+	lmd.a_uuid.len = hval->value.s.len;
+	pkg_free(hval);
+
+	return tps_htable_load_dialog(msg, &lmd, sd);
+}
 
 /**
  *
@@ -909,9 +1227,9 @@ int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	// build key
 	ptr = _tps_htable_key_buf;
 	ret = (md->a_uuid.len > 0) ? snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-				  md->a_uuid.len, md->a_uuid.s)
+										 md->a_uuid.len, md->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-									   md->b_uuid.len, md->b_uuid.s);
+										 md->b_uuid.len, md->b_uuid.s);
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
@@ -1074,6 +1392,10 @@ int tps_htable_update_dialog(
 
 			if(md->b_tag.len > 0) {
 				hval.b_tag = md->b_tag;
+				if(tps_htable_store_tag_index(md, sd) < 0) {
+					LM_ERR("failed to store tag index\n");
+					return -1;
+				}
 			}
 			liflags = sd->iflags | TPS_IFLAG_DLGON;
 			hval.iflags = liflags;
@@ -1128,8 +1450,23 @@ int tps_htable_update_dialog(
 		}
 		do_update = 1;
 
-		if(md->expires > 0) {
+		if(md->expires_valid && md->expires > 0) {
 			hval.expires = md->expires;
+			hval.expires_valid = 1;
+		}
+	}
+
+	if(mode & TPS_DBU_PUBETAG) {
+		if(!do_update) {
+			ret = tps_htable_load_dialog(msg, sd, &hval);
+			if(ret != 0) {
+				LM_ERR("dialog not loaded\n");
+				return -1;
+			}
+		}
+		do_update = 1;
+		if(sd->b_uri.len > 0) {
+			hval.b_uri = sd->b_uri;
 		}
 	}
 
@@ -1145,6 +1482,46 @@ int tps_htable_update_dialog(
 		return -1;
 	}
 
+	if((mode & TPS_DBU_TIME) && md->expires_valid && md->expires > 0) {
+		int ttl = tps_data_dialog_expire_ttl(md, _tps_api.get_dialog_expire());
+		if(ttl > 0 && helper_htable_set_expire(_tps_htable_dialog, ttl) < 0) {
+			LM_ERR("failed to refresh dialog expire\n");
+			return -1;
+		}
+	}
+
+	if(mode & TPS_DBU_TIME) {
+		tps_data_t idx;
+
+		memset(&idx, 0, sizeof(tps_data_t));
+		idx.a_callid = hval.a_callid;
+		idx.s_method = hval.s_method;
+		idx.s_method_id = md->s_method_id;
+		idx.a_uuid = hval.a_uuid;
+		idx.expires_valid = hval.expires_valid;
+		idx.expires = hval.expires;
+		if(tps_htable_store_callid_index(&idx) < 0) {
+			LM_ERR("failed to refresh call-id index\n");
+			return -1;
+		}
+	}
+
+	if((mode & TPS_DBU_PUBETAG) && hval.b_uri.len > 0) {
+		tps_data_t idx;
+
+		memset(&idx, 0, sizeof(tps_data_t));
+		idx.s_method_id = METHOD_PUBLISH;
+		idx.s_method = hval.s_method;
+		idx.b_uri = hval.b_uri;
+		idx.a_uuid = hval.a_uuid;
+		idx.expires_valid = hval.expires_valid;
+		idx.expires = hval.expires;
+		if(tps_htable_store_etag_index(&idx) < 0) {
+			LM_ERR("failed to store publish etag index\n");
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
@@ -1153,7 +1530,6 @@ int tps_htable_update_dialog(
  */
 int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
-	char *ptr;
 	int ret = 0;
 	int expire = 0;
 
@@ -1163,13 +1539,7 @@ int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		return -1;
 	}
 
-	if((md->s_method_id & METHOD_BYE)
-			|| (msg->first_line.u.reply.statuscode > 299
-					&& (get_cseq(msg)->method_id
-							& (METHOD_INVITE | METHOD_SUBSCRIBE)))
-			|| (md->s_method_id == METHOD_SUBSCRIBE && md->expires == 0)) {
-		// all good, end dialog by setting htable expire
-	} else {
+	if(!tps_data_end_dialog_match(msg, md)) {
 		LM_DBG("no method for ending dialog %d\n", md->s_method_id);
 		return 0;
 	}
@@ -1181,29 +1551,20 @@ int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 
 	LM_DBG("HERE\n");
 
-	// build key
-	ptr = _tps_htable_key_buf;
-	ret = (sd->a_uuid.len > 0) ? snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-				  sd->a_uuid.len, sd->a_uuid.s)
-							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-									   sd->b_uuid.len, sd->b_uuid.s);
-	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
-		LM_ERR("failed to build htable key\n");
-		return -1;
-	}
-	ptr[0] = 'a';
+	{
+		tps_data_t hval;
 
-	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
-				_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
+		memset(&hval, 0, sizeof(tps_data_t));
+		ret = tps_htable_load_dialog(msg, sd, &hval);
+		if(ret != 0) {
+			return -1;
+		}
+		hval.iflags = 0;
+		ret = tps_htable_insert_dialog_helper(&hval, 0);
+		if(ret != 0) {
+			return -1;
+		}
 	}
-	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
-		LM_ERR("failed to build htable key\n");
-		return -1;
-	}
-
 
 	// dialog ended -- keep it for branch lifetime only
 	expire = _tps_api.get_branch_expire();
@@ -1216,7 +1577,6 @@ int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		LM_ERR("failed to set expire\n");
 		return -1;
 	}
-
 
 	return 0;
 }
