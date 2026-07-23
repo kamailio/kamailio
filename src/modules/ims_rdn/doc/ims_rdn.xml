@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!-- Include general documentation entities -->
+<!-- This file added by %KTRVICT%
+     Creating branch: vict-tagging
+     Modified by branches: vict-tagging
+                         devel_rdn_xml -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+]>
+<book>
+  <bookinfo>
+
+    <title>ims_rdn Module</title>
+
+    <authorgroup>
+      <author>
+        <firstname>Peter</firstname>
+        <surname>Friedrich</surname>
+        <affiliation>
+          <orgname>Kontron Transportation GmbH</orgname>
+        </affiliation>
+      </author>
+
+      <author>
+        <firstname>Theo</firstname>
+        <surname>Scherney</surname>
+        <affiliation>
+          <orgname>Kontron Transportation GmbH</orgname>
+        </affiliation>
+        <email>theodor.scherney@kontron.com</email>
+      </author>
+
+      <author>
+        <firstname>Christoph P.</firstname>
+        <surname>Valentin</surname>
+        <affiliation>
+          <orgname>Kontron Transportation GmbH</orgname>
+        </affiliation>
+        <email>christoph.valentin@kontron.com</email>
+      </author>
+
+      <author>
+        <firstname>Christoph</firstname>
+        <surname>Eckl</surname>
+        <affiliation>
+          <orgname>Kontron Transportation GmbH</orgname>
+        </affiliation>
+        <email>christoph.eckl@kontron.com</email>
+      </author>
+
+      <author>
+        <firstname>Luca</firstname>
+        <surname>Nardin</surname>
+        <affiliation>
+          <orgname>Kontron Transportation GmbH</orgname>
+        </affiliation>
+        <email>luca.nardin@kontron.com</email>
+      </author>
+
+      <editor>
+        <firstname>Roman</firstname>
+        <surname>Onic</surname>
+        <affiliation>
+          <orgname>Kontron Transportation GmbH</orgname>
+        </affiliation>
+        <address>
+          <email>roman.onic@kontron.com</email>
+        </address>
+      </editor>
+
+    </authorgroup>
+
+    <copyright>
+      <year>2016 - 2025</year>
+      <holder>Kontron Transportation GmbH</holder>
+    </copyright>
+
+  </bookinfo>
+
+  <toc/>
+
+  <xi:include href="ims_rdn_admin.xml"
+              xmlns:xi="http://www.w3.org/2001/XInclude"/>
+</book>

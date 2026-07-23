@@ -1,0 +1,600 @@
+ims_rdn Module
+
+Peter Friedrich
+
+   Kontron Transportation GmbH
+
+Theo Scherney
+
+   Kontron Transportation GmbH
+   <theodor.scherney@kontron.com>
+
+Christoph P. Valentin
+
+   Kontron Transportation GmbH
+   <christoph.valentin@kontron.com>
+
+Christoph Eckl
+
+   Kontron Transportation GmbH
+   <christoph.eckl@kontron.com>
+
+Luca Nardin
+
+   Kontron Transportation GmbH
+   <luca.nardin@kontron.com>
+
+Edited by
+
+Roman Onic
+
+   Kontron Transportation GmbH
+
+   Copyright © 2016 - 2025 Kontron Transportation GmbH
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. list_file (e.g. rdn_services.list)
+              3.2. dpsi_file (e.g. dpsi.list)
+              3.3. cx_userdata_templates (e.g. CxUserData_tmpl.xml)
+              3.4. rdn_node_type (integer)
+
+        4. Functions
+
+              4.1. analyse_eirene_ruri()
+              4.2. analyse_e164_ruri()
+              4.3. analyse_dpsi_ruri()
+              4.4. analyse_domain_ruri()
+              4.5. prepare_term_unreg(domain)
+
+        5. Exported pseudo-variables
+
+              5.1. rdn_as_name
+              5.2. rdn_scscf_name
+              5.3. rdn_sessiontype
+              5.4. rdn_hardcoded_ruri
+              5.5. rdn_del
+              5.6. rdn_insrt
+
+   List of Examples
+
+   1.1. list_file parameter usage
+   1.2. dpsi_file parameter usage
+   1.3. cx_userdata_templates parameter usage
+   1.4. rdn_node_type parameter usage
+   1.5. analyse_eirene_ruri usage
+   1.6. analyse_e164_ruri usage
+   1.7. analyse_dpsi_ruri usage
+   1.8. analyse_domain_ruri usage
+   1.9. prepare_term_unreg usage
+   1.10. rdn_as_name pseudo-variable usage
+   1.11. rdn_scscf_name pseudo-variable usage
+   1.12. rdn_sessiontype pseudo-variable usage
+   1.13. rdn_hardcoded_ruri pseudo-variable usage
+   1.14. rdn_del pseudo-variable usage
+   1.15. rdn_insrt pseudo-variable usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. list_file (e.g. rdn_services.list)
+        3.2. dpsi_file (e.g. dpsi.list)
+        3.3. cx_userdata_templates (e.g. CxUserData_tmpl.xml)
+        3.4. rdn_node_type (integer)
+
+   4. Functions
+
+        4.1. analyse_eirene_ruri()
+        4.2. analyse_e164_ruri()
+        4.3. analyse_dpsi_ruri()
+        4.4. analyse_domain_ruri()
+        4.5. prepare_term_unreg(domain)
+
+   5. Exported pseudo-variables
+
+        5.1. rdn_as_name
+        5.2. rdn_scscf_name
+        5.3. rdn_sessiontype
+        5.4. rdn_hardcoded_ruri
+        5.5. rdn_del
+        5.6. rdn_insrt
+
+1. Overview
+
+   This module contains rdn (railway dedicated network) related functions
+   for an IMS environment (S-CSCF and/or I-CSCF).
+
+   This module is most useful for terminating unregistered services that
+   are triggered by the I/S-CSCF and that are identified by hierarchical
+   address ranges of E.164 addresses and of EIRENE addresses (in the
+   Request-URI), not unlike wildcarded PSIs.
+
+   By configuring these address ranges at the I/S-CSCF, one can save one
+   SAR/SAA exchange with the HSS per call.
+
+   EIRENE addresses are railway specific telephone numbers, which have
+   been defined by the UIC. This explains the name of the module RDN =
+   Railway Dedicated Networks.
+
+   Additionally, this module defines kamailio transformations, which are
+   tailored for the use in RDNs, e.g. for the transformation of functional
+   numbers and of MCData SDS into instant messages and vice versa.
+
+   This module is even more useful, when implementing an IWF according to
+   ETSI TS 103 792, in which case some specific routing scripts will be
+   needed.
+
+   Following high level functions are provided by this module:
+     * Definition of RDN Services with or without MCx AS Delivery
+     *
+          + rdn_services.list: EIRENE RDN Services
+          + rdn_services.list: E.164 RDN Services
+          + dpsi.list: Distinct PSI RDN Services
+          + dpsi.list: Domain Based RDN Services
+     * analyse_eirene_ruri() - search EIRENE RDN Service from $ru
+     * analyse_e164_ruri() - search E.164 RDN Service from $ru
+     * analyse_dpsi_ruri() - search Distinct PSI RDN Service from $ru
+     * analyse_domain_ruri() - search Domain based PSI RDN Service from
+       $ru
+     * prepare_term_unreg(domain) - prepare service, after it has been
+       found by analyse_..._ruri()
+     * analyse_eirene_pvar("pv") - search EIRENE RDN Service from PV
+     * analyse_e164_ruri() - search E.164 RDN Service from PV
+     * analyse_dpsi_ruri() - search Distinct PSI RDN Service from PV
+     * analyse_domain_ruri() - search Domain based PSI RDN Service from PV
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   After kamailio core modules the following modules must be loaded before
+   this module:
+     * TM - Transaction Manager
+     * ims_userloc_scscf (if used on S-CSCF)
+     * ims_registrar_scscf (if used on S-CSCF)
+
+2.2. External Libraries or Applications
+
+   This module requires the internal IMS library.
+
+3. Parameters
+
+   3.1. list_file (e.g. rdn_services.list)
+   3.2. dpsi_file (e.g. dpsi.list)
+   3.3. cx_userdata_templates (e.g. CxUserData_tmpl.xml)
+   3.4. rdn_node_type (integer)
+
+3.1. list_file (e.g. rdn_services.list)
+
+   This file contains the digit combinations with their respective
+   application server/service key.
+
+   Default value is 'rdn_services.list'.
+
+   Example 1.1. list_file parameter usage
+...
+modparam("ims_rdn", "list_file", "/usr/etc/kamailio-scscf-ref/rdn_services.list"
+)
+...
+
+rdn_services.list entry example:
+...
+# digits application server     sessiontype  hardcoded-RURI   DEL INSRT
+0432     sip:my-as.com          first-answer sip:srvc@ims.net 3   43
++4350255 sip:my-as.com          private      sip:srvc@ims.net 0
++49      sip:my-as.com          private
+...
+
+NOTE: lets assume a Req-URI sip:043287654321@ims.net;user=gsmr is received.
+      In this case the first row will apply, where hardcoded-RURI, DEL and
+      INSRT are not empty.
+
+      I.e. - we have an EIRENE RDN Service WITH MCx AS Delivery.
+
+      Lets assume a Req-URI sip:+43502553468@ims.net;user=phone is received.
+      In this case the second row will apply and we have an E.164 RDN Service
+      WITH MCx AS Delivery.
+
+      Lets assume a Req-URI sip:+49684512345@ims.net;user=phone is received.
+      In this case the third row will apply and we have an E.164 RDN Service
+      withOUT MCx AS Delivery (4th, 5th and 6th column are empty). The Request
+      will not receive a "special MCPTT handling" by the routing configuration
+
+NOTE: The digits field must contain digits only - kamailio server fails
+      to start in case digits field contains non digit characters.
+
+3.2. dpsi_file (e.g. dpsi.list)
+
+   This file contains the distinct public service identifiers with their
+   respective application server/sessiontype, and it contains the
+   descriptions of the domain based RDN services.
+
+   Default value is 'dpsi.list'.
+
+   Example 1.2. dpsi_file parameter usage
+...
+modparam("ims_rdn", "dpsi_file", "/usr/etc/kamailio-scscf-ref/dpsi.list")
+...
+
+dpsi.list entry example:
+...
+# service             application server         sessiontype
+ service34            sip:172.29.21.20:5060      mcptt34
+ MESSAGE@ipsmgw.com   sip:172.29.21.19:5060      ipsmgw
+...
+
+NOTE: Size of hash table is currently optimized for 64 entries.
+
+3.3. cx_userdata_templates (e.g. CxUserData_tmpl.xml)
+
+   This file is a part of the common configuration and should only be
+   changed, if you really know what you do.
+
+   Default value is '/usr/etc/CFG_COMMON/CxUserData_tmpl.xml'.
+
+   Example 1.3. cx_userdata_templates parameter usage
+...
+modparam("ims_rdn", "cx_userdata_templates", "/usr/etc/kamailio-scscf/CxUserData
+_tmpl.xml")
+...
+
+3.4. rdn_node_type (integer)
+
+   This parameter replaces the old i_am_at_icscf flag and defines the node
+   type where the ims_rdn module is running.
+
+   Depending on the value, the module will behave accordingly, especially
+   in terms of database interactions, and whether certain functions such
+   as prepare_fa_delivery() and prepare_term_unreg() are available, which
+   are only applicable when operating as an S-CSCF.
+
+   When using Multi-MCx Domain Support (i.e., when rdn_node_type is set to
+   16 or 17), two additional columns are expected for each entry in
+   rdn_services.list and dpsi.list: MCx Domain and IWF Domain. These must
+   be inserted after the AS/S-CSCF FQDN and after the session type. If the
+   support is not enabled (i.e., rdn_node_type < 16), these columns must
+   not be present.
+
+   Note: The optional S-CSCF flag is treated as part of the AS/S-CSCF FQDN
+   field and is not counted as a separate column. Therefore, the FQDN is
+   considered to be in column 3, and the session type in column 4 (unless
+   MCx support or special handling shifts this further).
+     * MCx domain indicates the source domain (e.g., for the originating
+       UE)
+     * IWF domain defines the target domain (e.g., for the terminating UE
+       or IWF AS)
+     * Hardcoded R-URI defines the target AS or gateway for MCx delivery
+
+   If any of these fields are missing, the module will reject the
+   configuration entry at startup and log an error such as: Cannot add RDN
+   service. Special handling needs hardcoded RURI(...)
+
+   Supported values:
+     * 0 S-CSCF (default mode)
+     * 1 I-CSCF
+     * 16 S-CSCF with Multi MCx Domain Support
+     * 17 I-CSCF with Multi MCx Domain Support
+
+   Example 1.4. rdn_node_type parameter usage
+  ...
+  modparam("ims_rdn", "rdn_node_type", 1)
+  ...
+
+4. Functions
+
+   4.1. analyse_eirene_ruri()
+   4.2. analyse_e164_ruri()
+   4.3. analyse_dpsi_ruri()
+   4.4. analyse_domain_ruri()
+   4.5. prepare_term_unreg(domain)
+
+4.1. analyse_eirene_ruri()
+
+   The function presumes that the user has checked, whether the Req-URI
+   actually contains an EIRENE FN (e.g. by checking for the URI parameter
+   "user=gsmr").
+
+   The function searches for a contiguous block of digits in the userpart
+   of the Req-URI and compares these digits with the stored digit tree of
+   EIRENE RDN Services.
+
+   If it finds a matching EIRENE RDN Service in the file
+   rdn_services.list, then it stores the values from the found row in AVPs
+   and returns positive.
+
+   If it encounters a problem, e.g. if no service is found, then a
+   negative result is returned.
+
+   Negative return codes can be interpreted as follows:
+     * -1 (generic error, service not found) - a generic error has
+       happened or the service has not been found (e.g. Req-URI cannot be
+       parsed, no matching service found for this Req-URI)
+     * -2 (AVPs could not be stored) - everything went well, but at last
+       the AVPs could not be stored, PVs will be incorrect
+
+   Positive return codes can be interpreted as follows:
+     * 1 (OK) - everything went well. The next action should be calling
+       prepare_term_unreg() to prepare the DB for the ims_isc module
+     * 2 (Mx-Delivery) - everything went well. However the hardcoded-RURI
+       (4th column in the file rdn_services.list) does not contain a
+       userpart, i.e. it is an FQDN (of the AS), but not a PSI. Hence the
+       IMS Subscription cannot be stored to DB and calling
+       prepare_term_unreg() will be useless. The routing script should
+       deliver the Request to the AS via the Mx interface ("per FQDN", but
+       not "per PSI")
+
+   This function can be used in REQUEST_ROUTE only.
+
+   Example 1.5. analyse_eirene_ruri usage
+...
+
+# Terminating
+
+xlog("L_INFO", "Detected: this transaction is on the \"Term\" S-CSCF");
+
+if (uri == myself || uri =~ "tel:.*") {
+  if (!term_impu_registered("location")) {
+    xlog("L_INFO", "user not registered -> try unreg services");
+    $var(ret) = analyse_domain_ruri();
+    if ($var(ret) < 0) {
+      $var(ret) = (uri_param("user","gsmr") && ($rU=~"^[0-9]+$"));
+      if ($var(ret)) {
+        $var(ret) = analyse_eirene_ruri();
+      } else {
+        $var(ret)=(uri_param("user","phone") && ($rU =~ "^\+[0-9]+$")));
+        if ($var(ret)) {
+          $var(ret) = analyse_e164_ruri();
+        } else {
+          $var(ret) = analyse_dpsi_ruri();
+        }
+      }
+    }
+    if ($var(ret) < 0){
+      if ($var(ret) == -2) {
+        xlog("L_ERR", "found RDN service/DPSI, could not set AVP");
+        sl_send_reply("500", "Server Internal Error - Cannot set AVP");
+        exit;
+      }
+      xlog("L_INFO", "did not find RDN Service/DPSI -> try UNREG SAR");
+      assign_server_unreg("UNREG_SAR_REPLY", "location", "term");
+      exit;
+    }
+    else {
+      if (!prepare_term_unreg("location")) {
+        xlog("L_ERR", "found RDN service/DPSI, cannot prepare DB for sending");
+        sl_send_reply("500", "Server Internal Error - Cannot prepare sending ser
+vice");
+        exit;
+      }
+      if ($var(ret) == 2) {
+        xlog("L_INFO", "RDN Service has hardcoded RURI, but w/o user part");
+        route(fwd);
+        exit;
+      }
+      xlog("L_INFO", "could prepare unreg terminating service -> continue");
+    }
+  }
+  else {
+    xlog("L_INFO", "user is registered at this S-CSCF, continue");
+  }
+} else {
+  xlog("L_INFO", "Terminating S-CSCF detects: this request is not for me");
+  sl_send_reply("403","Forbidden - Domain not served");
+  exit();
+}
+route(term);
+break;
+...
+
+4.2. analyse_e164_ruri()
+
+   Same function like analyse_eirene_ruri(), just it applies to E.164 RDN
+   Services in the file rdn_services.list.
+
+   This function can be used in REQUEST_ROUTE only.
+
+   Example 1.6. analyse_e164_ruri usage
+...
+see the example at function analyse_eirene_ruri
+...
+
+4.3. analyse_dpsi_ruri()
+
+   Same function like analyse_eirene_ruri(), just it applies to DPSIs in
+   the file dpsi.list.
+
+   This function can be used in REQUEST_ROUTE only.
+
+   Example 1.7. analyse_dpsi_ruri usage
+...
+see the example at function analyse_eirene_ruri
+...
+
+4.4. analyse_domain_ruri()
+
+   Same function like analyse_eirene_ruri(), just it applies to domain
+   based RDN Services in the file dpsi.list.
+
+   This function can be used in REQUEST_ROUTE only.
+
+   Example 1.8. analyse_domain_ruri usage
+...
+see the example at function analyse_eirene_ruri
+...
+
+4.5. prepare_term_unreg(domain)
+
+   This function is not applicable at an I-CSCF
+
+   The function presumes that the user has called one of the functions
+   analyse_eirene_ruri(), analyse_e164_ruri(), analyse_dpsi_ruri() or
+   analyse_domain_ruri() and the result was 1.
+
+   It looks up the stored values in the AVPs and tries to update the scscf
+   database with an unregistered subscription. IMS subscription data are
+   prepared including application server name for routing the INVITE/
+   PUBLISH/ SUBSCRIBE/ MESSAGE/ or REFER/ message to the Application
+   Server. The information about the service is kept in the AVPs and can
+   still be read out from the routing configuration by using the PVs
+   defined by this module.
+
+   If it encounters a problem, e.g. if the DB cannot be accessed, then a
+   negative result is returned.
+
+   Negative return codes can be interpreted as follows:
+     * -1 (generic error) - a generic error has happened (e.g. Cx user
+       data could not be parsed, contacts could not be updated in DB)
+
+   Positive return codes can be interpreted as follows::
+     * 1 (OK) - everything went well. The next call of
+       isc_match_filter("term","location") - see the description of module
+       ims_isc - will deliver the request to the AS
+
+   Meaning of the parameters is as follows:
+     * domain - Logical domain within registrar.
+
+   This function can be used in REQUEST_ROUTE only.
+
+   Example 1.9. prepare_term_unreg usage
+...
+see the example at function analyse_eirene_ruri
+...
+
+5. Exported pseudo-variables
+
+   5.1. rdn_as_name
+   5.2. rdn_scscf_name
+   5.3. rdn_sessiontype
+   5.4. rdn_hardcoded_ruri
+   5.5. rdn_del
+   5.6. rdn_insrt
+
+5.1. rdn_as_name
+
+   Returns the value of the 2nd column of the found row of tables
+   rdn_services.list or dpsi.list, after one of the functions
+   prepare_fa_delivery(), analyse_eirene_ruri(), analyse_e164_ruri(),
+   analyse_dpsi_ruri() or analyse_domain_ruri() has successfully detected
+   an RDN Service or a DPSI.
+
+   This PV is used on the S-CSCF. Please refer to rdn_scscf_name for
+   I-CSCF.
+
+   Example 1.10. rdn_as_name pseudo-variable usage
+...
+# add Route header
+$rdn_as_name
+...
+
+5.2. rdn_scscf_name
+
+   Returns the value of the 2nd column of the found row of tables
+   rdn_services.list or dpsi.list, after one of the functions
+   prepare_fa_delivery(), analyse_eirene_ruri(), analyse_e164_ruri(),
+   analyse_dpsi_ruri() or analyse_domain_ruri() has successfully detected
+   an RDN Service or a DPSI.
+
+   This PV is used on the I-CSCF. Please refer to rdn_as_name for S-CSCF.
+
+   Example 1.11. rdn_scscf_name pseudo-variable usage
+...
+# add Route header
+$rdn_scscf_name
+...
+
+5.3. rdn_sessiontype
+
+   Returns the value of the 3rd column of the found row of tables
+   rdn_services.list or dpsi.list, after one of the functions
+   prepare_fa_delivery(), analyse_eirene_ruri(), analyse_e164_ruri(),
+   analyse_dpsi_ruri() or analyse_domain_ruri() has successfully detected
+   an RDN Service or a DPSI.
+
+   Example 1.12. rdn_sessiontype pseudo-variable usage
+...
+# add sessiontype
+$rdn_sessiontpye
+...
+
+5.4. rdn_hardcoded_ruri
+
+   Returns the value of the 4th column of the found row of tables
+   rdn_services.list, if it exists, after one of the functions
+   prepare_fa_delivery(), analyse_eirene_ruri() or analyse_e164_ruri() has
+   successfully detected an RDN Service.
+
+   If this PV is $null or an empty string, then the 4th, 5th and 6th
+   column of the found row are empty. Hence we have an "RDN Service
+   WITHOUT MCx AS Delivery (no MCPTT handling necessary)
+
+   If this PV is a string with the value "*", then the routing
+   configuration SHALL NOT replace the Req-URI with the value of this PV.
+
+   Otherwise, the routing configuration shall replace the Req-URI with
+   this value, before calling isc_match_filter().
+
+   Example 1.13. rdn_hardcoded_ruri pseudo-variable usage
+...
+## flexible modification of Request URI (depends on position in digit tree)
+## the PVs $rdn_sessiontype, $rdn_hardcoded_ruri, $rdn_insrt and $rdn_del
+## have been looked up by the function prepare_fa_delivery and can be
+##  different for each RDN service
+##    make an E.164 from a CT8
+##    make a functional alias from a CT5
+##    make a functional alias from a CT1
+##    make a functional alias from a CT7
+if ($rdn_sessiontype == "prearranged")
+  $var(ibsipr) = "sip:g.mcptt." + $rdn_insrt + $(rU{s.substr,$rdn_del,0}) +
+                 ".prearranged@" + NETWORKNAME + ";user=gsmr";
+else
+  $var(ibsipr) = "sip:+" + $rdn_insrt + $(rU{s.substr,$rdn_del,0}) +
+                 "@" + NETWORKNAME + ";user=phone";
+$ru = $rdn_hardcoded_ruri;
+...
+
+5.5. rdn_del
+
+   Returns the value of the 5th column of the found row of the table
+   rdn_services.list, after one of the functions prepare_fa_delivery(),
+   analyse_eirene_ruri() or analyse_e164_ruri() has successfully detected
+   an RDN Service.
+
+   Example 1.14. rdn_del pseudo-variable usage
+...
+see the example above (rdn_hardcoded_ruri)
+...
+
+5.6. rdn_insrt
+
+   Returns the value of the 6th column of the found row of the table
+   rdn_services.list, after one of the functions prepare_fa_delivery(),
+   analyse_eirene_ruri() or analyse_e164_ruri() has successfully detected
+   an RDN Service.
+
+   Example 1.15. rdn_insrt pseudo-variable usage
+...
+see the example above (rdn_hardcoded_ruri)
+...
