@@ -541,6 +541,7 @@ LATENCY_LOG				latency_log
 LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
 LATENCY_LIMIT_CFG		latency_limit_cfg
+LATENCY_SAMPLE_N		latency_sample_n
 
 RPC_EXEC_DELTA_CFG		"rpc_exec_delta"
 RPC_EXEC_LOCKS_CFG		"rpc_exec_locks"
@@ -1115,6 +1116,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}
 <INITIAL>{LATENCY_LIMIT_ACTION}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_ACTION;}
 <INITIAL>{LATENCY_LIMIT_CFG}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_CFG;}
+<INITIAL>{LATENCY_SAMPLE_N}  { count(); yylval.strval=yytext; return LATENCY_SAMPLE_N;}
 <INITIAL>{RPC_EXEC_DELTA_CFG}  { count(); yylval.strval=yytext; return RPC_EXEC_DELTA_CFG;}
 <INITIAL>{RPC_EXEC_LOCKS_CFG}  { count(); yylval.strval=yytext; return RPC_EXEC_LOCKS_CFG;}
 <INITIAL>{RPC_EXEC_LOCKS_MODE_CFG}  { count(); yylval.strval=yytext; return RPC_EXEC_LOCKS_MODE_CFG;}

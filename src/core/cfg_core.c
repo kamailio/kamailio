@@ -124,6 +124,7 @@ struct cfg_group_core default_core_cfg = {
 		0,	   /*!< latency limit db */
 		0,	   /*!< latency limit action */
 		0,	   /*!< latency limit cfg */
+		1,	   /*!< latency sample n */
 		0,	   /*!< pv_cache_dump */
 		2048,  /*!< pv_cache_limit */
 		0	   /*!< pv_cache_action */
@@ -340,6 +341,8 @@ cfg_def_t core_cfg_def[] = {
 				"limit in ms for alerting on time consuming config actions"},
 		{"latency_limit_cfg", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
 				"limit in ms for alerting on time consuming config execution"},
+		{"latency_sample_n", CFG_VAR_INT | CFG_ATOMIC, 1, 0, 0, 0,
+				"sample one in N route latency updates (1 means all)"},
 		{"pv_cache_dump", CFG_VAR_INT, 0, 0, 0, pv_cache_dump_cb,
 				"dump process pv cache, parameter: pid_number"},
 		{"pv_cache_limit", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
