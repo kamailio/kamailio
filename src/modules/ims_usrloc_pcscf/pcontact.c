@@ -301,6 +301,18 @@ int new_pcontact(struct udomain *_d, str *_contact, struct pcontact_info *_ci,
 				_ci->rx_regsession_id->len);
 		(*_c)->rx_session_id.len = _ci->rx_regsession_id->len;
 	}
+	if(_ci->instance_id && _ci->instance_id->s && _ci->instance_id->len > 0) {
+		STR_SHM_DUP((*_c)->instance_id, (*_ci->instance_id), "new_pcontact");
+	}
+	if(_ci->pub_gruu && _ci->pub_gruu->s && _ci->pub_gruu->len > 0) {
+		STR_SHM_DUP((*_c)->pub_gruu, (*_ci->pub_gruu), "new_pcontact");
+	}
+	if(_ci->temp_gruu && _ci->temp_gruu->s && _ci->temp_gruu->len > 0) {
+		STR_SHM_DUP((*_c)->temp_gruu, (*_ci->temp_gruu), "new_pcontact");
+	}
+	if(_ci->path && _ci->path->s && _ci->path->len > 0) {
+		STR_SHM_DUP((*_c)->path, (*_ci->path), "new_pcontact");
+	}
 
 	LM_DBG("New contact host:port [%.*s:%d]\n", (*_c)->contact_host.len,
 			(*_c)->contact_host.s, (*_c)->contact_port);
@@ -358,6 +370,14 @@ void free_pcontact(pcontact_t *_c)
 
 	if(_c->rx_session_id.len > 0 && _c->rx_session_id.s)
 		shm_free(_c->rx_session_id.s);
+	if(_c->path.s)
+		shm_free(_c->path.s);
+	if(_c->instance_id.s)
+		shm_free(_c->instance_id.s);
+	if(_c->pub_gruu.s)
+		shm_free(_c->pub_gruu.s);
+	if(_c->temp_gruu.s)
+		shm_free(_c->temp_gruu.s);
 	shm_free(_c);
 }
 
