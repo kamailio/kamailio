@@ -4124,6 +4124,9 @@ inline static int handle_tcp_child(struct tcp_child *tcp_c, int fd_i)
 #endif /* TCP_ASYNC */
 				break;
 			}
+			/* the connection is returning to service:
+			 * clear any stale close reason a prior timeout left on it. */
+			tcpconn->event = 0;
 			/* update the timeout*/
 			t = get_ticks_raw();
 			con_lifetime = tcpconn->lifetime;
@@ -4359,6 +4362,8 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 				io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 				tcpconn->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
 			}
+			/* emit the close event route (tcp:closed/timeout/reset) */
+			tcp_emit_closed_event(tcpconn);
 			tcpconn_put_destroy(tcpconn); /* dec refcnt & destroy on 0 */
 			break;
 		case CONN_GET_FD:
@@ -5157,6 +5162,11 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	TCP_STATS_CON_TIMEOUT();
 #endif /* TCP_ASYNC */
 	LM_DBG("timeout for %p\n", c);
+	/* The connection timed out and is torn down here.
+	 * Emit the close event so the tcp:timeout event route fires */
+	if(c->event == 0)
+		c->event = TCP_CLOSED_TIMEOUT;
+	tcp_emit_closed_event(c);
 	if(likely(c->flags & F_CONN_HASHED)) {
 		c->flags &= ~(F_CONN_HASHED | F_CONN_MAIN_TIMER);
 		c->state = S_CONN_BAD;
@@ -5893,6 +5903,9 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 					mcmd[0] = (long)con;
 					mcmd[1] = CONN_EOF;
 
+					/* message read/data timeout: record the close reason
+					 * so that tcpops can identify tcp:timeout */
+					con->event = TCP_CLOSED_TIMEOUT;
 					con->send_flags.f |= SND_F_CON_CLOSE;
 					con->flags |= F_CONN_FORCE_EOF;
 

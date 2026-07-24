@@ -313,9 +313,14 @@ int tcp_read_data(int fd, struct tcp_connection *c, char *buf, int b_size,
 		rd_conn_flags_t *flags)
 {
 	int bytes_read;
+	int read_errno = 0; /* errno captured at the read() syscall (see below) */
 
 again:
 	bytes_read = read(fd, buf, b_size);
+	/* Snapshot errno immediately: switch()/dst_blocklist and
+	 * LOG()/async_tkv_emit() may change errno.
+	 * Needed to set the correct close reason for tcpops */
+	read_errno = errno;
 
 	if(likely(bytes_read != b_size)) {
 		if(unlikely(bytes_read == -1)) {
@@ -366,16 +371,30 @@ again:
 				}
 				LOG(cfg_get(core, core_cfg, corelog),
 						"error reading: %s (%d) ([%s]:%u -> [%s]:%u)\n",
-						strerror(errno), errno, ip_addr2xa(&c->rcv.src_ip),
-						c->rcv.src_port, ip_addr2xa(&c->rcv.dst_ip),
-						c->rcv.dst_port);
+						strerror(read_errno), read_errno,
+						ip_addr2xa(&c->rcv.src_ip), c->rcv.src_port,
+						ip_addr2xa(&c->rcv.dst_ip), c->rcv.dst_port);
 				async_tkv_emit(1200, "tcp-read-error",
-						"erno=%d;srcip=%s;dstip=%s", errno,
+						"erno=%d;srcip=%s;dstip=%s", read_errno,
 						ip_addr2xa(&c->rcv.src_ip), ip_addr2xa(&c->rcv.dst_ip));
-				if(errno == ETIMEDOUT) {
+				/* classify using read_errno */
+				if(read_errno == ETIMEDOUT) {
 					c->event = TCP_CLOSED_TIMEOUT;
-				} else if(errno == ECONNRESET) {
+				} else if(read_errno == ECONNRESET) {
 					c->event = TCP_CLOSED_RESET;
+				} else {
+					/* read_errno itself unhelpful (e.g. a TLS-layer failure that
+					 * left no socket errno) - recover the true socket error from
+					 * SO_ERROR so a reset is still classified as such. */
+					int soerr = 0;
+					socklen_t soerr_len = sizeof(soerr);
+					int grc = getsockopt(
+							fd, SOL_SOCKET, SO_ERROR, &soerr, &soerr_len);
+					if(grc == 0 && soerr == ECONNRESET) {
+						c->event = TCP_CLOSED_RESET;
+					} else if(grc == 0 && soerr == ETIMEDOUT) {
+						c->event = TCP_CLOSED_TIMEOUT;
+					}
 				}
 				return -1;
 			}
@@ -387,7 +406,22 @@ again:
 					ip_addr2xa(&c->rcv.dst_ip), c->rcv.dst_port);
 			c->state = S_CONN_EOF;
 			*flags |= RD_CONN_EOF;
-			c->event = TCP_CLOSED_EOF;
+			/* Classify the close reason - otherwise
+			 * tcp:reset may be mis-identified as tcp:closed
+			 * and tcpops runs the wrong route. */
+			if(likely(c->event == 0)) {
+				int soerr = 0;
+				socklen_t soerr_len = sizeof(soerr);
+				if(unlikely(bytes_read != 0)
+						&& getsockopt(
+								   fd, SOL_SOCKET, SO_ERROR, &soerr, &soerr_len)
+								   == 0
+						&& soerr == ECONNRESET) {
+					c->event = TCP_CLOSED_RESET;
+				} else {
+					c->event = TCP_CLOSED_EOF;
+				}
+			}
 		} else {
 			if(unlikely(c->state == S_CONN_CONNECT
 						|| c->state == S_CONN_ACCEPT)) {
