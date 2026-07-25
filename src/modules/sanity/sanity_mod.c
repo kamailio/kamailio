@@ -37,6 +37,7 @@
 #include "../../core/parser/contact/contact.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_rr.h"
+#include "../../core/parser/parse_ppi_pai.h"
 
 MODULE_VERSION
 
@@ -56,6 +57,7 @@ int sn_size_to_uri = 256;
 int sn_size_contact_uri = 256;
 int sn_size_route_uri = 256;
 int sn_size_path_uri = 256;
+int sn_size_pai_uri = 256;
 int sn_size_header = 2048;
 int sn_size_headers = 8192;
 int sn_size_body = 8192;
@@ -103,6 +105,7 @@ static param_export_t params[] = {
 	{"size_contact_uri", PARAM_INT, &sn_size_contact_uri},
 	{"size_route_uri", PARAM_INT, &sn_size_route_uri},
 	{"size_path_uri", PARAM_INT, &sn_size_path_uri},
+	{"size_pai_uri", PARAM_INT, &sn_size_pai_uri},
 	{"size_header", PARAM_INT, &sn_size_header},
 	{"size_headers", PARAM_INT, &sn_size_headers},
 	{"size_body", PARAM_INT, &sn_size_body},
@@ -168,6 +171,8 @@ int sanity_check_sizes(sip_msg_t *msg)
 	contact_t *cb = NULL;
 	rr_t *rb = NULL;
 	hdr_field_t *hf = NULL;
+	p_id_body_t *pib = NULL;
+	int i = 0;
 
 	if(sn_size_message > 0) {
 		if(msg->len > sn_size_message) {
@@ -319,6 +324,28 @@ int sanity_check_sizes(sip_msg_t *msg)
 					}
 				}
 			}
+		}
+	}
+	if(sn_size_pai_uri > 0) {
+		if(parse_pai_header(msg) == 0) {
+			for(hf = msg->pai; hf != NULL; hf = next_sibling_hdr(hf)) {
+				if(hf->type == HDR_PAI_T) {
+					pib = (p_id_body_t *)hf->parsed;
+					if(pib == NULL) {
+						LM_DBG("failed to parse P-Asserted-Identity header "
+							   "body\n");
+						return SANITY_CHECK_FAILED;
+					}
+					for(i = 0; i < pib->num_ids; i++) {
+						if(pib->id[i].uri.len > sn_size_pai_uri) {
+							return SANITY_CHECK_FAILED;
+						}
+					}
+				}
+			}
+		} else if(msg->pai != NULL) {
+			LM_DBG("failed to parse P-Asserted-Identity headers\n");
+			return SANITY_CHECK_FAILED;
 		}
 	}
 	if(sn_size_header > 0) {
