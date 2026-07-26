@@ -67,7 +67,17 @@ static void trim_whitespaces(str *string)
 	}
 }
 
+/* Free any previous value before overwriting it. A Security-Client or
+ * Security-Verify header may carry several comma-separated ipsec-3gpp offers,
+ * so the same parameter (alg/ealg/prot/mod) can be parsed more than once;
+ * without this free the earlier shm allocation is orphaned on every
+ * (re-)registration. The last parsed value is kept, as before. */
 #define SEC_COPY_STR_PARAM(DST, SRC) \
+	if(DST.s != NULL) {              \
+		shm_free(DST.s);             \
+		DST.s = NULL;                \
+		DST.len = 0;                 \
+	}                                \
 	DST.s = shm_malloc(SRC.len);     \
 	if(DST.s == NULL) {              \
 		SHM_MEM_ERROR;               \
