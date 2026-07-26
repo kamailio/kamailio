@@ -1013,12 +1013,23 @@ cleanup:
 	// stored on the contact. Free it here, otherwise it leaks on every
 	// re-registration. On the initial path ipsec_swapped==1 and data.ipsec is
 	// now owned by the contact - do NOT free it.
-	// sec_header is intentionally left alone (freed via the data_lump path).
 	if(req_sec_params && !ipsec_swapped && req_sec_params->data.ipsec) {
 		free_ipsec_data(req_sec_params->data.ipsec);
 		req_sec_params->data.ipsec = NULL;
 	}
-	// Do not free str* sec_header! It will be freed in data_lump.c -> free_lump()
+	// Free the security_t wrapper and its sec_header (a private shm copy of the
+	// request header name, never added to a lump). They are not stored on the
+	// contact, so without this they leak on every (re-)registration. data.ipsec
+	// is either freed just above (re-reg) or owned by the contact (initial swap)
+	// and must not be touched here.
+	if(req_sec_params) {
+		if(req_sec_params->sec_header.s) {
+			shm_free(req_sec_params->sec_header.s);
+			req_sec_params->sec_header.s = NULL;
+		}
+		shm_free(req_sec_params);
+		req_sec_params = NULL;
+	}
 	ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 	pkg_free(ci.received_host.s);
 	pkg_free(ci.aor.s);
