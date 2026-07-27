@@ -40,6 +40,7 @@ typedef struct sipdump_data
 	struct timeval tv;
 	str data;
 	str tag;
+	str call_id;
 	int afid;
 	int protoid;
 	str src_ip;

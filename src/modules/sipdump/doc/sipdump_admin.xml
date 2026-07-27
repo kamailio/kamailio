@@ -294,6 +294,29 @@ end
 </programlisting>
 		</example>
 	</section>
+	<section id="sipdump.p.parse_call_id">
+		<title><varname>parse_call_id</varname> (int)</title>
+		<para>
+			If set to 1, the Call-ID header is searched in the captured SIP
+			message and its value is exported in the
+			<emphasis>$sipdump(call_id)</emphasis> variable. It is relevant
+			only when the 'mode' parameter has the flag 2 set (execute event
+			route).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>parse_call_id</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sipdump", "parse_call_id", 1)
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
@@ -363,6 +386,10 @@ sipdump_send("cfg");
 		<para>
 			Executed when sipdump handles messages and mode parameter has flag 2 set.
 			The variable $sipdump(...) is available inside the event route.
+		</para>
+		<para>
+			The key 'call_id' is set only if the 'parse_call_id' parameter is
+			enabled, otherwise $sipdump(call_id) is $null.
 		</para>
 		<para>
 			If drop() is used in event_route, then writing to file is no longer
