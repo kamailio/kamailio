@@ -44,6 +44,8 @@
 #include "../../core/receive.h"
 #include "../../core/kemi.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/parser/parse_hname2.h"
+#include "../../core/parser/parser_f.h"
 
 #include "sipdump_write.h"
 
@@ -59,6 +61,7 @@ int sipdump_mode = SIPDUMP_MODE_WTEXT;
 static str sipdump_event_callback = STR_NULL;
 static int sipdump_fage = 0;
 static str sipdump_fagex = STR_NULL;
+static int parse_call_id = 0;
 
 static int sipdump_event_route_idx = -1;
 
@@ -94,6 +97,7 @@ static param_export_t params[]={
 	{"fagex",          PARAM_STR,   &sipdump_fagex},
 	{"mode",           PARAM_INT,   &sipdump_mode},
 	{"event_callback", PARAM_STR,   &sipdump_event_callback},
+	{"parse_call_id",  PARAM_INT,   &parse_call_id},
 
 	{0, 0, 0}
 };
@@ -347,6 +351,73 @@ static int w_sipdump_send(sip_msg_t *msg, char *ptag, char *str2)
 static sipdump_data_t *sipdump_event_data = NULL;
 
 /**
+ * find the Call-ID header in the captured (raw) SIP message buffer
+ * and store it in sdi->call_id
+ */
+static void sipdump_parse_call_id(sipdump_data_t *sdi)
+{
+	hdr_field_t hdr;
+	char *p, *end, *hend, *next_p;
+	str body;
+
+	sdi->call_id.s = NULL;
+	sdi->call_id.len = 0;
+
+	if(sdi->data.s == NULL || sdi->data.len <= 0) {
+		return;
+	}
+
+	p = sdi->data.s;
+	end = p + sdi->data.len;
+
+	/* skip the first line (request or status line) */
+	p = q_memchr(p, '\n', end - p);
+	if(p == NULL) {
+		return;
+	}
+	p++;
+
+	while(p < end) {
+		if(*p == '\r' || *p == '\n') {
+			/* end of headers, no Call-ID found */
+			return;
+		}
+		/* header name only - no allocation, no header body parsing */
+		body.s = parse_sip_header_name(p, end, &hdr, 0, 0);
+		if(hdr.type == HDR_ERROR_T) {
+			LM_DBG("failed to parse header name\n");
+			return;
+		}
+		body.s = eat_lws_end(body.s, end);
+
+		/* find the end of the header body, coping with line folding */
+		next_p = body.s;
+		do {
+			next_p = q_memchr(next_p, '\n', end - next_p);
+			if(next_p == NULL) {
+				return;
+			}
+			hend = next_p;
+			next_p++;
+		} while(next_p < end && (*next_p == ' ' || *next_p == '\t'));
+
+		/* exclude the trailing CR when the line ends with CRLF */
+		if(hend > body.s && *(hend - 1) == '\r') {
+			hend--;
+		}
+
+		if(hdr.type == HDR_CALLID_T) {
+			body.len = hend - body.s;
+			trim_r(body);
+			sdi->call_id = body;
+			return;
+		}
+		/* next_p is past the LF - start of the next header line */
+		p = next_p;
+	}
+}
+
+/**
  *
  */
 int sipdump_event_route(sipdump_data_t *sdi)
@@ -362,6 +433,10 @@ int sipdump_event_route(sipdump_data_t *sdi)
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
 	fmsg = faked_msg_next();
+
+	if(parse_call_id)
+		sipdump_parse_call_id(sdi);
+
 	sipdump_event_data = sdi;
 
 	if(sipdump_event_route_idx >= 0) {
@@ -739,6 +814,12 @@ int pv_parse_sipdump_name(pv_spec_t *sp, str *in)
 			else
 				goto error;
 			break;
+		case 7:
+			if(strncmp(in->s, "call_id", 7) == 0)
+				sp->pvp.pvn.u.isname.name.n = 10;
+			else
+				goto error;
+			break;
 		case 8:
 			if(strncmp(in->s, "src_port", 8) == 0)
 				sp->pvp.pvn.u.isname.name.n = 8;
@@ -796,6 +877,12 @@ int pv_get_sipdump(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		case 9: /* dst_port */
 			return pv_get_uintval(
 					msg, param, res, sipdump_event_data->dst_port);
+		case 10: /* call_id */
+			if(sipdump_event_data->call_id.s == NULL
+					|| sipdump_event_data->call_id.len <= 0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &sipdump_event_data->call_id);
 		default:
 			/* 0 - tag */
 			return pv_get_strval(msg, param, res, &sipdump_event_data->tag);
