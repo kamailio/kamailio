@@ -26,13 +26,18 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. ping_interval (integer)
-              3.2. server_timezone (integer)
-              3.3. timeout_interval (integer)
-              3.4. auto_reconnect (integer)
-              3.5. insert_delayed (integer)
-              3.6. update_affected_found (integer)
-              3.7. opt_ssl_mode (integer)
-              3.8. opt_ssl_ca (string)
+              3.2. connect_timeout (integer)
+              3.3. send_timeout (integer)
+              3.4. receive_timeout (integer)
+              3.5. retries (integer)
+              3.6. server_timezone (integer)
+              3.7. timeout_interval (integer)
+              3.8. auto_reconnect (integer)
+              3.9. insert_delayed (integer)
+              3.10. update_affected_found (integer)
+              3.11. unsigned_type (integer)
+              3.12. opt_ssl_mode (integer)
+              3.13. opt_ssl_ca (string)
 
         4. Functions
         5. Installation
@@ -41,16 +46,21 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set ping_interval parameter
-   1.2. Set server_timezone parameter
-   1.3. Set timeout_interval parameter
-   1.4. Set auto_reconnect parameter
-   1.5. Set insert_delayed parameter
-   1.6. Set update_affected_found parameter
-   1.7. Set opt_ssl_mode parameter
-   1.8. Set opt_ssl_ca parameter
-   1.9. Set a my.cnf group in db_url parameter
-   1.10. Adding a kamailio group to my.cnf
-   1.11. Using [client] and specific group
+   1.2. Set connect_timeout parameter
+   1.3. Set send_timeout parameter
+   1.4. Set receive_timeout parameter
+   1.5. Set retries parameter
+   1.6. Set server_timezone parameter
+   1.7. Set timeout_interval parameter
+   1.8. Set auto_reconnect parameter
+   1.9. Set insert_delayed parameter
+   1.10. Set update_affected_found parameter
+   1.11. Set unsigned_type parameter
+   1.12. Set opt_ssl_mode parameter
+   1.13. Set opt_ssl_ca parameter
+   1.14. Set a my.cnf group in db_url parameter
+   1.15. Adding a kamailio group to my.cnf
+   1.16. Using [client] and specific group
 
 Chapter 1. Admin Guide
 
@@ -65,13 +75,18 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. ping_interval (integer)
-        3.2. server_timezone (integer)
-        3.3. timeout_interval (integer)
-        3.4. auto_reconnect (integer)
-        3.5. insert_delayed (integer)
-        3.6. update_affected_found (integer)
-        3.7. opt_ssl_mode (integer)
-        3.8. opt_ssl_ca (string)
+        3.2. connect_timeout (integer)
+        3.3. send_timeout (integer)
+        3.4. receive_timeout (integer)
+        3.5. retries (integer)
+        3.6. server_timezone (integer)
+        3.7. timeout_interval (integer)
+        3.8. auto_reconnect (integer)
+        3.9. insert_delayed (integer)
+        3.10. update_affected_found (integer)
+        3.11. unsigned_type (integer)
+        3.12. opt_ssl_mode (integer)
+        3.13. opt_ssl_ca (string)
 
    4. Functions
    5. Installation
@@ -104,13 +119,18 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. ping_interval (integer)
-   3.2. server_timezone (integer)
-   3.3. timeout_interval (integer)
-   3.4. auto_reconnect (integer)
-   3.5. insert_delayed (integer)
-   3.6. update_affected_found (integer)
-   3.7. opt_ssl_mode (integer)
-   3.8. opt_ssl_ca (string)
+   3.2. connect_timeout (integer)
+   3.3. send_timeout (integer)
+   3.4. receive_timeout (integer)
+   3.5. retries (integer)
+   3.6. server_timezone (integer)
+   3.7. timeout_interval (integer)
+   3.8. auto_reconnect (integer)
+   3.9. insert_delayed (integer)
+   3.10. update_affected_found (integer)
+   3.11. unsigned_type (integer)
+   3.12. opt_ssl_mode (integer)
+   3.13. opt_ssl_ca (string)
 
 3.1. ping_interval (integer)
 
@@ -124,7 +144,57 @@ Chapter 1. Admin Guide
 modparam("db_mysql", "ping_interval", 600)
 ...
 
-3.2. server_timezone (integer)
+3.2. connect_timeout (integer)
+
+   Connection timeout in seconds for MySQL server connection attempts.
+
+   Default value is 2 (2 sec).
+
+   Example 1.2. Set connect_timeout parameter
+...
+modparam("db_mysql", "connect_timeout", 5)
+...
+
+3.3. send_timeout (integer)
+
+   Send timeout in seconds for MySQL server operations. This option is
+   only enabled for MySQL client library versions >= 5.0.25 or >= 4.1.22.
+   If set to 0 and the client library supports it, the default value is 2
+   seconds.
+
+   Default value is 0 (0 - use default 2 sec if supported).
+
+   Example 1.3. Set send_timeout parameter
+...
+modparam("db_mysql", "send_timeout", 5)
+...
+
+3.4. receive_timeout (integer)
+
+   Receive timeout in seconds for MySQL server operations. This option is
+   only enabled for MySQL client library versions >= 5.0.25 or >= 4.1.22.
+   If set to 0 and the client library supports it, the default value is 4
+   seconds.
+
+   Default value is 0 (0 - use default 4 sec if supported).
+
+   Example 1.4. Set receive_timeout parameter
+...
+modparam("db_mysql", "receive_timeout", 10)
+...
+
+3.5. retries (integer)
+
+   Number of retries when a MySQL command fails.
+
+   Default value is 1 (1 retry).
+
+   Example 1.5. Set retries parameter
+...
+modparam("db_mysql", "retries", 3)
+...
+
+3.6. server_timezone (integer)
 
    Control if kamailio converts a time to string using the local timezone
    or if MySQL will convert it using FROM_UNIXTIME. This option is useful
@@ -132,12 +202,12 @@ modparam("db_mysql", "ping_interval", 600)
 
    Default value is 0 (use local conversion)
 
-   Example 1.2. Set server_timezone parameter
+   Example 1.6. Set server_timezone parameter
 ...
 modparam("db_mysql", "server_timezone", 1)
 ...
 
-3.3. timeout_interval (integer)
+3.7. timeout_interval (integer)
 
    Time interval (in seconds) after that a connection attempt, read or
    write request is aborted. The value counts three times, as several
@@ -150,48 +220,60 @@ modparam("db_mysql", "server_timezone", 1)
 
    Default value is 2 (6 sec).
 
-   Example 1.3. Set timeout_interval parameter
+   Example 1.7. Set timeout_interval parameter
 ...
 modparam("db_mysql", "timeout_interval", 2)
 ...
 
-3.4. auto_reconnect (integer)
+3.8. auto_reconnect (integer)
 
    Configure whether the module should automatically reconnect to MySQL
    server if the connection was lost.
 
    Default value is 1 (1 - on / 0 - off).
 
-   Example 1.4. Set auto_reconnect parameter
+   Example 1.8. Set auto_reconnect parameter
 ...
 modparam("db_mysql", "auto_reconnect", 0)
 ...
 
-3.5. insert_delayed (integer)
+3.9. insert_delayed (integer)
 
    If set to 1, all INSERT SQL queries will be sent to MySQL server as
    INSERT DELAYED.
 
    Default value is 0 (1 - on / 0 - off).
 
-   Example 1.5. Set insert_delayed parameter
+   Example 1.9. Set insert_delayed parameter
 ...
 modparam("db_mysql", "insert_delayed", 1)
 ...
 
-3.6. update_affected_found (integer)
+3.10. update_affected_found (integer)
 
    If set to 1, all UPDATE SQL queries will return the number of matched
    rows instead of the number of "updated" rows.
 
    Default value is 0 (1 - on / 0 - off).
 
-   Example 1.6. Set update_affected_found parameter
+   Example 1.10. Set update_affected_found parameter
 ...
 modparam("db_mysql", "update_affected_found", 1)
 ...
 
-3.7. opt_ssl_mode (integer)
+3.11. unsigned_type (integer)
+
+   If set to 1, unsigned integer types from MySQL are mapped to unsigned
+   types in the internal DB API.
+
+   Default value is 0 (0 - off).
+
+   Example 1.11. Set unsigned_type parameter
+...
+modparam("db_mysql", "unsigned_type", 1)
+...
+
+3.12. opt_ssl_mode (integer)
 
    Control how the connection to MySQL server is done in regards to
    SSL/TLS. If set to 1, SSL/TLS mode is disabled.
@@ -211,12 +293,12 @@ modparam("db_mysql", "update_affected_found", 1)
 
    Default value is 0 (0 - off).
 
-   Example 1.7. Set opt_ssl_mode parameter
+   Example 1.12. Set opt_ssl_mode parameter
 ...
 modparam("db_mysql", "opt_ssl_mode", 1)
 ...
 
-3.8. opt_ssl_ca (string)
+3.13. opt_ssl_ca (string)
 
    Configures the CA certs used to verify the MySQL server cert when SSL
    is enabled.
@@ -226,7 +308,7 @@ modparam("db_mysql", "opt_ssl_mode", 1)
 
    Default value is NULL (NULL - not configured).
 
-   Example 1.8. Set opt_ssl_ca parameter
+   Example 1.13. Set opt_ssl_ca parameter
 ...
 modparam("db_mysql", "opt_ssl_ca", "/etc/ssl/certs/mysql-ca.pem")
 ...
@@ -257,12 +339,12 @@ modparam("db_mysql", "opt_ssl_ca", "/etc/ssl/certs/mysql-ca.pem")
      * mysql://user:pass@[group]/db
      * mysql://[group]/db
 
-   Example 1.9. Set a my.cnf group in db_url parameter
+   Example 1.14. Set a my.cnf group in db_url parameter
 ...
 modparam("usrloc", "db_url", "mysql://[kamailio]/kamailio)
 ...
 
-   Example 1.10. Adding a kamailio group to my.cnf
+   Example 1.15. Adding a kamailio group to my.cnf
 ...
 [kamailio]
 socket = /path/to/mysql.sock
@@ -276,7 +358,7 @@ default-character-set = utf8
    both your specific group and the client group, then the value is taken
    from the last one.
 
-   Example 1.11. Using [client] and specific group
+   Example 1.16. Using [client] and specific group
 ...
 [client]
 socket = /run/mysql/mysqld.sock
