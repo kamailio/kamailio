@@ -92,6 +92,7 @@ static int mod_init(void)
 
 	_tps_storage_api.insert_dialog = tps_htable_insert_dialog;
 	_tps_storage_api.load_dialog = tps_htable_load_dialog;
+	_tps_storage_api.load_dialog_by_tags = tps_htable_load_dialog_by_tags;
 	_tps_storage_api.update_dialog = tps_htable_update_dialog;
 	_tps_storage_api.clean_dialogs = tps_htable_clean_dialogs;
 	_tps_storage_api.end_dialog = tps_htable_end_dialog;

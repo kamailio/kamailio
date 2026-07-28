@@ -33,8 +33,11 @@
         This module is designed to work for presence (SUBSCRIBE-based) dialogs too.
 	</para>
 	<para>
-		The REGISTER and PUBLISH requests are skipped from processing
-		by this module, expected to be terminated on a local SIP server.
+		By default, REGISTER and PUBLISH requests are skipped from processing
+		by this module. When modparam <varname>enable_reg_pub</varname> is
+		set to 1, REGISTER and PUBLISH follow the same TOPOS encoding as
+		INVITE-based dialogs (with <varname>mask_callid</varname> and topoh
+		as for INVITE).
 	</para>
 	</section>
 	<section>
@@ -159,6 +162,78 @@ modparam("topos", "db_url", "&exampledb;")
 		<programlisting format="linespecific">
 ...
 modparam("topos", "mask_callid", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.enable_reg_pub">
+		<title><varname>enable_reg_pub</varname> (int)</title>
+		<para>
+			If set to 0 (default), REGISTER and PUBLISH are not processed by
+			TOPOS (same as legacy behavior). If set to 1, REGISTER and PUBLISH
+			use the same topology stripping, storage updates, and Call-ID
+			masking rules as INVITE (when <varname>mask_callid</varname> is
+			enabled and topoh is loaded as for INVITE).
+		</para>
+		<para>
+			The <varname>methods_noinitial</varname> check runs afterward in
+			the same skip function: if REGISTER or PUBLISH matches that
+			bitmask on an initial request, the message can still be skipped
+			even when this parameter is 1.
+		</para>
+		<para>
+			Optionally add REGISTER or PUBLISH to
+			<varname>methods_update_time</varname> so in-dialog requests refresh
+			<literal>rectime</literal> in <literal>topos_d</literal>, as for
+			SUBSCRIBE.
+		</para>
+		<para>
+			Multiple Contact URIs in one header: TOPOS uses the first entry only
+			and logs LM_NOTICE (see also <varname>reg_pub_multi_contact</varname>);
+			full multi-binding REGISTER is modeled in registrar/usrloc, not as
+			separate TOPOS rows per URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_reg_pub</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "enable_reg_pub", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.reg_pub_multi_contact">
+		<title><varname>reg_pub_multi_contact</varname> (int)</title>
+		<para>
+			When <varname>enable_reg_pub</varname> is active, REGISTER and
+			PUBLISH messages whose Contact header lists multiple URIs are handled as
+			follows.
+		</para>
+		<para>
+			<emphasis>0</emphasis> (default) — Use the first Contact URI for TOPOS
+			storage and emit LM_NOTICE naming registrar/usrloc for full bindings.
+		</para>
+		<para>
+			<emphasis>1</emphasis> — Reject linking for multi-Contact REGISTER/PUBLISH
+			(LM_ERR); strict policy when multi-Contact must not pass TOPOS storage.
+		</para>
+		<para>
+			The <varname>methods_noinitial</varname> skip logic runs separately on
+			the message path.
+		</para>
+		<para>
+			<emphasis>Default value is 0.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reg_pub_multi_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "reg_pub_multi_contact", 0)
 ...
 </programlisting>
 		</example>

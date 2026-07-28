@@ -42,6 +42,7 @@
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_via.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_expires.h"
 #include "../../core/parser/parse_refer_to.h"
 
 
@@ -49,6 +50,7 @@
 #include "tps_storage.h"
 
 extern int _tps_param_mask_callid;
+extern int _tps_enable_reg_pub;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
@@ -60,6 +62,7 @@ extern str _tps_context_value;
 
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
+static str _tps_invite_method = str_init("INVITE");
 
 unsigned int _tps_methods_nocontact = METHOD_CANCEL | METHOD_BYE | METHOD_PRACK;
 unsigned int _tps_methods_noinitial = 0;
@@ -414,8 +417,10 @@ int tps_skip_msg(sip_msg_t *msg)
 		return 1;
 	}
 
-	if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH))
-		return 1;
+	if(_tps_enable_reg_pub == 0) {
+		if((get_cseq(msg)->method_id) & (METHOD_REGISTER | METHOD_PUBLISH))
+			return 1;
+	}
 
 	if(_tps_methods_noinitial != 0 && msg->first_line.type == SIP_REQUEST
 			&& get_to(msg)->tag_value.len <= 0) {
@@ -729,6 +734,8 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 	} else if(_tps_context_param.len > 0) {
 		ptsd->x_context = _tps_context_param;
 	}
+
+	tps_data_fill_expires(msg, ptsd, NULL);
 	return 0;
 }
 
@@ -1020,6 +1027,163 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 }
 
 /**
+ * REGISTER/PUBLISH/SUBSCRIBE deregister (Expires=0 or Contact;expires=0)
+ */
+static int tps_is_reg_pub_dereg(tps_data_t *td)
+{
+	if(td == NULL) {
+		return 0;
+	}
+	if((td->s_method_id == METHOD_SUBSCRIBE
+			   || td->s_method_id == METHOD_REGISTER
+			   || td->s_method_id == METHOD_PUBLISH)
+			&& td->expires_valid && td->expires == 0) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Load stored topology for REGISTER/PUBLISH (Call-ID, RFC 3261/3903) or
+ * SUBSCRIBE (event subscription dialog, RFC 3265).
+ */
+static int tps_reg_pub_load_state(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t *direction)
+{
+	tps_data_t btsd;
+
+	memset(&btsd, 0, sizeof(tps_data_t));
+	if(tps_storage_link_msg(msg, md, TPS_DIR_DOWNSTREAM) < 0) {
+		return -1;
+	}
+	md->direction = TPS_DIR_DOWNSTREAM;
+
+	if(tps_data_is_reg_pub(md->s_method_id)) {
+		/* REGISTER/PUBLISH: Call-ID (RFC 3261/3903); PUBLISH also SIP-If-Match */
+		if(md->s_method_id == METHOD_PUBLISH) {
+			str ifmatch = STR_NULL;
+
+			if(tps_data_get_sipifmatch(msg, &ifmatch) == 0 && ifmatch.len > 0) {
+				md->b_uri = ifmatch;
+				if(tps_storage_load_dialog_by_tags(msg, md, sd) == 0) {
+					if(direction != NULL
+							&& tps_dlg_detect_direction(msg, sd, direction)
+									   < 0) {
+						return -1;
+					}
+					return 0;
+				}
+			}
+		}
+		if(tps_storage_load_dialog_by_tags(msg, md, sd) == 0) {
+			if(direction != NULL
+					&& tps_dlg_detect_direction(msg, sd, direction) < 0) {
+				return -1;
+			}
+			return 0;
+		}
+		if(tps_storage_load_branch(msg, md, &btsd, 1) == 0) {
+			if(tps_storage_load_dialog(msg, &btsd, sd) == 0) {
+				if(direction != NULL
+						&& tps_dlg_detect_direction(msg, sd, direction) < 0) {
+					return -1;
+				}
+				return 0;
+			}
+		}
+		return -1;
+	}
+
+	/* SUBSCRIBE: correlate by To-tag / branch like other dialog usages */
+	if(md->b_tag.len > 0) {
+		if(tps_storage_load_dialog_by_tags(msg, md, sd) == 0) {
+			if(direction != NULL
+					&& tps_dlg_detect_direction(msg, sd, direction) < 0) {
+				return -1;
+			}
+			return 0;
+		}
+	}
+
+	if(tps_storage_load_branch(msg, md, &btsd, 1) == 0) {
+		if(tps_storage_load_dialog(msg, &btsd, sd) == 0) {
+			if(direction != NULL
+					&& tps_dlg_detect_direction(msg, sd, direction) < 0) {
+				return -1;
+			}
+			return 0;
+		}
+	}
+
+	if(tps_storage_load_dialog_by_tags(msg, md, sd) == 0) {
+		if(direction != NULL
+				&& tps_dlg_detect_direction(msg, sd, direction) < 0) {
+			return -1;
+		}
+		return 0;
+	}
+
+	return -1;
+}
+
+/**
+ * Load stored topology for in-dialog requests (uuid, reg/pub, or INVITE tags).
+ */
+static int tps_dlg_load_state(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t *direction, int dialog, unsigned int metid)
+{
+	tps_data_t btsd;
+	str orig_method;
+	unsigned int orig_method_id;
+
+	if(md->a_uuid.len > 0) {
+		if(tps_storage_load_dialog(msg, md, sd) < 0) {
+			return -1;
+		}
+		return tps_dlg_detect_direction(msg, sd, direction);
+	}
+
+	if(_tps_enable_reg_pub
+			&& (metid
+					& (METHOD_REGISTER | METHOD_PUBLISH | METHOD_SUBSCRIBE))) {
+		return tps_reg_pub_load_state(msg, md, sd, direction);
+	}
+
+	if(dialog == 0
+			|| !(metid
+					& (METHOD_BYE | METHOD_INFO | METHOD_PRACK | METHOD_UPDATE
+							| METHOD_NOTIFY))) {
+		return -1;
+	}
+
+	if(tps_storage_link_msg(msg, md, TPS_DIR_DOWNSTREAM) < 0) {
+		return -1;
+	}
+
+	orig_method = md->s_method;
+	orig_method_id = md->s_method_id;
+	md->s_method = _tps_invite_method;
+	md->s_method_id = METHOD_INVITE;
+	if(tps_storage_load_dialog_by_tags(msg, md, sd) == 0) {
+		md->s_method = orig_method;
+		md->s_method_id = orig_method_id;
+		return tps_dlg_detect_direction(msg, sd, direction);
+	}
+	md->s_method = orig_method;
+	md->s_method_id = orig_method_id;
+
+	if(metid & (METHOD_BYE | METHOD_UPDATE | METHOD_NOTIFY)) {
+		memset(&btsd, 0, sizeof(tps_data_t));
+		if(tps_storage_load_branch(msg, md, &btsd, 1) == 0
+				&& tps_storage_load_dialog(msg, &btsd, sd) == 0) {
+			return tps_dlg_detect_direction(msg, sd, direction);
+		}
+	}
+
+	return -1;
+}
+
+/**
  *
  */
 int tps_request_received(sip_msg_t *msg, int dialog)
@@ -1035,9 +1199,12 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	LM_DBG("handling incoming request\n");
 
+	metid = get_cseq(msg)->method_id;
 	if(dialog == 0) {
-		/* nothing to do for initial request */
-		return 0;
+		if(!(_tps_enable_reg_pub && tps_data_is_reg_pub(metid))) {
+			/* initial request - nothing to do */
+			return 0;
+		}
 	}
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
@@ -1063,10 +1230,21 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	tps_storage_lock_get(&lkey);
 
-	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
+	if(tps_dlg_load_state(msg, &mtsd, &stsd, &direction, dialog, metid) < 0) {
+		if(_tps_enable_reg_pub && tps_data_is_reg_pub(metid)
+				&& tps_reg_pub_is_initial(&mtsd)) {
+			/* initial REGISTER/PUBLISH: record on request_sent */
+			tps_storage_lock_release(&lkey);
+			return 0;
+		}
+		if(_tps_enable_reg_pub && tps_data_is_reg_pub(metid)) {
+			LM_ERR("no reg/pub state for call-id [%.*s] CSeq %.*s\n",
+					mtsd.a_callid.len, ZSW(mtsd.a_callid.s), mtsd.s_cseq.len,
+					ZSW(mtsd.s_cseq.s));
+		}
 		goto error;
 	}
-	metid = get_cseq(msg)->method_id;
+	mtsd.direction = direction;
 	if((metid
 			   & (METHOD_BYE | METHOD_INFO | METHOD_PRACK | METHOD_UPDATE
 					   | METHOD_NOTIFY))
@@ -1093,6 +1271,27 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			goto error;
 		}
 		mtsd.direction = direction;
+	}
+
+	if(tps_is_reg_pub_dereg(&mtsd) || mtsd.s_method_id == METHOD_BYE) {
+		tps_storage_end_dialog(msg, &mtsd, &stsd);
+	}
+
+	if(dialog != 0 || tps_data_is_reg_pub(metid)) {
+		if(_tps_rr_update) {
+			if(tps_storage_update_dialog(
+					   msg, &mtsd, &stsd, TPS_DBU_RPLATTRS | TPS_DBU_BRR)
+					< 0) {
+				goto error;
+			}
+		}
+		if(metid & _tps_methods_update_time && !tps_is_reg_pub_dereg(&mtsd)) {
+			if(tps_storage_update_dialog(
+					   msg, &mtsd, &stsd, TPS_DBU_CONTACT | TPS_DBU_TIME)
+					< 0) {
+				goto error;
+			}
+		}
 	}
 
 	tps_storage_lock_release(&lkey);
@@ -1159,22 +1358,8 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			}
 		}
 	}
-	if(dialog != 0) {
+	if(dialog != 0 || tps_data_is_reg_pub(metid)) {
 		tps_append_xuuid(msg, &stsd.a_uuid);
-		if(_tps_rr_update) {
-			if(tps_storage_update_dialog(
-					   msg, &mtsd, &stsd, TPS_DBU_RPLATTRS | TPS_DBU_BRR)
-					< 0) {
-				goto error;
-			}
-		}
-		if(metid & _tps_methods_update_time) {
-			if(tps_storage_update_dialog(
-					   msg, &mtsd, &stsd, TPS_DBU_CONTACT | TPS_DBU_TIME)
-					< 0) {
-				goto error;
-			}
-		}
 	}
 	return 0;
 
@@ -1234,20 +1419,34 @@ int tps_response_received(sip_msg_t *msg)
 			< 0) {
 		goto error;
 	}
+
+	if(msg->first_line.u.reply.statuscode > 299
+			&& (get_cseq(msg)->method_id
+					& (METHOD_INVITE | METHOD_SUBSCRIBE | METHOD_REGISTER
+							| METHOD_PUBLISH))) {
+		LM_DBG("%d reply end dialog storage\n",
+				msg->first_line.u.reply.statuscode);
+		tps_storage_end_dialog(msg, &mtsd, &stsd);
+	} else if(msg->first_line.u.reply.statuscode >= 200
+			  && msg->first_line.u.reply.statuscode < 300
+			  && get_cseq(msg)->method_id == METHOD_PUBLISH) {
+		str etag = STR_NULL;
+
+		if(tps_data_get_sipetag_hdr(msg, &etag) == 0 && etag.len > 0) {
+			stsd.b_uri = etag;
+			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_PUBETAG)
+					< 0) {
+				goto error;
+			}
+		}
+	}
+
 	tps_storage_lock_release(&lkey);
 
 	tps_reappend_via(msg, &btsd, &btsd.x_via);
 	tps_reappend_rr(msg, &btsd, &btsd.s_rr);
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
 	tps_append_xbranch(msg, &mtsd.x_vbranch1);
-
-	if(msg->first_line.u.reply.statuscode > 299
-			&& (get_cseq(msg)->method_id
-					& (METHOD_INVITE | METHOD_SUBSCRIBE))) {
-		LM_DBG("%d reply end dialog storage\n",
-				msg->first_line.u.reply.statuscode);
-		tps_storage_end_dialog(msg, &mtsd, &stsd);
-	}
 
 	return 0;
 
@@ -1268,6 +1467,8 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	str lkey;
 	str xuuid;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
+	int reg_pub_dereg;
+	int is_new_record = 0;
 
 	LM_DBG("handling outgoing request (%d, %d)\n", dialog, local);
 
@@ -1276,29 +1477,37 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	memset(&stsd, 0, sizeof(tps_data_t));
 	ptsd = NULL;
 
+	tps_unmask_callid(msg);
+
 	if(tps_pack_message(msg, &mtsd) < 0) {
 		LM_ERR("failed to extract and pack the headers\n");
 		return -1;
 	}
 
+	reg_pub_dereg = tps_is_reg_pub_dereg(&mtsd);
+
 	if(dialog != 0) {
 		if(tps_get_xuuid(msg, &xuuid) < 0) {
-			LM_DBG("no x-uuid header - local message only - Call-ID mask if "
-				   "downstream \n");
-			if(get_cseq(msg)->method_id == METHOD_ACK
-					|| get_cseq(msg)->method_id == METHOD_CANCEL) {
-				/* cover stateless forwarding */
-				tps_remove_headers(msg, HDR_RECORDROUTE_T);
-				tps_remove_headers(msg, HDR_CONTACT_T);
-				tps_remove_headers(msg, HDR_VIA_T);
-				tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
-				/* ACK and CANCEL go downstream so Call-ID mask required */
-				tps_mask_callid(msg);
+			if(!reg_pub_dereg) {
+				LM_DBG("no x-uuid header - local message only - Call-ID mask "
+					   "if "
+					   "downstream \n");
+				if(get_cseq(msg)->method_id == METHOD_ACK
+						|| get_cseq(msg)->method_id == METHOD_CANCEL) {
+					/* cover stateless forwarding */
+					tps_remove_headers(msg, HDR_RECORDROUTE_T);
+					tps_remove_headers(msg, HDR_CONTACT_T);
+					tps_remove_headers(msg, HDR_VIA_T);
+					tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
+					/* ACK and CANCEL go downstream so Call-ID mask required */
+					tps_mask_callid(msg);
+				}
+				return 0;
 			}
-			return 0;
+		} else {
+			mtsd.a_uuid = xuuid;
+			tps_remove_xuuid(msg);
 		}
-		mtsd.a_uuid = xuuid;
-		tps_remove_xuuid(msg);
 	}
 
 	lkey = msg->callid->body;
@@ -1308,17 +1517,33 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	if(dialog != 0) {
 		if(tps_storage_load_dialog(msg, &mtsd, &stsd) == 0) {
 			ptsd = &stsd;
+		} else if(_tps_enable_reg_pub && tps_data_is_reg_pub(mtsd.s_method_id)
+				  && tps_reg_pub_load_state(msg, &mtsd, &stsd, &direction)
+							 == 0) {
+			ptsd = &stsd;
+			mtsd.direction = direction;
 		}
-		/* detect direction - via from-tag */
-		if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
-			goto error;
+		if(ptsd != NULL) {
+			/* detect direction - via from-tag */
+			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
+				goto error;
+			}
+			mtsd.direction = direction;
 		}
-		mtsd.direction = direction;
+	} else if(_tps_enable_reg_pub && tps_data_is_reg_pub(mtsd.s_method_id)) {
+		if(tps_reg_pub_load_state(msg, &mtsd, &stsd, &direction) == 0) {
+			ptsd = &stsd;
+			mtsd.direction = direction;
+		}
 	}
 
 	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0) != 0) {
-		if(tps_storage_record(msg, &mtsd, dialog, direction) < 0) {
-			goto error;
+		if(!reg_pub_dereg) {
+			if(tps_storage_record(msg, &mtsd, dialog, direction) == 0) {
+				is_new_record = 1;
+			} else {
+				goto error;
+			}
 		}
 	} else {
 		if(ptsd == NULL)
@@ -1327,6 +1552,22 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	if(ptsd == NULL)
 		ptsd = &mtsd;
+
+	if(!is_new_record && _tps_enable_reg_pub
+			&& tps_data_is_reg_pub(mtsd.s_method_id) && ptsd->a_uuid.len <= 0
+			&& ptsd->b_uuid.len <= 0) {
+		if(reg_pub_dereg) {
+			LM_WARN("reg/pub deregister without stored state (call-id "
+					"[%.*s])\n",
+					mtsd.a_callid.len, ZSW(mtsd.a_callid.s));
+		} else if(!tps_reg_pub_is_initial(&mtsd)) {
+			LM_ERR("reg/pub refresh without stored state (call-id [%.*s] "
+				   "CSeq %.*s)\n",
+					mtsd.a_callid.len, ZSW(mtsd.a_callid.s), mtsd.s_cseq.len,
+					ZSW(mtsd.s_cseq.s));
+			goto error;
+		}
+	}
 
 	/* local generated requests */
 	if(local) {
@@ -1352,20 +1593,26 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 		tps_reinsert_contact(msg, ptsd, &ptsd->bs_contact);
 	}
 
-	if(dialog != 0) {
+	if(dialog != 0 && !reg_pub_dereg && mtsd.s_method_id != METHOD_BYE
+			&& ptsd != NULL && (ptsd->a_uuid.len > 0 || ptsd->b_uuid.len > 0)) {
 		tps_storage_end_dialog(msg, &mtsd, ptsd);
-		if(tps_storage_update_dialog(msg, &mtsd, &stsd,
-				   (_tps_rr_update) ? (TPS_DBU_CONTACT | TPS_DBU_ARR)
-									: TPS_DBU_CONTACT)
-				< 0) {
-			goto error;
+		if(dialog != 0) {
+			if(tps_storage_update_dialog(msg, &mtsd, &stsd,
+					   (_tps_rr_update) ? (TPS_DBU_CONTACT | TPS_DBU_ARR)
+										: TPS_DBU_CONTACT)
+					< 0) {
+				goto error;
+			}
 		}
 	}
 
 done:
 	tps_storage_lock_release(&lkey);
-	if(direction == TPS_DIR_DOWNSTREAM) {
-		tps_mask_callid(msg);
+	if(direction == TPS_DIR_DOWNSTREAM && dialog == 0) {
+		if(!(_tps_enable_reg_pub && tps_data_is_reg_pub(mtsd.s_method_id)
+				   && !is_new_record)) {
+			tps_mask_callid(msg);
+		}
 	}
 
 	return 0;

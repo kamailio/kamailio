@@ -31,6 +31,7 @@ endif
 endif
 
 DEFS+=$(HIREDISDEFS)
+INCLUDES+=-I../topos
 LIBS=$(HIREDISLIBS)
 
 include ../../Makefile.modules

@@ -85,6 +85,9 @@ extern str td_table_name;
 /** module parameters */
 static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
+int _tps_enable_reg_pub = 0;
+/** 0 = first Contact only (+ NOTICE if multi); 1 = reject multi-Contact REGISTER/PUBLISH */
+int _tps_reg_pub_multi_contact = 0;
 int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
 int _tps_header_mode = 0;
@@ -172,6 +175,8 @@ static param_export_t params[] = {
 	{"storage", PARAM_STR, &_tps_storage},
 	{"db_url", PARAM_STR, &_tps_db_url},
 	{"mask_callid", PARAM_INT, &_tps_param_mask_callid},
+	{"enable_reg_pub", PARAM_INT, &_tps_enable_reg_pub},
+	{"reg_pub_multi_contact", PARAM_INT, &_tps_reg_pub_multi_contact},
 	{"sanity_checks", PARAM_INT, &_tps_sanity_checks},
 	{"header_mode", PARAM_INT, &_tps_header_mode},
 	{"branch_expire", PARAM_INT, &_tps_branch_expire},
@@ -274,6 +279,37 @@ static int mod_init(void)
 				< 0) {
 			LM_ERR("failed to parse methods_update_time parameter\n");
 			return -1;
+		}
+	}
+
+	if(_tps_reg_pub_multi_contact < 0 || _tps_reg_pub_multi_contact > 1) {
+		LM_ERR("invalid reg_pub_multi_contact %d (use 0=first or 1=reject)\n",
+				_tps_reg_pub_multi_contact);
+		return -1;
+	}
+
+	if(_tps_enable_reg_pub < 0 || _tps_enable_reg_pub > 1) {
+		LM_ERR("invalid enable_reg_pub %d (use 0=off or 1=on)\n",
+				_tps_enable_reg_pub);
+		return -1;
+	}
+
+	if(_tps_enable_reg_pub == 1) {
+		unsigned int added = 0;
+
+		if((_tps_methods_update_time & METHOD_REGISTER) == 0) {
+			_tps_methods_update_time |= METHOD_REGISTER;
+			added |= METHOD_REGISTER;
+		}
+		if((_tps_methods_update_time & METHOD_PUBLISH) == 0) {
+			_tps_methods_update_time |= METHOD_PUBLISH;
+			added |= METHOD_PUBLISH;
+		}
+		if(added != 0) {
+			LM_NOTICE("enable_reg_pub=1: REGISTER/PUBLISH added to "
+					  "methods_update_time for storage TTL refresh "
+					  "(0x%x)\n",
+					added);
 		}
 	}
 
@@ -582,8 +618,12 @@ int tps_msg_received(sr_event_param_t *evp)
 		}
 		dialog = (get_to(&msg)->tag_value.len > 0) ? 1 : 0;
 		if(dialog) {
-			/* dialog request */
+			/* SUBSCRIBE/INVITE in-dialog; REGISTER/PUBLISH with To-tag (interop) */
 			tps_request_received(&msg, dialog);
+		} else if(_tps_enable_reg_pub
+				  && tps_data_is_reg_pub(get_cseq(&msg)->method_id)) {
+			/* REGISTER/PUBLISH refresh/de-register without SIP dialog (RFC) */
+			tps_request_received(&msg, 0);
 		}
 	} else {
 		/* reply */

@@ -36,6 +36,7 @@
 
 #include "../ndb_redis/api.h"
 #include "../topos/api.h"
+#include "../topos/tps_storage.h"
 
 #include "topos_redis_storage.h"
 
@@ -46,6 +47,8 @@ extern topos_api_t _tps_api;
 
 static str _tps_redis_bprefix = str_init("b:x:");
 static str _tps_redis_dprefix = str_init("d:z:");
+static str _tps_redis_iprefix = str_init("i:x:");
+static str _tps_redis_gprefix = str_init("i:g:");
 
 // void *redisCommandArgv(redisContext *c, int argc, const char **argv, const size_t *argvlen);
 
@@ -149,6 +152,182 @@ str tt_key_x_context = str_init("x_context");
 		TPS_REDIS_SET_ARGSV((sval), argc, argv, argvlen);            \
 	} while(0)
 
+
+static int tps_redis_set_index(str *rkey, str *rval, unsigned long expire)
+{
+	char *argv[TPS_REDIS_NR_KEYS];
+	size_t argvlen[TPS_REDIS_NR_KEYS];
+	int argc = 0;
+	str rvalnum = STR_NULL;
+	char *rp;
+	redisc_server_t *rsrv = NULL;
+	redisReply *rrpl = NULL;
+	unsigned long lval = 0;
+
+	rsrv = _tps_redis_api.get_server(&_topos_redis_serverid);
+	if(rsrv == NULL) {
+		LM_ERR("cannot find redis server [%.*s]\n", _topos_redis_serverid.len,
+				_topos_redis_serverid.s);
+		return -1;
+	}
+
+	memset(argv, 0, TPS_REDIS_NR_KEYS * sizeof(char *));
+	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
+	argc = 0;
+
+	argv[argc] = "SET";
+	argvlen[argc] = 3;
+	argc++;
+	argv[argc] = rkey->s;
+	argvlen[argc] = rkey->len;
+	argc++;
+	argv[argc] = rval->s;
+	argvlen[argc] = rval->len;
+	argc++;
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl == NULL) {
+		LM_ERR("failed to execute redis SET for index\n");
+		return -1;
+	}
+	freeReplyObject(rrpl);
+
+	if(expire == 0) {
+		return 0;
+	}
+
+	argc = 0;
+	rp = _tps_redis_cbuf;
+	argv[argc] = "EXPIRE";
+	argvlen[argc] = 6;
+	argc++;
+	argv[argc] = rkey->s;
+	argvlen[argc] = rkey->len;
+	argc++;
+	lval = expire;
+	TPS_REDIS_SET_ARGNV(lval, rp, &rvalnum, argc, argv, argvlen);
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl == NULL) {
+		LM_ERR("failed to execute redis EXPIRE for index\n");
+		return -1;
+	}
+	freeReplyObject(rrpl);
+	return 0;
+}
+
+static int tps_redis_store_callid_index(tps_data_t *td)
+{
+	str rkey = STR_NULL;
+	char *rp;
+	int rlen;
+	unsigned long expire = 0;
+
+	if(td == NULL || !tps_data_is_reg_pub(td->s_method_id)) {
+		return 0;
+	}
+	if(td->a_callid.len <= 0 || td->s_method.len <= 0 || td->a_uuid.len <= 0) {
+		return 0;
+	}
+
+	expire = (unsigned long)tps_data_dialog_expire_ttl(
+			td, _tps_api.get_dialog_expire());
+	if(expire == 0) {
+		return 0;
+	}
+
+	rp = _tps_redis_cbuf;
+	rlen = snprintf(rp, TPS_REDIS_DATA_SIZE - 128, "%.*s%.*s|%.*s",
+			_tps_redis_iprefix.len, _tps_redis_iprefix.s, td->a_callid.len,
+			td->a_callid.s, td->s_method.len, td->s_method.s);
+	if(rlen < 0 || rlen >= TPS_REDIS_DATA_SIZE - 128) {
+		return -1;
+	}
+	rkey.s = rp;
+	rkey.len = rlen;
+
+	return tps_redis_set_index(&rkey, &td->a_uuid, expire);
+}
+
+static int tps_redis_store_etag_index(tps_data_t *td)
+{
+	str rkey = STR_NULL;
+	char *rp;
+	int rlen;
+	unsigned long expire = 0;
+
+	if(td == NULL || td->s_method_id != METHOD_PUBLISH) {
+		return 0;
+	}
+	if(td->b_uri.len <= 0 || td->a_uuid.len <= 0) {
+		return 0;
+	}
+
+	expire = (unsigned long)tps_data_dialog_expire_ttl(
+			td, _tps_api.get_dialog_expire());
+	if(expire == 0) {
+		return 0;
+	}
+
+	rp = _tps_redis_cbuf;
+	rlen = snprintf(rp, TPS_REDIS_DATA_SIZE - 128, "%.*s%.*s|%.*s",
+			_tps_redis_gprefix.len, _tps_redis_gprefix.s, td->b_uri.len,
+			td->b_uri.s, td->s_method.len, td->s_method.s);
+	if(rlen < 0 || rlen >= TPS_REDIS_DATA_SIZE - 128) {
+		return -1;
+	}
+	rkey.s = rp;
+	rkey.len = rlen;
+
+	return tps_redis_set_index(&rkey, &td->a_uuid, expire);
+}
+
+static int tps_redis_store_tag_index(tps_data_t *md, tps_data_t *sd)
+{
+	str rkey = STR_NULL;
+	str callid = STR_NULL;
+	str auuid = STR_NULL;
+	char *rp;
+	int rlen;
+	unsigned long expire = 0;
+
+	if(md == NULL || sd == NULL || md->b_tag.len <= 0) {
+		return 0;
+	}
+	if(sd->a_callid.len > 0) {
+		callid = sd->a_callid;
+	} else if(md->a_callid.len > 0) {
+		callid = md->a_callid;
+	}
+	if(callid.len <= 0) {
+		return 0;
+	}
+	if(md->a_uuid.len > 0) {
+		auuid = md->a_uuid;
+	} else if(sd->a_uuid.len > 0) {
+		auuid = sd->a_uuid;
+	}
+	if(auuid.len <= 0) {
+		return 0;
+	}
+
+	expire = (unsigned long)_tps_api.get_branch_expire();
+	if(expire == 0) {
+		return 0;
+	}
+
+	rp = _tps_redis_cbuf;
+	rlen = snprintf(rp, TPS_REDIS_DATA_SIZE - 128, "%.*s%.*s|%.*s",
+			_tps_redis_iprefix.len, _tps_redis_iprefix.s, callid.len, callid.s,
+			md->b_tag.len, md->b_tag.s);
+	if(rlen < 0 || rlen >= TPS_REDIS_DATA_SIZE - 128) {
+		return -1;
+	}
+	rkey.s = rp;
+	rkey.len = rlen;
+
+	return tps_redis_set_index(&rkey, &auuid, expire);
+}
 
 /**
  *
@@ -273,11 +452,8 @@ int tps_redis_insert_dialog(tps_data_t *td)
 	argvlen[argc] = rkey.len;
 	argc++;
 
-	if(td->s_method.len == 9 && strncmp(td->s_method.s, "SUBSCRIBE", 9) == 0) {
-		lval = (unsigned long)td->expires;
-	} else {
-		lval = (unsigned long)_tps_api.get_dialog_expire();
-	}
+	lval = (unsigned long)tps_data_dialog_expire_ttl(
+			td, _tps_api.get_dialog_expire());
 
 	if(lval == 0) {
 		return 0;
@@ -295,6 +471,11 @@ int tps_redis_insert_dialog(tps_data_t *td)
 	LM_DBG("expire %lu set on dialog record for [%.*s] with argc %d\n", lval,
 			rkey.len, rkey.s, argc);
 	freeReplyObject(rrpl);
+
+	if(tps_redis_store_callid_index(td) < 0) {
+		LM_ERR("failed to store call-id index\n");
+		return -1;
+	}
 
 	return 0;
 }
@@ -637,7 +818,13 @@ int tps_redis_load_initial_method_branch(
 		xuuid.len = sd->b_uuid.len - 1;
 	}
 
-	if(md->s_method_id & (METHOD_SUBSCRIBE | METHOD_NOTIFY)) {
+	if(md->s_method_id == METHOD_REGISTER) {
+		smethod.s = "REGISTER";
+		smethod.len = 8;
+	} else if(md->s_method_id == METHOD_PUBLISH) {
+		smethod.s = "PUBLISH";
+		smethod.len = 7;
+	} else if(md->s_method_id & (METHOD_SUBSCRIBE | METHOD_NOTIFY)) {
 		smethod.s = "SUBSCRIBE";
 		smethod.len = 9;
 	}
@@ -1174,6 +1361,125 @@ error:
 	return -1;
 }
 
+static int tps_redis_load_index_uuid(str *rkey, tps_data_t *lmd)
+{
+	char *argv[TPS_REDIS_NR_KEYS];
+	size_t argvlen[TPS_REDIS_NR_KEYS];
+	int argc = 0;
+	redisc_server_t *rsrv = NULL;
+	redisReply *rrpl = NULL;
+
+	rsrv = _tps_redis_api.get_server(&_topos_redis_serverid);
+	if(rsrv == NULL) {
+		LM_ERR("cannot find redis server [%.*s]\n", _topos_redis_serverid.len,
+				_topos_redis_serverid.s);
+		return -1;
+	}
+
+	memset(argv, 0, TPS_REDIS_NR_KEYS * sizeof(char *));
+	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
+	argc = 0;
+
+	argv[argc] = "GET";
+	argvlen[argc] = 3;
+	argc++;
+	argv[argc] = rkey->s;
+	argvlen[argc] = rkey->len;
+	argc++;
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl == NULL) {
+		LM_ERR("failed to execute redis GET for index\n");
+		return -1;
+	}
+	if(rrpl->type != REDIS_REPLY_STRING || rrpl->len <= 0) {
+		freeReplyObject(rrpl);
+		return 1;
+	}
+
+	memset(lmd, 0, sizeof(tps_data_t));
+	lmd->cp = lmd->cbuf;
+	if(rrpl->len + 1 >= TPS_DATA_SIZE) {
+		freeReplyObject(rrpl);
+		return -1;
+	}
+	memcpy(lmd->cbuf, rrpl->str, rrpl->len);
+	lmd->cbuf[rrpl->len] = '\0';
+	lmd->a_uuid.s = lmd->cbuf;
+	lmd->a_uuid.len = rrpl->len;
+	freeReplyObject(rrpl);
+	return 0;
+}
+
+/**
+ *
+ */
+int tps_redis_load_dialog_by_tags(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	tps_data_t lmd;
+	str rkey = STR_NULL;
+	char *rp;
+	int rlen;
+
+	if(msg == NULL || md == NULL || sd == NULL) {
+		return -1;
+	}
+
+	if(md->s_method_id == METHOD_PUBLISH && md->b_uri.len > 0
+			&& md->s_method.len > 0) {
+		rp = _tps_redis_cbuf;
+		rlen = snprintf(rp, TPS_REDIS_DATA_SIZE - 128, "%.*s%.*s|%.*s",
+				_tps_redis_gprefix.len, _tps_redis_gprefix.s, md->b_uri.len,
+				md->b_uri.s, md->s_method.len, md->s_method.s);
+		if(rlen > 0 && rlen < TPS_REDIS_DATA_SIZE - 128) {
+			rkey.s = rp;
+			rkey.len = rlen;
+			if(tps_redis_load_index_uuid(&rkey, &lmd) == 0) {
+				return tps_redis_load_dialog(msg, &lmd, sd);
+			}
+		}
+	}
+
+	if(tps_data_is_reg_pub(md->s_method_id) && md->a_callid.len > 0
+			&& md->s_method.len > 0) {
+		rp = _tps_redis_cbuf;
+		rlen = snprintf(rp, TPS_REDIS_DATA_SIZE - 128, "%.*s%.*s|%.*s",
+				_tps_redis_iprefix.len, _tps_redis_iprefix.s, md->a_callid.len,
+				md->a_callid.s, md->s_method.len, md->s_method.s);
+		if(rlen > 0 && rlen < TPS_REDIS_DATA_SIZE - 128) {
+			rkey.s = rp;
+			rkey.len = rlen;
+			if(tps_redis_load_index_uuid(&rkey, &lmd) == 0) {
+				return tps_redis_load_dialog(msg, &lmd, sd);
+			}
+		}
+	}
+
+	if(md->a_callid.len <= 0 || md->b_tag.len <= 0) {
+		LM_DBG("no call-id or to-tag for tag lookup\n");
+		return 1;
+	}
+
+	rp = _tps_redis_cbuf;
+	rlen = snprintf(rp, TPS_REDIS_DATA_SIZE - 128, "%.*s%.*s|%.*s",
+			_tps_redis_iprefix.len, _tps_redis_iprefix.s, md->a_callid.len,
+			md->a_callid.s, md->b_tag.len, md->b_tag.s);
+	if(rlen < 0 || rlen >= TPS_REDIS_DATA_SIZE - 128) {
+		return -1;
+	}
+	rkey.s = rp;
+	rkey.len = rlen;
+
+	if(tps_redis_load_index_uuid(&rkey, &lmd) != 0) {
+		LM_DBG("no tag index for <%.*s ~ %.*s>\n", md->a_callid.len,
+				md->a_callid.s, md->b_tag.len, md->b_tag.s);
+		return 1;
+	}
+
+	return tps_redis_load_dialog(msg, &lmd, sd);
+}
+
 /**
  *
  */
@@ -1194,8 +1500,9 @@ int tps_redis_update_branch(
 		return -1;
 	}
 
-	if(md->s_method_id == METHOD_INVITE
-			|| md->s_method_id == METHOD_SUBSCRIBE) {
+	if(md->s_method_id == METHOD_INVITE || md->s_method_id == METHOD_SUBSCRIBE
+			|| md->s_method_id == METHOD_REGISTER
+			|| md->s_method_id == METHOD_PUBLISH) {
 		if(tps_redis_insert_initial_method_branch(md, sd) < 0) {
 			LM_ERR("failed to insert %.*s extra initial branch data\n",
 					md->s_method.len, md->s_method.s);
@@ -1353,6 +1660,13 @@ int tps_redis_update_dialog(
 			liflags = sd->iflags | TPS_IFLAG_DLGON;
 			TPS_REDIS_SET_ARGN(
 					liflags, rp, &rval, argc, &td_key_iflags, argv, argvlen);
+
+			if(md->b_tag.len > 0) {
+				if(tps_redis_store_tag_index(md, sd) < 0) {
+					LM_ERR("failed to store tag index\n");
+					return -1;
+				}
+			}
 		}
 	}
 
@@ -1379,6 +1693,10 @@ int tps_redis_update_dialog(
 		lval = (unsigned long)time(NULL);
 		TPS_REDIS_SET_ARGN(
 				lval, rp, &rval, argc, &td_key_rectime, argv, argvlen);
+	}
+
+	if((mode & TPS_DBU_PUBETAG) && sd->b_uri.len > 0) {
+		TPS_REDIS_SET_ARGS(&sd->b_uri, argc, &td_key_b_uri, argv, argvlen);
 	}
 
 	if(argc <= 2) {
@@ -1409,7 +1727,8 @@ int tps_redis_update_dialog(
 		argvlen[argc] = rkey.len;
 		argc++;
 
-		lval = (unsigned long)md->expires;
+		lval = (unsigned long)tps_data_dialog_expire_ttl(
+				md, _tps_api.get_dialog_expire());
 		if(lval == 0) {
 			return 0;
 		}
@@ -1427,6 +1746,38 @@ int tps_redis_update_dialog(
 		LM_DBG("expire %lu set on dialog record for [%.*s] with argc %d\n",
 				lval, rkey.len, rkey.s, argc);
 		freeReplyObject(rrpl);
+
+		if(tps_data_is_reg_pub(md->s_method_id)) {
+			tps_data_t idx;
+
+			memset(&idx, 0, sizeof(tps_data_t));
+			idx.a_callid = sd->a_callid;
+			idx.s_method = sd->s_method;
+			idx.s_method_id = md->s_method_id;
+			idx.a_uuid = sd->a_uuid;
+			idx.expires_valid = md->expires_valid;
+			idx.expires = md->expires;
+			if(tps_redis_store_callid_index(&idx) < 0) {
+				LM_ERR("failed to refresh call-id index\n");
+				return -1;
+			}
+		}
+	}
+
+	if((mode & TPS_DBU_PUBETAG) && sd->b_uri.len > 0) {
+		tps_data_t idx;
+
+		memset(&idx, 0, sizeof(tps_data_t));
+		idx.s_method_id = METHOD_PUBLISH;
+		idx.s_method = sd->s_method;
+		idx.b_uri = sd->b_uri;
+		idx.a_uuid = sd->a_uuid;
+		idx.expires_valid = md->expires_valid;
+		idx.expires = md->expires;
+		if(tps_redis_store_etag_index(&idx) < 0) {
+			LM_ERR("failed to store publish etag index\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -1449,8 +1800,7 @@ int tps_redis_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	int32_t liflags;
 	unsigned long lval = 0;
 
-	if((md->s_method_id != METHOD_BYE)
-			&& !((md->s_method_id == METHOD_SUBSCRIBE) && (md->expires == 0))) {
+	if(!tps_data_end_dialog_match(msg, md)) {
 		return 0;
 	}
 

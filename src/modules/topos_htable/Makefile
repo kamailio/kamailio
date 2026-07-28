@@ -5,6 +5,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=topos_htable.so
 DEFS+=
+INCLUDES+=-I../topos
 LIBS=
 
 include ../../Makefile.modules
