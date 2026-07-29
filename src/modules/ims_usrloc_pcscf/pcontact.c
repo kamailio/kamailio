@@ -122,10 +122,6 @@ void free_security(security_t *_p)
 		return;
 	}
 
-	if(_p->sec_header.s) {
-		shm_free(_p->sec_header.s);
-	}
-
 	switch(_p->type) {
 		case SECURITY_IPSEC:
 			if(_p->data.ipsec) {
