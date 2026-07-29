@@ -77,11 +77,11 @@ static void trim_whitespaces(str *string)
 #define SEC_COPY_STR_PARAM(DST, SRC) \
 	if(DST.s != NULL) {              \
 		shm_free(DST.s);             \
-		DST.s = NULL;                \
-		DST.len = 0;                 \
 	}                                \
 	DST.s = shm_malloc(SRC.len);     \
 	if(DST.s == NULL) {              \
+		SHM_MEM_ERROR;               \
+		DST.len = 0;                 \
 		return -1;                   \
 	}                                \
 	memcpy(DST.s, SRC.s, SRC.len);   \

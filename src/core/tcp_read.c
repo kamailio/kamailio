@@ -314,6 +314,8 @@ int tcp_read_data(int fd, struct tcp_connection *c, char *buf, int b_size,
 {
 	int bytes_read;
 	int read_errno = 0; /* errno captured at the read() syscall (see below) */
+	int soerr = 0;
+	socklen_t soerr_len = sizeof(soerr);
 
 again:
 	bytes_read = read(fd, buf, b_size);
@@ -386,8 +388,6 @@ again:
 					/* read_errno itself unhelpful (e.g. a TLS-layer failure that
 					 * left no socket errno) - recover the true socket error from
 					 * SO_ERROR so a reset is still classified as such. */
-					int soerr = 0;
-					socklen_t soerr_len = sizeof(soerr);
 					int grc = getsockopt(
 							fd, SOL_SOCKET, SO_ERROR, &soerr, &soerr_len);
 					if(grc == 0 && soerr == ECONNRESET) {
@@ -410,8 +410,6 @@ again:
 			 * tcp:reset may be mis-identified as tcp:closed
 			 * and tcpops runs the wrong route. */
 			if(likely(c->event == 0)) {
-				int soerr = 0;
-				socklen_t soerr_len = sizeof(soerr);
 				if(unlikely(bytes_read != 0)
 						&& getsockopt(
 								   fd, SOL_SOCKET, SO_ERROR, &soerr, &soerr_len)
