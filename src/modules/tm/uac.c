@@ -593,7 +593,9 @@ static inline int t_uac_prepare(
 #endif
 
 	if(!is_ack) {
-		INIT_REF(new_cell, 1); /* ref'ed only from the hash */
+		/* keep extra temporary local reference to cope with a very fast local
+		 * reply that can free the transaction before arming retransmission */
+		INIT_REF(new_cell, 2); /* hash ref + local send and setup ref */
 		hi = dlg2hash(uac_r->dialog);
 		LOCK_HASH(hi);
 		insert_into_hash_table_unsafe(new_cell, hi);
@@ -703,12 +705,8 @@ error2:
 	if(is_ack) {
 		free_cell(new_cell);
 	} else {
-		if((new_cell->next_c == 0 && new_cell->prev_c == 0)
-				|| (atomic_get_int(&new_cell->ref_count) == 0)) {
-			free_cell(new_cell);
-		} else {
-			UNREF_FREE(new_cell, 0);
-		}
+		/* local UAC has a temporary extra reference */
+		UNREF_FREE(new_cell, 1);
 	}
 error3:
 	return ret;
@@ -810,7 +808,13 @@ static inline int send_prepared_request_impl(
 
 void send_prepared_request(struct retr_buf *request)
 {
+	struct cell *cell;
+
+	cell = (request != NULL) ? request->my_T : NULL;
 	send_prepared_request_impl(request, 1 /* retransmit */, 0);
+	if(likely(cell != NULL)) {
+		UNREF(cell);
+	}
 }
 
 /*
@@ -873,6 +877,9 @@ int t_uac_with_ids(
 		if(ret_index && ret_label) {
 			*ret_index = cell->hash_index;
 			*ret_label = cell->label;
+		}
+		if(likely(cell != NULL)) {
+			UNREF(cell);
 		}
 	}
 	return ret;
