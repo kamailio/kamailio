@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out the repository to the runner
         uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ needs.depth-value.outputs.pr_depth }}
       - name: Run clang-format check
         uses: wolletd/clang-format-checker@v1.12
         with:
@@ -51,6 +53,7 @@ jobs:
         with:
           path: source
           ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ needs.depth-value.outputs.pr_depth }}
       - uses: awalsh128/cache-apt-pkgs-action@v1.6.3
         with:
           packages: cmake-format
@@ -79,6 +82,7 @@ jobs:
         with:
           path: source
           ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ needs.depth-value.outputs.pr_depth }}
       - name: Run scripts/check-commit.sh
         run: ${{ github.workspace }}/actions/.github/scripts/check-commit.sh
         working-directory: ${{ github.workspace }}/source
