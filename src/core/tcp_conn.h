@@ -205,6 +205,9 @@ typedef enum conn_cmds
 	CONN_TLS_EVENT_DONE /* mode 2: worker finished a dispatched
 						 * tls:connection-out event; response[0] is the
 						 * tcp_connection*, tcp_main drops the dispatch refcnt */
+	,
+	CONN_SCRIPT_CLOSE /* mode 2: for worker to signal a connection close on error
+                           * when tcp_script_mode = 0 */
 } conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */

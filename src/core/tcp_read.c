@@ -2196,16 +2196,42 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 			 * the same sr_event decoders as in modes 0/1. The worker has no
 			 * local tcp_connection, so con is NULL; the decoders that need the
 			 * connection id read it from rcv->proto_reserved1 (== con->id). */
-			if(unlikely(task->flags & F_TCP_REQ_HEP3))
-				hep3_process_msg(
-						task->msg_buf, task->msg_len, &task->rcv, NULL);
+			{
+				int rmret;
+				if(unlikely(task->flags & F_TCP_REQ_HEP3))
+					rmret = hep3_process_msg(
+							task->msg_buf, task->msg_len, &task->rcv, NULL);
 #ifdef READ_MSRP
-			else if(unlikely(task->flags & F_TCP_REQ_MSRP_FRAME))
-				msrp_process_msg(
-						task->msg_buf, task->msg_len, &task->rcv, NULL);
+				else if(unlikely(task->flags & F_TCP_REQ_MSRP_FRAME))
+					rmret = msrp_process_msg(
+							task->msg_buf, task->msg_len, &task->rcv, NULL);
 #endif
-			else
-				receive_msg(task->msg_buf, task->msg_len, &task->rcv);
+				else {
+					rmret = receive_msg(
+							task->msg_buf, task->msg_len, &task->rcv);
+					/* SIP honours tcp_script_mode: CONTINUE masks a negative
+					 * script result so the connection stays up - same as
+					 * receive_tcp_msg() in modes 0/1. */
+					if(ksr_tcp_script_mode & TCP_SCRIPT_MODE_CONTINUE)
+						rmret = 0;
+				}
+				/* mode 2 parity with modes 0/1: a negative message-processing
+				 * result (e.g. request_route return(-1) with tcp_script_mode=0)
+				 * closes the connection. The worker holds no tcp_connection, so
+				 * ask PROC_TCP_MAIN to drop it by id (rcv.proto_reserved1 ==
+				 * con->id) via CONN_SCRIPT_CLOSE. */
+				if(unlikely(rmret < 0)) {
+					long clresp[2];
+					clresp[0] = (long)task->rcv.proto_reserved1;
+					clresp[1] = CONN_SCRIPT_CLOSE;
+					if(unlikely(tsend_stream(unix_tcp_sock, (char *)clresp,
+										sizeof(clresp), -1)
+								<= 0))
+						LM_ERR("mode2: failed to request script-close for "
+							   "conn id %ld\n",
+								(long)task->rcv.proto_reserved1);
+				}
+			}
 			shm_free(task);
 			break;
 		}

@@ -5131,6 +5131,41 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			if(unlikely(tcpconn_put(tcpconn)))
 				tcpconn_destroy(tcpconn);
 			break;
+		case CONN_SCRIPT_CLOSE: {
+			/* mode 2: close connection on core errors
+			 * used with tcp_script_mode=0). */
+			int scid = (int)response[0];
+			tcpconn = tcpconn_get(scid, 0, 0, 0, 0); /* takes a ref */
+			if(tcpconn == NULL) {
+				LM_DBG("mode2: script-close for conn id %d: already gone\n",
+						scid);
+				break;
+			}
+#ifdef TCP_ASYNC
+			/* if a pool job currently owns it,
+			 * do not unhash/free here - mark it bad and let the job completion
+			 * close it */
+			if(unlikely(tcpconn->flags & F_CONN_POOL_BUSY)) {
+				tcpconn->state = S_CONN_BAD;
+				tcpconn->timeout = get_ticks_raw();
+				if(unlikely(tcpconn_put(tcpconn)))
+					tcpconn_destroy(tcpconn); /* can't happen while busy */
+				break;
+			}
+#endif /* TCP_ASYNC */
+			if(tcpconn_try_unhash(tcpconn))
+				tcpconn_put(tcpconn);
+			if(((tcpconn->flags & (F_CONN_WRITE_W | F_CONN_READ_W)))
+					&& (tcpconn->s != -1)) {
+				io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+				tcpconn->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
+			}
+			/* reason stays unset -> reports tcp:closed (EOF), same as the
+			 * mode 0/1 script-error close. */
+			tcp_emit_closed_event(tcpconn);
+			tcpconn_put_destroy(tcpconn); /* release the lookup ref */
+			break;
+		}
 		case CONN_WRITE_REQ: {
 			/* mode 2: worker queued a write; response[0] is the write request,
 			 * not a tcp_connection. tcp_main queues the payload into the wbuf_q
