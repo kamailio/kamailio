@@ -179,14 +179,6 @@ static security_t *parse_sec_agree(struct hdr_field *h)
 	}
 	memset(params, 0, sizeof(security_t));
 
-	if((params->sec_header.s = shm_malloc(h->name.len)) == NULL) {
-		LM_ERR("Error allocating shm memory for security_t sec_header "
-			   "parameter during sec-agree parsing\n");
-		goto cleanup;
-	}
-	memcpy(params->sec_header.s, h->name.s, h->name.len);
-	params->sec_header.len = h->name.len;
-
 	// allocate memory for ipsec_t in security_t
 	params->data.ipsec = shm_malloc(sizeof(ipsec_t));
 	if(!params->data.ipsec) {
@@ -295,9 +287,6 @@ cleanup:
 	// Function - free_security()
 	// Keep them in sync!
 	if(params) {
-		if(params->sec_header.s)
-			shm_free(params->sec_header.s);
-
 		if(params->type == SECURITY_IPSEC && params->data.ipsec) {
 			if(params->data.ipsec->ealg.s)
 				shm_free(params->data.ipsec->ealg.s);
