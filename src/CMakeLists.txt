@@ -231,23 +231,35 @@ install(
 # Install the configuration file (kamailio.cfg) ${CFG_NAME} using a CODE block
 # to check  existence at install time instead of configure time
 # If(EXISTS ..) require full path
+add_custom_command(
+  OUTPUT kamailio.cfg.sample
+  COMMAND
+    sed -e "s#/usr/local/etc/kamailio#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}#g" -e
+    "s#/usr/local/lib/kamailio#${LIB_DIR}#g" < ${CMAKE_SOURCE_DIR}/etc/kamailio.cfg >
+    ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_NAME}.cfg.sample
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_custom_target(kamailio_cfg_sample ALL DEPENDS kamailio.cfg.sample)
+
 install(
   CODE "
     set(dir \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\")
+    set(sample_file \"${CFG_NAME}.cfg.sample\")
+    set(file \"${CFG_NAME}.cfg\")
 
     if(EXISTS \"\${dir}/${CFG_NAME}.cfg\")
         message(STATUS \"${CFG_NAME}.cfg already exists in \"
         \"\${dir}/${CFG_NAME}.cfg. Installing as ${CFG_NAME}.cfg.sample\")
-      file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
+        file(INSTALL \"${CMAKE_CURRENT_BINARY_DIR}/\${sample_file}\"
         DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
-        RENAME \"${CFG_NAME}.cfg.sample\"
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
       )
     else()
-        file(INSTALL \"${CMAKE_SOURCE_DIR}/etc/kamailio.cfg\"
+        file(INSTALL \"${CMAKE_CURRENT_BINARY_DIR}/\${sample_file}\"
           DESTINATION \"$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+          RENAME \"\${file}\"
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-          RENAME \"${CFG_NAME}.cfg\"
         )
     endif()
 "
