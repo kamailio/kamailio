@@ -60,6 +60,7 @@
 #define DLG_FLAG_NEW (1 << 0)		   /*!< new dialog */
 #define DLG_FLAG_CHANGED (1 << 1)	   /*!< dialog was changed */
 #define DLG_FLAG_HASBYE (1 << 2)	   /*!< bye was received */
+#define DLG_FLAG_DMQ_DELETED (1 << 3)  /*!< deleted via dmq peer */
 #define DLG_FLAG_CALLERBYE (1 << 4)	   /*!< bye from caller */
 #define DLG_FLAG_CALLEEBYE (1 << 5)	   /*!< bye from callee */
 #define DLG_FLAG_LOCALDLG (1 << 6)	   /*!< local dialog, unused */
