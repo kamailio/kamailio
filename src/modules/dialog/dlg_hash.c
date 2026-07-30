@@ -1258,6 +1258,10 @@ void next_state_dlg(
 								dlg->tag[DLG_CALLEE_LEG].s);
 						break;
 					}
+					/* don't revive a dialog torn down by a dmq peer */
+					if(dlg->dflags & DLG_FLAG_DMQ_DELETED) {
+						break;
+					}
 					ref_dlg_unsafe(dlg, 1);
 				case DLG_STATE_UNCONFIRMED:
 				case DLG_STATE_EARLY:

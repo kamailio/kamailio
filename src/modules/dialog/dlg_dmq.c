@@ -340,7 +340,8 @@ int dlg_dmq_handle_msg(
 					}
 					break;
 				case DLG_STATE_DELETED:
-					if(dlg->state == DLG_STATE_CONFIRMED) {
+					if(dlg->state == DLG_STATE_CONFIRMED_NA
+							|| dlg->state == DLG_STATE_CONFIRMED) {
 						ret = remove_dialog_timer(&dlg->tl);
 						if(ret == 0) {
 							/* one extra unref due to removal from timer list */
@@ -360,9 +361,14 @@ int dlg_dmq_handle_msg(
 
 					/* prevent DB sync */
 					dlg->dflags |= DLG_FLAG_NEW;
+					/* mark as deleted by a dmq peer */
+					dlg->dflags |= DLG_FLAG_DMQ_DELETED;
 					/* keep dialog around for a bit, to prevent out-of-order
 					 * syncs to reestablish the dlg */
 					dlg->init_ts = ksr_time_uint(NULL, NULL);
+					/* ensure end_ts is set so dlg_clean_run can clean the dialog */
+					if(dlg->end_ts == 0)
+						dlg->end_ts = ksr_time_uint(NULL, NULL);
 
 					if(dlg->state != DLG_STATE_DELETED) {
 						run_dlg_callbacks(DLGCB_TERMINATED, dlg, NULL, NULL,
@@ -403,7 +409,8 @@ int dlg_dmq_handle_msg(
 			LM_DBG("Removed dlg [%u:%u] with callid [%.*s] int state [%u]\n",
 					iuid.h_entry, iuid.h_id, dlg->callid.len, dlg->callid.s,
 					dlg->state);
-			if(dlg->state == DLG_STATE_CONFIRMED
+			if(dlg->state == DLG_STATE_CONFIRMED_NA
+					|| dlg->state == DLG_STATE_CONFIRMED
 					|| dlg->state == DLG_STATE_EARLY) {
 				ret = remove_dialog_timer(&dlg->tl);
 				if(ret == 0) {
@@ -424,6 +431,15 @@ int dlg_dmq_handle_msg(
 			/* prevent DB sync */
 			dlg->dflags |= DLG_FLAG_NEW;
 			dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
+			/* mark as deleted by a dmq peer */
+			dlg->dflags |= DLG_FLAG_DMQ_DELETED;
+
+			/* mark deleted if not already marked */
+			if(dlg->state != DLG_STATE_DELETED) {
+				dlg->state = DLG_STATE_DELETED;
+				if(dlg->end_ts == 0)
+					dlg->end_ts = ksr_time_uint(NULL, NULL);
+			}
 			unref++;
 			break;
 
