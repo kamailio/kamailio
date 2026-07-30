@@ -42,18 +42,20 @@ endif()
 install(
   CODE "
     set(dir \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\")
+    set(sample_file \"tls.cfg.sample\")
     set(file \"tls.cfg\")
+
     if(EXISTS \"\${dir}/\${file}\")
         message(STATUS \"\${file} already exists in \${dir}/\${file}.
           Installing as \${file}.sample\")
-        file(INSTALL \"${CMAKE_CURRENT_SOURCE_DIR}/\${file}\"
+        file(INSTALL \"${CMAKE_CURRENT_BINARY_DIR}/\${sample_file}\"
           DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
-          RENAME \"\${file}.sample\"
           PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
         )
     else()
-        file(INSTALL \"${CMAKE_CURRENT_SOURCE_DIR}/\${file}\"
+        file(INSTALL \"${CMAKE_CURRENT_BINARY_DIR}/\${sample_file}\"
             DESTINATION \"${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}\"
+            RENAME \"\${file}\"
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     endif()
 "
@@ -63,7 +65,7 @@ install(
 add_custom_command(
   OUTPUT tls.cfg.sample
   COMMAND
-    sed -e "s#\/usr/local/etc/kamailio/#${CMAKE_INSTALL_FULL_SYSCONFDIR}#g" -e
+    sed -e "s#\/usr/local/etc/kamailio/#${CMAKE_INSTALL_FULL_SYSCONFDIR}/${MAIN_NAME}/#g" -e
     "s#kamailio-selfsigned#${MAIN_NAME}-selfsigned#g" < tls.cfg >
     ${CMAKE_CURRENT_BINARY_DIR}/tls.cfg.sample
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
