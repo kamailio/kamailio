@@ -403,7 +403,6 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
-
 	if(msg->via1->branch->value.len < 7
 			|| memcmp(msg->via1->branch->value.s, "z9hG4bK", 7) != 0) {
 		LM_WARN("Via1 branch parameter does not start with the magic cookie\n");
@@ -672,9 +671,8 @@ int check_cseq_value(sip_msg_t *msg)
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		if(str2valid_uint(
-				   &((struct cseq_body *)msg->cseq->parsed)->number, &cseq)
-				!= 0) {
+		if(str2int(&((struct cseq_body *)msg->cseq->parsed)->number, &cseq) != 0
+				|| cseq >= (1U << 31)) {
 			if(sanity_reply(msg, 400, "CSeq number is illegal") < 0) {
 				LM_WARN("failed to send 400 via sl reply 2\n");
 			}
