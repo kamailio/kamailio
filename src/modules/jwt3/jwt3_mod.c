@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
@@ -32,6 +33,7 @@
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 
+#include <curl/curl.h>
 #include <jwt.h>
 
 #include "../../core/sr_module.h"
@@ -40,6 +42,8 @@
 #include "../../core/lvalue.h"
 #include "../../core/trim.h"
 #include "../../core/kemi.h"
+#include "../../core/locking.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../core/parser/parse_param.h"
 
 MODULE_VERSION
@@ -62,6 +66,26 @@ static int _jwt_leeway_sec = -1;
 static str _jwt_result = STR_NULL;
 static unsigned int _jwt_verify_status = 0;
 
+/**
+ * @brief JWKS cache entry (shared memory)
+ */
+typedef struct jwks_cache_entry
+{
+	str url;
+	str json;
+	time_t expires_at;
+	time_t miss_window_start;
+	int miss_count;
+	gen_lock_t *lock;
+	struct jwks_cache_entry *next;
+} jwks_cache_entry_t;
+
+static jwks_cache_entry_t **_jwks_cache = NULL;
+static gen_lock_t *_jwks_cache_lock = NULL;
+static int _jwks_cache_ttl = 3600;
+static int _jwks_miss_window = 60;
+static int _jwks_max_misses = 5;
+
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"jwt3_generate", (cmd_function)w_jwt_generate_4, 4, fixup_spve_all, fixup_free_spve_all,
@@ -77,6 +101,9 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"leeway_sec", PARAM_INT, &_jwt_leeway_sec},
+	{"jwks_cache_ttl", PARAM_INT, &_jwks_cache_ttl},
+	{"jwks_miss_window", PARAM_INT, &_jwks_miss_window},
+	{"jwks_max_misses", PARAM_INT, &_jwks_max_misses},
 	{0, 0, 0}
 };
 
@@ -125,6 +152,24 @@ static void jwt_free_str(char *s)
  */
 static int mod_init(void)
 {
+	_jwks_cache = shm_malloc(sizeof(jwks_cache_entry_t *));
+	if(!_jwks_cache) {
+		LM_ERR("Failed to allocate shared JWKS cache head\n");
+		return -1;
+	}
+	*_jwks_cache = NULL;
+
+	_jwks_cache_lock = lock_alloc();
+	if(!_jwks_cache_lock) {
+		LM_ERR("Failed to allocate JWKS cache lock\n");
+		return -1;
+	}
+	if(lock_init(_jwks_cache_lock) == NULL) {
+		LM_ERR("Failed to init JWKS cache lock\n");
+		lock_dealloc(_jwks_cache_lock);
+		_jwks_cache_lock = NULL;
+		return -1;
+	}
 	return 0;
 }
 
@@ -141,10 +186,37 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
+	jwks_cache_entry_t *e, *enext;
+
 	if(_jwt_result.s != NULL) {
 		jwt_free_str(_jwt_result.s);
 		_jwt_result.s = NULL;
 		_jwt_result.len = 0;
+	}
+
+	e = _jwks_cache ? *_jwks_cache : NULL;
+	while(e) {
+		enext = e->next;
+		if(e->lock) {
+			lock_destroy(e->lock);
+			lock_dealloc(e->lock);
+		}
+		if(e->url.s)
+			shm_free(e->url.s);
+		if(e->json.s)
+			shm_free(e->json.s);
+		shm_free(e);
+		e = enext;
+	}
+	if(_jwks_cache) {
+		shm_free(_jwks_cache);
+		_jwks_cache = NULL;
+	}
+
+	if(_jwks_cache_lock) {
+		lock_destroy(_jwks_cache_lock);
+		lock_dealloc(_jwks_cache_lock);
+		_jwks_cache_lock = NULL;
 	}
 	return;
 }
@@ -468,6 +540,184 @@ static char *jwt_raw_to_jwks(const char *pem_data, int pem_len, const char *kid)
 }
 
 /**
+ * @brief libcurl write callback - accumulates response body in pkg memory
+ */
+typedef struct
+{
+	char *buf;
+	size_t len;
+	size_t cap;
+} jwks_curl_buf_t;
+
+static size_t jwks_curl_write_cb(
+		char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+	jwks_curl_buf_t *b = (jwks_curl_buf_t *)userdata;
+	size_t n = size * nmemb;
+	if(b->len + n + 1 > b->cap) {
+		size_t new_cap = b->cap + n + 4096;
+		char *new_buf = pkg_realloc(b->buf, new_cap);
+		if(!new_buf)
+			return 0;
+		b->buf = new_buf;
+		b->cap = new_cap;
+	}
+	memcpy(b->buf + b->len, ptr, n);
+	b->len += n;
+	b->buf[b->len] = '\0';
+	return n;
+}
+
+/**
+ * @brief Find or create a JWKS cache entry for the given URL (shm)
+ */
+static jwks_cache_entry_t *jwks_cache_find_or_create(
+		const char *url, int url_len)
+{
+	jwks_cache_entry_t *e;
+
+	lock_get(_jwks_cache_lock);
+	for(e = *_jwks_cache; e; e = e->next) {
+		if(e->url.len == url_len && strncmp(e->url.s, url, url_len) == 0) {
+			LM_DBG("JWKS cache: found existing entry for %.*s\n", url_len, url);
+			lock_release(_jwks_cache_lock);
+			return e;
+		}
+	}
+
+	LM_DBG("JWKS cache: creating new entry for %.*s\n", url_len, url);
+	e = shm_malloc(sizeof(jwks_cache_entry_t));
+	if(!e) {
+		lock_release(_jwks_cache_lock);
+		return NULL;
+	}
+	memset(e, 0, sizeof(*e));
+
+	e->url.s = shm_malloc(url_len + 1);
+	if(!e->url.s) {
+		shm_free(e);
+		lock_release(_jwks_cache_lock);
+		return NULL;
+	}
+	memcpy(e->url.s, url, url_len);
+	e->url.s[url_len] = '\0';
+	e->url.len = url_len;
+
+	e->lock = lock_alloc();
+	if(!e->lock || lock_init(e->lock) == NULL) {
+		if(e->lock)
+			lock_dealloc(e->lock);
+		shm_free(e->url.s);
+		shm_free(e);
+		lock_release(_jwks_cache_lock);
+		return NULL;
+	}
+
+	e->next = *_jwks_cache;
+	*_jwks_cache = e;
+	lock_release(_jwks_cache_lock);
+	return e;
+}
+
+/**
+ * @brief Fetch JWKS from URL using libcurl, update cache entry
+ */
+static int jwks_fetch_url(jwks_cache_entry_t *entry)
+{
+	CURL *curl = NULL;
+	CURLcode res;
+	long http_code = 0;
+	jwks_curl_buf_t body = {NULL, 0, 0};
+	jwks_curl_buf_t hdrs = {NULL, 0, 0};
+	time_t new_expiry;
+	int ret = -1;
+
+	body.buf = pkg_malloc(4096);
+	if(!body.buf)
+		goto done;
+	body.cap = 4096;
+
+	hdrs.buf = pkg_malloc(2048);
+	if(!hdrs.buf)
+		goto done;
+	hdrs.cap = 2048;
+
+	curl = curl_easy_init();
+	if(!curl) {
+		LM_ERR("curl_easy_init() failed\n");
+		goto done;
+	}
+
+	curl_easy_setopt(curl, CURLOPT_URL, entry->url.s);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, jwks_curl_write_cb);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, jwks_curl_write_cb);
+	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdrs);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+	res = curl_easy_perform(curl);
+	if(res != CURLE_OK) {
+		LM_ERR("JWKS fetch from %.*s failed: %s\n", entry->url.len,
+				entry->url.s, curl_easy_strerror(res));
+		goto done;
+	}
+
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+	if(http_code < 200 || http_code >= 300) {
+		LM_ERR("JWKS fetch from %.*s returned HTTP %ld\n", entry->url.len,
+				entry->url.s, http_code);
+		goto done;
+	}
+
+	/* parse Cache-Control: max-age=N */
+	new_expiry = time(NULL) + _jwks_cache_ttl;
+	if(hdrs.buf && hdrs.len > 0) {
+		char *p = strcasestr(hdrs.buf, "cache-control:");
+		if(p) {
+			char *ma = strcasestr(p, "max-age=");
+			if(ma) {
+				int max_age = 0;
+				ma += 8;
+				while(*ma >= '0' && *ma <= '9') {
+					max_age = max_age * 10 + (*ma - '0');
+					ma++;
+				}
+				if(max_age > 0)
+					new_expiry = time(NULL) + max_age;
+			}
+		}
+	}
+
+	lock_get(entry->lock);
+	if(entry->json.s) {
+		shm_free(entry->json.s);
+		entry->json.s = NULL;
+		entry->json.len = 0;
+	}
+	entry->json.s = shm_malloc(body.len + 1);
+	if(entry->json.s) {
+		memcpy(entry->json.s, body.buf, body.len);
+		entry->json.s[body.len] = '\0';
+		entry->json.len = body.len;
+		entry->expires_at = new_expiry;
+		LM_DBG("JWKS cache: fetched %zu bytes from %.*s, TTL=%ld s\n", body.len,
+				entry->url.len, entry->url.s, (long)(new_expiry - time(NULL)));
+		ret = 0;
+	}
+	lock_release(entry->lock);
+
+done:
+	if(curl)
+		curl_easy_cleanup(curl);
+	if(body.buf)
+		pkg_free(body.buf);
+	if(hdrs.buf)
+		pkg_free(hdrs.buf);
+	return ret;
+}
+
+/**
  * @brief Load key based on string content
  */
 static jwk_set_t *jwt_load_keys(str *key_in)
@@ -476,7 +726,38 @@ static jwk_set_t *jwt_load_keys(str *key_in)
 	char *dot_last = strrchr(key_in->s, '.');
 	jwk_set_t *jwks = NULL;
 
-	if(key_in->s[0] == '{') {
+	if(strncmp(key_in->s, "https://", 8) == 0
+			|| strncmp(key_in->s, "http://", 7) == 0) {
+		/* remote JWKS URL */
+		LM_DBG("Detected URL. Treating as remote JWKS endpoint.\n");
+		jwks_cache_entry_t *entry =
+				jwks_cache_find_or_create(key_in->s, key_in->len);
+		if(!entry) {
+			LM_ERR("Failed to get cache entry for JWKS URL: %.*s\n",
+					key_in->len, key_in->s);
+			return NULL;
+		}
+		lock_get(entry->lock);
+		int needs_fetch =
+				(entry->json.s == NULL || time(NULL) >= entry->expires_at);
+		if(!needs_fetch) {
+			LM_DBG("JWKS cache: hit for %.*s (expires in %ld s)\n", key_in->len,
+					key_in->s, (long)(entry->expires_at - time(NULL)));
+		} else {
+			LM_DBG("JWKS cache: %s for %.*s, fetching now\n",
+					entry->json.s == NULL ? "empty" : "expired", key_in->len,
+					key_in->s);
+		}
+		lock_release(entry->lock);
+		if(needs_fetch) {
+			if(jwks_fetch_url(entry) < 0)
+				return NULL;
+		}
+		lock_get(entry->lock);
+		if(entry->json.s)
+			jwks = jwks_load(NULL, entry->json.s);
+		lock_release(entry->lock);
+	} else if(key_in->s[0] == '{') {
 		/* inline JWKS JSON */
 		LM_DBG("Starts with '{'. Treating as inline JWKS JSON.\n");
 		jwks = jwks_load(NULL, key_in->s);
@@ -928,14 +1209,74 @@ static int ki_jwt_verify_key(
 		/* find key item by kid in a JWKS ... */
 		if(hdr.value) {
 			item = jwks_find_bykid(jwks, hdr.value);
+			/* kid present but not found - try re-fetch for remote JWKS */
+			if(item == NULL
+					&& (strncmp(key->s, "https://", 8) == 0
+							|| strncmp(key->s, "http://", 7) == 0)) {
+				jwks_cache_entry_t *entry =
+						jwks_cache_find_or_create(key->s, key->len);
+				if(entry) {
+					int do_refresh = 0;
+					time_t now = time(NULL);
+					lock_get(entry->lock);
+					if(now - entry->miss_window_start > _jwks_miss_window) {
+						entry->miss_window_start = now;
+						entry->miss_count = 0;
+					}
+					if(entry->miss_count < _jwks_max_misses) {
+						entry->miss_count++;
+						do_refresh = 1;
+						LM_DBG("JWKS cache: kid '%s' not found, scheduling "
+							   "re-fetch (miss %d/%d) for %.*s\n",
+								hdr.value, entry->miss_count, _jwks_max_misses,
+								entry->url.len, entry->url.s);
+					} else {
+						LM_WARN("JWKS re-fetch rate limit reached for %.*s"
+								" - kid '%s' rejected\n",
+								entry->url.len, entry->url.s, hdr.value);
+					}
+					lock_release(entry->lock);
+					if(do_refresh) {
+						lock_get(entry->lock);
+						entry->expires_at = 0;
+						lock_release(entry->lock);
+						if(jwks_fetch_url(entry) == 0) {
+							jwks_free(jwks);
+							lock_get(entry->lock);
+							jwks = entry->json.s
+										   ? jwks_load(NULL, entry->json.s)
+										   : NULL;
+							lock_release(entry->lock);
+							if(jwks && !jwks_error(jwks)) {
+								item = jwks_find_bykid(jwks, hdr.value);
+								if(item)
+									LM_DBG("JWKS cache: kid '%s' found after "
+										   "re-fetch from %.*s\n",
+											hdr.value, key->len, key->s);
+								else
+									LM_DBG("JWKS cache: kid '%s' still not "
+										   "found after re-fetch from "
+										   "%.*s\n",
+											hdr.value, key->len, key->s);
+							}
+						}
+					}
+				}
+			}
 			if(item == NULL) {
-				/* kid present but not found - fall back to first key */
+				if(strncmp(key->s, "https://", 8) == 0
+						|| strncmp(key->s, "http://", 7) == 0) {
+					LM_ERR("kid '%s' not found in JWKS\n", hdr.value);
+					free(hdr.value);
+					goto error;
+				}
+				/* static key: fall back to first key */
 				LM_DBG("kid '%s' not found in JWKS, falling back to first "
 					   "key\n",
 						hdr.value);
 				item = jwks_item_get(jwks, 0);
 			}
-			free(hdr.value); /* clean up */
+			free(hdr.value);
 		} else {
 			/* no kid in JWT - use first key */
 			item = jwks_item_get(jwks, 0);
