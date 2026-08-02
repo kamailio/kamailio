@@ -30,6 +30,9 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. leeway_sec (int)
+              3.2. jwks_cache_ttl (int)
+              3.3. jwks_miss_window (int)
+              3.4. jwks_max_misses (int)
 
         4. Functions
 
@@ -44,10 +47,13 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set leeway_sec parameter
-   1.2. jwt3_generate usage
-   1.3. jwt3_verify usage
-   1.4. jwt3_verify_key usage
-   1.5. $jwt3(name) usage
+   1.2. Set jwks_cache_ttl parameter
+   1.3. Set jwks_miss_window parameter
+   1.4. Set jwks_max_misses parameter
+   1.5. jwt3_generate usage
+   1.6. jwt3_verify usage
+   1.7. jwt3_verify_key usage
+   1.8. $jwt3(name) usage
 
 Chapter 1. Admin Guide
 
@@ -62,6 +68,9 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. leeway_sec (int)
+        3.2. jwks_cache_ttl (int)
+        3.3. jwks_miss_window (int)
+        3.4. jwks_max_misses (int)
 
    4. Functions
 
@@ -81,6 +90,21 @@ Chapter 1. Admin Guide
    It relies on libjwt (at least v3.2.0) library
    (https://github.com/benmcollins/libjwt).
 
+   The key parameter of jwt3_verify() and jwt3_verify_key() accepts three
+   formats: a raw PEM string, a path to a local PEM or JWKS (.json) file,
+   or an HTTP/HTTPS URL pointing to a remote JWKS endpoint. When a URL is
+   provided, the JWKS is fetched and cached in shared memory. The cache
+   TTL is controlled by the jwks_cache_ttl parameter or, when available,
+   by the Cache-Control: max-age directive returned by the server.
+
+   When a JWT contains a kid (Key ID) header that is not found in the
+   loaded JWKS, the module will attempt to re-fetch the JWKS from the
+   remote URL once and retry the lookup. If the kid is still not found,
+   verification fails. To protect against DoS attacks using JWTs with
+   unknown kid values that would trigger continuous re-fetches, the number
+   of re-fetch attempts is rate-limited per URL using the jwks_miss_window
+   and jwks_max_misses parameters.
+
 2. Dependencies
 
    2.1. Kamailio Modules
@@ -96,10 +120,14 @@ Chapter 1. Admin Guide
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * libjwt - version 3.2.0 or higher.
+     * libcurl - required for remote JWKS URL support.
 
 3. Parameters
 
    3.1. leeway_sec (int)
+   3.2. jwks_cache_ttl (int)
+   3.3. jwks_miss_window (int)
+   3.4. jwks_max_misses (int)
 
 3.1. leeway_sec (int)
 
@@ -112,7 +140,52 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set leeway_sec parameter
 ...
-modparam("jwt", "leeway_sec", 30)
+modparam("jwt3", "leeway_sec", 30)
+...
+
+3.2. jwks_cache_ttl (int)
+
+   Time-to-live in seconds for cached remote JWKS documents. When the
+   remote JWKS endpoint returns a Cache-Control: max-age response header,
+   that value takes precedence over this parameter. This fallback TTL is
+   used when no Cache-Control header is present.
+
+   Default value is 3600.
+
+   Example 1.2. Set jwks_cache_ttl parameter
+...
+modparam("jwt3", "jwks_cache_ttl", 600)
+...
+
+3.3. jwks_miss_window (int)
+
+   Time window in seconds used by the DoS protection mechanism. When a JWT
+   contains a kid that is not found in the cached JWKS, the module
+   re-fetches the remote endpoint. This parameter defines the sliding
+   window within which re-fetch attempts are counted per URL. Once the
+   count reaches jwks_max_misses, further re-fetches are blocked until the
+   window expires.
+
+   Default value is 60.
+
+   Example 1.3. Set jwks_miss_window parameter
+...
+modparam("jwt3", "jwks_miss_window", 120)
+...
+
+3.4. jwks_max_misses (int)
+
+   Maximum number of remote JWKS re-fetch attempts allowed per URL within
+   the jwks_miss_window. This limits the impact of DoS attacks that send
+   JWTs with unknown kid values to trigger continuous HTTP requests to the
+   JWKS endpoint. Once the limit is reached, further re-fetches for that
+   URL are rejected until the window resets.
+
+   Default value is 5.
+
+   Example 1.4. Set jwks_max_misses parameter
+...
+modparam("jwt3", "jwks_max_misses", 3)
 ...
 
 4. Functions
@@ -148,7 +221,7 @@ modparam("jwt", "leeway_sec", 30)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.2. jwt3_generate usage
+   Example 1.5. jwt3_generate usage
 ...
   jwt3_generate("/path/to/prvkey.json", "ES256",
         "caller='$fU';callee='$tU';callid='$ci';index=100");
@@ -159,7 +232,9 @@ modparam("jwt", "leeway_sec", 30)
    Verify the JWT.
 
    The parameters are:
-     * pubkeypath - path to public key file (PEM or JWKS)
+     * pubkeypath - path to public key file (PEM or JWKS), or an
+       HTTP/HTTPS URL pointing to a remote JWKS endpoint. When a URL is
+       provided, the JWKS is fetched and cached in shared memory.
      * alg - the algorithm to build the signature, as supported by the
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be checked they are in the JWT, in
@@ -173,7 +248,7 @@ modparam("jwt", "leeway_sec", 30)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.3. jwt3_verify usage
+   Example 1.6. jwt3_verify usage
 ...
   if(!jwt3_verify("/path/to/pubkey.json", "ES256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
@@ -187,7 +262,10 @@ modparam("jwt", "leeway_sec", 30)
    Verify the JWT.
 
    The parameters are:
-     * pubkeyval - public key value
+     * pubkeyval - public key value. Can be a raw PEM string, a path to a
+       local PEM or JWKS (.json) file, or an HTTP/HTTPS URL pointing to a
+       remote JWKS endpoint. When a URL is provided, the JWKS is fetched
+       and cached in shared memory.
      * alg - the algorithm to build the signature, as supported by the
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be checked they are in the JWT, in
@@ -198,10 +276,17 @@ modparam("jwt", "leeway_sec", 30)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.4. jwt3_verify_key usage
+   Example 1.7. jwt3_verify_key usage
 ...
   if(!jwt3_verify_key("...", "RS256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
+        "$var(jwt)") {
+    xwarn("failed to verify jwt\n");
+  }
+
+  # remote JWKS URL - fetched and cached automatically
+  if(!jwt3_verify_key("https://auth.example.com/.well-known/jwks.json", "RS256",
+         "iss='https://auth.example.com'",
         "$var(jwt)") {
     xwarn("failed to verify jwt\n");
   }
@@ -219,7 +304,7 @@ modparam("jwt", "leeway_sec", 30)
      * val - the value of JWT after a successful jwt3_generate().
      * status - the status of verification after a failed jwt3_verify().
 
-   Example 1.5. $jwt3(name) usage
+   Example 1.8. $jwt3(name) usage
 ...
   jwt3_generate("/path/to/prvkey.pem", "RS256",
         "caller='$fU';callee='$tU';callid='$ci';index=100");
