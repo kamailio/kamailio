@@ -32,6 +32,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/data_lump.h"
 #include "../../core/forward.h"
+#include "../../core/resolve.h"
 #include "../../core/trim.h"
 #include "../../core/dset.h"
 #include "../../core/msg_translator.h"
@@ -54,6 +55,7 @@ extern str _tps_cparam_name;
 extern int _tps_rr_update;
 extern int _tps_header_mode;
 extern unsigned int _tps_methods_update_time;
+extern int _tps_handle_unmask_miss;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -772,6 +774,7 @@ int tps_remove_name_headers(sip_msg_t *msg, str *hname)
 {
 	hdr_field_t *hf;
 	struct lump *l;
+	/* remove every occurrence, not just the first one */
 	for(hf = msg->headers; hf; hf = hf->next) {
 		if(hf->name.len == hname->len
 				&& strncasecmp(hf->name.s, hname->s, hname->len) == 0) {
@@ -781,7 +784,6 @@ int tps_remove_name_headers(sip_msg_t *msg, str *hname)
 						hname->s);
 				return -1;
 			}
-			return 0;
 		}
 	}
 	return 0;
@@ -1020,6 +1022,37 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 }
 
 /**
+ * Find the owner node address from the stored s_rr.
+ * returns 0 on success and fills *out_puri
+ * returns -1 when there is no usable bare-IP s_rr
+ */
+static int tps_owner_uri_from_srr(tps_data_t *stsd, sip_uri_t *out_puri)
+{
+	rr_t *srr = NULL;
+	rr_t *entry = NULL;
+	int ret = -1;
+
+	if(stsd == NULL || out_puri == NULL || stsd->s_rr.len <= 0) {
+		return -1;
+	}
+	if(parse_rr_body(stsd->s_rr.s, stsd->s_rr.len, &srr) < 0 || srr == NULL) {
+		return -1;
+	}
+	for(entry = srr; entry != NULL; entry = entry->next) {
+		if(parse_uri(entry->nameaddr.uri.s, entry->nameaddr.uri.len, out_puri)
+						== 0
+				&& (str2ip(&out_puri->host) != NULL
+						|| str2ip6(&out_puri->host) != NULL)) {
+			/* bare IP host only; an FQDN names no specific owner */
+			ret = 0;
+			break;
+		}
+	}
+	free_rr(&srr);
+	return ret;
+}
+
+/**
  *
  */
 int tps_request_received(sip_msg_t *msg, int dialog)
@@ -1032,12 +1065,22 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	int ret;
 	int use_branch = 0;
 	unsigned int metid = 0;
+	sip_uri_t opuri;
+	str oduri;
+	char odbuf[256];
+	str um_owner_hname = str_init("P-TPS-Owner");
+	int um_owner = 0;
 
 	LM_DBG("handling incoming request\n");
 
 	if(dialog == 0) {
 		/* nothing to do for initial request */
 		return 0;
+	}
+
+	/* P-TPS-Owner is a topos-internal hint; remove it from the received SIP */
+	if(_tps_handle_unmask_miss) {
+		tps_remove_name_headers(msg, &um_owner_hname);
 	}
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
@@ -1066,6 +1109,20 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
 		goto error;
 	}
+
+	/* unmask-miss: capture the owner node from the dialog s_rr now */
+	if(_tps_handle_unmask_miss
+			&& (stsd.a_contact.len <= 0 || stsd.b_contact.len <= 0)
+			&& tps_owner_uri_from_srr(&stsd, &opuri) == 0) {
+		oduri.s = odbuf;
+		oduri.len =
+				snprintf(odbuf, sizeof(odbuf), "sip:%.*s:%u", opuri.host.len,
+						opuri.host.s, opuri.port_no ? opuri.port_no : SIP_PORT);
+		if(oduri.len > 0 && oduri.len < (int)sizeof(odbuf)) {
+			um_owner = 1;
+		}
+	}
+
 	metid = get_cseq(msg)->method_id;
 	if((metid
 			   & (METHOD_BYE | METHOD_INFO | METHOD_PRACK | METHOD_UPDATE
@@ -1113,6 +1170,27 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		} else {
 			LM_DBG("r-uri updated to: [%.*s]\n", nuri.len, nuri.s);
 		}
+	} else if(_tps_handle_unmask_miss
+			  && (mtsd.a_uuid.len > 0 || mtsd.b_uuid.len > 0)) {
+		/* unmask-miss: dialog loaded but the near contact is empty */
+		LM_WARN("[TOPOS-UNMASK-MISS] call_id=%.*s method=%.*s cseq=%.*s "
+				"dir=%s use_branch=%d um_owner=%d: near contact EMPTY "
+				"(a_contact_len=%d b_contact_len=%d) - r-uri [%.*s] left "
+				"masked\n",
+				msg->callid->body.len, msg->callid->body.s,
+				get_cseq(msg)->method.len, get_cseq(msg)->method.s,
+				get_cseq(msg)->number.len, get_cseq(msg)->number.s,
+				(direction == TPS_DIR_UPSTREAM) ? "UPSTREAM" : "DOWNSTREAM",
+				use_branch, um_owner, stsd.a_contact.len, stsd.b_contact.len,
+				msg->first_line.u.request.uri.len,
+				msg->first_line.u.request.uri.s);
+
+		if(um_owner) {
+			tps_add_headers(msg, &um_owner_hname, &oduri, 0);
+		}
+
+		/* return here on purpose; keep the request masked and skip topos */
+		return 0;
 	}
 	if(tps_unmask_refer_to(msg, &stsd, direction) < 0) {
 		LM_ERR("failed to update Refer-To header\n");
