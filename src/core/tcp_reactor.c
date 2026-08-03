@@ -25,6 +25,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <poll.h>
 
 #include "dprint.h"
 #include "mem/shm_mem.h"
@@ -36,6 +37,48 @@
   * A write of at most PIPE_BUF bytes is guaranteed atomic */
 _Static_assert(sizeof(uintptr_t) <= PIPE_BUF,
 		"task pointer too wide for atomic dispatch write");
+
+/* Hand a task pointer to the workers over the dispatch socketpair.
+ *
+ * The socket is non-blocking: poll briefly for the buffer to drain
+ * and retry, giving up only on a hard error or if the workers
+ * stay wedged past the bounded wait.
+ * Returns 0 on success, -1 on failure
+ * (task not sent - the caller must free it). */
+#define TCP_REACTOR_DISPATCH_POLL_MS 100
+#define TCP_REACTOR_DISPATCH_POLL_TRIES 5
+static int tcp_reactor_dispatch_send(uintptr_t ptr)
+{
+	int wfd = ksr_tcp_reactor_get_dispatch_wfd();
+	int tries = 0;
+	ssize_t sent;
+	struct pollfd pfd;
+
+	for(;;) {
+		sent = send(wfd, &ptr, sizeof(ptr), 0);
+		if(sent == (ssize_t)sizeof(ptr))
+			return 0;
+		if(sent < 0 && errno == EINTR)
+			continue; /* interrupted before anything was sent - retry */
+		if(sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+			if(tries++ >= TCP_REACTOR_DISPATCH_POLL_TRIES) {
+				LM_WARN("dispatch socket full: workers not draining after"
+						" %d x %dms - dropping task\n",
+						TCP_REACTOR_DISPATCH_POLL_TRIES,
+						TCP_REACTOR_DISPATCH_POLL_MS);
+				return -1;
+			}
+			pfd.fd = wfd;
+			pfd.events = POLLOUT;
+			pfd.revents = 0;
+			poll(&pfd, 1, TCP_REACTOR_DISPATCH_POLL_MS); /* wait for drain */
+			continue;
+		}
+		LM_ERR("dispatch send failed (%s)\n",
+				(sent < 0) ? strerror(errno) : "short write");
+		return -1;
+	}
+}
 
 /*
  * Allocate a tcp_reactor_task_t in shm, copy the reassembled SIP message
@@ -55,7 +98,6 @@ int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 {
 	tcp_reactor_task_t *task;
 	uintptr_t ptr;
-	ssize_t sent;
 
 	task = shm_malloc(sizeof(tcp_reactor_task_t) + len + 1);
 	if(task == NULL) {
@@ -69,10 +111,7 @@ int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 	task->msg_buf[len] = '\0';
 
 	ptr = (uintptr_t)task;
-	sent = send(ksr_tcp_reactor_get_dispatch_wfd(), &ptr, sizeof(ptr), 0);
-	if(sent != (ssize_t)sizeof(ptr)) {
-		LM_ERR("failed to dispatch SIP task to workers (%s)\n",
-				(sent < 0) ? strerror(errno) : "short write");
+	if(tcp_reactor_dispatch_send(ptr) < 0) {
 		shm_free(task);
 		return -1;
 	}
@@ -83,7 +122,6 @@ int tcp_reactor_dispatch_tls_event(struct tcp_connection *c)
 {
 	tcp_reactor_task_t *task;
 	uintptr_t ptr;
-	ssize_t sent;
 
 	/* Keep the connection alive across the hop to the worker; the worker only
 	 * reads c's shm-cached TLS metadata and hands the refcnt back to
@@ -107,10 +145,7 @@ int tcp_reactor_dispatch_tls_event(struct tcp_connection *c)
 	task->msg_buf[0] = '\0';
 
 	ptr = (uintptr_t)task;
-	sent = send(ksr_tcp_reactor_get_dispatch_wfd(), &ptr, sizeof(ptr), 0);
-	if(sent != (ssize_t)sizeof(ptr)) {
-		LM_ERR("failed to dispatch tls event to workers (%s)\n",
-				(sent < 0) ? strerror(errno) : "short write");
+	if(tcp_reactor_dispatch_send(ptr) < 0) {
 		shm_free(task);
 		tcpconn_put(c);
 		return -1;
