@@ -537,6 +537,8 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str *tag, str *rr, str *contact,
 		cs = *cseq;
 	}
 
+	dlg_cell_lock(dlg);
+
 	if(dlg->tag[leg].s)
 		shm_free(dlg->tag[leg].s);
 	dlg->tag[leg].s = (char *)shm_malloc(tag->len);
@@ -588,6 +590,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str *tag, str *rr, str *contact,
 			dlg->route_set[leg].s = NULL;
 		}
 
+		dlg_cell_unlock(dlg);
 		return -1;
 	}
 
@@ -614,6 +617,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str *tag, str *rr, str *contact,
 	dlg->cseq[leg].len = cs.len;
 	memcpy(dlg->cseq[leg].s, cs.s, cs.len);
 
+	dlg_cell_unlock(dlg);
 	return 0;
 }
 
