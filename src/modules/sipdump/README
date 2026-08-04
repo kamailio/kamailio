@@ -35,6 +35,7 @@ Daniel-Constantin Mierla
               3.8. fage (int)
               3.9. fagex (str)
               3.10. event_callback (str)
+              3.11. parse_call_id (int)
 
         4. Functions
 
@@ -62,8 +63,9 @@ Daniel-Constantin Mierla
    1.8. Set fage parameter
    1.9. Set fagex parameter
    1.10. Set event_callback parameter
-   1.11. sipdump_send usage
-   1.12. sipdump.enable usage
+   1.11. Set parse_call_id parameter
+   1.12. sipdump_send usage
+   1.13. sipdump.enable usage
 
 Chapter 1. Admin Guide
 
@@ -87,6 +89,7 @@ Chapter 1. Admin Guide
         3.8. fage (int)
         3.9. fagex (str)
         3.10. event_callback (str)
+        3.11. parse_call_id (int)
 
    4. Functions
 
@@ -151,6 +154,7 @@ Chapter 1. Admin Guide
    3.8. fage (int)
    3.9. fagex (str)
    3.10. event_callback (str)
+   3.11. parse_call_id (int)
 
 3.1. enable (int)
 
@@ -291,6 +295,20 @@ function ksr_sipdump_event(evname)
 end
 ...
 
+3.11. parse_call_id (int)
+
+   If set to 1, the Call-ID header is searched in the captured SIP message
+   and its value is exported in the $sipdump(call_id) variable. It is
+   relevant only when the 'mode' parameter has the flag 2 set (execute
+   event route).
+
+   Default value is 0.
+
+   Example 1.11. Set parse_call_id parameter
+...
+modparam("sipdump", "parse_call_id", 1)
+...
+
 4. Functions
 
    4.1. sipdump_send(tag)
@@ -305,7 +323,7 @@ end
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. sipdump_send usage
+   Example 1.12. sipdump_send usage
 ...
 sipdump_send("cfg");
 ...
@@ -323,7 +341,7 @@ sipdump_send("cfg");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. sipdump.enable usage
+   Example 1.13. sipdump.enable usage
 ...
 kamctl rpc sipdump.enable
 kamctl rpc sipdump.enable 1
@@ -338,6 +356,9 @@ kamctl rpc sipdump.enable 0
 
    Executed when sipdump handles messages and mode parameter has flag 2
    set. The variable $sipdump(...) is available inside the event route.
+
+   The key 'call_id' is set only if the 'parse_call_id' parameter is
+   enabled, otherwise $sipdump(call_id) is $null.
 
    If drop() is used in event_route, then writing to file is no longer
    done when mode parameter has also the flag 1 set.
