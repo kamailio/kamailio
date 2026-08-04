@@ -42,11 +42,12 @@ struct reply_list
 	size_t count;
 };
 
-// Redis role enum
+/* Prefixed to avoid clash with hiredis_cluster hircluster.h
+ * (#define REDIS_ROLE_MASTER / REDIS_ROLE_SLAVE). See GH #4773. */
 typedef enum
 {
-	REDIS_ROLE_MASTER,
-	REDIS_ROLE_REPLICA
+	DB_REDIS_ROLE_MASTER,
+	DB_REDIS_ROLE_REPLICA
 } redis_role_t;
 
 typedef struct redis_sentinel
