@@ -545,11 +545,13 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 
 		/* save the settings to the database,
 		 * if realtime saving mode configured- save dialog now
-		 * else: the next time the timer will fire the update*/
+		 * else: the next time the timer will fire the update
+		 *
+		 * Arm the dialog timer before the realtime DB write so the
+		 * persisted timeout is time(0)+lifetime. Writing first leaves
+		 * tl.timeout at 0 and stores an already-expired value (GH #4804).
+		 */
 		dlg->dflags |= DLG_FLAG_NEW;
-		if(dlg_db_mode == DB_MODE_REALTIME)
-			update_dialog_dbinfo(dlg);
-
 		if(0 != insert_dlg_timer(&dlg->tl, dlg->lifetime)) {
 			LM_CRIT("Unable to insert dlg %p [%u:%u] on event %d [%d->%d] "
 					"with clid '%.*s' and tags '%.*s' '%.*s'\n",
@@ -561,6 +563,9 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 			/* dialog pointer inserted in timer list */
 			dlg_ref(dlg, 1);
 		}
+
+		if(dlg_db_mode == DB_MODE_REALTIME)
+			update_dialog_dbinfo(dlg);
 
 		/* dialog confirmed (ACK pending) */
 		run_dlg_callbacks(
