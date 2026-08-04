@@ -538,6 +538,14 @@ $ kamctl rpc htable.dump htable
        nodes (htable peers). Please note, module parameter “enable_dmq”
        must also be set in order for this to apply (see below). Default is
        0 (no replication).
+       When replication is enabled for a htable, each cell carries a
+       'last_modified' timestamp with millisecond precision, updated on
+       every value change. This is included in SET_CELL and SYNC DMQ
+       payloads. A receiving peer applies an incoming value only if its
+       'last_modified' timestamp is newer than the local cell's one
+       (Last-Write-Wins); otherwise it keeps the local value. All other
+       DMQ actions carry no 'last_modified' timestamp and remain
+       last-arrived-wins.
      * coldelim - the character delimeter to use when packing the htable.
        When set, this parameter changes the column delimeter between
        columns in a multiple column hash table. This can be useful when
