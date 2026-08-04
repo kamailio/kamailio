@@ -599,8 +599,8 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str *tag, str *rr, str *contact,
 	memcpy(dlg->tag[leg].s, tag->s, tag->len);
 
 	/* rr */
+	dlg->route_set[leg].len = rr->len;
 	if(rr->len) {
-		dlg->route_set[leg].len = rr->len;
 		memcpy(dlg->route_set[leg].s, rr->s, rr->len);
 	}
 
