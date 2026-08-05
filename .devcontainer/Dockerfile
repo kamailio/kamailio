@@ -3,7 +3,8 @@ FROM mcr.microsoft.com/devcontainers/base:trixie
 RUN apt-get update && \
   export DEBIAN_FRONTEND=noninteractive && \
   apt-get -y install --no-install-recommends \
-    apt-utils dialog clang-format clang pbuilder cmake docbook-xsl lynx
+    apt-utils dialog clang-format clang pbuilder cmake docbook-xsl lynx \
+    libxml2-utils
 
 # trixie packaging
 RUN mkdir -p /usr/local/src/pkg
