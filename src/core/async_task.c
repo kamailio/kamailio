@@ -520,6 +520,7 @@ int async_task_run(async_wgroup_t *awg, int idx)
 		if(ptask->exec != NULL) {
 			LM_DBG("task executed [%p] (%p/%p)\n", (void *)ptask,
 					(void *)ptask->exec, (void *)ptask->param);
+			cfg_update();
 			ptask->exec(ptask->param);
 		} else {
 			LM_DBG("task with no callback function - ignoring\n");
@@ -607,6 +608,7 @@ void async_exec_tkv(void *param)
 	_ksr_async_tkv_param = adp;
 	set_route_type(REQUEST_ROUTE);
 	keng = sr_kemi_eng_get();
+	cfg_update();
 	if(keng != NULL) {
 		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &async_tkv_evcb, &evname)
 				< 0) {
