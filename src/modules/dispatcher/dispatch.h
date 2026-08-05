@@ -218,6 +218,8 @@ void ds_dns_timer(unsigned int ticks, void *param);
  * Check if the reply-code is valid:
  */
 int ds_ping_check_rplcode(int);
+int ds_ping_check_rplcode_list(int code, int *codes, int cnt);
+int ds_parse_reply_codes_list(str *input, int **pcodes);
 
 /* clang-format off */
 typedef struct _ds_attrs {
@@ -233,6 +235,8 @@ typedef struct _ds_attrs {
 	str ping_from;
 	str obproxy;
 	int rpriority;
+	int *ping_reply_codes; /*!< per-destination accepted ping reply codes (NULL=use global) */
+	int ping_reply_codes_cnt;
 } ds_attrs_t;
 
 typedef struct _ds_latency_stats {

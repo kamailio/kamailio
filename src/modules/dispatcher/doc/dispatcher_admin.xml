@@ -2683,6 +2683,16 @@ kamcli dispatcher.oclist 1
 								overwrites the general ds_ping_from parameter.</para>
 						</listitem>
 						<listitem>
+								<para>'ping_reply_codes' - accepted reply codes for the OPTIONS
+									keepalive of this destination, overriding the global
+									ds_ping_reply_codes parameter for it. It uses the same
+									'class=N;code=N' syntax as the global parameter; the value
+									has to be enclosed in double quotes so that its ';'
+									separators are not interpreted as attribute separators,
+									e.g. 'ping_reply_codes="class=2;code=404"'. When not set,
+									the global ds_ping_reply_codes list is used.</para>
+						</listitem>
+						<listitem>
 							<para>'obproxy' - SIP URI of outbound proxy to be used when sending
 								pings. It overwrites the general ds_outbound_proxy parameter.</para>
 						</listitem>
