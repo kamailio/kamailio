@@ -50,6 +50,7 @@
 #include "xavp.h"
 #include "select_buf.h"
 #include "locking.h"
+#include "atomic_ops.h"
 
 #include "tcp_server.h"	 /* for tcpconn_add_alias */
 #include "tcp_options.h" /* for access to tcp_accept_aliases*/
@@ -72,16 +73,18 @@ str default_via_port = {0, 0};
 
 int ksr_route_locks_size = 0;
 static rec_lock_set_t *ksr_route_locks_set = NULL;
-static unsigned int ksr_latency_sample_seq = 0;
+static volatile int ksr_latency_sample_seq = 0;
 
 static inline int ksr_latency_sample_hit(unsigned int sample_n)
 {
+	unsigned int seq;
+
 	if(sample_n <= 1) {
 		return 1;
 	}
 
-	ksr_latency_sample_seq++;
-	if((ksr_latency_sample_seq % sample_n) == 0) {
+	seq = (unsigned int)atomic_add_int(&ksr_latency_sample_seq, 1);
+	if((seq % sample_n) == 0) {
 		return 1;
 	}
 
