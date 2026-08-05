@@ -983,6 +983,26 @@ modparam("tm", "via1_matching", 1)
 	</example>
 	</section>
 
+	<section id="tm.p.reply_matching">
+	<title><varname>reply_matching</varname> (int)</title>
+	<para>
+		If set to 1, the tm module will match SIP replies only for active
+		transactions, skipping when transaction is put on wait or in agony
+		(the states to destroy the transaction).
+	</para>
+	<para>
+		Default value is 1 .
+	</para>
+	<example>
+		<title>Set <varname>reply_matching</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "reply_matching", 0)
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="tm.p.callid_matching">
 	<title><varname>callid_matching</varname> (integer)</title>
 	<para>
