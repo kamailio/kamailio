@@ -37,6 +37,7 @@
 #include "../../core/globals.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/tcp_int_send.h"
+#include "../../core/tcp_reactor.h" /* tcp_reactor_dispatch_tls_event() - mode 2 */
 #include "../../core/tcp_read.h"
 #include "../../core/tcp_mtops.h"
 #include "../../core/cfg/cfg.h"
@@ -2113,7 +2114,7 @@ int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	 * tls_run_event_routes() ran in a PROC_TCP_MAIN thread and
 	 * deferred the event route - we are back in the worker
 	 * so run the route now */
-	{
+	if(!is_tcp_main()) {
 		struct tls_extra_data *tls_c = (struct tls_extra_data *)c->extra_data;
 		if(tls_c != NULL && tls_c->run_conn_out_pending) {
 			tls_c->run_conn_out_pending = 0;
@@ -2166,9 +2167,16 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(_tls_evrt_connection_out < 0 && sr_tls_event_callback.len <= 0)
 		return 0;
 
-	/* With tcp_main_threads > 0 - mtops - ensure the route function
-	 * runs in the worker and not PROC_TCP_MAIN; we flag this for
-	 * deferred execution. */
+	/* With tcp_main_threads = 2: we are on a PROC_TCP_MAIN reactor thread.
+	 * Dispatch the event to a TCP worker. */
+	if(is_tcp_main() && ksr_tcp_main_threads == 2) {
+		tcp_reactor_dispatch_tls_event(c);
+		return 0;
+	}
+
+	/* With tcp_main_threads == 1 - mtops - ensure the route function
+         * runs in the worker and not PROC_TCP_MAIN; we flag this for
+         * deferred execution. */
 	if(is_tcp_main()) {
 		struct tls_extra_data *tls_c = (struct tls_extra_data *)c->extra_data;
 		if(tls_c != NULL)
@@ -2179,6 +2187,11 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(faked_msg_init() < 0)
 		return -1;
 	fmsg = faked_msg_next();
+	/* expose the connection's endpoints to the route: for an outbound
+	 * connection rcv.src is the peer we connected to and rcv.dst is the local
+	 * side, so $si/$sp read the peer and $Ri/$Rp the local socket. Without this
+	 * the faked message carries only the placeholder rcv (127.0.0.1:5060). */
+	fmsg->rcv = c->rcv;
 
 	backup_rt = get_route_type();
 	set_route_type(LOCAL_ROUTE);
