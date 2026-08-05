@@ -235,6 +235,7 @@ int _tm_reply_408_code = 408;
 str _tm_reply_408_reason = str_init("Request Timeout");
 int _tm_delayed_reply = 1;
 int _tm_evlreq_mode = 0;
+int _tm_reply_matching = TM_REPLY_MATCHING_ACTIVE;
 
 #ifdef USE_DNS_FAILOVER
 str failover_reply_codes_str = {NULL, 0};
@@ -477,6 +478,7 @@ static cmd_export_t cmds[] = {
 
 
 static param_export_t params[] = {
+	{"reply_matching", PARAM_INT, &_tm_reply_matching},
 	{"ruri_matching", PARAM_INT, &default_tm_cfg.ruri_matching},
 	{"via1_matching", PARAM_INT, &default_tm_cfg.via1_matching},
 	{"callid_matching", PARAM_INT, &default_tm_cfg.callid_matching},

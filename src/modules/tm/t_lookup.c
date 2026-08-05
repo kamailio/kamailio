@@ -128,6 +128,7 @@ static int T_branch = 0;
  */
 msg_ctx_id_t tm_global_ctx_id = {0};
 
+extern int _tm_reply_matching;
 
 struct cell *get_t()
 {
@@ -1501,6 +1502,15 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 					p_cell->uas.request->callid->body.len,
 					p_cell->uas.request->callid->body.s);
 			continue;
+		}
+
+		if(_tm_reply_matching & TM_REPLY_MATCHING_ACTIVE) {
+			if(unlikely(t_on_wait(p_cell) || (p_cell->flags & T_IN_AGONY))) {
+				LM_INFO("skipping late reply match for transaction already in "
+						"terminated phase: T=%p wait=%d flags=0x%x\n",
+						p_cell, t_on_wait(p_cell), p_cell->flags);
+				continue;
+			}
 		}
 
 		/* passed all disqualifying factors - the transaction has been matched */

@@ -33,6 +33,8 @@
 
 #define T_BR_UNDEFINED (-1)
 
+#define TM_REPLY_MATCHING_ACTIVE 1
+
 extern msg_ctx_id_t tm_global_ctx_id;
 
 
