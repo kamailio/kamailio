@@ -450,6 +450,12 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		} else if(pit->name.len == 9
 				  && strncasecmp(pit->name.s, "ping_from", 9) == 0) {
 			dest->attrs.ping_from = pit->body;
+		} else if(pit->name.len == 16
+				  && strncasecmp(pit->name.s, "ping_reply_codes", 16) == 0) {
+			dest->attrs.ping_reply_codes_cnt = ds_parse_reply_codes_list(
+					&pit->body, &dest->attrs.ping_reply_codes);
+			if(dest->attrs.ping_reply_codes_cnt < 0)
+				dest->attrs.ping_reply_codes_cnt = 0;
 		} else if(pit->name.len == 7
 				  && strncasecmp(pit->name.s, "obproxy", 7) == 0) {
 			dest->attrs.obproxy = pit->body;
@@ -800,6 +806,8 @@ err:
 			shm_free(dp->uri.s);
 		if(dp->attrs.body.s != NULL)
 			shm_free(dp->attrs.body.s);
+		if(dp->attrs.ping_reply_codes != NULL)
+			shm_free(dp->attrs.ping_reply_codes);
 		shm_free(dp);
 	}
 
@@ -887,6 +895,8 @@ error:
 			shm_free(dp->uri.s);
 		if(dp->attrs.body.s != NULL)
 			shm_free(dp->attrs.body.s);
+		if(dp->attrs.ping_reply_codes != NULL)
+			shm_free(dp->attrs.ping_reply_codes);
 		shm_free(dp);
 	}
 
@@ -3814,6 +3824,45 @@ int ds_update_latency(int group, str *address, int code)
 
 
 /**
+ * \brief Per-destination accepted ping reply codes (group, address/iuid).
+ *
+ * Returns the number of codes defined via the destination "ping_reply_codes"
+ * attribute (with *pcodes pointing to the parsed list), or 0 when none is set
+ * -- in which case the global ds_ping_reply_codes list must be used.
+ */
+int ds_get_ping_rplcodes(int group, str *address, str *iuid, int **pcodes)
+{
+	int i = 0;
+	ds_set_t *idx = NULL;
+	str *fmatch;
+	str *vmatch;
+
+	*pcodes = NULL;
+	if(_ds_list == NULL || _ds_list_nr <= 0)
+		return 0;
+
+	if(ds_get_index(group, *ds_crt_idx, &idx) != 0)
+		return 0;
+
+	while(i < idx->nr) {
+		if(iuid != NULL && iuid->s != NULL && iuid->len > 0) {
+			fmatch = &idx->dlist[i].suid;
+			vmatch = iuid;
+		} else {
+			fmatch = &idx->dlist[i].uri;
+			vmatch = address;
+		}
+		if(fmatch->len == vmatch->len
+				&& strncasecmp(fmatch->s, vmatch->s, vmatch->len) == 0) {
+			*pcodes = idx->dlist[i].attrs.ping_reply_codes;
+			return idx->dlist[i].attrs.ping_reply_codes_cnt;
+		}
+		i++;
+	}
+	return 0;
+}
+
+/**
  * Get state for given destination or iuid
  */
 int ds_get_state(int group, str *address, str *iuid)
@@ -4691,6 +4740,8 @@ static void ds_options_callback(
 	int state;
 	ds_rctx_t rctx;
 	str iuid = STR_NULL;
+	int *ds_rplcodes = NULL;
+	int ds_rplcodes_cnt = 0;
 
 	/* The param contains the group, in which the failed host
 	 * can be found.*/
@@ -4740,8 +4791,13 @@ static void ds_options_callback(
 
 	/* ps->code contains the result-code of the request.
 	 * We accept both a "200 OK" or the configured reply as a valid response */
+	/* a destination may override the accepted codes via its
+	 * ping_reply_codes attribute; otherwise the global list is used */
+	ds_rplcodes_cnt = ds_get_ping_rplcodes(group, &uri, &iuid, &ds_rplcodes);
 	if((ps->code >= 200 && ps->code <= 299)
-			|| ds_ping_check_rplcode(ps->code)) {
+			|| (ds_rplcodes_cnt > 0 ? ds_ping_check_rplcode_list(ps->code,
+											  ds_rplcodes, ds_rplcodes_cnt)
+									: ds_ping_check_rplcode(ps->code))) {
 		/* Set the according entry back to "Active" */
 		state = 0;
 		if(ds_probing_mode == DS_PROBE_ALL
@@ -5165,6 +5221,11 @@ void ds_avl_destroy(ds_set_t **node_ptr)
 		if(dest->attrs.body.s != NULL) {
 			shm_free(dest->attrs.body.s);
 			dest->attrs.body.s = NULL;
+		}
+		if(dest->attrs.ping_reply_codes != NULL) {
+			shm_free(dest->attrs.ping_reply_codes);
+			dest->attrs.ping_reply_codes = NULL;
+			dest->attrs.ping_reply_codes_cnt = 0;
 		}
 	}
 	if(node->dlist != NULL)
