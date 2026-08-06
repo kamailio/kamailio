@@ -155,9 +155,6 @@ int ds_event_callback_mode = DS_EVRTMODE_RUNTIME;
 str ds_db_extra_attrs = STR_NULL;
 param_t *ds_db_extra_attrs_list = NULL;
 
-static int ds_reload_delta = 5;
-static time_t *ds_rpc_reload_time = NULL;
-
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
@@ -330,7 +327,6 @@ static param_export_t params[]={
 	{"ds_attrs_none",      PARAM_INT, &ds_attrs_none},
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
-	{"reload_delta",       PARAM_INT, &ds_reload_delta },
 	{"ds_dns_mode",        PARAM_INT, &ds_dns_mode},
 	{"ds_dns_interval",    PARAM_INT, &ds_dns_interval},
 	{"ds_dns_ttl",         PARAM_INT, &ds_dns_ttl},
@@ -561,15 +557,6 @@ static int mod_init(void)
 				ds_latency_estimator_alpha);
 	}
 
-	ds_rpc_reload_time = shm_malloc(sizeof(time_t));
-	if(ds_rpc_reload_time == NULL) {
-		shm_free(ds_ping_reply_codes);
-		shm_free(ds_ping_reply_codes_cnt);
-		SHM_MEM_ERROR;
-		return -1;
-	}
-	*ds_rpc_reload_time = 0;
-
 	return 0;
 }
 
@@ -594,10 +581,6 @@ static void destroy(void)
 		shm_free(ds_ping_reply_codes);
 	if(ds_ping_reply_codes_cnt)
 		shm_free(ds_ping_reply_codes_cnt);
-	if(ds_rpc_reload_time != NULL) {
-		shm_free(ds_rpc_reload_time);
-		ds_rpc_reload_time = 0;
-	}
 }
 
 #define GET_VALUE(param_name, param, i_value, s_value, value_flags)        \
@@ -966,17 +949,6 @@ static int ds_warn_fixup(void **param, int param_no)
 
 static int ds_reload(sip_msg_t *msg)
 {
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("not ready for reload\n");
-		return -1;
-	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		return -1;
-	}
-	*ds_rpc_reload_time = time(NULL);
-
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0) {
 			LM_ERR("failed reloading the list file\n");
@@ -1465,13 +1437,16 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	int inactive = 0;
 	int j = 0;
 	ds_ocdata_t ocdata;
+	ds_list_t *list;
 
 	if(param == NULL) {
 		return -1;
 	}
-	dsg = ds_list_lookup(_pv_dsg_fetch_dg);
+	list = ds_get_list();
+	dsg = ds_list_lookup(list, _pv_dsg_fetch_dg);
 
 	if(dsg == NULL) {
+		ds_put_list(list);
 		return pv_get_null(msg, param, res);
 	}
 
@@ -1495,6 +1470,7 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		}
 	}
 	lock_release(&dsg->lock);
+	ds_put_list(list);
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* count */
@@ -1839,19 +1815,6 @@ static const char *dispatcher_rpc_reload_doc[2] = {
 static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 {
 
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("not ready for reload\n");
-		rpc->fault(ctx, 500, "Not ready for reload");
-		return;
-	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		rpc->fault(ctx, 500, "Ongoing reload");
-		return;
-	}
-	*ds_rpc_reload_time = time(NULL);
-
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0) {
 			rpc->fault(ctx, 500, "Reload Failed");
@@ -2043,7 +2006,7 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	int n;
 	str smode;
 	int vmode = DS_RPC_PRINT_NORMAL;
-	ds_set_t *dslist = NULL;
+	ds_list_t *dslist = NULL;
 	int dslistnr = 0;
 
 	n = rpc->scan(ctx, "*S", &smode);
@@ -2059,6 +2022,7 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	dslistnr = ds_get_list_nr();
 
 	if(dslist == NULL || dslistnr <= 0) {
+		ds_put_list(dslist);
 		LM_DBG("no destination sets\n");
 		rpc->fault(ctx, 500, "No Destination Sets");
 		return;
@@ -2066,15 +2030,18 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 
 	/* add entry node */
 	if(rpc->add(ctx, "{", &th) < 0) {
+		ds_put_list(dslist);
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 	if(rpc->struct_add(th, "d[", "NRSETS", dslistnr, "RECORDS", &ih) < 0) {
+		ds_put_list(dslist);
 		rpc->fault(ctx, 500, "Internal error sets structure");
 		return;
 	}
 
-	ds_rpc_print_set(dslist, rpc, ctx, ih, vmode);
+	ds_rpc_print_set(dslist->head, rpc, ctx, ih, vmode);
+	ds_put_list(dslist);
 
 	return;
 }
@@ -2221,19 +2188,6 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	str dest;
 	str attrs = STR_NULL;
 
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("Not ready for rebuilding destinations list\n");
-		rpc->fault(ctx, 500, "Not ready for reload");
-		return;
-	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		rpc->fault(ctx, 500, "Ongoing reload");
-		return;
-	}
-	*ds_rpc_reload_time = time(NULL);
-
 	flags = 0;
 	priority = 0;
 
@@ -2266,19 +2220,6 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 {
 	int group;
 	str dest;
-
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("Not ready for rebuilding destinations list\n");
-		rpc->fault(ctx, 500, "Not ready for reload");
-		return;
-	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		rpc->fault(ctx, 500, "Ongoing reload");
-		return;
-	}
-	*ds_rpc_reload_time = time(NULL);
 
 	if(rpc->scan(ctx, "dS", &group, &dest) < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -2348,6 +2289,7 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 	int i = 0;
 	ds_set_t *node = NULL;
 	void *th = NULL;
+	ds_list_t *list;
 
 	if(rpc->scan(ctx, "d", &group) != 1) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -2355,8 +2297,10 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 	}
 
 	/* get the index of the set */
-	node = ds_list_lookup(group);
+	list = ds_get_list();
+	node = ds_list_lookup(list, group);
 	if(node == NULL) {
+		ds_put_list(list);
 		LM_ERR("destination set [%d] not found\n", group);
 		rpc->fault(ctx, 404, "Destination Group Not Found");
 		return;
@@ -2365,6 +2309,7 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 	for(i = 0; i < node->nr; i++) {
 		/* add entry node */
 		if(rpc->add(ctx, "{", &th) < 0) {
+			ds_put_list(list);
 			rpc->fault(ctx, 500, "Internal error root reply");
 			return;
 		}
@@ -2380,10 +2325,12 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 				   node->dlist[i].ocdata.ocmin, "ocmax",
 				   node->dlist[i].ocdata.ocmax)
 				< 0) {
+			ds_put_list(list);
 			rpc->fault(ctx, 500, "Internal error main structure");
 			return;
 		}
 	}
+	ds_put_list(list);
 }
 
 /* clang-format off */
