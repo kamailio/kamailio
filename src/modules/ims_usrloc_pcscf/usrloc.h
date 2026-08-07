@@ -55,6 +55,7 @@
 #include "../../core/str.h"
 #include "../../modules/tm/dlg.h"
 #include "../cdp/diameter_ims_code_avp.h"
+#include "pcontact_index.h"
 
 #define NO_DB 0
 #define WRITE_THROUGH 1
@@ -85,6 +86,9 @@ struct udomain
 	str *name;			 /*!< Domain name (NULL terminated) */
 	int size;			 /*!< Hash table size */
 	struct hslot *table; /*!< Hash table - array of collision slots */
+	pcscf_index_t impu_idx;
+	pcscf_index_t pub_gruu_idx;
+	pcscf_index_t temp_gruu_idx;
 	/* statistics */
 	stat_var *contacts; /*!< no of registered contacts */
 	stat_var *expired;	/*!< no of expires */
@@ -158,6 +162,7 @@ typedef struct ppublic
 {
 	str public_identity; /**< Public identity */
 	char is_default;	 /**< is this the default identity for the contact */
+	char barred;
 	struct ppublic *next;
 	struct ppublic *prev;
 } ppublic_t;
@@ -208,6 +213,9 @@ typedef struct pcontact_info
 	unsigned short received_port;
 	unsigned short received_proto; /*!< from transport */
 	str *path;
+	str *instance_id;
+	str *pub_gruu;
+	str *temp_gruu;
 	time_t expires;
 	str *callid;
 	str *public_ids;
@@ -251,6 +259,10 @@ typedef struct pcontact
 	security_t *security_temp; /**< Security-Client Information (temp)	*/
 	ppublic_t *head;		   /*!< list of associated public identities */
 	ppublic_t *tail;
+	str instance_id;
+	str pub_gruu;
+	str temp_gruu;
+	unsigned int location_id;
 	struct socket_info *sock;  /*!< received socket */
 	struct ulcb_head_list cbs; /*!< contact callback list */
 	struct pcontact *prev;	   /*!< Next item in the hash entry */
@@ -294,6 +306,16 @@ typedef int (*update_temp_security_t)(struct udomain *_d, security_type _t,
 
 /* statistic APIs */
 typedef unsigned long (*get_number_of_contacts_t)();
+typedef int (*get_pcontact_by_impu_t)(udomain_t *d, str *impu, pcontact_t **c);
+typedef int (*get_pcontact_by_pub_gruu_t)(
+		udomain_t *d, str *gruu, pcontact_t **c);
+typedef int (*get_pcontact_by_temp_gruu_t)(
+		udomain_t *d, str *gruu, pcontact_t **c);
+typedef int (*update_contact_gruu_t)(udomain_t *d, pcontact_t *c,
+		str *instance_id, str *pub_gruu, str *temp_gruu);
+typedef int (*update_contact_impus_t)(udomain_t *d, pcontact_t *c, str impus[],
+		int n, int default_idx, str barred[], int n_barred);
+typedef int (*is_impu_barred_t)(pcontact_t *c, str *impu);
 
 /*! usrloc API export structure */
 typedef struct usrloc_api
@@ -326,6 +348,12 @@ typedef struct usrloc_api
 	is_ulcb_registered_t is_ulcb_registered;
 	register_ulcb_t register_ulcb_method;
 	db_load_pcontact_t db_load_pcontact;
+	get_pcontact_by_impu_t get_pcontact_by_impu;
+	update_contact_impus_t update_contact_impus;
+	get_pcontact_by_pub_gruu_t get_pcontact_by_pub_gruu;
+	get_pcontact_by_temp_gruu_t get_pcontact_by_temp_gruu;
+	update_contact_gruu_t update_contact_gruu;
+	is_impu_barred_t is_impu_barred;
 } usrloc_api_t;
 
 /*! usrloc API export bind function */
