@@ -1,0 +1,4 @@
+docs = ims_rdn.xml
+
+docbook_dir = ../../../../doc/docbook
+include $(docbook_dir)/Makefile.module
