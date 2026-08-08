@@ -368,6 +368,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	if(l_copy == 1) {
 		memset(&l_req, 0, sizeof(sip_msg_t));
 		l_req.buf = l_buf;
+		l_req.buf_size = sizeof(l_buf);
 		l_buf[0] = '\0';
 		if(sip_msg_copy(i_req, &l_req, 0) < 0) {
 			ret = E_OUT_OF_MEM;
