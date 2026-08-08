@@ -1236,7 +1236,7 @@ modparam("usrloc", "ka_interval", 30)
 
    Example 1.57. Set ka_randomize parameter
 ...
-modparam("usrloc", "ka_interval", 30)
+modparam("usrloc", "ka_randomize", 30)
 ...
 
 3.58. ka_loglevel (int)
