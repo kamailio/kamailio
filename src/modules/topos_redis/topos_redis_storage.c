@@ -980,12 +980,19 @@ int tps_redis_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	redisReply *rrpl = NULL;
 	str skey = STR_NULL;
 	str sval = STR_NULL;
+	str *uuid = NULL;
 
 	if(msg == NULL || md == NULL || sd == NULL)
 		return -1;
 
 	if(md->a_uuid.len <= 0 && md->b_uuid.len <= 0) {
 		LM_DBG("no dlg uuid provided\n");
+		return -1;
+	}
+	uuid = (md->a_uuid.len > 0) ? &md->a_uuid : &md->b_uuid;
+	if(uuid->s == NULL
+			|| uuid->len > TPS_REDIS_DATA_SIZE - _tps_redis_dprefix.len - 1) {
+		LM_ERR("invalid or too long dlg uuid (%d bytes)\n", uuid->len);
 		return -1;
 	}
 	rsrv = _tps_redis_api.get_server(&_topos_redis_serverid);
@@ -1002,25 +1009,14 @@ int tps_redis_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	rp = _tps_redis_cbuf;
 	memcpy(rp, _tps_redis_dprefix.s, _tps_redis_dprefix.len);
 
-	if(md->a_uuid.len > 0) {
-		memcpy(rp + _tps_redis_dprefix.len, md->a_uuid.s, md->a_uuid.len);
-		if(md->a_uuid.s[0] == 'b') {
-			rp[_tps_redis_dprefix.len] = 'a';
-		}
-		rp[_tps_redis_dprefix.len + md->a_uuid.len] = '\0';
-		rkey.s = rp;
-		rkey.len = _tps_redis_dprefix.len + md->a_uuid.len;
-		rp += _tps_redis_dprefix.len + md->a_uuid.len + 1;
-	} else {
-		memcpy(rp + _tps_redis_dprefix.len, md->b_uuid.s, md->b_uuid.len);
-		if(md->b_uuid.s[0] == 'b') {
-			rp[_tps_redis_dprefix.len] = 'a';
-		}
-		rp[_tps_redis_dprefix.len + md->b_uuid.len] = '\0';
-		rkey.s = rp;
-		rkey.len = _tps_redis_dprefix.len + md->b_uuid.len;
-		rp += _tps_redis_dprefix.len + md->b_uuid.len + 1;
+	memcpy(rp + _tps_redis_dprefix.len, uuid->s, uuid->len);
+	if(uuid->s[0] == 'b') {
+		rp[_tps_redis_dprefix.len] = 'a';
 	}
+	rp[_tps_redis_dprefix.len + uuid->len] = '\0';
+	rkey.s = rp;
+	rkey.len = _tps_redis_dprefix.len + uuid->len;
+	rp += _tps_redis_dprefix.len + uuid->len + 1;
 
 	argv[argc] = rcmd.s;
 	argvlen[argc] = rcmd.len;
