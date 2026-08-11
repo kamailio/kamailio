@@ -489,6 +489,9 @@ module_group_kuuid=$(mod_list_uuid)
 # pkg libev modules
 module_group_kev=$(mod_list_ev)
 
+# pkg jwt module
+module_group_kjwt=$(mod_list_jwt)
+
 # pkg jwt3 module
 module_group_kjwt3=$(mod_list_jwt3)
 
