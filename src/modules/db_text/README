@@ -61,17 +61,19 @@ Olle E. Johansson
    1.1. Sample of a dbtext table
    1.2. Minimal Kamailio location dbtext table definition
    1.3. Minimal Kamailio subscriber dbtext table example
-   1.4. Set db_mode parameter
-   1.5. Set db_mode parameter
-   1.6. Set default_connection parameter
-   1.7. Set emptystring parameter
-   1.8. Set file_buffer_size parameter
-   1.9. Set max_result_rows parameter
-   1.10. Load the dbtext module
-   1.11. Definition of 'subscriber' table (one line)
-   1.12. Definition of 'location' and 'aliases' tables (one line)
-   1.13. Definition of 'version' table and sample records
-   1.14. Configuration file
+   1.4.
+   1.5.
+   1.6. Set db_mode parameter
+   1.7. Set db_mode parameter
+   1.8. Set default_connection parameter
+   1.9. Set emptystring parameter
+   1.10. Set file_buffer_size parameter
+   1.11. Set max_result_rows parameter
+   1.12. Load the dbtext module
+   1.13. Definition of 'subscriber' table (one line)
+   1.14. Definition of 'location' and 'aliases' tables (one line)
+   1.15. Definition of 'version' table and sample records
+   1.16. Configuration file
 
 Chapter 1. Admin Guide
 
@@ -200,6 +202,43 @@ suser:supasswd:xxx:alpha.org:xxx
    So it is advisable to specify all data for a column at insertion
    operations.
 
+Query Information using sqlops module
+
+   When a function accepts a raw query string and the input may include a
+   “where” clause, the values of each key can be either an int or a double
+   quoted string. For string comparisons, use double quotes around the
+   literal value always. Numeric values should be written without quotes.
+   You can use either a single-quoted query string or a double-quoted
+   query string but for double-quoted strings you need to escape the
+   double quotes for each value inside the string with a backslash. For
+   example:
+
+   Example 1.4.
+modparam("db_text", "db_url", "text:///var/dbtext/ser")
+
+route {
+        # Single quoted query string with double quoted values
+    if (sql_xquery("ca", 'select * from domain where l_uuid = "abc123"', "ra") =
+= 1) {
+        xlog("L_INFO", "domain: $xavp(ra=>domain)\n");
+    }
+}
+
+   Example 1.5.
+modparam("db_text", "db_url", "text:///var/dbtext/ser")
+
+route {
+        # Double quoted query string with escaped double quotes for values
+    if (sql_xquery("ca", "select * from domain where l_uuid = \"abc123\"", "ra")
+ == 1) {
+        xlog("L_INFO", "domain: $xavp(ra=>domain)\n");
+    }
+}
+
+   Single-quoted literals for values, for example l_uuid ='abc123', are
+   not accepted by the parser used for these queries and should be
+   avoided.
+
 3. Dependencies
 
    3.1. Kamailio modules
@@ -234,7 +273,7 @@ suser:supasswd:xxx:alpha.org:xxx
 
    Default value is “0”.
 
-   Example 1.4. Set db_mode parameter
+   Example 1.6. Set db_mode parameter
 ...
 modparam("db_text", "db_mode", 1)
 ...
@@ -245,7 +284,7 @@ modparam("db_text", "db_mode", 1)
 
    Default value is “:”.
 
-   Example 1.5. Set db_mode parameter
+   Example 1.7. Set db_mode parameter
 ...
 modparam("db_text", "db_delim", "|")
 ...
@@ -256,7 +295,7 @@ modparam("db_text", "db_delim", "|")
 
    Default value is “none” (off).
 
-   Example 1.6. Set default_connection parameter
+   Example 1.8. Set default_connection parameter
                     ...
                     modparam("db_text", "default_connection", "text:///var/db/ka
 mailio/dbtext")
@@ -271,7 +310,7 @@ mailio/dbtext")
 
    Default value is “0” (off).
 
-   Example 1.7. Set emptystring parameter
+   Example 1.9. Set emptystring parameter
 ...
 modparam("db_text", "emptystring", 1)
 ...
@@ -283,7 +322,7 @@ modparam("db_text", "emptystring", 1)
 
    Default value is “16384”.
 
-   Example 1.8. Set file_buffer_size parameter
+   Example 1.10. Set file_buffer_size parameter
 ...
 modparam("db_text", "file_buffer_size", 8192)
 ...
@@ -294,7 +333,7 @@ modparam("db_text", "file_buffer_size", 8192)
 
    Default value is “100000”.
 
-   Example 1.9. Set max_result_rows parameter
+   Example 1.11. Set max_result_rows parameter
 ...
 modparam("db_text", "max_result_rows", 1000000)
 ...
@@ -340,7 +379,7 @@ modparam("db_text", "max_result_rows", 1000000)
    database path. So, either you provide an absolute path to database
    directory or a relative one to “CFG_DIR” directory.
 
-   Example 1.10. Load the dbtext module
+   Example 1.12. Load the dbtext module
 ...
 loadmodule "/path/to/kamailio/modules_k/db_text.so"
 ...
@@ -359,7 +398,7 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
    in order to have authentication. To use with the given configuration
    file, the table files must be placed in the '/tmp/serdb' directory.
 
-   Example 1.11. Definition of 'subscriber' table (one line)
+   Example 1.13. Definition of 'subscriber' table (one line)
 ...
 username(str) domain(str) password(str) first_name(str) last_name(str) phone(str
 ) email_address(str) datetime_created(int) datetime_modified(int) confirmation(s
@@ -367,14 +406,14 @@ tr) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(str)
 allow_find(str) timezone(str,null) rpid(str,null)
 ...
 
-   Example 1.12. Definition of 'location' and 'aliases' tables (one line)
+   Example 1.14. Definition of 'location' and 'aliases' tables (one line)
 ...
 username(str) domain(str,null) contact(str,null) received(str) expires(int,null)
  q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) us
 er_agent(str) socket(str)
 ...
 
-   Example 1.13. Definition of 'version' table and sample records
+   Example 1.15. Definition of 'version' table and sample records
 ...
 table_name(str) table_version(int)
 subscriber:3
@@ -382,7 +421,7 @@ location:6
 aliases:6
 ...
 
-   Example 1.14. Configuration file
+   Example 1.16. Configuration file
 ...
 #
 #

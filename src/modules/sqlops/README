@@ -256,6 +256,16 @@ modparam("sqlops", "results_maxsize", 64)
      * 3 - query successful, at least one row returned, but result
        parameter was not given
 
+db_text backend
+
+   When using the db_text backend, it has some limitations. See the module
+   documentation for more details.
+     * db_text backend support only where clause with AND|OR operators and
+       =,>,<,>=,<=,<> operators. It does not support LIKE operator or
+       other operators.
+
+   Other sql backends forward the query as is to the appropriate engine.
+
 4.1.  sql_query(connection, query[, result])
 
    Make an SQL query using 'connection' and store data in 'result'.
