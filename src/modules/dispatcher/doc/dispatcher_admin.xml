@@ -1362,22 +1362,22 @@ modparam("dispatcher", "ds_interval_mode", 7200)
 			<itemizedlist>
 			<listitem>
 				<para>
-				<quote>0</quote> - hash over callid
+				<quote>0</quote> - hash over Call-ID
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				<quote>1</quote> - hash over from URI.
+				<quote>1</quote> - hash over From-URI.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				<quote>2</quote> - hash over to URI.
+				<quote>2</quote> - hash over To-URI.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				<quote>3</quote> - hash over request-URI user.
+				<quote>3</quote> - hash over Request-URI user.
 				</para>
 			</listitem>
 			<listitem>
@@ -1388,7 +1388,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
 			<listitem>
 				<para>
 				<quote>5</quote> - hash over authorization-username
-				(Proxy-Authorization or "normal" authorization). If no
+				(from Proxy-Authorization or Authorization headers). If no
 				username is found, round robin is used.
 				</para>
 			</listitem>
