@@ -148,6 +148,9 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	dmq_node_t *dmq_node = NULL;
 	int ret;
 
+	/* zero early so error: can free peer_response.body */
+	memset(&peer_response, 0, sizeof(peer_response));
+
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("failed to parse sip message headers\n");
 		goto error;
@@ -175,7 +178,6 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	}
 	LM_DBG("dmq_handle_message peer found: %.*s\n", msg->parsed_uri.user.len,
 			msg->parsed_uri.user.s);
-	memset(&peer_response, 0, sizeof(peer_response));
 
 	if(parse_from_header(msg) < 0) {
 		LM_ERR("bad sip message or missing From hdr\n");
@@ -209,8 +211,13 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 		LM_WARN("no reply sent\n");
 	}
 
+	/* body was copied into the reply lump, free the original */
+	if(peer_response.body.s)
+		pkg_free(peer_response.body.s);
 	return returnval;
 error:
+	if(peer_response.body.s)
+		pkg_free(peer_response.body.s);
 	return -1;
 }
 
