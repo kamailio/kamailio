@@ -214,6 +214,48 @@ suser:supasswd:xxx:alpha.org:xxx
 			are ignored. So it is advisable to specify all data for a column at
 			insertion operations.
 		</para>
+		<note><title>Query Information using sqlops module</title>
+		<para>
+			When a function accepts a raw query string and the input may include a
+			<quote>where</quote> clause, the values of each key can be
+			either an int or a double quoted string.
+
+			For string comparisons, use double quotes around the
+			literal value always. Numeric values should be written
+			without quotes.
+
+			You can use either a single-quoted query string or a double-quoted query string but for double-quoted strings you need to escape the double quotes for each value inside the string with a backslash. For example:
+		</para>
+		<example>
+		<programlisting format="linespecific">
+modparam("db_text", "db_url", "text:///var/dbtext/ser")
+
+route {
+	# Single quoted query string with double quoted values
+    if (sql_xquery("ca", 'select * from domain where l_uuid = "abc123"', "ra") == 1) {
+        xlog("L_INFO", "domain: $xavp(ra=>domain)\n");
+    }
+}
+		</programlisting>
+		</example>
+		<example>
+		<programlisting format="linespecific">
+modparam("db_text", "db_url", "text:///var/dbtext/ser")
+
+route {
+	# Double quoted query string with escaped double quotes for values
+    if (sql_xquery("ca", "select * from domain where l_uuid = \"abc123\"", "ra") == 1) {
+        xlog("L_INFO", "domain: $xavp(ra=>domain)\n");
+    }
+}
+		</programlisting>
+		</example>
+		<para>
+			Single-quoted literals for values, for example <emphasis>l_uuid ='abc123'</emphasis>, are not accepted by the parser used
+			for these queries and should be avoided.
+		</para>
+	</note>
+
 	</section>
 	<section>
 	<title>Dependencies</title>
