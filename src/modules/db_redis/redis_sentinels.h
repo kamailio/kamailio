@@ -45,8 +45,8 @@ struct reply_list
 // Redis role enum
 typedef enum
 {
-	REDIS_ROLE_MASTER,
-	REDIS_ROLE_REPLICA
+	DB_REDIS_ROLE_MASTER,
+	DB_REDIS_ROLE_REPLICA
 } redis_role_t;
 
 typedef struct redis_sentinel
