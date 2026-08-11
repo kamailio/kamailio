@@ -193,7 +193,7 @@ static int validate_role(
 	struct timeval tv = {0, 500000};
 
 	LM_DBG("Trying to validate %s: %s:%d\n",
-			role == REDIS_ROLE_MASTER ? "master" : "replica", host, port);
+			role == DB_REDIS_ROLE_MASTER ? "master" : "replica", host, port);
 
 	// Connect to Redis server
 	con->con = redisConnectWithTimeout(host, port, tv);
@@ -224,17 +224,17 @@ static int validate_role(
 
 	// Validate role
 	role_str = reply->element[0]->str;
-	if(role == REDIS_ROLE_MASTER && strcmp(role_str, "master") != 0) {
+	if(role == DB_REDIS_ROLE_MASTER && strcmp(role_str, "master") != 0) {
 		LM_INFO("Server is not a master (got '%s').\n", role_str);
 		goto err;
 	}
-	if(role == REDIS_ROLE_REPLICA && strcmp(role_str, "slave") != 0) {
+	if(role == DB_REDIS_ROLE_REPLICA && strcmp(role_str, "slave") != 0) {
 		LM_INFO("Server is not a replica (got '%s').\n", role_str);
 		goto err;
 	}
 
 	LM_INFO("Successfully validated %s %s:%d\n",
-			role == REDIS_ROLE_MASTER ? "master" : "replica", host, port);
+			role == DB_REDIS_ROLE_MASTER ? "master" : "replica", host, port);
 
 	if(con->con) {
 		redisFree(con->con);
@@ -442,7 +442,7 @@ int db_redis_select_master(redisContext *sentinel_ctx, km_redis_con_t *con)
 		goto err;
 	}
 	if(validate_role(con, reply->element[0]->str, atoi(reply->element[1]->str),
-			   REDIS_ROLE_MASTER)
+			   DB_REDIS_ROLE_MASTER)
 			!= 0) {
 		LM_ERR("Failed to validate master %s:%s\n", reply->element[0]->str,
 				reply->element[1]->str);
@@ -500,7 +500,7 @@ int db_redis_select_replica(redisContext *sentinel_ctx, km_redis_con_t *con)
 		host = replica_reply->element[3]->str;
 		port = atoi(replica_reply->element[5]->str);
 
-		if(validate_role(con, host, port, REDIS_ROLE_REPLICA) == 0) {
+		if(validate_role(con, host, port, DB_REDIS_ROLE_REPLICA) == 0) {
 			replica_found = 1;
 			using_master_read_only = 0;
 			// Successfully validated a replica, set connection details
