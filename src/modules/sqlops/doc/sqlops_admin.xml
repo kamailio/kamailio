@@ -309,6 +309,21 @@ modparam("sqlops", "results_maxsize", 64)
 		</para>
 		</listitem>
 	</itemizedlist>
+		<note><title>db_text backend</title>
+		<para>
+			When using the db_text backend, it has some limitations. See the module documentation for more details.
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>db_text</emphasis> backend support only <emphasis>where</emphasis> clause with <emphasis>AND|OR</emphasis> operators and <emphasis>=,&gt;,&lt;,&gt;=,&lt;=,&lt;&gt;</emphasis> operators. It does not support LIKE operator or other operators.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+			Other sql backends forward the query as is to the appropriate engine.
+		</para>
+	</note>
 	<section>
 		<title>
 		<function moreinfo="none">sql_query(connection, query[, result])</function>
