@@ -160,6 +160,7 @@ shtable_t subs_htable = NULL;
 int pres_subs_dbmode = WRITE_BACK;
 int pres_sphere_enable = 0;
 int pres_timeout_rm_subs = 1;
+int pres_refresh_record_route = 0;
 int pres_send_fast_notify = 1;
 int publ_cache_mode = PS_PCACHE_HYBRID;
 int pres_waitn_time = 5;
@@ -245,6 +246,7 @@ static param_export_t params[]={
 	{ "send_fast_notify",       PARAM_INT, &pres_send_fast_notify},
 	{ "fetch_rows",             PARAM_INT, &pres_fetch_rows},
 	{ "db_table_lock_type",     PARAM_INT, &pres_db_table_lock_type},
+	{ "refresh_record_route",   PARAM_INT, &pres_refresh_record_route},
 	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
 	{ "local_log_facility",     PARAM_STRING, &pres_log_facility_str},
 	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},

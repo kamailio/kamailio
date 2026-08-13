@@ -666,6 +666,28 @@ modparam("presence", "timeout_rm_subs", 0)
 	</programlisting>
 		</example>
 	</section>
+
+	<section id="presence.p.refresh_record_route">
+		<title><varname>refresh_record_route</varname> (int)</title>
+		<para>
+		If set to 1, the route set stored for a subscription is refreshed from
+		the Record-Route headers of every in-dialog SUBSCRIBE. An in-dialog SUBSCRIBE
+		without Record-Route headers does not change the stored route set.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>refresh_record_route</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "refresh_record_route", 1)
+...
+	</programlisting>
+		</example>
+	</section>
+
 	<section id="presence.p.fetch_rows">
 	    <title><varname>fetch_rows</varname> (integer)</title>
 	    <para>
