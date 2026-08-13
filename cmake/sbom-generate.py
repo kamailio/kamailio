@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate a CycloneDX 1.6 JSON SBOM for a Kamailio build.
 
-Invoked by the `sbom` CMake target (see cmake/sbom.cmake) with:
+Invoked by the `sbom-cyclonedx` CMake target (see cmake/sbom-cyclonedx.cmake) with:
   --metadata   JSON file configured by CMake (product identity, module list)
   --artifacts  text file listing one built artifact path per line
   --binary-dir CMake binary dir (libraries under it are internal, skipped)

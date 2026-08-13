@@ -1,17 +1,17 @@
 # ----------
-# sbom target: generate a CycloneDX SBOM (JSON) describing the kamailio
+# sbom-cyclonedx target: generate a CycloneDX SBOM (JSON) describing the kamailio
 # binary, the selected modules and the external libraries they link.
 #
 # The top-level CMakeLists.txt includes this file after add_subdirectory(src)
 # so that the ADDED_MODULES_LIST global property and the kamailio/module
 # targets exist. The SBOM is produced on demand with:
-#   cmake --build <builddir> --target sbom
+#   cmake --build <builddir> --target sbom-cyclonedx
 # The linked-library inventory is taken from the built artifacts (ldd) and
 # resolved to distribution packages, so the target depends on the build.
 find_program(PYTHON3_EXECUTABLE NAMES python3 python QUIET)
 
 if(NOT PYTHON3_EXECUTABLE)
-  message(STATUS "python3 not found. Skip sbom target.")
+  message(STATUS "python3 not found. Skip sbom CycloneDX target.")
   return()
 endif()
 
@@ -70,7 +70,7 @@ file(
 )
 
 add_custom_target(
-  sbom
+  sbom-cyclonedx
   COMMAND
     ${PYTHON3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/sbom-generate.py --metadata
     ${CMAKE_BINARY_DIR}/sbom/sbom-metadata.json --artifacts ${CMAKE_BINARY_DIR}/sbom/artifacts.txt
@@ -78,9 +78,9 @@ add_custom_target(
   COMMENT "Generating CycloneDX SBOM in ${CMAKE_BINARY_DIR}/sbom/kamailio-sbom.cdx.json"
   VERBATIM
 )
-add_dependencies(sbom kamailio)
+add_dependencies(sbom-cyclonedx kamailio)
 if(TARGET modules)
-  add_dependencies(sbom modules)
+  add_dependencies(sbom-cyclonedx modules)
 endif()
 
 install(
