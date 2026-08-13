@@ -31,7 +31,7 @@ import uuid
 
 
 def warn(msg):
-    print("sbom-generate: warning: %s" % msg, file=sys.stderr)
+    print("sbom-cyclonedx-generate: warning: %s" % msg, file=sys.stderr)
 
 
 def run(cmd):
@@ -299,7 +299,7 @@ def build_bom(meta, components, dependencies):
                 "components": [
                     {
                         "type": "application",
-                        "name": "kamailio-sbom-generate",
+                        "name": "kamailio-sbom-cyclonedx-generate",
                         "version": meta["version"],
                     }
                 ]
@@ -368,7 +368,7 @@ def main():
         os.unlink(tmp)
         raise
     print(
-        "sbom-generate: %d artifacts, %d libraries, %d components -> %s"
+        "sbom-cyclonedx-generate: %d artifacts, %d libraries, %d components -> %s"
         % (len(artifacts), len(libs), len(components), args.output)
     )
 
