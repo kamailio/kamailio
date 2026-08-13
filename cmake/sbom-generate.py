@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a CycloneDX 1.6 JSON SBOM for a Kamailio build.
+"""Generate a CycloneDX 1.7 JSON SBOM for a Kamailio build.
 
 Invoked by the `sbom-cyclonedx` CMake target (see cmake/sbom-cyclonedx.cmake) with:
   --metadata   JSON file configured by CMake (product identity, module list)
@@ -45,15 +45,30 @@ def run(cmd):
     return proc.stdout.decode("utf-8", errors="replace")
 
 
-def os_release_id():
+def os_release():
+    """Return (ID, VERSION_ID) from /etc/os-release, e.g. ("almalinux", "9.7")."""
+    fields = {"ID": "linux", "VERSION_ID": ""}
     try:
         with open("/etc/os-release") as f:
             for line in f:
-                if line.startswith("ID="):
-                    return line.split("=", 1)[1].strip().strip('"')
+                key, _, value = line.partition("=")
+                if key in fields:
+                    fields[key] = value.strip().strip('"')
     except OSError:
         pass
-    return "linux"
+    return fields["ID"], fields["VERSION_ID"]
+
+
+def os_release_id():
+    return os_release()[0]
+
+
+def distro_qualifier():
+    """purl distro qualifier, e.g. "almalinux-9.7" ("" when unknown)."""
+    os_id, version_id = os_release()
+    if os_id == "linux" or not version_id:
+        return ""
+    return "%s-%s" % (os_id, version_id)
 
 
 def linked_libs_ldd(artifact, binary_dir):
@@ -156,20 +171,29 @@ def resolve_dpkg(path):
         urllib.parse.quote(version, safe=""),
         arch,
     )
+    if distro_qualifier():
+        purl += "&distro=%s" % distro_qualifier()
     return {"name": name, "version": version, "purl": purl}
 
 
 def resolve_rpm(path):
-    out = run(["rpm", "-qf", path, "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\t%{ARCH}\n"])
+    out = run(
+        ["rpm", "-qf", path, "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\t%{ARCH}\t%{EPOCH}\n"]
+    )
     if out is None:
         return None
-    name, version, arch = out.splitlines()[0].split("\t")
+    name, version, arch, epoch = out.splitlines()[0].split("\t")
     purl = "pkg:rpm/%s/%s@%s?arch=%s" % (
         os_release_id(),
         name,
         urllib.parse.quote(version, safe=""),
         arch,
     )
+    if distro_qualifier():
+        purl += "&distro=%s" % distro_qualifier()
+    # The purl rpm type carries the epoch as a qualifier, not in the version.
+    if epoch not in ("", "(none)", "0"):
+        purl += "&epoch=%s" % epoch
     return {"name": name, "version": version, "purl": purl}
 
 
@@ -266,7 +290,7 @@ def build_bom(meta, components, dependencies):
     main_ref = meta["name"]
     return {
         "bomFormat": "CycloneDX",
-        "specVersion": "1.6",
+        "specVersion": "1.7",
         "serialNumber": "urn:uuid:%s" % serial,
         "version": 1,
         "metadata": {
@@ -285,6 +309,9 @@ def build_bom(meta, components, dependencies):
                 "bom-ref": main_ref,
                 "name": meta["name"],
                 "version": meta["version"],
+                # Kamailio product as known to the NVD dictionary.
+                "cpe": "cpe:2.3:a:kamailio:kamailio:%s:*:*:*:*:*:*:*"
+                % meta["version"],
                 "purl": "pkg:generic/%s@%s"
                 % (meta["name"], urllib.parse.quote(meta["version"], safe="")),
                 "licenses": [{"license": {"id": "GPL-2.0-or-later"}}],
