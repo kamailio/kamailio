@@ -60,17 +60,33 @@ endif
 DEFS+=$(HIREDISDEFS)
 LIBS=$(HIREDISLIBS)
 
+# Mode switches:
+# - WITH_REDIS_CLUSTER=1 (default): enable cluster mode if hiredis_cluster exists
+# - WITH_REDIS_CLUSTER=0: force normal (non-cluster) mode
+# - WITH_SENTINELS=1: enable sentinel mode and disable cluster mode
+WITH_REDIS_CLUSTER ?= 1
+
+ifeq ($(WITH_SENTINELS),1)
+DEFS+=-DWITH_SENTINELS
+endif
+
 ifneq ($(HIREDIS_CLUSTER_BUILDER),)
-	HIREDISCLUSTERDEFS = $(shell $(HIREDIS_CLUSTER_BUILDER) --cflags)
-	HIREDISCLUSTERLIBS = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs)
-	HIREDISCLUSTERLIBSPATH = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs-only-L | cut -c 3-)
-	ifneq ($(shell ls $(HIREDISCLUSTERLIBSPATH) | grep libhiredis_cluster_ssl.so),)
-		HIREDISCLUSTERDEFS += -DWITH_SSL
-		HIREDISCLUSTERLIBS += -lhiredis_cluster_ssl
-	endif
-	DEFS+=-DWITH_HIREDIS_CLUSTER
-	DEFS+=$(HIREDISCLUSTERDEFS)
-	LIBS+=$(HIREDISCLUSTERLIBS)
+ifeq ($(WITH_SENTINELS),1)
+$(info db_redis: WITH_SENTINELS=1, skipping hiredis cluster mode)
+else ifeq ($(WITH_REDIS_CLUSTER),0)
+$(info db_redis: WITH_REDIS_CLUSTER=0, forcing normal (non-cluster) mode)
+else
+HIREDISCLUSTERDEFS = $(shell $(HIREDIS_CLUSTER_BUILDER) --cflags)
+HIREDISCLUSTERLIBS = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs)
+HIREDISCLUSTERLIBSPATH = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs-only-L | cut -c 3-)
+ifneq ($(shell ls $(HIREDISCLUSTERLIBSPATH) | grep libhiredis_cluster_ssl.so),)
+HIREDISCLUSTERDEFS += -DWITH_SSL
+HIREDISCLUSTERLIBS += -lhiredis_cluster_ssl
+endif
+DEFS+=-DWITH_HIREDIS_CLUSTER
+DEFS+=$(HIREDISCLUSTERDEFS)
+LIBS+=$(HIREDISCLUSTERLIBS)
+endif
 endif
 
 include ../../Makefile.modules
