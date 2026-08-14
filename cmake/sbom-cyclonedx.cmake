@@ -53,7 +53,7 @@ endif()
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/cmake/sbom-cyclonedx-metadata.json.in
-  ${CMAKE_BINARY_DIR}/sbom/sbom-metadata.json @ONLY
+  ${CMAKE_BINARY_DIR}/sbom/sbom-metadata.cdx.json @ONLY
 )
 
 # List of built artifacts to inspect; generator expressions resolve the
@@ -74,8 +74,9 @@ add_custom_target(
   sbom-cyclonedx
   COMMAND
     ${PYTHON3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/sbom-cyclonedx-generate.py --metadata
-    ${CMAKE_BINARY_DIR}/sbom/sbom-metadata.json --artifacts ${CMAKE_BINARY_DIR}/sbom/artifacts.txt
-    --binary-dir ${CMAKE_BINARY_DIR} --output ${CMAKE_BINARY_DIR}/sbom/kamailio-sbom.cdx.json
+    ${CMAKE_BINARY_DIR}/sbom/sbom-metadata.cdx.json --artifacts
+    ${CMAKE_BINARY_DIR}/sbom/artifacts.txt --binary-dir ${CMAKE_BINARY_DIR} --output
+    ${CMAKE_BINARY_DIR}/sbom/kamailio-sbom.cdx.json
   COMMENT "Generating CycloneDX SBOM in ${CMAKE_BINARY_DIR}/sbom/kamailio-sbom.cdx.json"
   VERBATIM
 )
