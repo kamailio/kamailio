@@ -1,5 +1,16 @@
 file(GLOB MODULE_SOURCES "*.c")
 
+option(WITH_SENTINELS "Build db_redis with Redis Sentinel support" OFF)
+option(WITH_HIREDIS_CLUSTER "Build db_redis with hiredis cluster support" OFF)
+
+if(WITH_SENTINELS AND WITH_HIREDIS_CLUSTER)
+  message(FATAL_ERROR "db_redis: WITH_SENTINELS and WITH_HIREDIS_CLUSTER are mutually exclusive")
+endif()
+
+if(NOT WITH_SENTINELS)
+  list(REMOVE_ITEM MODULE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/redis_sentinels.c")
+endif()
+
 add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(PkgConfig REQUIRED)
@@ -7,6 +18,17 @@ pkg_check_modules(hiredis REQUIRED IMPORTED_TARGET hiredis)
 add_library(hiredis::hiredis ALIAS PkgConfig::hiredis)
 
 target_link_libraries(${module_name} PRIVATE hiredis::hiredis)
+
+if(WITH_SENTINELS)
+  target_compile_definitions(${module_name} PRIVATE WITH_SENTINELS)
+endif()
+
+if(WITH_HIREDIS_CLUSTER)
+  pkg_check_modules(hiredis_cluster REQUIRED IMPORTED_TARGET hiredis_cluster)
+  add_library(hiredis::hiredis_cluster ALIAS PkgConfig::hiredis_cluster)
+  target_compile_definitions(${module_name} PRIVATE WITH_HIREDIS_CLUSTER)
+  target_link_libraries(${module_name} PRIVATE hiredis::hiredis_cluster)
+endif()
 
 # Check for hiredis SSL support
 pkg_check_modules(hiredis_ssl IMPORTED_TARGET hiredis_ssl)
