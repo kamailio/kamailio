@@ -40,7 +40,9 @@
 #include "../../core/ut.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/tcp_read.h"
+#include "../../core/tcp_reactor.h"
 #include "../../core/tcp_server.h"
+#include "../../core/globals.h"
 #include "../../core/counters.h"
 #include "../../core/mem/mem.h"
 #include "../../core/rand/kam_rand.h"
@@ -602,6 +604,22 @@ static int handle_pong(ws_frame_t *frame)
 	return 0;
 }
 
+/* Deliver a decoded, defragmented WS SIP payload.
+ *
+ * mode 2 (tcp reactor): the frame codec runs on a PROC_TCP_MAIN pool thread
+ * (single-owner under the connection shield). Running config here would execute
+ * the SIP route on a pool thread, so instead the payload is handed to a worker
+ * over the reactor dispatch socket - exactly like plain SIP / HEP3 / MSRP. The
+ * dispatch copies the buffer into shm, so the caller may reset frag_buf right
+ * after. Modes 0/1 keep the inline receive_msg() (worker owns the fd there). */
+static inline int ws_deliver_sip(
+		char *buf, unsigned int len, struct receive_info *rcv)
+{
+	if(unlikely(ksr_tcp_main_threads == 2))
+		return tcp_reactor_dispatch_msg(buf, len, 0, rcv);
+	return receive_msg(buf, len, rcv);
+}
+
 int ws_frame_receive(sr_event_param_t *evp)
 {
 	ws_frame_t frame;
@@ -664,7 +682,7 @@ int ws_frame_receive(sr_event_param_t *evp)
 				frame.wsc->frag_buf.s[frame.wsc->frag_buf.len] = '\0';
 
 				if(frame.fin) {
-					ret = receive_msg(frame.wsc->frag_buf.s,
+					ret = ws_deliver_sip(frame.wsc->frag_buf.s,
 							frame.wsc->frag_buf.len, tcpinfo->rcv);
 					frame.wsc->frag_buf.len = 0;
 					frame.wsc->frag_progress = 0;
@@ -708,7 +726,7 @@ int ws_frame_receive(sr_event_param_t *evp)
 
 					wsconn_put(frame.wsc);
 
-					return receive_msg(frame.payload_data, frame.payload_len,
+					return ws_deliver_sip(frame.payload_data, frame.payload_len,
 							tcpinfo->rcv);
 				} else {
 					memcpy(frame.wsc->frag_buf.s, frame.payload_data,
@@ -723,6 +741,17 @@ int ws_frame_receive(sr_event_param_t *evp)
 				LM_DBG("Rx MSRP frame:\n%.*s\n", frame.payload_len,
 						frame.payload_data);
 				update_stat(ws_msrp_received_frames, 1);
+				/* mode 2: dispatch the MSRP payload to a worker tagged as an MSRP
+				 * frame, so it runs the SREV_TCP_MSRP_FRAME decode there - the
+				 * same worker path as native MSRP-over-TCP. The worker sources the
+				 * conn id from rcv->proto_reserved1. */
+				if(unlikely(ksr_tcp_main_threads == 2)) {
+					ret = tcp_reactor_dispatch_msg(frame.payload_data,
+							frame.payload_len, F_TCP_REQ_MSRP_FRAME,
+							tcpinfo->rcv);
+					wsconn_put(frame.wsc);
+					return ret;
+				}
 				if(likely(sr_event_enabled(SREV_TCP_MSRP_FRAME))) {
 					tcp_event_info_t tev;
 					memset(&tev, 0, sizeof(tcp_event_info_t));
