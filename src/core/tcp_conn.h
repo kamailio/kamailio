@@ -66,6 +66,13 @@
 #define F_CONN_CLOSE_EV 32768 /* explicitely call tcpops ev route when closed */
 #define F_CONN_NOSEND 65536	  /* do not send data on this connection */
 #define F_CONN_NORECV (1 << 17) /* do not receive data on this connection */
+/* mode 2 (tcp reactor thread pool) flags */
+#define F_CONN_POOL_BUSY \
+	(1 << 18) /* owned by a pool job: shielded out of io_h + local timer.
+			   * Serializes read/write jobs per conn (one owner at a time). */
+#define F_CONN_CLOSE_EV_SENT \
+	(1 << 19) /* tcpops close event already emitted for this conn: fire-once
+			   * guard so racing teardown paths cannot double-fire the route */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
@@ -182,6 +189,31 @@ typedef enum conn_cmds
 	,
 	CONN_NEW_COMPLETE /* like CONN_NEW_PENDING_WRITE, but there is no
 						* pending write (the write queue might be empty) */
+	,
+	CONN_WRITE_REQ /* mode 2: worker asks tcp_main to queue a write on an
+						* existing connection; response[0] is a
+						* tcp_reactor_write_req_t*, not a tcp_connection* */
+	,
+	CONN_CONNECT_REQ /* mode 2: worker asks tcp_main to open a new outbound
+						* connection and send on it; response[0] is a
+						* tcp_reactor_connect_req_t*, not a tcp_connection* */
+	,
+	CONN_TLS_EVENT_DONE /* mode 2: worker finished a dispatched
+						 * tls:connection-out event; response[0] is the
+						 * tcp_connection*, tcp_main drops the dispatch refcnt */
+	,
+	CONN_SCRIPT_CLOSE /* mode 2: for worker to signal a connection close on error
+                           * when tcp_script_mode = 0 */
+	,
+	CONN_TCPX_TASK_REQ /* mode 2: any process asks PROC_TCP_MAIN to run a
+						* tcpx_task_t on a pool thread (ksr_tcpx_task_send()'s
+						* generic trampoline, e.g. RPC handlers like
+						* tls.reload); response[0] is a tcpx_task_t* */
+	,
+	CONN_TCPX_TASK_DONE /* mode 2: PROC_TCP_MAIN replies with the result of a
+						 * CONN_TCPX_TASK_REQ, sent back over the requesting
+						 * process's own unix_sock; response[0] is a
+						 * tcpx_task_result_t* */
 } conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
@@ -201,6 +233,10 @@ typedef enum tcp_req_flags
 #endif
 	F_TCP_REQ_HEP3 = (1 << 6),
 	F_TCP_REQ_WS_HANDSHAKE = (1 << 7),
+	/* mode 2: reactor dispatch task carries a tls:connection-out event to run
+	 * in a worker, not a message. task->con is the connection; msg_buf is
+	 * empty. See tcp_reactor_dispatch_tls_event(). */
+	F_TCP_REQ_TLS_EVENT = (1 << 8),
 } tcp_req_flags_t;
 
 #define TCP_REQ_HAS_CLEN(tr) ((tr)->flags & F_TCP_REQ_HAS_CLEN)
@@ -290,6 +326,19 @@ typedef struct ksr_coninfo
 } ksr_coninfo_t;
 
 
+/* mode 2 TCP writes: per-connection plaintext write staging
+ * chunk. PROC_TCP_MAIN may still need to apply TLS so
+ * wbuf_q cannot be used yet.
+ */
+struct tcp_wchunk
+{
+	char *buf;
+	unsigned int len;
+	snd_flags_t send_flags;
+	struct tcp_wchunk *next;
+};
+
+
 typedef struct tcp_connection
 {
 	int s;	/*socket, used by "tcp main" */
@@ -322,6 +371,10 @@ typedef struct tcp_connection
 	int aliases; /* aliases number, at least 1 */
 #ifdef TCP_ASYNC
 	struct tcp_wbuffer_queue wbuf_q;
+	/* mode 2 (tcp reactor) write path: the per-connection plaintext staging
+	 * list, guarded by write_lock; unused (NULL) in modes 0/1. */
+	struct tcp_wchunk *wsq_head;
+	struct tcp_wchunk *wsq_tail;
 #endif
 } tcp_connection_t;
 
@@ -437,6 +490,11 @@ struct tcp_connection *tcpconn_get(int id, struct ip_addr *ip, int port,
 struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
 		union sockaddr_union *local_addr, int try_local_port, ticks_t timeout,
 		sip_protos_t proto);
+/* opens a new outbound tcp connection (socket()+non-blocking connect()); used
+ * from tcp_send() (tcp_main.c) and, in mode 2, tcp_reactor_handle_connect_req()
+ * (tcp_reactor.c) when CONN_CONNECT_REQ's dedup lookup finds nothing. */
+struct tcp_connection *tcpconn_connect(union sockaddr_union *server,
+		union sockaddr_union *from, int type, snd_flags_t *send_flags);
 void tcpconn_log_candidates(int id, struct ip_addr *ip, int port,
 		union sockaddr_union *local_addr, sip_protos_t proto);
 
@@ -471,5 +529,55 @@ int is_tcp_main(void);
 #define _tconfd(c) (is_tcp_main() ? (c)->s : (c)->fd)
 
 int ksr_tcp_parse_accept_protocols(char *protos);
+
+/* write-queue state predicates - used by tcp_main.c (modes 0/1/2) and
+ * tcp_reactor.c (mode 2 pool/completion code) */
+#define _wbufq_empty(con) ((con)->wbuf_q.first == 0)
+#define _wbufq_non_empty(con) ((con)->wbuf_q.first != 0)
+
+/* Connection-lifecycle primitives shared with tcp_reactor.c (mode 2):
+ * write-queueing, unhash/destroy, the close-event emitter. They stay defined
+ * (and mostly used) in tcp_main.c since modes 0/1 need them too; declared
+ * here so tcp_reactor.c can call them without duplicating them. None of these
+ * touch io_h or the local timer - see the tcpmain_* wrappers below for that. */
+int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size);
+int wbufq_run(int fd, struct tcp_connection *c, int *empty);
+int tcpconn_try_unhash(struct tcp_connection *tcpconn);
+int tcpconn_put_destroy(struct tcp_connection *tcpconn);
+void tcpconn_destroy(struct tcp_connection *tcpconn);
+int tcpconn_chld_put(struct tcp_connection *tcpconn);
+struct tcp_connection *tcpconn_add(struct tcp_connection *c);
+int tcp_emit_closed_event(struct tcp_connection *con);
+void _tcpconn_free(struct tcp_connection *c);
+int tcp_safe_close(int s);
+
+/* io_h and tcp_main_ltimer are process-private to tcp_main.c - only the
+ * io_wait thread may touch them. These wrappers are how tcp_reactor.c reaches
+ * them instead of taking a raw pointer, which would drop that exclusivity.
+ * Callable only from the io_wait thread, same rule as the io_watch_*()/
+ * local_timer_*() calls they forward to. Every conn-fd watch in tcp_reactor.c
+ * uses F_TCPCONN, so the add wrapper hardcodes it; the notify-pipe
+ * registration (F_TCP_REACTOR_NOTIFY) is a separate one-off, done directly in
+ * tcp_main.c after tcp_reactor_pool_init() returns. */
+int tcpmain_io_watch_add_conn(int fd, short events, void *data);
+/* is_closing maps to io_watch_del()'s IO_FD_CLOSING flag (0 otherwise) - a
+ * bool here rather than the raw io_wait.h flag value so tcp_reactor.c does
+ * not need to include io_wait.h (and, with it, define its own fd_type - see
+ * HANDLE_IO_INLINE in io_wait.h - just for one constant). */
+int tcpmain_io_watch_del(int fd, int idx, int is_closing);
+/* no tcpmain_io_watch_add_notify(): the notify-pipe io_watch_add() is a single
+ * call site in tcp_main_loop() itself, right after tcp_reactor_pool_init(). */
+int tcpmain_io_watch_chg(int fd, short events, int idx);
+void tcpmain_local_timer_add(
+		struct timer_ln *tl, ticks_t delta, ticks_t crt_ticks);
+void tcpmain_local_timer_del(struct timer_ln *tl);
+/* local_timer_reinit(tl) needs no wrapper: it's timer_reinit(tl), a macro
+ * that only touches the timer_ln itself, not tcp_main_ltimer. */
+
+/* tcp_connections_no/tls_connections_no accounting - not a hard concurrency
+ * invariant like io_h/the timer (every increment already runs on the
+ * io_wait thread, same as the pre-existing mode 0/1 call sites), exposed as a
+ * wrapper purely to keep the counters themselves private to tcp_main.c. */
+void tcpmain_note_new_conn(int is_tls);
 
 #endif
