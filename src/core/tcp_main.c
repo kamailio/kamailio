@@ -55,6 +55,8 @@
 #include <stdint.h> /* UINT32_MAX */
 
 #include <unistd.h>
+#include <signal.h>	 /* sigfillset/pthread_sigmask - mode 2 pool threads */
+#include <pthread.h> /* mode 2 reactor thread pool */
 
 #include <errno.h>
 #include <string.h>
@@ -73,6 +75,7 @@
 #include "locking.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
+#include "tcp_reactor_mem.h" /* mode 2: pkg allocator serialization */
 #include "timer.h"
 #include "sr_module.h"
 #include "tcp_server.h"
@@ -98,6 +101,8 @@
 #include "tcp_info.h"
 #include "tcp_options.h"
 #include "tcp_mtops.h"
+#include "tcp_read.h"
+#include "tcp_reactor.h"
 #include "ut.h"
 #include "events.h"
 #include "cfg/cfg_struct.h"
@@ -147,7 +152,8 @@ enum fd_types
 	F_SOCKINFO /* a tcp_listen fd */,
 	F_TCPCONN,
 	F_TCPCHILD,
-	F_PROC
+	F_PROC,
+	F_TCP_REACTOR_NOTIFY /* mode 2: pool->reactor completion pipe */
 };
 
 
@@ -204,6 +210,43 @@ static io_wait_h io_h;
 
 static struct local_timer tcp_main_ltimer;
 static ticks_t tcp_main_prev_ticks;
+
+/* io_h/tcp_main_ltimer stay private to this file (only the io_wait thread may
+ * touch them); these wrappers are how tcp_reactor.c reaches them instead -
+ * see the prototypes in tcp_conn.h for why. Callable only from the io_wait
+ * thread, same as the io_watch_*()/local_timer_*() calls they forward to. */
+int tcpmain_io_watch_add_conn(int fd, short events, void *data)
+{
+	return io_watch_add(&io_h, fd, events, F_TCPCONN, data);
+}
+
+int tcpmain_io_watch_del(int fd, int idx, int is_closing)
+{
+	return io_watch_del(&io_h, fd, idx, is_closing ? IO_FD_CLOSING : 0);
+}
+
+int tcpmain_io_watch_chg(int fd, short events, int idx)
+{
+	return io_watch_chg(&io_h, fd, events, idx);
+}
+
+void tcpmain_local_timer_add(
+		struct timer_ln *tl, ticks_t delta, ticks_t crt_ticks)
+{
+	local_timer_add(&tcp_main_ltimer, tl, delta, crt_ticks);
+}
+
+void tcpmain_local_timer_del(struct timer_ln *tl)
+{
+	local_timer_del(&tcp_main_ltimer, tl);
+}
+
+void tcpmain_note_new_conn(int is_tls)
+{
+	(*tcp_connections_no)++;
+	if(unlikely(is_tls))
+		(*tls_connections_no)++;
+}
 
 /* tell if there are tcp workers that should handle only specific socket
  * - used to optimize the search of least loaded worker for a tcp socket
@@ -477,7 +520,7 @@ error:
  * @return - 0 on success, < 0 on error (whatever close() returns). On error
  *           errno is set.
  */
-static int tcp_safe_close(int s)
+int tcp_safe_close(int s)
 {
 	int ret;
 
@@ -662,15 +705,13 @@ end:
 #ifdef TCP_ASYNC
 
 
-/* unsafe version */
-#define _wbufq_empty(con) ((con)->wbuf_q.first == 0)
-/* unsafe version */
-#define _wbufq_non_empty(con) ((con)->wbuf_q.first != 0)
+/* _wbufq_empty()/_wbufq_non_empty() are in tcp_conn.h: tcp_reactor.c (mode 2)
+ * needs them too. */
 
 
-/* unsafe version, call while holding the connection write lock */
-inline static int _wbufq_add(
-		struct tcp_connection *c, const char *data, unsigned int size)
+/* unsafe version, call while holding the connection write lock.
+ * Not static: tcp_reactor.c (mode 2) calls this directly. */
+int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size)
 {
 	struct tcp_wbuffer_queue *q;
 	struct tcp_wbuffer *wb;
@@ -849,7 +890,7 @@ inline static void _wbufq_destroy(struct tcp_wbuffer_queue *q)
 /* tries to empty the queue  (safe version, c->write_lock must not be hold)
  * returns -1 on error, bytes written on success (>=0)
  * if the whole queue is emptied => sets *empty*/
-inline static int wbufq_run(int fd, struct tcp_connection *c, int *empty)
+int wbufq_run(int fd, struct tcp_connection *c, int *empty)
 {
 	struct tcp_wbuffer_queue *q;
 	struct tcp_wbuffer *wb;
@@ -1649,7 +1690,7 @@ int tcpconn_finish_connect(struct tcp_connection *c, union sockaddr_union *from)
 
 /* adds a tcp connection to the tcpconn hashes
  * Note: it's called _only_ from the tcp_main process */
-inline static struct tcp_connection *tcpconn_add(struct tcp_connection *c)
+struct tcp_connection *tcpconn_add(struct tcp_connection *c)
 {
 	struct ip_addr zero_ip;
 	int new_conn_alias_flags;
@@ -1717,11 +1758,20 @@ static inline void _tcpconn_detach(struct tcp_connection *c)
 }
 
 
-static inline void _tcpconn_free(struct tcp_connection *c)
+void _tcpconn_free(struct tcp_connection *c)
 {
 #ifdef TCP_ASYNC
 	if(unlikely(_wbufq_non_empty(c)))
 		_wbufq_destroy(&c->wbuf_q);
+	/* mode 2 : free any plaintext write chunks that were staged on the
+	 * connection but never drained (e.g. a write arrived just before close). */
+	while(c->wsq_head != NULL) {
+		struct tcp_wchunk *ch = c->wsq_head;
+		c->wsq_head = ch->next;
+		shm_free(ch->buf);
+		shm_free(ch);
+	}
+	c->wsq_tail = NULL;
 #endif
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
@@ -2300,8 +2350,6 @@ inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
 #endif /* TCP_FD_CACHE */
 
 
-inline static int tcpconn_chld_put(struct tcp_connection *tcpconn);
-
 static int tcpconn_send_put(struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags);
 static int tcpconn_do_send(int fd, struct tcp_connection *c, const char *buf,
@@ -2416,6 +2464,13 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 					break;
 			}
 		}
+#ifdef TCP_ASYNC
+		if(unlikely(ksr_tcp_main_threads == 2)) {
+			/* mode 2: workers do not open sockets - ask PROC_TCP_MAIN to create
+			 * the outbound connection and send on it. */
+			return tcp_reactor_connect_put(dst, from, buf, len);
+		}
+#endif /* TCP_ASYNC */
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
 		if(likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait)
 				   && cfg_get(tcp, tcp_cfg, async))) {
@@ -2732,6 +2787,14 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		goto release_c;
 	} /* if (c==0 or unusable) new connection */
 	tcp_dst_ephemeral_set(n, c, dst);
+#ifdef TCP_ASYNC
+	if(unlikely(ksr_tcp_main_threads == 2)) {
+		/* mode 2: existing connection - dispatch the write to PROC_TCP_MAIN
+		 * instead of getting the fd and writing here. (Opening a new outbound
+		 * connection, c==0, was handled in the branch above.) */
+		return tcp_reactor_send_put(c, buf, len, dst->send_flags);
+	}
+#endif /* TCP_ASYNC */
 	/* existing connection, send on it */
 	n = tcpconn_send_put(c, buf, len, dst->send_flags);
 	/* no deref needed (automatically done inside tcpconn_send_put() */
@@ -3062,6 +3125,48 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 {
 	int n;
 	long response[2];
+
+#ifdef TCP_ASYNC
+	if(unlikely(ksr_tcp_main_threads == 2 && is_tcp_main())) {
+		/* full reactor mode: we are already inside PROC_TCP_MAIN's event loop,
+		 * so there is no fd-passing / unix_sock self-send. This is reached from
+		 * the TLS read path (tls_h_read_*), which drives the handshake and may
+		 * need to push out ciphertext (handshake records, write-wants-read
+		 * flush, renegotiation). Handle the write result against our own
+		 * reactor instead of shipping a CONN_* command to ourselves.
+		 * The caller holds c->write_lock (locked=1) and keeps using c after we
+		 * return, so on failure we mark the connection for the reaper rather
+		 * than freeing it here. */
+		n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1], 1);
+		switch(response[1]) {
+			case CONN_NOP:
+				break;
+			case CONN_QUEUED_WRITE:
+				/* is_tcp_main() is true for the whole process. On a POOL thread
+				 * (this path is reached from tls_read() flushing handshake /
+				 * renegotiation ciphertext, which runs on a pool thread in
+				 * mode 2) we must NOT touch io_h: the conn is shielded out of
+				 * io_h for the duration of the read job, and io_watch_* from a
+				 * pool thread races the io_wait thread. The ciphertext is already
+				 * queued in wbuf_q; tcp_reactor_read_rearm() arms POLLOUT from
+				 * wbuf_q when the read job completes, so the flush is deferred
+				 * safely. Only the io_wait thread arms the watch directly. */
+				if(tcp_reactor_pool_thread_idx() < 0
+						&& unlikely(tcp_reactor_enable_write_watch(c) < 0)) {
+					c->state = S_CONN_BAD;
+					c->timeout = get_ticks_raw(); /* force timeout reaper */
+				}
+				break;
+			default: /* CONN_ERROR / CONN_EOF: defer close to the reaper */
+				c->state = S_CONN_BAD;
+				c->timeout = get_ticks_raw();
+				if(response[1] == CONN_ERROR)
+					n = -1;
+				break;
+		}
+		return n;
+	}
+#endif /* TCP_ASYNC */
 
 	n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1], 1);
 	if(unlikely(response[1] != CONN_NOP)) {
@@ -3653,7 +3758,7 @@ inline static void tcpconn_close_main_fd(struct tcp_connection *tcpconn)
  * returns 1 if the connection is freed, 0 otherwise
  *
  * WARNING: use only from child processes */
-inline static int tcpconn_chld_put(struct tcp_connection *tcpconn)
+int tcpconn_chld_put(struct tcp_connection *tcpconn)
 {
 	if(unlikely(atomic_dec_and_test(&tcpconn->refcnt))) {
 		LM_DBG("destroying connection %p (%d, %d) flags %04x\n", tcpconn,
@@ -3677,7 +3782,7 @@ inline static int tcpconn_chld_put(struct tcp_connection *tcpconn)
 /* simple destroy function (the connection should be already removed
  * from the hashes. refcnt 0 and the fds should not be watched anymore for IO)
  */
-inline static void tcpconn_destroy(struct tcp_connection *tcpconn)
+void tcpconn_destroy(struct tcp_connection *tcpconn)
 {
 	LM_DBG("destroying connection %p (%d, %d) flags %04x\n", tcpconn,
 			tcpconn->id, tcpconn->s, tcpconn->flags);
@@ -3717,7 +3822,7 @@ inline static void tcpconn_destroy(struct tcp_connection *tcpconn)
  *         - must be called _only_ from the tcp_main process context
  *          (or else the fd will remain open)
  */
-inline static int tcpconn_put_destroy(struct tcp_connection *tcpconn)
+int tcpconn_put_destroy(struct tcp_connection *tcpconn)
 {
 	if(unlikely((tcpconn->flags
 				 & (F_CONN_WRITE_W | F_CONN_HASHED | F_CONN_MAIN_TIMER
@@ -3769,7 +3874,7 @@ inline static int tcpconn_put_destroy(struct tcp_connection *tcpconn)
  * WARNING: call it only in the  tcp_main process context or else the
  *  timer removal won't work.
  */
-inline static int tcpconn_try_unhash(struct tcp_connection *tcpconn)
+int tcpconn_try_unhash(struct tcp_connection *tcpconn)
 {
 	if(likely(tcpconn->flags & F_CONN_HASHED)) {
 		tcpconn->state = S_CONN_BAD;
@@ -3986,12 +4091,19 @@ tcp_connection_t *ksr_tcpcon_evcb_get(void)
 	return _ksr_tcpcon_evcb;
 }
 
-static int tcp_emit_closed_event(struct tcp_connection *con)
+int tcp_emit_closed_event(struct tcp_connection *con)
 {
 	int ret;
 	tcp_closed_event_info_t tev;
 	sr_event_param_t evp = {0};
 	enum tcp_closed_reason reason;
+
+	/* Fire at most once per connection. In mode 2 a single reset can reach more
+	 * than one teardown path. All emits for a conn run on that one thread, so
+	 * a plain flag test-and-set is sufficient. */
+	if(con->flags & F_CONN_CLOSE_EV_SENT)
+		return 0;
+	con->flags |= F_CONN_CLOSE_EV_SENT;
 
 	if(con->event) {
 		reason = con->event;
@@ -4340,6 +4452,21 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 					tcpconn, tcpconn->id, atomic_get(&tcpconn->refcnt),
 					tcpconn->flags);
 		case CONN_EOF: /* forced EOF after full send, due to send flags */
+#ifdef TCP_ASYNC
+			/* mode 2: if a pool thread currently owns this conn (a
+			 * read/write job is in flight), do NOT unhash/io_watch_del/free it
+			 * here - that would race the pool thread. The in-pool refcount keeps
+			 * it alive; mark it bad and let the job completion close it (its
+			 * !HASHED/S_CONN_BAD check routes to tcp_reactor_read_close). Only
+			 * release the sender's reference. */
+			if(unlikely(tcpconn->flags & F_CONN_POOL_BUSY)) {
+				tcpconn->state = S_CONN_BAD;
+				tcpconn->timeout = get_ticks_raw();
+				if(unlikely(tcpconn_put(tcpconn)))
+					tcpconn_destroy(tcpconn); /* can't happen while busy */
+				break;
+			}
+#endif /* TCP_ASYNC */
 #ifdef TCP_CONNECT_WAIT
 			/* if the connection is marked as pending => it might be on
 			 *  the way of reaching tcp_main (e.g. CONN_NEW_COMPLETE or
@@ -4510,6 +4637,29 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			} else {
 				LM_WARN("connection %p already watched for write\n", tcpconn);
 			}
+			break;
+		/* mode 2: worker->tcp_main commands, handled in tcp_reactor.c
+		 * (staging writes, shielding, dedup-and-connect, event/script-close
+		 * teardown). */
+		case CONN_TLS_EVENT_DONE:
+			tcp_reactor_handle_tls_event_done(
+					(struct tcp_connection *)response[0]);
+			break;
+		case CONN_SCRIPT_CLOSE:
+			tcp_reactor_handle_script_close((int)response[0]);
+			break;
+		case CONN_WRITE_REQ:
+			tcp_reactor_handle_write_req(
+					(tcp_reactor_write_req_t *)response[0]);
+			break;
+		case CONN_CONNECT_REQ:
+			tcp_reactor_handle_connect_req(
+					(tcp_reactor_connect_req_t *)response[0]);
+			break;
+		case CONN_TCPX_TASK_REQ:
+			/* mode 2 + mtops: send task to PROC_TCP_MAIN; needed by
+                         * tls.reload */
+			tcp_reactor_handle_tcpx_task_req((tcpx_task_t *)response[0]);
 			break;
 #ifdef TCP_CONNECT_WAIT
 		case CONN_NEW_COMPLETE:
@@ -4905,6 +5055,13 @@ inline static int handle_tcpconn_ev(
 	int bytes;
 #endif /* TCP_ASYNC */
 
+	if(unlikely(ksr_tcp_main_threads == 2)) {
+		/* mode 2: tcp_main owns the fd permanently and does all reads/writes
+		 * itself (no fd-passing, no send2child) - tcp_reactor.c handles the
+		 * shield/enqueue/unshield dance for it. */
+		return tcp_reactor_handle_tcpconn_ev(tcpconn, ev, fd_i);
+	}
+
 	/* pass it to child, so remove it from the io watch list  and the local
 	 *  timer */
 #ifdef TCP_ASYNC
@@ -5087,6 +5244,13 @@ inline static int handle_io(struct fd_map *fm, short ev, int idx)
 		case F_PROC:
 			ret = handle_ser_child((struct process_table *)fm->data, idx);
 			break;
+		case F_TCP_REACTOR_NOTIFY:
+			/* mode 2: a pool thread finished a job. Drain the notify pipe and
+			 * process all completed jobs (coalesced) - tcp_reactor.c owns the
+			 * pool/job state, so the drain+dispatch lives there too. */
+			tcp_reactor_handle_notify();
+			ret = 0;
+			break;
 		case F_NONE:
 			LM_CRIT("empty fd map: %p {%d, %d, %p}, idx %d\n", fm, fm->fd,
 					fm->type, fm->data, idx);
@@ -5117,6 +5281,17 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 			c, t, c->timeout, TICKS_TO_S(c->timeout - t), c->wbuf_q.wr_timeout,
 			TICKS_TO_S(c->wbuf_q.wr_timeout - t), c->wbuf_q.queued);
 
+	/* mode 2: a connection owned by a pool job is shielded out of the
+	 * local timer (tcp_reactor_shield does local_timer_del + clears
+	 * F_CONN_MAIN_TIMER), so this callback must not run for a busy conn. Guard
+	 * defensively: never reap a conn a pool thread is still using - re-arm and
+	 * let the job completion own its lifetime. */
+	if(unlikely(c->flags & F_CONN_POOL_BUSY)) {
+		LM_WARN("tcp reactor: timer fired on pool-busy conn %p - deferring\n",
+				c);
+		return (ticks_t)cfg_get(tcp, tcp_cfg, con_lifetime);
+	}
+
 	tcp_async = cfg_get(tcp, tcp_cfg, async);
 	if(likely(TICKS_LT(t, c->timeout)
 			   && (!tcp_async || _wbufq_empty(c)
@@ -5126,6 +5301,25 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 					c->timeout - t, c->wbuf_q.wr_timeout - t);
 		else
 			return (ticks_t)(c->timeout - t);
+	}
+	/* mode 2: reap a connection whose partial SIP message stalled past the
+	 * read deadline. The read path (tcp_reactor_arm_read_timeout) bounds
+	 * c->timeout to that deadline, so reaching here with a message still
+	 * mid-read (tvrstart set) and the read window elapsed means a stalled
+	 * partial read; report it as such instead of idle/send timeout. */
+	if(unlikely(ksr_tcp_main_threads == 2 && ksr_tcp_msg_read_timeout > 0
+				&& c->state == S_CONN_OK && c->req.tvrstart.tv_sec > 0)) {
+		struct timeval tvnow;
+		long long tvdiff;
+		gettimeofday(&tvnow, NULL);
+		tvdiff = 1000000LL * (tvnow.tv_sec - c->req.tvrstart.tv_sec)
+				 + (tvnow.tv_usec - c->req.tvrstart.tv_usec);
+		if(tvdiff >= 1000000LL * ksr_tcp_msg_read_timeout) {
+			LM_DBG("reactor: message read timeout for %p after %lld us\n", c,
+					tvdiff);
+			TCP_STATS_CON_TIMEOUT();
+			goto reap;
+		}
 	}
 	/* if time out due to write, add it to the blocklist */
 	if(tcp_async && _wbufq_non_empty(c) && TICKS_GE(t, c->wbuf_q.wr_timeout)) {
@@ -5160,6 +5354,9 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	/* idle timeout */
 	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
 	TCP_STATS_CON_TIMEOUT();
+#endif /* TCP_ASYNC */
+#ifdef TCP_ASYNC
+reap:
 #endif /* TCP_ASYNC */
 	LM_DBG("timeout for %p\n", c);
 	/* The connection timed out and is torn down here.
@@ -5304,6 +5501,10 @@ void tcp_main_loop()
 			goto error;
 		}
 		LM_INFO("tcp main processing threads prepared\n");
+		/* mode 2: the reactor dispatch socketpair is created in the main
+		 * process by tcp_init_children() before any TCP child is forked, so it
+		 * is inherited here (and by every worker). Nothing to do at this point;
+		 * tcp_main uses ksr_tcp_reactor_get_dispatch_wfd() to ship tasks. */
 	} else {
 		LM_INFO("tcp main processing threads not enabled\n");
 	}
@@ -5359,6 +5560,25 @@ void tcp_main_loop()
 			}
 	}
 
+
+	/* mode 2: start the reactor thread pool (notify pipe + worker threads).
+	 * io_h is already initialized; the threads spawn and block in
+	 * tcp_cond_wait until reads/writes are routed to them.
+	 * tcp_reactor_pool_init() (tcp_reactor.c) creates the notify pipe but does
+	 * not watch it - only the io_wait thread may touch io_h, so that
+	 * registration happens here. */
+	if(ksr_tcp_main_threads == 2) {
+		if(tcp_reactor_pool_init() < 0) {
+			LM_CRIT("failed to start the tcp reactor thread pool\n");
+			goto error;
+		}
+		if(io_watch_add(&io_h, tcp_rpool.notify_pipe[0], POLLIN,
+				   F_TCP_REACTOR_NOTIFY, NULL)
+				< 0) {
+			LM_CRIT("failed to watch the reactor notify pipe\n");
+			goto error;
+		}
+	}
 
 	/* initialize the cfg framework */
 	if(cfg_child_init())
@@ -5433,6 +5653,8 @@ void tcp_main_loop()
 			goto error;
 	}
 error:
+	if(ksr_tcp_main_threads == 2)
+		tcp_reactor_pool_destroy(); /* stop + join pool threads */
 #ifdef SEND_FD_QUEUE
 	destroy_send_fd_queues();
 #endif
@@ -5686,6 +5908,12 @@ int tcp_init_children(int *woneinit)
 
 	/* create the tcp sock_info structures */
 	/* copy the sockets --moved to main_loop*/
+
+	/* mode 2: create the reactor dispatch socketpair before forking, so the
+	 * workers (below) and PROC_TCP_MAIN (forked by the caller right after) all
+	 * inherit the shared fds */
+	if(tcp_reactor_dsock_init() < 0)
+		goto error;
 
 	/* fork children & create the socket pairs*/
 	for(r = 0; r < tcp_children_no; r++) {
