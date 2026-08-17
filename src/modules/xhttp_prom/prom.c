@@ -34,6 +34,7 @@
 #include <time.h>
 #include <inttypes.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "../../core/globals.h"
 #include "../../core/counters.h"
@@ -201,6 +202,143 @@ int prom_body_timestamp_printf(prom_ctx_t *ctx, uint64_t ts)
 	}
 }
 
+static void ksr_prom_method_to_label(
+		const char *method_token, char *method_label, size_t method_label_size)
+{
+	if(method_token == NULL || method_label == NULL || method_label_size == 0) {
+		return;
+	}
+
+	if(strcmp(method_token, "invite") == 0) {
+		strncpy(method_label, "INVITE", method_label_size - 1);
+	} else if(strcmp(method_token, "ack") == 0) {
+		strncpy(method_label, "ACK", method_label_size - 1);
+	} else if(strcmp(method_token, "bye") == 0) {
+		strncpy(method_label, "BYE", method_label_size - 1);
+	} else if(strcmp(method_token, "cancel") == 0) {
+		strncpy(method_label, "CANCEL", method_label_size - 1);
+	} else if(strcmp(method_token, "options") == 0) {
+		strncpy(method_label, "OPTIONS", method_label_size - 1);
+	} else if(strcmp(method_token, "register") == 0) {
+		strncpy(method_label, "REGISTER", method_label_size - 1);
+	} else if(strcmp(method_token, "subscribe") == 0) {
+		strncpy(method_label, "SUBSCRIBE", method_label_size - 1);
+	} else if(strcmp(method_token, "notify") == 0) {
+		strncpy(method_label, "NOTIFY", method_label_size - 1);
+	} else if(strcmp(method_token, "update") == 0) {
+		strncpy(method_label, "UPDATE", method_label_size - 1);
+	} else if(strcmp(method_token, "refer") == 0) {
+		strncpy(method_label, "REFER", method_label_size - 1);
+	} else if(strcmp(method_token, "message") == 0) {
+		strncpy(method_label, "MESSAGE", method_label_size - 1);
+	} else if(strcmp(method_token, "info") == 0) {
+		strncpy(method_label, "INFO", method_label_size - 1);
+	} else if(strcmp(method_token, "prack") == 0) {
+		strncpy(method_label, "PRACK", method_label_size - 1);
+	} else if(strcmp(method_token, "publish") == 0) {
+		strncpy(method_label, "PUBLISH", method_label_size - 1);
+	} else if(strcmp(method_token, "kdmq") == 0) {
+		strncpy(method_label, "KDMQ", method_label_size - 1);
+	} else {
+		strncpy(method_label, "OTHER", method_label_size - 1);
+	}
+	method_label[method_label_size - 1] = '\0';
+}
+
+static int ksr_prom_emit_core_latency_metric(
+		prom_ctx_t *ctx, const char *name, long counter_val, uint64_t ts)
+{
+	char method_token[32];
+	char status_token[16];
+	char le_token[16];
+	char kind[16];
+	char method_label[32];
+
+	if(sscanf(name, "request_route_latency_usec_%15[^_]_method_%31[^_]_le_%15s",
+			   kind, method_token, le_token)
+			== 3) {
+		ksr_prom_method_to_label(
+				method_token, method_label, sizeof(method_label));
+		if(prom_body_name_printf(ctx, "%.*srequest_route_latency_usec_%s",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s, kind)
+				== -1)
+			return -1;
+		if(prom_body_printf(ctx, "{method=\"%s\",le=\"%s\"%s} %ld",
+				   method_label,
+				   (strcmp(le_token, "inf") == 0) ? "+Inf" : le_token,
+				   xhttp_prom_tags_comma, counter_val)
+				== -1)
+			return -1;
+		if(prom_body_timestamp_printf(ctx, ts) == -1)
+			return -1;
+		return (prom_body_printf(ctx, "\n") == -1) ? -1 : 1;
+	}
+
+	if(sscanf(name, "request_route_latency_usec_%15[^_]_method_%31s", kind,
+			   method_token)
+			== 2) {
+		ksr_prom_method_to_label(
+				method_token, method_label, sizeof(method_label));
+		if(prom_body_name_printf(ctx, "%.*srequest_route_latency_usec_%s",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s, kind)
+				== -1)
+			return -1;
+		if(prom_body_printf(ctx, "{method=\"%s\"%s} %ld", method_label,
+				   xhttp_prom_tags_comma, counter_val)
+				== -1)
+			return -1;
+		if(prom_body_timestamp_printf(ctx, ts) == -1)
+			return -1;
+		return (prom_body_printf(ctx, "\n") == -1) ? -1 : 1;
+	}
+
+	if(sscanf(name,
+			   "reply_route_latency_usec_%15[^_]_method_%31[^_]_status_class_"
+			   "%15[^_]_le_%15s",
+			   kind, method_token, status_token, le_token)
+			== 4) {
+		ksr_prom_method_to_label(
+				method_token, method_label, sizeof(method_label));
+		if(prom_body_name_printf(ctx, "%.*sreply_route_latency_usec_%s",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s, kind)
+				== -1)
+			return -1;
+		if(prom_body_printf(ctx,
+				   "{method=\"%s\",status_class=\"%s\",le=\"%s\"%s} %ld",
+				   method_label, status_token,
+				   (strcmp(le_token, "inf") == 0) ? "+Inf" : le_token,
+				   xhttp_prom_tags_comma, counter_val)
+				== -1)
+			return -1;
+		if(prom_body_timestamp_printf(ctx, ts) == -1)
+			return -1;
+		return (prom_body_printf(ctx, "\n") == -1) ? -1 : 1;
+	}
+
+	if(sscanf(name,
+			   "reply_route_latency_usec_%15[^_]_method_%31[^_]_status_class_"
+			   "%15s",
+			   kind, method_token, status_token)
+			== 3) {
+		ksr_prom_method_to_label(
+				method_token, method_label, sizeof(method_label));
+		if(prom_body_name_printf(ctx, "%.*sreply_route_latency_usec_%s",
+				   xhttp_prom_beginning.len, xhttp_prom_beginning.s, kind)
+				== -1)
+			return -1;
+		if(prom_body_printf(ctx, "{method=\"%s\",status_class=\"%s\"%s} %ld",
+				   method_label, status_token, xhttp_prom_tags_comma,
+				   counter_val)
+				== -1)
+			return -1;
+		if(prom_body_timestamp_printf(ctx, ts) == -1)
+			return -1;
+		return (prom_body_printf(ctx, "\n") == -1) ? -1 : 1;
+	}
+
+	return 0;
+}
+
 /**
  * @brief Generate a string suitable for a Prometheus metric.
  *
@@ -221,6 +359,18 @@ static int metric_generate(
 	LM_DBG("metric -> group: %.*s  name: %.*s  value: %lu  TS: %" PRIu64 "\n",
 			group->len, group->s, name->len, name->s, counter_val,
 			(uint64_t)ts);
+
+	if(group->len == 4 && strncmp(group->s, "core", 4) == 0) {
+		int lret;
+		lret = ksr_prom_emit_core_latency_metric(ctx, name->s, counter_val, ts);
+		if(lret < 0) {
+			LM_ERR("failed to print core latency metric\n");
+			return -1;
+		}
+		if(lret > 0) {
+			return 0;
+		}
+	}
 
 	/* Print metric name. */
 	if(prom_body_name_printf(ctx, "%.*s%.*s_%.*s", xhttp_prom_beginning.len,

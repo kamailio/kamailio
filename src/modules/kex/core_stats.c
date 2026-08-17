@@ -29,8 +29,11 @@
 
 
 #include <string.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #include "../../core/counters.h"
+#include "../../core/core_stats.h"
 #include "../../core/events.h"
 #include "../../core/dprint.h"
 #include "../../core/timer.h"
@@ -134,6 +137,35 @@ DECLARE_STAT_VARS(update);
 DECLARE_STAT_VARS(refer);
 DECLARE_STAT_VARS(options);
 
+#define KSR_LAT_METHODS_NO 16
+#define KSR_LAT_STATUS_CLASS_NO 7
+#define KSR_LAT_BUCKETS_NO 9
+
+static const unsigned int ksr_lat_bucket_limits[KSR_LAT_BUCKETS_NO] = {
+		1000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, UINT32_MAX};
+
+static const char *ksr_lat_bucket_tokens[KSR_LAT_BUCKETS_NO] = {"1000", "5000",
+		"10000", "20000", "50000", "100000", "200000", "500000", "inf"};
+
+static const char *ksr_lat_method_tokens[KSR_LAT_METHODS_NO] = {"invite", "ack",
+		"bye", "cancel", "options", "register", "subscribe", "notify", "update",
+		"refer", "message", "info", "prack", "publish", "kdmq", "other"};
+
+static const char *ksr_lat_status_class_tokens[KSR_LAT_STATUS_CLASS_NO] = {
+		"1xx", "2xx", "3xx", "4xx", "5xx", "6xx", "other"};
+
+static counter_handle_t ksr_req_lat_bucket[KSR_LAT_METHODS_NO]
+										  [KSR_LAT_BUCKETS_NO];
+static counter_handle_t ksr_req_lat_sum[KSR_LAT_METHODS_NO];
+static counter_handle_t ksr_req_lat_count[KSR_LAT_METHODS_NO];
+static counter_handle_t ksr_rpl_lat_bucket[KSR_LAT_METHODS_NO]
+										  [KSR_LAT_STATUS_CLASS_NO]
+										  [KSR_LAT_BUCKETS_NO];
+static counter_handle_t ksr_rpl_lat_sum[KSR_LAT_METHODS_NO]
+									   [KSR_LAT_STATUS_CLASS_NO];
+static counter_handle_t ksr_rpl_lat_count[KSR_LAT_METHODS_NO]
+										 [KSR_LAT_STATUS_CLASS_NO];
+
 /* clang-format off */
 /*! exported core statistics */
 stat_export_t core_stats[] = {
@@ -231,6 +263,173 @@ stat_export_t shm_stats[] = {
 /* clang-format on */
 
 int stats_proc_stats_init_rpc(void);
+
+static int ksr_lat_method_idx(unsigned int method)
+{
+	switch(method) {
+		case METHOD_INVITE:
+			return 0;
+		case METHOD_ACK:
+			return 1;
+		case METHOD_BYE:
+			return 2;
+		case METHOD_CANCEL:
+			return 3;
+		case METHOD_OPTIONS:
+			return 4;
+		case METHOD_REGISTER:
+			return 5;
+		case METHOD_SUBSCRIBE:
+			return 6;
+		case METHOD_NOTIFY:
+			return 7;
+		case METHOD_UPDATE:
+			return 8;
+		case METHOD_REFER:
+			return 9;
+		case METHOD_MESSAGE:
+			return 10;
+		case METHOD_INFO:
+			return 11;
+		case METHOD_PRACK:
+			return 12;
+		case METHOD_PUBLISH:
+			return 13;
+		case METHOD_KDMQ:
+			return 14;
+		default:
+			return 15;
+	}
+}
+
+static int ksr_lat_status_class_idx(unsigned int status_class)
+{
+	if(status_class >= 1 && status_class <= 6) {
+		return (int)status_class - 1;
+	}
+
+	return 6;
+}
+
+static int ksr_lat_counter_register(
+		counter_handle_t *h, const char *name, const char *doc)
+{
+	if(counter_register(h, "core", name, 0, 0, 0, doc, 0) < 0) {
+		LM_ERR("failed to register counter core.%s\n", name);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int ksr_register_latency_stats(void)
+{
+	char name[160];
+	int m, s, b;
+
+	for(m = 0; m < KSR_LAT_METHODS_NO; m++) {
+		for(b = 0; b < KSR_LAT_BUCKETS_NO; b++) {
+			snprintf(name, sizeof(name),
+					"request_route_latency_usec_bucket_method_%s_le_%s",
+					ksr_lat_method_tokens[m], ksr_lat_bucket_tokens[b]);
+			if(ksr_lat_counter_register(&ksr_req_lat_bucket[m][b], name,
+					   "request route latency bucket in usec")
+					< 0) {
+				return -1;
+			}
+		}
+		snprintf(name, sizeof(name), "request_route_latency_usec_sum_method_%s",
+				ksr_lat_method_tokens[m]);
+		if(ksr_lat_counter_register(&ksr_req_lat_sum[m], name,
+				   "request route latency sum in usec")
+				< 0) {
+			return -1;
+		}
+		snprintf(name, sizeof(name),
+				"request_route_latency_usec_count_method_%s",
+				ksr_lat_method_tokens[m]);
+		if(ksr_lat_counter_register(&ksr_req_lat_count[m], name,
+				   "request route latency sample count")
+				< 0) {
+			return -1;
+		}
+	}
+
+	for(m = 0; m < KSR_LAT_METHODS_NO; m++) {
+		for(s = 0; s < KSR_LAT_STATUS_CLASS_NO; s++) {
+			for(b = 0; b < KSR_LAT_BUCKETS_NO; b++) {
+				snprintf(name, sizeof(name),
+						"reply_route_latency_usec_bucket_method_%s_status_"
+						"class_%s_"
+						"le_%s",
+						ksr_lat_method_tokens[m],
+						ksr_lat_status_class_tokens[s],
+						ksr_lat_bucket_tokens[b]);
+				if(ksr_lat_counter_register(&ksr_rpl_lat_bucket[m][s][b], name,
+						   "reply route latency bucket in usec")
+						< 0) {
+					return -1;
+				}
+			}
+			snprintf(name, sizeof(name),
+					"reply_route_latency_usec_sum_method_%s_status_class_%s",
+					ksr_lat_method_tokens[m], ksr_lat_status_class_tokens[s]);
+			if(ksr_lat_counter_register(&ksr_rpl_lat_sum[m][s], name,
+					   "reply route latency sum in usec")
+					< 0) {
+				return -1;
+			}
+			snprintf(name, sizeof(name),
+					"reply_route_latency_usec_count_method_%s_status_class_%s",
+					ksr_lat_method_tokens[m], ksr_lat_status_class_tokens[s]);
+			if(ksr_lat_counter_register(&ksr_rpl_lat_count[m][s], name,
+					   "reply route latency sample count")
+					< 0) {
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static void ksr_update_req_route_latency(unsigned int method, unsigned int usec)
+{
+	int m, b;
+
+	m = ksr_lat_method_idx(method);
+	counter_inc(ksr_req_lat_count[m]);
+	counter_add(ksr_req_lat_sum[m], usec);
+
+	for(b = 0; b < KSR_LAT_BUCKETS_NO; b++) {
+		if(usec <= ksr_lat_bucket_limits[b]) {
+			for(; b < KSR_LAT_BUCKETS_NO; b++) {
+				counter_inc(ksr_req_lat_bucket[m][b]);
+			}
+			return;
+		}
+	}
+}
+
+static void ksr_update_rpl_route_latency(
+		unsigned int method, unsigned int status_class, unsigned int usec)
+{
+	int m, s, b;
+
+	m = ksr_lat_method_idx(method);
+	s = ksr_lat_status_class_idx(status_class);
+	counter_inc(ksr_rpl_lat_count[m][s]);
+	counter_add(ksr_rpl_lat_sum[m][s], usec);
+
+	for(b = 0; b < KSR_LAT_BUCKETS_NO; b++) {
+		if(usec <= ksr_lat_bucket_limits[b]) {
+			for(; b < KSR_LAT_BUCKETS_NO; b++) {
+				counter_inc(ksr_rpl_lat_bucket[m][s][b]);
+			}
+			return;
+		}
+	}
+}
 
 
 static int km_cb_req_stats(struct sip_msg *msg, unsigned int flags, void *param)
@@ -460,40 +659,64 @@ static int km_cb_rpl_stats(struct sip_msg *msg, unsigned int flags, void *param)
 static int sts_update_core_stats(sr_event_param_t *evp)
 {
 	int type;
+	uintptr_t pev;
+	struct core_stats_latency_event *lev = NULL;
 
-	type = (int)(long)evp;
+	pev = (uintptr_t)evp;
+	if(pev > 16) {
+		lev = (struct core_stats_latency_event *)evp;
+		if(lev != NULL) {
+			type = lev->type;
+		} else {
+			return 0;
+		}
+	} else {
+		type = (int)(long)evp;
+	}
+
 	switch(type) {
-		case 1:
+		case CORE_STATS_EV_FWD_REQ_OK:
 			/* fwd_requests */
 			update_stat(fwd_reqs, 1);
 			break;
-		case 2:
+		case CORE_STATS_EV_FWD_RPL_OK:
 			/* fwd_replies */
 			update_stat(fwd_rpls, 1);
 			break;
-		case 3:
+		case CORE_STATS_EV_DROP_REQ:
 			/* drop_requests */
 			update_stat(drp_reqs, 1);
 			break;
-		case 4:
+		case CORE_STATS_EV_DROP_RPL:
 			/* drop_replies */
 			update_stat(drp_rpls, 1);
 			break;
-		case 5:
+		case CORE_STATS_EV_ERR_REQ:
 			/* err_requests */
 			update_stat(err_reqs, 1);
 			break;
-		case 6:
+		case CORE_STATS_EV_ERR_RPL:
 			/* err_replies */
 			update_stat(err_rpls, 1);
 			break;
-		case 7:
+		case CORE_STATS_EV_BAD_URI:
 			/* bad_URIs_rcvd */
 			update_stat(bad_URIs, 1);
 			break;
-		case 8:
+		case CORE_STATS_EV_BAD_MSG_HDR:
 			/* bad_msg_hdr */
 			update_stat(bad_msg_hdr, 1);
+			break;
+		case CORE_STATS_EV_REQ_ROUTE_LATENCY:
+			if(lev != NULL) {
+				ksr_update_req_route_latency(lev->method, lev->latency_us);
+			}
+			break;
+		case CORE_STATS_EV_RPL_ROUTE_LATENCY:
+			if(lev != NULL) {
+				ksr_update_rpl_route_latency(
+						lev->method, lev->status_class, lev->latency_us);
+			}
 			break;
 	}
 	return 0;
@@ -509,6 +732,10 @@ int register_core_stats(void)
 	/* register sh_mem statistics */
 	if(register_module_stats("shmem", shm_stats) != 0) {
 		LM_ERR("failed to register sh_mem statistics\n");
+		return -1;
+	}
+	if(ksr_register_latency_stats() < 0) {
+		LM_ERR("failed to register route latency statistics\n");
 		return -1;
 	}
 	if(register_script_cb(km_cb_req_stats, PRE_SCRIPT_CB | REQUEST_CB, 0) < 0) {
