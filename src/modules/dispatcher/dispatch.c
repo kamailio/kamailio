@@ -1314,7 +1314,6 @@ int ds_load_list(char *lfile)
 		SHM_MEM_ERROR;
 		lock_release(ds_list_write_lock);
 		fclose(f);
-		LM_ERR("out of memory");
 		return -1;
 	}
 
@@ -1632,7 +1631,6 @@ int ds_load_db(void)
 		SHM_MEM_ERROR;
 		lock_release(ds_list_write_lock);
 		ds_dbf.free_result(ds_db_handle, res);
-		LM_ERR("out of memory");
 		return -1;
 	}
 
@@ -3504,7 +3502,6 @@ int ds_add_dst(int group, str *address, int flags, int priority, str *attrs)
 	next = ds_new_list();
 	if(!next) {
 		SHM_MEM_ERROR;
-		LM_ERR("out of memory");
 		return -1;
 	}
 
@@ -3594,7 +3591,6 @@ int ds_remove_dst(int group, str *address)
 	next = ds_new_list();
 	if(!next) {
 		SHM_MEM_ERROR;
-		LM_ERR("out of memory");
 		return -1;
 	}
 
