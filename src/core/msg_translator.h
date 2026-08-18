@@ -34,8 +34,9 @@
 #define _MSG_TRANSLATOR_H
 
 /* flags used for process_lumps flag parameter */
-#define FLAG_MSG_LUMPS_ONLY 0 /* copy just the lumps */
-#define FLAG_MSG_ALL 1		  /* copy all the msg */
+#define FLAG_MSG_LUMPS_ONLY 1	 /* copy just the lumps */
+#define FLAG_MSG_ALL (1 << 1)	 /* copy all the msg */
+#define FLAG_MSG_DRYRUN (1 << 2) /* dry-run - do not set LUMPFLAG_APPLIED */
 
 #define MY_HF_SEP ": "
 #define MY_HF_SEP_LEN 2
@@ -52,6 +53,7 @@
 #define BUILD_NO_VIA1_UPDATE (1 << 1)
 #define BUILD_NO_PATH (1 << 2)
 #define BUILD_NEW_LOCAL_VIA (1 << 3)
+#define BUILD_DRYRUN (1 << 4)
 #define BUILD_IN_SHM (1 << 7)
 
 #include "parser/msg_parser.h"
@@ -103,7 +105,7 @@ char *build_req_buf_from_sip_req(struct sip_msg *msg,
 		unsigned int mode, ksr_msgbuild_t *mbd);
 
 char *build_res_buf_from_sip_res(
-		struct sip_msg *msg, unsigned int *returned_len);
+		struct sip_msg *msg, unsigned int *returned_len, unsigned int mode);
 
 char *generate_res_buf_from_sip_res(
 		struct sip_msg *msg, unsigned int *returned_len, unsigned int mode);

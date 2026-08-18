@@ -951,7 +951,7 @@ static int do_forward_reply(struct sip_msg *msg, int mode)
 		goto error;
 	}
 
-	new_buf = build_res_buf_from_sip_res(msg, &new_len);
+	new_buf = build_res_buf_from_sip_res(msg, &new_len, 0);
 	if(!new_buf) {
 		LM_ERR("building failed\n");
 		goto error;
