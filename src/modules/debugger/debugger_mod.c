@@ -34,6 +34,7 @@
 #include "../../core/shm_init.h"
 #include "../../core/script_cb.h"
 #include "../../core/msg_translator.h"
+#include "../../core/data_lump.h"
 #include "../../core/kemi.h"
 
 #include "debugger_api.h"
@@ -232,6 +233,72 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	dbg_cfg = NULL;
+}
+
+/**
+ *
+ */
+typedef struct dbg_sip_msg_lumps
+{
+	struct lump *add_rm;
+	struct lump *body_lumps;
+} dbg_sip_msg_lumps_t;
+
+/**
+ *
+ */
+static int dbg_sip_msg_lumps_clone(sip_msg_t *msg, dbg_sip_msg_lumps_t *ctx)
+{
+	struct lump *dup_add_rm = NULL;
+	struct lump *dup_body_lumps = NULL;
+
+	memset(ctx, 0, sizeof(*ctx));
+	ctx->add_rm = msg->add_rm;
+	ctx->body_lumps = msg->body_lumps;
+
+	if(ctx->add_rm != NULL) {
+		dup_add_rm = dup_lump_list(ctx->add_rm);
+		if(dup_add_rm == NULL) {
+			LM_ERR("failed to duplicate header lumps for dbg_sip_msg()\n");
+			goto error;
+		}
+	}
+
+	if(ctx->body_lumps != NULL) {
+		dup_body_lumps = dup_lump_list(ctx->body_lumps);
+		if(dup_body_lumps == NULL) {
+			LM_ERR("failed to duplicate body lumps for dbg_sip_msg()\n");
+			goto error;
+		}
+	}
+
+	msg->add_rm = dup_add_rm;
+	msg->body_lumps = dup_body_lumps;
+	return 0;
+
+error:
+	if(dup_add_rm != NULL) {
+		free_duped_lump_list(dup_add_rm);
+	}
+	if(dup_body_lumps != NULL) {
+		free_duped_lump_list(dup_body_lumps);
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static void dbg_sip_msg_lumps_free(sip_msg_t *msg, dbg_sip_msg_lumps_t *ctx)
+{
+	if(msg->add_rm != NULL && msg->add_rm != ctx->add_rm) {
+		free_duped_lump_list(msg->add_rm);
+	}
+	if(msg->body_lumps != NULL && msg->body_lumps != ctx->body_lumps) {
+		free_duped_lump_list(msg->body_lumps);
+	}
+	msg->add_rm = ctx->add_rm;
+	msg->body_lumps = ctx->body_lumps;
 }
 
 /**
@@ -528,7 +595,10 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	const char *end_txt = "-------------------------- END OF SIP message debug "
 						  "---------------------------\n\n";
 	struct dest_info send_info;
+	dbg_sip_msg_lumps_t lctx;
 	str obuf;
+
+	memset(&lctx, 0, sizeof(lctx));
 
 	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
 		LM_ERR("invalid usage - not in request route\n");
@@ -542,6 +612,10 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 
 	if(facility != NULL) {
 		ifacility = (int)(long)facility;
+	}
+
+	if(dbg_sip_msg_lumps_clone(msg, &lctx) < 0) {
+		return -1;
 	}
 
 	/* msg_apply_changes_f code needed to get the current msg */
@@ -560,13 +634,13 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 
 	if(obuf.s == NULL) {
 		LM_ERR("couldn't update msg buffer content\n");
-		return -1;
+		goto error;
 	}
 
 	if(obuf.len >= BUF_SIZE) {
 		LM_ERR("new buffer overflow (%d)\n", obuf.len);
 		pkg_free(obuf.s);
-		return -1;
+		goto error;
 	}
 
 	/* skip original uri */
@@ -581,13 +655,13 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	hdr_lumps = pkg_malloc(BUF_SIZE);
 	if(hdr_lumps == NULL) {
 		PKG_MEM_ERROR;
-		return -1;
+		goto error;
 	}
 	bdy_lumps = pkg_malloc(BUF_SIZE);
 	if(bdy_lumps == NULL) {
 		pkg_free(hdr_lumps);
 		PKG_MEM_ERROR;
-		return -1;
+		goto error;
 	}
 
 	new_buf_offs = 0;
@@ -617,8 +691,19 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	if(bdy_lumps) {
 		pkg_free(bdy_lumps);
 	}
+	dbg_sip_msg_lumps_free(msg, &lctx);
 
 	return 1;
+
+error:
+	if(hdr_lumps) {
+		pkg_free(hdr_lumps);
+	}
+	if(bdy_lumps) {
+		pkg_free(bdy_lumps);
+	}
+	dbg_sip_msg_lumps_free(msg, &lctx);
+	return -1;
 }
 
 /**
