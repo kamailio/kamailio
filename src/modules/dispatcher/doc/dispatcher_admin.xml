@@ -1182,6 +1182,32 @@ modparam("dispatcher", "ds_load_mode", 1)
 		</example>
 	</section>
 
+	<section id="dispatcher.p.reload_delta">
+		<title><varname>reload_delta</varname> (int)</title>
+		<para>
+		The number of seconds that have to be waited before executing a new reload
+		of dispatcher records (it applies to RPC add and remove commands). It is
+		useful to enforce a rate limiting of reload actions in a specific time
+		interval.
+		</para>
+		<para>
+		If set to 0, no rate limit is configured.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reload_delta</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dispatcher", "reload_delta", 5)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="dispatcher.p.ds_dns_mode">
 		<title><varname>ds_dns_mode</varname> (int)</title>
 		<para>
