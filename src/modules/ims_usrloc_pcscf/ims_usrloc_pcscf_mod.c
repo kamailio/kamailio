@@ -78,6 +78,7 @@ static int child_init(int rank); /*!< Per-child init function */
 
 extern int bind_usrloc(usrloc_api_t *api);
 extern int ul_locks_no;
+extern void ul_timer_cleanup_temp_gruu_history(void);
 
 
 int expires_grace =
@@ -320,4 +321,6 @@ static void timer(unsigned int ticks, void *param)
 	if(synchronize_all_udomains() != 0) {
 		LM_ERR("synchronizing cache failed\n");
 	}
+
+	ul_timer_cleanup_temp_gruu_history();
 }

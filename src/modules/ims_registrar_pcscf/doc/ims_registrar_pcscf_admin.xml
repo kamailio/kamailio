@@ -361,6 +361,25 @@ modparam("ims_registrar_pcscf", "trust_bottom_via", 1)
         </programlisting>
       </example>
     </section>
+    <section>
+      <title><varname>insert_path_on_register</varname> (int)</title>
+
+      <para>If set to <emphasis>1</emphasis>, the module will insert a
+      Path header on outgoing REGISTER requests and store the Path URI for the
+      contact. When set to <emphasis>0</emphasis> (default), Path insertion is disabled.</para>
+
+      <para><emphasis>Default value is 0.</emphasis></para>
+
+      <example>
+        <title>Set <varname>insert_path_on_register</varname> parameter</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_registrar_pcscf", "insert_path_on_register", 1)
+...
+        </programlisting>
+      </example>
+    </section>
 
   </section>
 
@@ -500,6 +519,36 @@ pcscf_save("location");
 		</listitem>
 		</itemizedlist>
   </section>
+
+    <section>
+      <title><function moreinfo="none">pcscf_gruu_lookup(domain)</function></title>
+
+      <para>Resolve the Request-URI GRUU parameter (<emphasis>;gr=</emphasis>)
+      to a stored contact and set the destination URI to the contact AOR.
+      Returns <emphasis>1</emphasis> on match, <emphasis>-1</emphasis>
+      otherwise.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>domain</emphasis> - Logical domain within the registrar.
+            If a database is used then this must be the name of the table which
+            stores the contacts.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <example>
+        <title>pcscf_gruu_lookup</title>
+
+        <programlisting format="linespecific">
+...
+pcscf_gruu_lookup("location");
+...
+        </programlisting>
+      </example>
+    </section>
 
 <!--
 

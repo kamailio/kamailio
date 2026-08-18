@@ -57,6 +57,9 @@
 #include "../../core/ut.h"
 #include "ims_usrloc_pcscf_mod.h" /* usrloc module parameters */
 #include "usrloc.h"
+#include "impu_match.h"
+#include "pcontact_serialize.h"
+#include "pcscf_db_layout.h"
 #include "utime.h"
 #include "ul_callback.h"
 #include "usrloc_db.h"
@@ -69,6 +72,41 @@ extern int audit_expired_pcontacts_timeout;
 extern int db_mode;
 extern int db_mode_ext;
 extern int match_contact_host_port;
+
+static void pcscf_init_load_columns(db_key_t columns[PCSCF_LOAD_NCOLS])
+{
+	columns[0] = &id_col;
+	columns[1] = &domain_col;
+	columns[2] = &aor_col;
+	columns[3] = &host_col;
+	columns[4] = &port_col;
+	columns[5] = &protocol_col;
+	columns[6] = &received_col;
+	columns[7] = &received_port_col;
+	columns[8] = &received_proto_col;
+	columns[9] = &rx_session_id_col;
+	columns[10] = &reg_state_col;
+	columns[11] = &expires_col;
+	columns[12] = &socket_col;
+	columns[13] = &service_routes_col;
+	columns[14] = &public_ids_col;
+	columns[15] = &path_col;
+	columns[16] = &instance_id_col;
+	columns[17] = &pub_gruu_col;
+	columns[18] = &temp_gruu_col;
+	columns[19] = &rinstance_col;
+	columns[20] = &public_ids_barred_col;
+	columns[21] = &security_type_col;
+}
+
+static void pcscf_assign_location_id_from_row(pcontact_t *c, db_val_t *id_val)
+{
+	if(!c || !id_val || VAL_NULL(id_val))
+		return;
+	if(VAL_TYPE(id_val) == DB1_INT || VAL_TYPE(id_val) == DB1_UINT
+			|| VAL_TYPE(id_val) == DB1_BIGINT)
+		c->location_id = (unsigned int)VAL_INT(id_val);
+}
 
 #ifdef STATISTICS
 static char *build_stat_name(str *domain, char *var_name)
@@ -124,6 +162,10 @@ int new_udomain(str *_n, int _s, udomain_t **_d)
 	}
 
 	(*_d)->size = _s;
+	pcscf_index_init(&(*_d)->impu_idx);
+	pcscf_index_init(&(*_d)->pub_gruu_idx);
+	pcscf_index_init(&(*_d)->temp_gruu_idx);
+	pcscf_temp_gruu_lru_init(64);
 
 #ifdef STATISTICS
 	/* register the statistics */
@@ -156,6 +198,11 @@ error0:
 void free_udomain(udomain_t *_d)
 {
 	int i;
+
+	pcscf_index_destroy(&_d->impu_idx);
+	pcscf_index_destroy(&_d->pub_gruu_idx);
+	pcscf_index_destroy(&_d->temp_gruu_idx);
+	pcscf_temp_gruu_lru_destroy();
 
 	if(_d->table) {
 		for(i = 0; i < _d->size; i++) {
@@ -240,12 +287,21 @@ int mem_insert_pcontact(struct udomain *_d, str *_contact,
 	(*_c)->sl = sl;
 	LM_DBG("Putting contact into slot [%d]\n", sl);
 	slot_add(&_d->table[sl], *_c);
+	if(pcscf_index_sync_contact(_d, *_c) < 0) {
+		LM_ERR("pcscf index sync failed for new contact\n");
+		slot_rem((*_c)->slot, *_c);
+		free_pcontact(*_c);
+		return -1;
+	}
 	update_stat(_d->contacts, 1);
 	return 0;
 }
 
 void mem_delete_pcontact(udomain_t *_d, struct pcontact *_c)
 {
+	pcscf_index_remove_contact(&_d->impu_idx, _c);
+	pcscf_index_remove_contact(&_d->pub_gruu_idx, _c);
+	pcscf_index_remove_contact(&_d->temp_gruu_idx, _c);
 	slot_rem(_c->slot, _c);
 	free_pcontact(_c);
 	update_stat(_d->contacts, -1);
@@ -422,7 +478,25 @@ int update_pcontact(struct udomain *_d, struct pcontact_info *_ci,
 		_c->rx_session_id.len = _ci->rx_regsession_id->len;
 	}
 
-	//TODO: update path, etc
+	if(_ci->path && _ci->path->s && _ci->path->len > 0) {
+		if(_c->path.s) {
+			shm_free(_c->path.s);
+			_c->path.s = NULL;
+			_c->path.len = 0;
+		}
+		_c->path.s = shm_malloc(_ci->path->len);
+		if(!_c->path.s) {
+			LM_ERR("no more shm memory for path\n");
+			goto out_of_memory;
+		}
+		memcpy(_c->path.s, _ci->path->s, _ci->path->len);
+		_c->path.len = _ci->path->len;
+	}
+
+	if(pcscf_index_sync_contact(_d, _c) < 0) {
+		LM_ERR("pcscf index sync failed during update\n");
+		return -1;
+	}
 
 	if(((db_mode == WRITE_THROUGH) || (db_mode == DB_ONLY))
 			&& (db_update_pcontact(_c) != 0)) {
@@ -619,38 +693,11 @@ int get_pcontact_from_cache(udomain_t *_d, pcontact_info_t *contact_info,
 					}
 				}
 
-				// perform full contact match
-				if(match_contact_host_port == 0) {
-					if((contact_info->aor.len > 0)
-							&& (needle_uri.user.len != 0)) {
-						if((needle_uri.user.len != c->contact_user.len)
-								|| (memcmp(needle_uri.user.s, c->contact_user.s,
-											needle_uri.user.len)
-										!= 0)) {
-							LM_ERR("user name does not match - no match "
-								   "here...\n");
-							LM_DBG("found pcontact username [%d]: [%.*s]\n", i,
-									c->contact_user.len, c->contact_user.s);
-							LM_DBG("incoming contact username: [%.*s]\n",
-									needle_uri.user.len, needle_uri.user.s);
-							c = c->next;
-							continue;
-						}
-						if((contact_info->aor.len >= 4)
-								&& (memcmp(contact_info->aor.s, c->aor.s, 4)
-										!= 0)) { // do not mix up sip- and tel-URIs.
-							LM_ERR("scheme does not match - no match "
-								   "here...\n");
-							LM_DBG("found pcontact scheme [%d]: [%.*s]\n", i, 4,
-									c->aor.s);
-							LM_DBG("incoming contact scheme: [%.*s]\n", 4,
-									contact_info->aor.s);
-							c = c->next;
-							continue;
-						}
-					} else {
-						LM_DBG("No user name present - abort user name "
-							   "check\n");
+				/* #3646: match against contact AOR + implicit IMPU set */
+				if(contact_info->aor.len > 0 && contact_info->aor.s) {
+					if(!pcscf_contact_has_impu(c, &contact_info->aor)) {
+						c = reverse_search ? c->prev : c->next;
+						continue;
 					}
 				}
 
@@ -956,8 +1003,7 @@ int unreg_pending_contacts_cb(udomain_t *_d, pcontact_t *_c, int type)
  * \brief Convert database values into pcontact_info
  *
  * Convert database values into pcontact_info,
- * expects 15 rows (aor, host, port, protocol, received, received_port, received_proto, rx_session_id_col
- * reg_state, expires, socket, service_routes_col, public_ids, path
+ * expects partial v8 rows (aor..path + instance/pub/temp/barred)
  * \param vals database values
  * \param contact contact
  * \return pointer to the ucontact_info on success, 0 on failure
@@ -966,7 +1012,7 @@ static inline pcontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 {
 	static pcontact_info_t ci;
 	static str host, received, path, rx_session_id, implicit_impus, tmpstr,
-			service_routes;
+			service_routes, instance_id, pub_gruu, temp_gruu;
 	static str *impu_list, *service_route_list;
 	int flag = 0, n;
 	char *p, *q = 0;
@@ -1023,6 +1069,32 @@ static inline pcontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 		path.len = strlen(path.s);
 	}
 	ci.path = &path;
+	instance_id.s = (char *)VAL_STRING(vals + 14);
+	if(VAL_NULL(vals + 14) || !instance_id.s || !instance_id.s[0]) {
+		instance_id.s = 0;
+		instance_id.len = 0;
+	} else {
+		instance_id.len = strlen(instance_id.s);
+	}
+	ci.instance_id = &instance_id;
+
+	pub_gruu.s = (char *)VAL_STRING(vals + 15);
+	if(VAL_NULL(vals + 15) || !pub_gruu.s || !pub_gruu.s[0]) {
+		pub_gruu.s = 0;
+		pub_gruu.len = 0;
+	} else {
+		pub_gruu.len = strlen(pub_gruu.s);
+	}
+	ci.pub_gruu = &pub_gruu;
+
+	temp_gruu.s = (char *)VAL_STRING(vals + 16);
+	if(VAL_NULL(vals + 16) || !temp_gruu.s || !temp_gruu.s[0]) {
+		temp_gruu.s = 0;
+		temp_gruu.len = 0;
+	} else {
+		temp_gruu.len = strlen(temp_gruu.s);
+	}
+	ci.temp_gruu = &temp_gruu;
 
 	//public IDs - implicit set
 	implicit_impus.s = (char *)VAL_STRING(vals + 12);
@@ -1110,7 +1182,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 {
 	pcontact_info_t *ci;
 	db_row_t *row;
-	db_key_t columns[15];
+	db_key_t columns[PCSCF_LOAD_NCOLS];
 	db1_res_t *res = NULL;
 	str aor;
 	int i, n;
@@ -1119,21 +1191,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 
 	LM_DBG("pre-loading domain from DB\n");
 
-	columns[0] = &domain_col;
-	columns[1] = &aor_col;
-	columns[2] = &host_col;
-	columns[3] = &port_col;
-	columns[4] = &protocol_col;
-	columns[5] = &received_col;
-	columns[6] = &received_port_col;
-	columns[7] = &received_proto_col;
-	columns[8] = &rx_session_id_col;
-	columns[9] = &reg_state_col;
-	columns[10] = &expires_col;
-	columns[11] = &socket_col;
-	columns[12] = &service_routes_col;
-	columns[13] = &public_ids_col;
-	columns[14] = &path_col;
+	pcscf_init_load_columns(columns);
 
 	if(ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -1145,7 +1203,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 #endif
 
 	if(DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 15, 0, 0) < 0) {
+		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, PCSCF_LOAD_NCOLS, 0, 0) < 0) {
 			LM_ERR("db_query (1) failed\n");
 			return -1;
 		}
@@ -1154,7 +1212,8 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 			return -1;
 		}
 	} else {
-		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 15, 0, &res) < 0) {
+		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, PCSCF_LOAD_NCOLS, 0, &res)
+				< 0) {
 			LM_ERR("db_query failed\n");
 			return -1;
 		}
@@ -1174,14 +1233,15 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 		for(i = 0; i < RES_ROW_N(res); i++) {
 			row = RES_ROWS(res) + i;
 
-			aor.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
-			if(VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
+			aor.s = (char *)VAL_STRING(ROW_VALUES(row) + PCSCF_ROW_AOR_OFF);
+			if(VAL_NULL(ROW_VALUES(row) + PCSCF_ROW_AOR_OFF) || aor.s == 0
+					|| aor.s[0] == 0) {
 				LM_CRIT("empty aor record in table %s...skipping\n",
 						_d->name->s);
 				continue;
 			}
 			aor.len = strlen(aor.s);
-			ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
+			ci = dbrow2info(ROW_VALUES(row) + PCSCF_ROW_AOR_OFF, &aor);
 			if(!ci) {
 				LM_WARN("Failed to get contact info from DB.... "
 						"continuing...\n");
@@ -1199,6 +1259,47 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 					pkg_free(ci->service_routes);
 				}
 				goto error1;
+			}
+			pcscf_assign_location_id_from_row(c, ROW_VALUES(row));
+			if(ci->num_public_ids > 0 && ci->public_ids) {
+				str barred_serialized;
+				str *barred_list = NULL;
+				str *all_impus = NULL;
+				char *flags = NULL;
+				int n_all = ci->num_public_ids;
+				int n_barred = 0;
+
+				barred_serialized.s = (char *)VAL_STRING(
+						ROW_VALUES(row) + PCSCF_ROW_BARRED_OFF);
+				barred_serialized.len = 0;
+				if(!VAL_NULL(ROW_VALUES(row) + PCSCF_ROW_BARRED_OFF)
+						&& barred_serialized.s && barred_serialized.s[0]) {
+					barred_serialized.len = strlen(barred_serialized.s);
+					barred_list = pkg_malloc(sizeof(str) * n_all);
+					all_impus = pkg_malloc(sizeof(str) * n_all);
+					flags = pkg_malloc(n_all);
+					if(barred_list && all_impus && flags) {
+						n_barred = pcscf_parse_impus(
+								&barred_serialized, barred_list, n_all);
+						memcpy(all_impus, ci->public_ids, sizeof(str) * n_all);
+						if(pcscf_apply_barred_flags(all_impus, n_all,
+								   barred_list, n_barred, flags)
+								== 0) {
+							ppublic_t *pp = c->head;
+							int k = 0;
+							while(pp && k < n_all) {
+								pp->barred = flags[k++];
+								pp = pp->next;
+							}
+						}
+					}
+					if(barred_list)
+						pkg_free(barred_list);
+					if(all_impus)
+						pkg_free(all_impus);
+					if(flags)
+						pkg_free(flags);
+				}
 			}
 			//c->flags = c->flags|(1<<FLAG_READFROMDB);
 			//TODO: need to subscribe to s-cscf for first public identity
@@ -1223,6 +1324,9 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 	} while(RES_ROW_N(res) > 0);
 
 	ul_dbf.free_result(_c, res);
+	if(db_cleanup_temp_gruu_history() < 0) {
+		LM_WARN("temp GRUU history cleanup failed\n");
+	}
 
 #ifdef EXTRA_DEBUG
 	LM_NOTICE("load end time [%d]\n", (int)time(NULL));
@@ -1240,7 +1344,7 @@ int db_load_pcontact(udomain_t *_d, str *_aor, int insert_cache,
 		struct pcontact **_c, pcontact_info_t *contact_info)
 {
 	pcontact_info_t *ci;
-	db_key_t columns[15];
+	db_key_t columns[PCSCF_LOAD_NCOLS];
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_op_t op[2];
@@ -1258,21 +1362,7 @@ int db_load_pcontact(udomain_t *_d, str *_aor, int insert_cache,
 	op[1] = OP_EQ;
 
 
-	columns[0] = &domain_col;
-	columns[1] = &aor_col;
-	columns[2] = &host_col;
-	columns[3] = &port_col;
-	columns[4] = &protocol_col;
-	columns[5] = &received_col;
-	columns[6] = &received_port_col;
-	columns[7] = &received_proto_col;
-	columns[8] = &rx_session_id_col;
-	columns[9] = &reg_state_col;
-	columns[10] = &expires_col;
-	columns[11] = &socket_col;
-	columns[12] = &service_routes_col;
-	columns[13] = &public_ids_col;
-	columns[14] = &path_col;
+	pcscf_init_load_columns(columns);
 
 
 	if(_aor->len > 0 && _aor->s) {
@@ -1300,8 +1390,8 @@ int db_load_pcontact(udomain_t *_d, str *_aor, int insert_cache,
 	}
 
 
-	if(ul_dbf.query(
-			   ul_dbh, keys, op, vals, columns, port.s ? 2 : 1, 15, 0, &res)
+	if(ul_dbf.query(ul_dbh, keys, op, vals, columns, port.s ? 2 : 1,
+			   PCSCF_LOAD_NCOLS, 0, &res)
 			< 0) {
 		if(!port.s) {
 			LM_ERR("Unable to query DB for location associated with aor "
@@ -1336,23 +1426,25 @@ int db_load_pcontact(udomain_t *_d, str *_aor, int insert_cache,
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
 
-		aor.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
-		if(VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
+		aor.s = (char *)VAL_STRING(ROW_VALUES(row) + PCSCF_ROW_AOR_OFF);
+		if(VAL_NULL(ROW_VALUES(row) + PCSCF_ROW_AOR_OFF) || aor.s == 0
+				|| aor.s[0] == 0) {
 			LM_ERR("empty aor record in table %s...skipping\n", _d->name->s);
 			continue;
 		}
 		aor.len = strlen(aor.s);
 
 		if((_aor->len == 0 && !_aor->s)
-				&& (VAL_NULL(ROW_VALUES(row) + 5)
-						|| VAL_NULL(ROW_VALUES(row) + 6))) {
+				&& (VAL_NULL(ROW_VALUES(row) + (PCSCF_ROW_AOR_OFF + 4))
+						|| VAL_NULL(
+								ROW_VALUES(row) + (PCSCF_ROW_AOR_OFF + 5)))) {
 			LM_ERR("empty received_host or received_port record in table "
 				   "%s...skipping\n",
 					_d->name->s);
 			continue;
 		}
 		LM_DBG("Convert database values extracted with AOR.");
-		ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
+		ci = dbrow2info(ROW_VALUES(row) + PCSCF_ROW_AOR_OFF, &aor);
 		if(!ci) {
 			LM_WARN("Failed to get contact info from DB.... continuing...\n");
 			continue;
@@ -1381,6 +1473,7 @@ int db_load_pcontact(udomain_t *_d, str *_aor, int insert_cache,
 				LM_ERR("inserting contact failed\n");
 				goto error;
 			}
+			pcscf_assign_location_id_from_row(c, ROW_VALUES(row));
 		} else {
 			if(ci->public_ids) {
 				pkg_free(ci->public_ids);
@@ -1495,6 +1588,287 @@ int get_pcontact(udomain_t *_d, pcontact_info_t *contact_info,
 	}
 
 	return ret;
+}
+
+static inline int pcscf_str_match(const str *a, const str *b)
+{
+	if(!a || !b)
+		return 0;
+	if(a->len != b->len)
+		return 0;
+	if(a->len == 0)
+		return 1;
+	if(!a->s || !b->s)
+		return 0;
+	return (memcmp(a->s, b->s, a->len) == 0);
+}
+
+static int get_pcontact_by_location_id(
+		udomain_t *d, unsigned int location_id, pcontact_t **c)
+{
+	int i;
+	pcontact_t *it;
+
+	if(!d || !c || location_id == 0)
+		return -1;
+
+	for(i = 0; i < d->size; i++) {
+		it = d->table[i].first;
+		while(it) {
+			if(it->location_id == location_id) {
+				*c = it;
+				return 0;
+			}
+			it = it->next;
+		}
+	}
+
+	*c = NULL;
+	return 1;
+}
+
+static int save_temp_gruu_history(
+		udomain_t *d, pcontact_t *c, str *temp_gruu, time_t expires)
+{
+	if(!d || !c || !temp_gruu || !temp_gruu->s || temp_gruu->len <= 0)
+		return -1;
+
+	if(db_mode != NO_DB && c->location_id) {
+		if(db_insert_temp_gruu_history(c->location_id, temp_gruu, expires)
+				< 0) {
+			LM_ERR("failed to save temp GRUU history in DB\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	return pcscf_temp_gruu_lru_add(temp_gruu, c, expires);
+}
+
+int get_pcontact_by_impu(udomain_t *d, str *impu, pcontact_t **c)
+{
+	pcscf_index_entry_t *e;
+
+	if(!d || !impu || !impu->s || !c)
+		return -1;
+
+	e = pcscf_index_get(&d->impu_idx, impu);
+	if(!e) {
+		*c = NULL;
+		return 1;
+	}
+
+	*c = e->contact;
+	return 0;
+}
+
+int get_pcontact_by_pub_gruu(udomain_t *d, str *gruu, pcontact_t **c)
+{
+	pcscf_index_entry_t *e;
+
+	if(!d || !gruu || !gruu->s || !c)
+		return -1;
+
+	e = pcscf_index_get(&d->pub_gruu_idx, gruu);
+	if(!e) {
+		*c = NULL;
+		return 1;
+	}
+
+	*c = e->contact;
+	return 0;
+}
+
+int get_pcontact_by_temp_gruu(udomain_t *d, str *gruu, pcontact_t **c)
+{
+	pcscf_index_entry_t *e;
+	pcontact_t *lru_c;
+	unsigned int location_id = 0;
+	int rc;
+
+	if(!d || !gruu || !gruu->s || !c)
+		return -1;
+
+	e = pcscf_index_get(&d->temp_gruu_idx, gruu);
+	if(e) {
+		*c = e->contact;
+		return 0;
+	}
+
+	lru_c = pcscf_temp_gruu_lru_get(gruu);
+	if(lru_c) {
+		*c = lru_c;
+		return 0;
+	}
+
+	if(db_mode != NO_DB) {
+		rc = db_lookup_temp_gruu_history(gruu, &location_id);
+		if(rc < 0) {
+			*c = NULL;
+			return 1;
+		}
+		if(rc == 0 && location_id > 0) {
+			rc = get_pcontact_by_location_id(d, location_id, c);
+			return (rc == 0) ? 0 : 1;
+		}
+	}
+
+	*c = NULL;
+	return 1;
+}
+
+int update_contact_impus(udomain_t *d, pcontact_t *c, str impus[], int n,
+		int default_idx, str barred[], int n_barred)
+{
+	int i;
+	ppublic_t *p, *tmp;
+	char *flags = NULL;
+
+	if(!d || !c)
+		return -1;
+
+	p = c->head;
+	while(p) {
+		tmp = p->next;
+		free_ppublic(p);
+		p = tmp;
+	}
+	c->head = c->tail = NULL;
+
+	if(n > 0) {
+		flags = pkg_malloc(n);
+		if(!flags) {
+			LM_ERR("no pkg memory for IMPU flags\n");
+			return -1;
+		}
+		if(pcscf_apply_barred_flags(impus, n, barred, n_barred, flags) < 0) {
+			pkg_free(flags);
+			return -1;
+		}
+
+		for(i = 0; i < n; i++) {
+			ppublic_t *pp;
+			int is_default = (i == default_idx) ? 1 : 0;
+
+			if(new_ppublic(&impus[i], is_default, &pp) != 0) {
+				p = c->head;
+				while(p) {
+					tmp = p->next;
+					free_ppublic(p);
+					p = tmp;
+				}
+				c->head = c->tail = NULL;
+				pkg_free(flags);
+				return -1;
+			}
+			pp->barred = flags[i];
+			insert_ppublic(c, pp);
+		}
+
+		pkg_free(flags);
+	}
+
+	if(pcscf_index_sync_contact(d, c) < 0) {
+		LM_ERR("pcscf index sync failed after IMPU update\n");
+		return -1;
+	}
+
+	if(((db_mode == WRITE_THROUGH) || (db_mode == DB_ONLY))
+			&& db_update_pcontact(c) != 0) {
+		LM_ERR("Error updating IMPU changes in DB");
+		return -1;
+	}
+
+	return 0;
+}
+
+int update_contact_gruu(udomain_t *d, pcontact_t *c, str *instance_id,
+		str *pub_gruu, str *temp_gruu)
+{
+	str current_temp = {0, 0};
+	str new_instance = {0, 0};
+	str new_pub = {0, 0};
+	str new_temp = {0, 0};
+
+	if(!d || !c)
+		return -1;
+
+	if(c->temp_gruu.s) {
+		current_temp.s = shm_malloc(c->temp_gruu.len);
+		if(!current_temp.s)
+			return -1;
+		memcpy(current_temp.s, c->temp_gruu.s, c->temp_gruu.len);
+		current_temp.len = c->temp_gruu.len;
+	}
+
+	if(instance_id && instance_id->s && instance_id->len > 0) {
+		new_instance.s = shm_malloc(instance_id->len);
+		if(!new_instance.s)
+			goto error;
+		memcpy(new_instance.s, instance_id->s, instance_id->len);
+		new_instance.len = instance_id->len;
+	}
+	if(pub_gruu && pub_gruu->s && pub_gruu->len > 0) {
+		new_pub.s = shm_malloc(pub_gruu->len);
+		if(!new_pub.s)
+			goto error;
+		memcpy(new_pub.s, pub_gruu->s, pub_gruu->len);
+		new_pub.len = pub_gruu->len;
+	}
+	if(temp_gruu && temp_gruu->s && temp_gruu->len > 0) {
+		new_temp.s = shm_malloc(temp_gruu->len);
+		if(!new_temp.s)
+			goto error;
+		memcpy(new_temp.s, temp_gruu->s, temp_gruu->len);
+		new_temp.len = temp_gruu->len;
+	}
+
+	if(current_temp.s && current_temp.len > 0
+			&& !pcscf_str_match(&current_temp, &new_temp)) {
+		if(save_temp_gruu_history(d, c, &current_temp, c->expires) < 0) {
+			LM_ERR("failed to preserve previous temp GRUU\n");
+			goto error;
+		}
+	}
+
+	if(c->instance_id.s)
+		shm_free(c->instance_id.s);
+	if(c->pub_gruu.s)
+		shm_free(c->pub_gruu.s);
+	if(c->temp_gruu.s)
+		shm_free(c->temp_gruu.s);
+	c->instance_id = new_instance;
+	c->pub_gruu = new_pub;
+	c->temp_gruu = new_temp;
+	new_instance.s = NULL;
+	new_pub.s = NULL;
+	new_temp.s = NULL;
+
+	if(pcscf_index_sync_contact(d, c) < 0) {
+		LM_ERR("pcscf index sync failed after GRUU update\n");
+		goto error;
+	}
+
+	if(((db_mode == WRITE_THROUGH) || (db_mode == DB_ONLY))
+			&& db_update_pcontact(c) != 0) {
+		LM_ERR("Error updating GRUU changes in DB");
+		goto error;
+	}
+
+	if(current_temp.s)
+		shm_free(current_temp.s);
+	return 0;
+
+error:
+	if(current_temp.s)
+		shm_free(current_temp.s);
+	if(new_instance.s)
+		shm_free(new_instance.s);
+	if(new_pub.s)
+		shm_free(new_pub.s);
+	if(new_temp.s)
+		shm_free(new_temp.s);
+	return -1;
 }
 
 
