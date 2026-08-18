@@ -584,7 +584,7 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 		return -1;
 	}
 	bdy_lumps = pkg_malloc(BUF_SIZE);
-	if(hdr_lumps == NULL) {
+	if(bdy_lumps == NULL) {
 		pkg_free(hdr_lumps);
 		PKG_MEM_ERROR;
 		return -1;
