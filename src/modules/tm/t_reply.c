@@ -2073,7 +2073,7 @@ enum rps relay_reply(struct cell *t, struct sip_msg *p_msg, int branch,
 				relayed_msg =
 						FAKED_REPLY; /* mark the relayed_msg as a "FAKE" */
 			} else {
-				buf = build_res_buf_from_sip_res(relayed_msg, &res_len);
+				buf = build_res_buf_from_sip_res(relayed_msg, &res_len, 0);
 				/* if we build a message from shmem, we need to remove
 				 * via delete lumps which are now stirred in the shmem-ed
 				 * structure
