@@ -514,7 +514,8 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 {
 	int ilevel = cfg_get(core, core_cfg, debug);
 	int ifacility = cfg_get(core, core_cfg, log_facility);
-	int flag = FLAG_MSG_LUMPS_ONLY; // copy lumps only, not the whole message
+	int flag = FLAG_MSG_LUMPS_ONLY
+			   | FLAG_MSG_DRYRUN; // copy lumps only, not the whole message
 	unsigned int new_buf_offs = 0, orig_offs = 0;
 	char *hdr_lumps = NULL;
 	char *bdy_lumps = NULL;
@@ -547,12 +548,13 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	init_dest_info(&send_info);
 	send_info.proto = PROTO_UDP;
 	if(msg->first_line.type == SIP_REPLY) {
-		obuf.s = generate_res_buf_from_sip_res(
-				msg, (unsigned int *)&obuf.len, BUILD_NO_VIA1_UPDATE);
+		obuf.s = generate_res_buf_from_sip_res(msg, (unsigned int *)&obuf.len,
+				BUILD_NO_VIA1_UPDATE | BUILD_DRYRUN);
 	} else {
 		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
 				&send_info,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE,
+				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE
+						| BUILD_DRYRUN,
 				NULL);
 	}
 
