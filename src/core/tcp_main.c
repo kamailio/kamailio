@@ -5876,7 +5876,7 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 						}
 					}
 				}
-				if((cidset == 0)
+				if((cidset == 0) && (con->flags & F_CONN_PASSIVE)
 						&& !(con->req.dxstate & KSR_TCP_REQSTATE_DATARECV)) {
 					if(tvnow.tv_sec - con->timestamp
 							>= ksr_tcp_msg_data_timeout) {
