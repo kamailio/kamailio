@@ -1,0 +1,12 @@
+{
+  "name": "@MAIN_NAME@",
+  "version": "@RELEASE@",
+  "git_hash": "@SBOM_REPO_HASH@",
+  "git_state": "@SBOM_REPO_VER@",
+  "system_name": "@CMAKE_SYSTEM_NAME@",
+  "system_processor": "@CMAKE_SYSTEM_PROCESSOR@",
+  "c_compiler_id": "@CMAKE_C_COMPILER_ID@",
+  "c_compiler_version": "@CMAKE_C_COMPILER_VERSION@",
+  "cmake_version": "@CMAKE_VERSION@",
+  "modules": [@SBOM_MODULES_JSON@]
+}
