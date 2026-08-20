@@ -68,7 +68,7 @@
 
 #define ROUNDTO_MASK (~((unsigned long)ROUNDTO - 1))
 #define ROUNDUP(s) (((s) + (ROUNDTO - 1)) & ROUNDTO_MASK)
-#define ROUNDDOWN(s) ((s)&ROUNDTO_MASK)
+#define ROUNDDOWN(s) ((s) & ROUNDTO_MASK)
 
 
 /* finds the hash value for s, s=ROUNDTO multiple*/
@@ -78,10 +78,10 @@
 					: QM_MALLOC_OPTIMIZE / ROUNDTO + big_hash_idx((s)) \
 							  - QM_MALLOC_OPTIMIZE_FACTOR + 1)
 
-#define UN_HASH(h)                                             \
-	(((unsigned long)(h) <= (QM_MALLOC_OPTIMIZE / ROUNDTO))    \
-					? (unsigned long)(h)*ROUNDTO               \
-					: 1UL << ((h)-QM_MALLOC_OPTIMIZE / ROUNDTO \
+#define UN_HASH(h)                                               \
+	(((unsigned long)(h) <= (QM_MALLOC_OPTIMIZE / ROUNDTO))      \
+					? (unsigned long)(h) * ROUNDTO               \
+					: 1UL << ((h) - QM_MALLOC_OPTIMIZE / ROUNDTO \
 							  + QM_MALLOC_OPTIMIZE_FACTOR - 1))
 
 
@@ -205,15 +205,16 @@ struct qm_block *qm_malloc_init(char *address, unsigned long size, int type)
 		LM_ERR("memory fragment align constraints failure (%lu %% %lu = %lu "
 			   "::: %lu %% "
 			   "%lu = %lu)\n",
-				sizeof(struct qm_frag), ROUNDTO,
-				sizeof(struct qm_frag) % ROUNDTO, sizeof(struct qm_frag_end),
-				ROUNDTO, sizeof(struct qm_frag_end) % ROUNDTO);
+				(unsigned long)sizeof(struct qm_frag), ROUNDTO,
+				(unsigned long)sizeof(struct qm_frag) % ROUNDTO,
+				(unsigned long)sizeof(struct qm_frag_end), ROUNDTO,
+				(unsigned long)sizeof(struct qm_frag_end) % ROUNDTO);
 		return 0;
 	}
 	if(sizeof(struct qm_block) % ROUNDTO != 0) {
 		LM_ERR("memory block align constraints failure (%lu %% %lu = %lu)\n",
-				sizeof(struct qm_block), ROUNDTO,
-				sizeof(struct qm_block) % ROUNDTO);
+				(unsigned long)sizeof(struct qm_block), ROUNDTO,
+				(unsigned long)sizeof(struct qm_block) % ROUNDTO);
 		return 0;
 	}
 	/* make address and size multiple of ROUNDTO */
@@ -635,7 +636,7 @@ void qm_free(void *qmp, void *p)
 		}
 		f->size = size;
 		FRAG_END(f)->size = f->size;
-	}  /* if cfg_core->mem_join */
+	} /* if cfg_core->mem_join */
 #endif /* MEM_JOIN_FREE*/
 #ifdef DBG_QM_MALLOC
 	f->file = file;
