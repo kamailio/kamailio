@@ -46,7 +46,7 @@
 /** ROUNDTO= 2^k so the following works */
 #define ROUNDTO_MASK (~((unsigned long)ROUNDTO - 1))
 #define ROUNDUP(s) (((s) + (ROUNDTO - 1)) & ROUNDTO_MASK)
-#define ROUNDDOWN(s) ((s)&ROUNDTO_MASK)
+#define ROUNDDOWN(s) ((s) & ROUNDTO_MASK)
 
 #define FRAG_NEXT(f) \
 	((struct fm_frag *)((char *)(f) + sizeof(struct fm_frag) + (f)->size))
@@ -63,10 +63,10 @@
 					: F_MALLOC_OPTIMIZE / ROUNDTO + big_hash_idx((s)) \
 							  - F_MALLOC_OPTIMIZE_FACTOR + 1)
 
-#define UN_HASH(h)                                                           \
-	(((unsigned long)(h) <= (F_MALLOC_OPTIMIZE / ROUNDTO))                   \
-					? (unsigned long)(h)*ROUNDTO                             \
-					: 1UL << ((unsigned long)(h)-F_MALLOC_OPTIMIZE / ROUNDTO \
+#define UN_HASH(h)                                                             \
+	(((unsigned long)(h) <= (F_MALLOC_OPTIMIZE / ROUNDTO))                     \
+					? (unsigned long)(h) * ROUNDTO                             \
+					: 1UL << ((unsigned long)(h) - F_MALLOC_OPTIMIZE / ROUNDTO \
 							  + F_MALLOC_OPTIMIZE_FACTOR - 1))
 
 
@@ -322,14 +322,14 @@ struct fm_block *fm_malloc_init(char *address, unsigned long size, int type)
 
 	if(sizeof(struct fm_frag) % ROUNDTO != 0) {
 		LM_ERR("memory fragment align constraints failure (%lu %% %lu = %lu)\n",
-				sizeof(struct fm_frag), ROUNDTO,
-				sizeof(struct fm_frag) % ROUNDTO);
+				(unsigned long)sizeof(struct fm_frag), ROUNDTO,
+				(unsigned long)sizeof(struct fm_frag) % ROUNDTO);
 		return 0;
 	}
 	if(sizeof(struct fm_block) % ROUNDTO != 0) {
 		LM_ERR("memory block align constraints failure (%lu %% %lu = %lu)\n",
-				sizeof(struct fm_block), ROUNDTO,
-				sizeof(struct fm_block) % ROUNDTO);
+				(unsigned long)sizeof(struct fm_block), ROUNDTO,
+				(unsigned long)sizeof(struct fm_block) % ROUNDTO);
 		return 0;
 	}
 
