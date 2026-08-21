@@ -1141,33 +1141,48 @@ static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri)
 	return ki_ds_is_active_uri(msg, vset, &suri);
 }
 
-static int ds_parse_reply_codes()
+/**
+ * \brief Parse a reply-codes string into a newly shm-allocated int array.
+ *
+ * Accepts the same 'class=N'/'code=N' tokens as the ds_ping_reply_codes
+ * modparam; entries are 1..6 for a class and 100..699 for an exact code.
+ * Tokens may be separated by ';' or ',' (the per-destination attribute uses
+ * ',' because ';' is the attributes separator). Returns the number of parsed
+ * entries (0 if none), or -1 on error; *pcodes receives the array (NULL if 0).
+ */
+int ds_parse_reply_codes_list(str *input, int **pcodes)
 {
 	param_t *params_list = NULL;
 	param_t *pit = NULL;
 	int list_size = 0;
-	int i = 0;
 	int pos = 0;
 	int code = 0;
-	str input = {0, 0};
-	int *ds_ping_reply_codes_new = NULL;
-	int *ds_ping_reply_codes_old = NULL;
+	str in = STR_NULL;
+	char *buf = NULL;
+	int *codes_new = NULL;
 
-	/* validate input string */
-	if(cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0
-			|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len
-					   <= 0)
+	*pcodes = NULL;
+	if(input == NULL || input->s == NULL || input->len <= 0)
 		return 0;
 
-	/* parse_params() updates the string pointer of .s -- make a copy */
-	input.s = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s;
-	input.len =
-			cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len;
-
-	if(parse_params(&input, CLASS_ANY, 0, &params_list) < 0)
+	/* work on a private copy: parse_params() advances the str it is given
+	 * and modifies the buffer in place. Keep the original allocation in buf
+	 * to free it, as in.s is moved forward by parse_params(). */
+	buf = (char *)pkg_malloc(input->len + 1);
+	if(buf == NULL) {
+		PKG_MEM_ERROR;
 		return -1;
+	}
+	memcpy(buf, input->s, input->len);
+	buf[input->len] = '\0';
+	in.s = buf;
+	in.len = input->len;
 
-	/* get the number of entries in the list */
+	if(parse_params(&in, CLASS_ANY, 0, &params_list) < 0) {
+		pkg_free(buf);
+		return -1;
+	}
+
 	for(pit = params_list; pit; pit = pit->next) {
 		if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
 			str2sint(&pit->body, &code);
@@ -1180,36 +1195,56 @@ static int ds_parse_reply_codes()
 				list_size += 1;
 		}
 	}
-	LM_DBG("expecting %d reply codes and classes\n", list_size);
 
 	if(list_size > 0) {
-		/* Allocate Memory for the new list: */
-		ds_ping_reply_codes_new = (int *)shm_malloc(list_size * sizeof(int));
-		if(ds_ping_reply_codes_new == NULL) {
+		codes_new = (int *)shm_malloc(list_size * sizeof(int));
+		if(codes_new == NULL) {
 			free_params(params_list);
+			pkg_free(buf);
 			SHM_MEM_ERROR;
 			return -1;
 		}
-
-		/* Now create the list of valid reply-codes: */
 		for(pit = params_list; pit; pit = pit->next) {
 			if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
 				str2sint(&pit->body, &code);
-				if((code >= 100) && (code < 700)) {
-					ds_ping_reply_codes_new[pos++] = code;
-				}
+				if((code >= 100) && (code < 700))
+					codes_new[pos++] = code;
 			} else if(pit->name.len == 5
 					  && strncasecmp(pit->name.s, "class", 5) == 0) {
 				str2sint(&pit->body, &code);
-				if((code >= 1) && (code < 7)) {
-					ds_ping_reply_codes_new[pos++] = code;
-				}
+				if((code >= 1) && (code < 7))
+					codes_new[pos++] = code;
 			}
 		}
-	} else {
-		ds_ping_reply_codes_new = 0;
 	}
 	free_params(params_list);
+	pkg_free(buf);
+	*pcodes = codes_new;
+	return list_size;
+}
+
+static int ds_parse_reply_codes()
+{
+	int i = 0;
+	int list_size = 0;
+	str input = STR_NULL;
+	int *ds_ping_reply_codes_new = NULL;
+	int *ds_ping_reply_codes_old = NULL;
+
+	/* validate input string */
+	if(cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0
+			|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len
+					   <= 0)
+		return 0;
+
+	input.s = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s;
+	input.len =
+			cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len;
+
+	list_size = ds_parse_reply_codes_list(&input, &ds_ping_reply_codes_new);
+	if(list_size < 0)
+		return -1;
+	LM_DBG("expecting %d reply codes and classes\n", list_size);
 
 	if(list_size > *ds_ping_reply_codes_cnt) {
 		/* if more reply-codes -- change pointer and then set number of codes */
@@ -1219,7 +1254,7 @@ static int ds_parse_reply_codes()
 		if(ds_ping_reply_codes_old)
 			shm_free(ds_ping_reply_codes_old);
 	} else {
-		/* less or equal reply codea -- set the number of codes first */
+		/* less or equal reply codes -- set the number of codes first */
 		*ds_ping_reply_codes_cnt = list_size;
 		ds_ping_reply_codes_old = *ds_ping_reply_codes;
 		*ds_ping_reply_codes = ds_ping_reply_codes_new;
@@ -1235,25 +1270,31 @@ static int ds_parse_reply_codes()
 	return 0;
 }
 
-int ds_ping_check_rplcode(int code)
+int ds_ping_check_rplcode_list(int code, int *codes, int cnt)
 {
 	int i;
 
-	for(i = 0; i < *ds_ping_reply_codes_cnt; i++) {
-		if((*ds_ping_reply_codes)[i] / 10) {
+	for(i = 0; i < cnt; i++) {
+		if(codes[i] / 10) {
 			/* reply code */
-			if((*ds_ping_reply_codes)[i] == code) {
+			if(codes[i] == code) {
 				return 1;
 			}
 		} else {
 			/* reply class */
-			if((*ds_ping_reply_codes)[i] == code / 100) {
+			if(codes[i] == code / 100) {
 				return 1;
 			}
 		}
 	}
 
 	return 0;
+}
+
+int ds_ping_check_rplcode(int code)
+{
+	return ds_ping_check_rplcode_list(
+			code, *ds_ping_reply_codes, *ds_ping_reply_codes_cnt);
 }
 
 void ds_ping_reply_codes_update(str *gname, str *name)
