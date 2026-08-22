@@ -300,6 +300,8 @@ typedef struct tcp_connection
 	enum tcp_closed_reason event; /* connection close reason */
 	int reader_pid;				  /* pid of the active reader process */
 	struct receive_info rcv;	  /* src & dst ip, ports, proto a.s.o*/
+	struct receive_info
+			haproxy_rcv;		  /* src & dst ip, ports, proto from haproxy*/
 	ksr_coninfo_t cinfo;		  /* additional info (for haproxy, tls, ...) */
 	struct tcp_req req;			  /* request data */
 	atomic_t refcnt;
