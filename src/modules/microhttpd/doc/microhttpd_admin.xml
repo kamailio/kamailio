@@ -93,6 +93,60 @@ modparam("microhttpd", "listen_port", 8284)
 </programlisting>
 		</example>
 	</section>
+	<section id="microhttpd.p.listen_socket">
+		<title><varname>listen_socket</varname> (str)</title>
+		<para>
+			One or more address:port pairs the embedded HTTP server should
+			bind to. Unlike <varname>listen_addr</varname> /
+			<varname>listen_port</varname> (which define a single IPv4
+			binding), this parameter accepts multiple sockets and supports
+			both IPv4 and IPv6.
+		</para>
+		<para>
+			Each entry has the form <emphasis>host:port</emphasis>.
+			IPv6 addresses must be enclosed in square brackets, e.g.
+			<emphasis>[::1]:8280</emphasis>. Multiple entries can be given
+			either as a comma-separated list in a single
+			<function>modparam</function> call, or by setting
+			<varname>listen_socket</varname> several times - all entries are
+			accumulated. Whitespace around the comma separator is ignored.
+		</para>
+		<para>
+			When <varname>listen_socket</varname> is set (one or more times),
+			it takes precedence over <varname>listen_addr</varname> and
+			<varname>listen_port</varname>, which are then ignored. A
+			separate HTTP daemon is started for each listed socket.
+		</para>
+		<para>
+			IPv6 listeners require a libmicrohttpd version that supports
+			binding an IPv6 <emphasis>struct sockaddr</emphasis>. With older
+			libmicrohttpd releases, the length-aware bind API is unavailable
+			and the daemon relies on the <emphasis>MHD_USE_IPv6</emphasis>
+			flag to interpret the address - which is set automatically when
+			the entry parses as IPv6.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (empty - not set).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>listen_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# single IPv4 socket
+modparam("microhttpd", "listen_socket", "127.0.0.1:8280")
+
+# multiple sockets in one parameter (IPv4 + IPv6)
+modparam("microhttpd", "listen_socket", "127.0.0.1:8280, [::1]:8280")
+
+# or by setting the parameter multiple times
+modparam("microhttpd", "listen_socket", "127.0.0.1:8280")
+modparam("microhttpd", "listen_socket", "[2001:db8::1]:8284")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="microhttpd.p.allowed_ips">
 		<title><varname>allowed_ips</varname> (str)</title>
 		<para>
