@@ -28,16 +28,9 @@
 #include "../../core/parser/msg_parser.h"
 
 
-/* Pointer to current address hash table pointer */
-extern struct addr_list ***perm_addr_table;
-
-
-/* Pointer to current subnet table */
-extern struct subnet **perm_subnet_table;
-
-
-/* Pointer to current domain name table */
-extern struct domain_name_list ***perm_domain_table;
+struct addr_table;
+struct subnet_table;
+struct domain_name_table;
 
 /*
  * Initialize data structures
@@ -101,5 +94,37 @@ int ki_allow_source_address_group(sip_msg_t *_msg);
 int allow_address_group(struct sip_msg *_msg, char *_addr, char *_port);
 
 int ki_allow_address_group(sip_msg_t *_msg, str *_addr, int _port);
+
+
+/*
+ * Obtain reference to global table
+ */
+struct addr_table *get_addr_hash_table(void);
+
+/*
+ * Release reference after get_*()
+ */
+void put_addr_hash_table(struct addr_table *);
+
+/*
+ * Obtain reference to global table
+ */
+struct subnet_table *get_subnet_table(void);
+
+/*
+ * Release reference after get_*()
+ */
+void put_subnet_table(struct subnet_table *);
+
+/*
+ * Obtain reference to global table
+ */
+struct domain_name_table *get_domain_name_table(void);
+
+/*
+ * Release reference after get_*()
+ */
+void put_domain_name_table(struct domain_name_table *);
+
 
 #endif /* ADDRESS_H */
