@@ -804,6 +804,42 @@ modparam("rtpengine", "media_duration", "$avp(MEDIA_DURATION)")
 	</section>
 
 
+	<section id="rtpengine.p.stats_reply_pv">
+		<title><varname>stats_reply_pv</varname> (string)</title>
+		<para>
+			The name of a pseudovariable (AVP or script variable) to store the
+			complete reply of the commands returning call statistics,
+			serialized as JSON. This gives access to all the data returned by
+			RTPEngine (e.g., the full call statistics), not only the values
+			extracted into the mos_*_pv parameters.
+		</para>
+		<para>
+			The variable is set after invoking <quote>rtpengine_delete</quote>,
+			<quote>rtpengine_query</quote> or <quote>rtpengine_connect</quote>.
+			It is also set by <quote>rtpengine_manage</quote>, but only if the
+			command resulted in a deletion of the call (or call branch), e.g.
+			when processing a BYE or CANCEL.
+		</para>
+		<para>
+			Each of these commands writes the variable again on a successful
+			reply, so read it right after the command of interest. The
+			variable is not written by <quote>rtpengine_query_v</quote>, which
+			stores its reply in the variable given as its own parameter.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>stats_reply_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "stats_reply_pv", "$avp(RTPENGINE_STATS_REPLY)")
+...
+</programlisting>
+		</example>
+	</section>
+
+
 	<section id="rtpengine.p.mos_min_pv">
 		<title><varname>mos_min_pv</varname> (string)</title>
 		<para>
