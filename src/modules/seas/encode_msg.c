@@ -153,12 +153,14 @@ char get_header_code(struct hdr_field *hf)
 int encode_msg(struct sip_msg *msg, char *payload, int len)
 {
 	int i, j = 0, k, u, request;
+	int encoded_len, meta_end;
 	unsigned short int h;
 	struct hdr_field *hf;
 	struct msg_start *ms;
 	struct sip_uri miuri;
 	char *myerror = NULL;
 	ptrdiff_t diff;
+	unsigned char header_scratch[MAX_ENCODED_MSG + MAX_MESSAGE_LEN];
 
 	if(len < MAX_ENCODED_MSG + MAX_MESSAGE_LEN)
 		return -1;
@@ -240,21 +242,38 @@ int encode_msg(struct sip_msg *msg, char *payload, int len)
 		;
 	i++; /*we do as if there was an extra header, that marks the end of
 	 the previous header in the headers hashtable(read below)*/
-	j = k + 3 * i;
+	meta_end = k + 3 * i;
+	if(meta_end > len) {
+		LM_ERR("not enough space for sip message header metadata\n");
+		return -1;
+	}
+	j = meta_end;
 	for(i = 0, hf = msg->headers; hf; hf = hf->next, k += 3) {
+		/*
+		 * Encode away from the destination buffer.  The specialised
+		 * encoders predate the paylen contract and do not all enforce it.
+		 * hdr->len is capped at 256 by encode_header(), while this scratch
+		 * buffer is the historical maximum encoding workspace (3000 bytes).
+		 */
+		encoded_len =
+				encode_header(msg, hf, header_scratch, sizeof(header_scratch));
+		if(encoded_len < 0) {
+			LM_ERR("encoding header %.*s\n", hf->name.len, hf->name.s);
+			myerror = "encoding header";
+			goto error;
+		}
+		if(encoded_len > len - j) {
+			LM_ERR("not enough space to encode sip message headers\n");
+			return -1;
+		}
+
+		/* The complete meta table, including its terminator, was reserved. */
 		payload[k] = (unsigned char)(hf->type & 0xFF);
 		h = htons(j);
 		/*now goes a payload-based-ptr to where the header-code starts*/
 		memcpy(&payload[k + 1], &h, 2);
-		/*TODO fix this... fixed with k-=3?*/
-		if(0 > (i = encode_header(msg, hf, (unsigned char *)(payload + j),
-						MAX_ENCODED_MSG + MAX_MESSAGE_LEN - j))) {
-			LM_ERR("encoding header %.*s\n", hf->name.len, hf->name.s);
-			goto error;
-			k -= 3;
-			continue;
-		}
-		j += (unsigned short int)i;
+		memcpy(payload + j, header_scratch, encoded_len);
+		j += encoded_len;
 	}
 	/*now goes the number of headers that have been found, right after the meta-msg-section*/
 	payload[u] = (unsigned char)((k - u - 1) / 3);
