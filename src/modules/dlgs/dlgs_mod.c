@@ -35,6 +35,7 @@
 #include "../../core/timer_proc.h"
 
 #include "dlgs_records.h"
+#include "dlgs_stats.h"
 
 MODULE_VERSION
 
@@ -108,6 +109,10 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(dlgs_stats_init() < 0) {
+		return -1;
+	}
+
 	if(dlgs_rpc_init() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;

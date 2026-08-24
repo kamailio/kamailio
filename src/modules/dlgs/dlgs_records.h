@@ -48,6 +48,7 @@ typedef struct _dlgs_stats {
 } dlgs_stats_t;
 
 void dlgs_update_stats(dlgs_stats_t *stats, int state, int val);
+void dlgs_get_stats(dlgs_stats_t *astats, dlgs_stats_t *fstats);
 
 typedef struct _dlgs_tag {
 	unsigned int hashid;
