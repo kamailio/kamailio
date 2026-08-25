@@ -883,8 +883,17 @@ int process_bind_action(as_p as, unsigned char processor_id, unsigned int flags,
 		return -1;
 	}
 	memset(&my_addr, 0, sizeof(struct ip_addr));
+	if(len < 2) {
+		LM_ERR("bind action too short (%d bytes)\n", len);
+		return -1;
+	}
 	my_addr.af = payload[k++];
-	my_addr.len = payload[k++];
+	my_addr.len = (unsigned char)payload[k++];
+	/* the address bytes plus the trailing proto(1) and port(2) must all fit */
+	if(my_addr.len > sizeof(my_addr.u.addr) || k + (int)my_addr.len + 3 > len) {
+		LM_ERR("invalid address length %u in bind action\n", my_addr.len);
+		return -1;
+	}
 	memcpy(my_addr.u.addr, payload + k, my_addr.len);
 	k += my_addr.len;
 	proto = payload[k++];
