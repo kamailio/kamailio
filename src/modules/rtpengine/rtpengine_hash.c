@@ -156,6 +156,11 @@ int rtpengine_hash_table_destroy()
 	return 1;
 }
 
+struct rtpengine_hash_table *rtpengine_hash_table_get()
+{
+	return rtpengine_hash_table;
+}
+
 int rtpengine_hash_table_insert(
 		str callid, str viabranch, struct rtpengine_hash_entry *value)
 {
