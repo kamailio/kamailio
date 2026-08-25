@@ -1486,6 +1486,79 @@ modparam("dialog", "enable_dmq_ka_iflags_sync", 1)
 	</example>
     </section>
 
+	<section id="dialog.p.enable_dmq_load_callbacks">
+		<title><varname>enable_dmq_load_callbacks</varname> (int)</title>
+		<para>
+			If set to 1, active dialogs newly created from DMQ replication run the
+			<quote>DLGCB_LOADED</quote> callbacks after their replicated data has
+			been applied. This allows modules that register load callbacks, such as
+			the acc module with CDR generation enabled, to attach their per-dialog
+			callbacks to replicated dialogs.
+		</para>
+		<para>
+			While enabled, dialog variables are also included in subsequent DMQ
+			state messages. This keeps state used by the loaded callbacks, such as
+			the acc module's confirmed CDR start time, synchronized on the peer.
+		</para>
+		<para>
+			Enabling this parameter affects every module that registers a
+			<quote>DLGCB_LOADED</quote> callback. Verify the behavior of those
+			modules before enabling it.
+		</para>
+		<informaltable frame="all">
+			<tgroup cols="2">
+				<thead>
+					<row>
+						<entry>Module</entry>
+						<entry>Known effect</entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry><varname>acc</varname></entry>
+						<entry>Restores CDR callbacks; expiry or split brain can
+						produce duplicate CDRs.</entry>
+					</row>
+					<row>
+						<entry><varname>call_control</varname></entry>
+						<entry>Can send duplicate or spurious stop commands from DMQ
+						peers.</entry>
+					</row>
+					<row>
+						<entry><varname>pua_dialoginfo</varname></entry>
+						<entry>Can send duplicate terminated PUBLISH requests.</entry>
+					</row>
+					<row>
+						<entry><varname>uac</varname></entry>
+						<entry>Restores From/To replacement callbacks for failover.</entry>
+					</row>
+					<row>
+						<entry><varname>peerstate</varname></entry>
+						<entry>Currently has no effect because load callbacks have no SIP
+						request.</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</informaltable>
+		<para>
+			Other modules registering <quote>DLGCB_LOADED</quote> are affected as
+			well.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_dmq_load_callbacks</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "enable_dmq_load_callbacks", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dialog.p.track_cseq_updates">
 		<title><varname>track_cseq_updates</varname> (int)</title>
 		<para>

@@ -41,6 +41,7 @@ int dlg_dmq_request_sync(dmq_node_t *dmq_node);
 extern int dlg_enable_stats;
 extern str dlg_dmq_peer_id;
 extern int dlg_enable_dmq_ka_iflags_sync;
+extern int dlg_enable_dmq_load_callbacks;
 
 /**
 * @brief add notification peer
@@ -342,6 +343,18 @@ int dlg_dmq_handle_msg(
 						dlg->state, state);
 				break;
 			}
+			if(action == DLG_DMQ_STATE) {
+				vj = srjson_GetObjectItem(&jdoc, jdoc.root, "vars");
+				if(vj != NULL) {
+					for(it = vj->child; it; it = it->next) {
+						k.s = it->string;
+						k.len = strlen(k.s);
+						v.s = it->valuestring;
+						v.len = strlen(v.s);
+						set_dlg_variable(dlg, &k, &v);
+					}
+				}
+			}
 			LM_DBG("State update dlg [%u:%u] with callid [%.*s] from state [%u]"
 				   " to state [%u]\n",
 					iuid.h_entry, iuid.h_id, dlg->callid.len, dlg->callid.s,
@@ -494,6 +507,10 @@ int dlg_dmq_handle_msg(
 
 		case DLG_DMQ_NONE:
 			break;
+	}
+	if(newdlg && dlg->state != DLG_STATE_DELETED
+			&& dlg_enable_dmq_load_callbacks != 0) {
+		run_dlg_load_callbacks(dlg);
 	}
 skip:
 	if(dlg) {
@@ -670,6 +687,16 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 
 		case DLG_DMQ_STATE:
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "state", dlg->state);
+			if(action != DLG_DMQ_UPDATE && dlg_enable_dmq_load_callbacks != 0
+					&& dlg->vars != NULL) {
+				srjson_t *pj = NULL;
+				pj = srjson_CreateObject(&jdoc);
+				for(var = dlg->vars; var; var = var->next) {
+					srjson_AddStrToObject(&jdoc, pj, var->key.s, var->value.s,
+							var->value.len);
+				}
+				srjson_AddItemToObject(&jdoc, jdoc.root, "vars", pj);
+			}
 			switch(dlg->state) {
 				case DLG_STATE_EARLY:
 					srjson_AddNumberToObject(
