@@ -120,6 +120,9 @@ MODULE_VERSION
 #define DEF_LCR_GW_COUNT 128
 #define DEF_FETCH_ROWS 1024
 
+#define LCR_PING_MODE_INACTIVE 0
+#define LCR_PING_MODE_ALL 1
+
 /*
  * Database variables
  */
@@ -196,6 +199,7 @@ static int dont_strip_or_prefix_flag_param = -1;
 
 /* ping related params */
 unsigned int ping_interval_param = 0;
+unsigned int ping_mode_param = LCR_PING_MODE_INACTIVE;
 unsigned int ping_inactivate_threshold_param = 1;
 str ping_valid_reply_codes_param = {"", 0};
 str ping_socket_param = {"", 0};
@@ -359,6 +363,7 @@ static param_export_t params[] = {
     {"priority_ordering",        PARAM_INT, &priority_ordering_param},
     {"fetch_rows",               PARAM_INT, &fetch_rows_param},
     {"ping_interval",            PARAM_INT, &ping_interval_param},
+    {"ping_mode",                PARAM_INT, &ping_mode_param},
     {"ping_inactivate_threshold",  PARAM_INT, &ping_inactivate_threshold_param},
     {"ping_valid_reply_codes",   PARAM_STR, &ping_valid_reply_codes_param},
     {"ping_from",                PARAM_STR, &ping_from_param},
@@ -583,6 +588,10 @@ static int mod_init(void)
 
 	if((ping_interval_param != 0) && (ping_interval_param < 10)) {
 		LM_ERR("invalid ping_interval value '%u'\n", ping_interval_param);
+		return -1;
+	}
+	if(ping_mode_param > LCR_PING_MODE_ALL) {
+		LM_ERR("invalid ping_mode value '%u'\n", ping_mode_param);
 		return -1;
 	}
 
@@ -2936,10 +2945,29 @@ static void ping_callback(struct cell *t, int type, struct tmcb_params *ps)
 			|| (check_extra_codes(ps->code) == 0)) {
 		if((uri.len == gw->uri_len)
 				&& (strncmp(uri.s, &(gw->uri[0]), uri.len) == 0)) {
-			LM_INFO("activating gw with uri %.*s\n", uri.len, uri.s);
+			if((ping_mode_param == LCR_PING_MODE_INACTIVE)
+					|| (gw->state != GW_ACTIVE)) {
+				LM_INFO("activating gw with uri %.*s\n", uri.len, uri.s);
+			}
 			gw->state = GW_ACTIVE;
 		} else {
 			LM_DBG("ignoring OPTIONS reply due to lcr.reload\n");
+		}
+	} else if(ping_mode_param == LCR_PING_MODE_ALL) {
+		if((uri.len != gw->uri_len)
+				|| (strncmp(uri.s, &(gw->uri[0]), uri.len) != 0)) {
+			return;
+		}
+		if(gw->state == GW_ACTIVE) {
+			gw->state = GW_PINGING + ping_inactivate_threshold_param;
+		} else if(gw->state > GW_INACTIVE) {
+			gw->state--;
+		} else {
+			return;
+		}
+		if(gw->state == GW_INACTIVE) {
+			LM_INFO("gw '%.*s' has been inactivated by OPTIONS failure\n",
+					gw->gw_name_len, gw->gw_name);
 		}
 	}
 
@@ -2947,7 +2975,7 @@ static void ping_callback(struct cell *t, int type, struct tmcb_params *ps)
 }
 
 
-/* Timer process for pinging inactive gateways */
+/* Timer process for pinging gateways */
 void ping_timer(unsigned int ticks, void *param)
 {
 	struct gw_info *gws;
@@ -2955,7 +2983,7 @@ void ping_timer(unsigned int ticks, void *param)
 	str uri;
 	unsigned int i, j;
 
-	/* Ping each gateway that is GW_PINGING state */
+	/* Ping all gateways in continuous mode, otherwise only GW_PINGING ones */
 
 	for(j = 1; j <= lcr_count_param; j++) {
 
@@ -2963,7 +2991,8 @@ void ping_timer(unsigned int ticks, void *param)
 
 		for(i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
 
-			if(gws[i].state >= GW_PINGING) {
+			if((ping_mode_param == LCR_PING_MODE_ALL)
+					|| (gws[i].state >= GW_PINGING)) {
 
 				uri.s = &(gws[i].uri[0]);
 				uri.len = gws[i].uri_len;
