@@ -94,6 +94,7 @@ MODULE_VERSION
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy(void);
+static void warn_dmq_load_callback_modules(void);
 
 /* module parameter */
 static int dlg_hash_size = 4096;
@@ -120,6 +121,7 @@ int dlg_end_timeout = 300;
 int dlg_enable_dmq = 0;
 str dlg_dmq_peer_id = str_init("dialog");
 int dlg_enable_dmq_ka_iflags_sync = 0;
+int dlg_enable_dmq_load_callbacks = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 str dlg_event_callback = STR_NULL;
@@ -391,6 +393,7 @@ static param_export_t mod_params[]={
 	{ "ka_failed_limit",       PARAM_INT, &dlg_ka_failed_limit      },
 	{ "enable_dmq",            PARAM_INT, &dlg_enable_dmq           },
 	{ "enable_dmq_ka_iflags_sync",    PARAM_INT, &dlg_enable_dmq_ka_iflags_sync   },
+	{ "enable_dmq_load_callbacks", PARAM_INT, &dlg_enable_dmq_load_callbacks },
 	{ "event_callback",        PARAM_STR, &dlg_event_callback       },
 	{ "early_timeout",         PARAM_INT, &dlg_early_timeout        },
 	{ "noack_timeout",         PARAM_INT, &dlg_noack_timeout        },
@@ -557,10 +560,43 @@ static int pv_get_dlg_count(
 }
 
 
+static void warn_dmq_load_callback_modules(void)
+{
+	int acc_loaded;
+	int call_control_loaded;
+	int peerstate_loaded;
+	int pua_dialoginfo_loaded;
+	int uac_loaded;
+
+	if(dlg_enable_dmq_load_callbacks == 0)
+		return;
+
+	acc_loaded = module_loaded("acc");
+	call_control_loaded = module_loaded("call_control");
+	peerstate_loaded = module_loaded("peerstate");
+	pua_dialoginfo_loaded = module_loaded("pua_dialoginfo");
+	uac_loaded = module_loaded("uac");
+
+	if(acc_loaded || call_control_loaded || peerstate_loaded
+			|| pua_dialoginfo_loaded || uac_loaded) {
+		LM_WARN("enable_dmq_load_callbacks is enabled; loaded modules with "
+				"known DLGCB_LOADED behavior:%s%s%s%s%s. Review their effects "
+				"on dialogs created from DMQ\n",
+				acc_loaded ? " acc" : "",
+				call_control_loaded ? " call_control" : "",
+				peerstate_loaded ? " peerstate" : "",
+				pua_dialoginfo_loaded ? " pua_dialoginfo" : "",
+				uac_loaded ? " uac" : "");
+	}
+}
+
+
 static int mod_init(void)
 {
 	unsigned int n;
 	sr_cfgenv_t *cenv = NULL;
+
+	warn_dmq_load_callback_modules();
 
 	if(dlg_h_id_start == -1) {
 		dlg_h_id_start = server_id;
