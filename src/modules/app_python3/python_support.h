@@ -26,8 +26,10 @@
 
 #include <Python.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 extern PyObject *format_exc_obj;
+extern PyThreadState *_save;
 
 void python_handle_exception(const char *, ...);
 
@@ -39,5 +41,22 @@ const char *get_instance_class_name(PyObject *);
 char *get_class_name(PyObject *);
 char *get_instance_class_name(PyObject *);
 #endif
+
+#define ACQUIRE_GIL_REENTRANT            \
+	do {                                 \
+		if(!PyGILState_Check()) {        \
+			PyEval_RestoreThread(_save); \
+			(acquired_var) = true;       \
+		} else {                         \
+			(acquired_var) = false;      \
+		}                                \
+	} while(0)
+
+#define RELEASE_GIL_REENTRANT              \
+	do {                                   \
+		if(acquired_var) {                 \
+			(_save) = PyEval_SaveThread(); \
+		}                                  \
+	} while(0)
 
 #endif
