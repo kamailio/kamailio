@@ -2490,8 +2490,7 @@ void uac_request_cb(struct cell *t, int type, struct tmcb_params *ps)
 			LM_ERR("Error dropping subscription\n");
 		}
 	} else {
-		LM_INFO("NOTIFY request timed out. No further action can be taken.\n",
-				ps->code);
+		LM_INFO("NOTIFY request timed out. No further action can be taken.\n");
 	}
 done:
 	if(watcher_contact) {
