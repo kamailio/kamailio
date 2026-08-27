@@ -191,6 +191,12 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 	/* timing */
 	if(heph->hp_v == 2) {
 		hep_offset += sizeof(struct hep_timehdr);
+		if(unlikely(buf + hep_offset > end)) {
+			LOG(L_ERR, "HEPv2 time header "
+					   "exceeds packet boundary\n");
+			return -1;
+		}
+
 		heptime_tmp = (struct hep_timehdr *)hep_payload;
 
 		heptime->tv_sec = to_le(heptime_tmp->tv_sec);
@@ -232,6 +238,10 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 
 	hep_payload = buf + hep_offset;
 
+	if(unlikely(len < hep_offset)) {
+		LOG(L_ERR, "Calculated payload length underflow\n");
+		return -1;
+	}
 	receive_msg(hep_payload, (unsigned int)(len - hep_offset), ri);
 
 	return -1;
