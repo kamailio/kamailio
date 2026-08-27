@@ -44,9 +44,9 @@ int rtpengine_dmq_init();
 int rtpengine_dmq_handle_msg(
 		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *node);
 int rtpengine_dmq_replicate_action(rtpengine_dmq_action_t action, str callid,
-		str viabranch, struct rtpengine_hash_entry *entry, dmq_node_t *node);
+		str viabranch, struct rtpp_node *rtpp_node, dmq_node_t *node);
 int rtpengine_dmq_replicate_insert(
-		str callid, str viabranch, struct rtpengine_hash_entry *entry);
+		str callid, str viabranch, struct rtpp_node *rtpp_node);
 int rtpengine_dmq_replicate_remove(str callid, str viabranch);
 int rtpengine_dmq_replicate_sync();
 #endif

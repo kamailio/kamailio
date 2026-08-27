@@ -242,7 +242,7 @@ int rtpengine_dmq_send(str *body, dmq_node_t *node)
 }
 
 int rtpengine_dmq_replicate_action(rtpengine_dmq_action_t action, str callid,
-		str viabranch, struct rtpengine_hash_entry *entry, dmq_node_t *node)
+		str viabranch, struct rtpp_node *rtpp_node, dmq_node_t *node)
 {
 	srjson_doc_t jdoc;
 	unsigned int setid = -1;
@@ -263,12 +263,12 @@ int rtpengine_dmq_replicate_action(rtpengine_dmq_action_t action, str callid,
 		srjson_AddStrToObject(
 				&jdoc, jdoc.root, "viabranch", viabranch.s, viabranch.len);
 	}
-	if(entry && entry->node) {
+	if(rtpp_node) {
 		srjson_AddStrToObject(&jdoc, jdoc.root, "rtpengine_url",
-				entry->node->rn_url.s, entry->node->rn_url.len);
+				rtpp_node->rn_url.s, rtpp_node->rn_url.len);
 
-		setid = get_rtpp_set_id_by_node(entry->node);
-		if(setid != -1)
+		setid = get_rtpp_set_id_by_node(rtpp_node);
+		if(setid)
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "setid", setid);
 	}
 
@@ -299,10 +299,10 @@ error:
 }
 
 int rtpengine_dmq_replicate_insert(
-		str callid, str viabranch, struct rtpengine_hash_entry *entry)
+		str callid, str viabranch, struct rtpp_node *rtpp_node)
 {
 	return rtpengine_dmq_replicate_action(
-			RTPENGINE_DMQ_INSERT, callid, viabranch, entry, NULL);
+			RTPENGINE_DMQ_INSERT, callid, viabranch, rtpp_node, NULL);
 }
 
 int rtpengine_dmq_replicate_remove(str callid, str viabranch)
