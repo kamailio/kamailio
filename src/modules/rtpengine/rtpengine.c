@@ -1217,6 +1217,7 @@ int get_rtpp_set_id_by_node(struct rtpp_node *node)
 {
 	struct rtpp_set *rtpp_list;
 	struct rtpp_node *crt_rtpp;
+	unsigned int res = 0;
 
 	lock_get(rtpp_set_list->rset_head_lock);
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
@@ -1231,15 +1232,14 @@ int get_rtpp_set_id_by_node(struct rtpp_node *node)
 			}
 		}
 		lock_release(rtpp_list->rset_lock);
-		if(crt_rtpp != NULL)
+		if(crt_rtpp != NULL) {
+			res = rtpp_list->id_set;
 			break;
+		}
 	}
 	lock_release(rtpp_set_list->rset_head_lock);
 
-	if(crt_rtpp != NULL)
-		return rtpp_list->id_set;
-	else
-		return 0;
+	return res;
 }
 
 /**
@@ -3998,7 +3998,7 @@ select_node:
 					viabranch.s);
 			if(rtpengine_enable_dmq > 0)
 				rtpengine_dmq_replicate_insert(
-						ng_flags.call_id, viabranch, entry);
+						ng_flags.call_id, viabranch, node);
 		}
 	}
 
