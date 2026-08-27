@@ -319,6 +319,7 @@ static int tps_unmask_refer_to(
 	str *uri;
 	str nuri;
 	struct lump *l;
+	char *nbuf;
 	int ulen;
 	int ret;
 
@@ -384,8 +385,21 @@ static int tps_unmask_refer_to(
 		return -1;
 	}
 
-	if(insert_new_lump_after(l, nuri.s, nuri.len, 0) == 0) {
+	/* insert_new_lump_after() does not copy - the lump list takes ownership of
+	 * the buffer and free_lump() pkg_free()s it.  nuri points into the
+	 * stack-local rtsd, which is gone as soon as this function returns, so hand
+	 * over a pkg copy (same as tps_add_headers() and tps_mask_callid()). */
+	nbuf = (char *)pkg_malloc(nuri.len + 1);
+	if(nbuf == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memcpy(nbuf, nuri.s, nuri.len);
+	nbuf[nuri.len] = '\0';
+
+	if(insert_new_lump_after(l, nbuf, nuri.len, 0) == 0) {
 		LM_ERR("could not insert new Refer-To uri\n");
+		pkg_free(nbuf);
 		return -1;
 	}
 
