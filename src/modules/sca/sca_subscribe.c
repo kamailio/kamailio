@@ -1438,6 +1438,41 @@ int sca_handle_subscribe(sip_msg_t *msg, str *uri_to, str *uri_from)
 	return ki_sca_handle_subscribe_uris(msg, uri_to, uri_from);
 }
 
+static int sca_subscription_hdr_append(str *dst, size_t dst_cap, const str *src)
+{
+	if(dst == NULL || dst->s == NULL || src == NULL || src->s == NULL) {
+		LM_ERR("invalid header append input\n");
+		return -1;
+	}
+	if(dst->len < 0 || src->len < 0) {
+		LM_ERR("invalid header append length\n");
+		return -1;
+	}
+	if((size_t)dst->len >= dst_cap
+			|| (size_t)src->len >= dst_cap - (size_t)dst->len) {
+		LM_ERR("extra headers too long\n");
+		return -1;
+	}
+
+	memcpy(dst->s + dst->len, src->s, src->len);
+	dst->len += src->len;
+	return 0;
+}
+
+static int sca_subscription_hdr_append_cstr(
+		str *dst, size_t dst_cap, const char *src)
+{
+	str s = STR_NULL;
+
+	if(src == NULL) {
+		LM_ERR("Invalid cstr append input\n");
+		return -1;
+	}
+	s.s = (char *)src;
+	s.len = strlen(src);
+	return sca_subscription_hdr_append(dst, dst_cap, &s);
+}
+
 int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 		int event_type, int expires, sip_msg_t *msg)
 {
@@ -1447,8 +1482,7 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 
 	if(event_type != SCA_EVENT_TYPE_CALL_INFO
 			&& event_type != SCA_EVENT_TYPE_LINE_SEIZE) {
-		LM_ERR("sca_subscription_reply: unrecognized event type %d\n",
-				event_type);
+		LM_ERR("unrecognized event type %d\n", event_type);
 		return (-1);
 	}
 
@@ -1458,29 +1492,42 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 		len = snprintf(extra_headers.s, sizeof(hdr_buf), "Event: %s%s",
 				sca_event_name_from_type(event_type), CRLF);
 		if(len < 0 || len >= sizeof(hdr_buf)) {
-			LM_ERR("sca_subscription_reply: extra headers too long\n");
+			LM_ERR("extra headers too long\n");
 			return (-1);
 		}
 		extra_headers.len = len;
-
-		SCA_STR_APPEND_CSTR(&extra_headers, "Contact: ");
-		if(sca->cfg->server_address != NULL) {
-			SCA_STR_APPEND(&extra_headers, sca->cfg->server_address);
-		} else {
-			SCA_STR_APPEND(&extra_headers, &REQ_LINE(msg).uri);
+		if(sca_subscription_hdr_append_cstr(
+				   &extra_headers, sizeof(hdr_buf), "Contact: ")
+				< 0) {
+			return (-1);
 		}
-		SCA_STR_APPEND_CSTR(&extra_headers, CRLF);
+		if(scam->cfg->server_address != NULL) {
+			if(sca_subscription_hdr_append(&extra_headers, sizeof(hdr_buf),
+					   scam->cfg->server_address)
+					< 0) {
+				return (-1);
+			}
+		} else {
+			if(sca_subscription_hdr_append(
+					   &extra_headers, sizeof(hdr_buf), &REQ_LINE(msg).uri)
+					< 0) {
+				return (-1);
+			}
+		}
+		if(sca_subscription_hdr_append_cstr(
+				   &extra_headers, sizeof(hdr_buf), CRLF)
+				< 0) {
+			return (-1);
+		}
 
-		SCA_STR_COPY_CSTR(
-				&extra_headers, "Allow-Events: call-info, line-seize" CRLF);
-
+		if(sca_subscription_hdr_append_cstr(&extra_headers, sizeof(hdr_buf),
+				   "Allow-Events: call-info, line-seize" CRLF)
+				< 0) {
+			return (-1);
+		}
 		len = snprintf(extra_headers.s + extra_headers.len,
 				sizeof(hdr_buf) - extra_headers.len, "Expires: %d%s", expires,
 				CRLF);
-		if(len < 0 || len >= (sizeof(hdr_buf) - extra_headers.len)) {
-			LM_ERR("sca_subscription_reply: extra headers too long\n");
-			return (-1);
-		}
 		extra_headers.len += len;
 	} else if(status_code == 480) {
 		// tell loser of line-seize SUBSCRIBE race to try again shortly
