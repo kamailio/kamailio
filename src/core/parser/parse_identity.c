@@ -41,8 +41,11 @@
 #define SP(_c) ((_c) == '\t' || (_c) == ' ')
 inline static int isendofhash(char *p, char *end)
 {
+	if(p >= end)
+		return 1;
+
 	/* new header line */
-	if((p < end && *p == '"')
+	if((*p == '"')
 			/* end of message */
 			|| ((*p == '\n' || *p == '\r') && p + 1 == end))
 		return 1;
@@ -60,8 +63,13 @@ int movetomybuffer(
 {
 	char *phashend;
 
-	for(phashend = pcur; !isendofhash(phashend, pend); phashend++)
+	for(phashend = pcur;
+			phashend < pend && !isendofhash(phashend, pend); phashend++)
 		;
+	if(phashend == pend) {
+		LM_ERR("unterminated Identity hash\n");
+		return -1;
+	}
 
 	if(!(ib->hash.s = pkg_malloc(phashend - pstart))) {
 		PKG_MEM_ERROR;
@@ -103,8 +111,7 @@ void parse_identity(char *buffer, char *end, struct identity_body *ib)
 
 		/* LWS */
 		if(*p == '\n' && p + 1 < end && SP(*(p + 1))) {
-			/* p - 1 because we don't want to pass '\n' */
-			if(!ib->ballocated && (movetomybuffer(pstart, end, p - 1, ib)))
+			if(!ib->ballocated && (movetomybuffer(pstart, end, p, ib)))
 				goto error;
 			/* p + 1 < end because 'continue' increases p so we'd skip \n
 			   we need after this for loop */
@@ -113,7 +120,7 @@ void parse_identity(char *buffer, char *end, struct identity_body *ib)
 			continue;
 		}
 		if(*p == '\r' && p + 2 < end && *(p + 1) == '\n' && SP(*(p + 2))) {
-			if(!ib->ballocated && (movetomybuffer(pstart, end, p - 1, ib)))
+			if(!ib->ballocated && (movetomybuffer(pstart, end, p, ib)))
 				goto error;
 			for(p += 2; p + 1 < end && SP(*(p + 1)); p++)
 				;
