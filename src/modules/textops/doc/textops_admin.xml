@@ -1889,11 +1889,11 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 
 	<section id="textops.f.starts_with">
 		<title>
-		<function moreinfo="none">starts_with(str1, str2)</function>
+		<function moreinfo="none">starts_with(txt, prefix)</function>
 		</title>
 		<para>
 		The function returns <emphasis>true</emphasis> if
-		the first string starts with the second string.
+		the txt string starts with the prefix string.
 		</para>
    		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -1914,11 +1914,11 @@ if (starts_with("$rU", "+358"))
 
 	<section id="textops.f.ends_with">
 		<title>
-		<function moreinfo="none">ends_with(str1, str2)</function>
+		<function moreinfo="none">ends_with(txt, suffix)</function>
 		</title>
 		<para>
-		The function returns <emphasis>true</emphasis> if the first string ends
-		with the second string. The parameters can contain variables.
+		The function returns <emphasis>true</emphasis> if the txt string ends
+		with the suffix string. The parameters can contain variables.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -1939,11 +1939,11 @@ if (ends_with("$rU", "8800"))
 
 	<section id="textops.f.str_find">
 		<title>
-		<function moreinfo="none">str_find(str1, str2)</function>
+		<function moreinfo="none">str_find(txt, needle)</function>
 		</title>
 		<para>
 			The function returns <emphasis>true</emphasis> (greater than 0) if
-			the str2 string is found in str1, case sensitive comparison.
+			the needle string is found in txt string, case sensitive comparison.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -1962,11 +1962,11 @@ if (str_find("$rU", "8800")) {
 
 	<section id="textops.f.str_ifind">
 		<title>
-		<function moreinfo="none">str_ifind(str1, str2)</function>
+		<function moreinfo="none">str_ifind(txt, needle)</function>
 		</title>
 		<para>
 			The function returns <emphasis>true</emphasis> (greater than 0) if
-			the str2 string is found in str1, case insensitive comparison.
+			the needle string is found in txt string, case insensitive comparison.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
