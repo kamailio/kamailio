@@ -91,10 +91,10 @@ Ovidiu Sas
               4.50. in_list_prefix(subject, list, separator)
               4.51. cmp_str(str1, str2)
               4.52. cmp_istr(str1, str2)
-              4.53. starts_with(str1, str2)
-              4.54. ends_with(str1, str2)
-              4.55. str_find(str1, str2)
-              4.56. str_ifind(str1, str2)
+              4.53. starts_with(txt, prefix)
+              4.54. ends_with(txt, suffix)
+              4.55. str_find(txt, needle)
+              4.56. str_ifind(txt, needle)
               4.57. str_any_in(txt, clist)
               4.58. str_all_in(txt, clist)
               4.59. set_body_multipart([txt, content_type][, boundary])
@@ -251,10 +251,10 @@ Chapter 1. Admin Guide
         4.50. in_list_prefix(subject, list, separator)
         4.51. cmp_str(str1, str2)
         4.52. cmp_istr(str1, str2)
-        4.53. starts_with(str1, str2)
-        4.54. ends_with(str1, str2)
-        4.55. str_find(str1, str2)
-        4.56. str_ifind(str1, str2)
+        4.53. starts_with(txt, prefix)
+        4.54. ends_with(txt, suffix)
+        4.55. str_find(txt, needle)
+        4.56. str_ifind(txt, needle)
         4.57. str_any_in(txt, clist)
         4.58. str_all_in(txt, clist)
         4.59. set_body_multipart([txt, content_type][, boundary])
@@ -361,10 +361,10 @@ From: medabeda
    4.50. in_list_prefix(subject, list, separator)
    4.51. cmp_str(str1, str2)
    4.52. cmp_istr(str1, str2)
-   4.53. starts_with(str1, str2)
-   4.54. ends_with(str1, str2)
-   4.55. str_find(str1, str2)
-   4.56. str_ifind(str1, str2)
+   4.53. starts_with(txt, prefix)
+   4.54. ends_with(txt, suffix)
+   4.55. str_find(txt, needle)
+   4.56. str_ifind(txt, needle)
    4.57. str_any_in(txt, clist)
    4.58. str_all_in(txt, clist)
    4.59. set_body_multipart([txt, content_type][, boundary])
@@ -1367,9 +1367,9 @@ if(cmp_istr("$rU@you", "kamailio@YOU"))
 }
 ...
 
-4.53.  starts_with(str1, str2)
+4.53.  starts_with(txt, prefix)
 
-   The function returns true if the first string starts with the second
+   The function returns true if the txt string starts with the prefix
    string.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -1383,9 +1383,9 @@ if (starts_with("$rU", "+358"))
 }
 ...
 
-4.54.  ends_with(str1, str2)
+4.54.  ends_with(txt, suffix)
 
-   The function returns true if the first string ends with the second
+   The function returns true if the txt string ends with the suffix
    string. The parameters can contain variables.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -1399,10 +1399,10 @@ if (ends_with("$rU", "8800"))
 }
 ...
 
-4.55.  str_find(str1, str2)
+4.55.  str_find(txt, needle)
 
-   The function returns true (greater than 0) if the str2 string is found
-   in str1, case sensitive comparison.
+   The function returns true (greater than 0) if the needle string is
+   found in txt string, case sensitive comparison.
 
    This function can be used from ANY_ROUTE.
 
@@ -1413,10 +1413,10 @@ if (str_find("$rU", "8800")) {
 }
 ...
 
-4.56.  str_ifind(str1, str2)
+4.56.  str_ifind(txt, needle)
 
-   The function returns true (greater than 0) if the str2 string is found
-   in str1, case insensitive comparison.
+   The function returns true (greater than 0) if the needle string is
+   found in txt string, case insensitive comparison.
 
    This function can be used from ANY_ROUTE.
 
