@@ -1369,12 +1369,14 @@ static void check_list_rpc(rpc_t *rpc, void *ctx, int list_type)
 	/* Sanity checks */
 	if(rpc->scan(ctx, ".S", &prefix) < 1)
 		goto error_scan;
-	if(prefix.s == NULL || prefix.len == 0)
+	if(prefix.s == NULL || prefix.len <= 0)
 		goto error_scan;
+	if(prefix.len > MAXNUMBERLEN)
+		goto error_prefix;
 	if(rpc->add(ctx, "{", &out) < 0)
 		goto error;
 
-	strncpy(req_prefix, prefix.s, prefix.len);
+	memcpy(req_prefix, prefix.s, (size_t)prefix.len);
 	req_prefix[prefix.len] = '\0';
 
 	/* Check that global blocklist exists */
@@ -1444,6 +1446,11 @@ error_scan:
 	rpc->fault(ctx, 500, "Check failed: 1 argument needed (\"prefix\")");
 	return;
 
+error_prefix:
+	rpc->fault(ctx, 400, "Check failed: prefix exceeds %d characters",
+			MAXNUMBERLEN);
+	return;
+
 error:
 	rpc->fault(ctx, 500, "Check failed");
 	return;
@@ -1463,14 +1470,16 @@ static void check_userlist_rpc(rpc_t *rpc, void *ctx, int list_type)
 		domain.s = "";
 		domain.len = 0;
 	}
-	if(prefix.s == NULL || prefix.len == 0 || user.s == NULL || user.len == 0)
+	if(prefix.s == NULL || prefix.len <= 0 || user.s == NULL || user.len <= 0)
 		goto error_scan;
+	if(prefix.len > MAXNUMBERLEN)
+		goto error_prefix;
 	if(rpc->add(ctx, "{", &out) < 0)
 		goto error;
 	if(domain.s != NULL && domain.len != 0)
 		local_use_domain = 1;
 
-	strncpy(req_prefix, prefix.s, prefix.len);
+	memcpy(req_prefix, prefix.s, (size_t)prefix.len);
 	req_prefix[prefix.len] = '\0';
 
 	/* Check that global blocklist exists */
@@ -1552,6 +1561,10 @@ error_scan:
 	rpc->fault(ctx, 500,
 			"Check failed: 2 or 3 arguments needed (\"prefix\" \"user\" "
 			"\"domain\"(optional))");
+	return;
+error_prefix:
+	rpc->fault(ctx, 400, "Check failed: prefix exceeds %d characters",
+			MAXNUMBERLEN);
 	return;
 
 error:
