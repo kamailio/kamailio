@@ -149,6 +149,7 @@ typedef struct SIP_Dialog
 typedef struct NAT_Contact
 {
 	char *uri;
+	char *contact_uri;
 	struct socket_info *socket;
 
 	time_t registration_expire;
@@ -437,7 +438,8 @@ static INLINE void SIP_Subscription_expire(NAT_Contact *contact, time_t now)
 // NAT_Contact structure handling functions
 //
 
-static NAT_Contact *NAT_Contact_new(char *uri, struct socket_info *socket)
+static NAT_Contact *NAT_Contact_new(
+		char *uri, struct socket_info *socket, char *contact_uri)
 {
 	NAT_Contact *contact;
 
@@ -454,6 +456,19 @@ static NAT_Contact *NAT_Contact_new(char *uri, struct socket_info *socket)
 		shm_free(contact);
 		return NULL;
 	}
+
+	if(contact_uri) {
+		contact->contact_uri = shm_char_dup(contact_uri);
+		if(!contact->contact_uri) {
+			LM_ERR("out of memory while creating new NAT_Contact structure\n");
+			shm_free(contact->uri);
+			shm_free(contact);
+			return NULL;
+		}
+	} else {
+		contact->contact_uri = NULL;
+	}
+
 	contact->socket = socket;
 
 	update_stat(keepalive_endpoints, 1);
@@ -483,6 +498,8 @@ static void NAT_Contact_del(NAT_Contact *contact)
 	update_stat(keepalive_endpoints, -1);
 
 	shm_free(contact->uri);
+	if(contact->contact_uri)
+		shm_free(contact->contact_uri);
 	shm_free(contact);
 }
 
@@ -947,13 +964,55 @@ static char *get_source_uri(struct sip_msg *msg)
 }
 
 
+static char *get_source_contact_uri(struct sip_msg *msg)
+{
+	struct hdr_field contact_hdr;
+	contact_body_t *contact_body;
+	contact_t *contact;
+	static char contact_uri[MAX_URI_SIZE];
+	int len;
+
+	if((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact)
+		return NULL;
+
+	// Parse Contact using a local header copy to avoid writing a pkg pointer
+	// into msg->contact->parsed on shared memory messages (TM does not clone
+	// the Contact parsed body, so the field may be NULL or stale)
+	memcpy(&contact_hdr, msg->contact, sizeof(struct hdr_field));
+	contact_hdr.parsed = NULL;
+	if(parse_contact(&contact_hdr) < 0) {
+		LM_ERR("cannot parse the Contact header\n");
+		return NULL;
+	}
+
+	contact_body = (contact_body_t *)contact_hdr.parsed;
+	contact = contact_body->contacts;
+
+	if(contact == NULL) {
+		clean_hdr_field(&contact_hdr);
+		return NULL;
+	}
+
+	len = contact->uri.len < (int)sizeof(contact_uri) - 1
+				  ? contact->uri.len
+				  : (int)sizeof(contact_uri) - 1;
+	memcpy(contact_uri, contact->uri.s, len);
+	contact_uri[len] = '\0';
+
+	clean_hdr_field(&contact_hdr);
+	return contact_uri;
+}
+
+
 static void keepalive_registration(struct sip_msg *request, time_t expire)
 {
 	NAT_Contact *contact;
 	unsigned h;
 	char *uri;
+	char *contact_uri;
 
 	uri = get_source_uri(request);
+	contact_uri = get_source_contact_uri(request);
 
 	h = HASH(nat_table, uri);
 	lock_get(&nat_table->slots[h].lock);
@@ -962,7 +1021,7 @@ static void keepalive_registration(struct sip_msg *request, time_t expire)
 	if(contact) {
 		SIP_Registration_update(contact, expire);
 	} else {
-		contact = NAT_Contact_new(uri, request->rcv.bind_address);
+		contact = NAT_Contact_new(uri, request->rcv.bind_address, contact_uri);
 		if(contact) {
 			SIP_Registration_update(contact, expire);
 			contact->next = nat_table->slots[h].head;
@@ -981,8 +1040,10 @@ static void keepalive_subscription(struct sip_msg *request, time_t expire)
 	NAT_Contact *contact;
 	unsigned h;
 	char *uri;
+	char *contact_uri;
 
 	uri = get_source_uri(request);
+	contact_uri = get_source_contact_uri(request);
 
 	h = HASH(nat_table, uri);
 	lock_get(&nat_table->slots[h].lock);
@@ -991,7 +1052,7 @@ static void keepalive_subscription(struct sip_msg *request, time_t expire)
 	if(contact) {
 		SIP_Subscription_update(contact, expire);
 	} else {
-		contact = NAT_Contact_new(uri, request->rcv.bind_address);
+		contact = NAT_Contact_new(uri, request->rcv.bind_address, contact_uri);
 		if(contact) {
 			SIP_Subscription_update(contact, expire);
 			contact->next = nat_table->slots[h].head;
@@ -1269,7 +1330,8 @@ static void __dialog_created(
 			LM_ERR("cannot allocate shared memory for new SIP dialog\n");
 		}
 	} else {
-		contact = NAT_Contact_new(uri, request->rcv.bind_address);
+		char *contact_uri = get_source_contact_uri(request);
+		contact = NAT_Contact_new(uri, request->rcv.bind_address, contact_uri);
 		if(contact) {
 			contact->dialogs = SIP_Dialog_new(dlg, param->expire);
 			if(contact->dialogs) {
@@ -1552,7 +1614,7 @@ static int w_ClientNatTest(struct sip_msg *msg, char *ptests, char *p2)
 
 static void send_keepalive(NAT_Contact *contact)
 {
-	char buffer[8192], *from_uri, *ptr;
+	char buffer[8192], *from_uri, *to_uri, *ptr;
 	static char from[64] = FROM_PREFIX;
 	static char *from_ip = from + sizeof(FROM_PREFIX) - 1;
 	static struct socket_info *last_socket = NULL;
@@ -1562,10 +1624,18 @@ static void send_keepalive(NAT_Contact *contact)
 	str nat_ip;
 	unsigned short lport;
 	char lproto;
+	str vaddr;
+	int vport;
 
 	if(contact == NULL || contact->socket == NULL) {
 		LM_ERR("invalid parameters\n");
 		return;
+	}
+
+	if(contact->contact_uri) {
+		to_uri = contact->contact_uri;
+	} else {
+		to_uri = contact->uri;
 	}
 
 	if(keepalive_params.from == NULL) {
@@ -1580,6 +1650,16 @@ static void send_keepalive(NAT_Contact *contact)
 		from_uri = keepalive_params.from;
 	}
 
+	if(contact->socket->useinfo.name.len > 0)
+		vaddr = contact->socket->useinfo.name;
+	else
+		vaddr = contact->socket->address_str;
+
+	if(contact->socket->useinfo.port_no > 0)
+		vport = contact->socket->useinfo.port_no;
+	else
+		vport = contact->socket->port_no;
+
 	len = snprintf(buffer, sizeof(buffer),
 			"%s %s SIP/2.0\r\n"
 			"Via: SIP/2.0/UDP %.*s:%d;branch=z9hG4bK%ld\r\n"
@@ -1589,13 +1669,11 @@ static void send_keepalive(NAT_Contact *contact)
 			"CSeq: 1 %s\r\n"
 			"%s%s"
 			"Content-Length: 0\r\n\r\n",
-			keepalive_params.method, contact->uri,
-			contact->socket->address_str.len, contact->socket->address_str.s,
-			contact->socket->port_no,
+			keepalive_params.method, to_uri, vaddr.len, vaddr.s, vport,
 			(long)(kam_rand() / (float)KAM_RAND_MAX
 							* (MAX_BRANCHID - MIN_BRANCHID)
 					+ MIN_BRANCHID),
-			from_uri, keepalive_params.from_tag++, contact->uri,
+			from_uri, keepalive_params.from_tag++, to_uri,
 			keepalive_params.callid_prefix, keepalive_params.callid_counter++,
 			get_ticks(), contact->socket->address_str.len,
 			contact->socket->address_str.s, keepalive_params.method,
@@ -1694,10 +1772,11 @@ static void save_keepalive_state(void)
 	for(i = 0; i < nat_table->size; i++) {
 		contact = nat_table->slots[i].head;
 		while(contact) {
-			fprintf(f, "%s %.*s %ld %ld\n", contact->uri,
+			fprintf(f, "%s %.*s %ld %ld %s\n", contact->uri,
 					contact->socket->sock_str.len, contact->socket->sock_str.s,
 					(long int)contact->registration_expire,
-					(long int)contact->subscription_expire);
+					(long int)contact->subscription_expire,
+					contact->contact_uri ? contact->contact_uri : "");
 			contact = contact->next;
 		}
 	}
@@ -1712,7 +1791,7 @@ static void save_keepalive_state(void)
 
 static void restore_keepalive_state(void)
 {
-	char uri[64], socket[64];
+	char uri[64], socket[64], contact_uri[MAX_URI_SIZE], fmt[128];
 	time_t rtime, stime, now;
 	NAT_Contact *contact;
 	struct socket_info *sock;
@@ -1721,6 +1800,10 @@ static void restore_keepalive_state(void)
 	str host;
 	FILE *f;
 	long long ll_1, ll_2;
+
+	snprintf(fmt, sizeof(fmt),
+			"%%63s %%63s %%" TIME_T_FMT " %%" TIME_T_FMT " %%%ds[^\n]%%*c",
+			MAX_URI_SIZE - 1);
 
 	if(!keepalive_state_file)
 		return;
@@ -1742,14 +1825,14 @@ static void restore_keepalive_state(void)
 		ll_2 = 0;
 		uri[0] = '\0';
 		socket[0] = '\0';
-		res = fscanf(f, "%63s %63s %" TIME_T_FMT " %" TIME_T_FMT, uri, socket,
-				&ll_1, &ll_2);
+		contact_uri[0] = '\0';
+		res = fscanf(f, fmt, uri, socket, &ll_1, &ll_2, contact_uri);
 		if(res == EOF) {
 			if(ferror(f))
 				LM_ERR("error while reading keepalive state file: %s\n",
 						strerror(errno));
 			break;
-		} else if(res != 4) {
+		} else if(res < 4 || res > 5) {
 			LM_ERR("invalid/corrupted keepalive state file. ignoring remaining "
 				   "entries.\n");
 			break;
@@ -1768,7 +1851,7 @@ static void restore_keepalive_state(void)
 				continue; // socket no longer available since last time. ignore.
 
 			h = HASH(nat_table, uri);
-			contact = NAT_Contact_new(uri, sock);
+			contact = NAT_Contact_new(uri, sock, res == 5 ? contact_uri : NULL);
 			if(contact) {
 				SIP_Registration_update(contact, rtime);
 				SIP_Subscription_update(contact, stime);
