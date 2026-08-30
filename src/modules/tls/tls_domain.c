@@ -25,6 +25,8 @@
  */
 
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
 #include <openssl/bn.h>
@@ -1165,6 +1167,81 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 }
 #endif
 
+/**
+ * write a comment line with the connection and handshake parameters before
+ * a key line (keylog_mode value 32: 1 << 5, KSR_TLS_KEYLOG_MODE_TUPLE), so
+ * a capture that missed the hellos can match the keys to a flow and derive
+ * the record keys (tls 1.2: server random + cipher suite, tls 1.3: cipher
+ * suite)
+ */
+static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
+{
+	struct tls_extra_data *data;
+	struct tcp_connection *c;
+	const SSL_CIPHER *cipher;
+	struct sockaddr_storage sa;
+	socklen_t sa_len;
+	char src_ip[IP_ADDR_MAX_STR_SIZE];
+	char dst_ip[IP_ADDR_MAX_STR_SIZE];
+	char sr_hex[SSL3_RANDOM_SIZE * 2 + 1];
+	unsigned char sr[SSL3_RANDOM_SIZE];
+	char buf[512];
+	unsigned int dst_port;
+	size_t sr_len;
+	size_t i;
+	int fd;
+	int n;
+
+	data = (struct tls_extra_data *)SSL_get_app_data(ssl);
+	if(data == NULL || data->tcp_conn == NULL) {
+		return;
+	}
+	c = data->tcp_conn;
+	/* ip_addr2a() uses one static buffer: format each address separately */
+	n = ip_addr2sbuf(&c->rcv.src_ip, src_ip, sizeof(src_ip) - 1);
+	src_ip[n] = '\0';
+	n = ip_addr2sbuf(&c->rcv.dst_ip, dst_ip, sizeof(dst_ip) - 1);
+	dst_ip[n] = '\0';
+
+	dst_port = c->rcv.dst_port;
+	if(!(c->flags & F_CONN_PASSIVE)) {
+		/* outbound: read the local port from the socket of this process
+		 * (c->s in tcp main, c->fd in a worker) */
+		fd = _tconfd(c);
+		sa_len = sizeof(sa);
+		if(fd >= 0 && getsockname(fd, (struct sockaddr *)&sa, &sa_len) == 0) {
+			if(sa.ss_family == AF_INET) {
+				dst_port = ntohs(((struct sockaddr_in *)&sa)->sin_port);
+			} else if(sa.ss_family == AF_INET6) {
+				dst_port = ntohs(((struct sockaddr_in6 *)&sa)->sin6_port);
+			}
+		}
+	} else if(dst_port == 0 && c->rcv.bind_address != NULL) {
+		dst_port = c->rcv.bind_address->port_no;
+	}
+
+	sr_len = SSL_get_server_random(ssl, sr, sizeof(sr));
+	for(i = 0; i < sr_len; i++) {
+		snprintf(sr_hex + i * 2, 3, "%02x", sr[i]);
+	}
+	sr_hex[sr_len * 2] = '\0';
+	cipher = SSL_get_current_cipher(ssl);
+
+	n = snprintf(buf, sizeof(buf),
+			"# TUPLE src=%s:%u dst=%s:%u sr=%s cs=%04x v=%04x", src_ip,
+			(unsigned)c->rcv.src_port, dst_ip, dst_port, sr_hex,
+			cipher ? (unsigned)(SSL_CIPHER_get_id(cipher) & 0xFFFF) : 0,
+			(unsigned)SSL_version(ssl));
+	if(n <= 0 || (size_t)n >= sizeof(buf)) {
+		return;
+	}
+	if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
+		LM_NOTICE("tlskeylog: %s\n", buf);
+	}
+	ksr_tls_keylog_file_write(ssl, buf);
+	ksr_tls_keylog_peer_send(ssl, buf);
+}
+
 static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 {
 	if(ksr_tls_keylog_mode == NULL) {
@@ -1177,6 +1254,9 @@ static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 		if(ksr_tls_keylog_vfilter_match(line) == 0) {
 			return;
 		}
+	}
+	if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_TUPLE) {
+		ksr_tls_keylog_emit_tuple(ssl);
 	}
 	if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
 		LM_NOTICE("tlskeylog: %s\n", line);

@@ -69,6 +69,7 @@ typedef struct tls_extra_data
 	int run_conn_out_pending; /* tcp_main_threads>0: tls:connection-out should not
 							   * run on a PROC_TCP_MAIN mtops thread; this flag
 							   * marks deferred execution */
+	struct tcp_connection *tcp_conn; /* keylog tuple (memory bio, no fd) */
 
 	char *ssl_servername;
 	char *ssl_cipher_name;

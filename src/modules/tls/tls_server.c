@@ -396,6 +396,7 @@ static int tls_complete_init(struct tcp_connection *c)
 	/* SSL_set_bio does not allocate memory and has no return value */
 	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
+	data->tcp_conn = c; /* keylog tuple: the memory bio has no fd */
 	return 0;
 
 error:
