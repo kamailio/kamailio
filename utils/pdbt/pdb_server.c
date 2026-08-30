@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -133,9 +134,11 @@ int udp_server(int so)
 				/* get received bytes */
 				memcpy(&msg, buf, bytes_received);
 				//                pdb_msg_dbg(msg);
-				short int *_id =
-						(short int *)&(msg.hdr.id); /* make gcc happy */
-				msg.hdr.id = ntohs(*_id);
+				{
+					uint16_t id_tmp;
+					memcpy(&id_tmp, &msg.hdr.id, sizeof(id_tmp));
+					msg.hdr.id = ntohs(id_tmp);
+				}
 
 				i = 0;
 				while(i < strlen(msg.bdy.payload)) {

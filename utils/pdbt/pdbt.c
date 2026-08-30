@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <sys/time.h>
 #include <poll.h>
@@ -262,8 +263,8 @@ int dt_write_tree_recursor(
 	int ret;
 	int slen;
 	char *buf;
-	char *p;
 	int bufsize;
+	int linelen;
 
 	if(node == NULL)
 		return 0;
@@ -280,22 +281,21 @@ int dt_write_tree_recursor(
 			return -1;
 		}
 
-		/* construct outline line */
-		p = strncpy(buf, number, slen);
-		p += slen;
-		strncpy(p, ": ", 2);
-		p += 2;
-		ret = snprintf(p, 5, "%d\n", node->carrier);
-		if(ret < 1 || ret > 4) {
-			LERR("snprintf failed to write correct number of characters\n");
+		/* construct output line: "<number>: <carrier>\n" */
+		linelen = snprintf(buf, bufsize, "%s: %d\n", number, node->carrier);
+		if(linelen < 0 || linelen >= bufsize) {
+			LERR("buffer too small for line output '%s' (%d bytes needed)\n",
+					number, linelen);
+			free(buf);
 			return -1;
 		}
 
 		/* write line to file */
-		ret = write(fd, (void *)buf, strlen(buf));
-		if(ret != strlen(buf)) {
+		ret = write(fd, (void *)buf, linelen);
+		if(ret != linelen) {
 			LERR("could not write (complete) line output '%s' to file\n",
 					number);
+			free(buf);
 			return -1;
 		}
 		free(buf);
@@ -499,7 +499,6 @@ int query_udp(char *number, int timeout, struct pollfd *pfds,
 	int ret, nflush;
 	long int td;
 	ssize_t bytes_received;
-	short int *idptr;
 
 
 	if(gettimeofday(&tstart, NULL) != 0) {
@@ -581,15 +580,19 @@ int query_udp(char *number, int timeout, struct pollfd *pfds,
 
 		ret = poll(pfds, 1, timeout - td);
 		if(pfds->revents & POLLIN) {
+			/* do not block - just in case select/poll was wrong */
 			if((bytes_received = recv(
 						pfds->fd, buf, sizeof(struct pdb_msg), MSG_DONTWAIT))
-					> 0) { /* do not block - just in case select/poll was wrong */
+					> 0) {
 				switch(PDB_VERSION) {
 					case PDB_VERSION_1:
 						memcpy(&msg, buf, bytes_received);
-						//                        pdb_msg_dbg(msg);
-						idptr = (short int *)&(msg.hdr.id); /* make gcc happy */
-						msg.hdr.id = ntohs(*idptr);
+						//                      pdb_msg_dbg(msg);
+						{
+							uint16_t id_tmp;
+							memcpy(&id_tmp, &msg.hdr.id, sizeof(id_tmp));
+							msg.hdr.id = ntohs(id_tmp);
+						}
 
 
 						switch(msg.hdr.code) {
@@ -597,11 +600,11 @@ int query_udp(char *number, int timeout, struct pollfd *pfds,
 								msg.bdy.payload[sizeof(struct pdb_bdy) - 1] =
 										'\0';
 								if(strcmp(msg.bdy.payload, number) == 0) {
-									idptr = (short int *)&(
-											msg.bdy.payload
-													[reqlen]); /* make gcc happy */
-									carrierid = ntohs(
-											*idptr); /* convert to host byte order */
+									uint16_t carrier_tmp;
+									memcpy(&carrier_tmp,
+											&msg.bdy.payload[reqlen],
+											sizeof(carrier_tmp));
+									carrierid = ntohs(carrier_tmp);
 									goto found;
 								}
 								break;
@@ -624,10 +627,10 @@ int query_udp(char *number, int timeout, struct pollfd *pfds,
 					default:
 						buf[sizeof(struct pdb_msg) - 1] = '\0';
 						if(strcmp(buf, number) == 0) {
-							idptr = (short int *)&(
-									buf[reqlen]); /* make gcc happy */
-							carrierid = ntohs(
-									*idptr); /* convert to host byte order */
+							uint16_t carrier_tmp;
+							memcpy(&carrier_tmp, &buf[reqlen],
+									sizeof(carrier_tmp));
+							carrierid = ntohs(carrier_tmp);
 							goto found;
 						}
 						break;
