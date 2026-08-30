@@ -395,6 +395,9 @@ static int tls_complete_init(struct tcp_connection *c)
 	/* SSL_set_bio does not allocate memory and has no return value */
 	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
+	data->tcp_conn = c; /* used by ksr_tls_keylog_callback to emit the 5-tuple
+	                     * alongside the NSS key line; SSL_get_fd() cannot
+	                     * recover this because the BIO is memory-backed. */
 	return 0;
 
 error:
