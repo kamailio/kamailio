@@ -1,0 +1,140 @@
+NDB_TARANTOOL Module
+
+Kamailio Development Team
+
+   Copyright © 2026 Kamailio Project
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. server (str)
+              3.2. host (str)
+              3.3. port (int)
+              3.4. user (str)
+              3.5. pass (str)
+              3.6. pool_size (int)
+              3.7. connect_timeout (int)
+              3.8. cmd_timeout (int)
+              3.9. disable_time (int)
+              3.10. allowed_timeouts (int)
+              3.11. init_without_tarantool (int)
+
+        4. Functions
+
+              4.1. tarantool_call(proc_name, params)
+              4.2. tarantool_eval(code, params)
+
+        5. KEMI Exports
+
+              5.1. KSR.tarantool.call(proc_name, params)
+              5.2. KSR.tarantool.eval(code, params)
+
+Chapter 1. Admin Guide
+
+1. Overview
+
+   This module provides a high performance database connector to interact with 
+   Tarantool 3.x in-memory database using the binary IProto protocol.
+
+   It provides asynchronous connection pooling, auto-reconnect, configurable
+   failover parameters, and native KEMI exports for executing stored procedures
+   and evaluating Lua code directly from SIP routing scripts.
+
+2. Dependencies
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before running
+   Kamailio with this module loaded:
+     * none (uses built-in zero-dependency IProto binary client with MessagePack).
+
+3. Parameters
+
+3.1. server (str)
+
+   Specifies the connection URL string to the Tarantool server.
+   Format: "addr=127.0.0.1;port=3301;user=rtpe_user;pass=secret;pool=4".
+
+   Example 1.1. Set server parameter
+...
+modparam("ndb_tarantool", "server", "addr=127.0.0.1;port=3301;user=guest;pass=;pool=8")
+...
+
+3.2. host (str)
+
+   Tarantool server IP address or hostname. Default is "127.0.0.1".
+
+3.3. port (int)
+
+   Tarantool server IProto TCP port. Default is 3301.
+
+3.4. user (str)
+
+   Username for authentication. Default is NULL (guest).
+
+3.5. pass (str)
+
+   Password for authentication. Default is NULL.
+
+3.6. pool_size (int)
+
+   Number of connections in the connection pool per process. Default is 4.
+
+3.7. connect_timeout (int)
+
+   Socket connection timeout in milliseconds. Default is 1000.
+
+3.8. cmd_timeout (int)
+
+   Socket I/O command timeout in milliseconds. Default is 500.
+
+3.9. disable_time (int)
+
+   Number of seconds communication with Tarantool is disabled after exceeding
+   allowed timeouts. Default is 10.
+
+3.10. allowed_timeouts (int)
+
+   Number of consecutive timeouts before marking connection disabled. Default is 3.
+
+3.11. init_without_tarantool (int)
+
+   If set to 1, Kamailio starts successfully even if the Tarantool server is
+   temporarily offline at bootstrap. Default is 0.
+
+4. KEMI Exports
+
+4.1. KSR.tarantool.call(proc_name, params)
+
+   Executes a stored procedure in Tarantool 3.x via IProto protocol.
+
+   Example 1.2. KEMI Lua Example
+...
+local res = KSR.tarantool.call("rtpe_select_node", "[]");
+KSR.info("Selected node from Tarantool: " .. tostring(res));
+...
+
+4.2. KSR.tarantool.eval(lua_code, params)
+
+   Evaluates an arbitrary Lua code snippet directly in Tarantool 3.x.
+
+   Example 1.3. KEMI Python Example
+...
+res = KSR.tarantool.eval("return box.space.rtpe_calls:count()", "[]")
+KSR.info("Active calls: %s" % res)
+...

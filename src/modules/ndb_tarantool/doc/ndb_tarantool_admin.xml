@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a high-performance connector to interact with
+		<emphasis>Tarantool 3.x</emphasis> in-memory database from &kamailio;
+		routing scripts, C modules, and KEMI engines over the binary IProto protocol.
+	</para>
+	<para>
+		It is designed as a carrier-grade session synchronization backend for
+		RTPEngine and transactional dialog state storage, featuring zero BGSAVE
+		jitter, secondary O(log N) indexing, zero-allocation buffer decoding,
+		5-vector scatter-gather (<function>writev</function>) persistence,
+		and connection pooling.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis> (uses built-in lightweight MessagePack parser and IProto socket engine).
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.backend_setup">
+	<title>Tarantool Server Setup &amp; Schema</title>
+	<para>
+		The <emphasis>ndb_tarantool</emphasis> module requires a running <emphasis>Tarantool 3.x</emphasis>
+		instance with the VoIP schema initialized. You can deploy the backend using any of the following methods:
+	</para>
+	<section id="ndb_tarantool.backend.docker">
+		<title>Option 1: Quick Docker Deployment</title>
+		<programlisting format="linespecific">
+docker run -d --name tarantool-voip \
+  -p 3301:3301 \
+  lean1ee/tarantool-voip-backend:latest
+		</programlisting>
+	</section>
+	<section id="ndb_tarantool.backend.schema">
+		<title>Option 2: Minimal Lua Schema Initialization</title>
+		<para>
+			If you run your own Tarantool server, add the following space and index definitions to your <filename>init.lua</filename>:
+		</para>
+		<programlisting format="linespecific">
+-- Create rtpe_calls space (ID: 512)
+local calls = box.schema.space.create('rtpe_calls', { if_not_exists = true })
+calls:format({
+    { name = 'call_id',    type = 'string' },
+    { name = 'node_id',    type = 'string' },
+    { name = 'state',      type = 'string' },
+    { name = 'created_at', type = 'unsigned' },
+    { name = 'updated_at', type = 'unsigned' },
+    { name = 'expires_at', type = 'unsigned' },
+    { name = 'payload',    type = 'any' },
+})
+calls:create_index('primary', { parts = { 'call_id' }, if_not_exists = true })
+calls:create_index('by_node', { parts = { 'node_id', 'updated_at' }, if_not_exists = true, unique = false })
+calls:create_index('by_expire', { parts = { 'expires_at' }, if_not_exists = true, unique = false })
+		</programlisting>
+		<para>
+			Complete production templates, stored procedures, and TTL fibers are available in the open-source backend repository:
+			<ulink url="https://github.com/lean1ee/tarantool-voip-backend">https://github.com/lean1ee/tarantool-voip-backend</ulink>.
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+
+	<section id="ndb_tarantool.p.server">
+		<title><varname>server</varname> (string)</title>
+		<para>
+			Specifies the Tarantool server connection details. Format can be either
+			<quote>[srv_id]=[host]:[port]</quote> or key-value format
+			<quote>addr=[host];port=[port];user=[user];pass=[pass];pool=[size]</quote>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>none</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "server", "srv1=127.0.0.1:3301")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="ndb_tarantool.p.host">
+		<title><varname>host</varname> (string)</title>
+		<para>
+			Default host or IP address for Tarantool server connection.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>127.0.0.1</quote>.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.port">
+		<title><varname>port</varname> (integer)</title>
+		<para>
+			Default binary IProto TCP port.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3301.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.user">
+		<title><varname>user</varname> (string)</title>
+		<para>
+			Tarantool authentication username.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote> (guest access).
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.pass">
+		<title><varname>pass</varname> (string)</title>
+		<para>
+			Tarantool authentication password.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.pool_size">
+		<title><varname>pool_size</varname> (integer)</title>
+		<para>
+			Number of active IProto TCP connections per &kamailio; worker process.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 4.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.connect_timeout">
+		<title><varname>connect_timeout</varname> (integer)</title>
+		<para>
+			TCP socket connection timeout in milliseconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1000 ms.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.cmd_timeout">
+		<title><varname>cmd_timeout</varname> (integer)</title>
+		<para>
+			Socket query and stored procedure response timeout in milliseconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 500 ms.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.disable_time">
+		<title><varname>disable_time</varname> (integer)</title>
+		<para>
+			Time in seconds to temporarily disable communication with an unreachable Tarantool instance.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10 seconds.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.allowed_timeouts">
+		<title><varname>allowed_timeouts</varname> (integer)</title>
+		<para>
+			Number of consecutive errors or timeouts allowed before triggering node disabling.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3.
+		</emphasis>
+		</para>
+	</section>
+
+	<section id="ndb_tarantool.p.init_without_tarantool">
+		<title><varname>init_without_tarantool</varname> (integer)</title>
+		<para>
+			Allows &kamailio; to boot successfully even if the Tarantool instance is initially offline.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (strict check).
+		</emphasis>
+		</para>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+
+	<section id="ndb_tarantool.f.tnt_call">
+		<title>
+			<function moreinfo="none">tnt_call(srv_id, proc_name, params_json, result_pv)</function>
+		</title>
+		<para>
+			Executes a stored procedure on the Tarantool instance identified by
+			<quote>srv_id</quote>.
+		</para>
+		<example>
+		<title><function>tnt_call</function> usage</title>
+		<programlisting format="linespecific">
+...
+tnt_call("srv1", "select_optimal_node", "$ci", "$var(node)");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="ndb_tarantool.f.tnt_eval">
+		<title>
+			<function moreinfo="none">tnt_eval(srv_id, lua_expr, params_json, result_pv)</function>
+		</title>
+		<para>
+			Evaluates arbitrary Lua code directly inside the Tarantool server.
+		</para>
+		<example>
+		<title><function>tnt_eval</function> usage</title>
+		<programlisting format="linespecific">
+...
+tnt_eval("srv1", "return box.space.rtpe_calls:count()", "[]", "$var(cnt)");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>KEMI Bindings</title>
+	<para>
+		The module exports high-performance KEMI Lua and Python functions:
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>KSR.tarantool.call(proc_name, params_json)</emphasis> -
+				Calls a Tarantool stored procedure and returns the JSON string result.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>KSR.tarantool.eval(lua_expr, params_json)</emphasis> -
+				Evaluates arbitrary Lua code in Tarantool and returns the result.
+			</para>
+		</listitem>
+	</itemizedlist>
+	</section>
+
+	<section>
+	<title>Usage Examples</title>
+
+	<section id="ndb_tarantool.ex.full_routing">
+		<title>Complete SIP Signaling &amp; Media Proxying with RTPEngine</title>
+		<programlisting format="linespecific">
+#!KAMAILIO
+
+loadmodule "tm.so"
+loadmodule "sl.so"
+loadmodule "rr.so"
+loadmodule "pv.so"
+loadmodule "rtpengine.so"
+loadmodule "ndb_tarantool.so"
+
+# Configure Tarantool connector
+modparam("ndb_tarantool", "server", "srv1=127.0.0.1:3301")
+modparam("ndb_tarantool", "pool_size", 8)
+modparam("ndb_tarantool", "connect_timeout", 500)
+modparam("ndb_tarantool", "cmd_timeout", 500)
+modparam("ndb_tarantool", "init_without_tarantool", 1)
+
+# Default fallback RTPEngine socket
+modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:22222")
+
+route {
+    if (is_method("INVITE")) {
+        record_route();
+
+        # 1. Query Tarantool for optimal least-loaded media node (70 µs)
+        if (tnt_call("srv1", "select_optimal_node", "$ci", "$var(node)")) {
+            xlog("L_INFO", "Routing Call-ID: $ci via optimal media node: $var(node)\n");
+            $var(rtpe_sock) = "udp:" + $var(node) + ":22222";
+            $rtpengine_sock = $var(rtpe_sock);
+        }
+
+        # 2. Engage RTPEngine media proxy
+        rtpengine_offer("replace-origin replace-session-connection");
+
+        t_on_reply("MANAGE_REPLY");
+        t_relay();
+        exit;
+    }
+
+    if (is_method("BYE|CANCEL")) {
+        rtpengine_delete();
+        t_relay();
+        exit;
+    }
+
+    t_relay();
+}
+
+onreply_route[MANAGE_REPLY] {
+    if (status =~ "[12][0-9][0-9]") {
+        rtpengine_answer("replace-origin replace-session-connection");
+    }
+}
+		</programlisting>
+	</section>
+
+	<section id="ndb_tarantool.ex.kemi_lua">
+		<title>KEMI Lua Routing Script Example</title>
+		<programlisting format="linespecific">
+-- KEMI routing logic with Tarantool
+function ksr_route_invite()
+    KSR.rr.record_route()
+
+    -- Query Tarantool stored procedure
+    local best_node = KSR.tarantool.call("select_optimal_node", KSR.pv.get("$ci"))
+    if best_node then
+        KSR.info("KEMI selected RTPEngine node: " .. best_node .. "\n")
+    end
+
+    KSR.rtpengine.rtpengine_offer("replace-origin replace-session-connection")
+    KSR.tm.t_relay()
+end
+		</programlisting>
+	</section>
+
+	</section>
+
+</chapter>
