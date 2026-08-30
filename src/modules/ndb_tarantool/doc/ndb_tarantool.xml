@@ -14,13 +14,14 @@
 		<productname class="trade">&kamailio;</productname>
 		<authorgroup>
 			<author>
-				<firstname>lean1ee</firstname>
-				<email>lean1ee@users.noreply.github.com</email>
+				<firstname>Andrei</firstname>
+				<surname>Lashchinskii</surname>
+				<email>koorwork+kamailio@gmail.com</email>
 			</author>
 		</authorgroup>
 		<copyright>
 			<year>2026</year>
-			<holder>lean1ee</holder>
+			<holder>Andrei Lashchinskii</holder>
 		</copyright>
 	</bookinfo>
 	<toc></toc>

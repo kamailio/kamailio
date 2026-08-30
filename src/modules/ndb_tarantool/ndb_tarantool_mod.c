@@ -1,93 +1,32 @@
 /*
- * Copyright (C) 2026 lean1ee <https://github.com/lean1ee>
+ * Copyright (C) 2026 Andrei Lashchinskii <koorwork+kamailio@gmail.com>
  *
- * Author: lean1ee
- * Module: ndb_tarantool - High performance Tarantool 3.x connector for Kamailio
+ * This file is part of Kamailio, a free SIP server.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__has_include)
-#if __has_include("../../core/sr_module.h")
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/kemi.h"
-#define HAS_KAMAILIO_CORE 1
-#endif
-#endif
-
-#ifndef HAS_KAMAILIO_CORE
-#define MODULE_VERSION
-#define DEFAULT_DLFLAGS 0
-#define LM_INFO(...) printf("[ndb_tarantool] INFO: " __VA_ARGS__)
-#define LM_ERR(...) fprintf(stderr, "[ndb_tarantool] ERROR: " __VA_ARGS__)
-#define LM_WARN(...) fprintf(stderr, "[ndb_tarantool] WARN: " __VA_ARGS__)
-#define LM_DBG(...) printf("[ndb_tarantool] DBG: " __VA_ARGS__)
-#define PARAM_STRING 1
-#define PARAM_INT 2
-#define SR_KEMIP_NONE 0
-#define SR_KEMIP_INT 1
-#define SR_KEMIP_STR 2
-
-typedef struct str_core
-{
-	char *s;
-	int len;
-} str;
-#define str_init(v) {(char *)(v), (int)(sizeof(v) - 1)}
-
-typedef struct param_export_s
-{
-	const char *name;
-	int type;
-	void *param_pointer;
-} param_export_t;
-typedef struct cmd_export_s
-{
-	const char *name;
-	void *function;
-	int fixup;
-	int free_fixup;
-	int flags;
-	int extra;
-} cmd_export_t;
-
-struct module_exports
-{
-	const char *name;
-	int dlflags;
-	cmd_export_t *cmds;
-	param_export_t *params;
-	void *rpc;
-	void *pvs;
-	void *resp;
-	int (*init_f)(void);
-	int (*child_init_f)(int);
-	void (*destroy_f)(void);
-};
-
-typedef struct sip_msg
-{
-	int id;
-} sip_msg_t;
-typedef struct sr_kemi_s
-{
-	str mname;
-	str fname;
-	int rtype;
-	void *func;
-	int ptypes[6];
-} sr_kemi_t;
-static inline int sr_kemi_modules_add(sr_kemi_t *k)
-{
-	(void)k;
-	return 0;
-}
-#endif
 
 #include "tarantool_client.h"
 #include "tarantool_kemi.h"

@@ -1,6 +1,6 @@
 /*
- * modules/cachedb_tarantool/msgpuck.h
- * Lightweight MessagePack encoder and decoder header for OpenSIPS cachedb_tarantool
+ * src/modules/ndb_tarantool/msgpuck.h
+ * Lightweight MessagePack encoder and decoder header for Kamailio ndb_tarantool
  */
 
 #ifndef MSGPUCK_H_INCLUDED
@@ -148,11 +148,11 @@ extern "C"
 
 	static inline uint64_t mp_decode_uint(const char **data)
 	{
-		uint8_t c = (uint8_t)*(*data)++;
+		uint8_t c = (uint8_t) * (*data)++;
 		if(c <= 0x7f)
 			return c;
 		if(c == MP_UINT8) {
-			return (uint8_t)*(*data)++;
+			return (uint8_t) * (*data)++;
 		}
 		if(c == MP_UINT16) {
 			uint16_t val = ((uint8_t)(*data)[0] << 8) | (uint8_t)(*data)[1];
@@ -179,11 +179,11 @@ extern "C"
 
 	static inline const char *mp_decode_str(const char **data, uint32_t *len)
 	{
-		uint8_t c = (uint8_t)*(*data)++;
+		uint8_t c = (uint8_t) * (*data)++;
 		if((c & 0xe0) == MP_FIXSTR) {
 			*len = c & 0x1f;
 		} else if(c == MP_STR8) {
-			*len = (uint8_t)*(*data)++;
+			*len = (uint8_t) * (*data)++;
 		} else if(c == MP_STR16) {
 			*len = ((uint8_t)(*data)[0] << 8) | (uint8_t)(*data)[1];
 			*data += 2;
@@ -202,7 +202,7 @@ extern "C"
 
 	static inline uint32_t mp_decode_array(const char **data)
 	{
-		uint8_t c = (uint8_t)*(*data)++;
+		uint8_t c = (uint8_t) * (*data)++;
 		if((c & 0xf0) == MP_FIXARRAY) {
 			return c & 0x0f;
 		} else if(c == MP_ARRAY16) {
@@ -221,7 +221,7 @@ extern "C"
 
 	static inline uint32_t mp_decode_map(const char **data)
 	{
-		uint8_t c = (uint8_t)*(*data)++;
+		uint8_t c = (uint8_t) * (*data)++;
 		if((c & 0xf0) == MP_FIXMAP) {
 			return c & 0x0f;
 		} else if(c == MP_MAP16) {
