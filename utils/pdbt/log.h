@@ -24,31 +24,30 @@
 #include <syslog.h>
 
 
-
-
 void init_log(char *_prgname, int _use_syslog);
 
 void set_log_level(int level);
 
 void destroy_log(void);
 
-void pdb_log(int priority, char * format, ...);
+void pdb_log(int priority, char *format, ...);
 
-#define LEMERG(fmt, args...) pdb_log(LOG_EMERG, fmt, ## args)
-#define LALERT(fmt, args...) pdb_log(LOG_ALERT, fmt, ## args)
-#define LCRIT(fmt, args...) pdb_log(LOG_CRIT, fmt, ## args)
-#define LERR(fmt, args...) pdb_log(LOG_ERR, fmt, ## args)
-#define LWARNING(fmt, args...) pdb_log(LOG_WARNING, fmt, ## args)
-#define LNOTICE(fmt, args...) pdb_log(LOG_NOTICE, fmt, ## args)
-#define LINFO(fmt, args...) pdb_log(LOG_INFO, fmt, ## args)
-#define LDEBUG(fmt, args...) pdb_log(LOG_DEBUG, fmt, ## args)
+#define LEMERG(fmt, args...) pdb_log(LOG_EMERG, fmt, ##args)
+#define LALERT(fmt, args...) pdb_log(LOG_ALERT, fmt, ##args)
+#define LCRIT(fmt, args...) pdb_log(LOG_CRIT, fmt, ##args)
+#define LERR(fmt, args...) pdb_log(LOG_ERR, fmt, ##args)
+#define LWARNING(fmt, args...) pdb_log(LOG_WARNING, fmt, ##args)
+#define LNOTICE(fmt, args...) pdb_log(LOG_NOTICE, fmt, ##args)
+#define LINFO(fmt, args...) pdb_log(LOG_INFO, fmt, ##args)
+#define LDEBUG(fmt, args...) pdb_log(LOG_DEBUG, fmt, ##args)
 
 /* several shell exit codes for the application pdbt */
 
-#define PDB_OK 0              /* Everything ok */
-#define PDB_USE_ERROR 1       /* Wrong usage of application (unknown command, file not found, etc.) */
-#define PDB_NOT_IN_PDB 2      /* A queried number is not in the pdb */
-#define PDB_TIMEOUT 3         /* A timeout (server not responding) occurred */
-#define PDB_OTHER 4           /* Another application error occurred */
+#define PDB_OK 0 /* Everything ok */
+#define PDB_USE_ERROR \
+	1 /* Wrong usage of application (unknown command, file not found, etc.) */
+#define PDB_NOT_IN_PDB 2 /* A queried number is not in the pdb */
+#define PDB_TIMEOUT 3	 /* A timeout (server not responding) occurred */
+#define PDB_OTHER 4		 /* Another application error occurred */
 
 #endif

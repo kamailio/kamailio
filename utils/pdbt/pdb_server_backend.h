@@ -22,11 +22,7 @@
 #define _PDB_SERVER_BACKEND_H_
 
 
-
-
 #include "common.h"
-
-
 
 
 /*
@@ -40,8 +36,6 @@ int init_backend(char *filename);
  Returns 0 if not found.
 */
 carrier_t lookup_number(char *number);
-
-
 
 
 #endif

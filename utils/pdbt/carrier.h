@@ -22,11 +22,7 @@
 #define _CARRIER_H_
 
 
-
-
 #include "common.h"
-
-
 
 
 /*
@@ -47,8 +43,6 @@ int load_carrier_names(char *filename);
   Always returns a string, even if id is invalid or the id is unknown.
 */
 char *carrierid2name(carrier_t carrier);
-
-
 
 
 #endif
