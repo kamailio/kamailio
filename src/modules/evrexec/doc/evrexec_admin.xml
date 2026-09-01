@@ -67,7 +67,7 @@
 		<itemizedlist>
 		<listitem>
 		<para>
-		"name=_string_;wait=_number_;workers=_number_;sockaddr=_udp_socket_"
+		"name=_string_;wait=_number_;workers=_number_;sockaddr=_udp_socket_;watch=_file_path_"
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -81,8 +81,9 @@
 			<emphasis>name</emphasis> - name of the event route to be executed.
 			When used with a KEMI embedded language, this has to be the name
 			of a function from the KEMI script. The function must have a
-			string parameter, which will retrieve the index of the works in
-			string format.
+			string parameter. It receives the worker index for a startup task,
+			the local socket for a UDP task, or the watched file path for a
+			file watch task.
 		</para>
 		</listitem>
 		<listitem>
@@ -90,13 +91,24 @@
 			<emphasis>workers</emphasis> - if set to 0 or 1 the task is executed
 			in a dedicated process. Any number > 1 will create more dedicated
 			processes, each of them executing the startup task. For UDP data
-			execution (when 'sockaddr' is set), only 1 worker process is created.
+			execution (when 'sockaddr' is set) and file watch execution (when
+			'watch' is set), only 1 worker process is created.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
 			<emphasis>wait</emphasis> - timer interval in micro-seconds to wait
-			inside the dedicated process before executing the task.
+			inside the dedicated process before executing the task. When
+			<emphasis>watch</emphasis> is set, it specifies the interval between
+			checks and must be greater than 0.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>watch</emphasis> - path of a file to monitor. Its initial
+			metadata is recorded at startup and the event route is executed when
+			the file changes. It cannot be used together with
+			<emphasis>sockaddr</emphasis>.
 		</para>
 		</listitem>
 		<listitem>
@@ -119,6 +131,7 @@
 ...
 modparam("evrexec", "exec", "name=evrexec:timer;wait=1000;workers=1;")
 modparam("evrexec", "exec", "name=evrexec:udp;sockaddr=udp:127.0.0.1:4444;workers=1;")
+modparam("evrexec", "exec", "name=evrexec:watch;watch=/tmp/evrexec.watch;wait=1000000;")
 ...
 event_route[evrexec:timer] {
   $var(x) = 0;
@@ -131,6 +144,10 @@ event_route[evrexec:timer] {
 
 event_route[evrexec:udp] {
   xinfo("udp socket data: [$evr(data)] from [$evr(srcip)]\n");
+}
+
+event_route[evrexec:watch] {
+  xinfo("watched file changed\n");
 }
 
 ...
@@ -178,4 +195,3 @@ kamctl rpc evroute.run evroute:test mydata
 	</section>
 	</section>
 </chapter>
-
