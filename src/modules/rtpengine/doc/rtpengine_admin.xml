@@ -803,7 +803,6 @@ modparam("rtpengine", "media_duration", "$avp(MEDIA_DURATION)")
 		</example>
 	</section>
 
-
 	<section id="rtpengine.p.stats_reply_pv">
 		<title><varname>stats_reply_pv</varname> (string)</title>
 		<para>
@@ -838,7 +837,6 @@ modparam("rtpengine", "stats_reply_pv", "$avp(RTPENGINE_STATS_REPLY)")
 </programlisting>
 		</example>
 	</section>
-
 
 	<section id="rtpengine.p.mos_min_pv">
 		<title><varname>mos_min_pv</varname> (string)</title>
@@ -960,7 +958,6 @@ modparam("rtpengine", "mos_min_roundtrip_pv", "$avp(mos_min_roundtrip)")
 </programlisting>
 		</example>
 	</section>
-
 
 	<section id="rtpengine.p.mos_max_pv">
 		<title><varname>mos_max_pv</varname> (string)</title>
@@ -2427,7 +2424,7 @@ modparam("rtpengine", "wsapi", "lwsc")
 		</para>
 		<example>
 		<title>Set <varname>dtmf_events_sock</varname> parameter</title>
-		<programlisting format="linespecific">
+<programlisting format="linespecific">
 ...
 modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
 ...
@@ -2449,7 +2446,7 @@ modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
 		</para>
 		<example>
 		<title>Set <varname>ping_mode</varname> parameter</title>
-		<programlisting format="linespecific">
+<programlisting format="linespecific">
 ...
 modparam("rtpengine", "ping_mode", 0)
 ...
@@ -2457,115 +2454,114 @@ modparam("rtpengine", "ping_mode", 0)
 		</example>
 	</section>
 
-	</section>
-
-<section id="rtpengine.p.ping_interval">
-	<title><varname>ping_interval</varname> (integer)</title>
-	<para>
-		Specify the interval in seconds between pings to all rtpengines registered.
-	</para>
-	<para>
-		<emphasis>
-			Default value is <quote>60</quote>.
-		</emphasis>
-	</para>
-	<example>
-	<title>Set <varname>ping_interval</varname> parameter</title>
-	<programlisting format="linespecific">
+	<section id="rtpengine.p.ping_interval">
+		<title><varname>ping_interval</varname> (integer)</title>
+		<para>
+			Specify the interval in seconds between pings to all rtpengines registered.
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>60</quote>.
+			</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ping_interval</varname> parameter</title>
+<programlisting format="linespecific">
 ...
 modparam("rtpengine", "ping_interval", 10)
 ...
-	</programlisting>
-	</example>
-</section>
+</programlisting>
+		</example>
+	</section>
 
-<section id="rtpengine.p.enable_dmq">
-	<title><varname>enable_dmq</varname> (integer)</title>
-	<para>
-		If set to 1, will enable DMQ replication of hashtable of (callid, node) pairs.
-	</para>
-	<para>
-	<emphasis>
-		Important: If this parameter is enabled, the DMQ module must be loaded first - otherwise, startup will fail.
-	</emphasis>
-	</para>
-	<para>
+	<section id="rtpengine.p.enable_dmq">
+		<title><varname>enable_dmq</varname> (integer)</title>
+		<para>
+			If set to 1, will enable DMQ replication of hashtable of (callid, node) pairs.
+		</para>
+		<para>
 		<emphasis>
-			Default value is <quote>0</quote>.
+			Important: If this parameter is enabled, the DMQ module must be loaded first - otherwise, startup will fail.
 		</emphasis>
-	</para>
-	<example>
-	<title>Set <varname>enable_dmq</varname> parameter</title>
-	<programlisting format="linespecific">
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>0</quote>.
+			</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_dmq</varname> parameter</title>
+<programlisting format="linespecific">
 ...
 modparam("rtpengine", "enable_dmq", 1)
 ...
-	</programlisting>
-	</example>
-</section>
+</programlisting>
+		</example>
+	</section>
 
-<section id="rtpengine.p.dtmf_event_source_label">
-	<title><varname>dtmf_event_source_label</varname> (str)</title>
-	<para>
-	</para>
-</section>
+	<section id="rtpengine.p.dtmf_event_source_label">
+		<title><varname>dtmf_event_source_label</varname> (str)</title>
+		<para>
+		</para>
+	</section>
 
-<section id="rtpengine.p.dtmf_event_tags">
-	<title><varname>dtmf_event_tags</varname> (str)</title>
-	<para>
-	</para>
-</section>
+	<section id="rtpengine.p.dtmf_event_tags">
+		<title><varname>dtmf_event_tags</varname> (str)</title>
+		<para>
+		</para>
+	</section>
 
-<section id="rtpengine.p.dtmf_event_type">
-	<title><varname>dtmf_event_type</varname> (str)</title>
-	<para>
-	</para>
-</section>
+	<section id="rtpengine.p.dtmf_event_type">
+		<title><varname>dtmf_event_type</varname> (str)</title>
+		<para>
+		</para>
+	</section>
 
-<section id="rtpengine.p.dtmf_event_source_ip">
-	<title><varname>dtmf_event_source_ip</varname> (str)</title>
-	<para>
-	</para>
-</section>
+	<section id="rtpengine.p.dtmf_event_source_ip">
+		<title><varname>dtmf_event_source_ip</varname> (str)</title>
+		<para>
+		</para>
+	</section>
 
-<section id="rtpengine.p.dtmf_event_duration">
-	<title><varname>dtmf_event_duration</varname> (str)</title>
-	<para>
-	</para>
-</section>
+	<section id="rtpengine.p.dtmf_event_duration">
+		<title><varname>dtmf_event_duration</varname> (str)</title>
+		<para>
+		</para>
+	</section>
 
-<section id="rtpengine.p.dtmf_event_volume">
-	<title><varname>dtmf_event_volume</varname> (str)</title>
-	<para>
-	</para>
-</section>
+	<section id="rtpengine.p.dtmf_event_volume">
+		<title><varname>dtmf_event_volume</varname> (str)</title>
+		<para>
+		</para>
+	</section>
 
-<section id="rtpengine.p.event_callback">
-	<title><varname>event_callback</varname> (str)</title>
-	<para>
-	</para>
-</section>
+	<section id="rtpengine.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+		</para>
+	</section>
 
-<section id="rtpengine.p.dmq_peer_id">
-	<title><varname>dmq_peer_id</varname> (string)</title>
-	<para>
-		The DMQ peer identifier for rtpengine replication. This allows
-		customizing the peer name used in DMQ communication, which can be useful
-		to avoid compatibility conflicts, and for a better partitioning.
-	</para>
-	<para>
-	<emphasis>
-		Default value is <quote>rtpengine</quote>.
-	</emphasis>
-	</para>
-	<example>
-	<title>Set <varname>dmq_peer_id</varname> parameter</title>
-	<programlisting format="linespecific">
+	<section id="rtpengine.p.dmq_peer_id">
+		<title><varname>dmq_peer_id</varname> (string)</title>
+		<para>
+			The DMQ peer identifier for rtpengine replication. This allows
+			customizing the peer name used in DMQ communication, which can be useful
+			to avoid compatibility conflicts, and for a better partitioning.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>rtpengine</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dmq_peer_id</varname> parameter</title>
+<programlisting format="linespecific">
 ...
 modparam("rtpengine", "dmq_peer_id", "rtpengine_6.1.1")
 ...
 </programlisting>
-	</example>
+		</example>
+	</section>
 </section>
 
 	<section>
