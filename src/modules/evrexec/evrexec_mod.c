@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "../../core/sr_module.h"
@@ -48,6 +49,8 @@ typedef struct evrexec_task
 	int rtid;
 	str sockaddr;
 	int sockfd;
+	str watch;
+	struct stat watch_stat;
 	unsigned int wait;
 	unsigned int workers;
 	struct evrexec_task *next;
@@ -72,6 +75,7 @@ static int child_init(int);
 int evrexec_param(modparam_t type, void *val);
 void evrexec_process_start(evrexec_task_t *it, int idx);
 void evrexec_process_socket(evrexec_task_t *it, int idx);
+void evrexec_process_watch(evrexec_task_t *it, int idx);
 
 static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_evr_name(pv_spec_p sp, str *in);
@@ -130,6 +134,11 @@ static int mod_init(void)
 	/* register additional processes */
 	it = _evrexec_list;
 	while(it) {
+		if(it->watch.len > 0 && stat(it->watch.s, &it->watch_stat) < 0) {
+			LM_ERR("failed to stat watch file: %.*s (%d/%s)\n", it->watch.len,
+					it->watch.s, errno, strerror(errno));
+			return -1;
+		}
 		register_procs(it->workers);
 		it = it->next;
 	}
@@ -161,6 +170,10 @@ static int child_init(int rank)
 						"EVREXEC child=%d exec=%.*s socket=%.*s", i,
 						it->ename.len, it->ename.s, it->sockaddr.len,
 						it->sockaddr.s);
+			} else if(it->watch.len > 0) {
+				snprintf(si_desc, MAX_PT_DESC,
+						"EVREXEC child=%d exec=%.*s watch=%.*s", i,
+						it->ename.len, it->ename.s, it->watch.len, it->watch.s);
 			} else {
 				snprintf(si_desc, MAX_PT_DESC, "EVREXEC child=%d exec=%.*s", i,
 						it->ename.len, it->ename.s);
@@ -176,6 +189,8 @@ static int child_init(int rank)
 
 				if(it->sockaddr.len > 0) {
 					evrexec_process_socket(it, i);
+				} else if(it->watch.len > 0) {
+					evrexec_process_watch(it, i);
 				} else {
 					evrexec_process_start(it, i);
 				}
@@ -219,6 +234,50 @@ void evrexec_process_start(evrexec_task_t *it, int idx)
 	/* avoid exiting the process */
 	while(1) {
 		sleep(3600);
+	}
+}
+
+/**
+ *
+ */
+void evrexec_process_watch(evrexec_task_t *it, int idx)
+{
+	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	struct stat watch_stat;
+
+	while(1) {
+		sleep_us(it->wait);
+		if(stat(it->watch.s, &watch_stat) < 0) {
+			LM_ERR("failed to stat watch file: %.*s (%d/%s)\n", it->watch.len,
+					it->watch.s, errno, strerror(errno));
+			continue;
+		}
+		if(watch_stat.st_mtime == it->watch_stat.st_mtime
+				&& watch_stat.st_ctime == it->watch_stat.st_ctime
+				&& watch_stat.st_size == it->watch_stat.st_size
+				&& watch_stat.st_ino == it->watch_stat.st_ino
+				&& watch_stat.st_dev == it->watch_stat.st_dev) {
+			continue;
+		}
+		it->watch_stat = watch_stat;
+
+		fmsg = faked_msg_next();
+		set_route_type(LOCAL_ROUTE);
+		keng = sr_kemi_eng_get();
+		if(keng == NULL) {
+			if(it->rtid >= 0 && event_rt.rlist[it->rtid] != NULL) {
+				run_top_route(event_rt.rlist[it->rtid], fmsg, 0);
+			} else {
+				LM_WARN("empty event route block [%.*s]\n", it->ename.len,
+						it->ename.s);
+			}
+		} else {
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &it->ename, &it->watch)
+					< 0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
 	}
 }
 
@@ -374,6 +433,14 @@ int evrexec_param(modparam_t type, void *val)
 		} else if(pit->name.len == 8
 				  && strncasecmp(pit->name.s, "sockaddr", 8) == 0) {
 			tmp.sockaddr = pit->body;
+		} else if(pit->name.len == 5
+				  && strncasecmp(pit->name.s, "watch", 5) == 0) {
+			if(pit->body.len <= 0) {
+				LM_ERR("invalid watch path\n");
+				free_params(params_list);
+				return -1;
+			}
+			tmp.watch = pit->body;
 
 		} else {
 			LM_ERR("invalid attribute: %.*s=%.*s\n", pit->name.len, pit->name.s,
@@ -400,6 +467,20 @@ int evrexec_param(modparam_t type, void *val)
 			return -1;
 		}
 	}
+	if(tmp.watch.len > 0) {
+		if(tmp.sockaddr.len > 0) {
+			LM_ERR("watch and sockaddr attributes cannot be used together\n");
+			free_params(params_list);
+			return -1;
+		}
+		if(tmp.wait == 0) {
+			LM_ERR("wait must be greater than 0 when watch is set\n");
+			free_params(params_list);
+			return -1;
+		}
+		/* stat() needs a zero-terminated path */
+		tmp.watch.s[tmp.watch.len] = '\0';
+	}
 	/* set '\0' at the end of route name */
 	tmp.ename.s[tmp.ename.len] = '\0';
 	keng = sr_kemi_eng_get();
@@ -424,7 +505,7 @@ int evrexec_param(modparam_t type, void *val)
 	it->sockfd = -1;
 	if(it->workers == 0)
 		it->workers = 1;
-	if(it->sockaddr.len > 0)
+	if(it->sockaddr.len > 0 || it->watch.len > 0)
 		it->workers = 1;
 	it->next = _evrexec_list;
 	_evrexec_list = it;
