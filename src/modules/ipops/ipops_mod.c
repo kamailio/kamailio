@@ -108,6 +108,7 @@ static int w_dns_sys_match_ip(sip_msg_t *, char *, char *);
 static int w_dns_int_match_ip(sip_msg_t *, char *, char *);
 static int fixup_detailed_ip_type(void **param, int param_no);
 static int fixup_free_detailed_ip_type(void **param, int param_no);
+static int w_dns_reinit(sip_msg_t *msg, char *str1, char *str2);
 static int w_dns_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_ptr_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_srv_query(sip_msg_t *msg, char *str1, char *str2);
@@ -174,6 +175,7 @@ static cmd_export_t cmds[] = {
 			fixup_free_spve_spve, ANY_ROUTE},
 	{"dns_set_local_ttl", (cmd_function)w_dns_set_local_ttl, 1,
 			fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"dns_reinit", (cmd_function)w_dns_reinit, 0, 0, 0, ANY_ROUTE},
 
 	{"bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
 
@@ -1262,6 +1264,19 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	}
 
 	return ki_dns_int_match_ip(msg, &hns, &ips);
+}
+
+/**
+ *
+ */
+static int w_dns_reinit(sip_msg_t *msg, char *str1, char *str2)
+{
+	str gname = str_init("core");
+	str aname = str_init("dns_reinit");
+
+	resolv_reinit(&gname, &aname);
+
+	return 1;
 }
 
 /**
