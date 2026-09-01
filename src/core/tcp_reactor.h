@@ -27,10 +27,12 @@
 #include "tcp_cond.h" /* tcp_cond_t (pulls in <pthread.h>) - mode 2 thread pool */
 #include "tcp_mtops.h" /* tcpx_task_t - carried by TCP_R_RUN jobs */
 
+/* TCP reactor implementation for tcp_main_threads = 2 mode */
+
 struct tcp_connection;
 
 /*
- * Task dispatched from PROC_TCP_MAIN to a TCP worker (mode 2).
+ * Task dispatched from PROC_TCP_MAIN to a TCP worker.
  *
  * Allocated in shared memory with the message buffer inline:
  *   shm_malloc(sizeof(tcp_reactor_task_t) + msg_len + 1)
@@ -56,7 +58,7 @@ typedef struct tcp_reactor_task
 } tcp_reactor_task_t;
 
 /*
- * Write request sent from a TCP worker to PROC_TCP_MAIN (mode 2).
+ * Write request sent from a TCP worker to PROC_TCP_MAIN.
  *
  * Allocated in shared memory by the worker in tcp_send(); the pointer is
  * passed to tcp_main via pt[process_no].unix_sock as response[0] with
@@ -73,7 +75,7 @@ typedef struct tcp_reactor_write_req
 } tcp_reactor_write_req_t;
 
 /*
- * Connect request sent from a TCP worker to PROC_TCP_MAIN (mode 2) when no
+ * Connect request sent from a TCP worker to PROC_TCP_MAIN when no
  * struct tcp_connection exists
  * - the worker does not perform the connect.
  * - tcp_main performs socket()/connect(), creates the struct tcp_connection,
@@ -96,13 +98,13 @@ typedef struct tcp_reactor_connect_req
 
 /* Allocate a tcp_reactor_task_t in shm, copy buf+rcv+flags into it, and write
  * the pointer to the dispatch socketpair write end. Called from
- * PROC_TCP_MAIN in mode 2 wherever receive_tcp_msg() would be called. flags
+ * PROC_TCP_MAIN wherever receive_tcp_msg() would be called. flags
  * carries the framing discriminator (e.g. F_TCP_REQ_HEP3) the worker uses to
  * pick the message entry point. */
 int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 		struct receive_info *rcv);
 
-/* Dispatch a tls:connection-out event to a TCP worker (mode 2).
+/* Dispatch a tls:connection-out event to a TCP worker.
  * Takes a refcnt on c, allocates a F_TCP_REQ_TLS_EVENT
  * task in shm carrying c, and writes the pointer to the dispatch socket.
  * The worker runs the route and hands the refcnt back via CONN_TLS_EVENT_DONE.
@@ -145,8 +147,6 @@ void tcp_reactor_pool_destroy(void);
 int tcp_reactor_dsock_init(void);
 
 /* =========================================================================
- * tcp_main_threads == 2
- *
  * PROC_TCP_MAIN/io_wait owns all sockets. Pool threads only run read/write
  * callbacks on connections handed to them, then signal completion over a
  * notify pipe. The io_wait thread shields the conn and enqueues read/write
