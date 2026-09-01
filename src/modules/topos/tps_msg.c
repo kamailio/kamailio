@@ -373,9 +373,9 @@ static int tps_unmask_refer_to(
 		return -1;
 	}
 
-	vuri.s = (char*)shm_malloc(nuri.len + 1);
+	vuri.s = (char*)pkg_malloc(nuri.len + 1);
 	if(vuri.s == NULL) {
-		SHM_MEM_ERROR;
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(vuri.s, nuri.s, nuri.len);
@@ -391,13 +391,13 @@ static int tps_unmask_refer_to(
 	l = del_lump(msg, uri->s - msg->buf, ulen, 0);
 	if(l == 0) {
 		LM_ERR("failed deleting Refer-To uri\n");
-		shm_free(vuri.s);
+		pkg_free(vuri.s);
 		return -1;
 	}
 
 	if(insert_new_lump_after(l, nuri.s, nuri.len, 0) == 0) {
 		LM_ERR("could not insert new Refer-To uri\n");
-		shm_free(vuri.s);
+		pkg_free(vuri.s);
 		return -1;
 	}
 
