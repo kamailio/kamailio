@@ -41,11 +41,12 @@ Iñaki Baz Castillo
               4.13. is_in_subnet (ip, subnets_list)
               4.14. dns_sys_match_ip(hostname, ipaddr)
               4.15. dns_int_match_ip(hostname, ipaddr)
-              4.16. dns_query(hostname, pvid)
-              4.17. ptr_query(ip, pvid)
-              4.18. srv_query(srvcname, pvid)
-              4.19. naptr_query(domain, pvid)
-              4.20. dns_set_local_ttl(vttl)
+              4.16. dns_reinit()
+              4.17. dns_query(hostname, pvid)
+              4.18. ptr_query(ip, pvid)
+              4.19. srv_query(srvcname, pvid)
+              4.20. naptr_query(domain, pvid)
+              4.21. dns_set_local_ttl(vttl)
 
    List of Examples
 
@@ -64,11 +65,12 @@ Iñaki Baz Castillo
    1.13. is_in_subnet usage
    1.14. dns_sys_match_ip usage
    1.15. dns_int_match_ip usage
-   1.16. dns_query usage
-   1.17. ptr_query usage
-   1.18. srv_query usage
-   1.19. naptr_query usage
-   1.20. dns_set_local_ttl usage
+   1.16. dns_reinit usage
+   1.17. dns_query usage
+   1.18. ptr_query usage
+   1.19. srv_query usage
+   1.20. naptr_query usage
+   1.21. dns_set_local_ttl usage
 
 Chapter 1. Admin Guide
 
@@ -98,11 +100,12 @@ Chapter 1. Admin Guide
         4.13. is_in_subnet (ip, subnets_list)
         4.14. dns_sys_match_ip(hostname, ipaddr)
         4.15. dns_int_match_ip(hostname, ipaddr)
-        4.16. dns_query(hostname, pvid)
-        4.17. ptr_query(ip, pvid)
-        4.18. srv_query(srvcname, pvid)
-        4.19. naptr_query(domain, pvid)
-        4.20. dns_set_local_ttl(vttl)
+        4.16. dns_reinit()
+        4.17. dns_query(hostname, pvid)
+        4.18. ptr_query(ip, pvid)
+        4.19. srv_query(srvcname, pvid)
+        4.20. naptr_query(domain, pvid)
+        4.21. dns_set_local_ttl(vttl)
 
 1. Overview
 
@@ -159,11 +162,12 @@ Chapter 1. Admin Guide
    4.13. is_in_subnet (ip, subnets_list)
    4.14. dns_sys_match_ip(hostname, ipaddr)
    4.15. dns_int_match_ip(hostname, ipaddr)
-   4.16. dns_query(hostname, pvid)
-   4.17. ptr_query(ip, pvid)
-   4.18. srv_query(srvcname, pvid)
-   4.19. naptr_query(domain, pvid)
-   4.20. dns_set_local_ttl(vttl)
+   4.16. dns_reinit()
+   4.17. dns_query(hostname, pvid)
+   4.18. ptr_query(ip, pvid)
+   4.19. srv_query(srvcname, pvid)
+   4.20. naptr_query(domain, pvid)
+   4.21. dns_set_local_ttl(vttl)
 
 4.1.  is_ip (ip)
 
@@ -507,7 +511,19 @@ if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
 }
 ...
 
-4.16.  dns_query(hostname, pvid)
+4.16.  dns_reinit()
+
+   Trigger a libc DNS API reinit, similar to "rpc cfg.seti core dns_reinit
+   1".
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16.  dns_reinit usage
+...
+dns_reinit();
+...
+
+4.17.  dns_query(hostname, pvid)
 
    Store the IP addresses and their type that correspond to hostname in a
    config variable $dns(pvid=>key).
@@ -519,7 +535,7 @@ if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.16.  dns_query usage
+   Example 1.17.  dns_query usage
 ...
 if(dns_query("test.com", "xyz"))
 {
@@ -535,7 +551,7 @@ if(dns_query("test.com", "xyz"))
 }
 ...
 
-4.17.  ptr_query(ip, pvid)
+4.18.  ptr_query(ip, pvid)
 
    Store the hostname that correspond to an IP address (IPv4 or IPv6) in a
    pseudo-variable variable $ptrquery(pvid=>hostname).
@@ -554,7 +570,7 @@ if(dns_query("test.com", "xyz"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17.  ptr_query usage
+   Example 1.18.  ptr_query usage
 ...
 if(ptr_query("8.8.8.8","ip4"))
 {
@@ -567,7 +583,7 @@ if(ptr_query("8.8.8.8","ip4"))
 }
 ...
 
-4.18.  srv_query(srvcname, pvid)
+4.19.  srv_query(srvcname, pvid)
 
    Queries DNS SRV records to resolve a service/protocol name into a list
    of priorities, weights, ports, and targets sorted by priority and
@@ -593,7 +609,7 @@ if(ptr_query("8.8.8.8","ip4"))
      * target [index] - target host name
      * weight [index] - weight number as defined by RFC 2782
 
-   Example 1.18.  srv_query usage
+   Example 1.19.  srv_query usage
 ...
 if (srv_query ("_sip._udp.example.com", "udp") > 0) {
   $var(cnt) = $srvquery(udp=>count);
@@ -608,7 +624,7 @@ if (srv_query ("_sip._udp.example.com", "udp") > 0) {
 }
 ...
 
-4.19.  naptr_query(domain, pvid)
+4.20.  naptr_query(domain, pvid)
 
    Queries DNS NAPTR records to resolve a domain name into a list of
    orders, preferences, flags, services, regex, replaces sorted by orders
@@ -636,7 +652,7 @@ if (srv_query ("_sip._udp.example.com", "udp") > 0) {
      * regex [index] - regular expression
      * replace [index] - replace
 
-   Example 1.19.  naptr_query usage
+   Example 1.20.  naptr_query usage
 ...
 if (naptr_query ("example.com", "res") > 0) {
   $var(cnt) = $naptrquery(res=>count);
@@ -653,7 +669,7 @@ if (naptr_query ("example.com", "res") > 0) {
 }
 ...
 
-4.20.  dns_set_local_ttl(vttl)
+4.21.  dns_set_local_ttl(vttl)
 
    Set local ttl for DNS query results. If vttl is 0, then the value of
    the result and the core parameters are used.
@@ -664,7 +680,7 @@ if (naptr_query ("example.com", "res") > 0) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20.  dns_set_local_ttl usage
+   Example 1.21.  dns_set_local_ttl usage
 ...
   dns_set_local_ttl("7200");
   dns_query("test.com", "xyz")
