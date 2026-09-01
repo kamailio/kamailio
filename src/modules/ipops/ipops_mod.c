@@ -49,6 +49,8 @@
 #include "../../core/dns_cache.h"
 #include "../../core/lvalue.h"
 #include "../../core/kemi.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 #include "api.h"
 #include "ipops_pv.h"
 #include "ip_parser.h"
@@ -57,6 +59,7 @@
 
 MODULE_VERSION
 
+static cfg_ctx_t *_ipops_cfg_ctx = NULL;
 
 /*
  * Module parameter variables
@@ -201,10 +204,16 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
+	if(cfg_register_ctx(&_ipops_cfg_ctx, NULL)) {
+		LM_ERR(" failed to register cfg context\n");
+		return -1;
+	}
+
 	/* turn detailed_ip_type relevant structures to netowork byte order
 	 * so no need to transform each ip to host order before comparing */
 	ipv4ranges_hton();
 	ipv6ranges_hton();
+
 	return 0;
 }
 
@@ -1272,9 +1281,18 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 static int w_dns_reinit(sip_msg_t *msg, char *str1, char *str2)
 {
 	str gname = str_init("core");
-	str aname = str_init("dns_reinit");
+	str vname = str_init("dns_reinit");
+	unsigned int *groupid = NULL;
 
-	resolv_reinit(&gname, &aname);
+	if(cfg_get_group_id(&gname, &groupid)) {
+		LM_ERR("failed to get group id\n");
+		return -1;
+	}
+
+	if(cfg_set_now_int(_ipops_cfg_ctx, &gname, groupid, &vname, 1)) {
+		LM_ERR("failed to mark libc DNS API to reinitialize\n");
+		return -1;
+	}
 
 	return 1;
 }
