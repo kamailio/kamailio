@@ -1394,7 +1394,7 @@ int tcp_reactor_pool_init(void)
 {
 	int i;
 
-	LM_WARN("TCP reactor: using %d threads\n", ksr_tcp_reactor_threads);
+	LM_INFO("TCP reactor: using %d threads\n", ksr_tcp_reactor_threads);
 
 	/* pool_init() runs on PROC_TCP_MAIN's io_wait/main thread; name it here (pool
 	 * threads name themselves in tcp_reactor_thread_routine). OS thread comm only,
