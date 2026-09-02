@@ -3983,13 +3983,20 @@ int ds_get_ping_rplcodes(int group, str *address, str *iuid, int **pcodes)
 	ds_set_t *idx = NULL;
 	str *fmatch;
 	str *vmatch;
+	ds_list_t *list;
+
+	list = ds_get_list();
+	if(list == NULL || list->nr <= 0) {
+		LM_ERR("the list is null\n");
+		goto finish;
+	}
+
+	/* get the index of the set */
+	if(ds_get_index(group, list, &idx) != 0) {
+		LM_ERR("destination set [%d] not found\n", group);
+	}
 
 	*pcodes = NULL;
-	if(_ds_list == NULL || _ds_list_nr <= 0)
-		return 0;
-
-	if(ds_get_index(group, *ds_crt_idx, &idx) != 0)
-		return 0;
 
 	while(i < idx->nr) {
 		if(iuid != NULL && iuid->s != NULL && iuid->len > 0) {
@@ -4002,10 +4009,14 @@ int ds_get_ping_rplcodes(int group, str *address, str *iuid, int **pcodes)
 		if(fmatch->len == vmatch->len
 				&& strncasecmp(fmatch->s, vmatch->s, vmatch->len) == 0) {
 			*pcodes = idx->dlist[i].attrs.ping_reply_codes;
+			ds_put_list(list);
 			return idx->dlist[i].attrs.ping_reply_codes_cnt;
 		}
 		i++;
 	}
+
+finish:
+	ds_put_list(list);
 	return 0;
 }
 
