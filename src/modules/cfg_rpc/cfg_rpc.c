@@ -613,7 +613,8 @@ static void rpc_del_group_inst(rpc_t *rpc, void *c)
 }
 
 /* clang-format off */
-static rpc_export_t rpc_calls[] = {{"cfg.set", rpc_set, rpc_set_now_doc, 0},
+static rpc_export_t rpc_calls[] = {
+	{"cfg.set", rpc_set, rpc_set_now_doc, 0},
 	{"cfg.set_now_int", rpc_set_now_int, rpc_set_now_doc, 0},
 	{"cfg.seti", rpc_set_now_int, rpc_set_now_doc, 0},
 	{"cfg.set_now_string", rpc_set_now_string, rpc_set_now_doc, 0},
