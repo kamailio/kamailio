@@ -25,6 +25,7 @@
  */
 
 #include "../../core/sr_module.h"
+#include "../../core/mod_fix.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/cfg/cfg_ctx.h"
 #include "../../core/rpc.h"
@@ -32,6 +33,17 @@
 MODULE_VERSION
 
 static cfg_ctx_t *_cfg_rpc_ctx = NULL;
+
+static int w_cfg_rpc_seti(sip_msg_t *msg, char *pgname, char *pvname, char *pival);
+
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"cfg_rpc_seti", (cmd_function)w_cfg_rpc_seti, 3,
+		fixup_spve_spve_igp, fixup_free_spve_spve_igp, ANY_ROUTE},
+
+	{0, 0, 0, 0, 0, 0}
+};
+/* clang-format on */
 
 /* module initialization function */
 static int mod_init(void)
@@ -42,6 +54,42 @@ static int mod_init(void)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+static int w_cfg_rpc_seti(sip_msg_t *msg, char *pgname, char *pvname, char *pival)
+{
+	str gname;
+	str vname;
+	int ival;
+	unsigned int *groupid;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pgname, &gname)) {
+		LM_ERR("cannot get the group parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pvname, &vname)) {
+		LM_ERR("cannot get the variable parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pival, &ival)) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+
+	if(cfg_get_group_id(&gname, &groupid)) {
+		LM_ERR("cannot get the group id\n");
+		return -1;
+	}
+	if(cfg_set_now_int(_cfg_rpc_ctx, &gname, groupid, &vname, ival)) {
+		LM_ERR("cannot set the value\n");
+		return -1;
+	}
+
+	return 1;
 }
 
 static const char *rpc_set_now_doc[2] = {
@@ -642,7 +690,7 @@ static rpc_export_t rpc_calls[] = {
 struct module_exports exports = {
 	"cfg_rpc",
 	DEFAULT_DLFLAGS,	/* dlopen flags */
-	0,					/* exported functions */
+	cmds,				/* exported functions */
 	0,					/* exported parameters */
 	rpc_calls,			/* RPC methods */
 	0,					/* exported pseudo-variables */
