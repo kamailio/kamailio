@@ -316,9 +316,9 @@ static int sipt_get_calling_party_nai(
 static int sipt_get_calling_party(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	static char sb_s_buf[26];
+	static char sb_s_buf[MAX_SB_BUF_LEN];
 	str body;
-	memset(sb_s_buf, 0, 26);
+	memset(sb_s_buf, 0, MAX_SB_BUF_LEN);
 
 	if(sipt_check_IAM(msg, &body) != 1) {
 		LM_INFO("could not check IAM\n");
@@ -366,9 +366,9 @@ static int sipt_get_redirection_number_nai(
 static int sipt_get_redirection_number(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	static char sb_s_buf[26];
+	static char sb_s_buf[MAX_SB_BUF_LEN];
 	str body;
-	memset(sb_s_buf, 0, 26);
+	memset(sb_s_buf, 0, MAX_SB_BUF_LEN);
 	if(sipt_check_ACM_CPG(msg, &body) != 1) {
 		LM_INFO("could not check ACM or CPG\n");
 		return -1;
@@ -433,9 +433,9 @@ static int sipt_get_redirecting_number_nai(
 static int sipt_get_redirecting_number(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	static char sb_s_buf[26];
+	static char sb_s_buf[MAX_SB_BUF_LEN];
 	str body;
-	memset(sb_s_buf, 0, 26);
+	memset(sb_s_buf, 0, MAX_SB_BUF_LEN);
 
 	if(sipt_check_IAM(msg, &body) != 1) {
 		LM_INFO("could not check IAM\n");
@@ -471,9 +471,9 @@ static int sipt_get_original_called_number_nai(
 static int sipt_get_original_called_number(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	static char sb_s_buf[26];
+	static char sb_s_buf[MAX_SB_BUF_LEN];
 	str body;
-	memset(sb_s_buf, 0, 26);
+	memset(sb_s_buf, 0, MAX_SB_BUF_LEN);
 
 	if(sipt_check_IAM(msg, &body) != 1) {
 		LM_INFO("could not check IAM\n");
@@ -509,9 +509,9 @@ static int sipt_get_generic_number_nai(
 static int sipt_get_generic_number(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	static char sb_s_buf[26];
+	static char sb_s_buf[MAX_SB_BUF_LEN];
 	str body;
-	memset(sb_s_buf, 0, 26);
+	memset(sb_s_buf, 0, MAX_SB_BUF_LEN);
 	if(sipt_check_IAM(msg, &body) != 1) {
 		LM_INFO("could not check IAM\n");
 		return -1;
@@ -595,9 +595,9 @@ static int sipt_get_called_party_nai(
 static int sipt_get_called_party(
 		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	static char sb_s_buf[26];
+	static char sb_s_buf[MAX_SB_BUF_LEN];
 	str body;
-	memset(sb_s_buf, 0, 26);
+	memset(sb_s_buf, 0, MAX_SB_BUF_LEN);
 	if(sipt_check_IAM(msg, &body) != 1) {
 		LM_INFO("could not check IAM\n");
 		return -1;
