@@ -130,7 +130,7 @@ Tyler Moore
               4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
               4.13. ds_is_active(groupid [, uri])
               4.14. ds_load_update()
-              4.15. ds_load_unset()
+              4.15. ds_load_unset([callid])
               4.16. ds_reload()
               4.17. ds_dsg_fetch(setid)
               4.18. ds_dsg_fetch_uri(setid, uri)
@@ -313,7 +313,7 @@ Chapter 1. Admin Guide
         4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
         4.13. ds_is_active(groupid [, uri])
         4.14. ds_load_update()
-        4.15. ds_load_unset()
+        4.15. ds_load_unset([callid])
         4.16. ds_reload()
         4.17. ds_dsg_fetch(setid)
         4.18. ds_dsg_fetch_uri(setid, uri)
@@ -1217,7 +1217,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
    4.13. ds_is_active(groupid [, uri])
    4.14. ds_load_update()
-   4.15. ds_load_unset()
+   4.15. ds_load_unset([callid])
    4.16. ds_reload()
    4.17. ds_dsg_fetch(setid)
    4.18. ds_dsg_fetch_uri(setid, uri)
@@ -1734,12 +1734,21 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.15.  ds_load_unset()
+4.15.  ds_load_unset([callid])
 
    Remove the call load for the destination that routed the call.
 
+   Without a parameter, the call is identified by the Call-ID of the
+   current message. The optional callid parameter (which may contain
+   pseudo-variables) identifies the call by an explicit Call-ID instead of
+   the current message, so the load can be released from a context that
+   does not carry the original Call-ID - for example the dialog:failed
+   event route, which may run with a synthetic message: passing
+   $dlg(callid) there releases the load reliably regardless of the message
+   that triggered the event.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, ONREPLY_ROUTE and EVENT_ROUTE.
 
    Example 1.63. ds_load_unset usage
 ...
@@ -1762,6 +1771,12 @@ onreply_route {
             ds_load_unset();
     }
     ...
+}
+
+event_route[dialog:failed] {
+    # release the load by the dialog Call-ID, independent of the
+    # message that triggered the event
+    ds_load_unset("$dlg(callid)");
 }
 ...
 
