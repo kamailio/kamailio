@@ -27,6 +27,7 @@
 #include "ss7.h"
 #include <string.h>
 #include <stddef.h>
+#define MAX_SB_BUF_LEN 26
 
 static char char2digit(char localchar)
 {
@@ -276,9 +277,27 @@ int isup_get_calling_party(unsigned char *buf, int len, char *sb_buf)
 
 	if(offset != -1 && len - offset - 2 > 1) {
 		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		/*+ 1 byte: param type identifier + 1 byte: param length + 2 bytes: The ISUP address header =4*/
+		if(sbparamlen <= 0 || offset + 4 + sbparamlen > len) {
+			LM_WARN("Rejected malformed ISUP parameter length. sbparamlen=%d, "
+					"offset=%d, len=%d\n",
+					sbparamlen, offset, len);
+			return -1;
+		}
 		oddeven = (buf[offset + 2] >> 7) & 0x1;
 
 		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			if(sb_i + 2 >= MAX_SB_BUF_LEN) {
+				LM_WARN("Stopped loop to prevent buffer overflow. sb_i=%d\n",
+						sb_i);
+				break;
+			}
+			if(offset + 4 + sb_j >= len) {
+				LM_WARN("Stopped loop to prevent out-of-bounds packet read. "
+						"sb_j=%d, len=%d\n",
+						sb_j, len);
+				break;
+			}
 			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
 			if(sbparamlen > 1 || oddeven == 0) {
 				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
@@ -288,7 +307,12 @@ int isup_get_calling_party(unsigned char *buf, int len, char *sb_buf)
 			sbparamlen--;
 			sb_j++;
 		}
-		sb_buf[sb_i] = '\x0';
+		// Ensure safe null-termination within bounds
+		if(sb_i < MAX_SB_BUF_LEN) {
+			sb_buf[sb_i] = '\x0';
+		} else {
+			sb_buf[MAX_SB_BUF_LEN - 1] = '\x0';
+		}
 		return 1;
 	}
 	return -1;
@@ -352,9 +376,26 @@ int isup_get_called_party(unsigned char *buf, int len, char *sb_buf)
 		return -1;
 
 	sbparamlen = (message->called_party_number[0] & 0xFF) - 2;
+	/*+ 1 byte: param type identifier + 1 byte: param length + 2 bytes: The ISUP address header =4*/
+	if(sbparamlen <= 0 || offset + 4 + sbparamlen > len) {
+		LM_WARN("Rejected malformed ISUP parameter length. sbparamlen=%d, "
+				"offset=%d, len=%d\n",
+				sbparamlen, offset, len);
+		return -1;
+	}
 	oddeven = (message->called_party_number[1] >> 7) & 0x1;
 
 	while((sbparamlen > 0) && (message->called_party_number[offset] != 0)) {
+		if(sb_i + 2 >= MAX_SB_BUF_LEN) {
+			LM_WARN("Stopped loop to prevent buffer overflow. sb_i=%d\n", sb_i);
+			break;
+		}
+		if(offset + 4 + sb_j >= len) {
+			LM_WARN("Stopped loop to prevent out-of-bounds packet read. "
+					"sb_j=%d, len=%d\n",
+					sb_j, len);
+			break;
+		}
 		sb_buf[sb_i] = "0123456789ABCDEF"[(
 				message->called_party_number[offset + sb_j] & 0x0F)];
 		if(sbparamlen > 1 || oddeven == 0) {
@@ -365,7 +406,11 @@ int isup_get_called_party(unsigned char *buf, int len, char *sb_buf)
 		sbparamlen--;
 		sb_j++;
 	}
-	sb_buf[sb_i] = '\x0';
+	if(sb_i < MAX_SB_BUF_LEN) {
+		sb_buf[sb_i] = '\x0';
+	} else {
+		sb_buf[MAX_SB_BUF_LEN - 1] = '\x0';
+	}
 	return 1;
 }
 
@@ -429,8 +474,26 @@ int isup_get_redirection_number(unsigned char *buf, int len, char *sb_buf)
 
 	if(offset != -1 && len - offset - 2 > 1) {
 		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		/*+ 1 byte: param type identifier + 1 byte: param length + 2 bytes: The ISUP address header =4*/
+		if(sbparamlen <= 0 || offset + 4 + sbparamlen > len) {
+			LM_WARN("Rejected malformed ISUP parameter length. sbparamlen=%d, "
+					"offset=%d, len=%d\n",
+					sbparamlen, offset, len);
+			return -1;
+		}
 
 		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			if(sb_i + 2 >= MAX_SB_BUF_LEN) {
+				LM_WARN("Stopped loop to prevent buffer overflow. sb_i=%d\n",
+						sb_i);
+				break;
+			}
+			if(offset + 4 + sb_j >= len) {
+				LM_WARN("Stopped loop to prevent "
+						"out-of-bounds packet read. sb_j=%d, len=%d\n",
+						sb_j, len);
+				break;
+			}
 			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
 			sb_buf[sb_i + 1] =
 					"0123456789ABCDEF"[(buf[offset + 4 + sb_j] >> 4 & 0x0F)];
@@ -438,7 +501,11 @@ int isup_get_redirection_number(unsigned char *buf, int len, char *sb_buf)
 			sbparamlen--;
 			sb_j++;
 		}
-		sb_buf[sb_i] = '\x0';
+		if(sb_i < MAX_SB_BUF_LEN) {
+			sb_buf[sb_i] = '\x0';
+		} else {
+			sb_buf[MAX_SB_BUF_LEN - 1] = '\x0';
+		}
 		return 1;
 	}
 	return -1;
@@ -484,9 +551,27 @@ int isup_get_redirecting_number(unsigned char *buf, int len, char *sb_buf)
 
 	if(offset != -1 && len - offset - 2 > 1) {
 		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		/*+ 1 byte: param type identifier + 1 byte: param length + 2 bytes: The ISUP address header =4*/
+		if(sbparamlen <= 0 || offset + 4 + sbparamlen > len) {
+			LM_WARN("Rejected malformed ISUP parameter length. sbparamlen=%d, "
+					"offset=%d, len=%d\n",
+					sbparamlen, offset, len);
+			return -1;
+		}
 		oddeven = (buf[offset + 2] >> 7) & 0x1;
 
 		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			if(sb_i + 2 >= MAX_SB_BUF_LEN) {
+				LM_WARN("Stopped loop to prevent buffer overflow. sb_i=%d\n",
+						sb_i);
+				break;
+			}
+			if(offset + 4 + sb_j >= len) {
+				LM_WARN("Stopped loop to prevent out-of-bounds packet read. "
+						"sb_j=%d, len=%d\n",
+						sb_j, len);
+				break;
+			}
 			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
 			if(sbparamlen > 1 || oddeven == 0) {
 				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
@@ -496,7 +581,11 @@ int isup_get_redirecting_number(unsigned char *buf, int len, char *sb_buf)
 			sbparamlen--;
 			sb_j++;
 		}
-		sb_buf[sb_i] = '\x0';
+		if(sb_i < MAX_SB_BUF_LEN) {
+			sb_buf[sb_i] = '\x0';
+		} else {
+			sb_buf[MAX_SB_BUF_LEN - 1] = '\x0';
+		}
 		return 1;
 	}
 	return -1;
@@ -522,9 +611,27 @@ int isup_get_original_called_number(unsigned char *buf, int len, char *sb_buf)
 
 	if(offset != -1 && len - offset - 2 > 1) {
 		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		/*+ 1 byte: param type identifier + 1 byte: param length + 2 bytes: The ISUP address header =4*/
+		if(sbparamlen <= 0 || offset + 4 + sbparamlen > len) {
+			LM_WARN("Rejected malformed ISUP parameter length. sbparamlen=%d, "
+					"offset=%d, len=%d\n",
+					sbparamlen, offset, len);
+			return -1;
+		}
 		oddeven = (buf[offset + 2] >> 7) & 0x1;
 
 		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			if(sb_i + 2 >= MAX_SB_BUF_LEN) {
+				LM_WARN("Stopped loop to prevent buffer overflow. sb_i=%d\n",
+						sb_i);
+				break;
+			}
+			if(offset + 4 + sb_j >= len) {
+				LM_WARN("Stopped loop to prevent out-of-bounds packet read. "
+						"sb_j=%d, len=%d\n",
+						sb_j, len);
+				break;
+			}
 			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
 			if(sbparamlen > 1 || oddeven == 0) {
 				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
@@ -534,7 +641,11 @@ int isup_get_original_called_number(unsigned char *buf, int len, char *sb_buf)
 			sbparamlen--;
 			sb_j++;
 		}
-		sb_buf[sb_i] = '\x0';
+		if(sb_i < MAX_SB_BUF_LEN) {
+			sb_buf[sb_i] = '\x0';
+		} else {
+			sb_buf[MAX_SB_BUF_LEN - 1] = '\x0';
+		}
 		return 1;
 	}
 	return -1;
@@ -560,9 +671,27 @@ int isup_get_generic_number(unsigned char *buf, int len, char *sb_buf)
 
 	if(offset != -1 && len - offset - 2 > 1) {
 		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		/*+ 1 byte: param type identifier + 1 byte: param length + 2 bytes: The ISUP address header =4*/
+		if(sbparamlen <= 0 || offset + 4 + sbparamlen > len) {
+			LM_WARN("Rejected malformed ISUP parameter length. sbparamlen=%d, "
+					"offset=%d, len=%d\n",
+					sbparamlen, offset, len);
+			return -1;
+		}
 		oddeven = (buf[offset + 3] >> 7) & 0x1;
 
 		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			if(sb_i + 2 >= MAX_SB_BUF_LEN) {
+				LM_WARN("Stopped loop to prevent buffer overflow. sb_i=%d\n",
+						sb_i);
+				break;
+			}
+			if(offset + 4 + sb_j >= len) {
+				LM_WARN("Stopped loop to prevent out-of-bounds packet read. "
+						"sb_j=%d, len=%d\n",
+						sb_j, len);
+				break;
+			}
 			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 5 + sb_j] & 0x0F)];
 			if(sbparamlen > 1 || oddeven == 0) {
 				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
@@ -572,7 +701,11 @@ int isup_get_generic_number(unsigned char *buf, int len, char *sb_buf)
 			sbparamlen--;
 			sb_j++;
 		}
-		sb_buf[sb_i] = '\x0';
+		if(sb_i < MAX_SB_BUF_LEN) {
+			sb_buf[sb_i] = '\x0';
+		} else {
+			sb_buf[MAX_SB_BUF_LEN - 1] = '\x0';
+		}
 		return 1;
 	}
 	return -1;
