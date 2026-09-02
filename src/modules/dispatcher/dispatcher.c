@@ -1162,8 +1162,9 @@ int ds_parse_reply_codes_list(str *input, int **pcodes)
 	int *codes_new = NULL;
 
 	*pcodes = NULL;
-	if(input == NULL || input->s == NULL || input->len <= 0)
+	if(input == NULL || input->s == NULL || input->len <= 0) {
 		return 0;
+	}
 
 	/* work on a private copy: parse_params() advances the str it is given
 	 * and modifies the buffer in place. Keep the original allocation in buf
@@ -1186,13 +1187,15 @@ int ds_parse_reply_codes_list(str *input, int **pcodes)
 	for(pit = params_list; pit; pit = pit->next) {
 		if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
 			str2sint(&pit->body, &code);
-			if((code >= 100) && (code < 700))
+			if((code >= 100) && (code < 700)) {
 				list_size += 1;
+			}
 		} else if(pit->name.len == 5
 				  && strncasecmp(pit->name.s, "class", 5) == 0) {
 			str2sint(&pit->body, &code);
-			if((code >= 1) && (code < 7))
+			if((code >= 1) && (code < 7)) {
 				list_size += 1;
+			}
 		}
 	}
 
@@ -1207,13 +1210,15 @@ int ds_parse_reply_codes_list(str *input, int **pcodes)
 		for(pit = params_list; pit; pit = pit->next) {
 			if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
 				str2sint(&pit->body, &code);
-				if((code >= 100) && (code < 700))
+				if((code >= 100) && (code < 700)) {
 					codes_new[pos++] = code;
+				}
 			} else if(pit->name.len == 5
 					  && strncasecmp(pit->name.s, "class", 5) == 0) {
 				str2sint(&pit->body, &code);
-				if((code >= 1) && (code < 7))
+				if((code >= 1) && (code < 7)) {
 					codes_new[pos++] = code;
+				}
 			}
 		}
 	}
@@ -1234,16 +1239,18 @@ static int ds_parse_reply_codes()
 	/* validate input string */
 	if(cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0
 			|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len
-					   <= 0)
+					   <= 0) {
 		return 0;
+	}
 
 	input.s = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s;
 	input.len =
 			cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len;
 
 	list_size = ds_parse_reply_codes_list(&input, &ds_ping_reply_codes_new);
-	if(list_size < 0)
+	if(list_size < 0) {
 		return -1;
+	}
 	LM_DBG("expecting %d reply codes and classes\n", list_size);
 
 	if(list_size > *ds_ping_reply_codes_cnt) {
