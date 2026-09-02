@@ -31,12 +31,12 @@
 
 MODULE_VERSION
 
-static cfg_ctx_t *ctx = NULL;
+static cfg_ctx_t *_cfg_rpc_ctx = NULL;
 
 /* module initialization function */
 static int mod_init(void)
 {
-	if(cfg_register_ctx(&ctx, NULL)) {
+	if(cfg_register_ctx(&_cfg_rpc_ctx, NULL)) {
 		LOG(L_ERR, "cfg_rpc: failed to register cfg context\n");
 		return -1;
 	}
@@ -64,7 +64,7 @@ static void rpc_set_now_int(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_set_now_int(ctx, &group, group_id, &var, i)) {
+	if(cfg_set_now_int(_cfg_rpc_ctx, &group, group_id, &var, i)) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -85,7 +85,7 @@ static void rpc_set_now_string(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_set_now_string(ctx, &group, group_id, &var, ch)) {
+	if(cfg_set_now_string(_cfg_rpc_ctx, &group, group_id, &var, ch)) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -108,9 +108,9 @@ static void rpc_set(rpc_t *rpc, void *c)
 	}
 
 	if(rpc->scan(c, "d", &i) == 1)
-		err = cfg_set_now_int(ctx, &group, group_id, &var, i);
+		err = cfg_set_now_int(_cfg_rpc_ctx, &group, group_id, &var, i);
 	else if(rpc->scan(c, "s", &ch) == 1)
-		err = cfg_set_now_string(ctx, &group, group_id, &var, ch);
+		err = cfg_set_now_string(_cfg_rpc_ctx, &group, group_id, &var, ch);
 	else
 		return; /* error */
 
@@ -138,7 +138,7 @@ static void rpc_del(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_del_now(ctx, &group, group_id, &var)) {
+	if(cfg_del_now(_cfg_rpc_ctx, &group, group_id, &var)) {
 		rpc->fault(c, 400, "Failed to delete the value");
 		return;
 	}
@@ -164,7 +164,7 @@ static void rpc_set_delayed_int(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_set_delayed_int(ctx, &group, group_id, &var, i)) {
+	if(cfg_set_delayed_int(_cfg_rpc_ctx, &group, group_id, &var, i)) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -185,7 +185,7 @@ static void rpc_set_delayed_string(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_set_delayed_string(ctx, &group, group_id, &var, ch)) {
+	if(cfg_set_delayed_string(_cfg_rpc_ctx, &group, group_id, &var, ch)) {
 		rpc->fault(c, 400, "Failed to set the variable");
 		return;
 	}
@@ -208,9 +208,9 @@ static void rpc_set_delayed(rpc_t *rpc, void *c)
 	}
 
 	if(rpc->scan(c, "d", &i) == 1)
-		err = cfg_set_delayed_int(ctx, &group, group_id, &var, i);
+		err = cfg_set_delayed_int(_cfg_rpc_ctx, &group, group_id, &var, i);
 	else if(rpc->scan(c, "s", &ch) == 1)
-		err = cfg_set_delayed_string(ctx, &group, group_id, &var, ch);
+		err = cfg_set_delayed_string(_cfg_rpc_ctx, &group, group_id, &var, ch);
 	else
 		return; /* error */
 
@@ -238,7 +238,7 @@ static void rpc_del_delayed(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_del_delayed(ctx, &group, group_id, &var)) {
+	if(cfg_del_delayed(_cfg_rpc_ctx, &group, group_id, &var)) {
 		rpc->fault(c, 400, "Failed to delete the value");
 		return;
 	}
@@ -249,7 +249,7 @@ static const char *rpc_commit_doc[2] = {
 
 static void rpc_commit(rpc_t *rpc, void *c)
 {
-	if(cfg_commit(ctx)) {
+	if(cfg_commit(_cfg_rpc_ctx)) {
 		rpc->fault(c, 400, "Failed to commit the changes");
 		return;
 	}
@@ -260,7 +260,7 @@ static const char *rpc_rollback_doc[2] = {
 
 static void rpc_rollback(rpc_t *rpc, void *c)
 {
-	if(cfg_rollback(ctx)) {
+	if(cfg_rollback(_cfg_rpc_ctx)) {
 		rpc->fault(c, 400, "Failed to drop the changes");
 		return;
 	}
@@ -299,7 +299,7 @@ static void rpc_get(rpc_t *rpc, void *c)
 				var.len, var.s);
 		/* print value for one variable */
 		val = NULL;
-		ret = cfg_get_by_name(ctx, &group, group_id, &var, &val, &val_type);
+		ret = cfg_get_by_name(_cfg_rpc_ctx, &group, group_id, &var, &val, &val_type);
 		if(ret < 0) {
 			rpc->fault(c, 400, "Failed to get the variable");
 			return;
@@ -349,7 +349,7 @@ static void rpc_get(rpc_t *rpc, void *c)
 							group.s, var.len, var.s);
 					val = NULL;
 					ret = cfg_get_by_name(
-							ctx, &group, group_id, &var, &val, &val_type);
+							_cfg_rpc_ctx, &group, group_id, &var, &val, &val_type);
 					if(ret < 0) {
 						rpc->fault(c, 400, "Failed to get the variable");
 						return;
@@ -420,12 +420,12 @@ static void rpc_cfg_var_reset(rpc_t *rpc, void *c)
 				var.s = def[i].name;
 				var.len = (int)strlen(def[i].name);
 				ret = cfg_get_default_value_by_name(
-						ctx, &gname, group_id, &var, &val, &val_type);
+						_cfg_rpc_ctx, &gname, group_id, &var, &val, &val_type);
 
 				if(ret != 0)
 					continue;
 
-				if(cfg_help(ctx, &group, &var, &ch, &input_type)) {
+				if(cfg_help(_cfg_rpc_ctx, &group, &var, &ch, &input_type)) {
 					rpc->fault(
 							c, 400, "Failed to get the variable description");
 					return;
@@ -433,9 +433,9 @@ static void rpc_cfg_var_reset(rpc_t *rpc, void *c)
 
 				if(input_type == CFG_INPUT_INT) {
 					ret = cfg_set_now_int(
-							ctx, &gname, group_id, &var, (int)(long)val);
+							_cfg_rpc_ctx, &gname, group_id, &var, (int)(long)val);
 				} else if(input_type == CFG_INPUT_STRING) {
-					ret = cfg_set_now_string(ctx, &gname, group_id, &var, val);
+					ret = cfg_set_now_string(_cfg_rpc_ctx, &gname, group_id, &var, val);
 				} else {
 					rpc->fault(c, 500, "Unsupported input type");
 					return;
@@ -464,7 +464,7 @@ static void rpc_help(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
-	if(cfg_help(ctx, &group, &var, &ch, &input_type)) {
+	if(cfg_help(_cfg_rpc_ctx, &group, &var, &ch, &input_type)) {
 		rpc->fault(c, 400, "Failed to get the variable description");
 		return;
 	}
@@ -527,7 +527,7 @@ static void rpc_diff(rpc_t *rpc, void *c)
 	int err;
 
 
-	if(cfg_diff_init(ctx, &h)) {
+	if(cfg_diff_init(_cfg_rpc_ctx, &h)) {
 		rpc->fault(c, 400, "Failed to get the changes");
 		return;
 	}
@@ -563,7 +563,7 @@ static void rpc_diff(rpc_t *rpc, void *c)
 				break;
 		}
 	}
-	cfg_diff_release(ctx);
+	cfg_diff_release(_cfg_rpc_ctx);
 	if(err)
 		rpc->fault(c, 400, "Failed to get the changes");
 }
@@ -584,7 +584,7 @@ static void rpc_add_group_inst(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_add_group_inst(ctx, &group, *group_id)) {
+	if(cfg_add_group_inst(_cfg_rpc_ctx, &group, *group_id)) {
 		rpc->fault(c, 400, "Failed to add the group instance");
 		return;
 	}
@@ -606,7 +606,7 @@ static void rpc_del_group_inst(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(cfg_del_group_inst(ctx, &group, *group_id)) {
+	if(cfg_del_group_inst(_cfg_rpc_ctx, &group, *group_id)) {
 		rpc->fault(c, 400, "Failed to delete the group instance");
 		return;
 	}
