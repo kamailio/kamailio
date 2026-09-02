@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="cfg_rpc.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>Functions</title>
+    <sectioninfo>
+    </sectioninfo>
+
+    <section id="cfg_rpc.f.cfg_rpc_seti">
+	<title>
+	    <function>cfg_rpc_seti(gname, vname, ival)</function>
+	</title>
+	<para>
+		Set the int value for a cfg framework variable identified by group and
+		its name. The parameters can contain config variables.
+	</para>
+	<para>
+		The function can be used in ANY_ROUTE.
+	</para>
+	<example>
+	    <title><function>cfg_rpc_seti</function> usage</title>
+	    <programlisting>
+...
+cfg_rpc_seti("core", "corelog", "1");
+...
+	    </programlisting>
+	</example>
+	</section>
+
+  </section>
