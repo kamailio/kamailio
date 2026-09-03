@@ -25,6 +25,8 @@
  */
 
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
 #include <openssl/bn.h>
@@ -1164,6 +1166,130 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 }
 #endif
 
+/**
+ * Emit an NSS-format comment line describing the TCP 5-tuple of the SSL
+ * connection, so downstream consumers (e.g. voipmonitor) can build a full
+ * (tuple, session-key) mapping from a keylog file or UDP stream that would
+ * otherwise carry only the crypto material.
+ *
+ * Comments starting with '#' are ignored by standard NSS keylog readers
+ * (Wireshark, Chrome), so this addition is backwards-compatible.
+ *
+ * Emits nothing when the tls_extra_data back-pointer to tcp_connection is
+ * not populated (older callers) or the SSL has no app_data.
+ */
+static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
+{
+	struct tls_extra_data *data;
+	struct tcp_connection *c;
+	const SSL_CIPHER *cipher;
+	char src_ip[IP_ADDR_MAX_STR_SIZE];
+	char dst_ip[IP_ADDR_MAX_STR_SIZE];
+	char srv_random_hex[SSL3_RANDOM_SIZE * 2 + 1];
+	char buf[512];
+	unsigned char srv_random[SSL3_RANDOM_SIZE];
+	unsigned int dst_port;
+	unsigned int cipher_id;
+	size_t srv_random_len;
+	size_t i;
+	int version;
+	int n;
+
+	data = (struct tls_extra_data *)SSL_get_app_data(ssl);
+	if(data == NULL) {
+		return;
+	}
+	c = data->tcp_conn;
+	if(c == NULL) {
+		return;
+	}
+	/* ip_addr2a() returns a pointer into a single static buffer, so calling
+	 * it twice in one snprintf gives the same string for both operands.
+	 * Use ip_addr2sbuf() into caller-owned buffers instead. */
+	n = ip_addr2sbuf(&c->rcv.src_ip, src_ip, sizeof(src_ip) - 1);
+	src_ip[n] = '\0';
+	n = ip_addr2sbuf(&c->rcv.dst_ip, dst_ip, sizeof(dst_ip) - 1);
+	dst_ip[n] = '\0';
+
+	/* Local port resolution depends on connection direction:
+	 *
+	 * - Accepted (server-role, F_CONN_PASSIVE): rcv.dst_port is our listen
+	 *   port; if 0 fall back to bind_address->port_no.
+	 *
+	 * - Connected (client-role, kamailio dialed out): rcv.dst_port is not
+	 *   the local wire port - it's the peer's port for this direction of
+	 *   accounting. The actual local ephemeral is only available via
+	 *   getsockname on whatever fd is valid in the current process (c->fd
+	 *   for worker children, c->s for tcp-main). Try both; take the first
+	 *   non-zero. Downstream consumers matching on 5-tuple need the wire
+	 *   ephemeral, not rcv.dst_port.
+	 */
+	dst_port = c->rcv.dst_port;
+	if(!(c->flags & F_CONN_PASSIVE)) {
+		struct sockaddr_storage sa;
+		socklen_t sa_len;
+		unsigned int wire_port = 0;
+		int fds[2];
+		int fi;
+		fds[0] = c->fd;
+		fds[1] = c->s;
+		for(fi = 0; fi < 2 && wire_port == 0; fi++) {
+			if(fds[fi] < 0) {
+				continue;
+			}
+			sa_len = sizeof(sa);
+			if(getsockname(fds[fi], (struct sockaddr *)&sa, &sa_len)
+					!= 0) {
+				continue;
+			}
+			if(sa.ss_family == AF_INET) {
+				wire_port = ntohs(
+						((struct sockaddr_in *)&sa)->sin_port);
+			} else if(sa.ss_family == AF_INET6) {
+				wire_port = ntohs(
+						((struct sockaddr_in6 *)&sa)->sin6_port);
+			}
+		}
+		if(wire_port != 0) {
+			dst_port = wire_port;
+		}
+	} else if(dst_port == 0 && c->rcv.bind_address != NULL) {
+		dst_port = c->rcv.bind_address->port_no;
+	}
+
+	/* server_random, cipher, version - needed by consumers that build a full
+	 * ssl_sessions row from the file. NSS keylog format does not carry
+	 * server_random or cipher; include them here so consumers can populate
+	 * ssl_sessions-style rows (version, cipher_suite, client_random,
+	 * server_random, master_secret / traffic_secrets). */
+	srv_random_len = SSL_get_server_random(ssl, srv_random, sizeof(srv_random));
+	for(i = 0; i < srv_random_len && i < SSL3_RANDOM_SIZE; i++) {
+		snprintf(srv_random_hex + i * 2, 3, "%02x", srv_random[i]);
+	}
+	srv_random_hex[srv_random_len * 2] = '\0';
+
+	cipher = SSL_get_current_cipher(ssl);
+	cipher_id = cipher
+			? (unsigned int)(SSL_CIPHER_get_id(cipher) & 0xFFFF)
+			: 0;
+	version = SSL_version(ssl);
+
+	n = snprintf(buf, sizeof(buf),
+			"# TUPLE src=%s:%u dst=%s:%u sr=%s cs=%u v=%d\n",
+			src_ip, (unsigned)c->rcv.src_port, dst_ip, dst_port,
+			srv_random_hex, cipher_id, version);
+	if(n <= 0 || (size_t)n >= sizeof(buf)) {
+		return;
+	}
+
+	if(ksr_tls_keylog_mode != NULL
+			&& (*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG)) {
+		LM_NOTICE("tlskeylog: %s", buf);
+	}
+	ksr_tls_keylog_file_write(ssl, buf);
+	ksr_tls_keylog_peer_send(ssl, buf);
+}
+
 static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 {
 	if(ksr_tls_keylog_mode == NULL) {
@@ -1177,6 +1303,11 @@ static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 			return;
 		}
 	}
+	/* Emit the 5-tuple comment immediately before each key line so a file
+	 * reader can pair them: (# TUPLE ..., <key line>). One comment per key
+	 * line is intentionally simple; consumers that only care about the tuple
+	 * once per session can dedupe by 5-tuple. */
+	ksr_tls_keylog_emit_tuple(ssl);
 	if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
 		LM_NOTICE("tlskeylog: %s\n", line);
 	}
