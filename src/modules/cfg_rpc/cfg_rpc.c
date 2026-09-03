@@ -35,11 +35,14 @@ MODULE_VERSION
 static cfg_ctx_t *_cfg_rpc_ctx = NULL;
 
 static int w_cfg_rpc_seti(sip_msg_t *msg, char *pgname, char *pvname, char *pival);
+static int w_cfg_rpc_sets(sip_msg_t *msg, char *pgname, char *pvname, char *psval);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"cfg_rpc_seti", (cmd_function)w_cfg_rpc_seti, 3,
 		fixup_spve_spve_igp, fixup_free_spve_spve_igp, ANY_ROUTE},
+	{"cfg_rpc_sets", (cmd_function)w_cfg_rpc_sets, 3,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -85,6 +88,42 @@ static int w_cfg_rpc_seti(sip_msg_t *msg, char *pgname, char *pvname, char *piva
 		return -1;
 	}
 	if(cfg_set_now_int(_cfg_rpc_ctx, &gname, groupid, &vname, ival)) {
+		LM_ERR("cannot set the value\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_cfg_rpc_sets(sip_msg_t *msg, char *pgname, char *pvname, char *psval)
+{
+	str gname;
+	str vname;
+	str sval;
+	unsigned int *groupid;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pgname, &gname)) {
+		LM_ERR("cannot get the group parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pvname, &vname)) {
+		LM_ERR("cannot get the variable parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t *)psval, &sval)) {
+		LM_ERR("cannot get the value parameter\n");
+		return -1;
+	}
+
+	if(cfg_get_group_id(&gname, &groupid)) {
+		LM_ERR("cannot get the group id\n");
+		return -1;
+	}
+	if(cfg_set_now_str(_cfg_rpc_ctx, &gname, groupid, &vname, &sval)) {
 		LM_ERR("cannot set the value\n");
 		return -1;
 	}
