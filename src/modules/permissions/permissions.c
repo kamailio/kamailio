@@ -63,8 +63,7 @@ static char *perm_deny_suffix = ".deny";
 
 /* for allow_trusted and allow_address function */
 str perm_db_url = {NULL, 0}; /* Don't connect to the database by default */
-int perm_reload_delta = 5;
-int perm_trusted_table_interval = 60;
+int perm_reload_delta = 0;
 
 /* for allow_trusted function */
 int perm_db_mode = DISABLE_CACHE; /* Database usage mode: 0=no cache, 1=cache */
@@ -95,6 +94,7 @@ str perm_address_file = STR_NULL; /* Full path to file with address records */
 static int perm_check_all_branches = 1;
 
 time_t *perm_rpc_reload_time = NULL;
+gen_lock_t *perm_rpc_reload_time_lock = NULL;
 int _perm_max_subnets = 512;
 
 int _perm_load_backends = 0xFFFF;
@@ -203,7 +203,6 @@ static param_export_t params[] = {
 	{"subnet_match_mode", PARAM_INT, &_perm_subnet_match_mode},
 	{"load_backends", PARAM_INT, &_perm_load_backends},
 	{"reload_delta", PARAM_INT, &perm_reload_delta},
-	{"trusted_cleanup_interval", PARAM_INT, &perm_trusted_table_interval},
 	{0, 0, 0}
 };
 
@@ -643,8 +642,18 @@ static int mod_init(void)
 	}
 	*perm_rpc_reload_time = 0;
 
+	perm_rpc_reload_time_lock = lock_alloc();
+	if(!perm_rpc_reload_time_lock) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	if(!lock_init(perm_rpc_reload_time_lock)) {
+		LM_ERR("failed to init reload time lock\n");
+		return -1;
+	}
+
 	if(perm_reload_delta < 0)
-		perm_reload_delta = 5;
+		perm_reload_delta = 0;
 
 	if(permissions_init_rpc() != 0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -737,6 +746,12 @@ static void mod_exit(void)
 	if(perm_rpc_reload_time != NULL) {
 		shm_free(perm_rpc_reload_time);
 		perm_rpc_reload_time = 0;
+	}
+
+	if(perm_rpc_reload_time_lock != NULL) {
+		lock_destroy(perm_rpc_reload_time_lock);
+		shm_free(perm_rpc_reload_time_lock);
+		perm_rpc_reload_time_lock = 0;
 	}
 
 	for(i = 0; i < perm_rules_num; i++) {
