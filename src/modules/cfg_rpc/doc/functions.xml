@@ -29,4 +29,25 @@ cfg_rpc_seti("core", "corelog", "1");
 	</example>
 	</section>
 
+    <section id="cfg_rpc.f.cfg_rpc_sets">
+	<title>
+	    <function>cfg_rpc_sets(gname, vname, sval)</function>
+	</title>
+	<para>
+		Set the str value for a cfg framework variable identified by group and
+		its name. The parameters can contain config variables.
+	</para>
+	<para>
+		The function can be used in ANY_ROUTE.
+	</para>
+	<example>
+	    <title><function>cfg_rpc_sets</function> usage</title>
+	    <programlisting>
+...
+cfg_rpc_sets("tm", "auto_inv_100_reason", "Trying");
+...
+	    </programlisting>
+	</example>
+	</section>
+
   </section>
