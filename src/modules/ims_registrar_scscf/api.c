@@ -34,6 +34,7 @@
 #include "lookup.h"
 #include "save.h"
 #include "api.h"
+#include "userdata_parser.h"
 
 /**
  *
@@ -83,15 +84,16 @@
 ///**
 // *
 // */
-//int bind_registrar(registrar_api_t* api)
-//{
-//	if (!api) {
-//		ERR("Invalid parameter value\n");
-//		return -1;
-//	}
-//	api->save   = regapi_save;
-//	api->lookup = regapi_lookup;
-//	api->registered = regapi_registered;
-//
-//	return 0;
-//}
+int bind_registrar(registrar_api_t *api)
+{
+	if(!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	//	api->save   = regapi_save;
+	//	api->lookup = regapi_lookup;
+	//	api->registered = regapi_registered;
+	api->update_contacts = update_contacts;
+	api->parse_user_data = parse_user_data;
+	return 0;
+}
