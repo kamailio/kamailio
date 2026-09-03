@@ -548,8 +548,6 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 		 * if realtime saving mode configured- save dialog now
 		 * else: the next time the timer will fire the update*/
 		dlg->dflags |= DLG_FLAG_NEW;
-		if(dlg_db_mode == DB_MODE_REALTIME)
-			update_dialog_dbinfo(dlg);
 
 		ret = insert_dlg_timer(&dlg->tl, dlg->lifetime);
 		if(ret < 0) {
@@ -562,6 +560,10 @@ static void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 		} else if(ret == 0) {
 			/* dialog pointer inserted in timer list */
 			dlg_ref(dlg, 1);
+		}
+
+		if(dlg_db_mode == DB_MODE_REALTIME) {
+			update_dialog_dbinfo(dlg);
 		}
 
 		/* dialog confirmed (ACK pending) */
