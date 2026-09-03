@@ -273,6 +273,14 @@ modparam("topos", "sanity_checks", 1)
 
    Interval in seconds after which the branch records are deleted.
 
+   This value also bounds the lifetime of a dialog record that has not
+   been confirmed yet: the record created for an initial request is only
+   kept for branch_expire, and is extended to dialog_expire when the
+   dialog is confirmed by a 2xx reply. Calls that are never answered
+   (negative reply, CANCEL or timeout) therefore do not occupy storage for
+   dialog_expire. Set this value above the longest time you expect between
+   the initial request and its final reply.
+
    Default value is 180 (3 min).
 
    Example 1.5. Set branch_expire parameter
@@ -290,6 +298,9 @@ modparam("topos", "branch_expire", 300)
    dialog. SUBSCRIBE dialog records lifetime are based on value set in
    expires header. Moreover each re-SUBSCRIBEs update the dialog
    timestamp.
+
+   This interval starts when the dialog is confirmed. Until then the
+   record is kept for branch_expire only.
 
    Default value is 10800 (3 hours).
 
