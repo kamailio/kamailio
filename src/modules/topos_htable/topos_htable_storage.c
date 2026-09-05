@@ -46,6 +46,289 @@ static char _tps_htable_key_buf[TPS_HTABLE_SIZE_KEY];
 static char _tps_htable_val_buf[TPS_HTABLE_SIZE_VAL];
 static char _tps_base64_buf[TPS_BASE64_ROWS][TPS_BASE64_SIZE];
 
+static str _tps_htable_xpfx = str_init("x");
+
+/***		HTABLE RECORD FORMAT FUNCTIONS		***/
+
+/**
+ * The htable records are built by joining the field values with a separator,
+ * they are parsed back by position, therefore a field value containing the
+ * separator (e.g., taken from Call-ID or another header) has to be escaped,
+ * otherwise it shifts all the following fields of the record.
+ * - the escape character escapes the separator as well as itself
+ * - values without separator or escape character are stored unchanged, keeping
+ *   the format compatible with the records built by previous versions
+ */
+#define TPS_HTABLE_FSEP '|'
+#define TPS_HTABLE_FESC '\\'
+
+typedef struct tps_htable_rec
+{
+	char *buf;
+	int size;
+	int len;
+} tps_htable_rec_t;
+
+#define TPS_REC_ADD(_rec, _v)                    \
+	do {                                         \
+		if(tps_htable_rec_add((_rec), (_v)) < 0) \
+			return -1;                           \
+	} while(0)
+
+#define TPS_REC_CAT(_rec, _v)                    \
+	do {                                         \
+		if(tps_htable_rec_cat((_rec), (_v)) < 0) \
+			return -1;                           \
+	} while(0)
+
+#define TPS_REC_ADDI(_rec, _v)                    \
+	do {                                          \
+		if(tps_htable_rec_addi((_rec), (_v)) < 0) \
+			return -1;                            \
+	} while(0)
+
+/**
+ * Initialize a record builder over the buffer buf of size bytes
+ */
+static void tps_htable_rec_init(tps_htable_rec_t *rec, char *buf, int size)
+{
+	rec->buf = buf;
+	rec->size = size;
+	rec->len = 0;
+	rec->buf[0] = '\0';
+}
+
+/**
+ * Append the escaped value of sv, without a field separator
+ * - returns 0 on success, -1 if the value does not fit in the buffer
+ */
+static int tps_htable_rec_cat(tps_htable_rec_t *rec, str *sv)
+{
+	int i;
+
+	if(sv == NULL || sv->s == NULL || sv->len <= 0) {
+		return 0;
+	}
+
+	for(i = 0; i < sv->len; i++) {
+		if(sv->s[i] == TPS_HTABLE_FSEP || sv->s[i] == TPS_HTABLE_FESC) {
+			if(rec->len + 2 >= rec->size) {
+				return -1;
+			}
+			rec->buf[rec->len++] = TPS_HTABLE_FESC;
+		} else {
+			if(rec->len + 1 >= rec->size) {
+				return -1;
+			}
+		}
+		rec->buf[rec->len++] = sv->s[i];
+	}
+	rec->buf[rec->len] = '\0';
+
+	return 0;
+}
+
+/**
+ * Append the field separator, unless it is the first field of the record
+ * - returns 0 on success, -1 if it does not fit in the buffer
+ */
+static int tps_htable_rec_sep(tps_htable_rec_t *rec)
+{
+	if(rec->len == 0) {
+		return 0;
+	}
+	if(rec->len + 1 >= rec->size) {
+		return -1;
+	}
+	rec->buf[rec->len++] = TPS_HTABLE_FSEP;
+	rec->buf[rec->len] = '\0';
+
+	return 0;
+}
+
+/**
+ * Append a new field with the escaped value of sv
+ * - returns 0 on success, -1 if it does not fit in the buffer
+ */
+static int tps_htable_rec_add(tps_htable_rec_t *rec, str *sv)
+{
+	if(tps_htable_rec_sep(rec) < 0) {
+		return -1;
+	}
+
+	return tps_htable_rec_cat(rec, sv);
+}
+
+/**
+ * Append a new field with the value of the integer v
+ * - returns 0 on success, -1 if it does not fit in the buffer
+ */
+static int tps_htable_rec_addi(tps_htable_rec_t *rec, long v)
+{
+	int ret = 0;
+
+	if(tps_htable_rec_sep(rec) < 0) {
+		return -1;
+	}
+
+	ret = snprintf(rec->buf + rec->len, rec->size - rec->len, "%ld", v);
+	if(ret < 0 || ret >= rec->size - rec->len) {
+		return -1;
+	}
+	rec->len += ret;
+
+	return 0;
+}
+
+/**
+ * Get the next field of the record pointed by sptr, like strsep() does for the
+ * field separator, but skipping the escaped separators
+ * - the returned field value is unescaped in place, it can only get shorter
+ */
+static char *tps_htable_rec_next(char **sptr)
+{
+	char *val;
+	char *r;
+	char *w;
+
+	if(sptr == NULL || *sptr == NULL) {
+		return NULL;
+	}
+
+	val = *sptr;
+	for(r = val; *r != '\0'; r++) {
+		if(*r == TPS_HTABLE_FESC && *(r + 1) != '\0') {
+			r++;
+			continue;
+		}
+		if(*r == TPS_HTABLE_FSEP) {
+			break;
+		}
+	}
+
+	if(*r == TPS_HTABLE_FSEP) {
+		*r = '\0';
+		*sptr = r + 1;
+	} else {
+		*sptr = NULL;
+	}
+
+	for(r = w = val; *r != '\0'; r++) {
+		if(*r == TPS_HTABLE_FESC && *(r + 1) != '\0') {
+			r++;
+		}
+		*w++ = *r;
+	}
+	*w = '\0';
+
+	return val;
+}
+
+/**
+ * Build the key of an initial method branch record in the global key buffer
+ * - returns the length of the key, -1 if it does not fit in the buffer
+ */
+static int tps_htable_key_build_imb(str *callid, str *tag, str *xuuid)
+{
+	tps_htable_rec_t rec;
+
+	tps_htable_rec_init(&rec, _tps_htable_key_buf, TPS_HTABLE_SIZE_KEY);
+
+	TPS_REC_ADD(&rec, callid);
+	TPS_REC_ADD(&rec, tag);
+	TPS_REC_ADD(&rec, &_tps_htable_xpfx);
+	TPS_REC_CAT(&rec, xuuid);
+
+	return rec.len;
+}
+
+/**
+ * Build the value of an initial method branch record in the global value buffer
+ * - returns the length of the value, -1 if it does not fit in the buffer
+ */
+static int tps_htable_val_build_imb(unsigned long rectime, tps_data_t *md)
+{
+	tps_htable_rec_t rec;
+
+	tps_htable_rec_init(&rec, _tps_htable_val_buf, TPS_HTABLE_SIZE_VAL);
+
+	TPS_REC_ADDI(&rec, (long)rectime);
+	TPS_REC_ADD(&rec, &md->x_vbranch1);
+
+	return rec.len;
+}
+
+/**
+ * Build the value of a branch record in the global value buffer
+ * - returns the length of the value, -1 if it does not fit in the buffer
+ */
+static int tps_htable_val_build_branch(unsigned long rectime, tps_data_t *td)
+{
+	tps_htable_rec_t rec;
+
+	tps_htable_rec_init(&rec, _tps_htable_val_buf, TPS_HTABLE_SIZE_VAL);
+
+	TPS_REC_ADDI(&rec, (long)rectime);
+	TPS_REC_ADD(&rec, &td->a_callid);
+	TPS_REC_ADD(&rec, &td->a_uuid);
+	TPS_REC_ADD(&rec, &td->b_uuid);
+	TPS_REC_ADDI(&rec, (long)td->direction);
+	TPS_REC_ADD(&rec, &td->x_via);
+	TPS_REC_ADD(&rec, &td->x_vbranch1);
+	TPS_REC_ADD(&rec, &td->x_rr);
+	TPS_REC_ADD(&rec, &td->y_rr);
+	TPS_REC_ADD(&rec, &td->s_rr);
+	TPS_REC_ADD(&rec, &td->x_uri);
+	TPS_REC_ADD(&rec, &td->x_tag);
+	TPS_REC_ADD(&rec, &td->s_method);
+	TPS_REC_ADD(&rec, &td->s_cseq);
+	TPS_REC_ADD(&rec, &td->a_contact);
+	TPS_REC_ADD(&rec, &td->b_contact);
+	TPS_REC_ADD(&rec, &td->as_contact);
+	TPS_REC_ADD(&rec, &td->bs_contact);
+	TPS_REC_ADD(&rec, &td->a_tag);
+	TPS_REC_ADD(&rec, &td->b_tag);
+	TPS_REC_ADD(&rec, &td->x_context);
+
+	return rec.len;
+}
+
+/**
+ * Build the value of a dialog record in the global value buffer
+ * - returns the length of the value, -1 if it does not fit in the buffer
+ */
+static int tps_htable_val_build_dialog(unsigned long rectime, tps_data_t *td)
+{
+	tps_htable_rec_t rec;
+
+	tps_htable_rec_init(&rec, _tps_htable_val_buf, TPS_HTABLE_SIZE_VAL);
+
+	TPS_REC_ADDI(&rec, (long)rectime);
+	TPS_REC_ADD(&rec, &td->a_callid);
+	TPS_REC_ADD(&rec, &td->a_uuid);
+	TPS_REC_ADD(&rec, &td->b_uuid);
+	TPS_REC_ADD(&rec, &td->a_contact);
+	TPS_REC_ADD(&rec, &td->b_contact);
+	TPS_REC_ADD(&rec, &td->as_contact);
+	TPS_REC_ADD(&rec, &td->bs_contact);
+	TPS_REC_ADD(&rec, &td->a_tag);
+	TPS_REC_ADD(&rec, &td->b_tag);
+	TPS_REC_ADD(&rec, &td->a_rr);
+	TPS_REC_ADD(&rec, &td->b_rr);
+	TPS_REC_ADD(&rec, &td->s_rr);
+	TPS_REC_ADDI(&rec, (long)td->iflags);
+	TPS_REC_ADD(&rec, &td->a_uri);
+	TPS_REC_ADD(&rec, &td->b_uri);
+	TPS_REC_ADD(&rec, &td->r_uri);
+	TPS_REC_ADD(&rec, &td->a_srcaddr);
+	TPS_REC_ADD(&rec, &td->b_srcaddr);
+	TPS_REC_ADD(&rec, &td->s_method);
+	TPS_REC_ADD(&rec, &td->s_cseq);
+	TPS_REC_ADD(&rec, &td->x_context);
+
+	return rec.len;
+}
+
 /***		HTABLE HELPER FUNCTIONS		***/
 
 /**
@@ -154,9 +437,7 @@ static int tps_htable_insert_initial_method_branch(
 				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2]);
 
 	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|x%.*s",
-				md->a_callid.len, md->a_callid.s, md->b_tag.len, md->b_tag.s,
-				xuuid.len, xuuid.s);
+		ret = tps_htable_key_build_imb(&md->a_callid, &md->b_tag, &xuuid);
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
@@ -177,8 +458,7 @@ static int tps_htable_insert_initial_method_branch(
 		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL, "%ld|%s", rectime,
 				_tps_base64_buf[0]);
 	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL, "%ld|%.*s", rectime,
-				md->x_vbranch1.len, md->x_vbranch1.s);
+		ret = tps_htable_val_build_imb(rectime, md);
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
@@ -274,9 +554,7 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|x%s",
 				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2]);
 	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|x%.*s",
-				md->a_callid.len, md->a_callid.s, xtag.len, xtag.s, xuuid.len,
-				xuuid.s);
+		ret = tps_htable_key_build_imb(&md->a_callid, &xtag, &xuuid);
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
@@ -295,7 +573,7 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 	if(hval != NULL) {
 		LM_DBG("hval = %.*s\n", hval->value.s.len, hval->value.s.s);
 		i = 0;
-		while((ptr = strsep(&hval->value.s.s, "|")) != NULL) {
+		while((ptr = tps_htable_rec_next(&hval->value.s.s)) != NULL) {
 			// base64 decode val values
 			if(_tps_base64 && strlen(ptr) > 0 && i != 0 && i < 2) {
 				base64url_dec(ptr, strlen(ptr), _tps_base64_buf[0],
@@ -423,20 +701,7 @@ int tps_htable_insert_branch(tps_data_t *td)
 				_tps_base64_buf[13], _tps_base64_buf[14], _tps_base64_buf[15],
 				_tps_base64_buf[16], _tps_base64_buf[17], _tps_base64_buf[18]);
 	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
-				"%ld|%.*s|%.*s|%.*s|%d|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|"
-				"%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s",
-				rectime, td->a_callid.len, td->a_callid.s, td->a_uuid.len,
-				td->a_uuid.s, td->b_uuid.len, td->b_uuid.s, td->direction,
-				td->x_via.len, td->x_via.s, td->x_vbranch1.len,
-				td->x_vbranch1.s, td->x_rr.len, td->x_rr.s, td->y_rr.len,
-				td->y_rr.s, td->s_rr.len, td->s_rr.s, td->x_uri.len,
-				td->x_uri.s, td->x_tag.len, td->x_tag.s, td->s_method.len,
-				td->s_method.s, td->s_cseq.len, td->s_cseq.s, td->a_contact.len,
-				td->a_contact.s, td->b_contact.len, td->b_contact.s,
-				td->as_contact.len, td->as_contact.s, td->bs_contact.len,
-				td->bs_contact.s, td->a_tag.len, td->a_tag.s, td->b_tag.len,
-				td->b_tag.s, td->x_context.len, td->x_context.s);
+		ret = tps_htable_val_build_branch(rectime, td);
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
@@ -539,7 +804,7 @@ int tps_htable_load_branch(
 	if(hval != NULL) {
 		LM_DBG("hval = %.*s\n", hval->value.s.len, hval->value.s.s);
 		i = 0;
-		while((ptr = strsep(&hval->value.s.s, "|")) != NULL) {
+		while((ptr = tps_htable_rec_next(&hval->value.s.s)) != NULL) {
 			// base64 decode val values
 			if(_tps_base64 && strlen(ptr) > 0 && i != 0 && i != 4 && i < 21) {
 				base64url_dec(ptr, strlen(ptr), _tps_base64_buf[0],
@@ -824,22 +1089,7 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 				_tps_base64_buf[16], _tps_base64_buf[17], _tps_base64_buf[18],
 				_tps_base64_buf[19]);
 	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
-				"%ld|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*"
-				"s|"
-				"%d|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s",
-				rectime, td->a_callid.len, td->a_callid.s, td->a_uuid.len,
-				td->a_uuid.s, td->b_uuid.len, td->b_uuid.s, td->a_contact.len,
-				td->a_contact.s, td->b_contact.len, td->b_contact.s,
-				td->as_contact.len, td->as_contact.s, td->bs_contact.len,
-				td->bs_contact.s, td->a_tag.len, td->a_tag.s, td->b_tag.len,
-				td->b_tag.s, td->a_rr.len, td->a_rr.s, td->b_rr.len, td->b_rr.s,
-				td->s_rr.len, td->s_rr.s, td->iflags, td->a_uri.len,
-				td->a_uri.s, td->b_uri.len, td->b_uri.s, td->r_uri.len,
-				td->r_uri.s, td->a_srcaddr.len, td->a_srcaddr.s,
-				td->b_srcaddr.len, td->b_srcaddr.s, td->s_method.len,
-				td->s_method.s, td->s_cseq.len, td->s_cseq.s, td->x_context.len,
-				td->x_context.s);
+		ret = tps_htable_val_build_dialog(rectime, td);
 	}
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
@@ -941,7 +1191,7 @@ int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	if(hval != NULL) {
 		LM_DBG("hval = %.*s\n", hval->value.s.len, hval->value.s.s);
 		i = 0;
-		while((ptr = strsep(&hval->value.s.s, "|")) != NULL) {
+		while((ptr = tps_htable_rec_next(&hval->value.s.s)) != NULL) {
 			// base64 decode val values
 			if(_tps_base64 && strlen(ptr) > 0 && i != 0 && i != 13 && i < 22) {
 				base64url_dec(ptr, strlen(ptr), _tps_base64_buf[0],
