@@ -152,8 +152,8 @@ if(OBJCOPY)
   add_custom_command(
     TARGET kamailio-oss-fuzz
     POST_BUILD
-    COMMAND ${OBJCOPY} --strip-symbol=main $<TARGET_FILE:kamailio-oss-fuzz>
-    COMMENT "Stripping main symbol from kamailio-oss-fuzz library"
+    COMMAND ${OBJCOPY} --localize-symbol=main $<TARGET_FILE:kamailio-oss-fuzz>
+    COMMENT "Localizing main symbol in kamailio-oss-fuzz library"
   )
 endif()
 
