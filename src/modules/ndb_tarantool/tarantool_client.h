@@ -39,26 +39,27 @@
 /**
  * @brief Tarantool Server instance descriptor
  */
-typedef struct tnt_server {
-  str sname;              /**< Server identifier/alias */
-  str addr;               /**< Hostname or IP address */
-  int port;               /**< TCP port (default 3301) */
-  str user;               /**< Authentication username */
-  str pass;               /**< Authentication password */
-  int connect_timeout;    /**< Connect timeout in ms */
-  int cmd_timeout;        /**< Command read/write timeout in ms */
-  int disable_time;       /**< Failover cooldown in seconds */
-  int allowed_timeouts;   /**< Allowed consecutive errors before cooldown */
-  int disabled;           /**< 1 if currently disabled/in cooldown */
-  int consecutive_errors; /**< Consecutive timeout/error count */
-  time_t restore_tick;    /**< Unix timestamp when server can be retried */
+typedef struct tnt_server
+{
+	str sname;				/**< Server identifier/alias */
+	str addr;				/**< Hostname or IP address */
+	int port;				/**< TCP port (default 3301) */
+	str user;				/**< Authentication username */
+	str pass;				/**< Authentication password */
+	int connect_timeout;	/**< Connect timeout in ms */
+	int cmd_timeout;		/**< Command read/write timeout in ms */
+	int disable_time;		/**< Failover cooldown in seconds */
+	int allowed_timeouts;	/**< Allowed consecutive errors before cooldown */
+	int disabled;			/**< 1 if currently disabled/in cooldown */
+	int consecutive_errors; /**< Consecutive timeout/error count */
+	time_t restore_tick;	/**< Unix timestamp when server can be retried */
 
-  /* Worker process private runtime fields (initialized in child_init) */
-  int fd;           /**< Active TCP socket file descriptor */
-  int connected;    /**< 1 if connection is authenticated and ready */
-  uint64_t sync_id; /**< Monotonic request sync counter */
+	/* Worker process private runtime fields (initialized in child_init) */
+	int fd;			  /**< Active TCP socket file descriptor */
+	int connected;	  /**< 1 if connection is authenticated and ready */
+	uint64_t sync_id; /**< Monotonic request sync counter */
 
-  struct tnt_server *next;
+	struct tnt_server *next;
 } tnt_server_t;
 
 /**
@@ -111,16 +112,15 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
  * @param res_dst Destination str buffer (allocated in pkg memory on success)
  * @return 1 on success, -1 on failure
  */
-int tnt_exec_eval(tnt_server_t *srv, const str *expr,
-		const str *params_json, str *res_dst);
+int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
+		str *res_dst);
 
 /**
  * @brief High-performance Zero-Copy Scatter-Gather call state save (writev)
  */
 int tnt_save_call_sg(tnt_server_t *srv, const char *call_id, size_t cid_len,
 		const char *node_id, size_t nid_len, const char *state,
-		size_t state_len, int expires, const char *payload,
-		size_t payload_len);
+		size_t state_len, int expires, const char *payload, size_t payload_len);
 
 /**
  * @brief Zero-Allocation call retrieval directly into caller-provided buffer

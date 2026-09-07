@@ -854,8 +854,8 @@ out_free:
 /**
  * tnt_exec_eval - Execute IPROTO_EVAL on Tarantool instance
  */
-int tnt_exec_eval(tnt_server_t *srv, const str *expr,
-		const str *params_json, str *res_dst)
+int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
+		str *res_dst)
 {
 	uint64_t sync_id;
 	msgpack_sbuffer sbuf;
