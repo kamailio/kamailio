@@ -305,6 +305,7 @@ static char *parse_to_param(char *const buffer, const char *const end,
 								sizeof(struct to_param));
 						if(!param) {
 							PKG_MEM_ERROR;
+							ser_error = E_OUT_OF_MEM;
 							goto error;
 						}
 						memset(param, 0, sizeof(struct to_param));

@@ -47,6 +47,7 @@ char *parse_to_body(
 	to_b = pkg_malloc(sizeof(struct to_body));
 	if(to_b == 0) {
 		PKG_MEM_ERROR;
+		ser_error = E_OUT_OF_MEM;
 		goto error;
 	}
 	memset(to_b, 0, sizeof(struct to_body));
