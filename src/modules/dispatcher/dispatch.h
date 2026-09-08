@@ -91,8 +91,9 @@
 #define DS_STATE_MODE_FUNC (1<<1)
 
 #define DS_EVRTMODE_RUNTIME 0
-#define DS_EVRTMODE_OPTIONS 1
-#define DS_EVRTMODE_INIT 2
+#define DS_EVRTMODE_OPTIONS (1 << 0)
+#define DS_EVRTMODE_INIT    (1 << 1)
+#define DS_EVRTMODE_LOAD    (1 << 2)
 
 #define DS_SELRES_FAILED (ds_selres_t){0}
 
@@ -181,6 +182,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 		int state, int mode, ds_rctx_t *rctx);
 int ds_reinit_state(int group, str *address, str *iuid, int state);
 int ds_reinit_state_all(int group, int state);
+int ds_run_init_event_routes(void);
 int ds_reinit_duid_state(int group, str *vduid, int state);
 int ds_mark_dst(struct sip_msg *msg, int state);
 int ds_mark_dst_mode(struct sip_msg *msg, int state, int mode);
