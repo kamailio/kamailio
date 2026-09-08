@@ -35,6 +35,7 @@
 int pvh_str_new(str *s, int size);
 int pvh_str_free(str *s);
 int pvh_str_copy(str *dst, str *src, unsigned int max_size);
+int pvh_str_append(str *dst, str *src, unsigned int max_size);
 int pvh_extract_display_uri(char *suri, str *display, str *duri);
 char *pvh_detect_split_char(char *s);
 int pvh_split_values(str *s, char d[][_pvh_params.hdr_value_size], int *d_size,
