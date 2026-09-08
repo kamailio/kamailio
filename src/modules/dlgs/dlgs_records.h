@@ -119,6 +119,7 @@ int dlgs_init(void);
 int dlgs_destroy(void);
 int dlgs_rpc_init(void);
 int dlgs_update_item(sip_msg_t *msg);
+int dlgs_find_item(sip_msg_t *msg);
 
 int dlgs_tags_add(sip_msg_t *msg, str *vtags);
 int dlgs_tags_rm(sip_msg_t *msg, str *vtags);

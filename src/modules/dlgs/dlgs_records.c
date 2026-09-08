@@ -970,6 +970,21 @@ done:
 /**
  *
  */
+int dlgs_find_item(sip_msg_t *msg)
+{
+	dlgs_item_t *it;
+
+	it = dlgs_get_item(msg);
+	if(it == NULL) {
+		return -1;
+	}
+	dlgs_unlock_item(msg);
+	return 1;
+}
+
+/**
+ *
+ */
 int dlgs_tags_add(sip_msg_t *msg, str *vtags)
 {
 	dlgs_item_t *dit = NULL;
