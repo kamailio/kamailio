@@ -30,9 +30,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
+#include <time.h>
 #include <regex.h>
 
+#include "../../core/basex.h"
+#include "../../core/crypto/sha256.h"
 #include "../../core/sr_module.h"
 #include "../../core/ut.h"
 #include "../../core/error.h"
@@ -60,6 +64,7 @@ pv_spec_t custom_user_avp;
 int rr_ignore_sips = 0;	  /*!< ignore sips schema when building record-route */
 int rr_sockname_mode = 0; /*!< add socket name to R-R header */
 int rr_loose_route_mode = 0; /*!< modes for loose_route() */
+uint16_t rr_cookie_flags = 0; /*!< two-byte flags field encoded in R-R cookie */
 
 ob_api_t rr_obb;
 
@@ -79,6 +84,7 @@ static int w_record_route(struct sip_msg *, char *, char *);
 static int w_record_route_preset(struct sip_msg *, char *, char *);
 static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
 static int w_add_rr_param(struct sip_msg *, char *, char *);
+static int w_rr_cookie_add(struct sip_msg *, char *, char *);
 static int w_check_route_param(struct sip_msg *, char *, char *);
 static int w_is_direction(struct sip_msg *, char *, char *);
 static int w_remove_record_route(sip_msg_t *, char *, char *);
@@ -113,6 +119,8 @@ static cmd_export_t cmds[] = {
 		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"add_rr_param", (cmd_function)w_add_rr_param, 1,
 		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"rr_cookie_add", (cmd_function)w_rr_cookie_add, 2,
+		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"check_route_param", (cmd_function)w_check_route_param, 1,
 		fixup_regexp_null, fixup_free_regexp_null, REQUEST_ROUTE},
 	{"is_direction", (cmd_function)w_is_direction, 1,
@@ -506,6 +514,101 @@ static int ki_add_rr_param(sip_msg_t *msg, str *sparam)
 }
 
 
+#define RR_COOKIE_DATA_LEN 12
+#define RR_COOKIE_HASH_LEN 6
+#define RR_COOKIE_VALUE_LEN 16
+
+/**
+ * Build and append a Record-Route cookie parameter.
+ */
+static int ki_rr_cookie_add(sip_msg_t *msg, str *name, str *sval)
+{
+	static const uint8_t separator = 10;
+	SHA256_CTX sha256;
+	uint8_t digest[SHA256_DIGEST_LENGTH];
+	uint8_t cookie_data[RR_COOKIE_DATA_LEN];
+	uint32_t timestamp;
+	uint16_t field;
+	char cookie_value[RR_COOKIE_VALUE_LEN + 1];
+	char *param_buf;
+	str param;
+	int ret;
+
+	if(name == NULL || name->s == NULL || name->len <= 0) {
+		LM_ERR("invalid cookie parameter name\n");
+		return -1;
+	}
+	if(sval == NULL || sval->len < 0 || (sval->len > 0 && sval->s == NULL)) {
+		LM_ERR("invalid cookie value parameter\n");
+		return -1;
+	}
+	if(parse_headers(msg, HDR_CALLID_F, 0) < 0 || msg->callid == NULL
+			|| msg->callid->body.s == NULL || msg->callid->body.len <= 0) {
+		LM_ERR("failed to parse Call-ID header\n");
+		return -1;
+	}
+
+	timestamp = htonl((uint32_t)time(NULL));
+	field = htons(rr_cookie_flags);
+	memcpy(cookie_data, &field, sizeof(field));
+	memcpy(cookie_data + sizeof(field), &timestamp, sizeof(timestamp));
+
+	sr_SHA256_Init(&sha256);
+	sr_SHA256_Update(&sha256, cookie_data, sizeof(field));
+	sr_SHA256_Update(&sha256, &separator, sizeof(separator));
+	sr_SHA256_Update(&sha256, cookie_data + sizeof(field), sizeof(timestamp));
+	sr_SHA256_Update(&sha256, &separator, sizeof(separator));
+	sr_SHA256_Update(&sha256, (uint8_t *)msg->callid->body.s,
+			msg->callid->body.len);
+	sr_SHA256_Update(&sha256, &separator, sizeof(separator));
+	if(sval->len > 0)
+		sr_SHA256_Update(&sha256, (uint8_t *)sval->s, sval->len);
+	sr_SHA256_Final(digest, &sha256);
+	memcpy(cookie_data + sizeof(field) + sizeof(timestamp), digest,
+			RR_COOKIE_HASH_LEN);
+
+	if(base64url_enc((char *)cookie_data, sizeof(cookie_data), cookie_value,
+				sizeof(cookie_value)) != RR_COOKIE_VALUE_LEN) {
+		LM_ERR("failed to encode Record-Route cookie\n");
+		return -1;
+	}
+
+	param.len = 1 + name->len + 1 + RR_COOKIE_VALUE_LEN;
+	param_buf = pkg_malloc(param.len);
+	if(param_buf == NULL) {
+		PKG_MEM_ERROR_FMT("missing (%d)\n", param.len);
+		return -1;
+	}
+	param.s = param_buf;
+	param.s[0] = ';';
+	memcpy(param.s + 1, name->s, name->len);
+	param.s[1 + name->len] = '=';
+	memcpy(param.s + 1 + name->len + 1, cookie_value,
+			RR_COOKIE_VALUE_LEN);
+
+	ret = add_rr_param(msg, &param);
+	pkg_free(param_buf);
+	return (ret == 0) ? 1 : -1;
+}
+
+
+static int w_rr_cookie_add(struct sip_msg *msg, char *name, char *value)
+{
+	str sname;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t *)name, &sname) != 0) {
+		LM_ERR("failed to get the cookie parameter name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)value, &sval) != 0) {
+		LM_ERR("failed to get the cookie value parameter\n");
+		return -1;
+	}
+	return ki_rr_cookie_add(msg, &sname, &sval);
+}
+
+
 static int w_check_route_param(struct sip_msg *msg, char *re, char *foo)
 {
 	return ((check_route_param(msg, (regex_t *)re) == 0) ? 1 : -1);
@@ -879,6 +982,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	{ str_init("rr"), str_init("add_rr_param"),
 		SR_KEMIP_INT, ki_add_rr_param,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("cookie_add"),
+		SR_KEMIP_INT, ki_rr_cookie_add,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("rr"), str_init("check_route_param"),
