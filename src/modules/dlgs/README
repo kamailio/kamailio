@@ -35,10 +35,11 @@ Daniel-Constantin Mierla
 
               4.1. dlgs_init(src, dst, data)
               4.2. dlgs_update()
-              4.3. dlgs_count(field, op, data)
-              4.4. dlgs_tags_add(vtag)
-              4.5. dlgs_tags_rm(vtag)
-              4.6. dlgs_tags_count(vtag)
+              4.3. dlgs_find()
+              4.4. dlgs_count(field, op, data)
+              4.5. dlgs_tags_add(vtag)
+              4.6. dlgs_tags_rm(vtag)
+              4.7. dlgs_tags_count(vtag)
 
         5. RPC Commands
 
@@ -58,16 +59,17 @@ Daniel-Constantin Mierla
    1.5. Set hash_size parameter
    1.6. dlgs_init usage
    1.7. dlgs_update usage
-   1.8. dlgs_count usage
-   1.9. dlgs_tags_add usage
-   1.10. dlgs_tags_rm usage
-   1.11. dlgs_tags_count usage
-   1.12. dlgs.list usage
-   1.13. dlgs.briefing usage
-   1.14. dlgs.get usage
-   1.15. dlgs.getall usage
-   1.16. dlgs.stats usage
-   1.17. dlgs.count usage
+   1.8. dlgs_find usage
+   1.9. dlgs_count usage
+   1.10. dlgs_tags_add usage
+   1.11. dlgs_tags_rm usage
+   1.12. dlgs_tags_count usage
+   1.13. dlgs.list usage
+   1.14. dlgs.briefing usage
+   1.15. dlgs.get usage
+   1.16. dlgs.getall usage
+   1.17. dlgs.stats usage
+   1.18. dlgs.count usage
 
 Chapter 1. Admin Guide
 
@@ -91,10 +93,11 @@ Chapter 1. Admin Guide
 
         4.1. dlgs_init(src, dst, data)
         4.2. dlgs_update()
-        4.3. dlgs_count(field, op, data)
-        4.4. dlgs_tags_add(vtag)
-        4.5. dlgs_tags_rm(vtag)
-        4.6. dlgs_tags_count(vtag)
+        4.3. dlgs_find()
+        4.4. dlgs_count(field, op, data)
+        4.5. dlgs_tags_add(vtag)
+        4.6. dlgs_tags_rm(vtag)
+        4.7. dlgs_tags_count(vtag)
 
    5. RPC Commands
 
@@ -215,10 +218,11 @@ modparam("dlgs", "hash_size", 5)
 
    4.1. dlgs_init(src, dst, data)
    4.2. dlgs_update()
-   4.3. dlgs_count(field, op, data)
-   4.4. dlgs_tags_add(vtag)
-   4.5. dlgs_tags_rm(vtag)
-   4.6. dlgs_tags_count(vtag)
+   4.3. dlgs_find()
+   4.4. dlgs_count(field, op, data)
+   4.5. dlgs_tags_add(vtag)
+   4.6. dlgs_tags_rm(vtag)
+   4.7. dlgs_tags_count(vtag)
 
 4.1.  dlgs_init(src, dst, data)
 
@@ -258,7 +262,26 @@ request_route {
 }
 ...
 
-4.3.  dlgs_count(field, op, data)
+4.3.  dlgs_find()
+
+   Return true (1) if dlgs item is found for the current message,
+   otherwise false (-1).
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   FAILURE_ROUTE, ONSEND_ROUTE.
+
+   Example 1.8. dlgs_find usage
+...
+request_route {
+    ...
+    if(dlgs_find()) {
+        ...
+    }
+    ...
+}
+...
+
+4.4.  dlgs_count(field, op, data)
 
    Return the number of dialogs matching the filter specified by the
    parameters. It does not count the dialogs that are finished (not
@@ -276,7 +299,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. dlgs_count usage
+   Example 1.9. dlgs_count usage
 ...
 request_route {
     ...
@@ -293,13 +316,13 @@ request_route {
 }
 ...
 
-4.4.  dlgs_tags_add(vtag)
+4.5.  dlgs_tags_add(vtag)
 
    Add a tag to current dialog.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. dlgs_tags_add usage
+   Example 1.10. dlgs_tags_add usage
 ...
 request_route {
     ...
@@ -308,13 +331,13 @@ request_route {
 }
 ...
 
-4.5.  dlgs_tags_rm(vtag)
+4.6.  dlgs_tags_rm(vtag)
 
    Remove a tag from current dialog.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. dlgs_tags_rm usage
+   Example 1.11. dlgs_tags_rm usage
 ...
 request_route {
     ...
@@ -323,7 +346,7 @@ request_route {
 }
 ...
 
-4.6.  dlgs_tags_count(vtag)
+4.7.  dlgs_tags_count(vtag)
 
    Count all tags for ongoing dialogs matching the parameter.
 
@@ -332,7 +355,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. dlgs_tags_count usage
+   Example 1.12. dlgs_tags_count usage
 ...
 request_route {
     ...
@@ -354,7 +377,7 @@ request_route {
 
    List dialog records.
 
-   Example 1.12. dlgs.list usage
+   Example 1.13. dlgs.list usage
 ...
 kamctl rpc dlgs.list
 ...
@@ -363,7 +386,7 @@ kamctl rpc dlgs.list
 
    List dialog records with fewer attributes per record.
 
-   Example 1.13. dlgs.briefing usage
+   Example 1.14. dlgs.briefing usage
 ...
 kamctl rpc dlgs.briefing
 ...
@@ -375,7 +398,7 @@ kamctl rpc dlgs.briefing
    List first dialog record matching the filter. The parameters have the
    same meaning like those for dlgs_count(...).
 
-   Example 1.14. dlgs.get usage
+   Example 1.15. dlgs.get usage
 ...
 kamctl rpc dlgs.get src eq sip:alice@sipserver.com
 ...
@@ -387,7 +410,7 @@ kamctl rpc dlgs.get src eq sip:alice@sipserver.com
    List all dialog records matching the filter. The parameters have the
    same meaning like those for dlgs_count(...).
 
-   Example 1.15. dlgs.getall usage
+   Example 1.16. dlgs.getall usage
 ...
 kamctl rpc dlgs.getall src eq sip:alice@sipserver.com
 ...
@@ -396,7 +419,7 @@ kamctl rpc dlgs.getall src eq sip:alice@sipserver.com
 
    Return dialog statistics.
 
-   Example 1.16. dlgs.stats usage
+   Example 1.17. dlgs.stats usage
 ...
 kamctl rpc dlgs.stats
 ...
@@ -406,10 +429,10 @@ kamctl rpc dlgs.stats
    Prototype: dlgs.count field op data
 
    Return the number of ongoing dialogs. The parameters have the same
-   meaning like those for Section 4.3, “ dlgs_count(field, op, data) ”
+   meaning like those for Section 4.4, “ dlgs_count(field, op, data) ”
    function.
 
-   Example 1.17.  dlgs.count usage
+   Example 1.18.  dlgs.count usage
 ...
 kamctl rpc dlgs.count src sw "sip:alice"
 ...
