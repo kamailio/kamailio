@@ -684,6 +684,38 @@ add_rr_param(";nat=yes");
       </example>
     </section>
 
+    <section id="rr.f.rr_cookie_add">
+      <title><function moreinfo="none">rr_cookie_add(name, sval)</function></title>
+
+      <para>Adds a cookie URI parameter to the Record-Route header. It can be
+      called before or after the function that adds the Record-Route header.
+      The cookie is the base64url encoding of a two-byte global field value,
+      a four-byte current timestamp, and the first six bytes of a SHA-256
+      digest.</para>
+
+      <para>The digest is calculated over the field value, the four-byte
+      timestamp, the Call-ID, and <varname>sval</varname>, separated by bytes
+      with value 10. The timestamp and field are encoded in network byte
+      order.</para>
+
+      <para>The <varname>name</varname> parameter sets the Record-Route URI
+      parameter name. Both parameters may contain pseudo-variables.</para>
+
+      <para>This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+      FAILURE_ROUTE.</para>
+
+      <example>
+        <title><function>rr_cookie_add</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_add("kc", "private-key::$si");
+record_route();
+...
+</programlisting>
+      </example>
+    </section>
+
     <section id="rr.f.check_route_param">
       <title><function
       moreinfo="none">check_route_param(re)</function></title>
