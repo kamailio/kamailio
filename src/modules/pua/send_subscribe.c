@@ -313,8 +313,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			goto faked_error;
 		}
 		memset(callid, 0, sizeof(struct hdr_field));
-		get_hdr_field(
-				t->callid_hdr.s, t->callid_hdr.s + t->callid_hdr.len, callid);
+		get_hdr_field(t->callid_hdr.s, t->callid_hdr.s + t->callid_hdr.len,
+				callid, NULL);
 		hentity->call_id = callid->body;
 
 		from = (struct hdr_field *)pkg_malloc(sizeof(struct hdr_field));
@@ -323,7 +323,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			goto faked_error;
 		}
 		memset(from, 0, sizeof(struct hdr_field));
-		get_hdr_field(t->from_hdr.s, t->from_hdr.s + t->from_hdr.len, from);
+		get_hdr_field(
+				t->from_hdr.s, t->from_hdr.s + t->from_hdr.len, from, NULL);
 		parse_to(from->body.s, from->body.s + from->body.len + 1, &FROM);
 		if(FROM.uri.len <= 0) {
 			LM_ERR("'From' header NOT parsed\n");
