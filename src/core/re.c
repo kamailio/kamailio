@@ -38,7 +38,7 @@
 #include <string.h>
 
 #define MAX_REPLACE_WITH 100
-#define REPLACE_BUFFER_SIZE 1024
+#define REPLACE_BUFFER_SIZE 16384
 
 void subst_expr_free(struct subst_expr *se)
 {
