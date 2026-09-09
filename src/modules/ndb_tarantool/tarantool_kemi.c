@@ -29,12 +29,36 @@
 #include "tarantool_kemi.h"
 
 /**
- * tnt_kemi_set_result - Assign JSON result string to Kamailio pseudo-variable
+ * tnt_set_result_pvs - Assign result string directly to compiled pv_spec_t
+ */
+int tnt_set_result_pvs(sip_msg_t *msg, pv_spec_t *pvs, str *res_val)
+{
+	pv_value_t val;
+
+	if(!pvs || !res_val || !res_val->s)
+		return 0;
+
+	if(!msg)
+		return 0;
+
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_STR;
+	val.rs = *res_val;
+
+	if(pv_set_spec_value(msg, pvs, 0, &val) != 0) {
+		LM_WARN("failed to assign result to pv_spec\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * tnt_kemi_set_result - Assign JSON result string to Kamailio pseudo-variable by name
  */
 static int tnt_kemi_set_result(sip_msg_t *msg, str *res_dst, str *res_val)
 {
 	pv_spec_t *pvs;
-	pv_value_t val;
 
 	if(!res_dst || !res_dst->s || res_dst->len <= 0)
 		return 0;
@@ -49,17 +73,7 @@ static int tnt_kemi_set_result(sip_msg_t *msg, str *res_dst, str *res_val)
 		return -1;
 	}
 
-	memset(&val, 0, sizeof(pv_value_t));
-	val.flags = PV_VAL_STR;
-	val.rs = *res_val;
-
-	if(pv_set_spec_value(msg, pvs, 0, &val) != 0) {
-		LM_WARN("failed to assign result to variable %.*s\n", res_dst->len,
-				res_dst->s);
-		return -1;
-	}
-
-	return 0;
+	return tnt_set_result_pvs(msg, pvs, res_val);
 }
 
 /**

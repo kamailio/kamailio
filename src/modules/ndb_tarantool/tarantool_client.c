@@ -21,6 +21,7 @@
  */
 
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <errno.h>
 #include <netinet/tcp.h>
 #include <stdio.h>
@@ -236,8 +237,14 @@ tnt_server_t *tnt_get_server(const str *name)
 	tnt_server_t *it = NULL;
 	if(!tnt_srv_list)
 		return NULL;
-	if(!name || !name->s || name->len == 0)
+	if(!name || !name->s || name->len == 0) {
+		for(it = tnt_srv_list; it; it = it->next) {
+			if(it->sname.len == 7 && strncmp(it->sname.s, "default", 7) == 0) {
+				return it;
+			}
+		}
 		return tnt_srv_list;
+	}
 
 	for(it = tnt_srv_list; it; it = it->next) {
 		if(it->sname.len == name->len
@@ -655,33 +662,432 @@ void tnt_destroy_all(void)
 	tnt_srv_list = NULL;
 }
 
+typedef struct
+{
+	char *s;
+	size_t len;
+	size_t cap;
+} tnt_buf_t;
+
+static int tnt_buf_append(tnt_buf_t *b, const char *data, size_t len)
+{
+	if(b->len + len + 1 > b->cap) {
+		size_t new_cap = b->cap ? b->cap * 2 : 512;
+		while(new_cap < b->len + len + 1)
+			new_cap *= 2;
+		char *p = (char *)pkg_realloc(b->s, new_cap);
+		if(!p)
+			return -1;
+		b->s = p;
+		b->cap = new_cap;
+	}
+	memcpy(b->s + b->len, data, len);
+	b->len += len;
+	b->s[b->len] = '\0';
+	return 0;
+}
+
+static int tnt_buf_append_str_escaped(tnt_buf_t *b, const char *s, size_t len)
+{
+	size_t i;
+	if(tnt_buf_append(b, "\"", 1) < 0)
+		return -1;
+	for(i = 0; i < len; i++) {
+		unsigned char c = (unsigned char)s[i];
+		switch(c) {
+			case '\"':
+				if(tnt_buf_append(b, "\\\"", 2) < 0)
+					return -1;
+				break;
+			case '\\':
+				if(tnt_buf_append(b, "\\\\", 2) < 0)
+					return -1;
+				break;
+			case '\b':
+				if(tnt_buf_append(b, "\\b", 2) < 0)
+					return -1;
+				break;
+			case '\f':
+				if(tnt_buf_append(b, "\\f", 2) < 0)
+					return -1;
+				break;
+			case '\n':
+				if(tnt_buf_append(b, "\\n", 2) < 0)
+					return -1;
+				break;
+			case '\r':
+				if(tnt_buf_append(b, "\\r", 2) < 0)
+					return -1;
+				break;
+			case '\t':
+				if(tnt_buf_append(b, "\\t", 2) < 0)
+					return -1;
+				break;
+			default:
+				if(c < 0x20) {
+					char ubuf[8];
+					int ulen = snprintf(ubuf, sizeof(ubuf), "\\u%04x", c);
+					if(tnt_buf_append(b, ubuf, ulen) < 0)
+						return -1;
+				} else {
+					if(tnt_buf_append(b, (const char *)&c, 1) < 0)
+						return -1;
+				}
+				break;
+		}
+	}
+	return tnt_buf_append(b, "\"", 1);
+}
+
+static int tnt_mp_to_json_rec(const msgpack_object *obj, tnt_buf_t *b)
+{
+	char numbuf[64];
+	int nlen;
+	uint32_t i;
+
+	switch(obj->type) {
+		case MSGPACK_OBJECT_NIL:
+			return tnt_buf_append(b, "null", 4);
+		case MSGPACK_OBJECT_BOOLEAN:
+			return obj->via.boolean ? tnt_buf_append(b, "true", 4)
+									: tnt_buf_append(b, "false", 5);
+		case MSGPACK_OBJECT_POSITIVE_INTEGER:
+			nlen = snprintf(numbuf, sizeof(numbuf), "%llu",
+					(unsigned long long)obj->via.u64);
+			return tnt_buf_append(b, numbuf, nlen);
+		case MSGPACK_OBJECT_NEGATIVE_INTEGER:
+			nlen = snprintf(
+					numbuf, sizeof(numbuf), "%lld", (long long)obj->via.i64);
+			return tnt_buf_append(b, numbuf, nlen);
+		case MSGPACK_OBJECT_FLOAT32:
+		case MSGPACK_OBJECT_FLOAT64:
+			nlen = snprintf(numbuf, sizeof(numbuf), "%.15g", obj->via.f64);
+			return tnt_buf_append(b, numbuf, nlen);
+		case MSGPACK_OBJECT_STR:
+			return tnt_buf_append_str_escaped(
+					b, obj->via.str.ptr, obj->via.str.size);
+		case MSGPACK_OBJECT_BIN:
+			return tnt_buf_append_str_escaped(
+					b, obj->via.bin.ptr, obj->via.bin.size);
+		case MSGPACK_OBJECT_ARRAY:
+			if(tnt_buf_append(b, "[", 1) < 0)
+				return -1;
+			for(i = 0; i < obj->via.array.size; i++) {
+				if(i > 0 && tnt_buf_append(b, ", ", 2) < 0)
+					return -1;
+				if(tnt_mp_to_json_rec(&obj->via.array.ptr[i], b) < 0)
+					return -1;
+			}
+			return tnt_buf_append(b, "]", 1);
+		case MSGPACK_OBJECT_MAP:
+			if(tnt_buf_append(b, "{", 1) < 0)
+				return -1;
+			for(i = 0; i < obj->via.map.size; i++) {
+				if(i > 0 && tnt_buf_append(b, ", ", 2) < 0)
+					return -1;
+				if(obj->via.map.ptr[i].key.type == MSGPACK_OBJECT_STR) {
+					if(tnt_buf_append_str_escaped(b,
+							   obj->via.map.ptr[i].key.via.str.ptr,
+							   obj->via.map.ptr[i].key.via.str.size)
+							< 0)
+						return -1;
+				} else {
+					if(tnt_mp_to_json_rec(&obj->via.map.ptr[i].key, b) < 0)
+						return -1;
+				}
+				if(tnt_buf_append(b, ": ", 2) < 0)
+					return -1;
+				if(tnt_mp_to_json_rec(&obj->via.map.ptr[i].val, b) < 0)
+					return -1;
+			}
+			return tnt_buf_append(b, "}", 1);
+		default:
+			return tnt_buf_append(b, "null", 4);
+	}
+}
+
 /**
- * tnt_mp_to_json_str - Convert MessagePack Object to JSON string in pkg memory
+ * tnt_mp_to_json_str - Convert MessagePack Object to proper JSON string in pkg memory
  */
 static int tnt_mp_to_json_str(const msgpack_object *obj, str *dst)
 {
-	char buf[8192];
-	int len;
+	tnt_buf_t b;
 
 	if(!obj || !dst)
 		return -1;
 
-	len = msgpack_object_print_buffer(buf, sizeof(buf) - 1, *obj);
-	if(len > 0) {
-		buf[len] = '\0';
-		dst->s = (char *)pkg_malloc(len + 1);
-		if(!dst->s)
-			return -1;
-		memcpy(dst->s, buf, len + 1);
-		dst->len = len;
-	} else {
+	memset(&b, 0, sizeof(tnt_buf_t));
+	if(tnt_mp_to_json_rec(obj, &b) < 0 || !b.s) {
+		if(b.s)
+			pkg_free(b.s);
 		dst->s = (char *)pkg_malloc(3);
 		if(dst->s) {
 			memcpy(dst->s, "[]", 3);
 			dst->len = 2;
 		}
+		return 0;
 	}
+
+	dst->s = b.s;
+	dst->len = (int)b.len;
 	return 0;
+}
+
+static const char *tnt_skip_ws(const char *p, const char *end)
+{
+	while(p < end && (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n'))
+		p++;
+	return p;
+}
+
+static int tnt_count_json_elements(
+		const char *p, const char *end, char close_char)
+{
+	int count = 0;
+	int depth = 0;
+	int in_str = 0;
+	int escape = 0;
+
+	p = tnt_skip_ws(p, end);
+	if(p >= end || *p == close_char)
+		return 0;
+
+	count = 1;
+	while(p < end) {
+		char c = *p;
+		if(in_str) {
+			if(escape) {
+				escape = 0;
+			} else if(c == '\\') {
+				escape = 1;
+			} else if(c == '\"') {
+				in_str = 0;
+			}
+		} else {
+			if(c == '\"') {
+				in_str = 1;
+			} else if(c == '[' || c == '{') {
+				depth++;
+			} else if(c == ']' || c == '}') {
+				if(depth == 0 && c == close_char)
+					return count;
+				depth--;
+			} else if(c == ',' && depth == 0) {
+				count++;
+			}
+		}
+		p++;
+	}
+	return count;
+}
+
+static int tnt_pack_json_value(
+		msgpack_packer *pk, const char **cur, const char *end)
+{
+	const char *p = tnt_skip_ws(*cur, end);
+	if(p >= end)
+		return -1;
+
+	if(*p == '\"') {
+		p++;
+		tnt_buf_t sbuf;
+		memset(&sbuf, 0, sizeof(tnt_buf_t));
+		while(p < end && *p != '\"') {
+			if(*p == '\\' && p + 1 < end) {
+				p++;
+				switch(*p) {
+					case '\"':
+						tnt_buf_append(&sbuf, "\"", 1);
+						break;
+					case '\\':
+						tnt_buf_append(&sbuf, "\\", 1);
+						break;
+					case '/':
+						tnt_buf_append(&sbuf, "/", 1);
+						break;
+					case 'b':
+						tnt_buf_append(&sbuf, "\b", 1);
+						break;
+					case 'f':
+						tnt_buf_append(&sbuf, "\f", 1);
+						break;
+					case 'n':
+						tnt_buf_append(&sbuf, "\n", 1);
+						break;
+					case 'r':
+						tnt_buf_append(&sbuf, "\r", 1);
+						break;
+					case 't':
+						tnt_buf_append(&sbuf, "\t", 1);
+						break;
+					case 'u': {
+						if(p + 4 < end) {
+							char hex[5] = {p[1], p[2], p[3], p[4], '\0'};
+							long cp = strtol(hex, NULL, 16);
+							if(cp > 0 && cp < 128) {
+								char ascii_c = (char)cp;
+								tnt_buf_append(&sbuf, &ascii_c, 1);
+							}
+							p += 4;
+						}
+						break;
+					}
+					default:
+						tnt_buf_append(&sbuf, p, 1);
+						break;
+				}
+			} else {
+				tnt_buf_append(&sbuf, p, 1);
+			}
+			p++;
+		}
+		if(p < end && *p == '\"')
+			p++;
+		*cur = p;
+		msgpack_pack_str(pk, (uint32_t)sbuf.len);
+		if(sbuf.len > 0)
+			msgpack_pack_str_body(pk, sbuf.s, (uint32_t)sbuf.len);
+		if(sbuf.s)
+			pkg_free(sbuf.s);
+		return 0;
+	}
+
+	if(*p == '[') {
+		p++;
+		int count = tnt_count_json_elements(p, end, ']');
+		msgpack_pack_array(pk, (uint32_t)count);
+		p = tnt_skip_ws(p, end);
+		if(p < end && *p == ']') {
+			*cur = p + 1;
+			return 0;
+		}
+		for(int i = 0; i < count; i++) {
+			if(tnt_pack_json_value(pk, &p, end) < 0)
+				return -1;
+			p = tnt_skip_ws(p, end);
+			if(p < end && *p == ',')
+				p++;
+		}
+		p = tnt_skip_ws(p, end);
+		if(p < end && *p == ']')
+			p++;
+		*cur = p;
+		return 0;
+	}
+
+	if(*p == '{') {
+		p++;
+		int count = tnt_count_json_elements(p, end, '}');
+		msgpack_pack_map(pk, (uint32_t)count);
+		p = tnt_skip_ws(p, end);
+		if(p < end && *p == '}') {
+			*cur = p + 1;
+			return 0;
+		}
+		for(int i = 0; i < count; i++) {
+			if(tnt_pack_json_value(pk, &p, end) < 0)
+				return -1;
+			p = tnt_skip_ws(p, end);
+			if(p < end && *p == ':')
+				p++;
+			if(tnt_pack_json_value(pk, &p, end) < 0)
+				return -1;
+			p = tnt_skip_ws(p, end);
+			if(p < end && *p == ',')
+				p++;
+		}
+		p = tnt_skip_ws(p, end);
+		if(p < end && *p == '}')
+			p++;
+		*cur = p;
+		return 0;
+	}
+
+	if(end - p >= 4 && strncmp(p, "true", 4) == 0) {
+		msgpack_pack_true(pk);
+		*cur = p + 4;
+		return 0;
+	}
+
+	if(end - p >= 5 && strncmp(p, "false", 5) == 0) {
+		msgpack_pack_false(pk);
+		*cur = p + 5;
+		return 0;
+	}
+
+	if(end - p >= 4 && strncmp(p, "null", 4) == 0) {
+		msgpack_pack_nil(pk);
+		*cur = p + 4;
+		return 0;
+	}
+
+	if(*p == '-' || isdigit((unsigned char)*p)) {
+		char *next = NULL;
+		int is_float = 0;
+		const char *scan = p;
+		if(*scan == '-')
+			scan++;
+		while(scan < end && isdigit((unsigned char)*scan))
+			scan++;
+		if(scan < end && (*scan == '.' || *scan == 'e' || *scan == 'E'))
+			is_float = 1;
+
+		if(is_float) {
+			double d = strtod(p, &next);
+			msgpack_pack_double(pk, d);
+		} else {
+			long long val = strtoll(p, &next, 10);
+			msgpack_pack_int64(pk, val);
+		}
+		*cur = next ? next : scan;
+		return 0;
+	}
+
+	/* Fallback: string up to delimiter */
+	const char *start = p;
+	while(p < end && *p != ',' && *p != ']' && *p != '}'
+			&& !isspace((unsigned char)*p))
+		p++;
+	size_t len = (size_t)(p - start);
+	msgpack_pack_str(pk, (uint32_t)len);
+	if(len > 0)
+		msgpack_pack_str_body(pk, start, (uint32_t)len);
+	*cur = p;
+	return 0;
+}
+
+static int tnt_pack_params_tuple(msgpack_packer *pk, const str *params)
+{
+	if(!params || !params->s || params->len <= 0) {
+		return msgpack_pack_array(pk, 0);
+	}
+
+	const char *cur = tnt_skip_ws(params->s, params->s + params->len);
+	const char *end = params->s + params->len;
+
+	if(cur >= end) {
+		return msgpack_pack_array(pk, 0);
+	}
+
+	if(*cur == '[') {
+		cur++;
+		int count = tnt_count_json_elements(cur, end, ']');
+		msgpack_pack_array(pk, (uint32_t)count);
+		cur = tnt_skip_ws(cur, end);
+		if(cur < end && *cur == ']')
+			return 0;
+		for(int i = 0; i < count; i++) {
+			if(tnt_pack_json_value(pk, &cur, end) < 0)
+				return -1;
+			cur = tnt_skip_ws(cur, end);
+			if(cur < end && *cur == ',')
+				cur++;
+		}
+		return 0;
+	}
+
+	msgpack_pack_array(pk, 1);
+	return tnt_pack_json_value(pk, &cur, end);
 }
 
 /**
@@ -740,13 +1146,7 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	msgpack_pack_str_body(&pk, proc_name->s, proc_name->len);
 
 	msgpack_pack_uint8(&pk, TNT_IPROTO_TUPLE);
-	if(params_json && params_json->len > 0 && params_json->s[0] != '[') {
-		msgpack_pack_array(&pk, 1);
-		msgpack_pack_str(&pk, params_json->len);
-		msgpack_pack_str_body(&pk, params_json->s, params_json->len);
-	} else {
-		msgpack_pack_array(&pk, 0);
-	}
+	tnt_pack_params_tuple(&pk, params_json);
 
 	body_len = (uint32_t)sbuf.size;
 	len_hdr[0] = (char)0xce;
@@ -817,8 +1217,26 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	}
 
 	if(resp_type != TNT_IPROTO_OK) {
-		LM_ERR("Tarantool call '%.*s' returned error 0x%lx\n", proc_name->len,
-				proc_name->s, (unsigned long)resp_type);
+		str err_msg = str_init("unknown error");
+		if(msgpack_unpack_next(&msg, resp_body, resp_len, &off)
+				== MSGPACK_UNPACK_SUCCESS) {
+			if(msg.data.type == MSGPACK_OBJECT_MAP) {
+				for(i = 0; i < msg.data.via.map.size; i++) {
+					uint64_t k = msg.data.via.map.ptr[i].key.via.u64;
+					if(k == TNT_IPROTO_ERROR || k == TNT_IPROTO_ERROR_24) {
+						if(msg.data.via.map.ptr[i].val.type
+								== MSGPACK_OBJECT_STR) {
+							err_msg.s = (char *)msg.data.via.map.ptr[i]
+												.val.via.str.ptr;
+							err_msg.len =
+									msg.data.via.map.ptr[i].val.via.str.size;
+						}
+					}
+				}
+			}
+		}
+		LM_ERR("Tarantool call '%.*s' error 0x%lx: %.*s\n", proc_name->len,
+				proc_name->s, (unsigned long)resp_type, err_msg.len, err_msg.s);
 		goto out_unpack;
 	}
 
@@ -907,13 +1325,7 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	msgpack_pack_str_body(&pk, expr->s, expr->len);
 
 	msgpack_pack_uint8(&pk, TNT_IPROTO_TUPLE);
-	if(params_json && params_json->len > 0 && params_json->s[0] != '[') {
-		msgpack_pack_array(&pk, 1);
-		msgpack_pack_str(&pk, params_json->len);
-		msgpack_pack_str_body(&pk, params_json->s, params_json->len);
-	} else {
-		msgpack_pack_array(&pk, 0);
-	}
+	tnt_pack_params_tuple(&pk, params_json);
 
 	body_len = (uint32_t)sbuf.size;
 	len_hdr[0] = (char)0xce;
@@ -981,8 +1393,26 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	}
 
 	if(resp_type != TNT_IPROTO_OK) {
-		LM_ERR("Tarantool eval returned error 0x%lx\n",
-				(unsigned long)resp_type);
+		str err_msg = str_init("unknown error");
+		if(msgpack_unpack_next(&msg, resp_body, resp_len, &off)
+				== MSGPACK_UNPACK_SUCCESS) {
+			if(msg.data.type == MSGPACK_OBJECT_MAP) {
+				for(i = 0; i < msg.data.via.map.size; i++) {
+					uint64_t k = msg.data.via.map.ptr[i].key.via.u64;
+					if(k == TNT_IPROTO_ERROR || k == TNT_IPROTO_ERROR_24) {
+						if(msg.data.via.map.ptr[i].val.type
+								== MSGPACK_OBJECT_STR) {
+							err_msg.s = (char *)msg.data.via.map.ptr[i]
+												.val.via.str.ptr;
+							err_msg.len =
+									msg.data.via.map.ptr[i].val.via.str.size;
+						}
+					}
+				}
+			}
+		}
+		LM_ERR("Tarantool eval error 0x%lx: %.*s\n", (unsigned long)resp_type,
+				err_msg.len, err_msg.s);
 		goto out_unpack;
 	}
 

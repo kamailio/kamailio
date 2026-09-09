@@ -38,6 +38,8 @@ int sr_kemi_tarantool_call_srv(sip_msg_t *msg, str *srv_name, str *proc_name,
 int sr_kemi_tarantool_eval_srv(sip_msg_t *msg, str *srv_name, str *expr,
 		str *params_json, str *res_dst);
 
+int tnt_set_result_pvs(sip_msg_t *msg, pv_spec_t *pvs, str *res_val);
+
 int sr_kemi_ndb_tarantool_register(void);
 
 #endif /* NDB_TARANTOOL_KEMI_H */
