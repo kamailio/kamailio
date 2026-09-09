@@ -179,7 +179,7 @@ static char fourbits2char[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8',
   */
 static inline unsigned short str2s(const char *s, unsigned int len, int *err)
 {
-	unsigned short ret;
+	unsigned long ret;
 	int i;
 	unsigned char *limit;
 	unsigned char *str;
@@ -192,25 +192,32 @@ static inline unsigned short str2s(const char *s, unsigned int len, int *err)
 	for(; str < limit; str++) {
 		if((*str <= '9') && (*str >= '0')) {
 			ret = ret * 10 + *str - '0';
-			i++;
-			if(i > 5)
+			if (ret > USHRT_MAX) {
 				goto error_digits;
+			}
+			i++;
+			if(i > 5) {
+				goto error_digits;
+			}
 		} else {
 			/* error unknown char */
 			goto error_char;
 		}
 	}
-	if(err)
+	if(err) {
 		*err = 0;
-	return ret;
+	}
+	return (unsigned short)ret;
 
 error_digits:
-	if(err)
+	if(err) {
 		*err = 1;
+	}
 	return 0;
 error_char:
-	if(err)
+	if(err) {
 		*err = 1;
+	}
 	return 0;
 }
 
