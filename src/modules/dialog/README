@@ -111,8 +111,8 @@ Simone de Blasiis
               6.54. timeout_noreset (int)
               6.55. timer_procs (int)
               6.56. enable_dmq (int)
-              6.57. enable_dmq_ka_iflags_sync (int)
-              6.58. enable_dmq_load_callbacks (int)
+              6.57. dmq_ka_iflags_sync (int)
+              6.58. dmq_load_callbacks (int)
               6.59. track_cseq_updates (int)
               6.60. lreq_callee_headers (string)
               6.61. event_callback (str)
@@ -271,8 +271,8 @@ Simone de Blasiis
    1.54. Set timeout_noreset parameter
    1.55. Set timer_procs parameter
    1.56. Set enable_dmq parameter
-   1.57. Set enable_dmq_ka_iflags_sync parameter
-   1.58. Set enable_dmq_load_callbacks parameter
+   1.57. Set dmq_ka_iflags_sync parameter
+   1.58. Set dmq_load_callbacks parameter
    1.59. Set track_cseq_updates parameter
    1.60. Set lreq_callee_headers parameter
    1.61. Set event_callback parameter
@@ -387,8 +387,8 @@ Chapter 1. Admin Guide
         6.54. timeout_noreset (int)
         6.55. timer_procs (int)
         6.56. enable_dmq (int)
-        6.57. enable_dmq_ka_iflags_sync (int)
-        6.58. enable_dmq_load_callbacks (int)
+        6.57. dmq_ka_iflags_sync (int)
+        6.58. dmq_load_callbacks (int)
         6.59. track_cseq_updates (int)
         6.60. lreq_callee_headers (string)
         6.61. event_callback (str)
@@ -637,8 +637,8 @@ Chapter 1. Admin Guide
    6.54. timeout_noreset (int)
    6.55. timer_procs (int)
    6.56. enable_dmq (int)
-   6.57. enable_dmq_ka_iflags_sync (int)
-   6.58. enable_dmq_load_callbacks (int)
+   6.57. dmq_ka_iflags_sync (int)
+   6.58. dmq_load_callbacks (int)
    6.59. track_cseq_updates (int)
    6.60. lreq_callee_headers (string)
    6.61. event_callback (str)
@@ -1393,7 +1393,7 @@ modparam("dialog", "timer_procs", 1)
 modparam("dialog", "enable_dmq", 1)
 ...
 
-6.57. enable_dmq_ka_iflags_sync (int)
+6.57. dmq_ka_iflags_sync (int)
 
    If set to 1, the keepalive internal flags, set with
    dlg_set_property("ka-src"/"ka-dst"), are carried in the dmq dialog
@@ -1401,12 +1401,12 @@ modparam("dialog", "enable_dmq", 1)
 
    Default value is “0”.
 
-   Example 1.57. Set enable_dmq_ka_iflags_sync parameter
+   Example 1.57. Set dmq_ka_iflags_sync parameter
 ...
-modparam("dialog", "enable_dmq_ka_iflags_sync", 1)
+modparam("dialog", "dmq_ka_iflags_sync", 1)
 ...
 
-6.58. enable_dmq_load_callbacks (int)
+6.58. dmq_load_callbacks (int)
 
    If set to 1, active dialogs newly created from DMQ replication run the
    “DLGCB_LOADED” callbacks after their replicated data has been applied.
@@ -1435,9 +1435,9 @@ modparam("dialog", "enable_dmq_ka_iflags_sync", 1)
 
    Default value is “0”.
 
-   Example 1.58. Set enable_dmq_load_callbacks parameter
+   Example 1.58. Set dmq_load_callbacks parameter
 ...
-modparam("dialog", "enable_dmq_load_callbacks", 1)
+modparam("dialog", "dmq_load_callbacks", 1)
 ...
 
 6.59. track_cseq_updates (int)
