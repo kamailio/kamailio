@@ -74,8 +74,8 @@ struct th_socket_strings
 
 /** module parameters */
 str _th_key = str_init("aL9.n8~Hm]Z");
-str th_cookie_name = str_init("TH"); /* lost parameter? */
-str th_cookie_value = {0, 0};		 /* lost parameter? */
+str th_cookie_name = str_init("TH");
+str th_cookie_value = {0, 0};
 str th_ip = str_init("127.0.0.8");
 str th_uparam_name = str_init("line");
 str th_uparam_prefix = str_init("sr-");
@@ -131,6 +131,7 @@ static pv_export_t mod_pvs[] = {
 
 static param_export_t params[] = {
 	{"mask_key", PARAM_STR, &_th_key},
+	{"mask_cookie", PARAM_STR, &th_cookie_name},
 	{"mask_ip", PARAM_STR, &th_ip},
 	{"mask_callid", PARAM_INT, &th_param_mask_callid},
 	{"mask_mode", PARAM_INT, &th_param_mask_mode},
