@@ -94,19 +94,18 @@ void get_tag_avp(int_str *tag_avp_p, int *tag_avp_type_p)
 /*
  * Create and initialize a hash table
  */
-struct trusted_list **new_hash_table(void)
+struct trusted_table *new_hash_table(void)
 {
-	struct trusted_list **ptr;
+	struct trusted_table *ptr;
 
 	/* Initializing hash tables and hash table variable */
-	ptr = (struct trusted_list **)shm_malloc(
-			sizeof(struct trusted_list *) * PERM_HASH_SIZE);
+	ptr = shm_malloc(sizeof(struct trusted_table));
 	if(!ptr) {
 		LM_ERR("no shm memory for hash table\n");
 		return 0;
 	}
 
-	memset(ptr, 0, sizeof(struct trusted_list *) * PERM_HASH_SIZE);
+	memset(ptr, 0, sizeof(*ptr));
 	return ptr;
 }
 
@@ -114,12 +113,32 @@ struct trusted_list **new_hash_table(void)
 /*
  * Release all memory allocated for a hash table
  */
-void free_hash_table(struct trusted_list **table)
+void free_hash_table(struct trusted_table *table)
 {
+	int i;
+	struct trusted_list *np, *next;
+
 	if(!table)
 		return;
 
-	empty_hash_table(table);
+	for(i = 0; i < PERM_HASH_SIZE; i++) {
+		np = table->table[i];
+		while(np) {
+			if(np->src_ip.s)
+				shm_free(np->src_ip.s);
+			if(np->pattern)
+				shm_free(np->pattern);
+			if(np->ruri_pattern)
+				shm_free(np->ruri_pattern);
+			if(np->tag.s)
+				shm_free(np->tag.s);
+			next = np->next;
+			shm_free(np);
+			np = next;
+		}
+		table->table[i] = 0;
+	}
+
 	shm_free(table);
 }
 
@@ -381,51 +400,22 @@ int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t *rpc, void *c)
 	return 0;
 }
 
-/*
- * Free contents of hash table, it doesn't destroy the
- * hash table itself
- */
-void empty_hash_table(struct trusted_list **table)
-{
-	int i;
-	struct trusted_list *np, *next;
-
-	for(i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
-		while(np) {
-			if(np->src_ip.s)
-				shm_free(np->src_ip.s);
-			if(np->pattern)
-				shm_free(np->pattern);
-			if(np->ruri_pattern)
-				shm_free(np->ruri_pattern);
-			if(np->tag.s)
-				shm_free(np->tag.s);
-			next = np->next;
-			shm_free(np);
-			np = next;
-		}
-		table[i] = 0;
-	}
-}
-
 
 /*
  * Create and initialize an address hash table
  */
-struct addr_list **new_addr_hash_table(void)
+struct addr_table *new_addr_hash_table(void)
 {
-	struct addr_list **ptr;
+	struct addr_table *ptr;
 
 	/* Initializing hash tables and hash table variable */
-	ptr = (struct addr_list **)shm_malloc(
-			sizeof(struct addr_list *) * PERM_HASH_SIZE);
+	ptr = shm_malloc(sizeof(struct addr_table));
 	if(!ptr) {
 		LM_ERR("no shm memory for hash table\n");
 		return 0;
 	}
 
-	memset(ptr, 0, sizeof(struct addr_list *) * PERM_HASH_SIZE);
+	memset(ptr, 0, sizeof(*ptr));
 	return ptr;
 }
 
@@ -433,12 +423,24 @@ struct addr_list **new_addr_hash_table(void)
 /*
  * Release all memory allocated for a hash table
  */
-void free_addr_hash_table(struct addr_list **table)
+void free_addr_hash_table(struct addr_table *table)
 {
+	int i;
+	struct addr_list *np, *next;
+
 	if(!table)
 		return;
 
-	empty_addr_hash_table(table);
+	for(i = 0; i < PERM_HASH_SIZE; i++) {
+		np = table->table[i];
+		while(np) {
+			next = np->next;
+			shm_free(np);
+			np = next;
+		}
+		table->table[i] = 0;
+	}
+
 	shm_free(table);
 }
 
@@ -600,42 +602,20 @@ int addr_hash_table_rpc_print(struct addr_list **table, rpc_t *rpc, void *c)
 
 
 /*
- * Free contents of hash table, it doesn't destroy the
- * hash table itself
- */
-void empty_addr_hash_table(struct addr_list **table)
-{
-	int i;
-	struct addr_list *np, *next;
-
-	for(i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
-		while(np) {
-			next = np->next;
-			shm_free(np);
-			np = next;
-		}
-		table[i] = 0;
-	}
-}
-
-
-/*
  * Create and initialize a subnet table
  */
-struct subnet *new_subnet_table(void)
+struct subnet_table *new_subnet_table(void)
 {
-	struct subnet *ptr;
+	struct subnet_table *ptr;
 
-	/* subnet record [PERM_MAX_SUBNETS] contains in its grp field
-	 * the number of subnet records in the subnet table */
-	ptr = (struct subnet *)shm_malloc(
-			sizeof(struct subnet) * (PERM_MAX_SUBNETS + 1));
+	size_t alloc_size = sizeof(struct subnet_table)
+						+ sizeof(struct subnet) * PERM_MAX_SUBNETS;
+	ptr = shm_malloc(alloc_size);
 	if(!ptr) {
 		LM_ERR("no shm memory for subnet table\n");
 		return 0;
 	}
-	memset(ptr, 0, sizeof(struct subnet) * (PERM_MAX_SUBNETS + 1));
+	memset(ptr, 0, alloc_size);
 	return ptr;
 }
 
@@ -644,16 +624,14 @@ struct subnet *new_subnet_table(void)
  * Add <grp, subnet, mask, port, tag> into subnet table so that table is
  * kept in increasing ordered according to grp.
  */
-int subnet_table_insert(struct subnet *table, unsigned int grp,
-		ip_addr_t *subnet, unsigned int mask, unsigned int port, str *tagv)
+int subnet_table_insert(struct subnet *table, unsigned int *count,
+		unsigned int grp, ip_addr_t *subnet, unsigned int mask,
+		unsigned int port, str *tagv)
 {
 	int i;
-	unsigned int count;
 	str tags;
 
-	count = table[PERM_MAX_SUBNETS].grp;
-
-	if(count == PERM_MAX_SUBNETS) {
+	if(*count == PERM_MAX_SUBNETS) {
 		LM_CRIT("subnet table is full\n");
 		return 0;
 	}
@@ -672,7 +650,7 @@ int subnet_table_insert(struct subnet *table, unsigned int grp,
 		tags.s[tags.len] = '\0';
 	}
 
-	i = count - 1;
+	i = *count - 1;
 
 	while((i >= 0) && (table[i].grp > grp)) {
 		table[i + 1] = table[i];
@@ -685,7 +663,7 @@ int subnet_table_insert(struct subnet *table, unsigned int grp,
 	table[i + 1].mask = mask;
 	table[i + 1].tag = tags;
 
-	table[PERM_MAX_SUBNETS].grp = count + 1;
+	(*count)++;
 
 	return 1;
 }
@@ -695,15 +673,13 @@ int subnet_table_insert(struct subnet *table, unsigned int grp,
  * Check if an entry exists in subnet table that matches given group, ip_addr,
  * and port.  Port 0 in subnet table matches any port.
  */
-int match_subnet_table(struct subnet *table, unsigned int grp, ip_addr_t *addr,
-		unsigned int port)
+int match_subnet_table(struct subnet *table, unsigned int count,
+		unsigned int grp, ip_addr_t *addr, unsigned int port)
 {
-	unsigned int count, i;
+	unsigned int i;
 	avp_value_t val;
 	int best_idx = -1;
 	unsigned int best_mask = 0;
-
-	count = table[PERM_MAX_SUBNETS].grp;
 
 	i = 0;
 	while((i < count) && (table[i].grp < grp))
@@ -748,15 +724,13 @@ int match_subnet_table(struct subnet *table, unsigned int grp, ip_addr_t *addr,
  * and port.  Port 0 in subnet table matches any port.  Return group of
  * first match or -1 if no match is found.
  */
-int find_group_in_subnet_table(
-		struct subnet *table, ip_addr_t *addr, unsigned int port)
+int find_group_in_subnet_table(struct subnet *table, unsigned int count,
+		ip_addr_t *addr, unsigned int port)
 {
-	unsigned int count, i;
+	unsigned int i;
 	avp_value_t val;
 	int best_idx = -1;
 	unsigned int best_mask = 0;
-
-	count = table[PERM_MAX_SUBNETS].grp;
 
 	i = 0;
 	while(i < count) {
@@ -793,14 +767,12 @@ int find_group_in_subnet_table(
 /*! \brief
  * RPC interface :: Print subnet entries stored in hash table
  */
-int subnet_table_rpc_print(struct subnet *table, rpc_t *rpc, void *c)
+int subnet_table_rpc_print(
+		struct subnet *table, unsigned int count, rpc_t *rpc, void *c)
 {
 	int i;
-	int count;
 	void *th;
 	void *ih;
-
-	count = table[PERM_MAX_SUBNETS].grp;
 
 	for(i = 0; i < count; i++) {
 		if(rpc->add(c, "{", &th) < 0) {
@@ -832,35 +804,18 @@ int subnet_table_rpc_print(struct subnet *table, rpc_t *rpc, void *c)
 
 
 /*
- * Empty contents of subnet table
- */
-void empty_subnet_table(struct subnet *table)
-{
-	int i;
-	table[PERM_MAX_SUBNETS].grp = 0;
-	for(i = 0; i < PERM_MAX_SUBNETS; i++) {
-		if(table[i].tag.s != NULL) {
-			shm_free(table[i].tag.s);
-			table[i].tag.s = NULL;
-			table[i].tag.len = 0;
-		}
-	}
-}
-
-
-/*
  * Release memory allocated for a subnet table
  */
-void free_subnet_table(struct subnet *table)
+void free_subnet_table(struct subnet_table *table)
 {
 	int i;
 	if(!table)
 		return;
 	for(i = 0; i < PERM_MAX_SUBNETS; i++) {
-		if(table[i].tag.s != NULL) {
-			shm_free(table[i].tag.s);
-			table[i].tag.s = NULL;
-			table[i].tag.len = 0;
+		if(table->table[i].tag.s != NULL) {
+			shm_free(table->table[i].tag.s);
+			table->table[i].tag.s = NULL;
+			table->table[i].tag.len = 0;
 		}
 	}
 
@@ -870,52 +825,43 @@ void free_subnet_table(struct subnet *table)
 /*
  * Create and initialize a domain_name table
  */
-struct domain_name_list **new_domain_name_table(void)
+struct domain_name_table *new_domain_name_table(void)
 {
-	struct domain_name_list **ptr;
+	struct domain_name_table *ptr;
 
 	/* Initializing hash tables and hash table variable */
-	ptr = (struct domain_name_list **)shm_malloc(
-			sizeof(struct domain_name_list *) * PERM_HASH_SIZE);
+	ptr = (struct domain_name_table *)shm_malloc(
+			sizeof(struct domain_name_table));
 	if(!ptr) {
 		LM_ERR("no shm memory for hash table\n");
 		return 0;
 	}
 
-	memset(ptr, 0, sizeof(struct domain_name *) * PERM_HASH_SIZE);
+	memset(ptr, 0, sizeof(*ptr));
 	return ptr;
 }
 
 
 /*
- * Free contents of hash table, it doesn't destroy the
- * hash table itself
+ * Release all memory allocated for a hash table
  */
-void empty_domain_name_table(struct domain_name_list **table)
+void free_domain_name_table(struct domain_name_table *table)
 {
 	int i;
 	struct domain_name_list *np, *next;
 
+	if(!table)
+		return;
+
 	for(i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
+		np = table->table[i];
 		while(np) {
 			next = np->next;
 			shm_free(np);
 			np = next;
 		}
-		table[i] = 0;
+		table->table[i] = 0;
 	}
-}
-
-/*
- * Release all memory allocated for a hash table
- */
-void free_domain_name_table(struct domain_name_list **table)
-{
-	if(!table)
-		return;
-
-	empty_domain_name_table(table);
 	shm_free(table);
 }
 
@@ -1062,4 +1008,24 @@ int domain_name_table_rpc_print(
 		}
 	}
 	return 0;
+}
+
+
+/*
+ * Sleeps until the given reference count, protected by the given lock, drops
+ * to zero
+ */
+void ref_cnt_wait_zero(unsigned int *ref, gen_lock_t *lock)
+{
+	unsigned int iter = 0;
+
+	lock_get(lock);
+	while(*ref != 0) {
+		lock_release(lock);
+		iter++;
+		LM_WARN("table is still in use after %u tries", iter);
+		sleep_us(iter * 10000);
+		lock_get(lock);
+	}
+	lock_release(lock);
 }
