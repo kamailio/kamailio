@@ -405,13 +405,20 @@ int pvh_remove_header_param_helper(str *orig, const str *toRemove, str *dst)
 	char *saveptr = NULL;
 	char *token;
 	char t[_pvh_params.hdr_value_size];
+	unsigned int t_len;
 	char *result = pv_get_buffer();
 	int maxSize = pv_get_buffer_size();
 
+	if(orig->len + 1 >= _pvh_params.hdr_value_size) {
+		t_len = _pvh_params.hdr_value_size - 1;
+		LM_WARN("header length[%d] exceeds header_value_size\n", orig->len);
+	} else {
+		t_len = orig->len;
+	}
 	memset(result, 0, maxSize);
 	LM_DBG("orig:'%.*s' toRemove:'%.*s'\n", STR_FMT(orig), STR_FMT(toRemove));
-	strncpy(t, orig->s, orig->len);
-	t[orig->len] = '\0';
+	strncpy(t, orig->s, t_len);
+	t[t_len] = '\0';
 	token = strtok_r(t, ", ", &saveptr);
 	dst->s = NULL;
 	dst->len = -1;
