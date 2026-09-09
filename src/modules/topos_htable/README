@@ -103,7 +103,8 @@ toexpire=7200")
 3.3. topos_htable_base64 (int)
 
    Enable or disable base64 encoding of htable values. Useful when
-   individual values stored in htable contain delimiter value "|".
+   individual values stored in htable contain delimiter value "|". It is
+   recommended to enable this value for production environments.
 
    Default value is “0”.
 
