@@ -583,6 +583,7 @@ int th_msg_received(sr_event_param_t *evp)
 
 	LM_DBG("adding cookie: %.*s\n", th_cookie_value.len, th_cookie_value.s);
 
+	th_del_cookie(&msg);
 	th_add_cookie(&msg);
 	nbuf = th_msg_update(&msg, (unsigned int *)&obuf->len);
 
