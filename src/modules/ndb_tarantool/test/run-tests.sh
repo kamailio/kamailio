@@ -2,6 +2,8 @@
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$DIR"
+
 KAMAILIO_BIN="${DIR}/../../../../src/kamailio"
 MODULES_DIR="${DIR}/../../../../src/modules"
 
@@ -9,13 +11,31 @@ if [ ! -x "$KAMAILIO_BIN" ]; then
     KAMAILIO_BIN="kamailio"
 fi
 
+# Configurable Tarantool connection parameters via environment
+TNT_ADDR="${TNT_ADDR:-127.0.0.1}"
+TNT_PORT="${TNT_PORT:-3301}"
+TNT_USER="${TNT_USER:-rtpe_user}"
+TNT_PASS="${TNT_PASS:-rtpe_secret_password}"
+
+if [ -n "$TNT_USER" ]; then
+    TNT_AUTH=";user=${TNT_USER};pass=${TNT_PASS}"
+else
+    TNT_AUTH=""
+fi
+
 echo "==============================================================="
 echo "       Kamailio ndb_tarantool Module In-Tree Test Suite       "
 echo "==============================================================="
+echo "Target Tarantool instance: ${TNT_ADDR}:${TNT_PORT} (user: ${TNT_USER:-none})"
 
 # 1. Check syntax
 echo -n "[1/3] Validating Kamailio config syntax (kamailio -c)... "
-"$KAMAILIO_BIN" -c -L "$MODULES_DIR" -f "${DIR}/test.cfg" > /dev/null 2>&1
+"$KAMAILIO_BIN" -c -L "$MODULES_DIR" -w "$DIR" \
+    --substdef="!TNT_ADDR!${TNT_ADDR}!g" \
+    --substdef="!TNT_PORT!${TNT_PORT}!g" \
+    --substdef="!TNT_AUTH!${TNT_AUTH}!g" \
+    --substdef="!TNT_LUA_FILE!${DIR}/test_kemi.lua!g" \
+    -f "${DIR}/test.cfg" > /dev/null 2>&1
 echo "OK"
 
 # Function to run test with config and stream log
@@ -30,13 +50,18 @@ run_kam_test() {
     sleep 0.5
     rm -f "$log_file"
 
-    "$KAMAILIO_BIN" -L "$MODULES_DIR" -f "$cfg_file" -E -e > "$log_file" 2>&1 &
+    "$KAMAILIO_BIN" -L "$MODULES_DIR" -w "$DIR" \
+        --substdef="!TNT_ADDR!${TNT_ADDR}!g" \
+        --substdef="!TNT_PORT!${TNT_PORT}!g" \
+        --substdef="!TNT_AUTH!${TNT_AUTH}!g" \
+        --substdef="!TNT_LUA_FILE!${DIR}/test_kemi.lua!g" \
+        -f "$cfg_file" -E -e > "$log_file" 2>&1 &
     local kam_pid=$!
     sleep 1.5
 
-    # Send SIP OPTIONS
-    local sip_res
-    sip_res=$(python3 -c "
+    # Send SIP OPTIONS and record real return code
+    set +e
+    python3 -c "
 import socket, sys
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.settimeout(3.0)
@@ -62,8 +87,9 @@ except Exception:
     sys.exit(1)
 finally:
     s.close()
-" 2>&1) || true
+" > /dev/null 2>&1
     local rc=$?
+    set -e
 
     killall -9 kamailio 2>/dev/null || true
     wait $kam_pid 2>/dev/null || true

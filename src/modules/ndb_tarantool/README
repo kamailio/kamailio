@@ -1,0 +1,395 @@
+NDB_TARANTOOL Module
+
+Andrei Lashchinskii
+
+   <koorwork+kamailio@gmail.com>
+
+Edited by
+
+Andrei Lashchinskii
+
+   <koorwork+kamailio@gmail.com>
+
+   Copyright © 2026 Andrei Lashchinskii
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Parameters
+
+              1.3.1. server (string)
+              1.3.2. init_without_tarantool (integer)
+              1.3.3. connect_timeout (integer)
+              1.3.4. cmd_timeout (integer)
+              1.3.5. disable_time (integer)
+              1.3.6. allowed_timeouts (integer)
+
+        1.4. Functions
+
+              1.4.1. tarantool_call(proc_name, params_json, result_pvar)
+              1.4.2. tarantool_call_srv(srv_name, proc_name, params_json,
+                      result_pvar)
+
+              1.4.3. tarantool_eval(expr, params_json, result_pvar)
+              1.4.4. tarantool_eval_srv(srv_name, expr, params_json,
+                      result_pvar)
+
+        1.5. KEMI Exports
+
+              1.5.1. KSR.tarantool.call(proc_name, params_json,
+                      result_pvar)
+
+              1.5.2. KSR.tarantool.call_srv(srv_name, proc_name,
+                      params_json, result_pvar)
+
+              1.5.3. KSR.tarantool.eval(expr, params_json, result_pvar)
+              1.5.4. KSR.tarantool.eval_srv(srv_name, expr, params_json,
+                      result_pvar)
+
+        1.6. End-to-End Routing Examples
+
+   List of Examples
+
+   1.1. Set server parameter
+   1.2. Set init_without_tarantool parameter
+   1.3. Set connect_timeout parameter
+   1.4. Set cmd_timeout parameter
+   1.5. Set disable_time parameter
+   1.6. Set allowed_timeouts parameter
+   1.7. tarantool_call usage
+   1.8. tarantool_call_srv usage
+   1.9. tarantool_eval usage
+   1.10. tarantool_eval_srv usage
+   1.11. KEMI Lua Example
+   1.12. KEMI Python Example
+   1.13. Native Kamailio Script Routing Integration
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   The ndb_tarantool module provides a high-performance, non-blocking
+   connector for the Tarantool In-Memory Computing Platform and Database.
+   It connects Kamailio SIP workers directly to Tarantool instances
+   (compatible with 1.10+, 2.x, and 3.x) using the native binary IProto
+   protocol.
+
+   Key features include:
+     * Native binary IProto protocol with MessagePack serialization via
+       standard libmsgpack-c (compatible with Tarantool 1.10+, 2.x, and
+       3.x).
+     * Multi-process worker isolation: TCP connections are initialized
+       strictly per worker process via Kamailio child_init() hooks,
+       eliminating pre-fork socket sharing.
+     * Strict Kamailio memory management using pkg_malloc and pkg_free
+       allocators.
+     * Binary Greeting handshake and SHA-1 scramble authentication
+       (CHAP-SHA1).
+     * Built-in failover and cooldown engine: automatic error tracking,
+       threshold-based node disabling, and automatic retry after cooldown.
+     * Automatic serialization of returned MessagePack tuples into strict
+       RFC-8259 JSON format and assignment into Kamailio pseudo-variables.
+     * Rich KEMI exports for Lua, Python, JavaScript, and native Kamailio
+       routing scripts.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none (optional: jansson if parsing returned JSON in routing
+       scripts, pv for pseudo-variable support).
+
+1.2.2. External Libraries or Applications
+
+   The following libraries must be installed on the system:
+     * libmsgpack-c / libmsgpack-dev (version 3.x or 4.x/6.x C library) -
+       MessagePack serialization library.
+
+1.3. Parameters
+
+1.3.1. server (string)
+
+   Defines a Tarantool server connection. This parameter can be specified
+   multiple times to define multiple Tarantool instances for clustering,
+   sharding, or failover.
+
+   The parameter value is a semicolon-separated list of key-value
+   attributes:
+     * name (or srv) - identifier alias for this server instance. If not
+       set, defaults to “default”.
+     * addr (or host) - IP address or hostname of the Tarantool node
+       (default: “127.0.0.1”).
+     * port - TCP port of the Tarantool IProto service (default: 3301).
+     * user - username for authentication (optional, default: guest access
+       without auth).
+     * pass - password for authentication (optional).
+     * connect_timeout - TCP connection timeout in milliseconds for this
+       node (overrides module default).
+     * cmd_timeout - read/write command timeout in milliseconds for this
+       node (overrides module default).
+     * disable_time - duration in seconds to keep node disabled after
+       reaching error threshold (overrides module default).
+     * allowed_timeouts - number of consecutive errors before node enters
+       cooldown (overrides module default).
+
+   Example 1.1. Set server parameter
+...
+# Default cluster server
+modparam("ndb_tarantool", "server", "name=default;addr=10.0.0.1;port=3301;user=k
+amailio;pass=secret123")
+
+# Secondary dedicated billing server with custom timeouts
+modparam("ndb_tarantool", "server", "name=billing;addr=10.0.0.2;port=3301;user=b
+illing_usr;pass=topsecret;connect_timeout=500;cmd_timeout=800;disable_time=30;al
+lowed_timeouts=2")
+...
+
+1.3.2. init_without_tarantool (integer)
+
+   If set to 1, Kamailio will continue starting up even if configured
+   Tarantool instances are temporarily offline or unreachable at boot
+   time. Connections will be retried on first routing use.
+
+   Default value is 0 (fail startup if Tarantool is unreachable).
+
+   Example 1.2. Set init_without_tarantool parameter
+...
+modparam("ndb_tarantool", "init_without_tarantool", 1)
+...
+
+1.3.3. connect_timeout (integer)
+
+   Default TCP connect timeout in milliseconds for all Tarantool servers
+   (unless overridden in the server specification).
+
+   Default value is 1000 ms.
+
+   Example 1.3. Set connect_timeout parameter
+...
+modparam("ndb_tarantool", "connect_timeout", 500)
+...
+
+1.3.4. cmd_timeout (integer)
+
+   Default read and write socket timeout in milliseconds for executing
+   IProto commands.
+
+   Default value is 1000 ms.
+
+   Example 1.4. Set cmd_timeout parameter
+...
+modparam("ndb_tarantool", "cmd_timeout", 800)
+...
+
+1.3.5. disable_time (integer)
+
+   Duration in seconds to temporarily disable an unreachable or failing
+   Tarantool node before attempting reconnection. During cooldown, calls
+   fail immediately without blocking worker threads.
+
+   Default value is 10 seconds.
+
+   Example 1.5. Set disable_time parameter
+...
+modparam("ndb_tarantool", "disable_time", 15)
+...
+
+1.3.6. allowed_timeouts (integer)
+
+   Number of consecutive command timeouts or network errors required
+   before triggering failover cooldown on the server.
+
+   Default value is 3.
+
+   Example 1.6. Set allowed_timeouts parameter
+...
+modparam("ndb_tarantool", "allowed_timeouts", 2)
+...
+
+1.4. Functions
+
+   All routing functions accept params_json as a JSON array of parameters
+   (e.g., “[1, "abc", true]”) or an empty array “[]” for parameterless
+   procedures. Dynamic Kamailio pseudo-variables can be embedded directly
+   in the parameter string (e.g., “["$ci", "$si", 60]”).
+
+   The response data returned by Tarantool is serialized into a strict
+   RFC-8259 compliant JSON string (with boolean true/false and null
+   literals) and automatically assigned into the specified Kamailio
+   pseudo-variable (result_pvar, e.g., “$var(res)” or “$avp(tnt_data)”).
+   This allows direct processing with the jansson module (e.g., via
+   jansson_get).
+
+   Functions return:
+     * 1 - on successful execution and response parsing.
+     * -1 - on network failure, timeout, or Tarantool error.
+
+1.4.1.  tarantool_call(proc_name, params_json, result_pvar)
+
+   Executes a stored procedure (IPROTO_CALL) on the default Tarantool
+   server instance.
+
+   Example 1.7. tarantool_call usage
+...
+# Select optimal RTPEngine node with dynamic Call-ID parameter
+if (!tarantool_call("rtpe_select_node", "[\"$ci\"]", "$var(node_info)")) {
+    xlog("L_ERR", "Failed to query Tarantool node for Call-ID: $ci\n");
+    send_reply("500", "Media Server Unavailable");
+    exit;
+}
+xlog("L_INFO", "Tarantool returned: $var(node_info)\n");
+...
+
+1.4.2.  tarantool_call_srv(srv_name, proc_name, params_json, result_pvar)
+
+   Executes a stored procedure (IPROTO_CALL) on a specific named Tarantool
+   server instance.
+
+   Example 1.8. tarantool_call_srv usage
+...
+# Query dedicated billing instance for prepaid balance authorization
+if (!tarantool_call_srv("billing", "authorize_subscriber", "[\"$fU\", \"$rU\", 6
+0]", "$var(auth)")) {
+    xlog("L_WARN", "Billing node unreachable, applying fallback policy\n");
+    route(BILLING_FALLBACK);
+}
+...
+
+1.4.3.  tarantool_eval(expr, params_json, result_pvar)
+
+   Evaluates an arbitrary Lua expression (IPROTO_EVAL) on the default
+   Tarantool server.
+
+   Example 1.9. tarantool_eval usage
+...
+# Count active media sessions in Tarantool space
+tarantool_eval("return box.space.rtpe_calls:count()", "[]", "$var(active_calls)"
+);
+xlog("L_INFO", "Current active calls in cluster: $var(active_calls)\n");
+...
+
+1.4.4.  tarantool_eval_srv(srv_name, expr, params_json, result_pvar)
+
+   Evaluates an arbitrary Lua expression (IPROTO_EVAL) on a specific named
+   Tarantool server instance.
+
+   Example 1.10. tarantool_eval_srv usage
+...
+tarantool_eval_srv("srv1", "return box.info.version", "[]", "$var(version)");
+xlog("L_INFO", "Tarantool server version: $var(version)\n");
+...
+
+1.5. KEMI Exports
+
+   The module exports native Tarantool functions to the KEMI framework
+   under the “tarantool” sub-module. All functions return an integer (1 on
+   success, -1 on failure) and write the JSON-formatted result into the
+   specified pseudo-variable.
+
+1.5.1.  KSR.tarantool.call(proc_name, params_json, result_pvar)
+
+   Executes a stored procedure on the default Tarantool server.
+
+1.5.2.  KSR.tarantool.call_srv(srv_name, proc_name, params_json, result_pvar)
+
+   Executes a stored procedure on a specific named Tarantool server.
+
+1.5.3.  KSR.tarantool.eval(expr, params_json, result_pvar)
+
+   Executes an expression on the default Tarantool server.
+
+1.5.4.  KSR.tarantool.eval_srv(srv_name, expr, params_json, result_pvar)
+
+   Executes an expression on a specific named Tarantool server.
+
+   Example 1.11. KEMI Lua Example
+-- Lua KEMI routing script
+function ksr_tarantool_dispatch()
+    local call_id = KSR.pv.get("$ci")
+    local caller_ip = KSR.pv.get("$si")
+    local params = string.format('["%s", "%s"]', call_id, caller_ip)
+
+    -- Execute stored procedure on default server
+    local rc = KSR.tarantool.call("rtpe_select_node", params, "$var(node_info)")
+    if rc > 0 then
+        local node_json = KSR.pv.get("$var(node_info)")
+        KSR.info("Selected RTPEngine node: " .. tostring(node_json) .. "\n")
+        return 1
+    else
+        KSR.err("Failed to query Tarantool node selection\n")
+        return -1
+    end
+end
+
+   Example 1.12. KEMI Python Example
+# Python KEMI routing script
+import json
+
+def ksr_tarantool_dispatch():
+    call_id = KSR.pv.get("$ci")
+    caller_ip = KSR.pv.get("$si")
+    params = json.dumps([call_id, caller_ip])
+
+    # Execute stored procedure on default server
+    rc = KSR.tarantool.call("rtpe_select_node", params, "$var(node_info)")
+    if rc > 0:
+        node_raw = KSR.pv.get("$var(node_info)")
+        KSR.info("Selected RTPEngine node: %s\n" % node_raw)
+        return 1
+    else:
+        KSR.err("Failed to query Tarantool node selection\n")
+        return -1
+
+1.6. End-to-End Routing Examples
+
+   The following example shows an end-to-end Kamailio routing script
+   integrating ndb_tarantool with the jansson module to parse the response
+   and direct media sessions to the chosen RTPEngine instance:
+
+   Example 1.13. Native Kamailio Script Routing Integration
+loadmodule "ndb_tarantool.so"
+loadmodule "jansson.so"
+
+modparam("ndb_tarantool", "server", "name=default;addr=127.0.0.1;port=3301;user=
+rtpe;pass=secret")
+modparam("ndb_tarantool", "connect_timeout", 500)
+modparam("ndb_tarantool", "cmd_timeout", 800)
+modparam("ndb_tarantool", "allowed_timeouts", 2)
+modparam("ndb_tarantool", "disable_time", 15)
+
+route[DISPATCH_MEDIA] {
+    if (is_method("INVITE") && !has_totag()) {
+        # Query Tarantool cluster for optimal RTPEngine node
+        if (!tarantool_call("rtpe_select_node", "[\"$ci\", \"$si\"]", "$var(tnt_
+res)")) {
+            xlog("L_ERR", "Tarantool cluster unreachable or returned error\n");
+            send_reply("503", "Service Unavailable");
+            exit;
+        }
+
+        # Parse JSON response: {"node_id": "rtpe1", "ip": "10.0.0.10", "port": 2
+2222}
+        jansson_get("node_id", "$var(tnt_res)", "$var(node_id)");
+        xlog("L_INFO", "Directing Call-ID $ci to RTPEngine set $var(node_id)\n")
+;
+
+        # Engage RTPEngine on selected node
+        rtpengine_manage("set-id=$var(node_id) replace-origin replace-session-co
+nnection");
+    }
+
+    if (is_method("BYE")) {
+        # Notify Tarantool of call teardown
+        tarantool_call("rtpe_call_delete", "[\"$ci\"]", "$var(del_res)");
+        rtpengine_manage();
+    }
+}

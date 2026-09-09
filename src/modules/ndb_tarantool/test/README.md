@@ -4,12 +4,28 @@ This directory contains the in-tree regression and functional test suite for the
 
 ## Prerequisites
 
-1. Running **Tarantool 3.x** instance with user `rtpe_user` and password `rtpe_secret_password` (or custom credentials matching `test.cfg`):
+1. Running **Tarantool 3.x** instance:
    ```bash
    # Quick start with Docker:
    docker run -d --name tnt_test -p 3301:3301 tarantool/tarantool:3
    ```
 2. Python 3 (standard library only, for sending local SIP datagrams).
+
+### Dynamic Configuration (Environment Variables)
+
+The test suite can target any Tarantool deployment without modifying `.cfg` files:
+
+| Variable | Description | Default |
+|---|---|---|
+| `TNT_ADDR` | Tarantool server IP / hostname | `127.0.0.1` |
+| `TNT_PORT` | Tarantool IProto port | `3301` |
+| `TNT_USER` | Username (set to `""` for guest / unauthenticated access) | `rtpe_user` |
+| `TNT_PASS` | Password for authentication | `rtpe_secret_password` |
+
+Example for unauthenticated / guest Tarantool instance:
+```bash
+TNT_USER="" TNT_PASS="" ./run-tests.sh
+```
 
 ## Running Tests
 

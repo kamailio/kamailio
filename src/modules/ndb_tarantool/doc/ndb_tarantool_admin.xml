@@ -37,7 +37,7 @@
 					<para>Built-in failover and cooldown engine: automatic error tracking, threshold-based node disabling, and automatic retry after cooldown.</para>
 				</listitem>
 				<listitem>
-					<para>Automatic serialization of returned MessagePack tuples into JSON format and assignment into Kamailio pseudo-variables.</para>
+					<para>Automatic serialization of returned MessagePack tuples into strict RFC-8259 JSON format and assignment into Kamailio pseudo-variables.</para>
 				</listitem>
 				<listitem>
 					<para>Rich KEMI exports for Lua, Python, JavaScript, and native Kamailio routing scripts.</para>
@@ -225,8 +225,10 @@ modparam("ndb_tarantool", "allowed_timeouts", 2)
 			Dynamic Kamailio pseudo-variables can be embedded directly in the parameter string (e.g., <quote>["$ci", "$si", 60]</quote>).
 		</para>
 		<para>
-			The response data returned by Tarantool is serialized into a JSON string and automatically assigned
-			into the specified Kamailio pseudo-variable (<emphasis>result_pvar</emphasis>, e.g., <quote>$var(res)</quote> or <quote>$avp(tnt_data)</quote>).
+			The response data returned by Tarantool is serialized into a strict RFC-8259 compliant JSON string
+			(with boolean true/false and null literals) and automatically assigned into the specified Kamailio
+			pseudo-variable (<emphasis>result_pvar</emphasis>, e.g., <quote>$var(res)</quote> or <quote>$avp(tnt_data)</quote>).
+			This allows direct processing with the <emphasis>jansson</emphasis> module (e.g., via <function>jansson_get</function>).
 		</para>
 		<para>
 			Functions return:
