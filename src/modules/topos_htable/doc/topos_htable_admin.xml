@@ -96,6 +96,7 @@ modparam("topos_htable", "topos_htable_transaction", "my_transactions=>size=4;au
 		<para>
 			Enable or disable base64 encoding of htable values.
 			Useful when individual values stored in htable contain delimiter value "|".
+			It is recommended to enable this value for production environments.
 		</para>
 		<para>
 			<emphasis>
