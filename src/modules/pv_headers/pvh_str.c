@@ -156,8 +156,8 @@ char *pvh_detect_split_char(char *val)
 	return pvh_detect_split_char(val + (quote_b - val + 1));
 }
 
-int pvh_split_values(str *s, char d[][_pvh_params.hdr_value_size], int *d_size,
-		int keep_spaces, char *marker)
+int pvh_split_values(str *s, char d[][_pvh_params.hdr_value_size],
+		unsigned int d_capacity, int *d_size, int keep_spaces, char *marker)
 {
 	char *p = NULL;
 	int idx = 0, c_idx = 0;
@@ -187,18 +187,30 @@ int pvh_split_values(str *s, char d[][_pvh_params.hdr_value_size], int *d_size,
 			c_idx = 0;
 			continue;
 		}
-		if(c_idx == 0)
+		if(c_idx == 0) {
+			if((unsigned int)(*d_size + 1) >= d_capacity) {
+				LM_ERR("pvh_hdr_name_size %u reached\n", d_capacity);
+				goto error;
+			}
 			(*d_size)++;
-		strncpy(&d[*d_size][c_idx++], p, 1);
+		}
+		if(c_idx + 1 >= _pvh_params.hdr_value_size) {
+			LM_ERR("split value exceeds configured size (%u)\n",
+					_pvh_params.hdr_value_size);
+			goto error;
+		}
+		d[*d_size][c_idx++] = *p;
 	}
 
 	if(c_idx > 0) {
-		if(c_idx >= _pvh_params.hdr_value_size)
-			c_idx--;
 		d[*d_size][c_idx] = '\0';
 	}
 
 	(*d_size)++;
 
 	return 1;
+
+error:
+	*d_size = 0;
+	return -1;
 }

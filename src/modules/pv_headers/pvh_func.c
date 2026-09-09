@@ -101,9 +101,11 @@ int pvh_collect_headers(struct sip_msg *msg)
 		if((marker = pvh_detect_split_char(val.s)) != NULL
 				&& str_hash_case_get(&split_hdrs, name.s, name.len)) {
 
-			if(pvh_split_values(&val, hvals, &d_size, 1, marker) < 0) {
+			if(pvh_split_values(
+					   &val, hvals, pvh_hdr_name_size, &d_size, 1, marker)
+					< 0) {
 				LM_ERR("could not parse %.*s header comma separated "
-					   "value",
+					   "value\n",
 						name.len, name.s);
 				return -1;
 			}
