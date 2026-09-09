@@ -40,8 +40,8 @@ int dlg_dmq_request_sync(dmq_node_t *dmq_node);
 
 extern int dlg_enable_stats;
 extern str dlg_dmq_peer_id;
-extern int dlg_enable_dmq_ka_iflags_sync;
-extern int dlg_enable_dmq_load_callbacks;
+extern int dlg_dmq_ka_iflags_sync;
+extern int dlg_dmq_load_callbacks;
 
 /**
 * @brief add notification peer
@@ -304,7 +304,7 @@ int dlg_dmq_handle_msg(
 			if(lifetime > 0)
 				dlg->lifetime = lifetime;
 
-			if(dlg_enable_dmq_ka_iflags_sync != 0 && iflags > 0) {
+			if(dlg_dmq_ka_iflags_sync != 0 && iflags > 0) {
 				/* sync only keep-alive flags from owner */
 				dlg->iflags |= (iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_DST));
 			}
@@ -392,7 +392,7 @@ int dlg_dmq_handle_msg(
 						dlg_ref(dlg, 1);
 					}
 					/* register keep-alive on the replicated CONFIRMED dialog */
-					if(dlg_enable_dmq_ka_iflags_sync != 0
+					if(dlg_dmq_ka_iflags_sync != 0
 							&& dlg->state != DLG_STATE_CONFIRMED) {
 						dlg_ka_add(dlg);
 					}
@@ -509,7 +509,7 @@ int dlg_dmq_handle_msg(
 			break;
 	}
 	if(newdlg && dlg->state != DLG_STATE_DELETED
-			&& dlg_enable_dmq_load_callbacks != 0) {
+			&& dlg_dmq_load_callbacks != 0) {
 		run_dlg_load_callbacks(dlg);
 	}
 skip:
@@ -636,7 +636,7 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 			dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
 			dlg->dflags &= ~DLG_FLAG_CHANGED_PROF;
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts", dlg->init_ts);
-			if(dlg_enable_dmq_ka_iflags_sync != 0) {
+			if(dlg_dmq_ka_iflags_sync != 0) {
 				/* send iflags from owner */
 				srjson_AddNumberToObject(
 						&jdoc, jdoc.root, "iflags", dlg->iflags);
@@ -687,7 +687,7 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 
 		case DLG_DMQ_STATE:
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "state", dlg->state);
-			if(action != DLG_DMQ_UPDATE && dlg_enable_dmq_load_callbacks != 0
+			if(action != DLG_DMQ_UPDATE && dlg_dmq_load_callbacks != 0
 					&& dlg->vars != NULL) {
 				srjson_t *pj = NULL;
 				pj = srjson_CreateObject(&jdoc);

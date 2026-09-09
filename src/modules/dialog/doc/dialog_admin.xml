@@ -1464,8 +1464,8 @@ modparam("dialog", "enable_dmq", 1)
 	</example>
     </section>
 
-	<section id="dialog.p.enable_dmq_ka_iflags_sync">
-		<title><varname>enable_dmq_ka_iflags_sync</varname> (int)</title>
+	<section id="dialog.p.dmq_ka_iflags_sync">
+		<title><varname>dmq_ka_iflags_sync</varname> (int)</title>
 		<para>
 			If set to 1, the keepalive internal flags, set with
 			dlg_set_property("ka-src"/"ka-dst"), are carried in the dmq
@@ -1477,17 +1477,17 @@ modparam("dialog", "enable_dmq", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>enable_dmq_ka_iflags_sync</varname> parameter</title>
+		<title>Set <varname>dmq_ka_iflags_sync</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "enable_dmq_ka_iflags_sync", 1)
+modparam("dialog", "dmq_ka_iflags_sync", 1)
 ...
 </programlisting>
 	</example>
     </section>
 
-	<section id="dialog.p.enable_dmq_load_callbacks">
-		<title><varname>enable_dmq_load_callbacks</varname> (int)</title>
+	<section id="dialog.p.dmq_load_callbacks">
+		<title><varname>dmq_load_callbacks</varname> (int)</title>
 		<para>
 			If set to 1, active dialogs newly created from DMQ replication run the
 			<quote>DLGCB_LOADED</quote> callbacks after their replicated data has
@@ -1550,10 +1550,10 @@ modparam("dialog", "enable_dmq_ka_iflags_sync", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>enable_dmq_load_callbacks</varname> parameter</title>
+		<title>Set <varname>dmq_load_callbacks</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "enable_dmq_load_callbacks", 1)
+modparam("dialog", "dmq_load_callbacks", 1)
 ...
 </programlisting>
 		</example>
