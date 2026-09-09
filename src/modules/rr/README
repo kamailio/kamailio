@@ -59,9 +59,11 @@ Bogdan-Andrei Iancu
               5.6. record_route_preset(string [,string2])
               5.7. record_route_advertised_address(address)
               5.8. add_rr_param(param)
-              5.9. check_route_param(re)
-              5.10. is_direction(dir)
-              5.11. rr_next_hop_route()
+              5.9. rr_cookie_add(name, sval)
+              5.10. rr_cookie_check(name, sval, tdiff)
+              5.11. check_route_param(re)
+              5.12. is_direction(dir)
+              5.13. rr_next_hop_route()
 
         6. Exported Pseudo Variables
 
@@ -103,10 +105,12 @@ Bogdan-Andrei Iancu
    1.18. record_route_preset usage
    1.19. record_route_advertised_address usage
    1.20. add_rr_param usage
-   1.21. check_route_param usage
-   1.22. is_direction usage
-   1.23. rr_next_hop_route usage
-   1.24. $route_uri
+   1.21. rr_cookie_add usage
+   1.22. rr_cookie_check usage
+   1.23. check_route_param usage
+   1.24. is_direction usage
+   1.25. rr_next_hop_route usage
+   1.26. $route_uri
    2.1. record_route usage
    2.2. record_route_advertised_address usage
    2.3. Loading RR module's API from another module
@@ -145,9 +149,11 @@ Chapter 1. Admin Guide
         5.6. record_route_preset(string [,string2])
         5.7. record_route_advertised_address(address)
         5.8. add_rr_param(param)
-        5.9. check_route_param(re)
-        5.10. is_direction(dir)
-        5.11. rr_next_hop_route()
+        5.9. rr_cookie_add(name, sval)
+        5.10. rr_cookie_check(name, sval, tdiff)
+        5.11. check_route_param(re)
+        5.12. is_direction(dir)
+        5.13. rr_next_hop_route()
 
    6. Exported Pseudo Variables
 
@@ -186,7 +192,7 @@ Chapter 1. Admin Guide
 
    For this purpose, the module offers the following functions:
      * add_rr_param() - see Section 5.8, “add_rr_param(param)”
-     * check_route_param() - see Section 5.9, “check_route_param(re)”
+     * check_route_param() - see Section 5.11, “check_route_param(re)”
 
    Example 1.1. Dialog support in RR module
 ...
@@ -410,9 +416,11 @@ modparam("rr", "loose_route_mode", 1)
    5.6. record_route_preset(string [,string2])
    5.7. record_route_advertised_address(address)
    5.8. add_rr_param(param)
-   5.9. check_route_param(re)
-   5.10. is_direction(dir)
-   5.11. rr_next_hop_route()
+   5.9. rr_cookie_add(name, sval)
+   5.10. rr_cookie_check(name, sval, tdiff)
+   5.11. check_route_param(re)
+   5.12. is_direction(dir)
+   5.13. rr_next_hop_route()
 
 5.1. loose_route()
 
@@ -630,7 +638,55 @@ record_route_advertised_address("1.2.3.4:5080");
 add_rr_param(";nat=yes");
 ...
 
-5.9. check_route_param(re)
+5.9. rr_cookie_add(name, sval)
+
+   Adds a cookie URI parameter to the Record-Route header. It can be
+   called before or after the function that adds the Record-Route header.
+   The cookie is the base64url encoding of a two-byte global field value,
+   a four-byte current timestamp, and the first six bytes of a SHA-256
+   digest.
+
+   The digest is calculated over the field value, the four-byte timestamp,
+   the Call-ID, and sval, separated by bytes with value 10. The timestamp
+   and field are encoded in network byte order.
+
+   The name parameter sets the Record-Route URI parameter name. Both
+   parameters may contain pseudo-variables.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+   FAILURE_ROUTE.
+
+   Example 1.21. rr_cookie_add usage
+...
+rr_cookie_add("kc", "private-key::$si");
+record_route();
+...
+
+5.10. rr_cookie_check(name, sval, tdiff)
+
+   Checks the cookie in the parameter named name on the local Route URI.
+   The function decodes the cookie, verifies that its timestamp is not
+   older than the current time minus tdiff seconds, and recomputes the
+   hash from the cookie's field and timestamp, the Call-ID, and sval. It
+   returns 1 when all checks succeed and -1 otherwise.
+
+   The tdiff value must be a non-negative integer. The name and sval
+   parameters may contain pseudo-variables.
+
+   This function must be called after loose_route() and can be used from
+   REQUEST_ROUTE.
+
+   Example 1.22. rr_cookie_check usage
+...
+if(loose_route()) {
+    if(!rr_cookie_check("kc", "private-key::$si", 30)) {
+        sl_send_reply("403", "Invalid routing cookie");
+        exit;
+    }
+}
+...
+
+5.11. check_route_param(re)
 
    The function checks if the URI parameters of the local Route header
    (corresponding to the local server) matches the given regular
@@ -642,14 +698,14 @@ add_rr_param(";nat=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.21. check_route_param usage
+   Example 1.23. check_route_param usage
 ...
 if (check_route_param("nat=yes")) {
     setflag(6);
 }
 ...
 
-5.10. is_direction(dir)
+5.12. is_direction(dir)
 
    The function checks the flow direction of in-dialog requests. This
    function uses the “ftag” parameter from the Route header, therefore the
@@ -670,7 +726,7 @@ if (check_route_param("nat=yes")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.22. is_direction usage
+   Example 1.24. is_direction usage
 ...
 if (is_direction("downstream")) {
     xdbg("in-dialog request from caller to callee (downstream) ($rm)\n");
@@ -679,7 +735,7 @@ if (is_direction("downstream")) {
 }
 ...
 
-5.11. rr_next_hop_route()
+5.13. rr_next_hop_route()
 
    The function returns 1 (true) if there is a Route header for the next
    hop address. It has to be used after loose_route(), when the local
@@ -687,7 +743,7 @@ if (is_direction("downstream")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. rr_next_hop_route usage
+   Example 1.25. rr_next_hop_route usage
 ...
 if(loose_route) {
     if(rr_next_hop_route()) {
@@ -705,7 +761,7 @@ if(loose_route) {
 
    Returns the URI of the top route-header.
 
-   Example 1.24. $route_uri
+   Example 1.26. $route_uri
 ...
     xdbg("Route-URI is: $route_uri\n");
 ...
