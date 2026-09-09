@@ -1440,8 +1440,7 @@ int tr_eval_string(
 			}
 
 			if(i == 0 || i >= val->rs.len) {
-				_tr_buffer[0] = '\0';
-				val->rs.len = 0;
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
 			} else {
 				memcpy(_tr_buffer, val->rs.s, i);
 				val->rs.len = i;
