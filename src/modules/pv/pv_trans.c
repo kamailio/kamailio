@@ -1555,14 +1555,14 @@ int tr_eval_string(
 					}
 				}
 			} else {
-				for(i = val->rs.len - 1; i >= 0; i++) {
+				for(i = val->rs.len - 1; i > 0; i--) {
 					if(val->rs.s[i] == st.s[0]) {
 						break;
 					}
 				}
 			}
 
-			if(i == 0) {
+			if(i == 0 || i >= val->rs.len) {
 				_tr_buffer[0] = '\0';
 				val->rs.len = 0;
 			} else {
@@ -1606,13 +1606,14 @@ int tr_eval_string(
 					}
 				}
 			} else {
-				for(i = val->rs.len - 1; i >= 0; i++) {
+				for(i = val->rs.len - 1; i > 0; i--) {
 					if(val->rs.s[i] == st.s[0]) {
 						break;
 					}
 				}
 			}
-			if(i >= val->rs.len - 1) {
+
+			if(i == 0 || i >= val->rs.len) {
 				_tr_buffer[0] = '\0';
 				val->rs.len = 0;
 			} else {
