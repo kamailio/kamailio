@@ -1146,7 +1146,7 @@ int tr_eval_string(
 				}
 			}
 
-			if(max * (max / 2 + (subtype == TR_S_PREFIXES_QUOT ? 1 : 3))
+			if(max * (max / 2 + (subtype == TR_S_PREFIXES ? 1 : 3))
 					> TR_BUFFER_SIZE - 1) {
 				LM_ERR("prefixes buffer too short (cfg line: %d)\n",
 						get_cfg_crt_line());
