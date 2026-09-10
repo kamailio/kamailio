@@ -38,10 +38,13 @@
 #include "ul_callback.h"
 #include <libxml/parser.h>
 #include <libxml2/libxml/globals.h>
+#include "gruu.h"
 
 #include "subscribe.h"
 
 #include "../pua/pua_bind.h"
+
+#define NOTIFY_MAX_IMPUS 32
 
 /*<?xml version="1.0"?>
 <reginfo xmlns="urn:ietf:params:xml:ns:reginfo" version="0" state="full">
@@ -85,8 +88,10 @@ extern int subscribe_to_reginfo;
 
 extern ims_registrar_pcscf_params_t _imsregp_params;
 
-int process_contact(
-		udomain_t *_d, int expires, str contact_uri, int contact_state)
+char *xmlGetAttrContentByName(xmlNodePtr node, const char *name);
+
+int process_contact(udomain_t *_d, int expires, str contact_uri,
+		int contact_state, pcontact_t **out_contact)
 {
 	char bufport[5], *rest, *sep, *val, *port, *trans;
 	pcontact_t *pcontact;
@@ -95,6 +100,9 @@ int process_contact(
 	unsigned int received_proto, received_port_len;
 	int local_time_now, rest_len, val_len, has_alias;
 	int ret = RESULT_CONTACTS_FOUND;
+
+	if(out_contact)
+		*out_contact = NULL;
 
 	pcscf_act_time();
 	local_time_now = time_now;
@@ -133,7 +141,8 @@ int process_contact(
 	if(parse_uri(contact_uri.s, contact_uri.len, &uri) != 0) {
 		LM_ERR("Unable to parse contact in SIP notify [%.*s]\n",
 				contact_uri.len, contact_uri.s);
-		return RESULT_ERROR;
+		ret = RESULT_ERROR;
+		goto done;
 	}
 	/*check for alias - NAT */
 	rest = uri.sip_params.s;
@@ -160,14 +169,16 @@ int process_contact(
 		port = memchr(val, 126 /* ~ */, val_len);
 		if(port == NULL) {
 			LM_ERR("no '~' in alias param value\n");
-			return RESULT_ERROR;
+			ret = RESULT_ERROR;
+			goto done;
 		}
 		port++;
 		//            received_port = atoi(port);
 		trans = memchr(port, 126 /* ~ */, val_len - (port - val));
 		if(trans == NULL) {
 			LM_ERR("no second '~' in alias param value\n");
-			return RESULT_ERROR;
+			ret = RESULT_ERROR;
+			goto done;
 		}
 
 		received_port_len = trans - port;
@@ -214,6 +225,8 @@ int process_contact(
 		//			ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE, callback_pcscf_contact_cb, NULL);
 		//		}
 	} else { //contact exists
+		if(out_contact)
+			*out_contact = pcontact;
 		if(contact_state == STATE_TERMINATED) {
 			LM_DBG("This contact <%.*s> is in state terminated and is in "
 				   "usrloc so removing it from usrloc\n",
@@ -254,6 +267,103 @@ int process_contact(
 
 done:
 	ul.unlock_udomain(_d, &puri.host, puri.port_no, puri.proto);
+	return ret;
+}
+
+static void pcscf_normalize_param_value(str *value)
+{
+	if(!value || !value->s || value->len < 2)
+		return;
+	if(value->s[0] == '"' && value->s[value->len - 1] == '"') {
+		value->s++;
+		value->len -= 2;
+	}
+	if(value->len >= 2 && value->s[0] == '<'
+			&& value->s[value->len - 1] == '>') {
+		value->s++;
+		value->len -= 2;
+	}
+}
+
+static int apply_gruu_from_unknown_params(
+		xmlNodePtr params, udomain_t *domain, pcontact_t *pcontact)
+{
+	char *param_name = NULL;
+	char *param_value = NULL;
+	char *pub_gruu = NULL;
+	char *temp_gruu = NULL;
+	char *instance_id = NULL;
+	gruu_fields_t gf;
+	str value = {0};
+	int ret = 0;
+
+	if(!domain || !pcontact)
+		return -1;
+	memset(&gf, 0, sizeof(gf));
+
+	while(params) {
+		if(xmlStrcasecmp(params->name, BAD_CAST "unknown-param") != 0)
+			goto next_param;
+		param_name = xmlGetAttrContentByName(params, "name");
+		if(param_name == NULL)
+			goto next_param;
+		param_value = (char *)xmlNodeGetContent(params);
+		value.s = (param_value != NULL) ? param_value : "";
+		value.len = strlen(value.s);
+		pcscf_normalize_param_value(&value);
+		if(strcasecmp(param_name, "pub-gruu") == 0) {
+			pub_gruu = param_value;
+			param_value = NULL;
+		} else if(strcasecmp(param_name, "temp-gruu") == 0) {
+			temp_gruu = param_value;
+			param_value = NULL;
+		} else if(strcasecmp(param_name, "+sip.instance") == 0) {
+			instance_id = param_value;
+			param_value = NULL;
+		}
+	next_param:
+		if(param_name) {
+			xmlFree(param_name);
+			param_name = NULL;
+		}
+		if(param_value) {
+			xmlFree(param_value);
+			param_value = NULL;
+		}
+		params = params->next;
+	}
+	if(pub_gruu || temp_gruu || instance_id) {
+		str inst = {0}, pub = {0}, temp = {0};
+
+		if(pub_gruu) {
+			pub.s = pub_gruu;
+			pub.len = strlen(pub_gruu);
+			pcscf_normalize_param_value(&pub);
+		}
+		if(temp_gruu) {
+			temp.s = temp_gruu;
+			temp.len = strlen(temp_gruu);
+			pcscf_normalize_param_value(&temp);
+		}
+		if(instance_id) {
+			inst.s = instance_id;
+			inst.len = strlen(instance_id);
+			pcscf_normalize_param_value(&inst);
+		}
+		ret = pcscf_gruu_fields_dup(&gf, instance_id ? &inst : NULL,
+				pub_gruu ? &pub : NULL, temp_gruu ? &temp : NULL);
+		if(pub_gruu)
+			xmlFree(pub_gruu);
+		if(temp_gruu)
+			xmlFree(temp_gruu);
+		if(instance_id)
+			xmlFree(instance_id);
+		if(ret < 0)
+			return -1;
+		ret = pcscf_apply_gruu(domain, pcontact, &gf);
+	} else {
+		ret = -1;
+	}
 	return ret;
 }
 
@@ -356,8 +466,9 @@ int process_body(struct sip_msg *msg, str notify_body, udomain_t *domain)
 	str user_agent = {0, 0};
 	int reg_state, contact_state, event, expires, result,
 			final_result = RESULT_ERROR;
+	int barred_registration = 0;
 	char *expires_char = 0, *cseq_char = 0, *registration_state = 0,
-		 *contact_state_s = 0, *event_s = 0;
+		 *contact_state_s = 0, *event_s = 0, *barred_s = 0;
 	int cseq = 0;
 	pv_elem_t *presentity_uri_pv;
 
@@ -390,6 +501,14 @@ int process_body(struct sip_msg *msg, str notify_body, udomain_t *domain)
 		}
 		aor.len = strlen(aor.s);
 		LM_DBG("AOR %.*s has reg_state \"%d\"\n", aor.len, aor.s, reg_state);
+		barred_registration = 0;
+		barred_s = xmlGetAttrContentByName(registrations, "barred");
+		if(barred_s && strcasecmp(barred_s, "true") == 0)
+			barred_registration = 1;
+		if(barred_s) {
+			xmlFree(barred_s);
+			barred_s = NULL;
+		}
 
 		if(reg_state == STATE_TERMINATED) {
 			//TODO we if there is an IMPU record state here we should delete all contacts associated to it
@@ -492,33 +611,135 @@ int process_body(struct sip_msg *msg, str notify_body, udomain_t *domain)
 			}
 
 			/* Now lets process the URI's from this Contact: */
-			uris = contacts->children;
-			while(uris) {
-				if(xmlStrcasecmp(uris->name, BAD_CAST "uri") != 0)
-					goto next_uri;
-				contact_uri.s = (char *)xmlNodeGetContent(uris);
-				if(contact_uri.s == NULL) {
-					LM_ERR("No URI for this contact - going to next "
-						   "registration!\n");
-					goto next_registration;
+			{
+				str reg_impus[NOTIFY_MAX_IMPUS];
+				str reg_barred[NOTIFY_MAX_IMPUS];
+				char *reg_impu_buf[NOTIFY_MAX_IMPUS];
+				int reg_impu_n = 0;
+				int reg_barred_n = 0;
+				int reg_i;
+				pcontact_t *sync_pcontact = NULL;
+				struct pcontact_info ci = {0};
+				char *uri_barred_s = NULL;
+
+				memset(reg_impus, 0, sizeof(reg_impus));
+				memset(reg_barred, 0, sizeof(reg_barred));
+				memset(reg_impu_buf, 0, sizeof(reg_impu_buf));
+
+				uris = contacts->children;
+				while(uris) {
+					if(xmlStrcasecmp(uris->name, BAD_CAST "uri") != 0)
+						goto next_uri;
+					contact_uri.s = (char *)xmlNodeGetContent(uris);
+					if(contact_uri.s == NULL) {
+						LM_ERR("No URI for this contact - going to next "
+							   "registration!\n");
+						goto next_registration;
+					}
+					contact_uri.len = strlen(contact_uri.s);
+					LM_DBG("Contact: %.*s\n", contact_uri.len, contact_uri.s);
+
+					{
+						pcontact_t *pcontact = NULL;
+						result = process_contact(domain, expires, contact_uri,
+								contact_state, &pcontact);
+						if(result != RESULT_ERROR
+								&& contact_state == STATE_ACTIVE
+								&& pcontact != NULL)
+							sync_pcontact = pcontact;
+					}
+
+					if(reg_impu_n < NOTIFY_MAX_IMPUS) {
+						reg_impu_buf[reg_impu_n] =
+								(char *)pkg_malloc(contact_uri.len);
+						if(reg_impu_buf[reg_impu_n]) {
+							memcpy(reg_impu_buf[reg_impu_n], contact_uri.s,
+									contact_uri.len);
+							reg_impus[reg_impu_n].s = reg_impu_buf[reg_impu_n];
+							reg_impus[reg_impu_n].len = contact_uri.len;
+							if(barred_registration) {
+								reg_barred[reg_barred_n++] =
+										reg_impus[reg_impu_n];
+							} else {
+								uri_barred_s =
+										xmlGetAttrContentByName(uris, "barred");
+								if(uri_barred_s
+										&& strcasecmp(uri_barred_s, "true") == 0
+										&& reg_barred_n < NOTIFY_MAX_IMPUS)
+									reg_barred[reg_barred_n++] =
+											reg_impus[reg_impu_n];
+								if(uri_barred_s) {
+									xmlFree(uri_barred_s);
+									uri_barred_s = NULL;
+								}
+							}
+							reg_impu_n++;
+						}
+					}
+
+					if(contact_uri.s && (strlen(contact_uri.s) > 0)) {
+						xmlFree(contact_uri.s);
+						contact_uri.s = NULL;
+					}
+
+					/* Process the result */
+					if(final_result != RESULT_CONTACTS_FOUND)
+						final_result = result;
+				next_uri:
+					uris = uris->next;
 				}
-				contact_uri.len = strlen(contact_uri.s);
-				LM_DBG("Contact: %.*s\n", contact_uri.len, contact_uri.s);
 
-				/* Add to Usrloc: */
-				result = process_contact(
-						domain, expires, contact_uri, contact_state);
-
-				if(contact_uri.s && (strlen(contact_uri.s) > 0)) {
-					xmlFree(contact_uri.s);
-					contact_uri.s = NULL;
+				if(reg_impu_n == 0 && aor.s && aor.len > 0
+						&& reg_impu_n < NOTIFY_MAX_IMPUS) {
+					reg_impu_buf[0] = (char *)pkg_malloc(aor.len);
+					if(reg_impu_buf[0]) {
+						memcpy(reg_impu_buf[0], aor.s, aor.len);
+						reg_impus[0].s = reg_impu_buf[0];
+						reg_impus[0].len = aor.len;
+						reg_impu_n = 1;
+						if(barred_registration) {
+							reg_barred[0] = reg_impus[0];
+							reg_barred_n = 1;
+						}
+					}
 				}
 
-				/* Process the result */
-				if(final_result != RESULT_CONTACTS_FOUND)
-					final_result = result;
-			next_uri:
-				uris = uris->next;
+				if(sync_pcontact && contact_state == STATE_ACTIVE
+						&& reg_impu_n > 0) {
+					if(path.len > 0) {
+						memset(&ci, 0, sizeof(ci));
+						ci.path = &path;
+						if(ul.update_pcontact(domain, &ci, sync_pcontact)
+								!= 0) {
+							LM_ERR("failed to persist notify path for <%.*s>\n",
+									sync_pcontact->aor.len,
+									sync_pcontact->aor.s);
+						}
+					}
+					if(apply_gruu_from_unknown_params(
+							   contacts->children, domain, sync_pcontact)
+							!= 0) {
+						LM_DBG("pcscf_apply_gruu failed from NOTIFY\n");
+					}
+					if(ul.update_contact_impus) {
+						if(ul.update_contact_impus(domain, sync_pcontact,
+								   reg_impus, reg_impu_n, 0,
+								   reg_barred_n > 0 ? reg_barred : NULL,
+								   reg_barred_n)
+								!= 0) {
+							LM_ERR("failed to sync IMPUs/barred from NOTIFY "
+								   "for "
+								   "<%.*s>\n",
+									sync_pcontact->aor.len,
+									sync_pcontact->aor.s);
+						}
+					}
+				}
+
+				for(reg_i = 0; reg_i < reg_impu_n; reg_i++) {
+					if(reg_impu_buf[reg_i])
+						pkg_free(reg_impu_buf[reg_i]);
+				}
 			}
 		next_contact:
 			if(cseq_char && (strlen(cseq_char) > 0)) {
@@ -553,6 +774,10 @@ int process_body(struct sip_msg *msg, str notify_body, udomain_t *domain)
 				xmlFree(event_s);
 				event_s = NULL;
 			}
+			if(barred_s && (strlen(barred_s) > 0)) {
+				xmlFree(barred_s);
+				barred_s = NULL;
+			}
 
 			contacts = contacts->next;
 		}
@@ -565,6 +790,10 @@ int process_body(struct sip_msg *msg, str notify_body, udomain_t *domain)
 		if(registration_state && (strlen(registration_state) > 0)) {
 			xmlFree(registration_state);
 			registration_state = NULL;
+		}
+		if(barred_s && (strlen(barred_s) > 0)) {
+			xmlFree(barred_s);
+			barred_s = NULL;
 		}
 		if(aor.len > 0 && aor.s) {
 			xmlFree(aor.s);
