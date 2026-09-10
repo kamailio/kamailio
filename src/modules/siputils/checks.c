@@ -929,8 +929,11 @@ int tel2sip2(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res)
 				|| (is_telnumber_format(params[i].value))) {
 			append_chr(at, ';');
 			append_str(at, params[i].name, strlen(params[i].name));
-			append_chr(at, '=');
-			append_str(at, params[i].value, strlen(params[i].value));
+			/* only append if we are having an parameter value */
+			if(params[i].value != NULL && strlen(params[i].value) > 0) {
+				append_chr(at, '=');
+				append_str(at, params[i].value, strlen(params[i].value));
+			}
 		}
 	}
 	/***** End Code for sort tel: parameters ****/
