@@ -921,6 +921,8 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		}
 	}
 
+	ci.reg_state = pcontact->reg_state;
+
 	if(ul.update_pcontact(d, &ci, pcontact) != 0) {
 		LM_ERR("Error updating contact\n");
 		goto cleanup;
