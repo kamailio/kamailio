@@ -206,6 +206,11 @@ int tr_eval_string(
 
 	if(val == NULL || val->flags & PV_VAL_NULL)
 		return -1;
+	if(unlikely((val->flags & PV_VAL_STR) && val->rs.len < 0)) {
+		LM_ERR("invalid negative string length: %d (cfg line: %d)\n",
+				val->rs.len, get_cfg_crt_line());
+		return -1;
+	}
 
 	tr_set_crt_buffer();
 
