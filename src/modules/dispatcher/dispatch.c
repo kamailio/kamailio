@@ -4202,11 +4202,11 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 
 
 			if((ds_event_callback_mode == DS_EVRTMODE_RUNTIME)
-					|| (ds_event_callback_mode == DS_EVRTMODE_INIT)
+					|| ((ds_event_callback_mode & DS_EVRTMODE_OPTIONS) == 0)
 					|| ((mode & DS_STATE_MODE_FUNC) == 0)) {
 				was_down = ds_skip_dst(old_state);
 				is_down = ds_skip_dst(idx->dlist[i].flags);
-				if(ds_event_callback_mode == DS_EVRTMODE_INIT) {
+				if(ds_event_callback_mode & DS_EVRTMODE_INIT) {
 					if((!was_down && is_down) || (old_state == 0 && is_down)) {
 						ds_run_route(msg, address, "dispatcher:dst-down", rctx);
 					} else if((was_down && !is_down)
@@ -4495,6 +4495,47 @@ int ds_reinit_state_all(int group, int state)
 					old_state, idx->dlist[i].flags, idx);
 		}
 	}
+	ds_put_list(list);
+	return 0;
+}
+
+/**
+ * Callback for iterating over destinations to trigger init event routes
+ * for disabled and inactive nodes
+ */
+static void ds_run_init_dst_cb(ds_set_t *node, int i, void *arg)
+{
+	ds_rctx_t rctx;
+
+	if(!ds_skip_dst(node->dlist[i].flags)) {
+		return;
+	}
+
+	memset(&rctx, 0, sizeof(ds_rctx_t));
+	rctx.flags = node->dlist[i].flags;
+	rctx.setid = node->id;
+	rctx.uri = node->dlist[i].uri;
+	rctx.code = 0;
+
+	ds_run_route(NULL, &node->dlist[i].uri, "dispatcher:dst-down", &rctx);
+}
+
+/**
+ * Execute event routes for disabled/inactive destinations when DS_EVRTMODE_LOAD is enabled
+ */
+int ds_run_init_event_routes(void)
+{
+	ds_list_t *list;
+
+	if((ds_event_callback_mode & DS_EVRTMODE_LOAD) == 0)
+		return 0;
+
+	list = ds_get_list();
+	if(list == NULL || list->head == NULL)
+		return 0;
+
+	LM_DBG("executing init event routes for disabled/inactive destinations\n");
+	ds_iter_set(list->head, &ds_run_init_dst_cb, NULL);
 	ds_put_list(list);
 	return 0;
 }

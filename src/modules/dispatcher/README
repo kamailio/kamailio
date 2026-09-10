@@ -1049,12 +1049,28 @@ end
 3.40. event_callback_mode (int)
 
    Controls when the event_route or the KEMI event callback function are
-   executed. If set to 0, they are executed when the destination state
-   changes based on OPTIONS keepalives or the use of config functions to
-   set the state (e.g., ds_mark_dst(...)). If set to 1, they are executed
-   only on state change due to OPTIONS keepalives. If set to 2, the event
-   routes will always be executed when a state change occurs, even if no
-   previous state exists (for example, on startup or reload).
+   executed.
+
+   If set to 0, they are executed when the destination state changes based
+   on OPTIONS keepalives or the use of config functions to set the state
+   (e.g., ds_mark_dst(...)).
+
+   The value can be a bitmask combining the following flags:
+     * 1 (1<<0) - executed only on state change due to OPTIONS keepalives
+       (ignores state changes from config functions).
+     * 2 (1<<1) - always executed when a state change occurs, even if no
+       previous state exists (for example, on initial probe transition).
+     * 4 (1<<2) - executed for the initial state of disabled and inactive
+       destinations on startup and RPC reload.
+
+   Modes can be combined by adding their values. For example:
+     * 6 (2 + 4) - executes event routes on state change even with no
+       previous state, and also triggers initial routes for
+       disabled/inactive destinations on startup and reload.
+     * 5 (1 + 4) - executes event routes only on OPTIONS keepalives, plus
+       triggers initial routes for disabled/inactive destinations on
+       startup and reload.
+     * 7 (1 + 2 + 4) - enables all above behaviors.
 
    Note that event routes are not executed on RPC commands setting the
    destination state.
@@ -1063,7 +1079,9 @@ end
 
    Example 1.42. Set event_callback_mode parameter
 ...
-modparam("dispatcher", "event_callback_mode", 1)
+# execute routes on state change without previous state and on startup/reload (2
+ + 4)
+modparam("dispatcher", "event_callback_mode", 6)
 ...
 -- event callback function implemented in Lua
 function ksr_dispatcher_event(evname)

@@ -582,6 +582,9 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	if(rank == PROC_SIPINIT) {
+		ds_run_init_event_routes();
+	}
 	return 0;
 }
 
@@ -1931,6 +1934,7 @@ static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 			return;
 		}
 	}
+	ds_run_init_event_routes();
 	rpc->rpl_printf(ctx, "Ok. Dispatcher successfully reloaded.");
 	return;
 }

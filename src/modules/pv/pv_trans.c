@@ -209,6 +209,11 @@ int tr_eval_string(
 
 	if(val == NULL || val->flags & PV_VAL_NULL)
 		return -1;
+	if(unlikely((val->flags & PV_VAL_STR) && val->rs.len < 0)) {
+		LM_ERR("invalid negative string length: %d (cfg line: %d)\n",
+				val->rs.len, get_cfg_crt_line());
+		return -1;
+	}
 
 	tr_set_crt_buffer();
 
@@ -1555,16 +1560,15 @@ int tr_eval_string(
 					}
 				}
 			} else {
-				for(i = val->rs.len - 1; i >= 0; i++) {
+				for(i = val->rs.len - 1; i > 0; i--) {
 					if(val->rs.s[i] == st.s[0]) {
 						break;
 					}
 				}
 			}
 
-			if(i == 0) {
-				_tr_buffer[0] = '\0';
-				val->rs.len = 0;
+			if(i == 0 || i >= val->rs.len) {
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
 			} else {
 				memcpy(_tr_buffer, val->rs.s, i);
 				val->rs.len = i;
@@ -1606,13 +1610,14 @@ int tr_eval_string(
 					}
 				}
 			} else {
-				for(i = val->rs.len - 1; i >= 0; i++) {
+				for(i = val->rs.len - 1; i > 0; i--) {
 					if(val->rs.s[i] == st.s[0]) {
 						break;
 					}
 				}
 			}
-			if(i >= val->rs.len - 1) {
+
+			if(i == 0 || i >= val->rs.len) {
 				_tr_buffer[0] = '\0';
 				val->rs.len = 0;
 			} else {
