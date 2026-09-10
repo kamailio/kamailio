@@ -1362,6 +1362,7 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 	int loopl;
 
 	short is_cancel;
+	short is_local_cancel;
 
 	/* make compiler warnings happy */
 	loopi = 0;
@@ -1468,6 +1469,9 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 		if(unlikely(branch_id >= p_cell->nr_of_outgoings))
 			continue;
 
+		is_local_cancel = is_cancel && is_invite(p_cell)
+				&& p_cell->uac[branch_id].local_cancel.buffer_len;
+
 		/* does method match ? (remember -- CANCELs have the same branch
 		 * as canceled transactions) */
 		req_method = p_cell->method;
@@ -1477,15 +1481,7 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 									 cseq_method.len)
 									 == 0)
 						/* or it is a local cancel */
-						|| (is_cancel
-								&& is_invite(p_cell)
-								/* commented out -- should_cancel_branch set it to
-						 * BUSY_BUFFER to avoid collisions with replies;
-						 * thus, we test here by buffer size
-						 */
-								/* && p_cell->uac[branch_id].local_cancel.buffer ))) */
-								&& p_cell->uac[branch_id]
-										   .local_cancel.buffer_len)))
+						|| is_local_cancel))
 			continue;
 
 		if(cfg_get(tm, tm_cfg, callid_matching) && p_cell->uas.request
@@ -1505,7 +1501,9 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 		}
 
 		if(_tm_reply_matching & TM_REPLY_MATCHING_ACTIVE) {
-			if(unlikely(t_on_wait(p_cell) || (p_cell->flags & T_IN_AGONY))) {
+			/* reply for local CANCEL can arrive after INVITE is in WAIT */
+			if(unlikely((p_cell->flags & T_IN_AGONY)
+					|| (t_on_wait(p_cell) && !is_local_cancel))) {
 				LM_INFO("skipping late reply match for transaction already in "
 						"terminated phase: T=%p wait=%d flags=0x%x\n",
 						p_cell, t_on_wait(p_cell), p_cell->flags);
@@ -1518,7 +1516,7 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 		*p_branch = (int)branch_id;
 		REF_UNSAFE(T);
 		UNLOCK_HASH(hash_index);
-		LM_DBG("reply (%p) matched an active transaction (T=%p)!\n", p_msg, T);
+		LM_DBG("reply (%p) matched a valid transaction (T=%p)!\n", p_msg, T);
 		if(likely(!(p_msg->msg_flags & FL_TM_RPL_MATCHED))) {
 			/* if this is a 200 for INVITE, we will wish to store to-tags to be
 			 * able to distinguish retransmissions later and not to call
