@@ -144,6 +144,7 @@ int parse_diversion_body(char *buf, int len, diversion_body_t **body)
 		/* id.body should contain all info including uri and params */
 		/* Loop over all params */
 		params = uri_b[num_uri].param_lst;
+		lparam = NULL;
 		while(params) {
 			lparam = params;
 			params = params->next;
