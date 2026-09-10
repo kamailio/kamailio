@@ -3451,6 +3451,8 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 		/* do naptr lookup */
 		if((e = dns_get_entry(name, T_NAPTR)) == 0)
 			goto naptr_not_found;
+		/* the handle takes over the reference returned by dns_get_entry(),
+		 * it is released by dns_srv_handle_put() */
 		h->naptr = e;
 		try_lookup_naptr = 1;
 	} else {
@@ -3486,17 +3488,16 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 			if((ret = dns_srv_resolve_ip(h, &srv_name, ip, port, flags)) >= 0) {
 				LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n", name->len, name->s,
 						h->srv_no, h->ip_no, ret);
-				dns_hash_put(e);
 				if(proto)
 					*proto = n_proto;
 				h->proto = n_proto;
 				return ret;
 			}
 		}
-		/* no acceptable naptr record found, fallback to srv */
-		dns_hash_put(e);
-		dns_srv_handle_init(h); /* make sure h does not contain garbage
-								from previous dns_srv_sip_resolve calls */
+		/* no acceptable naptr record found, fallback to srv;
+		 * reset() releases the srv/a entries left by the failed attempts
+		 * above and keeps h->naptr, init() would leak them */
+		dns_srv_handle_reset(h);
 	}
 naptr_not_found:
 	if(proto)
