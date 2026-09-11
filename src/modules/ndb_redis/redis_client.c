@@ -488,8 +488,7 @@ int redisc_destroy(void)
 	while(rsrv != NULL) {
 		rsrv1 = rsrv;
 		rsrv = rsrv->next;
-		if(rsrv1->ctxRedis != NULL)
-			redisFree(rsrv1->ctxRedis);
+		cleanup_redis_context(rsrv1);
 		free_params(rsrv1->attrs);
 		pkg_free(rsrv1);
 	}
