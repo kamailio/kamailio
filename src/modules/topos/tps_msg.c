@@ -1045,6 +1045,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
 	int use_branch = 0;
+	int dlg_found = 0;
 	unsigned int metid = 0;
 	uint32_t up_mode = 0;
 	rr_t *srr = NULL;
@@ -1079,9 +1080,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	tps_storage_lock_get(&lkey);
 
-	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
+	ret = tps_storage_load_dialog(msg, &mtsd, &stsd);
+	if(ret < 0) {
 		goto error;
 	}
+	dlg_found = (ret == 0) ? 1 : 0;
 	metid = get_cseq(msg)->method_id;
 	if((metid
 			   & (METHOD_BYE | METHOD_INFO | METHOD_PRACK | METHOD_UPDATE
@@ -1176,7 +1179,24 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		}
 	}
 	if(dialog != 0) {
-		tps_append_xuuid(msg, &stsd.a_uuid);
+		if(stsd.a_uuid.len > 0) {
+			tps_append_xuuid(msg, &stsd.a_uuid);
+		} else if(stsd.b_uuid.len > 0) {
+			/* stored record has no a-side uuid (e.g., dialog created without
+			 * a-side local contact) - link via the b-side uuid so outgoing
+			 * processing can still load the dialog record and detect the
+			 * direction; otherwise the no-x-uuid fallback in
+			 * tps_request_sent() assumes downstream and wrongly masks the
+			 * Call-ID of in-dialog ACKs relayed upstream */
+			tps_append_xuuid(msg, &stsd.b_uuid);
+		} else if(dlg_found && mtsd.a_uuid.len > 0) {
+			/* record found but carries no uuid values (e.g., branch record
+			 * loaded on the no-b-contact fallback path) - use the r-uri
+			 * token that keyed the dialog lookup; when no record was found,
+			 * append nothing so the outgoing side keeps the stateless
+			 * cover behavior for local ACK/CANCEL */
+			tps_append_xuuid(msg, &mtsd.a_uuid);
+		}
 		if(_tps_rr_update) {
 			if(tps_storage_update_dialog(
 					   msg, &mtsd, &stsd, TPS_DBU_RPLATTRS | TPS_DBU_BRR)
@@ -1357,7 +1377,10 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 				tps_remove_headers(msg, HDR_CONTACT_T);
 				tps_remove_headers(msg, HDR_VIA_T);
 				tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
-				/* ACK and CANCEL go downstream so Call-ID mask required */
+				/* locally generated (hop-by-hop) ACK and CANCEL are assumed
+				 * to go downstream so Call-ID mask is applied - heuristic,
+				 * known-wrong for local ACKs to negative replies of b-side
+				 * requests, where server transactions match by via branch */
 				tps_mask_callid(msg);
 			}
 			return 0;
@@ -1407,7 +1430,16 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	}
 
 	tps_remove_headers(msg, HDR_RECORDROUTE_T);
-	tps_remove_headers(msg, HDR_CONTACT_T);
+	/* keep the original Contact when there is no stored surrogate contact
+	 * to reinsert (e.g., record created without that leg's local contact) -
+	 * a request without any Contact is worse than an unmasked one; still
+	 * strip it for the methods that do not use Contact at all */
+	if((get_cseq(msg)->method_id & _tps_methods_nocontact)
+			|| ((direction == TPS_DIR_UPSTREAM) ? ptsd->as_contact.len
+												: ptsd->bs_contact.len)
+					   > 0) {
+		tps_remove_headers(msg, HDR_CONTACT_T);
+	}
 	tps_remove_headers(msg, HDR_VIA_T);
 
 	tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
@@ -1511,6 +1543,14 @@ int tps_response_sent(sip_msg_t *msg)
 	if(contact_keep == 0 && msg->first_line.u.reply.statuscode >= 400
 			&& msg->first_line.u.reply.statuscode < 500
 			&& msg->contact == NULL) {
+		contact_keep = 1;
+	}
+	if(contact_keep == 0
+			&& ((direction == TPS_DIR_DOWNSTREAM) ? stsd.as_contact.len
+												  : stsd.bs_contact.len)
+					   <= 0) {
+		/* no stored surrogate contact to reinsert (e.g., record created
+		 * without that leg's local contact) - keep the original one */
 		contact_keep = 1;
 	}
 	if(contact_keep == 0) {
