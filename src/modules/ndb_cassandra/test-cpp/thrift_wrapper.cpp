@@ -1,1 +1,1 @@
-../thrift_wrapper.cpp
+/home/ubuntu/saturnc/./work/sip/esr/sip-router/src/modules/ndb_cassandra/thrift_wrapper.cpp

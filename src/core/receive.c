@@ -331,6 +331,11 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		return -1;
 	}
 
+	if(len >= BUF_SIZE) {
+		LM_ERR("message exceeding maximum size: %d\n", (int)BUF_SIZE);
+		return -1;
+	}
+
 	if(ksr_evrt_received_mode & KSR_EVRT_RECEIVED_MESSAGE) {
 		if(ksr_evrt_received(buf, &len, rcv_info, KSR_EVRT_RECEIVED_MESSAGE)
 				< 0) {
