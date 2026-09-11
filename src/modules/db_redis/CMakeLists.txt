@@ -1,6 +1,6 @@
 file(GLOB MODULE_SOURCES "*.c")
 
-option(WITH_SENTINELS "Build db_redis with Redis Sentinel support" OFF)
+option(WITH_SENTINELS "Build db_redis with Redis Sentinel support" ON)
 option(WITH_HIREDIS_CLUSTER "Build db_redis with hiredis cluster support" OFF)
 
 if(WITH_SENTINELS AND WITH_HIREDIS_CLUSTER)

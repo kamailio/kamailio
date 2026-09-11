@@ -61,10 +61,11 @@ DEFS+=$(HIREDISDEFS)
 LIBS=$(HIREDISLIBS)
 
 # Mode switches:
-# - WITH_REDIS_CLUSTER=1 (default): enable cluster mode if hiredis_cluster exists
+# - WITH_REDIS_CLUSTER=1: enable cluster mode if hiredis_cluster exists
 # - WITH_REDIS_CLUSTER=0: force normal (non-cluster) mode
-# - WITH_SENTINELS=1: enable sentinel mode and disable cluster mode
-WITH_REDIS_CLUSTER ?= 1
+# - WITH_SENTINELS=1: (default) enable sentinel mode and disable cluster mode
+WITH_REDIS_CLUSTER ?= 0
+WITH_SENTINELS ?= 1
 
 ifeq ($(WITH_SENTINELS),1)
 DEFS+=-DWITH_SENTINELS
