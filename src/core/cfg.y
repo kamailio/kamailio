@@ -1080,7 +1080,11 @@ assign_stm:
 	| MSG_CLONE_EXTRA_SIZE EQUAL error { yyerror("number expected"); }
 	| MSG_APPLY_CHANGES_MODE EQUAL NUMBER { ksr_msg_apply_changes_mode=$3; }
 	| MSG_APPLY_CHANGES_MODE EQUAL error { yyerror("boolean expected"); }
-	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3; }
+	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3;
+		if(ksr_msg_recv_max_size <= 0 || ksr_msg_recv_max_size >= BUF_SIZE) {
+			yyerror("value out of range 0 .. BUF_SIZE");
+		}
+	}
 	| MSG_RECV_MAX_SIZE EQUAL error { yyerror("number expected"); }
 	| TCP_MSG_READ_TIMEOUT EQUAL NUMBER { ksr_tcp_msg_read_timeout=$3; }
 	| TCP_MSG_READ_TIMEOUT EQUAL error { yyerror("number expected"); }
