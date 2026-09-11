@@ -49,7 +49,6 @@ endif()
 # endif
 
 # hiredis_cluster checks
-pkg_check_modules(hiredis_cluster IMPORTED_TARGET hiredis_cluster)
 if(hiredis_cluster_FOUND)
   # Check for hiredis_cluster SSL support
   pkg_check_modules(hiredis_cluster_ssl IMPORTED_TARGET hiredis_cluster_ssl)
