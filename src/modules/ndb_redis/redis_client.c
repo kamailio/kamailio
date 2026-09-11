@@ -832,6 +832,7 @@ err:
 		LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
 				rsrv->sname->len, rsrv->sname->s, addr, port, db);
 	}
+	cleanup_redis_context(rsrv);
 	return -1;
 }
 
