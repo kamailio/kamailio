@@ -1,1 +1,1 @@
-../cassandra_constants.cpp
+/home/ubuntu/saturnc/./work/sip/esr/sip-router/src/modules/ndb_cassandra/cassandra_constants.cpp
