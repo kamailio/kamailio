@@ -449,7 +449,6 @@ error:
 char *send_http_get(char *path, unsigned int xcap_port, char *match_etag,
 		int match_type, char **etag)
 {
-	int len;
 	char *stream = NULL;
 	CURLcode ret_code;
 	CURL *curl_handle = NULL;
@@ -465,9 +464,7 @@ char *send_http_get(char *path, unsigned int xcap_port, char *match_etag,
 
 		hdr_name = (match_type == IF_MATCH) ? "If-Match" : "If-None-Match";
 
-		len = sprintf(match_header, "%s: %s\n", hdr_name, match_etag);
-
-		match_header[len] = '\0';
+		snprintf(match_header, sizeof(buf), "%s: %s\n", hdr_name, match_etag);
 	}
 
 	curl_handle = curl_easy_init();
