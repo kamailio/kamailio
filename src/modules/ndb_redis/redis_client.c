@@ -126,7 +126,7 @@ int redisc_init(void)
 
 	unsigned int port, db, sock = 0, haspass = 0, sentinel_master = 1;
 	unsigned int enable_ssl = 0;
-	int i, row;
+	int i, row, col;
 	redisc_server_t *rsrv = NULL;
 	param_t *pit = NULL;
 	struct timeval tv_conn = {0};
@@ -289,16 +289,16 @@ int redisc_init(void)
 						if(res && (res->type == REDIS_REPLY_ARRAY)) {
 							for(row = 0; row < res->elements; row++) {
 								res2 = res->element[row];
-								for(i = 0; i < res2->elements; i += 2) {
-									if(strncmp(res2->element[i]->str, "ip", 2)
+								for(col = 0; col + 1 < res2->elements; col += 2) {
+									if(strncmp(res2->element[col]->str, "ip", 2)
 											== 0) {
-										strncpy(addr, res2->element[i + 1]->str,
-												res2->element[i + 1]->len);
-										addr[res2->element[i + 1]->len] = '\0';
-									} else if(strncmp(res2->element[i]->str,
+										strncpy(addr, res2->element[col + 1]->str,
+												res2->element[col + 1]->len);
+										addr[res2->element[col + 1]->len] = '\0';
+									} else if(strncmp(res2->element[col]->str,
 													  "port", 4)
 											  == 0) {
-										port = atoi(res2->element[i + 1]->str);
+										port = atoi(res2->element[col + 1]->str);
 										break;
 									}
 								}
@@ -590,7 +590,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 #endif
 	char sentinels[MAXIMUM_SENTINELS][256];
 	uint8_t sentinels_count = 0;
-	int i, row;
+	int i, row, col;
 	param_t *pit = NULL;
 	struct timeval tv_conn;
 	struct timeval tv_cmd;
@@ -723,16 +723,16 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 					if(res && (res->type == REDIS_REPLY_ARRAY)) {
 						for(row = 0; row < res->elements; row++) {
 							res2 = res->element[row];
-							for(i = 0; i < res2->elements; i += 2) {
-								if(strncmp(res2->element[i]->str, "ip", 2)
+							for(col = 0; col + 1 < res2->elements; col += 2) {
+								if(strncmp(res2->element[col]->str, "ip", 2)
 										== 0) {
-									strncpy(addr, res2->element[i + 1]->str,
-											res2->element[i + 1]->len);
-									addr[res2->element[i + 1]->len] = '\0';
-								} else if(strncmp(res2->element[i]->str, "port",
-												  4)
+									strncpy(addr, res2->element[col + 1]->str,
+											res2->element[col + 1]->len);
+									addr[res2->element[col + 1]->len] = '\0';
+								} else if(strncmp(res2->element[col]->str, "port",
+											  4)
 										  == 0) {
-									port = atoi(res2->element[i + 1]->str);
+									port = atoi(res2->element[col + 1]->str);
 									break;
 								}
 							}
