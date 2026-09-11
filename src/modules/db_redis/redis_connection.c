@@ -189,6 +189,7 @@ int db_redis_connect(km_redis_con_t *con)
 	if(con->con) {
 		LM_DBG("free old connection first\n");
 		redisFree(con->con);
+		con->con = NULL;
 	}
 
 	// TODO: introduce require_master mod-param and check if we're indeed master
