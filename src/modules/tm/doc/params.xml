@@ -987,8 +987,10 @@ modparam("tm", "via1_matching", 1)
 	<title><varname>reply_matching</varname> (int)</title>
 	<para>
 		If set to 1, the tm module will match SIP replies only for active
-		transactions, skipping when transaction is put on wait or in agony
-		(the states to destroy the transaction).
+		transactions, skipping when the transaction is put on wait or in agony
+		(the states used to destroy the transaction). Replies to a locally
+		generated CANCEL, as well as provisional INVITE replies for an already
+		cancelled branch, are still matched while the transaction is on wait.
 	</para>
 	<para>
 		Default value is 1 .
