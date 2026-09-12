@@ -1363,6 +1363,7 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 
 	short is_cancel;
 	short is_local_cancel;
+	short is_cinv_rpl1xx; /* 1xx reply to a canceled invite */
 
 	/* make compiler warnings happy */
 	loopi = 0;
@@ -1471,6 +1472,11 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 
 		is_local_cancel = is_cancel && is_invite(p_cell)
 				&& p_cell->uac[branch_id].local_cancel.buffer_len;
+		is_cinv_rpl1xx = is_invite(p_cell)
+				&& cseq_method.len == INVITE_LEN
+				&& memcmp(cseq_method.s, INVITE, INVITE_LEN) == 0
+				&& p_msg->REPLY_STATUS >= 100 && p_msg->REPLY_STATUS < 200
+				&& (p_cell->uac[branch_id].request.flags & F_RB_CANCELED);
 
 		/* does method match ? (remember -- CANCELs have the same branch
 		 * as canceled transactions) */
@@ -1501,9 +1507,11 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 		}
 
 		if(_tm_reply_matching & TM_REPLY_MATCHING_ACTIVE) {
-			/* reply for local CANCEL can arrive after INVITE is in WAIT */
+			/* Replies for a local CANCEL and provisional replies that trigger a
+			 * deferred branch CANCEL can arrive after the INVITE is in WAIT. */
 			if(unlikely((p_cell->flags & T_IN_AGONY)
-					|| (t_on_wait(p_cell) && !is_local_cancel))) {
+					|| (t_on_wait(p_cell) && !is_local_cancel
+							&& !is_cinv_rpl1xx))) {
 				LM_INFO("skipping late reply match for transaction already in "
 						"terminated phase: T=%p wait=%d flags=0x%x\n",
 						p_cell, t_on_wait(p_cell), p_cell->flags);
