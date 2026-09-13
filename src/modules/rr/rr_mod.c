@@ -84,6 +84,7 @@ static int w_record_route(struct sip_msg *, char *, char *);
 static int w_record_route_preset(struct sip_msg *, char *, char *);
 static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
 static int w_add_rr_param(struct sip_msg *, char *, char *);
+static int w_rr_cookie_flinit(struct sip_msg *, char *, char *);
 static int w_rr_cookie_add(struct sip_msg *, char *, char *);
 static int w_rr_cookie_check(struct sip_msg *, char *, char *, char *);
 static int w_check_route_param(struct sip_msg *, char *, char *);
@@ -120,6 +121,8 @@ static cmd_export_t cmds[] = {
 		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"add_rr_param", (cmd_function)w_add_rr_param, 1,
 		it_list_fixup, it_list_fixup_free, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+	{"rr_cookie_flinit", (cmd_function)w_rr_cookie_flinit, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"rr_cookie_add", (cmd_function)w_rr_cookie_add, 2,
 		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"rr_cookie_check", (cmd_function)w_rr_cookie_check, 3,
@@ -520,6 +523,34 @@ static int ki_add_rr_param(sip_msg_t *msg, str *sparam)
 #define RR_COOKIE_DATA_LEN 12
 #define RR_COOKIE_HASH_LEN 6
 #define RR_COOKIE_VALUE_LEN 16
+
+/**
+ * Set the two-byte field used for newly generated cookies.
+ */
+static int ki_rr_cookie_flinit(sip_msg_t *msg, int ival)
+{
+	(void)msg;
+
+	if(ival < 0 || ival > UINT16_MAX) {
+		LM_ERR("cookie flags value must be between 0 and %u\n", UINT16_MAX);
+		return -1;
+	}
+	rr_cookie_flags = (uint16_t)ival;
+	return 1;
+}
+
+
+static int w_rr_cookie_flinit(struct sip_msg *msg, char *pval, char *foo)
+{
+	int ival;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pval, &ival) != 0) {
+		LM_ERR("failed to get the cookie flags value\n");
+		return -1;
+	}
+	return ki_rr_cookie_flinit(msg, ival);
+}
+
 
 /**
  * Compute the cookie digest from the encoded F and T fields, Call-ID and sval.
@@ -1076,6 +1107,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	{ str_init("rr"), str_init("add_rr_param"),
 		SR_KEMIP_INT, ki_add_rr_param,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("cookie_flinit"),
+		SR_KEMIP_INT, ki_rr_cookie_flinit,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("rr"), str_init("cookie_add"),
