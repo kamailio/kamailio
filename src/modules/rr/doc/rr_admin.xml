@@ -749,6 +749,29 @@ if(loose_route()) {
       </example>
     </section>
 
+    <section id="rr.f.rr_cookie_flinit">
+      <title><function moreinfo="none">rr_cookie_flinit(ival)</function></title>
+
+      <para>Sets the two-byte global flags field value used by subsequent calls to
+      <function>rr_cookie_add()</function> in the process executing this
+      function. The value must be an integer between 0 and 65535. The parameter
+      can be a variable.
+      </para>
+
+      <para>This function can be used from any route. It returns 1 on success
+      and -1 when the value is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flinit</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_flinit("42");
+...
+</programlisting>
+      </example>
+    </section>
+
     <section id="rr.f.check_route_param">
       <title><function
       moreinfo="none">check_route_param(re)</function></title>
