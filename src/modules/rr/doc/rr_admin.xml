@@ -772,6 +772,29 @@ rr_cookie_flinit("42");
       </example>
     </section>
 
+    <section id="rr.f.rr_cookie_flset">
+      <title><function moreinfo="none">rr_cookie_flset(idx)</function></title>
+
+      <para>Sets the bit at position <varname>idx</varname> in the two-byte
+      global flags field used by subsequent calls to
+      <function>rr_cookie_add()</function> in the process executing this
+      function. Bit zero is the least-significant bit. The index must be an
+      integer between 0 and 15 and can be a variable.</para>
+
+      <para>This function can be used from any route. It returns 1 on success
+      and -1 when the index is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flset</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_flset("3");
+...
+</programlisting>
+      </example>
+    </section>
+
     <section id="rr.f.check_route_param">
       <title><function
       moreinfo="none">check_route_param(re)</function></title>
