@@ -86,6 +86,7 @@ static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
 static int w_add_rr_param(struct sip_msg *, char *, char *);
 static int w_rr_cookie_flinit(struct sip_msg *, char *, char *);
 static int w_rr_cookie_flset(struct sip_msg *, char *, char *);
+static int w_rr_cookie_flfetch(struct sip_msg *, char *, char *);
 static int w_rr_cookie_add(struct sip_msg *, char *, char *);
 static int w_rr_cookie_check(struct sip_msg *, char *, char *, char *);
 static int w_check_route_param(struct sip_msg *, char *, char *);
@@ -126,6 +127,8 @@ static cmd_export_t cmds[] = {
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"rr_cookie_flset", (cmd_function)w_rr_cookie_flset, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"rr_cookie_flfetch", (cmd_function)w_rr_cookie_flfetch, 1,
+		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"rr_cookie_add", (cmd_function)w_rr_cookie_add, 2,
 		fixup_spve_all, fixup_free_spve_all, REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
 	{"rr_cookie_check", (cmd_function)w_rr_cookie_check, 3,
@@ -585,6 +588,60 @@ static int w_rr_cookie_flset(struct sip_msg *msg, char *pidx, char *foo)
 
 
 /**
+ * Decode a cookie from the named parameter of the local Route URI.
+ */
+static int rr_cookie_decode(sip_msg_t *msg, str *name,
+		uint8_t cookie_data[RR_COOKIE_DATA_LEN + 1])
+{
+	str value;
+
+	if(name == NULL || name->s == NULL || name->len <= 0) {
+		LM_ERR("invalid cookie parameter name\n");
+		return -1;
+	}
+	if(get_route_param(msg, name, &value) < 0
+			|| value.len != RR_COOKIE_VALUE_LEN) {
+		return -1;
+	}
+	if(base64url_dec(value.s, value.len, (char *)cookie_data,
+				RR_COOKIE_DATA_LEN + 1)
+			!= RR_COOKIE_DATA_LEN) {
+		return -1;
+	}
+	return 0;
+}
+
+
+/**
+ * Fetch the two-byte flags field from a cookie on the local Route URI.
+ */
+static int ki_rr_cookie_flfetch(sip_msg_t *msg, str *name)
+{
+	uint8_t cookie_data[RR_COOKIE_DATA_LEN + 1];
+	uint16_t field;
+
+	if(rr_cookie_decode(msg, name, cookie_data) < 0) {
+		return -1;
+	}
+	memcpy(&field, cookie_data, sizeof(field));
+	rr_cookie_flags = ntohs(field);
+	return 1;
+}
+
+
+static int w_rr_cookie_flfetch(struct sip_msg *msg, char *name, char *foo)
+{
+	str sname;
+
+	if(fixup_get_svalue(msg, (gparam_t *)name, &sname) != 0) {
+		LM_ERR("failed to get the cookie parameter name\n");
+		return -1;
+	}
+	return ki_rr_cookie_flfetch(msg, &sname);
+}
+
+
+/**
  * Compute the cookie digest from the encoded F and T fields, Call-ID and sval.
  */
 static int rr_cookie_hash(sip_msg_t *msg, str *sval,
@@ -699,14 +756,9 @@ static int ki_rr_cookie_check(
 	uint8_t digest[SHA256_DIGEST_LENGTH];
 	uint32_t timestamp;
 	time_t now;
-	str value;
 	unsigned int mismatch;
 	int i;
 
-	if(name == NULL || name->s == NULL || name->len <= 0) {
-		LM_ERR("invalid cookie parameter name\n");
-		return -1;
-	}
 	if(sval == NULL || sval->len < 0 || (sval->len > 0 && sval->s == NULL)) {
 		LM_ERR("invalid cookie value parameter\n");
 		return -1;
@@ -715,12 +767,7 @@ static int ki_rr_cookie_check(
 		LM_ERR("cookie time difference must not be negative\n");
 		return -1;
 	}
-	if(get_route_param(msg, name, &value) < 0
-			|| value.len != RR_COOKIE_VALUE_LEN) {
-		return -1;
-	}
-	if(base64url_dec(value.s, value.len, (char *)cookie_data,
-				sizeof(cookie_data)) != RR_COOKIE_DATA_LEN) {
+	if(rr_cookie_decode(msg, name, cookie_data) < 0) {
 		return -1;
 	}
 
@@ -1149,6 +1196,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	{ str_init("rr"), str_init("cookie_flset"),
 		SR_KEMIP_INT, ki_rr_cookie_flset,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("cookie_flfetch"),
+		SR_KEMIP_INT, ki_rr_cookie_flfetch,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("rr"), str_init("cookie_add"),
