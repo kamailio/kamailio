@@ -795,6 +795,35 @@ rr_cookie_flset("3");
       </example>
     </section>
 
+    <section id="rr.f.rr_cookie_flfetch">
+      <title><function moreinfo="none">rr_cookie_flfetch(name)</function></title>
+
+      <para>Reads the cookie in the parameter named <varname>name</varname>
+      from the local Route URI, decodes its flags field, and assigns that value
+      to <varname>cookie flags</varname> global variable in the process
+      executing this function. The parameter name may contain
+      pseudo-variables.</para>
+
+      <para>This function must be called after <function>loose_route()</function>
+      and can be used from REQUEST_ROUTE. It returns 1 on success and -1 when
+      the parameter is missing or its cookie value is malformed.</para>
+
+      <example>
+        <title><function>rr_cookie_flfetch</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(loose_route()) {
+    if(!rr_cookie_flfetch("kc")) {
+        sl_send_reply("403", "Invalid routing cookie");
+        exit;
+    }
+}
+...
+</programlisting>
+      </example>
+    </section>
+
     <section id="rr.f.check_route_param">
       <title><function
       moreinfo="none">check_route_param(re)</function></title>
