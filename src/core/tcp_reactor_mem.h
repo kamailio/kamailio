@@ -33,7 +33,8 @@
  * Unlocked concurrent pkg_malloc/pkg_free corrupts the heap freelist.
  *
  * Rather than locking every call site, this wraps the _pkg_root vtable
- * (xmalloc/xmallocxz/xrealloc/xreallocxf/xfree) with one process-local mutex.
+ * (xmalloc/xmallocxz/xmallocxn/xrealloc/xreallocxf/xfree) with one
+ * process-local mutex.
  * _pkg_root is per-process, so installing the wrapper in PROC_TCP_MAIN leaves
  * worker processes and the tcp_main_threads 0/1 paths untouched.
  *

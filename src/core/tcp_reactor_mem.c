@@ -44,6 +44,7 @@
 static pthread_mutex_t _ksr_pkg_lock = PTHREAD_MUTEX_INITIALIZER;
 static sr_malloc_f _ksr_pkg_orig_xmalloc;
 static sr_malloc_f _ksr_pkg_orig_xmallocxz;
+static sr_malloc_f _ksr_pkg_orig_xmallocxn;
 static sr_realloc_f _ksr_pkg_orig_xrealloc;
 static sr_realloc_f _ksr_pkg_orig_xreallocxf;
 static sr_free_f _ksr_pkg_orig_xfree;
@@ -67,6 +68,15 @@ static void *_ksr_pkg_l_xmallocxz(void *mbp, size_t size, const char *file,
 	void *p;
 	pthread_mutex_lock(&_ksr_pkg_lock);
 	p = _ksr_pkg_orig_xmallocxz(mbp, size, file, func, line, mname);
+	pthread_mutex_unlock(&_ksr_pkg_lock);
+	return p;
+}
+static void *_ksr_pkg_l_xmallocxn(void *mbp, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname)
+{
+	void *p;
+	pthread_mutex_lock(&_ksr_pkg_lock);
+	p = _ksr_pkg_orig_xmallocxn(mbp, size, file, func, line, mname);
 	pthread_mutex_unlock(&_ksr_pkg_lock);
 	return p;
 }
@@ -114,6 +124,14 @@ static void *_ksr_pkg_l_xmallocxz(void *mbp, size_t size)
 	pthread_mutex_unlock(&_ksr_pkg_lock);
 	return p;
 }
+static void *_ksr_pkg_l_xmallocxn(void *mbp, size_t size)
+{
+	void *p;
+	pthread_mutex_lock(&_ksr_pkg_lock);
+	p = _ksr_pkg_orig_xmallocxn(mbp, size);
+	pthread_mutex_unlock(&_ksr_pkg_lock);
+	return p;
+}
 static void *_ksr_pkg_l_xrealloc(void *mbp, void *ptr, size_t size)
 {
 	void *p;
@@ -144,6 +162,7 @@ void tcp_reactor_pkg_lock_install(void)
 		return; /* already installed */
 	_ksr_pkg_orig_xmalloc = _pkg_root.xmalloc;
 	_ksr_pkg_orig_xmallocxz = _pkg_root.xmallocxz;
+	_ksr_pkg_orig_xmallocxn = _pkg_root.xmallocxn;
 	_ksr_pkg_orig_xrealloc = _pkg_root.xrealloc;
 	_ksr_pkg_orig_xreallocxf = _pkg_root.xreallocxf;
 	_ksr_pkg_orig_xfree = _pkg_root.xfree;
@@ -152,6 +171,7 @@ void tcp_reactor_pkg_lock_install(void)
 	 * diagnostic and not on the hot concurrent path. */
 	_pkg_root.xmalloc = _ksr_pkg_l_xmalloc;
 	_pkg_root.xmallocxz = _ksr_pkg_l_xmallocxz;
+	_pkg_root.xmallocxn = _ksr_pkg_l_xmallocxn;
 	_pkg_root.xrealloc = _ksr_pkg_l_xrealloc;
 	_pkg_root.xreallocxf = _ksr_pkg_l_xreallocxf;
 	_pkg_root.xfree = _ksr_pkg_l_xfree;
