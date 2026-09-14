@@ -1022,6 +1022,27 @@ void *tlsf_mallocxz(tlsf_t tlsf, size_t size)
 	return p;
 }
 
+#ifdef DBG_TLSF_MALLOC
+void *tlsf_mallocxn(tlsf_t tlsf, size_t size, const char *file,
+		const char *function, unsigned int line, const char *mname)
+#else
+void *tlsf_mallocxn(tlsf_t tlsf, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_TLSF_MALLOC
+	p = tlsf_malloc(tlsf, size, file, function, line, mname);
+#else
+	p = tlsf_malloc(tlsf, size);
+#endif
+
+	if(p && size > 0)
+		((char *)p)[size - 1] = 0;
+
+	return p;
+}
+
 
 #ifdef DBG_TLSF_MALLOC
 void tlsf_free(tlsf_t tlsf, void *ptr, const char *file, const char *function,
@@ -1439,6 +1460,7 @@ int tlsf_malloc_init_pkg_manager(void)
 	ma.mem_block = _tlsf_pkg_block;
 	ma.xmalloc = tlsf_malloc;
 	ma.xmallocxz = tlsf_mallocxz;
+	ma.xmallocxn = tlsf_mallocxn;
 	ma.xfree = tlsf_free;
 	ma.xrealloc = tlsf_realloc;
 	ma.xreallocxf = tlsf_reallocxf;
@@ -1536,6 +1558,15 @@ void *tlsf_shm_mallocxz(void *tlsfmp, size_t size, const char *file,
 	tlsf_shm_unlock();
 	return r;
 }
+void *tlsf_shm_mallocxn(void *tlsfmp, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname)
+{
+	void *r;
+	tlsf_shm_lock();
+	r = tlsf_mallocxn(tlsfmp, size, file, func, line, mname);
+	tlsf_shm_unlock();
+	return r;
+}
 void *tlsf_shm_realloc(void *tlsfmp, void *p, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
@@ -1586,6 +1617,14 @@ void *tlsf_shm_mallocxz(void *tlsfmp, size_t size)
 	void *r;
 	tlsf_shm_lock();
 	r = tlsf_mallocxz(tlsfmp, size);
+	tlsf_shm_unlock();
+	return r;
+}
+void *tlsf_shm_mallocxn(void *tlsfmp, size_t size)
+{
+	void *r;
+	tlsf_shm_lock();
+	r = tlsf_mallocxn(tlsfmp, size);
 	tlsf_shm_unlock();
 	return r;
 }
@@ -1700,6 +1739,7 @@ int tlsf_malloc_init_shm_manager(void)
 	ma.mem_block = _tlsf_shm_block;
 	ma.xmalloc = tlsf_shm_malloc;
 	ma.xmallocxz = tlsf_shm_mallocxz;
+	ma.xmallocxn = tlsf_shm_mallocxn;
 	ma.xmalloc_unsafe = tlsf_malloc;
 	ma.xfree = tlsf_shm_free;
 	ma.xfree_unsafe = tlsf_free;
