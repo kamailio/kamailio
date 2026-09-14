@@ -2760,10 +2760,6 @@ struct naptr_rdata *dns_naptr_sip_iterate(struct dns_rr *naptr_head,
 		}
 		LM_DBG("found a valid sip NAPTR rr %.*s, proto %d\n", naptr->repl_len,
 				naptr->repl, (int)naptr_proto);
-		if(naptr->skip_record) {
-			i++;
-			continue;
-		}
 		if((naptr_proto_supported(naptr_proto))) {
 			if(naptr_choose(&naptr_saved, &saved_proto, naptr, naptr_proto))
 				idx = i;
@@ -3330,65 +3326,6 @@ inline static int dns_srv_sip_resolve(struct dns_srv_handle *h, str *name,
 #ifdef USE_NAPTR
 
 
-static void mark_skip_current_naptr(
-		struct dns_rr *naptr_head, struct dns_hash_entry *srv)
-{
-	int i;
-	struct dns_rr *l;
-	struct naptr_rdata *naptr;
-
-	if(!naptr_head || !srv) {
-		return;
-	}
-
-	for(l = naptr_head, i = 0; l && (i < MAX_NAPTR_RRS); l = l->next, i++) {
-		naptr = (struct naptr_rdata *)l->rdata;
-		if(naptr == 0) {
-			break;
-		}
-		if(naptr->skip_record) {
-			continue;
-		}
-		if(srv->name_len == naptr->repl_len
-				&& !memcmp(srv->name, naptr->repl, srv->name_len)) {
-			naptr->skip_record = 1;
-			LM_NOTICE("Mark to skip %.*s NAPTR record due to all IPs are "
-					  "unreachable\n",
-					naptr->repl_len, naptr->repl);
-			break;
-		}
-	}
-}
-
-
-inline static int have_more_active_naptr(struct dns_rr *naptr_head)
-{
-	int i, res = 0;
-	struct dns_rr *l;
-	struct naptr_rdata *naptr;
-	char naptr_proto;
-
-	if(!naptr_head) {
-		return res;
-	}
-
-	for(l = naptr_head, i = 0; l && (i < MAX_NAPTR_RRS); l = l->next, i++) {
-		naptr = (struct naptr_rdata *)l->rdata;
-		if(naptr == 0) {
-			break;
-		}
-		if(naptr->skip_record) {
-			continue;
-		} else if((naptr_proto = naptr_get_sip_proto(naptr)) <= 0) {
-			continue;
-		} else if((naptr_proto_supported(naptr_proto))) {
-			res = 1;
-			break;
-		}
-	}
-	return res;
-}
-
 /* resolves a host name trying:
  * - NAPTR lookup if the address is not an ip and proto!=0, port!=0
  *    *port==0 and *proto=0 and if flags allow NAPTR lookups
@@ -3407,13 +3344,11 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 {
 	struct hostent *he;
 	struct ip_addr *tmp_ip;
-	naptr_bmp_t tried_bmp;
 	struct dns_hash_entry *e;
 	char n_proto, origproto;
 	str srv_name;
 	int ret;
-	int res;
-	int try_lookup_naptr = 0;
+	int continued;
 
 	ret = -E_DNS_NO_NAPTR;
 	if(proto)
@@ -3430,6 +3365,7 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 		}
 		return -E_DNS_NO_NAPTR;
 	}
+	continued = 0;
 	if(((h->srv == 0) && (h->a == 0) && (h->naptr == 0)) && /* first call */
 			proto && port && (*proto == 0) && (*port == 0)) {
 		*proto = PROTO_UDP; /* just in case we don't find another */
@@ -3454,51 +3390,52 @@ inline static int dns_naptr_sip_resolve(struct dns_srv_handle *h, str *name,
 		/* the handle takes over the reference returned by dns_get_entry(),
 		 * it is released by dns_srv_handle_put() */
 		h->naptr = e;
-		try_lookup_naptr = 1;
-	} else {
-		/* access old naptr lookup */
-		if((e = h->naptr) == 0)
-			goto naptr_not_found;
-	}
-	/* check if it's an ip address, dns_srv_sip_resolve will return the right failure */
-	if(str2ip(name) || str2ip6(name))
-		goto naptr_not_found;
-
-	if(!try_lookup_naptr) {
+		/* nothing tried yet by this handle */
+		naptr_iterate_init(&h->naptr_tried_rrs);
+	} else if((e = h->naptr) != 0) {
+		/* continue a naptr based resolution started by a previous call:
+		 * first try to get another ip for the naptr record in use */
+		continued = 1;
 		if(proto)
 			*proto = origproto;
-		res = dns_srv_sip_resolve(h, name, ip, port, proto, flags);
-		if(res) {
-			mark_skip_current_naptr(e->rr_lst, h->srv);
-			if(have_more_active_naptr(e->rr_lst)) {
-				// No more avaliable IP for current NAPTR record, let's try next one
-				try_lookup_naptr = 1;
-			}
-		} else {
-			return res;
-		}
+		ret = dns_srv_sip_resolve(h, name, ip, port, proto, flags);
+		if(ret >= 0)
+			return ret;
+		/* no more destinations for the current naptr record => fall through
+		 * and try the next naptr record not used yet by this handle */
+		LM_DBG("no more destinations for the current NAPTR record of %.*s"
+			   " (%d), trying the next one\n",
+				name->len, name->s, ret);
+	} else {
+		/* no naptr entry (previous fallback to srv/a) */
+		goto naptr_not_found;
 	}
 
-	if(try_lookup_naptr) {
-		naptr_iterate_init(&tried_bmp);
-		while(dns_naptr_sip_iterate(
-				e->rr_lst, &tried_bmp, &srv_name, &n_proto)) {
-			dns_srv_handle_reset(h); /* make sure h does not contain garbage
-									from previous dns_srv_sip_resolve calls */
-			if((ret = dns_srv_resolve_ip(h, &srv_name, ip, port, flags)) >= 0) {
-				LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n", name->len, name->s,
-						h->srv_no, h->ip_no, ret);
-				if(proto)
-					*proto = n_proto;
-				h->proto = n_proto;
-				return ret;
-			}
-		}
-		/* no acceptable naptr record found, fallback to srv;
-		 * reset() releases the srv/a entries left by the failed attempts
-		 * above and keeps h->naptr, init() would leak them */
+	/* iterate only over the naptr records not tried yet by *this* handle:
+	 * h->naptr_tried_rrs is transaction local, it does not affect any other
+	 * dns_srv_handle resolving the same (cached) name */
+	while(dns_naptr_sip_iterate(
+			e->rr_lst, &h->naptr_tried_rrs, &srv_name, &n_proto)) {
+		/* drop the srv/a state of the previous naptr record, but keep
+		 * h->naptr and the list of the naptr records already tried */
 		dns_srv_handle_reset(h);
+		if((ret = dns_srv_resolve_ip(h, &srv_name, ip, port, flags)) >= 0) {
+			LM_DBG("(%.*s, %d, %d), srv0, ret=%d\n", name->len, name->s,
+					h->srv_no, h->ip_no, ret);
+			if(proto)
+				*proto = n_proto;
+			h->proto = n_proto;
+			return ret;
+		}
 	}
+	if(continued) {
+		/* all the naptr records of this handle are exhausted, report the
+		 * last error - do not restart the resolution from scratch */
+		return ret;
+	}
+	/* no acceptable naptr record found, fallback to srv
+	 * (make sure h does not contain garbage from the failed attempts above) */
+	dns_srv_handle_reset(h);
 naptr_not_found:
 	if(proto)
 		*proto = origproto;
@@ -3971,11 +3908,11 @@ int dns_cache_print_entry(rpc_t *rpc, void *ctx, struct dns_hash_entry *e)
 					rpc->fault(ctx, 500, "Internal error adding naptr order");
 					return -1;
 				}
-				if(rpc->struct_add(sh, "s", "rr_skip_record",
-						   ((struct naptr_rdata *)(rr->rdata))->skip_record
-								   ? "yes"
-								   : "no")
-						< 0) {
+				/* deprecated, kept for backward compatibility of the rpc
+				 * output: a naptr record is never skipped globally anymore,
+				 * the records already tried are tracked per dns_srv_handle
+				 * (i.e. per transaction), not in the shared dns cache */
+				if(rpc->struct_add(sh, "s", "rr_skip_record", "no") < 0) {
 					rpc->fault(ctx, 500,
 							"Internal error adding naptr rr_skip_record");
 					return -1;
