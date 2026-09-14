@@ -460,14 +460,13 @@ char *send_http_get(char *path, unsigned int xcap_port, char *match_etag,
 	if(match_etag) {
 		char *hdr_name = NULL;
 
-		memset(buf, 0, 128 * sizeof(char));
-		match_header = buf;
-
 		hdr_name = (match_type == IF_MATCH) ? "If-Match" : "If-None-Match";
-
-		len = sprintf(match_header, "%s: %s\n", hdr_name, match_etag);
-
-		match_header[len] = '\0';
+		len = snprintf(buf, sizeof(buf), "%s: %s\n", hdr_name, match_etag);
+		if (len < 0 || (unsigned)len >= sizeof(buf)) {
+			LM_ERR("cannot print the header (%d)\n", len);
+			return NULL;
+		}
+		match_header = buf;
 	}
 
 	curl_handle = curl_easy_init();
