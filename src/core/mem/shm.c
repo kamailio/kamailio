@@ -235,6 +235,7 @@ int shm_init_api(sr_shm_api_t *ap)
 	_shm_root.mem_block = ap->mem_block;
 	_shm_root.xmalloc = ap->xmalloc;
 	_shm_root.xmallocxz = ap->xmallocxz;
+	_shm_root.xmallocxn = ap->xmallocxn;
 	_shm_root.xmalloc_unsafe = ap->xmalloc_unsafe;
 	_shm_root.xfree = ap->xfree;
 	_shm_root.xfree_unsafe = ap->xfree_unsafe;
