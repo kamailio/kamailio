@@ -1505,10 +1505,17 @@ static int tcp_read_hep3(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 
 	len = ((uint32_t)(p[4] & 0xff) << 8) + (p[5] & 0xff);
 
+	if(len < 6) {
+		LM_WARN("advertised length (%u) smaller than the HEP3 header\n", len);
+		r->error = TCP_REQ_BAD_LEN;
+		goto skip;
+	}
+
 	/* check if advertised length fits in read buffer */
 	if(len >= r->b_size) {
 		LM_WARN("advertised length (%u) greater than buffer size (%u)\n", len,
 				r->b_size);
+		r->error = TCP_REQ_BAD_LEN;
 		goto skip;
 	}
 	/* check the whole message has been received */
