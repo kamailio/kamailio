@@ -47,6 +47,7 @@ int pkg_init_api(sr_pkg_api_t *ap)
 	_pkg_root.mem_block = ap->mem_block;
 	_pkg_root.xmalloc = ap->xmalloc;
 	_pkg_root.xmallocxz = ap->xmallocxz;
+	_pkg_root.xmallocxn = ap->xmallocxn;
 	_pkg_root.xfree = ap->xfree;
 	_pkg_root.xrealloc = ap->xrealloc;
 	_pkg_root.xreallocxf = ap->xreallocxf;

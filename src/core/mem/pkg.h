@@ -47,6 +47,9 @@ void pkg_print_manager(void);
 #define pkg_mallocxz(s)                                                      \
 	_pkg_root.xmallocxz(_pkg_root.mem_block, (s), _SRC_LOC_, _SRC_FUNCTION_, \
 			_SRC_LINE_, _SRC_MODULE_)
+#define pkg_mallocxn(s)                                                      \
+	_pkg_root.xmallocxn(_pkg_root.mem_block, (s), _SRC_LOC_, _SRC_FUNCTION_, \
+			_SRC_LINE_, _SRC_MODULE_)
 #define pkg_free(p)                                                      \
 	_pkg_root.xfree(_pkg_root.mem_block, (p), _SRC_LOC_, _SRC_FUNCTION_, \
 			_SRC_LINE_, _SRC_MODULE_)
@@ -59,6 +62,7 @@ void pkg_print_manager(void);
 #else
 #define pkg_malloc(s) _pkg_root.xmalloc(_pkg_root.mem_block, (s))
 #define pkg_mallocxz(s) _pkg_root.xmallocxz(_pkg_root.mem_block, (s))
+#define pkg_mallocxn(s) _pkg_root.xmallocxn(_pkg_root.mem_block, (s))
 #define pkg_free(p) _pkg_root.xfree(_pkg_root.mem_block, (p))
 #define pkg_realloc(p, s) _pkg_root.xrealloc(_pkg_root.mem_block, (p), (s))
 #define pkg_reallocxf(p, s) _pkg_root.xreallocxf(_pkg_root.mem_block, (p), (s))
@@ -107,6 +111,18 @@ void pkg_print_manager(void);
 			memset(____v123, 0, (s));                                 \
 		____v123;                                                     \
 	})
+#define pkg_mallocxn(s)                                               \
+	({                                                                \
+		void *____v123;                                               \
+		size_t ____s123 = (s);                                        \
+		____v123 = malloc(____s123);                                  \
+		MDBG("malloc %p size %lu end %p (%s:%d)\n", ____v123,         \
+				(unsigned long)____s123, (char *)____v123 + ____s123, \
+				__FILE__, __LINE__);                                   \
+		if(____v123 && ____s123 > 0)                                 \
+			((char *)____v123)[____s123 - 1] = 0;                  \
+		____v123;                                                     \
+	})
 #define pkg_free(p)                                         \
 	do {                                                    \
 		MDBG("free %p (%s:%d)\n", (p), __FILE__, __LINE__); \
@@ -141,6 +157,15 @@ void pkg_print_manager(void);
 		if(____v123)                  \
 			memset(____v123, 0, (s)); \
 		____v123;                     \
+	})
+#define pkg_mallocxn(s)                      \
+	({                                       \
+		void *____v123;                      \
+		size_t ____s123 = (s);               \
+		____v123 = malloc(____s123);          \
+		if(____v123 && ____s123 > 0)         \
+			((char *)____v123)[____s123 - 1] = 0; \
+		____v123;                            \
 	})
 #define pkg_free(p) free((p))
 #define pkg_realloc(p, s) realloc((p), (s))
