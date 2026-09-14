@@ -599,6 +599,27 @@ void *fm_mallocxz(void *qmp, size_t size)
 	return p;
 }
 
+#ifdef DBG_F_MALLOC
+void *fm_mallocxn(void *qmp, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname)
+#else
+void *fm_mallocxn(void *qmp, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_F_MALLOC
+	p = fm_malloc(qmp, size, file, func, line, mname);
+#else
+	p = fm_malloc(qmp, size);
+#endif
+
+	if(p && size > 0)
+		((char *)p)[size - 1] = 0;
+
+	return p;
+}
+
 #ifdef MEM_JOIN_FREE
 /**
  * join fragment free frag f with next one (if it is free)
@@ -1189,6 +1210,7 @@ int fm_malloc_init_pkg_manager(void)
 	ma.mem_block = _fm_pkg_block;
 	ma.xmalloc = fm_malloc;
 	ma.xmallocxz = fm_mallocxz;
+	ma.xmallocxn = fm_mallocxn;
 	ma.xfree = fm_free;
 	ma.xrealloc = fm_realloc;
 	ma.xreallocxf = fm_reallocxf;
@@ -1287,6 +1309,15 @@ void *fm_shm_mallocxz(void *qmp, size_t size, const char *file,
 	fm_shm_unlock();
 	return r;
 }
+void *fm_shm_mallocxn(void *qmp, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_mallocxn(qmp, size, file, func, line, mname);
+	fm_shm_unlock();
+	return r;
+}
 void *fm_shm_realloc(void *qmp, void *p, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
@@ -1337,6 +1368,14 @@ void *fm_shm_mallocxz(void *qmp, size_t size)
 	void *r;
 	fm_shm_lock();
 	r = fm_mallocxz(qmp, size);
+	fm_shm_unlock();
+	return r;
+}
+void *fm_shm_mallocxn(void *qmp, size_t size)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_mallocxn(qmp, size);
 	fm_shm_unlock();
 	return r;
 }
@@ -1445,6 +1484,7 @@ int fm_malloc_init_shm_manager(void)
 	ma.mem_block = _fm_shm_block;
 	ma.xmalloc = fm_shm_malloc;
 	ma.xmallocxz = fm_shm_mallocxz;
+	ma.xmallocxn = fm_shm_mallocxn;
 	ma.xmalloc_unsafe = fm_malloc;
 	ma.xfree = fm_shm_free;
 	ma.xfree_unsafe = fm_free;

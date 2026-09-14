@@ -164,6 +164,13 @@ void *fm_mallocxz(void *qmp, size_t size, const char *file, const char *func,
 void *fm_mallocxz(void *qmp, size_t size);
 #endif
 
+#ifdef DBG_F_MALLOC
+void *fm_mallocxn(void *qmp, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname);
+#else
+void *fm_mallocxn(void *qmp, size_t size);
+#endif
+
 
 /**
  * \brief Main memory manager free function
