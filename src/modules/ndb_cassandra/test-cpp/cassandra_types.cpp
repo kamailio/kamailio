@@ -1,1 +1,1 @@
-/home/ubuntu/saturnc/./work/sip/esr/sip-router/src/modules/ndb_cassandra/cassandra_types.cpp
+../cassandra_types.cpp
