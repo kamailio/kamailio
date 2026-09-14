@@ -516,6 +516,28 @@ void *qm_mallocxz(void *qmp, size_t size)
 
 
 #ifdef DBG_QM_MALLOC
+void *qm_mallocxn(void *qmp, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname)
+#else
+void *qm_mallocxn(void *qmp, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_QM_MALLOC
+	p = qm_malloc(qmp, size, file, func, line, mname);
+#else
+	p = qm_malloc(qmp, size);
+#endif
+
+	if(p && size > 0)
+		((char *)p)[size - 1] = 0;
+
+	return p;
+}
+
+
+#ifdef DBG_QM_MALLOC
 void qm_free(void *qmp, void *p, const char *file, const char *func,
 		unsigned int line, const char *mname)
 #else
@@ -1467,6 +1489,7 @@ int qm_malloc_init_pkg_manager(void)
 	ma.mem_block = _qm_pkg_block;
 	ma.xmalloc = qm_malloc;
 	ma.xmallocxz = qm_mallocxz;
+	ma.xmallocxn = qm_mallocxn;
 	ma.xfree = qm_free;
 	ma.xrealloc = qm_realloc;
 	ma.xreallocxf = qm_reallocxf;
@@ -1567,6 +1590,15 @@ void *qm_shm_mallocxz(void *qmp, size_t size, const char *file,
 	qm_shm_unlock();
 	return r;
 }
+void *qm_shm_mallocxn(void *qmp, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname)
+{
+	void *r;
+	qm_shm_lock();
+	r = qm_mallocxn(qmp, size, file, func, line, mname);
+	qm_shm_unlock();
+	return r;
+}
 void *qm_shm_realloc(void *qmp, void *p, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
@@ -1617,6 +1649,14 @@ void *qm_shm_mallocxz(void *qmp, size_t size)
 	void *r;
 	qm_shm_lock();
 	r = qm_mallocxz(qmp, size);
+	qm_shm_unlock();
+	return r;
+}
+void *qm_shm_mallocxn(void *qmp, size_t size)
+{
+	void *r;
+	qm_shm_lock();
+	r = qm_mallocxn(qmp, size);
 	qm_shm_unlock();
 	return r;
 }
@@ -1736,6 +1776,7 @@ int qm_malloc_init_shm_manager(void)
 	ma.mem_block = _qm_shm_block;
 	ma.xmalloc = qm_shm_malloc;
 	ma.xmallocxz = qm_shm_mallocxz;
+	ma.xmallocxn = qm_shm_mallocxn;
 	ma.xmalloc_unsafe = qm_malloc;
 	ma.xfree = qm_shm_free;
 	ma.xfree_unsafe = qm_free;

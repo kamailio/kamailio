@@ -155,6 +155,13 @@ void *qm_mallocxz(void *, size_t size);
 #endif
 
 #ifdef DBG_QM_MALLOC
+void *qm_mallocxn(void *, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname);
+#else
+void *qm_mallocxn(void *, size_t size);
+#endif
+
+#ifdef DBG_QM_MALLOC
 void qm_free(void *, void *p, const char *file, const char *func,
 		unsigned int line, const char *mname);
 #else
