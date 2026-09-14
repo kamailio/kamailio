@@ -171,6 +171,13 @@ struct dns_srv_handle
 	struct dns_hash_entry *naptr; /**< naptr entry */
 	struct dns_hash_entry *srv;	  /**< srv entry */
 	struct dns_hash_entry *a;	  /**< a or aaaa current entry */
+#ifdef USE_NAPTR
+	/** @brief naptr records already used by this handle.
+	 * Handle (i.e. transaction) local state: it must never be stored in the
+	 * shared dns cache, else exhausting a naptr record in one transaction
+	 * would remove it from the candidate list of all the others */
+	naptr_bmp_t naptr_tried_rrs;
+#endif
 #ifdef DNS_SRV_LB
 	srv_flags_t srv_tried_rrs;
 #endif
@@ -289,6 +296,9 @@ inline static void dns_srv_handle_init(struct dns_srv_handle *h)
 	h->srv_no = h->ip_no = 0;
 	h->port = 0;
 	h->proto = 0;
+#ifdef USE_NAPTR
+	naptr_iterate_init(&h->naptr_tried_rrs);
+#endif
 #ifdef DNS_SRV_LB
 	h->srv_tried_rrs = 0;
 #endif
@@ -296,7 +306,9 @@ inline static void dns_srv_handle_init(struct dns_srv_handle *h)
 
 inline static void dns_srv_handle_reset(struct dns_srv_handle *h)
 {
-	/* do NOT put the naptr */
+	/* do NOT put the naptr and do NOT touch h->naptr_tried_rrs: reset() is
+	 * used while continuing the same naptr failover sequence, the list of
+	 * the naptr records already used by this handle must survive it */
 	if(h->srv) {
 		dns_hash_put(h->srv);
 		h->srv = 0;
@@ -311,6 +323,19 @@ inline static void dns_srv_handle_reset(struct dns_srv_handle *h)
 	h->proto = 0;
 #endif
 }
+
+#ifdef USE_NAPTR
+/** @brief iterates over the sip naptr records of a cached naptr entry
+ * Params:  naptr_head - naptr dns_rr list head
+ *          tried      - bitmap of the records already used by the caller
+ *                       (dns_srv_handle local, see naptr_tried_rrs)
+ *          srv_name   - result: srv name of the selected record
+ *          proto      - result: protocol of the selected record
+ * Returns: the selected naptr record or 0 if no more records are left
+ */
+struct naptr_rdata *dns_naptr_sip_iterate(struct dns_rr *naptr_head,
+		naptr_bmp_t *tried, str *srv_name, char *proto);
+#endif /* USE_NAPTR */
 
 /** @brief performes a srv query on name
  * Params:  name  - srv query target (e.g. _sip._udp.foo.bar)
