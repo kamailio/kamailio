@@ -284,6 +284,8 @@ static pv_export_t mod_pvs[] = {
 			PVT_OTHER, pv_get_ouri_attr, 0, 0, 0, pv_init_iname, 4},
 	{{"ou", (sizeof("ou") - 1)}, /* */
 			PVT_OURI, pv_get_ouri, 0, 0, 0, 0, 0},
+	{{"oul", (sizeof("ou") - 1)}, /* */
+			PVT_OURI, pv_get_ouri_len, 0, 0, 0, 0, 0},
 	{{"ouri", (sizeof("ouri") - 1)}, /* */
 			PVT_OURI, pv_get_ouri, 0, 0, 0, 0, 0},
 	{{"oU", (sizeof("oU") - 1)}, /* */

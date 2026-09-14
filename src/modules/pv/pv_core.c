@@ -287,6 +287,17 @@ int pv_get_ouri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	return pv_get_strval(msg, param, res, &msg->first_line.u.request.uri);
 }
 
+int pv_get_ouri_len(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(msg == NULL || res == NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY) /* REPLY doesn't have a ruri */
+		return pv_get_null(msg, param, res);
+
+	return pv_get_sintval(msg, param, res, msg->first_line.u.request.uri.len);
+}
+
 int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
 		pv_param_t *param, pv_value_t *res)
 {
