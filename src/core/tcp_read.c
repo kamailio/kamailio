@@ -1816,6 +1816,12 @@ again:
 		goto end_req;
 	}
 	if(likely(TCP_REQ_COMPLETE(req))) {
+		if(unlikely(req->parsed <= req->start)) {
+			LM_ERR("complete request with 0 bytes consumed (state=%d)\n",
+					req->state);
+			resp = CONN_ERROR;
+			goto end_req;
+		}
 #ifdef EXTRA_DEBUG
 		LM_DBG("end of header part\n");
 		LM_DBG("received from: port %d\n", con->rcv.src_port);
