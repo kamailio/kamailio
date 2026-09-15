@@ -63,11 +63,12 @@ Bogdan-Andrei Iancu
               5.10. rr_cookie_check(name, sval, tdiff)
               5.11. rr_cookie_flinit(ival)
               5.12. rr_cookie_flset(idx)
-              5.13. rr_cookie_flisset(idx)
-              5.14. rr_cookie_flfetch(name)
-              5.15. check_route_param(re)
-              5.16. is_direction(dir)
-              5.17. rr_next_hop_route()
+              5.13. rr_cookie_flreset(idx)
+              5.14. rr_cookie_flisset(idx)
+              5.15. rr_cookie_flfetch(name)
+              5.16. check_route_param(re)
+              5.17. is_direction(dir)
+              5.18. rr_next_hop_route()
 
         6. Exported Pseudo Variables
 
@@ -113,12 +114,13 @@ Bogdan-Andrei Iancu
    1.22. rr_cookie_check usage
    1.23. rr_cookie_flinit usage
    1.24. rr_cookie_flset usage
-   1.25. rr_cookie_flisset usage
-   1.26. rr_cookie_flfetch usage
-   1.27. check_route_param usage
-   1.28. is_direction usage
-   1.29. rr_next_hop_route usage
-   1.30. $route_uri
+   1.25. rr_cookie_flreset usage
+   1.26. rr_cookie_flisset usage
+   1.27. rr_cookie_flfetch usage
+   1.28. check_route_param usage
+   1.29. is_direction usage
+   1.30. rr_next_hop_route usage
+   1.31. $route_uri
    2.1. record_route usage
    2.2. record_route_advertised_address usage
    2.3. Loading RR module's API from another module
@@ -161,11 +163,12 @@ Chapter 1. Admin Guide
         5.10. rr_cookie_check(name, sval, tdiff)
         5.11. rr_cookie_flinit(ival)
         5.12. rr_cookie_flset(idx)
-        5.13. rr_cookie_flisset(idx)
-        5.14. rr_cookie_flfetch(name)
-        5.15. check_route_param(re)
-        5.16. is_direction(dir)
-        5.17. rr_next_hop_route()
+        5.13. rr_cookie_flreset(idx)
+        5.14. rr_cookie_flisset(idx)
+        5.15. rr_cookie_flfetch(name)
+        5.16. check_route_param(re)
+        5.17. is_direction(dir)
+        5.18. rr_next_hop_route()
 
    6. Exported Pseudo Variables
 
@@ -204,7 +207,7 @@ Chapter 1. Admin Guide
 
    For this purpose, the module offers the following functions:
      * add_rr_param() - see Section 5.8, “add_rr_param(param)”
-     * check_route_param() - see Section 5.15, “check_route_param(re)”
+     * check_route_param() - see Section 5.16, “check_route_param(re)”
 
    Example 1.1. Dialog support in RR module
 ...
@@ -432,11 +435,12 @@ modparam("rr", "loose_route_mode", 1)
    5.10. rr_cookie_check(name, sval, tdiff)
    5.11. rr_cookie_flinit(ival)
    5.12. rr_cookie_flset(idx)
-   5.13. rr_cookie_flisset(idx)
-   5.14. rr_cookie_flfetch(name)
-   5.15. check_route_param(re)
-   5.16. is_direction(dir)
-   5.17. rr_next_hop_route()
+   5.13. rr_cookie_flreset(idx)
+   5.14. rr_cookie_flisset(idx)
+   5.15. rr_cookie_flfetch(name)
+   5.16. check_route_param(re)
+   5.17. is_direction(dir)
+   5.18. rr_next_hop_route()
 
 5.1. loose_route()
 
@@ -731,7 +735,22 @@ rr_cookie_flinit("42");
 rr_cookie_flset("3");
 ...
 
-5.13. rr_cookie_flisset(idx)
+5.13. rr_cookie_flreset(idx)
+
+   Clears the bit at position idx in the two-byte global flags field used
+   by subsequent calls to rr_cookie_add() in the process executing this
+   function. Bit zero is the least-significant bit. The index must be an
+   integer between 0 and 15 and can be a variable.
+
+   This function can be used from any route. It returns 1 on success and
+   -1 when the index is invalid.
+
+   Example 1.25. rr_cookie_flreset usage
+...
+rr_cookie_flreset("3");
+...
+
+5.14. rr_cookie_flisset(idx)
 
    Checks whether the bit at position idx is set in the two-byte global
    flags field. Bit zero is the least-significant bit. The index must be
@@ -740,14 +759,14 @@ rr_cookie_flset("3");
    This function can be used from any route. It returns 1 when the bit is
    set and -1 when the bit is clear or the index is invalid.
 
-   Example 1.25. rr_cookie_flisset usage
+   Example 1.26. rr_cookie_flisset usage
 ...
 if(rr_cookie_flisset("3")) {
     xlog("cookie flag 3 is set\n");
 }
 ...
 
-5.14. rr_cookie_flfetch(name)
+5.15. rr_cookie_flfetch(name)
 
    Reads the cookie in the parameter named name from the local Route URI,
    decodes its flags field, and assigns that value to cookie flags global
@@ -758,7 +777,7 @@ if(rr_cookie_flisset("3")) {
    REQUEST_ROUTE. It returns 1 on success and -1 when the parameter is
    missing or its cookie value is malformed.
 
-   Example 1.26. rr_cookie_flfetch usage
+   Example 1.27. rr_cookie_flfetch usage
 ...
 if(loose_route()) {
     if(!rr_cookie_flfetch("kc")) {
@@ -768,7 +787,7 @@ if(loose_route()) {
 }
 ...
 
-5.15. check_route_param(re)
+5.16. check_route_param(re)
 
    The function checks if the URI parameters of the local Route header
    (corresponding to the local server) matches the given regular
@@ -780,14 +799,14 @@ if(loose_route()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.27. check_route_param usage
+   Example 1.28. check_route_param usage
 ...
 if (check_route_param("nat=yes")) {
     setflag(6);
 }
 ...
 
-5.16. is_direction(dir)
+5.17. is_direction(dir)
 
    The function checks the flow direction of in-dialog requests. This
    function uses the “ftag” parameter from the Route header, therefore the
@@ -808,7 +827,7 @@ if (check_route_param("nat=yes")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.28. is_direction usage
+   Example 1.29. is_direction usage
 ...
 if (is_direction("downstream")) {
     xdbg("in-dialog request from caller to callee (downstream) ($rm)\n");
@@ -817,7 +836,7 @@ if (is_direction("downstream")) {
 }
 ...
 
-5.17. rr_next_hop_route()
+5.18. rr_next_hop_route()
 
    The function returns 1 (true) if there is a Route header for the next
    hop address. It has to be used after loose_route(), when the local
@@ -825,7 +844,7 @@ if (is_direction("downstream")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.29. rr_next_hop_route usage
+   Example 1.30. rr_next_hop_route usage
 ...
 if(loose_route) {
     if(rr_next_hop_route()) {
@@ -843,7 +862,7 @@ if(loose_route) {
 
    Returns the URI of the top route-header.
 
-   Example 1.30. $route_uri
+   Example 1.31. $route_uri
 ...
     xdbg("Route-URI is: $route_uri\n");
 ...
