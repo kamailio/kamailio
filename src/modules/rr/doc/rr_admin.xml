@@ -795,6 +795,29 @@ rr_cookie_flset("3");
       </example>
     </section>
 
+    <section id="rr.f.rr_cookie_flreset">
+      <title><function moreinfo="none">rr_cookie_flreset(idx)</function></title>
+
+      <para>Clears the bit at position <varname>idx</varname> in the two-byte
+      global flags field used by subsequent calls to
+      <function>rr_cookie_add()</function> in the process executing this
+      function. Bit zero is the least-significant bit. The index must be an
+      integer between 0 and 15 and can be a variable.</para>
+
+      <para>This function can be used from any route. It returns 1 on success
+      and -1 when the index is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flreset</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_flreset("3");
+...
+</programlisting>
+      </example>
+    </section>
+
     <section id="rr.f.rr_cookie_flisset">
       <title><function moreinfo="none">rr_cookie_flisset(idx)</function></title>
 
