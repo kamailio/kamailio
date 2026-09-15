@@ -86,6 +86,7 @@ static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
 static int w_add_rr_param(struct sip_msg *, char *, char *);
 static int w_rr_cookie_flinit(struct sip_msg *, char *, char *);
 static int w_rr_cookie_flset(struct sip_msg *, char *, char *);
+static int w_rr_cookie_flreset(struct sip_msg *, char *, char *);
 static int w_rr_cookie_flisset(struct sip_msg *, char *, char *);
 static int w_rr_cookie_flfetch(struct sip_msg *, char *, char *);
 static int w_rr_cookie_add(struct sip_msg *, char *, char *);
@@ -127,6 +128,8 @@ static cmd_export_t cmds[] = {
 	{"rr_cookie_flinit", (cmd_function)w_rr_cookie_flinit, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"rr_cookie_flset", (cmd_function)w_rr_cookie_flset, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"rr_cookie_flreset", (cmd_function)w_rr_cookie_flreset, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"rr_cookie_flisset", (cmd_function)w_rr_cookie_flisset, 1,
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
@@ -587,6 +590,35 @@ static int w_rr_cookie_flset(struct sip_msg *msg, char *pidx, char *foo)
 		return -1;
 	}
 	return ki_rr_cookie_flset(msg, idx);
+}
+
+
+/**
+ * Clear one bit in the two-byte field used for newly generated cookies.
+ */
+static int ki_rr_cookie_flreset(sip_msg_t *msg, int idx)
+{
+	(void)msg;
+
+	if(idx < 0 || idx >= (int)(sizeof(rr_cookie_flags) * 8)) {
+		LM_ERR("cookie flag bit position must be between 0 and %d\n",
+				(int)(sizeof(rr_cookie_flags) * 8) - 1);
+		return -1;
+	}
+	rr_cookie_flags &= (uint16_t)~(1U << idx);
+	return 1;
+}
+
+
+static int w_rr_cookie_flreset(struct sip_msg *msg, char *pidx, char *foo)
+{
+	int idx;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pidx, &idx) != 0) {
+		LM_ERR("failed to get the cookie flag bit position\n");
+		return -1;
+	}
+	return ki_rr_cookie_flreset(msg, idx);
 }
 
 
@@ -1226,6 +1258,11 @@ static sr_kemi_t sr_kemi_rr_exports[] = {
 	},
 	{ str_init("rr"), str_init("cookie_flset"),
 		SR_KEMIP_INT, ki_rr_cookie_flset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("cookie_flreset"),
+		SR_KEMIP_INT, ki_rr_cookie_flreset,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
