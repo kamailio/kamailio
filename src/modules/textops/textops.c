@@ -1615,10 +1615,34 @@ static int subst_v_f(sip_msg_t *msg, char *pitext, char *psubex, char *popv)
 }
 
 
+/* Move to the first real line start, ignoring standalone CR bytes that can
+ * occur in binary MIME body parts. */
+static inline int advance_to_next_line(char **buf, unsigned int *buf_len)
+{
+	char *ch;
+	unsigned int offset;
+	int is_crlf;
+
+	while(*buf_len > 1) {
+		ch = memchr(*buf, 13, *buf_len - 1);
+		if(ch == NULL)
+			return 0;
+
+		is_crlf = *(ch + 1) == 10;
+		offset = ch - *buf + 1 + is_crlf;
+		*buf += offset;
+		*buf_len -= offset;
+		if(is_crlf)
+			return 1;
+	}
+
+	return 0;
+}
+
 static inline int find_line_start(
 		char *text, unsigned int text_len, char **buf, unsigned int *buf_len)
 {
-	char *ch, *start;
+	char *start;
 	unsigned int len;
 
 	start = *buf;
@@ -1630,14 +1654,7 @@ static inline int find_line_start(
 			*buf_len = len;
 			return 1;
 		}
-		if((ch = memchr(start, 13, len - 1))) {
-			if(*(ch + 1) != 10) {
-				LM_ERR("No LF after CR\n");
-				return 0;
-			}
-			len = len - (ch - start + 2);
-			start = ch + 2;
-		} else {
+		if(!advance_to_next_line(&start, &len)) {
 			LM_ERR("No CRLF found\n");
 			return 0;
 		}
@@ -1680,14 +1697,7 @@ static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
 			}
 		}
 		/* jump to next line */
-		if((ch = memchr(start, 13, len - 1))) {
-			if(*(ch + 1) != 10) {
-				LM_ERR("No LF after CR\n");
-				return 0;
-			}
-			len = len - (ch - start + 2);
-			start = ch + 2;
-		} else {
+		if(!advance_to_next_line(&start, &len)) {
 			LM_ERR("No CRLF found\n");
 			return 0;
 		}
