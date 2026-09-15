@@ -795,6 +795,30 @@ rr_cookie_flset("3");
       </example>
     </section>
 
+    <section id="rr.f.rr_cookie_flisset">
+      <title><function moreinfo="none">rr_cookie_flisset(idx)</function></title>
+
+      <para>Checks whether the bit at position <varname>idx</varname> is set
+      in the two-byte global flags field. Bit zero is the least-significant
+      bit. The index must be an integer between 0 and 15 and can be a
+      variable.</para>
+
+      <para>This function can be used from any route. It returns 1 when the
+      bit is set and -1 when the bit is clear or the index is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flisset</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(rr_cookie_flisset("3")) {
+    xlog("cookie flag 3 is set\n");
+}
+...
+</programlisting>
+      </example>
+    </section>
+
     <section id="rr.f.rr_cookie_flfetch">
       <title><function moreinfo="none">rr_cookie_flfetch(name)</function></title>
 
