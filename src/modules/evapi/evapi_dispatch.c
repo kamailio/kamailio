@@ -544,11 +544,12 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			while(k < _evapi_clients[i].rpos + rlen) {
 				if(_evapi_clients[i].rbuffer[k] >= '0'
 						&& _evapi_clients[i].rbuffer[k] <= '9') {
-					if(frame.len > INT_MAX / 10
+					if(frame.len > CLIENT_BUFFER_SIZE / 10
 							|| (_evapi_clients[i].rbuffer[k] - '0')
-									   > (INT_MAX - frame.len * 10)) {
+									   > (CLIENT_BUFFER_SIZE
+											   - frame.len * 10)) {
 						/* overflow - invalid frame */
-						LM_ERR("frame length overflow. 10+ digits \n");
+						LM_ERR("frame length overflow\n");
 						_evapi_clients[i].rpos = 0;
 						return;
 					}
@@ -598,6 +599,12 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			}
 			k++;
 			frame.s = _evapi_clients[i].rbuffer + k;
+			if(frame.s + frame.len >= _evapi_clients[i].rbuffer + CLIENT_BUFFER_SIZE) {
+				LM_DBG("invalid frame - len: %d kpos: %d rpos: %u rlen: %lu\n",
+						frame.len, k, _evapi_clients[i].rpos, rlen);
+				_evapi_clients[i].rpos = 0;
+				return;
+			}
 			if(frame.s[frame.len] != ',') {
 				/* invalid data - discard and reset buffer */
 				LM_DBG("frame size mismatch the ending char (%c): [%.*s] "
