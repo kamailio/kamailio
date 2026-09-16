@@ -94,6 +94,13 @@
 				of the URIs as dialog variables.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>HTable Module</emphasis>, but only if
+				<varname>restore_htable</varname> is configured. The htable module
+				must be loaded before the uac module.
+			</para>
+			</listitem>
 			</itemizedlist>
 			</para>
 		</section>
@@ -176,8 +183,10 @@ modparam("uac","rr_to_store_param","my_param")
 			<listitem>
 				<para>
 				<quote>auto</quote> - all sequential requests and replies will
-				be automatically updated based on stored original URI. For this
-				option you have to set <quote>modparam("rr", "append_fromtag", 1)</quote>.
+				be automatically updated based on stored original URI. When using
+				Record-Route parameter storage, you have to set
+				<quote>modparam("rr", "append_fromtag", 1)</quote>. It is not needed
+				when <varname>restore_htable</varname> is configured.
 				</para>
 			</listitem>
 			</itemizedlist>
@@ -689,7 +698,49 @@ modparam("uac", "reload_delta", 20)
 			</programlisting>
 		</example>
 	</section>
-	</section>
+
+		<section id="uac.p.restore_htable">
+			<title><varname>restore_htable</varname> (string)</title>
+			<para>
+			Name of an htable used to store the original and replacement From/To
+			URI and display values. When configured, this storage replaces both
+			dialog variables and the encoded <quote>vsf</quote>/<quote>vst</quote>
+			Record-Route parameters. It is available only with
+			<varname>restore_mode</varname> set to <quote>auto</quote> and cannot
+			be combined with <varname>restore_dlg</varname>.
+			</para>
+			<para>
+			The table must be declared by the htable module with a non-zero
+			<quote>autoexpire</quote> value and must be dedicated to the uac module.
+			The rr module is still required for the route callback, but
+			<quote>append_fromtag</quote> is not required because the original caller
+			From-tag is stored in the htable and used to detect direction. The default
+			value is empty, which keeps the legacy storage behavior.
+			</para>
+			<programlisting format="linespecific">
+...
+loadmodule "htable.so"
+modparam("htable", "htable", "uac_restore=&gt;size=8;autoexpire=7200")
+loadmodule "uac.so"
+modparam("uac", "restore_htable", "uac_restore")
+...
+			</programlisting>
+		</section>
+		<section id="uac.p.restore_htable_rmexpire">
+			<title><varname>restore_htable_rmexpire</varname> (int)</title>
+			<para>
+			Expiration time, in seconds, assigned to all call entries when a BYE
+			request is processed. The normal lifetime is configured with the
+			htable <quote>autoexpire</quote> option and is refreshed whenever the
+			stored state is used. The default value is 60 seconds.
+			</para>
+			<programlisting format="linespecific">
+...
+modparam("uac", "restore_htable_rmexpire", 30)
+...
+			</programlisting>
+		</section>
+		</section>
 
 	<section>
 		<title>Functions</title>
@@ -717,7 +768,7 @@ modparam("uac", "reload_delta", 20)
 			all subsequent requests and replies in that dialog.
 			</para>
 			<para>
-				There are two ways in which the AUTO mode can be achieved.
+				There are three ways in which the AUTO mode can be achieved.
 			</para>
 			<para>
 				One uses the rr module and appends to the Record-Route header a parameter
@@ -732,6 +783,12 @@ modparam("uac", "reload_delta", 20)
 				All you need to do to use this is to call dlg_manage() before calling uac_replace_from().
 				It works by storing the URIs as dialog variables and registering callbacks in dialog
 				module for in dialog requests.
+			</para>
+			<para>
+				The third mode stores the original and new URI and display values in
+				the htable configured by <varname>restore_htable</varname>. This avoids
+				dialog variables and does not expose the encoded values in
+				Record-Route/Route parameters.
 			</para>
 			<example>
 				<title><function>uac_replace_from</function> usage</title>
@@ -849,7 +906,7 @@ uac_replace_to("","");
 			all subsequent requests and replies in that dialog.
 			</para>
 			<para>
-				There are two ways in which the AUTO mode can be achieved.
+				There are three ways in which the AUTO mode can be achieved.
 			</para>
 			<para>
 				One uses the rr module and appends to the Record-Route header a parameter
@@ -864,6 +921,12 @@ uac_replace_to("","");
 				All you need to do to use this is to call dlg_manage() before calling uac_replace_to().
 				It works by storing the URIs as dialog variables and registering callbacks in dialog
 				module for in dialog requests.
+			</para>
+			<para>
+				The third mode stores the original and new URI and display values in
+				the htable configured by <varname>restore_htable</varname>. This avoids
+				dialog variables and does not expose the encoded values in
+				Record-Route/Route parameters.
 			</para>
 
 			<example>
