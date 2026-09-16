@@ -143,14 +143,15 @@ char *pvh_detect_split_char(char *val)
 
 	quote_a = strchr(val, '"');
 	if(quote_a == NULL || split < quote_a) {
-		LM_DBG("split marker detected[%ld], not between quotes\n", split - val);
+		LM_DBG("split marker detected[%ld], not between quotes\n",
+				(long int)(split - val));
 		return split;
 	}
 
 	quote_b = strchr(val + (split - quote_a + 1), '"');
 	if(quote_b == NULL) {
 		LM_DBG("split marker detected[%ld], quote occurrence unbalanced[%ld]\n",
-				split - val, quote_b - val);
+				(long int)(split - val), (long int)(quote_b - val));
 		return split;
 	}
 	return pvh_detect_split_char(val + (quote_b - val + 1));
