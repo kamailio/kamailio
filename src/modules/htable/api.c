@@ -92,6 +92,30 @@ int ht_api_get_cell_expire(str *hname, str *name, unsigned int *val)
 }
 
 /**
+ *
+ */
+int ht_api_refresh_cell_expire(str *hname, str *name)
+{
+	ht_t *ht;
+	numstr_ut val;
+
+	ht = ht_get_table(hname);
+	if(ht == NULL)
+		return -1;
+	/* not auto-expire htable */
+	if(ht->htexpire == 0)
+		return 0;
+	val.n = (long)ht->htexpire;
+	if(ht->dmqreplicate > 0
+			&& ht_dmq_replicate_action(
+					   HT_DMQ_SET_CELL_EXPIRE, hname, name, 0, &val, 0, 0)
+					   != 0) {
+		LM_ERR("dmq replication failed\n");
+	}
+	return ht_set_cell_expire(ht, name, 0, &val);
+}
+
+/**
  * get a clone in pkg for an htable item
  * - returned pointer must be pkg_free() after use
  */
@@ -159,6 +183,7 @@ int bind_htable(htable_api_t *api)
 	api->rm = ht_api_del_cell;
 	api->set_expire = ht_api_set_cell_expire;
 	api->get_expire = ht_api_get_cell_expire;
+	api->refresh_expire = ht_api_refresh_cell_expire;
 	api->rm_re = ht_api_rm_cell_re;
 	api->count_re = ht_api_count_cells_re;
 	api->db_open_con = ht_db_open_con;
