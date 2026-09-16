@@ -27,16 +27,21 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
+#include <stdio.h>
 
 #include "../../core/parser/parse_from.h"
 #include "../../core/mem/mem.h"
 #include "../../core/data_lump.h"
 #include "../../core/route.h"
+#include "../../core/basex.h"
 #include "../../modules/tm/h_table.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
+#include "../htable/ht_api.h"
+#include "../htable/api.h"
 
 
 #include "replace.h"
@@ -54,6 +59,9 @@ extern avp_flags_t restore_from_avp_type;
 extern int_str restore_from_avp_name;
 extern avp_flags_t restore_to_avp_type;
 extern int_str restore_to_avp_name;
+extern str uac_restore_htable;
+extern int uac_restore_htable_rmexpire;
+extern htable_api_t uac_htable_api;
 
 struct dlg_binds dlg_api;
 static str from_dlgvar[] = {str_init("_uac_fu"), str_init("_uac_funew"),
@@ -70,8 +78,660 @@ static void restore_uris_reply(struct cell *t, int type, struct tmcb_params *p);
 
 static void replace_callback(
 		struct dlg_cell *dlg, int type, struct dlg_cb_params *_params);
+static inline struct lump *get_display_anchor(struct sip_msg *msg,
+		struct hdr_field *hdr, struct to_body *body, str *dsp);
 
 #define text3B64_len(_l) ((((_l) + 2) / 3) << 2)
+
+#define UAC_HTABLE_VALUE_OVERHEAD 3
+
+typedef struct uac_htable_values
+{
+	str old_uri;
+	str new_uri;
+	str old_display;
+	str new_display;
+	ht_cell_t *cell;
+	char *decoded;
+} uac_htable_values_t;
+
+static int uac_htable_origin_key(struct sip_msg *msg, str *key)
+{
+	if(parse_headers(msg, HDR_CALLID_F, 0) < 0 || msg->callid == NULL
+			|| msg->callid->body.s == NULL || msg->callid->body.len <= 0) {
+		LM_ERR("failed to parse Call-ID header for htable key\n");
+		return -1;
+	}
+	if(msg->callid->body.len > INT_MAX - 2) {
+		LM_ERR("htable origin key is too long\n");
+		return -1;
+	}
+	key->len = msg->callid->body.len + 2;
+	key->s = pkg_malloc(key->len);
+	if(key->s == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	key->s[0] = 'o';
+	key->s[1] = ':';
+	memcpy(key->s + 2, msg->callid->body.s, msg->callid->body.len);
+	return 0;
+}
+
+static int uac_htable_key(
+		struct sip_msg *msg, int check_from, str *tag, str *key)
+{
+	char *p;
+	int n;
+
+	if(parse_headers(msg, HDR_CALLID_F, 0) < 0 || msg->callid == NULL
+			|| msg->callid->body.s == NULL || msg->callid->body.len <= 0) {
+		LM_ERR("failed to parse Call-ID header for htable key\n");
+		return -1;
+	}
+	if(tag == NULL || tag->s == NULL || tag->len <= 0) {
+		LM_ERR("missing original From tag for htable key\n");
+		return -1;
+	}
+	if(msg->callid->body.len > INT_MAX - 16
+			|| tag->len > INT_MAX - msg->callid->body.len - 16) {
+		LM_ERR("htable key is too long\n");
+		return -1;
+	}
+
+	key->len = msg->callid->body.len + tag->len + 16;
+	key->s = pkg_malloc(key->len);
+	if(key->s == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	p = key->s;
+	n = snprintf(p, key->len - (int)(p - key->s),
+			"%c:%d:", check_from ? 'f' : 't', msg->callid->body.len);
+	if(n < 0 || n >= key->len - (int)(p - key->s)) {
+		LM_ERR("failed to format htable key\n");
+		pkg_free(key->s);
+		key->s = NULL;
+		key->len = 0;
+		return -1;
+	}
+	p += n;
+	memcpy(p, msg->callid->body.s, msg->callid->body.len);
+	p += msg->callid->body.len;
+	*p++ = ':';
+	memcpy(p, tag->s, tag->len);
+	p += tag->len;
+	key->len = (int)(p - key->s);
+	return 0;
+}
+
+static int uac_htable_store_origin(struct sip_msg *msg)
+{
+	str key = STR_NULL;
+	struct to_body *from;
+	numstr_ut value;
+
+	if(parse_from_header(msg) < 0) {
+		LM_ERR("failed to parse From header for htable origin\n");
+		return -1;
+	}
+	from = get_from(msg);
+	if(from->tag_value.s == NULL || from->tag_value.len <= 0) {
+		LM_ERR("missing original From tag for htable origin\n");
+		return -1;
+	}
+	if(uac_htable_origin_key(msg, &key) < 0)
+		return -1;
+	value.s = from->tag_value;
+	if(uac_htable_api.set(&uac_restore_htable, &key, AVP_VAL_STR, &value, 1)
+			< 0) {
+		LM_ERR("failed to store original From tag in htable\n");
+		pkg_free(key.s);
+		return -1;
+	}
+	if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+		LM_ERR("failed to set htable origin expiration\n");
+		uac_htable_api.rm(&uac_restore_htable, &key);
+		pkg_free(key.s);
+		return -1;
+	}
+	pkg_free(key.s);
+	return 0;
+}
+
+static int uac_htable_direction_from_tag(
+		struct sip_msg *msg, str *tag, int *upstream)
+{
+	str from_tag;
+	str to_tag;
+
+	if(parse_from_header(msg) < 0) {
+		LM_ERR("failed to parse From header for htable direction\n");
+		return -1;
+	}
+	if(msg->to == NULL
+			&& (parse_headers(msg, HDR_TO_F, 0) != 0 || msg->to == NULL)) {
+		LM_ERR("failed to parse To header for htable direction\n");
+		return -1;
+	}
+	from_tag = get_from(msg)->tag_value;
+	to_tag = get_to(msg)->tag_value;
+	if(from_tag.len == tag->len && from_tag.s != NULL
+			&& memcmp(from_tag.s, tag->s, tag->len) == 0) {
+		*upstream = 0;
+		return 0;
+	}
+	if(to_tag.len == tag->len && to_tag.s != NULL
+			&& memcmp(to_tag.s, tag->s, tag->len) == 0) {
+		*upstream = 1;
+		return 0;
+	}
+	LM_ERR("original From tag does not match current From or To tag\n");
+	return -1;
+}
+
+static int uac_htable_unpack(ht_cell_t *cell, uac_htable_values_t *values)
+{
+	str *items[4];
+	str encoded[4];
+	unsigned int decoded_size;
+	char *end;
+	char *p;
+	char *q;
+	int len;
+	int i;
+
+	if(cell == NULL || !(cell->flags & AVP_VAL_STR) || cell->value.s.s == NULL
+			|| cell->value.s.len < UAC_HTABLE_VALUE_OVERHEAD) {
+		return -1;
+	}
+	p = cell->value.s.s;
+	end = p + cell->value.s.len;
+	decoded_size = 4;
+	for(i = 0; i < 4; i++) {
+		encoded[i].s = p;
+		if(i < 3) {
+			q = memchr(p, '|', end - p);
+			if(q == NULL) {
+				LM_ERR("invalid uac htable value fields\n");
+				return -1;
+			}
+			encoded[i].len = (int)(q - p);
+			p = q + 1;
+		} else {
+			encoded[i].len = (int)(end - p);
+			p = end;
+		}
+		if((encoded[i].len & 3) != 0 || encoded[i].len > (INT_MAX >> 2)) {
+			LM_ERR("invalid uac htable encoded field length\n");
+			return -1;
+		}
+		len = base64_max_dec_len(encoded[i].len);
+		if(len < 0 || (unsigned int)len > UINT_MAX - decoded_size) {
+			LM_ERR("invalid uac htable encoded field length\n");
+			return -1;
+		}
+		decoded_size += (unsigned int)len;
+	}
+	if(decoded_size > INT_MAX) {
+		LM_ERR("decoded uac htable value is too large\n");
+		return -1;
+	}
+	values->decoded = pkg_malloc(decoded_size);
+	if(values->decoded == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	items[0] = &values->old_uri;
+	items[1] = &values->new_uri;
+	items[2] = &values->old_display;
+	items[3] = &values->new_display;
+	p = values->decoded;
+	for(i = 0; i < 4; i++) {
+		items[i]->s = p;
+		if(encoded[i].len == 0) {
+			items[i]->len = 0;
+		} else {
+			items[i]->len = base64url_dec(encoded[i].s, encoded[i].len, p,
+					(int)(values->decoded + decoded_size - p));
+			if(items[i]->len < 0) {
+				LM_ERR("failed to decode uac htable value field\n");
+				pkg_free(values->decoded);
+				values->decoded = NULL;
+				return -1;
+			}
+		}
+		p += items[i]->len;
+		*p++ = '\0';
+	}
+	values->cell = cell;
+	return 0;
+}
+
+static void uac_htable_values_free(uac_htable_values_t *values)
+{
+	if(values->decoded != NULL) {
+		pkg_free(values->decoded);
+		values->decoded = NULL;
+	}
+	if(values->cell != NULL) {
+		pkg_free(values->cell);
+		values->cell = NULL;
+	}
+}
+
+static int uac_htable_load_origin(
+		struct sip_msg *msg, int refresh, ht_cell_t **origin)
+{
+	str key = STR_NULL;
+
+	*origin = NULL;
+	if(uac_htable_origin_key(msg, &key) < 0)
+		return -1;
+	*origin = uac_htable_api.get_clone(&uac_restore_htable, &key);
+	if(*origin != NULL && refresh) {
+		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+			LM_WARN("failed to refresh uac htable origin expiration\n");
+		}
+	}
+	pkg_free(key.s);
+	if(*origin == NULL)
+		return 1;
+	if(!((*origin)->flags & AVP_VAL_STR) || (*origin)->value.s.s == NULL
+			|| (*origin)->value.s.len <= 0) {
+		LM_ERR("invalid original From tag in uac htable\n");
+		pkg_free(*origin);
+		*origin = NULL;
+		return -1;
+	}
+	return 0;
+}
+
+static int uac_htable_direction(struct sip_msg *msg, int refresh, int *upstream)
+{
+	ht_cell_t *origin;
+	int ret;
+
+	ret = uac_htable_load_origin(msg, refresh, &origin);
+	if(ret != 0)
+		return ret;
+	ret = uac_htable_direction_from_tag(msg, &origin->value.s, upstream);
+	pkg_free(origin);
+	return ret;
+}
+
+static int uac_htable_set_call_expire(struct sip_msg *msg, int seconds)
+{
+	str key = STR_NULL;
+	ht_cell_t *origin;
+	int_str expire;
+	int check_from;
+	int ret = 0;
+
+	if(uac_htable_load_origin(msg, 0, &origin) != 0)
+		return -1;
+	expire.n = seconds;
+	for(check_from = 0; check_from <= 1; check_from++) {
+		if(uac_htable_key(msg, check_from, &origin->value.s, &key) < 0) {
+			ret = -1;
+			continue;
+		}
+		if(uac_htable_api.set_expire(&uac_restore_htable, &key, 0, &expire)
+				< 0) {
+			LM_WARN("failed to shorten uac htable entry expiration\n");
+			ret = -1;
+		}
+		pkg_free(key.s);
+		key.s = NULL;
+		key.len = 0;
+	}
+	if(uac_htable_origin_key(msg, &key) < 0) {
+		ret = -1;
+	} else {
+		if(uac_htable_api.set_expire(&uac_restore_htable, &key, 0, &expire)
+				< 0) {
+			LM_WARN("failed to shorten uac htable origin expiration\n");
+			ret = -1;
+		}
+		pkg_free(key.s);
+	}
+	pkg_free(origin);
+	return ret;
+}
+
+static int uac_htable_load(struct sip_msg *msg, int check_from, int refresh,
+		int *upstream, uac_htable_values_t *values)
+{
+	str key = STR_NULL;
+	ht_cell_t *origin;
+	ht_cell_t *cell;
+	int ret;
+
+	memset(values, 0, sizeof(*values));
+	ret = uac_htable_load_origin(msg, refresh, &origin);
+	if(ret != 0)
+		return ret;
+	if(upstream != NULL
+			&& uac_htable_direction_from_tag(msg, &origin->value.s, upstream)
+					   < 0) {
+		pkg_free(origin);
+		return -1;
+	}
+	if(uac_htable_key(msg, check_from, &origin->value.s, &key) < 0) {
+		pkg_free(origin);
+		return -1;
+	}
+	cell = uac_htable_api.get_clone(&uac_restore_htable, &key);
+	if(cell != NULL && refresh) {
+		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+			LM_WARN("failed to refresh uac htable entry expiration\n");
+		}
+	}
+	pkg_free(key.s);
+	pkg_free(origin);
+	if(cell == NULL)
+		return 1;
+	if(uac_htable_unpack(cell, values) < 0) {
+		pkg_free(cell);
+		return -1;
+	}
+	return 0;
+}
+
+static int uac_htable_store(struct sip_msg *msg, int check_from,
+		struct to_body *body, str *display, str *uri)
+{
+	uac_htable_values_t stored;
+	str key = STR_NULL;
+	ht_cell_t *origin = NULL;
+	str old_uri;
+	str old_display;
+	str new_display = STR_NULL;
+	str packed = STR_NULL;
+	str *items[4];
+	numstr_ut value;
+	unsigned int total;
+	char *p;
+	int len;
+	int i;
+	int ret;
+
+	if(uac_htable_store_origin(msg) < 0)
+		return -1;
+	ret = uac_htable_load(msg, check_from, 0, NULL, &stored);
+	if(ret < 0)
+		return -1;
+	if(ret == 0) {
+		old_uri = stored.old_uri;
+		old_display = stored.old_display;
+	} else {
+		old_uri = body->uri;
+		old_display = body->display;
+	}
+	if(display != NULL)
+		new_display = *display;
+	else
+		new_display = old_display;
+
+	items[0] = &old_uri;
+	items[1] = uri;
+	items[2] = &old_display;
+	items[3] = &new_display;
+	total = UAC_HTABLE_VALUE_OVERHEAD;
+	for(i = 0; i < 4; i++) {
+		if(items[i] == NULL || items[i]->len < 0
+				|| items[i]->len > (INT_MAX >> 2)) {
+			LM_ERR("invalid value for uac htable storage\n");
+			uac_htable_values_free(&stored);
+			return -1;
+		}
+		len = base64_enc_len(items[i]->len);
+		if(len < 0 || (unsigned int)len > UINT_MAX - total) {
+			LM_ERR("encoded uac htable value is too large\n");
+			uac_htable_values_free(&stored);
+			return -1;
+		}
+		total += (unsigned int)len;
+	}
+	if(total >= INT_MAX) {
+		LM_ERR("uac htable value is too large\n");
+		uac_htable_values_free(&stored);
+		return -1;
+	}
+	packed.s = pkg_malloc(total + 1);
+	if(packed.s == NULL) {
+		PKG_MEM_ERROR;
+		uac_htable_values_free(&stored);
+		return -1;
+	}
+	packed.len = (int)total;
+	p = packed.s;
+	for(i = 0; i < 4; i++) {
+		len = base64url_enc(
+				items[i]->s, items[i]->len, p, (int)(packed.s + total + 1 - p));
+		if(len < 0) {
+			LM_ERR("failed to encode uac htable value field\n");
+			pkg_free(packed.s);
+			uac_htable_values_free(&stored);
+			return -1;
+		}
+		p += len;
+		if(i < 3)
+			*p++ = '|';
+	}
+	*p = '\0';
+
+	if(uac_htable_load_origin(msg, 0, &origin) != 0)
+		goto error;
+	if(uac_htable_key(msg, check_from, &origin->value.s, &key) < 0)
+		goto error;
+	pkg_free(origin);
+	origin = NULL;
+	value.s = packed;
+	if(uac_htable_api.set(&uac_restore_htable, &key, AVP_VAL_STR, &value, 1)
+			< 0) {
+		LM_ERR("failed to store uac replacement in htable\n");
+		goto error;
+	}
+	if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+		LM_ERR("failed to set uac htable entry expiration\n");
+		uac_htable_api.rm(&uac_restore_htable, &key);
+		goto error;
+	}
+
+	pkg_free(key.s);
+	pkg_free(packed.s);
+	uac_htable_values_free(&stored);
+	return 0;
+
+error:
+	if(origin != NULL)
+		pkg_free(origin);
+	if(key.s != NULL)
+		pkg_free(key.s);
+	pkg_free(packed.s);
+	uac_htable_values_free(&stored);
+	return -1;
+}
+
+static int uac_replace_header_value(struct sip_msg *msg, struct hdr_field *hdr,
+		struct to_body *body, str *new_uri, str *new_display)
+{
+	struct lump *l = NULL;
+	str buf;
+	char *p;
+
+	if(new_uri == NULL || new_uri->s == NULL || new_uri->len <= 0
+			|| new_uri->len > MAX_URI_SIZE || new_display == NULL
+			|| new_display->len < 0 || new_display->len > INT_MAX - 2) {
+		LM_ERR("invalid stored replacement value\n");
+		return -1;
+	}
+
+	if(body->display.s != NULL && body->display.len > 0) {
+		l = del_lump(msg, body->display.s - msg->buf, body->display.len, 0);
+		if(l == NULL) {
+			LM_ERR("display del lump failed\n");
+			return -1;
+		}
+	}
+	if(new_display->len > 0) {
+		buf.s = pkg_malloc(new_display->len + 2);
+		if(buf.s == NULL) {
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		memcpy(buf.s, new_display->s, new_display->len);
+		buf.len = new_display->len;
+		if(l == NULL
+				&& (l = get_display_anchor(msg, hdr, body, &buf)) == NULL) {
+			LM_ERR("failed to insert display anchor\n");
+			pkg_free(buf.s);
+			return -1;
+		}
+		if(insert_new_lump_after(l, buf.s, buf.len, 0) == NULL) {
+			LM_ERR("insert new display lump failed\n");
+			pkg_free(buf.s);
+			return -1;
+		}
+	}
+
+	p = pkg_malloc(new_uri->len);
+	if(p == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memcpy(p, new_uri->s, new_uri->len);
+	l = del_lump(msg, body->uri.s - msg->buf, body->uri.len, 0);
+	if(l == NULL) {
+		LM_ERR("uri del lump failed\n");
+		pkg_free(p);
+		return -1;
+	}
+	if(insert_new_lump_after(l, p, new_uri->len, 0) == NULL) {
+		LM_ERR("insert new uri lump failed\n");
+		pkg_free(p);
+		return -1;
+	}
+	return 0;
+}
+
+static int uac_htable_restore_uri(
+		struct sip_msg *msg, str *restore_avp, int check_from)
+{
+	uac_htable_values_t values;
+	struct hdr_field *hdr;
+	struct to_body *body;
+	str *new_uri;
+	str *new_display;
+	char *p;
+	char *end;
+	int i;
+	int upstream;
+	int target_to;
+	numstr_ut avp_value;
+	msg_flags_t flag;
+
+	if(uac_htable_load(msg, check_from, 1, &upstream, &values) != 0) {
+		LM_DBG("uac replacement not found in htable\n");
+		return -1;
+	}
+
+	target_to = (check_from && upstream) || (!check_from && !upstream);
+	new_uri = upstream ? &values.old_uri : &values.new_uri;
+	new_display = upstream ? &values.old_display : &values.new_display;
+
+	if(target_to) {
+		if(msg->to == NULL
+				&& (parse_headers(msg, HDR_TO_F, 0) != 0 || msg->to == NULL)) {
+			LM_ERR("failed to parse To header\n");
+			goto error;
+		}
+		hdr = msg->to;
+		flag = FL_USE_UAC_TO;
+	} else {
+		if(parse_from_header(msg) < 0) {
+			LM_ERR("failed to parse From header\n");
+			goto error;
+		}
+		hdr = msg->from;
+		flag = FL_USE_UAC_FROM;
+	}
+	body = (struct to_body *)hdr->parsed;
+
+	if(restore_avp->s != NULL) {
+		p = body->uri.s + body->uri.len;
+		end = body->body.s + body->body.len;
+		for(i = 0; p + i < end && isspace((unsigned char)p[i]); i++)
+			;
+		avp_value.s.len =
+				p - body->body.s + ((p + i < end && p[i] == '>') ? (i + 1) : 0);
+		avp_value.s.s = body->body.s;
+		if(flag == FL_USE_UAC_FROM)
+			add_avp(restore_from_avp_type, restore_from_avp_name, avp_value);
+		else
+			add_avp(restore_to_avp_type, restore_to_avp_name, avp_value);
+	}
+
+	if(uac_replace_header_value(msg, hdr, body, new_uri, new_display) < 0)
+		goto error;
+	msg->msg_flags |= flag;
+	uac_htable_values_free(&values);
+	return 0;
+
+error:
+	uac_htable_values_free(&values);
+	return -1;
+}
+
+static int uac_htable_restore_reply(struct sip_msg *req, struct sip_msg *rpl,
+		int check_from, unsigned int direction)
+{
+	uac_htable_values_t values;
+	struct hdr_field *hdr;
+	struct to_body *body;
+	str *new_uri;
+	str *new_display;
+	int upstream;
+	int target_to;
+	int refresh;
+
+	upstream = (direction == DLG_DIR_UPSTREAM);
+	refresh = (req->first_line.u.request.method_value != METHOD_BYE);
+	if(uac_htable_load(req, check_from, refresh, NULL, &values) != 0) {
+		LM_ERR("uac reply replacement not found in htable\n");
+		return -1;
+	}
+
+	target_to = (check_from && upstream) || (!check_from && !upstream);
+	new_uri = upstream ? &values.new_uri : &values.old_uri;
+	new_display = upstream ? &values.new_display : &values.old_display;
+	if(target_to) {
+		if(rpl->to == NULL
+				&& (parse_headers(rpl, HDR_TO_F, 0) != 0 || rpl->to == NULL)) {
+			LM_ERR("failed to parse To header in reply\n");
+			goto error;
+		}
+		hdr = rpl->to;
+	} else {
+		if(parse_from_header(rpl) < 0) {
+			LM_ERR("failed to parse From header in reply\n");
+			goto error;
+		}
+		hdr = rpl->from;
+	}
+	body = (struct to_body *)hdr->parsed;
+	if(uac_replace_header_value(rpl, hdr, body, new_uri, new_display) < 0)
+		goto error;
+
+	uac_htable_values_free(&values);
+	return 0;
+
+error:
+	uac_htable_values_free(&values);
+	return -1;
+}
 
 /* The reply, were the From-Line was replaced. */
 
@@ -404,6 +1064,12 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 	if(restore_mode == UAC_NO_RESTORE)
 		return 0;
 
+	if(uac_restore_htable.len > 0) {
+		if(uac_htable_store(msg, check_from, body, display, uri) < 0)
+			goto error;
+		goto restore_stored;
+	}
+
 	/* trying to get dialog */
 	if(dlg_api.get_dlg) {
 		dlg = dlg_api.get_dlg(msg);
@@ -548,6 +1214,7 @@ int replace_uri(struct sip_msg *msg, str *display, str *uri,
 		pkg_free(param.s);
 	}
 
+restore_stored:
 	if((msg->msg_flags & (FL_USE_UAC_FROM | FL_USE_UAC_TO)) == 0) {
 		/* add TM callback to restore the FROM/TO hdr in reply */
 		if(uac_tmb.register_tmcb(
@@ -590,6 +1257,9 @@ int restore_uri(
 	int_str avp_value;
 	msg_flags_t flag;
 	int bsize;
+
+	if(uac_restore_htable.len > 0)
+		return uac_htable_restore_uri(msg, restore_avp, check_from);
 
 	/* we should process only sequential request, but since we are looking
 	 * for Route param, the test is not really required -bogdan */
@@ -753,15 +1423,35 @@ failed:
 
 void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 {
-	/* check if the request contains the route param */
-	if((restore_uri(msg, &rr_from_param, &restore_from_avp, 1 /*from*/)
-			   + restore_uri(msg, &rr_to_param, &restore_to_avp, 0 /*to*/))
-			!= -2) {
+	void *direction = 0;
+	int upstream = 0;
+	int restored;
+
+	if(uac_restore_htable.len > 0
+			&& uac_htable_direction(msg, 1, &upstream) != 0) {
+		LM_DBG("uac htable direction not found\n");
+		return;
+	}
+
+	/* check if the request contains stored replacement values */
+	restored = restore_uri(msg, &rr_from_param, &restore_from_avp, 1 /*from*/)
+			   + restore_uri(msg, &rr_to_param, &restore_to_avp, 0 /*to*/);
+	if(uac_restore_htable.len > 0
+			&& msg->first_line.u.request.method_value == METHOD_BYE
+			&& uac_htable_set_call_expire(msg, uac_restore_htable_rmexpire)
+					   < 0) {
+		LM_WARN("failed to shorten uac htable expiration for BYE\n");
+	}
+	if(restored != -2) {
+		if(uac_restore_htable.len > 0) {
+			direction = upstream ? (void *)(unsigned long)DLG_DIR_UPSTREAM
+								 : (void *)(unsigned long)DLG_DIR_DOWNSTREAM;
+		}
 		/* restore in req performed -> replace in reply */
 		/* in callback we need TO/FROM to be parsed- it's already done
 		 * by restore_from_to() function */
 		if(uac_tmb.register_tmcb(
-				   msg, 0, TMCB_RESPONSE_IN, restore_uris_reply, 0, 0)
+				   msg, 0, TMCB_RESPONSE_IN, restore_uris_reply, direction, 0)
 				!= 1) {
 			LM_ERR("failed to install TM callback\n");
 			return;
@@ -856,20 +1546,25 @@ void restore_uris_reply(struct cell *t, int type, struct tmcb_params *p)
 			   && (!direction || direction == DLG_DIR_DOWNSTREAM))
 			|| ((req->msg_flags & FL_USE_UAC_TO)
 					&& direction == DLG_DIR_UPSTREAM)) {
-		/* parse FROM in reply */
-		if(parse_from_header(rpl) < 0) {
-			LM_ERR("failed to find/parse FROM hdr\n");
-			return;
-		}
+		if(uac_restore_htable.len > 0) {
+			if(uac_htable_restore_reply(req, rpl, 1, direction) < 0)
+				LM_ERR("failed to restore FROM using htable\n");
+		} else {
+			/* parse FROM in reply */
+			if(parse_from_header(rpl) < 0) {
+				LM_ERR("failed to find/parse FROM hdr\n");
+				return;
+			}
 
-		avp_value.s.len = 0;
-		if(restore_from_avp.s) {
-			search_first_avp(restore_from_avp_type, restore_from_avp_name,
-					&avp_value, 0);
-		}
+			avp_value.s.len = 0;
+			if(restore_from_avp.s) {
+				search_first_avp(restore_from_avp_type, restore_from_avp_name,
+						&avp_value, 0);
+			}
 
-		if(restore_uri_reply(rpl, rpl->from, req->from, &avp_value.s)) {
-			LM_ERR("failed to restore FROM\n");
+			if(restore_uri_reply(rpl, rpl->from, req->from, &avp_value.s)) {
+				LM_ERR("failed to restore FROM\n");
+			}
 		}
 	}
 
@@ -877,21 +1572,26 @@ void restore_uris_reply(struct cell *t, int type, struct tmcb_params *p)
 			   && (!direction || direction == DLG_DIR_DOWNSTREAM))
 			|| ((req->msg_flags & FL_USE_UAC_FROM)
 					&& direction == DLG_DIR_UPSTREAM)) {
-		/* parse TO in reply */
-		if(rpl->to == 0
-				&& (parse_headers(rpl, HDR_TO_F, 0) != 0 || rpl->to == 0)) {
-			LM_ERR("failed to parse TO hdr\n");
-			return;
-		}
+		if(uac_restore_htable.len > 0) {
+			if(uac_htable_restore_reply(req, rpl, 0, direction) < 0)
+				LM_ERR("failed to restore TO using htable\n");
+		} else {
+			/* parse TO in reply */
+			if(rpl->to == 0
+					&& (parse_headers(rpl, HDR_TO_F, 0) != 0 || rpl->to == 0)) {
+				LM_ERR("failed to parse TO hdr\n");
+				return;
+			}
 
-		avp_value.s.len = 0;
-		if(restore_to_avp.s) {
-			search_first_avp(
-					restore_to_avp_type, restore_to_avp_name, &avp_value, 0);
-		}
+			avp_value.s.len = 0;
+			if(restore_to_avp.s) {
+				search_first_avp(restore_to_avp_type, restore_to_avp_name,
+						&avp_value, 0);
+			}
 
-		if(restore_uri_reply(rpl, rpl->to, req->to, &avp_value.s)) {
-			LM_ERR("failed to restore TO\n");
+			if(restore_uri_reply(rpl, rpl->to, req->to, &avp_value.s)) {
+				LM_ERR("failed to restore TO\n");
+			}
 		}
 	}
 }

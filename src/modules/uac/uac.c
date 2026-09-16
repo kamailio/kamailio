@@ -53,6 +53,8 @@
 #include "../../core/rand/kam_rand.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../dialog/dlg_load.h"
+#include "../htable/ht_api.h"
+#include "../htable/api.h"
 
 #include "../rr/api.h"
 
@@ -84,9 +86,12 @@ str rr_to_param = str_init("vst");
 str uac_passwd = str_init("");
 str restore_from_avp = STR_NULL;
 str restore_to_avp = STR_NULL;
+str uac_restore_htable = STR_NULL;
+int uac_restore_htable_rmexpire = 60;
 int restore_mode = UAC_AUTO_RESTORE;
 struct tm_binds uac_tmb;
 struct rr_binds uac_rrb;
+htable_api_t uac_htable_api;
 pv_spec_t auth_username_spec;
 pv_spec_t auth_realm_spec;
 pv_spec_t auth_password_spec;
@@ -181,6 +186,8 @@ static param_export_t params[] = {
 	{"rr_to_store_param", PARAM_STR, &rr_to_param},
 	{"restore_mode", PARAM_STRING, &restore_mode_str},
 	{"restore_dlg", PARAM_INT, &uac_restore_dlg},
+	{"restore_htable", PARAM_STR, &uac_restore_htable},
+	{"restore_htable_rmexpire", PARAM_INT, &uac_restore_htable_rmexpire},
 	{"restore_passwd", PARAM_STR, &uac_passwd},
 	{"restore_from_avp", PARAM_STR, &restore_from_avp},
 	{"restore_to_avp", PARAM_STR, &restore_to_avp},
@@ -255,9 +262,30 @@ static int mod_init(void)
 	}
 
 	if((rr_from_param.len == 0 || rr_to_param.len == 0)
-			&& restore_mode != UAC_NO_RESTORE) {
+			&& uac_restore_htable.len == 0 && restore_mode != UAC_NO_RESTORE) {
 		LM_ERR("rr_store_param cannot be empty if FROM is restoreable\n");
 		goto error;
+	}
+
+	if(uac_restore_htable.len > 0) {
+		if(restore_mode != UAC_AUTO_RESTORE) {
+			LM_ERR("restore_htable requires restore_mode=auto\n");
+			goto error;
+		}
+		if(uac_restore_dlg != 0) {
+			LM_ERR("restore_htable and restore_dlg cannot be enabled "
+				   "together\n");
+			goto error;
+		}
+		if(uac_restore_htable_rmexpire <= 0) {
+			LM_ERR("invalid restore htable remove expiration value\n");
+			goto error;
+		}
+		memset(&uac_htable_api, 0, sizeof(uac_htable_api));
+		if(htable_load_api(&uac_htable_api) < 0) {
+			LM_ERR("failed to bind htable API - is htable module loaded?\n");
+			goto error;
+		}
 	}
 
 	/* parse the auth AVP spesc, if any */
@@ -338,10 +366,9 @@ static int mod_init(void)
 
 
 		if(restore_mode == UAC_AUTO_RESTORE) {
-			/* we need the append_fromtag on in RR */
-
 			if(uac_restore_dlg == 0) {
-				if(!uac_rrb.append_fromtag) {
+				/* RR storage needs append_fromtag for direction detection. */
+				if(uac_restore_htable.len == 0 && !uac_rrb.append_fromtag) {
 					LM_ERR("'append_fromtag' RR param is not enabled!"
 						   " - required by AUTO restore mode\n");
 					goto error;
