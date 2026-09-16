@@ -274,7 +274,7 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE},
 	{"publish_reg", (cmd_function)publish_reg, 1, domain_fixup, 0,
 			REQUEST_ROUTE},
-	//{"bind_registrar", (cmd_function) bind_registrar, 0, 0, 0, 0},  TODO put this back in !
+	{"bind_registrar", (cmd_function)bind_registrar, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
