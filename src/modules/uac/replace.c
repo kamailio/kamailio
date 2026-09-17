@@ -60,6 +60,7 @@ extern int_str restore_from_avp_name;
 extern avp_flags_t restore_to_avp_type;
 extern int_str restore_to_avp_name;
 extern str uac_restore_htable;
+extern int uac_restore_htable_initexpire;
 extern int uac_restore_htable_rmexpire;
 extern htable_api_t uac_htable_api;
 
@@ -95,7 +96,7 @@ typedef struct uac_htable_values
 	char *decoded;
 } uac_htable_values_t;
 
-static int uac_htable_origin_key(struct sip_msg *msg, str *key)
+static int uac_htable_call_key(struct sip_msg *msg, char type, str *key)
 {
 	if(parse_headers(msg, HDR_CALLID_F, 0) < 0 || msg->callid == NULL
 			|| msg->callid->body.s == NULL || msg->callid->body.len <= 0) {
@@ -103,7 +104,7 @@ static int uac_htable_origin_key(struct sip_msg *msg, str *key)
 		return -1;
 	}
 	if(msg->callid->body.len > INT_MAX - 2) {
-		LM_ERR("htable origin key is too long\n");
+		LM_ERR("htable call key is too long\n");
 		return -1;
 	}
 	key->len = msg->callid->body.len + 2;
@@ -112,10 +113,20 @@ static int uac_htable_origin_key(struct sip_msg *msg, str *key)
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	key->s[0] = 'o';
+	key->s[0] = type;
 	key->s[1] = ':';
 	memcpy(key->s + 2, msg->callid->body.s, msg->callid->body.len);
 	return 0;
+}
+
+static inline int uac_htable_origin_key(struct sip_msg *msg, str *key)
+{
+	return uac_htable_call_key(msg, 'o', key);
+}
+
+static inline int uac_htable_active_key(struct sip_msg *msg, str *key)
+{
+	return uac_htable_call_key(msg, 'a', key);
 }
 
 static int uac_htable_key(
@@ -170,6 +181,7 @@ static int uac_htable_store_origin(struct sip_msg *msg)
 	str key = STR_NULL;
 	struct to_body *from;
 	numstr_ut value;
+	numstr_ut expire;
 
 	if(parse_from_header(msg) < 0) {
 		LM_ERR("failed to parse From header for htable origin\n");
@@ -189,7 +201,8 @@ static int uac_htable_store_origin(struct sip_msg *msg)
 		pkg_free(key.s);
 		return -1;
 	}
-	if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+	expire.n = uac_restore_htable_initexpire;
+	if(uac_htable_api.set_expire(&uac_restore_htable, &key, 0, &expire) < 0) {
 		LM_ERR("failed to set htable origin expiration\n");
 		uac_htable_api.rm(&uac_restore_htable, &key);
 		pkg_free(key.s);
@@ -321,17 +334,50 @@ static void uac_htable_values_free(uac_htable_values_t *values)
 	}
 }
 
+static int uac_htable_is_active(struct sip_msg *msg, int refresh)
+{
+	str key = STR_NULL;
+	ht_cell_t *cell;
+	int ret = 0;
+
+	if(uac_htable_active_key(msg, &key) < 0)
+		return -1;
+	cell = uac_htable_api.get_clone(&uac_restore_htable, &key);
+	if(cell == NULL)
+		goto done;
+	if((cell->flags & AVP_VAL_STR) || cell->value.n != 1) {
+		LM_ERR("invalid uac htable active marker\n");
+		ret = -1;
+		goto done;
+	}
+	ret = 1;
+	if(refresh
+			&& uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+		LM_WARN("failed to refresh uac htable active marker expiration\n");
+	}
+
+done:
+	if(cell != NULL)
+		pkg_free(cell);
+	pkg_free(key.s);
+	return ret;
+}
+
 static int uac_htable_load_origin(
 		struct sip_msg *msg, int refresh, ht_cell_t **origin)
 {
 	str key = STR_NULL;
+	int active;
 
 	*origin = NULL;
 	if(uac_htable_origin_key(msg, &key) < 0)
 		return -1;
 	*origin = uac_htable_api.get_clone(&uac_restore_htable, &key);
 	if(*origin != NULL && refresh) {
-		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+		active = uac_htable_is_active(msg, 1);
+		if(active > 0
+				&& uac_htable_api.refresh_expire(&uac_restore_htable, &key)
+						   < 0) {
 			LM_WARN("failed to refresh uac htable origin expiration\n");
 		}
 	}
@@ -359,6 +405,71 @@ static int uac_htable_direction(struct sip_msg *msg, int refresh, int *upstream)
 	ret = uac_htable_direction_from_tag(msg, &origin->value.s, upstream);
 	pkg_free(origin);
 	return ret;
+}
+
+static int uac_htable_refresh_call(struct sip_msg *msg)
+{
+	str key = STR_NULL;
+	ht_cell_t *origin;
+	int check_from;
+	int ret = 0;
+
+	if(uac_htable_load_origin(msg, 0, &origin) != 0)
+		return -1;
+	for(check_from = 0; check_from <= 1; check_from++) {
+		if(uac_htable_key(msg, check_from, &origin->value.s, &key) < 0) {
+			ret = -1;
+			continue;
+		}
+		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+			LM_WARN("failed to refresh uac htable entry expiration\n");
+			ret = -1;
+		}
+		pkg_free(key.s);
+		key.s = NULL;
+		key.len = 0;
+	}
+	if(uac_htable_origin_key(msg, &key) < 0) {
+		ret = -1;
+	} else {
+		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+			LM_WARN("failed to refresh uac htable origin expiration\n");
+			ret = -1;
+		}
+		pkg_free(key.s);
+		key.s = NULL;
+		key.len = 0;
+	}
+	if(uac_htable_active_key(msg, &key) < 0) {
+		ret = -1;
+	} else {
+		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+			LM_WARN("failed to refresh uac htable active marker expiration\n");
+			ret = -1;
+		}
+		pkg_free(key.s);
+		key.s = NULL;
+		key.len = 0;
+	}
+	pkg_free(origin);
+	return ret;
+}
+
+static int uac_htable_activate_call(struct sip_msg *msg)
+{
+	str key = STR_NULL;
+	numstr_ut value;
+
+	if(uac_htable_active_key(msg, &key) < 0)
+		return -1;
+	value.n = 1;
+	if(uac_htable_api.set(&uac_restore_htable, &key, 0, &value, 1) < 0) {
+		LM_ERR("failed to store uac htable active marker\n");
+		pkg_free(key.s);
+		return -1;
+	}
+	pkg_free(key.s);
+	return uac_htable_refresh_call(msg);
 }
 
 static int uac_htable_set_call_expire(struct sip_msg *msg, int seconds)
@@ -395,6 +506,18 @@ static int uac_htable_set_call_expire(struct sip_msg *msg, int seconds)
 			ret = -1;
 		}
 		pkg_free(key.s);
+		key.s = NULL;
+		key.len = 0;
+	}
+	if(uac_htable_active_key(msg, &key) < 0) {
+		ret = -1;
+	} else {
+		if(uac_htable_api.set_expire(&uac_restore_htable, &key, 0, &expire)
+				< 0) {
+			LM_WARN("failed to shorten uac htable active marker expiration\n");
+			ret = -1;
+		}
+		pkg_free(key.s);
 	}
 	pkg_free(origin);
 	return ret;
@@ -423,7 +546,7 @@ static int uac_htable_load(struct sip_msg *msg, int check_from, int refresh,
 		return -1;
 	}
 	cell = uac_htable_api.get_clone(&uac_restore_htable, &key);
-	if(cell != NULL && refresh) {
+	if(cell != NULL && refresh && uac_htable_is_active(msg, 0) > 0) {
 		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
 			LM_WARN("failed to refresh uac htable entry expiration\n");
 		}
@@ -451,6 +574,7 @@ static int uac_htable_store(struct sip_msg *msg, int check_from,
 	str packed = STR_NULL;
 	str *items[4];
 	numstr_ut value;
+	numstr_ut expire;
 	unsigned int total;
 	char *p;
 	int len;
@@ -534,7 +658,8 @@ static int uac_htable_store(struct sip_msg *msg, int check_from,
 		LM_ERR("failed to store uac replacement in htable\n");
 		goto error;
 	}
-	if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
+	expire.n = uac_restore_htable_initexpire;
+	if(uac_htable_api.set_expire(&uac_restore_htable, &key, 0, &expire) < 0) {
 		LM_ERR("failed to set uac htable entry expiration\n");
 		uac_htable_api.rm(&uac_restore_htable, &key);
 		goto error;
@@ -1437,9 +1562,13 @@ void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 	restored = restore_uri(msg, &rr_from_param, &restore_from_avp, 1 /*from*/)
 			   + restore_uri(msg, &rr_to_param, &restore_to_avp, 0 /*to*/);
 	if(uac_restore_htable.len > 0
-			&& msg->first_line.u.request.method_value == METHOD_BYE
-			&& uac_htable_set_call_expire(msg, uac_restore_htable_rmexpire)
-					   < 0) {
+			&& msg->first_line.u.request.method_value == METHOD_ACK
+			&& uac_htable_activate_call(msg) < 0) {
+		LM_WARN("failed to activate uac htable entries for ACK\n");
+	} else if(uac_restore_htable.len > 0
+			  && msg->first_line.u.request.method_value == METHOD_BYE
+			  && uac_htable_set_call_expire(msg, uac_restore_htable_rmexpire)
+						 < 0) {
 		LM_WARN("failed to shorten uac htable expiration for BYE\n");
 	}
 	if(restored != -2) {

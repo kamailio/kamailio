@@ -87,6 +87,7 @@ str uac_passwd = str_init("");
 str restore_from_avp = STR_NULL;
 str restore_to_avp = STR_NULL;
 str uac_restore_htable = STR_NULL;
+int uac_restore_htable_initexpire = 60;
 int uac_restore_htable_rmexpire = 60;
 int restore_mode = UAC_AUTO_RESTORE;
 struct tm_binds uac_tmb;
@@ -187,6 +188,7 @@ static param_export_t params[] = {
 	{"restore_mode", PARAM_STRING, &restore_mode_str},
 	{"restore_dlg", PARAM_INT, &uac_restore_dlg},
 	{"restore_htable", PARAM_STR, &uac_restore_htable},
+	{"restore_htable_initexpire", PARAM_INT, &uac_restore_htable_initexpire},
 	{"restore_htable_rmexpire", PARAM_INT, &uac_restore_htable_rmexpire},
 	{"restore_passwd", PARAM_STR, &uac_passwd},
 	{"restore_from_avp", PARAM_STR, &restore_from_avp},
@@ -277,8 +279,9 @@ static int mod_init(void)
 				   "together\n");
 			goto error;
 		}
-		if(uac_restore_htable_rmexpire <= 0) {
-			LM_ERR("invalid restore htable remove expiration value\n");
+		if(uac_restore_htable_initexpire <= 0
+				|| uac_restore_htable_rmexpire <= 0) {
+			LM_ERR("invalid restore htable expiration value\n");
 			goto error;
 		}
 		memset(&uac_htable_api, 0, sizeof(uac_htable_api));
