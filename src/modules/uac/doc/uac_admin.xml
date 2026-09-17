@@ -726,13 +726,31 @@ modparam("uac", "restore_htable", "uac_restore")
 ...
 			</programlisting>
 		</section>
+		<section id="uac.p.restore_htable_initexpire">
+			<title><varname>restore_htable_initexpire</varname> (int)</title>
+			<para>
+			Initial expiration time, in seconds, assigned to the htable entries
+			created by <function>uac_replace_from</function> or
+			<function>uac_replace_to</function>. This limits the lifetime of state
+			for dialogs that are not established. When the routed ACK is processed,
+			an <quote>a:Call-ID</quote> marker is stored and all dialog entries are
+			refreshed to the htable <quote>autoexpire</quote> value. The default
+			value is 60 seconds.
+			</para>
+			<programlisting format="linespecific">
+...
+modparam("uac", "restore_htable_initexpire", 120)
+...
+			</programlisting>
+		</section>
 		<section id="uac.p.restore_htable_rmexpire">
 			<title><varname>restore_htable_rmexpire</varname> (int)</title>
 			<para>
-			Expiration time, in seconds, assigned to all call entries when a BYE
-			request is processed. The normal lifetime is configured with the
-			htable <quote>autoexpire</quote> option and is refreshed whenever the
-			stored state is used. The default value is 60 seconds.
+			Expiration time, in seconds, assigned to all call entries, including the
+			active marker, when a BYE request is processed. After activation by ACK,
+			the normal lifetime is configured with the htable
+			<quote>autoexpire</quote> option and is refreshed whenever the stored
+			state is used. The default value is 60 seconds.
 			</para>
 			<programlisting format="linespecific">
 ...
