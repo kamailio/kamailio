@@ -845,6 +845,10 @@ static int mod_init(void)
 
 	if(_dlg_track_cseq_updates != 0) {
 		cenv = sr_cfgenv_get();
+		if(cenv->cb_cseq_update != NULL) {
+			LM_ERR("a CSeq update tracker is already registered\n");
+			return -1;
+		}
 		cenv->cb_cseq_update = dlg_cseq_update;
 		dlg_register_cseq_callbacks();
 	}
