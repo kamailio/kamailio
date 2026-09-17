@@ -63,7 +63,8 @@ Tyler Moore
               3.24. event_callback (str)
               3.25. reload_delta (int)
               3.26. restore_htable (string)
-              3.27. restore_htable_rmexpire (int)
+              3.27. restore_htable_initexpire (int)
+              3.28. restore_htable_rmexpire (int)
 
         4. Functions
 
@@ -205,7 +206,8 @@ Chapter 1. Admin Guide
         3.24. event_callback (str)
         3.25. reload_delta (int)
         3.26. restore_htable (string)
-        3.27. restore_htable_rmexpire (int)
+        3.27. restore_htable_initexpire (int)
+        3.28. restore_htable_rmexpire (int)
 
    4. Functions
 
@@ -334,7 +336,8 @@ Chapter 1. Admin Guide
    3.24. event_callback (str)
    3.25. reload_delta (int)
    3.26. restore_htable (string)
-   3.27. restore_htable_rmexpire (int)
+   3.27. restore_htable_initexpire (int)
+   3.28. restore_htable_rmexpire (int)
 
 3.1. rr_from_store_param (string)
 
@@ -727,12 +730,25 @@ loadmodule "uac.so"
 modparam("uac", "restore_htable", "uac_restore")
 ...
 
-3.27. restore_htable_rmexpire (int)
+3.27. restore_htable_initexpire (int)
 
-   Expiration time, in seconds, assigned to all call entries when a BYE
-   request is processed. The normal lifetime is configured with the htable
-   “autoexpire” option and is refreshed whenever the stored state is used.
-   The default value is 60 seconds.
+   Initial expiration time, in seconds, assigned to the htable entries
+   created by uac_replace_from or uac_replace_to. This limits the lifetime
+   of state for dialogs that are not established. When the routed ACK is
+   processed, an “a:Call-ID” marker is stored and all dialog entries are
+   refreshed to the htable “autoexpire” value. The default value is 60
+   seconds.
+...
+modparam("uac", "restore_htable_initexpire", 120)
+...
+
+3.28. restore_htable_rmexpire (int)
+
+   Expiration time, in seconds, assigned to all call entries, including
+   the active marker, when a BYE request is processed. After activation by
+   ACK, the normal lifetime is configured with the htable “autoexpire”
+   option and is refreshed whenever the stored state is used. The default
+   value is 60 seconds.
 ...
 modparam("uac", "restore_htable_rmexpire", 30)
 ...
