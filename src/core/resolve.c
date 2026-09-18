@@ -177,6 +177,8 @@ counter_def_t dns_cnt_defs[] = {
 		{&dns_cnts_h.slow_dns_req, "slow_dns_request", 0, 0, 0,
 				"incremented each time a DNS request took longer than "
 				"dns_slow_query_ms."},
+		{&dns_cnts_h.total_dns_req, "total_dns_request", 0, 0, 0,
+				"incremented each time a DNS request is attempted."},
 		{0, 0, 0, 0, 0, 0}};
 
 
@@ -871,6 +873,8 @@ struct rdata *get_record(char *name, int type, int flags)
 		search_list_used = 1;
 	}
 	fullname_rd = 0;
+
+	counter_inc(dns_cnts_h.total_dns_req);
 
 	if(slow_query_ms > 0)
 		gettimeofday(&start, NULL);
