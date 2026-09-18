@@ -451,12 +451,14 @@ int tps_storage_fill_contact(
 	dir: TPS_DIR_DOWNSTREAM or TPS_DIR_UPSTREAM
 	return: the xavu or NULL if not found
 
-	TODO: Who is responsible to free the xavu?
+	Note: contact_mode=3 maps A/B opposite to contact_mode=2:
+	- mode 2: a_contact = downstream, b_contact = upstream
+	- mode 3: a_contact_host = upstream, b_contact_host = downstream
+	This matches the internal a/b uuid side (upstream=a, downstream=b).
+	Do not change without a compatibility plan; see GH #4725.
 */
 static sr_xavp_t *get_xavu_host(int dir)
 {
-	/* Downstream should be B side, upstream should be A side
-	otherwise the config related params are used in reversed for some reason */
 	sr_xavp_t *vavu;
 	str *field;
 
