@@ -1528,8 +1528,9 @@ int save(struct sip_msg *msg, char *str1, char *route, int _cflags)
 	}
 	/** check we have valid contacts according to IMS spec. */
 	if(check_contacts(msg, &st) > 0) {
+		/* rerrno is set by check_contacts() - keep it so that the
+		 * UE gets the proper 4xx reply instead of 500 SAR failed */
 		LM_ERR("contacts not valid for REGISTER\n");
-		rerrno = R_SAR_FAILED;
 		goto error;
 	}
 
