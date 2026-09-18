@@ -65,6 +65,7 @@ Tyler Moore
               3.26. restore_htable (string)
               3.27. restore_htable_initexpire (int)
               3.28. restore_htable_rmexpire (int)
+              3.29. auth_cseq_tracking (int)
 
         4. Functions
 
@@ -208,6 +209,7 @@ Chapter 1. Admin Guide
         3.26. restore_htable (string)
         3.27. restore_htable_initexpire (int)
         3.28. restore_htable_rmexpire (int)
+        3.29. auth_cseq_tracking (int)
 
    4. Functions
 
@@ -338,6 +340,7 @@ Chapter 1. Admin Guide
    3.26. restore_htable (string)
    3.27. restore_htable_initexpire (int)
    3.28. restore_htable_rmexpire (int)
+   3.29. auth_cseq_tracking (int)
 
 3.1. rr_from_store_param (string)
 
@@ -733,11 +736,11 @@ modparam("uac", "restore_htable", "uac_restore")
 3.27. restore_htable_initexpire (int)
 
    Initial expiration time, in seconds, assigned to the htable entries
-   created by uac_replace_from or uac_replace_to. This limits the lifetime
-   of state for dialogs that are not established. When the routed ACK is
-   processed, an “a:Call-ID” marker is stored and all dialog entries are
-   refreshed to the htable “autoexpire” value. The default value is 60
-   seconds.
+   created by uac_replace_from, uac_replace_to, or authentication CSeq
+   tracking. This limits the lifetime of state for dialogs that are not
+   established. When the routed ACK is processed, an “a:Call-ID” marker is
+   stored and all dialog entries are refreshed to the htable “autoexpire”
+   value. The default value is 60 seconds.
 ...
 modparam("uac", "restore_htable_initexpire", 120)
 ...
@@ -751,6 +754,23 @@ modparam("uac", "restore_htable_initexpire", 120)
    value is 60 seconds.
 ...
 modparam("uac", "restore_htable_rmexpire", 30)
+...
+
+3.29. auth_cseq_tracking (int)
+
+   When enabled, CSeq updates made after successful uac_auth()
+   authentication are tracked in the htable configured by restore_htable.
+   This provides the same request CSeq translation, reply restoration, Via
+   cookie, and PRACK RAck adjustment without requiring the dialog module.
+
+   The cumulative difference is stored in an integer item whose key is
+   “c:Call-ID-length:Call-ID:original-From-tag”. Its expiry follows
+   restore_htable_initexpire until ACK, the htable “autoexpire” while the
+   dialog is active, and restore_htable_rmexpire after BYE. Do not enable
+   this parameter together with the dialog module's track_cseq_updates
+   parameter. The default value is 0 (disabled).
+...
+modparam("uac", "auth_cseq_tracking", 1)
 ...
 
 4. Functions
