@@ -32,6 +32,7 @@
 #include "../../core/parser/hf.h"
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_expires.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../core/ut.h"
 #include "../../core/qvalue.h"
 #include "../../core/rand/kam_rand.h"
@@ -131,6 +132,24 @@ int parse_message(struct sip_msg *_m)
 
 
 /*! \brief
+ * Check that a SIP/SIPS Contact URI is syntactically valid.
+ * Other URI schemes are left to the caller/routing logic.
+ * \return 0 when the URI is acceptable, -1 when it is malformed
+ */
+static int check_contact_uri(contact_t *c)
+{
+	struct sip_uri puri;
+
+	if((c->uri.len >= 4 && strncasecmp(c->uri.s, "sip:", 4) == 0)
+			|| (c->uri.len >= 5 && strncasecmp(c->uri.s, "sips:", 5) == 0)) {
+		if(parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*! \brief
  * Check if the originating REGISTER message was formed correctly
  * The whole message must be parsed before calling the function
  * _s indicates whether the contact was star
@@ -196,6 +215,12 @@ int check_contacts(struct sip_msg *_m, int *_s)
 					if(c->received && c->received->len > RECEIVED_MAX_SIZE) {
 						LM_WARN("received attribute of contact is too long\n");
 						rerrno = R_CONTACT_LEN;
+						return 1;
+					}
+					if(check_contact_uri(c) < 0) {
+						LM_WARN("malformed contact uri: [%.*s]\n", c->uri.len,
+								c->uri.s);
+						rerrno = R_PARSE_CONT;
 						return 1;
 					}
 				}
