@@ -108,6 +108,8 @@ int ht_set_cell_and_replicate(ht_t *ht, str *hname, str *name, int type,
 int ht_del_cell(ht_t *ht, str *name);
 int ht_del_cell_confirm(ht_t *ht, str *name);
 ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old);
+ht_cell_t *ht_cell_value_add_init(
+		ht_t *ht, str *name, int val, int initval, ht_cell_t *old);
 int ht_cell_exists(ht_t *ht, str *name);
 
 int ht_dbg(void);

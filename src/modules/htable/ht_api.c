@@ -20,6 +20,7 @@
  */
 
 #include <stddef.h>
+#include <limits.h>
 #include <regex.h>
 
 #include "../../core/mem/shm_mem.h"
@@ -814,7 +815,8 @@ int ht_del_cell_confirm(ht_t *ht, str *name)
 	return 0;
 }
 
-ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
+static ht_cell_t *ht_cell_value_add_mode(
+		ht_t *ht, str *name, int val, int init_any, int initval, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -855,10 +857,10 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 				if(it->expire) {
 					it->expire += now;
 				}
-				if(ht->flags == PV_VAL_INT) {
+				if(ht->flags == PV_VAL_INT || init_any) {
 					/* initval is integer, use it to create a fresh entry */
 					it->flags &= ~AVP_VAL_STR;
-					it->value.n = ht->initval.n;
+					it->value.n = init_any ? initval : ht->initval.n;
 					/* increment will be done below */
 				} else {
 					ht_slot_unlock(ht, idx);
@@ -871,6 +873,15 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 				ht_slot_unlock(ht, idx);
 				return NULL;
 			} else {
+				if((val > 0
+						   && it->value.n
+									  > (init_any ? INT_MAX : LONG_MAX) - val)
+						|| (val < 0
+								&& it->value.n < (init_any ? INT_MIN : LONG_MIN)
+														 - val)) {
+					ht_slot_unlock(ht, idx);
+					return NULL;
+				}
 				it->value.n += val;
 				if(ht->updateexpire)
 					it->expire = now + ht->htexpire;
@@ -901,11 +912,20 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 		it = it->next;
 	}
 	/* add val if htable has an integer init value */
-	if(ht->flags != PV_VAL_INT) {
+	if(ht->flags != PV_VAL_INT && !init_any) {
 		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
-	isval.n = ht->initval.n + val;
+	if((val > 0
+			   && (init_any ? (long)initval : ht->initval.n)
+						  > (init_any ? INT_MAX : LONG_MAX) - val)
+			|| (val < 0
+					&& (init_any ? (long)initval : ht->initval.n)
+							   < (init_any ? INT_MIN : LONG_MIN) - val)) {
+		ht_slot_unlock(ht, idx);
+		return NULL;
+	}
+	isval.n = (init_any ? initval : ht->initval.n) + val;
 	it = ht_cell_new(name, 0, &isval, hid);
 	if(it == NULL) {
 		LM_ERR("cannot create new cell.\n");
@@ -943,6 +963,17 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 
 	ht_slot_unlock(ht, idx);
 	return cell;
+}
+
+ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
+{
+	return ht_cell_value_add_mode(ht, name, val, 0, 0, old);
+}
+
+ht_cell_t *ht_cell_value_add_init(
+		ht_t *ht, str *name, int val, int initval, ht_cell_t *old)
+{
+	return ht_cell_value_add_mode(ht, name, val, 1, initval, old);
 }
 
 
