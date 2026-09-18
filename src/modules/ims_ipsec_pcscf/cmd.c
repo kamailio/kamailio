@@ -913,9 +913,8 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	req_sec_params = cscf_get_security(req);
 
 	// Update contacts only for initial registration, for re-registration the existing contacts shouldn't be updated.
-	if(ci.via_port == SIP_PORT
-			|| (pcontact->security_temp->data.ipsec->port_ps == 0
-					&& pcontact->security_temp->data.ipsec->port_pc == 0)) {
+	if(pcontact->security_temp->data.ipsec->port_ps == 0
+			&& pcontact->security_temp->data.ipsec->port_pc == 0) {
 		LM_DBG("Registration for contact with AOR [%.*s], VIA [%d://%.*s:%d], "
 			   "received_host [%d://%.*s:%d]\n",
 				ci.aor.len, ci.aor.s, ci.via_prot, ci.via_host.len,
@@ -955,26 +954,24 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	if(ci.via_port == SIP_PORT) {
-		if(req_sec_params != NULL) {
-			ipsec_t *old_ipsec = pcontact->security_temp->data.ipsec;
-			pcontact->security_temp->data.ipsec = s;
-			// s is now owned by the contact (freed at contact expiry by
-			// free_security()); do not free it on the cleanup path
-			ipsec_swapped = 1;
-			// free the ipsec_t we just replaced on the contact - it was
-			// stored by save_pending() (or a prior ipsec_create()) and was
-			// previously orphaned on every registration
-			if(old_ipsec && old_ipsec != s) {
-				free_ipsec_data(old_ipsec);
-			}
+	if(req_sec_params != NULL) {
+		ipsec_t *old_ipsec = pcontact->security_temp->data.ipsec;
+		pcontact->security_temp->data.ipsec = s;
+		// s is now owned by the contact (freed at contact expiry by
+		// free_security()); do not free it on the cleanup path
+		ipsec_swapped = 1;
+		// free the ipsec_t we just replaced on the contact - it was
+		// stored by save_pending() (or a prior ipsec_create()) and was
+		// previously orphaned on every registration
+		if(old_ipsec && old_ipsec != s) {
+			free_ipsec_data(old_ipsec);
 		}
-		// Update temp security parameters
-		if(ul.update_temp_security(d, pcontact->security_temp->type,
-				   pcontact->security_temp, pcontact)
-				!= 0) {
-			LM_ERR("Error updating temp security\n");
-		}
+	}
+	// Update temp security parameters
+	if(ul.update_temp_security(d, pcontact->security_temp->type,
+			   pcontact->security_temp, pcontact)
+			!= 0) {
+		LM_ERR("Error updating temp security\n");
 	}
 
 	ci.reg_state = pcontact->reg_state;
@@ -997,14 +994,13 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	if(ci.via_port == SIP_PORT) {
-		if(ul.register_ulcb(pcontact,
-				   PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_DELETE, ipsec_on_expire,
-				   (void *)&pcontact->received_port)
-				!= 1) {
-			LM_ERR("Error subscribing for contact\n");
-			goto cleanup;
-		}
+	if(!ul.is_ulcb_registered(pcontact, ipsec_on_expire)
+			&& ul.register_ulcb(pcontact,
+					   PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_DELETE,
+					   ipsec_on_expire, (void *)&pcontact->received_port)
+					   != 1) {
+		LM_ERR("Error subscribing for contact\n");
+		goto cleanup;
 	}
 
 	ret = IPSEC_CMD_SUCCESS; // all good, set ret to SUCCESS, and exit
