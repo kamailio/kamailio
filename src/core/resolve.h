@@ -73,6 +73,7 @@ struct dns_counters_h
 {
 	counter_handle_t failed_dns_req;
 	counter_handle_t slow_dns_req;
+	counter_handle_t total_dns_req;
 };
 
 extern struct dns_counters_h dns_cnts_h;
