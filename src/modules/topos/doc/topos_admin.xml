@@ -362,12 +362,20 @@ modparam("topos", "contact_host", "proxy.domain.com")
 		<emphasis>xavu_field_a_contact</emphasis> and <emphasis>xavu_field_b_contact</emphasis>
 		parameter. Furthermore you need to assign values to them during
 		the processing of the initial SIP request.
+		In this mode, <emphasis>xavu_field_a_contact</emphasis> is used for
+		the downstream direction and <emphasis>xavu_field_b_contact</emphasis>
+		for the upstream direction.
 		</para>
 		<para>
 		If you use the mode (3), you need to configure the
 		<emphasis>xavu_field_a_contact_host</emphasis> and <emphasis>xavu_field_b_contact_host</emphasis>
 		parameter. Furthermore you need to assign values to them during
 		the processing of the initial SIP request.
+		Note that the A/B mapping for mode (3) is the opposite of mode (2):
+		<emphasis>xavu_field_a_contact_host</emphasis> is used for the
+		upstream direction and <emphasis>xavu_field_b_contact_host</emphasis>
+		for the downstream direction. Modes 2 and 3 cannot be used at the
+		same time.
 		</para>
 
 		<para>
@@ -443,8 +451,9 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 		<title><varname>xavu_field_a_contact</varname> (str)</title>
 		<para>
 			Name of the field inside root XAVU specified by `xavu_cfg`
-			to evaluate for the A-side Contact Header user part. This parameter
-			is only necessary in contact_mode (2).
+			to evaluate for the Contact Header user part in the
+			downstream direction. This parameter is only necessary in
+			contact_mode (2).
 		</para>
 		<para>
 		<emphasis>
@@ -467,8 +476,9 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 		<title><varname>xavu_field_b_contact</varname> (str)</title>
 		<para>
 			Name of the field inside root XAVU specified by `xavu_cfg`
-			to evaluate for the B-side Contact Header user part. This parameter
-			is only necessary in contact_mode (2).
+			to evaluate for the Contact Header user part in the
+			upstream direction. This parameter is only necessary in
+			contact_mode (2).
 		</para>
 		<para>
 		<emphasis>
@@ -484,6 +494,74 @@ modparam("topos", "xavu_field_b_contact", "b_contact")
 ...
     $xavu(_tps_=>b_contact) = "...";
 
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.xavu_field_a_contact_host">
+		<title><varname>xavu_field_a_contact_host</varname> (str)</title>
+		<para>
+			Name of the field inside root XAVU specified by `xavu_cfg`
+			to evaluate for the Contact Header host part in the
+			upstream direction. This parameter is only necessary in
+			contact_mode (3).
+		</para>
+		<para>
+			Note: compared to <emphasis>xavu_field_a_contact</emphasis>
+			in contact_mode (2), which is used for the downstream
+			direction, this parameter applies to the upstream direction.
+			See also <emphasis>contact_mode</emphasis>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavu_field_a_contact_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "contact_mode", 3)
+modparam("topos", "xavu_field_a_contact_host", "a_contact_host")
+modparam("topos", "xavu_field_b_contact_host", "b_contact_host")
+...
+    $xavu(_tps_=>a_contact_host) = "upstream.example.com";
+    $xavu(_tps_=>b_contact_host) = "downstream.example.com";
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.xavu_field_b_contact_host">
+		<title><varname>xavu_field_b_contact_host</varname> (str)</title>
+		<para>
+			Name of the field inside root XAVU specified by `xavu_cfg`
+			to evaluate for the Contact Header host part in the
+			downstream direction. This parameter is only necessary in
+			contact_mode (3).
+		</para>
+		<para>
+			Note: compared to <emphasis>xavu_field_b_contact</emphasis>
+			in contact_mode (2), which is used for the upstream
+			direction, this parameter applies to the downstream direction.
+			See also <emphasis>contact_mode</emphasis>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote> (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xavu_field_b_contact_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "contact_mode", 3)
+modparam("topos", "xavu_field_a_contact_host", "a_contact_host")
+modparam("topos", "xavu_field_b_contact_host", "b_contact_host")
+...
+    $xavu(_tps_=>a_contact_host) = "upstream.example.com";
+    $xavu(_tps_=>b_contact_host) = "downstream.example.com";
 ...
 </programlisting>
 		</example>
