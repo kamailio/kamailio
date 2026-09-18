@@ -730,8 +730,9 @@ modparam("uac", "restore_htable", "uac_restore")
 			<title><varname>restore_htable_initexpire</varname> (int)</title>
 			<para>
 			Initial expiration time, in seconds, assigned to the htable entries
-			created by <function>uac_replace_from</function> or
-			<function>uac_replace_to</function>. This limits the lifetime of state
+			created by <function>uac_replace_from</function>,
+			<function>uac_replace_to</function>, or authentication CSeq tracking.
+			This limits the lifetime of state
 			for dialogs that are not established. When the routed ACK is processed,
 			an <quote>a:Call-ID</quote> marker is stored and all dialog entries are
 			refreshed to the htable <quote>autoexpire</quote> value. The default
@@ -755,6 +756,31 @@ modparam("uac", "restore_htable_initexpire", 120)
 			<programlisting format="linespecific">
 ...
 modparam("uac", "restore_htable_rmexpire", 30)
+...
+			</programlisting>
+		</section>
+		<section id="uac.p.auth_cseq_tracking">
+			<title><varname>auth_cseq_tracking</varname> (int)</title>
+			<para>
+			When enabled, CSeq updates made after successful
+			<function>uac_auth()</function> authentication are tracked in the
+			htable configured by <varname>restore_htable</varname>. This provides
+			the same request CSeq translation, reply restoration, Via cookie, and
+			PRACK RAck adjustment without requiring the dialog module.
+			</para>
+			<para>
+			The cumulative difference is stored in an integer item whose key is
+			<quote>c:Call-ID-length:Call-ID:original-From-tag</quote>. Its expiry
+			follows <varname>restore_htable_initexpire</varname> until ACK, the
+			htable <quote>autoexpire</quote> while the dialog is active, and
+			<varname>restore_htable_rmexpire</varname> after BYE. Do not enable
+			this parameter together with the dialog module's
+			<varname>track_cseq_updates</varname> parameter. The default value is
+			0 (disabled).
+			</para>
+			<programlisting format="linespecific">
+...
+modparam("uac", "auth_cseq_tracking", 1)
 ...
 			</programlisting>
 		</section>
