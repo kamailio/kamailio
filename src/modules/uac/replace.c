@@ -45,6 +45,7 @@
 
 
 #include "replace.h"
+#include "uac_cseq.h"
 
 extern str uac_passwd;
 extern int restore_mode;
@@ -62,6 +63,7 @@ extern int_str restore_to_avp_name;
 extern str uac_restore_htable;
 extern int uac_restore_htable_initexpire;
 extern int uac_restore_htable_rmexpire;
+extern int uac_auth_cseq_tracking;
 extern htable_api_t uac_htable_api;
 
 struct dlg_binds dlg_api;
@@ -129,8 +131,8 @@ static inline int uac_htable_active_key(struct sip_msg *msg, str *key)
 	return uac_htable_call_key(msg, 'a', key);
 }
 
-static int uac_htable_key(
-		struct sip_msg *msg, int check_from, str *tag, str *key)
+static int uac_htable_tag_key(
+		struct sip_msg *msg, char type, str *tag, str *key)
 {
 	char *p;
 	int n;
@@ -157,8 +159,8 @@ static int uac_htable_key(
 		return -1;
 	}
 	p = key->s;
-	n = snprintf(p, key->len - (int)(p - key->s),
-			"%c:%d:", check_from ? 'f' : 't', msg->callid->body.len);
+	n = snprintf(p, key->len - (int)(p - key->s), "%c:%d:", type,
+			msg->callid->body.len);
 	if(n < 0 || n >= key->len - (int)(p - key->s)) {
 		LM_ERR("failed to format htable key\n");
 		pkg_free(key->s);
@@ -174,6 +176,17 @@ static int uac_htable_key(
 	p += tag->len;
 	key->len = (int)(p - key->s);
 	return 0;
+}
+
+static inline int uac_htable_key(
+		struct sip_msg *msg, int check_from, str *tag, str *key)
+{
+	return uac_htable_tag_key(msg, check_from ? 'f' : 't', tag, key);
+}
+
+static inline int uac_htable_cseq_key(struct sip_msg *msg, str *tag, str *key)
+{
+	return uac_htable_tag_key(msg, 'c', tag, key);
 }
 
 static int uac_htable_store_origin(struct sip_msg *msg)
@@ -407,6 +420,153 @@ static int uac_htable_direction(struct sip_msg *msg, int refresh, int *upstream)
 	return ret;
 }
 
+int uac_htable_cseq_update(
+		struct sip_msg *msg, unsigned int *diff, int *upstream)
+{
+	str key = STR_NULL;
+	ht_cell_t *origin = NULL;
+	int active;
+	int value;
+	int ret;
+	int_str expire;
+
+	if(diff == NULL || upstream == NULL)
+		return -1;
+	*diff = 0;
+	*upstream = 0;
+
+	ret = uac_htable_load_origin(msg, 0, &origin);
+	if(ret == 1) {
+		if(uac_htable_store_origin(msg) < 0)
+			return -1;
+		ret = uac_htable_load_origin(msg, 0, &origin);
+	}
+	if(ret != 0)
+		return -1;
+	if(uac_htable_direction_from_tag(msg, &origin->value.s, upstream) < 0)
+		goto error;
+	if(*upstream) {
+		pkg_free(origin);
+		return 0;
+	}
+	if(uac_htable_cseq_key(msg, &origin->value.s, &key) < 0)
+		goto error;
+	active = uac_htable_is_active(msg, 0);
+	if(active < 0)
+		goto error;
+	if(uac_htable_api.add_ival(&uac_restore_htable, &key, 1, 0, &value) < 0
+			|| value <= 0) {
+		LM_ERR("failed to increment uac htable cseq difference\n");
+		goto error;
+	}
+	if(active > 0) {
+		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0)
+			LM_WARN("failed to refresh uac htable cseq expiration\n");
+	} else {
+		expire.n = uac_restore_htable_initexpire;
+		if(uac_htable_api.set_expire(&uac_restore_htable, &key, 0, &expire)
+				< 0) {
+			LM_WARN("failed to set uac htable cseq expiration\n");
+		}
+	}
+	*diff = (unsigned int)value;
+	pkg_free(key.s);
+	pkg_free(origin);
+	return 0;
+
+error:
+	if(key.s != NULL)
+		pkg_free(key.s);
+	if(origin != NULL)
+		pkg_free(origin);
+	return -1;
+}
+
+int uac_htable_cseq_get(
+		struct sip_msg *msg, int refresh, unsigned int *diff, int *upstream)
+{
+	str key = STR_NULL;
+	ht_cell_t *origin = NULL;
+	ht_cell_t *cell = NULL;
+	int active;
+	int ret;
+
+	if(diff == NULL || upstream == NULL)
+		return -1;
+	*diff = 0;
+	*upstream = 0;
+	ret = uac_htable_load_origin(msg, refresh, &origin);
+	if(ret != 0)
+		return ret;
+	if(uac_htable_direction_from_tag(msg, &origin->value.s, upstream) < 0) {
+		ret = -1;
+		goto done;
+	}
+	if(uac_htable_cseq_key(msg, &origin->value.s, &key) < 0) {
+		ret = -1;
+		goto done;
+	}
+	cell = uac_htable_api.get_clone(&uac_restore_htable, &key);
+	if(cell == NULL) {
+		ret = 1;
+		goto done;
+	}
+	if((cell->flags & AVP_VAL_STR) || cell->value.n <= 0
+			|| cell->value.n > UINT_MAX) {
+		LM_ERR("invalid uac htable cseq difference\n");
+		ret = -1;
+		goto done;
+	}
+	*diff = (unsigned int)cell->value.n;
+	ret = 0;
+	if(refresh) {
+		active = uac_htable_is_active(msg, 0);
+		if(active > 0
+				&& uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0)
+			LM_WARN("failed to refresh uac htable cseq expiration\n");
+	}
+
+done:
+	if(cell != NULL)
+		pkg_free(cell);
+	if(key.s != NULL)
+		pkg_free(key.s);
+	if(origin != NULL)
+		pkg_free(origin);
+	return ret;
+}
+
+static int uac_htable_refresh_optional(str *key, const char *what)
+{
+	ht_cell_t *cell;
+
+	cell = uac_htable_api.get_clone(&uac_restore_htable, key);
+	if(cell == NULL)
+		return 0;
+	pkg_free(cell);
+	if(uac_htable_api.refresh_expire(&uac_restore_htable, key) < 0) {
+		LM_WARN("failed to refresh uac htable %s expiration\n", what);
+		return -1;
+	}
+	return 0;
+}
+
+static int uac_htable_expire_optional(
+		str *key, int_str *expire, const char *what)
+{
+	ht_cell_t *cell;
+
+	cell = uac_htable_api.get_clone(&uac_restore_htable, key);
+	if(cell == NULL)
+		return 0;
+	pkg_free(cell);
+	if(uac_htable_api.set_expire(&uac_restore_htable, key, 0, expire) < 0) {
+		LM_WARN("failed to shorten uac htable %s expiration\n", what);
+		return -1;
+	}
+	return 0;
+}
+
 static int uac_htable_refresh_call(struct sip_msg *msg)
 {
 	str key = STR_NULL;
@@ -421,8 +581,17 @@ static int uac_htable_refresh_call(struct sip_msg *msg)
 			ret = -1;
 			continue;
 		}
-		if(uac_htable_api.refresh_expire(&uac_restore_htable, &key) < 0) {
-			LM_WARN("failed to refresh uac htable entry expiration\n");
+		if(uac_htable_refresh_optional(&key, "replacement") < 0) {
+			ret = -1;
+		}
+		pkg_free(key.s);
+		key.s = NULL;
+		key.len = 0;
+	}
+	if(uac_htable_cseq_key(msg, &origin->value.s, &key) < 0) {
+		ret = -1;
+	} else {
+		if(uac_htable_refresh_optional(&key, "cseq") < 0) {
 			ret = -1;
 		}
 		pkg_free(key.s);
@@ -488,9 +657,17 @@ static int uac_htable_set_call_expire(struct sip_msg *msg, int seconds)
 			ret = -1;
 			continue;
 		}
-		if(uac_htable_api.set_expire(&uac_restore_htable, &key, 0, &expire)
-				< 0) {
-			LM_WARN("failed to shorten uac htable entry expiration\n");
+		if(uac_htable_expire_optional(&key, &expire, "replacement") < 0) {
+			ret = -1;
+		}
+		pkg_free(key.s);
+		key.s = NULL;
+		key.len = 0;
+	}
+	if(uac_htable_cseq_key(msg, &origin->value.s, &key) < 0) {
+		ret = -1;
+	} else {
+		if(uac_htable_expire_optional(&key, &expire, "cseq") < 0) {
 			ret = -1;
 		}
 		pkg_free(key.s);
@@ -1557,6 +1734,8 @@ void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 		LM_DBG("uac htable direction not found\n");
 		return;
 	}
+	if(uac_auth_cseq_tracking != 0 && uac_cseq_refresh(msg) < 0)
+		LM_WARN("failed to refresh uac htable cseq update\n");
 
 	/* check if the request contains stored replacement values */
 	restored = restore_uri(msg, &rr_from_param, &restore_from_avp, 1 /*from*/)

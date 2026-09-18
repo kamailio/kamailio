@@ -52,6 +52,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/rand/kam_rand.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/srapi.h"
 #include "../dialog/dlg_load.h"
 #include "../htable/ht_api.h"
 #include "../htable/api.h"
@@ -62,6 +63,7 @@
 #include "auth.h"
 #include "uac_send.h"
 #include "uac_reg.h"
+#include "uac_cseq.h"
 #include "api.h"
 
 
@@ -89,6 +91,7 @@ str restore_to_avp = STR_NULL;
 str uac_restore_htable = STR_NULL;
 int uac_restore_htable_initexpire = 60;
 int uac_restore_htable_rmexpire = 60;
+int uac_auth_cseq_tracking = 0;
 int restore_mode = UAC_AUTO_RESTORE;
 struct tm_binds uac_tmb;
 struct rr_binds uac_rrb;
@@ -190,6 +193,7 @@ static param_export_t params[] = {
 	{"restore_htable", PARAM_STR, &uac_restore_htable},
 	{"restore_htable_initexpire", PARAM_INT, &uac_restore_htable_initexpire},
 	{"restore_htable_rmexpire", PARAM_INT, &uac_restore_htable_rmexpire},
+	{"auth_cseq_tracking", PARAM_INT, &uac_auth_cseq_tracking},
 	{"restore_passwd", PARAM_STR, &uac_passwd},
 	{"restore_from_avp", PARAM_STR, &restore_from_avp},
 	{"restore_to_avp", PARAM_STR, &restore_to_avp},
@@ -248,6 +252,7 @@ static int mod_init(void)
 	pv_spec_t avp_spec;
 	str host;
 	int port, proto;
+	sr_cfgenv_t *cenv;
 
 	if(restore_mode_str && *restore_mode_str) {
 		if(strcasecmp(restore_mode_str, "none") == 0) {
@@ -289,6 +294,10 @@ static int mod_init(void)
 			LM_ERR("failed to bind htable API - is htable module loaded?\n");
 			goto error;
 		}
+	}
+	if(uac_auth_cseq_tracking != 0 && uac_restore_htable.len == 0) {
+		LM_ERR("auth_cseq_tracking requires restore_htable\n");
+		goto error;
 	}
 
 	/* parse the auth AVP spesc, if any */
@@ -442,6 +451,19 @@ static int mod_init(void)
 	init_from_replacer();
 
 	uac_req_init();
+	if(uac_auth_cseq_tracking != 0) {
+		cenv = sr_cfgenv_get();
+		if(cenv->cb_cseq_update != NULL) {
+			LM_ERR("a CSeq update tracker is already registered; disable "
+				   "dialog track_cseq_updates\n");
+			goto error;
+		}
+		cenv->cb_cseq_update = uac_cseq_update;
+		if(uac_cseq_register_callbacks() < 0) {
+			cenv->cb_cseq_update = NULL;
+			goto error;
+		}
+	}
 
 	return 0;
 error:
