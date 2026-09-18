@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]> 
+
+<table id="pcscf_gruu_history" xmlns:db="http://docbook.org/ns/docbook">
+    <name>pcscf_gruu_history</name>
+    <version>1</version>
+    <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>Temporary GRUU history.</db:para>
+    </description>
+
+    <column id="id">
+      <name>id</name>
+      <type>unsigned int</type>
+      <size>&table_id_len;</size>
+      <autoincrement/>
+      <primary/>
+      <type db="db_text">int,auto</type>
+      <description>unique ID</description>
+    </column>
+
+    <column id="location_id">
+      <name>location_id</name>
+      <type>unsigned int</type>
+      <size>&table_id_len;</size>
+      <description>Reference to pcscf_location.id</description>
+    </column>
+
+    <column id="temp_gruu">
+      <name>temp_gruu</name>
+      <type>string</type>
+      <size>255</size>
+      <description>Temporary GRUU value</description>
+    </column>
+
+    <column id="created">
+      <name>created</name>
+      <type>datetime</type>
+      <description>Creation timestamp</description>
+    </column>
+
+    <column id="expires">
+      <name>expires</name>
+      <type>datetime</type>
+      <description>Expiration timestamp</description>
+    </column>
+
+    <index>
+      <name>idx_loc</name>
+      <colref linkend="location_id"/>
+    </index>
+
+    <index>
+      <name>idx_tgruu</name>
+      <colref linkend="temp_gruu"/>
+    </index>
+
+    <index>
+      <name>idx_exp</name>
+      <colref linkend="expires"/>
+    </index>
+</table>
+

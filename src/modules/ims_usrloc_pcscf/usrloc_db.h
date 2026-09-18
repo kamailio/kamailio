@@ -26,7 +26,11 @@ typedef enum location_pcscf_fields_idx
 	LP_PUBLIC_IPS_IDX,
 	LP_HOST_IDX,
 	LP_PORT_IDX,
-	LP_PROTOCOL_IDX
+	LP_PROTOCOL_IDX,
+	LP_INSTANCE_ID_IDX,
+	LP_PUB_GRUU_IDX,
+	LP_TEMP_GRUU_IDX,
+	LP_PUBLIC_IDS_BARRED_IDX
 
 } location_pcscf_fields_idx_t;
 
@@ -70,6 +74,10 @@ typedef enum location_pcscf_fields_idx
 #define SERVICE_ROUTES_COL "service_routes"
 #define SOCKET_COL "socket"
 #define PUBLIC_IDS_COL "public_ids"
+#define INSTANCE_ID_COL "instance_id"
+#define PUB_GRUU_COL "pub_gruu"
+#define TEMP_GRUU_COL "temp_gruu"
+#define PUBLIC_IDS_BARRED_COL "public_ids_barred"
 #define SECURITY_TYPE_COL "security_type"
 
 #define MODE_COL "mode"
@@ -114,12 +122,18 @@ extern str received_col;
 extern str received_port_col;
 extern str received_proto_col;
 extern str path_col;
+extern str rinstance_col;
 extern str rx_session_id_col;
 extern str reg_state_col;
 extern str expires_col;
 extern str service_routes_col;
 extern str socket_col;
 extern str public_ids_col;
+extern str instance_id_col;
+extern str pub_gruu_col;
+extern str temp_gruu_col;
+extern str public_ids_barred_col;
+extern str security_type_col;
 
 typedef struct reusable_buffer
 {
@@ -145,5 +159,9 @@ int db_update_pcontact_security_temp(
 		struct pcontact *_c, security_type _t, security_t *_s);
 int db_update_pcontact_security(
 		struct pcontact *_c, security_type _t, security_t *_s);
+int db_insert_temp_gruu_history(
+		unsigned int location_id, str *temp_gruu, time_t expires);
+int db_lookup_temp_gruu_history(str *temp_gruu, unsigned int *location_id);
+int db_cleanup_temp_gruu_history(void);
 db1_con_t *get_db_handle();
 #endif /* USRLOC_DB_H_ */
