@@ -52,6 +52,7 @@
 #include <fcntl.h>
 
 #include "dprint.h"
+#include "worker_stats.h"
 #include "ip_addr.h"
 #include "globals.h"
 #include "locking.h"
@@ -148,6 +149,7 @@ static int tcp_reactor_dispatch_send(uintptr_t ptr)
 						" %d x %dms - dropping task\n",
 						TCP_REACTOR_DISPATCH_POLL_TRIES,
 						TCP_REACTOR_DISPATCH_POLL_MS);
+				counter_inc(ksr_cnt_rdispatch_drops);
 				return -1;
 			}
 			pfd.fd = wfd;
@@ -1258,6 +1260,7 @@ static void *tcp_reactor_thread_routine(void *arg)
 	char wake = 'x';
 
 	tcp_reactor_thread_idx = (int)(long)arg;
+	KSR_POOL_MEMBER_ONCE(ksr_cnt_rthreads);
 
 #if defined(HAVE_PTHREAD_SETNAME_NP_2ARG) \
 		|| defined(HAVE_PTHREAD_SETNAME_NP_1ARG)
@@ -1306,6 +1309,7 @@ static void *tcp_reactor_thread_routine(void *arg)
 		if(job == NULL)
 			continue; /* spurious wakeup */
 
+		counter_inc(ksr_cnt_busy_rthreads);
 		switch(job->op) {
 			case TCP_R_READ: {
 				/* read + reassemble on conn->s (all of PROTO_TCP/TLS/WS/WSS).
@@ -1363,11 +1367,13 @@ static void *tcp_reactor_thread_routine(void *arg)
 				if(job->task && job->task->exec)
 					job->task->exec(job->task->param, KSR_TCPX_MAIN_PIDX);
 				pkg_free(job);
+				counter_add(ksr_cnt_busy_rthreads, -1);
 				continue;
 			default:
 				LM_ERR("unknown reactor job op %d\n", job->op);
 				break;
 		}
+		counter_add(ksr_cnt_busy_rthreads, -1);
 
 		/* hand the completed job back to the reactor thread */
 		pthread_mutex_lock(&tcp_rpool.done_lock);

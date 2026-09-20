@@ -134,6 +134,7 @@
 #include "core/rand/cryptorand.h"
 
 #include "core/counters.h"
+#include "core/worker_stats.h"
 #include "core/cfg/cfg.h"
 #include "core/cfg/cfg_struct.h"
 #include "core/cfg_core.h"
@@ -3375,6 +3376,10 @@ int main(int argc, char **argv)
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
+
+	/* occupancy counters - must be registered before counters_prefork_init() */
+	if(ksr_worker_stats_init() < 0)
+		goto error;
 
 	/* initialize process_table, add core process no. (calc_proc_no()) to the
 	 * processes registered from the modules*/
