@@ -692,6 +692,27 @@ static inline int parse_dlg_rr_param(
 {
 	char *s;
 
+	/* sanity checks */
+	if(!p) {
+		LM_ERR("NULL start of parameter string");
+		return -1;
+	}
+
+	if(!end) {
+		LM_ERR("NULL end of parameter string");
+		return -1;
+	}
+
+	if(!h_entry) {
+		LM_ERR("NULL h_entry");
+		return -1;
+	}
+
+	if(!h_id) {
+		LM_ERR("NULL h_id");
+		return -1;
+	}
+
 	for(s = p; p < end && *p != DLG_SEPARATOR; p++)
 		;
 	if(*p != DLG_SEPARATOR) {
