@@ -1027,7 +1027,7 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 	next_state_dlg(dlg, event, &old_state, &new_state, &unref, 0);
 	LM_DBG("unref after next state is %i\n", unref);
 	CURR_DLG_ID = req->id;
-	CURR_DLG_LIFETIME = (unsigned int)(time(0)) - dlg->start_ts;
+	CURR_DLG_LIFETIME = ksr_time_uint(NULL, NULL) - dlg->start_ts;
 	CURR_DLG_STATUS = new_state;
 
 	//    dlg_run_event_route(dlg, req, old_state, new_state);
@@ -1538,7 +1538,7 @@ void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 		LM_DBG("dialog %p confirmed (No Ack) \n", dlg);
 
 		/* set start time */
-		dlg->start_ts = (unsigned int)(time(0));
+		dlg->start_ts = ksr_time_uint(NULL, NULL);
 
 		/* save the settings to the database,
          * if realtime saving mode configured- save dialog now
