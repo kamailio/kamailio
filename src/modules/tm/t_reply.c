@@ -2531,6 +2531,16 @@ int reply_received(struct sip_msg *p_msg)
 					}
 					shm_free(ack);
 				}
+				/* The upstream transaction is already complete. This reply was
+				 * matched only to ACK the negative final response on the canceled
+				 * branch; do not run normal reply processing for it. */
+				if(msg_status < 700 && t->uas.status >= 200
+						&& (uac->request.flags & F_RB_CANCELED)) {
+					LM_DBG("negative final reply for canceled branch consumed "
+						   "after "
+						   "ACK handling\n");
+					goto done;
+				}
 			} else if(is_local(t) /*&& 200 <= msg_status < 300*/) {
 				ack = build_local_ack(p_msg, t, branch, &ack_len, &lack_dst);
 				if(ack) {
