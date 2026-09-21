@@ -323,7 +323,7 @@ $ kamctl rpc htable.dump htable
 		<itemizedlist>
 		<listitem>
 		<para>
-		"htname=&gt;size=_number_;autoexpire=_number_;dbtable=_string_"
+			"htname=&gt;size=_number_;autoexpire=_number_;dbtable=_string_;fpath=_string_"
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -372,7 +372,54 @@ $ kamctl rpc htable.dump htable
 		<para>
 			<emphasis>dbtable</emphasis> - name of database to be loaded at
 			startup in hash table. If empty or missing, no data will be loaded.
+			It cannot be used together with <emphasis>fpath</emphasis>.
 		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>fpath</emphasis> - path of a file to be loaded into the hash
+			table at startup. It cannot be used together with
+			<emphasis>dbtable</emphasis>. Each non-empty line must have four fields:
+			<quote>key|value-type|value|expire</quote>, where the delimiter can be
+			changed with <emphasis>fdelim</emphasis>. The value type is 0 for a
+			string and 1 for a signed integer. The expire field is an absolute Unix
+			timestamp, or 0 for an entry that does not expire. Entries whose timestamp
+			is already in the past are not loaded. A missing file or malformed line
+			causes module initialization to fail.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>ftype</emphasis> - encoding used by a file-backed hash table.
+			The default value 0 stores keys and string values in clear text. Such
+			values cannot contain the configured delimiter, carriage return, or line
+			feed. Value 1 stores keys and string values as unpadded Base64URL; padded
+			Base64URL is also accepted when loading. Integer values are always stored
+			as decimal text.
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>fdelim</emphasis> - single character used to separate fields
+			in a file-backed hash table. The default value is <quote>|</quote>. With
+			<emphasis>ftype</emphasis> set to 1, the delimiter cannot be part of the
+			Base64URL alphabet or the padding character <quote>=</quote>.
+		</para>
+		<para>
+			For example, the clear-text form can contain:
+		</para>
+		<programlisting format="linespecific">
+customer42|0|active|1790000000
+counter|1|-23|0
+</programlisting>
+		<para>
+			With <emphasis>ftype=1</emphasis>, the same records are stored with
+			unpadded Base64URL keys and string values:
+		</para>
+		<programlisting format="linespecific">
+Y3VzdG9tZXI0Mg|0|YWN0aXZl|1790000000
+Y291bnRlcg|1|-23|0
+</programlisting>
 		</listitem>
 		<listitem>
 		<para>
@@ -392,10 +439,10 @@ $ kamctl rpc htable.dump htable
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>dbmode</emphasis> - if set to 1, the content of hash
-			table is written to database table when the SIP server is stopped
-			(i.e., ensure persistency over restarts). Default value is 0 (no
-			write back to db table).
+			<emphasis>dbmode</emphasis> - if set to 1, the content of the hash
+			table is written to its configured database table or file path when the
+			SIP server is stopped (i.e., ensure persistency over restarts). File
+			write-back uses an atomic replacement. Default value is 0 (no write-back).
 		</para>
 		</listitem>
 		<listitem>
@@ -478,6 +525,7 @@ if (!strempty($var(customer_name))) {
 modparam("htable", "htable", "a=&gt;size=4;autoexpire=7200;dbtable=htable_a;")
 modparam("htable", "htable", "b=&gt;size=5;")
 modparam("htable", "htable", "c=&gt;size=4;autoexpire=7200;initval=1;dmqreplicate=1;")
+modparam("htable", "htable", "d=&gt;size=4;autoexpire=7200;fpath=/var/lib/kamailio/d.ht;ftype=1;dbmode=1;")
 ...
 </programlisting>
 		</example>
