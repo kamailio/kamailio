@@ -206,6 +206,11 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg, struct cell *t,
 	str rr_set;
 	struct socket_info *callee_bind_address = NULL;
 
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse headers\n");
+		goto error0;
+	}
+
 	if(leg == DLG_CALLER_LEG)
 		dlg->caller_bind_addr = msg->rcv.bind_address;
 	else
@@ -246,12 +251,6 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg, struct cell *t,
 		goto error0;
 	}
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
-
-	/* extract the RR parts */
-	if(!msg->record_route && (parse_headers(msg, HDR_EOH_F, 0) < 0)) {
-		LM_ERR("failed to parse record route header\n");
-		goto error0;
-	}
 
 	skip_recs = 0;
 	if(leg != DLG_CALLER_LEG) {
