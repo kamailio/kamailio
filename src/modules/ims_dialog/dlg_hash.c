@@ -908,6 +908,9 @@ struct dlg_cell *lookup_dlg(unsigned int h_entry, unsigned int h_id)
 	struct dlg_cell *dlg;
 	struct dlg_entry *d_entry;
 
+	if(d_table == NULL)
+		return 0;
+
 	if(h_entry >= d_table->size)
 		goto not_found;
 
