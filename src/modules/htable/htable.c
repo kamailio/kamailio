@@ -44,6 +44,7 @@
 #include "../../core/pvar.h"
 #include "ht_api.h"
 #include "ht_db.h"
+#include "ht_file.h"
 #include "ht_var.h"
 #include "api.h"
 #include "ht_dmq.h"
@@ -240,6 +241,8 @@ static int mod_init(void)
 		}
 		ht_db_close_con();
 	}
+	if(ht_file_load_tables() != 0)
+		return -1;
 	if(ht_has_autoexpire()) {
 		LM_DBG("starting auto-expire timer\n");
 		if(ht_timer_interval <= 0)
@@ -347,6 +350,9 @@ done:
  */
 static void destroy(void)
 {
+	/* sync back to files */
+	ht_file_sync_tables();
+
 	/* sync back to db */
 	if(ht_db_url.len > 0) {
 		if(ht_db_init_con() == 0) {
