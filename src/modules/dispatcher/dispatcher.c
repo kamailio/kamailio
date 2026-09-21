@@ -68,6 +68,7 @@ MODULE_VERSION
 #define DS_DEST_FLAGS_COL		"flags"
 #define DS_DEST_PRIORITY_COL	"priority"
 #define DS_DEST_ATTRS_COL		"attrs"
+#define DS_DEST_ID_COL			"id"
 #define DS_TABLE_NAME			"dispatcher"
 
 /** parameters */
@@ -143,6 +144,7 @@ str ds_dest_uri_col      = str_init(DS_DEST_URI_COL);
 str ds_dest_flags_col    = str_init(DS_DEST_FLAGS_COL);
 str ds_dest_priority_col = str_init(DS_DEST_PRIORITY_COL);
 str ds_dest_attrs_col    = str_init(DS_DEST_ATTRS_COL);
+str ds_dest_id_col       = str_init(DS_DEST_ID_COL);
 str ds_table_name        = str_init(DS_TABLE_NAME);
 
 str ds_setid_pvname   = STR_NULL;
@@ -297,6 +299,7 @@ static param_export_t params[]={
 	{"flags_col",       PARAM_STR, &ds_dest_flags_col},
 	{"priority_col",    PARAM_STR, &ds_dest_priority_col},
 	{"attrs_col",       PARAM_STR, &ds_dest_attrs_col},
+	{"id_col",          PARAM_STR, &ds_dest_id_col},
 	{"force_dst",       PARAM_INT, &ds_force_dst},
 	{"flags",           PARAM_INT, &ds_flags},
 	{"use_default",     PARAM_INT, &ds_use_default},
@@ -1939,6 +1942,28 @@ static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 	return;
 }
 
+static const char *dispatcher_rpc_reload_db_id_doc[2] = {
+		"Reload a single dispatcher entry", 0};
+
+static void dispatcher_rpc_reload_db_id(rpc_t *rpc, void *ctx)
+{
+        unsigned int target_id;
+
+        if(rpc->scan(ctx, "u", &target_id) != 1) {
+                rpc->fault(ctx, 500, "Invalid Parameters");
+                return;
+        }
+
+        if(ds_reload_db_id(target_id) < 0) {
+                rpc->fault(ctx, 500, "Reload Failed");
+                return;
+        }
+
+        rpc->rpl_printf(ctx,
+                "Ok. Dispatcher target %u successfully reloaded.",
+                target_id);
+}
+
 
 static const char *dispatcher_rpc_list_doc[2] = {
 		"Return the content of dispatcher sets", 0};
@@ -2320,7 +2345,7 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 		attrs.len = 0;
 	}
 
-	if(ds_add_dst(group, &dest, flags, priority, &attrs) != 0) {
+	if(ds_add_dst(group, &dest, flags, priority, &attrs, 0) != 0) {
 		rpc->fault(ctx, 500, "Adding dispatcher dst failed");
 		return;
 	}
@@ -2466,6 +2491,8 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 rpc_export_t dispatcher_rpc_cmds[] = {
 	{"dispatcher.reload", dispatcher_rpc_reload,
 		dispatcher_rpc_reload_doc, 0},
+	{"dispatcher.reload_id", dispatcher_rpc_reload_db_id,
+		dispatcher_rpc_reload_db_id_doc, 0},
 	{"dispatcher.list",   dispatcher_rpc_list,
 		dispatcher_rpc_list_doc,   0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
