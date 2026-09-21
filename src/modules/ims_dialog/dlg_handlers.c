@@ -1139,7 +1139,8 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 		goto done;
 	}
 
-	if((event == DLG_EVENT_REQ || event == DLG_EVENT_REQACK)
+	if((event == DLG_EVENT_REQ || event == DLG_EVENT_REQACK
+			   || event == DLG_EVENT_REQPRACK)
 			&& (new_state == DLG_STATE_CONFIRMED
 					|| new_state == DLG_STATE_EARLY)) {
 
