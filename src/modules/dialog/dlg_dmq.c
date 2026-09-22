@@ -41,6 +41,7 @@ int dlg_dmq_request_sync(dmq_node_t *dmq_node);
 extern int dlg_enable_stats;
 extern str dlg_dmq_peer_id;
 extern int dlg_dmq_ka_iflags_sync;
+extern int dlg_dmq_timeout_iflags_sync;
 extern int dlg_dmq_load_callbacks;
 
 /**
@@ -119,6 +120,7 @@ int dlg_dmq_handle_msg(
 	unsigned int state = 1;
 	unsigned int lm = 0;
 	unsigned int iflags = 0;
+	unsigned int iflags_mask = 0;
 	srjson_t *vj;
 	int newdlg = 0;
 	dlg_entry_t *d_entry = NULL;
@@ -304,9 +306,16 @@ int dlg_dmq_handle_msg(
 			if(lifetime > 0)
 				dlg->lifetime = lifetime;
 
-			if(dlg_dmq_ka_iflags_sync != 0 && iflags > 0) {
-				/* sync only keep-alive flags from owner */
-				dlg->iflags |= (iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_DST));
+			/* sync only the enabled internal flags from owner */
+			iflags_mask = 0;
+			if(dlg_dmq_ka_iflags_sync != 0) {
+				iflags_mask |= (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_DST);
+			}
+			if(dlg_dmq_timeout_iflags_sync != 0) {
+				iflags_mask |= DLG_IFLAG_TIMEOUTBYE;
+			}
+			if(iflags_mask != 0 && iflags > 0) {
+				dlg->iflags |= (iflags & iflags_mask);
 			}
 
 			vj = srjson_GetObjectItem(&jdoc, jdoc.root, "vars");
@@ -636,7 +645,8 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
 			dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
 			dlg->dflags &= ~DLG_FLAG_CHANGED_PROF;
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts", dlg->init_ts);
-			if(dlg_dmq_ka_iflags_sync != 0) {
+			if(dlg_dmq_ka_iflags_sync != 0
+					|| dlg_dmq_timeout_iflags_sync != 0) {
 				/* send iflags from owner */
 				srjson_AddNumberToObject(
 						&jdoc, jdoc.root, "iflags", dlg->iflags);
