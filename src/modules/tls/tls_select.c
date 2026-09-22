@@ -173,6 +173,7 @@ static int get_cert(
 	extra = get_extra(*c);
 	if(!extra)
 		goto err;
+	/* both branches return a new reference - caller must X509_free() it */
 	*cert = my ? x509_DER_to_cert(extra->ssl_my_cert, extra->ssl_my_cert_len)
 			   : x509_DER_to_cert(
 						 extra->ssl_peer_cert, extra->ssl_peer_cert_len);
@@ -415,8 +416,7 @@ static int get_cert_version(str *res, int local, sip_msg_t *msg)
 	version = int2str(X509_get_version(cert), &res->len);
 	memcpy(buf, version, res->len);
 	res->s = buf;
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 }
@@ -623,15 +623,13 @@ static int get_validity(str *res, int local, int bound, sip_msg_t *msg)
 	res->len = p->length;
 
 	BIO_free(mem);
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 err:
 	if(mem)
 		BIO_free(mem);
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -716,8 +714,7 @@ static int get_sn(str *res, int local, sip_msg_t *msg)
 	memcpy(buf, sn, res->len);
 	res->s = buf;
 
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 
 	BN_free(bn);
@@ -729,6 +726,8 @@ error:
 		OPENSSL_free(sn);
 	if(bn)
 		BN_free(bn);
+	X509_free(cert);
+	tcpconn_put(c);
 	return -1;
 }
 
@@ -847,14 +846,12 @@ static int get_ssl_cert(str *res, int local, int urlencoded, sip_msg_t *msg)
 		res->len = len;
 	}
 
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
 err:
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -963,14 +960,14 @@ static int sel_ssl_verified_cert_chain(str *res, select_t *s, sip_msg_t *msg)
 	if(s->params[s->n - 1].type == SEL_PARAM_INT) {
 		i = s->params[s->n - 1].v.i;
 	} else
-		return -1;
+		goto err;
 
 	if(i < 0 || i >= sk_X509_num(chain))
-		return -1;
+		goto err;
 
 	cert = sk_X509_value(chain, i);
 	if(!cert)
-		return -1;
+		goto err;
 
 	if(cert_to_buf(cert, &buf, &len) < 0) {
 		ERR("cert to buf failed\n");
@@ -980,10 +977,13 @@ static int sel_ssl_verified_cert_chain(str *res, select_t *s, sip_msg_t *msg)
 	res->s = buf;
 	res->len = len;
 
+	/* x509_DER_to_stack() returned an owned stack - free it */
+	sk_X509_pop_free(chain, X509_free);
 	tcpconn_put(c);
 	return 0;
 
 err:
+	sk_X509_pop_free(chain, X509_free);
 	tcpconn_put(c);
 	return -1;
 }
@@ -1021,8 +1021,7 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 		}
 		res->s = buf;
 		res->len = strlen(buf);
-		if(!local)
-			X509_free(cert);
+		X509_free(cert);
 		tcpconn_put(c);
 		return 0;
 	}
@@ -1071,16 +1070,14 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 	res->len = text_len;
 
 	OPENSSL_free(text_s);
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
 err:
 	if(text_s)
 		OPENSSL_free(text_s);
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -1286,15 +1283,13 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 
 	if(names)
 		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 err:
 	if(names)
 		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -1427,15 +1422,15 @@ static int get_alt_count(long *res, int local, int type, sip_msg_t *msg)
 	}
 	if(names)
 		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
-	if(!local)
-		X509_free(cert);
+	X509_free(cert);
 
 	*res = found;
 	tcpconn_put(c);
 	return 0;
 err:
-	if(!local)
-		X509_free(cert);
+	if(names)
+		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
+	X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -1721,6 +1716,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 					== NULL) {
 				goto error;
 			}
+			X509_free(cert);
 			tcpconn_put(c);
 			return pv_get_strzval(msg, param, res, sv.s);
 			break;
@@ -1733,6 +1729,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 					== NULL) {
 				goto error;
 			}
+			X509_free(cert);
 			tcpconn_put(c);
 			return pv_get_strzval(msg, param, res, sv.s);
 			break;
@@ -1742,6 +1739,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 error:
+	X509_free(cert);
 	tcpconn_put(c);
 	return pv_get_null(msg, param, res);
 }

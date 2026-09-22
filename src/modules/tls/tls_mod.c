@@ -411,6 +411,10 @@ static int mod_init(void)
 	int verify_client;
 
 	tls_config_rev = shm_malloc(sizeof(int));
+	if(tls_config_rev == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
 	*tls_config_rev =
 			0; /* the version is increased in RPC process on tls.reload */
 

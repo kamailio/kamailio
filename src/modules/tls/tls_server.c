@@ -567,7 +567,11 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 	sni = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if(sni != NULL) {
 		tls_c->ssl_servername = shm_malloc(strlen(sni) + 1);
-		strcpy(tls_c->ssl_servername, sni);
+		if(tls_c->ssl_servername == NULL) {
+			SHM_MEM_ERROR;
+		} else {
+			strcpy(tls_c->ssl_servername, sni);
+		}
 	}
 
 	strcpy(tls_c->ssl_cipher_desc, "unknown");
@@ -578,7 +582,11 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 		cipher_name = SSL_CIPHER_get_name(cipher);
 		if(cipher_name) {
 			tls_c->ssl_cipher_name = shm_malloc(strlen(cipher_name) + 1);
-			strcpy(tls_c->ssl_cipher_name, cipher_name);
+			if(tls_c->ssl_cipher_name == NULL) {
+				SHM_MEM_ERROR;
+			} else {
+				strcpy(tls_c->ssl_cipher_name, cipher_name);
+			}
 		}
 		tls_c->ssl_cipher_bits = SSL_CIPHER_get_bits(cipher, &alg_bits);
 
@@ -1463,6 +1471,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	tcpx_task_result_t *rtask = NULL;
 	tls_encode_params_t *eparams = NULL;
 	char *ps = NULL;
+	const char *obuf = NULL;
 	int ret = 0;
 
 	LM_DBG("preparing task for tcp main process threads\n");
@@ -1481,6 +1490,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	ps = (char *)eparams + sizeof(tls_encode_params_t);
 
 	eparams->c = c;
+	obuf = *pbuf; /* caller plaintext buffer - rest_buf is an offset into it */
 	eparams->pbuf = ps;
 	memcpy(eparams->pbuf, *pbuf, *plen);
 	eparams->plen = *plen;
@@ -1509,7 +1519,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	*pbuf = eparams->pbuf;
 	*plen = eparams->plen;
 	if(eparams->rest_buf != NULL) {
-		*rest_buf = *pbuf + (eparams->rest_buf - ps);
+		*rest_buf = obuf + (eparams->rest_buf - ps);
 	}
 	*rest_len = eparams->rest_len;
 	if(send_flags != NULL) {
