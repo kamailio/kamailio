@@ -32,8 +32,8 @@ enum tlsf_public
 enum tlsf_private
 {
 #if defined(TLSF_64BIT)
-	/* All allocation sizes and addresses are aligned to 8 bytes. */
-	ALIGN_SIZE_LOG2 = 3,
+	/* Match the alignment guaranteed by malloc on supported 64-bit ABIs. */
+	ALIGN_SIZE_LOG2 = 4,
 #else
 	/* All allocation sizes and addresses are aligned to 4 bytes. */
 	ALIGN_SIZE_LOG2 = 2,
@@ -43,9 +43,9 @@ enum tlsf_private
 /*
 	** We support allocations of sizes up to (1 << FL_INDEX_MAX) bits.
 	** However, because we linearly subdivide the second-level lists, and
-	** our minimum size granularity is 4 bytes, it doesn't make sense to
-	** create first-level lists for sizes smaller than SL_INDEX_COUNT * 4,
-	** or (1 << (SL_INDEX_COUNT_LOG2 + 2)) bytes, as there we will be
+	** our minimum size granularity is ALIGN_SIZE bytes, it doesn't make sense
+	** to create first-level lists for sizes smaller than
+	** SL_INDEX_COUNT * ALIGN_SIZE, as there we will be
 	** trying to split size ranges into more slots than we have available.
 	** Instead, we calculate the minimum threshold size, and place all
 	** blocks below that size into the 0th first-level list.
@@ -74,6 +74,7 @@ enum tlsf_private
 #define tlsf_cast(t, exp) ((t)(exp))
 #define tlsf_min(a, b) ((a) < (b) ? (a) : (b))
 #define tlsf_max(a, b) ((a) > (b) ? (a) : (b))
+#define tlsf_align_up_const(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 
 /*
 ** Set assert macro, if it has not been provided by the user.
@@ -100,6 +101,7 @@ tlsf_static_assert(sizeof(size_t) * CHAR_BIT <= 64);
 tlsf_static_assert(sizeof(unsigned int) * CHAR_BIT >= SL_INDEX_COUNT);
 
 /* Ensure we've properly tuned our sizes. */
+tlsf_static_assert(0 == (ALIGN_SIZE & (ALIGN_SIZE - 1)));
 tlsf_static_assert(ALIGN_SIZE == SMALL_BLOCK_SIZE / SL_INDEX_COUNT);
 
 /*
@@ -155,24 +157,41 @@ static const size_t block_header_prev_free_bit = 1 << 1;
 ** The prev_phys_block field is stored *inside* the previous free block.
 */
 #ifdef DBG_TLSF_MALLOC
-static const size_t block_header_overhead =
-		sizeof(size_t) + sizeof(alloc_info_t);
+#define BLOCK_HEADER_OVERHEAD_RAW (sizeof(size_t) + sizeof(alloc_info_t))
 #else
-static const size_t block_header_overhead = sizeof(size_t);
+#define BLOCK_HEADER_OVERHEAD_RAW sizeof(size_t)
 #endif
 
-/* User data starts directly after the size field in a used block. */
+/*
+** The physical overhead between consecutive user areas must have the same
+** alignment as the user areas. Otherwise each split would move the next
+** allocation off alignment by the unaligned portion of the header.
+*/
+static const size_t block_header_overhead =
+		tlsf_align_up_const(BLOCK_HEADER_OVERHEAD_RAW, ALIGN_SIZE);
+
+/*
+** User data starts after the previous-block pointer and the aligned header.
+** Any padding after the size field overlaps free-list metadata while the
+** block is free, so it does not require additional free-block storage.
+*/
 static const size_t block_start_offset =
-		offsetof(block_header_t, size) + sizeof(size_t);
+		sizeof(block_header_t *)
+		+ tlsf_align_up_const(BLOCK_HEADER_OVERHEAD_RAW, ALIGN_SIZE);
 
 /*
 ** A free block must be large enough to store its header minus the size of
 ** the prev_phys_block field, and no larger than the number of addressable
 ** bits for FL_INDEX.
 */
-static const size_t block_size_min =
-		sizeof(block_header_t) - sizeof(block_header_t *);
+static const size_t block_size_min = tlsf_align_up_const(
+		sizeof(block_header_t) - sizeof(block_header_t *), ALIGN_SIZE);
 static const size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
+
+tlsf_static_assert(
+		0
+		== (tlsf_align_up_const(BLOCK_HEADER_OVERHEAD_RAW, ALIGN_SIZE)
+				% ALIGN_SIZE));
 
 #define TLSF_INCREASE_REAL_USED(control, increment)                          \
 	do {                                                                     \
@@ -484,7 +503,7 @@ static void block_insert(control_t *control, block_header_t *block)
 
 static int block_can_split(block_header_t *block, size_t size)
 {
-	return block_size(block) >= sizeof(block_header_t) + size;
+	return block_size(block) >= size + block_header_overhead + block_size_min;
 }
 
 /* Split a block into two, the second of which is free. */
@@ -757,7 +776,7 @@ static void default_walker(void *ptr, size_t size, int used, void *user)
 void tlsf_walk_pool(pool_t pool, tlsf_walker walker, void *user)
 {
 	tlsf_walker pool_walker = walker ? walker : default_walker;
-	block_header_t *block = pool + tlsf_size() - sizeof(block_header_t *);
+	block_header_t *block = offset_to_block(pool, -(tlsfptr_t)sizeof(size_t));
 
 	while(block && !block_is_last(block)) {
 		pool_walker(block_to_ptr(block), block_size(block),
@@ -787,11 +806,11 @@ int tlsf_check_pool(pool_t pool)
 
 /*
 ** Size of the TLSF structures in a given memory block passed to
-** tlsf_create, equal to the size of a control_t
+** tlsf_create, equal to the aligned size of a control_t
 */
 size_t tlsf_size()
 {
-	return sizeof(control_t);
+	return align_up(sizeof(control_t), ALIGN_SIZE);
 }
 
 size_t tlsf_align_size()
@@ -857,9 +876,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void *mem, size_t bytes)
 	** so that the prev_phys_block field falls outside of the pool -
 	** it will never be used.
 	*/
-	block = mem
-			- sizeof(
-					size_t); /*offset_to_block(mem, -(tlsfptr_t)block_header_overhead);*/
+	block = offset_to_block(mem, -(tlsfptr_t)sizeof(size_t));
 	block_set_size(block, pool_bytes);
 	block_set_free(block);
 	block_set_prev_used(block);
@@ -882,7 +899,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void *mem, size_t bytes)
 void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 {
 	control_t *control = tlsf_cast(control_t *, tlsf);
-	block_header_t *block = offset_to_block(pool, -(int)block_header_overhead);
+	block_header_t *block = offset_to_block(pool, -(tlsfptr_t)sizeof(size_t));
 
 	int fl = 0, sl = 0;
 
