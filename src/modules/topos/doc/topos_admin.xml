@@ -589,6 +589,48 @@ modparam("topos", "sn_refresh_topology", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.handle_unmask_miss">
+		<title><varname>handle_unmask_miss</varname> (int)</title>
+		<para>
+			Handles the "unmask-miss" race that can happen in an active-active
+			cluster with topos_htable storage: roamed in-dialog request
+			(e.g. ACK after initial INVITE)	before KDMQ synced for topos_dialog.
+		</para>
+		<para>
+			When enabled, and "unmask-miss" happens, leaves ruri masked and adds
+			<emphasis>P-TPS-Owner</emphasis> header with hint for original owner.
+			The configuration must, in the within-dialog route and
+			<emphasis>before</emphasis> <function>loose_route()</function>,
+			use that hint as <emphasis>$du</emphasis>, and relay
+			the still-masked request to the owner, for example:
+		</para>
+		<programlisting format="linespecific">
+...
+if ($rU =~ "^[ab]tpsh-") {             # topos left it masked => unmask-miss
+    if (is_present_hf("P-TPS-Owner")) {
+        $du = $hdr(P-TPS-Owner);       # forced dst, masked ruri preserved
+        remove_hf("P-TPS-Owner");
+        t_relay();
+    }
+    exit;
+}
+loose_route();
+...
+</programlisting>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>handle_unmask_miss</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "handle_unmask_miss", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="topos.p.context">
 		<title><varname>context</varname> (str)</title>
 		<para>

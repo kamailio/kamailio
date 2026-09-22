@@ -89,6 +89,7 @@ int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
 int _tps_header_mode = 0;
 int _tps_sn_refresh_topology = 0;
+int _tps_handle_unmask_miss = 0;
 str _tps_storage = str_init("db");
 str _tps_methods_update_time_list = str_init("SUBSCRIBE");
 
@@ -191,6 +192,7 @@ static param_export_t params[] = {
 	{"xavu_field_b_contact_host", PARAM_STR, &_tps_xavu_field_bcontact_host},
 	{"rr_update", PARAM_INT, &_tps_rr_update},
 	{"sn_refresh_topology", PARAM_INT, &_tps_sn_refresh_topology},
+	{"handle_unmask_miss", PARAM_INT, &_tps_handle_unmask_miss},
 	{"context", PARAM_STR, &_tps_context_param},
 	{"methods_nocontact", PARAM_STR, &_tps_methods_nocontact_list},
 	{"methods_noinitial", PARAM_STR, &_tps_methods_noinitial_list},
