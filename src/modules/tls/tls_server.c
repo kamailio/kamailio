@@ -567,7 +567,11 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 	sni = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if(sni != NULL) {
 		tls_c->ssl_servername = shm_malloc(strlen(sni) + 1);
-		strcpy(tls_c->ssl_servername, sni);
+		if(tls_c->ssl_servername == NULL) {
+			SHM_MEM_ERROR;
+		} else {
+			strcpy(tls_c->ssl_servername, sni);
+		}
 	}
 
 	strcpy(tls_c->ssl_cipher_desc, "unknown");
@@ -578,7 +582,11 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 		cipher_name = SSL_CIPHER_get_name(cipher);
 		if(cipher_name) {
 			tls_c->ssl_cipher_name = shm_malloc(strlen(cipher_name) + 1);
-			strcpy(tls_c->ssl_cipher_name, cipher_name);
+			if(tls_c->ssl_cipher_name == NULL) {
+				SHM_MEM_ERROR;
+			} else {
+				strcpy(tls_c->ssl_cipher_name, cipher_name);
+			}
 		}
 		tls_c->ssl_cipher_bits = SSL_CIPHER_get_bits(cipher, &alg_bits);
 
