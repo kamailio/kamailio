@@ -422,7 +422,7 @@ static int get_ck_ik(const struct sip_msg *m, str *ck, str *ik)
 	}
 
 	*ik = get_www_auth_param("ik", www_auth);
-	if(ck->len == 0) {
+	if(ik->len == 0) {
 		LM_ERR("Error getting IK\n");
 		return -1;
 	}
@@ -463,8 +463,7 @@ static int update_contact_ipsec_params(
 
 	// Reuse only if both CK and IK match.
 	if(s_old && s_old->ck.s != NULL && s_old->ik.s != NULL
-			&& strcmp(s_old->ck.s, s->ck.s) == 0
-			&& strcmp(s_old->ik.s, s->ik.s) == 0) {
+			&& STR_EQ(s_old->ck, s->ck) && STR_EQ(s_old->ik, s->ik)) {
 		if(s_old->spi_pc && s_old->spi_ps && s_old->port_pc && s_old->port_ps) {
 			LM_INFO("Reusing IPSEC tunnel\n");
 			s->spi_pc = s_old->spi_pc;
