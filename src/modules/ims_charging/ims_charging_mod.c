@@ -60,7 +60,7 @@ int ro_db_mode = DB_MODE_NONE;
 char *domain = "location";
 
 client_ro_cfg cfg = {
-		str_init(""), str_init(""), str_init(""), str_init(""), 0, 0};
+		str_init(""), str_init(""), str_init(""), str_init(""), 0, 0, 0, 0};
 
 static str custom_user_spec = {NULL, 0};
 static str app_provided_party_spec = {NULL, 0};
