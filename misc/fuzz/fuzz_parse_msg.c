@@ -12,6 +12,11 @@
 #include "../parser/parse_diversion.h"
 #include "../parser/parse_identityinfo.h"
 #include "../parser/parse_disposition.h"
+#include "../parser/parse_allow.h"
+#include "../parser/parse_date.h"
+#include "../parser/parse_event.h"
+#include "../parser/parse_expires.h"
+#include "../parser/parse_identity.h"
 #include "../tcp_conn.h"
 #include "../tcp_read.h"
 
@@ -118,6 +123,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	parse_record_route_headers(&orig_inv);
 
 	parse_route_headers(&orig_inv);
+
+	parse_date_header(&orig_inv);
+
+	parse_identity_header(&orig_inv);
+
+	parse_allow(&orig_inv);
+
+	if(orig_inv.expires != NULL) {
+		parse_expires(orig_inv.expires);
+	}
+
+	if(orig_inv.event != NULL) {
+		parse_event(orig_inv.event);
+	}
 
 	str uri;
 	get_src_uri(&orig_inv, 0, &uri);
