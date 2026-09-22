@@ -36,6 +36,11 @@
 		The REGISTER and PUBLISH requests are skipped from processing
 		by this module, expected to be terminated on a local SIP server.
 	</para>
+	<para>
+		If received SIP contains any internal headers like P-SR-XUID or P-SR-XBranch,
+		all of them are stripped from the received SIP message. If any error happens
+		on this operation, SIP message is completely dropped.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -585,6 +590,73 @@ modparam("topos", "rr_update", 1)
 		<programlisting format="linespecific">
 ...
 modparam("topos", "sn_refresh_topology", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.dlg_mode">
+		<title><varname>dlg_mode</varname> (int)</title>
+		<para>
+			This modparam controls how in-dialog requests are handled when
+			the topos dialog data on the local instance is incomplete
+			(e.g. has no contact to send the request to).
+			In an active-active cluster with topos_htable storage, the topos dialog
+			data can be only partially synced: an in-dialog request can roam to
+			another node before the topos dialog data is synced via KDMQ.
+		</para>
+		<para>
+			If set to 0 (default), it relies more on client retransmissions
+			(e.g., ACK routing is recovered only by the 200 OK retransmissions).
+			If set to 1, <emphasis>P-TPS-Owner</emphasis> header is added
+			with the address of the topos dialog "owner".
+			The topos dialog "owner" is the node that handled the initial
+			INVITE request and its reply, having the complete topos dialog data.
+		</para>
+		<para>
+			When set to 1, the configuration must, in the within-dialog route and
+			<emphasis>before</emphasis> <function>loose_route()</function>,
+			use <emphasis>P-TPS-Owner</emphasis> as <emphasis>$du</emphasis>,
+			and relay the still-masked request to the owner, for example:
+		</para>
+		<programlisting format="linespecific">
+...
+if ($rU =~ "^[ab]tpsh-") {             # topos left it masked
+    if (is_present_hf("P-TPS-Owner")) {
+        $du = $hdr(P-TPS-Owner);       # forced dst, masked ruri preserved
+        remove_hf("P-TPS-Owner");
+        t_relay();
+    }
+    exit;
+}
+loose_route();
+...
+</programlisting>
+		<para>
+			<emphasis>P-TPS-Owner</emphasis> is a topos-internal header.
+			When this modparam is set to 1, any headers with same name
+			arriving from the wire are stripped on the receiving path,
+			so the value read by the configuration is always the one topos generated locally.
+			This prevents a spoofed <emphasis>P-TPS-Owner</emphasis>
+			from being used as a forced destination.
+		</para>
+		<para>
+			WARNING: if an error happens while stripping that header,
+			the received SIP message is dropped entirely and does not enter routing logic!
+		</para>
+		<para>
+			WARNING: if one already uses "incoming" event route to skip some traffic from topos, he MUST
+			switch to "receiving" event route; otherwise spoofing of this header is still possible!
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dlg_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "dlg_mode", 1)
 ...
 </programlisting>
 		</example>
