@@ -81,6 +81,7 @@ sruid_t _tps_sruid;
 
 extern str tt_table_name;
 extern str td_table_name;
+extern str _tps_owner_hname;
 
 /** module parameters */
 static str _tps_db_url = str_init(DEFAULT_DB_URL);
@@ -545,6 +546,7 @@ int tps_msg_received(sr_event_param_t *evp)
 	char *nbuf = NULL;
 	int dialog;
 	int ret;
+	int nstrip = 0;
 
 	ki_tps_set_context(NULL, NULL);
 
@@ -568,13 +570,27 @@ int tps_msg_received(sr_event_param_t *evp)
 		goto done;
 	}
 
+	/* Remove any bogus pre-existing headers that topos uses internally */
+	nstrip = tps_remove_internal_headers(&msg);
+	if(nstrip < 0) {
+		/* drop the entire SIP message if issues with topos internal header remove */
+		obuf->len = 0;
+		goto done;
+	}
+
 	if(tps_skip_msg(&msg)) {
+		if(nstrip > 0) {
+			goto update;
+		}
 		goto done;
 	}
 
 	if(tps_execute_event_route(&msg, evp, TPS_EVENTRT_RECEIVING,
 			   _tps_eventrt_receiving, &_tps_eventrt_receiving_name)
 			== 1) {
+		if(nstrip > 0) {
+			goto update;
+		}
 		goto done;
 	}
 
@@ -582,6 +598,9 @@ int tps_msg_received(sr_event_param_t *evp)
 		if(_tps_sanity_checks != 0) {
 			if(_tps_scb.check_defaults(&msg) < 1) {
 				LM_ERR("sanity checks failed\n");
+				if(nstrip > 0) {
+					goto update;
+				}
 				goto done;
 			}
 		}
@@ -595,6 +614,7 @@ int tps_msg_received(sr_event_param_t *evp)
 		tps_response_received(&msg);
 	}
 
+update:
 	nbuf = tps_msg_update(&msg, (unsigned int *)&obuf->len);
 
 	if(nbuf == NULL) {

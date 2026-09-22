@@ -789,6 +789,7 @@ int tps_remove_name_headers(sip_msg_t *msg, str *hname)
 {
 	hdr_field_t *hf;
 	struct lump *l;
+	/* remove every occurrence, not just the first one */
 	for(hf = msg->headers; hf; hf = hf->next) {
 		if(hf->name.len == hname->len
 				&& strncasecmp(hf->name.s, hname->s, hname->len) == 0) {
@@ -798,12 +799,48 @@ int tps_remove_name_headers(sip_msg_t *msg, str *hname)
 						hname->s);
 				return -1;
 			}
-			return 0;
 		}
 	}
 	return 0;
 }
 
+/**
+ * @brief remove every topos-internal header in a SINGLE pass over the headers
+ * @return number of headers marked for removal (>=0), -1 on error
+ */
+int tps_remove_internal_headers(sip_msg_t *msg)
+{
+	str *names[4];
+	int nnames = 0;
+	hdr_field_t *hf;
+	struct lump *l;
+	int i;
+	int n = 0;
+
+	names[nnames++] = &_sr_hname_xuuid;
+	names[nnames++] = &_sr_hname_xbranch;
+	if(_tps_handle_unmask_miss) {
+		names[nnames++] = &_tps_owner_hname;
+	}
+
+	for(hf = msg->headers; hf; hf = hf->next) {
+		for(i = 0; i < nnames; i++) {
+			if(hf->name.len == names[i]->len
+					&& strncasecmp(hf->name.s, names[i]->s, hf->name.len)
+							   == 0) {
+				l = del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
+				if(l == 0) {
+					LM_CRIT("unable to delete header [%.*s]\n", names[i]->len,
+							names[i]->s);
+					return -1;
+				}
+				n++;
+				break;
+			}
+		}
+	}
+	return n;
+}
 
 /**
  *

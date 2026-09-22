@@ -36,6 +36,11 @@
 		The REGISTER and PUBLISH requests are skipped from processing
 		by this module, expected to be terminated on a local SIP server.
 	</para>
+	<para>
+		If received SIP contains any internal headers like P-SR-XUID or P-SR-XBranch,
+		all of them are stripped from the received SIP message. If any error happens
+		on this operation, SIP message is completely dropped.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -617,6 +622,22 @@ if ($rU =~ "^[ab]tpsh-") {             # topos left it masked => unmask-miss
 loose_route();
 ...
 </programlisting>
+		<para>
+			<emphasis>P-TPS-Owner</emphasis> is a topos-internal header.
+			When this modparam is enabled, any headers with same name
+			arriving from the wire are stripped on the receiving path,
+			so the value read by the configuration is always the one topos generated locally.
+			This prevents a spoofed <emphasis>P-TPS-Owner</emphasis>
+			from being used as a forced destination.
+		</para>
+		<para>
+			WARNING: if an error happens while stripping that header,
+			the received SIP message is dropped entirely and does not enter routing logic!
+		</para>
+		<para>
+			WARNING: if one already uses "incoming" event route to skip some traffic from topos, he MUST
+			switch to "receiving" event route; otherwise spoofing of this header is still possible!
+		</para>
 		<para>
 		<emphasis>
 			Default value is 0 (disabled).
