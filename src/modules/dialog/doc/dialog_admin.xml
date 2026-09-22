@@ -1486,6 +1486,36 @@ modparam("dialog", "dmq_ka_iflags_sync", 1)
 	</example>
     </section>
 
+	<section id="dialog.p.dmq_timeout_iflags_sync">
+		<title><varname>dmq_timeout_iflags_sync</varname> (int)</title>
+		<para>
+			If set to 1, the internal flag to send BYE on dialog timeout (set
+			with <varname>send_bye</varname> parameter or
+			$dlg_ctx(timeout_bye)=1) is carried in the dmq dialog replication
+			and applied on the receiving nodes. This way, the dialog timeout
+			can also be handled by another node than the one that created the
+			dialog.
+		</para>
+		<para>
+			Note that all nodes that have the dialog will send BYE on timeout.
+			If only one node must do it, use <varname>dlg_filter_mode</varname>
+			or the timeout event route to control it.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dmq_timeout_iflags_sync</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dmq_timeout_iflags_sync", 1)
+...
+</programlisting>
+	</example>
+    </section>
+
 	<section id="dialog.p.dmq_load_callbacks">
 		<title><varname>dmq_load_callbacks</varname> (int)</title>
 		<para>
