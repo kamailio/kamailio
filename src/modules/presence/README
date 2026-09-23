@@ -55,27 +55,28 @@ Juha Heinanen
               3.22. send_fast_notify (int)
               3.23. enable_sphere_check (int)
               3.24. timeout_rm_subs (int)
-              3.25. fetch_rows (integer)
-              3.26. db_table_lock_type (integer)
-              3.27. local_log_level (int)
-              3.28. local_log_facility (int)
-              3.29. subs_remove_match (int)
-              3.30. xavp_cfg (str)
-              3.31. retrieve_order (int)
-              3.32. retrieve_order_by (str)
-              3.33. sip_uri_match (int)
-              3.34. enable_dmq (integer)
-              3.35. enable_pres_dmq (integer)
-              3.36. enable_pres_sync_dmq (integer)
-              3.37. enable_subs_dmq (integer)
-              3.38. enable_subs_sync_dmq (integer)
-              3.39. skip_notify_dmq (integer)
-              3.40. default_socket (str)
-              3.41. pres_subs_mode (integer)
-              3.42. delete_same_subs (integer)
-              3.43. timer_mode (integer)
-              3.44. subs_respond_200 (integer)
-              3.45. dmq_peer_id (string)
+              3.25. refresh_record_route (int)
+              3.26. fetch_rows (integer)
+              3.27. db_table_lock_type (integer)
+              3.28. local_log_level (int)
+              3.29. local_log_facility (int)
+              3.30. subs_remove_match (int)
+              3.31. xavp_cfg (str)
+              3.32. retrieve_order (int)
+              3.33. retrieve_order_by (str)
+              3.34. sip_uri_match (int)
+              3.35. enable_dmq (integer)
+              3.36. enable_pres_dmq (integer)
+              3.37. enable_pres_sync_dmq (integer)
+              3.38. enable_subs_dmq (integer)
+              3.39. enable_subs_sync_dmq (integer)
+              3.40. skip_notify_dmq (integer)
+              3.41. default_socket (str)
+              3.42. pres_subs_mode (integer)
+              3.43. delete_same_subs (integer)
+              3.44. timer_mode (integer)
+              3.45. subs_respond_200 (integer)
+              3.46. dmq_peer_id (string)
 
         4. Functions
 
@@ -155,36 +156,37 @@ Juha Heinanen
    1.22. Set send_fast_notify parameter
    1.23. Set enable_sphere_check parameter
    1.24. Set timeout_rm_subs parameter
-   1.25. Set fetch_rows parameter
-   1.26. Set db_table_lock_type parameter
-   1.27. Set local_log_level parameter
-   1.28. Set local_log_facility parameter
-   1.29. Set subs_remove_match parameter
-   1.30. Set xavp_cfg parameter
-   1.31. Set retrieve_order parameter
-   1.32. Set retrieve_order_by parameter
-   1.33. Set sip_uri_match parameter
-   1.34. Set enable_dmq parameter
-   1.35. Set enable_pres_dmq parameter
-   1.36. Set enable_pres_sync_dmq parameter
-   1.37. Set enable_subs_dmq parameter
-   1.38. Set enable_subs_sync_dmq parameter
-   1.39. Set skip_notify_dmq parameter
-   1.40. Set default_socket parameter
-   1.41. Set pres_subs_mode parameter
-   1.42. Set delete_same_subs parameter
-   1.43. Set timer_mode parameter
-   1.44. Set subs_respond_200 parameter
-   1.45. Set dmq_peer_id parameter
-   1.46. handle_publish usage
-   1.47. handle_subscribe usage
-   1.48. pres_auth_status usage
-   1.49. pres_has_subscribers usage
-   1.50. pres_refresh_watchers usage
-   1.51. pres_update_watchers usage
-   1.52. $subs(name) usage
-   1.53. $notify_reply(name) usage
+   1.25. Set refresh_record_route parameter
+   1.26. Set fetch_rows parameter
+   1.27. Set db_table_lock_type parameter
+   1.28. Set local_log_level parameter
+   1.29. Set local_log_facility parameter
+   1.30. Set subs_remove_match parameter
+   1.31. Set xavp_cfg parameter
+   1.32. Set retrieve_order parameter
+   1.33. Set retrieve_order_by parameter
+   1.34. Set sip_uri_match parameter
+   1.35. Set enable_dmq parameter
+   1.36. Set enable_pres_dmq parameter
+   1.37. Set enable_pres_sync_dmq parameter
+   1.38. Set enable_subs_dmq parameter
+   1.39. Set enable_subs_sync_dmq parameter
+   1.40. Set skip_notify_dmq parameter
+   1.41. Set default_socket parameter
+   1.42. Set pres_subs_mode parameter
+   1.43. Set delete_same_subs parameter
+   1.44. Set timer_mode parameter
+   1.45. Set subs_respond_200 parameter
+   1.46. Set dmq_peer_id parameter
+   1.47. handle_publish usage
+   1.48. handle_subscribe usage
+   1.49. pres_auth_status usage
+   1.50. pres_has_subscribers usage
+   1.51. pres_refresh_watchers usage
+   1.52. pres_update_watchers usage
+   1.53. $subs(name) usage
    1.54. $notify_reply(name) usage
+   1.55. $notify_reply(name) usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -223,27 +225,28 @@ Chapter 1. Admin Guide
         3.22. send_fast_notify (int)
         3.23. enable_sphere_check (int)
         3.24. timeout_rm_subs (int)
-        3.25. fetch_rows (integer)
-        3.26. db_table_lock_type (integer)
-        3.27. local_log_level (int)
-        3.28. local_log_facility (int)
-        3.29. subs_remove_match (int)
-        3.30. xavp_cfg (str)
-        3.31. retrieve_order (int)
-        3.32. retrieve_order_by (str)
-        3.33. sip_uri_match (int)
-        3.34. enable_dmq (integer)
-        3.35. enable_pres_dmq (integer)
-        3.36. enable_pres_sync_dmq (integer)
-        3.37. enable_subs_dmq (integer)
-        3.38. enable_subs_sync_dmq (integer)
-        3.39. skip_notify_dmq (integer)
-        3.40. default_socket (str)
-        3.41. pres_subs_mode (integer)
-        3.42. delete_same_subs (integer)
-        3.43. timer_mode (integer)
-        3.44. subs_respond_200 (integer)
-        3.45. dmq_peer_id (string)
+        3.25. refresh_record_route (int)
+        3.26. fetch_rows (integer)
+        3.27. db_table_lock_type (integer)
+        3.28. local_log_level (int)
+        3.29. local_log_facility (int)
+        3.30. subs_remove_match (int)
+        3.31. xavp_cfg (str)
+        3.32. retrieve_order (int)
+        3.33. retrieve_order_by (str)
+        3.34. sip_uri_match (int)
+        3.35. enable_dmq (integer)
+        3.36. enable_pres_dmq (integer)
+        3.37. enable_pres_sync_dmq (integer)
+        3.38. enable_subs_dmq (integer)
+        3.39. enable_subs_sync_dmq (integer)
+        3.40. skip_notify_dmq (integer)
+        3.41. default_socket (str)
+        3.42. pres_subs_mode (integer)
+        3.43. delete_same_subs (integer)
+        3.44. timer_mode (integer)
+        3.45. subs_respond_200 (integer)
+        3.46. dmq_peer_id (string)
 
    4. Functions
 
@@ -345,27 +348,28 @@ Chapter 1. Admin Guide
    3.22. send_fast_notify (int)
    3.23. enable_sphere_check (int)
    3.24. timeout_rm_subs (int)
-   3.25. fetch_rows (integer)
-   3.26. db_table_lock_type (integer)
-   3.27. local_log_level (int)
-   3.28. local_log_facility (int)
-   3.29. subs_remove_match (int)
-   3.30. xavp_cfg (str)
-   3.31. retrieve_order (int)
-   3.32. retrieve_order_by (str)
-   3.33. sip_uri_match (int)
-   3.34. enable_dmq (integer)
-   3.35. enable_pres_dmq (integer)
-   3.36. enable_pres_sync_dmq (integer)
-   3.37. enable_subs_dmq (integer)
-   3.38. enable_subs_sync_dmq (integer)
-   3.39. skip_notify_dmq (integer)
-   3.40. default_socket (str)
-   3.41. pres_subs_mode (integer)
-   3.42. delete_same_subs (integer)
-   3.43. timer_mode (integer)
-   3.44. subs_respond_200 (integer)
-   3.45. dmq_peer_id (string)
+   3.25. refresh_record_route (int)
+   3.26. fetch_rows (integer)
+   3.27. db_table_lock_type (integer)
+   3.28. local_log_level (int)
+   3.29. local_log_facility (int)
+   3.30. subs_remove_match (int)
+   3.31. xavp_cfg (str)
+   3.32. retrieve_order (int)
+   3.33. retrieve_order_by (str)
+   3.34. sip_uri_match (int)
+   3.35. enable_dmq (integer)
+   3.36. enable_pres_dmq (integer)
+   3.37. enable_pres_sync_dmq (integer)
+   3.38. enable_subs_dmq (integer)
+   3.39. enable_subs_sync_dmq (integer)
+   3.40. skip_notify_dmq (integer)
+   3.41. default_socket (str)
+   3.42. pres_subs_mode (integer)
+   3.43. delete_same_subs (integer)
+   3.44. timer_mode (integer)
+   3.45. subs_respond_200 (integer)
+   3.46. dmq_peer_id (string)
 
 3.1. db_url(str)
 
@@ -740,18 +744,32 @@ modparam("presence", "enable_sphere_check", 1)
 modparam("presence", "timeout_rm_subs", 0)
 ...
 
-3.25. fetch_rows (integer)
+3.25. refresh_record_route (int)
+
+   If set to 1, the route set stored for a subscription is refreshed from
+   the Record-Route headers of every in-dialog SUBSCRIBE. An in-dialog
+   SUBSCRIBE without Record-Route headers does not change the stored route
+   set.
+
+   Default value is “0”.
+
+   Example 1.25. Set refresh_record_route parameter
+...
+modparam("presence", "refresh_record_route", 1)
+...
+
+3.26. fetch_rows (integer)
 
    Number of rows to be loaded in one step from database.
 
    Default value is 500.
 
-   Example 1.25. Set fetch_rows parameter
+   Example 1.26. Set fetch_rows parameter
 ...
 modparam("presence", "fetch_rows", 1000)
 ...
 
-3.26. db_table_lock_type (integer)
+3.27. db_table_lock_type (integer)
 
    Enable (=1) or disable (=0) the Locks for table during a transaction.
    Locking only the "current" table causes problems with a MySQL-Databases
@@ -764,35 +782,35 @@ modparam("presence", "fetch_rows", 1000)
 
    Default value is 1 (Write Lock for the Tables).
 
-   Example 1.26. Set db_table_lock_type parameter
+   Example 1.27. Set db_table_lock_type parameter
 ...
 modparam("presence", "db_table_lock_type", 0)
 ...
 
-3.27. local_log_level (int)
+3.28. local_log_level (int)
 
    Control log level for some debug messages inside the module.
 
    Default value is 2 (L_INFO).
 
-   Example 1.27. Set local_log_level parameter
+   Example 1.28. Set local_log_level parameter
 ...
 modparam("presence", "local_log_level", 3)
 ...
 
-3.28. local_log_facility (int)
+3.29. local_log_facility (int)
 
    Control syslog facility for some debug messages inside the module.
 
    Default value is taken from the core log_facility configuration
    parameter.
 
-   Example 1.28. Set local_log_facility parameter
+   Example 1.29. Set local_log_facility parameter
 ...
 modparam("presence", "local_log_facility", "LOG_LOCAL3")
 ...
 
-3.29. subs_remove_match (int)
+3.30. subs_remove_match (int)
 
    Control how to match the subscriptions to remove from memory. If set to
    0, then the match is done on To-Tag (local generated), if set to 1,
@@ -801,12 +819,12 @@ modparam("presence", "local_log_facility", "LOG_LOCAL3")
 
    Default value is 0.
 
-   Example 1.29. Set subs_remove_match parameter
+   Example 1.30. Set subs_remove_match parameter
 ...
 modparam("presence", "subs_remove_match", 1)
 ...
 
-3.30. xavp_cfg (str)
+3.31. xavp_cfg (str)
 
    The name of the xavp to be used to specify attributes for internal
    processing of presence module.
@@ -829,7 +847,7 @@ modparam("presence", "subs_remove_match", 1)
 
    Default value is empty (not set).
 
-   Example 1.30. Set xavp_cfg parameter
+   Example 1.31. Set xavp_cfg parameter
 ...
 modparam("presence", "xavp_cfg", "pres")
 ...
@@ -838,7 +856,7 @@ if(is_method("PUBLISH")) {
 }
 ...
 
-3.31. retrieve_order (int)
+3.32. retrieve_order (int)
 
    If set to 0, presentity records are retrieved by received_time order.
    If set to 1, presentity records are retrieved by the value of
@@ -846,24 +864,24 @@ if(is_method("PUBLISH")) {
 
    Default value is 0.
 
-   Example 1.31. Set retrieve_order parameter
+   Example 1.32. Set retrieve_order parameter
 ...
 modparam("presence", "retrieve_order", 1)
 ...
 
-3.32. retrieve_order_by (str)
+3.33. retrieve_order_by (str)
 
    Used to set the order-by of the db query for fetching the presence
    records when retrieve_order is set to 1.
 
    Default value is “priority”.
 
-   Example 1.32. Set retrieve_order_by parameter
+   Example 1.33. Set retrieve_order_by parameter
 ...
 modparam("presence", "retrieve_order_by", "priority, received_time")
 ...
 
-3.33. sip_uri_match (int)
+3.34. sip_uri_match (int)
 
    The mode used when comparing uris.
 
@@ -873,12 +891,12 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
 
    Default value is “0”.
 
-   Example 1.33. Set sip_uri_match parameter
+   Example 1.34. Set sip_uri_match parameter
 ...
 modparam("presence", "sip_uri_match", 1)
 ...
 
-3.34. enable_dmq (integer)
+3.35. enable_dmq (integer)
 
    If set to 1, will enable DMQ replication of presence data between
    nodes. Use this instead of a shared DB to share state across a cluster
@@ -890,12 +908,12 @@ modparam("presence", "sip_uri_match", 1)
 
    Default value is 0.
 
-   Example 1.34. Set enable_dmq parameter
+   Example 1.35. Set enable_dmq parameter
 ...
 modparam("presence", "enable_dmq", 1)
 ...
 
-3.35. enable_pres_dmq (integer)
+3.36. enable_pres_dmq (integer)
 
    If set to 1, will enable DMQ replication of presentities.
 
@@ -903,12 +921,12 @@ modparam("presence", "enable_dmq", 1)
 
    Default value is 1.
 
-   Example 1.35. Set enable_pres_dmq parameter
+   Example 1.36. Set enable_pres_dmq parameter
 ...
 modparam("presence", "enable_pres_dmq", 1)
 ...
 
-3.36. enable_pres_sync_dmq (integer)
+3.37. enable_pres_sync_dmq (integer)
 
    If set to 1, will enable initial synchronization of presentities state.
 
@@ -916,12 +934,12 @@ modparam("presence", "enable_pres_dmq", 1)
 
    Default value is 1.
 
-   Example 1.36. Set enable_pres_sync_dmq parameter
+   Example 1.37. Set enable_pres_sync_dmq parameter
 ...
 modparam("presence", "enable_pres_sync_dmq", 1)
 ...
 
-3.37. enable_subs_dmq (integer)
+3.38. enable_subs_dmq (integer)
 
    If set to 1, will enable DMQ replication of subscriptions.
 
@@ -929,12 +947,12 @@ modparam("presence", "enable_pres_sync_dmq", 1)
 
    Default value is 0.
 
-   Example 1.37. Set enable_subs_dmq parameter
+   Example 1.38. Set enable_subs_dmq parameter
 ...
 modparam("presence", "enable_subs_dmq", 1)
 ...
 
-3.38. enable_subs_sync_dmq (integer)
+3.39. enable_subs_sync_dmq (integer)
 
    If set to 1, will enable initial synchronization of subscriptions
    state.
@@ -943,23 +961,23 @@ modparam("presence", "enable_subs_dmq", 1)
 
    Default value is 1.
 
-   Example 1.38. Set enable_subs_sync_dmq parameter
+   Example 1.39. Set enable_subs_sync_dmq parameter
 ...
 modparam("presence", "enable_subs_sync_dmq", 1)
 ...
 
-3.39. skip_notify_dmq (integer)
+3.40. skip_notify_dmq (integer)
 
    Skip sending Notify messages if presentity was received by DMQ.
 
    Default value is 0.
 
-   Example 1.39. Set skip_notify_dmq parameter
+   Example 1.40. Set skip_notify_dmq parameter
 ...
 modparam("presence", "skip_notify_dmq", 1)
 ...
 
-3.40. default_socket (str)
+3.41. default_socket (str)
 
    Default socket name to rewrite socket info in subcription that was
    received by DMQ.
@@ -967,12 +985,12 @@ modparam("presence", "skip_notify_dmq", 1)
    By default is not defined. Socket info will be original value from DMQ
    message.
 
-   Example 1.40. Set default_socket parameter
+   Example 1.41. Set default_socket parameter
 ...
 modparam("presence", "default_socket", "udp:192.168.0.125:5060")
 ...
 
-3.41. pres_subs_mode (integer)
+3.42. pres_subs_mode (integer)
 
    Allow disabling cloning subscription structure for pv $subs(...),
    saving the pkg memory and copy operations for all its fields. If 1 the
@@ -980,35 +998,35 @@ modparam("presence", "default_socket", "udp:192.168.0.125:5060")
 
    Default value is 1.
 
-   Example 1.41. Set pres_subs_mode parameter
+   Example 1.42. Set pres_subs_mode parameter
 ...
 modparam("presence", "pres_subs_mode", 0)
 ...
 
-3.42. delete_same_subs (integer)
+3.43. delete_same_subs (integer)
 
    Enable deleting of subscriptions with the same presence uri and callid.
 
    Default value is 0 (disabled behavior).
 
-   Example 1.42. Set delete_same_subs parameter
+   Example 1.43. Set delete_same_subs parameter
 ...
 modparam("presence", "delete_same_subs", 1)
 ...
 
-3.43. timer_mode (integer)
+3.44. timer_mode (integer)
 
    Specify what timer process to be used. If set to 0, the core main timer
    is used. If set to 1, the core secondary timer is used.
 
    Default value is 1.
 
-   Example 1.43. Set timer_mode parameter
+   Example 1.44. Set timer_mode parameter
 ...
 modparam("presence", "timer_mode", 0)
 ...
 
-3.44. subs_respond_200 (integer)
+3.45. subs_respond_200 (integer)
 
    Specify the response code for accepted SUBSCRIBE requests. If set to 0,
    "202 Accepted" will be returned (default behaviour till version 5.5).
@@ -1017,12 +1035,12 @@ modparam("presence", "timer_mode", 0)
 
    Default value is 1.
 
-   Example 1.44. Set subs_respond_200 parameter
+   Example 1.45. Set subs_respond_200 parameter
 ...
 modparam("presence", "subs_respond_200", 0)
 ...
 
-3.45. dmq_peer_id (string)
+3.46. dmq_peer_id (string)
 
    The DMQ peer identifier for presence replication. This allows
    customizing the peer name used in DMQ communication, which can be
@@ -1030,7 +1048,7 @@ modparam("presence", "subs_respond_200", 0)
 
    Default value is “presence”.
 
-   Example 1.45. Set dmq_peer_id parameter
+   Example 1.46. Set dmq_peer_id parameter
 ...
 modparam("presence", "dmq_peer_id", "presence_6.1.1")
 ...
@@ -1064,7 +1082,7 @@ modparam("presence", "dmq_peer_id", "presence_6.1.1")
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.46. handle_publish usage
+   Example 1.47. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -1095,7 +1113,7 @@ modparam("presence", "dmq_peer_id", "presence_6.1.1")
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.47. handle_subscribe usage
+   Example 1.48. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -1114,7 +1132,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.48. pres_auth_status usage
+   Example 1.49. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -1132,7 +1150,7 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.49. pres_has_subscribers usage
+   Example 1.50. pres_has_subscribers usage
 ...
 if(pres_has_subscribers($var(uri), "message-summary"))
     # do something...;
@@ -1162,7 +1180,7 @@ if(pres_has_subscribers($var(uri), "message-summary"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.50. pres_refresh_watchers usage
+   Example 1.51. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
@@ -1180,7 +1198,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. pres_update_watchers usage
+   Example 1.52. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
@@ -1361,7 +1379,7 @@ kamctl rpc presence.watcher_list basic sip:alice@sipserver.com
      * flags
      * user_agent
 
-   Example 1.52. $subs(name) usage
+   Example 1.53. $subs(name) usage
 ...
 if(handle_subscription())
 {
@@ -1377,7 +1395,7 @@ if(handle_subscription())
 
    The “attr” can be any pseudo var that accesses attributes of msg
 
-   Example 1.53. $notify_reply(name) usage
+   Example 1.54. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
@@ -1393,7 +1411,7 @@ event_route[presence:notify-reply]
 
    Fired after notify reply is received or timeout.
 
-   Example 1.54. $notify_reply(name) usage
+   Example 1.55. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
