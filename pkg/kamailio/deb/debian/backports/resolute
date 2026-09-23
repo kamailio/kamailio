@@ -6,6 +6,11 @@ DIST=resolute
 rm -rf ${DIST}
 cp -r debian ${DIST}
 
+# default-libmysqlclient-dev
+sed -i -e 's/libmariadb-dev-compat/default-libmysqlclient-dev/' \
+  -e 's/mariadb-client/default-mysql-client/' \
+  ${DIST}/control
+
 # missing dependency at libphonenumber-dev
 sed -i -e '/^ libphonenumber-dev/a\ libicu-dev,' ${DIST}/control
 

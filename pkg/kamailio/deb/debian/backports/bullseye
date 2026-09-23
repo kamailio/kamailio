@@ -6,6 +6,11 @@ DIST=bullseye
 rm -rf ${DIST}
 cp -r debian ${DIST}
 
+# default-libmysqlclient-dev
+sed -i -e 's/libmariadb-dev-compat/default-libmysqlclient-dev/' \
+  -e 's/mariadb-client/default-mysql-client/' \
+  ${DIST}/control
+
 # cmake missing PostgreSQL_TYPE_INCLUDE_DIR
 sed -i '/^ libpq-dev,/a\ postgresql-server-dev-all,' ${DIST}/control
 
