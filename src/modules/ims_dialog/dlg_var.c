@@ -70,7 +70,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	memcpy(var->key.s, key->s, key->len);
 	/* set value */
 	var->value.len = val->len;
-	var->value.s = (char *)shm_malloc(var->value.len);
+	var->value.s = (char *)shm_malloc(var->value.len + 1);
 	if(var->value.s == NULL) {
 		shm_free(var->key.s);
 		shm_free(var);
