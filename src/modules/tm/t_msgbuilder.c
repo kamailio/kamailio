@@ -1924,7 +1924,7 @@ int t_calc_branch_ack(
 				md5b[i] = 'a';
 			} else if(md5b[i] >= 'A' && md5b[i] < 'Z') {
 				md5b[i] = md5b[i] + 1;
-			} else if(md5b[i] == 'z') {
+			} else if(md5b[i] == 'Z') {
 				md5b[i] = 'A';
 			}
 		}
