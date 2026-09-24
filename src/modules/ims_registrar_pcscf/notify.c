@@ -88,7 +88,7 @@ extern ims_registrar_pcscf_params_t _imsregp_params;
 int process_contact(
 		udomain_t *_d, int expires, str contact_uri, int contact_state)
 {
-	char bufport[5], *rest, *sep, *val, *port, *trans;
+	char bufport[6], *rest, *sep, *val, *port, *trans;
 	pcontact_t *pcontact;
 	struct pcontact_info ci;
 	struct sip_uri puri, uri;
@@ -171,6 +171,11 @@ int process_contact(
 		}
 
 		received_port_len = trans - port;
+		if(received_port_len >= sizeof(bufport)) {
+			LM_ERR("invalid port value\n");
+			ret = RESULT_ERROR;
+			goto done;
+		}
 
 		trans = trans + 1;
 		received_proto = *trans - 48 /* char 0 */;
