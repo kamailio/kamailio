@@ -63,6 +63,8 @@
 						 * tcpconn_try_unhash()/_put_destroy()/etc. and the
 						 * tcpmain_* io_h/timer wrappers */
 #include "tcp_reactor.h"
+#include "tcp_int_send.h" /* _tcpconn_write_nb() */
+#include "tcp_stats.h"
 #include "tcp_reactor_mem.h" /* tcp_reactor_pkg_lock_install() */
 #include "tcp_mtops.h"		 /* tcpx_task_t, KSR_TCPX_MAIN_PIDX */
 #include "tcp_server.h"		 /* ksr_tcp_reactor_get_dispatch_wfd() */
@@ -237,11 +239,33 @@ int tcp_reactor_dispatch_tls_event(struct tcp_connection *c)
  * ========================================================================= */
 
 
+/* mode 2: direct - tcpconn_do_send() semantics, write if nothing is queued and
+ * queue only the rest (errors too: the following wbufq_run() reports them) */
+static int tcp_reactor_wbuf_put_locked(
+		struct tcp_connection *c, const char *buf, unsigned len, int direct)
+{
+	int n = 0;
+
+	if(direct && _wbufq_empty(c) && c->state != S_CONN_CONNECT) {
+		n = _tcpconn_write_nb(c->s, c, buf, len);
+		if(n < 0)
+			n = 0;
+		else if(n > 0 && c->state == S_CONN_ACCEPT) {
+			TCP_STATS_ESTABLISHED(c->state);
+			c->state = S_CONN_OK;
+		}
+		if((unsigned)n == len)
+			return 0;
+	}
+	return _wbufq_add(c, buf + n, len - n);
+}
+
 /* mode 2: append an outgoing payload to c's write queue (wbuf_q), encrypting it
  * first for TLS/WSS (tls_encode) or copying it verbatim for plain TCP.
+ * direct: write-through first - only from the pool thread owning the conn.
  **/
 static int tcp_reactor_wbuf_add_locked(struct tcp_connection *c, char *buf,
-		unsigned len, snd_flags_t send_flags)
+		unsigned len, snd_flags_t send_flags, int direct)
 {
 #ifdef USE_TLS
 	const char *t_buf, *rest_buf;
@@ -257,7 +281,10 @@ static int tcp_reactor_wbuf_add_locked(struct tcp_connection *c, char *buf,
 			wn = tls_encode(
 					c, &t_buf, &t_len, &rest_buf, &rest_len, &t_send_flags);
 			if(unlikely((wn < 0)
-						|| (t_len && (_wbufq_add(c, t_buf, t_len) < 0)))) {
+						|| (t_len
+								&& (tcp_reactor_wbuf_put_locked(
+											c, t_buf, t_len, direct)
+										< 0)))) {
 				c->state = S_CONN_BAD;
 				c->timeout = get_ticks_raw(); /* force timeout */
 				return -1;
@@ -268,7 +295,8 @@ static int tcp_reactor_wbuf_add_locked(struct tcp_connection *c, char *buf,
 		return 0;
 	}
 #endif /* USE_TLS */
-	if(unlikely(len && (_wbufq_add(c, buf, len) < 0))) {
+	if(unlikely(
+			   len && (tcp_reactor_wbuf_put_locked(c, buf, len, direct) < 0))) {
 		c->state = S_CONN_BAD;
 		c->timeout = get_ticks_raw(); /* force timeout */
 		return -1;
@@ -287,7 +315,7 @@ static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 	int ret;
 
 	lock_get(&c->write_lock);
-	ret = tcp_reactor_wbuf_add_locked(c, buf, len, send_flags);
+	ret = tcp_reactor_wbuf_add_locked(c, buf, len, send_flags, 0);
 	lock_release(&c->write_lock);
 	return ret;
 }
@@ -1151,8 +1179,8 @@ reactor_close:
 	/* unhash first, while F_CONN_MAIN_TIMER is still set, so the local
 	 * timer is removed before the connection is freed (try_unhash only
 	 * deletes the timer when the flag is set). Then stop watching the fd. */
-	if(tcpconn_try_unhash(tcpconn))
-		tcpconn_put(tcpconn);
+	if(unlikely(!tcpconn_try_unhash(tcpconn)))
+		LM_CRIT("unhashed connection %p\n", tcpconn);
 	if((tcpconn->flags & (F_CONN_WRITE_W | F_CONN_READ_W))
 			&& (tcpconn->s != -1)) {
 		if(unlikely(tcpmain_io_watch_del(tcpconn->s, fd_i, 1) < 0)) {
@@ -1166,6 +1194,7 @@ reactor_close:
 	 * tcp_reactor_read_close - the reader detected an EOF/error/reset, so
 	 * emit the tcpops close event here too. Fire-once guarded. */
 	tcp_emit_closed_event(tcpconn);
+	/* not shielded: only the hash ref is held - release it once here */
 	tcpconn_put_destroy(tcpconn);
 	return -1;
 }
@@ -1341,7 +1370,7 @@ static void *tcp_reactor_thread_routine(void *arg)
 				while((ch = conn->wsq_head) != NULL) {
 					conn->wsq_head = ch->next;
 					if(tcp_reactor_wbuf_add_locked(
-							   conn, ch->buf, ch->len, ch->send_flags)
+							   conn, ch->buf, ch->len, ch->send_flags, 1)
 							< 0)
 						werr = 1;
 					shm_free(ch->buf);
