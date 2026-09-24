@@ -87,6 +87,16 @@
 				uuid_generate_time().
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>$uuid(7)</emphasis> (alias <emphasis>$uuid(v7)</emphasis>)
+				- return a UUID version 7 value (RFC 9562).
+				The value is generated with uuid_generate_time_v7(), which
+				requires libuuid from util-linux 2.41 or newer. If the module
+				was built against an older libuuid, the variable returns
+				$null and an error is logged.
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 		<example>

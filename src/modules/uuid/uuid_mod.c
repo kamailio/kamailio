@@ -46,6 +46,21 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
+/**
+ * generate UUID version 7 (RFC 9562)
+ * Requires uuid_generate_time_v7() from libuuid (util-linux 2.41 or newer).
+ */
+static int ksr_uuid_generate_v7(uuid_t out)
+{
+#ifdef HAVE_UUID_GENERATE_TIME_V7
+	uuid_generate_time_v7(out);
+	return 0;
+#else
+	LM_ERR("uuid v7 not supported by libuuid (util-linux 2.41+ required)\n");
+	return -1;
+#endif
+}
+
 static uuid_t _k_uuid_val;
 static char _k_uuid_str[KSR_UUID_BSIZE];
 
@@ -93,6 +108,17 @@ static int mod_init(void)
 	uuid_clear(_k_uuid_val);
 	_k_uuid_str[0] = '\0';
 
+#ifdef HAVE_UUID_GENERATE_TIME_V7
+	uuid_generate_time_v7(_k_uuid_val);
+	uuid_unparse_lower(_k_uuid_val, _k_uuid_str);
+	LM_DBG("uuid v7 initialized - probing value [%s]\n", _k_uuid_str);
+	uuid_clear(_k_uuid_val);
+	_k_uuid_str[0] = '\0';
+#else
+	LM_INFO("uuid v7 not available - libuuid without uuid_generate_time_v7()"
+			" (util-linux 2.41+ required)\n");
+#endif
+
 	return 0;
 }
 
@@ -139,6 +165,17 @@ int pv_parse_uuid_name(pv_spec_p sp, str *in)
 		case 'S':
 			sp->pvp.pvn.u.isname.name.n = 3;
 			break;
+		case '7':
+			sp->pvp.pvn.u.isname.name.n = 4;
+			break;
+		case 'v':
+		case 'V':
+			if(in->len >= 2 && in->s[1] == '7') {
+				sp->pvp.pvn.u.isname.name.n = 4;
+				break;
+			}
+			LM_ERR("unknown uuid variable name [%.*s]\n", in->len, in->s);
+			return -1;
 		default:
 			sp->pvp.pvn.u.isname.name.n = 0;
 	}
@@ -171,6 +208,11 @@ int pv_get_uuid(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 #else
 			uuid_generate_time(_k_uuid_val);
 #endif
+			break;
+		case 4:
+			if(ksr_uuid_generate_v7(_k_uuid_val) != 0) {
+				return pv_get_null(msg, param, res);
+			}
 			break;
 		default:
 			uuid_generate(_k_uuid_val);
@@ -225,6 +267,22 @@ static int ksr_uuid_generate_random(char *out, int *len)
 		return -1;
 	}
 	uuid_generate_random(_k_uuid_val);
+	uuid_unparse_lower(_k_uuid_val, out);
+	*len = strlen(out);
+	return 0;
+}
+
+/**
+ * generate uuid version 7 value
+ */
+static int ksr_uuid_generate_time_v7(char *out, int *len)
+{
+	if(out == NULL || len == NULL || *len < KSR_UUID_BSIZE) {
+		return -1;
+	}
+	if(ksr_uuid_generate_v7(_k_uuid_val) != 0) {
+		return -1;
+	}
 	uuid_unparse_lower(_k_uuid_val, out);
 	*len = strlen(out);
 	return 0;
@@ -296,6 +354,25 @@ static sr_kemi_xval_t *ki_ksr_uuid_tget(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t *ki_ksr_uuid_v7get(sip_msg_t *msg)
+{
+	int len = KSR_UUID_BSIZE;
+
+	memset(&_ksr_kemi_uuid_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(ksr_uuid_generate_time_v7(_k_uuid_str, &len)) {
+		sr_kemi_xval_null(&_ksr_kemi_uuid_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_uuid_xval;
+	}
+	_ksr_kemi_uuid_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_uuid_xval.v.s.s = _k_uuid_str;
+	_ksr_kemi_uuid_xval.v.s.len = len;
+	return &_ksr_kemi_uuid_xval;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_uuid_exports[] = {
 	{ str_init("uuid"), str_init("get"),
@@ -310,6 +387,11 @@ static sr_kemi_t sr_kemi_uuid_exports[] = {
 	},
 	{ str_init("uuid"), str_init("tget"),
 		SR_KEMIP_XVAL, ki_ksr_uuid_tget,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uuid"), str_init("v7get"),
+		SR_KEMIP_XVAL, ki_ksr_uuid_v7get,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
