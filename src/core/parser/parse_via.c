@@ -165,7 +165,7 @@ enum
 	FIN_I,
 	FIN_ALIAS
 #ifdef USE_COMP
-	,
+			,
 	FIN_COMP
 #endif
 	/*GEN_PARAM,
@@ -2537,6 +2537,7 @@ main_via:
 						param = pkg_malloc(sizeof(struct via_param));
 						if(param == 0) {
 							PKG_MEM_ERROR;
+							ser_error = E_OUT_OF_MEM;
 							goto error;
 						}
 						memset(param, 0, sizeof(struct via_param));
@@ -2706,11 +2707,11 @@ endofpacket:
 	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
 		if(vb->last_param->name.len > 0) {
 			if(vb->last_param->value.len > 0) {
-				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->value.s
+								 + vb->last_param->value.len - vb->params.s;
 			} else {
-				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->name.s
+								 + vb->last_param->name.len - vb->params.s;
 			}
 		}
 	}
@@ -2731,11 +2732,11 @@ nextvia:
 	if(vb->params.s != NULL && vb->params.len == 0 && vb->last_param != NULL) {
 		if(vb->last_param->name.len > 0) {
 			if(vb->last_param->value.len > 0) {
-				vb->params.len = vb->last_param->value.s + vb->last_param->value.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->value.s
+								 + vb->last_param->value.len - vb->params.s;
 			} else {
-				vb->params.len = vb->last_param->name.s + vb->last_param->name.len
-					- vb->params.s;
+				vb->params.len = vb->last_param->name.s
+								 + vb->last_param->name.len - vb->params.s;
 			}
 		}
 	}
@@ -2743,6 +2744,7 @@ nextvia:
 	vb->next = pkg_malloc(sizeof(struct via_body));
 	if(vb->next == 0) {
 		PKG_MEM_ERROR;
+		ser_error = E_OUT_OF_MEM;
 		goto error;
 	}
 	vb = vb->next;
