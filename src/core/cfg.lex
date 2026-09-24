@@ -364,6 +364,8 @@ DNS_CACHE_MEM		dns_cache_mem
 DNS_CACHE_GC_INT	dns_cache_gc_interval
 DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
 DNS_CACHE_REC_PREF	dns_cache_rec_pref
+DNS_CACHE_MODE		dns_cache_mode
+
 /* ipv6 auto bind */
 AUTO_BIND_IPV6		auto_bind_ipv6
 BIND_IPV6_LINK_LOCAL	bind_ipv6_link_local
@@ -867,6 +869,8 @@ IMPORTFILE      "import_file"
 								return DNS_CACHE_DEL_NONEXP; }
 <INITIAL>{DNS_CACHE_REC_PREF}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_REC_PREF; }
+<INITIAL>{DNS_CACHE_MODE}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_MODE; }
 <INITIAL>{AUTO_BIND_IPV6}	{ count(); yylval.strval=yytext;
 								return AUTO_BIND_IPV6; }
 <INITIAL>{BIND_IPV6_LINK_LOCAL}	{ count(); yylval.strval=yytext;

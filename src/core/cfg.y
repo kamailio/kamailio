@@ -371,6 +371,7 @@ extern char *default_routename;
 %token DNS_CACHE_GC_INT
 %token DNS_CACHE_DEL_NONEXP
 %token DNS_CACHE_REC_PREF
+%token DNS_CACHE_MODE
 
 /* ipv6 auto bind */
 %token AUTO_BIND_IPV6
@@ -1015,6 +1016,8 @@ assign_stm:
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
 	| DNS_CACHE_REC_PREF EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_rec_pref=$3); }
 	| DNS_CACHE_REC_PREF error { yyerror("boolean value expected"); }
+	| DNS_CACHE_MODE EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_mode=$3); }
+	| DNS_CACHE_MODE error { yyerror("number value expected"); }
 	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
 	| IPV6_HEX_STYLE EQUAL STRING {

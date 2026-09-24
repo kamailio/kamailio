@@ -56,6 +56,8 @@
 #define DEFAULT_DNS_CACHE_MAX_TTL ((unsigned int)(-1)) /* (maxint) */
 #define DEFAULT_DNS_MAX_MEM 500						   /* 500 Kb */
 
+#define DNS_CACHE_MODE_RMUNLINKED 1
+
 /** @brief uncomment the define below for SRV weight based load balancing */
 #define DNS_SRV_LB
 

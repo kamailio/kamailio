@@ -90,17 +90,18 @@ struct t_dns_cache_stats *dns_cache_stats = 0;
 
 static int _dns_local_ttl = 0;
 
-#define FIX_TTL(t)                                                             \
-	((_dns_local_ttl > 0)                                                      \
-					? _dns_local_ttl                                           \
-					: (((t) < cfg_get(core, core_cfg, dns_cache_min_ttl))      \
-									? cfg_get(                                 \
-											core, core_cfg, dns_cache_min_ttl) \
-									: (((t) > cfg_get(core, core_cfg,          \
-												dns_cache_max_ttl))            \
-													? cfg_get(core, core_cfg,  \
-															dns_cache_max_ttl) \
-													: (t))))
+#define FIX_TTL(t)                                                                   \
+	((_dns_local_ttl > 0)                                                            \
+					? _dns_local_ttl                                                 \
+					: (((t) < cfg_get(core, core_cfg, dns_cache_min_ttl))            \
+									  ? cfg_get(core, core_cfg,                      \
+												dns_cache_min_ttl)                   \
+									  : (((t) > cfg_get(core, core_cfg,              \
+												  dns_cache_max_ttl))                \
+														? cfg_get(core,              \
+																  core_cfg,          \
+																  dns_cache_max_ttl) \
+														: (t))))
 
 
 struct dns_hash_head
@@ -181,8 +182,11 @@ void dns_hash_put_entry(
 			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
 			dns_destroy_entry(e);
 		} else if(e->next == NULL && e->prev == NULL) {
-			LM_INFO("unlinked item %p rc %d (%s:%u)\n", e,
-					atomic_get_int(&e->refcnt), fpath, line);
+			if(cfg_get(core, core_cfg, dns_cache_mode)
+					& DNS_CACHE_MODE_RMUNLINKED) {
+				LM_INFO("unlinked item %p rc %d (%s:%u)\n", e,
+						atomic_get_int(&e->refcnt), fpath, line);
+			}
 		}
 	}
 }
@@ -194,11 +198,15 @@ void dns_hash_put_entry_shm_unsafe(
 		struct dns_hash_entry *e, const char *fpath, unsigned int line)
 {
 	if(e != NULL) {
+		/* Do not access e after releasing this reference. */
 		if(atomic_dec_and_test(&e->refcnt)) {
 			/* atomic_sub_long(dns_cache_total_used, e->total_size); */
 			dns_destroy_entry_shm_unsafe(e);
 		} else if(e->next == NULL && e->prev == NULL) {
-			LM_WARN("unlinked item %p (%s:%u)\n", e, fpath, line);
+			if(cfg_get(core, core_cfg, dns_cache_mode)
+					& DNS_CACHE_MODE_RMUNLINKED) {
+				LM_WARN("unlinked item %p (%s:%u)\n", e, fpath, line);
+			}
 		}
 	}
 }
@@ -509,8 +517,14 @@ inline static void _dns_hash_remove_entry(
 		LM_DBG("item %p with high refcnt %d (%s:%u)\n", e,
 				atomic_get_int(&e->refcnt), fpath, line);
 	}
-	/* item unlinked - destroy it */
-	dns_destroy_entry(e);
+	if(cfg_get(core, core_cfg, dns_cache_mode) & DNS_CACHE_MODE_RMUNLINKED) {
+		/* item unlinked - destroy it */
+		dns_destroy_entry(e);
+	} else {
+		/* item unlinked - keep it while transactions or other users
+		 * still hold references, destroy it when final reference is gone */
+		dns_hash_put_entry(e, fpath, line);
+	}
 }
 
 #define _dns_hash_remove(e) _dns_hash_remove_entry(e, __FILE__, __LINE__)
