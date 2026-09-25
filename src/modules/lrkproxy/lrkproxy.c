@@ -1503,14 +1503,16 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 	}
 	//            LM_INFO("body:<%.*s>\n", body.len, body.s);
 
-	//allocate new buffer to new sdp buffer.
-	newbody.len = 1024;
+	//allocate new buffer to new sdp buffer - the rebuilt body can never
+	//exceed the size of the original body plus the rewritten header
+	//lines below, and every copy is bounded by the remaining capacity.
+	newbody.len = body.len + 1024;
 	newbody.s = pkg_malloc(newbody.len);
 	if(newbody.s == NULL) {
 		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
-	memset(newbody.s, 0, 1024);
+	memset(newbody.s, 0, newbody.len);
 
 	off = body.s;
 	start_sdp_o = strstr(off, "o=");
@@ -1588,12 +1590,20 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 
 	while(*off != EOB) //while end of body.
 	{
+		int remaining;
+
 		sdp_param_start = off;
 		sdp_param_end = sdp_param_start;
 		while(*sdp_param_end != CR && *sdp_param_end != LF
 				&& *sdp_param_end != EOB)
 			sdp_param_end++;
 		len = (int)(sdp_param_end - sdp_param_start);
+		remaining = newbody.len - (int)strlen(newbody.s) - 1;
+		if(remaining <= 0) {
+			LM_WARN("lrkproxy: rebuilt sdp body exceeds %d bytes, truncating\n",
+					newbody.len);
+			break;
+		}
 		if((int)(start_sdp_o - off) == 0) {
 			memset(sdp_new_o, 0, 128);
 			time_t seconds;
@@ -1601,21 +1611,21 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 			//            snprintf(sdp_new_o, 128, "o=lrkproxy %s %s IN IP4 %s\r", SUP_CPROTOVER, REQ_CPROTOVER, ip_selected);
 			snprintf(sdp_new_o, 128, "o=lrkproxy %ld %ld IN IP4 %s\r", seconds,
 					seconds, ip_selected);
-			strcat(newbody.s, sdp_new_o);
+			strncat(newbody.s, sdp_new_o, remaining);
 			off += len + 1;
 			continue;
 		}
 		if((int)(start_sdp_s - off) == 0) {
 			memset(sdp_new_s, 0, 128);
 			snprintf(sdp_new_s, 128, "s=lrkproxy Support only Audio Call\r");
-			strcat(newbody.s, sdp_new_s);
+			strncat(newbody.s, sdp_new_s, remaining);
 			off += len + 1;
 			continue;
 		}
 		if((int)(start_sdp_c - off) == 0) {
 			memset(sdp_new_c, 0, 128);
 			snprintf(sdp_new_c, 128, "c=IN IP4 %s\r", ip_selected);
-			strcat(newbody.s, sdp_new_c);
+			strncat(newbody.s, sdp_new_c, remaining);
 			off += len + 1;
 			continue;
 		}
@@ -1639,12 +1649,12 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 						(int)(len - (avp_flags - off)), avp_flags);
 			//               snprintf(sdp_new_m, 128, "m=audio %d %.*s\r",e->node->lrkp_n_c->current_port, (int)(len - (avp_flags-off)), avp_flags);
 			//            printf("%.*s\n\n", len - (avp_flags-off), avp_flags);
-			strcat(newbody.s, sdp_new_m);
+			strncat(newbody.s, sdp_new_m, remaining);
 			off += len + 1;
 			continue;
 		}
 
-		strncat(newbody.s, off, len + 1);
+		strncat(newbody.s, off, len + 1 > remaining ? remaining : len + 1);
 		off += len + 1;
 	}
 
