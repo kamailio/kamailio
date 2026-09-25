@@ -148,18 +148,6 @@ struct tcp_connection *get_cur_connection(struct sip_msg *msg)
 }
 
 
-static SSL *get_ssl(struct tcp_connection *c)
-{
-	struct tls_extra_data *extra;
-
-	if(!c || !c->extra_data) {
-		ERR("Unable to extract SSL data from TLS connection\n");
-		return 0;
-	}
-	extra = (struct tls_extra_data *)c->extra_data;
-	return extra->ssl;
-}
-
 static struct tls_extra_data *get_extra(struct tcp_connection *c)
 {
 	struct tls_extra_data *extra;
@@ -1389,21 +1377,20 @@ static int get_tlsext_sn(str *res, sip_msg_t *msg)
 	static char buf[1024];
 	struct tcp_connection *c;
 	str server_name;
-	SSL *ssl;
+	struct tls_extra_data *extra;
 
 	c = get_cur_connection(msg);
 	if(!c) {
 		INFO("TLS connection not found in select_desc\n");
 		goto error;
 	}
-	ssl = get_ssl(c);
-	if(!ssl)
+	extra = get_extra(c);
+	if(!extra)
 		goto error;
 
 	buf[0] = '\0';
 
-	server_name.s =
-			(char *)wolfSSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+	server_name.s = extra->ssl_servername;
 	if(server_name.s) {
 		server_name.len = strlen(server_name.s);
 		DBG("received server_name (TLS extension): '%.*s'\n",
