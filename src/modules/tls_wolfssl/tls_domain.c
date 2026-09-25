@@ -1140,6 +1140,9 @@ int tls_fix_domains_cfg(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
 		return -1;
 	}
 
+	if(ssl_max_send_fragment >= 0)
+		LM_WARN("ssl_max_send_fragment is not supported by tls_wolfssl"
+				" - ignored\n");
 	/* only in >= 0.9.9 */
 	if(tls_foreach_CTX_in_cfg(
 			   cfg, tls_ssl_ctx_set_max_send_fragment, ssl_max_send_fragment, 0)

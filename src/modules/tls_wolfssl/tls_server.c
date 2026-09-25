@@ -1416,7 +1416,7 @@ int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	WOLFSSL_BIO *rwbio;
 	unsigned char rd_buf[TLS_RD_MBUF_SZ];
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
-	size_t wr_used, rd_unused;
+	size_t wr_used, rd_unused, rd_pending;
 	size_t nr, npos, nw;
 	struct tls_extra_data *tls_c;
 	int n, flush_flags;
@@ -1454,9 +1454,12 @@ redo_read:
 	/* real read() */
 	/* read() only if no previously detected EOF, or previous
      * short read (which means the socket buffer was emptied) */
-	if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)))) {
-		/* don't read more than the free bytes in the tcp req buffer */
-		read_size = MIN_unsigned(TLS_RD_MBUF_SZ, bytes_free);
+	/* ciphertext left unread in the rd BIO when the tcp req buffer filled */
+	rd_pending = wolfSSL_BIO_ctrl_pending(wolfSSL_SSL_get_rbio(tls_c->ssl));
+	if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ))
+			   && rd_pending < TLS_RD_MBUF_SZ)) {
+		/* don't read more than the free bytes in the tcp req buffer or BIO */
+		read_size = MIN_unsigned(TLS_RD_MBUF_SZ - rd_pending, bytes_free);
 		bytes_read =
 				tcp_read_data(_tconfd(c), c, (char *)rd_buf, read_size, flags);
 		TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n", c,
