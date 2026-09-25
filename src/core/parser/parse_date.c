@@ -37,8 +37,13 @@
  * Parse Date header field
  */
 
-#define READ(val) \
-	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+inline static unsigned int date_read_u32le(const char *val)
+{
+	return (unsigned int)(unsigned char)val[0]
+		   | ((unsigned int)(unsigned char)val[1] << 8)
+		   | ((unsigned int)(unsigned char)val[2] << 16)
+		   | ((unsigned int)(unsigned char)val[3] << 24);
+}
 
 inline static int char2int(char *p, int *t)
 {
@@ -67,7 +72,7 @@ static int rfc1123totm(char *stime, struct tm *ttm)
 	unsigned int uval;
 	int ires;
 
-	uval = READ(ptime);
+	uval = date_read_u32le(ptime);
 	ptime += 4;
 	switch(uval) {
 		/* Sun, */
@@ -118,7 +123,7 @@ static int rfc1123totm(char *stime, struct tm *ttm)
 	if(*(ptime++) != ' ')
 		return -5;
 
-	uval = READ(ptime);
+	uval = date_read_u32le(ptime);
 	ptime += 4;
 	switch(uval) {
 		/* Jan, */
@@ -201,7 +206,7 @@ static int rfc1123totm(char *stime, struct tm *ttm)
 	ptime += 2;
 
 	/* " GMT" */
-	uval = READ(ptime);
+	uval = date_read_u32le(ptime);
 	if((uval | 0x20202020) != 0x746d6720)
 		return -15;
 
