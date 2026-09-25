@@ -86,6 +86,7 @@
 #include "core/modparam.h"
 #include "core/timer.h"
 #include "core/parser/msg_parser.h"
+#include "core/parser/parse_bytes.h"
 #include "core/ip_addr.h"
 #include "core/resolve.h"
 #include "core/parser/parse_hname2.h"
@@ -1017,7 +1018,7 @@ int parse_proto(unsigned char *s, long len, int *proto)
 			| 0x20202020)
 	unsigned int i;
 	if(likely(len == 3)) {
-		i = PROTO2UINT3(s[0], s[1], s[2]);
+		i = ksr_ascii_lower_u32(ksr_read_u24be((const char *)s));
 		switch(i) {
 			case PROTO2UINT3('u', 'd', 'p'):
 				*proto = PROTO_UDP;
@@ -1044,7 +1045,7 @@ int parse_proto(unsigned char *s, long len, int *proto)
 	}
 #ifdef USE_SCTP
 	else if(likely(len == 4)) {
-		i = PROTO2UINT4(s[0], s[1], s[2], s[3]);
+		i = ksr_ascii_lower_u32(ksr_read_u32be((const char *)s));
 		if(i == PROTO2UINT4('s', 'c', 't', 'p')) {
 			if(sctp_disable) {
 				return -1;
