@@ -151,11 +151,18 @@ error:
 }
 
 
-/*! \brief macros from parse_hname2.c */
-#define READ(val) \
-	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+inline static unsigned int body_read_u32le(const char *val)
+{
+	return (unsigned int)(unsigned char)val[0]
+		   | ((unsigned int)(unsigned char)val[1] << 8)
+		   | ((unsigned int)(unsigned char)val[2] << 16)
+		   | ((unsigned int)(unsigned char)val[3] << 24);
+}
 
-#define LOWER_DWORD(d) ((d) | 0x20202020)
+inline static unsigned int body_lower_u32(unsigned int val)
+{
+	return val | 0x20202020U;
+}
 
 /*! \brief Returns the pointer within the msg body to the given type/subtype,
  * and sets the length of the body part.
@@ -217,9 +224,9 @@ char *get_body_part(struct sip_msg *msg, unsigned short type,
 				if(c + content_type_len >= buf_end)
 					return NULL;
 
-				if((LOWER_DWORD(READ(c)) == _cont_)
-						&& (LOWER_DWORD(READ(c + 4)) == _ent__)
-						&& (LOWER_DWORD(READ(c + 8)) == _type_)) {
+				if((body_lower_u32(body_read_u32le(c)) == _cont_)
+						&& (body_lower_u32(body_read_u32le(c + 4)) == _ent__)
+						&& (body_lower_u32(body_read_u32le(c + 8)) == _type_)) {
 					/* Content-Type HF found */
 					c += content_type_len;
 					while((c < buf_end) && ((*c == ' ') || (*c == '\t')))
@@ -377,8 +384,9 @@ int part_multipart_headers_cmp(char *buffer, char *end_buffer,
 		found = found_content_type * found_content_id * found_content_length;
 		while((!found) && (!error) && (cpy_c < cpy_d)) {
 			if((cpy_c + 8) < cpy_d) {
-				if((LOWER_DWORD(READ(cpy_c)) == _cont_)
-						&& (LOWER_DWORD(READ(cpy_c + 4)) == _ent__)) {
+				if((body_lower_u32(body_read_u32le(cpy_c)) == _cont_)
+						&& (body_lower_u32(body_read_u32le(cpy_c + 4))
+								== _ent__)) {
 					cpy_c += 8;
 					if((!found_content_type) && ((cpy_c + 5) < cpy_d)
 							&& ((*(cpy_c + 0) == 't') || (*(cpy_c + 0) == 'T'))
