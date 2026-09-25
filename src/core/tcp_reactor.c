@@ -869,11 +869,9 @@ void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq)
 	 * enqueue a write job; for TLS the job tls_encode()s each staged chunk
 	 * before flushing wbuf_q (the conn is shielded, so that pool thread
 	 * owns the SSL object exclusively). If the conn is busy, the data
-	 * waits in wsq and the running job's completion chains a write job.
-	 * Plain WS keeps the inline copy+watch path below (no TLS); WSS is
-	 * staged here too so its tls_encode runs on the owning pool thread. */
+	 * waits in wsq and the running job's completion chains a write job. */
 	if(likely(tcpconn->type == PROTO_TCP || tcpconn->type == PROTO_TLS
-			   || tcpconn->type == PROTO_WSS)) {
+			   || tcpconn->type == PROTO_WS || tcpconn->type == PROTO_WSS)) {
 		if(unlikely(tcp_reactor_wsq_add(
 							tcpconn, wreq->buf, wreq->len, wreq->send_flags)
 					< 0)) {
@@ -956,7 +954,7 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 			return;
 		}
 		if(likely(cc->type == PROTO_TCP || cc->type == PROTO_TLS
-				   || cc->type == PROTO_WSS)) {
+				   || cc->type == PROTO_WS || cc->type == PROTO_WSS)) {
 			if(unlikely(tcp_reactor_wsq_add(
 								cc, creq->buf, creq->len, creq->send_flags)
 						< 0)) {
