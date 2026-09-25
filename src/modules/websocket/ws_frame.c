@@ -198,7 +198,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	else if(frame->payload_len <= USHRT_MAX)
 		extended_length = 2;
 	else if(frame->payload_len < UINT_MAX)
-		extended_length = 4;
+		extended_length = 8;
 	else {
 		LM_ERR(NAME " only supports WebSocket frames with payload "
 					"< %u\n",
@@ -222,6 +222,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 		send_buf[pos++] = (frame->payload_len & 0x00ff) >> 0;
 	} else {
 		send_buf[pos++] = 127;
+		pos += 4; /* 64-bit length, upper 32 bits left zero by memset */
 		send_buf[pos++] = (frame->payload_len & 0xff000000) >> 24;
 		send_buf[pos++] = (frame->payload_len & 0x00ff0000) >> 16;
 		send_buf[pos++] = (frame->payload_len & 0x0000ff00) >> 8;
