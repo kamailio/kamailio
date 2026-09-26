@@ -321,7 +321,6 @@ int ki_dmq_do_custom(sip_msg_t *msg, str *peer, str *from, str *body,
 
 	if(wlen < 0 || wlen >= DMQ_MSG_BUF_SIZE) {
 		LM_ERR("failed to build synthetic dmq message buffer\n");
-		pkg_free(buf);
 		return -1;
 	}
 
