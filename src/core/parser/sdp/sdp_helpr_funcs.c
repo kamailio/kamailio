@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include "../../ut.h"
 #include "../msg_parser.h"
+#include "../parse_bytes.h"
 #include "../parser_f.h"
 #include "../parse_hname2.h"
 #include "sdp.h"
@@ -50,10 +51,6 @@ static struct
 		{.s = NULL, .len = 0, .is_rtp = 0}};
 
 
-#define READ(val)                                                   \
-	((unsigned int)(*(val + 0)) + ((unsigned int)(*(val + 1)) << 8) \
-			+ ((unsigned int)(*(val + 2)) << 16)                    \
-			+ ((unsigned int)(*(val + 3)) << 24))
 #define advance(_ptr, _n, _str, _error)           \
 	do {                                          \
 		if((_ptr) + (_n) > (_str).s + (_str).len) \
@@ -97,11 +94,11 @@ int get_mixed_part_delimiter(str *body, str *mp_delimiter)
 	while(*p == ' ' || *p == '\t')
 		advance(p, 1, str_type, error);
 	advance(p, 4, str_type, error);
-	x = READ(p - 4);
+	x = ksr_read_u32le(p - 4);
 	if(!one_of_16(x, boun))
 		goto other;
 	advance(p, 4, str_type, error);
-	x = READ(p - 4);
+	x = ksr_read_u32le(p - 4);
 	if(!one_of_16(x, dary))
 		goto other;
 
