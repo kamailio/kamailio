@@ -349,7 +349,7 @@ static void ds_free_list(ds_list_t *list)
  */
 static void ds_wait_free_list(ds_list_t *list)
 {
-	unsigned int iters;
+	unsigned int iters = 0;
 
 	if(!list)
 		return;
