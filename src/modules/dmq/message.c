@@ -255,7 +255,7 @@ int ki_dmq_do_custom(sip_msg_t *msg, str *peer, str *from, str *body,
 	dmq_peer_t *found_peer;
 	peer_reponse_t peer_response;
 	dmq_node_t *dmq_node = NULL;
-	sip_msg_t *new_msg;
+	sip_msg_t *new_msg = NULL;
 #define MAX_BRANCHID 9999999
 #define MIN_BRANCHID 1000000
 #define DMQ_MSG_BUF_SIZE 65507
@@ -317,6 +317,7 @@ int ki_dmq_do_custom(sip_msg_t *msg, str *peer, str *from, str *body,
 			body->len,
 			/* body */
 			body->len, body->s);
+	pkg_free(to.s);
 	LM_DBG("dmq custom request (len: %d) [[\n%.*s]]\n", wlen, wlen, buf);
 
 	if(wlen < 0 || wlen >= DMQ_MSG_BUF_SIZE) {
@@ -363,8 +364,10 @@ int ki_dmq_do_custom(sip_msg_t *msg, str *peer, str *from, str *body,
 	return 1;
 
 error:
-	free_sip_msg(new_msg);
-	pkg_free(new_msg);
+	if(new_msg) {
+		free_sip_msg(new_msg);
+		pkg_free(new_msg);
+	}
 	return -1;
 }
 
