@@ -34,6 +34,7 @@
 #include "../../core/error.h"
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
+#include "../../core/parser/parse_bytes.h"
 
 
 static inline int /*bool*/ is_space(char c)
@@ -45,33 +46,12 @@ static inline int /*bool*/ is_num(char c)
 	return (c >= '0' && c <= '9');
 }
 
-static inline unsigned lower_byte(char b)
-{
-	return b | 0x20;
-}
-static inline unsigned lower_4bytes(unsigned d)
-{
-	return d | 0x20202020;
-}
-static inline unsigned lower_3bytes(unsigned d)
-{
-	return d | 0x202020;
-}
-static inline unsigned read_4bytes(char *val)
-{
-	return (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16)
-			+ (*(val + 3) << 24));
-}
-static inline unsigned read_3bytes(char *val)
-{
-	return (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16));
-}
-
 /* compile-time constants if called with constants */
-#define MAKE_4BYTES(a, b, c, d) \
-	(((a)&0xFF) | (((b)&0xFF) << 8) | (((c)&0xFF) << 16) | (((d)&0xFF) << 24))
+#define MAKE_4BYTES(a, b, c, d)                                \
+	(((a) & 0xFF) | (((b) & 0xFF) << 8) | (((c) & 0xFF) << 16) \
+			| (((d) & 0xFF) << 24))
 #define MAKE_3BYTES(a, b, c) \
-	(((a)&0xFF) | (((b)&0xFF) << 8) | (((c)&0xFF) << 16))
+	(((a) & 0xFF) | (((b) & 0xFF) << 8) | (((c) & 0xFF) << 16))
 
 
 struct session_expires *malloc_session_expires(void)
@@ -137,15 +117,16 @@ enum parse_sst_result parse_session_expires_body(struct hdr_field *hf)
 			++pos;
 
 			if(pos + 4 < len) {
-				switch(lower_4bytes(read_4bytes(p))) {
+				switch(ksr_ascii_lower_u32(ksr_read_u32le(p))) {
 					case /*refr*/ MAKE_4BYTES('r', 'e', 'f', 'r'):
 						if(pos + 9 <= len
-								&& lower_4bytes(read_4bytes(p + 4))
+								&& ksr_ascii_lower_u32(ksr_read_u32le(p + 4))
 										   == /*eshe*/ MAKE_4BYTES(
 												   'e', 's', 'h', 'e')
-								&& lower_byte(*(p + 8)) == 'r'
+								&& ksr_ascii_lower_u8((unsigned char)*(p + 8))
+										   == 'r'
 								&& *(p + 9) == '=') {
-							tok = lower_3bytes(read_3bytes(p + 10));
+							tok = ksr_ascii_lower_u24(ksr_read_u24le(p + 10));
 							if(tok == MAKE_3BYTES('u', 'a', 'c')) {
 								se.refresher = sst_refresher_uac;
 								p += 13;
@@ -171,7 +152,7 @@ enum parse_sst_result parse_session_expires_body(struct hdr_field *hf)
 							/*skip to ';'*/;
 						break;
 				} /*switch*/
-			}	  /* exist 4 bytes to check */
+			} /* exist 4 bytes to check */
 			else /* less than 4 bytes left */ {
 				/* not enough text left for any of the recognized se-params */
 				/* no other recognized se-param */
@@ -182,7 +163,7 @@ enum parse_sst_result parse_session_expires_body(struct hdr_field *hf)
 			LM_ERR("no semicolon separating se-params\n");
 			return parse_sst_parse_error;
 		} /* if ';' */
-	}	  /* while */
+	} /* while */
 
 	hf->parsed = malloc_session_expires();
 	if(!hf->parsed) {
