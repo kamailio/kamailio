@@ -1253,16 +1253,6 @@ ssl_eof:
 }
 
 
-int tls_h_encode_mp_f(struct tcp_connection *c, const char **pbuf,
-		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
-		snd_flags_t *send_flags)
-{
-	static unsigned char wr_buf[TLS_WR_MBUF_SZ];
-
-	return tls_h_encode_helper_f(
-			c, pbuf, plen, rest_buf, rest_len, send_flags, wr_buf);
-}
-
 typedef struct tls_encode_params
 {
 	struct tcp_connection *c;
@@ -1371,7 +1361,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 
 /**
  * tls encode core callback
- * - for parameters see tls_h_encode_mp_f(...)
+ * - for parameters see tls_h_encode_helper_f(...)
  */
 int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
@@ -1416,7 +1406,7 @@ int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	WOLFSSL_BIO *rwbio;
 	unsigned char rd_buf[TLS_RD_MBUF_SZ];
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
-	size_t wr_used, rd_unused, rd_pending;
+	size_t wr_used, rd_pending;
 	size_t nr, npos, nw;
 	struct tls_extra_data *tls_c;
 	int n, flush_flags;
@@ -1666,14 +1656,7 @@ continue_ssl_read:
 		case WOLFSSL_ERROR_WANT_READ:
 			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n", c, flags,
 					*flags);
-			/* needs to read more data */
-			if(unlikely((rd_unused = wolfSSL_BIO_wpending(rwbio)))) {
-				/* data still in the read buffer */
-				BUG("SSL_ERROR_WANT_READ but data still in"
-					" the rbio (%d bytes)\n",
-						(int)rd_unused);
-				goto bug;
-			}
+			/* needs to read more data (a partial record may wait in the rbio) */
 			if(unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0)
 					&& bytes_free) {
 				/* there might still be data to read and there is space
