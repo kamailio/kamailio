@@ -37,6 +37,7 @@
  * the no-op install at the bottom of this file. */
 
 #include <pthread.h>
+#include <string.h>
 
 /* The single mutex that serializes all pkg allocation in this process once the
  * wrappers are installed, plus the saved originals we delegate to. Only ever
@@ -160,6 +161,12 @@ void tcp_reactor_pkg_lock_install(void)
 {
 	if(_ksr_pkg_orig_xmalloc != NULL)
 		return; /* already installed */
+	/* -X sm: pkg is the (thread-safe) system malloc - nothing to serialize */
+	if(_pkg_root.mname != NULL && strcmp(_pkg_root.mname, "sm") == 0) {
+		LM_DBG("pkg manager is sm (system malloc); reactor pkg lock "
+			   "not needed\n");
+		return;
+	}
 	_ksr_pkg_orig_xmalloc = _pkg_root.xmalloc;
 	_ksr_pkg_orig_xmallocxz = _pkg_root.xmallocxz;
 	_ksr_pkg_orig_xmallocxn = _pkg_root.xmallocxn;
