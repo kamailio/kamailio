@@ -334,7 +334,8 @@ void tls_destroy_cfg(void)
  */
 char *tls_domain_str(tls_domain_t *d)
 {
-	static char buf[1024];
+	/* per thread: mode 2 completes the TLS init on tcp reactor pool threads */
+	static _Thread_local char buf[1024];
 	char *p;
 
 	buf[0] = '\0';
