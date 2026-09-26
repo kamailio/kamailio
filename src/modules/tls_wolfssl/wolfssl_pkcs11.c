@@ -421,7 +421,7 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 		cur_token->token[127] = '\0';
 
 		strncpy(cur_token->pin, pin_buf, 127);
-		cur_token->token[127] = '\0';
+		cur_token->pin[127] = '\0';
 
 		cur_token->dev = cur_module;
 
