@@ -764,6 +764,10 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 		if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
 			LM_WARN("no local address - do record routing for all initial "
 					"requests\n");
+		} else if(td->as_contact.len <= 0 || td->bs_contact.len <= 0) {
+			LM_DBG("one local contact missing (a: %d b: %d) - dialog record"
+				   " stored with an empty uuid on that side\n",
+					td->as_contact.len, td->bs_contact.len);
 		}
 		ret = _tps_storage_api.insert_dialog(td);
 		if(ret < 0)
