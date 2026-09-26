@@ -50,6 +50,7 @@
 #define DS_NODNSARES_DST	16 /*!< no DNS A/AAAA resolve for host in uri */
 #define DS_NOPING_DST		32 /*!< no ping to destination */
 #define DS_STATES_ALL		63 /*!< all bits for the states of destination */
+#define DS_TOMBSTONE_DST        64 /*!< whether the entry is considered as removed */
 
 #define ds_skip_dst(flags)	((flags) & (DS_INACTIVE_DST|DS_DISABLED_DST))
 
@@ -120,6 +121,7 @@ extern str ds_dest_uri_col;
 extern str ds_dest_flags_col;
 extern str ds_dest_priority_col;
 extern str ds_dest_attrs_col;
+extern str ds_dest_id_col;
 
 extern int ds_flags;
 extern int ds_use_default;
@@ -169,6 +171,7 @@ int ds_connect_db(void);
 void ds_disconnect_db(void);
 int ds_load_db(void);
 int ds_reload_db(void);
+int ds_reload_db_id(unsigned int target_id);
 int ds_destroy_list(void);
 int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 		int mode, ds_selres_t *sres);
@@ -176,7 +179,7 @@ int ds_select_routes_limit(
 		sip_msg_t *msg, str *srules, str *smode, int rlimit, ds_selres_t *sres);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
-int ds_add_dst(int group, str *address, int flags, int priority, str *attrs);
+int ds_add_dst(int group, str *address, int flags, int priority, str *attrs, unsigned int ds_id);
 int ds_remove_dst(int group, str *address);
 int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 		int state, int mode, ds_rctx_t *rctx);
@@ -288,6 +291,7 @@ typedef struct _ds_dest {
 	char buid[SRUID_SIZE]; /*!< buffer for internal uid */
 	str suid; /*!< str shortcut for internal uid */
 	struct _ds_dest *next;
+	unsigned int db_id;
 } ds_dest_t;
 
 typedef struct _ds_set {

@@ -858,7 +858,7 @@ err:
  */
 static ds_dest_t *add_dest2list(int id, str uri, int flags, int priority,
 		str *attrs, ds_list_t *list, int dload,
-		ds_latency_stats_t *latency_stats)
+		ds_latency_stats_t *latency_stats, unsigned int db_id)
 {
 	ds_dest_t *dp = NULL;
 	ds_set_t *sp = NULL;
@@ -928,6 +928,7 @@ static ds_dest_t *add_dest2list(int id, str uri, int flags, int priority,
 	LM_DBG("dest [%d/%d] <%.*s> (%d %d)\n", sp->id, sp->nr, dp->uri.len,
 			dp->uri.s, dp->flags, dp->priority);
 
+	dp->db_id = db_id;
 	return dp;
 error:
 	if(dp != NULL) {
@@ -1422,7 +1423,7 @@ int ds_load_list(char *lfile)
 			latency_stats = latency_stats_find(id, &uri);
 		}
 		if(add_dest2list(
-				   id, uri, flags, priority, &attrs, next, 0, latency_stats)
+				   id, uri, flags, priority, &attrs, next, 0, latency_stats, 0)
 				== NULL) {
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
@@ -1583,12 +1584,14 @@ int ds_load_db(void)
 	char ds_attrs_buf[DS_ATTRS_MAXSIZE];
 	ds_latency_stats_t *latency_stats;
 	ds_list_t *old, *next;
+	unsigned int db_id;
 
 	query_cols[0] = &ds_set_id_col;
 	query_cols[1] = &ds_dest_uri_col;
 	query_cols[2] = &ds_dest_flags_col;
 	query_cols[3] = &ds_dest_priority_col;
 	query_cols[4] = &ds_dest_attrs_col;
+	query_cols[5] = &ds_dest_id_col;
 
 	nrcols = 2;
 	if(_ds_table_version == DS_TABLE_VERSION2) {
@@ -1653,6 +1656,10 @@ int ds_load_db(void)
 		flags = 0;
 		if(nrcols >= 3)
 			flags = VAL_INT(values + 2);
+		if(flags & DS_TOMBSTONE_DST) {
+			continue;
+		}
+
 		priority = 0;
 		if(nrcols >= 4)
 			priority = VAL_INT(values + 3);
@@ -1763,12 +1770,17 @@ int ds_load_db(void)
 		}
 		LM_DBG("attributes string: [%.*s]\n", attrs.len,
 				(attrs.s) ? attrs.s : "");
+
+		db_id = 0;
+		if(nrcols >= 6)
+			db_id = VAL_INT(values + 5);
+
 		latency_stats = NULL;
 		if(ds_ping_latency_stats && ds_retain_latency_stats) {
 			latency_stats = latency_stats_find(id, &uri);
 		}
 		if(add_dest2list(
-				   id, uri, flags, priority, &attrs, next, 0, latency_stats)
+				   id, uri, flags, priority, &attrs, next, 0, latency_stats, db_id)
 				== NULL) {
 			dest_errs++;
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
@@ -3518,7 +3530,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 
 	ndst = add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body, next,
-			node->dlist[i].dload, &node->dlist[i].latency_stats);
+			node->dlist[i].dload, &node->dlist[i].latency_stats, node->dlist[i].db_id);
 	if(ndst == NULL) {
 		LM_WARN("failed to add destination in group %d - %.*s\n", node->id,
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
@@ -3532,7 +3544,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 }
 
 /* add dispatcher entry to in-memory dispatcher list */
-int ds_add_dst(int group, str *address, int flags, int priority, str *attrs)
+int ds_add_dst(int group, str *address, int flags, int priority, str *attrs, unsigned int ds_id)
 {
 	ds_list_t *cur, *next;
 
@@ -3552,7 +3564,7 @@ int ds_add_dst(int group, str *address, int flags, int priority, str *attrs)
 	}
 
 	// add new destination
-	if(add_dest2list(group, *address, flags, priority, attrs, next, 0, NULL)
+	if(add_dest2list(group, *address, flags, priority, attrs, next, 0, NULL, ds_id)
 			== NULL) {
 		LM_WARN("unable to add destination %.*s to set %d", address->len,
 				address->s, group);
@@ -3607,7 +3619,7 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 	ndst = add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body,
 			filter_arg->list, node->dlist[i].dload,
-			&node->dlist[i].latency_stats);
+			&node->dlist[i].latency_stats, node->dlist[i].db_id);
 
 	if(ndst == NULL) {
 		LM_WARN("failed to add destination in group %d - %.*s\n", node->id,
@@ -5690,4 +5702,109 @@ static void avl_rebalance(ds_set_t **path_top, int id)
 		third = (id > path->id);
 	path = avl_rotate_3(path_top, first, third);
 	avl_rebalance_path(path, id);
+}
+
+int ds_reload_db_id(unsigned int target_id)
+{
+	int setid;
+	int flags;
+	int priority;
+	int nr_rows;
+	str uri;
+	str attrs = STR_NULL;
+	db1_res_t *res = NULL;
+	db_val_t *values;
+	db_key_t query_cols[5];
+	db_key_t query_keys[1];
+	db_op_t query_ops[1];
+	db_val_t query_vals[1];
+	const unsigned int db_id = target_id;
+
+	query_cols[0] = &ds_set_id_col;
+	query_cols[1] = &ds_dest_uri_col;
+	query_cols[2] = &ds_dest_flags_col;
+	query_cols[3] = &ds_dest_priority_col;
+	query_cols[4] = &ds_dest_attrs_col;
+
+	query_keys[0] = &ds_dest_id_col;
+	query_ops[0] = OP_EQ;
+
+	memset(query_vals, 0, sizeof(query_vals));
+	query_vals[0].type = DB1_INT;
+	query_vals[0].nul = 0;
+	query_vals[0].val.int_val = target_id;
+
+	if(ds_connect_db() != 0) {
+		LM_ERR("unable to connect to the database\n");
+		return -1;
+	}
+
+	if(ds_db_handle == NULL) {
+		ds_disconnect_db();
+		LM_ERR("invalid DB handler\n");
+		return -1;
+	}
+
+	if(ds_dbf.use_table(ds_db_handle, &ds_table_name) < 0) {
+		ds_disconnect_db();
+		LM_ERR("error in use_table\n");
+		return -1;
+	}
+
+	LM_DBG("loading dispatcher db record id [%d]\n", target_id);
+
+	if(ds_dbf.query(ds_db_handle,
+				query_keys, query_ops, query_vals,
+				query_cols, 1, 5, 0, &res) < 0) {
+		ds_disconnect_db();
+		LM_ERR("error while querying database for id [%d]\n", target_id);
+		return -1;
+	}
+
+	nr_rows = RES_ROW_N(res);
+
+	if(nr_rows == 0) {
+		ds_disconnect_db();
+		ds_dbf.free_result(ds_db_handle, res);
+		LM_ERR("dispatcher database record id [%d] not found\n",
+				target_id);
+		return -1;
+	}
+
+	values = ROW_VALUES(RES_ROWS(res));
+
+	setid = VAL_INT(values);
+	uri.s = VAL_STR(values + 1).s;
+	uri.len = strlen(uri.s);
+
+	flags = VAL_INT(values + 2);
+	priority = VAL_INT(values + 3);
+
+	if(!VAL_NULL(values + 4)) {
+		attrs.s = VAL_STR(values + 4).s;
+		if(attrs.s)
+			attrs.len = strlen(attrs.s);
+	}
+		
+	ds_dbf.free_result(ds_db_handle, res);
+	
+	ds_disconnect_db();
+	if(flags & DS_TOMBSTONE_DST) {
+		if(ds_remove_dst(setid, &uri) < 0) {
+			LM_ERR("failed to remove dispatcher destination "
+					"id [%d], set [%d], uri [%.*s]\n",
+					target_id, setid, uri.len, uri.s);
+			return -1;
+		}
+	} else {
+		ds_remove_dst(setid, &uri);
+		if(ds_add_dst(setid, &uri, flags, priority, &attrs, db_id) < 0) {
+			LM_ERR("failed to add dispatcher destination "
+					"id [%d], set [%d], uri [%.*s]\n",
+					target_id, setid, uri.len, uri.s);
+			return -1;
+		}
+	}
+
+	return 0;
 }

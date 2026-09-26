@@ -2460,6 +2460,27 @@ DEST: {
 		&sercmd; dispatcher.reload
 </programlisting>
 	</section>
+	<section id="dispatcher.r.reload_id">
+		<title>
+		<function moreinfo="none">dispatcher.reload_id</function>
+		</title>
+		<para>
+		Reloads a destination record given its database id.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.reload_id</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_id_: the database id to be reloaded</para></listitem>
+		</itemizedlist>
+		<para>
+		Example
+		</para>
+<programlisting  format="linespecific">
+		&sercmd; dispatcher.reload_id
+</programlisting>
+	</section>
 
 	<section id="dispatcher.r.ping_active">
 		<title>
