@@ -27,6 +27,7 @@
 #include <strings.h>
 #include "hf.h"
 #include "keys.h"
+#include "parse_bytes.h"
 
 #define F_OPTION_TAG_PATH (1 << 0)
 #define F_OPTION_TAG_100REL (1 << 1)
@@ -75,24 +76,6 @@ inline static int option_tag_is_delim(char val)
 		   || val == ',';
 }
 
-inline static unsigned int option_tag_lower_byte(unsigned char val)
-{
-	return (unsigned int)val | 0x20U;
-}
-
-inline static unsigned int option_tag_read_u32le(const char *val)
-{
-	return (unsigned int)(unsigned char)val[0]
-		   | ((unsigned int)(unsigned char)val[1] << 8)
-		   | ((unsigned int)(unsigned char)val[2] << 16)
-		   | ((unsigned int)(unsigned char)val[3] << 24);
-}
-
-inline static unsigned int option_tag_lower_u32(unsigned int val)
-{
-	return val | 0x20202020U;
-}
-
 /*!
  * Parse HF body containing option-tags.
  */
@@ -118,7 +101,7 @@ static inline int parse_option_tag_body(str *body, unsigned int *tags)
 			break;
 		}
 		if(len - pos >= 4) {
-			val = option_tag_lower_u32(option_tag_read_u32le(p));
+			val = ksr_ascii_lower_u32(ksr_read_u32le(p));
 			switch(val) {
 
 				/* "path" */
@@ -137,8 +120,8 @@ static inline int parse_option_tag_body(str *body, unsigned int *tags)
 				/* "100rel" */
 				case _100r_:
 					if(len - pos >= OPTION_TAG_100REL_LEN
-							&& option_tag_lower_byte((unsigned char)p[4]) == 'e'
-							&& option_tag_lower_byte((unsigned char)p[5]) == 'l'
+							&& ksr_ascii_lower_u8((unsigned char)p[4]) == 'e'
+							&& ksr_ascii_lower_u8((unsigned char)p[5]) == 'l'
 							&& (len - pos == OPTION_TAG_100REL_LEN
 									|| option_tag_is_delim(
 											p[OPTION_TAG_100REL_LEN]))) {
@@ -152,7 +135,7 @@ static inline int parse_option_tag_body(str *body, unsigned int *tags)
 				/* "timer" */
 				case _time_:
 					if(len - pos >= OPTION_TAG_TIMER_LEN
-							&& option_tag_lower_byte((unsigned char)p[4]) == 'r'
+							&& ksr_ascii_lower_u8((unsigned char)p[4]) == 'r'
 							&& (len - pos == OPTION_TAG_TIMER_LEN
 									|| option_tag_is_delim(
 											p[OPTION_TAG_TIMER_LEN]))) {
