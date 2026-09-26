@@ -274,7 +274,8 @@ int shm_init_manager(char *name)
 		/*tlsf malloc*/
 		return tlsf_malloc_init_shm_manager();
 	} else if(strcmp(name, "sm") == 0) {
-		/*system malloc*/
+		/*system malloc - process private, cannot back shared memory*/
+		LM_ERR("sm (system malloc) is pkg only (-X sm), not for shm\n");
 	} else {
 		/*custom malloc - module*/
 	}

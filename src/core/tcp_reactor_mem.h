@@ -53,8 +53,8 @@
  * this returns, every pkg_malloc/pkg_free in this process is serialized by a
  * single mutex. No-op-safe to call more than once.
  *
- * In a build without PKG_MALLOC (pkg_* == thread-safe system malloc) this is a
- * no-op: there is no lock-free allocator to protect.
+ * In a build without PKG_MALLOC, or with the runtime pkg manager -X sm (both:
+ * pkg_* == thread-safe system malloc), this is a no-op: nothing to protect.
  */
 void tcp_reactor_pkg_lock_install(void);
 

@@ -36,6 +36,9 @@ int qm_malloc_init_pkg_manager(void);
 int qm_malloc_init_shm_manager(void);
 #endif
 
+/* system malloc - implemented in sys_malloc.c, pkg only (-X sm) */
+int sm_malloc_init_pkg_manager(void);
+
 #ifdef TLSF_MALLOC
 /* two levels segregated fit - implemented in tlsf_malloc.c */
 #include "tlsf_malloc.h"
