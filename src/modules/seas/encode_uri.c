@@ -47,6 +47,7 @@
 #include <netinet/in.h>
 #include "../../core/mem/mem.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_bytes.h"
 #include "../../core/dprint.h"
 #include "encode_uri.h"
 #include "encode_parameters.h"
@@ -215,9 +216,7 @@ int encode_uri2(char *hdr, int hdrlen, str uri_str, struct sip_uri *uri_parsed,
 #define SIPS_SCH 0x73706973
 #define TEL_SCH 0x3a6c6574
 #define TELS_SCH 0x736c6574
-	scheme = uri_str.s[0] + (uri_str.s[1] << 8) + (uri_str.s[2] << 16)
-			 + (uri_str.s[3] << 24);
-	scheme |= 0x20202020;
+	scheme = ksr_ascii_lower_u32(ksr_read_u32le(uri_str.s));
 	if(scheme == SIP_SCH) {
 		flags1 |= SIP_OR_TEL_F;
 	} else if(scheme == SIPS_SCH) {
