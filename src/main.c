@@ -259,6 +259,7 @@ Options:\n\
     -x name      Specify internal manager for shared memory (shm)\n\
                   - can be: fm, qm or tlsf\n\
     -X name      Specify internal manager for private memory (pkg)\n\
+                  - can be: fm, qm, tlsf or sm\n\
                   - if omitted, the one for shm is used\n\
     -Y dir       Runtime dir path\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n"
@@ -2397,7 +2398,10 @@ int main(int argc, char **argv)
 	}
 
 	/*init pkg mallocs (before parsing cfg or the rest of the cmd line !)*/
-	if(pkg_mem_size)
+	if(strcmp(sr_memmng_pkg, "sm") == 0)
+		LM_INFO("private (per process) memory: system malloc, -M "
+				"ignored\n");
+	else if(pkg_mem_size)
 		LM_INFO("private (per process) memory: %ld bytes\n", pkg_mem_size);
 	if(pkg_init_manager(sr_memmng_pkg) < 0)
 		goto error;

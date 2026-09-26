@@ -81,6 +81,7 @@ int pkg_init_manager(char *name)
 		return tlsf_malloc_init_pkg_manager();
 	} else if(strcmp(name, "sm") == 0) {
 		/*system malloc*/
+		return sm_malloc_init_pkg_manager();
 	} else {
 		/*custom malloc - module*/
 	}
