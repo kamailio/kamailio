@@ -51,6 +51,7 @@
 #include "compiler_opt.h"
 #include "dprint.h"
 #include "mem/mem.h"
+#include "parser/parse_bytes.h"
 #include "ip_addr.h"
 #include "ut.h"
 #include "error.h"
@@ -1216,18 +1217,16 @@ char naptr_get_sip_proto(struct naptr_rdata *n)
 
 	proto = -1;
 
-	if((n->flags_len != 1) || ((*n->flags | 0x20) != 's'))
+	if((n->flags_len != 1)
+			|| (ksr_ascii_lower_u8((unsigned char)*n->flags) != 's'))
 		return -1;
 	if(n->regexp_len != 0)
 		return -1;
 	/* SIP+D2U, SIP+D2T, SIP+D2S, SIPS+D2T */
 	if(n->services_len == 7) { /* SIP+D2X */
-		s = n->services[0] + (n->services[1] << 8) + (n->services[2] << 16)
-			+ (n->services[3] << 24);
-		s |= 0x20202020;
+		s = ksr_ascii_lower_u32(ksr_read_u32le(n->services));
 		if(s == SIP_SCH) {
-			s = n->services[4] + (n->services[5] << 8) + (n->services[6] << 16);
-			s |= 0x00202020;
+			s = ksr_ascii_lower_u24(ksr_read_u24le(n->services + 4));
 			switch(s) {
 				case SIP_D2U:
 					proto = PROTO_UDP;
@@ -1245,13 +1244,9 @@ char naptr_get_sip_proto(struct naptr_rdata *n)
 			return -1;
 		}
 	} else if(n->services_len == 8) { /*SIPS+D2T */
-		s = n->services[0] + (n->services[1] << 8) + (n->services[2] << 16)
-			+ (n->services[3] << 24);
-		s |= 0x20202020;
+		s = ksr_ascii_lower_u32(ksr_read_u32le(n->services));
 		if(s == SIPS_SCH) {
-			s = n->services[4] + (n->services[5] << 8) + (n->services[6] << 16)
-				+ (n->services[7] << 24);
-			s |= 0x20202020;
+			s = ksr_ascii_lower_u32(ksr_read_u32le(n->services + 4));
 			if(s == SIPS_D2T) {
 				proto = PROTO_TLS;
 			}
