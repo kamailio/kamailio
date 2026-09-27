@@ -269,9 +269,12 @@ static void rpc_pkg_info(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return;
 	}
+	/* sm (system malloc) has no pkg pool, -M does not apply */
 	if(rpc->struct_add(th, "su", "name",
 			   (_pkg_root.mname) ? _pkg_root.mname : "unknown", "size",
-			   (unsigned int)pkg_mem_size)
+			   (_pkg_root.mname && strcmp(_pkg_root.mname, "sm") == 0)
+					   ? 0
+					   : (unsigned int)pkg_mem_size)
 			< 0) {
 		rpc->fault(ctx, 500, "Internal error adding fields");
 		return;
