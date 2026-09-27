@@ -1551,10 +1551,18 @@ static int w_rx_aar_register(
 		if(vb->host.len > 2 && vb->host.s[0] == '['
 				&& vb->host.s[vb->host.len - 1] == ']') {
 			// IPv6
+			if(vb->host.len - 2 >= (int)sizeof(buff)) {
+				LM_ERR("Via host too long for buffer (%d)\n", vb->host.len);
+				goto error;
+			}
 			memcpy(&buff, vb->host.s + 1, vb->host.len - 2);
 			buff[vb->host.len - 2] = 0;
 		} else {
 			// IPv4
+			if(vb->host.len >= (int)sizeof(buff)) {
+				LM_ERR("Via host too long for buffer (%d)\n", vb->host.len);
+				goto error;
+			}
 			memcpy(&buff, vb->host.s, vb->host.len);
 			buff[vb->host.len] = 0;
 		}
