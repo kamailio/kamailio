@@ -378,7 +378,9 @@ int pv_get_contact_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	if(msg == NULL)
 		return -1;
 
-	if(msg->contact == NULL && parse_headers(msg, HDR_CONTACT_F, 0) == -1) {
+	if(msg->contact == NULL
+			&& (parse_headers(msg, HDR_CONTACT_F, 0) == -1
+					|| msg->contact == NULL)) {
 		LM_DBG("no contact header\n");
 		return pv_get_null(msg, param, res);
 	}
@@ -401,7 +403,9 @@ int pv_get_contact_star(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	if(msg == NULL)
 		return -1;
 
-	if(msg->contact == NULL && parse_headers(msg, HDR_CONTACT_F, 0) == -1) {
+	if(msg->contact == NULL
+			&& (parse_headers(msg, HDR_CONTACT_F, 0) == -1
+					|| msg->contact == NULL)) {
 		LM_DBG("no contact header\n");
 		return pv_get_null(msg, param, res);
 	}
