@@ -388,11 +388,20 @@ char *stre_search_strz(char *vstart, char *vend, char *needlez)
 char *str_casesearch(str *text, str *needle)
 {
 	int i, j;
+	unsigned char text_char;
+	unsigned char needle_char;
+
+	if(text == NULL || text->s == NULL || needle == NULL || needle->s == NULL
+			|| text->len < needle->len || text->len < 0 || needle->len < 0)
+		return NULL;
+
 	for(i = 0; i <= text->len - needle->len; i++) {
 		for(j = 0; j < needle->len; j++) {
-			if(!((text->s[i + j] == needle->s[j])
-					   || (isalpha((int)text->s[i + j])
-							   && ((text->s[i + j]) ^ (needle->s[j])) == 0x20)))
+			text_char = (unsigned char)text->s[i + j];
+			needle_char = (unsigned char)needle->s[j];
+			if(!(text_char == needle_char
+					   || (isalpha(text_char)
+							   && (text_char ^ needle_char) == 0x20)))
 				break;
 		}
 		if(j == needle->len)
