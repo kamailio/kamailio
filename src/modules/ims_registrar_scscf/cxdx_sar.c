@@ -60,8 +60,11 @@
 #include "../../core/counters.h"
 #include "../../core/data_lump_rpl.h"
 #include "sip_msg.h"
+#include "path.h"
 #include "regtime.h"
 #include "../../core/parser/hf.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
 #include "../../lib/ims/ims_getters.h"
 #include "registrar_notify.h"
 #include "pvt_message.h"
@@ -114,6 +117,7 @@ void async_cdp_callback(
 
 	str xml_data = {0, 0}, ccf1 = {0, 0}, ccf2 = {0, 0}, ecf1 = {0, 0},
 		ecf2 = {0, 0};
+	restoration_info_t ri = {{0, 0}, {0, 0}, {0, 0}};
 	ims_subscription *s = 0;
 	rerrno = R_FINE;
 
@@ -206,11 +210,31 @@ void async_cdp_callback(
 		cxdx_get_result_code(saa, &rc);
 		cxdx_get_experimental_result_code(saa, &experimental_rc);
 		cxdx_get_charging_info(saa, &ccf1, &ccf2, &ecf1, &ecf2);
+		/* TS 23.380 4.6.2: present only on the answer to a NO_ASSIGNMENT or
+		 * UNREGISTERED_USER SAR, the two assign_server() sends; no point
+		 * looking in a REGISTER's SAA. */
+		if(data->script_assignment)
+			cxdx_get_scscf_restoration_info(
+					saa, &ri.path, &ri.contact, &ri.callid);
 
 		if(!rc && !experimental_rc) {
 			LM_ERR("bad SAA result code\n");
 			rerrno = R_SAR_FAILED;
 			goto error;
+		}
+
+		/* TS 29.228 6.1.2.1, TS 23.380 4.3.2: an UNREGISTERED_USER SAR for an
+		 * identity the HSS holds as registered is answered with the profile,
+		 * the restoration information and Experimental-Result
+		 * DIAMETER_ERROR_IN_ASSIGNMENT_TYPE. That is the restoration answer,
+		 * not a failure: the S-CSCF triggers the registered services. */
+		if(rc == -1
+				&& experimental_rc == RC_IMS_DIAMETER_ERROR_IN_ASSIGNMENT_TYPE
+				&& data->sar_assignment_type == AVP_IMS_SAR_UNREGISTERED_USER
+				&& ri.contact.len) {
+			LM_DBG("UNREGISTERED_USER SAA with restoration information: "
+				   "restoring a registered user\n");
+			rc = AAA_SUCCESS;
 		}
 
 		switch(rc) {
@@ -234,9 +258,8 @@ void async_cdp_callback(
 				goto error;
 		}
 		//success
-		//if this is from a save (not a server assign unreg) and expires is zero we don't update usrloc as this is a dereg and usrloc was updated previously
-		if(data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER
-				&& data->expires == 0) {
+		//if this is from a save (not a server assign from the script) and expires is zero we don't update usrloc as this is a dereg and usrloc was updated previously
+		if(!data->script_assignment && data->expires == 0) {
 			LM_DBG("no need to update usrloc - already done for de-reg\n");
 			result = CSCF_RETURN_TRUE;
 			goto success;
@@ -269,7 +292,7 @@ void async_cdp_callback(
 		//here we update the contacts and also build the new contact header for the 200 OK reply
 		if(update_contacts(req, data->domain, &data->public_identity,
 				   data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2,
-				   &data->contact_header)
+				   &data->contact_header, &ri)
 				<= 0) {
 			LM_ERR("Error processing REGISTER\n");
 			rerrno = R_SAR_FAILED;
@@ -288,7 +311,7 @@ success:
 	update_stat(accepted_registrations, 1);
 
 done:
-	if(data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
+	if(!data->script_assignment)
 		reg_send_reply_transactional(req, data->contact_header, t);
 	LM_DBG("DBG:SAR Async CDP callback: ... Done resuming transaction\n");
 
@@ -314,7 +337,7 @@ done:
 
 error:
 	create_return_code(-2);
-	if(data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
+	if(!data->script_assignment)
 		reg_send_reply_transactional(req, data->contact_header, t);
 
 error_no_send: //if we don't have the transaction then we can't send a transaction response
@@ -329,6 +352,50 @@ error_no_send: //if we don't have the transaction then we can't send a transacti
 	tmb.t_continue(data->tindex, data->tlabel, data->act);
 	free_saved_transaction_data(data);
 	return;
+}
+
+/*!
+ * The Contact to back up at the HSS (TS 23.380 4.6.2): the REGISTER's whole
+ * Contact header field value, parameters included, as TS 29.229 6.3.48 has the
+ * Contact AVP carry it - the restored binding needs its feature tags
+ * (+sip.instance, +g.3gpp.icsi-ref...) as much as its URI. A registration time
+ * given in an Expires header rather than as a parameter is appended as one, so
+ * the restored binding is granted what this REGISTER was granted and not
+ * default_expires.
+ * @param msg - the REGISTER
+ * @param c - the contact of msg to back up
+ * @param out - set to a pkg copy the caller frees
+ * @returns 0 on success, -1 on error
+ */
+static int build_restoration_contact(
+		struct sip_msg *msg, contact_t *c, str *out)
+{
+	static const char expires_param[] = ";expires=";
+	str value;
+	int expires = -1;
+
+	value.s = c->name.s;
+	value.len = c->len;
+	trim(&value);
+
+	if(!c->expires)
+		expires = cscf_get_expires_hdr(msg, 0);
+
+	out->len = value.len + sizeof(expires_param) - 1 + INT2STR_MAX_LEN;
+	out->s = pkg_malloc(out->len);
+	if(!out->s) {
+		PKG_MEM_ERROR;
+		out->len = 0;
+		return -1;
+	}
+	memcpy(out->s, value.s, value.len);
+	if(expires >= 0)
+		out->len = value.len
+				   + snprintf(out->s + value.len, out->len - value.len, "%s%d",
+						   expires_param, expires);
+	else
+		out->len = value.len;
+	return 0;
 }
 
 /**
@@ -350,6 +417,7 @@ int cxdx_send_sar(struct sip_msg *msg, str public_identity,
 	unsigned int hash = 0, label = 0;
 	struct hdr_field *hdr;
 	str call_id;
+	int restoration_info_sent = 0;
 
 	session = cdpb.AAACreateSession(0);
 
@@ -390,6 +458,73 @@ int cxdx_send_sar(struct sip_msg *msg, str public_identity,
 		goto error1;
 	if(!cxdx_add_userdata_available(sar, data_available))
 		goto error1;
+
+	/*
+	 * TS 23.380 4.6.2: back up the Contact and the Path leading to it
+	 * (normally just the P-CSCF) at the HSS during (RE_)REGISTRATION, so a
+	 * restarted S-CSCF can ask for them back later instead of only the
+	 * profile. msg is the REGISTER only for these two types; for any other
+	 * assignment_type it is the request being served (INVITE, MESSAGE...),
+	 * whose Path/Contact have nothing to do with the served user's binding.
+	 *
+	 * Gated behind scscf_restoration_info_enabled: Supported-Features goes
+	 * out with the M bit set on a SAR that carries SCSCF-Restoration-Info
+	 * (TS 29.229 7.2.1), which an HSS without IMSRestorationInd must reject
+	 * (DIAMETER_ERROR_FEATURE_UNSUPPORTED, or DIAMETER_AVP_UNSUPPORTED if it
+	 * has no Supported-Features support at all) -- failing the REGISTER.
+	 * Default off so an unpatched HSS keeps working; turn on only once the
+	 * HSS is known to support the feature.
+	 */
+	if(scscf_restoration_info_enabled) {
+		if(msg
+				&& (assignment_type == AVP_IMS_SAR_REGISTRATION
+						|| assignment_type == AVP_IMS_SAR_RE_REGISTRATION)) {
+			str restoration_path = {0, 0}, path_received = {0, 0};
+			str restoration_contact = {0, 0}, restoration_callid = {0, 0};
+			contact_t *c;
+
+			if(path_enabled)
+				build_path_vector(msg, &restoration_path, &path_received);
+
+			c = get_first_contact(msg);
+			if(c && restoration_path.len
+					&& build_restoration_contact(msg, c, &restoration_contact)
+							   < 0)
+				LM_WARN("Failed to build the Contact to back up at the "
+						"HSS.... continuing... assuming non-critical\n");
+
+			/* trimmed as pack_ci() stores it, or a restored binding would
+			 * not match the UE's next REGISTER on Call-ID */
+			restoration_callid = cscf_get_call_id(msg, &hdr);
+			trim_trailing(&restoration_callid);
+
+			if(private_identity.len && restoration_path.len
+					&& restoration_contact.len) {
+				if(cxdx_add_scscf_restoration_info(sar, private_identity,
+						   restoration_path, restoration_contact,
+						   restoration_callid))
+					restoration_info_sent = 1;
+				else
+					LM_WARN("Failed to add SCSCF-Restoration-Info to SAR.... "
+							"continuing... assuming non-critical\n");
+			}
+			if(restoration_contact.s)
+				pkg_free(restoration_contact.s);
+		}
+
+		/*
+		 * TS 29.229 table 7.1.1 IMSRestorationInd: the HSS sends restoration
+		 * information back only to an S-CSCF that says it supports the
+		 * feature, so every SAR says so once enabled -- NO_ASSIGNMENT and
+		 * UNREGISTERED_USER being the ones that ask for it back. 7.2.1: the
+		 * M bit is set only when this SAR itself uses the feature, i.e.
+		 * carries SCSCF-Restoration-Info.
+		 */
+		if(!cxdx_add_supported_features(sar,
+				   AVP_IMS_Feature_List_ID_IMS_Restoration_Indication,
+				   restoration_info_sent))
+			goto error1;
+	}
 
 	if(msg && tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
 		// it's ok cause we can call this async with a message for ul callbacks!

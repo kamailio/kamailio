@@ -139,6 +139,8 @@ static int w_save4(
 		struct sip_msg *_m, char *_route, char *_d, char *mode, char *_cflags);
 static int w_assign_server_unreg(
 		struct sip_msg *_m, char *_route, char *_d, char *_direction);
+static int w_assign_server(struct sip_msg *_m, char *_route, char *_d,
+		char *_direction, char *_type);
 static int w_lookup(struct sip_msg *_m, char *_d, char *_p2);
 static int w_lookup_ue_type(struct sip_msg *_m, char *_d, char *_p2);
 static int w_lookup_path_to_contact(struct sip_msg *_m, char *contact_uri);
@@ -147,6 +149,8 @@ static int w_lookup_path_to_contact(struct sip_msg *_m, char *contact_uri);
 static int domain_fixup(void **param, int param_no);
 static int assign_save_fixup3_async(void **param, int param_no);
 static int assign_save_fixup_free(void **param, int param_no);
+static int assign_server_fixup4(void **param, int param_no);
+static int assign_server_fixup4_free(void **param, int param_no);
 static int free_uint_fixup(void **param, int param_no);
 static int save_fixup4(void **param, int param_no);
 static int unreg_fixup(void **param, int param_no);
@@ -171,6 +175,10 @@ int path_mode =
 int path_use_params =
 		0; /*!< if the received- and nat-parameters of last Path uri should be used
  						 * to determine if UAC is nat'ed */
+int scscf_restoration_info_enabled =
+		0; /*!< if SCSCF-Restoration-Info/Supported-Features should be sent on
+			*   the Cx SAR; leave off for an HSS without IMSRestorationInd, or
+			*   it will reject the SAR (mandatory Supported-Features AVP) */
 
 char *aor_avp_param =
 		0; /*!< if instead of extacting the AOR from the request, it should be
@@ -259,6 +267,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"assign_server_unreg", (cmd_function)w_assign_server_unreg, 3, assign_save_fixup3_async, assign_save_fixup_free,
 			REQUEST_ROUTE},
+	{"assign_server", (cmd_function)w_assign_server, 4, assign_server_fixup4, assign_server_fixup4_free,
+			REQUEST_ROUTE},
 	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1, fixup_str_null, fixup_free_str_null,
 			REQUEST_ROUTE},
 	{"unregister", (cmd_function)unregister, 2, unreg_fixup, unreg_fixup_free,
@@ -306,6 +316,8 @@ static param_export_t params[] = {
 	{"use_path", PARAM_INT, &path_enabled},
 	{"path_mode", PARAM_INT, &path_mode},
 	{"path_use_received", PARAM_INT, &path_use_params},
+	{"scscf_restoration_info_enabled", PARAM_INT,
+			&scscf_restoration_info_enabled},
 	{"user_data_dtd", PARAM_STRING, &scscf_user_data_dtd},
 	{"user_data_xsd", PARAM_STRING, &scscf_user_data_xsd},
 	{"support_wildcardPSI", PARAM_INT, &scscf_support_wildcardPSI},
@@ -710,6 +722,21 @@ static int w_assign_server_unreg(
 	return assign_server_unreg(_m, _d, &direction, _route);
 }
 
+static int w_assign_server(struct sip_msg *_m, char *_route, char *_d,
+		char *_direction, char *_type)
+{
+	str direction;
+	int type;
+
+	if(fixup_get_ivalue(_m, (gparam_t *)_type, &type) != 0) {
+		LM_ERR("invalid Server-Assignment-Type\n");
+		return -1;
+	}
+	direction.s = _direction;
+	direction.len = strlen(_direction);
+	return assign_server_type(_m, _d, &direction, _route, type);
+}
+
 static int w_lookup_path_to_contact(struct sip_msg *_m, char *contact_uri)
 {
 	return lookup_path_to_contact(_m, contact_uri);
@@ -798,6 +825,22 @@ static int assign_save_fixup_free(void **param, int param_no)
 		fixup_free_spve_null(param, param_no);
 	}
 	return 0;
+}
+
+/* assign_server(route, domain, direction, type): the first three as for
+ * assign_server_unreg(), the Server-Assignment-Type an int or a variable */
+static int assign_server_fixup4(void **param, int param_no)
+{
+	if(param_no == 4)
+		return fixup_igp_null(param, 1);
+	return assign_save_fixup3_async(param, param_no);
+}
+
+static int assign_server_fixup4_free(void **param, int param_no)
+{
+	if(param_no == 4)
+		return fixup_free_igp_null(param, 1);
+	return assign_save_fixup_free(param, param_no);
 }
 
 

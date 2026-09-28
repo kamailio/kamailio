@@ -470,6 +470,42 @@
       </example>
     </section>
 
+    <section>
+      <title>scscf_restoration_info_enabled (int)</title>
+
+      <para>If set to 1, the S-CSCF takes part in the S-CSCF restoration
+      procedures of 3GPP TS 23.380 using the HSS rather than a database: every
+      Cx Server-Assignment-Request carries a Supported-Features AVP naming
+      IMSRestorationInd (3GPP TS 29.229 table 7.1.1), and those sent for a
+      REGISTRATION or RE_REGISTRATION also back up the contact at the HSS in
+      an SCSCF-Restoration-Info AVP: the whole Contact header field value,
+      its Path and the Call-ID of the REGISTER. The HSS hands them back in the
+      answer to a NO_ASSIGNMENT or UNREGISTERED_USER request sent by
+      assign_server() for a user it holds as registered, and the S-CSCF then
+      binds that contact again and serves the user as registered.</para>
+
+      <para>Only the contact of the first Contact header is backed up, and
+      only when the REGISTER has a Path (see use_path). The restored binding
+      is granted the registration time of the REGISTER it was backed up from,
+      counted from the moment it is restored.</para>
+
+      <para>Enable it only towards an HSS that supports IMSRestorationInd.
+      The Supported-Features AVP goes out with the M bit set on a request that
+      carries SCSCF-Restoration-Info (3GPP TS 29.229 7.2.1), so an HSS without
+      the feature rejects every REGISTRATION and RE_REGISTRATION request, and
+      with it the REGISTER.</para>
+
+      <para><emphasis> Default value is 0 (disabled). </emphasis></para>
+
+      <example>
+        <title>Set <varname>scscf_restoration_info_enabled</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_registrar_scscf", "scscf_restoration_info_enabled", 1)
+...</programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>
@@ -659,9 +695,92 @@ unregister("location");
       <title><function moreinfo="none">assign_server_unreg(aysnc_reply_route,
       domain, direction)</function></title>
 
-      <para>TBD</para>
+      <para>Same as assign_server() with a Server-Assignment-Type of 3
+      (UNREGISTERED_USER).</para>
 
       <para>used in REQUEST_ROUTE</para>
+    </section>
+
+    <section>
+      <title><function moreinfo="none">assign_server(async_reply_route,
+      domain, direction, assignment_type)</function></title>
+
+      <para>Sends a Cx Server-Assignment-Request on behalf of a request other
+      than REGISTER, downloading the served user's profile into usrloc. The
+      transaction is suspended and resumed in async_reply_route once the SAA
+      arrives, with $avp(saa_return_code) set to 1 when a profile was stored
+      and to a negative value otherwise. No reply is sent by the module; that
+      is left to the route.</para>
+
+      <para>Meaning of the parameters is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>async_reply_route</emphasis> - route to resume in
+          when the SAA arrives.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>domain</emphasis> - Logical domain within
+          registrar.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>direction</emphasis> - "orig" takes the served user
+          from the P-Asserted-Identity, "term" from the Request-URI.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>assignment_type</emphasis> - the
+          Server-Assignment-Type, an integer or a variable holding one:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para>0 (NO_ASSIGNMENT) - fetch the profile without changing
+              anything at the HSS. The HSS answers DIAMETER_UNABLE_TO_COMPLY
+              when another S-CSCF is assigned to the user. An IMPU already in
+              usrloc keeps its registration state and bindings; a new one is
+              stored as unregistered. This is the S-CSCF restoration procedure
+              for an originating request (3GPP TS 23.380 4.4.2).</para>
+            </listitem>
+
+            <listitem>
+              <para>3 (UNREGISTERED_USER) - fetch the unregistered profile and
+              tell the HSS the user is unregistered here (3GPP TS 29.228
+              6.1.2.1).</para>
+            </listitem>
+          </itemizedlist>
+
+          <para>With scscf_restoration_info_enabled, either answer can carry
+          the restoration information backed up at REGISTER, for a user the
+          HSS holds as registered. Each IMPU of the profile is then stored as
+          registered with that contact bound to it; a contact still bound in
+          usrloc is linked to the IMPU as it is.</para>
+
+          <para>Any other type is refused: REGISTRATION and RE_REGISTRATION
+          are sent by save(), and the de-registration types would leave usrloc
+          out of step with the HSS.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This function can be used in REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function>assign_server</function> usage</title>
+
+        <programlisting format="linespecific">...
+assign_server("ORIG_SAA", "location", "orig", 0);
+...
+route[ORIG_SAA] {
+    if($avp(saa_return_code) != 1) {
+        t_reply("504", "Server Time-out");
+        exit;
+    }
+    # continue as for a registered user
+}
+...
+</programlisting>
+      </example>
     </section>
 
     <section>
