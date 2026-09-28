@@ -163,6 +163,7 @@ static const char *parse_number(
 {
 	double n = 0, sign = 1, scale = 0;
 	int subscale = 0, signsubscale = 1;
+	int digit;
 
 	/* Could use sscanf for this? */
 	if(*num == '-')
@@ -185,8 +186,14 @@ static const char *parse_number(
 			num++;
 		else if(*num == '-')
 			signsubscale = -1, num++; /* With sign? */
-		while(*num >= '0' && *num <= '9')
-			subscale = (subscale * 10) + (*num++ - '0'); /* Number? */
+		while(*num >= '0' && *num <= '9') {
+			digit = *num++ - '0';
+			/* Saturate, but keep consuming all exponent digits. */
+			if(subscale > (INT_MAX - digit) / 10)
+				subscale = INT_MAX;
+			else
+				subscale = (subscale * 10) + digit; /* Number? */
+		}
 	}
 	n = sign * n * pow(10.0, (scale + subscale * signsubscale)); /* number = +/-
 									 * number.fraction *
@@ -202,8 +209,15 @@ static char *print_number(srjson_doc_t *doc, srjson_t *item)
 {
 	char *str;
 	double d = item->valuedouble;
-	int i = (int)d;
-	if(fabs(((double)i) - d) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN) {
+	int i;
+	if(!isfinite(d))
+		return srjson_strdup(doc, "null");
+	if(d <= INT_MAX && d >= INT_MIN) {
+		i = (int)d;
+	} else {
+		i = 0;
+	}
+	if(d <= INT_MAX && d >= INT_MIN && fabs(((double)i) - d) <= DBL_EPSILON) {
 		str = (char *)doc->malloc_fn(21); /* 2^64+1 can be
 							 * represented in 20+1
 							 * chars (including 0-termination). */
