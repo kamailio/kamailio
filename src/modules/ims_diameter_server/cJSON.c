@@ -55,6 +55,17 @@ static int cJSON_strcasecmp(const char *s1, const char *s2)
 static void *(*cJSON_malloc)(size_t sz) = malloc;
 static void (*cJSON_free)(void *ptr) = free;
 
+static int cJSON_double_to_int(double number)
+{
+	if(isnan(number))
+		return 0;
+	if(number >= INT_MAX)
+		return INT_MAX;
+	if(number <= INT_MIN)
+		return INT_MIN;
+	return (int)number;
+}
+
 static char *cJSON_strdup(const char *str)
 {
 	size_t len;
@@ -110,6 +121,7 @@ static const char *parse_number(cJSON *item, const char *num)
 {
 	double n = 0, sign = 1, scale = 0;
 	int subscale = 0, signsubscale = 1;
+	int digit;
 
 	if(*num == '-')
 		sign = -1, num++; /* Has sign? */
@@ -124,7 +136,7 @@ static const char *parse_number(cJSON *item, const char *num)
 		do
 			n = (n * 10.0) + (*num++ - '0'), scale--;
 		while(*num >= '0' && *num <= '9');
-	}							   /* Fractional part? */
+	} /* Fractional part? */
 	if(*num == 'e' || *num == 'E') /* Exponent? */
 	{
 		num++;
@@ -132,8 +144,14 @@ static const char *parse_number(cJSON *item, const char *num)
 			num++;
 		else if(*num == '-')
 			signsubscale = -1, num++; /* With sign? */
-		while(*num >= '0' && *num <= '9')
-			subscale = (subscale * 10) + (*num++ - '0'); /* Number? */
+		while(*num >= '0' && *num <= '9') {
+			digit = *num++ - '0';
+			/* Saturate, but keep consuming all exponent digits. */
+			if(subscale > (INT_MAX - digit) / 10)
+				subscale = INT_MAX;
+			else
+				subscale = (subscale * 10) + digit; /* Number? */
+		}
 	}
 
 	n = sign * n
@@ -141,7 +159,7 @@ static const char *parse_number(cJSON *item, const char *num)
 				(scale + subscale * signsubscale)); /* number = +/- number.fraction * 10^+/- exponent */
 
 	item->valuedouble = n;
-	item->valueint = (int)n;
+	item->valueint = cJSON_double_to_int(n);
 	item->type = cJSON_Number;
 	return num;
 }
@@ -203,7 +221,14 @@ static char *print_number(cJSON *item, printbuffer *p)
 {
 	char *str = 0;
 	double d = item->valuedouble;
-	if(d == 0) {
+	if(!isfinite(d)) {
+		if(p)
+			str = ensure(p, 5);
+		else
+			str = (char *)cJSON_malloc(5);
+		if(str)
+			strcpy(str, "null");
+	} else if(d == 0) {
 		if(p)
 			str = ensure(p, 2);
 		else
@@ -1273,7 +1298,7 @@ cJSON *cJSON_CreateNumber(double num)
 	if(item) {
 		item->type = cJSON_Number;
 		item->valuedouble = num;
-		item->valueint = (int)num;
+		item->valueint = cJSON_double_to_int(num);
 	}
 	return item;
 }
