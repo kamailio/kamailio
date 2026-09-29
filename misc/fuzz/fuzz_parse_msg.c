@@ -33,7 +33,7 @@ int ksr_fuzz_tcp_read(char *buf, size_t bsize)
 	struct tcp_connection c;
 	rd_conn_flags_t read_flags;
 
-	if(bsize >= (1 << 24)) {
+	if(bsize >= 4 * BUF_SIZE) {
 		/* limit the size */
 		return 0;
 	}
@@ -80,15 +80,15 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
 	sip_msg_t orig_inv = {};
 
-	ksr_fuzz_tcp_read((char *)data, size);
-
-	orig_inv.buf = (char *)data;
-	orig_inv.len = size;
-
 	if(size >= 4 * BUF_SIZE) {
 		/* test with larger message than core accepts, but not indefinitely large */
 		return 0;
 	}
+
+	ksr_fuzz_tcp_read((char *)data, size);
+
+	orig_inv.buf = (char *)data;
+	orig_inv.len = size;
 
 	if(parse_msg(orig_inv.buf, orig_inv.len, &orig_inv) < 0) {
 		goto cleanup;
