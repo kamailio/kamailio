@@ -116,25 +116,26 @@ Tyler Moore
 
         4. Functions
 
-              4.1. ds_select_dst(set, alg[, limit])
-              4.2. ds_select_domain(set, alg[, limit])
-              4.3. ds_select(set, alg [, limit])
-              4.4. ds_select_routes(rules, mode [, limit])
-              4.5. ds_next_dst()
-              4.6. ds_next_domain()
-              4.7. ds_set_dst()
-              4.8. ds_set_domain()
-              4.9. ds_mark_dst([state])
-              4.10. ds_mark_addr(state, setid, uri)
-              4.11. ds_list_exists(groupid)
-              4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.13. ds_is_active(groupid [, uri])
-              4.14. ds_load_update()
-              4.15. ds_load_unset([callid])
-              4.16. ds_reload()
-              4.17. ds_dsg_fetch(setid)
-              4.18. ds_dsg_fetch_uri(setid, uri)
-              4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+              4.1. ds_select_dns([limit])
+              4.2. ds_select_dst(set, alg[, limit])
+              4.3. ds_select_domain(set, alg[, limit])
+              4.4. ds_select(set, alg [, limit])
+              4.5. ds_select_routes(rules, mode [, limit])
+              4.6. ds_next_dst()
+              4.7. ds_next_domain()
+              4.8. ds_set_dst()
+              4.9. ds_set_domain()
+              4.10. ds_mark_dst([state])
+              4.11. ds_mark_addr(state, setid, uri)
+              4.12. ds_list_exists(groupid)
+              4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+              4.14. ds_is_active(groupid [, uri])
+              4.15. ds_load_update()
+              4.16. ds_load_unset([callid])
+              4.17. ds_reload()
+              4.18. ds_dsg_fetch(setid)
+              4.19. ds_dsg_fetch_uri(setid, uri)
+              4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
         5. RPC Commands
 
@@ -216,25 +217,26 @@ Tyler Moore
    1.48. Set the “ds_dns_interval” parameter
    1.49. Set the “ds_dns_match_all” parameter
    1.50. Set the “ds_dns_ttl” parameter
-   1.51. latency_optimized_dispatching usage
-   1.52. priority_weight_dispatching usage
-   1.53. ds_select_dst usage
-   1.54. configuring load balancing with congestion detection
-   1.55. ds_select_domain usage
-   1.56. ds_select usage
-   1.57. ds_select_routes usage
-   1.58. ds_mark_dst usage
-   1.59. ds_mark_addr usage
-   1.60. ds_list_exists usage
-   1.61. ds_is_from_list usage
-   1.62. ds_is_active usage
-   1.63. ds_load_unset usage
-   1.64. ds_reload usage
-   1.65. ds_dsg_fetch() usage
-   1.66. ds_dsg_fetch_uri() usage
-   1.67. ds_oc_set_attrs() usage
-   1.68. dispatcher list file
-   1.69. Kamailio config script - sample dispatcher usage
+   1.51. ds_select_dns usage
+   1.52. latency_optimized_dispatching usage
+   1.53. priority_weight_dispatching usage
+   1.54. ds_select_dst usage
+   1.55. configuring load balancing with congestion detection
+   1.56. ds_select_domain usage
+   1.57. ds_select usage
+   1.58. ds_select_routes usage
+   1.59. ds_mark_dst usage
+   1.60. ds_mark_addr usage
+   1.61. ds_list_exists usage
+   1.62. ds_is_from_list usage
+   1.63. ds_is_active usage
+   1.64. ds_load_unset usage
+   1.65. ds_reload usage
+   1.66. ds_dsg_fetch() usage
+   1.67. ds_dsg_fetch_uri() usage
+   1.68. ds_oc_set_attrs() usage
+   1.69. dispatcher list file
+   1.70. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -299,25 +301,26 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. ds_select_dst(set, alg[, limit])
-        4.2. ds_select_domain(set, alg[, limit])
-        4.3. ds_select(set, alg [, limit])
-        4.4. ds_select_routes(rules, mode [, limit])
-        4.5. ds_next_dst()
-        4.6. ds_next_domain()
-        4.7. ds_set_dst()
-        4.8. ds_set_domain()
-        4.9. ds_mark_dst([state])
-        4.10. ds_mark_addr(state, setid, uri)
-        4.11. ds_list_exists(groupid)
-        4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.13. ds_is_active(groupid [, uri])
-        4.14. ds_load_update()
-        4.15. ds_load_unset([callid])
-        4.16. ds_reload()
-        4.17. ds_dsg_fetch(setid)
-        4.18. ds_dsg_fetch_uri(setid, uri)
-        4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+        4.1. ds_select_dns([limit])
+        4.2. ds_select_dst(set, alg[, limit])
+        4.3. ds_select_domain(set, alg[, limit])
+        4.4. ds_select(set, alg [, limit])
+        4.5. ds_select_routes(rules, mode [, limit])
+        4.6. ds_next_dst()
+        4.7. ds_next_domain()
+        4.8. ds_set_dst()
+        4.9. ds_set_domain()
+        4.10. ds_mark_dst([state])
+        4.11. ds_mark_addr(state, setid, uri)
+        4.12. ds_list_exists(groupid)
+        4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+        4.14. ds_is_active(groupid [, uri])
+        4.15. ds_load_update()
+        4.16. ds_load_unset([callid])
+        4.17. ds_reload()
+        4.18. ds_dsg_fetch(setid)
+        4.19. ds_dsg_fetch_uri(setid, uri)
+        4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    5. RPC Commands
 
@@ -1221,27 +1224,57 @@ modparam("dispatcher", "ds_interval_mode", 7200)
 
 4. Functions
 
-   4.1. ds_select_dst(set, alg[, limit])
-   4.2. ds_select_domain(set, alg[, limit])
-   4.3. ds_select(set, alg [, limit])
-   4.4. ds_select_routes(rules, mode [, limit])
-   4.5. ds_next_dst()
-   4.6. ds_next_domain()
-   4.7. ds_set_dst()
-   4.8. ds_set_domain()
-   4.9. ds_mark_dst([state])
-   4.10. ds_mark_addr(state, setid, uri)
-   4.11. ds_list_exists(groupid)
-   4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.13. ds_is_active(groupid [, uri])
-   4.14. ds_load_update()
-   4.15. ds_load_unset([callid])
-   4.16. ds_reload()
-   4.17. ds_dsg_fetch(setid)
-   4.18. ds_dsg_fetch_uri(setid, uri)
-   4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+   4.1. ds_select_dns([limit])
+   4.2. ds_select_dst(set, alg[, limit])
+   4.3. ds_select_domain(set, alg[, limit])
+   4.4. ds_select(set, alg [, limit])
+   4.5. ds_select_routes(rules, mode [, limit])
+   4.6. ds_next_dst()
+   4.7. ds_next_domain()
+   4.8. ds_set_dst()
+   4.9. ds_set_domain()
+   4.10. ds_mark_dst([state])
+   4.11. ds_mark_addr(state, setid, uri)
+   4.12. ds_list_exists(groupid)
+   4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+   4.14. ds_is_active(groupid [, uri])
+   4.15. ds_load_update()
+   4.16. ds_load_unset([callid])
+   4.17. ds_reload()
+   4.18. ds_dsg_fetch(setid)
+   4.19. ds_dsg_fetch_uri(setid, uri)
+   4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
-4.1.  ds_select_dst(set, alg[, limit])
+4.1.  ds_select_dns([limit])
+
+   Resolves the current next hop using the procedures from RFC 3263 and
+   stores the resulting target addresses in the XAVP configured by the
+   xavp_dst parameter. The destination URI is used as the next hop when it
+   is set; otherwise, the Request-URI is used. The lookup performs NAPTR,
+   SRV, and CNAME/A/AAAA queries as required by the URI and stores
+   concrete SIP URIs containing the resolved IP address, port, and
+   transport in DNS selection order.
+
+   The optional limit parameter is a positive integer or a variable
+   containing an integer. Resolution stops after this number of targets
+   has been stored. A missing or zero value means no limit.
+
+   The function returns true if at least one target was resolved and
+   stored. The generated XAVP records contain the “uri” field and can be
+   used by ds_next_dst() for serial failover when bit 2 of the flags
+   parameter is set.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.51. ds_select_dns usage
+...
+if(ds_select_dns("8")) {
+        ds_next_dst();
+        t_relay();
+}
+...
+
+4.2.  ds_select_dst(set, alg[, limit])
 
    The method selects a destination from addresses set. It returns true if
    a new destination is set. The selected address is set to dst_uri field
@@ -1339,7 +1372,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
             - If the attribute 'cc=1' is set, the latency used is
             congestion ms : estimate (current latency ms) - average
             (normal condition latency ms).
-            Example 1.51. latency_optimized_dispatching usage
+            Example 1.52. latency_optimized_dispatching usage
 Using this simple formula :
     ADJUSTED_PRIORITY = PRIORITY - (ESTIMATED_LATENCY_MS/PRIORITY)
 
@@ -1376,7 +1409,7 @@ With congestion control the formula becomes :
             inactive, the algorithm automatically recalculates the
             distribution and falls back to destinations at the next
             priority level, mirroring SRV failover behaviour.
-            Example 1.52. priority_weight_dispatching usage
+            Example 1.53. priority_weight_dispatching usage
 GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
    1    |    10    |   70   |   70%
    2    |    10    |   30   |   30%
@@ -1398,7 +1431,7 @@ GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.53. ds_select_dst usage
+   Example 1.54. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -1408,7 +1441,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-   Example 1.54. configuring load balancing with congestion detection
+   Example 1.55. configuring load balancing with congestion detection
 ...
 # sample of SQL provisioning statements
 INSERT INTO "dispatcher"
@@ -1449,7 +1482,7 @@ DEST: {
 }
 ...
 
-4.2.  ds_select_domain(set, alg[, limit])
+4.3.  ds_select_domain(set, alg[, limit])
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
@@ -1462,7 +1495,7 @@ DEST: {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.55. ds_select_domain usage
+   Example 1.56. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1471,7 +1504,7 @@ if(ds_select_domain("1", "$var(a)")) {
 }
 ...
 
-4.3.  ds_select(set, alg [, limit])
+4.4.  ds_select(set, alg [, limit])
 
    The method selects a destination from addresses set and adds it in the
    XAVP specified for this module. It is not updating R-URI nor the
@@ -1486,7 +1519,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.56. ds_select usage
+   Example 1.57. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1496,7 +1529,7 @@ if(ds_select("1", "$var(a)")) {
 }
 ...
 
-4.4.  ds_select_routes(rules, mode [, limit])
+4.5.  ds_select_routes(rules, mode [, limit])
 
    The method selects destinations following the rules combining groups
    add algorithms, controlling where the first destination address is
@@ -1529,7 +1562,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.57. ds_select_routes usage
+   Example 1.58. ds_select_routes usage
 ...
 $var(alg) = 4;
 $var(limit) = 8;
@@ -1549,35 +1582,35 @@ failure_route[REROUTE] {
 }
 ...
 
-4.5.  ds_next_dst()
+4.6.  ds_next_dst()
 
    Takes the next destination address from the corresponding XAVPs and
    sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.6.  ds_next_domain()
+4.7.  ds_next_domain()
 
    Takes the next destination address from the corresponding XAVPs and
    sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.7.  ds_set_dst()
+4.8.  ds_set_dst()
 
    Takes the current destination address from the corresponding XAVPs and
    sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.8.  ds_set_domain()
+4.9.  ds_set_domain()
 
    Takes the current destination address from the corresponding XAVPs and
    sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.9.  ds_mark_dst([state])
+4.10.  ds_mark_dst([state])
 
    Mark the last used address from destination set as inactive ("i"/"I"),
    active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
@@ -1604,7 +1637,7 @@ failure_route[REROUTE] {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.58. ds_mark_dst usage
+   Example 1.59. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1614,7 +1647,7 @@ failure_route[tryagain] {
 }
 ...
 
-4.10.  ds_mark_addr(state, setid, uri)
+4.11.  ds_mark_addr(state, setid, uri)
 
    Set the state to the target specified by setid and uri. The parameter
    state can have same value as for ds_mark_dst(). All parameters can
@@ -1622,12 +1655,12 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.59. ds_mark_addr usage
+   Example 1.60. ds_mark_addr usage
 ...
     ds_mark_addr("ip", "1", "sip:127.0.0.1:5080"); # set to inactive and probing
 ...
 
-4.11.  ds_list_exists(groupid)
+4.12.  ds_list_exists(groupid)
 
    Function alias: ds_list_exist(groupid)
 
@@ -1639,14 +1672,14 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.60. ds_list_exists usage
+   Example 1.61. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
 }
 ...
 
-4.12.  ds_is_from_list([groupid [, mode [, uri] ] ])
+4.13.  ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -1701,7 +1734,7 @@ Note
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.61. ds_is_from_list usage
+   Example 1.62. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1717,7 +1750,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.13.  ds_is_active(groupid [, uri])
+4.14.  ds_is_active(groupid [, uri])
 
    This function returns true, if there is an active URI in the
    destination group; otherwise false. If the uri parameter is provided,
@@ -1731,7 +1764,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.62. ds_is_active usage
+   Example 1.63. ds_is_active usage
 ...
 if(ds_is_active("10")) {
     ...
@@ -1741,7 +1774,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.14.  ds_load_update()
+4.15.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -1752,7 +1785,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.15.  ds_load_unset([callid])
+4.16.  ds_load_unset([callid])
 
    Remove the call load for the destination that routed the call.
 
@@ -1768,7 +1801,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE and EVENT_ROUTE.
 
-   Example 1.63. ds_load_unset usage
+   Example 1.64. ds_load_unset usage
 ...
 route {
     ...
@@ -1798,7 +1831,7 @@ event_route[dialog:failed] {
 }
 ...
 
-4.16.  ds_reload()
+4.17.  ds_reload()
 
    Reloads the groups and included destinations.
 
@@ -1808,12 +1841,12 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.64. ds_reload usage
+   Example 1.65. ds_reload usage
 ...
     ds_reload();
 ...
 
-4.17.  ds_dsg_fetch(setid)
+4.18.  ds_dsg_fetch(setid)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes.
@@ -1822,13 +1855,13 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.65. ds_dsg_fetch() usage
+   Example 1.66. ds_dsg_fetch() usage
 ...
     ds_dsg_fetch("1");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
 ...
 
-4.18.  ds_dsg_fetch_uri(setid, uri)
+4.19.  ds_dsg_fetch_uri(setid, uri)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes and the overload-control attributes to the corresponding uri
@@ -1839,13 +1872,13 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.66. ds_dsg_fetch_uri() usage
+   Example 1.67. ds_dsg_fetch_uri() usage
 ...
     ds_dsg_fetch_uri("1", "sip:127.0.0.1:5080");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active); $dsg(ocrate)\n");
 ...
 
-4.19.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
+4.20.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    Sets the overload control rate, time interval limit and sequence number
    for the destination record (setid, uri) following RFC7339
@@ -1871,7 +1904,7 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.67. ds_oc_set_attrs() usage
+   Example 1.68. ds_oc_set_attrs() usage
 ...
     ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
 ...
@@ -2189,7 +2222,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.68. dispatcher list file
+   Example 1.69. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -2214,7 +2247,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.69. Kamailio config script - sample dispatcher usage
+   Example 1.70. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
