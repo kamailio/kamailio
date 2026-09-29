@@ -1366,6 +1366,45 @@ modparam("dispatcher", "ds_interval_mode", 7200)
 
 	<section>
 	<title>Functions</title>
+	<section id="dispatcher.f.ds_select_dns">
+		<title>
+		<function moreinfo="none">ds_select_dns([limit])</function>
+		</title>
+		<para>
+		Resolves the current next hop using the procedures from RFC 3263 and
+		stores the resulting target addresses in the XAVP configured by the
+		<varname>xavp_dst</varname> parameter. The destination URI is used as
+		the next hop when it is set; otherwise, the Request-URI is used.
+		The lookup performs NAPTR, SRV, and CNAME/A/AAAA queries as required by
+		the URI and stores concrete SIP URIs containing the resolved IP address,
+		port, and transport in DNS selection order.
+		</para>
+		<para>
+		The optional <emphasis>limit</emphasis> parameter is a positive integer
+		or a variable containing an integer. Resolution stops after this number
+		of targets has been stored. A missing or zero value means no limit.
+		</para>
+		<para>
+		The function returns true if at least one target was resolved and stored.
+		The generated XAVP records contain the <quote>uri</quote> field and can be
+		used by <function>ds_next_dst()</function> for serial failover when bit 2
+		of the <varname>flags</varname> parameter is set.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_select_dns</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(ds_select_dns("8")) {
+	ds_next_dst();
+	t_relay();
+}
+...
+		</programlisting>
+		</example>
+	</section>
 	<section id="dispatcher.f.ds_select_dst">
 		<title>
 		<function moreinfo="none">ds_select_dst(set, alg[, limit])</function>
