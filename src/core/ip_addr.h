@@ -175,6 +175,35 @@ typedef struct socket_info
 #endif		   /* USE_MCAST */
 } socket_info_t;
 
+typedef struct send_socket_map
+{
+	struct socket_info *udp;
+	struct socket_info *tcp;
+	struct socket_info *tls;
+	struct socket_info *sctp;
+} send_socket_map_t;
+
+static inline struct socket_info *send_socket_map_get(
+		const send_socket_map_t *smap, unsigned short proto)
+{
+	if(smap == NULL)
+		return NULL;
+	switch(proto) {
+		case PROTO_UDP:
+			return smap->udp;
+		case PROTO_TCP:
+		case PROTO_WS:
+			return smap->tcp;
+		case PROTO_TLS:
+		case PROTO_WSS:
+			return smap->tls;
+		case PROTO_SCTP:
+			return smap->sctp;
+		default:
+			return NULL;
+	}
+}
+
 typedef struct socket_attrs
 {
 	int bindproto;
