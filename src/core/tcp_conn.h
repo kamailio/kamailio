@@ -162,7 +162,8 @@ typedef enum tcp_conn_states
 	S_CONN_INIT,   /* initial state (invalid) */
 	S_CONN_EOF,
 	S_CONN_ACCEPT,
-	S_CONN_CONNECT
+	S_CONN_CONNECT,
+	S_CONN_HAPROXY
 } tcp_conn_states_t;
 
 
