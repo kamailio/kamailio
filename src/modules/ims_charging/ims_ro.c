@@ -1256,7 +1256,7 @@ error:
  * @param reservation_units - units to try to reserve
  * @param reservation_units - config route to call when receiving a CCA
  * @param tindex - transaction index
- * @param tindex - transaction label
+ * @param tlabel - transaction label
  *
  * @returns #CSCF_RETURN_BREAK if OK, #CSCF_RETURN_ERROR on error
  */
