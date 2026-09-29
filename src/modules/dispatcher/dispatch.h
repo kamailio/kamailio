@@ -172,6 +172,7 @@ int ds_reload_db(void);
 int ds_destroy_list(void);
 int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 		int mode, ds_selres_t *sres);
+int ds_select_dns(sip_msg_t *msg, uint32_t limit);
 int ds_select_routes_limit(
 		sip_msg_t *msg, str *srules, str *smode, int rlimit, ds_selres_t *sres);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);

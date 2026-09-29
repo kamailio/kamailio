@@ -39,6 +39,7 @@
 #include "../../core/ut.h"
 #include "../../core/trim.h"
 #include "../../core/dprint.h"
+#include "../../core/globals.h"
 #include "../../core/action.h"
 #include "../../core/route.h"
 #include "../../core/dset.h"
@@ -49,6 +50,7 @@
 #include "../../core/xavp.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/resolve.h"
+#include "../../core/dns_cache.h"
 #include "../../core/lvalue.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/srdb1/db.h"
@@ -2753,6 +2755,171 @@ int ds_add_xavp_record(
 	}
 
 	return 0;
+}
+
+/**
+ * Add a DNS-resolved destination URI to the dispatcher destination XAVP.
+ */
+static int ds_add_dns_xavp_record(str *uri, sr_xavp_t **pxavp)
+{
+	sr_xavp_t *nxavp = NULL;
+	sr_xval_t nxval;
+
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_STR;
+	nxval.v.s = *uri;
+	if(xavp_add_value(&ds_xavp_dst_addr, &nxval, &nxavp) == NULL) {
+		LM_ERR("failed to add DNS destination uri xavp field\n");
+		return -1;
+	}
+
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_XAVP;
+	nxval.v.xavp = nxavp;
+	if((*pxavp = xavp_add_value_after(&ds_xavp_dst, &nxval, *pxavp)) == NULL) {
+		LM_ERR("cannot add DNS destination xavp to root list\n");
+		xavp_destroy_list(&nxavp);
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Resolve the current next hop according to RFC 3263 and store all resulting
+ * target addresses in the dispatcher destination XAVP.
+ */
+int ds_select_dns(sip_msg_t *msg, uint32_t limit)
+{
+#ifndef USE_DNS_CACHE
+	(void)msg;
+	(void)limit;
+	LM_ERR("ds_select_dns requires DNS cache support\n");
+	return -1;
+#else
+	struct dns_srv_handle dns_h;
+	struct sip_uri puri;
+	struct ip_addr ip;
+	str *next_hop;
+	str host;
+	str proto_name;
+	str target;
+	sr_xavp_t *lxavp = NULL;
+	sr_xval_t nxval;
+	unsigned short port;
+	char proto;
+	char target_buf[MAX_URI_SIZE];
+	char ip_buf[IP_ADDR_MAX_STRZ_SIZE];
+	int ip_len;
+	int ret;
+	int fatal_error = 0;
+	uint32_t cnt = 0;
+
+	if(msg == NULL || msg->first_line.type != SIP_REQUEST) {
+		LM_ERR("invalid SIP request\n");
+		return -1;
+	}
+	if(ds_xavp_dst.len <= 0) {
+		LM_ERR("no destination xavp configured\n");
+		return -1;
+	}
+
+	next_hop = (msg->dst_uri.s != NULL && msg->dst_uri.len > 0) ? &msg->dst_uri
+																: GET_RURI(msg);
+	if(next_hop == NULL || next_hop->s == NULL || next_hop->len <= 0
+			|| parse_uri(next_hop->s, next_hop->len, &puri) < 0) {
+		LM_ERR("failed to parse next hop uri [%.*s]\n",
+				next_hop ? next_hop->len : 0,
+				(next_hop && next_hop->s) ? next_hop->s : "");
+		return -1;
+	}
+	if(puri.type != SIP_URI_T && puri.type != SIPS_URI_T) {
+		LM_ERR("next hop is not a SIP uri [%.*s]\n", next_hop->len,
+				next_hop->s);
+		return -1;
+	}
+
+#ifdef HONOR_MADDR
+	if(puri.maddr_val.s != NULL && puri.maddr_val.len > 0)
+		host = puri.maddr_val;
+	else
+#endif
+		host = puri.host;
+	port = puri.port_no;
+	proto = puri.proto;
+	if(puri.type == SIPS_URI_T) {
+		if(proto == PROTO_UDP) {
+			LM_ERR("invalid UDP transport for sips next hop\n");
+			return -1;
+		}
+		if(proto != PROTO_WS)
+			proto = PROTO_TLS;
+	}
+
+	if(limit == 0)
+		limit = UINT32_MAX;
+
+	dns_srv_handle_init(&dns_h);
+	do {
+		ret = dns_sip_resolve(
+				&dns_h, &host, &ip, &port, &proto, dns_flags | DNS_TRY_NAPTR);
+		if(ret < 0)
+			break;
+
+		ip_len = ip_addr2sbufz(&ip, ip_buf, sizeof(ip_buf));
+		if(ip_len <= 0
+				|| get_valid_proto_string(proto, 1, 0, &proto_name) < 0) {
+			LM_ERR("failed to format DNS target address\n");
+			fatal_error = 1;
+			break;
+		}
+		target.len = snprintf(target_buf, sizeof(target_buf),
+				(puri.type == SIPS_URI_T) ? "sips:%.*s:%u;transport=%.*s"
+										  : "sip:%.*s:%u;transport=%.*s",
+				ip_len, ip_buf, port, proto_name.len, proto_name.s);
+		if(target.len <= 0 || target.len >= (int)sizeof(target_buf)) {
+			LM_ERR("DNS target uri is too long\n");
+			fatal_error = 1;
+			break;
+		}
+		target.s = target_buf;
+		if(ds_add_dns_xavp_record(&target, &lxavp) < 0) {
+			fatal_error = 1;
+			break;
+		}
+		cnt++;
+	} while(cnt < limit && dns_srv_handle_next(&dns_h, ret));
+	dns_srv_handle_put(&dns_h);
+	if(fatal_error) {
+		while(cnt > 0) {
+			xavp_rm_by_index(&ds_xavp_dst, 0, NULL);
+			cnt--;
+		}
+		return -1;
+	}
+
+	if(cnt == 0) {
+		if(ret != -E_DNS_EOR)
+			LM_ERR("failed to resolve next hop host [%.*s]: %s (%d)\n",
+					host.len, host.s, dns_strerror(ret), ret);
+		return -1;
+	}
+
+	if(((ds_xavp_ctx_mode & DS_XAVP_CTX_SKIP_CNT) == 0)
+			&& (ds_xavp_ctx.len >= 0)) {
+		memset(&nxval, 0, sizeof(sr_xval_t));
+		nxval.type = SR_XTYPE_LONG;
+		nxval.v.l = cnt;
+		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)
+				== NULL) {
+			LM_ERR("failed to add DNS destination count to xavp\n");
+			return -1;
+		}
+	}
+
+	LM_DBG("selected DNS target destinations: %u\n", cnt);
+	return 1;
+#endif
 }
 
 /**
