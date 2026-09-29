@@ -69,6 +69,11 @@ typedef struct tls_extra_data
 	int run_conn_out_pending; /* tcp_main_threads>0: tls:connection-out should not
 							   * run on a PROC_TCP_MAIN mtops thread; this flag
 							   * marks deferred execution */
+	struct tcp_connection *tcp_conn; /* back-pointer for keylog callback so it
+	                                  * can read the peer 5-tuple; the SSL* has
+	                                  * no accessible fd because kamailio uses
+	                                  * a memory BIO (tls_BIO_new_mbuf), so
+	                                  * SSL_get_fd()/BIO_get_fd() both fail. */
 
 	char *ssl_servername;
 	char *ssl_cipher_name;
