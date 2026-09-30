@@ -1030,6 +1030,7 @@ int sip_msg_copy(sip_msg_t *imsg, sip_msg_t *omsg, unsigned int flags)
 	memcpy(omsg->xflags, imsg->xflags, KSR_XFLAGS_SIZE * sizeof(flag_t));
 	omsg->hash_index = imsg->hash_index;
 	omsg->force_send_socket = imsg->force_send_socket;
+	omsg->force_send_socket_map = imsg->force_send_socket_map;
 
 	omsg->reg_id = imsg->reg_id;
 	omsg->otcpid = imsg->otcpid;
