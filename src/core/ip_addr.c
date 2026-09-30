@@ -301,7 +301,7 @@ char *ip_addr2strz(struct ip_addr *ip)
 }
 
 #define IP_ADDR_BUF_NR 8
-static char _ksr_addr2x_buff[IP_ADDR_BUF_NR][IP_ADDR_MAX_STR_SIZE];
+static char _ksr_addr2x_buff[IP_ADDR_BUF_NR][IP_ADDR_MAX_STRZ_SIZE];
 static int _ksr_addr2x_idx = 0;
 
 /* fast ip_addr -> string converter;
@@ -315,7 +315,7 @@ char *ip_addr2xa(struct ip_addr *ip)
 	buff = _ksr_addr2x_buff[_ksr_addr2x_idx];
 	_ksr_addr2x_idx = (_ksr_addr2x_idx + 1) % IP_ADDR_BUF_NR;
 
-	len = ip_addr2sbuf(ip, buff, sizeof(buff) - 1);
+	len = ip_addr2sbuf(ip, buff, IP_ADDR_MAX_STR_SIZE - 1);
 	buff[len] = 0;
 
 	return buff;
@@ -336,7 +336,7 @@ char *ip_addr2xstrz(struct ip_addr *ip)
 	if(ip->af == AF_INET6) {
 		*p++ = '[';
 	}
-	len = ip_addr2sbuf(ip, p, sizeof(buff) - 3);
+	len = ip_addr2sbuf(ip, p, IP_ADDR_MAX_STRZ_SIZE - 3);
 	p += len;
 	if(ip->af == AF_INET6) {
 		*p++ = ']';
