@@ -66,7 +66,14 @@ struct socket_info *get_send_socket2(struct socket_info *force_send_socket,
 inline static struct socket_info *get_send_socket(
 		struct sip_msg *msg, union sockaddr_union *su, int proto)
 {
-	return get_send_socket2(msg ? msg->force_send_socket : 0, su, proto, 0);
+	struct socket_info *send_sock = 0;
+
+	if(msg) {
+		send_sock = send_socket_map_get(&msg->force_send_socket_map, proto);
+		if(send_sock == 0)
+			send_sock = msg->force_send_socket;
+	}
+	return get_send_socket2(send_sock, su, proto, 0);
 }
 
 

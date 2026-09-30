@@ -546,6 +546,7 @@ int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
 	char *buf;
 	char md5[MD5_LEN];
 	struct socket_info *orig_send_sock; /* initial send_sock */
+	struct socket_info *map_send_sock;
 	int ret;
 	struct ip_addr ip; /* debugging only */
 	char proto;
@@ -610,8 +611,17 @@ int forward_request_mode(struct sip_msg *msg, str *dst, unsigned short port,
 #ifdef USE_DNS_FAILOVER
 	do {
 #endif
-		if(orig_send_sock == 0) /* no forced send_sock => find it **/
+		map_send_sock = send_socket_map_get(&msg->force_send_socket_map, proto);
+		if(map_send_sock) {
+			send_info->send_sock =
+					get_send_socket2(map_send_sock, &send_info->to, proto, 0);
+			send_info->send_flags.f |= SND_F_FORCE_SOCKET;
+		} else if(orig_send_sock == 0) {
+			/* no forced send_sock => find it */
+			if(msg->force_send_socket == 0)
+				send_info->send_flags.f &= ~SND_F_FORCE_SOCKET;
 			send_info->send_sock = get_send_socket(msg, &send_info->to, proto);
+		}
 		if(send_info->send_sock == 0) {
 			LM_ERR("cannot forward to af %d, proto %d "
 				   "no corresponding listening socket\n",
@@ -1050,7 +1060,13 @@ int forward_reply_nocb(struct sip_msg *msg)
 
 static void apply_force_send_socket(struct dest_info *dst, struct sip_msg *msg)
 {
-	if(msg->force_send_socket != 0) {
+	struct socket_info *map_send_sock;
+
+	map_send_sock =
+			send_socket_map_get(&msg->force_send_socket_map, dst->proto);
+	if(msg->force_send_socket != 0 || map_send_sock != 0) {
 		dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
+		if(map_send_sock != 0)
+			dst->send_flags.f |= SND_F_FORCE_SOCKET;
 	}
 }
