@@ -203,6 +203,7 @@ typedef struct ua_client
 #ifdef USE_DNS_FAILOVER
 	struct dns_srv_handle dns_h;
 #endif
+	send_socket_map_t force_send_socket_map;
 	str uri;
 	str dst_uri;
 	str path;

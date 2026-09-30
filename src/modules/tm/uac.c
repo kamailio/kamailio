@@ -533,12 +533,12 @@ static inline int t_uac_prepare(
 	if((uri2dst2(cfg_get(core, core_cfg, use_dns_failover)
 						 ? &new_cell->uac[0].dns_h
 						 : 0,
-				&dst, uac_r->dialog->send_sock, snd_flags,
+				&dst, uac_r->dialog->send_sock, 0, snd_flags,
 				uac_r->dialog->hooks.next_hop, PROTO_NONE)
 			   == 0)
 			|| (dst.send_sock == 0)) {
 #else  /* USE_DNS_FAILOVER */
-	if((uri2dst2(&dst, uac_r->dialog->send_sock, snd_flags,
+	if((uri2dst2(&dst, uac_r->dialog->send_sock, 0, snd_flags,
 				uac_r->dialog->hooks.next_hop, PROTO_NONE)
 			   == 0)
 			|| (dst.send_sock == 0)) {
