@@ -467,8 +467,8 @@ int force_capture_callid(struct sip_msg *msg, struct _sipcapture_object *sco)
 		}
 		memset(hdr, 0, sizeof(struct hdr_field));
 		hdr->type = HDR_ERROR_T;
-		get_hdr_field(tmp, end, hdr);
-		if(hdr->type != HDR_CALLID_T) {
+		if((get_hdr_field(tmp, end, hdr, NULL) < 0)
+				|| (hdr->type != HDR_CALLID_T)) {
 			LM_DBG("Bad msg callid error\n");
 			pkg_free(hdr);
 			EMPTY_STR(sco->callid);
