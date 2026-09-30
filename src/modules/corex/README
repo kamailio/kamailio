@@ -55,22 +55,23 @@ Muhammad Shahzad Shafi
               4.14. resetxflag(flag)
               4.15. set_send_socket(saddr)
               4.16. set_send_socket_name(sname)
-              4.17. set_recv_socket(saddr)
-              4.18. set_recv_socket_name(sname)
-              4.19. set_source_address(saddr)
-              4.20. via_add_srvid(flags)
-              4.21. via_add_xavp_params(flags)
-              4.22. via_use_xavp_fields(flags)
-              4.23. via_reply_add_xavp_params(flags)
-              4.24. is_faked_msg()
-              4.25. is_socket_name(sockname)
-              4.26. forward_uac([bindex])
-              4.27. forward_uac_uri(vuri [, bindex])
-              4.28. forward_reply()
-              4.29. msg_vbflag_set(flag)
-              4.30. msg_vbflag_is_set(flag)
-              4.31. msg_vbflag_reset(flag)
-              4.32. add_tcp_alias(port)
+              4.17. set_send_socket_map(smap)
+              4.18. set_recv_socket(saddr)
+              4.19. set_recv_socket_name(sname)
+              4.20. set_source_address(saddr)
+              4.21. via_add_srvid(flags)
+              4.22. via_add_xavp_params(flags)
+              4.23. via_use_xavp_fields(flags)
+              4.24. via_reply_add_xavp_params(flags)
+              4.25. is_faked_msg()
+              4.26. is_socket_name(sockname)
+              4.27. forward_uac([bindex])
+              4.28. forward_uac_uri(vuri [, bindex])
+              4.29. forward_reply()
+              4.30. msg_vbflag_set(flag)
+              4.31. msg_vbflag_is_set(flag)
+              4.32. msg_vbflag_reset(flag)
+              4.33. add_tcp_alias(port)
 
         5. RPC Commands
 
@@ -117,24 +118,25 @@ Muhammad Shahzad Shafi
    1.21. resetxflag usage
    1.22. set_send_socket usage
    1.23. set_send_socket_name usage
-   1.24. set_recv_socket usage
-   1.25. set_recv_socket_name usage
-   1.26. set_source_address usage
-   1.27. via_add_srvid usage
-   1.28. via_add_xavp_params usage
-   1.29. via_use_xavp_fields usage
-   1.30. via_reply_add_xavp_params usage
-   1.31. is_faked_msg usage
-   1.32. is_socket_name usage
-   1.33. forward_uac usage
-   1.34. forward_uac_uri usage
-   1.35. forward_reply usage
-   1.36. msg_vbflag_set usage
-   1.37. msg_vbflag_is_set usage
-   1.38. msg_vbflag_reset usage
-   1.39. add_tcp_alias usage
-   1.40. event_route[network:msg] use cases
-   1.41. Sample PERL code for do_compress and do_uncompress
+   1.24. set_send_socket_map usage
+   1.25. set_recv_socket usage
+   1.26. set_recv_socket_name usage
+   1.27. set_source_address usage
+   1.28. via_add_srvid usage
+   1.29. via_add_xavp_params usage
+   1.30. via_use_xavp_fields usage
+   1.31. via_reply_add_xavp_params usage
+   1.32. is_faked_msg usage
+   1.33. is_socket_name usage
+   1.34. forward_uac usage
+   1.35. forward_uac_uri usage
+   1.36. forward_reply usage
+   1.37. msg_vbflag_set usage
+   1.38. msg_vbflag_is_set usage
+   1.39. msg_vbflag_reset usage
+   1.40. add_tcp_alias usage
+   1.41. event_route[network:msg] use cases
+   1.42. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -174,22 +176,23 @@ Chapter 1. Admin Guide
         4.14. resetxflag(flag)
         4.15. set_send_socket(saddr)
         4.16. set_send_socket_name(sname)
-        4.17. set_recv_socket(saddr)
-        4.18. set_recv_socket_name(sname)
-        4.19. set_source_address(saddr)
-        4.20. via_add_srvid(flags)
-        4.21. via_add_xavp_params(flags)
-        4.22. via_use_xavp_fields(flags)
-        4.23. via_reply_add_xavp_params(flags)
-        4.24. is_faked_msg()
-        4.25. is_socket_name(sockname)
-        4.26. forward_uac([bindex])
-        4.27. forward_uac_uri(vuri [, bindex])
-        4.28. forward_reply()
-        4.29. msg_vbflag_set(flag)
-        4.30. msg_vbflag_is_set(flag)
-        4.31. msg_vbflag_reset(flag)
-        4.32. add_tcp_alias(port)
+        4.17. set_send_socket_map(smap)
+        4.18. set_recv_socket(saddr)
+        4.19. set_recv_socket_name(sname)
+        4.20. set_source_address(saddr)
+        4.21. via_add_srvid(flags)
+        4.22. via_add_xavp_params(flags)
+        4.23. via_use_xavp_fields(flags)
+        4.24. via_reply_add_xavp_params(flags)
+        4.25. is_faked_msg()
+        4.26. is_socket_name(sockname)
+        4.27. forward_uac([bindex])
+        4.28. forward_uac_uri(vuri [, bindex])
+        4.29. forward_reply()
+        4.30. msg_vbflag_set(flag)
+        4.31. msg_vbflag_is_set(flag)
+        4.32. msg_vbflag_reset(flag)
+        4.33. add_tcp_alias(port)
 
    5. RPC Commands
 
@@ -399,22 +402,23 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    4.14. resetxflag(flag)
    4.15. set_send_socket(saddr)
    4.16. set_send_socket_name(sname)
-   4.17. set_recv_socket(saddr)
-   4.18. set_recv_socket_name(sname)
-   4.19. set_source_address(saddr)
-   4.20. via_add_srvid(flags)
-   4.21. via_add_xavp_params(flags)
-   4.22. via_use_xavp_fields(flags)
-   4.23. via_reply_add_xavp_params(flags)
-   4.24. is_faked_msg()
-   4.25. is_socket_name(sockname)
-   4.26. forward_uac([bindex])
-   4.27. forward_uac_uri(vuri [, bindex])
-   4.28. forward_reply()
-   4.29. msg_vbflag_set(flag)
-   4.30. msg_vbflag_is_set(flag)
-   4.31. msg_vbflag_reset(flag)
-   4.32. add_tcp_alias(port)
+   4.17. set_send_socket_map(smap)
+   4.18. set_recv_socket(saddr)
+   4.19. set_recv_socket_name(sname)
+   4.20. set_source_address(saddr)
+   4.21. via_add_srvid(flags)
+   4.22. via_add_xavp_params(flags)
+   4.23. via_use_xavp_fields(flags)
+   4.24. via_reply_add_xavp_params(flags)
+   4.25. is_faked_msg()
+   4.26. is_socket_name(sockname)
+   4.27. forward_uac([bindex])
+   4.28. forward_uac_uri(vuri [, bindex])
+   4.29. forward_reply()
+   4.30. msg_vbflag_set(flag)
+   4.31. msg_vbflag_is_set(flag)
+   4.32. msg_vbflag_reset(flag)
+   4.33. add_tcp_alias(port)
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -668,7 +672,28 @@ set_send_socket("udp:127.0.0.1:5060");
 set_send_socket_name("sock1");
 ...
 
-4.17. set_recv_socket(saddr)
+4.17. set_send_socket_map(smap)
+
+   Set local sending sockets by transport. The map is consulted after DNS
+   resolution, allowing each transport selected by NAPTR failover to use a
+   different local socket. WebSocket uses the TCP entry and secure
+   WebSocket uses the TLS entry. If an entry is not present, the existing
+   forced-socket and default socket selection behavior is used. An empty
+   string clears the map.
+
+   Meaning of the parameters is as follows:
+     * smap - semicolon-separated assignments using the keys “udp”, “tcp”,
+       “tls”, and “sctp”. Values are configured local socket names. The
+       value can be a static string or contain a pseudo-variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. set_send_socket_map usage
+...
+set_send_socket_map("udp=private-udp;tcp=private-tcp;tls=private-tls");
+...
+
+4.18. set_recv_socket(saddr)
 
    Switch local socket used for receiving the message.
 
@@ -678,12 +703,12 @@ set_send_socket_name("sock1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. set_recv_socket usage
+   Example 1.25. set_recv_socket usage
 ...
 set_recv_socket("udp:127.0.0.1:5060");
 ...
 
-4.18. set_recv_socket_name(sname)
+4.19. set_recv_socket_name(sname)
 
    Switch local socket used for receiving the message.
 
@@ -693,12 +718,12 @@ set_recv_socket("udp:127.0.0.1:5060");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. set_recv_socket_name usage
+   Example 1.26. set_recv_socket_name usage
 ...
 set_recv_socket_name("sock1");
 ...
 
-4.19. set_source_address(saddr)
+4.20. set_source_address(saddr)
 
    Set the source address for the message.
 
@@ -708,12 +733,12 @@ set_recv_socket_name("sock1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. set_source_address usage
+   Example 1.27. set_source_address usage
 ...
 set_source_address("udp:127.0.0.1:5080");
 ...
 
-4.20. via_add_srvid(flags)
+4.21. via_add_srvid(flags)
 
    Control if srvid parameter is added or not to local Via. If yes, the
    value is server_id, added only if it is different than 0.
@@ -723,12 +748,12 @@ set_source_address("udp:127.0.0.1:5080");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.27. via_add_srvid usage
+   Example 1.28. via_add_srvid usage
 ...
 via_add_srv("1");
 ...
 
-4.21. via_add_xavp_params(flags)
+4.22. via_add_xavp_params(flags)
 
    Control if fields of the xavp with the name specified by
    xavp_via_params global parameter are added or not to local Via.
@@ -738,7 +763,7 @@ via_add_srv("1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.28. via_add_xavp_params usage
+   Example 1.29. via_add_xavp_params usage
 ...
 xavp_via_params="xvia"
 ...
@@ -751,7 +776,7 @@ request_route {
 }
 ...
 
-4.22. via_use_xavp_fields(flags)
+4.23. via_use_xavp_fields(flags)
 
    Control if fields of the xavp with the name specified by
    xavp_via_fields global parameter are used or not to build local Via.
@@ -761,7 +786,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.29. via_use_xavp_fields usage
+   Example 1.30. via_use_xavp_fields usage
 ...
 xavp_via_fields="mvia"
 ...
@@ -774,7 +799,7 @@ request_route {
 }
 ...
 
-4.23. via_reply_add_xavp_params(flags)
+4.24. via_reply_add_xavp_params(flags)
 
    Control if fields of the xavp with the name specified by
    xavp_via_reply_params global parameter are added or not to the top Via
@@ -785,7 +810,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.30. via_reply_add_xavp_params usage
+   Example 1.31. via_reply_add_xavp_params usage
 ...
 xavp_via_reply_params="xviarpl"
 ...
@@ -798,7 +823,7 @@ request_route {
 }
 ...
 
-4.24.  is_faked_msg()
+4.25.  is_faked_msg()
 
    Returns 1 (native config true) if the SIP message under processing is
    the internal faked msg structure. Returns -1 (native config false) if
@@ -810,7 +835,7 @@ request_route {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.31. is_faked_msg usage
+   Example 1.32. is_faked_msg usage
 ...
 event_route[dispatcher:dst-down] {
     if (is_faked_msg()) {
@@ -819,7 +844,7 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
-4.25.  is_socket_name(sockname)
+4.26.  is_socket_name(sockname)
 
    Returns 1 (native config true) if the parameter matches a local socket
    name, otherwise -1 (native config false). The parameter can contain
@@ -827,14 +852,14 @@ event_route[dispatcher:dst-down] {
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.32. is_socket_name usage
+   Example 1.33. is_socket_name usage
 ...
     if (is_socket_name("socktls")) {
         xinfo("matched local socket name\n");
     }
 ...
 
-4.26.  forward_uac([bindex])
+4.27.  forward_uac([bindex])
 
    Forward received request with a single Via header, the one added by
    Kamailio, the other ones being removed. Useful in cases when its reply
@@ -845,7 +870,7 @@ event_route[dispatcher:dst-down] {
 
    This function can be used in REQUEST_ROUTE.
 
-   Example 1.33. forward_uac usage
+   Example 1.34. forward_uac usage
 ...
 request_route {
     ...
@@ -856,7 +881,7 @@ request_route {
 }
 ...
 
-4.27.  forward_uac_uri(vuri [, bindex])
+4.28.  forward_uac_uri(vuri [, bindex])
 
    Similar to forward_uac() with the posibility to provide the target
    address as a SIP URI via the parameter vuri. The parameter vuri can
@@ -866,7 +891,7 @@ request_route {
 
    This function can be used in REQUEST_ROUTE.
 
-   Example 1.34. forward_uac_uri usage
+   Example 1.35. forward_uac_uri usage
 ...
 request_route {
     ...
@@ -876,20 +901,20 @@ request_route {
 }
 ...
 
-4.28.  forward_reply()
+4.29.  forward_reply()
 
    Forward received reply on demand.
 
    This function can be used in CORE_ONREPLY_ROUTE.
 
-   Example 1.35. forward_reply usage
+   Example 1.36. forward_reply usage
 ...
 route[reply] {
     forward_reply();
 }
 ...
 
-4.29. msg_vbflag_set(flag)
+4.30. msg_vbflag_set(flag)
 
    Set the via-body flag.
 
@@ -899,7 +924,7 @@ route[reply] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.36. msg_vbflag_set usage
+   Example 1.37. msg_vbflag_set usage
 ...
 msg_vbflag_set("1");
 ...
@@ -907,7 +932,7 @@ $var(flag) = 11;
 msg_vbflag_set("$var(flag)");
 ...
 
-4.30. msg_vbflag_is_set(flag)
+4.31. msg_vbflag_is_set(flag)
 
    Return true if the via-body flag is set.
 
@@ -917,7 +942,7 @@ msg_vbflag_set("$var(flag)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.37. msg_vbflag_is_set usage
+   Example 1.38. msg_vbflag_is_set usage
 ...
 if(msg_vbflag_is_set("1"))
 {
@@ -925,7 +950,7 @@ if(msg_vbflag_is_set("1"))
 }
 ...
 
-4.31. msg_vbflag_reset(flag)
+4.32. msg_vbflag_reset(flag)
 
    Reset the via-body flag.
 
@@ -935,12 +960,12 @@ if(msg_vbflag_is_set("1"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.38. msg_vbflag_reset usage
+   Example 1.39. msg_vbflag_reset usage
 ...
 msg_vbflag_reset("1");
 ...
 
-4.32.  add_tcp_alias(port)
+4.33.  add_tcp_alias(port)
 
    Add an alias to the TCP connection with the port parameter. If the port
    is 0, then the port of the first Via-header is used. The parameter can
@@ -948,7 +973,7 @@ msg_vbflag_reset("1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.39. add_tcp_alias usage
+   Example 1.40. add_tcp_alias usage
 ...
     add_tcp_alias("5062");
 ...
@@ -1135,7 +1160,7 @@ e:359
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.40. event_route[network:msg] use cases
+   Example 1.41. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -1166,7 +1191,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.41. Sample PERL code for do_compress and do_uncompress
+   Example 1.42. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
