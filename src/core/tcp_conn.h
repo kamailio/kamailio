@@ -67,12 +67,18 @@
 #define F_CONN_NOSEND 65536	  /* do not send data on this connection */
 #define F_CONN_NORECV (1 << 17) /* do not receive data on this connection */
 /* mode 2 (tcp reactor thread pool) flags */
-#define F_CONN_POOL_BUSY \
-	(1 << 18) /* owned by a pool job: shielded out of io_h + local timer.
-			   * Serializes read/write jobs per conn (one owner at a time). */
+#define F_CONN_POOL_RD \
+	(1 << 18) /* a pool read job owns this conn (set/cleared by io_wait) */
+#define F_CONN_POOL_WR \
+	(1 << 20) /* a pool write job owns this conn (set/cleared by io_wait) */
+/* owned by a pool job: shielded out of io_h + local timer */
+#define F_CONN_POOL_BUSY (F_CONN_POOL_RD | F_CONN_POOL_WR)
+#define tcpconn_pool_busy(c) ((c)->flags & F_CONN_POOL_BUSY)
 #define F_CONN_CLOSE_EV_SENT \
 	(1 << 19) /* tcpops close event already emitted for this conn: fire-once
 			   * guard so racing teardown paths cannot double-fire the route */
+#define F_CONN_POOL_CLOSE \
+	(1 << 21) /* a pool job failed: close when its last job completes */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
@@ -380,6 +386,10 @@ typedef struct tcp_connection
 	struct tcp_wchunk *wsq_head;
 	struct tcp_wchunk *wsq_tail;
 	unsigned int wsq_len; /* bytes staged on wsq */
+	/* mode 2: pool thread index + 1 running this conn's read/write job, or 0;
+	 * written by that thread only, checked to catch a second owner */
+	int rd_owner;
+	int wr_owner;
 #endif
 } tcp_connection_t;
 

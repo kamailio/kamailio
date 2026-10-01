@@ -29,6 +29,9 @@ counter_handle_t ksr_cnt_udp_threads;
 counter_handle_t ksr_cnt_busy_rthreads;
 counter_handle_t ksr_cnt_rthreads;
 counter_handle_t ksr_cnt_rdispatch_drops;
+counter_handle_t ksr_cnt_rdispatch_waits;
+counter_handle_t ksr_cnt_rwrites_behind_read;
+counter_handle_t ksr_cnt_rrw_overlap;
 
 /* CNT_F_NO_RESET: stats.reset_statistics would skew the net gauges.
  * busy_children covers receive_msg() only, not timer/rtimer routes. */
@@ -51,6 +54,17 @@ static counter_def_t ksr_worker_cnt_defs[] = {
 				0,
 				"messages dropped because the reactor dispatch socket stayed"
 				" full"},
+		{&ksr_cnt_rdispatch_waits, "reactor_dispatch_waits", CNT_F_NO_RESET, 0,
+				0,
+				"messages that found the reactor dispatch socket full and"
+				" waited for the workers"},
+		{&ksr_cnt_rwrites_behind_read, "reactor_writes_behind_read",
+				CNT_F_NO_RESET, 0, 0,
+				"worker writes staged while a read job owned the connection and"
+				" no write job could start"},
+		{&ksr_cnt_rrw_overlap, "reactor_rw_overlap", CNT_F_NO_RESET, 0, 0,
+				"reactor write jobs started while a read job owned the"
+				" connection"},
 		{0, 0, 0, 0, 0, 0}};
 
 /* Must run before counters_prefork_init(). */

@@ -38,6 +38,9 @@ extern counter_handle_t ksr_cnt_udp_threads;
 extern counter_handle_t ksr_cnt_rthreads;
 
 extern counter_handle_t ksr_cnt_rdispatch_drops;
+extern counter_handle_t ksr_cnt_rdispatch_waits;
+extern counter_handle_t ksr_cnt_rwrites_behind_read;
+extern counter_handle_t ksr_cnt_rrw_overlap;
 
 int ksr_worker_stats_init(void);
 

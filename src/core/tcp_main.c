@@ -4497,9 +4497,10 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			 * it alive; mark it bad and let the job completion close it (its
 			 * !HASHED/S_CONN_BAD check routes to tcp_reactor_read_close). Only
 			 * release the sender's reference. */
-			if(unlikely(tcpconn->flags & F_CONN_POOL_BUSY)) {
+			if(unlikely(tcpconn_pool_busy(tcpconn))) {
 				tcpconn->state = S_CONN_BAD;
 				tcpconn->timeout = get_ticks_raw();
+				tcpconn->flags |= F_CONN_POOL_CLOSE; /* a job may reset state */
 				if(unlikely(tcpconn_put(tcpconn)))
 					tcpconn_destroy(tcpconn); /* can't happen while busy */
 				break;
@@ -5324,7 +5325,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	 * F_CONN_MAIN_TIMER), so this callback must not run for a busy conn. Guard
 	 * defensively: never reap a conn a pool thread is still using - re-arm and
 	 * let the job completion own its lifetime. */
-	if(unlikely(c->flags & F_CONN_POOL_BUSY)) {
+	if(unlikely(tcpconn_pool_busy(c))) {
 		LM_WARN("tcp reactor: timer fired on pool-busy conn %p - deferring\n",
 				c);
 		return (ticks_t)cfg_get(tcp, tcp_cfg, con_lifetime);
