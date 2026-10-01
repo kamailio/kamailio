@@ -145,9 +145,10 @@ Tyler Moore
               5.4. dispatcher.reload
               5.5. dispatcher.ping_active
               5.6. dispatcher.add
-              5.7. dispatcher.remove
-              5.8. dispatcher.hash
-              5.9. dispatcher.oclist
+              5.7. dispatcher.update
+              5.8. dispatcher.remove
+              5.9. dispatcher.hash
+              5.10. dispatcher.oclist
 
         6. Installation and Running
 
@@ -330,9 +331,10 @@ Chapter 1. Admin Guide
         5.4. dispatcher.reload
         5.5. dispatcher.ping_active
         5.6. dispatcher.add
-        5.7. dispatcher.remove
-        5.8. dispatcher.hash
-        5.9. dispatcher.oclist
+        5.7. dispatcher.update
+        5.8. dispatcher.remove
+        5.9. dispatcher.hash
+        5.10. dispatcher.oclist
 
    6. Installation and Running
 
@@ -1917,9 +1919,10 @@ event_route[dialog:failed] {
    5.4. dispatcher.reload
    5.5. dispatcher.ping_active
    5.6. dispatcher.add
-   5.7. dispatcher.remove
-   5.8. dispatcher.hash
-   5.9. dispatcher.oclist
+   5.7. dispatcher.update
+   5.8. dispatcher.remove
+   5.9. dispatcher.hash
+   5.10. dispatcher.oclist
 
 5.1.  dispatcher.set_state
 
@@ -2050,7 +2053,36 @@ kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:506
 0
 ...
 
-5.7.  dispatcher.remove
+5.7.  dispatcher.update
+
+   Replace a destination address in the in-memory dispatcher list. All
+   records matching the destination group and address are removed and the
+   new destination is added in one atomic update of the routing structure.
+   If no matching record exists, the destination is added.
+
+   Reloading the dispatcher will replace this change with the destinations
+   loaded from the configured file or database.
+
+   Name: dispatcher.update
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the _group_
+     * _flags_ (optional): as described in the list file format, default 0
+     * _priority_ (optional): as described in the list file format,
+       default 0
+     * _attrs_ (optional): as described in the list file format, default
+       ""
+
+   Example:
+...
+# prototype: kamcmd dispatcher.update _group_ _address_ _flags_ _priority_ _attr
+s_
+kamcmd dispatcher.update 3 sip:127.0.0.1:5075 8 10 duid=abc;socket=udp:127.0.0.1
+:5060
+...
+
+5.8.  dispatcher.remove
 
    Remove a destination address from the in-memory dispatcher list.
    Reloading the dispatcher from file or database will re-add destinations
@@ -2071,7 +2103,7 @@ kamcmd dispatcher.remove 2 sip:127.0.0.1:5080
 kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 ...
 
-5.8.  dispatcher.hash
+5.9.  dispatcher.hash
 
    Compute the hash id corresponding to the string parameter values.
 
@@ -2100,7 +2132,7 @@ kamctl rpc dispatcher.hash 0 alice server.com
 kamctl rpc dispatcher.hash 4 bob server.com
 ...
 
-5.9.  dispatcher.oclist
+5.10.  dispatcher.oclist
 
    List the overload control attributes for the records in a specific
    group.
