@@ -294,7 +294,7 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 	int ret;
 	struct addrinfo *res = 0;
 	sr_phostp_t phostp;
-	char rcvbuf[BUF_SIZE];
+	char rcvbuf[BUF_SIZE + 1];
 	struct sockaddr_storage src_addr;
 	socklen_t src_addr_len;
 	ssize_t count;
