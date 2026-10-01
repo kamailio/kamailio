@@ -174,7 +174,7 @@ static void dlg_cseq_sort_edits(dlg_cseq_edit_t *edits, int ecnt)
 static int dlg_cseq_apply_edits(
 		sip_msg_t *msg, dlg_cseq_edit_t *edits, int ecnt, str *obuf)
 {
-	char tbuf[BUF_SIZE];
+	char tbuf[BUF_SIZE + 1];
 	char *src = NULL;
 	char *msgend = NULL;
 	int tbuf_len = 0;
