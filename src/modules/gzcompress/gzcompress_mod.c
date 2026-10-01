@@ -221,7 +221,7 @@ int gzc_set_msg_body(sip_msg_t *msg, str *obody, str *nbody)
 }
 
 /* local buffer to use for compressing/decompressing */
-static char _gzc_local_buffer[BUF_SIZE];
+static char _gzc_local_buffer[BUF_SIZE + 1];
 
 /**
  *
