@@ -2574,6 +2574,48 @@ DEST: {
 ...
 </programlisting>
 	</section>
+		<section id="dispatcher.r.update">
+		<title>
+		<function moreinfo="none">dispatcher.update</function>
+		</title>
+		<para>
+		Replace a destination address in the in-memory dispatcher list. All
+		records matching the destination group and address are removed and the
+		new destination is added in one atomic update of the routing structure.
+		If no matching record exists, the destination is added.
+		</para>
+		<para>
+		Reloading the dispatcher will replace this change with the destinations
+		loaded from the configured file or database.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.update</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+
+			<listitem><para>_address_: address of the destination in the _group_</para></listitem>
+
+			<listitem><para>_flags_ (optional): as described in the list file format,
+			default 0</para></listitem>
+
+			<listitem><para>_priority_ (optional): as described in the list file format,
+			default 0</para></listitem>
+
+			<listitem><para>_attrs_ (optional): as described in the list file format,
+			default ""</para></listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.update _group_ _address_ _flags_ _priority_ _attrs_
+&sercmd; dispatcher.update 3 sip:127.0.0.1:5075 8 10 duid=abc;socket=udp:127.0.0.1:5060
+...
+</programlisting>
+	</section>
 		<section id="dispatcher.r.remove">
 		<title>
 		<function moreinfo="none">dispatcher.remove</function>
