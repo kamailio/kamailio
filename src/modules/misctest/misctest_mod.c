@@ -358,7 +358,7 @@ error:
 
 static int misctest_message_init(void)
 {
-	char tbuf[4 * BUF_SIZE];
+	char tbuf[4 * BUF_SIZE + 1];
 	FILE *f;
 	long fsize;
 	sip_msg_t tmsg = {};
