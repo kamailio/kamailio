@@ -652,12 +652,12 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	}
 
 	/* alloc private mem and copy lumps */
-	hdr_lumps = pkg_malloc(BUF_SIZE);
+	hdr_lumps = pkg_malloc(BUF_SIZE + 1);
 	if(hdr_lumps == NULL) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	bdy_lumps = pkg_malloc(BUF_SIZE);
+	bdy_lumps = pkg_malloc(BUF_SIZE + 1);
 	if(bdy_lumps == NULL) {
 		pkg_free(hdr_lumps);
 		PKG_MEM_ERROR;
