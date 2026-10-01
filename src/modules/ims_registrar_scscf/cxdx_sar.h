@@ -63,6 +63,7 @@ typedef struct saved_transaction
 	int expires; //used to see if this is a dereg as then we don't need to touch usrloc! > 0 if not dereg - 0 id de-reg
 	int require_user_data;
 	int sar_assignment_type;
+	int script_assignment; //sent by assign_server() for a request other than REGISTER: nothing to reply to, no Contacts to store
 	str public_identity;
 	udomain_t *domain;
 	contact_for_header_t *
