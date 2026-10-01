@@ -241,7 +241,7 @@ static inline int msg_send_buffer(
 		wsev.id = con->id;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		goto done;
 	}
 #endif

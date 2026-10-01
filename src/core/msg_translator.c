@@ -3265,12 +3265,12 @@ char *via_builder(unsigned int *len, sip_msg_t *msg,
 			} else if(con->rcv.proto == PROTO_WSS) {
 				memcpy(line_buf + MY_VIA_LEN - 4, "WSS ", 4);
 			} else {
-				tcpconn_put(con);
+				tcpconn_chld_put(con);
 				LM_CRIT("unknown proto %d\n", con->rcv.proto);
 				pkg_free(line_buf);
 				return 0;
 			}
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 		}
 	} else if(proto == PROTO_WSS) {
 		memcpy(line_buf + MY_VIA_LEN - 4, "WSS ", 4);
