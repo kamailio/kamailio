@@ -1698,7 +1698,7 @@ branches_failed:
  */
 int t_retransmit_reply(struct cell *t)
 {
-	static char b[BUF_SIZE];
+	static char b[BUF_SIZE + 1];
 	int len;
 
 	/* first check if we managed to resolve topmost Via
