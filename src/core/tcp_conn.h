@@ -214,6 +214,10 @@ typedef enum conn_cmds
 						 * CONN_TCPX_TASK_REQ, sent back over the requesting
 						 * process's own unix_sock; response[0] is a
 						 * tcpx_task_result_t* */
+	,
+	CONN_FREE_REQ /* modes 1/2: a process other than tcp_main dropped the last
+				   * ref of a TLS/WSS connection; response[0] is the
+				   * tcp_connection*, tcp_main frees it (and its TLS state) */
 } conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */

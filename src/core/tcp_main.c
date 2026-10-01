@@ -3754,6 +3754,19 @@ inline static void tcpconn_close_main_fd(struct tcp_connection *tcpconn)
 }
 
 
+/* modes 1/2: TLS state may only be freed in PROC_TCP_MAIN, so a TLS/WSS
+ * connection whose last ref is dropped elsewhere is freed there */
+static void tcpconn_free_in_main(struct tcp_connection *c)
+{
+	long response[2];
+
+	response[0] = (long)c;
+	response[1] = CONN_FREE_REQ;
+	if(unlikely(send_all(unix_tcp_sock, response, sizeof(response)) <= 0))
+		LM_ERR("failed to send free request for %p to tcp main: %s (%d)\n", c,
+				strerror(errno), errno);
+}
+
 /* dec refcnt & frees the connection if refcnt==0
  * returns 1 if the connection is freed, 0 otherwise
  *
@@ -3772,6 +3785,14 @@ int tcpconn_chld_put(struct tcp_connection *tcpconn)
 			LM_CRIT("%p bad flags = %0x\n", tcpconn, tcpconn->flags);
 			abort();
 		}
+#ifdef USE_TLS
+		if(unlikely(ksr_tcp_main_threads > 0 && !is_tcp_main()
+					&& (tcpconn->type == PROTO_TLS
+							|| tcpconn->type == PROTO_WSS))) {
+			tcpconn_free_in_main(tcpconn);
+			return 1;
+		}
+#endif
 		_tcpconn_free(tcpconn); /* destroys also the wbuf_q if still present*/
 		return 1;
 	}
@@ -4446,6 +4467,10 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 		goto end;
 	}
 	switch(cmd) {
+		case CONN_FREE_REQ:
+			/* last ref dropped outside tcp_main (modes 1/2, TLS/WSS) */
+			_tcpconn_free(tcpconn);
+			break;
 		case CONN_ERROR:
 			LM_ERR("received CON_ERROR for %p (id %d), refcnt %d, flags "
 				   "0x%0x\n",
