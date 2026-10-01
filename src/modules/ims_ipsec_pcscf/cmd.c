@@ -177,7 +177,7 @@ static int fill_contact(
 	char *srcip = NULL;
 	str aor = STR_NULL;
 	sip_msg_t tmsg;
-	char tbuf[BUF_SIZE];
+	char tbuf[BUF_SIZE + 1];
 	int i;
 
 	if(!ci) {
