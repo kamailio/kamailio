@@ -780,7 +780,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 			update_stat(ws_msrp_successful_handshakes, 1);
 	}
 
-	tcpconn_put(con);
+	tcpconn_chld_put(con);
 	return 1;
 error:
 	LM_WARN("failed to build websocket handshake response headers\n");
@@ -788,7 +788,7 @@ error:
 	goto end;
 end:
 	if(con)
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 	return 0;
 }
 
@@ -872,7 +872,7 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 			   "connection"
 			   " (id: %d)\n",
 				(cmode) ? "tls" : "tcp", con->id);
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		con = NULL;
 		goto done;
 	}
@@ -953,7 +953,7 @@ done:
 		con->timeout = get_ticks_raw();
 	}
 	if(con)
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 	if(proxy)
 		free_proxy(proxy);
 	return ret;
