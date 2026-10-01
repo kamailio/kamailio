@@ -66,6 +66,7 @@
 #include "tcp_reactor.h"
 #include "tcp_int_send.h" /* _tcpconn_write_nb() */
 #include "tcp_stats.h"
+#include "tcp_ev.h"
 #include "tcp_reactor_mem.h" /* tcp_reactor_pkg_lock_install() */
 #include "tcp_mtops.h"		 /* tcpx_task_t, KSR_TCPX_MAIN_PIDX */
 #include "tcp_server.h"		 /* ksr_tcp_reactor_get_dispatch_wfd() */
@@ -242,7 +243,8 @@ int tcp_reactor_dispatch_tls_event(struct tcp_connection *c)
 
 
 /* mode 2: direct - tcpconn_do_send() semantics, write if nothing is queued and
- * queue only the rest (errors too: the following wbufq_run() reports them) */
+ * queue only the rest (errors too: the following wbufq_run() reports them).
+ * direct chunks come from wsq, already checked against tcpconn_wq_max */
 static int tcp_reactor_wbuf_put_locked(
 		struct tcp_connection *c, const char *buf, unsigned len, int direct)
 {
@@ -259,7 +261,7 @@ static int tcp_reactor_wbuf_put_locked(
 		if((unsigned)n == len)
 			return 0;
 	}
-	return _wbufq_add(c, buf + n, len - n);
+	return _wbufq_add_cap(c, buf + n, len - n, !direct);
 }
 
 /* mode 2: append an outgoing payload to c's write queue (wbuf_q), encrypting it
@@ -518,6 +520,17 @@ static int tcp_reactor_shield(struct tcp_connection *c, int fd_i)
 	return 0;
 }
 
+/* mode 2: non-blocking check that fd accepts more data now. Returns 1/0 */
+static int tcp_reactor_sock_writable(int fd)
+{
+	struct pollfd pfd;
+
+	pfd.fd = fd;
+	pfd.events = POLLOUT;
+	pfd.revents = 0;
+	return (poll(&pfd, 1, 0) == 1) && (pfd.revents == POLLOUT);
+}
+
 /* mode 2: stage a plaintext write chunk onto c's per-connection
  * write staging list (shm). Taken by a pool TCP_R_WRITE job. Safe to call from
  * the io_wait thread (CONN_WRITE_REQ handler). Returns 0/-1. */
@@ -525,6 +538,7 @@ static int tcp_reactor_wsq_add(struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags)
 {
 	struct tcp_wchunk *ch;
+	unsigned int queued, staged;
 
 	ch = shm_malloc(sizeof(*ch));
 	if(unlikely(ch == NULL)) {
@@ -543,11 +557,30 @@ static int tcp_reactor_wsq_add(struct tcp_connection *c, const char *buf,
 	ch->send_flags = send_flags;
 	ch->next = NULL;
 	lock_get(&c->write_lock);
+	/* cap only while the socket itself is full, like mode 0: a backlog left by
+	 * a staged batch waiting for its pool flush is not peer backpressure */
+	if(unlikely(_wbufq_non_empty(c)
+				&& (c->wbuf_q.queued + c->wsq_len + len
+						> cfg_get(tcp, tcp_cfg, tcpconn_wq_max))
+				&& !tcp_reactor_sock_writable(c->s))) {
+		queued = c->wbuf_q.queued;
+		staged = c->wsq_len;
+		lock_release(&c->write_lock);
+		LM_ERR("(%u bytes): write queue full (%u queued, %u staged) - conn "
+			   "%p id %d state %d flags 0x%x\n",
+				len, queued, staged, c, c->id, c->state, c->flags);
+		TCP_EV_SENDQ_FULL(0, &c->rcv);
+		TCP_STATS_SENDQ_FULL();
+		shm_free(ch->buf);
+		shm_free(ch);
+		return -1;
+	}
 	if(c->wsq_tail != NULL)
 		c->wsq_tail->next = ch;
 	else
 		c->wsq_head = ch;
 	c->wsq_tail = ch;
+	c->wsq_len += len;
 	lock_release(&c->write_lock);
 	return 0;
 }
@@ -1371,14 +1404,17 @@ static void *tcp_reactor_thread_routine(void *arg)
 				lock_get(&conn->write_lock);
 				while((ch = conn->wsq_head) != NULL) {
 					conn->wsq_head = ch->next;
-					if(tcp_reactor_wbuf_add_locked(
-							   conn, ch->buf, ch->len, ch->send_flags, 1)
-							< 0)
+					/* after an error the conn is dropped: discard the rest */
+					if(!werr
+							&& tcp_reactor_wbuf_add_locked(conn, ch->buf,
+									   ch->len, ch->send_flags, 1)
+									   < 0)
 						werr = 1;
 					shm_free(ch->buf);
 					shm_free(ch);
 				}
 				conn->wsq_tail = NULL;
+				conn->wsq_len = 0;
 				lock_release(&conn->write_lock);
 				if(!werr && wbufq_run(conn->s, conn, &wempty) < 0)
 					werr = 1;

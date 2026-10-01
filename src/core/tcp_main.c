@@ -710,8 +710,10 @@ end:
 
 
 /* unsafe version, call while holding the connection write lock.
- * Not static: tcp_reactor.c (mode 2) calls this directly. */
-int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size)
+ * conn_cap: 0 skips the per-connection tcpconn_wq_max check (mode 2 staged
+ * chunks, already checked when staged). Not static: tcp_reactor.c uses it. */
+int _wbufq_add_cap(struct tcp_connection *c, const char *data,
+		unsigned int size, int conn_cap)
 {
 	struct tcp_wbuffer_queue *q;
 	struct tcp_wbuffer *wb;
@@ -722,7 +724,9 @@ int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size)
 
 	q = &c->wbuf_q;
 	t = get_ticks_raw();
-	if(unlikely(((q->queued + size) > cfg_get(tcp, tcp_cfg, tcpconn_wq_max))
+	if(unlikely((conn_cap
+						&& ((q->queued + size)
+								> cfg_get(tcp, tcp_cfg, tcpconn_wq_max)))
 				|| ((*tcp_total_wq + size) > cfg_get(tcp, tcp_cfg, tcp_wq_max))
 				|| (q->first && TICKS_LT(q->wr_timeout, t)))) {
 		LM_ERR("(%u bytes): write queue full or timeout "
@@ -805,6 +809,14 @@ int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size)
 	return 0;
 error:
 	return -1;
+}
+
+
+/* unsafe version, call while holding the connection write lock.
+ * Not static: tcp_reactor.c (mode 2) calls this directly. */
+int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size)
+{
+	return _wbufq_add_cap(c, data, size, 1);
 }
 
 
@@ -1772,6 +1784,7 @@ void _tcpconn_free(struct tcp_connection *c)
 		shm_free(ch);
 	}
 	c->wsq_tail = NULL;
+	c->wsq_len = 0;
 #endif
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS

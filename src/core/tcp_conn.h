@@ -379,6 +379,7 @@ typedef struct tcp_connection
 	 * list, guarded by write_lock; unused (NULL) in modes 0/1. */
 	struct tcp_wchunk *wsq_head;
 	struct tcp_wchunk *wsq_tail;
+	unsigned int wsq_len; /* bytes staged on wsq */
 #endif
 } tcp_connection_t;
 
@@ -545,6 +546,8 @@ int ksr_tcp_parse_accept_protocols(char *protos);
  * here so tcp_reactor.c can call them without duplicating them. None of these
  * touch io_h or the local timer - see the tcpmain_* wrappers below for that. */
 int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size);
+int _wbufq_add_cap(struct tcp_connection *c, const char *data,
+		unsigned int size, int conn_cap);
 int wbufq_run(int fd, struct tcp_connection *c, int *empty);
 int tcpconn_try_unhash(struct tcp_connection *tcpconn);
 int tcpconn_put_destroy(struct tcp_connection *tcpconn);
