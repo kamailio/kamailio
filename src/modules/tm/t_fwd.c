@@ -335,7 +335,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	send_socket_map_t send_socket_map;
 	sip_msg_t l_req;
 	sip_msg_t *b_req = NULL;
-	char l_buf[BUF_SIZE];
+	char l_buf[BUF_SIZE + 1];
 	int l_copy;
 
 	l_copy = 0;
