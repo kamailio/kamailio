@@ -1084,7 +1084,7 @@ assign_stm:
 	| MSG_APPLY_CHANGES_MODE EQUAL NUMBER { ksr_msg_apply_changes_mode=$3; }
 	| MSG_APPLY_CHANGES_MODE EQUAL error { yyerror("boolean expected"); }
 	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3;
-		if(ksr_msg_recv_max_size <= 0 || ksr_msg_recv_max_size >= BUF_SIZE) {
+		if(ksr_msg_recv_max_size <= 0 || ksr_msg_recv_max_size > BUF_SIZE) {
 			yyerror("value out of range 0 .. BUF_SIZE");
 		}
 	}
