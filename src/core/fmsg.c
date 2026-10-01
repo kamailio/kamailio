@@ -35,7 +35,7 @@
 	"<sip:server@kamailio.org>\r\nCall-ID: aaa-bbb-ccc-ddd\r\nCSeq: 1 " \
 	"OPTIONS\r\nContent-Length: 0\r\n\r\n"
 #define FAKED_SIP_MSG_LEN (sizeof(FAKED_SIP_MSG) - 1)
-static char _faked_sip_buf[BUF_SIZE];
+static char _faked_sip_buf[BUF_SIZE + 1];
 static int _faked_sip_buf_init = 0;
 static sip_msg_t _faked_msg;
 static unsigned int _faked_msg_no = 0;
