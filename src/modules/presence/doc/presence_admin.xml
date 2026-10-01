@@ -1862,4 +1862,44 @@ event_route[presence:notify-reply]
 	</para>
 </section>
 
+<section id="presence.db_notes">
+	<title>MariaDB 11.6.2 or newer</title>
+	<para>
+	Since MariaDB 11.6.2 the <emphasis>innodb_snapshot_isolation</emphasis>
+	variable is enabled by default (it exists, disabled by default, since
+	10.6.18, 10.11.8, 11.0.6, 11.1.5, 11.2.4 and 11.4.2). With it enabled,
+	two concurrent requests for the same watcher (e.g., two PUBLISH requests,
+	with <varname>notifier_processes</varname> enabled) can make the presence
+	transaction fail with error 1020 (<quote>Record has changed since last
+	read in table 'active_watchers'</quote>). The whole transaction is rolled
+	back, including the <emphasis>presentity</emphasis> update, although the
+	PUBLISH was already answered with 200 OK: the stored state stays old
+	and watchers miss the NOTIFY.
+	</para>
+	<para>
+	It is recommended to disable the variable for the presence connections,
+	using a dedicated my.cnf group with an <emphasis>init-command</emphasis>
+	(see <ulink url="https://www.kamailio.org/docs/modules/devel/modules/db_mysql.html#db_mysql.r.my_cnf">Reading configuration from my.cnf</ulink>
+	in the <emphasis>db_mysql</emphasis> module documentation). Use it only with
+	servers that have this variable, otherwise the connection fails.
+	</para>
+	<example>
+	<title>Disable innodb_snapshot_isolation for presence</title>
+	<programlisting format="linespecific">
+...
+# my.cnf
+[kamailio-presence]
+user = kamailiouser
+password = kamailiopass
+host = localhost
+database = kamailio
+init-command = SET SESSION innodb_snapshot_isolation=OFF
+
+# kamailio.cfg
+modparam("presence", "db_url", "mysql://[kamailio-presence]/kamailio")
+...
+</programlisting>
+	</example>
+</section>
+
 </chapter>
