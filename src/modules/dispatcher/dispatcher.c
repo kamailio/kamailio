@@ -2393,6 +2393,9 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 static const char *dispatcher_rpc_remove_doc[2] = {
 		"Remove a destination address from memory", 0};
 
+static const char *dispatcher_rpc_update_doc[2] = {
+		"Update a destination address in memory", 0};
+
 
 /*
  * RPC command to remove a destination address from memory
@@ -2422,6 +2425,46 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 		return;
 	}
 	rpc->rpl_printf(ctx, "Ok. Dispatcher destination removed.");
+	return;
+}
+
+/*
+ * RPC command to replace a destination address in memory
+ */
+static void dispatcher_rpc_update(rpc_t *rpc, void *ctx)
+{
+	int group, flags, priority, nparams;
+	str dest;
+	str attrs = STR_NULL;
+
+	if(ds_rpc_reload_time != NULL) {
+		if(*ds_rpc_reload_time != 0
+				&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+			LM_ERR("ongoing reload\n");
+			rpc->fault(ctx, 500, "Ongoing reload");
+			return;
+		}
+		*ds_rpc_reload_time = time(NULL);
+	}
+
+	flags = 0;
+	priority = 0;
+
+	nparams =
+			rpc->scan(ctx, "dS*ddS", &group, &dest, &flags, &priority, &attrs);
+	if(nparams < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	} else if(nparams <= 4) {
+		attrs.s = 0;
+		attrs.len = 0;
+	}
+
+	if(ds_update_dst_record(group, &dest, flags, priority, &attrs) != 0) {
+		rpc->fault(ctx, 500, "Updating dispatcher dst failed");
+		return;
+	}
+	rpc->rpl_printf(ctx, "Ok. Dispatcher destination updated.");
 	return;
 }
 
@@ -2538,6 +2581,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_ping_active_doc, 0},
 	{"dispatcher.add",   dispatcher_rpc_add,
 		dispatcher_rpc_add_doc, 0},
+	{"dispatcher.update", dispatcher_rpc_update,
+		dispatcher_rpc_update_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,

@@ -3763,6 +3763,8 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 	struct ds_filter_dest_cb_arg *filter_arg;
 
 	filter_arg = (typeof(filter_arg))arg;
+	if(filter_arg->error)
+		return;
 
 	if(node->id == filter_arg->setid
 			&& node->dlist[i].uri.len == filter_arg->dest->uri.len
@@ -3779,16 +3781,30 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 	if(ndst == NULL) {
 		LM_WARN("failed to add destination in group %d - %.*s\n", node->id,
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
+		filter_arg->error = 1;
 	} else {
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 	}
 	return;
 }
 
+static void ds_free_unlinked_dest(ds_dest_t *dest)
+{
+	if(dest == NULL)
+		return;
+	if(dest->uri.s != NULL)
+		shm_free(dest->uri.s);
+	if(dest->attrs.body.s != NULL)
+		shm_free(dest->attrs.body.s);
+	if(dest->attrs.ping_reply_codes != NULL)
+		shm_free(dest->attrs.ping_reply_codes);
+	shm_free(dest);
+}
+
 /* remove dispatcher entry from in-memory dispatcher list */
 int ds_remove_dst(int group, str *address)
 {
-	ds_list_t *cur, *next;
+	ds_list_t *cur = NULL, *next;
 	struct ds_filter_dest_cb_arg filter_arg;
 	ds_dest_t *dp = NULL;
 
@@ -3808,6 +3824,7 @@ int ds_remove_dst(int group, str *address)
 	filter_arg.setid = group;
 	filter_arg.dest = dp;
 	filter_arg.list = next;
+	filter_arg.error = 0;
 
 	lock_get(ds_list_write_lock);
 
@@ -3816,7 +3833,13 @@ int ds_remove_dst(int group, str *address)
 	if(cur) {
 		// add existing destinations except destination that matches group & address
 		ds_iter_set(cur->head, &ds_filter_dest_cb, &filter_arg);
+		if(filter_arg.error) {
+			LM_ERR("error cloning dispatcher destinations\n");
+			goto error;
+		}
 	}
+	ds_free_unlinked_dest(dp);
+	dp = NULL;
 
 	if(reindex_dests(next->head) != 0) {
 		LM_ERR("error on reindex\n");
@@ -3842,6 +3865,80 @@ int ds_remove_dst(int group, str *address)
 
 error:
 	lock_release(ds_list_write_lock);
+	ds_free_unlinked_dest(dp);
+	ds_put_list(cur);
+	ds_free_list(next);
+	return -1;
+}
+
+/* replace a dispatcher entry in the in-memory dispatcher list */
+int ds_update_dst_record(
+		int group, str *address, int flags, int priority, str *attrs)
+{
+	ds_list_t *cur, *next;
+	ds_dest_t *replacement;
+	struct ds_filter_dest_cb_arg filter_arg;
+
+	next = ds_new_list();
+	if(!next) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	/* Build and validate the replacement before taking the write lock. It is
+	 * also used as the normalized URI to match records being replaced. */
+	replacement = add_dest2list(
+			group, *address, flags, priority, attrs, next, 0, NULL);
+	if(replacement == NULL) {
+		LM_WARN("unable to update destination %.*s in set %d\n", address->len,
+				address->s, group);
+		ds_free_list(next);
+		return -1;
+	}
+
+	filter_arg.setid = group;
+	filter_arg.dest = replacement;
+	filter_arg.list = next;
+	filter_arg.error = 0;
+
+	lock_get(ds_list_write_lock);
+
+	cur = ds_get_list();
+	if(cur) {
+		/* Clone the routing structure once, omitting all records replaced by the
+		 * new destination already stored in 'next'. */
+		ds_iter_set(cur->head, &ds_filter_dest_cb, &filter_arg);
+		if(filter_arg.error) {
+			LM_ERR("error cloning dispatcher destinations\n");
+			goto error;
+		}
+	}
+
+	if(reindex_dests(next->head) != 0) {
+		LM_ERR("error on reindex\n");
+		goto error;
+	}
+
+	next->refs = 1; /* one reference for logging, below */
+
+	/* Swap the complete replacement list into service atomically. */
+	lock_get(ds_list_read_lock);
+	*ds_list = next;
+	lock_release(ds_list_read_lock);
+
+	lock_release(ds_list_write_lock);
+
+	ds_log_sets(next);
+	ds_put_list(next);
+
+	ds_put_list(cur);
+	ds_wait_free_list(cur);
+
+	return 0;
+
+error:
+	lock_release(ds_list_write_lock);
+	ds_put_list(cur);
 	ds_free_list(next);
 	return -1;
 }
