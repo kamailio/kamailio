@@ -2312,6 +2312,14 @@ T_SET_FLAG_GEN_FUNC(t_set_no_auto_ack, T_NO_AUTO_ACK)
 
 W_T_SET_FLAG_GEN_FUNC(t_set_no_auto_ack, T_NO_AUTO_ACK)
 
+/**
+ *
+ */
+static int ki_t_set_no_auto_ack(sip_msg_t *msg, int state)
+{
+	return t_set_no_auto_ack(msg, state);
+}
+
 /* FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
  * returns true if the choosed "failure" branch failed because of a timeout,
  * -1 otherwise */
@@ -3803,7 +3811,7 @@ static sr_kemi_t tm_kemi_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tm"), str_init("t_set_no_auto_ack"),
-		SR_KEMIP_INT, t_set_no_auto_ack,
+		SR_KEMIP_INT, ki_t_set_no_auto_ack,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
