@@ -371,7 +371,7 @@ modparam("db_mysql", "opt_ssl_ca", "/etc/ssl/certs/mysql-ca.pem")
 			</listitem>
 		</itemizedlist>
 	</section>
-	<section>
+	<section id="db_mysql.r.my_cnf">
 		<title>Reading configuration from my.cnf</title>
 		<para>
 		In order to take into account specific mysql client options, a my.cnf config group can be passed using the <emphasis>db_url</emphasis> module parameter. This is done by setting <emphasis>[group]</emphasis> in front of or instead of the host part. The following examples are valid <emphasis>db_url</emphasis> definitions, which include a my.cnf group:
