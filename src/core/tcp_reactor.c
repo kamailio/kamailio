@@ -565,6 +565,32 @@ static int tcp_reactor_write_beside_read(struct tcp_connection *c)
 	return 1;
 }
 
+/* mode 2: non-blocking check that fd has input (or EOF/error) now. 1/0 */
+static int tcp_reactor_sock_readable(int fd)
+{
+	struct pollfd pfd;
+
+	pfd.fd = fd;
+	pfd.events = POLLIN;
+	pfd.revents = 0;
+	return (poll(&pfd, 1, 0) == 1);
+}
+
+/* mode 2: start a read job for c's pending input while its write job runs
+ * (io_wait thread), so a steady stream of writes cannot starve reads. 1/0 */
+static int tcp_reactor_read_beside_write(struct tcp_connection *c)
+{
+	if(!(c->flags & F_CONN_POOL_WR)
+			|| (c->flags & (F_CONN_POOL_RD | F_CONN_POOL_CLOSE))
+			|| c->state == S_CONN_BAD || !(c->flags & F_CONN_HASHED)
+			|| !tcp_reactor_sock_readable(c->s))
+		return 0;
+	if(unlikely(tcp_reactor_enqueue_job(c, TCP_R_READ) < 0))
+		return 0; /* the write completion re-arms POLLIN */
+	counter_inc(ksr_cnt_rrw_overlap);
+	return 1;
+}
+
 /* mode 2: a write was staged on a pool-owned c: start a write job beside its
  * read, else count it as waiting behind the read (reactor_writes_behind_read) */
 static void tcp_reactor_staged_on_busy(struct tcp_connection *c)
@@ -703,10 +729,15 @@ static void tcp_reactor_read_close(struct tcp_connection *c)
  * and hand the conn back to the reactor (un-shield: re-arm io_h + timer). */
 static void tcp_reactor_unshield_or_chain(struct tcp_connection *c)
 {
+	/* a full socket (wbuf_q left over) un-shields instead: POLLOUT brings the
+	 * staged data back, rather than a write job spinning on EAGAIN */
 	if(c->wsq_head != NULL && (c->flags & F_CONN_HASHED)
-			&& c->state != S_CONN_BAD) {
-		if(likely(tcp_reactor_enqueue_job(c, TCP_R_WRITE) == 0))
-			return; /* keep POOL_BUSY + in-pool ref; the write job completes */
+			&& c->state != S_CONN_BAD && !_wbufq_non_empty(c)) {
+		if(likely(tcp_reactor_enqueue_job(c, TCP_R_WRITE) == 0)) {
+			/* keep POOL_BUSY + in-pool ref; the write job completes */
+			tcp_reactor_read_beside_write(c);
+			return;
+		}
 		/* enqueue failed: fall through to un-shield; the staged data waits in
 		 * wsq until the next write trigger */
 	}
@@ -975,6 +1006,9 @@ void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq)
 		shm_free(wreq->buf);
 		shm_free(wreq);
 		if(!tcpconn_pool_busy(tcpconn)) {
+			/* socket full: the data waits in wsq for POLLOUT */
+			if((tcpconn->flags & F_CONN_WRITE_W) && _wbufq_non_empty(tcpconn))
+				return;
 			if(unlikely(tcp_reactor_shield(tcpconn, -1) < 0)) {
 				tcpconn->state = S_CONN_BAD;
 				tcpconn->timeout = get_ticks_raw();
@@ -1170,6 +1204,18 @@ int tcp_reactor_handle_tcpconn_ev(
 	}
 
 #ifdef TCP_ASYNC
+	/* writes staged while the socket was full: flush them all on the pool
+	 * (TLS encodes there), with a read beside if input is pending */
+	if((ev & POLLOUT) && !(ev & (POLLERR | POLLHUP))
+			&& (tcpconn->flags & F_CONN_WRITE_W) && tcpconn->wsq_head != NULL) {
+		if(unlikely(tcp_reactor_shield(tcpconn, fd_i) < 0))
+			goto reactor_close;
+		if(unlikely(tcp_reactor_enqueue_job(tcpconn, TCP_R_WRITE) < 0))
+			tcp_reactor_unshield_or_chain(tcpconn);
+		else
+			tcp_reactor_read_beside_write(tcpconn);
+		return 0;
+	}
 	/* drain pending writes first if the fd is write-watched */
 	if((ev & (POLLOUT | POLLERR | POLLHUP))
 			&& (tcpconn->flags & F_CONN_WRITE_W)) {
@@ -1367,9 +1413,12 @@ static void tcp_reactor_handle_done(void)
 				if(unlikely(resp < 0))
 					conn->flags |= F_CONN_POOL_CLOSE;
 				if(tcpconn_pool_busy(conn)) {
-					/* rw split: keep writes flowing while the read runs */
+					/* rw split: keep each direction flowing while the other
+					 * one's job still runs */
 					if(op == TCP_R_WRITE)
 						tcp_reactor_write_beside_read(conn);
+					else
+						tcp_reactor_read_beside_write(conn);
 					break;
 				}
 				if(unlikely(conn->flags & F_CONN_POOL_CLOSE)) {
