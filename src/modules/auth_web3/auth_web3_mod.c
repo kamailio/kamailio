@@ -400,16 +400,21 @@ static int ki_web3_proxy_authenticate(sip_msg_t *msg, str *realm, str *method)
 /*
  * KEMI exports
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_web3_auth_exports[] = {
-		{str_init("auth_web3"), str_init("web3_www_authenticate"), SR_KEMIP_INT,
-				ki_web3_www_authenticate,
-				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("auth_web3"), str_init("web3_proxy_authenticate"),
-				SR_KEMIP_INT, ki_web3_proxy_authenticate,
-				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
+	{ str_init("auth_web3"), str_init("web3_www_authenticate"),
+		SR_KEMIP_INT, ki_web3_www_authenticate,
+			{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_web3"), str_init("web3_proxy_authenticate"),
+		SR_KEMIP_INT, ki_web3_proxy_authenticate,
+			{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ {0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0} }
+};
+/* clang-format on */
 
 /*
  * Module register function
