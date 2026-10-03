@@ -3834,6 +3834,18 @@ void tcpconn_destroy(struct tcp_connection *tcpconn)
 		tcpconn->flags &= ~(F_CONN_HASHED | F_CONN_MAIN_TIMER);
 		TCPCONN_UNLOCK;
 	}
+	if(unlikely((tcpconn->flags & (F_CONN_READ_W | F_CONN_WRITE_W))
+				&& tcpconn->s != -1)) {
+		/* a refcount bug: drop the fd from io_h before closing it, else the
+		 * next connection given that fd number cannot be watched */
+		LM_CRIT("destroying connection %p with fd %d still watched (flags "
+				"%0x)\n",
+				tcpconn, tcpconn->s, tcpconn->flags);
+		if(tcp_reactor_pool_thread_idx() < 0) {
+			io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+			tcpconn->flags &= ~(F_CONN_READ_W | F_CONN_WRITE_W);
+		}
+	}
 	if(likely(!(tcpconn->flags & F_CONN_FD_CLOSED))) {
 		tcpconn_close_main_fd(tcpconn);
 		tcpconn->flags |= F_CONN_FD_CLOSED;
