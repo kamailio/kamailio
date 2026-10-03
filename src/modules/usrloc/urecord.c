@@ -233,7 +233,7 @@ int is_tcp_alive(ucontact_t *c)
 	int rc = 0;
 
 	if((con = tcpconn_get(c->tcpconn_id, 0, 0, 0, 0))) {
-		tcpconn_put(con); /* refcnt-- */
+		tcpconn_chld_put(con); /* refcnt-- */
 		rc = 1;
 	}
 
@@ -262,6 +262,7 @@ static inline int close_connection(int conid)
 		if(unlikely(n <= 0)) {
 			LM_ERR("failed to send close request: %s (%d)\n", strerror(errno),
 					errno);
+			tcpconn_chld_put(con);
 			return 0;
 		}
 		return 1;
