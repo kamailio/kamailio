@@ -34,7 +34,6 @@
 #include "msrp_parser.h"
 #include "msrp_vars.h"
 
-extern int msrp_tls_module_loaded;
 
 /**
  *
@@ -278,7 +277,9 @@ int pv_get_msrp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				return pv_get_null(msg, param, res);
 			s.s = pv_get_buffer();
 			p = s.s;
-			if(msrp_tls_module_loaded) {
+			/* scheme of the connection the frame came on */
+			if(mf->tcpinfo->rcv->proto == PROTO_TLS
+					|| mf->tcpinfo->rcv->proto == PROTO_WSS) {
 				memcpy(p, "msrps://", 8);
 				p += 8;
 			} else {
