@@ -319,8 +319,8 @@ static int tcp_cfg_def_fix(char *name, int *val)
 }
 
 
-/* checks & warns if some tcp_option cannot be enabled */
-void tcp_options_check()
+/* checks & warns if some tcp_option cannot be enabled; -1 if unsupported */
+int tcp_options_check()
 {
 #ifndef TCP_FD_CACHE
 	W_OPT_NC(defer_accept);
@@ -339,9 +339,8 @@ void tcp_options_check()
 	/* mode 2 connects on the single io_wait thread: a blocking connect()
 	 * there would stall all tcp traffic */
 	if(ksr_tcp_main_threads == 2 && !tcp_default_cfg.async) {
-		LM_WARN("tcp_async=no is not supported with tcp_main_threads=2"
-				" - enabling it\n");
-		tcp_default_cfg.async = 1;
+		LM_ERR("tcp_async=no is not supported with tcp_main_threads=2\n");
+		return -1;
 	}
 	/* the first message on a new connection is queued until the connect
 	 * completes, so it must fit tcp_conn_wq_max (all modes) */
@@ -402,6 +401,7 @@ void tcp_options_check()
 #endif /* USE_TCP */
 	tcp_cfg_def_fix("rd_buf_size", (int *)&tcp_default_cfg.rd_buf_size);
 	tcp_cfg_def_fix("wq_blk_size", (int *)&tcp_default_cfg.wq_blk_size);
+	return 0;
 }
 
 

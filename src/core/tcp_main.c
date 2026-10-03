@@ -5769,7 +5769,8 @@ int init_tcp()
 {
 	char *poll_err;
 
-	tcp_options_check();
+	if(tcp_options_check() < 0)
+		return -1;
 	if(tcp_cfg == 0) {
 		BUG("tcp_cfg not initialized\n");
 		goto error;
