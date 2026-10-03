@@ -150,7 +150,7 @@ int msrp_forward(msrp_frame_t *mf, str *tpath, str *fpath)
 		wsev.id = con->id;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return ret;
 	} else if(tcp_send(&env->dstinfo, 0, buf, len) < 0) {
 		LM_ERR("forwarding frame failed\n");
@@ -272,15 +272,15 @@ done:
 			wsev.id = con->id;
 			evp.data = (void *)&wsev;
 			ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			return ret;
 		} else if(tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
 			LM_ERR("forwarding frame failed\n");
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			return -1;
 		}
 
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 	} else if(tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
 		LM_ERR("forwarding frame failed\n");
 		return -1;
@@ -393,7 +393,7 @@ int msrp_reply(msrp_frame_t *mf, str *code, str *text, str *xhdrs)
 		wsev.id = con->id;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return ret;
 	} else if(tcp_send(&env->srcinfo, 0, rplbuf, p - rplbuf) < 0) {
 		LM_ERR("sending reply failed\n");
