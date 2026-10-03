@@ -140,7 +140,7 @@ void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq);
 void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq);
 void tcp_reactor_handle_tls_event_done(struct tcp_connection *tcpconn);
 void tcp_reactor_handle_script_close(int scid);
-void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task);
+void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task, int pidx);
 void tcp_reactor_handle_notify(void);
 int tcp_reactor_pool_init(void);
 void tcp_reactor_pool_destroy(void);
@@ -177,6 +177,7 @@ struct tcp_reactor_job
 	enum tcp_reactor_op op;
 	int resp; /* callback result (e.g. wbuf still pending); READ/WRITE only */
 	tcpx_task_t *task; /* TCP_R_RUN only */
+	int pidx;		   /* TCP_R_RUN only: requesting process, for the result */
 	struct tcp_reactor_job *next;
 };
 

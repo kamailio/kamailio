@@ -4698,7 +4698,8 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 		case CONN_TCPX_TASK_REQ:
 			/* mode 2 + mtops: send task to PROC_TCP_MAIN; needed by
                          * tls.reload */
-			tcp_reactor_handle_tcpx_task_req((tcpx_task_t *)response[0]);
+			tcp_reactor_handle_tcpx_task_req(
+					(tcpx_task_t *)response[0], (int)(p - pt));
 			break;
 #ifdef TCP_CONNECT_WAIT
 		case CONN_NEW_COMPLETE:

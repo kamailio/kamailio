@@ -460,7 +460,7 @@ static int tcp_reactor_enqueue_job(
 
 /* mode 2: enqueue a connectionless TCP_R_RUN job carrying task onto the pool
  * queue. No shield/refcount dance concerns. Returns 0/-1. */
-static int tcp_reactor_enqueue_run(tcpx_task_t *task)
+static int tcp_reactor_enqueue_run(tcpx_task_t *task, int pidx)
 {
 	struct tcp_reactor_job *job;
 
@@ -472,6 +472,7 @@ static int tcp_reactor_enqueue_run(tcpx_task_t *task)
 	memset(job, 0, sizeof(*job));
 	job->op = TCP_R_RUN;
 	job->task = task;
+	job->pidx = pidx;
 	tcp_cond_lock(&tcp_reactor_wake->cond);
 	job->next = NULL;
 	if(tcp_rpool.task_tail != NULL)
@@ -485,18 +486,19 @@ static int tcp_reactor_enqueue_run(tcpx_task_t *task)
 }
 
 /* mode 2 + mtops: used to send tasks to the thread pool from external
- * processes like jsonrpc with tls.reload
+ * processes like jsonrpc with tls.reload; exec() gets the requester's pidx,
+ * so a result sent via ksr_tcpx_thread_eresult(rtask, pidx) reaches it
  */
-void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task)
+void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task, int pidx)
 {
-	if(unlikely(tcp_reactor_enqueue_run(task) < 0)) {
+	if(unlikely(tcp_reactor_enqueue_run(task, pidx) < 0)) {
 		/* Enqueue failed (pkg OOM) - the sender is blocked in
 		 * ksr_tcpx_task_result_recv() so dropping
 		 * the task here would hang it forever. Run it inline instead. */
 		LM_ERR("failed to enqueue tcpx task %p - running inline\n",
 				(void *)task);
 		if(task->exec)
-			task->exec(task->param, KSR_TCPX_MAIN_PIDX);
+			task->exec(task->param, pidx);
 	}
 }
 
@@ -1556,7 +1558,7 @@ static void *tcp_reactor_thread_routine(void *arg)
 						tcp_reactor_thread_idx, (void *)job->task,
 						job->task ? (void *)job->task->exec : NULL);
 				if(job->task && job->task->exec)
-					job->task->exec(job->task->param, KSR_TCPX_MAIN_PIDX);
+					job->task->exec(job->task->param, job->pidx);
 				pkg_free(job);
 				counter_add(ksr_cnt_busy_rthreads, -1);
 				continue;
