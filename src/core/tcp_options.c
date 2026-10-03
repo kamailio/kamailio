@@ -343,6 +343,15 @@ void tcp_options_check()
 				" - enabling it\n");
 		tcp_default_cfg.async = 1;
 	}
+	/* the first message on a new connection is queued until the connect
+	 * completes, so it must fit tcp_conn_wq_max (all modes) */
+	if(tcp_default_cfg.async
+			&& (unsigned int)ksr_msg_recv_max_size
+					   > tcp_default_cfg.tcpconn_wq_max) {
+		LM_WARN("msg_recv_max_size (%d) > tcp_conn_wq_max (%u): a larger"
+				" first message on a new tcp connection will be refused\n",
+				ksr_msg_recv_max_size, tcp_default_cfg.tcpconn_wq_max);
+	}
 #endif /* TCP_ASYNC */
 
 	if(tcp_default_cfg.tcp_connect_wait && !tcp_default_cfg.async) {
