@@ -586,7 +586,7 @@ int check_flow_token(struct sip_msg *msg)
 					ip_addr2a(&rcv->src_ip), rcv->src_port);
 			return CHECK_FLOW_NO_TCP_CONNECTION;
 		}
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return CHECK_FLOW_SUCCESS;
 	} else if(rcv->proto == PROTO_UDP) {
 		return CHECK_FLOW_SUCCESS;
