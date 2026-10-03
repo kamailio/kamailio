@@ -335,6 +335,16 @@ void tcp_options_check()
 	W_OPT_NC(tcp_connect_wait);
 #endif /* TCP_CONNECT_WAIT */
 
+#ifdef TCP_ASYNC
+	/* mode 2 connects on the single io_wait thread: a blocking connect()
+	 * there would stall all tcp traffic */
+	if(ksr_tcp_main_threads == 2 && !tcp_default_cfg.async) {
+		LM_WARN("tcp_async=no is not supported with tcp_main_threads=2"
+				" - enabling it\n");
+		tcp_default_cfg.async = 1;
+	}
+#endif /* TCP_ASYNC */
+
 	if(tcp_default_cfg.tcp_connect_wait && !tcp_default_cfg.async) {
 		tcp_default_cfg.tcp_connect_wait = 0;
 	}
