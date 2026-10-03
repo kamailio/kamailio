@@ -141,7 +141,7 @@ struct tcp_connection *get_cur_connection(struct sip_msg *msg)
 			cfg_get(tls, tls_cfg, con_lifetime));
 	if(c && c->type != PROTO_TLS) {
 		ERR("Connection found but is not TLS\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return 0;
 	}
 	return c;
@@ -191,7 +191,7 @@ static int get_cert(WOLFSSL_X509 **cert, struct tcp_connection **c,
 	return 0;
 
 err:
-	tcpconn_put(*c);
+	tcpconn_chld_put(*c);
 	return -1;
 }
 
@@ -226,12 +226,12 @@ static int get_cipher(str *res, sip_msg_t *msg)
 	}
 	res->s = buf;
 	res->len = cipher.len;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -280,12 +280,12 @@ static int get_bits(str *res, long *i, sip_msg_t *msg)
 	res->len = bits.len;
 	if(i)
 		*i = b;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -335,12 +335,12 @@ static int get_version(str *res, sip_msg_t *msg)
 	}
 	res->s = buf;
 	res->len = version.len;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -381,12 +381,12 @@ static int get_desc(str *res, sip_msg_t *msg)
 	strcpy(buf, extra->ssl_cipher_desc);
 	res->s = buf;
 	res->len = strlen(buf);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -419,7 +419,7 @@ static int get_cert_version(str *res, int local, sip_msg_t *msg)
 	memcpy(buf, version, res->len);
 	res->s = buf;
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 }
 
@@ -503,12 +503,12 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 
 	if(cert)
 		wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 error:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -631,13 +631,13 @@ static int get_validity(str *res, int local, int bound, sip_msg_t *msg)
 
 	wolfSSL_BIO_free(mem);
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 err:
 	if(mem)
 		wolfSSL_BIO_free(mem);
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -721,7 +721,7 @@ static int get_sn(str *res, int local, sip_msg_t *msg)
 	res->s = buf;
 
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	wolfSSL_OPENSSL_free(sn);
 	wolfSSL_BN_free(bn);
 	return 0;
@@ -731,7 +731,7 @@ error:
 	if(bn)
 		wolfSSL_BN_free(bn);
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -851,12 +851,12 @@ static int get_ssl_cert(str *res, int local, int urlencoded, sip_msg_t *msg)
 	}
 
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -943,7 +943,7 @@ static int get_verified_cert_chain(WOLF_STACK_OF(WOLFSSL_X509) * *chain,
 
 	return 0;
 err:
-	tcpconn_put(*c);
+	tcpconn_chld_put(*c);
 	return -1;
 }
 
@@ -982,12 +982,12 @@ static int sel_ssl_verified_cert_chain(str *res, select_t *s, sip_msg_t *msg)
 
 	/* x509_DER_to_stack() returned an owned stack - free it */
 	wolfSSL_sk_X509_pop_free(chain, wolfSSL_X509_free);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	wolfSSL_sk_X509_pop_free(chain, wolfSSL_X509_free);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -1025,7 +1025,7 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 		res->s = buf;
 		res->len = strlen(buf);
 		wolfSSL_X509_free(cert);
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return 0;
 	}
 
@@ -1074,14 +1074,14 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 
 	wolfSSL_OPENSSL_free(text_s);
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(text_s)
 		wolfSSL_OPENSSL_free(text_s);
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -1266,13 +1266,13 @@ static int get_alt(str *res, int local, int type, sip_msg_t *msg)
 	if(names)
 		wolfSSL_sk_GENERAL_NAME_pop_free(names, wolfSSL_GENERAL_NAME_free);
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 err:
 	if(names)
 		wolfSSL_sk_GENERAL_NAME_pop_free(names, wolfSSL_GENERAL_NAME_free);
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -1415,12 +1415,12 @@ static int get_tlsext_sn(str *res, sip_msg_t *msg)
 	}
 	res->s = buf;
 
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 error:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -1529,7 +1529,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 				goto error;
 			}
 			wolfSSL_X509_free(cert);
-			tcpconn_put(c);
+			tcpconn_chld_put(c);
 			return pv_get_strzval(msg, param, res, sv.s);
 			break;
 
@@ -1542,7 +1542,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 				goto error;
 			}
 			wolfSSL_X509_free(cert);
-			tcpconn_put(c);
+			tcpconn_chld_put(c);
 			return pv_get_strzval(msg, param, res, sv.s);
 			break;
 
@@ -1552,7 +1552,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 error:
 	wolfSSL_X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return pv_get_null(msg, param, res);
 }
 
