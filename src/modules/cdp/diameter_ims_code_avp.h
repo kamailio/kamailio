@@ -245,6 +245,8 @@ enum
 	AVP_IMS_Requested_Party_Address = 1251,
 	AVP_IMS_Access_Network_Information = 1263,
 
+	AVP_IMS_Number_Portability_Routing_Information = 2024,
+
 };
 
 /** ETSI AVP Codes */
