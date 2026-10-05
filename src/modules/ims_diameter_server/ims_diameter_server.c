@@ -348,9 +348,13 @@ int ki_diameter_request(struct sip_msg *msg, str *s_peer, int i_appid,
 			resp = cdpb.AAASendRecvMessageToPeer(req, s_peer);
 			LM_DBG("Successfully sent diameter\n");
 			if(resp && AAAmsg2json(resp, &responsejson) == 1) {
+				cdpb.AAAFreeMessage(&resp);
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
+				if(resp) {
+					cdpb.AAAFreeMessage(&resp);
+				}
 				return -1;
 			}
 		}
@@ -363,9 +367,13 @@ int ki_diameter_request(struct sip_msg *msg, str *s_peer, int i_appid,
 			resp = cdpb.AAASendRecvMessage(req);
 			LM_DBG("Successfully sent diameter\n");
 			if(resp && AAAmsg2json(resp, &responsejson) == 1) {
+				cdpb.AAAFreeMessage(&resp);
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
+				if(resp) {
+					cdpb.AAAFreeMessage(&resp);
+				}
 				return -1;
 			}
 		}
