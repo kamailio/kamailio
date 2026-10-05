@@ -61,7 +61,7 @@
 #define CDP_AVP_MODULE imsapp
 
 #if !defined(CDP_AVP_DECLARATION) && !defined(CDP_AVP_EXPORT) \
-	&& !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
+		&& !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
 #ifndef _CDP_AVP_IMSAPP_H_1
 #define _CDP_AVP_IMSAPP_H_1
 
@@ -514,7 +514,8 @@ cdp_avp_ptr(Access_Network_Information,
 		IMS_vendor_id_3GPP, 0, UTF8String,
 		str)
 
-
+cdp_avp_ptr(Number_Portability_Routing_Information,
+	IMS_vendor_id_3GPP, 0, UTF8String, str)
 /*
  * ETSI something, that probably does not exist anymore
  *
@@ -882,4 +883,4 @@ cdp_avp_ptr(DSAI_Tag, IMS_vendor_id_3GPP,
 #define CDP_AVP_UNDEF_MACROS
 #include "macros.h"
 #undef CDP_AVP_UNDEF_MACROS
-/* clang-format on */
+		/* clang-format on */
