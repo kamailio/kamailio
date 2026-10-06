@@ -314,6 +314,8 @@ static int tcp_reactor_wbuf_add_locked(struct tcp_connection *c, char *buf,
 				c->timeout = get_ticks_raw(); /* force timeout */
 				return -1;
 			}
+			/* tls_encode() clears SND_F_CON_CLOSE on all but the last chunk */
+			tcpconn_set_send_flags(c, t_send_flags);
 			t_buf = rest_buf;
 			t_len = rest_len;
 		} while(unlikely(rest_len && wn > 0));
@@ -1529,8 +1531,10 @@ static void *tcp_reactor_thread_routine(void *arg)
 				if(!werr && wbufq_run(conn->s, conn, &wempty) < 0)
 					werr = 1;
 				tcp_reactor_stamp(conn, TCP_R_WRITE, 0);
-				/* resp: <0 error; 1 = wbuf_q still has data (needs POLLOUT,
-				 * handled inline after un-shield); 0 = fully drained */
+				/* resp: <0 error or close-after-send with all data written;
+				 * 1 = wbuf_q holds data for POLLOUT; 0 = fully drained */
+				if(wempty && tcpconn_close_after_send(conn))
+					werr = 1;
 				job->resp = werr ? -1 : (wempty ? 0 : 1);
 				break;
 			}
