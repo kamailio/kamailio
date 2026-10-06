@@ -3141,8 +3141,8 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 
 #ifdef TCP_ASYNC
 	if(unlikely(ksr_tcp_main_threads == 2 && is_tcp_main())) {
-		/* full reactor mode: we are already inside PROC_TCP_MAIN's event loop,
-		 * so there is no fd-passing / unix_sock self-send. This is reached from
+		/* mode 2: this runs in PROC_TCP_MAIN's event loop, so write here
+		 * instead of fd-passing / a unix_sock self-send. This is reached from
 		 * the TLS read path (tls_h_read_*), which drives the handshake and may
 		 * need to push out ciphertext (handshake records, write-wants-read
 		 * flush, renegotiation). Handle the write result against our own
@@ -5553,10 +5553,6 @@ void tcp_main_loop()
 			goto error;
 		}
 		LM_INFO("tcp main processing threads prepared\n");
-		/* mode 2: the reactor dispatch socketpair is created in the main
-		 * process by tcp_init_children() before any TCP child is forked, so it
-		 * is inherited here (and by every worker). Nothing to do at this point;
-		 * tcp_main uses ksr_tcp_reactor_get_dispatch_wfd() to ship tasks. */
 	} else {
 		LM_INFO("tcp main processing threads not enabled\n");
 	}

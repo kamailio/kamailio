@@ -31,6 +31,29 @@
  * tcp_main.c and tcp_read.c. It does not touch tcp_main.c's private io_wait
  * set (io_h) or local timer (tcp_main_ltimer) directly - see the tcpmain_*
  * wrapper prototypes and the long comment next to them in tcp_conn.h for why.
+ *
+ * Threads: one io_wait thread (PROC_TCP_MAIN's main thread) + N pool threads.
+ * Job model:
+ *  - shield (io_wait): drop c from io_h + the timer and take the in-pool ref;
+ *    the ref spans chained jobs; unshield/close releases it
+ *  - F_CONN_POOL_RD/_WR: a read/write job owns c; at most one of each, they
+ *    may run at the same time and share the SSL object and wbuf_q under
+ *    write_lock, as in mode 0
+ *  - F_CONN_POOL_CLOSE: a job failed or io_wait marked c bad; the last job
+ *    to complete closes c
+ *  - wsq: plaintext staged under write_lock, drained by a TCP_R_WRITE job
+ *    into wbuf_q (tls_encode() there); all transports write this way
+ *  - completion (io_wait, tcp_reactor_handle_done()): the last job out
+ *    closes c, chains a staged write, or unshields
+ *  - refs: hash + in-pool + transient (a worker's write request, a
+ *    tls-event dispatch); whoever drops the last one frees c
+ *  - TCP_R_RUN: a connectionless tcpx task, freed by its pool thread
+ * Per-field owner or lock:
+ *  - io_h, tcp_main_ltimer, c->flags: the io_wait thread
+ *  - c->req: the running read job (c is shielded)
+ *  - c->wbuf_q, c->wsq: c->write_lock; the completion's unlocked peeks are
+ *    ordered by the done_lock handoff (push under done_lock + notify byte)
+ *  - c->refcnt: atomic
  */
 
 /* pthread_setname_np() needs _GNU_SOURCE on glibc; must be set before any
@@ -105,12 +128,8 @@ struct tcp_reactor_pool tcp_rpool;
  * cfg.y directive (assigns through the extern in globals.h), default 8. */
 int ksr_tcp_reactor_threads = 8;
 
-/* per-pool-thread index (0..N-1); -1 in the io_wait/main thread and any other
- * thread. Set at pool-thread start (tcp_reactor_thread_routine()). Two uses:
- * selecting the per-thread TLS encode scratch buffer (see tcp_mtops.c) so
- * concurrent pool encodes never collide, and letting tcp_reactor_send_put()/
- * tcpconn_send_unsafe() tell a pool thread from the io_wait thread (both
- * satisfy is_tcp_main()) via tcp_reactor_pool_thread_idx(). */
+/* per-pool-thread index (0..N-1); -1 in the io_wait thread and elsewhere.
+ * Tells a pool thread from the io_wait thread (both satisfy is_tcp_main()) */
 static _Thread_local int tcp_reactor_thread_idx = -1;
 
 int tcp_reactor_pool_thread_idx(void)
@@ -395,7 +414,7 @@ static int tcp_reactor_watch_write(struct tcp_connection *c)
 
 /* mode 2: modifies the existing per-connection timer:
  * - allows PROC_TCP_MAIN to reap a partial read, instead of
- *   waiting for the slower cross-process tcp_timer_check_connections() sca
+ *   waiting for the slower cross-process tcp_timer_check_connections() scan
  * - pulls c->timeout in to the partial-read deadline (message start +
  *   ksr_tcp_msg_read_timeout) and re-arms c->timer to fire there
  * Caller passes t = current tick.
@@ -965,9 +984,8 @@ void tcp_reactor_handle_script_close(int scid)
 }
 
 /* mode 2: worker queued a write; wreq is the write request (shm-allocated by
- * the worker in tcp_reactor_send_put()). Queues the payload into the wbuf_q
- * (encrypting it first for TLS) and enables write watching, or (PROTO_TCP/
- * TLS/WSS) stages it on wsq and shields+enqueues a TCP_R_WRITE pool job.
+ * the worker in tcp_reactor_send_put()). Stages the payload on wsq; if c is
+ * free and its socket has room, shields c and enqueues a TCP_R_WRITE job.
  * Runs on the io_wait thread (handle_ser_child's CONN_WRITE_REQ arm). Frees
  * wreq and wreq->buf on every path. */
 void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq)
@@ -1065,11 +1083,8 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 		cc = tcpconn_get(creq->id, &cip, cport, cfrom, con_lifetime);
 	}
 	if(cc != NULL) {
-		/* reuse: queue the payload onto the existing connection. The
-		 * reused conn may already be owned by a pool job (mid-read):
-		 * PROTO_TCP/TLS - stage the plaintext on wsq and let a pool write
-		 *     job do the TLS encode + flush
-		 * WS/WSS - keep the inline encode+watch path. */
+		/* reuse: stage on wsq for a pool write job, as for CONN_WRITE_REQ;
+		 * a pool job may own cc (mid-read) */
 		if(unlikely(tcpconn_put(cc))) {
 			tcpconn_destroy(cc);
 			shm_free(creq->buf);
@@ -1340,42 +1355,8 @@ reactor_close:
 }
 
 /* ========================================================================
- * mode 2: reactor thread pool inside PROC_TCP_MAIN - all reads on the pool;
- * all writes except plain-WS on the pool
- *
- * Threads: one io_wait thread (this process's main thread) + N pool threads.
- *
- * Ownership / serialization:
- *  - epoll (io_h) and the local timer (tcp_main_ltimer): io_wait thread ONLY.
- *    Pool threads never call io_watch_*() or local_timer_*().
- *  - F_CONN_POOL_BUSY = F_CONN_POOL_RD | F_CONN_POOL_WR = "a pool job owns
- *    this conn": the io_wait thread shields the conn (removes it from io_h +
- *    the timer), sets the job's bit when it enqueues a read/write job, and
- *    clears it in the completion. While set, the conn has at most one read
- *    and one write job, which may run at the same time. Neither runs
- *    concurrently with the reactor; a read and a write job share the SSL
- *    object and wbuf_q under write_lock, as in mode 0.
- *    The last job to complete closes, chains or un-shields the conn.
- *  - A single "in-pool" refcount is taken at shield and released at
- *    unshield/close; it spans chained jobs and pins the conn so it cannot be
- *    freed while a pool thread uses it.
- *
- * Per-field synchronization:
- *  - c->flags        : io_wait thread ONLY (pool jobs never write c->flags;
- *                      reads/buffers/state only). No race.
- *  - c->req          : the read job exclusively while it runs (conn shielded).
- *  - c->wbuf_q,c->wsq: c->write_lock (gen_lock). The completion's unlocked
- *                      peeks (_wbufq_non_empty / wsq_head) are safe via the
- *                      done_lock happens-before edge.
- *  - c->refcnt       : atomic.
- *  - handoff pool->io_wait: push to done_head under done_lock + a notify byte;
- *                      io_wait reads done_head under done_lock - a
- *                      release/acquire barrier, so completion sees the job's
- *                      final writes.
- **/
-
-/* tcp_reactor_thread_idx is defined near the top (needed earlier by
- * tcp_reactor_send_put's pool-thread detection). */
+ * mode 2: reactor thread pool inside PROC_TCP_MAIN (job model: file header)
+ * ======================================================================== */
 
 /* runs in the io_wait thread on notify_pipe readiness: process all completed
  * jobs (coalesced). Only the io_wait thread touches io_h, so all re-arm / close
