@@ -1070,11 +1070,6 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	atomic_set(&c->refcnt, 0);
 	local_timer_init(&c->timer, tcpconn_main_timeout, c, 0);
 
-	if(unlikely((ksr_tcp_accept_haproxy
-						|| (ksr_tcp_accept_protocols & KSR_TCPAP_HAPROXY))
-				&& state == S_CONN_ACCEPT)) {
-		state = S_CONN_HAPROXY;
-	}
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
 	LM_DBG("on port %d, type %d, socket %d\n", c->rcv.src_port, type, sock);
 	init_tcp_req(&c->req, (char *)c + sizeof(struct tcp_connection), rd_b_size);
@@ -1083,6 +1078,12 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	c->rcv.proto_reserved2 = 0;
 	c->state = state;
 	c->initstate = state;
+	/* the first read parses the PROXY header, then moves to S_CONN_ACCEPT */
+	if(unlikely((ksr_tcp_accept_haproxy
+						|| (ksr_tcp_accept_protocols & KSR_TCPAP_HAPROXY))
+				&& state == S_CONN_ACCEPT)) {
+		c->state = S_CONN_HAPROXY;
+	}
 	c->extra_data = 0;
 	c->timestamp = time(NULL);
 #ifdef USE_TLS
@@ -1427,51 +1428,74 @@ int tcpconn_finish_connect(struct tcp_connection *c, union sockaddr_union *from)
 
 /* adds a tcp connection to the tcpconn hashes
  * Note: it's called _only_ from the tcp_main process */
-struct tcp_connection *tcpconn_add(struct tcp_connection *c)
+/* add the aliases of a new connection, keyed on its peer address c->rcv.src_*:
+ * - (peer_ip, peer_port, 0, 0): any connection to peer_ip, peer_port
+ * - (peer_ip, peer_port, local_addr, 0): the same, from local_addr
+ * - (peer_ip, peer_port, local_addr, local_port): a fully specified connection
+ * - (peer_ip, peer_port, cinfo_addr, 0) and (..., cinfo_addr, cinfo_port): the
+ *   same, with the local address stored in cinfo (e.g. by the PROXY protocol)
+ * add_alias errors are ignored: some are valid (e.g. two connections to the
+ * same destination from different source addresses).
+ * WARNING: must be called with TCPCONN_LOCK held */
+static void _tcpconn_add_conn_aliases_unsafe(struct tcp_connection *c)
 {
 	struct ip_addr zero_ip;
 	int new_conn_alias_flags;
 
+	ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
+	new_conn_alias_flags = cfg_get(tcp, tcp_cfg, new_conn_alias_flags);
+	_tcpconn_add_alias_unsafe(
+			c, c->rcv.src_port, &zero_ip, 0, new_conn_alias_flags);
+	if(likely(c->rcv.dst_ip.af && !ip_addr_any(&c->rcv.dst_ip))) {
+		_tcpconn_add_alias_unsafe(
+				c, c->rcv.src_port, &c->rcv.dst_ip, 0, new_conn_alias_flags);
+		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
+				c->rcv.dst_port, new_conn_alias_flags);
+	}
+	if(unlikely(c->cinfo.dst_ip.af && !ip_addr_any(&c->cinfo.dst_ip)
+				&& !ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))) {
+		_tcpconn_add_alias_unsafe(
+				c, c->rcv.src_port, &c->cinfo.dst_ip, 0, new_conn_alias_flags);
+		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip,
+				c->cinfo.dst_port, new_conn_alias_flags);
+	}
+}
+
+
+/* set the peer and local address of an accepted connection from its PROXY
+ * header and re-key its aliases on them, under TCPCONN_LOCK: lookups compare
+ * the live c->rcv addresses, and cinfo keeps the proxy-side addresses */
+void tcpconn_set_proxied_addr(struct tcp_connection *c, struct ip_addr *src_ip,
+		unsigned short src_port, struct ip_addr *dst_ip,
+		unsigned short dst_port)
+{
+	int r;
+
+	TCPCONN_LOCK;
+	for(r = 0; r < c->aliases; r++)
+		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash],
+				&c->con_aliases[r], next, prev);
+	c->aliases = 0;
+	c->rcv.src_ip = *src_ip;
+	c->rcv.src_port = src_port;
+	c->rcv.dst_ip = *dst_ip;
+	c->rcv.dst_port = dst_port;
+	if(likely(c->flags & F_CONN_HASHED))
+		_tcpconn_add_conn_aliases_unsafe(c);
+	TCPCONN_UNLOCK;
+}
+
+
+struct tcp_connection *tcpconn_add(struct tcp_connection *c)
+{
 	if(likely(c)) {
-		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
 		c->id_hash = tcp_id_hash(c->id);
 		c->aliases = 0;
-		new_conn_alias_flags = cfg_get(tcp, tcp_cfg, new_conn_alias_flags);
 		TCPCONN_LOCK;
 		c->flags |= F_CONN_HASHED;
 		/* add it at the beginning of the list*/
 		tcpconn_listadd(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
-		/* set the aliases */
-		/* first alias is for (peer_ip, peer_port, 0 ,0) -- for finding
-		 *  any connection to peer_ip, peer_port
-		 * the second alias is for (peer_ip, peer_port, local_addr, 0) -- for
-		 *  finding any connection to peer_ip, peer_port from local_addr
-		 * the third alias is for (peer_ip, peer_port, local_addr, local_port)
-		 *   -- for finding if a fully specified connection exists
-		 * the fourth alias is for (peer_ip, peer_port, cinfo_addr, 0) -- for
-		 *  finding any connection to peer_ip, peer_port from address stored into cinfo (e.g. when proxy protocol is used)
-		 * the fifth alias is for (peer_ip, peer_port, cinfo_addr, cinfo_port)
-		 *   -- for finding if a fully specified connection exists using address
-		 *      and port stored into cinfo*/
-		_tcpconn_add_alias_unsafe(
-				c, c->rcv.src_port, &zero_ip, 0, new_conn_alias_flags);
-		if(likely(c->rcv.dst_ip.af && !ip_addr_any(&c->rcv.dst_ip))) {
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip, 0,
-					new_conn_alias_flags);
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
-					c->rcv.dst_port, new_conn_alias_flags);
-		}
-		if(unlikely(c->cinfo.dst_ip.af && !ip_addr_any(&c->cinfo.dst_ip)
-					&& !ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))) {
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, 0,
-					new_conn_alias_flags);
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip,
-					c->cinfo.dst_port, new_conn_alias_flags);
-		}
-
-		/* ignore add_alias errors, there are some valid cases when one
-		 *  of the add_alias would fail (e.g. first add_alias for 2 connections
-		 *   with the same destination but different src. ip*/
+		_tcpconn_add_conn_aliases_unsafe(c);
 		TCPCONN_UNLOCK;
 		LM_DBG("hashes: %d:%d:%d, %d\n", c->con_aliases[0].hash,
 				c->con_aliases[1].hash, c->con_aliases[2].hash, c->id_hash);

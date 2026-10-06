@@ -572,6 +572,9 @@ void tcpconn_destroy(struct tcp_connection *tcpconn);
  * ref, or hands a tls/wss conn to tcp main to free in modes 1/2 */
 int tcpconn_chld_put(struct tcp_connection *tcpconn);
 struct tcp_connection *tcpconn_add(struct tcp_connection *c);
+void tcpconn_set_proxied_addr(struct tcp_connection *c, struct ip_addr *src_ip,
+		unsigned short src_port, struct ip_addr *dst_ip,
+		unsigned short dst_port);
 int tcp_emit_closed_event(struct tcp_connection *con);
 void _tcpconn_free(struct tcp_connection *c);
 int tcp_safe_close(int s);

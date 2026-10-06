@@ -1732,13 +1732,16 @@ int receive_tcp_msg(char *tcpbuf, unsigned int len,
  *    0 on parser success, and connection information was extracted
  *    1 on parser success, but no connection information was provided by the
  *      upstream load balancer or reverse proxy.
+ *    2 when the data does not start with a PROXY header
+ *    3 when no data is available yet (the caller retries on the next POLLIN)
  */
 int tcpconn_read_haproxy(struct tcp_connection *c)
 {
-	int bytes, retval = 0;
+	int bytes, fd, retval = 0;
 	uint32_t size, port;
 	char *p, *end;
-	struct ip_addr *src_ip, *dst_ip;
+	struct ip_addr src, dst, *src_ip, *dst_ip;
+	unsigned short src_port, dst_port;
 
 	const char v2sig[12] = "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A";
 
@@ -1787,10 +1790,12 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 
 	} hdr;
 
-	bytes = recv(c->s, &hdr, sizeof(hdr), MSG_PEEK | MSG_DONTWAIT);
+	/* c->s in tcp main (mode 2 pool threads), c->fd in a worker (modes 0/1) */
+	fd = _tconfd(c);
+	bytes = recv(fd, &hdr, sizeof(hdr), MSG_PEEK | MSG_DONTWAIT);
 	if(bytes == -1) {
 		if(errno == EAGAIN || errno == EINTR) {
-			return 0; /* Data not ready yet; remain in S_CONN_HAPROXY state */
+			return 3; /* no data yet: stay in S_CONN_HAPROXY */
 		}
 		LM_ERR("recv(MSG_PEEK) failed: %s\n", strerror(errno));
 		return -1; /* Real error */
@@ -1807,8 +1812,13 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 	c->cinfo.proto = (int)c->rcv.proto;
 	c->cinfo.csocket = c->rcv.bind_address;
 
-	src_ip = &c->rcv.src_ip;
-	dst_ip = &c->rcv.dst_ip;
+	/* parse into copies: tcpconn_set_proxied_addr() applies them under lock */
+	src = c->rcv.src_ip;
+	dst = c->rcv.dst_ip;
+	src_port = c->rcv.src_port;
+	dst_port = c->rcv.dst_port;
+	src_ip = &src;
+	dst_ip = &dst;
 
 	if(bytes >= 16 && memcmp(&hdr.v2, v2sig, 12) == 0
 			&& (hdr.v2.ver_cmd & 0xF0) == 0x20) {
@@ -1826,12 +1836,12 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 						src_ip->af = AF_INET;
 						src_ip->len = 4;
 						src_ip->u.addr32[0] = hdr.v2.addr.ip4.src_addr;
-						c->rcv.src_port = htons(hdr.v2.addr.ip4.src_port);
+						src_port = htons(hdr.v2.addr.ip4.src_port);
 
 						dst_ip->af = AF_INET;
 						dst_ip->len = 4;
 						dst_ip->u.addr32[0] = hdr.v2.addr.ip4.dst_addr;
-						c->rcv.dst_port = htons(hdr.v2.addr.ip4.dst_port);
+						dst_port = htons(hdr.v2.addr.ip4.dst_port);
 
 						goto done;
 
@@ -1839,12 +1849,12 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 						src_ip->af = AF_INET6;
 						src_ip->len = 16;
 						memcpy(src_ip->u.addr, hdr.v2.addr.ip6.src_addr, 16);
-						c->rcv.src_port = htons(hdr.v2.addr.ip6.src_port);
+						src_port = htons(hdr.v2.addr.ip6.src_port);
 
 						dst_ip->af = AF_INET6;
 						dst_ip->len = 16;
 						memcpy(dst_ip->u.addr, hdr.v2.addr.ip6.dst_addr, 16);
-						c->rcv.dst_port = htons(hdr.v2.addr.ip6.dst_port);
+						dst_port = htons(hdr.v2.addr.ip6.dst_port);
 
 						goto done;
 
@@ -1915,7 +1925,7 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 			if(port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
 				return -1; /* invalid port number */
 			}
-			c->rcv.src_port = port;
+			src_port = port;
 
 			if(*end != ' ') {
 				return -1; /* invalid header */
@@ -1927,7 +1937,7 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 			if(port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
 				return -1; /* invalid port number */
 			}
-			c->rcv.dst_port = port;
+			dst_port = port;
 
 			goto done;
 		} else if(strncmp(p, " UNKNOWN", 8) == 0) {
@@ -1949,11 +1959,18 @@ int tcpconn_read_haproxy(struct tcp_connection *c)
 	}
 
 done:
-	bytes = recv(c->fd, &hdr, size, 0);
+	bytes = recv(fd, &hdr, size, 0);
 	if(bytes == -1) {
 		LM_ERR("failed to consume PROXY header: %s\n", strerror(errno));
 		return -1;
 	}
+	if(bytes != (int)size) {
+		LM_ERR("short read consuming the PROXY header (%d of %u bytes)\n",
+				bytes, size);
+		return -1;
+	}
+	if(retval == 0)
+		tcpconn_set_proxied_addr(c, &src, src_port, &dst, dst_port);
 	return retval;
 }
 
@@ -1973,35 +1990,25 @@ int tcp_read_req(struct tcp_connection *con, int *bytes_read,
 	total_bytes = 0;
 	resp = CONN_RELEASE;
 	req = &con->req;
-	/* PROXY protocol: non-blocking parse before TLS handshake.
-	 * Only on first read (S_CONN_ACCEPT) for haproxy-enabled listeners. */
-	if(unlikely((ksr_tcp_accept_haproxy
-						|| (ksr_tcp_accept_protocols & KSR_TCPAP_HAPROXY)
-						|| (con->rcv.bind_address
-								&& (con->rcv.bind_address->flags
-										& S_CONN_HAPROXY)))
-				&& con->state == S_CONN_ACCEPT)) {
+	/* PROXY protocol: parse the header before any SIP or TLS data, on the
+	 * first read of a connection accepted on a haproxy-enabled server */
+	if(unlikely(con->state == S_CONN_HAPROXY)) {
 		ret = tcpconn_read_haproxy(con);
 		if(ret == -1) {
 			LM_ERR("invalid PROXY protocol header from %s\n",
 					ip_addr2a(&con->rcv.src_ip));
-		}
-
-		if(ret == -1) {
-			LM_ERR("invalid PROXY protocol header\n");
 			*bytes_read = 0;
 			return CONN_ERROR;
-		} else if(ret == 0) {
-			/* no data yet — return to event loop, POLLIN will re-trigger */
+		} else if(ret == 3) {
+			/* no data yet: POLLIN brings the connection back */
 			*bytes_read = 0;
 			return CONN_RELEASE;
-		} else if(
-				ret
-				== 1) { /* ret > 0: header parsed or not a proxy header, proceed */
+		} else if(ret == 1) {
 			LM_DBG("PROXY protocol did not override IP addresses\n");
 		} else if(ret == 2) {
 			LM_DBG("PROXY protocol header not found\n");
 		}
+		con->state = S_CONN_ACCEPT;
 	}
 	if(req->tvrstart.tv_sec == 0) {
 		gettimeofday(&req->tvrstart, NULL);
