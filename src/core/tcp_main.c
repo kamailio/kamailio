@@ -6097,6 +6097,7 @@ int wss_send(dest_info_t *dst, const char *buf, unsigned len)
 		wsev.buf = (char *)buf;
 		wsev.len = len;
 		wsev.id = con->id;
+		wsev.send_flags = dst->send_flags;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
 		tcpconn_put(con);

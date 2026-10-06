@@ -239,6 +239,7 @@ static inline int msg_send_buffer(
 		wsev.buf = outb.s;
 		wsev.len = outb.len;
 		wsev.id = con->id;
+		wsev.send_flags = dst->send_flags;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
 		tcpconn_chld_put(con);

@@ -537,6 +537,7 @@ typedef struct ws_event_info
 	char *buf;
 	unsigned int len;
 	int id;
+	snd_flags_t send_flags; /* frame out: the sender's flags */
 } ws_event_info_t;
 
 tcp_connection_t *ksr_tcpcon_evcb_get(void);
