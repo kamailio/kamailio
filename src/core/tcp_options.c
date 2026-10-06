@@ -335,6 +335,19 @@ int tcp_options_check()
 	W_OPT_NC(tcp_connect_wait);
 #endif /* TCP_CONNECT_WAIT */
 
+	if(ksr_tcp_main_threads < 0 || ksr_tcp_main_threads > 2) {
+		LM_ERR("tcp_main_threads=%d is out of range (0..2)\n",
+				ksr_tcp_main_threads);
+		return -1;
+	}
+	/* mode 2 handles all tcp reads and writes on the pool threads */
+	if(ksr_tcp_main_threads == 2 && ksr_tcp_reactor_threads < 1) {
+		LM_ERR("tcp_reactor_threads=%d: tcp_main_threads=2 needs at least one"
+			   " thread\n",
+				ksr_tcp_reactor_threads);
+		return -1;
+	}
+
 #ifdef TCP_ASYNC
 	/* mode 2 connects on the single io_wait thread: a blocking connect()
 	 * there would stall all tcp traffic */

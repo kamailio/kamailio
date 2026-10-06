@@ -26,8 +26,8 @@
 #define TLS_RD_MBUF_SZ 65536
 #define TLS_WR_MBUF_SZ 65536
 
-/* pidx sentinel used in mode 2: identifies the tcp_main thread context.
- * No per-process trampoline thread exists; exec() is called directly. */
+/* pidx sentinel: the caller runs in PROC_TCP_MAIN (io_wait or a mode 2 pool
+ * thread); call exec() in place and skip the relay */
 #define KSR_TCPX_MAIN_PIDX (-1)
 
 typedef void (*tcpx_cbe_f)(void *p, int pidx);

@@ -62,9 +62,9 @@ typedef struct tcp_reactor_task
  *
  * Allocated in shared memory by the worker in tcp_send(); the pointer is
  * passed to tcp_main via pt[process_no].unix_sock as response[0] with
- * command CONN_WRITE_REQ. tcp_main queues buf into conn->wbuf_q, enables
- * POLLOUT watching, releases the worker's connection refcnt, and frees
- * both buf and the request struct.
+ * command CONN_WRITE_REQ. tcp_main stages buf on conn->wsq for a pool write
+ * job, releases the worker's connection refcnt, and frees both buf and the
+ * request struct.
  */
 typedef struct tcp_reactor_write_req
 {
@@ -75,13 +75,12 @@ typedef struct tcp_reactor_write_req
 } tcp_reactor_write_req_t;
 
 /*
- * Connect request sent from a TCP worker to PROC_TCP_MAIN when no
- * struct tcp_connection exists
- * - the worker does not perform the connect.
- * - tcp_main performs socket()/connect(), creates the struct tcp_connection,
- *   queues the payload, and watches the fd
- * - allocated in shm by the worker; passed as response[0] with command
- * - tcp_main frees buf and the request struct.
+ * Connect request sent from a TCP worker to PROC_TCP_MAIN, which owns the
+ * connect, when the worker lacks a struct tcp_connection for dst.
+ * Allocated in shm by the worker and passed as response[0] with command
+ * CONN_CONNECT_REQ. tcp_main reuses a matching connection another worker
+ * opened meanwhile, or does socket()/connect(), creates the connection and
+ * queues the payload; it frees buf and the request struct.
  */
 typedef struct tcp_reactor_connect_req
 {
@@ -114,8 +113,7 @@ int tcp_reactor_dispatch_tls_event(struct tcp_connection *c);
 
 /* Reactor pool thread index of the calling thread: 0..N-1 on a PROC_TCP_MAIN
  * pool thread, -1 otherwise (io_wait/main thread, or any other process/mode).
- * Exposed so the pkg-allocator guard (tcp_reactor_mem.c) can flag pkg use on a
- * pool thread without the reactor thread-local leaking outside core. */
+ * Used by tcp_main.c to tell a pool thread from the io_wait thread. */
 int tcp_reactor_pool_thread_idx(void);
 
 /* Mode-2 write entry points, called from tcp_send()/tcpconn_send_unsafe() in
@@ -164,13 +162,11 @@ enum tcp_reactor_op
 	TCP_R_RUN = 3,	 /* run an arbitrary tcpx_task_t, no connection involved */
 };
 
-/* A read/write job references only the connection (+op); it never carries a
- * payload - write data lives on the connection's wsq staging list. It holds a
- * refcount on conn (taken at enqueue, released in completion). A TCP_R_RUN job
- * carries a task instead of a conn (conn stays NULL) and is self-contained: the
- * pool thread runs task->exec() and frees the job itself, no io_wait-side
- * completion needed - see tcp_reactor_handle_tcpx_task_req(). All jobs are
- * pkg-allocated by the enqueuing thread. */
+/* A read/write job carries the connection and op; write data stays on the
+ * connection's wsq. The in-pool ref taken at shield covers every job on it.
+ * A TCP_R_RUN job carries a task (conn NULL): its pool thread runs
+ * task->exec() and frees the job (tcp_reactor_handle_tcpx_task_req()).
+ * The enqueuing thread pkg-allocates every job. */
 struct tcp_reactor_job
 {
 	struct tcp_connection *conn;
@@ -197,7 +193,7 @@ struct tcp_reactor_pool
 	pthread_t *threads;
 	int threads_no;
 	int stop;
-	struct tcp_reactor_job *task_head; /* read/run jobs (reactor-enqueued) */
+	struct tcp_reactor_job *task_head; /* all jobs (io_wait-enqueued) */
 	struct tcp_reactor_job *task_tail;
 	pthread_mutex_t done_lock; /* plain mutex: same process only */
 	struct tcp_reactor_job *done_head;
