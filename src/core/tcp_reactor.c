@@ -1583,15 +1583,8 @@ int tcp_reactor_pool_init(void)
 
 	LM_INFO("TCP reactor: using %d threads\n", ksr_tcp_reactor_threads);
 
-	/* pool_init() runs on PROC_TCP_MAIN's io_wait/main thread; name it here (pool
-	 * threads name themselves in tcp_reactor_thread_routine). OS thread comm only,
-	 * so kamcmd core.ps still reports the usual process description. */
-#if defined(HAVE_PTHREAD_SETNAME_NP_2ARG)
-	pthread_setname_np(pthread_self(), "tcpr-iowait");
-#elif defined(HAVE_PTHREAD_SETNAME_NP_1ARG)
-	pthread_setname_np("tcpr-iowait");
-#endif
-
+	/* the io_wait thread keeps its name: as the main thread it names the process,
+	 * which ps -C, pkill -x and killall match (pool threads name themselves) */
 	if(pipe(tcp_rpool.notify_pipe) < 0) {
 		LM_ERR("reactor notify pipe: %s\n", strerror(errno));
 		return -1;
