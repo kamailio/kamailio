@@ -1112,6 +1112,9 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 			shm_free(creq->buf);
 			shm_free(creq);
 			if(!tcpconn_pool_busy(cc)) {
+				/* socket full: the data waits in wsq for POLLOUT */
+				if((cc->flags & F_CONN_WRITE_W) && _wbufq_non_empty(cc))
+					return;
 				if(unlikely(tcp_reactor_shield(cc, -1) < 0)) {
 					cc->state = S_CONN_BAD;
 					cc->timeout = get_ticks_raw();
