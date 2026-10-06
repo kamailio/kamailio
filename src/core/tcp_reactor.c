@@ -1539,7 +1539,7 @@ static void *tcp_reactor_thread_routine(void *arg)
 				break;
 			}
 			case TCP_R_RUN:
-				LM_WARN("tcpr-pool-%d: running tcpx task %p (exec=%p)\n",
+				LM_DBG("tcpr-pool-%d: running tcpx task %p (exec=%p)\n",
 						tcp_reactor_thread_idx, (void *)job->task,
 						job->task ? (void *)job->task->exec : NULL);
 				if(job->task && job->task->exec)
