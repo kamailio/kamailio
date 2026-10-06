@@ -116,11 +116,11 @@ Tyler Moore
 
         4. Functions
 
-              4.1. ds_select_dns([limit])
-              4.2. ds_select_dst(set, alg[, limit])
-              4.3. ds_select_domain(set, alg[, limit])
-              4.4. ds_select(set, alg [, limit])
-              4.5. ds_select_routes(rules, mode [, limit])
+              4.1. ds_select_dst(set, alg[, limit])
+              4.2. ds_select_domain(set, alg[, limit])
+              4.3. ds_select(set, alg [, limit])
+              4.4. ds_select_routes(rules, mode [, limit])
+              4.5. ds_select_dns([limit])
               4.6. ds_next_dst()
               4.7. ds_next_domain()
               4.8. ds_set_dst()
@@ -218,14 +218,14 @@ Tyler Moore
    1.48. Set the “ds_dns_interval” parameter
    1.49. Set the “ds_dns_match_all” parameter
    1.50. Set the “ds_dns_ttl” parameter
-   1.51. ds_select_dns usage
-   1.52. latency_optimized_dispatching usage
-   1.53. priority_weight_dispatching usage
-   1.54. ds_select_dst usage
-   1.55. configuring load balancing with congestion detection
-   1.56. ds_select_domain usage
-   1.57. ds_select usage
-   1.58. ds_select_routes usage
+   1.51. latency_optimized_dispatching usage
+   1.52. priority_weight_dispatching usage
+   1.53. ds_select_dst usage
+   1.54. configuring load balancing with congestion detection
+   1.55. ds_select_domain usage
+   1.56. ds_select usage
+   1.57. ds_select_routes usage
+   1.58. ds_select_dns usage
    1.59. ds_mark_dst usage
    1.60. ds_mark_addr usage
    1.61. ds_list_exists usage
@@ -302,11 +302,11 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. ds_select_dns([limit])
-        4.2. ds_select_dst(set, alg[, limit])
-        4.3. ds_select_domain(set, alg[, limit])
-        4.4. ds_select(set, alg [, limit])
-        4.5. ds_select_routes(rules, mode [, limit])
+        4.1. ds_select_dst(set, alg[, limit])
+        4.2. ds_select_domain(set, alg[, limit])
+        4.3. ds_select(set, alg [, limit])
+        4.4. ds_select_routes(rules, mode [, limit])
+        4.5. ds_select_dns([limit])
         4.6. ds_next_dst()
         4.7. ds_next_domain()
         4.8. ds_set_dst()
@@ -1226,11 +1226,11 @@ modparam("dispatcher", "ds_interval_mode", 7200)
 
 4. Functions
 
-   4.1. ds_select_dns([limit])
-   4.2. ds_select_dst(set, alg[, limit])
-   4.3. ds_select_domain(set, alg[, limit])
-   4.4. ds_select(set, alg [, limit])
-   4.5. ds_select_routes(rules, mode [, limit])
+   4.1. ds_select_dst(set, alg[, limit])
+   4.2. ds_select_domain(set, alg[, limit])
+   4.3. ds_select(set, alg [, limit])
+   4.4. ds_select_routes(rules, mode [, limit])
+   4.5. ds_select_dns([limit])
    4.6. ds_next_dst()
    4.7. ds_next_domain()
    4.8. ds_set_dst()
@@ -1247,36 +1247,7 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.19. ds_dsg_fetch_uri(setid, uri)
    4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
-4.1.  ds_select_dns([limit])
-
-   Resolves the current next hop using the procedures from RFC 3263 and
-   stores the resulting target addresses in the XAVP configured by the
-   xavp_dst parameter. The destination URI is used as the next hop when it
-   is set; otherwise, the Request-URI is used. The lookup performs NAPTR,
-   SRV, and CNAME/A/AAAA queries as required by the URI and stores
-   concrete SIP URIs containing the resolved IP address, port, and
-   transport in DNS selection order.
-
-   The optional limit parameter is a positive integer or a variable
-   containing an integer. Resolution stops after this number of targets
-   has been stored. A missing or zero value means no limit.
-
-   The function returns true if at least one target was resolved and
-   stored. The generated XAVP records contain the “uri” field and can be
-   used by ds_next_dst() for serial failover when bit 2 of the flags
-   parameter is set.
-
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
-
-   Example 1.51. ds_select_dns usage
-...
-if(ds_select_dns("8")) {
-        ds_next_dst();
-        t_relay();
-}
-...
-
-4.2.  ds_select_dst(set, alg[, limit])
+4.1.  ds_select_dst(set, alg[, limit])
 
    The method selects a destination from addresses set. It returns true if
    a new destination is set. The selected address is set to dst_uri field
@@ -1374,7 +1345,7 @@ if(ds_select_dns("8")) {
             - If the attribute 'cc=1' is set, the latency used is
             congestion ms : estimate (current latency ms) - average
             (normal condition latency ms).
-            Example 1.52. latency_optimized_dispatching usage
+            Example 1.51. latency_optimized_dispatching usage
 Using this simple formula :
     ADJUSTED_PRIORITY = PRIORITY - (ESTIMATED_LATENCY_MS/PRIORITY)
 
@@ -1411,7 +1382,7 @@ With congestion control the formula becomes :
             inactive, the algorithm automatically recalculates the
             distribution and falls back to destinations at the next
             priority level, mirroring SRV failover behaviour.
-            Example 1.53. priority_weight_dispatching usage
+            Example 1.52. priority_weight_dispatching usage
 GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
    1    |    10    |   70   |   70%
    2    |    10    |   30   |   30%
@@ -1433,7 +1404,7 @@ GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.54. ds_select_dst usage
+   Example 1.53. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -1443,7 +1414,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-   Example 1.55. configuring load balancing with congestion detection
+   Example 1.54. configuring load balancing with congestion detection
 ...
 # sample of SQL provisioning statements
 INSERT INTO "dispatcher"
@@ -1484,7 +1455,7 @@ DEST: {
 }
 ...
 
-4.3.  ds_select_domain(set, alg[, limit])
+4.2.  ds_select_domain(set, alg[, limit])
 
    The method selects a destination from addresses set and rewrites the
    host and port from R-URI. The parameters have same meaning as for
@@ -1497,7 +1468,7 @@ DEST: {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.56. ds_select_domain usage
+   Example 1.55. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1506,7 +1477,7 @@ if(ds_select_domain("1", "$var(a)")) {
 }
 ...
 
-4.4.  ds_select(set, alg [, limit])
+4.3.  ds_select(set, alg [, limit])
 
    The method selects a destination from addresses set and adds it in the
    XAVP specified for this module. It is not updating R-URI nor the
@@ -1521,7 +1492,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.57. ds_select usage
+   Example 1.56. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1531,7 +1502,7 @@ if(ds_select("1", "$var(a)")) {
 }
 ...
 
-4.5.  ds_select_routes(rules, mode [, limit])
+4.4.  ds_select_routes(rules, mode [, limit])
 
    The method selects destinations following the rules combining groups
    add algorithms, controlling where the first destination address is
@@ -1564,7 +1535,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.58. ds_select_routes usage
+   Example 1.57. ds_select_routes usage
 ...
 $var(alg) = 4;
 $var(limit) = 8;
@@ -1581,6 +1552,35 @@ failure_route[REROUTE] {
             exit;
         }
     }
+}
+...
+
+4.5.  ds_select_dns([limit])
+
+   Resolves the current next hop using the procedures from RFC 3263 and
+   stores the resulting target addresses in the XAVP configured by the
+   xavp_dst parameter. The destination URI is used as the next hop when it
+   is set; otherwise, the Request-URI is used. The lookup performs NAPTR,
+   SRV, and CNAME/A/AAAA queries as required by the URI and stores
+   concrete SIP URIs containing the resolved IP address, port, and
+   transport in DNS selection order.
+
+   The optional limit parameter is a positive integer or a variable
+   containing an integer. Resolution stops after this number of targets
+   has been stored. A missing or zero value means no limit.
+
+   The function returns true if at least one target was resolved and
+   stored. The generated XAVP records contain the “uri” field and can be
+   used by ds_next_dst() for serial failover when bit 2 of the flags
+   parameter is set.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.58. ds_select_dns usage
+...
+if(ds_select_dns("8")) {
+        ds_next_dst();
+        t_relay();
 }
 ...
 
