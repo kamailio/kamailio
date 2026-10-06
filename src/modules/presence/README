@@ -107,6 +107,7 @@ Juha Heinanen
               7.1. presence:notify-reply
 
         8. Installation
+        9. MariaDB 11.6.2 or newer
 
    2. Developer Guide
 
@@ -183,6 +184,7 @@ Juha Heinanen
    1.51. $subs(name) usage
    1.52. $notify_reply(name) usage
    1.53. $notify_reply(name) usage
+   1.54. Disable innodb_snapshot_isolation for presence
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -272,6 +274,7 @@ Chapter 1. Admin Guide
         7.1. presence:notify-reply
 
    8. Installation
+   9. MariaDB 11.6.2 or newer
 
 1. Overview
 
@@ -1392,6 +1395,38 @@ event_route[presence:notify-reply]
    kamailio/scripts folder. You can also find the complete database
    documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
+
+9. MariaDB 11.6.2 or newer
+
+   Since MariaDB 11.6.2 the innodb_snapshot_isolation variable is enabled
+   by default (it exists, disabled by default, since 10.6.18, 10.11.8,
+   11.0.6, 11.1.5, 11.2.4 and 11.4.2). With it enabled, two concurrent
+   requests for the same watcher (e.g., two PUBLISH requests, with
+   notifier_processes enabled) can make the presence transaction fail with
+   error 1020 (“Record has changed since last read in table
+   'active_watchers'”). The whole transaction is rolled back, including
+   the presentity update, although the PUBLISH was already answered with
+   200 OK: the stored state stays old and watchers miss the NOTIFY.
+
+   It is recommended to disable the variable for the presence connections,
+   using a dedicated my.cnf group with an init-command (see Reading
+   configuration from my.cnf in the db_mysql module documentation). Use it
+   only with servers that have this variable, otherwise the connection
+   fails.
+
+   Example 1.54. Disable innodb_snapshot_isolation for presence
+...
+# my.cnf
+[kamailio-presence]
+user = kamailiouser
+password = kamailiopass
+host = localhost
+database = kamailio
+init-command = SET SESSION innodb_snapshot_isolation=OFF
+
+# kamailio.cfg
+modparam("presence", "db_url", "mysql://[kamailio-presence]/kamailio")
+...
 
 Chapter 2. Developer Guide
 
