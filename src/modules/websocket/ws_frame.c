@@ -808,6 +808,7 @@ int ws_frame_transmit(sr_event_param_t *evp)
 {
 	ws_event_info_t *wsev = (ws_event_info_t *)evp->data;
 	ws_frame_t frame;
+	conn_close_t cc;
 
 	memset(&frame, 0, sizeof(frame));
 	frame.fin = 1;
@@ -832,7 +833,10 @@ int ws_frame_transmit(sr_event_param_t *evp)
 
 	LM_DBG("Tx message:\n%.*s\n", frame.payload_len, frame.payload_data);
 
-	if(encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0) {
+	/* close-after-send from the script, e.g. set_reply_close() */
+	cc = (wsev->send_flags.f & SND_F_CON_CLOSE) ? CONN_CLOSE_DO
+												: CONN_CLOSE_DONT;
+	if(encode_and_send_ws_frame(&frame, cc) < 0) {
 		LM_ERR("sending message\n");
 
 		wsconn_put(frame.wsc);
