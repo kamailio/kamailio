@@ -75,7 +75,7 @@ mod_list_snmpstats=snmpstats
 mod_list_xmpp=xmpp
 
 # - modules depending on curl library
-mod_list_utils=utils http_client lost slack
+mod_list_utils=utils http_client lost slack log_victorialogs
 
 # - modules depending on curl and libevent2 library
 mod_list_http_async=http_async_client
