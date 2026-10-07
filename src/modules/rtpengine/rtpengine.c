@@ -3031,7 +3031,7 @@ static int parse_from_to_tags(struct ng_flags_parse *ng_flags,
 static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 		enum rtpe_operation *op, const char *flags_str)
 {
-	char *e;
+	char *e, v;
 	const char *err;
 	str key, val, s, s1;
 	int ip_af = AF_UNSPEC;
@@ -3069,7 +3069,9 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 			goto next;
 		}
 		if(str_key_val_prefix(&key, "received-from", &val, &s)) {
+			STR_VTOZ(s.s[s.len], v);
 			ip_af = get_ip_type(s.s);
+			STR_ZTOV(s.s[s.len], v);
 			if(ip_af == AF_INET) {
 				s1.s = "IP4";
 				s1.len = 3;
