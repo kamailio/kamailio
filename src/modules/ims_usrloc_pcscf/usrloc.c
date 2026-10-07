@@ -89,6 +89,12 @@ int bind_usrloc(usrloc_api_t *api)
 	api->get_number_of_contacts = get_number_of_contacts;
 	api->is_ulcb_registered = is_ulcb_registered;
 	api->register_ulcb_method = register_ulcb_method;
+	api->get_pcontact_by_impu = get_pcontact_by_impu;
+	api->update_contact_impus = update_contact_impus;
+	api->get_pcontact_by_pub_gruu = get_pcontact_by_pub_gruu;
+	api->get_pcontact_by_temp_gruu = get_pcontact_by_temp_gruu;
+	api->update_contact_gruu = update_contact_gruu;
+	api->is_impu_barred = is_impu_barred;
 
 	api->db_mode = db_mode;
 

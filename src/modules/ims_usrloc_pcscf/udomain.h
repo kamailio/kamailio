@@ -98,4 +98,12 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d);
 int audit_usrloc_expired_pcontacts(udomain_t *_d);
 int db_load_pcontact(udomain_t *_d, str *_aor, int insert_cache,
 		struct pcontact **_c, pcontact_info_t *contact_info);
+int get_pcontact_by_impu(udomain_t *d, str *impu, pcontact_t **c);
+int get_pcontact_by_pub_gruu(udomain_t *d, str *gruu, pcontact_t **c);
+int get_pcontact_by_temp_gruu(udomain_t *d, str *gruu, pcontact_t **c);
+int update_contact_gruu(udomain_t *d, pcontact_t *c, str *instance_id,
+		str *pub_gruu, str *temp_gruu);
+int update_contact_impus(udomain_t *d, pcontact_t *c, str impus[], int n,
+		int default_idx, str barred[], int n_barred);
+int is_impu_barred(pcontact_t *c, str *impu);
 #endif

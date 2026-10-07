@@ -68,6 +68,7 @@ extern avp_flags_t rcv_avp_type;
 extern avp_name_t rcv_avp_name;
 extern int is_registered_fallback2ip;
 extern int ignore_reg_state;
+extern int insert_path_on_register;
 
 #endif /* REG_MOD_H */
 
