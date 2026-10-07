@@ -463,16 +463,16 @@ static sr_xavp_t *get_xavu_host(int dir)
 	str *field;
 
 	if(dir == TPS_DIR_DOWNSTREAM) {
-		field = &_tps_xavu_field_bcontact_host;
-	} else {
 		field = &_tps_xavu_field_acontact_host;
+	} else {
+		field = &_tps_xavu_field_bcontact_host;
 	}
 
 	vavu = xavu_get_child_with_sval(&_tps_xavu_cfg, field);
 	if(vavu == NULL || vavu->val.v.s.len <= 0) {
 		LM_ERR("could not evaluate %s_contact_host xavu. Make sure it has a "
 			   "non-empty value or it is set in the related routes.\n",
-				(dir == TPS_DIR_DOWNSTREAM) ? "b" : "a");
+				(dir == TPS_DIR_DOWNSTREAM) ? "a" : "b");
 		return NULL;
 	}
 	return vavu;
