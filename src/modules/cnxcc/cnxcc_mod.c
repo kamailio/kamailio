@@ -1193,7 +1193,7 @@ static credit_data_t *__alloc_new_credit_data(
 	credit_data->call_list = shm_malloc(sizeof(call_t));
 	if(credit_data->call_list == NULL)
 		goto no_memory;
-	memset(credit_data->call_list, 0, sizeof(data_t));
+	memset(credit_data->call_list, 0, sizeof(call_t));
 	clist_init(credit_data->call_list, next, prev);
 
 	/*
