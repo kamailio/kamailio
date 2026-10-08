@@ -656,6 +656,22 @@ event_route [tm:branch-failure:contact] {
 			<listitem><para>
 				<emphasis>$T(name)</emphasis>
 			</para></listitem>
+			<listitem><para>
+				<emphasis>$T(failure_route)</emphasis> - name of the failure_route
+				currently armed for the transaction.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T(branch_route)</emphasis> - name of the branch_route
+				currently armed for the transaction.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T(onreply_route)</emphasis> - name of the onreply_route
+				currently armed for the transaction.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$T(branch_failure_route)</emphasis> - name of the
+				branch_failure_route currently armed for the transaction.
+			</para></listitem>
 		</itemizedlist>
 		<para>
 		Exported pseudo-variables are documented at &kamwikilink;.
