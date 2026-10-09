@@ -41,6 +41,9 @@ int tnt_connect_timeout_param = TNT_DEFAULT_CONNECT_TIMEOUT;
 int tnt_cmd_timeout_param = TNT_DEFAULT_CMD_TIMEOUT;
 int tnt_disable_time_param = TNT_DEFAULT_DISABLE_TIME;
 int tnt_allowed_timeouts_param = TNT_DEFAULT_ALLOWED_TIMEOUTS;
+int tnt_max_response_size_param = TNT_DEFAULT_MAX_RESPONSE_SIZE;
+int tnt_max_response_percent_param = TNT_DEFAULT_MAX_RESPONSE_PERCENT;
+int tnt_probe_interval_param = TNT_DEFAULT_PROBE_INTERVAL;
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -123,6 +126,9 @@ static param_export_t mod_params[] = {
 	{"cmd_timeout", PARAM_INT, &tnt_cmd_timeout_param},
 	{"disable_time", PARAM_INT, &tnt_disable_time_param},
 	{"allowed_timeouts", PARAM_INT, &tnt_allowed_timeouts_param},
+	{"max_response_size", PARAM_INT, &tnt_max_response_size_param},
+	{"max_response_percent", PARAM_INT, &tnt_max_response_percent_param},
+	{"probe_interval", PARAM_INT, &tnt_probe_interval_param},
 	{0, 0, 0}
 };
 
@@ -169,8 +175,12 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	/* Skip management processes without SIP routing duties */
-	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN) {
+	/* Skip management/internal processes without primary SIP routing duties;
+	 * they will connect on-demand if tarantool_call/eval is ever invoked. */
+	if(rank <= 0) {
+		LM_DBG("skipping pre-connect for non-SIP child rank=%d "
+			   "(on-demand connection enabled)\n",
+				rank);
 		return 0;
 	}
 

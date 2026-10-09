@@ -215,6 +215,60 @@ modparam("ndb_tarantool", "allowed_timeouts", 2)
 				</programlisting>
 			</example>
 		</section>
+
+		<section id="ndb_tarantool.p.max_response_size">
+			<title><varname>max_response_size</varname> (integer)</title>
+			<para>
+				Maximum allowed IProto response body size in bytes. If set to 0 (default), auto mode is enabled where the maximum response size is calculated dynamically as a percentage of worker private memory (pkg pool) via <varname>max_response_percent</varname>, with an upper safety cap of 32 MB. Set to a positive integer to enforce a fixed maximum byte limit (e.g. 4194304 for 4 MB). Responses exceeding this limit are rejected safely and the connection is reset.
+			</para>
+			<para>
+				<emphasis>Default value is 0 (auto mode).</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>max_response_size</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "max_response_size", 4194304)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="ndb_tarantool.p.max_response_percent">
+			<title><varname>max_response_percent</varname> (integer)</title>
+			<para>
+				Percentage of worker package memory pool (pkg) allocated for a single response when <varname>max_response_size</varname> is in auto mode (0). Values range from 1 to 100.
+			</para>
+			<para>
+				<emphasis>Default value is 25 (25% of pkg memory pool).</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>max_response_percent</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "max_response_percent", 20)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="ndb_tarantool.p.probe_interval">
+			<title><varname>probe_interval</varname> (integer)</title>
+			<para>
+				Interval in seconds between active probe reconnection attempts while a node is in failover cooldown (<varname>disable_time</varname>). This allows instantaneous traffic restoration (typically ~1s) following sub-second server restarts without waiting for the full cooldown window.
+			</para>
+			<para>
+				<emphasis>Default value is 1 second.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>probe_interval</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "probe_interval", 1)
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section id="ndb_tarantool.functions">
@@ -223,6 +277,7 @@ modparam("ndb_tarantool", "allowed_timeouts", 2)
 			All routing functions accept <emphasis>params_json</emphasis> as a JSON array of parameters
 			(e.g., <quote>[1, "abc", true]</quote>) or an empty array <quote>[]</quote> for parameterless procedures.
 			Dynamic Kamailio pseudo-variables can be embedded directly in the parameter string (e.g., <quote>["$ci", "$si", 60]</quote>).
+			If a bare string not beginning with <quote>[</quote> is passed, it is strictly treated and packed as exactly one string argument, preventing Call-ID quote injection.
 		</para>
 		<para>
 			The response data returned by Tarantool is serialized into a strict RFC-8259 compliant JSON string
@@ -234,7 +289,8 @@ modparam("ndb_tarantool", "allowed_timeouts", 2)
 			Functions return:
 			<itemizedlist>
 				<listitem><para><emphasis>1</emphasis> - on successful execution and response parsing.</para></listitem>
-				<listitem><para><emphasis>-1</emphasis> - on network failure, timeout, or Tarantool error.</para></listitem>
+				<listitem><para><emphasis>-1</emphasis> - on network failure, socket timeout, or memory allocation error.</para></listitem>
+				<listitem><para><emphasis>-2</emphasis> - on Tarantool server error (TNT_IPROTO_ERROR, e.g. Lua runtime error).</para></listitem>
 			</itemizedlist>
 		</para>
 

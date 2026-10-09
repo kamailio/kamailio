@@ -25,6 +25,8 @@
 
 #include "../../core/sr_module.h"
 #include "../../core/str.h"
+#include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
@@ -35,6 +37,9 @@
 #define TNT_DEFAULT_CMD_TIMEOUT 1000
 #define TNT_DEFAULT_DISABLE_TIME 10
 #define TNT_DEFAULT_ALLOWED_TIMEOUTS 3
+#define TNT_DEFAULT_MAX_RESPONSE_SIZE 0
+#define TNT_DEFAULT_MAX_RESPONSE_PERCENT 25
+#define TNT_DEFAULT_PROBE_INTERVAL 1
 
 /**
  * @brief Tarantool Server instance descriptor
@@ -54,13 +59,25 @@ typedef struct tnt_server
 	int consecutive_errors; /**< Consecutive timeout/error count */
 	time_t restore_tick;	/**< Unix timestamp when server can be retried */
 
-	/* Worker process private runtime fields (initialized in child_init) */
+	/* Address resolution & failover probing */
+	union sockaddr_union addr_su; /**< Resolved binary socket address */
+	int su_valid;				  /**< 1 if addr_su is resolved and valid */
+	int is_ip_literal;	/**< 1 if addr was given as IPv4/IPv6 literal */
+	int probe_interval; /**< Interval in seconds for single probe reconnect */
+	time_t last_probe_time; /**< Timestamp of last probe connection attempt */
+
+	/* Worker process private runtime fields (initialized in child_init or on-demand) */
 	int fd;			  /**< Active TCP socket file descriptor */
 	int connected;	  /**< 1 if connection is authenticated and ready */
 	uint64_t sync_id; /**< Monotonic request sync counter */
 
 	struct tnt_server *next;
 } tnt_server_t;
+
+/**
+ * @brief Resolve server address (IPv4, IPv6, localhost, hostname) into addr_su
+ */
+int tnt_resolve_server(tnt_server_t *srv);
 
 /**
  * @brief Add a server definition parsed from modparam string
@@ -114,18 +131,5 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
  */
 int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 		str *res_dst);
-
-/**
- * @brief High-performance Zero-Copy Scatter-Gather call state save (writev)
- */
-int tnt_save_call_sg(tnt_server_t *srv, const char *call_id, size_t cid_len,
-		const char *node_id, size_t nid_len, const char *state,
-		size_t state_len, int expires, const char *payload, size_t payload_len);
-
-/**
- * @brief Zero-Allocation call retrieval directly into caller-provided buffer
- */
-int tnt_get_call_buf(tnt_server_t *srv, const char *call_id, size_t cid_len,
-		char *dst_buf, size_t dst_len, size_t *out_len);
 
 #endif /* NDB_TARANTOOL_CLIENT_H */

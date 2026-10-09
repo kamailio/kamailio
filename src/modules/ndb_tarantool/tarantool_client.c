@@ -84,6 +84,41 @@ extern int tnt_connect_timeout_param;
 extern int tnt_cmd_timeout_param;
 extern int tnt_disable_time_param;
 extern int tnt_allowed_timeouts_param;
+extern int tnt_max_response_size_param;
+extern int tnt_max_response_percent_param;
+extern int tnt_probe_interval_param;
+
+static uint32_t tnt_calc_max_response_size(void)
+{
+	if(tnt_max_response_size_param > 0) {
+		return (uint32_t)tnt_max_response_size_param;
+	}
+	uint32_t pct = (tnt_max_response_percent_param > 0
+						   && tnt_max_response_percent_param <= 100)
+						   ? (uint32_t)tnt_max_response_percent_param
+						   : 25;
+	uint32_t auto_limit = (32 * 1024 * 1024 / 100) * pct;
+	if(auto_limit < 1048576)
+		auto_limit = 1048576;
+	if(auto_limit > 33554432)
+		auto_limit = 33554432;
+	return auto_limit;
+}
+
+int tnt_resolve_server(tnt_server_t *srv)
+{
+	char proto = PROTO_TCP;
+	if(!srv)
+		return -1;
+	if(sip_hostport2su(
+			   &srv->addr_su, &srv->addr, (unsigned short)srv->port, &proto)
+			< 0) {
+		srv->su_valid = 0;
+		return -1;
+	}
+	srv->su_valid = 1;
+	return 0;
+}
 
 /**
  * tnt_strdup_pkg - Allocate and copy string into PKG memory
@@ -152,6 +187,7 @@ int tnt_add_server(const char *srv_spec)
 	srv->cmd_timeout = tnt_cmd_timeout_param;
 	srv->disable_time = tnt_disable_time_param;
 	srv->allowed_timeouts = tnt_allowed_timeouts_param;
+	srv->probe_interval = tnt_probe_interval_param;
 	srv->fd = -1;
 
 	/* Default alias */
@@ -199,6 +235,8 @@ int tnt_add_server(const char *srv_spec)
 				srv->disable_time = (int)strtol(val, NULL, 10);
 			} else if(strcmp(key, "allowed_timeouts") == 0) {
 				srv->allowed_timeouts = (int)strtol(val, NULL, 10);
+			} else if(strcmp(key, "probe_interval") == 0) {
+				srv->probe_interval = (int)strtol(val, NULL, 10);
 			}
 		}
 		token = strtok_r(NULL, ";", &saveptr);
@@ -217,6 +255,41 @@ int tnt_add_server(const char *srv_spec)
 			pkg_free(srv->pass.s);
 		pkg_free(srv);
 		return -1;
+	}
+
+	{
+		struct in_addr in4_tmp;
+		struct in6_addr in6_tmp;
+		char addr_buf[256];
+		int alen = srv->addr.len < 255 ? srv->addr.len : 255;
+		memcpy(addr_buf, srv->addr.s, alen);
+		addr_buf[alen] = '\0';
+		if(inet_pton(AF_INET, addr_buf, &in4_tmp) > 0
+				|| inet_pton(AF_INET6, addr_buf, &in6_tmp) > 0) {
+			srv->is_ip_literal = 1;
+		} else {
+			srv->is_ip_literal = 0;
+		}
+	}
+
+	if(tnt_resolve_server(srv) < 0) {
+		if(!init_without_tarantool) {
+			LM_ERR("failed to resolve tarantool server address %.*s:%d\n",
+					srv->addr.len, srv->addr.s, srv->port);
+			if(srv->sname.s)
+				pkg_free(srv->sname.s);
+			if(srv->addr.s)
+				pkg_free(srv->addr.s);
+			if(srv->user.s)
+				pkg_free(srv->user.s);
+			if(srv->pass.s)
+				pkg_free(srv->pass.s);
+			pkg_free(srv);
+			return -1;
+		}
+		LM_WARN("failed to resolve tarantool server address %.*s:%d "
+				"(init_without_tarantool enabled)\n",
+				srv->addr.len, srv->addr.s, srv->port);
 	}
 
 	/* Append to linked list */
@@ -493,6 +566,7 @@ static void tnt_conn_fail(tnt_server_t *srv)
 	if(srv->consecutive_errors >= srv->allowed_timeouts) {
 		srv->disabled = 1;
 		srv->restore_tick = time(NULL) + srv->disable_time;
+		srv->last_probe_time = time(NULL);
 		LM_WARN("tarantool server %.*s:%d marked disabled for %d seconds\n",
 				srv->addr.len, srv->addr.s, srv->port, srv->disable_time);
 	}
@@ -503,11 +577,11 @@ static void tnt_conn_fail(tnt_server_t *srv)
  */
 static int tnt_conn_connect(tnt_server_t *srv)
 {
-	struct sockaddr_in serv_addr;
 	struct timeval tv;
 	int flag = 1;
 	int buf_size = 1024 * 1024;
 	char greeting[TNT_GREETING_SIZE];
+	int af;
 
 	if(!srv)
 		return -1;
@@ -515,21 +589,41 @@ static int tnt_conn_connect(tnt_server_t *srv)
 
 	/* Check if server is in disable cooldown */
 	if(srv->disabled) {
-		if(time(NULL) < srv->restore_tick) {
-			LM_DBG("tarantool server %.*s:%d is temporarily disabled\n",
+		time_t now = time(NULL);
+		if(now < srv->restore_tick) {
+			if(srv->probe_interval <= 0
+					|| (now - srv->last_probe_time < srv->probe_interval)) {
+				LM_DBG("tarantool server %.*s:%d is temporarily disabled\n",
+						srv->addr.len, srv->addr.s, srv->port);
+				return -1;
+			}
+			/* Allow single probe attempt */
+			srv->last_probe_time = now;
+			LM_INFO("probing disabled tarantool server %.*s:%d...\n",
 					srv->addr.len, srv->addr.s, srv->port);
-			return -1;
+		} else {
+			LM_INFO("tarantool server %.*s:%d cooldown expired, retrying "
+					"connection...\n",
+					srv->addr.len, srv->addr.s, srv->port);
+			srv->disabled = 0;
 		}
-		LM_INFO("tarantool server %.*s:%d cooldown expired, retrying "
-				"connection...\n",
-				srv->addr.len, srv->addr.s, srv->port);
-		srv->disabled = 0;
-		srv->consecutive_errors = 0;
 	}
 
-	srv->fd = socket(AF_INET, SOCK_STREAM, 0);
+	/* Resolve server address if not yet valid or if hostname could have changed */
+	if(!srv->su_valid || !srv->is_ip_literal) {
+		if(tnt_resolve_server(srv) < 0) {
+			LM_ERR("failed to resolve tarantool server %.*s:%d: %s\n",
+					srv->addr.len, srv->addr.s, srv->port, strerror(errno));
+			tnt_conn_fail(srv);
+			return -1;
+		}
+	}
+
+	af = srv->addr_su.s.sa_family ? srv->addr_su.s.sa_family : AF_INET;
+	srv->fd = socket(af, SOCK_STREAM, 0);
 	if(srv->fd < 0) {
 		LM_ERR("socket() failed: %s\n", strerror(errno));
+		tnt_conn_fail(srv);
 		return -1;
 	}
 
@@ -542,16 +636,7 @@ static int tnt_conn_connect(tnt_server_t *srv)
 	setsockopt(srv->fd, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size));
 	setsockopt(srv->fd, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size));
 
-	memset(&serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(srv->port);
-	if(inet_pton(AF_INET, srv->addr.s, &serv_addr.sin_addr) <= 0) {
-		LM_ERR("invalid IPv4 address: %.*s\n", srv->addr.len, srv->addr.s);
-		tnt_conn_close(srv);
-		return -1;
-	}
-
-	if(connect(srv->fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+	if(connect(srv->fd, &srv->addr_su.s, sockaddru_len(srv->addr_su)) < 0) {
 		LM_ERR("connect() to %.*s:%d failed: %s\n", srv->addr.len, srv->addr.s,
 				srv->port, strerror(errno));
 		tnt_conn_fail(srv);
@@ -581,7 +666,13 @@ static int tnt_conn_connect(tnt_server_t *srv)
 	}
 
 	srv->connected = 1;
-	srv->consecutive_errors = 0;
+	if(srv->disabled) {
+		LM_INFO("tarantool server %.*s:%d recovered successfully via active "
+				"probe\n",
+				srv->addr.len, srv->addr.s, srv->port);
+		srv->disabled = 0;
+	}
+	/* srv->consecutive_errors is reset upon successful query execution */
 	LM_DBG("connected successfully to Tarantool at %.*s:%d\n", srv->addr.len,
 			srv->addr.s, srv->port);
 	return 0;
@@ -820,12 +911,9 @@ static int tnt_mp_to_json_str(const msgpack_object *obj, str *dst)
 	if(tnt_mp_to_json_rec(obj, &b) < 0 || !b.s) {
 		if(b.s)
 			pkg_free(b.s);
-		dst->s = (char *)pkg_malloc(3);
-		if(dst->s) {
-			memcpy(dst->s, "[]", 3);
-			dst->len = 2;
-		}
-		return 0;
+		LM_ERR("failed to convert MsgPack object to JSON: memory allocation "
+			   "failed\n");
+		return -1;
 	}
 
 	dst->s = b.s;
@@ -849,7 +937,9 @@ static int tnt_count_json_elements(
 	int escape = 0;
 
 	p = tnt_skip_ws(p, end);
-	if(p >= end || *p == close_char)
+	if(p >= end)
+		return -1;
+	if(*p == close_char)
 		return 0;
 
 	count = 1;
@@ -869,8 +959,11 @@ static int tnt_count_json_elements(
 			} else if(c == '[' || c == '{') {
 				depth++;
 			} else if(c == ']' || c == '}') {
-				if(depth == 0 && c == close_char)
-					return count;
+				if(depth == 0) {
+					if(c == close_char)
+						return count;
+					return -1;
+				}
 				depth--;
 			} else if(c == ',' && depth == 0) {
 				count++;
@@ -878,7 +971,7 @@ static int tnt_count_json_elements(
 		}
 		p++;
 	}
-	return count;
+	return -1;
 }
 
 static int tnt_pack_json_value(
@@ -923,10 +1016,24 @@ static int tnt_pack_json_value(
 					case 'u': {
 						if(p + 4 < end) {
 							char hex[5] = {p[1], p[2], p[3], p[4], '\0'};
-							long cp = strtol(hex, NULL, 16);
-							if(cp > 0 && cp < 128) {
-								char ascii_c = (char)cp;
-								tnt_buf_append(&sbuf, &ascii_c, 1);
+							char *endptr = NULL;
+							long cp = strtol(hex, &endptr, 16);
+							if(endptr == hex + 4 && cp >= 0) {
+								if(cp < 0x80) {
+									char ascii_c = (char)cp;
+									tnt_buf_append(&sbuf, &ascii_c, 1);
+								} else if(cp < 0x800) {
+									char utf8[2];
+									utf8[0] = (char)(0xC0 | (cp >> 6));
+									utf8[1] = (char)(0x80 | (cp & 0x3F));
+									tnt_buf_append(&sbuf, utf8, 2);
+								} else {
+									char utf8[3];
+									utf8[0] = (char)(0xE0 | (cp >> 12));
+									utf8[1] = (char)(0x80 | ((cp >> 6) & 0x3F));
+									utf8[2] = (char)(0x80 | (cp & 0x3F));
+									tnt_buf_append(&sbuf, utf8, 3);
+								}
 							}
 							p += 4;
 						}
@@ -941,8 +1048,12 @@ static int tnt_pack_json_value(
 			}
 			p++;
 		}
-		if(p < end && *p == '\"')
-			p++;
+		if(p >= end || *p != '\"') {
+			if(sbuf.s)
+				pkg_free(sbuf.s);
+			return -1;
+		}
+		p++;
 		*cur = p;
 		msgpack_pack_str(pk, (uint32_t)sbuf.len);
 		if(sbuf.len > 0)
@@ -955,6 +1066,8 @@ static int tnt_pack_json_value(
 	if(*p == '[') {
 		p++;
 		int count = tnt_count_json_elements(p, end, ']');
+		if(count < 0)
+			return -1;
 		msgpack_pack_array(pk, (uint32_t)count);
 		p = tnt_skip_ws(p, end);
 		if(p < end && *p == ']') {
@@ -965,12 +1078,16 @@ static int tnt_pack_json_value(
 			if(tnt_pack_json_value(pk, &p, end) < 0)
 				return -1;
 			p = tnt_skip_ws(p, end);
-			if(p < end && *p == ',')
+			if(i < count - 1) {
+				if(p >= end || *p != ',')
+					return -1;
 				p++;
+			}
 		}
 		p = tnt_skip_ws(p, end);
-		if(p < end && *p == ']')
-			p++;
+		if(p >= end || *p != ']')
+			return -1;
+		p++;
 		*cur = p;
 		return 0;
 	}
@@ -978,6 +1095,8 @@ static int tnt_pack_json_value(
 	if(*p == '{') {
 		p++;
 		int count = tnt_count_json_elements(p, end, '}');
+		if(count < 0)
+			return -1;
 		msgpack_pack_map(pk, (uint32_t)count);
 		p = tnt_skip_ws(p, end);
 		if(p < end && *p == '}') {
@@ -988,37 +1107,57 @@ static int tnt_pack_json_value(
 			if(tnt_pack_json_value(pk, &p, end) < 0)
 				return -1;
 			p = tnt_skip_ws(p, end);
-			if(p < end && *p == ':')
-				p++;
+			if(p >= end || *p != ':')
+				return -1;
+			p++;
 			if(tnt_pack_json_value(pk, &p, end) < 0)
 				return -1;
 			p = tnt_skip_ws(p, end);
-			if(p < end && *p == ',')
+			if(i < count - 1) {
+				if(p >= end || *p != ',')
+					return -1;
 				p++;
+			}
 		}
 		p = tnt_skip_ws(p, end);
-		if(p < end && *p == '}')
-			p++;
+		if(p >= end || *p != '}')
+			return -1;
+		p++;
 		*cur = p;
 		return 0;
 	}
 
 	if(end - p >= 4 && strncmp(p, "true", 4) == 0) {
-		msgpack_pack_true(pk);
-		*cur = p + 4;
-		return 0;
+		const char *after = p + 4;
+		if(after == end || isspace((unsigned char)*after) || *after == ','
+				|| *after == ']' || *after == '}') {
+			msgpack_pack_true(pk);
+			*cur = after;
+			return 0;
+		}
+		return -1;
 	}
 
 	if(end - p >= 5 && strncmp(p, "false", 5) == 0) {
-		msgpack_pack_false(pk);
-		*cur = p + 5;
-		return 0;
+		const char *after = p + 5;
+		if(after == end || isspace((unsigned char)*after) || *after == ','
+				|| *after == ']' || *after == '}') {
+			msgpack_pack_false(pk);
+			*cur = after;
+			return 0;
+		}
+		return -1;
 	}
 
 	if(end - p >= 4 && strncmp(p, "null", 4) == 0) {
-		msgpack_pack_nil(pk);
-		*cur = p + 4;
-		return 0;
+		const char *after = p + 4;
+		if(after == end || isspace((unsigned char)*after) || *after == ','
+				|| *after == ']' || *after == '}') {
+			msgpack_pack_nil(pk);
+			*cur = after;
+			return 0;
+		}
+		return -1;
 	}
 
 	if(*p == '-' || isdigit((unsigned char)*p)) {
@@ -1027,33 +1166,49 @@ static int tnt_pack_json_value(
 		const char *scan = p;
 		if(*scan == '-')
 			scan++;
+		if(scan >= end || !isdigit((unsigned char)*scan))
+			return -1;
 		while(scan < end && isdigit((unsigned char)*scan))
 			scan++;
-		if(scan < end && (*scan == '.' || *scan == 'e' || *scan == 'E'))
+		if(scan < end && *scan == '.') {
 			is_float = 1;
+			scan++;
+			if(scan >= end || !isdigit((unsigned char)*scan))
+				return -1;
+			while(scan < end && isdigit((unsigned char)*scan))
+				scan++;
+		}
+		if(scan < end && (*scan == 'e' || *scan == 'E')) {
+			is_float = 1;
+			scan++;
+			if(scan < end && (*scan == '+' || *scan == '-'))
+				scan++;
+			if(scan >= end || !isdigit((unsigned char)*scan))
+				return -1;
+			while(scan < end && isdigit((unsigned char)*scan))
+				scan++;
+		}
+		if(scan < end && *scan != ',' && *scan != ']' && *scan != '}'
+				&& !isspace((unsigned char)*scan)) {
+			return -1;
+		}
 
 		if(is_float) {
 			double d = strtod(p, &next);
+			if(next != scan)
+				return -1;
 			msgpack_pack_double(pk, d);
 		} else {
 			long long val = strtoll(p, &next, 10);
+			if(next != scan)
+				return -1;
 			msgpack_pack_int64(pk, val);
 		}
-		*cur = next ? next : scan;
+		*cur = scan;
 		return 0;
 	}
 
-	/* Fallback: string up to delimiter */
-	const char *start = p;
-	while(p < end && *p != ',' && *p != ']' && *p != '}'
-			&& !isspace((unsigned char)*p))
-		p++;
-	size_t len = (size_t)(p - start);
-	msgpack_pack_str(pk, (uint32_t)len);
-	if(len > 0)
-		msgpack_pack_str_body(pk, start, (uint32_t)len);
-	*cur = p;
-	return 0;
+	return -1;
 }
 
 static int tnt_pack_params_tuple(msgpack_packer *pk, const str *params)
@@ -1069,25 +1224,54 @@ static int tnt_pack_params_tuple(msgpack_packer *pk, const str *params)
 		return msgpack_pack_array(pk, 0);
 	}
 
+	/* If params starts with '[', it must be a strict JSON array */
 	if(*cur == '[') {
 		cur++;
-		int count = tnt_count_json_elements(cur, end, ']');
-		msgpack_pack_array(pk, (uint32_t)count);
 		cur = tnt_skip_ws(cur, end);
-		if(cur < end && *cur == ']')
-			return 0;
+		if(cur < end && *cur == ']') {
+			cur++;
+			cur = tnt_skip_ws(cur, end);
+			if(cur != end)
+				return -1;
+			return msgpack_pack_array(pk, 0);
+		}
+
+		int count = tnt_count_json_elements(cur, end, ']');
+		if(count <= 0)
+			return -1;
+
+		if(msgpack_pack_array(pk, (uint32_t)count) < 0)
+			return -1;
+
 		for(int i = 0; i < count; i++) {
 			if(tnt_pack_json_value(pk, &cur, end) < 0)
 				return -1;
 			cur = tnt_skip_ws(cur, end);
-			if(cur < end && *cur == ',')
+			if(i < count - 1) {
+				if(cur >= end || *cur != ',')
+					return -1;
 				cur++;
+				cur = tnt_skip_ws(cur, end);
+			}
 		}
+		cur = tnt_skip_ws(cur, end);
+		if(cur >= end || *cur != ']')
+			return -1;
+		cur++;
+		cur = tnt_skip_ws(cur, end);
+		if(cur != end)
+			return -1;
 		return 0;
 	}
 
-	msgpack_pack_array(pk, 1);
-	return tnt_pack_json_value(pk, &cur, end);
+	/* Bare string or single parameter: pack as exactly 1 string argument */
+	if(msgpack_pack_array(pk, 1) < 0)
+		return -1;
+	if(msgpack_pack_str(pk, (uint32_t)params->len) < 0)
+		return -1;
+	if(params->len > 0)
+		return msgpack_pack_str_body(pk, params->s, (uint32_t)params->len);
+	return 0;
 }
 
 /**
@@ -1104,6 +1288,7 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	uint32_t net_len;
 	char resp_hdr[5];
 	uint32_t resp_len;
+	uint32_t max_resp;
 	char *resp_body = NULL;
 	msgpack_unpacked msg;
 	size_t off = 0;
@@ -1146,7 +1331,13 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	msgpack_pack_str_body(&pk, proc_name->s, proc_name->len);
 
 	msgpack_pack_uint8(&pk, TNT_IPROTO_TUPLE);
-	tnt_pack_params_tuple(&pk, params_json);
+	if(tnt_pack_params_tuple(&pk, params_json) < 0) {
+		LM_ERR("failed to pack procedure parameters for proc=%.*s (syntax "
+			   "error or malformed JSON)\n",
+				proc_name->len, proc_name->s);
+		msgpack_sbuffer_destroy(&sbuf);
+		return -1;
+	}
 
 	body_len = (uint32_t)sbuf.size;
 	len_hdr[0] = (char)0xce;
@@ -1176,9 +1367,11 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 
 	memcpy(&resp_len, resp_hdr + 1, 4);
 	resp_len = ntohl(resp_len);
-	if(resp_len > 1048576) {
-		LM_ERR("IPROTO_CALL response too large (%u bytes) from %.*s:%d\n",
-				resp_len, srv->addr.len, srv->addr.s, srv->port);
+	max_resp = tnt_calc_max_response_size();
+	if(resp_len > max_resp) {
+		LM_ERR("IPROTO_CALL response too large (%u bytes, exceeds "
+			   "max_response_size limit %u) from %.*s:%d\n",
+				resp_len, max_resp, srv->addr.len, srv->addr.s, srv->port);
 		tnt_conn_fail(srv);
 		return -1;
 	}
@@ -1187,6 +1380,7 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	if(!resp_body) {
 		LM_ERR("pkg_malloc failed for IPROTO_CALL response body (%u bytes)\n",
 				resp_len);
+		tnt_conn_fail(srv);
 		return -1;
 	}
 
@@ -1237,6 +1431,7 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 		}
 		LM_ERR("Tarantool call '%.*s' error 0x%lx: %.*s\n", proc_name->len,
 				proc_name->s, (unsigned long)resp_type, err_msg.len, err_msg.s);
+		rc = -2;
 		goto out_unpack;
 	}
 
@@ -1256,7 +1451,11 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	}
 
 	if(res_dst && data_obj) {
-		tnt_mp_to_json_str(data_obj, res_dst);
+		if(tnt_mp_to_json_str(data_obj, res_dst) < 0) {
+			LM_ERR("failed to serialize procedure result to JSON\n");
+			rc = -1;
+			goto out_unpack;
+		}
 	}
 
 	srv->consecutive_errors = 0;
@@ -1283,6 +1482,7 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	uint32_t net_len;
 	char resp_hdr[5];
 	uint32_t resp_len;
+	uint32_t max_resp;
 	char *resp_body = NULL;
 	msgpack_unpacked msg;
 	size_t off = 0;
@@ -1325,7 +1525,13 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	msgpack_pack_str_body(&pk, expr->s, expr->len);
 
 	msgpack_pack_uint8(&pk, TNT_IPROTO_TUPLE);
-	tnt_pack_params_tuple(&pk, params_json);
+	if(tnt_pack_params_tuple(&pk, params_json) < 0) {
+		LM_ERR("failed to pack expression parameters for expr=%.*s (syntax "
+			   "error or malformed JSON)\n",
+				expr->len, expr->s);
+		msgpack_sbuffer_destroy(&sbuf);
+		return -1;
+	}
 
 	body_len = (uint32_t)sbuf.size;
 	len_hdr[0] = (char)0xce;
@@ -1354,9 +1560,11 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 
 	memcpy(&resp_len, resp_hdr + 1, 4);
 	resp_len = ntohl(resp_len);
-	if(resp_len > 1048576) {
-		LM_ERR("IPROTO_EVAL response too large (%u bytes) from %.*s:%d\n",
-				resp_len, srv->addr.len, srv->addr.s, srv->port);
+	max_resp = tnt_calc_max_response_size();
+	if(resp_len > max_resp) {
+		LM_ERR("IPROTO_EVAL response too large (%u bytes, exceeds "
+			   "max_response_size limit %u) from %.*s:%d\n",
+				resp_len, max_resp, srv->addr.len, srv->addr.s, srv->port);
 		tnt_conn_fail(srv);
 		return -1;
 	}
@@ -1365,6 +1573,7 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	if(!resp_body) {
 		LM_ERR("pkg_malloc failed for IPROTO_EVAL response body (%u bytes)\n",
 				resp_len);
+		tnt_conn_fail(srv);
 		return -1;
 	}
 
@@ -1413,6 +1622,7 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 		}
 		LM_ERR("Tarantool eval error 0x%lx: %.*s\n", (unsigned long)resp_type,
 				err_msg.len, err_msg.s);
+		rc = -2;
 		goto out_unpack;
 	}
 
@@ -1431,7 +1641,11 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	}
 
 	if(res_dst && data_obj) {
-		tnt_mp_to_json_str(data_obj, res_dst);
+		if(tnt_mp_to_json_str(data_obj, res_dst) < 0) {
+			LM_ERR("failed to serialize eval result to JSON\n");
+			rc = -1;
+			goto out_unpack;
+		}
 	}
 
 	srv->consecutive_errors = 0;
@@ -1442,81 +1656,4 @@ out_unpack:
 out_free:
 	pkg_free(resp_body);
 	return rc;
-}
-
-/**
- * tnt_save_call_sg - Zero-Copy Scatter-Gather call state save (writev)
- */
-int tnt_save_call_sg(tnt_server_t *srv, const char *call_id, size_t cid_len,
-		const char *node_id, size_t nid_len, const char *state,
-		size_t state_len, int expires, const char *payload, size_t payload_len)
-{
-	str proc = str_init("rtpe_call_upsert");
-	msgpack_sbuffer sbuf;
-	msgpack_packer pk;
-	str param_str;
-	int rc;
-
-	if(!srv)
-		srv = tnt_srv_list;
-	if(!srv || !call_id)
-		return -1;
-
-	msgpack_sbuffer_init(&sbuf);
-	msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
-
-	/* Pack tuple: [call_id, node_id, state, expires, payload] */
-	msgpack_pack_array(&pk, 5);
-	msgpack_pack_str(&pk, cid_len);
-	msgpack_pack_str_body(&pk, call_id, cid_len);
-	msgpack_pack_str(&pk, nid_len);
-	msgpack_pack_str_body(&pk, node_id ? node_id : "", nid_len);
-	msgpack_pack_str(&pk, state_len);
-	msgpack_pack_str_body(&pk, state ? state : "", state_len);
-	msgpack_pack_int(&pk, expires);
-	msgpack_pack_str(&pk, payload_len);
-	msgpack_pack_str_body(&pk, payload ? payload : "", payload_len);
-
-	param_str.s = sbuf.data;
-	param_str.len = (int)sbuf.size;
-
-	rc = tnt_exec_call(srv, &proc, &param_str, NULL);
-	msgpack_sbuffer_destroy(&sbuf);
-	return rc > 0 ? 0 : -1;
-}
-
-/**
- * tnt_get_call_buf - Zero-Allocation call retrieval directly into caller buffer
- */
-int tnt_get_call_buf(tnt_server_t *srv, const char *call_id, size_t cid_len,
-		char *dst_buf, size_t dst_len, size_t *out_len)
-{
-	str proc = str_init("rtpe_call_get");
-	str cid_str;
-	str res_dst = {0, 0};
-	int rc;
-
-	if(!srv)
-		srv = tnt_srv_list;
-	if(!srv || !call_id || !dst_buf)
-		return -1;
-
-	cid_str.s = (char *)call_id;
-	cid_str.len = (int)cid_len;
-
-	rc = tnt_exec_call(srv, &proc, &cid_str, &res_dst);
-	if(rc > 0 && res_dst.s) {
-		size_t to_copy = (size_t)res_dst.len < dst_len - 1 ? (size_t)res_dst.len
-														   : dst_len - 1;
-		memcpy(dst_buf, res_dst.s, to_copy);
-		dst_buf[to_copy] = '\0';
-		if(out_len)
-			*out_len = to_copy;
-		pkg_free(res_dst.s);
-		return 0;
-	}
-
-	if(res_dst.s)
-		pkg_free(res_dst.s);
-	return -1;
 }
