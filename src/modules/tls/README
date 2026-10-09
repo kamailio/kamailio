@@ -1774,6 +1774,16 @@ activate = 1
      * 4 (bit 3) - write keys to NOTICE log
      * 8 (bit 4) - write keys to file
      * 16 (bit 5) - send keys to udp peer
+     * 32 (bit 6) - write before each key line a comment line "# TUPLE
+       src=IP:PORT dst=IP:PORT sr=HEX cs=HEX v=HEX" with the TCP
+       connection (peer on src, kamailio on dst), the server random, the
+       cipher suite and the protocol version. A tool decoding a capture
+       that missed the TLS handshake needs this data to match the keys to
+       the connection and to derive the record keys (TLS 1.2: server
+       random and cipher suite, TLS 1.3: cipher suite). It provides
+       necessary data only: recovery is still a non-trivial step and
+       requires the external tool to perform a search for epoch and
+       sequence number.
      * 1024 (bit 11) - enable filtering of keys logging. When set,
        filtering is done on: "CLIENT_RANDOM",
        "CLIENT_HANDSHAKE_TRAFFIC_SECRET",
