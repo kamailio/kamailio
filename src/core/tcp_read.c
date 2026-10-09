@@ -1100,7 +1100,8 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 						LM_ERR("bad chunk, unexpected "
 							   "char %c in state %d\n",
 								*p, r->state);
-						r->state = H_SKIP; /* try to find another?*/
+						r->error = TCP_REQ_BAD_LEN;
+						r->state = H_SKIP;
 				}
 				p++;
 				break;
@@ -1163,7 +1164,8 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 						LM_ERR("bad chunk size value, unexpected "
 							   "char %c in state %d\n",
 								*p, r->state);
-						r->state = H_SKIP; /* try to find another?*/
+						r->error = TCP_REQ_BAD_LEN;
+						r->state = H_SKIP;
 				}
 				p++;
 				break;
