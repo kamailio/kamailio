@@ -1181,8 +1181,8 @@ static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
 	const SSL_CIPHER *cipher;
 	struct sockaddr_storage sa;
 	socklen_t sa_len;
-	char src_ip[IP_ADDR_MAX_STR_SIZE];
-	char dst_ip[IP_ADDR_MAX_STR_SIZE];
+	char src_ip[IP_ADDR_MAX_STR_SIZE + 2];
+	char dst_ip[IP_ADDR_MAX_STR_SIZE + 2];
 	char sr_hex[SSL3_RANDOM_SIZE * 2 + 1];
 	unsigned char sr[SSL3_RANDOM_SIZE];
 	char buf[512];
@@ -1197,11 +1197,11 @@ static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
 		return;
 	}
 	c = data->tcp_conn;
-	/* ip_addr2a() uses one static buffer: format each address separately */
-	n = ip_addr2sbuf(&c->rcv.src_ip, src_ip, sizeof(src_ip) - 1);
-	src_ip[n] = '\0';
-	n = ip_addr2sbuf(&c->rcv.dst_ip, dst_ip, sizeof(dst_ip) - 1);
-	dst_ip[n] = '\0';
+	/* own buffers (ip_addr2a() uses one static buffer); ipv6 as [addr] */
+	if(ip_addr2sbufz(&c->rcv.src_ip, src_ip, sizeof(src_ip)) <= 0
+			|| ip_addr2sbufz(&c->rcv.dst_ip, dst_ip, sizeof(dst_ip)) <= 0) {
+		return;
+	}
 
 	dst_port = c->rcv.dst_port;
 	if(!(c->flags & F_CONN_PASSIVE)) {
