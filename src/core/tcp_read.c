@@ -1100,7 +1100,7 @@ int tcp_read_headers(
 								r->chunk_size);
 						r->content_len += r->chunk_size;
 					}
-					goto skip;
+					/* continue with the buffered bytes (next chunk) */
 				}
 				break;
 
