@@ -277,7 +277,8 @@ modparam("ndb_tarantool", "probe_interval", 1)
 			All routing functions accept <emphasis>params_json</emphasis> as a JSON array of parameters
 			(e.g., <quote>[1, "abc", true]</quote>) or an empty array <quote>[]</quote> for parameterless procedures.
 			Dynamic Kamailio pseudo-variables can be embedded directly in the parameter string (e.g., <quote>["$ci", "$si", 60]</quote>).
-			If a bare string not beginning with <quote>[</quote> is passed, it is strictly treated and packed as exactly one string argument, preventing Call-ID quote injection.
+			If a bare string not beginning with <quote>[</quote> is passed (such as <quote>$ci</quote> or <quote>$var(val)</quote>), it is strictly treated and packed as exactly one string argument, preventing Call-ID quote injection.
+			When embedding dynamic variables containing arbitrary user characters inside a JSON array format, standard Kamailio string escaping transformation <quote>$(var{s.escape.common})</quote> should be used (e.g., <quote>["$(ci{s.escape.common})"]</quote>).
 		</para>
 		<para>
 			The response data returned by Tarantool is serialized into a strict RFC-8259 compliant JSON string
@@ -289,8 +290,9 @@ modparam("ndb_tarantool", "probe_interval", 1)
 			Functions return:
 			<itemizedlist>
 				<listitem><para><emphasis>1</emphasis> - on successful execution and response parsing.</para></listitem>
-				<listitem><para><emphasis>-1</emphasis> - on network failure, socket timeout, or memory allocation error.</para></listitem>
+				<listitem><para><emphasis>-1</emphasis> - on network failure, connection refused, or memory allocation error (request not executed).</para></listitem>
 				<listitem><para><emphasis>-2</emphasis> - on Tarantool server error (TNT_IPROTO_ERROR, e.g. Lua runtime error).</para></listitem>
+				<listitem><para><emphasis>-3</emphasis> - on command response timeout (cmd_timeout exceeded while waiting for reply; request dispatched, outcome unknown).</para></listitem>
 			</itemizedlist>
 		</para>
 
@@ -380,7 +382,7 @@ xlog("L_INFO", "Tarantool server version: $var(version)\n");
 		<title>KEMI Exports</title>
 		<para>
 			The module exports native Tarantool functions to the KEMI framework
-			under the <quote>tarantool</quote> sub-module. All functions return an integer (1 on success, -1 on failure)
+			under the <quote>tarantool</quote> sub-module. All functions return an integer (1 on success, -1 on network failure, -2 on Lua error, -3 on timeout)
 			and write the JSON-formatted result into the specified pseudo-variable.
 		</para>
 

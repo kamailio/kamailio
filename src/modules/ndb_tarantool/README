@@ -271,8 +271,12 @@ modparam("ndb_tarantool", "probe_interval", 1)
    (e.g., “[1, "abc", true]”) or an empty array “[]” for parameterless
    procedures. Dynamic Kamailio pseudo-variables can be embedded directly
    in the parameter string (e.g., “["$ci", "$si", 60]”). If a bare string
-   not beginning with “[” is passed, it is strictly treated and packed as
-   exactly one string argument, preventing Call-ID quote injection.
+   not beginning with “[” is passed (such as “$ci” or “$var(val)”), it is
+   strictly treated and packed as exactly one string argument, preventing
+   Call-ID quote injection. When embedding dynamic variables containing
+   arbitrary user characters inside a JSON array format, standard Kamailio
+   string escaping transformation $(var{s.escape.common}) should be used
+   (e.g., “[\"$(ci{s.escape.common})\"]”).
 
    The response data returned by Tarantool is serialized into a strict
    RFC-8259 compliant JSON string (with boolean true/false and null
@@ -283,8 +287,9 @@ modparam("ndb_tarantool", "probe_interval", 1)
 
    Functions return:
      * 1 - on successful execution and response parsing.
-     * -1 - on network failure, socket timeout, or memory allocation error.
+     * -1 - on network failure, connection refused, or memory allocation error (request not executed).
      * -2 - on Tarantool server error (TNT_IPROTO_ERROR, e.g. Lua runtime error).
+     * -3 - on command response timeout (cmd_timeout exceeded while waiting for reply; request dispatched, outcome unknown).
 
 1.4.1.  tarantool_call(proc_name, params_json, result_pvar)
 
@@ -345,8 +350,8 @@ xlog("L_INFO", "Tarantool server version: $var(version)\n");
 
    The module exports native Tarantool functions to the KEMI framework
    under the “tarantool” sub-module. All functions return an integer (1 on
-   success, -1 on failure) and write the JSON-formatted result into the
-   specified pseudo-variable.
+   success, -1 on network failure, -2 on Lua error, -3 on timeout) and
+   write the JSON-formatted result into the specified pseudo-variable.
 
 1.5.1.  KSR.tarantool.call(proc_name, params_json, result_pvar)
 

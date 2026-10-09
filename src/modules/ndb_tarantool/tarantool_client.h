@@ -116,7 +116,7 @@ tnt_server_t *tnt_get_server(const str *name);
  * @param proc_name Stored procedure name
  * @param params_json JSON or string parameters array
  * @param res_dst Destination str buffer (allocated in pkg memory on success)
- * @return 1 on success, -1 on failure
+ * @return 1 on success, -1 on transport error, -2 on Lua error, -3 on timeout
  */
 int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 		const str *params_json, str *res_dst);
@@ -127,7 +127,7 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
  * @param expr Expression to evaluate
  * @param params_json JSON or string parameters array
  * @param res_dst Destination str buffer (allocated in pkg memory on success)
- * @return 1 on success, -1 on failure
+ * @return 1 on success, -1 on transport error, -2 on Lua error, -3 on timeout
  */
 int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 		str *res_dst);

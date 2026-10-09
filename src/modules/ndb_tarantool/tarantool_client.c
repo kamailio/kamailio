@@ -363,8 +363,10 @@ static int tnt_socket_recv_all(int fd, char *buf, size_t len)
 				continue;
 			return -1;
 		}
-		if(n == 0)
+		if(n == 0) {
+			errno = ECONNRESET;
 			return -1;
+		}
 		off += (size_t)n;
 	}
 	return 0;
@@ -1358,10 +1360,14 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	/* Read response header */
 	if(tnt_socket_recv_all(srv->fd, resp_hdr, 5) < 0
 			|| (uint8_t)resp_hdr[0] != 0xce) {
+		int err = errno;
 		LM_ERR("failed to receive IPROTO_CALL response header from %.*s:%d: "
 			   "%s\n",
-				srv->addr.len, srv->addr.s, srv->port, strerror(errno));
+				srv->addr.len, srv->addr.s, srv->port, strerror(err));
 		tnt_conn_fail(srv);
+		if(err == EAGAIN || err == EWOULDBLOCK || err == ETIMEDOUT) {
+			return -3;
+		}
 		return -1;
 	}
 
@@ -1385,9 +1391,12 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	}
 
 	if(tnt_socket_recv_all(srv->fd, resp_body, resp_len) < 0) {
+		int err = errno;
 		LM_ERR("failed to receive IPROTO_CALL response body from %.*s:%d: %s\n",
-				srv->addr.len, srv->addr.s, srv->port, strerror(errno));
+				srv->addr.len, srv->addr.s, srv->port, strerror(err));
 		tnt_conn_fail(srv);
+		rc = (err == EAGAIN || err == EWOULDBLOCK || err == ETIMEDOUT) ? -3
+																	   : -1;
 		goto out_free;
 	}
 
@@ -1551,10 +1560,14 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	/* Read response header */
 	if(tnt_socket_recv_all(srv->fd, resp_hdr, 5) < 0
 			|| (uint8_t)resp_hdr[0] != 0xce) {
+		int err = errno;
 		LM_ERR("failed to receive IPROTO_EVAL response header from %.*s:%d: "
 			   "%s\n",
-				srv->addr.len, srv->addr.s, srv->port, strerror(errno));
+				srv->addr.len, srv->addr.s, srv->port, strerror(err));
 		tnt_conn_fail(srv);
+		if(err == EAGAIN || err == EWOULDBLOCK || err == ETIMEDOUT) {
+			return -3;
+		}
 		return -1;
 	}
 
@@ -1578,9 +1591,12 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	}
 
 	if(tnt_socket_recv_all(srv->fd, resp_body, resp_len) < 0) {
+		int err = errno;
 		LM_ERR("failed to receive IPROTO_EVAL response body from %.*s:%d: %s\n",
-				srv->addr.len, srv->addr.s, srv->port, strerror(errno));
+				srv->addr.len, srv->addr.s, srv->port, strerror(err));
 		tnt_conn_fail(srv);
+		rc = (err == EAGAIN || err == EWOULDBLOCK || err == ETIMEDOUT) ? -3
+																	   : -1;
 		goto out_free;
 	}
 
