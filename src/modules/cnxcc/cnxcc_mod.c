@@ -682,9 +682,27 @@ static void __setup_billing(
 
 	/*
 	 * Search call data by call-id
+	 *
+	 * NOTE: this lookup can legitimately fail here. __setup_billing() runs from
+	 * the dialog DLGCB_CREATED callback, which may fire before the call entry
+	 * is inserted by __add_call_by_cid() (for money-billed calls that entry is
+	 * created from the cnxcc_set_max_credit() path earlier in request_route,
+	 * but the dlg callbacks can run in either order across the workers).
+	 *
+	 * When it does, the call's dialog handles below are NOT recorded, and -- much
+	 * more visibly -- the statistics update that used to live here never ran at
+	 * all, while the matching decrement in __delete_call() always ran. That
+	 * drove the unsigned `active`/`total` counters to wrap around, so
+	 * cnxcc.stats reported negative values after the first call ended.
+	 *
+	 * The counters are therefore maintained in __start_billing(), after its own
+	 * (successful) lookup, which keeps them paired with the __delete_call()
+	 * decrement: that is the point at which cnxcc considers the call active,
+	 * the same place credit_data->concurrent_calls++ happens below.
 	 */
 	if(try_get_call_entry(callid, &call, &hts) != 0) {
-		LM_ERR("Call [%.*s] not found\n", callid->len, callid->s);
+		LM_DBG("Call [%.*s] not yet available, skipping dialog handle\n",
+				callid->len, callid->s);
 		return;
 	}
 
@@ -698,16 +716,6 @@ static void __setup_billing(
 				callid->s);
 		return;
 	}
-
-	/*
-	 * Update calls statistics
-	 */
-	cnxcc_lock(_data.lock);
-
-	_data.stats->active++;
-	_data.stats->total++;
-
-	cnxcc_unlock(_data.lock);
 
 	cnxcc_lock(call->lock);
 
@@ -775,6 +783,27 @@ static void __start_billing(
 	}
 
 	cnxcc_unlock(hts->lock);
+
+	/*
+	 * Update calls statistics.
+	 *
+	 * These increments used to live in __setup_billing(), which is called from
+	 * the dialog-created callback and whose call lookup can fail at that point
+	 * (the entry may not be in the hash table yet). When it did, the increment
+	 * was skipped entirely while __delete_call() still ran its decrement, so
+	 * the unsigned counters wrapped and cnxcc.stats reported negative values.
+	 *
+	 * __start_billing() is the reliable pairing point: it has already resolved
+	 * the call and its credit data, and it is the same point at which
+	 * concurrent_calls++ below marks the call as active. Every call that
+	 * reaches the decrement in __delete_call() has passed through here.
+	 */
+	cnxcc_lock(_data.lock);
+
+	_data.stats->active++;
+	_data.stats->total++;
+
+	cnxcc_unlock(_data.lock);
 
 	cnxcc_lock(credit_data->lock);
 
@@ -857,11 +886,21 @@ exit:
 
 static void __delete_call(call_t *call, credit_data_t *credit_data)
 {
-	// Update calls statistics
-	cnxcc_lock(_data.lock);
-	_data.stats->active--;
-	_data.stats->total--;
-	cnxcc_unlock(_data.lock);
+	/*
+	 * Update calls statistics.
+	 *
+	 * Guarded on call->confirmed for the same reason concurrent_calls-- below is:
+	 * the matching increments now live in __start_billing(), which only runs for
+	 * a confirmed call. An unconfirmed call is torn down without ever having
+	 * been counted, so decrementing here would drive the unsigned counters
+	 * negative again -- the bug this pairing is meant to eliminate.
+	 */
+	if(call->confirmed) {
+		cnxcc_lock(_data.lock);
+		_data.stats->active--;
+		_data.stats->total--;
+		cnxcc_unlock(_data.lock);
+	}
 
 	// This call just ended and we need to remove it from the summ.
 	if(call->confirmed) {
@@ -2067,7 +2106,12 @@ void rpc_credit_control_stats(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	rpc->struct_add(rh, "sddd", "info", "CNX Credit Control", "active",
+	/*
+	 * 'u' is for unsigned int, which is what stats_t's fields are. The previous
+	 * "sddd" used 'd', whose varargs handler reads an int (jsonrpcs_mod.c:522),
+	 * so a large unsigned value was reinterpreted as a signed one.
+	 */
+	rpc->struct_add(rh, "suuu", "info", "CNX Credit Control", "active",
 			_data.stats->active, "dropped", _data.stats->dropped, "total",
 			_data.stats->total);
 }
