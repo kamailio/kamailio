@@ -43,6 +43,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 #ifndef S_CSCF_REGISTRAR_NOTIFY_H_
@@ -123,6 +128,7 @@ typedef enum
 	IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, /**< User unregistered implicitly, ie not via explicit deregister	*/
 	IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE,
 	IMS_REGISTRAR_CONTACT_DEREGISTERED, /**< User's registration was terminated with RTR				*/
+	IMS_REGISTRAR_CONTACT_DEACTIVATED, /**< RTR SERVER_CHANGE: ask UE to re-register */
 } IMS_Registrar_events_enum_t;
 
 extern IMS_Registrar_events_enum_t IMS_Registrar_events;
