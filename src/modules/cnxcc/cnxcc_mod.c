@@ -804,8 +804,8 @@ static void __start_billing(
 
 
 		if(_data.redis)
-			redis_insert_double_value(credit_data, "max_amount",
-					call->max_amount - credit_data->max_amount);
+			redis_insert_double_value(
+					credit_data, "max_amount", call->max_amount);
 
 		credit_data->max_amount += call->max_amount - credit_data->max_amount;
 	}
