@@ -405,10 +405,7 @@ modparam("topos", "contact_host", "proxy.domain.com")
    If you use the mode (3) or (4), you need to configure the
    xavu_field_a_contact_host and xavu_field_b_contact_host parameter.
    Furthermore you need to assign values to them during the processing of
-   the initial SIP request. Note that the A/B mapping for mode (3) is the
-   opposite of mode (2): xavu_field_a_contact_host is used for the
-   upstream direction and xavu_field_b_contact_host for the downstream
-   direction. Modes 2 and 3 cannot be used at the same time.
+   the initial SIP request. Modes 2 and 3 cannot be used at the same time.
 
    The name of the Contact URI parameter can be customized with the
    cparam_name parameter.
@@ -492,10 +489,6 @@ modparam("topos", "xavu_field_b_contact", "b_contact")
    for the Contact Header host part in the upstream direction. This
    parameter is only necessary in contact_mode (3).
 
-   Note: compared to xavu_field_a_contact in contact_mode (2), which is
-   used for the downstream direction, this parameter applies to the
-   upstream direction. See also contact_mode.
-
    Default value is “NULL” (disabled).
 
    Example 1.16. Set xavu_field_a_contact_host parameter
@@ -514,10 +507,6 @@ modparam("topos", "xavu_field_b_contact_host", "b_contact_host")
    Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
    for the Contact Header host part in the downstream direction. This
    parameter is only necessary in contact_mode (3).
-
-   Note: compared to xavu_field_b_contact in contact_mode (2), which is
-   used for the upstream direction, this parameter applies to the
-   downstream direction. See also contact_mode.
 
    Default value is “NULL” (disabled).
 
