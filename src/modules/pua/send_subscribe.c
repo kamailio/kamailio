@@ -424,6 +424,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		   a subscription with type= INSERT_TYPE, else return*/
 
 		subs_info_t subs;
+		int now;
 
 		hentity->to_tag.s = NULL;
 		hentity->to_tag.len = 0;
@@ -437,6 +438,12 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		}
 
 		end_transaction = 0;
+		now = (int)time(NULL);
+		/* Expires: 0 has desired_expires equal to the request time.
+		 * Do not turn a failed unsubscribe into a fresh subscription,
+		 * including when its response arrives in that same second. */
+		if(hentity->desired_expires != 0 && hentity->desired_expires <= now)
+			goto done;
 
 		/* Redirect if the response 3XX */
 		memset(&subs, 0, sizeof(subs_info_t));
@@ -449,10 +456,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 		if(hentity->desired_expires == 0)
 			subs.expires = -1;
-		else if(hentity->desired_expires < (int)time(NULL))
-			subs.expires = 0;
 		else
-			subs.expires = hentity->desired_expires - (int)time(NULL) + 3;
+			subs.expires = hentity->desired_expires - now + 3;
 
 		subs.flag = INSERT_TYPE;
 		subs.source_flag = flag;
