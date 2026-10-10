@@ -51,6 +51,7 @@
 #include "ucontact.h"
 #include "udomain.h"
 #include "subscribe.h"
+#include "cx_profile.h"
 #include "../../core/sr_module.h"
 #include "ims_usrloc_scscf_mod.h"
 
@@ -123,6 +124,8 @@ int bind_usrloc(usrloc_api_t *api)
 			get_presentity_from_subscriber_dialog;
 
 	api->register_ulcb = register_ulcb;
+	api->cx_replace_profile = cx_replace_profile;
+	api->cx_deregister = cx_deregister;
 
 	//api->update_user_profile = update_user_profile;
 	api->nat_flag = nat_bflag;
