@@ -366,6 +366,7 @@ static inline ucontact_info_t *pack_ci(struct sip_msg *_m, contact_t *_c,
 		m = _m;				/* remember the message */
 	} else {
 		memset(&ci.instance, 0, sizeof(str));
+		ci.reg_id = 0;
 	}
 
 	if(_c != 0) {
@@ -619,55 +620,124 @@ error:
 }
 
 
+/*! \brief
+ * Check if the number of valid contacts after update_contacts() would exceed
+ * the limit. Each contact is packed and matched like in update_contacts(),
+ * with its own +sip.instance and reg-id. Only the first contact matching a
+ * stored binding changes the count for it: +1 if it refreshes an expired
+ * binding, -1 if it removes a valid one. After a contact with +sip.instance,
+ * one matching an already matched binding or one not found after a new one,
+ * update_contacts() can stop, skip contacts or match other bindings, so later
+ * removals free no slot.
+ */
 static int test_max_contacts(struct sip_msg *_m, urecord_t *_r, contact_t *_c,
-		ucontact_info_t *ci, int mc)
+		ucontact_info_t *ci, int mc, int _use_regid)
 {
 	int num;
 	int e;
 	ucontact_t *ptr, *cont;
 	int ret;
+	ucontact_info_t ci0;
+	ucontact_info_t *cci;
+	ucontact_t **seen = NULL;
+	int nseen = 0;
+	int unsure = 0;
+	int added = 0;
+	int i;
 
 	num = 0;
+	i = 0;
 	ptr = _r->contacts;
 	while(ptr) {
 		if(VALID_CONTACT(ptr, act_time)) {
 			num++;
 		}
+		i++;
 		ptr = ptr->next;
 	}
 	LM_DBG("%d valid contacts before update\n", num);
 
+	if(i > 0) {
+		seen = (ucontact_t **)pkg_malloc(i * sizeof(ucontact_t *));
+		if(seen == NULL) {
+			PKG_MEM_ERROR;
+			rerrno = R_UL_UPD_C;
+			return -1;
+		}
+	}
+	/* pack_ci() reuses the structure of ci, restore it at the end */
+	ci0 = *ci;
+
 	for(; _c; _c = get_next_contact(_c)) {
 		/* calculate expires */
 		calc_contact_expires(_m, _c->expires, &e, 0);
+		if(rerrno == R_LOW_EXP)
+			goto error;
 
-		ret = _reg_ul.get_ucontact_by_instance(_r, &_c->uri, ci, &cont);
+		if((cci = pack_ci(0, _c, e, 0, _use_regid)) == 0) {
+			LM_ERR("failed to pack contact specific info\n");
+			goto error;
+		}
+
+		ret = _reg_ul.get_ucontact_by_instance(_r, &_c->uri, cci, &cont);
 		if(ret == -1) {
 			LM_ERR("invalid cseq for aor <%.*s>\n", _r->aor.len, _r->aor.s);
 			rerrno = R_INV_CSEQ;
-			return -1;
+			goto error;
 		} else if(ret == -2) {
-			continue;
-		}
-		if(ret > 0) {
-			/* Contact not found */
-			if(e != 0)
+			/* skipped, unless a previous contact removed or moved it */
+			if(e != 0 && unsure)
 				num++;
+		} else if(ret > 0) {
+			/* Contact not found, it can match a binding inserted for a
+			 * previous contact instead */
+			if(added)
+				unsure = 1;
+			if(e != 0) {
+				num++;
+				added = 1;
+			}
 		} else {
-			if(e == 0)
-				num--;
+			for(i = 0; i < nseen && seen[i] != cont; i++)
+				;
+			if(i < nseen) {
+				/* matched by a previous contact too: removing it frees no
+				 * slot, otherwise it can be inserted again */
+				if(e != 0)
+					num++;
+				unsure = 1;
+			} else {
+				seen[nseen++] = cont;
+				if(e != 0) {
+					if(!VALID_CONTACT(cont, act_time))
+						num++;
+				} else if(VALID_CONTACT(cont, act_time) && !unsure) {
+					num--;
+				}
+			}
 		}
+		if(cci->instance.len > 0)
+			unsure = 1;
 	}
 
 	if(num > mc) {
 		LM_INFO("too many contacts for AOR <%.*s> (n:%d max:%d)\n", _r->aor.len,
 				_r->aor.s, num, mc);
 		rerrno = R_TOO_MANY;
-		return -1;
+		goto error;
 	}
 	LM_DBG("%d contacts when update is done (max: %d)\n", num, mc);
 
+	*ci = ci0;
+	if(seen != NULL)
+		pkg_free(seen);
 	return 0;
+
+error:
+	*ci = ci0;
+	if(seen != NULL)
+		pkg_free(seen);
+	return -1;
 }
 
 
@@ -711,7 +781,7 @@ static inline int update_contacts(struct sip_msg *_m, urecord_t *_r, int _mode,
 		maxc = reg_get_crt_max_contacts();
 		if(maxc > 0) {
 			_c = get_first_contact(_m);
-			if(test_max_contacts(_m, _r, _c, ci, maxc) != 0)
+			if(test_max_contacts(_m, _r, _c, ci, maxc, _use_regid) != 0)
 				goto error;
 		}
 	}
