@@ -54,7 +54,7 @@
 extern str scscf_name_str;
 /* Does the Server Assignment procedures, assigning this S-CSCF to the user.
  * Covered cases:
- * AVP_IMS_SAR_NO_ASSIGNMENT							= 0
+ * AVP_IMS_SAR_NO_ASSIGNMENT							= 0,		in assign_server
  * AVP_IMS_SAR_REGISTRATION								= 1,		YES,HERE
  * AVP_IMS_SAR_RE_REGISTRATION							= 2,
  * AVP_IMS_SAR_UNREGISTERED_USER						= 3,		in S_assign_server_unreg
@@ -84,7 +84,8 @@ int scscf_assign_server(struct sip_msg *msg, str public_identity,
 			&& assignment_type != AVP_IMS_SAR_USER_DEREGISTRATION
 			&& assignment_type
 					   != AVP_IMS_SAR_USER_DEREGISTRATION_STORE_SERVER_NAME
-			&& assignment_type != AVP_IMS_SAR_UNREGISTERED_USER) {
+			&& assignment_type != AVP_IMS_SAR_UNREGISTERED_USER
+			&& assignment_type != AVP_IMS_SAR_NO_ASSIGNMENT) {
 		LM_DBG("Invalid SAR assignment type\n");
 		return result;
 	}

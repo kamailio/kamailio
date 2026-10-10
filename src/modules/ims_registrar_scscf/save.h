@@ -55,9 +55,21 @@
 #include "reply.h"
 
 
+/*! TS 23.380 4.6.2 restoration information the HSS handed back in an SAA:
+ * the backed-up Contact (header field value, parameters included), its Path
+ * and, if the HSS kept it, the REGISTER's Call-ID */
+typedef struct restoration_info
+{
+	str path;
+	str contact;
+	str callid;
+} restoration_info_t;
+
 /*! \brief
  * Process REGISTER request and save its contacts
  */
+int assign_server_type(struct sip_msg *_m, char *str1, str *direction,
+		char *route, int assignment_type);
 int assign_server_unreg(
 		struct sip_msg *_m, char *str1, str *direction, char *route);
 
@@ -67,6 +79,7 @@ int unregister(struct sip_msg *_m, char *_d, char *_uri);
 
 int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 		int assignment_type, ims_subscription **s, str *ccf1, str *ccf2,
-		str *ecf1, str *ecf2, contact_for_header_t **contact_header);
+		str *ecf1, str *ecf2, contact_for_header_t **contact_header,
+		restoration_info_t *ri);
 
 #endif /* SAVE_H */

@@ -534,6 +534,137 @@ int cxdx_add_server_name(AAAMessage *msg, str data)
 			IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
+int cxdx_add_scscf_restoration_info(
+		AAAMessage *msg, str user_name, str path, str contact, str call_id)
+{
+	AAA_AVP_LIST list, ri_list;
+	str group, ri_group;
+	list.head = 0;
+	list.tail = 0;
+	ri_list.head = 0;
+	ri_list.tail = 0;
+
+	/* User-Name, Path and Contact are all mandatory (TS 29.229 6.3.46,
+	 * 6.3.52): without one of them there is nothing valid to back up. */
+	if(!user_name.len || !path.len || !contact.len)
+		return 1;
+
+	/* Restoration-Info ::= { Path } { Contact } ...
+	 * 639/640/641/649 are V, M must not (TS 29.229 table 6.3.1) */
+	if(!cxdx_add_avp_list(&ri_list, path.s, path.len, AVP_IMS_Path, 0,
+			   IMS_vendor_id_3GPP, AVP_DONT_FREE_DATA, __FUNCTION__)) {
+		LM_ERR("failed to add Path to Restoration-Info\n");
+		goto error;
+	}
+	if(!cxdx_add_avp_list(&ri_list, contact.s, contact.len, AVP_IMS_Contact, 0,
+			   IMS_vendor_id_3GPP, AVP_DONT_FREE_DATA, __FUNCTION__)) {
+		LM_ERR("failed to add Contact to Restoration-Info\n");
+		goto error;
+	}
+	/* [ Call-ID-SIP-Header ] (643, V): lets the restored binding carry the
+	 * REGISTER's own Call-ID rather than a placeholder */
+	if(call_id.len
+			&& !cxdx_add_avp_list(&ri_list, call_id.s, call_id.len,
+					AVP_IMS_Call_ID_SIP_Header, 0, IMS_vendor_id_3GPP,
+					AVP_DONT_FREE_DATA, __FUNCTION__)) {
+		LM_ERR("failed to add Call-ID-SIP-Header to Restoration-Info\n");
+		goto error;
+	}
+
+	ri_group = cdpb.AAAGroupAVPS(ri_list);
+
+	cdpb.AAAFreeAVPList(&ri_list);
+
+	if(!ri_group.len) {
+		LM_ERR("failed to group Restoration-Info\n");
+		goto error;
+	}
+
+	/* SCSCF-Restoration-Info ::= { User-Name } 1*{ Restoration-Info } ... */
+	if(!cxdx_add_avp_list(&list, user_name.s, user_name.len, AVP_User_Name,
+			   AAA_AVP_FLAG_MANDATORY, 0, AVP_DONT_FREE_DATA, __FUNCTION__)) {
+		LM_ERR("failed to add User-Name to SCSCF-Restoration-Info\n");
+		shm_free(ri_group.s);
+		goto error;
+	}
+	/* on success ri_group.s belongs to list, freed with it */
+	if(!cxdx_add_avp_list(&list, ri_group.s, ri_group.len,
+			   AVP_IMS_Restoration_Info, 0, IMS_vendor_id_3GPP, AVP_FREE_DATA,
+			   __FUNCTION__)) {
+		LM_ERR("failed to add Restoration-Info to SCSCF-Restoration-Info\n");
+		shm_free(ri_group.s);
+		goto error;
+	}
+
+	group = cdpb.AAAGroupAVPS(list);
+
+	cdpb.AAAFreeAVPList(&list);
+
+	if(!group.len) {
+		LM_ERR("failed to group SCSCF-Restoration-Info\n");
+		return 0;
+	}
+
+	return cxdx_add_avp(msg, group.s, group.len, AVP_IMS_SCSCF_Restoration_Info,
+			0, IMS_vendor_id_3GPP, AVP_FREE_DATA, __FUNCTION__);
+
+error:
+	cdpb.AAAFreeAVPList(&ri_list);
+	cdpb.AAAFreeAVPList(&list);
+	return 0;
+}
+
+int cxdx_add_supported_features(
+		AAAMessage *msg, unsigned int feature_list, int mandatory)
+{
+	AAA_AVP_LIST list;
+	str group;
+	char x[4];
+	list.head = 0;
+	list.tail = 0;
+
+	/* Supported-Features ::= { Vendor-Id } { Feature-List-ID }
+	 * { Feature-List } (TS 29.229 6.3.29), Feature-List-ID 1 being the Cx
+	 * feature list of table 7.1.1 */
+	set_4bytes(x, IMS_vendor_id_3GPP);
+	if(!cxdx_add_avp_list(&list, x, 4, AVP_Vendor_Id, AAA_AVP_FLAG_MANDATORY, 0,
+			   AVP_DUPLICATE_DATA, __FUNCTION__)) {
+		LM_ERR("failed to add Vendor-Id to Supported-Features\n");
+		goto error;
+	}
+	set_4bytes(x, 1);
+	if(!cxdx_add_avp_list(&list, x, 4, AVP_IMS_Feature_List_ID, 0,
+			   IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA, __FUNCTION__)) {
+		LM_ERR("failed to add Feature-List-ID to Supported-Features\n");
+		goto error;
+	}
+	set_4bytes(x, feature_list);
+	if(!cxdx_add_avp_list(&list, x, 4, AVP_IMS_Feature_List, 0,
+			   IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA, __FUNCTION__)) {
+		LM_ERR("failed to add Feature-List to Supported-Features\n");
+		goto error;
+	}
+
+	group = cdpb.AAAGroupAVPS(list);
+
+	cdpb.AAAFreeAVPList(&list);
+
+	if(!group.len) {
+		LM_ERR("failed to group Supported-Features\n");
+		return 0;
+	}
+
+	/* 7.2.1: M set in a request constructed using one of the features,
+	 * clear in one only prepared to accept an answer that uses them */
+	return cxdx_add_avp(msg, group.s, group.len, AVP_IMS_Supported_Features,
+			mandatory ? AAA_AVP_FLAG_MANDATORY : 0, IMS_vendor_id_3GPP,
+			AVP_FREE_DATA, __FUNCTION__);
+
+error:
+	cdpb.AAAFreeAVPList(&list);
+	return 0;
+}
+
 /**
  * Returns the SIP-Number-Auth-Items AVP from a Diameter message.
  * @param msg - the Diameter message
@@ -913,6 +1044,73 @@ int cxdx_get_charging_info(
 
 	cdpb.AAAFreeAVPList(&list);
 	return 1;
+}
+
+int cxdx_get_scscf_restoration_info(
+		AAAMessage *msg, str *path, str *contact, str *call_id)
+{
+	AAA_AVP_LIST list, ri_list;
+	AAA_AVP *avp;
+	int ret = 0;
+
+	path->s = 0;
+	path->len = 0;
+	contact->s = 0;
+	contact->len = 0;
+	call_id->s = 0;
+	call_id->len = 0;
+
+	/* SCSCF-Restoration-Info ::= { User-Name } 1*{ Restoration-Info } ...
+	 * Restoration-Info ::= { Path } { Contact } [ Call-ID-SIP-Header ] ...
+	 * (TS 29.229 6.3.46/52). An SAA may carry one per private identity, and
+	 * each may carry more than one Restoration-Info; the first of each is
+	 * the one restored. Looked up without cxdx_get_avp(): absent is the
+	 * normal case and not worth a log line. */
+	avp = cdpb.AAAFindMatchingAVP(
+			msg, 0, AVP_IMS_SCSCF_Restoration_Info, IMS_vendor_id_3GPP, 0);
+	if(!avp)
+		return 0;
+
+	list = cdpb.AAAUngroupAVPS(avp->data);
+	avp = cdpb.AAAFindMatchingAVPList(
+			list, 0, AVP_IMS_Restoration_Info, IMS_vendor_id_3GPP, 0);
+	if(!avp) {
+		LM_WARN("SCSCF-Restoration-Info without Restoration-Info\n");
+		cdpb.AAAFreeAVPList(&list);
+		return 0;
+	}
+
+	/* the AVPs of an ungrouped list point into the SAA, so the values stay
+	 * valid for as long as the SAA does */
+	ri_list = cdpb.AAAUngroupAVPS(avp->data);
+	avp = cdpb.AAAFindMatchingAVPList(
+			ri_list, 0, AVP_IMS_Contact, IMS_vendor_id_3GPP, 0);
+	if(avp && avp->data.len) {
+		*contact = avp->data;
+		/* Path is mandatory: a Contact restored without it would have
+		 * requests sent straight to the UE, past the P-CSCF */
+		avp = cdpb.AAAFindMatchingAVPList(
+				ri_list, 0, AVP_IMS_Path, IMS_vendor_id_3GPP, 0);
+		if(avp && avp->data.len) {
+			*path = avp->data;
+			avp = cdpb.AAAFindMatchingAVPList(ri_list, 0,
+					AVP_IMS_Call_ID_SIP_Header, IMS_vendor_id_3GPP, 0);
+			if(avp)
+				*call_id = avp->data;
+			ret = 1;
+		} else {
+			LM_WARN("Restoration-Info without Path - not restoring <%.*s>\n",
+					contact->len, contact->s);
+			contact->s = 0;
+			contact->len = 0;
+		}
+	} else {
+		LM_WARN("Restoration-Info without Contact\n");
+	}
+
+	cdpb.AAAFreeAVPList(&ri_list);
+	cdpb.AAAFreeAVPList(&list);
+	return ret;
 }
 
 /**
