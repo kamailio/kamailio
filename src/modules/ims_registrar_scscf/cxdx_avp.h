@@ -280,6 +280,8 @@ str cxdx_get_user_name(AAAMessage *msg);
  * @returns 1 on success or 0 on error
  */
 int cxdx_add_result_code(AAAMessage *msg, unsigned int data);
+int cxdx_add_experimental_result(AAAMessage *msg, unsigned int code);
+int cxdx_add_failed_avp(AAAMessage *msg, int code, int vendor, str value);
 
 /**
  * Transactional SIP response - tries to create a transaction if none found.

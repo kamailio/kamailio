@@ -50,6 +50,7 @@ int lookup_path_to_contact(struct sip_msg *_m, char *contact_uri);
  * the Request-URI nor appends branches
  */
 int impu_registered(struct sip_msg *_m, char *_t, char *_s);
+int orig_impu_has_contact(struct sip_msg *_m, char *_t, char *_s);
 int term_impu_registered(struct sip_msg *_m, char *_t, char *_s);
 int term_impu_has_contact(struct sip_msg *_m, udomain_t *_d, char *_s);
 
