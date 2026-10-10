@@ -44,6 +44,10 @@ int tnt_allowed_timeouts_param = TNT_DEFAULT_ALLOWED_TIMEOUTS;
 int tnt_max_response_size_param = TNT_DEFAULT_MAX_RESPONSE_SIZE;
 int tnt_max_response_percent_param = TNT_DEFAULT_MAX_RESPONSE_PERCENT;
 int tnt_probe_interval_param = TNT_DEFAULT_PROBE_INTERVAL;
+int tnt_tcp_keepalive_idle_param = TNT_DEFAULT_TCP_KEEPALIVE_IDLE;
+int tnt_tcp_keepalive_interval_param = TNT_DEFAULT_TCP_KEEPALIVE_INTERVAL;
+int tnt_tcp_keepalive_count_param = TNT_DEFAULT_TCP_KEEPALIVE_COUNT;
+int tnt_json_buffer_size_param = TNT_DEFAULT_JSON_BUFFER_SIZE;
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -129,6 +133,10 @@ static param_export_t mod_params[] = {
 	{"max_response_size", PARAM_INT, &tnt_max_response_size_param},
 	{"max_response_percent", PARAM_INT, &tnt_max_response_percent_param},
 	{"probe_interval", PARAM_INT, &tnt_probe_interval_param},
+	{"tcp_keepalive_idle", PARAM_INT, &tnt_tcp_keepalive_idle_param},
+	{"tcp_keepalive_interval", PARAM_INT, &tnt_tcp_keepalive_interval_param},
+	{"tcp_keepalive_count", PARAM_INT, &tnt_tcp_keepalive_count_param},
+	{"json_buffer_size", PARAM_INT, &tnt_json_buffer_size_param},
 	{0, 0, 0}
 };
 

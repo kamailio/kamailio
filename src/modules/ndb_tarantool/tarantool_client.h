@@ -40,24 +40,31 @@
 #define TNT_DEFAULT_MAX_RESPONSE_SIZE 0
 #define TNT_DEFAULT_MAX_RESPONSE_PERCENT 25
 #define TNT_DEFAULT_PROBE_INTERVAL 1
+#define TNT_DEFAULT_TCP_KEEPALIVE_IDLE 60
+#define TNT_DEFAULT_TCP_KEEPALIVE_INTERVAL 10
+#define TNT_DEFAULT_TCP_KEEPALIVE_COUNT 3
+#define TNT_DEFAULT_JSON_BUFFER_SIZE 0
 
 /**
  * @brief Tarantool Server instance descriptor
  */
 typedef struct tnt_server
 {
-	str sname;				/**< Server identifier/alias */
-	str addr;				/**< Hostname or IP address */
-	int port;				/**< TCP port (default 3301) */
-	str user;				/**< Authentication username */
-	str pass;				/**< Authentication password */
-	int connect_timeout;	/**< Connect timeout in ms */
-	int cmd_timeout;		/**< Command read/write timeout in ms */
-	int disable_time;		/**< Failover cooldown in seconds */
-	int allowed_timeouts;	/**< Allowed consecutive errors before cooldown */
-	int disabled;			/**< 1 if currently disabled/in cooldown */
-	int consecutive_errors; /**< Consecutive timeout/error count */
-	time_t restore_tick;	/**< Unix timestamp when server can be retried */
+	str sname;			  /**< Server identifier/alias */
+	str addr;			  /**< Hostname or IP address */
+	int port;			  /**< TCP port (default 3301) */
+	str user;			  /**< Authentication username */
+	str pass;			  /**< Authentication password */
+	int connect_timeout;  /**< Connect timeout in ms */
+	int cmd_timeout;	  /**< Command read/write timeout in ms */
+	int disable_time;	  /**< Failover cooldown in seconds */
+	int allowed_timeouts; /**< Allowed consecutive errors before cooldown */
+	int tcp_keepalive_idle; /**< TCP keepalive idle time in seconds (0 = disabled) */
+	int tcp_keepalive_interval; /**< TCP keepalive probe interval in seconds */
+	int tcp_keepalive_count;	/**< TCP keepalive probe count */
+	int disabled;				/**< 1 if currently disabled/in cooldown */
+	int consecutive_errors;		/**< Consecutive timeout/error count */
+	time_t restore_tick; /**< Unix timestamp when server can be retried */
 
 	/* Address resolution & failover probing */
 	union sockaddr_union addr_su; /**< Resolved binary socket address */

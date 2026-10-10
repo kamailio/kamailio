@@ -87,6 +87,21 @@ extern int tnt_allowed_timeouts_param;
 extern int tnt_max_response_size_param;
 extern int tnt_max_response_percent_param;
 extern int tnt_probe_interval_param;
+extern int tnt_tcp_keepalive_idle_param;
+extern int tnt_tcp_keepalive_interval_param;
+extern int tnt_tcp_keepalive_count_param;
+extern int tnt_json_buffer_size_param;
+
+static inline size_t tnt_calc_json_hint(size_t resp_len)
+{
+	if(tnt_json_buffer_size_param > 0)
+		return (size_t)tnt_json_buffer_size_param;
+	if(resp_len < 1024) {
+		size_t h = resp_len * 2;
+		return (h < 128) ? 128 : h;
+	}
+	return resp_len + (resp_len >> 1);
+}
 
 static uint32_t tnt_calc_max_response_size(void)
 {
@@ -188,6 +203,9 @@ int tnt_add_server(const char *srv_spec)
 	srv->disable_time = tnt_disable_time_param;
 	srv->allowed_timeouts = tnt_allowed_timeouts_param;
 	srv->probe_interval = tnt_probe_interval_param;
+	srv->tcp_keepalive_idle = tnt_tcp_keepalive_idle_param;
+	srv->tcp_keepalive_interval = tnt_tcp_keepalive_interval_param;
+	srv->tcp_keepalive_count = tnt_tcp_keepalive_count_param;
 	srv->fd = -1;
 
 	/* Default alias */
@@ -237,6 +255,15 @@ int tnt_add_server(const char *srv_spec)
 				srv->allowed_timeouts = (int)strtol(val, NULL, 10);
 			} else if(strcmp(key, "probe_interval") == 0) {
 				srv->probe_interval = (int)strtol(val, NULL, 10);
+			} else if(strcmp(key, "tcp_keepalive_idle") == 0
+					  || strcmp(key, "keepalive_idle") == 0) {
+				srv->tcp_keepalive_idle = (int)strtol(val, NULL, 10);
+			} else if(strcmp(key, "tcp_keepalive_interval") == 0
+					  || strcmp(key, "keepalive_interval") == 0) {
+				srv->tcp_keepalive_interval = (int)strtol(val, NULL, 10);
+			} else if(strcmp(key, "tcp_keepalive_count") == 0
+					  || strcmp(key, "keepalive_count") == 0) {
+				srv->tcp_keepalive_count = (int)strtol(val, NULL, 10);
 			}
 		}
 		token = strtok_r(NULL, ";", &saveptr);
@@ -328,15 +355,16 @@ tnt_server_t *tnt_get_server(const str *name)
 	return NULL;
 }
 
-/**
- * tnt_socket_send_all - Reliable full buffer send loop
- */
-static int tnt_socket_send_all(int fd, const char *buf, size_t len)
-{
-	size_t off = 0;
 
-	while(off < len) {
-		ssize_t n = send(fd, buf + off, len - off, 0);
+/**
+ * tnt_socket_sendv_all - Reliable full vector send loop via writev()
+ */
+static int tnt_socket_sendv_all(int fd, struct iovec *iov, int iovcnt)
+{
+	int cur = 0;
+
+	while(cur < iovcnt) {
+		ssize_t n = writev(fd, &iov[cur], iovcnt - cur);
 		if(n < 0) {
 			if(errno == EINTR)
 				continue;
@@ -344,7 +372,14 @@ static int tnt_socket_send_all(int fd, const char *buf, size_t len)
 		}
 		if(n == 0)
 			return -1;
-		off += (size_t)n;
+		while(cur < iovcnt && (size_t)n >= iov[cur].iov_len) {
+			n -= iov[cur].iov_len;
+			cur++;
+		}
+		if(n > 0 && cur < iovcnt) {
+			iov[cur].iov_base = (char *)iov[cur].iov_base + n;
+			iov[cur].iov_len -= (size_t)n;
+		}
 	}
 	return 0;
 }
@@ -393,6 +428,7 @@ static int tnt_auth_scramble(
 	msgpack_packer pk;
 	uint32_t body_len;
 	char len_hdr[5];
+	struct iovec iov[2];
 	uint32_t net_len;
 	char resp_hdr[5];
 	uint32_t resp_len;
@@ -465,8 +501,12 @@ static int tnt_auth_scramble(
 	net_len = htonl(body_len);
 	memcpy(len_hdr + 1, &net_len, 4);
 
-	if(tnt_socket_send_all(srv->fd, len_hdr, 5) < 0
-			|| tnt_socket_send_all(srv->fd, sbuf.data, body_len) < 0) {
+	iov[0].iov_base = len_hdr;
+	iov[0].iov_len = sizeof(len_hdr);
+	iov[1].iov_base = sbuf.data;
+	iov[1].iov_len = body_len;
+
+	if(tnt_socket_sendv_all(srv->fd, iov, 2) < 0) {
 		LM_ERR("failed to send IPROTO_AUTH to %.*s:%d: %s\n", srv->addr.len,
 				srv->addr.s, srv->port, strerror(errno));
 		msgpack_sbuffer_destroy(&sbuf);
@@ -637,6 +677,35 @@ static int tnt_conn_connect(tnt_server_t *srv)
 	setsockopt(srv->fd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
 	setsockopt(srv->fd, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size));
 	setsockopt(srv->fd, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size));
+
+	if(srv->tcp_keepalive_idle > 0) {
+		int keepalive = 1;
+		if(setsockopt(srv->fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive,
+				   sizeof(keepalive))
+				< 0) {
+			LM_WARN("failed to enable SO_KEEPALIVE for Tarantool %.*s:%d: %s\n",
+					srv->addr.len, srv->addr.s, srv->port, strerror(errno));
+		}
+#if defined(TCP_KEEPIDLE)
+		setsockopt(srv->fd, IPPROTO_TCP, TCP_KEEPIDLE, &srv->tcp_keepalive_idle,
+				sizeof(int));
+#elif defined(TCP_KEEPALIVE)
+		setsockopt(srv->fd, IPPROTO_TCP, TCP_KEEPALIVE,
+				&srv->tcp_keepalive_idle, sizeof(int));
+#endif
+#if defined(TCP_KEEPINTVL)
+		if(srv->tcp_keepalive_interval > 0) {
+			setsockopt(srv->fd, IPPROTO_TCP, TCP_KEEPINTVL,
+					&srv->tcp_keepalive_interval, sizeof(int));
+		}
+#endif
+#if defined(TCP_KEEPCNT)
+		if(srv->tcp_keepalive_count > 0) {
+			setsockopt(srv->fd, IPPROTO_TCP, TCP_KEEPCNT,
+					&srv->tcp_keepalive_count, sizeof(int));
+		}
+#endif
+	}
 
 	if(connect(srv->fd, &srv->addr_su.s, sockaddru_len(srv->addr_su)) < 0) {
 		LM_ERR("connect() to %.*s:%d failed: %s\n", srv->addr.len, srv->addr.s,
@@ -900,9 +969,11 @@ static int tnt_mp_to_json_rec(const msgpack_object *obj, tnt_buf_t *b)
 }
 
 /**
- * tnt_mp_to_json_str - Convert MessagePack Object to proper JSON string in pkg memory
+ * tnt_mp_to_json_str_hint - Convert MessagePack Object to proper JSON string
+ * in pkg memory with optional buffer pre-allocation hint
  */
-static int tnt_mp_to_json_str(const msgpack_object *obj, str *dst)
+static int tnt_mp_to_json_str_hint(
+		const msgpack_object *obj, str *dst, size_t initial_hint)
 {
 	tnt_buf_t b;
 
@@ -910,6 +981,14 @@ static int tnt_mp_to_json_str(const msgpack_object *obj, str *dst)
 		return -1;
 
 	memset(&b, 0, sizeof(tnt_buf_t));
+	if(initial_hint > 0) {
+		b.s = (char *)pkg_malloc(initial_hint);
+		if(b.s) {
+			b.cap = initial_hint;
+			b.s[0] = '\0';
+		}
+	}
+
 	if(tnt_mp_to_json_rec(obj, &b) < 0 || !b.s) {
 		if(b.s)
 			pkg_free(b.s);
@@ -921,6 +1000,14 @@ static int tnt_mp_to_json_str(const msgpack_object *obj, str *dst)
 	dst->s = b.s;
 	dst->len = (int)b.len;
 	return 0;
+}
+
+/**
+ * tnt_mp_to_json_str - Convert MessagePack Object to proper JSON string
+ */
+static inline int tnt_mp_to_json_str(const msgpack_object *obj, str *dst)
+{
+	return tnt_mp_to_json_str_hint(obj, dst, 0);
 }
 
 static const char *tnt_skip_ws(const char *p, const char *end)
@@ -1287,6 +1374,7 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	msgpack_packer pk;
 	uint32_t body_len;
 	char len_hdr[5];
+	struct iovec iov[2];
 	uint32_t net_len;
 	char resp_hdr[5];
 	uint32_t resp_len;
@@ -1346,8 +1434,12 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	net_len = htonl(body_len);
 	memcpy(len_hdr + 1, &net_len, 4);
 
-	if(tnt_socket_send_all(srv->fd, len_hdr, 5) < 0
-			|| tnt_socket_send_all(srv->fd, sbuf.data, body_len) < 0) {
+	iov[0].iov_base = len_hdr;
+	iov[0].iov_len = sizeof(len_hdr);
+	iov[1].iov_base = sbuf.data;
+	iov[1].iov_len = body_len;
+
+	if(tnt_socket_sendv_all(srv->fd, iov, 2) < 0) {
 		LM_ERR("failed to send IPROTO_CALL (proc=%.*s) to %.*s:%d: %s\n",
 				proc_name->len, proc_name->s, srv->addr.len, srv->addr.s,
 				srv->port, strerror(errno));
@@ -1460,7 +1552,9 @@ int tnt_exec_call(tnt_server_t *srv, const str *proc_name,
 	}
 
 	if(res_dst && data_obj) {
-		if(tnt_mp_to_json_str(data_obj, res_dst) < 0) {
+		if(tnt_mp_to_json_str_hint(
+				   data_obj, res_dst, tnt_calc_json_hint(resp_len))
+				< 0) {
 			LM_ERR("failed to serialize procedure result to JSON\n");
 			rc = -1;
 			goto out_unpack;
@@ -1488,6 +1582,7 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	msgpack_packer pk;
 	uint32_t body_len;
 	char len_hdr[5];
+	struct iovec iov[2];
 	uint32_t net_len;
 	char resp_hdr[5];
 	uint32_t resp_len;
@@ -1547,8 +1642,12 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	net_len = htonl(body_len);
 	memcpy(len_hdr + 1, &net_len, 4);
 
-	if(tnt_socket_send_all(srv->fd, len_hdr, 5) < 0
-			|| tnt_socket_send_all(srv->fd, sbuf.data, body_len) < 0) {
+	iov[0].iov_base = len_hdr;
+	iov[0].iov_len = sizeof(len_hdr);
+	iov[1].iov_base = sbuf.data;
+	iov[1].iov_len = body_len;
+
+	if(tnt_socket_sendv_all(srv->fd, iov, 2) < 0) {
 		LM_ERR("failed to send IPROTO_EVAL to %.*s:%d: %s\n", srv->addr.len,
 				srv->addr.s, srv->port, strerror(errno));
 		msgpack_sbuffer_destroy(&sbuf);
@@ -1657,7 +1756,9 @@ int tnt_exec_eval(tnt_server_t *srv, const str *expr, const str *params_json,
 	}
 
 	if(res_dst && data_obj) {
-		if(tnt_mp_to_json_str(data_obj, res_dst) < 0) {
+		if(tnt_mp_to_json_str_hint(
+				   data_obj, res_dst, tnt_calc_json_hint(resp_len))
+				< 0) {
 			LM_ERR("failed to serialize eval result to JSON\n");
 			rc = -1;
 			goto out_unpack;

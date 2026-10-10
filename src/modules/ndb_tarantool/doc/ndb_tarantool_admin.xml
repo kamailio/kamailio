@@ -111,6 +111,15 @@
 				<listitem>
 					<para><emphasis>allowed_timeouts</emphasis> - number of consecutive errors before node enters cooldown (overrides module default).</para>
 				</listitem>
+				<listitem>
+					<para><emphasis>keepalive_idle</emphasis> (or <emphasis>tcp_keepalive_idle</emphasis>) - TCP keepalive idle time in seconds for this node (0 disables keepalive, overrides module default).</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>keepalive_interval</emphasis> (or <emphasis>tcp_keepalive_interval</emphasis>) - TCP keepalive probe interval in seconds (overrides module default).</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>keepalive_count</emphasis> (or <emphasis>tcp_keepalive_count</emphasis>) - TCP keepalive probe count (overrides module default).</para>
+				</listitem>
 			</itemizedlist>
 			<example>
 				<title>Set <varname>server</varname> parameter</title>
@@ -265,6 +274,78 @@ modparam("ndb_tarantool", "max_response_percent", 20)
 				<programlisting format="linespecific">
 ...
 modparam("ndb_tarantool", "probe_interval", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="ndb_tarantool.p.tcp_keepalive_idle">
+			<title><varname>tcp_keepalive_idle</varname> (integer)</title>
+			<para>
+				Idle time in seconds after which TCP keepalive probes will be sent over persistent Tarantool worker sockets. Set to 0 to disable <literal>SO_KEEPALIVE</literal>.
+			</para>
+			<para>
+				<emphasis>Default value is 60 seconds.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>tcp_keepalive_idle</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "tcp_keepalive_idle", 60)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="ndb_tarantool.p.tcp_keepalive_interval">
+			<title><varname>tcp_keepalive_interval</varname> (integer)</title>
+			<para>
+				Interval in seconds between individual TCP keepalive probes when waiting for confirmation from a Tarantool instance.
+			</para>
+			<para>
+				<emphasis>Default value is 10 seconds.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>tcp_keepalive_interval</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "tcp_keepalive_interval", 10)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="ndb_tarantool.p.tcp_keepalive_count">
+			<title><varname>tcp_keepalive_count</varname> (integer)</title>
+			<para>
+				Maximum number of unacknowledged TCP keepalive probes sent before the kernel drops the connection.
+			</para>
+			<para>
+				<emphasis>Default value is 3 probes.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>tcp_keepalive_count</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "tcp_keepalive_count", 3)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="ndb_tarantool.p.json_buffer_size">
+			<title><varname>json_buffer_size</varname> (integer)</title>
+			<para>
+				Initial pre-allocated buffer size in bytes for serializing MessagePack responses into JSON strings in worker package memory. When set to 0 (default), an adaptive auto-scaler dynamically calculates the buffer based on response wire size (2x for payloads &lt; 1 KB, 1.5x for larger payloads, min 128 bytes) to eliminate intermediate memory reallocations during high-throughput SIP routing.
+			</para>
+			<para>
+				<emphasis>Default value is 0 (auto-scaled pre-allocation).</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>json_buffer_size</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("ndb_tarantool", "json_buffer_size", 0)
 ...
 				</programlisting>
 			</example>
