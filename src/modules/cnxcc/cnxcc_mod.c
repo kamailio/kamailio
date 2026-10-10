@@ -491,6 +491,12 @@ static void __dialog_terminated_callback(
 	LM_DBG("Dialog terminated for CID [%.*s]\n", cell->callid.len,
 			cell->callid.s);
 
+	// Update calls statistics (balances __setup_billing())
+	cnxcc_lock(_data.lock);
+	_data.stats->active--;
+	_data.stats->total--;
+	cnxcc_unlock(_data.lock);
+
 	__stop_billing(&cell->callid);
 }
 
@@ -678,13 +684,26 @@ static void __setup_billing(
 	LM_DBG("Creating dialog for [%.*s], h_id [%u], h_entry [%u]\n", callid->len,
 			callid->s, h_id, h_entry);
 
-	//	cnxcc_lock(&_data);
+	/*
+	 * Update calls statistics. This must happen for every created dialog,
+	 * regardless of whether the call is already known to cnxcc: it is
+	 * balanced by the decrement in __dialog_terminated_callback().
+	 */
+	cnxcc_lock(_data.lock);
+
+	_data.stats->active++;
+	_data.stats->total++;
+
+	cnxcc_unlock(_data.lock);
 
 	/*
-	 * Search call data by call-id
+	 * Search call data by call-id. The dialog may be created (e.g. by
+	 * dlg_manage()) before cnxcc_set_max_*() registered the call, in which
+	 * case there is nothing to update yet.
 	 */
 	if(try_get_call_entry(callid, &call, &hts) != 0) {
-		LM_ERR("Call [%.*s] not found\n", callid->len, callid->s);
+		LM_DBG("Call [%.*s] not yet registered, skipping dialog info\n",
+				callid->len, callid->s);
 		return;
 	}
 
@@ -698,16 +717,6 @@ static void __setup_billing(
 				callid->s);
 		return;
 	}
-
-	/*
-	 * Update calls statistics
-	 */
-	cnxcc_lock(_data.lock);
-
-	_data.stats->active++;
-	_data.stats->total++;
-
-	cnxcc_unlock(_data.lock);
 
 	cnxcc_lock(call->lock);
 
@@ -857,12 +866,6 @@ exit:
 
 static void __delete_call(call_t *call, credit_data_t *credit_data)
 {
-	// Update calls statistics
-	cnxcc_lock(_data.lock);
-	_data.stats->active--;
-	_data.stats->total--;
-	cnxcc_unlock(_data.lock);
-
 	// This call just ended and we need to remove it from the summ.
 	if(call->confirmed) {
 		credit_data->concurrent_calls--;
@@ -2067,7 +2070,7 @@ void rpc_credit_control_stats(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	rpc->struct_add(rh, "sddd", "info", "CNX Credit Control", "active",
+	rpc->struct_add(rh, "suuu", "info", "CNX Credit Control", "active",
 			_data.stats->active, "dropped", _data.stats->dropped, "total",
 			_data.stats->total);
 }
