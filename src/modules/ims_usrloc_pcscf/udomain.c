@@ -821,6 +821,25 @@ int delete_pcontact(udomain_t *_d,
 	return 0;
 }
 
+/*!
+ * \brief Whether two securities describe the same IPsec tunnel
+ */
+static int same_ipsec(security_t *a, security_t *b)
+{
+	ipsec_t *x, *y;
+
+	if(!a || !b || a->type != SECURITY_IPSEC || b->type != SECURITY_IPSEC
+			|| !a->data.ipsec || !b->data.ipsec) {
+		return 0;
+	}
+	x = a->data.ipsec;
+	y = b->data.ipsec;
+	return x->port_pc == y->port_pc && x->port_ps == y->port_ps
+		   && x->port_uc == y->port_uc && x->port_us == y->port_us
+		   && x->spi_pc == y->spi_pc && x->spi_ps == y->spi_ps
+		   && x->spi_uc == y->spi_uc && x->spi_us == y->spi_us;
+}
+
 int unreg_pending_contacts_cb(udomain_t *_d, pcontact_t *_c, int type)
 {
 	pcontact_t *c;
@@ -885,64 +904,24 @@ int unreg_pending_contacts_cb(udomain_t *_d, pcontact_t *_c, int type)
 					continue;
 				}
 
-				// check for equal ipsec parameters
-				if(c->security_temp == NULL || _c->security_temp == NULL) {
-					LM_DBG("Invalid temp security\n");
-					c = c->next;
-					continue;
-				}
-
-				if(c->security_temp->type != SECURITY_IPSEC) {
-					LM_DBG("Invalid temp security type\n");
-					c = c->next;
-					continue;
-				}
-
-				if(c->security_temp->data.ipsec == NULL
-						|| _c->security_temp->data.ipsec == NULL) {
-					LM_DBG("Invalid ipsec\n");
-					c = c->next;
-					continue;
-				}
-
-				LM_DBG("=========== c->reg_state %s, %u-%u | %u-%u | %u-%u "
-					   "| %u-%u | %u-%u | %u-%u | %u-%u | %u-%u |",
-						reg_state_to_string(c->reg_state),
-						c->security_temp->data.ipsec->port_pc,
-						_c->security_temp->data.ipsec->port_pc,
-						c->security_temp->data.ipsec->port_ps,
-						_c->security_temp->data.ipsec->port_ps,
-						c->security_temp->data.ipsec->port_uc,
-						_c->security_temp->data.ipsec->port_uc,
-						c->security_temp->data.ipsec->port_us,
-						_c->security_temp->data.ipsec->port_us,
-						c->security_temp->data.ipsec->spi_pc,
-						_c->security_temp->data.ipsec->spi_pc,
-						c->security_temp->data.ipsec->spi_ps,
-						_c->security_temp->data.ipsec->spi_ps,
-						c->security_temp->data.ipsec->spi_uc,
-						_c->security_temp->data.ipsec->spi_uc,
-						c->security_temp->data.ipsec->spi_us,
-						_c->security_temp->data.ipsec->spi_us);
-
-				if(c->security_temp->data.ipsec->port_pc
-								== _c->security_temp->data.ipsec->port_pc
-						&& c->security_temp->data.ipsec->port_ps
-								   == _c->security_temp->data.ipsec->port_ps
-						&& c->security_temp->data.ipsec->port_uc
-								   == _c->security_temp->data.ipsec->port_uc
-						&& c->security_temp->data.ipsec->port_us
-								   == _c->security_temp->data.ipsec->port_us
-						&& c->security_temp->data.ipsec->spi_pc
-								   == _c->security_temp->data.ipsec->spi_pc
-						&& c->security_temp->data.ipsec->spi_ps
-								   == _c->security_temp->data.ipsec->spi_ps
-						&& c->security_temp->data.ipsec->spi_uc
-								   == _c->security_temp->data.ipsec->spi_uc
-						&& c->security_temp->data.ipsec->spi_us
-								   == _c->security_temp->data.ipsec->spi_us) {
-					// deregister user callback only for contacts with exact sec parameters like registerd contact
+				// A pending contact holds only the offer save_pending() stored,
+				// in security_temp. Deregister its callback when that offer is
+				// either of the registered contact's tunnels, so its expiry
+				// does not destroy a tunnel in use.
+				if(same_ipsec(c->security_temp, _c->security_temp)
+						|| same_ipsec(c->security_temp, _c->security)) {
+					LM_DBG("pending contact [%.*s] (%s) holds a tunnel of "
+						   "[%.*s], removing its callback\n",
+							c->aor.len, c->aor.s,
+							reg_state_to_string(c->reg_state), _c->aor.len,
+							_c->aor.s);
 					delete_ulcb(c, type);
+				} else {
+					LM_DBG("pending contact [%.*s] (%s) holds no tunnel of "
+						   "[%.*s]\n",
+							c->aor.len, c->aor.s,
+							reg_state_to_string(c->reg_state), _c->aor.len,
+							_c->aor.s);
 				}
 			}
 		}
