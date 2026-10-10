@@ -43,6 +43,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 
@@ -989,4 +994,35 @@ int cxdx_add_result_code(AAAMessage *msg, unsigned int data)
 	set_4bytes(x, data);
 	return cxdx_add_avp(msg, x, 4, AVP_Result_Code, AAA_AVP_FLAG_MANDATORY, 0,
 			AVP_DUPLICATE_DATA, __FUNCTION__);
+}
+
+int cxdx_add_experimental_result(AAAMessage *msg, unsigned int code)
+{
+	char data[24] = {0};
+	set_4bytes(data, AVP_Vendor_Id);
+	data[4] = AAA_AVP_FLAG_MANDATORY;
+	set_3bytes(data + 5, 12);
+	set_4bytes(data + 8, IMS_vendor_id_3GPP);
+	set_4bytes(data + 12, AVP_Experimental_Result_Code);
+	data[16] = AAA_AVP_FLAG_MANDATORY;
+	set_3bytes(data + 17, 12);
+	set_4bytes(data + 20, code);
+	return cxdx_add_avp(msg, data, sizeof(data), AVP_Experimental_Result,
+			AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+}
+
+int cxdx_add_failed_avp(AAAMessage *msg, int code, int vendor, str value)
+{
+	AAA_AVP_LIST list = {0, 0};
+	str group;
+	if(!cxdx_add_avp_list(&list, value.s, value.len, code,
+			   AAA_AVP_FLAG_MANDATORY, vendor, AVP_DUPLICATE_DATA,
+			   __FUNCTION__))
+		return 0;
+	group = cdpb.AAAGroupAVPS(list);
+	cdpb.AAAFreeAVPList(&list);
+	if(!group.s)
+		return 0;
+	return cxdx_add_avp(msg, group.s, group.len, AVP_Failed_AVP,
+			AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
 }

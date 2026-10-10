@@ -20,6 +20,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 #include "cxdx_callbacks.h"
@@ -28,135 +33,232 @@
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "cxdx_avp.h"
 #include "registrar_notify.h"
-
+#include "userdata_parser.h"
+#include "../cdp/diameter_ims_code_result.h"
+#include <string.h>
 
 extern struct cdp_binds cdpb;
 extern usrloc_api_t ul;
-
 extern char *domain;
 
-/*int PPR_RTR_Event(void *parsed_message, int type, void *param) {
-	if (type & CXDX_PPR_RECEIVED) {
-		LM_ERR("Received a PPR-Request\n");
-		return 1;
+#define CX_MAX_IDENTITIES 256
+#define CX_MAX_USER_DATA (1024 * 1024)
+
+static AAAMessage *cx_answer(AAAMessage *request, int code, int experimental)
+{
+	AAAMessage *answer = cdpb.AAACreateResponse(request);
+	if(!answer)
+		return 0;
+	if(!cxdx_add_vendor_specific_appid(answer, IMS_vendor_id_3GPP, IMS_Cx, 0)
+			|| !cxdx_add_auth_session_state(answer, 1)
+			|| !(experimental ? cxdx_add_experimental_result(answer, code)
+							  : cxdx_add_result_code(answer, code))) {
+		cdpb.AAAFreeMessage(&answer);
+		return 0;
 	}
-	if (type & CXDX_RTR_RECEIVED) {
-		LM_ERR("Received a RTR-Request\n");
-		return 1;
+	return answer;
+}
+
+static AAA_AVP *cx_avp(AAAMessage *request, int code, int vendor)
+{
+	return cdpb.AAAFindMatchingAVP(request, 0, code, vendor, 0);
+}
+
+static AAAMessage *cx_failed_answer(
+		AAAMessage *request, int result, int code, int vendor)
+{
+	AAAMessage *answer = cx_answer(request, result, 0);
+	AAA_AVP *avp = cx_avp(request, code, vendor);
+	char zero[4] = {0};
+	str value = avp ? avp->data : (str){zero, 0};
+	if(!avp && code == AVP_Auth_Session_State)
+		value.len = 4;
+	if(answer && !cxdx_add_failed_avp(answer, code, vendor, value))
+		cdpb.AAAFreeMessage(&answer);
+	return answer;
+}
+
+static int cx_validate_request(AAAMessage *request, int *failed)
+{
+	int codes[] = {AVP_Session_Id, AVP_User_Name, AVP_Origin_Host,
+			AVP_Origin_Realm, AVP_Destination_Host, AVP_Destination_Realm,
+			AVP_Vendor_Specific_Application_Id, AVP_Auth_Session_State};
+	AAA_AVP *avp;
+	unsigned int i;
+	for(i = 0; i < sizeof(codes) / sizeof(codes[0]); i++) {
+		*failed = codes[i];
+		avp = cx_avp(request, codes[i], 0);
+		if(!avp || !avp->data.len)
+			return DIAMETER_MISSING_AVP;
+		if(cdpb.AAAGetNextAVP(avp)
+				&& cdpb.AAAFindMatchingAVP(
+						request, cdpb.AAAGetNextAVP(avp), codes[i], 0, 0))
+			return DIAMETER_AVP_OCCURS_TOO_MANY_TIMES;
+	}
+	*failed = AVP_Auth_Session_State;
+	avp = cx_avp(request, AVP_Auth_Session_State, 0);
+	if(avp->data.len != 4 || get_4bytes(avp->data.s) != 1)
+		return DIAMETER_INVALID_AVP_VALUE;
+	{
+		AAA_AVP_LIST list;
+		int vendors = 0, apps = 0, valid = 1;
+		*failed = AVP_Vendor_Specific_Application_Id;
+		avp = cx_avp(request, *failed, 0);
+		list = cdpb.AAAUngroupAVPS(avp->data);
+		for(avp = list.head; avp; avp = avp->next) {
+			if(avp->code == AVP_Vendor_Id && avp->vendorId == 0) {
+				vendors++;
+				if(avp->data.len != 4
+						|| get_4bytes(avp->data.s) != IMS_vendor_id_3GPP)
+					valid = 0;
+			} else if(avp->code == AVP_Auth_Application_Id
+					  && avp->vendorId == 0) {
+				apps++;
+				if(avp->data.len != 4 || get_4bytes(avp->data.s) != IMS_Cx)
+					valid = 0;
+			}
+		}
+		cdpb.AAAFreeAVPList(&list);
+		if(!valid || vendors != 1 || apps != 1)
+			return DIAMETER_INVALID_AVP_VALUE;
 	}
 	return 0;
-}*/
+}
 
-AAAMessage *cxdx_process_rtr(AAAMessage *rtr)
+static AAAMessage *cx_operation_answer(AAAMessage *request, int result)
 {
-	LM_DBG("Processing RTR");
+	if(result == -1)
+		return cx_answer(request, RC_IMS_DIAMETER_ERROR_USER_UNKNOWN, 1);
+	if(result == -3)
+		return cx_answer(
+				request, RC_IMS_DIAMETER_ERROR_NOT_SUPPORTED_USER_DATA, 1);
+	return cx_answer(request,
+			result == 0 ? DIAMETER_SUCCESS : DIAMETER_UNABLE_TO_COMPLY, 0);
+}
 
-	AAAMessage *rta_msg;
-	AAA_AVP *avp;
-	str public_id;
-	impurecord_t *r;
-	int res = 0;
-	udomain_t *udomain;
-	impu_contact_t *impucontact;
+AAAMessage *cxdx_process_ppr(AAAMessage *request)
+{
+	AAA_AVP *data;
+	ims_subscription *profile;
+	udomain_t *d;
+	str private_id;
+	int failed, result = cx_validate_request(request, &failed);
+	if(result)
+		return cx_failed_answer(request, result, failed, 0);
+	/* This receiver implements the sender's User-Data/iFC update subset. */
+	if(cx_avp(request, AVP_IMS_Charging_Information, IMS_vendor_id_3GPP)
+			|| cx_avp(request, AVP_IMS_SIP_Auth_Data_Item, IMS_vendor_id_3GPP))
+		return cx_answer(
+				request, RC_IMS_DIAMETER_ERROR_NOT_SUPPORTED_USER_DATA, 1);
+	data = cx_avp(request, AVP_IMS_User_Data_Cx, IMS_vendor_id_3GPP);
+	if(!data || !data->data.len)
+		return cx_failed_answer(request, DIAMETER_MISSING_AVP,
+				AVP_IMS_User_Data_Cx, IMS_vendor_id_3GPP);
+	if(data->data.len > CX_MAX_USER_DATA)
+		return cx_answer(request, RC_IMS_DIAMETER_ERROR_TOO_MUCH_DATA, 1);
+	if(cdpb.AAAGetNextAVP(data)
+			&& cdpb.AAAFindMatchingAVP(request, cdpb.AAAGetNextAVP(data),
+					AVP_IMS_User_Data_Cx, IMS_vendor_id_3GPP, 0))
+		return cx_answer(request, DIAMETER_AVP_OCCURS_TOO_MANY_TIMES, 0);
+	/* Cx profiles are self-contained XML; never resolve an external DTD. */
+	if(memchr(data->data.s, 0, data->data.len))
+		return cx_answer(
+				request, RC_IMS_DIAMETER_ERROR_NOT_SUPPORTED_USER_DATA, 1);
+	{
+		int i;
+		for(i = 0; i < data->data.len; i++)
+			if((i + 9 <= data->data.len
+					   && !memcmp(data->data.s + i, "<!DOCTYPE", 9))
+					|| (i + 8 <= data->data.len
+							&& !memcmp(data->data.s + i, "<!ENTITY", 8)))
+				return cx_answer(request,
+						RC_IMS_DIAMETER_ERROR_NOT_SUPPORTED_USER_DATA, 1);
+	}
+	profile = parse_user_data(data->data);
+	if(!profile)
+		return cx_answer(
+				request, RC_IMS_DIAMETER_ERROR_NOT_SUPPORTED_USER_DATA, 1);
+	profile->ref_count = 1; /* owned here until the cache takes record refs */
+	private_id = cxdx_get_user_name(request);
+	if(profile->private_identity.len != private_id.len
+			|| memcmp(profile->private_identity.s, private_id.s,
+					private_id.len)) {
+		ul.unref_subscription(profile);
+		return cx_answer(
+				request, RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH, 1);
+	}
+	if(ul.register_udomain(domain, &d) < 0) {
+		ul.unref_subscription(profile);
+		return cx_answer(request, DIAMETER_UNABLE_TO_COMPLY, 0);
+	}
+	result = ul.cx_replace_profile(d, profile);
+	ul.unref_subscription(profile);
+	LM_INFO("Cx PPR profile installation result=%d\n", result);
+	return cx_operation_answer(request, result);
+}
 
-	rta_msg = cdpb.AAACreateResponse(rtr); //session ID?
-	if(!rta_msg)
-		return 0;
+static void cx_notify(impurecord_t *r, ucontact_t *c, int reason)
+{
+	/* RTR marks the contact deleted before the asynchronous XML builder runs.
+	 * Preserve its URI in the notification's copied deregistration list. */
+	notify_subscribers(r, c, &c->c, 1,
+			reason == 2 ? IMS_REGISTRAR_CONTACT_DEACTIVATED
+						: IMS_REGISTRAR_CONTACT_DEREGISTERED);
+}
 
-	avp = cxdx_get_next_public_identity(
-			rtr, 0, AVP_IMS_Public_Identity, IMS_vendor_id_3GPP, __FUNCTION__);
-	if(avp == 0) {
-		LM_WARN("RTR received with only IMPI (username AVP) - currently S-CSCF "
-				"does not support this kind of RTR\n");
-		return 0;
-		//TODO add support for receiving RTR with IMPI
-		//get all impus related to this impu
-		//get all contacts related to each impu
-		//set the contact expire for each contact to now
-	} else {
-		public_id = avp->data;
-		LM_DBG("RTR received with IMPU [%.*s] in public identity AVP - this is "
-			   "supported\n",
-				public_id.len, public_id.s);
-
-		//TODO this should be a configurable module param
-		if(ul.register_udomain(domain, &udomain) < 0) {
-			LM_ERR("Unable to register usrloc domain....aborting\n");
-			return 0;
-		}
-
-		ul.lock_udomain(udomain, &public_id);
-		res = ul.get_impurecord(udomain, &public_id, &r);
-		if(res != 0) {
-			LM_WARN("Strange, '%.*s' Not found in usrloc\n", public_id.len,
-					public_id.s);
-			ul.unlock_udomain(udomain, &public_id);
-			//no point in continuing
-			return 0;
-		}
-
-		impucontact = r->linked_contacts.head;
-		while(impucontact) {
-			LM_DBG("Deleting contact with AOR [%.*s]\n",
-					impucontact->contact->aor.len, impucontact->contact->aor.s);
-			ul.lock_contact_slot_i(impucontact->contact->sl);
-			if(r->shead) {
-				//send NOTIFY to all subscribers of this IMPU.
-				notify_subscribers(r, impucontact->contact, 0, 0,
-						IMS_REGISTRAR_CONTACT_DEREGISTERED);
-			}
-			impucontact->contact->state = CONTACT_DELETED;
-			ul.unlock_contact_slot_i(impucontact->contact->sl);
-
-			impucontact = impucontact->next;
-		}
-
-		ul.unlock_udomain(udomain, &public_id);
-
-		while(cdpb.AAAGetNextAVP(avp)
-				&& (avp = cxdx_get_next_public_identity(rtr,
-							cdpb.AAAGetNextAVP(avp), AVP_IMS_Public_Identity,
-							IMS_vendor_id_3GPP, __FUNCTION__))
-						   != 0) {
-			public_id = avp->data;
-			LM_DBG("RTR also has public id [%.*s]\n", public_id.len,
-					public_id.s);
-			ul.lock_udomain(udomain, &public_id);
-			res = ul.get_impurecord(udomain, &public_id, &r);
-			if(res != 0) {
-				LM_WARN("Strange, '%.*s' Not found in usrloc\n", public_id.len,
-						public_id.s);
-				ul.unlock_udomain(udomain, &public_id);
-				//no point in continuing
-				return 0;
-			}
-
-			impucontact = r->linked_contacts.head;
-			while(impucontact) {
-				LM_DBG("Deleting contact with AOR [%.*s]\n",
-						impucontact->contact->aor.len,
-						impucontact->contact->aor.s);
-				ul.lock_contact_slot_i(impucontact->contact->sl);
-				if(r->shead) {
-					//send NOTIFY to all subscribers of this IMPU.
-					notify_subscribers(r, impucontact->contact, 0, 0,
-							IMS_REGISTRAR_CONTACT_DEREGISTERED);
-				}
-				impucontact->contact->state = CONTACT_DELETED;
-				ul.unlock_contact_slot_i(impucontact->contact->sl);
-				impucontact = impucontact->next;
-			}
-
-			ul.unlock_udomain(udomain, &public_id);
+AAAMessage *cxdx_process_rtr(AAAMessage *request)
+{
+	AAA_AVP *avp, *reason_avp;
+	AAA_AVP_LIST reason_list;
+	str identities[CX_MAX_IDENTITIES], private_id;
+	udomain_t *d;
+	int count = 0, reason = -1, reason_count = 0;
+	int failed, result = cx_validate_request(request, &failed);
+	if(result)
+		return cx_failed_answer(request, result, failed, 0);
+	if(cx_avp(request, AVP_IMS_Associated_Identities, IMS_vendor_id_3GPP))
+		return cx_answer(request, DIAMETER_UNABLE_TO_COMPLY, 0);
+	reason_avp =
+			cx_avp(request, AVP_IMS_Deregistration_Reason, IMS_vendor_id_3GPP);
+	if(!reason_avp)
+		return cx_failed_answer(request, DIAMETER_MISSING_AVP,
+				AVP_IMS_Deregistration_Reason, IMS_vendor_id_3GPP);
+	reason_list = cdpb.AAAUngroupAVPS(reason_avp->data);
+	for(avp = reason_list.head; avp; avp = avp->next) {
+		if(avp->code == AVP_IMS_Reason_Code
+				&& avp->vendorId == IMS_vendor_id_3GPP) {
+			reason_count++;
+			if(avp->data.len == 4)
+				reason = get_4bytes(avp->data.s);
 		}
 	}
-	cxdx_add_vendor_specific_appid(
-			rta_msg, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/);
-
-	cxdx_add_auth_session_state(rta_msg, 1);
-
-	/* send an RTA back to the HSS */
-	cxdx_add_result_code(rta_msg, DIAMETER_SUCCESS);
-
-	return rta_msg;
+	cdpb.AAAFreeAVPList(&reason_list);
+	if(reason_count != 1 || reason < 0 || reason > 3)
+		return cx_answer(request, DIAMETER_INVALID_AVP_VALUE, 0);
+	avp = cx_avp(request, AVP_IMS_Public_Identity, IMS_vendor_id_3GPP);
+	while(avp) {
+		if(count == CX_MAX_IDENTITIES)
+			return cx_answer(request, DIAMETER_RESOURCES_EXCEEDED, 0);
+		if(!avp->data.len)
+			return cx_answer(request, DIAMETER_INVALID_AVP_VALUE, 0);
+		identities[count++] = avp->data;
+		avp = cdpb.AAAGetNextAVP(avp);
+		if(avp)
+			avp = cdpb.AAAFindMatchingAVP(request, avp, AVP_IMS_Public_Identity,
+					IMS_vendor_id_3GPP, 0);
+	}
+	/* The existing PyHSS sender supplies all identities in the selected IRS. */
+	if(!count)
+		return cx_answer(request, DIAMETER_UNABLE_TO_COMPLY, 0);
+	private_id = cxdx_get_user_name(request);
+	if(ul.register_udomain(domain, &d) < 0)
+		return cx_answer(request, DIAMETER_UNABLE_TO_COMPLY, 0);
+	result = ul.cx_deregister(
+			d, &private_id, identities, count, reason, cx_notify);
+	LM_INFO("Cx RTR cache cleanup reason=%d public_ids=%d result=%d\n", reason,
+			count, result);
+	/* Unsupported RTR scope is a base processing error, not a PPR data error. */
+	if(result == -3)
+		return cx_answer(request, DIAMETER_UNABLE_TO_COMPLY, 0);
+	return cx_operation_answer(request, result);
 }

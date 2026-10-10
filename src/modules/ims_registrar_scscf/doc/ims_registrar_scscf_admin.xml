@@ -15,6 +15,32 @@
     <para>This module contains REGISTER processing logic for the S-CSCF. The
     'storage engine' of this module is provided by the ims_usrloc_scscf
     module:</para>
+
+    <para>The module handles HSS-initiated Cx Push-Profile-Requests (PPR)
+    carrying User-Data for existing public identities. Profile replacement
+    preserves registration and contact state. Identity-set changes, wildcard
+    identities, charging-information updates and authentication-data updates
+    are not supported by this receiver and are rejected.</para>
+
+    <para>Cx Registration-Termination-Requests (RTR) invalidate registration
+    and contact state and remove cached profile and charging information.
+    Registration-event notifications include the removed contact URI. Shared
+    contacts belonging to identities outside the requested scope and emergency
+    contacts are protected by rejecting unsupported termination scopes.</para>
+
+    <para>These Cx cache operations require the ims_usrloc_scscf module's
+    <parameter>db_mode</parameter> to be 0. Persistent database backends are
+    not updated by these operations. To reject ordinary originating calls
+    after deregistration, use <function>orig_impu_has_contact()</function>
+    after verifying the trusted access peer in the routing script.</para>
+
+    <para>Registration-event SUBSCRIBE responses advertise the configured
+    S-CSCF URI as Contact. P-CSCFs using PUA for reginfo must disable remote
+    Contact matching, since the watched IMPU and the notifier Contact are
+    different URIs:</para>
+    <programlisting format="linespecific">
+modparam("pua", "check_remote_contact", 0)
+    </programlisting>
   </section>
 
   <section>
@@ -662,6 +688,42 @@ unregister("location");
       <para>TBD</para>
 
       <para>used in REQUEST_ROUTE</para>
+    </section>
+
+    <section>
+      <title><function
+      moreinfo="none">orig_impu_has_contact(domain)</function></title>
+
+      <para>Checks the originating identity in P-Asserted-Identity. Returns
+      1 only if an unbarred IMPU has a stored profile, registered state and
+      a valid linked contact. Returns -1 otherwise. Use only after verifying
+      that the request comes from a trusted P-CSCF. It does not rewrite the
+      Request-URI or check the To identity.</para>
+      <para>The KEMI export is
+      <function>ims_registrar_scscf.orig_impu_has_contact(domain)</function>.
+      The domain must already be registered with ims_usrloc_scscf. Native
+      configuration functions that use the domain, such as save(), register
+      it during configuration fixup. The KEMI export returns the same integer
+      result as the native function. In Lua, compare the result with 1 or -1;
+      negative integers are truthy.</para>
+      <example>
+        <title>Originating admission after trusted-peer validation</title>
+        <programlisting format="linespecific">
+if (!orig_impu_has_contact("location")) {
+    send_reply("403", "Originating registration required");
+    exit;
+}
+        </programlisting>
+      </example>
+      <example>
+        <title>KEMI Lua admission after trusted-peer validation</title>
+        <programlisting format="linespecific">
+if KSR.ims_registrar_scscf.orig_impu_has_contact("location") &lt; 0 then
+    KSR.sl.send_reply(403, "Originating registration required")
+    KSR.x.exit()
+end
+        </programlisting>
+      </example>
     </section>
 
     <section>
