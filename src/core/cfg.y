@@ -2327,22 +2327,30 @@ module_stm:
 	| LOADPATH STRING {
 		if(mods_dir_cmd==0) {
 			LM_DBG("loading modules under %s\n", $2);
-			printf("loading modules under config path: %s\n", $2);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under config path: %s\n", $2);
+			}
 			mods_dir = $2;
 		} else {
 			LM_DBG("ignoring mod path given in config: %s\n", $2);
-			printf("loading modules under command line path: %s\n", mods_dir);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under command line path: %s\n", mods_dir);
+			}
 		}
 	}
 	| LOADPATH error	{ yyerror("string expected"); }
 	| LOADPATH EQUAL STRING {
 		if(mods_dir_cmd==0) {
 			LM_DBG("loading modules under %s\n", $3);
-			printf("loading modules under config path: %s\n", $3);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under config path: %s\n", $3);
+			}
 			mods_dir = $3;
 		} else {
 			LM_DBG("ignoring mod path given in config: %s\n", $3);
-			printf("loading modules under command line path: %s\n", mods_dir);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under command line path: %s\n", mods_dir);
+			}
 		}
 	}
 	| LOADPATH EQUAL error	{ yyerror("string expected"); }

@@ -226,6 +226,7 @@ Options:\n\
                   example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
     --all-errors Print details about all config errors that can be detected\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
+    --no-stdprint-logs  Do not print startup logs to std terminal\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
 #ifdef USE_TCP
@@ -527,6 +528,7 @@ int ksr_udp_mtreceivers = 0;
 int cfg_errors = 0;
 int cfg_warnings = 0;
 
+int ksr_no_stdprint_logs = 0;
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size = 0;
@@ -2248,6 +2250,7 @@ int main(int argc, char **argv)
 			{"atexit", required_argument, 0, KARGOPTVAL + 10},
 			{"all-errors", no_argument, 0, KARGOPTVAL + 11},
 			{"iuid", required_argument, 0, KARGOPTVAL + 12},
+			{"no-stdprint-logs", no_argument, 0, KARGOPTVAL + 14},
 			{0, 0, 0, 0}
 		};
 	/* clang-format on */
@@ -2371,6 +2374,9 @@ int main(int argc, char **argv)
 				break;
 			case KARGOPTVAL + 11:
 				ksr_all_errors = 1;
+				break;
+			case KARGOPTVAL + 14:
+				ksr_no_stdprint_logs = 1;
 				break;
 
 			default:
@@ -2574,6 +2580,7 @@ int main(int argc, char **argv)
 			case KARGOPTVAL + 9:
 			case KARGOPTVAL + 10:
 			case KARGOPTVAL + 11:
+			case KARGOPTVAL + 14:
 				break;
 
 			/* long options */
@@ -3188,12 +3195,14 @@ int main(int argc, char **argv)
 		default_core_cfg.dns_try_ipv6 = 0;
 	}
 	/* print all the listen addresses */
-	printf("Listening on \n");
-	print_all_socket_lists();
-	printf("Aliases: \n");
-	/*print_aliases();*/
-	print_aliases();
-	printf("\n");
+	if(!ksr_no_stdprint_logs) {
+		printf("Listening on \n");
+		print_all_socket_lists();
+		printf("Aliases: \n");
+		/*print_aliases();*/
+		print_aliases();
+		printf("\n");
+	}
 
 	if(dont_fork) {
 		fprintf(stderr, "WARNING: no fork mode %s\n",
