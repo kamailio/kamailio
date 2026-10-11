@@ -223,6 +223,19 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 	membar_write_atomic_op(); /* make sure t_active will be committed to mem.
 								 before the transaction would be deref. by the
 								 current process */
+	/* diagnostics for tracking FR timer armed for an outbound INVITE branch */
+	if((_tm_debug_mode & TM_DEBUG_MODE_INVSEND) && (rb->rbtype == TYPE_REQUEST)
+			&& (is_invite(rb->my_T))) {
+		LM_INFO("diagnostics: armed transaction=%p branch=%u on_failure=%d "
+				"now=%u fr_timeout=%u ticks (%u ms) "
+				"fr_inv_timeout=%u ticks (%u ms) fr_expire=%u "
+				"t_active=%u last_received=%d timer_add_ret=%d\n",
+				rb->my_T, rb->branch, rb->my_T->on_failure, ticks,
+				rb->my_T->fr_timeout, TICKS_TO_MS(rb->my_T->fr_timeout),
+				rb->my_T->fr_inv_timeout, TICKS_TO_MS(rb->my_T->fr_inv_timeout),
+				rb->fr_expire, rb->t_active,
+				rb->my_T->uac[rb->branch].last_received, ret);
+	}
 	return ret;
 }
 

@@ -264,6 +264,8 @@ str tm_event_callback = STR_NULL;
 
 str tm_evcb_local_ack_sent = STR_NULL;
 
+int _tm_debug_mode = 0;
+
 static int fixup_t_check_status(void **param, int param_no);
 
 /* clang-format off */
@@ -552,6 +554,7 @@ static param_export_t params[] = {
 	{"reply_408_reason", PARAM_STR, &_tm_reply_408_reason},
 	{"delayed_reply", PARAM_INT, &_tm_delayed_reply},
 	{"evlreq_mode", PARAM_INT, &_tm_evlreq_mode},
+	{"debug_mode", PARAM_INT, &_tm_debug_mode},
 	{0, 0, 0}
 };
 
