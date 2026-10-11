@@ -32,12 +32,19 @@
 
 #include "../../core/sr_module.h"
 #include "../../core/parser/msg_parser.h"
+#include "save.h"
 
 typedef int (*regapi_save_f)(struct sip_msg *msg, char *table);
 int regapi_save(struct sip_msg *msg, char *table);
 
 typedef int (*regapi_lookup_f)(struct sip_msg *msg, char *table);
 int regapi_lookup(struct sip_msg *msg, char *table);
+
+typedef int (*regapi_update_contacts_f)(struct sip_msg *msg, udomain_t *_d,
+		str *public_identity, int assignment_type, ims_subscription **s,
+		str *ccf1, str *ccf2, str *ecf1, str *ecf2,
+		contact_for_header_t **contact_header);
+typedef ims_subscription *(*regapi_parse_user_data_f)(str xml);
 
 /**
  * @brief REGISTRAR API structure
@@ -47,6 +54,8 @@ typedef struct registrar_api
 	regapi_save_f save;
 	regapi_lookup_f lookup;
 	regapi_lookup_f registered;
+	regapi_update_contacts_f update_contacts;
+	regapi_parse_user_data_f parse_user_data;
 } registrar_api_t;
 
 typedef int (*bind_registrar_f)(registrar_api_t *api);
