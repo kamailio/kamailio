@@ -232,6 +232,9 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
+	/* detach from core logging: cleanup() logs after shm is released */
+	set_module_debug_level_cb(NULL);
+	set_module_debug_facility_cb(NULL);
 	dbg_cfg = NULL;
 }
 
