@@ -217,7 +217,7 @@ tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
  */
 void tls_free_domain(tls_domain_t *d)
 {
-	int i, free_ctx;
+	int i;
 	int procs_no;
 
 	if(!d)
@@ -228,25 +228,7 @@ void tls_free_domain(tls_domain_t *d)
 			procs_no = get_max_procs();
 			for(i = 0; i < procs_no; i++) {
 				if(d->ctx[i]) {
-					free_ctx = 1;
-#ifdef KSR_SSL_COMMON
-					if(ksr_tls_jit_key_ex_idx >= 0) {
-						ksr_tls_jit_key_t *jk =
-								(ksr_tls_jit_key_t *)SSL_CTX_get_ex_data(
-										d->ctx[i], ksr_tls_jit_key_ex_idx);
-						/* If provider/engine keys are used we cannot
-						 * free the SSL_CTX in the RPC process; there is
-						 * is a memory leak here
-						 */
-						if(jk) {
-							shm_free(jk);
-							free_ctx = 0;
-						}
-					}
-#endif /* KSR_SSL_COMMON */
-					if(free_ctx) {
-						SSL_CTX_free(d->ctx[i]);
-					}
+					SSL_CTX_free(d->ctx[i]);
 				}
 			}
 		} else {
@@ -1072,37 +1054,6 @@ static int tls_ssl_ctx_set_read_ahead(SSL_CTX *ctx, long val, void *unused)
 
 #ifndef OPENSSL_NO_TLSEXT
 
-#ifdef KSR_SSL_COMMON
-/**
- * @brief SNI callback key loading hook
- *
- * used to install engine/provider keys in the SSL_CTX */
-
-int tls_engine_key_hook(SSL_CTX *jit_ctx)
-{
-	ksr_tls_jit_key_t *jk = (ksr_tls_jit_key_t *)SSL_CTX_get_ex_data(
-			jit_ctx, ksr_tls_jit_key_ex_idx);
-	if(jk != NULL && jk->loaded == 0 && jk->key_uri[0] != '\0') {
-		EVP_PKEY *pkey = tls_engine_private_key(jk->key_uri + KEY_PREFIX_LEN);
-		if(pkey == NULL) {
-			LM_ERR("JIT engine key load failed for URI [%s]\n", jk->key_uri);
-			goto error;
-		}
-		if(SSL_CTX_use_PrivateKey(jit_ctx, pkey) != 1) {
-			LM_ERR("SSL_CTX_use_PrivateKey failed for URI [%s]\n", jk->key_uri);
-			EVP_PKEY_free(pkey);
-			goto error;
-		}
-		EVP_PKEY_free(pkey);
-		jk->loaded = 1;
-		LM_INFO("JIT: rank=%d loaded engine key [%s] into ctx %p\n", process_no,
-				jk->key_uri, (void *)jit_ctx);
-	}
-	return 0;
-error:
-	return -1;
-}
-#endif /* KSR_SSL_COMMON */
 /**
  * @brief SNI callback function
  *
@@ -1579,6 +1530,15 @@ static int load_private_key(tls_domain_t *d)
 	}
 	if(fix_shm_pathname(&d->pkey_file) < 0)
 		return -1;
+#ifdef KSR_SSL_COMMON
+	if(ksr_tcp_main_threads == 0
+			&& strncmp(d->pkey_file.s, KEY_PREFIX, KEY_PREFIX_LEN) == 0) {
+		ERR("%s: engine/provider key '%s' requires tcp_main_threads = 1 or"
+			" 2\n",
+				tls_domain_str(d), d->pkey_file.s);
+		return -1;
+	}
+#endif /* KSR_SSL_COMMON */
 
 	procs_no = ksr_tcp_main_threads == 0 ? get_max_procs() : 1;
 	for(i = 0; i < procs_no; i++) {
@@ -1592,35 +1552,12 @@ static int load_private_key(tls_domain_t *d)
 
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 #ifdef KSR_SSL_COMMON
-			/*
-			 * engine/PKCS#11 keys are not loaded here (PKCS#11 libs are
-			 * not fork()-safe).  In MP-mode (tcp_main_threads == 0) the
-			 * key URI is stored in the SSL_CTX ex_data slot and the
-			 * actual ENGINE/OSSL_STORE call is deferred to the first
-			 * SSL_new() in each worker (JIT).  In MT-mode the key is
-			 * loaded in PROC_TCP_MAIN via tls_fix_engine_keys().
-			 */
+			/* engine/provider keys: loaded in PROC_TCP_MAIN by
+			 * tls_fix_engine_keys() (PKCS#11 modules break across fork) */
 			if(strncmp(d->pkey_file.s, KEY_PREFIX, KEY_PREFIX_LEN) != 0) {
 				ret_pwd = SSL_CTX_use_PrivateKey_file(
 						d->ctx[i], d->pkey_file.s, SSL_FILETYPE_PEM);
-			} else if(ksr_tcp_main_threads == 0
-					  && ksr_tls_jit_key_ex_idx >= 0) {
-				/* MP-mode JIT: store URI in this ctx slot's ex_data. */
-				ksr_tls_jit_key_t *jk = (ksr_tls_jit_key_t *)shm_mallocxz(
-						sizeof(ksr_tls_jit_key_t));
-				if(jk == NULL) {
-					SHM_MEM_ERROR;
-					ret_pwd = 0;
-				} else {
-					snprintf(jk->key_uri, KSR_TLS_JIT_KEY_URI_LEN, "%s",
-							d->pkey_file.s);
-					jk->loaded = 0;
-					SSL_CTX_set_ex_data(d->ctx[i], ksr_tls_jit_key_ex_idx, jk);
-					ret_pwd = 1;
-				}
 			} else {
-				/* MT-mode: loaded later by tls_fix_engine_keys() in
-				 * PROC_TCP_MAIN. */
 				ret_pwd = 1;
 			}
 #else
@@ -1915,34 +1852,6 @@ tls_domain_t *tls_lookup_cfg(tls_domains_cfg_t *cfg, int type,
 {
 	tls_domain_t *p;
 	int dotpos;
-
-#ifdef KSR_SSL_COMMON
-	/* Late binding of engine/provider keys in worker:
-         * walk the domains and bind key to SSL_CTX
-         */
-	if(ksr_tcp_main_threads == 0 && tls_child_rank > 0
-			&& tls_child_rev < *tls_config_rev) {
-		tls_engine_key_hook(cfg->srv_default->ctx[process_no]);
-		tls_engine_key_hook(cfg->cli_default->ctx[process_no]);
-
-		p = cfg->srv_list;
-		while(p) {
-			tls_engine_key_hook(p->ctx[process_no]);
-			p = p->next;
-		}
-
-		p = cfg->cli_list;
-		while(p) {
-			tls_engine_key_hook(p->ctx[process_no]);
-			p = p->next;
-		}
-
-		tls_child_rev = *tls_config_rev;
-
-		LM_INFO("Fixup of engine/provider keys in child rank=%d version=%d\n",
-				tls_child_rank, tls_child_rev);
-	}
-#endif /* KSR_SSL_COMMON */
 
 	if(type & TLS_DOMAIN_DEF) {
 		if(type & TLS_DOMAIN_SRV)
