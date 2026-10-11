@@ -52,6 +52,20 @@
 #include "tls_cfg.h"
 #include "tls_util.h"
 
+/* openssl 4: x509 name getters return const */
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+#define KSR_X509_CONST const
+#else
+#define KSR_X509_CONST
+#endif
+
+/* openssl 4.1: ASN1_STRING_get_length() replaces ASN1_STRING_length() */
+#if OPENSSL_VERSION_NUMBER >= 0x40100000L
+#define KSR_ASN1_STRING_LEN(s) ((int)ASN1_STRING_get_length(s))
+#else
+#define KSR_ASN1_STRING_LEN(s) ASN1_STRING_length(s)
+#endif
+
 enum
 {
 	CERT_LOCAL = 1,	 /* Select local certificate */
@@ -995,9 +1009,9 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 	static char buf[1024];
 	X509 *cert;
 	struct tcp_connection *c;
-	X509_NAME *name;
-	X509_NAME_ENTRY *e;
-	ASN1_STRING *asn1;
+	KSR_X509_CONST X509_NAME *name;
+	KSR_X509_CONST X509_NAME_ENTRY *e;
+	KSR_X509_CONST ASN1_STRING *asn1;
 	int index, text_len;
 	char *elem;
 	unsigned char *text_s;
@@ -1250,7 +1264,7 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 				case GEN_DNS:
 				case GEN_URI:
 					text.s = (char *)ASN1_STRING_get0_data(nm->d.ia5);
-					text.len = ASN1_STRING_length(nm->d.ia5);
+					text.len = KSR_ASN1_STRING_LEN(nm->d.ia5);
 					if(text.len >= 1024) {
 						ERR("Alternative subject text too long\n");
 						goto err;
@@ -1260,7 +1274,7 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 					res->len = text.len;
 					break;
 				case GEN_IPADD:
-					ip.len = ASN1_STRING_length(nm->d.iPAddress);
+					ip.len = KSR_ASN1_STRING_LEN(nm->d.iPAddress);
 					if(ip.len != 4 && ip.len != 16) {
 						ERR("Invalid ip address length\n");
 						goto err;
