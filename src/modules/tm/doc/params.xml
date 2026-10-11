@@ -1863,4 +1863,27 @@ modparam("tm", "evlreq_mode", 1)
 		</example>
 	</section>
 
+	<section id="tm.p.debug_mode">
+		<title><varname>debug_mode</varname> (int)</title>
+		<para>
+			Control printing additional log messages that can be useful for
+			troubleshooting.
+		</para>
+		<para>
+			If bit 1 is set (value 1), the modue prints additional info log
+			messages about outgoing INVITE transactions.
+		</para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		<example>
+			<title>debug_mode example</title>
+			<programlisting>
+...
+modparam("tm", "debug_mode", 1)
+....
+			</programlisting>
+		</example>
+	</section>
+
 </section>
