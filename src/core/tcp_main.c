@@ -1307,6 +1307,7 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	c->initstate = state;
 	c->extra_data = 0;
 	c->timestamp = time(NULL);
+	c->lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
 #ifdef USE_TLS
 	if(type == PROTO_TLS) {
 		if(tls_tcpconn_init(c, sock) == -1)
@@ -1316,8 +1317,7 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	{
 		c->type = PROTO_TCP;
 		c->rcv.proto = PROTO_TCP;
-		c->timeout = get_ticks_raw() + cfg_get(tcp, tcp_cfg, con_lifetime);
-		c->lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
+		c->timeout = get_ticks_raw() + c->lifetime;
 	}
 
 	return c;
@@ -4631,6 +4631,8 @@ static inline int handle_new_connect(struct socket_info *si)
 	union sockaddr_union *dst_su;
 	struct tcp_connection *tcpconn;
 	socklen_t su_len;
+	ticks_t crt_timeout;
+	ticks_t t;
 	int new_sock;
 
 	/* got a connection on r */
@@ -4715,9 +4717,12 @@ static inline int handle_new_connect(struct socket_info *si)
 		atomic_set(&tcpconn->refcnt, 1); /* safe, not yet available to the
 											outside world */
 		tcpconn_add(tcpconn);
-		/* activate the timer */
-		local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
-				cfg_get(tcp, tcp_cfg, con_lifetime), get_ticks_raw());
+		/* activate the protocol-specific initial timer
+		 * - TLS may use a shorter deadline (i.e., tls/connection_timeout) until
+		 *   the first I/O event than the recurring core TCP lifetime */
+		t = get_ticks_raw();
+		crt_timeout = TICKS_LT(t, tcpconn->timeout) ? tcpconn->timeout - t : 1;
+		local_timer_add(&tcp_main_ltimer, &tcpconn->timer, crt_timeout, t);
 		tcpconn->flags |= (F_CONN_MAIN_TIMER | F_CONN_READ_W | F_CONN_WANTS_RD);
 		if(unlikely(io_watch_add(&io_h, tcpconn->s, POLLIN, F_TCPCONN, tcpconn)
 					< 0)) {
