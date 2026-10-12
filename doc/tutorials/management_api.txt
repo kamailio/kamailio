@@ -25,16 +25,9 @@ web site in the wiki section.
 Modules
 -------
 
-mi_rpc		Exports Kamailio's MI interface over Kamailio's RPC interface
 xmlrpc		Exports the RPC interface using XML-rpc
 ctl		Implements the binrpc transport interface for SER rpcs
 		Also implements the old SER fifo-based management interface.
-
-Kamailio modules (modules_k)
-----------------------------
-mi_datagram	Kamailio MI interface- UDP version
-mi_fifo		Kamailio MI interface- FIFO version
-mi_xmlrpc	Kamailio MI interface- XML-rpc version
 
 
 The Kamailio MI interface is considered deprecated and will be supported

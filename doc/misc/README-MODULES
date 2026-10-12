@@ -121,10 +121,6 @@ matrix			Matrix operations
 maxfwd			SIP loop detection prevention (max-forwards header - "ttl")
 mediaproxy		Nat traversal :: Mediaproxy (AG projects)
 memcached		Utils :: In-memory caching support (memcached)
-mi_datagram		Management interface :: UDP
-mi_fifo			Management Interface :: Unix FIFO
-mi_rpc			Management Interface :: RPC support
-mi_xmlrpc		Management Interface :: XML-rpc
 misc_radius		Various Radius functions
 msilo			Text message storage
 msrp			Embedded MSRP relay (RFC 4975 and RFC 4976)
