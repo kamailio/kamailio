@@ -507,7 +507,7 @@ static void tls_dump_cert_info(char *s, X509 *cert)
  *
  * Incurs a small overhead per connection but necessary as
  * the *SSL pointer is only valid in PROC_TCP_MAIN
- * 
+ *
  */
 static void tls_free_ssl_cache(struct tls_extra_data *data)
 {
@@ -883,7 +883,6 @@ int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
 	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
-	c->lifetime = cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
 	tls_store_outbound_xavp(c);
 	return 0;
