@@ -248,6 +248,7 @@ extern unsigned char *_ksr_hname_extra_chars;
 extern char *ksr_stats_namesep;
 extern str ksr_ipv6_hex_style;
 extern int ksr_local_rport;
+extern int ksr_via_conid_mode;
 
 extern int ksr_rpc_exec_delta;
 extern int ksr_rpc_exec_locks;
