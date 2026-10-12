@@ -182,6 +182,7 @@ EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
 LOCAL_RPORT		"local_rport"
 ADD_LOCAL_RPORT		"add_local_rport"
+VIA_CONID_MODE	"via_conid_mode"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 UDP_MTU		"udp_mtu"
 UDP_MTU_TRY_PROTO	"udp_mtu_try_proto"
@@ -726,6 +727,8 @@ IMPORTFILE      "import_file"
 								return LOCAL_RPORT; }
 <INITIAL>{ADD_LOCAL_RPORT}	{ count(); yylval.strval=yytext;
 								return ADD_LOCAL_RPORT; }
+<INITIAL>{VIA_CONID_MODE}	{ count(); yylval.strval=yytext;
+								return VIA_CONID_MODE; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }
 <INITIAL>{UDP_MTU}	{ count(); yylval.strval=yytext; return UDP_MTU; }

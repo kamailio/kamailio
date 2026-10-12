@@ -120,6 +120,7 @@ str _ksr_xavp_via_params = STR_NULL;
 str _ksr_xavp_via_fields = STR_NULL;
 str _ksr_xavp_via_reply_params = STR_NULL;
 int ksr_local_rport = 0;
+int ksr_via_conid_mode = 0;
 str _ksr_via_body_flags = str_init("kvf");
 int ksr_msg_apply_changes_mode = 0;
 
@@ -3363,8 +3364,9 @@ char *create_via_hf(unsigned int *len, struct sip_msg *msg,
 
 
 #if defined USE_TCP || defined USE_SCTP
-	/* add id if tcp */
-	if(msg
+	/* add id if tcp, in mode 1 only if rport does not lead back to the
+	 * connection */
+	if(msg && !(ksr_via_conid_mode == 1 && rport_test(msg))
 			&& (
 #ifdef USE_TCP
 					(msg->rcv.proto == PROTO_TCP)

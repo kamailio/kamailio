@@ -261,6 +261,7 @@ extern char *default_routename;
 %token FORCE_RPORT
 %token ADD_LOCAL_RPORT
 %token LOCAL_RPORT
+%token VIA_CONID_MODE
 %token FORCE_TCP_ALIAS
 %token UDP_MTU
 %token UDP_MTU_TRY_PROTO
@@ -2192,6 +2193,8 @@ assign_stm:
 	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }
 	| LOCAL_RPORT EQUAL NUMBER { ksr_local_rport=$3; }
 	| LOCAL_RPORT EQUAL error { yyerror("boolean value expected"); }
+	| VIA_CONID_MODE EQUAL NUMBER { ksr_via_conid_mode=$3; }
+	| VIA_CONID_MODE EQUAL error { yyerror("number expected"); }
 	| UDP_MTU_TRY_PROTO EQUAL proto
 		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0, 0); }
 	| UDP_MTU_TRY_PROTO EQUAL error
