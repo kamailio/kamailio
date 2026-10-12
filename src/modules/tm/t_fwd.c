@@ -1754,8 +1754,10 @@ int t_forward_nonack(
 	int lock_replies;
 	flag_t backup_bflags = 0;
 	branch_data_t obranch;
+	send_socket_map_t backup_send_socket_map;
 
 	getbflagsval(0, &backup_bflags);
+	backup_send_socket_map = p_msg->force_send_socket_map;
 
 	if(t->flags & T_CANCELED)
 		goto canceled;
@@ -1835,6 +1837,8 @@ int t_forward_nonack(
 	while(next_branch_data(&obranch) == 1) {
 		try_new++;
 		setbflagsval(0, obranch.flags);
+		if(obranch.force_send_socket_map_set)
+			p_msg->force_send_socket_map = obranch.force_send_socket_map;
 
 		branch_ret = add_uac(t, p_msg, &obranch.uri,
 				(obranch.dst_uri.len > 0) ? &obranch.dst_uri : &obranch.uri,
@@ -1842,6 +1846,7 @@ int t_forward_nonack(
 				p_msg->fwd_send_flags, proto,
 				(obranch.dst_uri.len > 0) ? 0 : UAC_SKIP_BR_DST_F,
 				&obranch.instance, &obranch.ruid, &obranch.location_ua);
+		p_msg->force_send_socket_map = backup_send_socket_map;
 		/* test if cancel was received meanwhile */
 		if(t->flags & T_CANCELED)
 			goto canceled;
