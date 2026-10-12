@@ -4283,6 +4283,29 @@ error:
 	return 1;
 }
 
+static int rtpengine_poll_ms(struct pollfd *fds, nfds_t nfds, int timeout_ms)
+{
+	struct timeval tv_start, tv_now;
+	long elapsed_ms;
+	int time_left_ms = timeout_ms;
+	int ret;
+
+	gettimeofday(&tv_start, NULL);
+	for(;;) {
+		ret = poll(fds, nfds, time_left_ms);
+		if(ret != -1 || errno != EINTR)
+			return ret;
+		gettimeofday(&tv_now, NULL);
+		elapsed_ms = (tv_now.tv_sec - tv_start.tv_sec) * 1000
+					 + (tv_now.tv_usec - tv_start.tv_usec) / 1000;
+		time_left_ms = timeout_ms - (int)elapsed_ms;
+		if(time_left_ms < 0)
+			time_left_ms = 0;
+		else if(time_left_ms > timeout_ms)
+			time_left_ms = timeout_ms;
+	}
+}
+
 static char *send_rtpp_command(
 		struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 {
@@ -4416,7 +4439,7 @@ static char *send_rtpp_command(
 						cmd.len, cmd.s, node->rn_url.s, strerror(errno), errno);
 				goto badproxy;
 			}
-			while((poll(fds, 1, rtpengine_tout_ms) == 1)
+			while((rtpengine_poll_ms(fds, 1, rtpengine_tout_ms) == 1)
 					&& (fds[0].revents & POLLIN) != 0) {
 				do {
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf) - 1, 0);
