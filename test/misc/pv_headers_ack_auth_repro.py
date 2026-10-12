@@ -99,8 +99,13 @@ def main():
         route = "".join("Route: " + v + "\r\n"
                         for v in reversed(hdr.get("record-route", [])))
         via2 = f"Via: SIP/2.0/UDP 127.0.0.1:{port};branch=z9hG4bKpvtest2;rport\r\n"
-        # The proxy must handle in-dialog ACK as an end-to-end transaction.
-        ack = ("ACK sip:target@localhost SIP/2.0\r\n" + via2
+        # ACK for a 2xx INVITE must target the remote Contact URI,
+        # not the original Request-URI (which may not route to the UAS).
+        contact = first(hdr, "contact")
+        if not (contact.startswith("<sip:") and ">" in contact):
+            raise AssertionError("200 OK missing Contact")
+        contact_uri = contact[1:contact.index(">")]
+        ack = ("ACK " + contact_uri + " SIP/2.0\r\n" + via2
                + common.replace(f"To: {target}\r\n",
                                 "To: " + first(hdr, "to") + "\r\n")
                + route + "CSeq: 1 ACK\r\nContent-Length: 0\r\n\r\n")
