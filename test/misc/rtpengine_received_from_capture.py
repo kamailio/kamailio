@@ -54,16 +54,24 @@ def main():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.bind((args.host, args.port))
         sock.settimeout(args.timeout)
-        print("Waiting for a Kamailio RTPengine NG command...", flush=True)
-        data, sender = sock.recvfrom(65535)
-        cookie, space, encoded = data.partition(b" ")
-        if not space:
-            raise AssertionError("missing NG cookie")
-        decoded, end = decode(encoded)
-        if end != len(encoded) or not isinstance(decoded, dict):
-            raise AssertionError("bad NG payload")
-        # Respond to the request before asserting so the caller doesn't hang.
-        sock.sendto(cookie + b" d6:result5:errore", sender)
+        print("Waiting for a Kamailio RTPengine NG offer/answer...", flush=True)
+        # Kamailio can issue RTPengine ping/status requests before SIP media.
+        # Ignore them while responding with a valid NG success dictionary.
+        while True:
+            data, sender = sock.recvfrom(65535)
+            cookie, space, encoded = data.partition(b" ")
+            if not space:
+                raise AssertionError("missing NG cookie")
+            decoded, end = decode(encoded)
+            if end != len(encoded) or not isinstance(decoded, dict):
+                raise AssertionError("bad NG payload")
+            if decoded.get(b"command") not in (b"offer", b"answer"):
+                sock.sendto(cookie + b" d6:result2:oke", sender)
+                continue
+            # A dummy NG error terminates the SIP media request without
+            # trying to impersonate an actual RTPengine SDP rewrite.
+            sock.sendto(cookie + b" d6:result5:errore", sender)
+            break
         got = decoded.get(b"received-from")
         expected = [args.expect_family.encode(), args.expect_ip.encode()]
         if got != expected:
