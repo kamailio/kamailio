@@ -81,6 +81,53 @@ static inline int find_dlist(str *_n, dlist_t **_d)
 }
 
 /*!
+ * \brief Append one tunnel of a contact to a get_all_ucontacts() buffer
+ *
+ * Writes the record described at get_all_mem_ucontacts() for an IPsec
+ * security, or adds what it would have needed to *shortage when it does not
+ * fit. Any other security, or none, appends nothing.
+ */
+static inline void append_tunnel(
+		void **cp, int *len, int *shortage, pcontact_t *c, security_t *sec)
+{
+	ipsec_t *s;
+	int needed;
+
+	if(!sec || sec->type != SECURITY_IPSEC || !sec->data.ipsec) {
+		return;
+	}
+	s = sec->data.ipsec;
+
+	needed = (int)(sizeof(c->received_host.len) + c->received_host.len
+				   + sizeof(s->spi_uc) + sizeof(s->spi_us) + sizeof(s->spi_pc)
+				   + sizeof(s->spi_ps) + sizeof(s->port_uc) + sizeof(s->port_us)
+				   + sizeof(s->port_pc) + sizeof(s->port_ps));
+	if(*len < needed) {
+		*shortage += needed;
+		return;
+	}
+
+#define APPEND(_p, _n)            \
+	do {                          \
+		memcpy(*cp, (_p), (_n));  \
+		*cp = (char *)*cp + (_n); \
+	} while(0)
+	APPEND(&c->received_host.len, sizeof(c->received_host.len));
+	APPEND(c->received_host.s, c->received_host.len);
+	APPEND(&s->spi_uc, sizeof(s->spi_uc));
+	APPEND(&s->spi_us, sizeof(s->spi_us));
+	APPEND(&s->spi_pc, sizeof(s->spi_pc));
+	APPEND(&s->spi_ps, sizeof(s->spi_ps));
+	APPEND(&s->port_uc, sizeof(s->port_uc));
+	APPEND(&s->port_us, sizeof(s->port_us));
+	APPEND(&s->port_pc, sizeof(s->port_pc));
+	APPEND(&s->port_ps, sizeof(s->port_ps));
+#undef APPEND
+
+	*len -= needed;
+}
+
+/*!
  * \brief Get all contacts from the usrloc, in partitions if wanted
  *
  * Return list of all contacts for all currently registered
@@ -91,7 +138,8 @@ static inline int find_dlist(str *_n, dlist_t **_d)
  * case the caller is expected to repeat the call using
  * this value as the hint.
  *
- * Information is packed into the buffer as follows:
+ * Information is packed into the buffer as follows, one record per IPsec
+ * tunnel - a contact can hold two:
  *
  * +-----------------+---------------+------+------+------+------+-------+-------+-------+-------+
  * |received host.len|received host.s|spi_uc|spi_us|spi_pc|spi_ps|port_uc|port_us|port_pc|port_ps|
@@ -117,7 +165,6 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 	pcontact_t *c;
 	void *cp;
 	int shortage;
-	int needed;
 	int i = 0;
 	cp = buf;
 	shortage = 0;
@@ -138,78 +185,11 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 			}
 
 			for(c = p->d->table[i].first; c != NULL; c = c->next) {
-				if(c->received_host.s && c->security_temp
-						&& c->security_temp->type == SECURITY_IPSEC) {
-					needed = (int)(sizeof(c->received_host.len)
-								   + c->received_host.len
-								   + sizeof(
-										   c->security_temp->data.ipsec->spi_uc)
-								   + sizeof(
-										   c->security_temp->data.ipsec->spi_us)
-								   + sizeof(
-										   c->security_temp->data.ipsec->spi_pc)
-								   + sizeof(
-										   c->security_temp->data.ipsec->spi_ps)
-								   + sizeof(c->security_temp->data.ipsec
-													->port_uc)
-								   + sizeof(c->security_temp->data.ipsec
-													->port_us)
-								   + sizeof(c->security_temp->data.ipsec
-													->port_pc)
-								   + sizeof(c->security_temp->data.ipsec
-													->port_ps));
-
-					if(len >= needed) {
-						memcpy(cp, &c->received_host.len,
-								sizeof(c->received_host.len));
-						cp = (char *)cp + sizeof(c->received_host.len);
-						memcpy(cp, c->received_host.s, c->received_host.len);
-						cp = (char *)cp + c->received_host.len;
-
-						memcpy(cp, &c->security_temp->data.ipsec->spi_uc,
-								sizeof(c->security_temp->data.ipsec->spi_uc));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->spi_uc);
-
-						memcpy(cp, &c->security_temp->data.ipsec->spi_us,
-								sizeof(c->security_temp->data.ipsec->spi_us));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->spi_us);
-
-						memcpy(cp, &c->security_temp->data.ipsec->spi_pc,
-								sizeof(c->security_temp->data.ipsec->spi_pc));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->spi_pc);
-
-						memcpy(cp, &c->security_temp->data.ipsec->spi_ps,
-								sizeof(c->security_temp->data.ipsec->spi_ps));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->spi_ps);
-
-						memcpy(cp, &c->security_temp->data.ipsec->port_uc,
-								sizeof(c->security_temp->data.ipsec->port_uc));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->port_uc);
-
-						memcpy(cp, &c->security_temp->data.ipsec->port_us,
-								sizeof(c->security_temp->data.ipsec->port_us));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->port_us);
-
-						memcpy(cp, &c->security_temp->data.ipsec->port_pc,
-								sizeof(c->security_temp->data.ipsec->port_pc));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->port_pc);
-
-						memcpy(cp, &c->security_temp->data.ipsec->port_ps,
-								sizeof(c->security_temp->data.ipsec->port_ps));
-						cp = (char *)cp
-							 + sizeof(c->security_temp->data.ipsec->port_ps);
-
-						len -= needed;
-					} else {
-						shortage += needed;
-					}
+				// both of a contact's tunnels are in use: the one the UE
+				// registered over and the one being negotiated beside it
+				if(c->received_host.s) {
+					append_tunnel(&cp, &len, &shortage, c, c->security);
+					append_tunnel(&cp, &len, &shortage, c, c->security_temp);
 				}
 			}
 			unlock_ulslot(p->d, i);
