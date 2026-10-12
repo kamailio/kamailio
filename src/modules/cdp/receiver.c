@@ -845,12 +845,17 @@ int receive_loop(peer *original_peer)
 									sp2 = sp;
 									break;
 								}
-							if(!sp2)
+							if(!sp2) {
 								sp2 = add_serviced_peer(p);
-							else
-								make_send_pipe(sp2);
+							} else if(!sp2->send_pipe_name.s && !make_send_pipe(sp2)) {
+								LM_ERR("Error recreating send FIFO for Diameter peer\n");
+								close_send_pipe(sp2);
+								close(fd);
+								continue;
+							}
 							if(!sp2) {
 								LM_ERR("Error on add_serviced_peer()\n");
+								close(fd);
 								continue;
 							}
 
@@ -872,6 +877,7 @@ int receive_loop(peer *original_peer)
 							sp2 = add_serviced_peer(NULL);
 							if(!sp2) {
 								LM_ERR("Error on add_serviced_peer()\n");
+								close(fd);
 								continue;
 							}
 							sp2->tcp_socket = fd;
