@@ -177,7 +177,11 @@ extern km_log_f _km_log_func;
 
 void km_log_func_set(km_log_f f);
 /* Write one fully formatted stderr record per write(2) whenever possible. */
-void ksr_stderr_printf(const char *format, ...);
+void ksr_stderr_printf(const char *format, ...)
+#if defined(__GNUC__) || defined(__clang__)
+		__attribute__((format(printf, 1, 2)))
+#endif
+		;
 
 /** @brief maps log levels to their string name and corresponding syslog level */
 
