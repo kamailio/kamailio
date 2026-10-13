@@ -359,9 +359,11 @@ Chapter 1. Admin Guide
    expires contact parameters, this value will be used for newly created
    usrloc records. The parameter contains number of second to expire (for
    example use 3600 for one hour). If it is set to a lower value than the
-   “min_expires” parameter then it will be ignored. This parameter can be
-   modified via ser config framework. A random value in a specific
-   interval can be selected by using the default_expires_range parameter
+   “min_expires” parameter then see “min_expires_mode” for what happens.
+   If it is greater than “min_expires”, the value is lowered to it. This
+   parameter can be modified via Kamailio config framework. A random value
+   in a specific interval can be selected by using the
+   default_expires_range parameter.
 
    Default value is 3600.
 
