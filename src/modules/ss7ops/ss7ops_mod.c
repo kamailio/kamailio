@@ -135,8 +135,8 @@ static const uint8_t *extract_from_m2ua(const uint8_t *data, size_t *len)
 	/* check the length */
 	memcpy(&data_len, &data[4], sizeof(data_len));
 	data_len = ntohl(data_len);
-	if(*len < data_len) {
-		LM_ERR("M2UA data can't fit %zu vs. %zu\n", *len, (size_t)data_len);
+	if(data_len < 8 || *len < data_len) {
+		LM_ERR("M2UA bad data length %zu vs. %zu\n", *len, (size_t)data_len);
 		return NULL;
 	}
 
@@ -150,8 +150,8 @@ static const uint8_t *extract_from_m2ua(const uint8_t *data, size_t *len)
 		ie_tag = ntohs(ie_tag);
 		ie_len = ntohs(ie_len);
 
-		if(ie_len > data_len) {
-			LM_ERR("M2UA premature end %u vs. %zu\n", ie_len, (size_t)data_len);
+		if(ie_len < 4 || ie_len > data_len) {
+			LM_ERR("M2UA bad IE length %u vs. %zu\n", ie_len, (size_t)data_len);
 			return NULL;
 		}
 
@@ -210,8 +210,8 @@ static const uint8_t *extract_from_m2pa(const uint8_t *data, size_t *len)
 	/* check the length */
 	memcpy(&data_len, &data[4], sizeof(data_len));
 	data_len = ntohl(data_len);
-	if(*len < data_len) {
-		LM_ERR("M2PA data can't fit %zu vs. %u\n", *len, data_len);
+	if(data_len < 8 || *len < data_len) {
+		LM_ERR("M2PA bad data length %zu vs. %u\n", *len, data_len);
 		return NULL;
 	}
 
