@@ -419,6 +419,8 @@ int gsm_to_ascii(char *buffer, int buffer_length, str sms, const int fill_bits)
 
 	for(; i < buffer_length; ++i) {
 		if(carry_on_bits > 0) {
+			if(i + 1 >= buffer_length)
+				break;
 			unsigned char cmask = (1 << (carry_on_bits - 1))
 								  - 1; //mask for the rightmost carry_on_bits
 									   //E.g. carry_on_bits=3 -> _ _ _ _ _ X X X
@@ -498,7 +500,8 @@ int gsm_to_ascii(char *buffer, int buffer_length, str sms, const int fill_bits)
 	}
 
 	if(num_bytes < sms.len) { // Add last remainder.
-		symbol = buffer[i - 1] >> (8 - carry_on_bits);
+		symbol = ((unsigned char)buffer[i - 1] >> (8 - carry_on_bits))
+				 & BITMASK_7BITS;
 
 		sms.s[output_text_length++] = gsm7bit_codes[symbol];
 	}
@@ -771,6 +774,17 @@ static struct ie_concat_sm_8bit_ref *GetConcatShortMsg8bitRefIE(
 	return &(ie->concat_sm_8bit_ref);
 }
 
+// Fail the decoding unless n more octets are left in the body at offset p
+#define SMS_BODY_CHECK(n)                                                \
+	do {                                                                 \
+		if((n) < 0 || (n) > body.len - p) {                              \
+			LM_ERR("SMS body too short: %d octets needed at offset %d, " \
+				   "body length %d\n",                                   \
+					(int)(n), p, body.len);                              \
+			return -1;                                                   \
+		}                                                                \
+	} while(0)
+
 // Decode SMS-Body into the given structure:
 int decode_3gpp_sms(struct sip_msg *msg)
 {
@@ -825,12 +839,15 @@ int decode_3gpp_sms(struct sip_msg *msg)
 		////////////////////////////////////////////////
 		// RP-Data
 		////////////////////////////////////////////////
+		SMS_BODY_CHECK(2);
 		_smsops_rp_data->msg_type = (unsigned char)body.s[p++];
 		_smsops_rp_data->reference = (unsigned char)body.s[p++];
 		if((_smsops_rp_data->msg_type == RP_DATA_MS_TO_NETWORK)
 				|| (_smsops_rp_data->msg_type == RP_DATA_NETWORK_TO_MS)) {
-			len = body.s[p++];
+			SMS_BODY_CHECK(1);
+			len = (unsigned char)body.s[p++];
 			if(len > 0) {
+				SMS_BODY_CHECK(len);
 				p++;   // Type of Number, we assume E164, thus ignored
 				len--; // Deduct the type of number from the len
 				_smsops_rp_data->originator.s = pkg_malloc(len * 2);
@@ -838,8 +855,10 @@ int decode_3gpp_sms(struct sip_msg *msg)
 						&body.s[p], len * 2, _smsops_rp_data->originator);
 				p += len;
 			}
-			len = body.s[p++];
+			SMS_BODY_CHECK(1);
+			len = (unsigned char)body.s[p++];
 			if(len > 0) {
+				SMS_BODY_CHECK(len);
 				p++;   // Type of Number, we assume E164, thus ignored
 				len--; // Deduct the type of number from the len
 				_smsops_rp_data->destination.s = pkg_malloc(len * 2);
@@ -851,21 +870,31 @@ int decode_3gpp_sms(struct sip_msg *msg)
 			////////////////////////////////////////////////
 			// TPDU
 			////////////////////////////////////////////////
+			SMS_BODY_CHECK(1);
 			_smsops_rp_data->pdu_len = body.s[p++];
 			if(_smsops_rp_data->pdu_len > 0) {
+				SMS_BODY_CHECK(1);
 				_smsops_rp_data->pdu.flags = (unsigned char)body.s[p++];
 				_smsops_rp_data->pdu.msg_type =
 						(unsigned char)_smsops_rp_data->pdu.flags & 0x03;
 
 				if(_smsops_rp_data->pdu.msg_type == SUBMIT
 						|| _smsops_rp_data->pdu.msg_type == COMMAND) {
+					SMS_BODY_CHECK(1);
 					_smsops_rp_data->pdu.reference = (unsigned char)body.s[p++];
 				}
 
 				if(_smsops_rp_data->pdu.msg_type == SUBMIT) {
 					// TP-DA
-					_smsops_rp_data->pdu.destination.len = body.s[p++];
+					SMS_BODY_CHECK(1);
+					_smsops_rp_data->pdu.destination.len =
+							(unsigned char)body.s[p++];
 					if(_smsops_rp_data->pdu.destination.len > 0) {
+						// flags octet plus the BCD digits
+						SMS_BODY_CHECK(
+								1
+								+ (_smsops_rp_data->pdu.destination.len + 1)
+										  / 2);
 						_smsops_rp_data->pdu.destination_flags =
 								(unsigned char)body.s[p++];
 						_smsops_rp_data->pdu.destination.s = pkg_malloc(
@@ -881,8 +910,16 @@ int decode_3gpp_sms(struct sip_msg *msg)
 					}
 				} else if(_smsops_rp_data->pdu.msg_type == DELIVER) {
 					// TP-OA
-					_smsops_rp_data->pdu.originating_address.len = body.s[p++];
+					SMS_BODY_CHECK(1);
+					_smsops_rp_data->pdu.originating_address.len =
+							(unsigned char)body.s[p++];
 					if(_smsops_rp_data->pdu.originating_address.len > 0) {
+						// flags octet plus the BCD digits
+						SMS_BODY_CHECK(
+								1
+								+ (_smsops_rp_data->pdu.originating_address.len
+										  + 1)
+										  / 2);
 						_smsops_rp_data->pdu.originating_address_flags =
 								(unsigned char)body.s[p++];
 						_smsops_rp_data->pdu.originating_address.s = pkg_malloc(
@@ -902,10 +939,12 @@ int decode_3gpp_sms(struct sip_msg *msg)
 					}
 				}
 
+				SMS_BODY_CHECK(1);
 				_smsops_rp_data->pdu.pid = (unsigned char)body.s[p++];
 
 				if(_smsops_rp_data->pdu.msg_type == SUBMIT
 						|| _smsops_rp_data->pdu.msg_type == DELIVER) {
+					SMS_BODY_CHECK(1);
 					_smsops_rp_data->pdu.coding = (unsigned char)body.s[p++];
 				}
 
@@ -915,14 +954,17 @@ int decode_3gpp_sms(struct sip_msg *msg)
 					// 3GPP TS 03.40 9.2.3.3 TP Validity Period Format (TP VPF)
 					switch(_smsops_rp_data->pdu.flags & BITMASK_TP_VPF) {
 						case BITMASK_TP_VPF_RELATIVE: // 3GPP TS 03.40 9.2.3.12.1 TP-VP (Relative format)
+							SMS_BODY_CHECK(1);
 							_smsops_rp_data->pdu.validity =
 									(unsigned char)body.s[p++];
 							break;
 						case BITMASK_TP_VPF_ABSOLUTE: // 3GPP TS 03.40 9.2.3.12.2 TP-VP (Absolute format)
+							SMS_BODY_CHECK(7);
 							DecodeTime(&body.s[p], &_smsops_rp_data->pdu.time);
 							p += 7;
 							break;
 						case BITMASK_TP_VPF_ENHANCED: // 3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced format)
+							SMS_BODY_CHECK(7);
 							p += 7;
 							LM_WARN("3GPP TS 03.40 9.2.3.12.3 TP-VP (Enhanced "
 									"format) is not supported\n");
@@ -932,6 +974,7 @@ int decode_3gpp_sms(struct sip_msg *msg)
 					}
 				} else if(_smsops_rp_data->pdu.msg_type == DELIVER) {
 					// TP-SCTS
+					SMS_BODY_CHECK(7);
 					DecodeTime(&body.s[p], &_smsops_rp_data->pdu.time);
 					p += 7;
 				}
@@ -939,11 +982,13 @@ int decode_3gpp_sms(struct sip_msg *msg)
 				if(_smsops_rp_data->pdu.msg_type == SUBMIT
 						|| _smsops_rp_data->pdu.msg_type == DELIVER) {
 					//TP-User-Data-Length and TP-User-Data
+					SMS_BODY_CHECK(1);
 					len = (unsigned char)body.s[p++];
 					int fill_bits = 0;
 					if(len > 0) {
 						if((unsigned char)_smsops_rp_data->pdu.flags
 								& BITMASK_TP_UDHI) { //TP-UDHI
+							SMS_BODY_CHECK(1);
 							int udh_len = (unsigned char)body.s[p++];
 							int udh_read = 0;
 
@@ -966,6 +1011,12 @@ int decode_3gpp_sms(struct sip_msg *msg)
 							// IE 'Concatenated short messages, 8-bit reference number' should not be repeated
 							int contains_8bit_refnum = 0;
 							while(udh_read < udh_len) {
+								// IE identifier and IE length
+								if(udh_read + 2 > udh_len) {
+									LM_ERR("Truncated IE in "
+										   "User-Data-Header\n");
+									return -1;
+								}
 								tp_udh_inf_element_t *ie = pkg_malloc(
 										sizeof(tp_udh_inf_element_t));
 								if(ie == NULL) {
@@ -999,6 +1050,14 @@ int decode_3gpp_sms(struct sip_msg *msg)
 										return -1;
 									}
 
+									if(ie->data.len != 3) {
+										LM_ERR("IE Concatenated Short Message "
+											   "8bit Reference has length %d "
+											   "instead of 3\n",
+												ie->data.len);
+										pkg_free(ie);
+										return -1;
+									}
 									ie->concat_sm_8bit_ref.ref = body.s[p++];
 									ie->concat_sm_8bit_ref.max_num_sm =
 											body.s[p++];
@@ -1059,6 +1118,13 @@ int decode_3gpp_sms(struct sip_msg *msg)
 							return -1;
 						}
 
+						// Octets of TP-User-Data left after the header
+						if(_smsops_rp_data->pdu.coding == 0x00) {
+							SMS_BODY_CHECK((fill_bits + len * 7 + 7) / 8);
+						} else {
+							SMS_BODY_CHECK(len);
+						}
+
 						blen = 2 + len * 4;
 						_smsops_rp_data->pdu.payload.sm.s = pkg_malloc(blen);
 						if(_smsops_rp_data->pdu.payload.sm.s == NULL) {
@@ -1071,7 +1137,7 @@ int decode_3gpp_sms(struct sip_msg *msg)
 							// We don't care about the extra used bytes here.
 							_smsops_rp_data->pdu.payload.sm.len = len;
 							_smsops_rp_data->pdu.payload.sm.len = gsm_to_ascii(
-									&body.s[p], len,
+									&body.s[p], body.len - p,
 									_smsops_rp_data->pdu.payload.sm, fill_bits);
 						} else {
 							// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
@@ -1087,6 +1153,8 @@ int decode_3gpp_sms(struct sip_msg *msg)
 
 	return 1;
 }
+
+#undef SMS_BODY_CHECK
 
 int dumpRPData(sms_rp_data_t *rpdata, int level)
 {
