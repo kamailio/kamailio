@@ -208,7 +208,7 @@ Options:\n\
                   [proto:]addr_lst[:port][/advaddr][/socket_name], \n\
                   where proto=udp|tcp|tls|sctp, \n\
                   addr_lst= addr|(addr, addr_lst), \n\
-                  addr=host|ip_address|interface_name, \n\
+                  addr=host|ip_address|interface_name|* (* means all IPv4), \n\
                   advaddr=addr[:port] (advertised address) and \n\
                   socket_name=identifying name.\n\
                   E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
