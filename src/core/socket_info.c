@@ -2004,6 +2004,7 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 	struct addr_info *tmp_ail;
 	struct addr_info *tmp_ail_next;
 	struct addr_info *ail_next;
+	int all_ipv4;
 
 	if(type_flags)
 		*type_flags = 0;
@@ -2012,8 +2013,10 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 	for(si = *list; si;) {
 		next = si->next;
 		ai_lst = 0;
-		if(add_interfaces(si->name.s, auto_bind_ipv6 ? 0 : AF_INET, si->port_no,
-				   si->proto, &ai_lst)
+		all_ipv4 = (si->name.len == 1 && si->name.s[0] == '*');
+		if(add_interfaces(all_ipv4 ? 0 : si->name.s,
+				   all_ipv4 ? AF_INET : (auto_bind_ipv6 ? 0 : AF_INET),
+				   si->port_no, si->proto, &ai_lst)
 				!= -1) {
 			if(si->flags & SI_IS_MHOMED) {
 				if((new_si = new_sock2list_after(ai_lst->name.s, 0, si->port_no,
@@ -2047,6 +2050,8 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 						   si->useinfo.port_no, si->sockname.s, si->flags, si)
 						!= 0)
 					goto error;
+				for(new_si = si->next; new_si != next; new_si = new_si->next)
+					new_si->workers = si->workers;
 				/* ai_lst not needed anymore */
 				free_addr_info_lst(&ai_lst);
 				ail = 0;
@@ -2056,6 +2061,11 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 			sock_listrm(list, si);
 			free_sock_info(si);
 		} else {
+			if(all_ipv4) {
+				LM_ERR("could not find any local IPv4 address for wildcard "
+					   "listen\n");
+				goto error;
+			}
 			new_si = si;
 			ail = si->addr_info_lst;
 		}

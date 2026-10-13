@@ -801,6 +801,14 @@ listen_phostport:
 	| listen_id2 COLON port	{ $$=mk_listen_id2($1, 0, $3); }
 	| proto COLON listen_id2	{ $$=mk_listen_id2($3, $1, 0); }
 	| proto COLON listen_id2 COLON port	{ $$=mk_listen_id2($3, $1, $5);}
+	| proto COLON STAR COLON port	{
+		if($1 == PROTO_NONE) {
+			$$=0;
+			yyerror("specific protocol expected before wildcard address");
+		} else {
+			$$=mk_listen_id("*", $1, $5);
+		}
+	}
 	| listen_id2 COLON error { $$=0; yyerror("port number expected"); }
 	;
 
