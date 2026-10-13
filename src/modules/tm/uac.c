@@ -223,6 +223,8 @@ static inline int t_build_msg_from_buf(struct sip_msg *msg, char *buf,
 		return -1;
 	}
 	msg->force_send_socket = uac_r->dialog->send_sock;
+	if(uac_r->ssockmap != NULL)
+		msg->force_send_socket_map = *uac_r->ssockmap;
 	msg->rcv.proto = dst->send_sock->proto;
 	msg->rcv.src_ip = dst->send_sock->address;
 	su2ip_addr(&msg->rcv.dst_ip, &dst->to);
@@ -533,12 +535,12 @@ static inline int t_uac_prepare(
 	if((uri2dst2(cfg_get(core, core_cfg, use_dns_failover)
 						 ? &new_cell->uac[0].dns_h
 						 : 0,
-				&dst, uac_r->dialog->send_sock, 0, snd_flags,
+				&dst, uac_r->dialog->send_sock, uac_r->ssockmap, snd_flags,
 				uac_r->dialog->hooks.next_hop, PROTO_NONE)
 			   == 0)
 			|| (dst.send_sock == 0)) {
 #else  /* USE_DNS_FAILOVER */
-	if((uri2dst2(&dst, uac_r->dialog->send_sock, 0, snd_flags,
+	if((uri2dst2(&dst, uac_r->dialog->send_sock, uac_r->ssockmap, snd_flags,
 				uac_r->dialog->hooks.next_hop, PROTO_NONE)
 			   == 0)
 			|| (dst.send_sock == 0)) {
@@ -581,6 +583,8 @@ static inline int t_uac_prepare(
 	request = &new_cell->uac[0].request;
 	request->dst = dst;
 	request->flags |= nhtype;
+	if(uac_r->ssockmap != NULL)
+		new_cell->uac[0].force_send_socket_map = *uac_r->ssockmap;
 
 #ifdef SO_REUSEPORT
 	if(cfg_get(tcp, tcp_cfg, reuse_port)
