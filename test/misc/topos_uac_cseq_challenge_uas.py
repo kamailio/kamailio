@@ -52,6 +52,7 @@ def main():
     first = None
     challenged = False
     completed = False
+    authenticated_cseq = None
     tag = "toposregress"
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.bind((args.host, args.port))
@@ -59,12 +60,26 @@ def main():
         print(f"Challenge UAS listening at {args.host}:{args.port}", flush=True)
         end = time.monotonic() + args.timeout
         while time.monotonic() < end:
-            packet, peer = sock.recvfrom(65535)
+            try:
+                packet, peer = sock.recvfrom(65535)
+            except socket.timeout as exc:
+                raise SystemExit("FAIL: timed out waiting for authenticated "
+                                 "INVITE/ACK") from exc
             request, headers = parse_headers(packet)
             method = request.split(" ", 1)[0]
             if method == "ACK":
-                print("ACK", head(headers, "cseq"))
-                continue
+                if not completed:
+                    print("ACK to challenge", head(headers, "cseq"), flush=True)
+                    continue
+                if head(headers, "call-id") != first[0]:
+                    raise AssertionError("ACK Call-ID differs from authenticated INVITE")
+                cseq_tokens = head(headers, "cseq").split()
+                if len(cseq_tokens) != 2 or cseq_tokens[1] != "ACK" \
+                        or int(cseq_tokens[0]) != int(authenticated_cseq):
+                    raise AssertionError("ACK CSeq is not the final INVITE CSeq")
+                print("PASS: 2xx ACK received by UAS; verify caller-facing "
+                      "responses and TM matching in Kamailio logs", flush=True)
+                return
             if method != "INVITE":
                 continue
             callid = head(headers, "call-id")
@@ -94,11 +109,10 @@ def main():
                 extra = f"Contact: <sip:uas@{args.host}:{args.port}>\r\n" if status == 200 else ""
                 sock.sendto(reply(headers, status, reason, tag, extra), peer)
             completed = True
-            print("PASS: authenticated INVITE accepted and replied 100/180/200. "
-                  "Verify originating side receives those responses and Kamailio "
-                  "does not retransmit for missing transaction matches.", flush=True)
-            return
-    raise SystemExit("FAIL: no authenticated INVITE received")
+            authenticated_cseq = cseq
+            print("Received authenticated INVITE; waiting for 2xx ACK", flush=True)
+            continue
+    raise SystemExit("FAIL: no matching 2xx ACK received for authenticated INVITE")
 
 
 if __name__ == "__main__":
