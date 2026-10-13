@@ -809,6 +809,14 @@ listen_phostport:
 			$$=mk_listen_id("*", $1, $5);
 		}
 	}
+	| proto COLON LBRACK STAR RBRACK COLON port	{
+		if($1 == PROTO_NONE) {
+			$$=0;
+			yyerror("specific protocol expected before wildcard address");
+		} else {
+			$$=mk_listen_id("[*]", $1, $7);
+		}
+	}
 	| listen_id2 COLON error { $$=0; yyerror("port number expected"); }
 	;
 
@@ -870,6 +878,16 @@ socket_lattr:
 				tmp_sa.bindaddr.s = "*";
 				tmp_sa.bindaddr.len = 1;
 				tmp_sa.bindport = $7;
+			}
+		}
+	| BIND EQUAL proto COLON LBRACK STAR RBRACK COLON port	{
+			if($3 == PROTO_NONE) {
+				yyerror("specific protocol expected before wildcard address");
+			} else {
+				tmp_sa.bindproto = $3;
+				tmp_sa.bindaddr.s = "[*]";
+				tmp_sa.bindaddr.len = 3;
+				tmp_sa.bindport = $9;
 			}
 		}
 	| BIND EQUAL listen_id COLON port	{
