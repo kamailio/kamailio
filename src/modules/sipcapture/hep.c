@@ -279,22 +279,82 @@ static int hepv3_total_length(const char *buf, unsigned int len)
 }
 
 /*
+ * Return the smallest valid on-wire length of a chunk: the size of the
+ * structure the generic chunk types are cast to, or the 6-byte generic
+ * header for vendor and variable length chunks.
+ */
+static unsigned int hepv3_chunk_min_length(
+		unsigned int chunk_vendor, unsigned int chunk_type)
+{
+	if(chunk_vendor != 0)
+		return sizeof(hep_chunk_t);
+
+	switch(chunk_type) {
+		case 1:	 /* ip family */
+		case 2:	 /* ip proto */
+		case 11: /* proto type */
+			return sizeof(hep_chunk_uint8_t);
+		case 3: /* src ipv4 */
+		case 4: /* dst ipv4 */
+			return sizeof(hep_chunk_ip4_t);
+		case 5: /* src ipv6 */
+		case 6: /* dst ipv6 */
+			return sizeof(hep_chunk_ip6_t);
+		case 7:	 /* src port */
+		case 8:	 /* dst port */
+		case 13: /* keep alive timer */
+			return sizeof(hep_chunk_uint16_t);
+		case 9:	 /* time sec */
+		case 10: /* time usec */
+		case 12: /* capture id */
+			return sizeof(hep_chunk_uint32_t);
+		default:
+			return sizeof(hep_chunk_t);
+	}
+}
+
+/*
  * Verify the chunk at offset off is safe to read before it is cast and its
  * fields are dereferenced: the 6-byte generic header must lie within the
- * blen-byte buffer, it must advertise at least that header (so the loop
- * advances), and the whole chunk must fit. Returns 0 if in bounds, -1 if not.
+ * blen-byte buffer, it must advertise at least the size of the structure its
+ * type is read as (so the loop advances and the typed field is inside it),
+ * and the whole chunk must fit. Returns 0 if in bounds, -1 if not.
  */
 static int hepv3_chunk_ok(const char *buf, unsigned int blen, unsigned int off)
 {
+	const hep_chunk_t *chunk;
 	unsigned int chunk_length;
 
 	if(off + sizeof(hep_chunk_t) > blen)
 		return -1;
-	chunk_length = ntohs(((const hep_chunk_t *)(buf + off))->length);
+	chunk = (const hep_chunk_t *)(buf + off);
+	chunk_length = ntohs(chunk->length);
 	/* the on-wire chunk length includes the 6-byte generic header (see the
-	 * encoder in hep.h), so a valid chunk is never shorter than that and the
-	 * loop, which advances by chunk_length, always makes progress */
-	if(chunk_length < sizeof(hep_chunk_t) || off + chunk_length > blen)
+	 * encoder in hep.h) */
+	if(chunk_length < hepv3_chunk_min_length(
+			   ntohs(chunk->vendor_id), ntohs(chunk->type_id))
+			|| off + chunk_length > blen)
+		return -1;
+	return 0;
+}
+
+/*
+ * Verify that the chunks the receive path dereferences after parsing are all
+ * present: ip family and proto, both ports, proto type, and the source and
+ * destination address chunks of the family the packet announces (the
+ * address chunks are read by that family).
+ * Returns 0 if they are, -1 if not.
+ */
+static int hepv3_required_chunks_ok(const struct hep_generic_recv *hg)
+{
+	if(hg->ip_family == NULL || hg->ip_proto == NULL || hg->src_port == NULL
+			|| hg->dst_port == NULL || hg->proto_t == NULL)
+		return -1;
+	if(hg->ip_family->data == AF_INET6
+			&& (hg->hep_src_ip6 == NULL || hg->hep_dst_ip6 == NULL))
+		return -1;
+	if(hg->ip_family->data == AF_INET
+			&& (hg->hep_src_ip4 == NULL || hg->hep_dst_ip4 == NULL))
 		return -1;
 	return 0;
 }
@@ -494,6 +554,11 @@ int parsing_hepv3_message(char *buf, unsigned int len)
 	/* CHECK how much elements */
 	if(totelem < 9) {
 		LM_ERR("Not all elements [%d]\n", totelem);
+		goto done;
+	}
+
+	if(hepv3_required_chunks_ok(hg) < 0) {
+		LM_ERR("required chunks missing\n");
 		goto done;
 	}
 
@@ -775,6 +840,11 @@ int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 	/* CHECK how much elements */
 	if(totelem < 9) {
 		LM_ERR("Not all elements [%d]\n", totelem);
+		goto done;
+	}
+
+	if(hepv3_required_chunks_ok(hg) < 0) {
+		LM_ERR("required chunks missing\n");
 		goto done;
 	}
 
