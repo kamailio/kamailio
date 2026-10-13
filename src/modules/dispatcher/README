@@ -2224,14 +2224,17 @@ kamcli dispatcher.oclist 1
        gateway. It is used for sending the SIP traffic as well as OPTIONS
        keepalives and has priority over 'socket' attribute.
      * 'sockmap' - sets local sending sockets by transport for dispatched
-       requests. Its value is a slash-separated list in the form
+       requests and OPTIONS keepalives. Its value is a slash-separated
+       list in the form
        “udp:sockname-udp/tcp:sockname-tcp/tls:sockname-tls/sctp:sockname-s
        ctp”, where each value is a configured socket name. TCP is used for
        WS and TLS is used for WSS. The appropriate socket is selected
        after DNS resolves the transport, including during DNS failover.
        For a mapped transport, this attribute takes precedence over
-       'socket' and 'sockname'; transports not present in the map retain
-       the existing socket-selection behavior.
+       'socket' and 'sockname'. For OPTIONS keepalives, a mapped transport
+       also takes precedence over 'ping_socket' and 'ds_ping_socket'.
+       Transports not present in the map retain the existing
+       socket-selection behavior.
      * 'ping_from' - used to set the From URI in OPTIONS keepalives. It
        overwrites the general ds_ping_from parameter.
      * 'ping_reply_codes' - accepted reply codes for the OPTIONS keepalive
