@@ -2052,8 +2052,22 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 						   si->useinfo.port_no, si->sockname.s, si->flags, si)
 						!= 0)
 					goto error;
-				for(new_si = si->next; new_si != next; new_si = new_si->next)
+				for(new_si = si->next; new_si != next; new_si = new_si->next) {
 					new_si->workers = si->workers;
+					memcpy(new_si->agroup.agname, si->agroup.agname,
+							KSR_AGROUP_NAME_SIZE);
+					if(si->vrfinfo.name.len > 0) {
+						new_si->vrfinfo.name.s =
+								(char *)pkg_mallocxn(si->vrfinfo.name.len + 1);
+						if(new_si->vrfinfo.name.s == 0) {
+							PKG_MEM_ERROR;
+							goto error;
+						}
+						new_si->vrfinfo.name.len = si->vrfinfo.name.len;
+						memcpy(new_si->vrfinfo.name.s, si->vrfinfo.name.s,
+								si->vrfinfo.name.len);
+					}
+				}
 				/* ai_lst not needed anymore */
 				free_addr_info_lst(&ai_lst);
 				ail = 0;
