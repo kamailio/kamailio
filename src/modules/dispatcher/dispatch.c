@@ -5696,6 +5696,8 @@ void ds_ping_set(ds_set_t *node)
 			 *		transaction_cb cb, void* cbp); */
 			set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
 					ds_options_callback, (void *)(long)node->id);
+			if(node->dlist[j].attrs.sockmap.len > 0)
+				uac_r.ssockmap = &node->dlist[j].sockmap;
 			if(node->dlist[j].attrs.ping_socket.s != NULL
 					&& node->dlist[j].attrs.ping_socket.len > 0) {
 				uac_r.ssock = &node->dlist[j].attrs.ping_socket;
