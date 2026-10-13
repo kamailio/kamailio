@@ -862,6 +862,16 @@ socket_lattr:
 			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
 			tmp_sa.bindport = $7;
 		}
+	| BIND EQUAL proto COLON STAR COLON port	{
+			if($3 == PROTO_NONE) {
+				yyerror("specific protocol expected before wildcard address");
+			} else {
+				tmp_sa.bindproto = $3;
+				tmp_sa.bindaddr.s = "*";
+				tmp_sa.bindaddr.len = 1;
+				tmp_sa.bindport = $7;
+			}
+		}
 	| BIND EQUAL listen_id COLON port	{
 			tmp_sa.bindaddr.s = $3;
 			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);

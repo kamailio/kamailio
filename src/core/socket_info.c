@@ -1285,6 +1285,7 @@ int add_listen_socket(socket_attrs_t *sa)
 {
 	socket_info_t *newsi;
 	name_lst_t addr_l;
+	name_lst_t *addr_lp;
 	char sname[128];
 	char *psname = NULL;
 	int i;
@@ -1295,10 +1296,11 @@ int add_listen_socket(socket_attrs_t *sa)
 	}
 	memset(&addr_l, 0, sizeof(name_lst_t));
 	addr_l.name = sa->bindaddr.s;
+	addr_lp = (sa->bindaddr.len == 1 && sa->bindaddr.s[0] == '*') ? 0 : &addr_l;
 
 	/* binding on single port */
 	if(sa->bindportend <= sa->bindport) {
-		newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
+		newsi = add_listen_socket_info(sa->bindaddr.s, addr_lp, sa->bindport,
 				sa->bindproto, sa->useproto, sa->useaddr.s, sa->useport,
 				sa->sockname.s, sa->sflags);
 		if(newsi == NULL) {
@@ -1319,7 +1321,7 @@ int add_listen_socket(socket_attrs_t *sa)
 		} else {
 			psname = NULL;
 		}
-		newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l,
+		newsi = add_listen_socket_info(sa->bindaddr.s, addr_lp,
 				sa->bindport + i, sa->bindproto, sa->useproto, sa->useaddr.s,
 				sa->useport + i, psname, sa->sflags);
 		if(newsi == NULL) {
