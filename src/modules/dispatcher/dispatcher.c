@@ -88,6 +88,11 @@ str ds_xavp_dst_dstidx = str_init("dstidx");
 str ds_xavp_dst_dstid = str_init("dstid");
 str ds_xavp_dst_attrs = str_init("attrs");
 str ds_xavp_dst_sock = str_init("sock");
+str ds_xavp_dst_sockmap_set = str_init("sockmap_set");
+str ds_xavp_dst_sockmap_udp = str_init("sockmap_udp");
+str ds_xavp_dst_sockmap_tcp = str_init("sockmap_tcp");
+str ds_xavp_dst_sockmap_tls = str_init("sockmap_tls");
+str ds_xavp_dst_sockmap_sctp = str_init("sockmap_sctp");
 str ds_xavp_dst_socket = str_init("socket");
 str ds_xavp_dst_sockname = str_init("sockname");
 
@@ -2105,7 +2110,7 @@ int ds_rpc_print_set(
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSddddSSSSjj", "BODY",
+			if(rpc->struct_add(wh, "SSddddSSSSSjj", "BODY",
 					   &(node->dlist[j].attrs.body), "DUID",
 					   (node->dlist[j].attrs.duid.s)
 							   ? &(node->dlist[j].attrs.duid)
@@ -2120,6 +2125,10 @@ int ds_rpc_print_set(
 					   "SOCKNAME",
 					   (node->dlist[j].attrs.sockname.s)
 							   ? &(node->dlist[j].attrs.sockname)
+							   : &data,
+					   "SOCKMAP",
+					   (node->dlist[j].attrs.sockmap.s)
+							   ? &(node->dlist[j].attrs.sockmap)
 							   : &data,
 					   "PING_SOCKET",
 					   (node->dlist[j].attrs.ping_socket.s)

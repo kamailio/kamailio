@@ -135,6 +135,11 @@ extern str ds_xavp_dst_dstidx;
 extern str ds_xavp_dst_dstid;
 extern str ds_xavp_dst_attrs;
 extern str ds_xavp_dst_sock;
+extern str ds_xavp_dst_sockmap_set;
+extern str ds_xavp_dst_sockmap_udp;
+extern str ds_xavp_dst_sockmap_tcp;
+extern str ds_xavp_dst_sockmap_tls;
+extern str ds_xavp_dst_sockmap_sctp;
 extern str ds_xavp_dst_socket;
 extern str ds_xavp_dst_sockname;
 
@@ -233,6 +238,7 @@ typedef struct _ds_attrs {
 	str socket;
 	str ping_socket;
 	str sockname;
+	str sockmap;
 	int maxload;
 	int weight;
 	int rweight;
@@ -280,6 +286,7 @@ typedef struct _ds_dest {
 	ds_latency_stats_t latency_stats; /*!< latency statistics */
 	int irmode;       /*!< internal runtime mode (flags) */
 	struct socket_info *sock; /*!< pointer to local socket */
+	send_socket_map_t sockmap; /*!< local socket map by transport */
 	struct ip_addr ip_address; 	/*!< IP of the address (first resolved) */
 	struct ip_addr ip_addrs[DS_DNS_MAX_ADDRS]; /*!< all resolved IP addresses */
 	int ip_addrs_num;          /*!< number of resolved addresses in ip_addrs */
@@ -324,6 +331,8 @@ typedef struct _ds_select_state {
 	int cnt;    /* output: number of xavps set with destination addresses */
 	int emode;  /* output: update operation was executed or not */
 	sr_xavp_t *lxavp;
+	send_socket_map_t default_sockmap;
+	int use_sockmap;
 } ds_select_state_t;
 
 struct ds_filter_dest_cb_arg {

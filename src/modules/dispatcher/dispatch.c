@@ -469,6 +469,9 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 		} else if(pit->name.len == 8
 				  && strncasecmp(pit->name.s, "sockname", 8) == 0) {
 			dest->attrs.sockname = pit->body;
+		} else if(pit->name.len == 7
+				  && strncasecmp(pit->name.s, "sockmap", 7) == 0) {
+			dest->attrs.sockmap = pit->body;
 		} else if(pit->name.len == 11
 				  && strncasecmp(pit->name.s, "ping_socket", 11) == 0) {
 			dest->attrs.ping_socket = pit->body;
@@ -529,6 +532,101 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 
 	if(params_list)
 		free_params(params_list);
+	return 0;
+}
+
+/**
+ * Check whether a configured socket can be used for a socket-map protocol.
+ */
+static int ds_sockmap_proto_match(int map_proto, int socket_proto)
+{
+	switch(map_proto) {
+		case PROTO_UDP:
+			return socket_proto == PROTO_UDP;
+		case PROTO_TCP:
+			return socket_proto == PROTO_TCP || socket_proto == PROTO_WS;
+		case PROTO_TLS:
+			return socket_proto == PROTO_TLS || socket_proto == PROTO_WSS;
+		case PROTO_SCTP:
+			return socket_proto == PROTO_SCTP;
+		default:
+			return 0;
+	}
+}
+
+/**
+ * Parse a slash-separated transport-to-socket-name map.
+ */
+static int ds_parse_sockmap(str *value, send_socket_map_t *sockmap)
+{
+	send_socket_map_t nmap;
+	struct socket_info *si;
+	str item;
+	str proto_name;
+	str socket_name;
+	char *item_end;
+	char *colon;
+	unsigned int seen = 0;
+	int map_proto;
+	int pos;
+	int end;
+
+	memset(&nmap, 0, sizeof(nmap));
+	for(pos = 0; pos < value->len; pos = end + 1) {
+		item_end = memchr(value->s + pos, '/', value->len - pos);
+		end = item_end ? (int)(item_end - value->s) : value->len;
+		item.s = value->s + pos;
+		item.len = end - pos;
+		trim(&item);
+		if(item.len == 0) {
+			LM_ERR("empty item in socket map [%.*s]\n", value->len, value->s);
+			return -1;
+		}
+
+		colon = memchr(item.s, ':', item.len);
+		if(colon == NULL) {
+			LM_ERR("invalid socket map item [%.*s]\n", item.len, item.s);
+			return -1;
+		}
+
+		proto_name.s = item.s;
+		proto_name.len = colon - item.s;
+		socket_name.s = colon + 1;
+		socket_name.len = item.s + item.len - socket_name.s;
+		trim(&proto_name);
+		trim(&socket_name);
+		map_proto = get_valid_proto_id(&proto_name);
+		if((map_proto != PROTO_UDP && map_proto != PROTO_TCP
+				   && map_proto != PROTO_TLS && map_proto != PROTO_SCTP)
+				|| socket_name.len == 0) {
+			LM_ERR("invalid socket map item [%.*s]\n", item.len, item.s);
+			return -1;
+		}
+		if(seen & (1U << map_proto)) {
+			LM_ERR("duplicate transport [%.*s] in socket map\n", proto_name.len,
+					proto_name.s);
+			return -1;
+		}
+
+		si = ksr_get_socket_by_name(&socket_name);
+		if(si == NULL) {
+			LM_ERR("no local socket found with name [%.*s]\n", socket_name.len,
+					socket_name.s);
+			return -1;
+		}
+		if(!ds_sockmap_proto_match(map_proto, si->proto)) {
+			LM_ERR("socket [%.*s] protocol %s does not match map transport "
+				   "[%.*s]\n",
+					socket_name.len, socket_name.s, proto2a(si->proto),
+					proto_name.len, proto_name.s);
+			return -1;
+		}
+
+		corex_send_socket_map_set(&nmap, map_proto, si);
+		seen |= 1U << map_proto;
+	}
+
+	*sockmap = nmap;
 	return 0;
 }
 
@@ -717,6 +815,12 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 
 	if(ds_set_attrs(dp, attrs) < 0) {
 		LM_ERR("cannot set attributes!\n");
+		goto err;
+	}
+	if(dp->attrs.sockmap.s && dp->attrs.sockmap.len > 0
+			&& ds_parse_sockmap(&dp->attrs.sockmap, &dp->sockmap) < 0) {
+		LM_ERR("invalid socket map <%.*s>\n", dp->attrs.sockmap.len,
+				dp->attrs.sockmap.s);
 		goto err;
 	}
 
@@ -2509,8 +2613,8 @@ int ds_load_unset_callid(struct sip_msg *msg, str *callid)
 /**
  *
  */
-static inline int ds_push_dst(
-		sip_msg_t *msg, str *uri, socket_info_t *sock, int mode)
+static inline int ds_push_dst(sip_msg_t *msg, str *uri, socket_info_t *sock,
+		const send_socket_map_t *sockmap, int mode)
 {
 	struct action act;
 	struct run_act_ctx ra_ctx;
@@ -2554,13 +2658,44 @@ static inline int ds_push_dst(
 				sock->sock_str.s);
 		set_force_socket(msg, sock);
 	}
+	if(sockmap) {
+		msg->force_send_socket_map = *sockmap;
+		LM_DBG("set send socket map for destination\n");
+	}
 	return 0;
 }
 
 /**
  *
  */
-int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
+static int ds_append_branch(sip_msg_t *msg, str *uri, str *dst_uri,
+		ds_dest_t *dest, const send_socket_map_t *default_sockmap)
+{
+	branch_t *branch;
+	int ret;
+
+	ret = append_branch(msg, uri, dst_uri, NULL, Q_UNSPECIFIED, 0, dest->sock,
+			NULL, 0, NULL, NULL);
+	if(ret < 0)
+		return ret;
+	branch = get_sip_branch(get_nr_branches() - 1);
+	if(branch == NULL) {
+		LM_BUG("failed to get appended branch\n");
+		return -1;
+	}
+	if(dest->attrs.sockmap.len > 0)
+		branch->force_send_socket_map = dest->sockmap;
+	else
+		branch->force_send_socket_map = *default_sockmap;
+	branch->force_send_socket_map_set = 1;
+	return ret;
+}
+
+/**
+ *
+ */
+int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode,
+		const send_socket_map_t *default_sockmap)
 {
 	unsigned int i = 0;
 	str ruri = STR_NULL;
@@ -2594,9 +2729,8 @@ int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
 			/* ruri updates */
 			if(puri->user.len <= 0) {
 				/* no username to preserve */
-				if(append_branch(msg, &idx->dlist[i].uri, NULL, NULL,
-						   Q_UNSPECIFIED, 0, idx->dlist[i].sock, NULL, 0, NULL,
-						   NULL)
+				if(ds_append_branch(msg, &idx->dlist[i].uri, NULL,
+						   &idx->dlist[i], default_sockmap)
 						< 0) {
 					LM_ERR("failed to add branch with ruri\n");
 					return -1;
@@ -2623,8 +2757,8 @@ int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
 					}
 				}
 				ruri.s = buri;
-				if(append_branch(msg, &ruri, NULL, NULL, Q_UNSPECIFIED, 0,
-						   idx->dlist[i].sock, NULL, 0, NULL, NULL)
+				if(ds_append_branch(
+						   msg, &ruri, NULL, &idx->dlist[i], default_sockmap)
 						< 0) {
 					LM_ERR("failed to add branch with user ruri\n");
 					return -1;
@@ -2632,9 +2766,8 @@ int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
 			}
 		} else {
 			/* duri updates */
-			if(append_branch(msg, GET_RURI(msg), &idx->dlist[i].uri, NULL,
-					   Q_UNSPECIFIED, 0, idx->dlist[i].sock, NULL, 0, NULL,
-					   NULL)
+			if(ds_append_branch(msg, GET_RURI(msg), &idx->dlist[i].uri,
+					   &idx->dlist[i], default_sockmap)
 					< 0) {
 				LM_ERR("failed to add branch with duri\n");
 				return -1;
@@ -2645,10 +2778,80 @@ int ds_add_branches(sip_msg_t *msg, ds_set_t *idx, unsigned int hash, int mode)
 }
 
 /**
+ * Add one configured socket-map entry to a destination XAVP.
+ */
+static int ds_sockmap_xavp_add(str *name, socket_info_t *sock, sr_xavp_t **xavp)
+{
+	sr_xval_t val;
+
+	if(sock == NULL)
+		return 0;
+	memset(&val, 0, sizeof(val));
+	val.type = SR_XTYPE_VPTR;
+	val.v.vptr = sock;
+	return (xavp_add_value(name, &val, xavp) != NULL) ? 0 : -1;
+}
+
+/**
+ * Read one configured socket-map entry from a destination XAVP.
+ */
+static socket_info_t *ds_sockmap_xavp_get(str *name, sr_xavp_t *xavp)
+{
+	sr_xavp_t *item;
+
+	item = xavp_get(name, xavp);
+	if(item == NULL || item->val.type != SR_XTYPE_VPTR)
+		return NULL;
+	return item->val.v.vptr;
+}
+
+/**
+ * Add all configured socket-map entries to a destination XAVP.
+ */
+static int ds_sockmap_xavp_add_map(
+		const send_socket_map_t *sockmap, sr_xavp_t **xavp)
+{
+	sr_xval_t val;
+
+	memset(&val, 0, sizeof(val));
+	val.type = SR_XTYPE_LONG;
+	val.v.l = 1;
+	if(xavp_add_value(&ds_xavp_dst_sockmap_set, &val, xavp) == NULL)
+		return -1;
+	if(ds_sockmap_xavp_add(&ds_xavp_dst_sockmap_udp, sockmap->udp, xavp) < 0)
+		return -1;
+	if(ds_sockmap_xavp_add(&ds_xavp_dst_sockmap_tcp, sockmap->tcp, xavp) < 0)
+		return -1;
+	if(ds_sockmap_xavp_add(&ds_xavp_dst_sockmap_tls, sockmap->tls, xavp) < 0)
+		return -1;
+	if(ds_sockmap_xavp_add(&ds_xavp_dst_sockmap_sctp, sockmap->sctp, xavp) < 0)
+		return -1;
+	return 0;
+}
+
+/**
+ * Read the socket map from a destination XAVP.
+ */
+static int ds_sockmap_xavp_get_map(send_socket_map_t *sockmap, sr_xavp_t *xavp)
+{
+	sr_xavp_t *marker;
+
+	marker = xavp_get(&ds_xavp_dst_sockmap_set, xavp);
+	if(marker == NULL || marker->val.type != SR_XTYPE_LONG)
+		return 0;
+	sockmap->udp = ds_sockmap_xavp_get(&ds_xavp_dst_sockmap_udp, xavp);
+	sockmap->tcp = ds_sockmap_xavp_get(&ds_xavp_dst_sockmap_tcp, xavp);
+	sockmap->tls = ds_sockmap_xavp_get(&ds_xavp_dst_sockmap_tls, xavp);
+	sockmap->sctp = ds_sockmap_xavp_get(&ds_xavp_dst_sockmap_sctp, xavp);
+	return 1;
+}
+
+/**
  *
  */
-int ds_add_xavp_record(
-		ds_set_t *dsidx, int pos, int set, int alg, sr_xavp_t **pxavp)
+int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
+		sr_xavp_t **pxavp, const send_socket_map_t *default_sockmap,
+		int use_sockmap)
 {
 	sr_xavp_t *nxavp = NULL;
 	sr_xval_t nxval;
@@ -2725,6 +2928,16 @@ int ds_add_xavp_record(
 				return -1;
 			}
 		}
+	}
+	if(use_sockmap
+			&& ds_sockmap_xavp_add_map((dsidx->dlist[pos].attrs.sockmap.len > 0)
+											   ? &dsidx->dlist[pos].sockmap
+											   : default_sockmap,
+					   &nxavp)
+					   < 0) {
+		xavp_destroy_list(&nxavp);
+		LM_ERR("failed to add destination socket map xavp field\n");
+		return -1;
 	}
 
 	if(alg == DS_ALG_CALLLOAD) {
@@ -3124,7 +3337,8 @@ int ds_manage_routes_fill_reordered_xavp(
 			continue;
 		}
 		if(ds_add_xavp_record(idx, ds_sorted[i].idx, rstate->setid, rstate->alg,
-				   &rstate->lxavp)
+				   &rstate->lxavp, &rstate->default_sockmap,
+				   rstate->use_sockmap)
 				< 0) {
 			LM_ERR("failed to add destination in the xavp (%d/%d)\n",
 					ds_sorted[i].idx, rstate->setid);
@@ -3143,7 +3357,8 @@ int ds_manage_routes_fill_xavp(
 	int i;
 
 	LM_DBG("using first entry [%d/%d]\n", rstate->setid, hash);
-	if(ds_add_xavp_record(idx, hash, rstate->setid, rstate->alg, &rstate->lxavp)
+	if(ds_add_xavp_record(idx, hash, rstate->setid, rstate->alg, &rstate->lxavp,
+			   &rstate->default_sockmap, rstate->use_sockmap)
 			< 0) {
 		LM_ERR("failed to add destination in the xavp (%d/%d)\n", hash,
 				rstate->setid);
@@ -3163,8 +3378,9 @@ int ds_manage_routes_fill_xavp(
 			continue;
 		}
 		LM_DBG("using entry [%d/%d]\n", rstate->setid, i);
-		if(ds_add_xavp_record(
-				   idx, i, rstate->setid, rstate->alg, &rstate->lxavp)
+		if(ds_add_xavp_record(idx, i, rstate->setid, rstate->alg,
+				   &rstate->lxavp, &rstate->default_sockmap,
+				   rstate->use_sockmap)
 				< 0) {
 			LM_ERR("failed to add destination in the xavp (%d/%d)\n", i,
 					rstate->setid);
@@ -3185,8 +3401,9 @@ int ds_manage_routes_fill_xavp(
 			continue;
 		}
 		LM_DBG("using entry [%d/%d]\n", rstate->setid, i);
-		if(ds_add_xavp_record(
-				   idx, i, rstate->setid, rstate->alg, &rstate->lxavp)
+		if(ds_add_xavp_record(idx, i, rstate->setid, rstate->alg,
+				   &rstate->lxavp, &rstate->default_sockmap,
+				   rstate->use_sockmap)
 				< 0) {
 			LM_ERR("failed to add destination in the xavp (%d/%d)\n", i,
 					rstate->setid);
@@ -3307,6 +3524,11 @@ int ds_manage_routes(
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
+	rstate->default_sockmap = msg->force_send_socket_map;
+	rstate->use_sockmap = rstate->default_sockmap.udp != NULL
+						  || rstate->default_sockmap.tcp != NULL
+						  || rstate->default_sockmap.tls != NULL
+						  || rstate->default_sockmap.sctp != NULL;
 
 	list = ds_get_list();
 
@@ -3327,6 +3549,14 @@ int ds_manage_routes(
 	if(ds_get_index(rstate->setid, list, &idx) != 0) {
 		LM_ERR("destination set [%d] not found\n", rstate->setid);
 		goto error;
+	}
+	if(!rstate->use_sockmap) {
+		for(i = 0; i < idx->nr; i++) {
+			if(idx->dlist[i].attrs.sockmap.len > 0) {
+				rstate->use_sockmap = 1;
+				break;
+			}
+		}
 	}
 
 	if(rstate->alg == DS_ALG_RRSERIAL) {
@@ -3513,6 +3743,9 @@ int ds_manage_routes(
 
 	if(rstate->umode != DS_SETOP_XAVP) {
 		if(ds_push_dst(msg, &idx->dlist[hash].uri, idx->dlist[hash].sock,
+				   (idx->dlist[hash].attrs.sockmap.len > 0)
+						   ? &idx->dlist[hash].sockmap
+						   : NULL,
 				   rstate->umode)
 				!= 0) {
 			LM_ERR("cannot set next hop address with: %.*s\n",
@@ -3535,7 +3768,9 @@ int ds_manage_routes(
 			idx->dlist[hash].uri.s);
 
 	if(rstate->alg == DS_ALG_PARALLEL) {
-		if(ds_add_branches(msg, idx, hash, rstate->umode) < 0) {
+		if(ds_add_branches(
+				   msg, idx, hash, rstate->umode, &rstate->default_sockmap)
+				< 0) {
 			LM_ERR("failed to add additional branches\n");
 			/* one destination was already set - return success anyhow */
 			if(sres != NULL) {
@@ -3578,8 +3813,9 @@ int ds_manage_routes(
 	if(ds_use_default != 0 && hash != idx->nr - 1
 			&& rstate->cnt < rstate->limit) {
 		LM_DBG("using default entry [%d/%d]\n", rstate->setid, idx->nr - 1);
-		if(ds_add_xavp_record(
-				   idx, idx->nr - 1, rstate->setid, rstate->alg, &rstate->lxavp)
+		if(ds_add_xavp_record(idx, idx->nr - 1, rstate->setid, rstate->alg,
+				   &rstate->lxavp, &rstate->default_sockmap,
+				   rstate->use_sockmap)
 				< 0) {
 			LM_ERR("failed to add default destination in the xavp\n");
 			goto error;
@@ -3603,6 +3839,8 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 
 	int ret;
 	socket_info_t *sock = NULL;
+	send_socket_map_t sockmap = {0};
+	int has_sockmap = 0;
 	sr_xavp_t *rxavp = NULL;
 	sr_xavp_t *lxavp = NULL;
 
@@ -3615,6 +3853,9 @@ int ds_update_dst(struct sip_msg *msg, int upos, int mode)
 	}
 
 next_dst:
+	sock = NULL;
+	memset(&sockmap, 0, sizeof(sockmap));
+	has_sockmap = 0;
 	rxavp = xavp_get(&ds_xavp_dst, NULL);
 	if(rxavp == NULL || rxavp->val.type != SR_XTYPE_XAVP) {
 		LM_DBG("no xavp with previous destination record\n");
@@ -3640,6 +3881,7 @@ next_dst:
 		LM_DBG("socket enforced in next destination record\n");
 		sock = lxavp->val.v.vptr;
 	}
+	has_sockmap = ds_sockmap_xavp_get_map(&sockmap, rxavp);
 
 	lxavp = xavp_get(&ds_xavp_dst_addr, rxavp);
 	if(lxavp == NULL || lxavp->val.type != SR_XTYPE_STR) {
@@ -3647,7 +3889,9 @@ next_dst:
 		return -1;
 	}
 
-	if(ds_push_dst(msg, &lxavp->val.v.s, sock, mode) != 0) {
+	if(ds_push_dst(
+			   msg, &lxavp->val.v.s, sock, has_sockmap ? &sockmap : NULL, mode)
+			!= 0) {
 		LM_ERR("cannot set dst addr: %.*s\n", lxavp->val.v.s.len,
 				lxavp->val.v.s.s);
 		return -1;
