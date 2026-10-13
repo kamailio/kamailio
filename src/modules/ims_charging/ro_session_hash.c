@@ -156,7 +156,12 @@ int put_ro_session_on_wait(struct ro_session *session)
 			session, session->ro_session_id.len, session->ro_session_id.s);
 	session->event_type = delayed_delete;
 	session->last_event_timestamp = get_current_time_micro();
-	insert_ro_timer(&session->ro_tl, 120);
+	if(insert_ro_timer(&session->ro_tl, 120) != 0) {
+		LM_CRIT("Unable to insert session [%p] - [%.*s] on wait queue for "
+				"deletion\n",
+				session, STR_FMT(&session->ro_session_id));
+		return -1;
+	}
 
 	return 0;
 }

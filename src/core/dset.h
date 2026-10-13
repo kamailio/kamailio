@@ -64,6 +64,8 @@ typedef struct branch
 	int q; /* Preference of the contact among
         * contact within the array */
 	struct socket_info *force_send_socket;
+	send_socket_map_t force_send_socket_map;
+	int force_send_socket_map_set;
 
 	/* +sip.instance contact header param value */
 	char instance[MAX_INSTANCE_SIZE];
@@ -94,6 +96,8 @@ typedef struct branch_data
 	str path;
 	unsigned int flags;
 	socket_info_t *force_socket;
+	send_socket_map_t force_send_socket_map;
+	int force_send_socket_map_set;
 	str ruid;
 	str instance;
 	str location_ua;

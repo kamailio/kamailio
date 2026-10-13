@@ -98,6 +98,7 @@ struct cfg_group_core default_core_cfg = {
 		DEFAULT_DNS_MAX_MEM,	   /*!< dns_cache_max_mem */
 		0, /*!< dns_cache_del_nonexp -- delete only expired entries by default */
 		0, /*!< dns_cache_rec_pref -- 0 by default, do not check the existing entries. */
+		0, /*!< dns_cache_mode -- 0 by default. */
 #endif
 #ifdef PKG_MALLOC
 		0, /*!< mem_dump_pkg */
@@ -278,6 +279,8 @@ cfg_def_t core_cfg_def[] = {
 				" 1 - prefer old records"
 				" 2 - prefer new records"
 				" 3 - prefer records with longer lifetime"},
+		{"dns_cache_mode", CFG_VAR_INT, 0, 0, 0, 0,
+				"dns cache mode - controls the dns cache management"},
 #endif
 #ifdef PKG_MALLOC
 		{"mem_dump_pkg", CFG_VAR_INT, 0, 0, 0, mem_dump_pkg_cb,

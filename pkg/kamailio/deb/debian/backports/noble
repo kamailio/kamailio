@@ -6,6 +6,11 @@ DIST=noble
 rm -rf ${DIST}
 cp -r debian ${DIST}
 
+# default-libmysqlclient-dev
+sed -i -e 's/libmariadb-dev-compat/default-libmysqlclient-dev/' \
+  -e 's/mariadb-client/default-mysql-client/' \
+  ${DIST}/control
+
 # no python2
 sed -i -e '/^ python,/d' -e '/python-dev/d' \
   -e '/^Package: kamailio-python-modules/,/^$/d' \

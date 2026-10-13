@@ -23,54 +23,49 @@
 #include <stdarg.h>
 
 
-
-
 static int use_syslog = 0;
 static int log_level = LOG_WARNING;
 
 
-
-
-void init_log(char *_prgname, int _use_syslog) {
+void init_log(char *_prgname, int _use_syslog)
+{
 	use_syslog = _use_syslog;
-	if (use_syslog) {
+	if(use_syslog) {
 		openlog(_prgname, LOG_PID, LOG_DAEMON);
 	}
 }
 
 
-
-
-void set_log_level(int level) {
+void set_log_level(int level)
+{
 	log_level = level;
 }
 
 
-
-
-void destroy_log(void) {
-	if (use_syslog) closelog();
+void destroy_log(void)
+{
+	if(use_syslog)
+		closelog();
 }
 
 
-
-
-void log_stderr(char * format, va_list ap)
+void log_stderr(char *format, va_list ap)
 {
 	vfprintf(stderr, format, ap);
 	fflush(stderr);
 }
 
 
-
-
-void pdb_log(int priority, char * format, ...) {
+void pdb_log(int priority, char *format, ...)
+{
 	va_list ap;
 
-	if (priority<=log_level) {
+	if(priority <= log_level) {
 		va_start(ap, format);
-		if (use_syslog) vsyslog(priority, format, ap);
-		else log_stderr(format, ap);
+		if(use_syslog)
+			vsyslog(priority, format, ap);
+		else
+			log_stderr(format, ap);
 		va_end(ap);
 	}
 }

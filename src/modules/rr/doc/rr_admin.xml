@@ -684,6 +684,193 @@ add_rr_param(";nat=yes");
       </example>
     </section>
 
+    <section id="rr.f.rr_cookie_add">
+      <title><function moreinfo="none">rr_cookie_add(name, sval)</function></title>
+
+      <para>Adds a cookie URI parameter to the Record-Route header. It can be
+      called before or after the function that adds the Record-Route header.
+      The cookie is the base64url encoding of a two-byte global field value,
+      a four-byte current timestamp, and the first six bytes of a SHA-256
+      digest.</para>
+
+      <para>The digest is calculated over the field value, the four-byte
+      timestamp, the Call-ID, and <varname>sval</varname>, separated by bytes
+      with value 10. The timestamp and field are encoded in network byte
+      order.</para>
+
+      <para>The <varname>name</varname> parameter sets the Record-Route URI
+      parameter name. Both parameters may contain pseudo-variables.</para>
+
+      <para>This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+      FAILURE_ROUTE.</para>
+
+      <example>
+        <title><function>rr_cookie_add</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_add("kc", "private-key::$si");
+record_route();
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section id="rr.f.rr_cookie_check">
+      <title><function moreinfo="none">rr_cookie_check(name, sval, tdiff)</function></title>
+
+      <para>Checks the cookie in the parameter named <varname>name</varname>
+      on the local Route URI. The function decodes the cookie, verifies that
+      its timestamp is not older than the current time minus
+      <varname>tdiff</varname> seconds, and recomputes the hash from the
+      cookie's field and timestamp, the Call-ID, and <varname>sval</varname>.
+      It returns 1 when all checks succeed and -1 otherwise.</para>
+
+      <para>The <varname>tdiff</varname> value must be a non-negative integer.
+      The <varname>name</varname> and <varname>sval</varname> parameters may
+      contain pseudo-variables.</para>
+
+      <para>This function must be called after <function>loose_route()</function>
+      and can be used from REQUEST_ROUTE.</para>
+
+      <example>
+        <title><function>rr_cookie_check</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(loose_route()) {
+    if(!rr_cookie_check("kc", "private-key::$si", 30)) {
+        sl_send_reply("403", "Invalid routing cookie");
+        exit;
+    }
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section id="rr.f.rr_cookie_flinit">
+      <title><function moreinfo="none">rr_cookie_flinit(ival)</function></title>
+
+      <para>Sets the two-byte global flags field value used by subsequent calls to
+      <function>rr_cookie_add()</function> in the process executing this
+      function. The value must be an integer between 0 and 65535. The parameter
+      can be a variable.
+      </para>
+
+      <para>This function can be used from any route. It returns 1 on success
+      and -1 when the value is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flinit</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_flinit("42");
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section id="rr.f.rr_cookie_flset">
+      <title><function moreinfo="none">rr_cookie_flset(idx)</function></title>
+
+      <para>Sets the bit at position <varname>idx</varname> in the two-byte
+      global flags field used by subsequent calls to
+      <function>rr_cookie_add()</function> in the process executing this
+      function. Bit zero is the least-significant bit. The index must be an
+      integer between 0 and 15 and can be a variable.</para>
+
+      <para>This function can be used from any route. It returns 1 on success
+      and -1 when the index is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flset</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_flset("3");
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section id="rr.f.rr_cookie_flreset">
+      <title><function moreinfo="none">rr_cookie_flreset(idx)</function></title>
+
+      <para>Clears the bit at position <varname>idx</varname> in the two-byte
+      global flags field used by subsequent calls to
+      <function>rr_cookie_add()</function> in the process executing this
+      function. Bit zero is the least-significant bit. The index must be an
+      integer between 0 and 15 and can be a variable.</para>
+
+      <para>This function can be used from any route. It returns 1 on success
+      and -1 when the index is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flreset</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+rr_cookie_flreset("3");
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section id="rr.f.rr_cookie_flisset">
+      <title><function moreinfo="none">rr_cookie_flisset(idx)</function></title>
+
+      <para>Checks whether the bit at position <varname>idx</varname> is set
+      in the two-byte global flags field. Bit zero is the least-significant
+      bit. The index must be an integer between 0 and 15 and can be a
+      variable.</para>
+
+      <para>This function can be used from any route. It returns 1 when the
+      bit is set and -1 when the bit is clear or the index is invalid.</para>
+
+      <example>
+        <title><function>rr_cookie_flisset</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(rr_cookie_flisset("3")) {
+    xlog("cookie flag 3 is set\n");
+}
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section id="rr.f.rr_cookie_flfetch">
+      <title><function moreinfo="none">rr_cookie_flfetch(name)</function></title>
+
+      <para>Reads the cookie in the parameter named <varname>name</varname>
+      from the local Route URI, decodes its flags field, and assigns that value
+      to <varname>cookie flags</varname> global variable in the process
+      executing this function. The parameter name may contain
+      pseudo-variables.</para>
+
+      <para>This function must be called after <function>loose_route()</function>
+      and can be used from REQUEST_ROUTE. It returns 1 on success and -1 when
+      the parameter is missing or its cookie value is malformed.</para>
+
+      <example>
+        <title><function>rr_cookie_flfetch</function> usage</title>
+
+        <programlisting format="linespecific">
+...
+if(loose_route()) {
+    if(!rr_cookie_flfetch("kc")) {
+        sl_send_reply("403", "Invalid routing cookie");
+        exit;
+    }
+}
+...
+</programlisting>
+      </example>
+    </section>
+
     <section id="rr.f.check_route_param">
       <title><function
       moreinfo="none">check_route_param(re)</function></title>

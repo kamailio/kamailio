@@ -12,7 +12,6 @@ Build-Depends:
  dpkg-dev (>= 1.16.1.1),
  bison,
  cmake (>= 3.10),
- default-libmysqlclient-dev,
  docbook-xml,
  docbook-xsl,
  erlang-dev,
@@ -27,6 +26,7 @@ Build-Depends:
  libjwt-dev,
  libldap2-dev,
  liblua5.5-dev,
+ libmariadb-dev-compat,
  libmaxminddb-dev,
  libmemcached-dev,
  libmicrohttpd-dev,
@@ -272,8 +272,8 @@ Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
- default-mysql-client | virtual-mysql-client,
  kamailio (= ${binary:Version}),
+ mariadb-client | virtual-mysql-client,
  ${misc:Depends},
  ${shlibs:Depends},
 Description: MySQL database connectivity module for Kamailio

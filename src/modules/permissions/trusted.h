@@ -28,14 +28,6 @@
 #include "../../core/parser/msg_parser.h"
 
 
-extern struct trusted_list **
-		*perm_trust_table; /* Pointer to current trusted hash table pointer */
-extern struct trusted_list *
-		*perm_trust_table_1; /* Pointer to trusted hash table 1 */
-extern struct trusted_list *
-		*perm_trust_table_2; /* Pointer to trusted hash table 2 */
-
-
 /*
  * Initialize data structures
  */
@@ -46,6 +38,18 @@ int init_trusted(void);
  * Open database connections if necessary
  */
 int init_child_trusted(int rank);
+
+
+/*
+ * Get pointer to the current table and increase reference count
+ */
+struct trusted_table *get_trusted_table(void);
+
+/*
+ * Release the reference obtained by get_trusted_table().
+ * Must be called when done with the table, and invalidates the pointer.
+ */
+void put_trusted_table(struct trusted_table *);
 
 
 /*

@@ -39,14 +39,18 @@ int rpc_check_reload(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Not ready for reload");
 		return -1;
 	}
+
+	lock_get(perm_rpc_reload_time_lock);
+
 	if(*perm_rpc_reload_time != 0
 			&& *perm_rpc_reload_time > time(NULL) - perm_reload_delta) {
+		lock_release(perm_rpc_reload_time_lock);
 		LM_ERR("ongoing reload\n");
 		rpc->fault(ctx, 500, "ongoing reload");
 		return -1;
 	}
-	// we are reloading, don't allow new reloads
-	*perm_rpc_reload_time = time(NULL) + 86400;
+	*perm_rpc_reload_time = time(NULL);
+	lock_release(perm_rpc_reload_time_lock);
 	return 0;
 }
 
@@ -64,7 +68,7 @@ void rpc_trusted_reload(rpc_t *rpc, void *c)
 	if(perm_db_mode == ENABLE_CACHE) {
 		if(reload_trusted_table_cmd() != 1) {
 			rpc->fault(c, 500, "Reload failed.");
-			goto done;
+			return;
 		}
 		rpc->rpl_printf(c, "Reload OK");
 	} else {
@@ -72,11 +76,6 @@ void rpc_trusted_reload(rpc_t *rpc, void *c)
 			   "disabled.\n");
 		rpc->fault(c, 500, "Reload skipped (disabled cache)");
 	}
-
-done:
-	// reloading is done
-	*perm_rpc_reload_time = time(NULL);
-	return;
 }
 
 
@@ -85,16 +84,18 @@ done:
  */
 void rpc_trusted_dump(rpc_t *rpc, void *c)
 {
+	struct trusted_table *table = get_trusted_table();
 
-	if(perm_trust_table == NULL) {
+	if(table == NULL) {
 		rpc->fault(c, 500, "No trusted table");
 		return;
 	}
 
-	if(hash_table_rpc_print(*perm_trust_table, rpc, c) < 0) {
+	if(hash_table_rpc_print(table->table, rpc, c) < 0) {
 		LM_DBG("failed to print a hash_table dump\n");
-		return;
 	}
+
+	put_trusted_table(table);
 
 	return;
 }
@@ -112,14 +113,10 @@ void rpc_address_reload(rpc_t *rpc, void *c)
 
 	if(reload_address_table_cmd() != 1) {
 		rpc->fault(c, 500, "Reload failed.");
-		goto done;
+		return;
 	}
 
 	rpc->rpl_printf(c, "Reload OK");
-done:
-	// reloading is done
-	*perm_rpc_reload_time = time(NULL);
-	return;
 }
 
 
@@ -128,14 +125,18 @@ done:
  */
 void rpc_address_dump(rpc_t *rpc, void *c)
 {
+	struct addr_table *table = get_addr_hash_table();
 
-	if(perm_addr_table == NULL) {
+	if(table == NULL) {
 		rpc->fault(c, 500, "No address table");
 		return;
 	}
-	if(addr_hash_table_rpc_print(*perm_addr_table, rpc, c) < 0) {
+	if(addr_hash_table_rpc_print(table->table, rpc, c) < 0) {
 		LM_DBG("failed to print address table dump\n");
 	}
+
+	put_addr_hash_table(table);
+
 	return;
 }
 
@@ -145,13 +146,17 @@ void rpc_address_dump(rpc_t *rpc, void *c)
  */
 void rpc_subnet_dump(rpc_t *rpc, void *c)
 {
-	if(perm_subnet_table == NULL) {
+	struct subnet_table *table = get_subnet_table();
+
+	if(table == NULL) {
 		rpc->fault(c, 500, "No subnet table");
 		return;
 	}
-	if(subnet_table_rpc_print(*perm_subnet_table, rpc, c) < 0) {
+	if(subnet_table_rpc_print(table->table, table->count, rpc, c) < 0) {
 		LM_DBG("failed to print subnet table dump\n");
 	}
+
+	put_subnet_table(table);
 
 	return;
 }
@@ -162,14 +167,18 @@ void rpc_subnet_dump(rpc_t *rpc, void *c)
  */
 void rpc_domain_name_dump(rpc_t *rpc, void *c)
 {
+	struct domain_name_table *table = get_domain_name_table();
 
-	if(perm_domain_table == NULL) {
+	if(table == NULL) {
 		rpc->fault(c, 500, "No domain list table");
 		return;
 	}
-	if(domain_name_table_rpc_print(*perm_domain_table, rpc, c) < 0) {
+	if(domain_name_table_rpc_print(table->table, rpc, c) < 0) {
 		LM_DBG("failed to print domain table dump\n");
 	}
+
+	put_domain_name_table(table);
+
 	return;
 }
 

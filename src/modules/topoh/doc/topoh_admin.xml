@@ -110,6 +110,28 @@ modparam("topoh", "mask_ip", "192.168.0.1")
 </programlisting>
 		</example>
 	</section>
+	<section id="topoh.p.mask_cookie">
+		<title><varname>mask_cookie</varname> (str)</title>
+		<para>
+		Name of the cookie used internally for processing as header name and
+		Via parameter name. The incoming SIP message is cleaned of the attributes
+		matching it, therefore use a name unlikely to be set by the downstream
+		for legit purposes.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "TH".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>mask_cookie</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "mask_cookie", "KSRTH")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="topoh.p.mask_callid">
 		<title><varname>mask_callid</varname> (integer)</title>
 		<para>

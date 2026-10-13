@@ -115,6 +115,7 @@ int udp_server(int so)
 	carrier_t carrierid;
 	char buf[sizeof(struct pdb_msg)];
 	int i;
+	uint16_t tmpid;
 
 	for(;;) {
 		fromaddrlen = sizeof(fromaddr);
@@ -132,10 +133,9 @@ int udp_server(int so)
 			case PDB_VERSION_1:
 				/* get received bytes */
 				memcpy(&msg, buf, bytes_received);
-				//                pdb_msg_dbg(msg);
-				short int *_id =
-						(short int *)&(msg.hdr.id); /* make gcc happy */
-				msg.hdr.id = ntohs(*_id);
+				// pdb_msg_dbg(msg);
+				tmpid = msg.hdr.id;
+				msg.hdr.id = ntohs(tmpid);
 
 				i = 0;
 				while(i < strlen(msg.bdy.payload)) {
@@ -161,8 +161,8 @@ int udp_server(int so)
 				carrierid = htons(carrierid);
 
 				/* prepare the message payload to be sent
-                 * add the number string and append the carrier id
-                 */
+				 * add the number string and append the carrier id
+				 */
 				memcpy(buf, msg.bdy.payload, msg.hdr.length - sizeof(msg.hdr));
 				memcpy(buf + msg.hdr.length - sizeof(msg.hdr), &carrierid,
 						sizeof(carrierid));

@@ -77,6 +77,8 @@ typedef struct sr_pkg_api
 	sr_malloc_f xmalloc;
 	/*memory chunk allocation with 0 filling */
 	sr_malloc_f xmallocxz;
+	/*memory chunk allocation with last byte set to 0 */
+	sr_malloc_f xmallocxn;
 	/*memory chunk reallocation*/
 	sr_realloc_f xrealloc;
 	/*memory chunk reallocation with always free of old buffer*/
@@ -116,6 +118,8 @@ typedef struct sr_shm_api
 	sr_malloc_f xmalloc;
 	/*memory chunk allocation with 0 filling */
 	sr_malloc_f xmallocxz;
+	/*memory chunk allocation with last byte set to 0 */
+	sr_malloc_f xmallocxn;
 	/*memory chunk allocation without locking shm*/
 	sr_malloc_f xmalloc_unsafe;
 	/*memory chunk reallocation*/

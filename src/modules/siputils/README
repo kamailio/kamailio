@@ -684,8 +684,8 @@ tel2sip2("$ru", $fd", "$ru");
 if (is_e164("$fU")) {  # Check From header URI user part
    ...
 }
-if (is_e164("$avp(i:705)") {
-   # Check stgring value stored in avp i:705
+if (is_e164("$avp(test)") {
+   # Check string value stored in avp test
    ...
 };
 ...

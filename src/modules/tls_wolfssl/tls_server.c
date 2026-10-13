@@ -177,7 +177,11 @@ static void tls_build_ssl_cache(
 	sni = wolfSSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if(sni != NULL) {
 		tls_c->ssl_servername = shm_malloc(strlen(sni) + 1);
-		strcpy(tls_c->ssl_servername, sni);
+		if(tls_c->ssl_servername == NULL) {
+			SHM_MEM_ERROR;
+		} else {
+			strcpy(tls_c->ssl_servername, sni);
+		}
 	}
 
 	strcpy(tls_c->ssl_cipher_desc, "unknown");
@@ -188,7 +192,11 @@ static void tls_build_ssl_cache(
 		cipher_name = wolfSSL_CIPHER_get_name(cipher);
 		if(cipher_name) {
 			tls_c->ssl_cipher_name = shm_malloc(strlen(cipher_name) + 1);
-			strcpy(tls_c->ssl_cipher_name, cipher_name);
+			if(tls_c->ssl_cipher_name == NULL) {
+				SHM_MEM_ERROR;
+			} else {
+				strcpy(tls_c->ssl_cipher_name, cipher_name);
+			}
 		}
 		tls_c->ssl_cipher_bits = wolfSSL_CIPHER_get_bits(cipher, &alg_bits);
 	}
@@ -712,7 +720,6 @@ int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
 	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
-	c->lifetime = cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
 	return 0;
 }
@@ -1120,15 +1127,14 @@ redo_wr:
 				send_flags->f &= ~SND_F_CON_CLOSE;
 				break; /* or goto end */
 			case WOLFSSL_ERROR_WANT_WRITE:
-				if(unlikely(offs == 0)) {
-					/*  error, no record fits in the buffer or
-				 * no partial write enabled and buffer to small to fit
-				 * all the records */
+				if(unlikely(wr_used == 0)) {
+					/* error, nothing encoded - no record fits in the buffer */
 					BUG("write buffer too small (%d/%d bytes)\n", (int)wr_used,
 							TLS_WR_MBUF_SZ);
 					goto bug;
 				} else {
-					/* offs != 0 => something was "written"  */
+					/* wr_buf full, maybe with offs == 0: flush it and retry
+					 * the rest - wolfSSL resumes its pending record */
 					*rest_buf = buf + offs;
 					*rest_len = len - offs;
 					/* this function should be called again => disallow
@@ -1246,16 +1252,6 @@ ssl_eof:
 }
 
 
-int tls_h_encode_mp_f(struct tcp_connection *c, const char **pbuf,
-		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
-		snd_flags_t *send_flags)
-{
-	static unsigned char wr_buf[TLS_WR_MBUF_SZ];
-
-	return tls_h_encode_helper_f(
-			c, pbuf, plen, rest_buf, rest_len, send_flags, wr_buf);
-}
-
 typedef struct tls_encode_params
 {
 	struct tcp_connection *c;
@@ -1301,6 +1297,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	tcpx_task_result_t *rtask = NULL;
 	tls_encode_params_t *eparams = NULL;
 	char *ps = NULL;
+	const char *obuf = NULL;
 	int ret = 0;
 
 	LM_DBG("preparing task for tcp main process threads\n");
@@ -1319,6 +1316,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	ps = (char *)eparams + sizeof(tls_encode_params_t);
 
 	eparams->c = c;
+	obuf = *pbuf; /* caller plaintext buffer - rest_buf is an offset into it */
 	eparams->pbuf = ps;
 	memcpy(eparams->pbuf, *pbuf, *plen);
 	eparams->plen = *plen;
@@ -1347,7 +1345,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	*pbuf = eparams->pbuf;
 	*plen = eparams->plen;
 	if(eparams->rest_buf != NULL) {
-		*rest_buf = *pbuf + (eparams->rest_buf - ps);
+		*rest_buf = obuf + (eparams->rest_buf - ps);
 	}
 	*rest_len = eparams->rest_len;
 	if(send_flags != NULL) {
@@ -1362,7 +1360,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 
 /**
  * tls encode core callback
- * - for parameters see tls_h_encode_mp_f(...)
+ * - for parameters see tls_h_encode_helper_f(...)
  */
 int tls_h_encode_f(struct tcp_connection *c, const char **pbuf,
 		unsigned int *plen, const char **rest_buf, unsigned int *rest_len,
@@ -1407,7 +1405,7 @@ int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	WOLFSSL_BIO *rwbio;
 	unsigned char rd_buf[TLS_RD_MBUF_SZ];
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
-	size_t wr_used, rd_unused;
+	size_t wr_used, rd_pending;
 	size_t nr, npos, nw;
 	struct tls_extra_data *tls_c;
 	int n, flush_flags;
@@ -1445,9 +1443,12 @@ redo_read:
 	/* real read() */
 	/* read() only if no previously detected EOF, or previous
      * short read (which means the socket buffer was emptied) */
-	if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)))) {
-		/* don't read more than the free bytes in the tcp req buffer */
-		read_size = MIN_unsigned(TLS_RD_MBUF_SZ, bytes_free);
+	/* ciphertext left unread in the rd BIO when the tcp req buffer filled */
+	rd_pending = wolfSSL_BIO_ctrl_pending(wolfSSL_SSL_get_rbio(tls_c->ssl));
+	if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ))
+			   && rd_pending < TLS_RD_MBUF_SZ)) {
+		/* don't read more than the free bytes in the tcp req buffer or BIO */
+		read_size = MIN_unsigned(TLS_RD_MBUF_SZ - rd_pending, bytes_free);
 		bytes_read =
 				tcp_read_data(_tconfd(c), c, (char *)rd_buf, read_size, flags);
 		TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n", c,
@@ -1654,14 +1655,7 @@ continue_ssl_read:
 		case WOLFSSL_ERROR_WANT_READ:
 			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n", c, flags,
 					*flags);
-			/* needs to read more data */
-			if(unlikely((rd_unused = wolfSSL_BIO_wpending(rwbio)))) {
-				/* data still in the read buffer */
-				BUG("SSL_ERROR_WANT_READ but data still in"
-					" the rbio (%d bytes)\n",
-						(int)rd_unused);
-				goto bug;
-			}
+			/* needs to read more data (a partial record may wait in the rbio) */
 			if(unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0)
 					&& bytes_free) {
 				/* there might still be data to read and there is space

@@ -34,6 +34,7 @@
 #include "../../core/shm_init.h"
 #include "../../core/script_cb.h"
 #include "../../core/msg_translator.h"
+#include "../../core/data_lump.h"
 #include "../../core/kemi.h"
 
 #include "debugger_api.h"
@@ -231,7 +232,76 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
+	/* detach from core logging: cleanup() logs after shm is released */
+	set_module_debug_level_cb(NULL);
+	set_module_debug_facility_cb(NULL);
 	dbg_cfg = NULL;
+}
+
+/**
+ *
+ */
+typedef struct dbg_sip_msg_lumps
+{
+	struct lump *add_rm;
+	struct lump *body_lumps;
+} dbg_sip_msg_lumps_t;
+
+/**
+ *
+ */
+static int dbg_sip_msg_lumps_clone(sip_msg_t *msg, dbg_sip_msg_lumps_t *ctx)
+{
+	struct lump *dup_add_rm = NULL;
+	struct lump *dup_body_lumps = NULL;
+
+	memset(ctx, 0, sizeof(*ctx));
+	ctx->add_rm = msg->add_rm;
+	ctx->body_lumps = msg->body_lumps;
+
+	if(ctx->add_rm != NULL) {
+		dup_add_rm = dup_lump_list(ctx->add_rm);
+		if(dup_add_rm == NULL) {
+			LM_ERR("failed to duplicate header lumps for dbg_sip_msg()\n");
+			goto error;
+		}
+	}
+
+	if(ctx->body_lumps != NULL) {
+		dup_body_lumps = dup_lump_list(ctx->body_lumps);
+		if(dup_body_lumps == NULL) {
+			LM_ERR("failed to duplicate body lumps for dbg_sip_msg()\n");
+			goto error;
+		}
+	}
+
+	msg->add_rm = dup_add_rm;
+	msg->body_lumps = dup_body_lumps;
+	return 0;
+
+error:
+	if(dup_add_rm != NULL) {
+		free_duped_lump_list(dup_add_rm);
+	}
+	if(dup_body_lumps != NULL) {
+		free_duped_lump_list(dup_body_lumps);
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static void dbg_sip_msg_lumps_free(sip_msg_t *msg, dbg_sip_msg_lumps_t *ctx)
+{
+	if(msg->add_rm != NULL && msg->add_rm != ctx->add_rm) {
+		free_duped_lump_list(msg->add_rm);
+	}
+	if(msg->body_lumps != NULL && msg->body_lumps != ctx->body_lumps) {
+		free_duped_lump_list(msg->body_lumps);
+	}
+	msg->add_rm = ctx->add_rm;
+	msg->body_lumps = ctx->body_lumps;
 }
 
 /**
@@ -514,7 +584,8 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 {
 	int ilevel = cfg_get(core, core_cfg, debug);
 	int ifacility = cfg_get(core, core_cfg, log_facility);
-	int flag = FLAG_MSG_LUMPS_ONLY; // copy lumps only, not the whole message
+	int flag = FLAG_MSG_LUMPS_ONLY
+			   | FLAG_MSG_DRYRUN; // copy lumps only, not the whole message
 	unsigned int new_buf_offs = 0, orig_offs = 0;
 	char *hdr_lumps = NULL;
 	char *bdy_lumps = NULL;
@@ -527,7 +598,10 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	const char *end_txt = "-------------------------- END OF SIP message debug "
 						  "---------------------------\n\n";
 	struct dest_info send_info;
+	dbg_sip_msg_lumps_t lctx;
 	str obuf;
+
+	memset(&lctx, 0, sizeof(lctx));
 
 	if(msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
 		LM_ERR("invalid usage - not in request route\n");
@@ -543,28 +617,33 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 		ifacility = (int)(long)facility;
 	}
 
+	if(dbg_sip_msg_lumps_clone(msg, &lctx) < 0) {
+		return -1;
+	}
+
 	/* msg_apply_changes_f code needed to get the current msg */
 	init_dest_info(&send_info);
 	send_info.proto = PROTO_UDP;
 	if(msg->first_line.type == SIP_REPLY) {
-		obuf.s = generate_res_buf_from_sip_res(
-				msg, (unsigned int *)&obuf.len, BUILD_NO_VIA1_UPDATE);
+		obuf.s = generate_res_buf_from_sip_res(msg, (unsigned int *)&obuf.len,
+				BUILD_NO_VIA1_UPDATE | BUILD_DRYRUN);
 	} else {
 		obuf.s = build_req_buf_from_sip_req(msg, (unsigned int *)&obuf.len,
 				&send_info,
-				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE,
+				BUILD_NO_PATH | BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE
+						| BUILD_DRYRUN,
 				NULL);
 	}
 
 	if(obuf.s == NULL) {
 		LM_ERR("couldn't update msg buffer content\n");
-		return -1;
+		goto error;
 	}
 
 	if(obuf.len >= BUF_SIZE) {
 		LM_ERR("new buffer overflow (%d)\n", obuf.len);
 		pkg_free(obuf.s);
-		return -1;
+		goto error;
 	}
 
 	/* skip original uri */
@@ -576,16 +655,16 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	}
 
 	/* alloc private mem and copy lumps */
-	hdr_lumps = pkg_malloc(BUF_SIZE);
+	hdr_lumps = pkg_malloc(BUF_SIZE + 1);
 	if(hdr_lumps == NULL) {
 		PKG_MEM_ERROR;
-		return -1;
+		goto error;
 	}
-	bdy_lumps = pkg_malloc(BUF_SIZE);
-	if(hdr_lumps == NULL) {
+	bdy_lumps = pkg_malloc(BUF_SIZE + 1);
+	if(bdy_lumps == NULL) {
 		pkg_free(hdr_lumps);
 		PKG_MEM_ERROR;
-		return -1;
+		goto error;
 	}
 
 	new_buf_offs = 0;
@@ -615,8 +694,19 @@ static int w_dbg_sip_msg(struct sip_msg *msg, char *level, char *facility)
 	if(bdy_lumps) {
 		pkg_free(bdy_lumps);
 	}
+	dbg_sip_msg_lumps_free(msg, &lctx);
 
 	return 1;
+
+error:
+	if(hdr_lumps) {
+		pkg_free(hdr_lumps);
+	}
+	if(bdy_lumps) {
+		pkg_free(bdy_lumps);
+	}
+	dbg_sip_msg_lumps_free(msg, &lctx);
+	return -1;
 }
 
 /**

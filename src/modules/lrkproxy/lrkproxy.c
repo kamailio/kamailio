@@ -40,6 +40,7 @@
 #include <sys/un.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <netdb.h>
 #include <poll.h>
 #include <stdio.h>
@@ -919,8 +920,39 @@ static int lrkp_keep_alive(struct lrkp_node *node)
 	return 1;
 }
 
+static int lrkp_build_spaced_field(str *dst, const str *src)
+{
+	if(dst == NULL || src == NULL || src->s == NULL || src->len <= 0) {
+		LM_ERR("invalid string field for lrkproxy command\n");
+		return -1;
+	}
+
+	if(src->len > INT_MAX - 2) {
+		LM_ERR("string field too long for lrkproxy command: %d\n", src->len);
+		return -1;
+	}
+
+	dst->len = src->len + 1; /* trailing space, not NUL */
+	dst->s = (char *)pkg_malloc(dst->len + 1);
+	if(dst->s == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	memcpy(dst->s, src->s, src->len);
+	dst->s[src->len] = ' ';
+	dst->s[src->len + 1] = '\0';
+
+	return 0;
+}
+
 static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e)
 {
+	if(e == NULL) {
+		LM_ERR("invalid null lrkproxy hash entry\n");
+		return 0;
+	}
+
 	int buflen = 254;
 	char buf[buflen];
 	int v_len = 0;
@@ -934,7 +966,7 @@ static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e)
 	char dnat_ipv4[20];
 	char dnat_port[20];
 	char timeout[20];
-	char callid[50];
+	str callid = {0, 0};
 
 	struct iovec v[] = {
 			{NULL, 0}, /* reserved (cookie) */
@@ -1007,15 +1039,19 @@ static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e)
 	v[10].iov_len = strlen(v[10].iov_base);
 	v_len += v[10].iov_len;
 
-	//set callid to buffer.
-	sprintf(callid, "%.*s ", e->callid.len, e->callid.s);
-	v[11].iov_base = callid;
-	v[11].iov_len = strlen(v[11].iov_base);
+	//set callid to dynamically allocated buffer.
+	if(lrkp_build_spaced_field(&callid, &e->callid) < 0) {
+		return 0;
+	}
+	v[11].iov_base = callid.s;
+	v[11].iov_len = callid.len;
 	v_len += v[11].iov_len;
 	//    LM_ERR("e->callid.len is:%d right now.\n\n", e->callid.len);
 
 	memset(buf, 0, buflen);
 	memcpy(buf, send_lrkp_command(e->node, v, 12, v_len), buflen);
+	pkg_free(callid.s);
+	callid.s = NULL;
 	//
 
 	//    if (buf == NULL) {
@@ -1043,6 +1079,11 @@ static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e)
 
 static int lrkp_remove_conntrack_rule(struct lrkproxy_hash_entry *e)
 {
+	if(e == NULL) {
+		LM_ERR("invalid null lrkproxy hash entry\n");
+		return 0;
+	}
+
 	int buflen = 254;
 	char buf[buflen];
 	int v_len = 0;
@@ -1056,7 +1097,7 @@ static int lrkp_remove_conntrack_rule(struct lrkproxy_hash_entry *e)
 	char dnat_ipv4[20];
 	char dnat_port[20];
 	char timeout[20];
-	char callid[50];
+	str callid = {0, 0};
 
 	struct iovec v[] = {
 			{NULL, 0}, /* reserved (cookie) */
@@ -1129,15 +1170,19 @@ static int lrkp_remove_conntrack_rule(struct lrkproxy_hash_entry *e)
 	v[10].iov_len = strlen(v[10].iov_base);
 	v_len += v[10].iov_len;
 
-	//set callid to buffer.
-	sprintf(callid, "%.*s ", e->callid.len, e->callid.s);
-	v[11].iov_base = callid;
-	v[11].iov_len = strlen(v[11].iov_base);
+	//set callid to dynamically allocated buffer.
+	if(lrkp_build_spaced_field(&callid, &e->callid) < 0) {
+		return 0;
+	}
+	v[11].iov_base = callid.s;
+	v[11].iov_len = callid.len;
 	v_len += v[11].iov_len;
 	//    LM_ERR("e->callid.len is:%d right now.\n\n", e->callid.len);
 
 	memset(buf, 0, buflen);
 	memcpy(buf, send_lrkp_command(e->node, v, 12, v_len), buflen);
+	pkg_free(callid.s);
+	callid.s = NULL;
 	//
 
 	//    if (buf == NULL) {
@@ -1458,14 +1503,16 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 	}
 	//            LM_INFO("body:<%.*s>\n", body.len, body.s);
 
-	//allocate new buffer to new sdp buffer.
-	newbody.len = 1024;
+	//allocate new buffer to new sdp buffer - the rebuilt body can never
+	//exceed the size of the original body plus the rewritten header
+	//lines below, and every copy is bounded by the remaining capacity.
+	newbody.len = body.len + 1024;
 	newbody.s = pkg_malloc(newbody.len);
 	if(newbody.s == NULL) {
 		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
-	memset(newbody.s, 0, 1024);
+	memset(newbody.s, 0, newbody.len);
 
 	off = body.s;
 	start_sdp_o = strstr(off, "o=");
@@ -1543,12 +1590,20 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 
 	while(*off != EOB) //while end of body.
 	{
+		int remaining;
+
 		sdp_param_start = off;
 		sdp_param_end = sdp_param_start;
 		while(*sdp_param_end != CR && *sdp_param_end != LF
 				&& *sdp_param_end != EOB)
 			sdp_param_end++;
 		len = (int)(sdp_param_end - sdp_param_start);
+		remaining = newbody.len - (int)strlen(newbody.s) - 1;
+		if(remaining <= 0) {
+			LM_WARN("lrkproxy: rebuilt sdp body exceeds %d bytes, truncating\n",
+					newbody.len);
+			break;
+		}
 		if((int)(start_sdp_o - off) == 0) {
 			memset(sdp_new_o, 0, 128);
 			time_t seconds;
@@ -1556,21 +1611,21 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 			//            snprintf(sdp_new_o, 128, "o=lrkproxy %s %s IN IP4 %s\r", SUP_CPROTOVER, REQ_CPROTOVER, ip_selected);
 			snprintf(sdp_new_o, 128, "o=lrkproxy %ld %ld IN IP4 %s\r", seconds,
 					seconds, ip_selected);
-			strcat(newbody.s, sdp_new_o);
+			strncat(newbody.s, sdp_new_o, remaining);
 			off += len + 1;
 			continue;
 		}
 		if((int)(start_sdp_s - off) == 0) {
 			memset(sdp_new_s, 0, 128);
 			snprintf(sdp_new_s, 128, "s=lrkproxy Support only Audio Call\r");
-			strcat(newbody.s, sdp_new_s);
+			strncat(newbody.s, sdp_new_s, remaining);
 			off += len + 1;
 			continue;
 		}
 		if((int)(start_sdp_c - off) == 0) {
 			memset(sdp_new_c, 0, 128);
 			snprintf(sdp_new_c, 128, "c=IN IP4 %s\r", ip_selected);
-			strcat(newbody.s, sdp_new_c);
+			strncat(newbody.s, sdp_new_c, remaining);
 			off += len + 1;
 			continue;
 		}
@@ -1594,12 +1649,12 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e,
 						(int)(len - (avp_flags - off)), avp_flags);
 			//               snprintf(sdp_new_m, 128, "m=audio %d %.*s\r",e->node->lrkp_n_c->current_port, (int)(len - (avp_flags-off)), avp_flags);
 			//            printf("%.*s\n\n", len - (avp_flags-off), avp_flags);
-			strcat(newbody.s, sdp_new_m);
+			strncat(newbody.s, sdp_new_m, remaining);
 			off += len + 1;
 			continue;
 		}
 
-		strncat(newbody.s, off, len + 1);
+		strncat(newbody.s, off, len + 1 > remaining ? remaining : len + 1);
 		off += len + 1;
 	}
 

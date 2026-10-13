@@ -255,6 +255,11 @@ key:"location:entry::example-ruid-1", value:"hash_value")
      * hiredis-cluster - available at
        https://github.com/Nordix/hiredis-cluster
 
+   Please note that the cluster protocol does not work together with the
+   sentinel support in this module. For this reason the cluster support is
+   not compiled by default and need to be enabled in the module build
+   scripts.
+
 4. Parameters
 
    4.1. schema_path (string)

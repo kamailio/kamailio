@@ -23,6 +23,8 @@
 #ifndef _REDIS_SENTINELS_H_
 #define _REDIS_SENTINELS_H_
 
+#ifdef WITH_SENTINELS
+
 #include <hiredis/hiredis.h>
 #include "db_redis_mod.h"
 #include "redis_connection.h"
@@ -68,6 +70,9 @@ typedef struct
 
 extern sentinel_config_t db_redis_sc;
 extern struct reply_list replica_list;
+extern int db_redis_with_sentinels;
+extern int use_replicas;
+extern char *db_redis_master_name;
 extern time_t last_seen_time;
 extern time_t *db_redis_shared_time;
 extern int using_master_read_only;
@@ -84,15 +89,25 @@ int replica_list_free(struct reply_list *list);
  */
 int parse_sentinel_config(char *spec);
 
+/* module param callback for sentinels_config */
+int sentinels_param(modparam_t type, void *val);
+
+/* timer callback used for replica recheck */
+void db_redis_timer(unsigned int ticks, void *param);
+
+/* initialize sentinel runtime state during module init */
+int db_redis_sentinels_init_runtime(void);
+
+/* decide when to refresh replica usage while on master */
+int should_recheck_replicas(time_t crt_time);
+
+/* decide if connection should reconnect to refresh replica usage */
+int db_redis_should_reconnect_for_replica_recheck(void);
+
 /*
  * Add sentinels in case of sentinel mode
  */
 int db_redis_add_sentinels(char *spec);
-
-/*
- * Authenticate to Redis if a password was provided
- */
-int db_redis_authenticate(redisContext *ctx, const char *password);
 
 /*
  * Select a master server using the Sentinel
@@ -103,5 +118,12 @@ int db_redis_select_master(redisContext *sentinel_ctx, km_redis_con_t *con);
  * Select a replica server using the Sentinel
  */
 int db_redis_select_replica(redisContext *sentinel_ctx, km_redis_con_t *con);
+
+/*
+ * Resolve redis host/port via configured sentinels.
+ */
+int db_redis_resolve_server_via_sentinels(km_redis_con_t *con);
+
+#endif
 
 #endif /* _REDIS_SENTINELS_H_ */

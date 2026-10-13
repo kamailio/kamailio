@@ -120,21 +120,22 @@ Tyler Moore
               4.2. ds_select_domain(set, alg[, limit])
               4.3. ds_select(set, alg [, limit])
               4.4. ds_select_routes(rules, mode [, limit])
-              4.5. ds_next_dst()
-              4.6. ds_next_domain()
-              4.7. ds_set_dst()
-              4.8. ds_set_domain()
-              4.9. ds_mark_dst([state])
-              4.10. ds_mark_addr(state, setid, uri)
-              4.11. ds_list_exists(groupid)
-              4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.13. ds_is_active(groupid [, uri])
-              4.14. ds_load_update()
-              4.15. ds_load_unset()
-              4.16. ds_reload()
-              4.17. ds_dsg_fetch(setid)
-              4.18. ds_dsg_fetch_uri(setid, uri)
-              4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+              4.5. ds_select_dns([limit])
+              4.6. ds_next_dst()
+              4.7. ds_next_domain()
+              4.8. ds_set_dst()
+              4.9. ds_set_domain()
+              4.10. ds_mark_dst([state])
+              4.11. ds_mark_addr(state, setid, uri)
+              4.12. ds_list_exists(groupid)
+              4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+              4.14. ds_is_active(groupid [, uri])
+              4.15. ds_load_update()
+              4.16. ds_load_unset([callid])
+              4.17. ds_reload()
+              4.18. ds_dsg_fetch(setid)
+              4.19. ds_dsg_fetch_uri(setid, uri)
+              4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
         5. RPC Commands
 
@@ -144,9 +145,10 @@ Tyler Moore
               5.4. dispatcher.reload
               5.5. dispatcher.ping_active
               5.6. dispatcher.add
-              5.7. dispatcher.remove
-              5.8. dispatcher.hash
-              5.9. dispatcher.oclist
+              5.7. dispatcher.update
+              5.8. dispatcher.remove
+              5.9. dispatcher.hash
+              5.10. dispatcher.oclist
 
         6. Installation and Running
 
@@ -223,18 +225,19 @@ Tyler Moore
    1.55. ds_select_domain usage
    1.56. ds_select usage
    1.57. ds_select_routes usage
-   1.58. ds_mark_dst usage
-   1.59. ds_mark_addr usage
-   1.60. ds_list_exists usage
-   1.61. ds_is_from_list usage
-   1.62. ds_is_active usage
-   1.63. ds_load_unset usage
-   1.64. ds_reload usage
-   1.65. ds_dsg_fetch() usage
-   1.66. ds_dsg_fetch_uri() usage
-   1.67. ds_oc_set_attrs() usage
-   1.68. dispatcher list file
-   1.69. Kamailio config script - sample dispatcher usage
+   1.58. ds_select_dns usage
+   1.59. ds_mark_dst usage
+   1.60. ds_mark_addr usage
+   1.61. ds_list_exists usage
+   1.62. ds_is_from_list usage
+   1.63. ds_is_active usage
+   1.64. ds_load_unset usage
+   1.65. ds_reload usage
+   1.66. ds_dsg_fetch() usage
+   1.67. ds_dsg_fetch_uri() usage
+   1.68. ds_oc_set_attrs() usage
+   1.69. dispatcher list file
+   1.70. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -303,21 +306,22 @@ Chapter 1. Admin Guide
         4.2. ds_select_domain(set, alg[, limit])
         4.3. ds_select(set, alg [, limit])
         4.4. ds_select_routes(rules, mode [, limit])
-        4.5. ds_next_dst()
-        4.6. ds_next_domain()
-        4.7. ds_set_dst()
-        4.8. ds_set_domain()
-        4.9. ds_mark_dst([state])
-        4.10. ds_mark_addr(state, setid, uri)
-        4.11. ds_list_exists(groupid)
-        4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.13. ds_is_active(groupid [, uri])
-        4.14. ds_load_update()
-        4.15. ds_load_unset()
-        4.16. ds_reload()
-        4.17. ds_dsg_fetch(setid)
-        4.18. ds_dsg_fetch_uri(setid, uri)
-        4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+        4.5. ds_select_dns([limit])
+        4.6. ds_next_dst()
+        4.7. ds_next_domain()
+        4.8. ds_set_dst()
+        4.9. ds_set_domain()
+        4.10. ds_mark_dst([state])
+        4.11. ds_mark_addr(state, setid, uri)
+        4.12. ds_list_exists(groupid)
+        4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+        4.14. ds_is_active(groupid [, uri])
+        4.15. ds_load_update()
+        4.16. ds_load_unset([callid])
+        4.17. ds_reload()
+        4.18. ds_dsg_fetch(setid)
+        4.19. ds_dsg_fetch_uri(setid, uri)
+        4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    5. RPC Commands
 
@@ -327,9 +331,10 @@ Chapter 1. Admin Guide
         5.4. dispatcher.reload
         5.5. dispatcher.ping_active
         5.6. dispatcher.add
-        5.7. dispatcher.remove
-        5.8. dispatcher.hash
-        5.9. dispatcher.oclist
+        5.7. dispatcher.update
+        5.8. dispatcher.remove
+        5.9. dispatcher.hash
+        5.10. dispatcher.oclist
 
    6. Installation and Running
 
@@ -605,6 +610,9 @@ modparam("dispatcher", "xavp_dst", "_dsdst_")
      * grp - the set id (group id).
      * uri - the URI address.
      * sock - the socket pointer.
+     * sockmap_set - marks the effective per-destination socket map;
+       sockmap_udp, sockmap_tcp, sockmap_tls, and sockmap_sctp contain the
+       corresponding socket pointers, when present.
      * socket - the socket string - it is added only if xavp_dst_mode has
        bit 2 set (value 2).
      * sockname - the sockname string - it is added only if xavp_dst_mode
@@ -1049,12 +1057,28 @@ end
 3.40. event_callback_mode (int)
 
    Controls when the event_route or the KEMI event callback function are
-   executed. If set to 0, they are executed when the destination state
-   changes based on OPTIONS keepalives or the use of config functions to
-   set the state (e.g., ds_mark_dst(...)). If set to 1, they are executed
-   only on state change due to OPTIONS keepalives. If set to 2, the event
-   routes will always be executed when a state change occurs, even if no
-   previous state exists (for example, on startup or reload).
+   executed.
+
+   If set to 0, they are executed when the destination state changes based
+   on OPTIONS keepalives or the use of config functions to set the state
+   (e.g., ds_mark_dst(...)).
+
+   The value can be a bitmask combining the following flags:
+     * 1 (1<<0) - executed only on state change due to OPTIONS keepalives
+       (ignores state changes from config functions).
+     * 2 (1<<1) - always executed when a state change occurs, even if no
+       previous state exists (for example, on initial probe transition).
+     * 4 (1<<2) - executed for the initial state of disabled and inactive
+       destinations on startup and RPC reload.
+
+   Modes can be combined by adding their values. For example:
+     * 6 (2 + 4) - executes event routes on state change even with no
+       previous state, and also triggers initial routes for
+       disabled/inactive destinations on startup and reload.
+     * 5 (1 + 4) - executes event routes only on OPTIONS keepalives, plus
+       triggers initial routes for disabled/inactive destinations on
+       startup and reload.
+     * 7 (1 + 2 + 4) - enables all above behaviors.
 
    Note that event routes are not executed on RPC commands setting the
    destination state.
@@ -1063,7 +1087,9 @@ end
 
    Example 1.42. Set event_callback_mode parameter
 ...
-modparam("dispatcher", "event_callback_mode", 1)
+# execute routes on state change without previous state and on startup/reload (2
+ + 4)
+modparam("dispatcher", "event_callback_mode", 6)
 ...
 -- event callback function implemented in Lua
 function ksr_dispatcher_event(evname)
@@ -1121,18 +1147,17 @@ modparam("dispatcher", "ds_load_mode", 1)
 3.44. reload_delta (int)
 
    The number of seconds that have to be waited before executing a new
-   reload of dispatcher records. By default there is a rate limiting of
-   maximum one reload in five seconds.
+   reload of dispatcher records (it applies to RPC add and remove
+   commands). It is useful to enforce a rate limiting of reload actions in
+   a specific time interval.
 
-   If set to 0, no rate limit is configured. Note carefully: use this
-   configuration only in tests environments because executing many RPC
-   reload commands at the same time can cause unexpected behavior.
+   If set to 0, no rate limit is configured.
 
-   Default value is “5”.
+   Default value is “0”.
 
    Example 1.46. Set reload_delta parameter
 ...
-modparam("dispatcher", "reload_delta", 1)
+modparam("dispatcher", "reload_delta", 5)
 ...
 
 3.45. ds_dns_mode (int)
@@ -1208,21 +1233,22 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.2. ds_select_domain(set, alg[, limit])
    4.3. ds_select(set, alg [, limit])
    4.4. ds_select_routes(rules, mode [, limit])
-   4.5. ds_next_dst()
-   4.6. ds_next_domain()
-   4.7. ds_set_dst()
-   4.8. ds_set_domain()
-   4.9. ds_mark_dst([state])
-   4.10. ds_mark_addr(state, setid, uri)
-   4.11. ds_list_exists(groupid)
-   4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.13. ds_is_active(groupid [, uri])
-   4.14. ds_load_update()
-   4.15. ds_load_unset()
-   4.16. ds_reload()
-   4.17. ds_dsg_fetch(setid)
-   4.18. ds_dsg_fetch_uri(setid, uri)
-   4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+   4.5. ds_select_dns([limit])
+   4.6. ds_next_dst()
+   4.7. ds_next_domain()
+   4.8. ds_set_dst()
+   4.9. ds_set_domain()
+   4.10. ds_mark_dst([state])
+   4.11. ds_mark_addr(state, setid, uri)
+   4.12. ds_list_exists(groupid)
+   4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+   4.14. ds_is_active(groupid [, uri])
+   4.15. ds_load_update()
+   4.16. ds_load_unset([callid])
+   4.17. ds_reload()
+   4.18. ds_dsg_fetch(setid)
+   4.19. ds_dsg_fetch_uri(setid, uri)
+   4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1532,35 +1558,64 @@ failure_route[REROUTE] {
 }
 ...
 
-4.5.  ds_next_dst()
+4.5.  ds_select_dns([limit])
+
+   Resolves the current next hop using the procedures from RFC 3263 and
+   stores the resulting target addresses in the XAVP configured by the
+   xavp_dst parameter. The destination URI is used as the next hop when it
+   is set; otherwise, the Request-URI is used. The lookup performs NAPTR,
+   SRV, and CNAME/A/AAAA queries as required by the URI and stores
+   concrete SIP URIs containing the resolved IP address, port, and
+   transport in DNS selection order.
+
+   The optional limit parameter is a positive integer or a variable
+   containing an integer. Resolution stops after this number of targets
+   has been stored. A missing or zero value means no limit.
+
+   The function returns true if at least one target was resolved and
+   stored. The generated XAVP records contain the “uri” field and can be
+   used by ds_next_dst() for serial failover when bit 2 of the flags
+   parameter is set.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.58. ds_select_dns usage
+...
+if(ds_select_dns("8")) {
+        ds_next_dst();
+        t_relay();
+}
+...
+
+4.6.  ds_next_dst()
 
    Takes the next destination address from the corresponding XAVPs and
    sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.6.  ds_next_domain()
+4.7.  ds_next_domain()
 
    Takes the next destination address from the corresponding XAVPs and
    sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.7.  ds_set_dst()
+4.8.  ds_set_dst()
 
    Takes the current destination address from the corresponding XAVPs and
    sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.8.  ds_set_domain()
+4.9.  ds_set_domain()
 
    Takes the current destination address from the corresponding XAVPs and
    sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.9.  ds_mark_dst([state])
+4.10.  ds_mark_dst([state])
 
    Mark the last used address from destination set as inactive ("i"/"I"),
    active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
@@ -1587,7 +1642,7 @@ failure_route[REROUTE] {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.58. ds_mark_dst usage
+   Example 1.59. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1597,7 +1652,7 @@ failure_route[tryagain] {
 }
 ...
 
-4.10.  ds_mark_addr(state, setid, uri)
+4.11.  ds_mark_addr(state, setid, uri)
 
    Set the state to the target specified by setid and uri. The parameter
    state can have same value as for ds_mark_dst(). All parameters can
@@ -1605,12 +1660,12 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.59. ds_mark_addr usage
+   Example 1.60. ds_mark_addr usage
 ...
     ds_mark_addr("ip", "1", "sip:127.0.0.1:5080"); # set to inactive and probing
 ...
 
-4.11.  ds_list_exists(groupid)
+4.12.  ds_list_exists(groupid)
 
    Function alias: ds_list_exist(groupid)
 
@@ -1622,14 +1677,14 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.60. ds_list_exists usage
+   Example 1.61. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
 }
 ...
 
-4.12.  ds_is_from_list([groupid [, mode [, uri] ] ])
+4.13.  ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -1684,7 +1739,7 @@ Note
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.61. ds_is_from_list usage
+   Example 1.62. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1700,7 +1755,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.13.  ds_is_active(groupid [, uri])
+4.14.  ds_is_active(groupid [, uri])
 
    This function returns true, if there is an active URI in the
    destination group; otherwise false. If the uri parameter is provided,
@@ -1714,7 +1769,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.62. ds_is_active usage
+   Example 1.63. ds_is_active usage
 ...
 if(ds_is_active("10")) {
     ...
@@ -1724,7 +1779,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.14.  ds_load_update()
+4.15.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -1735,14 +1790,23 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.15.  ds_load_unset()
+4.16.  ds_load_unset([callid])
 
    Remove the call load for the destination that routed the call.
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   Without a parameter, the call is identified by the Call-ID of the
+   current message. The optional callid parameter (which may contain
+   pseudo-variables) identifies the call by an explicit Call-ID instead of
+   the current message, so the load can be released from a context that
+   does not carry the original Call-ID - for example the dialog:failed
+   event route, which may run with a synthetic message: passing
+   $dlg(callid) there releases the load reliably regardless of the message
+   that triggered the event.
 
-   Example 1.63. ds_load_unset usage
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, ONREPLY_ROUTE and EVENT_ROUTE.
+
+   Example 1.64. ds_load_unset usage
 ...
 route {
     ...
@@ -1764,9 +1828,15 @@ onreply_route {
     }
     ...
 }
+
+event_route[dialog:failed] {
+    # release the load by the dialog Call-ID, independent of the
+    # message that triggered the event
+    ds_load_unset("$dlg(callid)");
+}
 ...
 
-4.16.  ds_reload()
+4.17.  ds_reload()
 
    Reloads the groups and included destinations.
 
@@ -1776,12 +1846,12 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.64. ds_reload usage
+   Example 1.65. ds_reload usage
 ...
     ds_reload();
 ...
 
-4.17.  ds_dsg_fetch(setid)
+4.18.  ds_dsg_fetch(setid)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes.
@@ -1790,13 +1860,13 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.65. ds_dsg_fetch() usage
+   Example 1.66. ds_dsg_fetch() usage
 ...
     ds_dsg_fetch("1");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
 ...
 
-4.18.  ds_dsg_fetch_uri(setid, uri)
+4.19.  ds_dsg_fetch_uri(setid, uri)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes and the overload-control attributes to the corresponding uri
@@ -1807,13 +1877,13 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.66. ds_dsg_fetch_uri() usage
+   Example 1.67. ds_dsg_fetch_uri() usage
 ...
     ds_dsg_fetch_uri("1", "sip:127.0.0.1:5080");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active); $dsg(ocrate)\n");
 ...
 
-4.19.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
+4.20.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    Sets the overload control rate, time interval limit and sequence number
    for the destination record (setid, uri) following RFC7339
@@ -1839,7 +1909,7 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.67. ds_oc_set_attrs() usage
+   Example 1.68. ds_oc_set_attrs() usage
 ...
     ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
 ...
@@ -1852,9 +1922,10 @@ onreply_route {
    5.4. dispatcher.reload
    5.5. dispatcher.ping_active
    5.6. dispatcher.add
-   5.7. dispatcher.remove
-   5.8. dispatcher.hash
-   5.9. dispatcher.oclist
+   5.7. dispatcher.update
+   5.8. dispatcher.remove
+   5.9. dispatcher.hash
+   5.10. dispatcher.oclist
 
 5.1.  dispatcher.set_state
 
@@ -1985,7 +2056,36 @@ kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:506
 0
 ...
 
-5.7.  dispatcher.remove
+5.7.  dispatcher.update
+
+   Replace a destination address in the in-memory dispatcher list. All
+   records matching the destination group and address are removed and the
+   new destination is added in one atomic update of the routing structure.
+   If no matching record exists, the destination is added.
+
+   Reloading the dispatcher will replace this change with the destinations
+   loaded from the configured file or database.
+
+   Name: dispatcher.update
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the _group_
+     * _flags_ (optional): as described in the list file format, default 0
+     * _priority_ (optional): as described in the list file format,
+       default 0
+     * _attrs_ (optional): as described in the list file format, default
+       ""
+
+   Example:
+...
+# prototype: kamcmd dispatcher.update _group_ _address_ _flags_ _priority_ _attr
+s_
+kamcmd dispatcher.update 3 sip:127.0.0.1:5075 8 10 duid=abc;socket=udp:127.0.0.1
+:5060
+...
+
+5.8.  dispatcher.remove
 
    Remove a destination address from the in-memory dispatcher list.
    Reloading the dispatcher from file or database will re-add destinations
@@ -2006,7 +2106,7 @@ kamcmd dispatcher.remove 2 sip:127.0.0.1:5080
 kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 ...
 
-5.8.  dispatcher.hash
+5.9.  dispatcher.hash
 
    Compute the hash id corresponding to the string parameter values.
 
@@ -2035,7 +2135,7 @@ kamctl rpc dispatcher.hash 0 alice server.com
 kamctl rpc dispatcher.hash 4 bob server.com
 ...
 
-5.9.  dispatcher.oclist
+5.10.  dispatcher.oclist
 
    List the overload control attributes for the records in a specific
    group.
@@ -2123,8 +2223,27 @@ kamcli dispatcher.oclist 1
      * 'sockname' - used to set by name the sending socket for the
        gateway. It is used for sending the SIP traffic as well as OPTIONS
        keepalives and has priority over 'socket' attribute.
+     * 'sockmap' - sets local sending sockets by transport for dispatched
+       requests and OPTIONS keepalives. Its value is a slash-separated
+       list in the form
+       “udp:sockname-udp/tcp:sockname-tcp/tls:sockname-tls/sctp:sockname-s
+       ctp”, where each value is a configured socket name. TCP is used for
+       WS and TLS is used for WSS. The appropriate socket is selected
+       after DNS resolves the transport, including during DNS failover.
+       For a mapped transport, this attribute takes precedence over
+       'socket' and 'sockname'. For OPTIONS keepalives, a mapped transport
+       also takes precedence over 'ping_socket' and 'ds_ping_socket'.
+       Transports not present in the map retain the existing
+       socket-selection behavior.
      * 'ping_from' - used to set the From URI in OPTIONS keepalives. It
        overwrites the general ds_ping_from parameter.
+     * 'ping_reply_codes' - accepted reply codes for the OPTIONS keepalive
+       of this destination, overriding the global ds_ping_reply_codes
+       parameter for it. It uses the same 'class=N;code=N' syntax as the
+       global parameter; the value has to be enclosed in double quotes so
+       that its ';' separators are not interpreted as attribute
+       separators, e.g. 'ping_reply_codes="class=2;code=404"'. When not
+       set, the global ds_ping_reply_codes list is used.
      * 'obproxy' - SIP URI of outbound proxy to be used when sending
        pings. It overwrites the general ds_outbound_proxy parameter.
      * 'latency' - latency_stats initialization in ms.
@@ -2150,7 +2269,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.68. dispatcher list file
+   Example 1.69. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -2175,7 +2294,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.69. Kamailio config script - sample dispatcher usage
+   Example 1.70. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #

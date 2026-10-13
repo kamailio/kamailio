@@ -319,8 +319,8 @@ static int tcp_cfg_def_fix(char *name, int *val)
 }
 
 
-/* checks & warns if some tcp_option cannot be enabled */
-void tcp_options_check()
+/* checks & warns if some tcp_option cannot be enabled; -1 if unsupported */
+int tcp_options_check()
 {
 #ifndef TCP_FD_CACHE
 	W_OPT_NC(defer_accept);
@@ -334,6 +334,37 @@ void tcp_options_check()
 #ifndef TCP_CONNECT_WAIT
 	W_OPT_NC(tcp_connect_wait);
 #endif /* TCP_CONNECT_WAIT */
+
+	if(ksr_tcp_main_threads < 0 || ksr_tcp_main_threads > 2) {
+		LM_ERR("tcp_main_threads=%d is out of range (0..2)\n",
+				ksr_tcp_main_threads);
+		return -1;
+	}
+	/* mode 2 handles all tcp reads and writes on the pool threads */
+	if(ksr_tcp_main_threads == 2 && ksr_tcp_reactor_threads < 1) {
+		LM_ERR("tcp_reactor_threads=%d: tcp_main_threads=2 needs at least one"
+			   " thread\n",
+				ksr_tcp_reactor_threads);
+		return -1;
+	}
+
+#ifdef TCP_ASYNC
+	/* mode 2 connects on the single io_wait thread: a blocking connect()
+	 * there would stall all tcp traffic */
+	if(ksr_tcp_main_threads == 2 && !tcp_default_cfg.async) {
+		LM_ERR("tcp_async=no is not supported with tcp_main_threads=2\n");
+		return -1;
+	}
+	/* the first message on a new connection is queued until the connect
+	 * completes, so it must fit tcp_conn_wq_max (all modes) */
+	if(tcp_default_cfg.async
+			&& (unsigned int)ksr_msg_recv_max_size
+					   > tcp_default_cfg.tcpconn_wq_max) {
+		LM_WARN("msg_recv_max_size (%d) > tcp_conn_wq_max (%u): a larger"
+				" first message on a new tcp connection will be refused\n",
+				ksr_msg_recv_max_size, tcp_default_cfg.tcpconn_wq_max);
+	}
+#endif /* TCP_ASYNC */
 
 	if(tcp_default_cfg.tcp_connect_wait && !tcp_default_cfg.async) {
 		tcp_default_cfg.tcp_connect_wait = 0;
@@ -383,6 +414,7 @@ void tcp_options_check()
 #endif /* USE_TCP */
 	tcp_cfg_def_fix("rd_buf_size", (int *)&tcp_default_cfg.rd_buf_size);
 	tcp_cfg_def_fix("wq_blk_size", (int *)&tcp_default_cfg.wq_blk_size);
+	return 0;
 }
 
 

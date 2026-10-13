@@ -104,7 +104,8 @@ int lookup(struct sip_msg *_m, udomain_t *_d, char *ue_type_c)
 		tmp_aor = _m->first_line.u.request.uri;
 	}
 
-	aor.s = pkg_malloc(tmp_aor.len);
+	/* allow space for the eventually added @ character */
+	aor.s = pkg_malloc(tmp_aor.len + 1);
 	if(aor.s == NULL) {
 		LM_ERR("memory allocation failure\n");
 		return -1;

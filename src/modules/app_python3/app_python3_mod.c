@@ -185,6 +185,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	int ret = -1;
+	bool acquired_var = false;
 	if(rank == PROC_INIT) {
 		/*
 		 * this is called before any process is forked
@@ -193,11 +194,11 @@ static int child_init(int rank)
 		 */
 #if PY_VERSION_HEX >= 0x03070000
 		if(_ksr_apy3_threads_mode == 1) {
-			Py_BLOCK_THREADS;
+			ACQUIRE_GIL_REENTRANT;
 		}
 		PyOS_BeforeFork();
 		if(_ksr_apy3_threads_mode == 1) {
-			Py_UNBLOCK_THREADS;
+			RELEASE_GIL_REENTRANT;
 		}
 #endif
 		return 0;
@@ -209,11 +210,11 @@ static int child_init(int rank)
 		 */
 #if PY_VERSION_HEX >= 0x03070000
 		if(_ksr_apy3_threads_mode == 1) {
-			Py_BLOCK_THREADS;
+			ACQUIRE_GIL_REENTRANT;
 		}
 		PyOS_AfterFork_Parent();
 		if(_ksr_apy3_threads_mode == 1) {
-			Py_UNBLOCK_THREADS;
+			RELEASE_GIL_REENTRANT;
 		}
 #endif
 		return 0;
@@ -221,7 +222,7 @@ static int child_init(int rank)
 	_apy_process_rank = rank;
 	/* clang-format off */
 	if(_ksr_apy3_threads_mode == 1) {
-		Py_BLOCK_THREADS;
+		ACQUIRE_GIL_REENTRANT;
 	}
 	if(!_ksr_is_main)
 	{
@@ -239,7 +240,7 @@ static int child_init(int rank)
 
 finish:
 	if(_ksr_apy3_threads_mode == 1) {
-		Py_UNBLOCK_THREADS;
+		RELEASE_GIL_REENTRANT;
 	}
 	return ret;
 }
@@ -360,11 +361,12 @@ int apy_reload_script(void)
 {
 	int rval = -1;
 	PyGILState_STATE gstate;
+        bool acquired_var = false;
 
 	if(_ksr_apy3_threads_mode != 1) {
 		gstate = PyGILState_Ensure();
 	} else {
-		Py_BLOCK_THREADS;
+		ACQUIRE_GIL_REENTRANT;
 	}
 	PyObject *pModule = PyImport_ReloadModule(_sr_apy_module);
 	if(!pModule) {
@@ -391,7 +393,7 @@ err:
 	if(_ksr_apy3_threads_mode != 1) {
 		PyGILState_Release(gstate);
 	} else {
-		Py_UNBLOCK_THREADS;
+		RELEASE_GIL_REENTRANT;
 	}
 	return rval;
 }
@@ -408,6 +410,7 @@ static int apy_load_script(void)
 	PyObject *sys_path, *pDir, *pModule;
 	PyGILState_STATE gstate;
 	int rc, rval = -1;
+        bool acquired_var = true; /* threads_mode = 1, force release of GIL */
 
 	if(sr_apy_init_ksr() != 0) {
 		return -1;
@@ -493,7 +496,7 @@ err:
 	if(_ksr_apy3_threads_mode != 1) {
 		PyGILState_Release(gstate);
 	} else {
-		Py_UNBLOCK_THREADS;
+		RELEASE_GIL_REENTRANT;
 	}
 	return rval;
 }

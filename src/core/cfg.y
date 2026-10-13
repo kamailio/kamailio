@@ -261,6 +261,7 @@ extern char *default_routename;
 %token FORCE_RPORT
 %token ADD_LOCAL_RPORT
 %token LOCAL_RPORT
+%token VIA_CONID_MODE
 %token FORCE_TCP_ALIAS
 %token UDP_MTU
 %token UDP_MTU_TRY_PROTO
@@ -371,6 +372,7 @@ extern char *default_routename;
 %token DNS_CACHE_GC_INT
 %token DNS_CACHE_DEL_NONEXP
 %token DNS_CACHE_REC_PREF
+%token DNS_CACHE_MODE
 
 /* ipv6 auto bind */
 %token AUTO_BIND_IPV6
@@ -439,6 +441,7 @@ extern char *default_routename;
 %token TCP_MSG_DATA_TIMEOUT
 %token TCP_ACCEPT_IPLIMIT
 %token TCP_MAIN_THREADS
+%token TCP_REACTOR_THREADS
 %token TCP_CHECK_TIMER
 %token USER
 %token GROUP
@@ -799,6 +802,22 @@ listen_phostport:
 	| listen_id2 COLON port	{ $$=mk_listen_id2($1, 0, $3); }
 	| proto COLON listen_id2	{ $$=mk_listen_id2($3, $1, 0); }
 	| proto COLON listen_id2 COLON port	{ $$=mk_listen_id2($3, $1, $5);}
+	| proto COLON STAR COLON port	{
+		if($1 == PROTO_NONE) {
+			$$=0;
+			yyerror("specific protocol expected before wildcard address");
+		} else {
+			$$=mk_listen_id("*", $1, $5);
+		}
+	}
+	| proto COLON LBRACK STAR RBRACK COLON port	{
+		if($1 == PROTO_NONE) {
+			$$=0;
+			yyerror("specific protocol expected before wildcard address");
+		} else {
+			$$=mk_listen_id("[*]", $1, $7);
+		}
+	}
 	| listen_id2 COLON error { $$=0; yyerror("port number expected"); }
 	;
 
@@ -851,6 +870,26 @@ socket_lattr:
 			tmp_sa.bindaddr.s = $5;
 			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
 			tmp_sa.bindport = $7;
+		}
+	| BIND EQUAL proto COLON STAR COLON port	{
+			if($3 == PROTO_NONE) {
+				yyerror("specific protocol expected before wildcard address");
+			} else {
+				tmp_sa.bindproto = $3;
+				tmp_sa.bindaddr.s = "*";
+				tmp_sa.bindaddr.len = 1;
+				tmp_sa.bindport = $7;
+			}
+		}
+	| BIND EQUAL proto COLON LBRACK STAR RBRACK COLON port	{
+			if($3 == PROTO_NONE) {
+				yyerror("specific protocol expected before wildcard address");
+			} else {
+				tmp_sa.bindproto = $3;
+				tmp_sa.bindaddr.s = "[*]";
+				tmp_sa.bindaddr.len = 3;
+				tmp_sa.bindport = $9;
+			}
 		}
 	| BIND EQUAL listen_id COLON port	{
 			tmp_sa.bindaddr.s = $3;
@@ -1014,6 +1053,8 @@ assign_stm:
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
 	| DNS_CACHE_REC_PREF EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_rec_pref=$3); }
 	| DNS_CACHE_REC_PREF error { yyerror("boolean value expected"); }
+	| DNS_CACHE_MODE EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_mode=$3); }
+	| DNS_CACHE_MODE error { yyerror("number value expected"); }
 	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
 	| IPV6_HEX_STYLE EQUAL STRING {
@@ -1079,7 +1120,11 @@ assign_stm:
 	| MSG_CLONE_EXTRA_SIZE EQUAL error { yyerror("number expected"); }
 	| MSG_APPLY_CHANGES_MODE EQUAL NUMBER { ksr_msg_apply_changes_mode=$3; }
 	| MSG_APPLY_CHANGES_MODE EQUAL error { yyerror("boolean expected"); }
-	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3; }
+	| MSG_RECV_MAX_SIZE EQUAL NUMBER { ksr_msg_recv_max_size=$3;
+		if(ksr_msg_recv_max_size <= 0 || ksr_msg_recv_max_size > BUF_SIZE) {
+			yyerror("value out of range 0 .. BUF_SIZE");
+		}
+	}
 	| MSG_RECV_MAX_SIZE EQUAL error { yyerror("number expected"); }
 	| TCP_MSG_READ_TIMEOUT EQUAL NUMBER { ksr_tcp_msg_read_timeout=$3; }
 	| TCP_MSG_READ_TIMEOUT EQUAL error { yyerror("number expected"); }
@@ -1089,6 +1134,8 @@ assign_stm:
 	| TCP_ACCEPT_IPLIMIT EQUAL error { yyerror("number expected"); }
 	| TCP_MAIN_THREADS EQUAL NUMBER { ksr_tcp_main_threads=$3; }
 	| TCP_MAIN_THREADS EQUAL error { yyerror("number expected"); }
+	| TCP_REACTOR_THREADS EQUAL NUMBER { ksr_tcp_reactor_threads=$3; }
+	| TCP_REACTOR_THREADS EQUAL error { yyerror("number expected"); }
 	| TCP_CHECK_TIMER EQUAL NUMBER { ksr_tcp_check_timer=$3; }
 	| TCP_CHECK_TIMER EQUAL error { yyerror("number expected"); }
 	| CHILDREN EQUAL NUMBER { children_no=$3; }
@@ -2182,6 +2229,8 @@ assign_stm:
 	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }
 	| LOCAL_RPORT EQUAL NUMBER { ksr_local_rport=$3; }
 	| LOCAL_RPORT EQUAL error { yyerror("boolean value expected"); }
+	| VIA_CONID_MODE EQUAL NUMBER { ksr_via_conid_mode=$3; }
+	| VIA_CONID_MODE EQUAL error { yyerror("number expected"); }
 	| UDP_MTU_TRY_PROTO EQUAL proto
 		{ default_core_cfg.udp_mtu_try_proto=$3; fix_global_req_flags(0, 0); }
 	| UDP_MTU_TRY_PROTO EQUAL error
@@ -2317,22 +2366,30 @@ module_stm:
 	| LOADPATH STRING {
 		if(mods_dir_cmd==0) {
 			LM_DBG("loading modules under %s\n", $2);
-			printf("loading modules under config path: %s\n", $2);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under config path: %s\n", $2);
+			}
 			mods_dir = $2;
 		} else {
 			LM_DBG("ignoring mod path given in config: %s\n", $2);
-			printf("loading modules under command line path: %s\n", mods_dir);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under command line path: %s\n", mods_dir);
+			}
 		}
 	}
 	| LOADPATH error	{ yyerror("string expected"); }
 	| LOADPATH EQUAL STRING {
 		if(mods_dir_cmd==0) {
 			LM_DBG("loading modules under %s\n", $3);
-			printf("loading modules under config path: %s\n", $3);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under config path: %s\n", $3);
+			}
 			mods_dir = $3;
 		} else {
 			LM_DBG("ignoring mod path given in config: %s\n", $3);
-			printf("loading modules under command line path: %s\n", mods_dir);
+			if(!ksr_no_stdprint_logs) {
+				printf("loading modules under command line path: %s\n", mods_dir);
+			}
 		}
 	}
 	| LOADPATH EQUAL error	{ yyerror("string expected"); }

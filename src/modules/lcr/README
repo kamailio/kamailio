@@ -14,6 +14,10 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
+Federico De Martin
+
+   <federico.demartin@eis.it>
+
    Copyright © 2005-2014 Juha Heinanen
      __________________________________________________________________
 
@@ -73,10 +77,11 @@ Ovidiu Sas
               3.42. priority_ordering (integer)
               3.43. fetch_rows (integer)
               3.44. ping_interval (integer)
-              3.45. ping_inactivate_threshold (integer)
-              3.46. ping_valid_reply_codes (string)
-              3.47. ping_from (string)
-              3.48. ping_socket (string)
+              3.45. ping_mode (integer)
+              3.46. ping_inactivate_threshold (integer)
+              3.47. ping_valid_reply_codes (string)
+              3.48. ping_from (string)
+              3.49. ping_socket (string)
 
         4. Functions
 
@@ -145,24 +150,25 @@ Ovidiu Sas
    1.42. Setting priority_ordering module parameter
    1.43. Set fetch_rows parameter
    1.44. Set ping_interval parameter
-   1.45. Set ping_inactivate_threshold parameter
-   1.46. Set ping_valid_reply_codes parameter
-   1.47. Set ping_from parameter
-   1.48. Set ping_socket parameter
-   1.49. load_gws usage
-   1.50. next_gw usage from a route block
-   1.51. next_gw usage from a failure route block
-   1.52. inactivate_gw usage
-   1.53. defunct_gw usage
-   1.54. from_gw usage
+   1.45. Set ping_mode parameter
+   1.46. Set ping_inactivate_threshold parameter
+   1.47. Set ping_valid_reply_codes parameter
+   1.48. Set ping_from parameter
+   1.49. Set ping_socket parameter
+   1.50. load_gws usage
+   1.51. next_gw usage from a route block
+   1.52. next_gw usage from a failure route block
+   1.53. inactivate_gw usage
+   1.54. defunct_gw usage
    1.55. from_gw usage
-   1.56. to_gw usage
+   1.56. from_gw usage
    1.57. to_gw usage
-   1.58. lcr.reload RPC example
-   1.59. lcr.dump_gws RPC example
-   1.60. lcr.dump_rules RPC example
-   1.61. lcr.load_gws RPC example
-   1.62. lcr.defunct_gw RPC example
+   1.58. to_gw usage
+   1.59. lcr.reload RPC example
+   1.60. lcr.dump_gws RPC example
+   1.61. lcr.dump_rules RPC example
+   1.62. lcr.load_gws RPC example
+   1.63. lcr.defunct_gw RPC example
 
 Chapter 1. Admin Guide
 
@@ -220,10 +226,11 @@ Chapter 1. Admin Guide
         3.42. priority_ordering (integer)
         3.43. fetch_rows (integer)
         3.44. ping_interval (integer)
-        3.45. ping_inactivate_threshold (integer)
-        3.46. ping_valid_reply_codes (string)
-        3.47. ping_from (string)
-        3.48. ping_socket (string)
+        3.45. ping_mode (integer)
+        3.46. ping_inactivate_threshold (integer)
+        3.47. ping_valid_reply_codes (string)
+        3.48. ping_from (string)
+        3.49. ping_socket (string)
 
    4. Functions
 
@@ -385,10 +392,11 @@ Chapter 1. Admin Guide
    3.42. priority_ordering (integer)
    3.43. fetch_rows (integer)
    3.44. ping_interval (integer)
-   3.45. ping_inactivate_threshold (integer)
-   3.46. ping_valid_reply_codes (string)
-   3.47. ping_from (string)
-   3.48. ping_socket (string)
+   3.45. ping_mode (integer)
+   3.46. ping_inactivate_threshold (integer)
+   3.47. ping_valid_reply_codes (string)
+   3.48. ping_from (string)
+   3.49. ping_socket (string)
 
 3.1. db_url (string)
 
@@ -908,15 +916,14 @@ modparam("lcr", "fetch_rows", 3000)
 
 3.44. ping_interval (integer)
 
-   Interval in seconds for sending OPTIONS ping requests to gateways that,
-   due to failures, have been marked as inactive by inactivate_gw()
-   function call. If an inactive gateway later gives a valid response (see
-   ping_valid_reply_codes) to a ping request, it is marked again as
-   active.
+   Interval in seconds for sending OPTIONS ping requests to gateways
+   selected according to ping_mode. If an inactive gateway later gives a
+   valid response (see ping_valid_reply_codes) to a ping request, it is
+   marked again as active.
 
    If value of this parameter is greater than zero, tm module must have
    been loaded and parameters lcr_id_avp and defunct_gw_avp must have been
-   defined. Value “0” disables sending of OPTIONS ping requests to failed
+   defined. Value “0” disables sending of OPTIONS ping requests to
    gateways.
 
    Default value is “0”.
@@ -926,19 +933,41 @@ modparam("lcr", "fetch_rows", 3000)
 modparam("lcr", "ping_interval", 15)
 ...
 
-3.45. ping_inactivate_threshold (integer)
+3.45. ping_mode (integer)
 
-   Tells after how many failures (= inactivate_gw() function calls) a
-   gateway is marked as inactive.
+   Controls which gateways are pinged and whether failed OPTIONS requests
+   can inactivate them. This parameter has effect only when ping_interval
+   is greater than zero.
+     * Value “0” preserves the existing behavior. Only gateways being
+       inactivated or already inactive are pinged, and failed OPTIONS
+       requests do not change their state.
+     * Value “1” continuously pings all gateways. A timeout or a reply
+       that is neither a 2xx response nor listed in ping_valid_reply_codes
+       counts as a failure. Once ping_inactivate_threshold is reached, the
+       gateway is marked as inactive. A valid reply immediately marks it
+       as active again. In this mode, calling inactivate_gw() is optional.
+
+   Default value is “0”.
+
+   Example 1.45.  Set ping_mode parameter
+...
+modparam("lcr", "ping_mode", 1)
+...
+
+3.46. ping_inactivate_threshold (integer)
+
+   Tells after how many failures a gateway is marked as inactive. Calls to
+   inactivate_gw() count as failures. When ping_mode is “1”, failed
+   OPTIONS requests count towards the same threshold.
 
    Default value is “1”, i.e., gateway is inactivated after first failure.
 
-   Example 1.45.  Set ping_inactivate_threshold parameter
+   Example 1.46.  Set ping_inactivate_threshold parameter
 ...
 modparam("lcr", "ping_inactivate_threshold", 3)
 ...
 
-3.46. ping_valid_reply_codes (string)
+3.47. ping_valid_reply_codes (string)
 
    A comma separated list of SIP reply codes, which are accepted as valid
    replies to OPTIONS ping requests. Reply codes 2xx are by default
@@ -947,30 +976,30 @@ modparam("lcr", "ping_inactivate_threshold", 3)
    Default value is “”, i.e., only 2xx replies are considered as valid
    replies.
 
-   Example 1.46.  Set ping_valid_reply_codes parameter
+   Example 1.47.  Set ping_valid_reply_codes parameter
 ...
 modparam("lcr", "ping_valid_reply_codes", "403,405,501")
 ...
 
-3.47. ping_from (string)
+3.48. ping_from (string)
 
    From URI used in OPTIONS ping requests.
 
    Default value is “sip:pinger@localhost”.
 
-   Example 1.47.  Set ping_from parameter
+   Example 1.48.  Set ping_from parameter
 ...
 modparam("lcr", "ping_from", "sip:proxy.operator.com")
 ...
 
-3.48. ping_socket (string)
+3.49. ping_socket (string)
 
    Socket to be used for sending OPTIONS ping request. If not set or set
    to “”, default socket is used.
 
    Default value is “”.
 
-   Example 1.48.  Set ping_socket parameter
+   Example 1.49.  Set ping_socket parameter
 ...
 modparam("lcr", "ping_socket", "192.98.102.10:5060")
 ...
@@ -1006,7 +1035,7 @@ modparam("lcr", "ping_socket", "192.98.102.10:5060")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.49. load_gws usage
+   Example 1.50. load_gws usage
 ...
 if (!load_gws(1, $rU, $var(caller_uri))) {
         sl_send_reply("500", "Server Internal Error - Cannot load gateways");
@@ -1037,7 +1066,7 @@ if (!load_gws(1, $rU, $var(caller_uri))) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.50. next_gw usage from a route block
+   Example 1.51. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -1045,7 +1074,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1.51. next_gw usage from a failure route block
+   Example 1.52. next_gw usage from a failure route block
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -1065,7 +1094,7 @@ if (!next_gw()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.52. inactivate_gw usage
+   Example 1.53. inactivate_gw usage
 ...
 failure_route [GW_FAILURE] {
 ...
@@ -1086,7 +1115,7 @@ failure_route [GW_FAILURE] {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.53. defunct_gw usage
+   Example 1.54. defunct_gw usage
 ...
 defunct_gw(60);
 ...
@@ -1121,7 +1150,7 @@ defunct_gw(60);
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.54. from_gw usage
+   Example 1.55. from_gw usage
 ...
 if (from_gw(1, $avp(real_source_addr), 2, 5060) {
         ...
@@ -1154,7 +1183,7 @@ if (from_gw(1, $avp(real_source_addr), 2, 5060) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.55. from_gw usage
+   Example 1.56. from_gw usage
 ...
 $var(lcr_id) = from_any_gw("192.168.1.1", 3, 5061);
 ...
@@ -1175,7 +1204,7 @@ $var(lcr_id) = from_any_gw("192.168.1.1", 3, 5061);
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.56. to_gw usage
+   Example 1.57. to_gw usage
 ...
 if (to_gw("1")) {
         ...
@@ -1201,7 +1230,7 @@ if (to_gw("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.57. to_gw usage
+   Example 1.58. to_gw usage
 ...
 if (to_any_gw("192.55.66.2", 1)) {
         ...
@@ -1225,7 +1254,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 
    Parameters: none
 
-   Example 1.58. lcr.reload RPC example
+   Example 1.59. lcr.reload RPC example
                 $ kamcmd lcr.reload
 
 5.2. lcr.dump_gws
@@ -1234,7 +1263,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 
    Parameters: none
 
-   Example 1.59. lcr.dump_gws RPC example
+   Example 1.60. lcr.dump_gws RPC example
                 $ kamcmd lcr.dump_gws
 
 5.3. lcr.dump_rules
@@ -1248,7 +1277,7 @@ if (to_any_gw("192.55.66.2", 1)) {
      * prefix filter rules based on prefix (prefixes shorter or equal to
        the give prefix) in addition to the previous lcr_id parameter.
 
-   Example 1.60. lcr.dump_rules RPC example
+   Example 1.61. lcr.dump_rules RPC example
                 $ kamcmd lcr.dump_rules
 
 5.4. lcr.load_gws
@@ -1259,7 +1288,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 
    Parameters: lcr_id uri_user [caller_uri request_uri]
 
-   Example 1.61. lcr.load_gws RPC example
+   Example 1.62. lcr.load_gws RPC example
                 $ kamcmd lcr.load_gws 2 s:0447058050
 
 5.5. lcr.defunct_gw
@@ -1272,7 +1301,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 
    Parameters: lcr_id gw_id period
 
-   Example 1.62. lcr.defunct_gw RPC example
+   Example 1.63. lcr.defunct_gw RPC example
                 $ kamcmd lcr.defunct_gw 1 4 120
 
 6. Known Limitations

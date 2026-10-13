@@ -46,7 +46,7 @@
 /** ROUNDTO= 2^k so the following works */
 #define ROUNDTO_MASK (~((unsigned long)ROUNDTO - 1))
 #define ROUNDUP(s) (((s) + (ROUNDTO - 1)) & ROUNDTO_MASK)
-#define ROUNDDOWN(s) ((s)&ROUNDTO_MASK)
+#define ROUNDDOWN(s) ((s) & ROUNDTO_MASK)
 
 #define FRAG_NEXT(f) \
 	((struct fm_frag *)((char *)(f) + sizeof(struct fm_frag) + (f)->size))
@@ -63,10 +63,10 @@
 					: F_MALLOC_OPTIMIZE / ROUNDTO + big_hash_idx((s)) \
 							  - F_MALLOC_OPTIMIZE_FACTOR + 1)
 
-#define UN_HASH(h)                                                           \
-	(((unsigned long)(h) <= (F_MALLOC_OPTIMIZE / ROUNDTO))                   \
-					? (unsigned long)(h)*ROUNDTO                             \
-					: 1UL << ((unsigned long)(h)-F_MALLOC_OPTIMIZE / ROUNDTO \
+#define UN_HASH(h)                                                             \
+	(((unsigned long)(h) <= (F_MALLOC_OPTIMIZE / ROUNDTO))                     \
+					? (unsigned long)(h) * ROUNDTO                             \
+					: 1UL << ((unsigned long)(h) - F_MALLOC_OPTIMIZE / ROUNDTO \
 							  + F_MALLOC_OPTIMIZE_FACTOR - 1))
 
 
@@ -322,14 +322,14 @@ struct fm_block *fm_malloc_init(char *address, unsigned long size, int type)
 
 	if(sizeof(struct fm_frag) % ROUNDTO != 0) {
 		LM_ERR("memory fragment align constraints failure (%lu %% %lu = %lu)\n",
-				sizeof(struct fm_frag), ROUNDTO,
-				sizeof(struct fm_frag) % ROUNDTO);
+				(unsigned long)sizeof(struct fm_frag), ROUNDTO,
+				(unsigned long)sizeof(struct fm_frag) % ROUNDTO);
 		return 0;
 	}
 	if(sizeof(struct fm_block) % ROUNDTO != 0) {
 		LM_ERR("memory block align constraints failure (%lu %% %lu = %lu)\n",
-				sizeof(struct fm_block), ROUNDTO,
-				sizeof(struct fm_block) % ROUNDTO);
+				(unsigned long)sizeof(struct fm_block), ROUNDTO,
+				(unsigned long)sizeof(struct fm_block) % ROUNDTO);
 		return 0;
 	}
 
@@ -595,6 +595,27 @@ void *fm_mallocxz(void *qmp, size_t size)
 
 	if(p)
 		memset(p, 0, size);
+
+	return p;
+}
+
+#ifdef DBG_F_MALLOC
+void *fm_mallocxn(void *qmp, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname)
+#else
+void *fm_mallocxn(void *qmp, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_F_MALLOC
+	p = fm_malloc(qmp, size, file, func, line, mname);
+#else
+	p = fm_malloc(qmp, size);
+#endif
+
+	if(p && size > 0)
+		((char *)p)[size - 1] = 0;
 
 	return p;
 }
@@ -1189,6 +1210,7 @@ int fm_malloc_init_pkg_manager(void)
 	ma.mem_block = _fm_pkg_block;
 	ma.xmalloc = fm_malloc;
 	ma.xmallocxz = fm_mallocxz;
+	ma.xmallocxn = fm_mallocxn;
 	ma.xfree = fm_free;
 	ma.xrealloc = fm_realloc;
 	ma.xreallocxf = fm_reallocxf;
@@ -1287,6 +1309,15 @@ void *fm_shm_mallocxz(void *qmp, size_t size, const char *file,
 	fm_shm_unlock();
 	return r;
 }
+void *fm_shm_mallocxn(void *qmp, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_mallocxn(qmp, size, file, func, line, mname);
+	fm_shm_unlock();
+	return r;
+}
 void *fm_shm_realloc(void *qmp, void *p, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
@@ -1337,6 +1368,14 @@ void *fm_shm_mallocxz(void *qmp, size_t size)
 	void *r;
 	fm_shm_lock();
 	r = fm_mallocxz(qmp, size);
+	fm_shm_unlock();
+	return r;
+}
+void *fm_shm_mallocxn(void *qmp, size_t size)
+{
+	void *r;
+	fm_shm_lock();
+	r = fm_mallocxn(qmp, size);
 	fm_shm_unlock();
 	return r;
 }
@@ -1445,6 +1484,7 @@ int fm_malloc_init_shm_manager(void)
 	ma.mem_block = _fm_shm_block;
 	ma.xmalloc = fm_shm_malloc;
 	ma.xmallocxz = fm_shm_mallocxz;
+	ma.xmallocxn = fm_shm_mallocxn;
 	ma.xmalloc_unsafe = fm_malloc;
 	ma.xfree = fm_shm_free;
 	ma.xfree_unsafe = fm_free;

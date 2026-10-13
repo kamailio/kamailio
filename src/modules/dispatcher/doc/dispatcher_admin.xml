@@ -365,6 +365,11 @@ modparam("dispatcher", "xavp_dst", "_dsdst_")
 						<para>sock - the socket pointer.</para>
 					</listitem>
 					<listitem>
+						<para>sockmap_set - marks the effective per-destination socket map;
+							sockmap_udp, sockmap_tcp, sockmap_tls, and sockmap_sctp contain
+							the corresponding socket pointers, when present.</para>
+					</listitem>
+					<listitem>
 						<para>socket - the socket string - it is added only if xavp_dst_mode has
 							bit 2 set (value 2).</para>
 					</listitem>
@@ -1076,14 +1081,53 @@ end
 		<title><varname>event_callback_mode</varname> (int)</title>
 		<para>
 			Controls when the event_route or the KEMI event callback function
-			are executed. If set to 0, they are executed when the destination
-			state changes based on OPTIONS keepalives or the use of config
-			functions to set the state (e.g., ds_mark_dst(...)). If set to 1,
-			they are executed only on state change due to OPTIONS keepalives.
-			If set to 2, the event routes will always be executed when a state
-			change occurs, even if no previous state exists (for example, on
-			startup or reload).
+			are executed.
 		</para>
+		<para>
+			If set to 0, they are executed when the destination state changes based on
+			OPTIONS keepalives or the use of config functions to set the state
+			(e.g., ds_mark_dst(...)).
+		</para>
+		<para>
+			The value can be a bitmask combining the following flags:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>1</emphasis> (<emphasis>1&lt;&lt;0</emphasis>) - executed only on state change due to OPTIONS keepalives (ignores state changes from config functions).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>2</emphasis> (<emphasis>1&lt;&lt;1</emphasis>) - always executed when a state change occurs, even if no previous state exists (for example, on initial probe transition).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>4</emphasis> (<emphasis>1&lt;&lt;2</emphasis>) - executed for the initial state of disabled and inactive destinations on startup and RPC reload.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			Modes can be combined by adding their values. For example:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>6</emphasis> (2 + 4) - executes event routes on state change even with no previous state, and also triggers initial routes for disabled/inactive destinations on startup and reload.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>5</emphasis> (1 + 4) - executes event routes only on OPTIONS keepalives, plus triggers initial routes for disabled/inactive destinations on startup and reload.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>7</emphasis> (1 + 2 + 4) - enables all above behaviors.
+			</para>
+			</listitem>
+		</itemizedlist>
 		<para>
 			Note that event routes are not executed on RPC commands setting
 			the destination state.
@@ -1097,7 +1141,8 @@ end
 		<title>Set <varname>event_callback_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dispatcher", "event_callback_mode", 1)
+# execute routes on state change without previous state and on startup/reload (2 + 4)
+modparam("dispatcher", "event_callback_mode", 6)
 ...
 -- event callback function implemented in Lua
 function ksr_dispatcher_event(evname)
@@ -1186,24 +1231,23 @@ modparam("dispatcher", "ds_load_mode", 1)
 		<title><varname>reload_delta</varname> (int)</title>
 		<para>
 		The number of seconds that have to be waited before executing a new reload
-		of dispatcher records. By default there is a rate limiting of maximum
-		one reload in five seconds.
+		of dispatcher records (it applies to RPC add and remove commands). It is
+		useful to enforce a rate limiting of reload actions in a specific time
+		interval.
 		</para>
 		<para>
-		If set to 0, no rate limit is configured. Note carefully: use this
-		configuration only in tests environments because executing many RPC
-		reload commands at the same time can cause unexpected behavior.
+		If set to 0, no rate limit is configured.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>5</quote>.
+			Default value is <quote>0</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>reload_delta</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dispatcher", "reload_delta", 1)
+modparam("dispatcher", "reload_delta", 5)
 ...
 		</programlisting>
 		</example>
@@ -1796,6 +1840,45 @@ failure_route[REROUTE] {
 </programlisting>
 		</example>
 	</section>
+	<section id="dispatcher.f.ds_select_dns">
+		<title>
+		<function moreinfo="none">ds_select_dns([limit])</function>
+		</title>
+		<para>
+		Resolves the current next hop using the procedures from RFC 3263 and
+		stores the resulting target addresses in the XAVP configured by the
+		<varname>xavp_dst</varname> parameter. The destination URI is used as
+		the next hop when it is set; otherwise, the Request-URI is used.
+		The lookup performs NAPTR, SRV, and CNAME/A/AAAA queries as required by
+		the URI and stores concrete SIP URIs containing the resolved IP address,
+		port, and transport in DNS selection order.
+		</para>
+		<para>
+		The optional <emphasis>limit</emphasis> parameter is a positive integer
+		or a variable containing an integer. Resolution stops after this number
+		of targets has been stored. A missing or zero value means no limit.
+		</para>
+		<para>
+		The function returns true if at least one target was resolved and stored.
+		The generated XAVP records contain the <quote>uri</quote> field and can be
+		used by <function>ds_next_dst()</function> for serial failover when bit 2
+		of the <varname>flags</varname> parameter is set.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_select_dns</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(ds_select_dns("8")) {
+	ds_next_dst();
+	t_relay();
+}
+...
+		</programlisting>
+		</example>
+	</section>
 	<section>
 		<title>
 		<function moreinfo="none">ds_next_dst()</function>
@@ -2119,14 +2202,25 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">ds_load_unset()</function>
+		<function moreinfo="none">ds_load_unset([callid])</function>
 		</title>
 		<para>
 		Remove the call load for the destination that routed the call.
 		</para>
 		<para>
+		Without a parameter, the call is identified by the Call-ID of the current
+		message. The optional <emphasis>callid</emphasis> parameter (which may
+		contain pseudo-variables) identifies the call by an explicit Call-ID
+		instead of the current message, so the load can be released from a context
+		that does not carry the original Call-ID - for example the
+		<function>dialog:failed</function> event route, which may run with a
+		synthetic message: passing <emphasis>$dlg(callid)</emphasis> there
+		releases the load reliably regardless of the message that triggered the
+		event.
+		</para>
+		<para>
 			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE and ONREPLY_ROUTE.
+			BRANCH_ROUTE, ONREPLY_ROUTE and EVENT_ROUTE.
 		</para>
 		<example>
 		<title><function>ds_load_unset</function> usage</title>
@@ -2151,6 +2245,12 @@ onreply_route {
             ds_load_unset();
     }
     ...
+}
+
+event_route[dialog:failed] {
+    # release the load by the dialog Call-ID, independent of the
+    # message that triggered the event
+    ds_load_unset("$dlg(callid)");
 }
 ...
 </programlisting>
@@ -2479,6 +2579,48 @@ DEST: {
 ...
 </programlisting>
 	</section>
+		<section id="dispatcher.r.update">
+		<title>
+		<function moreinfo="none">dispatcher.update</function>
+		</title>
+		<para>
+		Replace a destination address in the in-memory dispatcher list. All
+		records matching the destination group and address are removed and the
+		new destination is added in one atomic update of the routing structure.
+		If no matching record exists, the destination is added.
+		</para>
+		<para>
+		Reloading the dispatcher will replace this change with the destinations
+		loaded from the configured file or database.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.update</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+
+			<listitem><para>_address_: address of the destination in the _group_</para></listitem>
+
+			<listitem><para>_flags_ (optional): as described in the list file format,
+			default 0</para></listitem>
+
+			<listitem><para>_priority_ (optional): as described in the list file format,
+			default 0</para></listitem>
+
+			<listitem><para>_attrs_ (optional): as described in the list file format,
+			default ""</para></listitem>
+		</itemizedlist>
+		<para>
+		Example:
+		</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.update _group_ _address_ _flags_ _priority_ _attrs_
+&sercmd; dispatcher.update 3 sip:127.0.0.1:5075 8 10 duid=abc;socket=udp:127.0.0.1:5060
+...
+</programlisting>
+	</section>
 		<section id="dispatcher.r.remove">
 		<title>
 		<function moreinfo="none">dispatcher.remove</function>
@@ -2679,8 +2821,31 @@ kamcli dispatcher.oclist 1
 								keepalives and has priority over 'socket' attribute.</para>
 						</listitem>
 						<listitem>
+							<para>'sockmap' - sets local sending sockets by transport for
+								dispatched requests and OPTIONS keepalives. Its value is a
+								slash-separated list in the form
+								<quote>udp:sockname-udp/tcp:sockname-tcp/tls:sockname-tls/sctp:sockname-sctp</quote>,
+								where each value is a configured socket name. TCP is used for WS and TLS is
+								used for WSS. The appropriate socket is selected after DNS resolves
+								the transport, including during DNS failover. For a mapped transport,
+								this attribute takes precedence over 'socket' and 'sockname'. For
+								OPTIONS keepalives, a mapped transport also takes precedence over
+								'ping_socket' and 'ds_ping_socket'. Transports not present in the map
+								retain the existing socket-selection behavior.</para>
+						</listitem>
+						<listitem>
 							<para>'ping_from' - used to set the From URI in OPTIONS keepalives. It
 								overwrites the general ds_ping_from parameter.</para>
+						</listitem>
+						<listitem>
+								<para>'ping_reply_codes' - accepted reply codes for the OPTIONS
+									keepalive of this destination, overriding the global
+									ds_ping_reply_codes parameter for it. It uses the same
+									'class=N;code=N' syntax as the global parameter; the value
+									has to be enclosed in double quotes so that its ';'
+									separators are not interpreted as attribute separators,
+									e.g. 'ping_reply_codes="class=2;code=404"'. When not set,
+									the global ds_ping_reply_codes list is used.</para>
 						</listitem>
 						<listitem>
 							<para>'obproxy' - SIP URI of outbound proxy to be used when sending

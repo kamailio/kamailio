@@ -165,7 +165,7 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 	if((sipdump_mode & SIPDUMP_MODE_WPCAPEX)
 			&& (spd->data.len < BUF_SIZE - 256)) {
 		if(_sipdump_pcap_data_buf == NULL) {
-			_sipdump_pcap_data_buf = (char *)malloc(BUF_SIZE);
+			_sipdump_pcap_data_buf = (char *)malloc(BUF_SIZE + 1);
 		}
 		if(_sipdump_pcap_data_buf != NULL) {
 			data.s = _sipdump_pcap_data_buf;

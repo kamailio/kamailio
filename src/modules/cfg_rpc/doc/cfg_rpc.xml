@@ -78,6 +78,7 @@
 	</section>
 	</section>
 
+    <xi:include href="functions.xml"/>
     <xi:include href="rpc.xml"/>
     </chapter>
 

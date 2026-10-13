@@ -68,7 +68,6 @@ Tyler Moore
               3.24. subnet_match_mode (int)
               3.25. load_backends (int)
               3.26. reload_delta (int)
-              3.27. trusted_cleanup_interval (int)
 
         4. Functions
 
@@ -128,22 +127,21 @@ Tyler Moore
    1.24. Set subnet_match_mode parameter
    1.25. Set load_backends parameter
    1.26. Set reload_delta parameter
-   1.27. Set trusted_cleanup_interval parameter
-   1.28. allow_routing usage
-   1.29. allow_routing(basename) usage
-   1.30. allow_routing(allow_file, deny_file) usage
-   1.31. allow_register(basename) usage
-   1.32. allow_register(allow_file, deny_file) usage
-   1.33. allow_register_include_port(basename) usage
-   1.34. allow_register_include_port(allow_file, deny_file) usage
-   1.35. allow_uri(basename, pvar) usage
-   1.36. allow_address() usage
-   1.37. allow_source_address(group_id) usage
+   1.27. allow_routing usage
+   1.28. allow_routing(basename) usage
+   1.29. allow_routing(allow_file, deny_file) usage
+   1.30. allow_register(basename) usage
+   1.31. allow_register(allow_file, deny_file) usage
+   1.32. allow_register_include_port(basename) usage
+   1.33. allow_register_include_port(allow_file, deny_file) usage
+   1.34. allow_uri(basename, pvar) usage
+   1.35. allow_address() usage
+   1.36. allow_source_address(group_id) usage
+   1.37. allow_source_address_group() usage
    1.38. allow_source_address_group() usage
-   1.39. allow_source_address_group() usage
-   1.40. allow_trusted() usage
-   1.41. Address File Sample
-   1.42. Register File Sample
+   1.39. allow_trusted() usage
+   1.40. Address File Sample
+   1.41. Register File Sample
 
 Chapter 1. Admin Guide
 
@@ -190,7 +188,6 @@ Chapter 1. Admin Guide
         3.24. subnet_match_mode (int)
         3.25. load_backends (int)
         3.26. reload_delta (int)
-        3.27. trusted_cleanup_interval (int)
 
    4. Functions
 
@@ -445,7 +442,6 @@ Note
    3.24. subnet_match_mode (int)
    3.25. load_backends (int)
    3.26. reload_delta (int)
-   3.27. trusted_cleanup_interval (int)
 
 3.1. default_allow_file (string)
 
@@ -792,31 +788,13 @@ modparam("permissions", "load_backends", 1)
 3.26. reload_delta (int)
 
    The number of seconds that have to be waited before executing a new RPC
-   reload. By default there is a rate limiting of maximum one reload in
-   five seconds.
+   reload. By default there is a no rate limiting (zero).
 
-   If set to 0, no rate limit is configured. Note carefully: use this
-   configuration only in tests environments because executing two RPC
-   reloads of the same table at the same time can cause Kamailio to crash.
-
-   Default value is “5”.
+   Default value is “0”.
 
    Example 1.26. Set reload_delta parameter
 ...
 modparam("permissions", "reload_delta", 1)
-...
-
-3.27. trusted_cleanup_interval (int)
-
-   If module parameter db_mode is set to 1 a cleanup timer is set to the
-   trusted_cleanup_interval value in seconds. This process will cleanup
-   the previous values from memory after a RPC reload.
-
-   Default value is “60”.
-
-   Example 1.27. Set trusted_cleanup_interval parameter
-...
-modparam("permissions", "trusted_cleanup_interval", 120)
 ...
 
 4. Functions
@@ -844,7 +822,7 @@ modparam("permissions", "trusted_cleanup_interval", 120)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. allow_routing usage
+   Example 1.27. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
@@ -867,7 +845,7 @@ if (allow_routing()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. allow_routing(basename) usage
+   Example 1.28. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
@@ -892,7 +870,7 @@ if (allow_routing("basename")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. allow_routing(allow_file, deny_file) usage
+   Example 1.29. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
@@ -915,7 +893,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.31. allow_register(basename) usage
+   Example 1.30. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -945,7 +923,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.32. allow_register(allow_file, deny_file) usage
+   Example 1.31. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -973,7 +951,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.33. allow_register_include_port(basename) usage
+   Example 1.32. allow_register_include_port(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register_include_port("register")) {
@@ -1003,7 +981,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.34. allow_register_include_port(allow_file, deny_file) usage
+   Example 1.33. allow_register_include_port(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register_include_port("register.allow", "register.deny")) {
@@ -1032,7 +1010,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.35. allow_uri(basename, pvar) usage
+   Example 1.34. allow_uri(basename, pvar) usage
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
         t_relay();
@@ -1062,7 +1040,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.36. allow_address() usage
+   Example 1.35. allow_address() usage
 ...
 
 // Check if source address/port is in group 1
@@ -1088,7 +1066,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.37. allow_source_address(group_id) usage
+   Example 1.36. allow_source_address(group_id) usage
 ...
 
 // Check source address/port of request
@@ -1110,7 +1088,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.38. allow_source_address_group() usage
+   Example 1.37. allow_source_address_group() usage
 ...
 
 $var(group) = allow_source_address_group();
@@ -1133,7 +1111,7 @@ Note
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.39. allow_source_address_group() usage
+   Example 1.38. allow_source_address_group() usage
 ...
 
 $var(group) = allow_address_group("1.2.3.4", "5060");
@@ -1163,7 +1141,7 @@ if ($var(group) != -1) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.40. allow_trusted() usage
+   Example 1.39. allow_trusted() usage
 ...
 if (allow_trusted()) {
         t_relay();
@@ -1195,9 +1173,8 @@ if (allow_trusted("$si", "any", "$ai")) {
    database table into cache memory. In cache memory the entries are for
    performance reasons stored in two different tables: address table and
    subnet table depending on the value of the mask field (IPv6: 64 or
-   smaller, IPv4: 32 or smaller). Note that there is a rate limiting
-   defined by 'reload_delta' parameter. By default is allowed maximum one
-   reload in five seconds.
+   smaller, IPv4: 32 or smaller). Note that there may be a rate limiting
+   defined by 'reload_delta' parameter.
 
    Parameters: none
 
@@ -1243,9 +1220,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 5.7.  permissions.trustedReload
 
    Causes the permissions module to re-read the contents of the trusted
-   database table into cache memory. Note that there is a rate limiting
-   defined by 'reload_delta' parameter. By default is allowed maximum one
-   reload in five seconds.
+   database table into cache memory. Note that there may be a rate
+   limiting defined by 'reload_delta' parameter.
 
    Parameters: none
 
@@ -1281,7 +1257,7 @@ if (allow_trusted("$si", "any", "$ai")) {
    provided, the tag value has to be a single token, without whitespaces
    (other punctuation signs can be in its value, like ',', '=', ';', ...).
 
-   Example 1.41. Address File Sample
+   Example 1.40. Address File Sample
 ...
 # address file - records to match with allow_address(...) and variants
 # * file format details
@@ -1318,7 +1294,7 @@ if (allow_trusted("$si", "any", "$ai")) {
    The 'str' indicates that the value has to be a string compatible with
    POSIX Extended Regular Expressions.
 
-   Example 1.42. Register File Sample
+   Example 1.41. Register File Sample
 ...
 # Syntax:
 #       from_list [EXCEPT from_list] : req_uri_list [EXCEPT req_uri_list]

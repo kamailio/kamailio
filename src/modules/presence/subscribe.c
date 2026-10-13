@@ -1600,6 +1600,30 @@ int extract_sdialog_info(subs_t *subs, struct sip_msg *msg, int mexp,
 			&reply_str);
 }
 
+/* take the route set from an in-dialog request instead of the stored one */
+static void pres_refresh_rr_from_msg(struct sip_msg *msg, subs_t *subs)
+{
+	str rr_body = {0, 0};
+	int rt;
+
+	if(subs == NULL || msg == NULL || msg->record_route == NULL) {
+		return;
+	}
+
+	rt = print_rr_body(msg->record_route, &rr_body, 0, 0);
+	if(rt != 0) {
+		LM_ERR("failed to process the in-dialog record route [%d]\n", rt);
+		return;
+	}
+
+	if(subs->record_route.s != NULL) {
+		pkg_free(subs->record_route.s);
+	}
+	subs->record_route = rr_body;
+	LM_DBG("route set refreshed from in-dialog request: [%.*s]\n",
+			subs->record_route.len, subs->record_route.s);
+}
+
 int get_stored_info(
 		struct sip_msg *msg, subs_t *subs, int *reply_code, str *reply_str)
 {
@@ -1607,6 +1631,11 @@ int get_stored_info(
 	subs_t *s;
 	int i;
 	unsigned int hash_code;
+
+	/* get Record-Route(s) from SIP msg, if there are any */
+	if(pres_refresh_record_route) {
+		pres_refresh_rr_from_msg(msg, subs);
+	}
 
 	if(pres_subs_dbmode == DB_ONLY) {
 		return get_database_info(msg, subs, reply_code, reply_str);
@@ -1680,7 +1709,9 @@ found_rec:
 		reason.len = s->reason.len;
 		subs->reason = reason;
 	}
-	if(s->record_route.s && s->record_route.len) {
+	/* refresh_record_route: keep the route set taken from the SIP msg */
+	if((!pres_refresh_record_route || subs->record_route.s == NULL)
+			&& s->record_route.s && s->record_route.len) {
 		subs->record_route.s =
 				(char *)pkg_malloc(s->record_route.len * sizeof(char));
 		if(subs->record_route.s == NULL) {
@@ -1849,7 +1880,9 @@ int get_database_info(
 	}
 
 	record_route.s = (char *)row_vals[record_route_col].val.string_val;
-	if(record_route.s) {
+	/* refresh_record_route: keep the route set taken from the SIP msg */
+	if((!pres_refresh_record_route || subs->record_route.s == NULL)
+			&& record_route.s) {
 		record_route.len = strlen(record_route.s);
 		if(record_route.len > 0) {
 			subs->record_route.s =

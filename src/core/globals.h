@@ -228,6 +228,7 @@ extern int http_reply_parse;
 extern int _sr_ip_free_bind;
 extern int ksr_verbose_startup;
 extern int ksr_all_errors;
+extern int ksr_no_stdprint_logs;
 extern int ksr_route_locks_size;
 extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
@@ -247,6 +248,7 @@ extern unsigned char *_ksr_hname_extra_chars;
 extern char *ksr_stats_namesep;
 extern str ksr_ipv6_hex_style;
 extern int ksr_local_rport;
+extern int ksr_via_conid_mode;
 
 extern int ksr_rpc_exec_delta;
 extern int ksr_rpc_exec_locks;
@@ -260,6 +262,7 @@ extern int ksr_tcp_msg_read_timeout;
 extern int ksr_tcp_msg_data_timeout;
 extern int ksr_tcp_accept_iplimit;
 extern int ksr_tcp_main_threads;
+extern int ksr_tcp_reactor_threads;
 extern int ksr_tcp_check_timer;
 extern int ksr_udp_accept_proxy;
 

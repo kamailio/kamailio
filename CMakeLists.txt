@@ -81,6 +81,12 @@ add_subdirectory(utils/kamcmd)
 include(${CMAKE_SOURCE_DIR}/cmake/dbschema.cmake)
 
 # ----------
+# SBOM (CycloneDX) generation, on demand: cmake --build <dir> --target sbom-cyclonedx
+# Included after add_subdirectory(src) so module targets and the
+# ADDED_MODULES_LIST global property are populated.
+include(${CMAKE_SOURCE_DIR}/cmake/sbom-cyclonedx.cmake)
+
+# ----------
 # Packaging
 # ----------
 include(${CMAKE_SOURCE_DIR}/cmake/deb-packaging.cmake)

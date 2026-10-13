@@ -179,6 +179,9 @@ location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive;acc
 						</para>
 					</listitem>
 				</itemizedlist>
+				Please note that the cluster protocol does not work together with the sentinel support in this module.
+				For this reason the cluster support is not compiled by default and need to be enabled in the module
+				build scripts.
 			</para>
 		</section>
 	</section>

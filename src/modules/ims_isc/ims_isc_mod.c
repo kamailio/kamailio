@@ -404,7 +404,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 		LM_DBG("ISC is for Term user\n");
 		if(k) {
 			regstate = isc_is_registered(&s, d);
-			if(k == IMPU_REGISTERED) {
+			if(regstate == IMPU_REGISTERED) {
 				new_mark.direction = IFC_TERMINATING_SESSION;
 			} else {
 				new_mark.direction = IFC_TERMINATING_UNREGISTERED;

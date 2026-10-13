@@ -443,6 +443,7 @@ typedef struct sip_msg
 	str set_global_address;
 	str set_global_port;
 	struct socket_info *force_send_socket; /*!< force sending on this socket */
+	send_socket_map_t force_send_socket_map; /*!< forced socket by transport */
 	str path_vec;
 	str instance;
 	unsigned int reg_id;

@@ -133,7 +133,7 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 	pcontact_t *pcontact;
 	unsigned short port, proto;
 	char *alias_start, *p, *port_s, *proto_s;
-	char portbuf[5];
+	char portbuf[6];
 	str alias_s;
 	char srcip[50];
 
@@ -225,13 +225,17 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 						if(p != NULL) {
 							LM_DBG("alias(port) [%.*s]\n", (int)(p - port_s),
 									port_s);
-							memset(portbuf, 0, 5);
+							if((p - port_s) > 5) {
+								LM_ERR("invalid port value\n");
+								return -1;
+							}
+							memset(portbuf, 0, 6);
 							memcpy(portbuf, port_s, (p - port_s));
 							port = atoi(portbuf);
 							LM_DBG("alias(port) [%d]\n", port);
 
 							proto_s = p + 1;
-							memset(portbuf, 0, 5);
+							memset(portbuf, 0, 6);
 							memcpy(portbuf, proto_s, 1);
 							proto = atoi(portbuf);
 							LM_DBG("alias(proto) [%d]\n", proto);

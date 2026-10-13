@@ -206,6 +206,11 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg, struct cell *t,
 	str rr_set;
 	struct socket_info *callee_bind_address = NULL;
 
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse headers\n");
+		goto error0;
+	}
+
 	if(leg == DLG_CALLER_LEG)
 		dlg->caller_bind_addr = msg->rcv.bind_address;
 	else
@@ -246,12 +251,6 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg, struct cell *t,
 		goto error0;
 	}
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
-
-	/* extract the RR parts */
-	if(!msg->record_route && (parse_headers(msg, HDR_EOH_F, 0) < 0)) {
-		LM_ERR("failed to parse record route header\n");
-		goto error0;
-	}
 
 	skip_recs = 0;
 	if(leg != DLG_CALLER_LEG) {
@@ -692,6 +691,27 @@ static inline int parse_dlg_rr_param(
 {
 	char *s;
 
+	/* sanity checks */
+	if(!p) {
+		LM_ERR("NULL start of parameter string");
+		return -1;
+	}
+
+	if(!end) {
+		LM_ERR("NULL end of parameter string");
+		return -1;
+	}
+
+	if(!h_entry) {
+		LM_ERR("NULL h_entry");
+		return -1;
+	}
+
+	if(!h_id) {
+		LM_ERR("NULL h_id");
+		return -1;
+	}
+
 	for(s = p; p < end && *p != DLG_SEPARATOR; p++)
 		;
 	if(*p != DLG_SEPARATOR) {
@@ -1006,7 +1026,7 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 	next_state_dlg(dlg, event, &old_state, &new_state, &unref, 0);
 	LM_DBG("unref after next state is %i\n", unref);
 	CURR_DLG_ID = req->id;
-	CURR_DLG_LIFETIME = (unsigned int)(time(0)) - dlg->start_ts;
+	CURR_DLG_LIFETIME = ksr_time_uint(NULL, NULL) - dlg->start_ts;
 	CURR_DLG_STATUS = new_state;
 
 	//    dlg_run_event_route(dlg, req, old_state, new_state);
@@ -1135,7 +1155,8 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 		goto done;
 	}
 
-	if((event == DLG_EVENT_REQ || event == DLG_EVENT_REQACK)
+	if((event == DLG_EVENT_REQ || event == DLG_EVENT_REQACK
+			   || event == DLG_EVENT_REQPRACK)
 			&& (new_state == DLG_STATE_CONFIRMED
 					|| new_state == DLG_STATE_EARLY)) {
 
@@ -1516,7 +1537,7 @@ void dlg_onreply(struct cell *t, int type, struct tmcb_params *param)
 		LM_DBG("dialog %p confirmed (No Ack) \n", dlg);
 
 		/* set start time */
-		dlg->start_ts = (unsigned int)(time(0));
+		dlg->start_ts = ksr_time_uint(NULL, NULL);
 
 		/* save the settings to the database,
          * if realtime saving mode configured- save dialog now

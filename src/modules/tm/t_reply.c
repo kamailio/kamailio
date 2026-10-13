@@ -1698,7 +1698,7 @@ branches_failed:
  */
 int t_retransmit_reply(struct cell *t)
 {
-	static char b[BUF_SIZE];
+	static char b[BUF_SIZE + 1];
 	int len;
 
 	/* first check if we managed to resolve topmost Via
@@ -2073,7 +2073,7 @@ enum rps relay_reply(struct cell *t, struct sip_msg *p_msg, int branch,
 				relayed_msg =
 						FAKED_REPLY; /* mark the relayed_msg as a "FAKE" */
 			} else {
-				buf = build_res_buf_from_sip_res(relayed_msg, &res_len);
+				buf = build_res_buf_from_sip_res(relayed_msg, &res_len, 0);
 				/* if we build a message from shmem, we need to remove
 				 * via delete lumps which are now stirred in the shmem-ed
 				 * structure
@@ -2530,6 +2530,16 @@ int reply_received(struct sip_msg *p_msg)
 						/* trigger tm:local-request event route for negative reply ACK --- */
 					}
 					shm_free(ack);
+				}
+				/* The upstream transaction is already complete. This reply was
+				 * matched only to ACK the negative final response on the canceled
+				 * branch; do not run normal reply processing for it. */
+				if(msg_status < 700 && t->uas.status >= 200
+						&& (uac->request.flags & F_RB_CANCELED)) {
+					LM_DBG("negative final reply for canceled branch consumed "
+						   "after "
+						   "ACK handling\n");
+					goto done;
 				}
 			} else if(is_local(t) /*&& 200 <= msg_status < 300*/) {
 				ack = build_local_ack(p_msg, t, branch, &ack_len, &lack_dst);

@@ -480,7 +480,7 @@ struct dlg_cell *build_new_dlg(
 	memset(dlg, 0, len);
 	dlg->state = DLG_STATE_UNCONFIRMED;
 	dlg->init_ts = ksr_time_uint(NULL, NULL);
-	dlg->last_modified = (unsigned int)time(NULL);
+	dlg->last_modified = ksr_time_uint(NULL, NULL);
 
 	dlg->h_entry = core_hash(callid, 0, d_table->size);
 	LM_DBG("new dialog on hash %u\n", dlg->h_entry);

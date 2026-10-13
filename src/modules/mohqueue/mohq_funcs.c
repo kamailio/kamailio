@@ -2098,7 +2098,7 @@ int send_rtp_answer(sip_msg_t *pmsg, call_lst *pcall)
 * o find SDP
 **********/
 
-	pbuf->s = build_res_buf_from_sip_res(pnmsg, (unsigned int *)&pbuf->len);
+	pbuf->s = build_res_buf_from_sip_res(pnmsg, (unsigned int *)&pbuf->len, 0);
 	pkg_free(pnewbuf);
 	free_sip_msg(pnmsg);
 	if(!pbuf->s || !pbuf->len) {

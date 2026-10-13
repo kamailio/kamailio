@@ -443,14 +443,14 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 
 	if(c->type != PROTO_TLS) {
 		LM_ERR("Connection found but is not TLS\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
 	if(!c->extra_data) {
 		LM_ERR("no extra_data specified in TLS/TCP connection found."
 			   " This should not happen... return -1\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
@@ -460,7 +460,7 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	// WOLFSSL_X509_V_OK / X509_V_OK
 	if(ssl_verify != 0) {
 		LM_WARN("verification of presented certificate failed... return -1\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
@@ -470,11 +470,11 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	if(!tls_c->ssl_peer_cert) {
 		LM_INFO("tlsops:is_peer_verified: WARNING: peer did not present "
 				"a certificate. Thus it could not be verified... return -1\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 
 	LM_DBG("tlsops:is_peer_verified: peer is successfully verified"
 		   "...done\n");

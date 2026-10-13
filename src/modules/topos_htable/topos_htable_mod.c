@@ -47,13 +47,11 @@ htable_api_t _tps_htable_api = {0};
 str _tps_htable_dialog = {
 		"topos_dialog=>size=4;autoexpire=7200;dmqreplicate=1", 52};
 str _tps_htable_transaction = {"topos_transaction=>size=4;autoexpire=7200", 42};
-int _tps_base64 = 0;
 
 static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 static param_export_t params[] = {
 		{"topos_htable_dialog", PARAM_STR, &_tps_htable_dialog},
-		{"topos_htable_transaction", PARAM_STR, &_tps_htable_transaction},
-		{"topos_htable_base64", PARAM_INT, &_tps_base64}, {0, 0, 0}};
+		{"topos_htable_transaction", PARAM_STR, &_tps_htable_transaction}};
 struct module_exports exports = {
 		"topos_htable",	 /* module name */
 		DEFAULT_DLFLAGS, /* dlopen flags */

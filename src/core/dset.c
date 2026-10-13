@@ -400,6 +400,9 @@ int get_branch_data(unsigned int i, branch_data_t *vbranch)
 			vbranch->path.s = _ksr_branches[i].path;
 		}
 		vbranch->force_socket = _ksr_branches[i].force_send_socket;
+		vbranch->force_send_socket_map = _ksr_branches[i].force_send_socket_map;
+		vbranch->force_send_socket_map_set =
+				_ksr_branches[i].force_send_socket_map_set;
 		vbranch->flags = _ksr_branches[i].flags;
 		if(_ksr_branches[i].ruid_len > 0) {
 			vbranch->ruid.len = _ksr_branches[i].ruid_len;
@@ -534,6 +537,9 @@ int append_branch(struct sip_msg *msg, str *uri, str *dst_uri, str *path,
 	_ksr_branches[nr_branches].q = q;
 
 	_ksr_branches[nr_branches].force_send_socket = force_socket;
+	memset(&_ksr_branches[nr_branches].force_send_socket_map, 0,
+			sizeof(send_socket_map_t));
+	_ksr_branches[nr_branches].force_send_socket_map_set = 0;
 	_ksr_branches[nr_branches].flags = flags;
 
 	/* copy instance string */

@@ -128,6 +128,14 @@ modparam("tls", "tls_method", "TLSv1")
 		the private key in PEM format.
 	</para>
 	<para>
+		A value starting with <varname>/engine:</varname> (OpenSSL 1.1.1 ENGINE) or
+		<varname>/uri:</varname> (OpenSSL 3 provider, e.g.
+		<varname>/uri:pkcs11:token=MYTOKEN;object=MYKEY;type=private</varname>)
+		selects a key held by an engine or provider (HSM). Such keys require
+		tcp_main_threads = 1 or 2; with tcp_main_threads = 0 the module refuses
+		to start.
+	</para>
+	<para>
 		If the file name starts with a '.' the path will be relative to the
 		working directory (<emphasis>at runtime</emphasis>). If it starts
 		with a '/' it will be an absolute path and if it starts with anything
@@ -1460,6 +1468,8 @@ modparam("tls", "rand_engine", "fastrand")
 
 	<para>
 	        To use private keys from the HSM, the name is the HSM key label prefixed by <varname>/engine:</varname>.
+	        The engine (offloaded algorithms and HSM keys) requires tcp_main_threads = 1 or 2;
+	        with tcp_main_threads = 0 the module refuses to start.
 	</para>
 		<programlisting format="linespecific">
 ...
@@ -1566,9 +1576,14 @@ verify_client = optional_no_ca
         <section id="tls.p.provider_quirks">
             <title><varname>provider_quirks</varname> (integer)</title>
             <para>
-              Reload a provider in the child - needed in MP-mode only (tcp_main_threads = 0) for some providers.
-              The configuration file for the provider is provided in the <varname>provider_quirks_config</varname> parameter.
-              Should be 0 in MT-mode.
+              <emphasis>Deprecated, ignored since 6.2.</emphasis> Engine/provider keys require
+              tcp_main_threads = 1 or 2, where the provider is loaded once in PROC_TCP_MAIN; a value set
+              here logs a warning.
+            </para>
+            <para>
+              Up to 6.1: reload a provider in the child - needed in MP-mode (tcp_main_threads = 0) for some
+              providers. The configuration file for the provider is provided in the
+              <varname>provider_quirks_config</varname> parameter.
             </para>
             <itemizedlist>
                 <listitem>
@@ -1593,7 +1608,10 @@ modparam("tls", "provider_quirks", 1)
         <section id="tls.p.provider_quirks_config">
             <title><varname>provider_quirks_config</varname> (string)</title>
             <para>
-              A file name of a OpenSSL configuration snippet that contains the provider configuration.
+              <emphasis>Deprecated, ignored since 6.2</emphasis> (see <varname>provider_quirks</varname>).
+            </para>
+            <para>
+              Up to 6.1: a file name of a OpenSSL configuration snippet that contains the provider configuration.
               The file must contain two mandatory keys: <varname>quirks_sect</varname> - section to load,
               <varname>quirks_provider</varname> - the provider to load. </para>
 	<example>
@@ -1646,6 +1664,19 @@ activate = 1
 		</listitem>
 		<listitem>
 			<para><emphasis>16 (bit 5)</emphasis> - send keys to udp peer</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>32 (bit 6)</emphasis> - write before each key line a
+			comment line "# TUPLE src=IP:PORT dst=IP:PORT sr=HEX cs=HEX v=HEX"
+			with the TCP connection (peer on src, kamailio on dst; IPv6 as
+			[IP]:PORT), the server random, the cipher suite and the protocol
+			version. A tool decoding a capture that missed the TLS handshake needs
+			this data to match the keys to the connection and to derive the record
+			keys (TLS 1.2: server random and cipher suite, TLS 1.3: cipher suite).
+			It provides necessary data only: recovery is still a non-trivial step
+			and requires the external tool to perform a search for epoch and
+			sequence number.
+			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>1024 (bit 11)</emphasis> - enable filtering of

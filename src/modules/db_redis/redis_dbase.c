@@ -2714,7 +2714,7 @@ static int db_redis_perform_update(const db1_con_t *_h, km_redis_con_t *con,
 					LM_ERR("Failed to add key to delete query\n");
 					goto error;
 				}
-				if(db_redis_key_add_str(&query_v, key) != 0) {
+				if(db_redis_key_add_str(&query_v, &key->key) != 0) {
 					LM_ERR("Failed to add key to delete query\n");
 					goto error;
 				}

@@ -177,7 +177,7 @@ static int fill_contact(
 	char *srcip = NULL;
 	str aor = STR_NULL;
 	sip_msg_t tmsg;
-	char tbuf[BUF_SIZE];
+	char tbuf[BUF_SIZE + 1];
 	int i;
 
 	if(!ci) {
@@ -436,7 +436,7 @@ static int get_ck_ik(const struct sip_msg *m, str *ck, str *ik)
 	}
 
 	*ik = get_www_auth_param("ik", www_auth);
-	if(ck->len == 0) {
+	if(ik->len == 0) {
 		LM_ERR("Error getting IK\n");
 		return -1;
 	}
@@ -477,8 +477,7 @@ static int update_contact_ipsec_params(
 
 	// Reuse only if both CK and IK match.
 	if(s_old && s_old->ck.s != NULL && s_old->ik.s != NULL
-			&& strcmp(s_old->ck.s, s->ck.s) == 0
-			&& strcmp(s_old->ik.s, s->ik.s) == 0) {
+			&& STR_EQ(s_old->ck, s->ck) && STR_EQ(s_old->ik, s->ik)) {
 		if(s_old->spi_pc && s_old->spi_ps && s_old->port_pc && s_old->port_ps) {
 			LM_INFO("Reusing IPSEC tunnel\n");
 			s->spi_pc = s_old->spi_pc;
@@ -913,9 +912,8 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	req_sec_params = cscf_get_security(req);
 
 	// Update contacts only for initial registration, for re-registration the existing contacts shouldn't be updated.
-	if(ci.via_port == SIP_PORT
-			|| (pcontact->security_temp->data.ipsec->port_ps == 0
-					&& pcontact->security_temp->data.ipsec->port_pc == 0)) {
+	if(pcontact->security_temp->data.ipsec->port_ps == 0
+			&& pcontact->security_temp->data.ipsec->port_pc == 0) {
 		LM_DBG("Registration for contact with AOR [%.*s], VIA [%d://%.*s:%d], "
 			   "received_host [%d://%.*s:%d]\n",
 				ci.aor.len, ci.aor.s, ci.via_prot, ci.via_host.len,
@@ -955,27 +953,27 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	if(ci.via_port == SIP_PORT) {
-		if(req_sec_params != NULL) {
-			ipsec_t *old_ipsec = pcontact->security_temp->data.ipsec;
-			pcontact->security_temp->data.ipsec = s;
-			// s is now owned by the contact (freed at contact expiry by
-			// free_security()); do not free it on the cleanup path
-			ipsec_swapped = 1;
-			// free the ipsec_t we just replaced on the contact - it was
-			// stored by save_pending() (or a prior ipsec_create()) and was
-			// previously orphaned on every registration
-			if(old_ipsec && old_ipsec != s) {
-				free_ipsec_data(old_ipsec);
-			}
-		}
-		// Update temp security parameters
-		if(ul.update_temp_security(d, pcontact->security_temp->type,
-				   pcontact->security_temp, pcontact)
-				!= 0) {
-			LM_ERR("Error updating temp security\n");
+	if(req_sec_params != NULL) {
+		ipsec_t *old_ipsec = pcontact->security_temp->data.ipsec;
+		pcontact->security_temp->data.ipsec = s;
+		// s is now owned by the contact (freed at contact expiry by
+		// free_security()); do not free it on the cleanup path
+		ipsec_swapped = 1;
+		// free the ipsec_t we just replaced on the contact - it was
+		// stored by save_pending() (or a prior ipsec_create()) and was
+		// previously orphaned on every registration
+		if(old_ipsec && old_ipsec != s) {
+			free_ipsec_data(old_ipsec);
 		}
 	}
+	// Update temp security parameters
+	if(ul.update_temp_security(d, pcontact->security_temp->type,
+			   pcontact->security_temp, pcontact)
+			!= 0) {
+		LM_ERR("Error updating temp security\n");
+	}
+
+	ci.reg_state = pcontact->reg_state;
 
 	if(ul.update_pcontact(d, &ci, pcontact) != 0) {
 		LM_ERR("Error updating contact\n");
@@ -995,14 +993,13 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	if(ci.via_port == SIP_PORT) {
-		if(ul.register_ulcb(pcontact,
-				   PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_DELETE, ipsec_on_expire,
-				   (void *)&pcontact->received_port)
-				!= 1) {
-			LM_ERR("Error subscribing for contact\n");
-			goto cleanup;
-		}
+	if(!ul.is_ulcb_registered(pcontact, ipsec_on_expire)
+			&& ul.register_ulcb(pcontact,
+					   PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_DELETE,
+					   ipsec_on_expire, (void *)&pcontact->received_port)
+					   != 1) {
+		LM_ERR("Error subscribing for contact\n");
+		goto cleanup;
 	}
 
 	ret = IPSEC_CMD_SUCCESS; // all good, set ret to SUCCESS, and exit
@@ -1013,12 +1010,10 @@ cleanup:
 	// stored on the contact. Free it here, otherwise it leaks on every
 	// re-registration. On the initial path ipsec_swapped==1 and data.ipsec is
 	// now owned by the contact - do NOT free it.
-	// sec_header is intentionally left alone (freed via the data_lump path).
 	if(req_sec_params && !ipsec_swapped && req_sec_params->data.ipsec) {
 		free_ipsec_data(req_sec_params->data.ipsec);
 		req_sec_params->data.ipsec = NULL;
 	}
-	// Do not free str* sec_header! It will be freed in data_lump.c -> free_lump()
 	ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 	pkg_free(ci.received_host.s);
 	pkg_free(ci.aor.s);

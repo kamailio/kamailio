@@ -64,8 +64,12 @@ typedef struct _ht
 	unsigned int htid;
 	unsigned int htexpire;
 	str dbtable;
+	str fpath;
 	int dbmode;
+	int ftype;
+	char fdelim;
 	int dbload;
+	int fload;
 	int ncols;
 	str scols[HT_MAX_COLS];
 	char pack[4];
@@ -95,7 +99,8 @@ typedef struct _ht_pv
 
 int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 		int dbmode, int itype, int_str *ival, int updateexpire,
-		int dmqreplicate, char coldelim, char colnull, int reloadat);
+		int dmqreplicate, char coldelim, char colnull, int reloadat, str *fpath,
+		int ftype, char fdelim);
 int ht_init_tables(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
@@ -108,6 +113,8 @@ int ht_set_cell_and_replicate(ht_t *ht, str *hname, str *name, int type,
 int ht_del_cell(ht_t *ht, str *name);
 int ht_del_cell_confirm(ht_t *ht, str *name);
 ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old);
+ht_cell_t *ht_cell_value_add_init(
+		ht_t *ht, str *name, int val, int initval, ht_cell_t *old);
 int ht_cell_exists(ht_t *ht, str *name);
 
 int ht_dbg(void);

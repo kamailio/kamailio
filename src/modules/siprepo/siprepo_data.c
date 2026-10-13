@@ -361,7 +361,7 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	int rtno;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("siprepo:msg");
-	char lbuf[BUF_SIZE];
+	char lbuf[BUF_SIZE + 1];
 
 	it = siprepo_msg_find(callid, msgid, 1);
 	if(it==NULL) {

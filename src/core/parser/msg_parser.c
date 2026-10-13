@@ -1151,7 +1151,7 @@ int msg_set_time(sip_msg_t *const msg)
  */
 char *ksr_buf_oneline(char *inbuf, int inlen)
 {
-	static char outbuf[BUF_SIZE];
+	static char outbuf[BUF_SIZE + 1];
 	int outlen;
 	int i = 0;
 

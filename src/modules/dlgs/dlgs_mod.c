@@ -35,6 +35,7 @@
 #include "../../core/timer_proc.h"
 
 #include "dlgs_records.h"
+#include "dlgs_stats.h"
 
 MODULE_VERSION
 
@@ -55,6 +56,7 @@ static void mod_destroy(void);
 
 static int w_dlgs_init(sip_msg_t *msg, char *psrc, char *pdst, char *pdata);
 static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2);
+static int w_dlgs_find(sip_msg_t *msg, char *p1, char *p2);
 static int w_dlgs_count(sip_msg_t *msg, char *pfield, char *pop, char *pdata);
 static int w_dlgs_tags_add(sip_msg_t *msg, char *ptags, char *p2);
 static int w_dlgs_tags_rm(sip_msg_t *msg, char *ptags, char *p2);
@@ -67,6 +69,8 @@ static cmd_export_t cmds[]={
 	{"dlgs_init", (cmd_function)w_dlgs_init, 3, fixup_spve_all,
 		fixup_free_spve_all, REQUEST_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE|ONSEND_ROUTE},
 	{"dlgs_update", (cmd_function)w_dlgs_update, 0, 0,
+		0, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"dlgs_find", (cmd_function)w_dlgs_find, 0, 0,
 		0, REQUEST_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
 	{"dlgs_count", (cmd_function)w_dlgs_count, 3, fixup_spve_all,
 		fixup_free_spve_all, ANY_ROUTE},
@@ -108,6 +112,10 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(dlgs_stats_init() < 0) {
+		return -1;
+	}
+
 	if(dlgs_rpc_init() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
@@ -240,6 +248,26 @@ static int ki_dlgs_update(sip_msg_t *msg)
 static int w_dlgs_update(sip_msg_t *msg, char *p1, char *p2)
 {
 	return ki_dlgs_update(msg);
+}
+
+/**
+ *
+ */
+static int ki_dlgs_find(sip_msg_t *msg)
+{
+	if(dlgs_find_item(msg) > 0) {
+		return 1;
+	}
+
+	return -1;
+}
+
+/**
+ *
+ */
+static int w_dlgs_find(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ki_dlgs_find(msg);
 }
 
 /**
@@ -381,6 +409,11 @@ static sr_kemi_t sr_kemi_dlgs_exports[] = {
 	},
 	{ str_init("dlgs"), str_init("dlgs_update"),
 		SR_KEMIP_INT, ki_dlgs_update,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dlgs"), str_init("dlgs_find"),
+		SR_KEMIP_INT, ki_dlgs_find,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

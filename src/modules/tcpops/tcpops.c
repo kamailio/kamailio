@@ -88,7 +88,7 @@ int tcpops_get_current_fd(int conid, int *fd)
 	LM_DBG("got fd=%d from id=%d\n", s_con->fd, conid);
 
 	*fd = s_con->fd;
-	tcpconn_put(s_con);
+	tcpconn_chld_put(s_con);
 	return 1;
 }
 
@@ -127,11 +127,11 @@ int tcpops_acquire_fd_from_tcpmain(int conid, int *fd)
 				errno);
 		goto error_release;
 	}
-	tcpconn_put(s_con);
+	tcpconn_chld_put(s_con);
 	return 1;
 
 error_release:
-	tcpconn_put(s_con);
+	tcpconn_chld_put(s_con);
 	return 0;
 }
 

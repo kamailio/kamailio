@@ -88,6 +88,11 @@ str ds_xavp_dst_dstidx = str_init("dstidx");
 str ds_xavp_dst_dstid = str_init("dstid");
 str ds_xavp_dst_attrs = str_init("attrs");
 str ds_xavp_dst_sock = str_init("sock");
+str ds_xavp_dst_sockmap_set = str_init("sockmap_set");
+str ds_xavp_dst_sockmap_udp = str_init("sockmap_udp");
+str ds_xavp_dst_sockmap_tcp = str_init("sockmap_tcp");
+str ds_xavp_dst_sockmap_tls = str_init("sockmap_tls");
+str ds_xavp_dst_sockmap_sctp = str_init("sockmap_sctp");
 str ds_xavp_dst_socket = str_init("socket");
 str ds_xavp_dst_sockname = str_init("sockname");
 
@@ -155,7 +160,7 @@ int ds_event_callback_mode = DS_EVRTMODE_RUNTIME;
 str ds_db_extra_attrs = STR_NULL;
 param_t *ds_db_extra_attrs_list = NULL;
 
-static int ds_reload_delta = 5;
+static int ds_reload_delta = 0;
 static time_t *ds_rpc_reload_time = NULL;
 
 /** module functions */
@@ -167,6 +172,8 @@ static int ds_init_rpc(void);
 
 static int w_ds_select(sip_msg_t*, char*, char*);
 static int w_ds_select_limit(sip_msg_t*, char*, char*, char*);
+static int w_ds_select_dns0(sip_msg_t*, char*, char*);
+static int w_ds_select_dns1(sip_msg_t*, char*, char*);
 static int w_ds_select_dst(struct sip_msg*, char*, char*);
 static int w_ds_select_dst_limit(struct sip_msg*, char*, char*, char*);
 static int w_ds_select_domain(struct sip_msg*, char*, char*);
@@ -182,6 +189,7 @@ static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
 static int w_ds_mark_addr(struct sip_msg *msg, char *state, char *group,
 		char *uri);
 static int w_ds_load_unset(struct sip_msg*, char*, char*);
+static int w_ds_load_unset_cid(struct sip_msg*, char*, char*);
 static int w_ds_load_update(struct sip_msg*, char*, char*);
 
 static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
@@ -225,6 +233,10 @@ static cmd_export_t cmds[]={
 		fixup_igp_igp, fixup_free_igp_igp, ANY_ROUTE},
 	{"ds_select",    (cmd_function)w_ds_select_limit,      3,
 		fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_dns", (cmd_function)w_ds_select_dns0,      0,
+		0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"ds_select_dns", (cmd_function)w_ds_select_dns1,      1,
+		fixup_igp_null, fixup_free_igp_null, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2,
 		fixup_igp_igp, fixup_free_igp_igp, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"ds_select_dst",    (cmd_function)w_ds_select_dst_limit,    3,
@@ -265,6 +277,8 @@ static cmd_export_t cmds[]={
 		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 	{"ds_load_unset",    (cmd_function)w_ds_load_unset,   0,
 		0, 0, ANY_ROUTE},
+	{"ds_load_unset",    (cmd_function)w_ds_load_unset_cid, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
 		0, 0, ANY_ROUTE},
 	{"ds_is_active",  (cmd_function)w_ds_is_active, 1,
@@ -561,15 +575,16 @@ static int mod_init(void)
 				ds_latency_estimator_alpha);
 	}
 
-	ds_rpc_reload_time = shm_malloc(sizeof(time_t));
-	if(ds_rpc_reload_time == NULL) {
-		shm_free(ds_ping_reply_codes);
-		shm_free(ds_ping_reply_codes_cnt);
-		SHM_MEM_ERROR;
-		return -1;
+	if(ds_reload_delta > 0) {
+		ds_rpc_reload_time = shm_malloc(sizeof(time_t));
+		if(ds_rpc_reload_time == NULL) {
+			shm_free(ds_ping_reply_codes);
+			shm_free(ds_ping_reply_codes_cnt);
+			SHM_MEM_ERROR;
+			return -1;
+		}
+		*ds_rpc_reload_time = 0;
 	}
-	*ds_rpc_reload_time = 0;
-
 	return 0;
 }
 
@@ -578,6 +593,9 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	if(rank == PROC_SIPINIT) {
+		ds_run_init_event_routes();
+	}
 	return 0;
 }
 
@@ -706,6 +724,32 @@ static int w_ds_select_limit(
 {
 	return w_ds_select_addr(msg, set, alg, limit /* limit number of dst*/,
 			DS_SETOP_XAVP /*set no dst/uri*/);
+}
+
+/**
+ *
+ */
+static int w_ds_select_dns0(sip_msg_t *msg, char *p1, char *p2)
+{
+	return ds_select_dns(msg, 0);
+}
+
+/**
+ *
+ */
+static int w_ds_select_dns1(sip_msg_t *msg, char *limit, char *p2)
+{
+	int vlimit;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)limit, &vlimit) < 0) {
+		LM_ERR("unable to get DNS destination limit\n");
+		return -1;
+	}
+	if(vlimit < 0) {
+		LM_ERR("DNS destination limit must not be negative\n");
+		return -1;
+	}
+	return ds_select_dns(msg, (uint32_t)vlimit);
 }
 
 /**
@@ -942,6 +986,19 @@ static int w_ds_load_unset(struct sip_msg *msg, char *str1, char *str2)
 	return 1;
 }
 
+static int w_ds_load_unset_cid(struct sip_msg *msg, char *pcid, char *str2)
+{
+	str scid = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pcid, &scid) < 0) {
+		LM_ERR("failed to get Call-ID parameter\n");
+		return -1;
+	}
+	if(ds_load_unset_callid(msg, &scid) < 0)
+		return -1;
+	return 1;
+}
+
 /**
  *
  */
@@ -966,17 +1023,14 @@ static int ds_warn_fixup(void **param, int param_no)
 
 static int ds_reload(sip_msg_t *msg)
 {
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("not ready for reload\n");
-		return -1;
+	if(ds_rpc_reload_time != NULL) {
+		if(*ds_rpc_reload_time != 0
+				&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+			LM_ERR("ongoing reload\n");
+			return -1;
+		}
+		*ds_rpc_reload_time = time(NULL);
 	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		return -1;
-	}
-	*ds_rpc_reload_time = time(NULL);
-
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0) {
 			LM_ERR("failed reloading the list file\n");
@@ -1143,75 +1197,117 @@ static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri)
 	return ki_ds_is_active_uri(msg, vset, &suri);
 }
 
-static int ds_parse_reply_codes()
+/**
+ * \brief Parse a reply-codes string into a newly shm-allocated int array.
+ *
+ * Accepts the same 'class=N'/'code=N' tokens as the ds_ping_reply_codes
+ * modparam; entries are 1..6 for a class and 100..699 for an exact code.
+ * Tokens may be separated by ';' or ',' (the per-destination attribute uses
+ * ',' because ';' is the attributes separator). Returns the number of parsed
+ * entries (0 if none), or -1 on error; *pcodes receives the array (NULL if 0).
+ */
+int ds_parse_reply_codes_list(str *input, int **pcodes)
 {
 	param_t *params_list = NULL;
 	param_t *pit = NULL;
 	int list_size = 0;
-	int i = 0;
 	int pos = 0;
 	int code = 0;
-	str input = {0, 0};
+	str in = STR_NULL;
+	char *buf = NULL;
+	int *codes_new = NULL;
+
+	*pcodes = NULL;
+	if(input == NULL || input->s == NULL || input->len <= 0) {
+		return 0;
+	}
+
+	/* work on a private copy: parse_params() advances the str it is given
+	 * and modifies the buffer in place. Keep the original allocation in buf
+	 * to free it, as in.s is moved forward by parse_params(). */
+	buf = (char *)pkg_malloc(input->len + 1);
+	if(buf == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	memcpy(buf, input->s, input->len);
+	buf[input->len] = '\0';
+	in.s = buf;
+	in.len = input->len;
+
+	if(parse_params(&in, CLASS_ANY, 0, &params_list) < 0) {
+		pkg_free(buf);
+		return -1;
+	}
+
+	for(pit = params_list; pit; pit = pit->next) {
+		if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
+			str2sint(&pit->body, &code);
+			if((code >= 100) && (code < 700)) {
+				list_size += 1;
+			}
+		} else if(pit->name.len == 5
+				  && strncasecmp(pit->name.s, "class", 5) == 0) {
+			str2sint(&pit->body, &code);
+			if((code >= 1) && (code < 7)) {
+				list_size += 1;
+			}
+		}
+	}
+
+	if(list_size > 0) {
+		codes_new = (int *)shm_malloc(list_size * sizeof(int));
+		if(codes_new == NULL) {
+			free_params(params_list);
+			pkg_free(buf);
+			SHM_MEM_ERROR;
+			return -1;
+		}
+		for(pit = params_list; pit; pit = pit->next) {
+			if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
+				str2sint(&pit->body, &code);
+				if((code >= 100) && (code < 700)) {
+					codes_new[pos++] = code;
+				}
+			} else if(pit->name.len == 5
+					  && strncasecmp(pit->name.s, "class", 5) == 0) {
+				str2sint(&pit->body, &code);
+				if((code >= 1) && (code < 7)) {
+					codes_new[pos++] = code;
+				}
+			}
+		}
+	}
+	free_params(params_list);
+	pkg_free(buf);
+	*pcodes = codes_new;
+	return list_size;
+}
+
+static int ds_parse_reply_codes()
+{
+	int i = 0;
+	int list_size = 0;
+	str input = STR_NULL;
 	int *ds_ping_reply_codes_new = NULL;
 	int *ds_ping_reply_codes_old = NULL;
 
 	/* validate input string */
 	if(cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s == 0
 			|| cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len
-					   <= 0)
+					   <= 0) {
 		return 0;
+	}
 
-	/* parse_params() updates the string pointer of .s -- make a copy */
 	input.s = cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).s;
 	input.len =
 			cfg_get(dispatcher, dispatcher_cfg, ds_ping_reply_codes_str).len;
 
-	if(parse_params(&input, CLASS_ANY, 0, &params_list) < 0)
+	list_size = ds_parse_reply_codes_list(&input, &ds_ping_reply_codes_new);
+	if(list_size < 0) {
 		return -1;
-
-	/* get the number of entries in the list */
-	for(pit = params_list; pit; pit = pit->next) {
-		if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
-			str2sint(&pit->body, &code);
-			if((code >= 100) && (code < 700))
-				list_size += 1;
-		} else if(pit->name.len == 5
-				  && strncasecmp(pit->name.s, "class", 5) == 0) {
-			str2sint(&pit->body, &code);
-			if((code >= 1) && (code < 7))
-				list_size += 1;
-		}
 	}
 	LM_DBG("expecting %d reply codes and classes\n", list_size);
-
-	if(list_size > 0) {
-		/* Allocate Memory for the new list: */
-		ds_ping_reply_codes_new = (int *)shm_malloc(list_size * sizeof(int));
-		if(ds_ping_reply_codes_new == NULL) {
-			free_params(params_list);
-			SHM_MEM_ERROR;
-			return -1;
-		}
-
-		/* Now create the list of valid reply-codes: */
-		for(pit = params_list; pit; pit = pit->next) {
-			if(pit->name.len == 4 && strncasecmp(pit->name.s, "code", 4) == 0) {
-				str2sint(&pit->body, &code);
-				if((code >= 100) && (code < 700)) {
-					ds_ping_reply_codes_new[pos++] = code;
-				}
-			} else if(pit->name.len == 5
-					  && strncasecmp(pit->name.s, "class", 5) == 0) {
-				str2sint(&pit->body, &code);
-				if((code >= 1) && (code < 7)) {
-					ds_ping_reply_codes_new[pos++] = code;
-				}
-			}
-		}
-	} else {
-		ds_ping_reply_codes_new = 0;
-	}
-	free_params(params_list);
 
 	if(list_size > *ds_ping_reply_codes_cnt) {
 		/* if more reply-codes -- change pointer and then set number of codes */
@@ -1221,7 +1317,7 @@ static int ds_parse_reply_codes()
 		if(ds_ping_reply_codes_old)
 			shm_free(ds_ping_reply_codes_old);
 	} else {
-		/* less or equal reply codea -- set the number of codes first */
+		/* less or equal reply codes -- set the number of codes first */
 		*ds_ping_reply_codes_cnt = list_size;
 		ds_ping_reply_codes_old = *ds_ping_reply_codes;
 		*ds_ping_reply_codes = ds_ping_reply_codes_new;
@@ -1237,25 +1333,31 @@ static int ds_parse_reply_codes()
 	return 0;
 }
 
-int ds_ping_check_rplcode(int code)
+int ds_ping_check_rplcode_list(int code, int *codes, int cnt)
 {
 	int i;
 
-	for(i = 0; i < *ds_ping_reply_codes_cnt; i++) {
-		if((*ds_ping_reply_codes)[i] / 10) {
+	for(i = 0; i < cnt; i++) {
+		if(codes[i] / 10) {
 			/* reply code */
-			if((*ds_ping_reply_codes)[i] == code) {
+			if(codes[i] == code) {
 				return 1;
 			}
 		} else {
 			/* reply class */
-			if((*ds_ping_reply_codes)[i] == code / 100) {
+			if(codes[i] == code / 100) {
 				return 1;
 			}
 		}
 	}
 
 	return 0;
+}
+
+int ds_ping_check_rplcode(int code)
+{
+	return ds_ping_check_rplcode_list(
+			code, *ds_ping_reply_codes, *ds_ping_reply_codes_cnt);
 }
 
 void ds_ping_reply_codes_update(str *gname, str *name)
@@ -1465,13 +1567,16 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	int inactive = 0;
 	int j = 0;
 	ds_ocdata_t ocdata;
+	ds_list_t *list;
 
 	if(param == NULL) {
 		return -1;
 	}
-	dsg = ds_list_lookup(_pv_dsg_fetch_dg);
+	list = ds_get_list();
+	dsg = ds_list_lookup(list, _pv_dsg_fetch_dg);
 
 	if(dsg == NULL) {
+		ds_put_list(list);
 		return pv_get_null(msg, param, res);
 	}
 
@@ -1495,6 +1600,7 @@ static int pv_get_dsg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		}
 	}
 	lock_release(&dsg->lock);
+	ds_put_list(list);
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* count */
@@ -1618,6 +1724,26 @@ static int ki_ds_select_limit(sip_msg_t *msg, int set, int alg, int limit)
 /**
  *
  */
+static int ki_ds_select_dns(sip_msg_t *msg)
+{
+	return ds_select_dns(msg, 0);
+}
+
+/**
+ *
+ */
+static int ki_ds_select_dns_limit(sip_msg_t *msg, int limit)
+{
+	if(limit < 0) {
+		LM_ERR("DNS destination limit must not be negative\n");
+		return -1;
+	}
+	return ds_select_dns(msg, (uint32_t)limit);
+}
+
+/**
+ *
+ */
 static int ki_ds_select_dst(sip_msg_t *msg, int set, int alg)
 {
 	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
@@ -1697,6 +1823,16 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 	{ str_init("dispatcher"), str_init("ds_select_limit"),
 		SR_KEMIP_INT, ki_ds_select_limit,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_dns"),
+		SR_KEMIP_INT, ki_ds_select_dns,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_dns_limit"),
+		SR_KEMIP_INT, ki_ds_select_dns_limit,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dispatcher"), str_init("ds_select_domain"),
@@ -1794,6 +1930,11 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dispatcher"), str_init("ds_load_unset_callid"),
+		SR_KEMIP_INT, ds_load_unset_callid,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dispatcher"), str_init("ds_reload"),
 		SR_KEMIP_INT, ds_reload,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1839,18 +1980,15 @@ static const char *dispatcher_rpc_reload_doc[2] = {
 static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 {
 
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("not ready for reload\n");
-		rpc->fault(ctx, 500, "Not ready for reload");
-		return;
+	if(ds_rpc_reload_time != NULL) {
+		if(*ds_rpc_reload_time != 0
+				&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+			LM_ERR("ongoing reload\n");
+			rpc->fault(ctx, 500, "Ongoing reload");
+			return;
+		}
+		*ds_rpc_reload_time = time(NULL);
 	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		rpc->fault(ctx, 500, "Ongoing reload");
-		return;
-	}
-	*ds_rpc_reload_time = time(NULL);
 
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0) {
@@ -1863,6 +2001,7 @@ static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 			return;
 		}
 	}
+	ds_run_init_event_routes();
 	rpc->rpl_printf(ctx, "Ok. Dispatcher successfully reloaded.");
 	return;
 }
@@ -1971,7 +2110,7 @@ int ds_rpc_print_set(
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
-			if(rpc->struct_add(wh, "SSddddSSSSjj", "BODY",
+			if(rpc->struct_add(wh, "SSddddSSSSSjj", "BODY",
 					   &(node->dlist[j].attrs.body), "DUID",
 					   (node->dlist[j].attrs.duid.s)
 							   ? &(node->dlist[j].attrs.duid)
@@ -1986,6 +2125,10 @@ int ds_rpc_print_set(
 					   "SOCKNAME",
 					   (node->dlist[j].attrs.sockname.s)
 							   ? &(node->dlist[j].attrs.sockname)
+							   : &data,
+					   "SOCKMAP",
+					   (node->dlist[j].attrs.sockmap.s)
+							   ? &(node->dlist[j].attrs.sockmap)
 							   : &data,
 					   "PING_SOCKET",
 					   (node->dlist[j].attrs.ping_socket.s)
@@ -2043,7 +2186,7 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	int n;
 	str smode;
 	int vmode = DS_RPC_PRINT_NORMAL;
-	ds_set_t *dslist = NULL;
+	ds_list_t *dslist = NULL;
 	int dslistnr = 0;
 
 	n = rpc->scan(ctx, "*S", &smode);
@@ -2059,6 +2202,7 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	dslistnr = ds_get_list_nr();
 
 	if(dslist == NULL || dslistnr <= 0) {
+		ds_put_list(dslist);
 		LM_DBG("no destination sets\n");
 		rpc->fault(ctx, 500, "No Destination Sets");
 		return;
@@ -2066,15 +2210,18 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 
 	/* add entry node */
 	if(rpc->add(ctx, "{", &th) < 0) {
+		ds_put_list(dslist);
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 	if(rpc->struct_add(th, "d[", "NRSETS", dslistnr, "RECORDS", &ih) < 0) {
+		ds_put_list(dslist);
 		rpc->fault(ctx, 500, "Internal error sets structure");
 		return;
 	}
 
-	ds_rpc_print_set(dslist, rpc, ctx, ih, vmode);
+	ds_rpc_print_set(dslist->head, rpc, ctx, ih, vmode);
+	ds_put_list(dslist);
 
 	return;
 }
@@ -2221,18 +2368,15 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	str dest;
 	str attrs = STR_NULL;
 
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("Not ready for rebuilding destinations list\n");
-		rpc->fault(ctx, 500, "Not ready for reload");
-		return;
+	if(ds_rpc_reload_time != NULL) {
+		if(*ds_rpc_reload_time != 0
+				&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+			LM_ERR("ongoing reload\n");
+			rpc->fault(ctx, 500, "Ongoing reload");
+			return;
+		}
+		*ds_rpc_reload_time = time(NULL);
 	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		rpc->fault(ctx, 500, "Ongoing reload");
-		return;
-	}
-	*ds_rpc_reload_time = time(NULL);
 
 	flags = 0;
 	priority = 0;
@@ -2258,6 +2402,9 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 static const char *dispatcher_rpc_remove_doc[2] = {
 		"Remove a destination address from memory", 0};
 
+static const char *dispatcher_rpc_update_doc[2] = {
+		"Update a destination address in memory", 0};
+
 
 /*
  * RPC command to remove a destination address from memory
@@ -2267,18 +2414,15 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 	int group;
 	str dest;
 
-	if(ds_rpc_reload_time == NULL) {
-		LM_ERR("Not ready for rebuilding destinations list\n");
-		rpc->fault(ctx, 500, "Not ready for reload");
-		return;
+	if(ds_rpc_reload_time != NULL) {
+		if(*ds_rpc_reload_time != 0
+				&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+			LM_ERR("ongoing reload\n");
+			rpc->fault(ctx, 500, "Ongoing reload");
+			return;
+		}
+		*ds_rpc_reload_time = time(NULL);
 	}
-	if(*ds_rpc_reload_time != 0
-			&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
-		LM_ERR("ongoing reload\n");
-		rpc->fault(ctx, 500, "Ongoing reload");
-		return;
-	}
-	*ds_rpc_reload_time = time(NULL);
 
 	if(rpc->scan(ctx, "dS", &group, &dest) < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -2290,6 +2434,46 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 		return;
 	}
 	rpc->rpl_printf(ctx, "Ok. Dispatcher destination removed.");
+	return;
+}
+
+/*
+ * RPC command to replace a destination address in memory
+ */
+static void dispatcher_rpc_update(rpc_t *rpc, void *ctx)
+{
+	int group, flags, priority, nparams;
+	str dest;
+	str attrs = STR_NULL;
+
+	if(ds_rpc_reload_time != NULL) {
+		if(*ds_rpc_reload_time != 0
+				&& *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+			LM_ERR("ongoing reload\n");
+			rpc->fault(ctx, 500, "Ongoing reload");
+			return;
+		}
+		*ds_rpc_reload_time = time(NULL);
+	}
+
+	flags = 0;
+	priority = 0;
+
+	nparams =
+			rpc->scan(ctx, "dS*ddS", &group, &dest, &flags, &priority, &attrs);
+	if(nparams < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	} else if(nparams <= 4) {
+		attrs.s = 0;
+		attrs.len = 0;
+	}
+
+	if(ds_update_dst_record(group, &dest, flags, priority, &attrs) != 0) {
+		rpc->fault(ctx, 500, "Updating dispatcher dst failed");
+		return;
+	}
+	rpc->rpl_printf(ctx, "Ok. Dispatcher destination updated.");
 	return;
 }
 
@@ -2348,6 +2532,7 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 	int i = 0;
 	ds_set_t *node = NULL;
 	void *th = NULL;
+	ds_list_t *list;
 
 	if(rpc->scan(ctx, "d", &group) != 1) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
@@ -2355,8 +2540,10 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 	}
 
 	/* get the index of the set */
-	node = ds_list_lookup(group);
+	list = ds_get_list();
+	node = ds_list_lookup(list, group);
 	if(node == NULL) {
+		ds_put_list(list);
 		LM_ERR("destination set [%d] not found\n", group);
 		rpc->fault(ctx, 404, "Destination Group Not Found");
 		return;
@@ -2365,6 +2552,7 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 	for(i = 0; i < node->nr; i++) {
 		/* add entry node */
 		if(rpc->add(ctx, "{", &th) < 0) {
+			ds_put_list(list);
 			rpc->fault(ctx, 500, "Internal error root reply");
 			return;
 		}
@@ -2380,10 +2568,12 @@ static void dispatcher_rpc_oclist(rpc_t *rpc, void *ctx)
 				   node->dlist[i].ocdata.ocmin, "ocmax",
 				   node->dlist[i].ocdata.ocmax)
 				< 0) {
+			ds_put_list(list);
 			rpc->fault(ctx, 500, "Internal error main structure");
 			return;
 		}
 	}
+	ds_put_list(list);
 }
 
 /* clang-format off */
@@ -2400,6 +2590,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_ping_active_doc, 0},
 	{"dispatcher.add",   dispatcher_rpc_add,
 		dispatcher_rpc_add_doc, 0},
+	{"dispatcher.update", dispatcher_rpc_update,
+		dispatcher_rpc_update_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,

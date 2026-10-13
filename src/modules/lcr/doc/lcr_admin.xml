@@ -1132,8 +1132,7 @@ modparam("lcr", "fetch_rows", 3000)
 		<title><varname>ping_interval</varname> (integer)</title>
 		<para>
 		  Interval in seconds for sending OPTIONS ping requests
-		  to gateways that, due to failures, have been marked
-		  as inactive by inactivate_gw() function call.
+		  to gateways selected according to <varname>ping_mode</varname>.
 		  If an inactive gateway later gives a valid response (see
 		  <varname>ping_valid_reply_codes</varname>) to a ping
 		  request, it is marked again as active.
@@ -1144,7 +1143,7 @@ modparam("lcr", "fetch_rows", 3000)
 		  parameters <varname>lcr_id_avp</varname> and
 		  <varname>defunct_gw_avp</varname> must have been defined.
 		  Value <quote>0</quote> disables sending of OPTIONS ping
-		  requests to failed gateways.
+		  requests to gateways.
 		</para>
 		<para>
 		<emphasis>
@@ -1163,11 +1162,57 @@ modparam("lcr", "ping_interval", 15)
 		</example>
 	</section>
 
+	<section id="lcr.p.ping_mode">
+		<title><varname>ping_mode</varname> (integer)</title>
+		<para>
+		  Controls which gateways are pinged and whether failed OPTIONS
+		  requests can inactivate them. This parameter has effect only when
+		  <varname>ping_interval</varname> is greater than zero.
+		</para>
+		<itemizedlist>
+		  <listitem>
+			<para>
+			  Value <quote>0</quote> preserves the existing behavior. Only
+			  gateways being inactivated or already inactive are pinged, and
+			  failed OPTIONS requests do not change their state.
+			</para>
+		  </listitem>
+		  <listitem>
+			<para>
+			  Value <quote>1</quote> continuously pings all gateways. A timeout
+			  or a reply that is neither a 2xx response nor listed in
+			  <varname>ping_valid_reply_codes</varname> counts as a failure.
+			  Once <varname>ping_inactivate_threshold</varname> is reached, the
+			  gateway is marked as inactive. A valid reply immediately marks it
+			  as active again. In this mode, calling
+			  <function>inactivate_gw()</function> is optional.
+			</para>
+		  </listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Set <varname>ping_mode</varname> parameter
+		</title>
+<programlisting format="linespecific">
+...
+modparam("lcr", "ping_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="lcr.p.ping_inactivate_threshold">
 		<title><varname>ping_inactivate_threshold</varname> (integer)</title>
 		<para>
-		  Tells after how many failures (= inactivate_gw() function
-		  calls) a gateway is marked as inactive.
+		  Tells after how many failures a gateway is marked as inactive.
+		  Calls to <function>inactivate_gw()</function> count as failures.
+		  When <varname>ping_mode</varname> is <quote>1</quote>, failed
+		  OPTIONS requests count towards the same threshold.
 		</para>
 		<para>
 		<emphasis>

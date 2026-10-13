@@ -142,22 +142,13 @@ static int tps_htable_insert_initial_method_branch(
 	ptr = _tps_htable_key_buf;
 
 	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[1],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(
-				xuuid.s, xuuid.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
-
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|x%s",
-				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2]);
-
-	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|x%.*s",
-				md->a_callid.len, md->a_callid.s, md->b_tag.len, md->b_tag.s,
-				xuuid.len, xuuid.s);
-	}
+	base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(md->b_tag.s, md->b_tag.len, _tps_base64_buf[1],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(xuuid.s, xuuid.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|x%s", _tps_base64_buf[0],
+			_tps_base64_buf[1], _tps_base64_buf[2]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
@@ -171,15 +162,10 @@ static int tps_htable_insert_initial_method_branch(
 	ptr = _tps_htable_val_buf;
 
 	// base64 encode val values
-	if(_tps_base64) {
-		base64url_enc(md->x_vbranch1.s, md->x_vbranch1.len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL, "%ld|%s", rectime,
-				_tps_base64_buf[0]);
-	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL, "%ld|%.*s", rectime,
-				md->x_vbranch1.len, md->x_vbranch1.s);
-	}
+	base64url_enc(md->x_vbranch1.s, md->x_vbranch1.len, _tps_base64_buf[0],
+			TPS_BASE64_SIZE - 1);
+	ret = snprintf(
+			ptr, TPS_HTABLE_SIZE_VAL, "%ld|%s", rectime, _tps_base64_buf[0]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
 		LM_ERR("failed to build htable val\n");
@@ -263,21 +249,12 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 	ptr = _tps_htable_key_buf;
 
 	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(
-				xtag.s, xtag.len, _tps_base64_buf[1], TPS_BASE64_SIZE - 1);
-		base64url_enc(
-				xuuid.s, xuuid.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
-
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|x%s",
-				_tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2]);
-	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s|%.*s|x%.*s",
-				md->a_callid.len, md->a_callid.s, xtag.len, xtag.s, xuuid.len,
-				xuuid.s);
-	}
+	base64url_enc(md->a_callid.s, md->a_callid.len, _tps_base64_buf[0],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(xtag.s, xtag.len, _tps_base64_buf[1], TPS_BASE64_SIZE - 1);
+	base64url_enc(xuuid.s, xuuid.len, _tps_base64_buf[2], TPS_BASE64_SIZE - 1);
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s|%s|x%s", _tps_base64_buf[0],
+			_tps_base64_buf[1], _tps_base64_buf[2]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
@@ -297,7 +274,7 @@ static int tps_htable_load_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 		i = 0;
 		while((ptr = strsep(&hval->value.s.s, "|")) != NULL) {
 			// base64 decode val values
-			if(_tps_base64 && strlen(ptr) > 0 && i != 0 && i < 2) {
+			if(strlen(ptr) > 0 && i != 0 && i < 2) {
 				base64url_dec(ptr, strlen(ptr), _tps_base64_buf[0],
 						TPS_BASE64_SIZE - 1);
 				ptr = _tps_base64_buf[0];
@@ -352,14 +329,9 @@ int tps_htable_insert_branch(tps_data_t *td)
 	ptr = _tps_htable_key_buf;
 
 	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(td->x_vbranch1.s, td->x_vbranch1.len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
-	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s", td->x_vbranch1.len,
-				td->x_vbranch1.s);
-	}
+	base64url_enc(td->x_vbranch1.s, td->x_vbranch1.len, _tps_base64_buf[0],
+			TPS_BASE64_SIZE - 1);
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
@@ -372,72 +344,55 @@ int tps_htable_insert_branch(tps_data_t *td)
 	ptr = _tps_htable_val_buf;
 
 	// base64 encode val values
-	if(_tps_base64) {
-		base64url_enc(td->a_callid.s, td->a_callid.len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_uuid.s, td->a_uuid.len, _tps_base64_buf[1],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_uuid.s, td->b_uuid.len, _tps_base64_buf[2],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->x_via.s, td->x_via.len, _tps_base64_buf[3],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->x_vbranch1.s, td->x_vbranch1.len, _tps_base64_buf[4],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->x_rr.s, td->x_rr.len, _tps_base64_buf[5],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->y_rr.s, td->y_rr.len, _tps_base64_buf[6],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->s_rr.s, td->s_rr.len, _tps_base64_buf[7],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->x_uri.s, td->x_uri.len, _tps_base64_buf[8],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->x_tag.s, td->x_tag.len, _tps_base64_buf[9],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->s_method.s, td->s_method.len, _tps_base64_buf[10],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->s_cseq.s, td->s_cseq.len, _tps_base64_buf[11],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_contact.s, td->a_contact.len, _tps_base64_buf[12],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_contact.s, td->b_contact.len, _tps_base64_buf[13],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->as_contact.s, td->as_contact.len, _tps_base64_buf[14],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->bs_contact.s, td->bs_contact.len, _tps_base64_buf[15],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_tag.s, td->a_tag.len, _tps_base64_buf[16],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_tag.s, td->b_tag.len, _tps_base64_buf[17],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->x_context.s, td->x_context.len, _tps_base64_buf[18],
-				TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_callid.s, td->a_callid.len, _tps_base64_buf[0],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_uuid.s, td->a_uuid.len, _tps_base64_buf[1],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_uuid.s, td->b_uuid.len, _tps_base64_buf[2],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->x_via.s, td->x_via.len, _tps_base64_buf[3],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->x_vbranch1.s, td->x_vbranch1.len, _tps_base64_buf[4],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(
+			td->x_rr.s, td->x_rr.len, _tps_base64_buf[5], TPS_BASE64_SIZE - 1);
+	base64url_enc(
+			td->y_rr.s, td->y_rr.len, _tps_base64_buf[6], TPS_BASE64_SIZE - 1);
+	base64url_enc(
+			td->s_rr.s, td->s_rr.len, _tps_base64_buf[7], TPS_BASE64_SIZE - 1);
+	base64url_enc(td->x_uri.s, td->x_uri.len, _tps_base64_buf[8],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->x_tag.s, td->x_tag.len, _tps_base64_buf[9],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->s_method.s, td->s_method.len, _tps_base64_buf[10],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->s_cseq.s, td->s_cseq.len, _tps_base64_buf[11],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_contact.s, td->a_contact.len, _tps_base64_buf[12],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_contact.s, td->b_contact.len, _tps_base64_buf[13],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->as_contact.s, td->as_contact.len, _tps_base64_buf[14],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->bs_contact.s, td->bs_contact.len, _tps_base64_buf[15],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_tag.s, td->a_tag.len, _tps_base64_buf[16],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_tag.s, td->b_tag.len, _tps_base64_buf[17],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->x_context.s, td->x_context.len, _tps_base64_buf[18],
+			TPS_BASE64_SIZE - 1);
 
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
-				"%ld|%s|%s|%s|%d|%s|%s|%s|%s|%s|%s|%s|%s|"
-				"%s|%s|%s|%s|%s|%s|%s|%s",
-				rectime, _tps_base64_buf[0], _tps_base64_buf[1],
-				_tps_base64_buf[2], td->direction, _tps_base64_buf[3],
-				_tps_base64_buf[4], _tps_base64_buf[5], _tps_base64_buf[6],
-				_tps_base64_buf[7], _tps_base64_buf[8], _tps_base64_buf[9],
-				_tps_base64_buf[10], _tps_base64_buf[11], _tps_base64_buf[12],
-				_tps_base64_buf[13], _tps_base64_buf[14], _tps_base64_buf[15],
-				_tps_base64_buf[16], _tps_base64_buf[17], _tps_base64_buf[18]);
-	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
-				"%ld|%.*s|%.*s|%.*s|%d|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|"
-				"%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s",
-				rectime, td->a_callid.len, td->a_callid.s, td->a_uuid.len,
-				td->a_uuid.s, td->b_uuid.len, td->b_uuid.s, td->direction,
-				td->x_via.len, td->x_via.s, td->x_vbranch1.len,
-				td->x_vbranch1.s, td->x_rr.len, td->x_rr.s, td->y_rr.len,
-				td->y_rr.s, td->s_rr.len, td->s_rr.s, td->x_uri.len,
-				td->x_uri.s, td->x_tag.len, td->x_tag.s, td->s_method.len,
-				td->s_method.s, td->s_cseq.len, td->s_cseq.s, td->a_contact.len,
-				td->a_contact.s, td->b_contact.len, td->b_contact.s,
-				td->as_contact.len, td->as_contact.s, td->bs_contact.len,
-				td->bs_contact.s, td->a_tag.len, td->a_tag.s, td->b_tag.len,
-				td->b_tag.s, td->x_context.len, td->x_context.s);
-	}
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
+			"%ld|%s|%s|%s|%d|%s|%s|%s|%s|%s|%s|%s|%s|"
+			"%s|%s|%s|%s|%s|%s|%s|%s",
+			rectime, _tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2],
+			td->direction, _tps_base64_buf[3], _tps_base64_buf[4],
+			_tps_base64_buf[5], _tps_base64_buf[6], _tps_base64_buf[7],
+			_tps_base64_buf[8], _tps_base64_buf[9], _tps_base64_buf[10],
+			_tps_base64_buf[11], _tps_base64_buf[12], _tps_base64_buf[13],
+			_tps_base64_buf[14], _tps_base64_buf[15], _tps_base64_buf[16],
+			_tps_base64_buf[17], _tps_base64_buf[18]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
 		LM_ERR("failed to build htable val\n");
@@ -514,14 +469,9 @@ int tps_htable_load_branch(
 	ptr = _tps_htable_key_buf;
 
 	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(xvbranch1->s, xvbranch1->len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
-	} else {
-		ret = snprintf(
-				ptr, TPS_HTABLE_SIZE_KEY, "%.*s", xvbranch1->len, xvbranch1->s);
-	}
+	base64url_enc(xvbranch1->s, xvbranch1->len, _tps_base64_buf[0],
+			TPS_BASE64_SIZE - 1);
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
@@ -541,7 +491,7 @@ int tps_htable_load_branch(
 		i = 0;
 		while((ptr = strsep(&hval->value.s.s, "|")) != NULL) {
 			// base64 decode val values
-			if(_tps_base64 && strlen(ptr) > 0 && i != 0 && i != 4 && i < 21) {
+			if(strlen(ptr) > 0 && i != 0 && i != 4 && i < 21) {
 				base64url_dec(ptr, strlen(ptr), _tps_base64_buf[0],
 						TPS_BASE64_SIZE - 1);
 				ptr = _tps_base64_buf[0];
@@ -743,9 +693,9 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 	// build key
 	ptr = _tps_htable_key_buf;
 	ret = (td->a_uuid.len > 0) ? snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-				  td->a_uuid.len, td->a_uuid.s)
+										 td->a_uuid.len, td->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-									   td->b_uuid.len, td->b_uuid.s);
+										 td->b_uuid.len, td->b_uuid.s);
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
@@ -753,11 +703,9 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 	ptr[0] = 'a';
 
 	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
-				_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
-	}
+	base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
+			_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
@@ -770,77 +718,57 @@ static int tps_htable_insert_dialog_helper(tps_data_t *td, int set_expire)
 	ptr = _tps_htable_val_buf;
 
 	// base64 encode val values
-	if(_tps_base64) {
-		base64url_enc(td->a_callid.s, td->a_callid.len, _tps_base64_buf[0],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_uuid.s, td->a_uuid.len, _tps_base64_buf[1],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_uuid.s, td->b_uuid.len, _tps_base64_buf[2],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_contact.s, td->a_contact.len, _tps_base64_buf[3],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_contact.s, td->b_contact.len, _tps_base64_buf[4],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->as_contact.s, td->as_contact.len, _tps_base64_buf[5],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->bs_contact.s, td->bs_contact.len, _tps_base64_buf[6],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_tag.s, td->a_tag.len, _tps_base64_buf[7],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_tag.s, td->b_tag.len, _tps_base64_buf[8],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_rr.s, td->a_rr.len, _tps_base64_buf[9],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_rr.s, td->b_rr.len, _tps_base64_buf[10],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->s_rr.s, td->s_rr.len, _tps_base64_buf[11],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_uri.s, td->a_uri.len, _tps_base64_buf[12],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_uri.s, td->b_uri.len, _tps_base64_buf[13],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->r_uri.s, td->r_uri.len, _tps_base64_buf[14],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->a_srcaddr.s, td->a_srcaddr.len, _tps_base64_buf[15],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->b_srcaddr.s, td->b_srcaddr.len, _tps_base64_buf[16],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->s_method.s, td->s_method.len, _tps_base64_buf[17],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->s_cseq.s, td->s_cseq.len, _tps_base64_buf[18],
-				TPS_BASE64_SIZE - 1);
-		base64url_enc(td->x_context.s, td->x_context.len, _tps_base64_buf[19],
-				TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_callid.s, td->a_callid.len, _tps_base64_buf[0],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_uuid.s, td->a_uuid.len, _tps_base64_buf[1],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_uuid.s, td->b_uuid.len, _tps_base64_buf[2],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_contact.s, td->a_contact.len, _tps_base64_buf[3],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_contact.s, td->b_contact.len, _tps_base64_buf[4],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->as_contact.s, td->as_contact.len, _tps_base64_buf[5],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->bs_contact.s, td->bs_contact.len, _tps_base64_buf[6],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_tag.s, td->a_tag.len, _tps_base64_buf[7],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_tag.s, td->b_tag.len, _tps_base64_buf[8],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(
+			td->a_rr.s, td->a_rr.len, _tps_base64_buf[9], TPS_BASE64_SIZE - 1);
+	base64url_enc(
+			td->b_rr.s, td->b_rr.len, _tps_base64_buf[10], TPS_BASE64_SIZE - 1);
+	base64url_enc(
+			td->s_rr.s, td->s_rr.len, _tps_base64_buf[11], TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_uri.s, td->a_uri.len, _tps_base64_buf[12],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_uri.s, td->b_uri.len, _tps_base64_buf[13],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->r_uri.s, td->r_uri.len, _tps_base64_buf[14],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->a_srcaddr.s, td->a_srcaddr.len, _tps_base64_buf[15],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->b_srcaddr.s, td->b_srcaddr.len, _tps_base64_buf[16],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->s_method.s, td->s_method.len, _tps_base64_buf[17],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->s_cseq.s, td->s_cseq.len, _tps_base64_buf[18],
+			TPS_BASE64_SIZE - 1);
+	base64url_enc(td->x_context.s, td->x_context.len, _tps_base64_buf[19],
+			TPS_BASE64_SIZE - 1);
 
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
-				"%ld|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|"
-				"%d|%s|%s|%s|%s|%s|%s|%s|%s",
-				rectime, _tps_base64_buf[0], _tps_base64_buf[1],
-				_tps_base64_buf[2], _tps_base64_buf[3], _tps_base64_buf[4],
-				_tps_base64_buf[5], _tps_base64_buf[6], _tps_base64_buf[7],
-				_tps_base64_buf[8], _tps_base64_buf[9], _tps_base64_buf[10],
-				_tps_base64_buf[11], td->iflags, _tps_base64_buf[12],
-				_tps_base64_buf[13], _tps_base64_buf[14], _tps_base64_buf[15],
-				_tps_base64_buf[16], _tps_base64_buf[17], _tps_base64_buf[18],
-				_tps_base64_buf[19]);
-	} else {
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
-				"%ld|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*"
-				"s|"
-				"%d|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s|%.*s",
-				rectime, td->a_callid.len, td->a_callid.s, td->a_uuid.len,
-				td->a_uuid.s, td->b_uuid.len, td->b_uuid.s, td->a_contact.len,
-				td->a_contact.s, td->b_contact.len, td->b_contact.s,
-				td->as_contact.len, td->as_contact.s, td->bs_contact.len,
-				td->bs_contact.s, td->a_tag.len, td->a_tag.s, td->b_tag.len,
-				td->b_tag.s, td->a_rr.len, td->a_rr.s, td->b_rr.len, td->b_rr.s,
-				td->s_rr.len, td->s_rr.s, td->iflags, td->a_uri.len,
-				td->a_uri.s, td->b_uri.len, td->b_uri.s, td->r_uri.len,
-				td->r_uri.s, td->a_srcaddr.len, td->a_srcaddr.s,
-				td->b_srcaddr.len, td->b_srcaddr.s, td->s_method.len,
-				td->s_method.s, td->s_cseq.len, td->s_cseq.s, td->x_context.len,
-				td->x_context.s);
-	}
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_VAL,
+			"%ld|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|"
+			"%d|%s|%s|%s|%s|%s|%s|%s|%s",
+			rectime, _tps_base64_buf[0], _tps_base64_buf[1], _tps_base64_buf[2],
+			_tps_base64_buf[3], _tps_base64_buf[4], _tps_base64_buf[5],
+			_tps_base64_buf[6], _tps_base64_buf[7], _tps_base64_buf[8],
+			_tps_base64_buf[9], _tps_base64_buf[10], _tps_base64_buf[11],
+			td->iflags, _tps_base64_buf[12], _tps_base64_buf[13],
+			_tps_base64_buf[14], _tps_base64_buf[15], _tps_base64_buf[16],
+			_tps_base64_buf[17], _tps_base64_buf[18], _tps_base64_buf[19]);
 
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_VAL) {
 		LM_ERR("failed to build htable val\n");
@@ -909,9 +837,9 @@ int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	// build key
 	ptr = _tps_htable_key_buf;
 	ret = (md->a_uuid.len > 0) ? snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-				  md->a_uuid.len, md->a_uuid.s)
+										 md->a_uuid.len, md->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-									   md->b_uuid.len, md->b_uuid.s);
+										 md->b_uuid.len, md->b_uuid.s);
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
@@ -919,11 +847,10 @@ int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	ptr[0] = 'a';
 
 	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
-				_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
-	}
+	base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
+			_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
+
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
@@ -943,7 +870,7 @@ int tps_htable_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		i = 0;
 		while((ptr = strsep(&hval->value.s.s, "|")) != NULL) {
 			// base64 decode val values
-			if(_tps_base64 && strlen(ptr) > 0 && i != 0 && i != 13 && i < 22) {
+			if(strlen(ptr) > 0 && i != 0 && i != 13 && i < 22) {
 				base64url_dec(ptr, strlen(ptr), _tps_base64_buf[0],
 						TPS_BASE64_SIZE - 1);
 				ptr = _tps_base64_buf[0];
@@ -1218,9 +1145,9 @@ int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	// build key
 	ptr = _tps_htable_key_buf;
 	ret = (sd->a_uuid.len > 0) ? snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-				  sd->a_uuid.len, sd->a_uuid.s)
+										 sd->a_uuid.len, sd->a_uuid.s)
 							   : snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%.*s",
-									   sd->b_uuid.len, sd->b_uuid.s);
+										 sd->b_uuid.len, sd->b_uuid.s);
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;
@@ -1228,11 +1155,10 @@ int tps_htable_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	ptr[0] = 'a';
 
 	// base64 encode key values
-	if(_tps_base64) {
-		base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
-				_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
-		ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
-	}
+	base64url_enc(_tps_htable_key_buf, strlen(_tps_htable_key_buf),
+			_tps_base64_buf[0], TPS_BASE64_SIZE - 1);
+	ret = snprintf(ptr, TPS_HTABLE_SIZE_KEY, "%s", _tps_base64_buf[0]);
+
 	if(ret < 0 || ret >= TPS_HTABLE_SIZE_KEY) {
 		LM_ERR("failed to build htable key\n");
 		return -1;

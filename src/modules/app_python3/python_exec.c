@@ -73,9 +73,10 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	sip_msg_t *bmsg;
 	PyGILState_STATE gstate;
 	int locked = 0;
+	bool acquired_var = false;
 
 	if(_ksr_apy3_threads_mode == 1) {
-		Py_BLOCK_THREADS;
+		ACQUIRE_GIL_REENTRANT;
 	}
 	/* clear error state */
 	PyErr_Clear();
@@ -182,7 +183,7 @@ err:
 	}
 	LOCK_RELEASE;
 	if(_ksr_apy3_threads_mode == 1) {
-		Py_UNBLOCK_THREADS;
+		RELEASE_GIL_REENTRANT;
 	}
 
 	return rval;

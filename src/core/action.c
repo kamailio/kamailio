@@ -1731,6 +1731,7 @@ int run_child_one_init_route(void)
 		if(cfg_child_init()) {
 			return -1;
 		}
+		cfg_update();
 		LM_DBG("executing event_route[%s] (%d)\n", evname.s, rt);
 		if(faked_msg_init() < 0)
 			return -1;

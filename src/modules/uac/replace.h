@@ -42,6 +42,11 @@ int restore_uri(
 /* RR callback functions */
 void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param);
 
+int uac_htable_cseq_update(
+		struct sip_msg *msg, unsigned int *diff, int *upstream);
+int uac_htable_cseq_get(
+		struct sip_msg *msg, int refresh, unsigned int *diff, int *upstream);
+
 /* init dlg module */
 int uac_init_dlg(void);
 

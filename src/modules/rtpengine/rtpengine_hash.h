@@ -30,6 +30,7 @@ struct rtpengine_hash_table
 
 int rtpengine_hash_table_init(int size);
 int rtpengine_hash_table_destroy();
+struct rtpengine_hash_table *rtpengine_hash_table_get();
 int rtpengine_hash_table_insert(
 		str callid, str viabranch, struct rtpengine_hash_entry *value);
 int rtpengine_hash_table_remove(str callid, str viabranch, enum rtpe_operation);

@@ -577,12 +577,12 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			dlg->tl.timeout = (unsigned int)(VAL_INT(
 					GET_FIELD_IDX(values, DLGI_TIMEOUT_COL_IDX)));
 			LM_DBG("db dialog timeout is %u (%u/%u)\n", dlg->tl.timeout,
-					get_ticks(), (unsigned int)time(0));
+					get_ticks(), ksr_time_uint(NULL, NULL));
 
-			if(dlg->tl.timeout <= (unsigned int)time(0))
+			if(dlg->tl.timeout <= ksr_time_uint(NULL, NULL))
 				dlg->tl.timeout = 0;
 			else
-				dlg->tl.timeout -= (unsigned int)time(0);
+				dlg->tl.timeout -= ksr_time_uint(NULL, NULL);
 
 			dlg->lifetime = dlg->tl.timeout;
 
@@ -1110,7 +1110,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 				cell->start_ts;
 		VAL_INT(GET_FIELD_IDX(values, DLGI_STATE_COL_IDX)) = cell->state;
 		VAL_INT(GET_FIELD_IDX(values, DLGI_TIMEOUT_COL_IDX)) =
-				(unsigned int)((unsigned int)time(0) + cell->tl.timeout
+				(unsigned int)(ksr_time_uint(NULL, NULL) + cell->tl.timeout
 							   - get_ticks());
 		VAL_INT(GET_FIELD_IDX(values, DLGI_TOROUTE_INDEX_COL_IDX)) =
 				cell->toroute;
@@ -1193,7 +1193,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 		VAL_INT(GET_FIELD_IDX(values, 1)) = cell->h_id;
 		VAL_INT(GET_FIELD_IDX(values, 2)) = cell->state;
 		VAL_INT(GET_FIELD_IDX(values, 3)) =
-				(unsigned int)((unsigned int)time(0) + cell->tl.timeout
+				(unsigned int)(ksr_time_uint(NULL, NULL) + cell->tl.timeout
 							   - get_ticks());
 		SET_STR_VALUE(GET_FIELD_IDX(values, 4), cell->first_req_cseq);
 

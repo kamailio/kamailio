@@ -685,6 +685,11 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 			ptr += AVP_VENDOR_ID_SIZE;
 		}
 		/* data length */
+		if(avp_len < AVP_HDR_SIZE(avp_flags)) {
+			LM_ERR("AVP len %u too small for header size %u\n", avp_len,
+					AVP_HDR_SIZE(avp_flags));
+			goto error;
+		}
 		avp_data_len = avp_len - AVP_HDR_SIZE(avp_flags);
 		/*check the data length */
 		if(buf.s + buf.len < ptr + avp_data_len) {

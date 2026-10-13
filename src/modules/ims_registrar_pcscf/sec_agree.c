@@ -115,10 +115,6 @@ void free_security_t(security_t *params)
 		return;
 	}
 
-	if(params->sec_header.s) {
-		shm_free(params->sec_header.s);
-	}
-
 	switch(params->type) {
 		case SECURITY_IPSEC:
 			if(params->data.ipsec) {
@@ -188,14 +184,6 @@ static security_t *parse_sec_agree(struct hdr_field *h)
 		return NULL;
 	}
 	memset(params, 0, sizeof(security_t));
-
-	if((params->sec_header.s = shm_malloc(h->name.len)) == NULL) {
-		SHM_MEM_ERROR_FMT("for security_t sec_header parameter during "
-						  "sec-agree parsing\n");
-		goto cleanup;
-	}
-	memcpy(params->sec_header.s, h->name.s, h->name.len);
-	params->sec_header.len = h->name.len;
 
 	// allocate memory for ipsec_t in security_t
 	params->data.ipsec = shm_malloc(sizeof(ipsec_t));

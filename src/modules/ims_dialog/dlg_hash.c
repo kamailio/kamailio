@@ -337,7 +337,7 @@ struct dlg_cell *build_new_dlg(
 	}
 
 	dlg->state = DLG_STATE_UNCONFIRMED;
-	dlg->init_ts = (unsigned int)time(NULL);
+	dlg->init_ts = ksr_time_uint(NULL, NULL);
 
 	dlg->h_entry = core_hash(callid, 0, d_table->size);
 	LM_DBG("new dialog on hash %u\n", dlg->h_entry);
@@ -907,6 +907,9 @@ struct dlg_cell *lookup_dlg(unsigned int h_entry, unsigned int h_id)
 {
 	struct dlg_cell *dlg;
 	struct dlg_entry *d_entry;
+
+	if(d_table == NULL)
+		return 0;
 
 	if(h_entry >= d_table->size)
 		goto not_found;

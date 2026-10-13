@@ -137,7 +137,6 @@ typedef enum sec_type
 
 typedef struct security
 {
-	str sec_header;		/**< Security Header value 				*/
 	security_type type; /**< Type of security in use			*/
 
 	union

@@ -46,15 +46,18 @@ Frederic Gaisnon
               3.13. xavu_cfg (str)
               3.14. xavu_field_a_contact (str)
               3.15. xavu_field_b_contact (str)
-              3.16. xavu_field_contact_host (str)
-              3.17. rr_update (int)
-              3.18. sn_refresh_topology (int)
-              3.19. context (str)
-              3.20. methods_nocontact (str)
-              3.21. header_mode (int)
-              3.22. methods_noinitial (str)
-              3.23. version_table (integer)
-              3.24. methods_update_time (str)
+              3.16. xavu_field_a_contact_host (str)
+              3.17. xavu_field_b_contact_host (str)
+              3.18. xavu_field_contact_host (str)
+              3.19. rr_update (int)
+              3.20. sn_refresh_topology (int)
+              3.21. dlg_mode (int)
+              3.22. context (str)
+              3.23. methods_nocontact (str)
+              3.24. header_mode (int)
+              3.25. methods_noinitial (str)
+              3.26. version_table (integer)
+              3.27. methods_update_time (str)
 
         4. Functions
 
@@ -84,20 +87,23 @@ Frederic Gaisnon
    1.13. Set xavu_cfg parameter
    1.14. Set xavu_field_a_contact parameter
    1.15. Set xavu_field_b_contact parameter
-   1.16. Set xavu_field_contact_host parameter
-   1.17. Set rr_update parameter
-   1.18. Set sn_refresh_topology parameter
-   1.19. Set context parameter
-   1.20. Set methods_nocontact parameter
-   1.21. Set header_mode parameter
-   1.22. Set methods_noinitial parameter
-   1.23. version_table parameter usage
-   1.24. Set methods_update_time parameter
-   1.25. tps_set_context usage
-   1.26. Usage of event_route[topos:msg-outgoing]
-   1.27. Usage of event_route[topos:msg-sending]
-   1.28. Usage of event_route[topos:msg-incoming]
-   1.29. Usage of event_route[topos:msg-receiving]
+   1.16. Set xavu_field_a_contact_host parameter
+   1.17. Set xavu_field_b_contact_host parameter
+   1.18. Set xavu_field_contact_host parameter
+   1.19. Set rr_update parameter
+   1.20. Set sn_refresh_topology parameter
+   1.21. Set dlg_mode parameter
+   1.22. Set context parameter
+   1.23. Set methods_nocontact parameter
+   1.24. Set header_mode parameter
+   1.25. Set methods_noinitial parameter
+   1.26. version_table parameter usage
+   1.27. Set methods_update_time parameter
+   1.28. tps_set_context usage
+   1.29. Usage of event_route[topos:msg-outgoing]
+   1.30. Usage of event_route[topos:msg-sending]
+   1.31. Usage of event_route[topos:msg-incoming]
+   1.32. Usage of event_route[topos:msg-receiving]
 
 Chapter 1. Admin Guide
 
@@ -126,15 +132,18 @@ Chapter 1. Admin Guide
         3.13. xavu_cfg (str)
         3.14. xavu_field_a_contact (str)
         3.15. xavu_field_b_contact (str)
-        3.16. xavu_field_contact_host (str)
-        3.17. rr_update (int)
-        3.18. sn_refresh_topology (int)
-        3.19. context (str)
-        3.20. methods_nocontact (str)
-        3.21. header_mode (int)
-        3.22. methods_noinitial (str)
-        3.23. version_table (integer)
-        3.24. methods_update_time (str)
+        3.16. xavu_field_a_contact_host (str)
+        3.17. xavu_field_b_contact_host (str)
+        3.18. xavu_field_contact_host (str)
+        3.19. rr_update (int)
+        3.20. sn_refresh_topology (int)
+        3.21. dlg_mode (int)
+        3.22. context (str)
+        3.23. methods_nocontact (str)
+        3.24. header_mode (int)
+        3.25. methods_noinitial (str)
+        3.26. version_table (integer)
+        3.27. methods_update_time (str)
 
    4. Functions
 
@@ -166,6 +175,11 @@ Chapter 1. Admin Guide
 
    The REGISTER and PUBLISH requests are skipped from processing by this
    module, expected to be terminated on a local SIP server.
+
+   If received SIP contains any internal headers like P-SR-XUID or
+   P-SR-XBranch, all of them are stripped from the received SIP message.
+   If any error happens on this operation, SIP message is completely
+   dropped.
 
 2. Dependencies
 
@@ -205,15 +219,18 @@ Chapter 1. Admin Guide
    3.13. xavu_cfg (str)
    3.14. xavu_field_a_contact (str)
    3.15. xavu_field_b_contact (str)
-   3.16. xavu_field_contact_host (str)
-   3.17. rr_update (int)
-   3.18. sn_refresh_topology (int)
-   3.19. context (str)
-   3.20. methods_nocontact (str)
-   3.21. header_mode (int)
-   3.22. methods_noinitial (str)
-   3.23. version_table (integer)
-   3.24. methods_update_time (str)
+   3.16. xavu_field_a_contact_host (str)
+   3.17. xavu_field_b_contact_host (str)
+   3.18. xavu_field_contact_host (str)
+   3.19. rr_update (int)
+   3.20. sn_refresh_topology (int)
+   3.21. dlg_mode (int)
+   3.22. context (str)
+   3.23. methods_nocontact (str)
+   3.24. header_mode (int)
+   3.25. methods_noinitial (str)
+   3.26. version_table (integer)
+   3.27. methods_update_time (str)
 
 3.1. storage (str)
 
@@ -273,6 +290,14 @@ modparam("topos", "sanity_checks", 1)
 
    Interval in seconds after which the branch records are deleted.
 
+   This value also bounds the lifetime of a dialog record that has not
+   been confirmed yet: the record created for an initial request is only
+   kept for branch_expire, and is extended to dialog_expire when the
+   dialog is confirmed by a 2xx reply. Calls that are never answered
+   (negative reply, CANCEL or timeout) therefore do not occupy storage for
+   dialog_expire. Set this value above the longest time you expect between
+   the initial request and its final reply.
+
    Default value is 180 (3 min).
 
    Example 1.5. Set branch_expire parameter
@@ -290,6 +315,9 @@ modparam("topos", "branch_expire", 300)
    dialog. SUBSCRIBE dialog records lifetime are based on value set in
    expires header. Moreover each re-SUBSCRIBEs update the dialog
    timestamp.
+
+   This interval starts when the dialog is confirmed. Until then the
+   record is kept for branch_expire only.
 
    Default value is 10800 (3 hours).
 
@@ -379,12 +407,14 @@ modparam("topos", "contact_host", "proxy.domain.com")
 
    If you use the mode (2), you need to configure the xavu_field_a_contact
    and xavu_field_b_contact parameter. Furthermore you need to assign
-   values to them during the processing of the initial SIP request.
+   values to them during the processing of the initial SIP request. In
+   this mode, xavu_field_a_contact is used for the downstream direction
+   and xavu_field_b_contact for the upstream direction.
 
    If you use the mode (3) or (4), you need to configure the
    xavu_field_a_contact_host and xavu_field_b_contact_host parameter.
    Furthermore you need to assign values to them during the processing of
-   the initial SIP request.
+   the initial SIP request. Modes 2 and 3 cannot be used at the same time.
 
    The name of the Contact URI parameter can be customized with the
    cparam_name parameter.
@@ -432,8 +462,8 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 3.14. xavu_field_a_contact (str)
 
    Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
-   for the A-side Contact Header user part. This parameter is only
-   necessary in contact_mode (2).
+   for the Contact Header user part in the downstream direction. This
+   parameter is only necessary in contact_mode (2).
 
    Default value is “NULL” (disabled).
 
@@ -448,8 +478,8 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 3.15. xavu_field_b_contact (str)
 
    Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
-   for the B-side Contact Header user part. This parameter is only
-   necessary in contact_mode (2).
+   for the Contact Header user part in the upstream direction. This
+   parameter is only necessary in contact_mode (2).
 
    Default value is “NULL” (disabled).
 
@@ -462,7 +492,45 @@ modparam("topos", "xavu_field_b_contact", "b_contact")
 
 ...
 
-3.16. xavu_field_contact_host (str)
+3.16. xavu_field_a_contact_host (str)
+
+   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
+   for the Contact Header host part in the upstream direction. This
+   parameter is only necessary in contact_mode (3).
+
+   Default value is “NULL” (disabled).
+
+   Example 1.16. Set xavu_field_a_contact_host parameter
+...
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "contact_mode", 3)
+modparam("topos", "xavu_field_a_contact_host", "a_contact_host")
+modparam("topos", "xavu_field_b_contact_host", "b_contact_host")
+...
+    $xavu(_tps_=>a_contact_host) = "upstream.example.com";
+    $xavu(_tps_=>b_contact_host) = "downstream.example.com";
+...
+
+3.17. xavu_field_b_contact_host (str)
+
+   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
+   for the Contact Header host part in the downstream direction. This
+   parameter is only necessary in contact_mode (3).
+
+   Default value is “NULL” (disabled).
+
+   Example 1.17. Set xavu_field_b_contact_host parameter
+...
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "contact_mode", 3)
+modparam("topos", "xavu_field_a_contact_host", "a_contact_host")
+modparam("topos", "xavu_field_b_contact_host", "b_contact_host")
+...
+    $xavu(_tps_=>a_contact_host) = "upstream.example.com";
+    $xavu(_tps_=>b_contact_host) = "downstream.example.com";
+...
+
+3.18. xavu_field_contact_host (str)
 
    Control from where to take the host part of the Contact header added by
    topos. This parameter allows to take the value from an XAVU during
@@ -474,7 +542,7 @@ modparam("topos", "xavu_field_b_contact", "b_contact")
 
    Default value is empty, not set.
 
-   Example 1.16. Set xavu_field_contact_host parameter
+   Example 1.18. Set xavu_field_contact_host parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
 modparam("topos", "xavu_field_contact_host", "contact_host")
@@ -482,19 +550,19 @@ modparam("topos", "xavu_field_contact_host", "contact_host")
     $xavu(_tps_=>contact_host) = "kamailio.org";
 ...
 
-3.17. rr_update (int)
+3.19. rr_update (int)
 
    If set to 1, topos module will track and update record route changes on
    re-invite.
 
    Default value is 0 (do not update record route changes within dialog).
 
-   Example 1.17. Set rr_update parameter
+   Example 1.19. Set rr_update parameter
 ...
 modparam("topos", "rr_update", 1)
 ...
 
-3.18. sn_refresh_topology (int)
+3.20. sn_refresh_topology (int)
 
    When set to 1, topos module will get local IPs based on ;sn=<sockname>
    embedded in the already stored s_rr. Will compare them with the
@@ -514,12 +582,62 @@ modparam("topos", "rr_update", 1)
 
    Default value is 0 (no refresh on in-dialog requests).
 
-   Example 1.18. Set sn_refresh_topology parameter
+   Example 1.20. Set sn_refresh_topology parameter
 ...
 modparam("topos", "sn_refresh_topology", 1)
 ...
 
-3.19. context (str)
+3.21. dlg_mode (int)
+
+   This modparam controls how in-dialog requests are handled when the
+   topos dialog data on the local instance is incomplete (e.g. has no
+   contact to send the request to). In an active-active cluster with
+   topos_htable storage, the topos dialog data can be only partially
+   synced: an in-dialog request can roam to another node before the topos
+   dialog data is synced via KDMQ.
+
+   If set to 0 (default), it relies more on client retransmissions (e.g.,
+   ACK routing is recovered only by the 200 OK retransmissions). If set to
+   1, P-TPS-Owner header is added with the address of the topos dialog
+   "owner". The topos dialog "owner" is the node that handled the initial
+   INVITE request and its reply, having the complete topos dialog data.
+
+   When set to 1, the configuration must, in the within-dialog route and
+   before loose_route(), use P-TPS-Owner as $du, and relay the
+   still-masked request to the owner, for example:
+...
+if ($rU =~ "^[ab]tpsh-") {             # topos left it masked
+    if (is_present_hf("P-TPS-Owner")) {
+        $du = $hdr(P-TPS-Owner);       # forced dst, masked ruri preserved
+        remove_hf("P-TPS-Owner");
+        t_relay();
+    }
+    exit;
+}
+loose_route();
+...
+
+   P-TPS-Owner is a topos-internal header. When this modparam is set to 1,
+   any headers with same name arriving from the wire are stripped on the
+   receiving path, so the value read by the configuration is always the
+   one topos generated locally. This prevents a spoofed P-TPS-Owner from
+   being used as a forced destination.
+
+   WARNING: if an error happens while stripping that header, the received
+   SIP message is dropped entirely and does not enter routing logic!
+
+   WARNING: if one already uses "incoming" event route to skip some
+   traffic from topos, he MUST switch to "receiving" event route;
+   otherwise spoofing of this header is still possible!
+
+   Default value is 0.
+
+   Example 1.21. Set dlg_mode parameter
+...
+modparam("topos", "dlg_mode", 1)
+...
+
+3.22. context (str)
 
    Set the global context for topos instance.
 
@@ -527,23 +645,23 @@ modparam("topos", "sn_refresh_topology", 1)
 
    Default value is “NULL” (disabled).
 
-   Example 1.19. Set context parameter
+   Example 1.22. Set context parameter
 ...
 modparam("topos", "context", "srvone")
 ...
 
-3.20. methods_nocontact (str)
+3.23. methods_nocontact (str)
 
    List of SIP methods to skip adding Contact header for.
 
    Default value is “BYE,CANCEL,PRACK”.
 
-   Example 1.20. Set methods_nocontact parameter
+   Example 1.23. Set methods_nocontact parameter
 ...
 modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 ...
 
-3.21. header_mode (int)
+3.24. header_mode (int)
 
    List of headers to disable multiple comma separated values inserted in
    compact form. Altough compact form is RFC compliant this parameter
@@ -555,35 +673,35 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 
    Default value is “0”.
 
-   Example 1.21. Set header_mode parameter
+   Example 1.24. Set header_mode parameter
 ...
 modparam("topos", "header_mode", 1)
 ...
 
-3.22. methods_noinitial (str)
+3.25. methods_noinitial (str)
 
    List of SIP methods to skip doing topos if it is an initial request (no
    To-tag).
 
    Default value is “” (no method).
 
-   Example 1.22. Set methods_noinitial parameter
+   Example 1.25. Set methods_noinitial parameter
 ...
 modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
 ...
 
-3.23. version_table (integer)
+3.26. version_table (integer)
 
    If set to 0, the module will skip checking the version of the tables.
 
    Default value is “1 (check for table version)”.
 
-   Example 1.23. version_table parameter usage
+   Example 1.26. version_table parameter usage
 ...
 modparam("topos", "version_table", 0)
 ...
 
-3.24. methods_update_time (str)
+3.27. methods_update_time (str)
 
    List of SIP methods (comma separated) for which the dialog timestamp
    (rectime) should be updated in the topos_d table when processing
@@ -592,7 +710,7 @@ modparam("topos", "version_table", 0)
 
    Default value is “SUBSCRIBE”.
 
-   Example 1.24. Set methods_update_time parameter
+   Example 1.27. Set methods_update_time parameter
 ...
 modparam("topos", "methods_update_time", "SUBSCRIBE,UPDATE,INVITE")
 ...
@@ -608,7 +726,7 @@ modparam("topos", "methods_update_time", "SUBSCRIBE,UPDATE,INVITE")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. tps_set_context usage
+   Example 1.28. tps_set_context usage
 ...
 request_route {
     ...
@@ -637,7 +755,7 @@ request_route {
    $sndto(ip), $sndto(port) and $sndto(proto) point to the real
    destination of the SIP message.
 
-   Example 1.26. Usage of event_route[topos:msg-outgoing]
+   Example 1.29. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -660,7 +778,7 @@ event_route[topos:msg-outgoing] {
    $sndto(ip), $sndto(port) and $sndto(proto) point to the real
    destination of the SIP message.
 
-   Example 1.27. Usage of event_route[topos:msg-sending]
+   Example 1.30. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {
@@ -682,7 +800,7 @@ event_route[topos:msg-sending] {
    $si, $sp and $proto point to the real source address of the SIP
    message, as well as the keywords src_port and dst_port.
 
-   Example 1.28. Usage of event_route[topos:msg-incoming]
+   Example 1.31. Usage of event_route[topos:msg-incoming]
 ...
 event_route[topos:msg-incoming] {
   if($si=="10.1.1.10") {
@@ -704,7 +822,7 @@ event_route[topos:msg-incoming] {
    $proto point to the real source address of the SIP message, as well as
    the keywords src_port and dst_port.
 
-   Example 1.29. Usage of event_route[topos:msg-receiving]
+   Example 1.32. Usage of event_route[topos:msg-receiving]
 ...
 event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {

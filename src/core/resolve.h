@@ -73,6 +73,7 @@ struct dns_counters_h
 {
 	counter_handle_t failed_dns_req;
 	counter_handle_t slow_dns_req;
+	counter_handle_t total_dns_req;
 };
 
 extern struct dns_counters_h dns_cnts_h;
@@ -130,7 +131,6 @@ struct naptr_rdata
 	unsigned char services_len;
 	unsigned char regexp_len;
 	unsigned char repl_len; /* not currently used */
-	unsigned char skip_record;
 
 	char str_table[1]; /* contains all the strings */
 };

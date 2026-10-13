@@ -27,6 +27,7 @@
 #include <strings.h>
 #include "hf.h"
 #include "keys.h"
+#include "parse_bytes.h"
 
 #define F_OPTION_TAG_PATH (1 << 0)
 #define F_OPTION_TAG_100REL (1 << 1)
@@ -69,14 +70,11 @@ struct option_tag_body
 };
 
 
-#define IS_DELIM(c) \
-	(*(c) == ' ' || *(c) == '\t' || *(c) == '\r' || *(c) == '\n' || *(c) == ',')
-
-/* from parser/parse_hname2.c: */
-#define LOWER_BYTE(b) ((b) | 0x20)
-#define LOWER_DWORD(d) ((d) | 0x20202020)
-#define READ(val) \
-	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+inline static int option_tag_is_delim(char val)
+{
+	return val == ' ' || val == '\t' || val == '\r' || val == '\n'
+		   || val == ',';
+}
 
 /*!
  * Parse HF body containing option-tags.
@@ -95,7 +93,7 @@ static inline int parse_option_tag_body(str *body, unsigned int *tags)
 
 	while(pos < len) {
 		/* skip spaces and commas */
-		for(; pos < len && IS_DELIM(p); ++pos, ++p)
+		for(; pos < len && option_tag_is_delim(*p); ++pos, ++p)
 			;
 
 		case_found = 0;
@@ -103,37 +101,47 @@ static inline int parse_option_tag_body(str *body, unsigned int *tags)
 			break;
 		}
 		if(len - pos >= 4) {
-			val = LOWER_DWORD(READ(p));
+			val = ksr_ascii_lower_u32(ksr_read_u32le(p));
 			switch(val) {
 
 				/* "path" */
 				case _path_:
-					if(pos + 4 <= len && IS_DELIM(p + 4)) {
+					if(len - pos == OPTION_TAG_PATH_LEN
+							|| (len - pos > OPTION_TAG_PATH_LEN
+									&& option_tag_is_delim(
+											p[OPTION_TAG_PATH_LEN]))) {
 						*tags |= F_OPTION_TAG_PATH;
-						pos += 5;
-						p += 5;
+						pos += OPTION_TAG_PATH_LEN;
+						p += OPTION_TAG_PATH_LEN;
 						case_found = 1;
 					}
 					break;
 
 				/* "100rel" */
 				case _100r_:
-					if(pos + 6 <= len && LOWER_BYTE(*(p + 4)) == 'e'
-							&& LOWER_BYTE(*(p + 5)) == 'l' && IS_DELIM(p + 6)) {
+					if(len - pos >= OPTION_TAG_100REL_LEN
+							&& ksr_ascii_lower_u8((unsigned char)p[4]) == 'e'
+							&& ksr_ascii_lower_u8((unsigned char)p[5]) == 'l'
+							&& (len - pos == OPTION_TAG_100REL_LEN
+									|| option_tag_is_delim(
+											p[OPTION_TAG_100REL_LEN]))) {
 						*tags |= F_OPTION_TAG_100REL;
-						pos += OPTION_TAG_100REL_LEN + 1;
-						p += OPTION_TAG_100REL_LEN + 1;
+						pos += OPTION_TAG_100REL_LEN;
+						p += OPTION_TAG_100REL_LEN;
 						case_found = 1;
 					}
 					break;
 
 				/* "timer" */
 				case _time_:
-					if(pos + 5 <= len && LOWER_BYTE(*(p + 4)) == 'r'
-							&& IS_DELIM(p + 5)) {
+					if(len - pos >= OPTION_TAG_TIMER_LEN
+							&& ksr_ascii_lower_u8((unsigned char)p[4]) == 'r'
+							&& (len - pos == OPTION_TAG_TIMER_LEN
+									|| option_tag_is_delim(
+											p[OPTION_TAG_TIMER_LEN]))) {
 						*tags |= F_OPTION_TAG_TIMER;
-						pos += OPTION_TAG_TIMER_LEN + 1;
-						p += OPTION_TAG_TIMER_LEN + 1;
+						pos += OPTION_TAG_TIMER_LEN;
+						p += OPTION_TAG_TIMER_LEN;
 						case_found = 1;
 					}
 					break;
@@ -141,33 +149,38 @@ static inline int parse_option_tag_body(str *body, unsigned int *tags)
 		}
 		if(case_found == 0) {
 			/* extra require or unknown */
-			if(pos + OPTION_TAG_EVENTLIST_LEN <= len
+			if(len - pos >= OPTION_TAG_EVENTLIST_LEN
 					&& strncasecmp(p, OPTION_TAG_EVENTLIST_STR,
 							   OPTION_TAG_EVENTLIST_LEN)
 							   == 0
-					&& IS_DELIM(p + OPTION_TAG_EVENTLIST_LEN)) {
+					&& (len - pos == OPTION_TAG_EVENTLIST_LEN
+							|| option_tag_is_delim(
+									p[OPTION_TAG_EVENTLIST_LEN]))) {
 				*tags |= F_OPTION_TAG_EVENTLIST;
-				pos += OPTION_TAG_EVENTLIST_LEN + 1;
-				p += OPTION_TAG_EVENTLIST_LEN + 1;
-			} else if(pos + OPTION_TAG_GRUU_LEN <= len
+				pos += OPTION_TAG_EVENTLIST_LEN;
+				p += OPTION_TAG_EVENTLIST_LEN;
+			} else if(len - pos >= OPTION_TAG_GRUU_LEN
 					  && strncasecmp(
 								 p, OPTION_TAG_GRUU_STR, OPTION_TAG_GRUU_LEN)
 								 == 0
-					  && IS_DELIM(p + OPTION_TAG_GRUU_LEN)) {
+					  && (len - pos == OPTION_TAG_GRUU_LEN
+							  || option_tag_is_delim(p[OPTION_TAG_GRUU_LEN]))) {
 				*tags |= F_OPTION_TAG_GRUU;
-				pos += OPTION_TAG_GRUU_LEN + 1;
-				p += OPTION_TAG_GRUU_LEN + 1;
-			} else if(pos + OPTION_TAG_OUTBOUND_LEN <= len
+				pos += OPTION_TAG_GRUU_LEN;
+				p += OPTION_TAG_GRUU_LEN;
+			} else if(len - pos >= OPTION_TAG_OUTBOUND_LEN
 					  && strncasecmp(p, OPTION_TAG_OUTBOUND_STR,
 								 OPTION_TAG_OUTBOUND_LEN)
 								 == 0
-					  && IS_DELIM(p + OPTION_TAG_OUTBOUND_LEN)) {
+					  && (len - pos == OPTION_TAG_OUTBOUND_LEN
+							  || option_tag_is_delim(
+									  p[OPTION_TAG_OUTBOUND_LEN]))) {
 				*tags |= F_OPTION_TAG_OUTBOUND;
-				pos += OPTION_TAG_OUTBOUND_LEN + 1;
-				p += OPTION_TAG_OUTBOUND_LEN + 1;
+				pos += OPTION_TAG_OUTBOUND_LEN;
+				p += OPTION_TAG_OUTBOUND_LEN;
 			} else {
 				/* unknown (not needed) - skip element */
-				for(; pos < len && !IS_DELIM(p); ++pos, ++p)
+				for(; pos < len && !option_tag_is_delim(*p); ++pos, ++p)
 					;
 			}
 		}

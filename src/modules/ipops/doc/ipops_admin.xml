@@ -829,6 +829,32 @@ if (!dns_int_match_ip("myhost.com", "1.2.3.4")) {
 
     </section>
 
+    <section id="ipops.f.dns_reinit">
+      <title>
+        <function moreinfo="none">dns_reinit()</function>
+      </title>
+
+      <para>
+		  Trigger a libc DNS API reinit, similar to "rpc cfg.seti core dns_reinit 1".
+      </para>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_reinit</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+dns_reinit();
+...
+        </programlisting>
+      </example>
+
+    </section>
+
     <section id="ipops.f.dns_query">
       <title>
         <function moreinfo="none">dns_query(hostname, pvid)</function>

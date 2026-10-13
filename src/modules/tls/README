@@ -744,6 +744,12 @@ modparam("tls", "tls_method", "TLSv1")
    Sets the certificate file name. The certificate file can also contain
    the private key in PEM format.
 
+   A value starting with /engine: (OpenSSL 1.1.1 ENGINE) or /uri: (OpenSSL
+   3 provider, e.g. /uri:pkcs11:token=MYTOKEN;object=MYKEY;type=private)
+   selects a key held by an engine or provider (HSM). Such keys require
+   tcp_main_threads = 1 or 2; with tcp_main_threads = 0 the module refuses
+   to start.
+
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
    absolute path and if it starts with anything else the path will be
@@ -1639,7 +1645,9 @@ modparam("tls", "rand_engine", "fastrand")
    specified per_domain.
 
    To use private keys from the HSM, the name is the HSM key label
-   prefixed by /engine:.
+   prefixed by /engine:. The engine (offloaded algorithms and HSM keys)
+   requires tcp_main_threads = 1 or 2; with tcp_main_threads = 0 the
+   module refuses to start.
 ...
 ## example for the Gem engine
 modparam("tls", "engine", "gem")
@@ -1724,10 +1732,13 @@ verify_client = optional_no_ca
 
 10.44. provider_quirks (integer)
 
-   Reload a provider in the child - needed in MP-mode only
+   Deprecated, ignored since 6.2. Engine/provider keys require
+   tcp_main_threads = 1 or 2, where the provider is loaded once in
+   PROC_TCP_MAIN; a value set here logs a warning.
+
+   Up to 6.1: reload a provider in the child - needed in MP-mode
    (tcp_main_threads = 0) for some providers. The configuration file for
    the provider is provided in the provider_quirks_config parameter.
-   Should be 0 in MT-mode.
      * 0 - no reload (default)
      * 1 - reloads a provider in a new library context in the child.
        pkcs11-provider is known to require this.
@@ -1740,8 +1751,10 @@ modparam("tls", "provider_quirks", 1)
 
 10.45. provider_quirks_config (string)
 
-   A file name of a OpenSSL configuration snippet that contains the
-   provider configuration. The file must contain two mandatory keys:
+   Deprecated, ignored since 6.2 (see provider_quirks).
+
+   Up to 6.1: a file name of a OpenSSL configuration snippet that contains
+   the provider configuration. The file must contain two mandatory keys:
    quirks_sect - section to load, quirks_provider - the provider to load.
 
    Example 1.56. Set provider_quirks_config modparam parameter
@@ -1774,6 +1787,16 @@ activate = 1
      * 4 (bit 3) - write keys to NOTICE log
      * 8 (bit 4) - write keys to file
      * 16 (bit 5) - send keys to udp peer
+     * 32 (bit 6) - write before each key line a comment line "# TUPLE
+       src=IP:PORT dst=IP:PORT sr=HEX cs=HEX v=HEX" with the TCP
+       connection (peer on src, kamailio on dst; IPv6 as [IP]:PORT), the
+       server random, the cipher suite and the protocol version. A tool
+       decoding a capture that missed the TLS handshake needs this data to
+       match the keys to the connection and to derive the record keys (TLS
+       1.2: server random and cipher suite, TLS 1.3: cipher suite). It
+       provides necessary data only: recovery is still a non-trivial step
+       and requires the external tool to perform a search for epoch and
+       sequence number.
      * 1024 (bit 11) - enable filtering of keys logging. When set,
        filtering is done on: "CLIENT_RANDOM",
        "CLIENT_HANDSHAKE_TRAFFIC_SECRET",

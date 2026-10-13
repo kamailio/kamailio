@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <stdbool.h>
 
 #include <microhttpd.h>
 
@@ -59,8 +60,19 @@ typedef struct ksr_mhttpd_net_item
 SLIST_HEAD(ksr_mhttpd_net_head, ksr_mhttpd_net_item)
 _ksr_mhttpd_allowed_ips = SLIST_HEAD_INITIALIZER(_ksr_mhttpd_allowed_ips);
 
+typedef struct ksr_mhttpd_sock_item
+{
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+	SLIST_ENTRY(ksr_mhttpd_sock_item) entries;
+} ksr_mhttpd_sock_item_t;
+
+SLIST_HEAD(ksr_mhttpd_sock_head, ksr_mhttpd_sock_item)
+_ksr_mhttpd_listen_sockets = SLIST_HEAD_INITIALIZER(_ksr_mhttpd_listen_sockets);
+
 static int microhttpd_server_run(void);
 static int parse_allowed_ips(modparam_t type, str *val);
+static int parse_listen_sockets(modparam_t type, str *val);
 
 static int w_mhttpd_send_reply(
 		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody);
@@ -94,6 +106,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"listen_port",     PARAM_INT,                &_microhttpd_listen_port},
 	{"listen_addr",     PARAM_STR,                &_microhttpd_listen_addr},
+	{"listen_socket",   PARAM_STR|PARAM_USE_FUNC, &parse_listen_sockets},
 	{"event_callback",  PARAM_STR,                &microhttpd_event_callback},
 	{"allowed_ips",     PARAM_STR|PARAM_USE_FUNC, &parse_allowed_ips},
 	{0, 0, 0}
@@ -191,11 +204,18 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	ksr_mhttpd_net_item_t *item;
+	ksr_mhttpd_sock_item_t *sitem;
 
 	while(!SLIST_EMPTY(&_ksr_mhttpd_allowed_ips)) {
 		item = SLIST_FIRST(&_ksr_mhttpd_allowed_ips);
 		SLIST_REMOVE_HEAD(&_ksr_mhttpd_allowed_ips, entries);
 		pkg_free(item);
+	}
+
+	while(!SLIST_EMPTY(&_ksr_mhttpd_listen_sockets)) {
+		sitem = SLIST_FIRST(&_ksr_mhttpd_listen_sockets);
+		SLIST_REMOVE_HEAD(&_ksr_mhttpd_listen_sockets, entries);
+		pkg_free(sitem);
 	}
 }
 
@@ -364,6 +384,137 @@ int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		default:
 			return pv_get_null(msg, param, res);
 	}
+}
+
+static int parse_one_listen_socket(str *token)
+{
+	str host;
+	str sport;
+	int port;
+	bool is_ipv6 = false;
+	char hbuf[64];
+	ksr_mhttpd_sock_item_t *item;
+	char *rbr;
+	char *colon;
+	char *cp;
+
+	if(token->len == 0) {
+		return 0;
+	}
+
+	if(token->s[0] == '[') {
+		rbr = NULL;
+		for(cp = token->s + 1; cp < token->s + token->len; cp++) {
+			if(*cp == ']') {
+				rbr = cp;
+				break;
+			}
+		}
+		if(rbr == NULL) {
+			LM_ERR("missing ']' in IPv6 listen socket: %.*s\n", token->len,
+					token->s);
+			return -1;
+		}
+		host.s = token->s + 1;
+		host.len = (int)(rbr - host.s);
+		if(rbr + 1 >= token->s + token->len || rbr[1] != ':') {
+			LM_ERR("missing ':port' after ']' in IPv6 listen socket: %.*s\n",
+					token->len, token->s);
+			return -1;
+		}
+		sport.s = rbr + 2;
+		sport.len = (int)((token->s + token->len) - sport.s);
+		is_ipv6 = true;
+	} else {
+		colon = NULL;
+		for(cp = token->s + token->len - 1; cp >= token->s; cp--) {
+			if(*cp == ':') {
+				colon = cp;
+				break;
+			}
+		}
+		if(colon == NULL) {
+			LM_ERR("missing ':port' in listen socket: %.*s\n", token->len,
+					token->s);
+			return -1;
+		}
+		host.s = token->s;
+		host.len = (int)(colon - token->s);
+		sport.s = colon + 1;
+		sport.len = (int)((token->s + token->len) - sport.s);
+	}
+
+	if(host.len <= 0 || host.len >= (int)sizeof(hbuf)) {
+		LM_ERR("invalid host in listen socket: %.*s\n", token->len, token->s);
+		return -1;
+	}
+	memcpy(hbuf, host.s, host.len);
+	hbuf[host.len] = '\0';
+
+	if(str2sint(&sport, &port) < 0 || port <= 0 || port > 65535) {
+		LM_ERR("invalid port in listen socket: %.*s\n", token->len, token->s);
+		return -1;
+	}
+
+	item = (ksr_mhttpd_sock_item_t *)pkg_malloc(sizeof(ksr_mhttpd_sock_item_t));
+	if(item == NULL) {
+		LM_ERR("no pkg memory\n");
+		return -1;
+	}
+	memset(item, 0, sizeof(*item));
+
+	if(is_ipv6) {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&item->addr;
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_port = htons((uint16_t)port);
+		if(inet_pton(AF_INET6, hbuf, &sin6->sin6_addr) <= 0) {
+			LM_ERR("failed to parse IPv6 address: %s\n", hbuf);
+			pkg_free(item);
+			return -1;
+		}
+		item->addrlen = sizeof(struct sockaddr_in6);
+	} else {
+		struct sockaddr_in *sin = (struct sockaddr_in *)&item->addr;
+		sin->sin_family = AF_INET;
+		sin->sin_port = htons((uint16_t)port);
+		if(inet_pton(AF_INET, hbuf, &sin->sin_addr) <= 0) {
+			LM_ERR("failed to parse IPv4 address: %s\n", hbuf);
+			pkg_free(item);
+			return -1;
+		}
+		item->addrlen = sizeof(struct sockaddr_in);
+	}
+
+	SLIST_INSERT_HEAD(&_ksr_mhttpd_listen_sockets, item, entries);
+	LM_DBG("added listen socket: %.*s\n", token->len, token->s);
+	return 0;
+}
+
+static int parse_listen_sockets(modparam_t type, str *val)
+{
+	str token;
+	char *p, *end, *comma;
+
+	if(val == NULL || val->s == NULL || val->len == 0)
+		return 0;
+
+	p = val->s;
+	end = val->s + val->len;
+	while(p < end) {
+		comma = memchr(p, ',', (size_t)(end - p));
+		token.s = p;
+		token.len = comma ? (int)(comma - p) : (int)(end - p);
+		trim_leading(&token);
+		trim_trailing(&token);
+		if(token.len > 0) {
+			if(parse_one_listen_socket(&token) < 0) {
+				return -1;
+			}
+		}
+		p = comma ? comma + 1 : end;
+	}
+
+	return 0;
 }
 
 static int parse_allowed_ips(modparam_t type, str *val)
@@ -681,8 +832,35 @@ static int microhttpd_server_run(void)
 
 	struct MHD_Daemon *d;
 	struct sockaddr_in address;
+	ksr_mhttpd_sock_item_t *item;
+	int started = 0;
 
-	if(_microhttpd_listen_addr.len > 0) {
+	if(!SLIST_EMPTY(&_ksr_mhttpd_listen_sockets)) {
+		SLIST_FOREACH(item, &_ksr_mhttpd_listen_sockets, entries)
+		{
+			unsigned int flags = MHD_USE_SELECT_INTERNALLY;
+			if(item->addr.ss_family == AF_INET6) {
+				flags |= MHD_USE_IPv6;
+			}
+			LM_DBG("starting microhttpd daemon for listen socket (family %d)\n",
+					(int)item->addr.ss_family);
+			d = MHD_start_daemon(flags, 0, &ksr_mhttpd_accept_policy, NULL,
+					&ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
+#ifdef MHD_OPTION_SOCK_ADDR_LEN
+					MHD_OPTION_SOCK_ADDR_LEN, (socklen_t)item->addrlen,
+					(struct sockaddr *)&item->addr,
+#else
+					MHD_OPTION_SOCK_ADDR, (struct sockaddr *)&item->addr,
+#endif
+					MHD_OPTION_END);
+			if(d == NULL) {
+				LM_ERR("failed to start microhttpd daemon for listen socket\n");
+				return -1;
+			}
+			started++;
+		}
+		LM_INFO("microhttpd: started %d listen socket(s)\n", started);
+	} else if(_microhttpd_listen_addr.len > 0) {
 		address.sin_family = AF_INET;
 		address.sin_port = htons(_microhttpd_listen_port);
 		if(inet_pton(AF_INET, _microhttpd_listen_addr.s, &address.sin_addr)
@@ -696,16 +874,19 @@ static int microhttpd_server_run(void)
 				&ksr_mhttpd_accept_policy, NULL, &ksr_microhttpd_request,
 				KSR_MICROHTTPD_PAGE, MHD_OPTION_SOCK_ADDR, &address,
 				MHD_OPTION_END);
+		if(d == NULL) {
+			return -1;
+		}
 	} else {
 		LM_DBG("preparing to listen on port: %d\n", _microhttpd_listen_port);
 		d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
 				&ksr_mhttpd_accept_policy, NULL, &ksr_microhttpd_request,
 				KSR_MICROHTTPD_PAGE, MHD_OPTION_END);
+		if(d == NULL) {
+			return -1;
+		}
 	}
 
-	if(d == NULL) {
-		return -1;
-	}
 	while(1) {
 		sleep(10);
 	}

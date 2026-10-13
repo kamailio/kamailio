@@ -49,6 +49,8 @@
 #include "../../core/dns_cache.h"
 #include "../../core/lvalue.h"
 #include "../../core/kemi.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 #include "api.h"
 #include "ipops_pv.h"
 #include "ip_parser.h"
@@ -57,6 +59,7 @@
 
 MODULE_VERSION
 
+static cfg_ctx_t *_ipops_cfg_ctx = NULL;
 
 /*
  * Module parameter variables
@@ -108,6 +111,7 @@ static int w_dns_sys_match_ip(sip_msg_t *, char *, char *);
 static int w_dns_int_match_ip(sip_msg_t *, char *, char *);
 static int fixup_detailed_ip_type(void **param, int param_no);
 static int fixup_free_detailed_ip_type(void **param, int param_no);
+static int w_dns_reinit(sip_msg_t *msg, char *str1, char *str2);
 static int w_dns_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_ptr_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_srv_query(sip_msg_t *msg, char *str1, char *str2);
@@ -174,6 +178,7 @@ static cmd_export_t cmds[] = {
 			fixup_free_spve_spve, ANY_ROUTE},
 	{"dns_set_local_ttl", (cmd_function)w_dns_set_local_ttl, 1,
 			fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"dns_reinit", (cmd_function)w_dns_reinit, 0, 0, 0, ANY_ROUTE},
 
 	{"bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
 
@@ -199,10 +204,16 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
+	if(cfg_register_ctx(&_ipops_cfg_ctx, NULL)) {
+		LM_ERR(" failed to register cfg context\n");
+		return -1;
+	}
+
 	/* turn detailed_ip_type relevant structures to netowork byte order
 	 * so no need to transform each ip to host order before comparing */
 	ipv4ranges_hton();
 	ipv6ranges_hton();
+
 	return 0;
 }
 
@@ -1262,6 +1273,28 @@ static int w_dns_int_match_ip(sip_msg_t *msg, char *hnp, char *ipp)
 	}
 
 	return ki_dns_int_match_ip(msg, &hns, &ips);
+}
+
+/**
+ *
+ */
+static int w_dns_reinit(sip_msg_t *msg, char *str1, char *str2)
+{
+	str gname = str_init("core");
+	str vname = str_init("dns_reinit");
+	unsigned int *groupid = NULL;
+
+	if(cfg_get_group_id(&gname, &groupid)) {
+		LM_ERR("failed to get group id\n");
+		return -1;
+	}
+
+	if(cfg_set_now_int(_ipops_cfg_ctx, &gname, groupid, &vname, 1)) {
+		LM_ERR("failed to mark libc DNS API to reinitialize\n");
+		return -1;
+	}
+
+	return 1;
 }
 
 /**

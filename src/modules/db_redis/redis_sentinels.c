@@ -21,10 +21,101 @@
 #include <stdlib.h>
 
 #include "redis_sentinels.h"
+
+#ifdef WITH_SENTINELS
 #include "db_redis_mod.h"
+
+int db_redis_with_sentinels = 0;
+char *db_redis_master_name = "mymaster";
+int use_replicas = 0;				 // 0 master/RW, 1 replica/RO
+int recheck_replicas_interval = 120; // seconds
+int min_recheck_interval = 60;		 // seconds
+time_t *db_redis_shared_time = NULL;
+time_t last_seen_time = 0;
+int using_master_read_only = 0;
 
 sentinel_config_t db_redis_sc;
 struct reply_list replica_list = {NULL, NULL, 0};
+
+int sentinels_param(modparam_t type, void *val)
+{
+	(void)type;
+	return parse_sentinel_config((char *)val);
+}
+
+void db_redis_timer(unsigned int ticks, void *param)
+{
+	(void)ticks;
+	(void)param;
+	if(db_redis_shared_time) {
+		*db_redis_shared_time = time(NULL);
+	}
+}
+
+int db_redis_sentinels_init_runtime(void)
+{
+	db_redis_shared_time = shm_malloc(sizeof(time_t));
+	if(db_redis_shared_time == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	*db_redis_shared_time = 0;
+
+	if(db_redis_with_sentinels) {
+		if(db_redis_sc.sentinel_list == NULL) {
+			LM_ERR("sentinels_config parameter is required when using "
+				   "sentinels\n");
+			return -1;
+		}
+
+		if(recheck_replicas_interval <= 0) {
+			LM_WARN("Considering replica recheck is not desired.\n");
+			return 0;
+		}
+
+		min_recheck_interval = recheck_replicas_interval / 2;
+		if(register_timer(db_redis_timer, 0, recheck_replicas_interval) < 0) {
+			LM_ERR("Failed to register timer for rechecking replica "
+				   "availability\n");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+int should_recheck_replicas(time_t crt_time)
+{
+	if(!using_master_read_only || !recheck_replicas_interval) {
+		return 0;
+	}
+
+	if(crt_time != last_seen_time
+			&& (crt_time - last_seen_time) > min_recheck_interval) {
+		last_seen_time = crt_time;
+		return 1;
+	}
+	return 0;
+}
+
+int db_redis_should_reconnect_for_replica_recheck(void)
+{
+	time_t current_time;
+
+	if(!db_redis_shared_time) {
+		return 0;
+	}
+
+	current_time = *db_redis_shared_time;
+	if(should_recheck_replicas(current_time)) {
+		LM_WARN("Reconnecting: redis master is being used for read-only "
+				"operations.\n");
+		return 1;
+	}
+
+	return 0;
+}
 
 
 static int is_text(const redisReply *r)
@@ -391,40 +482,6 @@ error:
 	return -1;
 }
 
-/* Authenticate to Redis if a password was provided */
-int db_redis_authenticate(redisContext *ctx, const char *password)
-{
-	redisReply *reply = NULL;
-
-	if(!ctx) {
-		LM_ERR("No Redis context");
-		goto err;
-	}
-	if(!password) {
-		password = db_redis_db_pass;
-	}
-	if(!password) {
-		return 0;
-	}
-
-	reply = redisCommand(ctx, "AUTH %s", password);
-	if(!reply) {
-		LM_ERR("AUTH error: %s\n", ctx->errstr);
-		goto err;
-	}
-	if(reply->type == REDIS_REPLY_ERROR) {
-		LM_ERR("AUTH failed: %s\n", reply->str);
-		goto err;
-	}
-	freeReplyObject(reply);
-	return 0;
-
-err:
-	if(reply)
-		freeReplyObject(reply);
-	return -1;
-}
-
 int db_redis_select_master(redisContext *sentinel_ctx, km_redis_con_t *con)
 {
 	redisReply *reply = redisCommand(sentinel_ctx,
@@ -533,3 +590,73 @@ err:
 		freeReplyObject(reply);
 	return -1;
 }
+
+int db_redis_resolve_server_via_sentinels(km_redis_con_t *con)
+{
+	redisContext *sentinel_ctx = NULL;
+	redis_sentinel_t *sentinel;
+	int select_status;
+	int srv_found = 0;
+	int try_replicas = use_replicas;
+
+recheck_sentinels:
+	for(sentinel = db_redis_sc.sentinel_list; sentinel != NULL;
+			sentinel = sentinel->next) {
+		struct timeval timeout;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 500000;
+
+		LM_INFO("Connecting to sentinel %s:%d\n", sentinel->host,
+				sentinel->port);
+		sentinel_ctx = redisConnectWithTimeout(
+				sentinel->host, sentinel->port, timeout);
+
+		if(!sentinel_ctx || sentinel_ctx->err) {
+			LM_ERR("Failed to create Redis context for sentinel %s:%d\n",
+					sentinel->host, sentinel->port);
+			if(sentinel_ctx) {
+				redisFree(sentinel_ctx);
+				sentinel_ctx = NULL;
+			}
+			continue;
+		}
+
+		if(db_redis_authenticate(sentinel_ctx, db_redis_sc.password) != 0) {
+			LM_ERR("Authentication error\n");
+			redisFree(sentinel_ctx);
+			sentinel_ctx = NULL;
+			continue;
+		}
+
+		select_status = try_replicas
+								? db_redis_select_replica(sentinel_ctx, con)
+								: db_redis_select_master(sentinel_ctx, con);
+
+		redisFree(sentinel_ctx);
+		sentinel_ctx = NULL;
+
+		if(select_status != 0) {
+			continue;
+		}
+
+		srv_found = 1;
+		break;
+	}
+
+	if(!srv_found) {
+		if(try_replicas) {
+			LM_ERR("Could not connect to any redis replica via sentinel, "
+				   "now defaulting to checking for master\n");
+			replica_list_free(&replica_list);
+			try_replicas = 0;
+			goto recheck_sentinels;
+		}
+
+		LM_ERR("Could not connect to any redis servers via sentinel\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+#endif

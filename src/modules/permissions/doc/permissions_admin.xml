@@ -902,18 +902,11 @@ modparam("permissions", "load_backends", 1)
 		<title><varname>reload_delta</varname> (int)</title>
 		<para>
 		The number of seconds that have to be waited before executing a new
-		RPC reload. By default there is a rate limiting of maximum one reload
-		in five seconds.
-		</para>
-		<para>
-		If set to 0, no rate limit is configured. Note carefully: use this
-		configuration only in tests environments because executing two RPC
-		reloads of the same table at the same time can cause &kamailio;
-		to crash.
+		RPC reload. By default there is a no rate limiting (zero).
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>5</quote>.
+			Default value is <quote>0</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -921,27 +914,6 @@ modparam("permissions", "load_backends", 1)
 		<programlisting format="linespecific">
 ...
 modparam("permissions", "reload_delta", 1)
-...
-		</programlisting>
-		</example>
-	</section>
-	<section id ="permissions.p.trusted_cleanup_interval">
-		<title><varname>trusted_cleanup_interval</varname> (int)</title>
-		<para>
-		If module parameter <varname>db_mode</varname> is set to 1 a cleanup timer
-		is set to the trusted_cleanup_interval value in seconds.
-		This process will cleanup the previous values from memory after a RPC reload.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>60</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>trusted_cleanup_interval</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("permissions", "trusted_cleanup_interval", 120)
 ...
 		</programlisting>
 		</example>
@@ -1484,8 +1456,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 			different tables:  address table and
 			subnet table depending on the value of
 			the mask field (IPv6: 64 or smaller, IPv4: 32 or smaller).
-			Note that there is a rate limiting defined by 'reload_delta'
-			parameter. By default is allowed maximum one reload in five seconds.
+			Note that there may be a rate limiting defined by 'reload_delta'
+			parameter.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 		<para>
@@ -1572,8 +1544,8 @@ if (allow_trusted("$si", "any", "$ai")) {
 		<para>
 			Causes the permissions module to re-read the contents of
 			the trusted database table into cache memory.
-			Note that there is a rate limiting defined by 'reload_delta'
-			parameter. By default is allowed maximum one reload in five seconds.
+			Note that there may be a rate limiting defined by 'reload_delta'
+			parameter.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 		<para>

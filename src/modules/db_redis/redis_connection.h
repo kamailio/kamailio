@@ -46,7 +46,7 @@
 
 #include "db_redis_mod.h"
 
-#ifndef WITH_REDIS_CLUSTER
+#ifndef WITH_HIREDIS_CLUSTER
 #define db_redis_check_reply(con, reply, err)                                \
 	do {                                                                     \
 		if(!(reply) && !(con)->con) {                                        \
@@ -118,6 +118,7 @@ km_redis_con_t *db_redis_new_connection(const struct db_id *id);
 void db_redis_free_connection(struct pool_con *con);
 
 int db_redis_connect(km_redis_con_t *con);
+int db_redis_authenticate(void *ctx, const char *password);
 void *db_redis_command_argv(km_redis_con_t *con, redis_key_t *query);
 int db_redis_append_command_argv(
 		km_redis_con_t *con, redis_key_t *query, int queue);

@@ -32,6 +32,7 @@
 #include "../../core/dprint.h"
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
+#include "../../core/parser/parse_bytes.h"
 
 #include "auth_hdr.h"
 #include "auth.h"
@@ -40,33 +41,28 @@
 #define AUTHENTICATE_DIGEST_S "Digest"
 #define AUTHENTICATE_DIGEST_LEN (sizeof(AUTHENTICATE_DIGEST_S) - 1)
 
-#define LOWER1B(_n) ((_n) | 0x20)
-#define LOWER4B(_n) ((_n) | 0x20202020)
-#define GET4B(_p) \
-	((*(_p) << 24) + (*(_p + 1) << 16) + (*(_p + 2) << 8) + *(_p + 3))
-#define GET3B(_p) ((*(_p) << 24) + (*(_p + 1) << 16) + (*(_p + 2) << 8) + 0xff)
-
-#define CASE_5B(_hex4, _c5, _new_state, _quoted)      \
-	case _hex4:                                       \
-		if(p + 5 < end && LOWER1B(*(p + 4)) == _c5) { \
-			p += 5;                                   \
-			state = _new_state;                       \
-			quoted_val = _quoted;                     \
-		} else {                                      \
-			p += 4;                                   \
-		}                                             \
+#define CASE_5B(_hex4, _c5, _new_state, _quoted)                         \
+	case _hex4:                                                          \
+		if(p + 5 < end                                                   \
+				&& ksr_ascii_lower_u8((unsigned char)*(p + 4)) == _c5) { \
+			p += 5;                                                      \
+			state = _new_state;                                          \
+			quoted_val = _quoted;                                        \
+		} else {                                                         \
+			p += 4;                                                      \
+		}                                                                \
 		break;
 
-#define CASE_6B(_hex4, _c5, _c6, _new_state, _quoted) \
-	case _hex4:                                       \
-		if(p + 6 < end && LOWER1B(*(p + 4)) == _c5    \
-				&& LOWER1B(*(p + 5)) == _c6) {        \
-			p += 6;                                   \
-			state = _new_state;                       \
-			quoted_val = _quoted;                     \
-		} else {                                      \
-			p += 4;                                   \
-		}                                             \
+#define CASE_6B(_hex4, _c5, _c6, _new_state, _quoted)                        \
+	case _hex4:                                                              \
+		if(p + 6 < end && ksr_ascii_lower_u8((unsigned char)*(p + 4)) == _c5 \
+				&& ksr_ascii_lower_u8((unsigned char)*(p + 5)) == _c6) {     \
+			p += 6;                                                          \
+			state = _new_state;                                              \
+			quoted_val = _quoted;                                            \
+		} else {                                                             \
+			p += 4;                                                          \
+		}                                                                    \
 		break;
 
 #define OTHER_STATE 0
@@ -120,7 +116,7 @@ int parse_authenticate_body(str *body, struct authenticate_body *auth)
 		/* get name */
 		name.s = p;
 		if(p + 4 < end) {
-			n = LOWER4B(GET4B(p));
+			n = ksr_ascii_lower_u32(ksr_read_u32be(p));
 			switch(n) {
 				CASE_5B(0x7265616c, 'm', REALM_STATE, 1);		/*realm*/
 				CASE_5B(0x6e6f6e63, 'e', NONCE_STATE, 1);		/*nonce*/
@@ -128,8 +124,11 @@ int parse_authenticate_body(str *body, struct authenticate_body *auth)
 				CASE_6B(0x646f6d62, 'i', 'n', DOMAIN_STATE, 1); /*domain*/
 				CASE_6B(0x6f706171, 'u', 'e', OPAQUE_STATE, 1); /*opaque*/
 				case 0x616c676f:								/*algo*/
-					if(p + 9 < end && LOWER4B(GET4B(p + 4)) == 0x72697468
-							&& LOWER1B(*(p + 8)) == 'm') {
+					if(p + 9 < end
+							&& ksr_ascii_lower_u32(ksr_read_u32be(p + 4))
+									   == 0x72697468
+							&& ksr_ascii_lower_u8((unsigned char)*(p + 8))
+									   == 'm') {
 						p += 9;
 						state = ALGORITHM_STATE;
 					} else {
@@ -144,7 +143,7 @@ int parse_authenticate_body(str *body, struct authenticate_body *auth)
 					}
 			}
 		} else if(p + 3 < end) {
-			n = LOWER4B(GET3B(p));
+			n = ksr_ascii_lower_u32((ksr_read_u24be(p) << 8) | 0xffU);
 			if(n == 0x716f70ff) /*qop*/
 			{
 				p += 3;
@@ -221,7 +220,10 @@ int parse_authenticate_body(str *body, struct authenticate_body *auth)
 				break;
 			case ALGORITHM_STATE:
 				auth->algorithm = val;
-				if(val.len == 3 && LOWER4B(GET3B(val.s)) == 0x6d6435ff) {
+				if(val.len == 3
+						&& ksr_ascii_lower_u32(
+								   (ksr_read_u24be(val.s) << 8) | 0xffU)
+								   == 0x6d6435ff) {
 					auth->flags |= AUTHENTICATE_MD5;
 				} else if(val.len == 8
 						  && !strncasecmp(val.s, "MD5-sess", val.len)) {
@@ -235,11 +237,16 @@ int parse_authenticate_body(str *body, struct authenticate_body *auth)
 				}
 				break;
 			case STALE_STATE:
-				if(val.len == 4 && LOWER4B(GET4B(val.s)) == 0x74727565) /*true*/
+				if(val.len == 4
+						&& ksr_ascii_lower_u32(ksr_read_u32be(val.s))
+								   == 0x74727565) /*true*/
 				{
 					auth->flags |= AUTHENTICATE_STALE;
-				} else if(!(val.len == 5 && LOWER1B(val.s[4]) == 'e'
-								  && LOWER4B(GET4B(val.s)) == 0x66616c73)) {
+				} else if(!(val.len == 5
+								  && ksr_ascii_lower_u8((unsigned char)val.s[4])
+											 == 'e'
+								  && ksr_ascii_lower_u32(ksr_read_u32be(val.s))
+											 == 0x66616c73)) {
 					LM_ERR("unsupported stale value \"%.*s\"\n", val.len,
 							val.s);
 					goto error;

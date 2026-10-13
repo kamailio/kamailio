@@ -218,7 +218,7 @@ int ldap_url_search(char *_ldap_url, int *_ld_result_count)
 			ZSW(ludp->lud_filter));
 
 	rc = ldap_params_search(_ld_result_count, ludp->lud_host, ludp->lud_dn,
-			ludp->lud_scope, ludp->lud_attrs, ludp->lud_filter);
+			ludp->lud_scope, ludp->lud_attrs, "%s", ludp->lud_filter);
 	ldap_free_urldesc(ludp);
 	return rc;
 }

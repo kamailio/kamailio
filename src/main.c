@@ -86,6 +86,7 @@
 #include "core/modparam.h"
 #include "core/timer.h"
 #include "core/parser/msg_parser.h"
+#include "core/parser/parse_bytes.h"
 #include "core/ip_addr.h"
 #include "core/resolve.h"
 #include "core/parser/parse_hname2.h"
@@ -134,6 +135,7 @@
 #include "core/rand/cryptorand.h"
 
 #include "core/counters.h"
+#include "core/worker_stats.h"
 #include "core/cfg/cfg.h"
 #include "core/cfg/cfg_struct.h"
 #include "core/cfg_core.h"
@@ -206,7 +208,8 @@ Options:\n\
                   [proto:]addr_lst[:port][/advaddr][/socket_name], \n\
                   where proto=udp|tcp|tls|sctp, \n\
                   addr_lst= addr|(addr, addr_lst), \n\
-                  addr=host|ip_address|interface_name, \n\
+                  addr=host|ip_address|interface_name|*|[*], \n\
+                  where *=all IPv4 and [*]=all IPv6 addresses, \n\
                   advaddr=addr[:port] (advertised address) and \n\
                   socket_name=identifying name.\n\
                   E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
@@ -224,6 +227,7 @@ Options:\n\
                   example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
     --all-errors Print details about all config errors that can be detected\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
+    --no-stdprint-logs  Do not print startup logs to std terminal\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
 #ifdef USE_TCP
@@ -258,6 +262,7 @@ Options:\n\
     -x name      Specify internal manager for shared memory (shm)\n\
                   - can be: fm, qm or tlsf\n\
     -X name      Specify internal manager for private memory (pkg)\n\
+                  - can be: fm, qm, tlsf or sm\n\
                   - if omitted, the one for shm is used\n\
     -Y dir       Runtime dir path\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n"
@@ -524,6 +529,7 @@ int ksr_udp_mtreceivers = 0;
 int cfg_errors = 0;
 int cfg_warnings = 0;
 
+int ksr_no_stdprint_logs = 0;
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size = 0;
@@ -1017,7 +1023,7 @@ int parse_proto(unsigned char *s, long len, int *proto)
 			| 0x20202020)
 	unsigned int i;
 	if(likely(len == 3)) {
-		i = PROTO2UINT3(s[0], s[1], s[2]);
+		i = ksr_ascii_lower_u32(ksr_read_u24be((const char *)s));
 		switch(i) {
 			case PROTO2UINT3('u', 'd', 'p'):
 				*proto = PROTO_UDP;
@@ -1044,7 +1050,7 @@ int parse_proto(unsigned char *s, long len, int *proto)
 	}
 #ifdef USE_SCTP
 	else if(likely(len == 4)) {
-		i = PROTO2UINT4(s[0], s[1], s[2], s[3]);
+		i = ksr_ascii_lower_u32(ksr_read_u32be((const char *)s));
 		if(i == PROTO2UINT4('s', 'c', 't', 'p')) {
 			if(sctp_disable) {
 				return -1;
@@ -2245,6 +2251,7 @@ int main(int argc, char **argv)
 			{"atexit", required_argument, 0, KARGOPTVAL + 10},
 			{"all-errors", no_argument, 0, KARGOPTVAL + 11},
 			{"iuid", required_argument, 0, KARGOPTVAL + 12},
+			{"no-stdprint-logs", no_argument, 0, KARGOPTVAL + 14},
 			{0, 0, 0, 0}
 		};
 	/* clang-format on */
@@ -2369,6 +2376,9 @@ int main(int argc, char **argv)
 			case KARGOPTVAL + 11:
 				ksr_all_errors = 1;
 				break;
+			case KARGOPTVAL + 14:
+				ksr_no_stdprint_logs = 1;
+				break;
 
 			default:
 				if(c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
@@ -2396,7 +2406,10 @@ int main(int argc, char **argv)
 	}
 
 	/*init pkg mallocs (before parsing cfg or the rest of the cmd line !)*/
-	if(pkg_mem_size)
+	if(strcmp(sr_memmng_pkg, "sm") == 0)
+		LM_INFO("private (per process) memory: system malloc, -M "
+				"ignored\n");
+	else if(pkg_mem_size)
 		LM_INFO("private (per process) memory: %ld bytes\n", pkg_mem_size);
 	if(pkg_init_manager(sr_memmng_pkg) < 0)
 		goto error;
@@ -2568,6 +2581,7 @@ int main(int argc, char **argv)
 			case KARGOPTVAL + 9:
 			case KARGOPTVAL + 10:
 			case KARGOPTVAL + 11:
+			case KARGOPTVAL + 14:
 				break;
 
 			/* long options */
@@ -3182,12 +3196,14 @@ int main(int argc, char **argv)
 		default_core_cfg.dns_try_ipv6 = 0;
 	}
 	/* print all the listen addresses */
-	printf("Listening on \n");
-	print_all_socket_lists();
-	printf("Aliases: \n");
-	/*print_aliases();*/
-	print_aliases();
-	printf("\n");
+	if(!ksr_no_stdprint_logs) {
+		printf("Listening on \n");
+		print_all_socket_lists();
+		printf("Aliases: \n");
+		/*print_aliases();*/
+		print_aliases();
+		printf("\n");
+	}
 
 	if(dont_fork) {
 		fprintf(stderr, "WARNING: no fork mode %s\n",
@@ -3375,6 +3391,10 @@ int main(int argc, char **argv)
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
+
+	/* occupancy counters - must be registered before counters_prefork_init() */
+	if(ksr_worker_stats_init() < 0)
+		goto error;
 
 	/* initialize process_table, add core process no. (calc_proc_no()) to the
 	 * processes registered from the modules*/

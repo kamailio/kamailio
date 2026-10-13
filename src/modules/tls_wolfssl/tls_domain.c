@@ -221,7 +221,8 @@ void tls_destroy_cfg(void)
  */
 char *tls_domain_str(tls_domain_t *d)
 {
-	static char buf[1024];
+	/* per thread: mode 2 completes the TLS init on tcp reactor pool threads */
+	static _Thread_local char buf[1024];
 	char *p;
 
 	buf[0] = '\0';
@@ -1140,6 +1141,9 @@ int tls_fix_domains_cfg(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
 		return -1;
 	}
 
+	if(ssl_max_send_fragment >= 0)
+		LM_WARN("ssl_max_send_fragment is not supported by tls_wolfssl"
+				" - ignored\n");
 	/* only in >= 0.9.9 */
 	if(tls_foreach_CTX_in_cfg(
 			   cfg, tls_ssl_ctx_set_max_send_fragment, ssl_max_send_fragment, 0)
@@ -1154,21 +1158,12 @@ int tls_fix_domains_cfg(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
 		ERR("invalid ssl_read_ahead value (%d)\n", ssl_read_ahead);
 		return -1;
 	}
-	/* set options for SSL_write:
-		WOLFSSL_MODE_ACCEPT_MOVING_WRITE_BUFFER - needed when queueing
-		  clear text for a future write (WANTS_READ). In this case the
-		  buffer address will change for the repeated SSL_write() and
-		  without this option it will trigger the openssl sanity checks.
-		SSL_MODE_ENABLE_PARTIAL_WRITE - needed to deal with potentially
-		  huge multi-record writes that don't fit in the default buffer
-		  (the default buffer must have space for at least 1 record) */
-	if(tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_mode,
-			   WOLFSSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
-					   | SSL_MODE_ENABLE_PARTIAL_WRITE,
-			   0)
+	/* wolfSSL_CTX_set_mode() takes one mode per call, not a mask; moving
+	 * write buffer is the wolfSSL default - enable multi-record partial write */
+	if(tls_foreach_CTX_in_cfg(
+			   cfg, tls_ssl_ctx_mode, SSL_MODE_ENABLE_PARTIAL_WRITE, 0)
 			< 0) {
-		ERR("could not set WOLFSSL_MODE_ACCEPT_MOVING_WRITE_BUFFER and"
-			" SSL_MODE_ENABLE_PARTIAL_WRITE\n");
+		ERR("could not set SSL_MODE_ENABLE_PARTIAL_WRITE\n");
 		return -1;
 	}
 

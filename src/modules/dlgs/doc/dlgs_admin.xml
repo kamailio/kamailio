@@ -229,6 +229,33 @@ request_route {
 </programlisting>
 		</example>
 	</section>
+	<section id="dlgs.f.dlgs_find">
+		<title>
+		<function moreinfo="none">dlgs_find()</function>
+		</title>
+		<para>
+			Return true (1) if dlgs item is found for the current message,
+			otherwise false (-1).
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, FAILURE_ROUTE,
+			ONSEND_ROUTE.
+		</para>
+		<example>
+		<title><function>dlgs_find</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(dlgs_find()) {
+        ...
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="dlgs.f.dlgs_count">
 		<title>
 		<function moreinfo="none">dlgs_count(field, op, data)</function>

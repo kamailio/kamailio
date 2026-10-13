@@ -55,28 +55,32 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 		return;
 	}
 
-	LM_DBG("Call answered on dlg [%p] - search for Ro Session [%p]\n", dlg,
-			session);
+	LM_DBG("Call answered on dlg [%d:%d] - search for Ro Session ID [%.*s]\n",
+			dlg->h_entry, dlg->h_id, STR_FMT(&session->ro_session_id));
 
 	ro_session_entry = &(ro_session_table->entries[session->h_entry]);
 
 	ro_session_lock(ro_session_table, ro_session_entry);
 
-	if(session->active) {
-		LM_CRIT("Why the heck am i receiving a double confirmation of the "
-				"dialog? Ignoring...\n");
+	if(session->active > 0) {
+		LM_WARN("Double confirmation for dialog [%d:%d], Ro Session ID [%.*s], "
+				"ignoring\n",
+				dlg->h_entry, dlg->h_id, STR_FMT(&session->ro_session_id));
 		ro_session_unlock(ro_session_table, ro_session_entry);
 		return;
 	} else if(
 			session->active
 			< 0) { //session has already been terminated - we can't reactivate...
-		LM_WARN("Received an answer after terminating dialog.... ignoring\n");
+		LM_WARN("Received answer after session termination for dialog [%d:%d], "
+				"Ro Session ID [%.*s], ignoring\n",
+				dlg->h_entry, dlg->h_id, STR_FMT(&session->ro_session_id));
 		ro_session_unlock(ro_session_table, ro_session_entry);
 		return;
 	}
 
 	time_since_last_event = (now - session->last_event_timestamp) / 1000000;
 	session->start_time = session->last_event_timestamp = now;
+	/* Mark session as active */
 	session->event_type = answered;
 	session->active = 1;
 
@@ -114,8 +118,8 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 
 
 	if(ret != 0) {
-		LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
-				session->ro_session_id.len, session->ro_session_id.s);
+		LM_CRIT("unable to insert timer for Ro Session ID [%.*s]\n",
+				STR_FMT(&session->ro_session_id));
 	} else {
 		ref_ro_session(session, 1, 0); // lock already acquired
 	}
@@ -131,8 +135,9 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 
 	AAASession *cdp_session = cdpb.AAAGetCCAccSession(session->ro_session_id);
 	if(!cdp_session) {
-		LM_ERR("could not find find CC App CDP session for session [%.*s]\n",
-				session->ro_session_id.len, session->ro_session_id.s);
+		LM_ERR("could not find find CC App CDP session for Ro Session ID "
+			   "[%.*s]\n",
+				STR_FMT(&session->ro_session_id));
 		return;
 	}
 
@@ -143,7 +148,8 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode,
 		char *reason, struct dlg_cb_params *_params)
 {
-	//int i;
+	int ret = 0;
+	struct hdr_field *h = NULL;
 	int unref = 0;
 	struct ro_session *ro_session = 0;
 	struct ro_session_entry *ro_session_entry;
@@ -153,11 +159,27 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode,
 	s_reason.s = reason;
 	s_reason.len = strlen(reason);
 
-	LM_DBG("dialog [%p] terminated on type [%d], lets send stop record\n", dlg,
-			type);
+	LM_DBG("dialog [%d:%d] terminated on type [%d], lets send stop record\n",
+			dlg->h_entry, dlg->h_id, type);
 
 	if(!_params) {
+		LM_ERR("Callback param is NULL\n");
 		return;
+	}
+
+	ro_session = (struct ro_session *)*_params->param;
+	if(!ro_session) {
+		LM_ERR("Ro Session object is NULL\n");
+		return;
+	}
+
+	LM_DBG("Found Ro Session, SessionID: [%.*s], ccr_sent=%d, active=%d\n",
+			STR_FMT(&ro_session->ro_session_id), ro_session->ccr_sent,
+			ro_session->active);
+
+	request = _params->req;
+	if(!request) {
+		LM_WARN("dlg_terminated has no SIP request associated.\n");
 	}
 
 	LM_DBG("Direction is %d\n", _params->direction);
@@ -174,7 +196,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode,
 					_params->req->first_line.u.request.method.s);
 		}
 
-		struct hdr_field *h = get_hdr_by_name(_params->req, "Reason", 6);
+		h = get_hdr_by_name(_params->req, "Reason", 6);
 		if(h != NULL) {
 			LM_DBG("reason header is [%.*s]\n", h->body.len, h->body.s);
 			s_reason = h->body;
@@ -184,17 +206,6 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode,
 				_params->rpl->first_line.u.reply.statuscode,
 				_params->rpl->first_line.u.reply.reason.len,
 				_params->rpl->first_line.u.reply.reason.s);
-	}
-
-	ro_session = (struct ro_session *)*_params->param;
-	if(!ro_session) {
-		LM_ERR("Ro Session object is NULL...... aborting\n");
-		return;
-	}
-
-	request = _params->req;
-	if(!request) {
-		LM_WARN("dlg_terminated has no SIP request associated.\n");
 	}
 
 	if(dlg && (dlg->callid.s && dlg->callid.len > 0)) {
@@ -230,22 +241,22 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode,
 			return;
 		}
 
-		if(ro_session->active) { // if the call was never activated, there's no timer to remove
-			int ret = remove_ro_timer(&ro_session->ro_tl);
+		// if the call was never activated, there's no timer to remove
+		if(ro_session->active > 0) {
+			ret = remove_ro_timer(&ro_session->ro_tl);
 			if(ret < 0) {
-				LM_CRIT("unable to unlink the timer on ro_session %p [%.*s]\n",
-						ro_session, ro_session->ro_session_id.len,
-						ro_session->ro_session_id.s);
+				LM_CRIT("unable to unlink the timer on ro_session [%.*s]\n",
+						STR_FMT(&ro_session->ro_session_id));
 			} else if(ret > 0) {
-				LM_WARN("inconsistent ro timer data on ro_session %p [%.*s]\n",
-						ro_session, ro_session->ro_session_id.len,
-						ro_session->ro_session_id.s);
+				LM_WARN("inconsistent ro timer data on ro_session [%.*s]\n",
+						STR_FMT(&ro_session->ro_session_id));
 			} else {
 				unref++;
 			}
 		}
 
-		LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
+		LM_DBG("Sending CCR STOP on Ro_Session [%.*s]\n",
+				STR_FMT(&ro_session->ro_session_id));
 		send_ccr_stop_with_param(ro_session, termcode, &s_reason);
 		ro_session->active = -1; //deleted.... terminated ....
 		ro_session->ccr_sent = 1;

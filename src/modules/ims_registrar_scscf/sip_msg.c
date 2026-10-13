@@ -33,6 +33,7 @@
 #include "../../core/parser/hf.h"
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_expires.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../core/ut.h"
 #include "../../core/qvalue.h"
 #include "ims_registrar_scscf_mod.h" /* Module parameters */
@@ -169,6 +170,24 @@ int calc_contact_q(param_t *_q, qvalue_t *_r)
 }
 
 /*! \brief
+ * Check that a SIP/SIPS Contact URI is syntactically valid.
+ * Other URI schemes are left to the caller/routing logic.
+ * \return 0 when the URI is acceptable, -1 when it is malformed
+ */
+static int check_contact_uri(contact_t *c)
+{
+	struct sip_uri puri;
+
+	if((c->uri.len >= 4 && strncasecmp(c->uri.s, "sip:", 4) == 0)
+			|| (c->uri.len >= 5 && strncasecmp(c->uri.s, "sips:", 5) == 0)) {
+		if(parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*! \brief
  * Check if the originating REGISTER message was formed correctly
  * The whole message must be parsed before calling the function
  * _s indicates whether the contact was star
@@ -211,7 +230,9 @@ int check_contacts(struct sip_msg *_m, int *_s)
 		*_s = 1;
 	} else { /* The first Contact HF is not star */
 		/* Message must contain no star Contact HF */
-		p = _m->contact->next;
+		/* start with the first Contact HF, so that its contacts are
+		 * also checked (it cannot be star, as checked above) */
+		p = _m->contact;
 		while(p) {
 			if(p->type == HDR_CONTACT_T) {
 				if(((contact_body_t *)p->parsed)->star == 1) {
@@ -225,6 +246,12 @@ int check_contacts(struct sip_msg *_m, int *_s)
 							|| (c->received
 									&& c->received->len > RECEIVED_MAX_SIZE)) {
 						rerrno = R_CONTACT_LEN;
+						return 1;
+					}
+					if(check_contact_uri(c) < 0) {
+						LM_WARN("malformed contact uri: [%.*s]\n", c->uri.len,
+								c->uri.s);
+						rerrno = R_PARSE_CONT;
 						return 1;
 					}
 				}

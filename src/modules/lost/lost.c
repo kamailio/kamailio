@@ -124,7 +124,8 @@ static cmd_export_t cmds[] = {
 };
 
 /* Exported parameters */
-static param_export_t params[] = {{"exact_type", PARAM_INT, &held_exact_type},
+static param_export_t params[] = {
+	{"exact_type", PARAM_INT, &held_exact_type},
 	{"response_time", PARAM_INT, &held_resp_time},
 	{"post_request", PARAM_INT, &held_post_req},
 	{"location_type", PARAM_STR, &held_loc_type},
@@ -133,7 +134,8 @@ static param_export_t params[] = {{"exact_type", PARAM_INT, &held_exact_type},
 	{"location_3d", PARAM_INT, &lost_geoloc_3d},
 	{"verbose", PARAM_INT, &lost_verbose},
 	{"geoheader_type", PARAM_INT, &lost_geoloc_type},
-	{"geoheader_order", PARAM_INT, &lost_geoloc_order}, {0, 0, 0}
+	{"geoheader_order", PARAM_INT, &lost_geoloc_order},
+	{0, 0, 0}
 };
 
 /* Module interface */

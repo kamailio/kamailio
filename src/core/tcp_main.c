@@ -55,6 +55,8 @@
 #include <stdint.h> /* UINT32_MAX */
 
 #include <unistd.h>
+#include <signal.h>	 /* sigfillset/pthread_sigmask - mode 2 pool threads */
+#include <pthread.h> /* mode 2 reactor thread pool */
 
 #include <errno.h>
 #include <string.h>
@@ -73,6 +75,7 @@
 #include "locking.h"
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
+#include "tcp_reactor_mem.h" /* mode 2: pkg allocator serialization */
 #include "timer.h"
 #include "sr_module.h"
 #include "tcp_server.h"
@@ -98,6 +101,8 @@
 #include "tcp_info.h"
 #include "tcp_options.h"
 #include "tcp_mtops.h"
+#include "tcp_read.h"
+#include "tcp_reactor.h"
 #include "ut.h"
 #include "events.h"
 #include "cfg/cfg_struct.h"
@@ -147,7 +152,8 @@ enum fd_types
 	F_SOCKINFO /* a tcp_listen fd */,
 	F_TCPCONN,
 	F_TCPCHILD,
-	F_PROC
+	F_PROC,
+	F_TCP_REACTOR_NOTIFY /* mode 2: pool->reactor completion pipe */
 };
 
 
@@ -204,6 +210,43 @@ static io_wait_h io_h;
 
 static struct local_timer tcp_main_ltimer;
 static ticks_t tcp_main_prev_ticks;
+
+/* io_h/tcp_main_ltimer stay private to this file (only the io_wait thread may
+ * touch them); these wrappers are how tcp_reactor.c reaches them instead -
+ * see the prototypes in tcp_conn.h for why. Callable only from the io_wait
+ * thread, same as the io_watch_*()/local_timer_*() calls they forward to. */
+int tcpmain_io_watch_add_conn(int fd, short events, void *data)
+{
+	return io_watch_add(&io_h, fd, events, F_TCPCONN, data);
+}
+
+int tcpmain_io_watch_del(int fd, int idx, int is_closing)
+{
+	return io_watch_del(&io_h, fd, idx, is_closing ? IO_FD_CLOSING : 0);
+}
+
+int tcpmain_io_watch_chg(int fd, short events, int idx)
+{
+	return io_watch_chg(&io_h, fd, events, idx);
+}
+
+void tcpmain_local_timer_add(
+		struct timer_ln *tl, ticks_t delta, ticks_t crt_ticks)
+{
+	local_timer_add(&tcp_main_ltimer, tl, delta, crt_ticks);
+}
+
+void tcpmain_local_timer_del(struct timer_ln *tl)
+{
+	local_timer_del(&tcp_main_ltimer, tl);
+}
+
+void tcpmain_note_new_conn(int is_tls)
+{
+	(*tcp_connections_no)++;
+	if(unlikely(is_tls))
+		(*tls_connections_no)++;
+}
 
 /* tell if there are tcp workers that should handle only specific socket
  * - used to optimize the search of least loaded worker for a tcp socket
@@ -477,7 +520,7 @@ error:
  * @return - 0 on success, < 0 on error (whatever close() returns). On error
  *           errno is set.
  */
-static int tcp_safe_close(int s)
+int tcp_safe_close(int s)
 {
 	int ret;
 
@@ -662,15 +705,15 @@ end:
 #ifdef TCP_ASYNC
 
 
-/* unsafe version */
-#define _wbufq_empty(con) ((con)->wbuf_q.first == 0)
-/* unsafe version */
-#define _wbufq_non_empty(con) ((con)->wbuf_q.first != 0)
+/* _wbufq_empty()/_wbufq_non_empty() are in tcp_conn.h: tcp_reactor.c (mode 2)
+ * needs them too. */
 
 
-/* unsafe version, call while holding the connection write lock */
-inline static int _wbufq_add(
-		struct tcp_connection *c, const char *data, unsigned int size)
+/* unsafe version, call while holding the connection write lock.
+ * conn_cap: 0 skips the per-connection tcpconn_wq_max check (mode 2 staged
+ * chunks, already checked when staged). Not static: tcp_reactor.c uses it. */
+int _wbufq_add_cap(struct tcp_connection *c, const char *data,
+		unsigned int size, int conn_cap)
 {
 	struct tcp_wbuffer_queue *q;
 	struct tcp_wbuffer *wb;
@@ -681,7 +724,9 @@ inline static int _wbufq_add(
 
 	q = &c->wbuf_q;
 	t = get_ticks_raw();
-	if(unlikely(((q->queued + size) > cfg_get(tcp, tcp_cfg, tcpconn_wq_max))
+	if(unlikely((conn_cap
+						&& ((q->queued + size)
+								> cfg_get(tcp, tcp_cfg, tcpconn_wq_max)))
 				|| ((*tcp_total_wq + size) > cfg_get(tcp, tcp_cfg, tcp_wq_max))
 				|| (q->first && TICKS_LT(q->wr_timeout, t)))) {
 		LM_ERR("(%u bytes): write queue full or timeout "
@@ -767,6 +812,14 @@ error:
 }
 
 
+/* unsafe version, call while holding the connection write lock.
+ * Not static: tcp_reactor.c (mode 2) calls this directly. */
+int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size)
+{
+	return _wbufq_add_cap(c, data, size, 1);
+}
+
+
 /* unsafe version, call while holding the connection write lock
  * inserts data at the beginning, it ignores the max queue size checks and
  * the timeout (use sparingly)
@@ -849,7 +902,7 @@ inline static void _wbufq_destroy(struct tcp_wbuffer_queue *q)
 /* tries to empty the queue  (safe version, c->write_lock must not be hold)
  * returns -1 on error, bytes written on success (>=0)
  * if the whole queue is emptied => sets *empty*/
-inline static int wbufq_run(int fd, struct tcp_connection *c, int *empty)
+int wbufq_run(int fd, struct tcp_connection *c, int *empty)
 {
 	struct tcp_wbuffer_queue *q;
 	struct tcp_wbuffer *wb;
@@ -952,273 +1005,6 @@ inline static int wbufq_run(int fd, struct tcp_connection *c, int *empty)
 
 #endif /* TCP_ASYNC */
 
-
-/* Attempt to extract real connection information from an upstream load
- * balancer or reverse proxy. This should be called right after accept()ing the
- * connection, and before TLS negotiation.
- *
- * Returns:
- *    -1 on parsing error (connection should be closed)
- *    0 on parser success, and connection information was extracted
- *    1 on parser success, but no connection information was provided by the
- *      upstream load balancer or reverse proxy.
- */
-int tcpconn_read_haproxy(struct tcp_connection *c)
-{
-	int bytes, retval = 0;
-	uint32_t size, port;
-	char *p, *end;
-	struct ip_addr *src_ip, *dst_ip;
-	int twaitms = 0;
-	int tsleepus = 0;
-
-	const char v2sig[12] = "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A";
-
-	// proxy header union
-	union
-	{
-		// v1 struct
-		struct
-		{
-			char line[108];
-		} v1;
-
-		// v2 struct
-		struct
-		{
-			uint8_t sig[12];
-			uint8_t ver_cmd;
-			uint8_t fam;
-			uint16_t len;
-
-			union
-			{
-				struct
-				{ /* for TCP/UDP over IPv4, len = 12 */
-					uint32_t src_addr;
-					uint32_t dst_addr;
-					uint16_t src_port;
-					uint16_t dst_port;
-				} ip4;
-
-				struct
-				{ /* for TCP/UDP over IPv6, len = 36 */
-					uint8_t src_addr[16];
-					uint8_t dst_addr[16];
-					uint16_t src_port;
-					uint16_t dst_port;
-				} ip6;
-
-				struct
-				{ /* for AF_UNIX sockets, len = 216 */
-					uint8_t src_addr[108];
-					uint8_t dst_addr[108];
-				} unx;
-			} addr;
-		} v2;
-
-	} hdr;
-
-	if(cfg_get(tcp, tcp_cfg, wait_data_ms) > 10000) {
-		tsleepus = 100000;
-	} else if(cfg_get(tcp, tcp_cfg, wait_data_ms) < 1000) {
-		tsleepus = 50000;
-	} else {
-		tsleepus = 10 * cfg_get(tcp, tcp_cfg, wait_data_ms);
-	}
-
-	twaitms = 0;
-	do {
-		bytes = recv(c->s, &hdr, sizeof(hdr), MSG_PEEK);
-		if(bytes == -1 && (errno == EINTR || errno == EAGAIN)) {
-			if(twaitms <= cfg_get(tcp, tcp_cfg, wait_data_ms)) {
-				/* LM_DBG("bytes: %d - errno: %d (%d/%d) - twait: %dms\n", bytes,
-						errno, EINTR, EAGAIN, twaitms); */
-				sleep_us(tsleepus);
-				twaitms += tsleepus / 1000;
-			} else {
-				break;
-			}
-		} else {
-			break;
-		}
-	} while(1);
-
-	if(bytes == -1) {
-		/* no data received during tcp_wait_data */
-		return -1;
-	}
-	/* copy original tunnel address details */
-	memcpy(&c->cinfo.src_ip, &c->rcv.src_ip, sizeof(ip_addr_t));
-	memcpy(&c->cinfo.dst_ip, &c->rcv.dst_ip, sizeof(ip_addr_t));
-	c->cinfo.src_port = c->rcv.src_port;
-	c->cinfo.dst_port = c->rcv.dst_port;
-	c->cinfo.proto = (int)c->rcv.proto;
-	c->cinfo.csocket = c->rcv.bind_address;
-
-	src_ip = &c->rcv.src_ip;
-	dst_ip = &c->rcv.dst_ip;
-
-	if(bytes >= 16 && memcmp(&hdr.v2, v2sig, 12) == 0
-			&& (hdr.v2.ver_cmd & 0xF0) == 0x20) {
-		LM_DBG("received PROXY protocol v2 header\n");
-		size = 16 + ntohs(hdr.v2.len);
-
-		if(bytes < size) {
-			return -1; /* truncated or too large header */
-		}
-
-		switch(hdr.v2.ver_cmd & 0xF) {
-			case 0x01: /* PROXY command */
-				switch(hdr.v2.fam) {
-					case 0x11: /* TCPv4 */
-						src_ip->af = AF_INET;
-						src_ip->len = 4;
-						src_ip->u.addr32[0] = hdr.v2.addr.ip4.src_addr;
-						c->rcv.src_port = htons(hdr.v2.addr.ip4.src_port);
-
-						dst_ip->af = AF_INET;
-						dst_ip->len = 4;
-						dst_ip->u.addr32[0] = hdr.v2.addr.ip4.dst_addr;
-						c->rcv.dst_port = htons(hdr.v2.addr.ip4.dst_port);
-
-						goto done;
-
-					case 0x21: /* TCPv6 */
-						src_ip->af = AF_INET6;
-						src_ip->len = 16;
-						memcpy(src_ip->u.addr, hdr.v2.addr.ip6.src_addr, 16);
-						c->rcv.src_port = htons(hdr.v2.addr.ip6.src_port);
-
-						dst_ip->af = AF_INET6;
-						dst_ip->len = 16;
-						memcpy(dst_ip->u.addr, hdr.v2.addr.ip6.dst_addr, 16);
-						c->rcv.dst_port = htons(hdr.v2.addr.ip6.dst_port);
-
-						goto done;
-
-					default: /* unsupported protocol */
-						return -1;
-				}
-
-			case 0x00:		/* LOCAL command */
-				retval = 1; /* keep local connection address for LOCAL */
-				goto done;
-
-			default:
-				return -1; /* not a supported command */
-		}
-	} else if(bytes >= 8 && memcmp(hdr.v1.line, "PROXY", 5) == 0) {
-		LM_DBG("received PROXY protocol v1 header\n");
-		end = memchr(hdr.v1.line, '\r', bytes - 1);
-		if(!end || end[1] != '\n') {
-			return -1; /* partial or invalid header */
-		}
-		*end = '\0'; /* terminate the string to ease parsing */
-		size = end + 2 - hdr.v1.line;
-		p = hdr.v1.line + 5;
-
-		if(strncmp(p, " TCP", 4) == 0) {
-			switch(p[4]) {
-				case '4':
-					src_ip->af = dst_ip->af = AF_INET;
-					src_ip->len = dst_ip->len = 4;
-					break;
-				case '6':
-					src_ip->af = dst_ip->af = AF_INET6;
-					src_ip->len = dst_ip->len = 16;
-					break;
-				default:
-					return -1; /* unknown TCP version */
-			}
-
-			if(p[5] != ' ') {
-				return -1; /* misformatted header */
-			}
-			p += 6; /* skip over the already-parsed bytes */
-
-			/* Parse the source IP address */
-			end = strchr(p, ' ');
-			if(!end) {
-				return -1; /* truncated header */
-			}
-			*end = '\0'; /* mark the end of the IP address */
-			if(inet_pton(src_ip->af, p, src_ip->u.addr) != 1) {
-				return -1; /* missing IP address */
-			}
-			p = end + 1;
-
-			/* Parse the destination IP address */
-			end = strchr(p, ' ');
-			if(!end) {
-				return -1;
-			}
-			*end = '\0'; /* mark the end of the IP address */
-			if(inet_pton(dst_ip->af, p, dst_ip->u.addr) != 1) {
-				return -1;
-			}
-			p = end + 1;
-
-			/* Parse the source port */
-			port = strtoul(p, &end, 10);
-			if(port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
-				return -1; /* invalid port number */
-			}
-			c->rcv.src_port = port;
-
-			if(*end != ' ') {
-				return -1; /* invalid header */
-			}
-			p = end + 1;
-
-			/* Parse the destination port */
-			port = strtoul(p, NULL, 10);
-			if(port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
-				return -1; /* invalid port number */
-			}
-			c->rcv.dst_port = port;
-
-			goto done;
-		} else if(strncmp(p, " UNKNOWN", 8) == 0) {
-			/* We know that the sender speaks the correct PROXY protocol with the
-			 * appropriate version, and we SHOULD accept the connection and use the
-			 * real connection's parameters as if there were no PROXY protocol header
-			 * on the wire.
-			 */
-			retval = 1; /* PROXY protocol parsed, but no IP override */
-			goto done;
-		} else {
-			return -1; /* invalid header */
-		}
-	} else if(bytes == 0) {
-		return 1; /* EOF? Return "no IP change" in any case */
-	} else {
-		/* not haproxy protocol */
-		return 2;
-	}
-
-done:
-	/* we need to consume the appropriate amount of data from the socket */
-	twaitms = 0;
-	do {
-		bytes = recv(c->s, &hdr, size, 0);
-		if(bytes == -1 && errno == EINTR) {
-			if(twaitms <= cfg_get(tcp, tcp_cfg, wait_data_ms)) {
-				/* LM_DBG("bytes: %d - errno: %d (%d/%d) - twait: %dms\n", bytes,
-						errno, EINTR, EAGAIN, twaitms); */
-				sleep_us(tsleepus);
-				twaitms += tsleepus / 1000;
-			} else {
-				break;
-			}
-		} else {
-			break;
-		}
-	} while(bytes == -1 && errno == EINTR);
-
-	return (bytes >= 0) ? retval : -1;
-}
-
 int tcp_connection_limit_srcip(union sockaddr_union *srcaddr, int limit)
 {
 	struct tcp_connection *con;
@@ -1252,7 +1038,7 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 		int state)
 {
 	struct tcp_connection *c;
-	int rd_b_size, ret;
+	int rd_b_size;
 
 	rd_b_size = cfg_get(tcp, tcp_cfg, rd_buf_size);
 	c = shm_malloc(sizeof(struct tcp_connection) + rd_b_size);
@@ -1284,19 +1070,6 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	atomic_set(&c->refcnt, 0);
 	local_timer_init(&c->timer, tcpconn_main_timeout, c, 0);
 
-	if(unlikely((ksr_tcp_accept_haproxy
-						|| (ksr_tcp_accept_protocols & KSR_TCPAP_HAPROXY))
-				&& state == S_CONN_ACCEPT)) {
-		ret = tcpconn_read_haproxy(c);
-		if(ret == -1) {
-			LM_ERR("invalid PROXY protocol header\n");
-			goto error;
-		} else if(ret == 1) {
-			LM_DBG("PROXY protocol did not override IP addresses\n");
-		} else if(ret == 2) {
-			LM_DBG("PROXY protocol header not found\n");
-		}
-	}
 	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
 	LM_DBG("on port %d, type %d, socket %d\n", c->rcv.src_port, type, sock);
 	init_tcp_req(&c->req, (char *)c + sizeof(struct tcp_connection), rd_b_size);
@@ -1305,8 +1078,15 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	c->rcv.proto_reserved2 = 0;
 	c->state = state;
 	c->initstate = state;
+	/* the first read parses the PROXY header, then moves to S_CONN_ACCEPT */
+	if(unlikely((ksr_tcp_accept_haproxy
+						|| (ksr_tcp_accept_protocols & KSR_TCPAP_HAPROXY))
+				&& state == S_CONN_ACCEPT)) {
+		c->state = S_CONN_HAPROXY;
+	}
 	c->extra_data = 0;
 	c->timestamp = time(NULL);
+	c->lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
 #ifdef USE_TLS
 	if(type == PROTO_TLS) {
 		if(tls_tcpconn_init(c, sock) == -1)
@@ -1316,8 +1096,7 @@ struct tcp_connection *tcpconn_new(int sock, union sockaddr_union *su,
 	{
 		c->type = PROTO_TCP;
 		c->rcv.proto = PROTO_TCP;
-		c->timeout = get_ticks_raw() + cfg_get(tcp, tcp_cfg, con_lifetime);
-		c->lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
+		c->timeout = get_ticks_raw() + c->lifetime;
 	}
 
 	return c;
@@ -1649,51 +1428,74 @@ int tcpconn_finish_connect(struct tcp_connection *c, union sockaddr_union *from)
 
 /* adds a tcp connection to the tcpconn hashes
  * Note: it's called _only_ from the tcp_main process */
-inline static struct tcp_connection *tcpconn_add(struct tcp_connection *c)
+/* add the aliases of a new connection, keyed on its peer address c->rcv.src_*:
+ * - (peer_ip, peer_port, 0, 0): any connection to peer_ip, peer_port
+ * - (peer_ip, peer_port, local_addr, 0): the same, from local_addr
+ * - (peer_ip, peer_port, local_addr, local_port): a fully specified connection
+ * - (peer_ip, peer_port, cinfo_addr, 0) and (..., cinfo_addr, cinfo_port): the
+ *   same, with the local address stored in cinfo (e.g. by the PROXY protocol)
+ * add_alias errors are ignored: some are valid (e.g. two connections to the
+ * same destination from different source addresses).
+ * WARNING: must be called with TCPCONN_LOCK held */
+static void _tcpconn_add_conn_aliases_unsafe(struct tcp_connection *c)
 {
 	struct ip_addr zero_ip;
 	int new_conn_alias_flags;
 
+	ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
+	new_conn_alias_flags = cfg_get(tcp, tcp_cfg, new_conn_alias_flags);
+	_tcpconn_add_alias_unsafe(
+			c, c->rcv.src_port, &zero_ip, 0, new_conn_alias_flags);
+	if(likely(c->rcv.dst_ip.af && !ip_addr_any(&c->rcv.dst_ip))) {
+		_tcpconn_add_alias_unsafe(
+				c, c->rcv.src_port, &c->rcv.dst_ip, 0, new_conn_alias_flags);
+		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
+				c->rcv.dst_port, new_conn_alias_flags);
+	}
+	if(unlikely(c->cinfo.dst_ip.af && !ip_addr_any(&c->cinfo.dst_ip)
+				&& !ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))) {
+		_tcpconn_add_alias_unsafe(
+				c, c->rcv.src_port, &c->cinfo.dst_ip, 0, new_conn_alias_flags);
+		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip,
+				c->cinfo.dst_port, new_conn_alias_flags);
+	}
+}
+
+
+/* set the peer and local address of an accepted connection from its PROXY
+ * header and re-key its aliases on them, under TCPCONN_LOCK: lookups compare
+ * the live c->rcv addresses, and cinfo keeps the proxy-side addresses */
+void tcpconn_set_proxied_addr(struct tcp_connection *c, struct ip_addr *src_ip,
+		unsigned short src_port, struct ip_addr *dst_ip,
+		unsigned short dst_port)
+{
+	int r;
+
+	TCPCONN_LOCK;
+	for(r = 0; r < c->aliases; r++)
+		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash],
+				&c->con_aliases[r], next, prev);
+	c->aliases = 0;
+	c->rcv.src_ip = *src_ip;
+	c->rcv.src_port = src_port;
+	c->rcv.dst_ip = *dst_ip;
+	c->rcv.dst_port = dst_port;
+	if(likely(c->flags & F_CONN_HASHED))
+		_tcpconn_add_conn_aliases_unsafe(c);
+	TCPCONN_UNLOCK;
+}
+
+
+struct tcp_connection *tcpconn_add(struct tcp_connection *c)
+{
 	if(likely(c)) {
-		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
 		c->id_hash = tcp_id_hash(c->id);
 		c->aliases = 0;
-		new_conn_alias_flags = cfg_get(tcp, tcp_cfg, new_conn_alias_flags);
 		TCPCONN_LOCK;
 		c->flags |= F_CONN_HASHED;
 		/* add it at the beginning of the list*/
 		tcpconn_listadd(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
-		/* set the aliases */
-		/* first alias is for (peer_ip, peer_port, 0 ,0) -- for finding
-		 *  any connection to peer_ip, peer_port
-		 * the second alias is for (peer_ip, peer_port, local_addr, 0) -- for
-		 *  finding any connection to peer_ip, peer_port from local_addr
-		 * the third alias is for (peer_ip, peer_port, local_addr, local_port)
-		 *   -- for finding if a fully specified connection exists
-		 * the fourth alias is for (peer_ip, peer_port, cinfo_addr, 0) -- for
-		 *  finding any connection to peer_ip, peer_port from address stored into cinfo (e.g. when proxy protocol is used)
-		 * the fifth alias is for (peer_ip, peer_port, cinfo_addr, cinfo_port)
-		 *   -- for finding if a fully specified connection exists using address
-		 *      and port stored into cinfo*/
-		_tcpconn_add_alias_unsafe(
-				c, c->rcv.src_port, &zero_ip, 0, new_conn_alias_flags);
-		if(likely(c->rcv.dst_ip.af && !ip_addr_any(&c->rcv.dst_ip))) {
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip, 0,
-					new_conn_alias_flags);
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
-					c->rcv.dst_port, new_conn_alias_flags);
-		}
-		if(unlikely(c->cinfo.dst_ip.af && !ip_addr_any(&c->cinfo.dst_ip)
-					&& !ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))) {
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, 0,
-					new_conn_alias_flags);
-			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip,
-					c->cinfo.dst_port, new_conn_alias_flags);
-		}
-
-		/* ignore add_alias errors, there are some valid cases when one
-		 *  of the add_alias would fail (e.g. first add_alias for 2 connections
-		 *   with the same destination but different src. ip*/
+		_tcpconn_add_conn_aliases_unsafe(c);
 		TCPCONN_UNLOCK;
 		LM_DBG("hashes: %d:%d:%d, %d\n", c->con_aliases[0].hash,
 				c->con_aliases[1].hash, c->con_aliases[2].hash, c->id_hash);
@@ -1717,11 +1519,21 @@ static inline void _tcpconn_detach(struct tcp_connection *c)
 }
 
 
-static inline void _tcpconn_free(struct tcp_connection *c)
+void _tcpconn_free(struct tcp_connection *c)
 {
 #ifdef TCP_ASYNC
 	if(unlikely(_wbufq_non_empty(c)))
 		_wbufq_destroy(&c->wbuf_q);
+	/* mode 2 : free any plaintext write chunks that were staged on the
+	 * connection but never drained (e.g. a write arrived just before close). */
+	while(c->wsq_head != NULL) {
+		struct tcp_wchunk *ch = c->wsq_head;
+		c->wsq_head = ch->next;
+		shm_free(ch->buf);
+		shm_free(ch);
+	}
+	c->wsq_tail = NULL;
+	c->wsq_len = 0;
 #endif
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
@@ -2300,8 +2112,6 @@ inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
 #endif /* TCP_FD_CACHE */
 
 
-inline static int tcpconn_chld_put(struct tcp_connection *tcpconn);
-
 static int tcpconn_send_put(struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags);
 static int tcpconn_do_send(int fd, struct tcp_connection *c, const char *buf,
@@ -2416,6 +2226,13 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 					break;
 			}
 		}
+#ifdef TCP_ASYNC
+		if(unlikely(ksr_tcp_main_threads == 2)) {
+			/* mode 2: workers do not open sockets - ask PROC_TCP_MAIN to create
+			 * the outbound connection and send on it. */
+			return tcp_reactor_connect_put(dst, from, buf, len);
+		}
+#endif /* TCP_ASYNC */
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_ASYNC)
 		if(likely(cfg_get(tcp, tcp_cfg, tcp_connect_wait)
 				   && cfg_get(tcp, tcp_cfg, async))) {
@@ -2732,6 +2549,14 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 		goto release_c;
 	} /* if (c==0 or unusable) new connection */
 	tcp_dst_ephemeral_set(n, c, dst);
+#ifdef TCP_ASYNC
+	if(unlikely(ksr_tcp_main_threads == 2)) {
+		/* mode 2: existing connection - dispatch the write to PROC_TCP_MAIN
+		 * instead of getting the fd and writing here. (Opening a new outbound
+		 * connection, c==0, was handled in the branch above.) */
+		return tcp_reactor_send_put(c, buf, len, dst->send_flags);
+	}
+#endif /* TCP_ASYNC */
 	/* existing connection, send on it */
 	n = tcpconn_send_put(c, buf, len, dst->send_flags);
 	/* no deref needed (automatically done inside tcpconn_send_put() */
@@ -3062,6 +2887,48 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 {
 	int n;
 	long response[2];
+
+#ifdef TCP_ASYNC
+	if(unlikely(ksr_tcp_main_threads == 2 && is_tcp_main())) {
+		/* mode 2: this runs in PROC_TCP_MAIN's event loop, so write here
+		 * instead of fd-passing / a unix_sock self-send. This is reached from
+		 * the TLS read path (tls_h_read_*), which drives the handshake and may
+		 * need to push out ciphertext (handshake records, write-wants-read
+		 * flush, renegotiation). Handle the write result against our own
+		 * reactor instead of shipping a CONN_* command to ourselves.
+		 * The caller holds c->write_lock (locked=1) and keeps using c after we
+		 * return, so on failure we mark the connection for the reaper rather
+		 * than freeing it here. */
+		n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1], 1);
+		switch(response[1]) {
+			case CONN_NOP:
+				break;
+			case CONN_QUEUED_WRITE:
+				/* is_tcp_main() is true for the whole process. On a POOL thread
+				 * (this path is reached from tls_read() flushing handshake /
+				 * renegotiation ciphertext, which runs on a pool thread in
+				 * mode 2) we must NOT touch io_h: the conn is shielded out of
+				 * io_h for the duration of the read job, and io_watch_* from a
+				 * pool thread races the io_wait thread. The ciphertext is already
+				 * queued in wbuf_q; tcp_reactor_read_rearm() arms POLLOUT from
+				 * wbuf_q when the read job completes, so the flush is deferred
+				 * safely. Only the io_wait thread arms the watch directly. */
+				if(tcp_reactor_pool_thread_idx() < 0
+						&& unlikely(tcp_reactor_enable_write_watch(c) < 0)) {
+					c->state = S_CONN_BAD;
+					c->timeout = get_ticks_raw(); /* force timeout reaper */
+				}
+				break;
+			default: /* CONN_ERROR / CONN_EOF: defer close to the reaper */
+				c->state = S_CONN_BAD;
+				c->timeout = get_ticks_raw();
+				if(response[1] == CONN_ERROR)
+					n = -1;
+				break;
+		}
+		return n;
+	}
+#endif /* TCP_ASYNC */
 
 	n = tcpconn_do_send(fd, c, buf, len, send_flags, &response[1], 1);
 	if(unlikely(response[1] != CONN_NOP)) {
@@ -3649,11 +3516,24 @@ inline static void tcpconn_close_main_fd(struct tcp_connection *tcpconn)
 }
 
 
+/* modes 1/2: TLS state may only be freed in PROC_TCP_MAIN, so a TLS/WSS
+ * connection whose last ref is dropped elsewhere is freed there */
+static void tcpconn_free_in_main(struct tcp_connection *c)
+{
+	long response[2];
+
+	response[0] = (long)c;
+	response[1] = CONN_FREE_REQ;
+	if(unlikely(send_all(unix_tcp_sock, response, sizeof(response)) <= 0))
+		LM_ERR("failed to send free request for %p to tcp main: %s (%d)\n", c,
+				strerror(errno), errno);
+}
+
 /* dec refcnt & frees the connection if refcnt==0
  * returns 1 if the connection is freed, 0 otherwise
  *
  * WARNING: use only from child processes */
-inline static int tcpconn_chld_put(struct tcp_connection *tcpconn)
+int tcpconn_chld_put(struct tcp_connection *tcpconn)
 {
 	if(unlikely(atomic_dec_and_test(&tcpconn->refcnt))) {
 		LM_DBG("destroying connection %p (%d, %d) flags %04x\n", tcpconn,
@@ -3667,6 +3547,14 @@ inline static int tcpconn_chld_put(struct tcp_connection *tcpconn)
 			LM_CRIT("%p bad flags = %0x\n", tcpconn, tcpconn->flags);
 			abort();
 		}
+#ifdef USE_TLS
+		if(unlikely(ksr_tcp_main_threads > 0 && !is_tcp_main()
+					&& (tcpconn->type == PROTO_TLS
+							|| tcpconn->type == PROTO_WSS))) {
+			tcpconn_free_in_main(tcpconn);
+			return 1;
+		}
+#endif
 		_tcpconn_free(tcpconn); /* destroys also the wbuf_q if still present*/
 		return 1;
 	}
@@ -3677,7 +3565,7 @@ inline static int tcpconn_chld_put(struct tcp_connection *tcpconn)
 /* simple destroy function (the connection should be already removed
  * from the hashes. refcnt 0 and the fds should not be watched anymore for IO)
  */
-inline static void tcpconn_destroy(struct tcp_connection *tcpconn)
+void tcpconn_destroy(struct tcp_connection *tcpconn)
 {
 	LM_DBG("destroying connection %p (%d, %d) flags %04x\n", tcpconn,
 			tcpconn->id, tcpconn->s, tcpconn->flags);
@@ -3694,6 +3582,18 @@ inline static void tcpconn_destroy(struct tcp_connection *tcpconn)
 		_tcpconn_detach(tcpconn);
 		tcpconn->flags &= ~(F_CONN_HASHED | F_CONN_MAIN_TIMER);
 		TCPCONN_UNLOCK;
+	}
+	if(unlikely((tcpconn->flags & (F_CONN_READ_W | F_CONN_WRITE_W))
+				&& tcpconn->s != -1)) {
+		/* a refcount bug: drop the fd from io_h before closing it, else the
+		 * next connection given that fd number cannot be watched */
+		LM_CRIT("destroying connection %p with fd %d still watched (flags "
+				"%0x)\n",
+				tcpconn, tcpconn->s, tcpconn->flags);
+		if(tcp_reactor_pool_thread_idx() < 0) {
+			io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+			tcpconn->flags &= ~(F_CONN_READ_W | F_CONN_WRITE_W);
+		}
 	}
 	if(likely(!(tcpconn->flags & F_CONN_FD_CLOSED))) {
 		tcpconn_close_main_fd(tcpconn);
@@ -3717,7 +3617,7 @@ inline static void tcpconn_destroy(struct tcp_connection *tcpconn)
  *         - must be called _only_ from the tcp_main process context
  *          (or else the fd will remain open)
  */
-inline static int tcpconn_put_destroy(struct tcp_connection *tcpconn)
+int tcpconn_put_destroy(struct tcp_connection *tcpconn)
 {
 	if(unlikely((tcpconn->flags
 				 & (F_CONN_WRITE_W | F_CONN_HASHED | F_CONN_MAIN_TIMER
@@ -3769,7 +3669,7 @@ inline static int tcpconn_put_destroy(struct tcp_connection *tcpconn)
  * WARNING: call it only in the  tcp_main process context or else the
  *  timer removal won't work.
  */
-inline static int tcpconn_try_unhash(struct tcp_connection *tcpconn)
+int tcpconn_try_unhash(struct tcp_connection *tcpconn)
 {
 	if(likely(tcpconn->flags & F_CONN_HASHED)) {
 		tcpconn->state = S_CONN_BAD;
@@ -3986,12 +3886,19 @@ tcp_connection_t *ksr_tcpcon_evcb_get(void)
 	return _ksr_tcpcon_evcb;
 }
 
-static int tcp_emit_closed_event(struct tcp_connection *con)
+int tcp_emit_closed_event(struct tcp_connection *con)
 {
 	int ret;
 	tcp_closed_event_info_t tev;
 	sr_event_param_t evp = {0};
 	enum tcp_closed_reason reason;
+
+	/* Fire at most once per connection. In mode 2 a single reset can reach more
+	 * than one teardown path. All emits for a conn run on that one thread, so
+	 * a plain flag test-and-set is sufficient. */
+	if(con->flags & F_CONN_CLOSE_EV_SENT)
+		return 0;
+	con->flags |= F_CONN_CLOSE_EV_SENT;
 
 	if(con->event) {
 		reason = con->event;
@@ -4334,12 +4241,32 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 		goto end;
 	}
 	switch(cmd) {
+		case CONN_FREE_REQ:
+			/* last ref dropped outside tcp_main (modes 1/2, TLS/WSS) */
+			_tcpconn_free(tcpconn);
+			break;
 		case CONN_ERROR:
 			LM_ERR("received CON_ERROR for %p (id %d), refcnt %d, flags "
 				   "0x%0x\n",
 					tcpconn, tcpconn->id, atomic_get(&tcpconn->refcnt),
 					tcpconn->flags);
 		case CONN_EOF: /* forced EOF after full send, due to send flags */
+#ifdef TCP_ASYNC
+			/* mode 2: if a pool thread currently owns this conn (a
+			 * read/write job is in flight), do NOT unhash/io_watch_del/free it
+			 * here - that would race the pool thread. The in-pool refcount keeps
+			 * it alive; mark it bad and let the job completion close it (its
+			 * !HASHED/S_CONN_BAD check routes to tcp_reactor_read_close). Only
+			 * release the sender's reference. */
+			if(unlikely(tcpconn_pool_busy(tcpconn))) {
+				tcpconn->state = S_CONN_BAD;
+				tcpconn->timeout = get_ticks_raw();
+				tcpconn->flags |= F_CONN_POOL_CLOSE; /* a job may reset state */
+				if(unlikely(tcpconn_put(tcpconn)))
+					tcpconn_destroy(tcpconn); /* can't happen while busy */
+				break;
+			}
+#endif /* TCP_ASYNC */
 #ifdef TCP_CONNECT_WAIT
 			/* if the connection is marked as pending => it might be on
 			 *  the way of reaching tcp_main (e.g. CONN_NEW_COMPLETE or
@@ -4510,6 +4437,30 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			} else {
 				LM_WARN("connection %p already watched for write\n", tcpconn);
 			}
+			break;
+		/* mode 2: worker->tcp_main commands, handled in tcp_reactor.c
+		 * (staging writes, shielding, dedup-and-connect, event/script-close
+		 * teardown). */
+		case CONN_TLS_EVENT_DONE:
+			tcp_reactor_handle_tls_event_done(
+					(struct tcp_connection *)response[0]);
+			break;
+		case CONN_SCRIPT_CLOSE:
+			tcp_reactor_handle_script_close((int)response[0]);
+			break;
+		case CONN_WRITE_REQ:
+			tcp_reactor_handle_write_req(
+					(tcp_reactor_write_req_t *)response[0]);
+			break;
+		case CONN_CONNECT_REQ:
+			tcp_reactor_handle_connect_req(
+					(tcp_reactor_connect_req_t *)response[0]);
+			break;
+		case CONN_TCPX_TASK_REQ:
+			/* mode 2 + mtops: send task to PROC_TCP_MAIN; needed by
+                         * tls.reload */
+			tcp_reactor_handle_tcpx_task_req(
+					(tcpx_task_t *)response[0], (int)(p - pt));
 			break;
 #ifdef TCP_CONNECT_WAIT
 		case CONN_NEW_COMPLETE:
@@ -4766,6 +4717,8 @@ static inline int handle_new_connect(struct socket_info *si)
 	union sockaddr_union *dst_su;
 	struct tcp_connection *tcpconn;
 	socklen_t su_len;
+	ticks_t crt_timeout;
+	ticks_t t;
 	int new_sock;
 
 	/* got a connection on r */
@@ -4850,9 +4803,12 @@ static inline int handle_new_connect(struct socket_info *si)
 		atomic_set(&tcpconn->refcnt, 1); /* safe, not yet available to the
 											outside world */
 		tcpconn_add(tcpconn);
-		/* activate the timer */
-		local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
-				cfg_get(tcp, tcp_cfg, con_lifetime), get_ticks_raw());
+		/* activate the protocol-specific initial timer
+		 * - TLS may use a shorter deadline (i.e., tls/connection_timeout) until
+		 *   the first I/O event than the recurring core TCP lifetime */
+		t = get_ticks_raw();
+		crt_timeout = TICKS_LT(t, tcpconn->timeout) ? tcpconn->timeout - t : 1;
+		local_timer_add(&tcp_main_ltimer, &tcpconn->timer, crt_timeout, t);
 		tcpconn->flags |= (F_CONN_MAIN_TIMER | F_CONN_READ_W | F_CONN_WANTS_RD);
 		if(unlikely(io_watch_add(&io_h, tcpconn->s, POLLIN, F_TCPCONN, tcpconn)
 					< 0)) {
@@ -4904,6 +4860,13 @@ inline static int handle_tcpconn_ev(
 	int empty_q;
 	int bytes;
 #endif /* TCP_ASYNC */
+
+	if(unlikely(ksr_tcp_main_threads == 2)) {
+		/* mode 2: tcp_main owns the fd permanently and does all reads/writes
+		 * itself (no fd-passing, no send2child) - tcp_reactor.c handles the
+		 * shield/enqueue/unshield dance for it. */
+		return tcp_reactor_handle_tcpconn_ev(tcpconn, ev, fd_i);
+	}
 
 	/* pass it to child, so remove it from the io watch list  and the local
 	 *  timer */
@@ -5087,6 +5050,13 @@ inline static int handle_io(struct fd_map *fm, short ev, int idx)
 		case F_PROC:
 			ret = handle_ser_child((struct process_table *)fm->data, idx);
 			break;
+		case F_TCP_REACTOR_NOTIFY:
+			/* mode 2: a pool thread finished a job. Drain the notify pipe and
+			 * process all completed jobs (coalesced) - tcp_reactor.c owns the
+			 * pool/job state, so the drain+dispatch lives there too. */
+			tcp_reactor_handle_notify();
+			ret = 0;
+			break;
 		case F_NONE:
 			LM_CRIT("empty fd map: %p {%d, %d, %p}, idx %d\n", fm, fm->fd,
 					fm->type, fm->data, idx);
@@ -5117,6 +5087,17 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 			c, t, c->timeout, TICKS_TO_S(c->timeout - t), c->wbuf_q.wr_timeout,
 			TICKS_TO_S(c->wbuf_q.wr_timeout - t), c->wbuf_q.queued);
 
+	/* mode 2: a connection owned by a pool job is shielded out of the
+	 * local timer (tcp_reactor_shield does local_timer_del + clears
+	 * F_CONN_MAIN_TIMER), so this callback must not run for a busy conn. Guard
+	 * defensively: never reap a conn a pool thread is still using - re-arm and
+	 * let the job completion own its lifetime. */
+	if(unlikely(tcpconn_pool_busy(c))) {
+		LM_WARN("tcp reactor: timer fired on pool-busy conn %p - deferring\n",
+				c);
+		return (ticks_t)cfg_get(tcp, tcp_cfg, con_lifetime);
+	}
+
 	tcp_async = cfg_get(tcp, tcp_cfg, async);
 	if(likely(TICKS_LT(t, c->timeout)
 			   && (!tcp_async || _wbufq_empty(c)
@@ -5126,6 +5107,25 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 					c->timeout - t, c->wbuf_q.wr_timeout - t);
 		else
 			return (ticks_t)(c->timeout - t);
+	}
+	/* mode 2: reap a connection whose partial SIP message stalled past the
+	 * read deadline. The read path (tcp_reactor_arm_read_timeout) bounds
+	 * c->timeout to that deadline, so reaching here with a message still
+	 * mid-read (tvrstart set) and the read window elapsed means a stalled
+	 * partial read; report it as such instead of idle/send timeout. */
+	if(unlikely(ksr_tcp_main_threads == 2 && ksr_tcp_msg_read_timeout > 0
+				&& c->state == S_CONN_OK && c->req.tvrstart.tv_sec > 0)) {
+		struct timeval tvnow;
+		long long tvdiff;
+		gettimeofday(&tvnow, NULL);
+		tvdiff = 1000000LL * (tvnow.tv_sec - c->req.tvrstart.tv_sec)
+				 + (tvnow.tv_usec - c->req.tvrstart.tv_usec);
+		if(tvdiff >= 1000000LL * ksr_tcp_msg_read_timeout) {
+			LM_DBG("reactor: message read timeout for %p after %lld us\n", c,
+					tvdiff);
+			TCP_STATS_CON_TIMEOUT();
+			goto reap;
+		}
 	}
 	/* if time out due to write, add it to the blocklist */
 	if(tcp_async && _wbufq_non_empty(c) && TICKS_GE(t, c->wbuf_q.wr_timeout)) {
@@ -5160,6 +5160,9 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	/* idle timeout */
 	TCP_EV_IDLE_CONN_CLOSED(0, &c->rcv);
 	TCP_STATS_CON_TIMEOUT();
+#endif /* TCP_ASYNC */
+#ifdef TCP_ASYNC
+reap:
 #endif /* TCP_ASYNC */
 	LM_DBG("timeout for %p\n", c);
 	/* The connection timed out and is torn down here.
@@ -5360,6 +5363,25 @@ void tcp_main_loop()
 	}
 
 
+	/* mode 2: start the reactor thread pool (notify pipe + worker threads).
+	 * io_h is already initialized; the threads spawn and block in
+	 * tcp_cond_wait until reads/writes are routed to them.
+	 * tcp_reactor_pool_init() (tcp_reactor.c) creates the notify pipe but does
+	 * not watch it - only the io_wait thread may touch io_h, so that
+	 * registration happens here. */
+	if(ksr_tcp_main_threads == 2) {
+		if(tcp_reactor_pool_init() < 0) {
+			LM_CRIT("failed to start the tcp reactor thread pool\n");
+			goto error;
+		}
+		if(io_watch_add(&io_h, tcp_rpool.notify_pipe[0], POLLIN,
+				   F_TCP_REACTOR_NOTIFY, NULL)
+				< 0) {
+			LM_CRIT("failed to watch the reactor notify pipe\n");
+			goto error;
+		}
+	}
+
 	/* initialize the cfg framework */
 	if(cfg_child_init())
 		goto error;
@@ -5433,6 +5455,8 @@ void tcp_main_loop()
 			goto error;
 	}
 error:
+	if(ksr_tcp_main_threads == 2)
+		tcp_reactor_pool_destroy(); /* stop + join pool threads */
 #ifdef SEND_FD_QUEUE
 	destroy_send_fd_queues();
 #endif
@@ -5495,7 +5519,8 @@ int init_tcp()
 {
 	char *poll_err;
 
-	tcp_options_check();
+	if(tcp_options_check() < 0)
+		return -1;
 	if(tcp_cfg == 0) {
 		BUG("tcp_cfg not initialized\n");
 		goto error;
@@ -5687,6 +5712,12 @@ int tcp_init_children(int *woneinit)
 	/* create the tcp sock_info structures */
 	/* copy the sockets --moved to main_loop*/
 
+	/* mode 2: create the reactor dispatch socketpair before forking, so the
+	 * workers (below) and PROC_TCP_MAIN (forked by the caller right after) all
+	 * inherit the shared fds */
+	if(tcp_reactor_dsock_init() < 0)
+		goto error;
+
 	/* fork children & create the socket pairs*/
 	for(r = 0; r < tcp_children_no; r++) {
 		child_rank++;
@@ -5820,6 +5851,7 @@ int wss_send(dest_info_t *dst, const char *buf, unsigned len)
 		wsev.buf = (char *)buf;
 		wsev.len = len;
 		wsev.id = con->id;
+		wsev.send_flags = dst->send_flags;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
 		tcpconn_put(con);
@@ -5876,7 +5908,7 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 						}
 					}
 				}
-				if((cidset == 0)
+				if((cidset == 0) && (con->flags & F_CONN_PASSIVE)
 						&& !(con->req.dxstate & KSR_TCP_REQSTATE_DATARECV)) {
 					if(tvnow.tv_sec - con->timestamp
 							>= ksr_tcp_msg_data_timeout) {

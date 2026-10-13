@@ -148,6 +148,9 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	dmq_node_t *dmq_node = NULL;
 	int ret;
 
+	/* zero early so error: can free peer_response.body */
+	memset(&peer_response, 0, sizeof(peer_response));
+
 	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
 		LM_ERR("failed to parse sip message headers\n");
 		goto error;
@@ -175,7 +178,6 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 	}
 	LM_DBG("dmq_handle_message peer found: %.*s\n", msg->parsed_uri.user.len,
 			msg->parsed_uri.user.s);
-	memset(&peer_response, 0, sizeof(peer_response));
 
 	if(parse_from_header(msg) < 0) {
 		LM_ERR("bad sip message or missing From hdr\n");
@@ -209,8 +211,13 @@ int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval)
 		LM_WARN("no reply sent\n");
 	}
 
+	/* body was copied into the reply lump, free the original */
+	if(peer_response.body.s)
+		pkg_free(peer_response.body.s);
 	return returnval;
 error:
+	if(peer_response.body.s)
+		pkg_free(peer_response.body.s);
 	return -1;
 }
 
@@ -248,7 +255,7 @@ int ki_dmq_do_custom(sip_msg_t *msg, str *peer, str *from, str *body,
 	dmq_peer_t *found_peer;
 	peer_reponse_t peer_response;
 	dmq_node_t *dmq_node = NULL;
-	sip_msg_t *new_msg;
+	sip_msg_t *new_msg = NULL;
 #define MAX_BRANCHID 9999999
 #define MIN_BRANCHID 1000000
 #define DMQ_MSG_BUF_SIZE 65507
@@ -310,11 +317,11 @@ int ki_dmq_do_custom(sip_msg_t *msg, str *peer, str *from, str *body,
 			body->len,
 			/* body */
 			body->len, body->s);
+	pkg_free(to.s);
 	LM_DBG("dmq custom request (len: %d) [[\n%.*s]]\n", wlen, wlen, buf);
 
 	if(wlen < 0 || wlen >= DMQ_MSG_BUF_SIZE) {
 		LM_ERR("failed to build synthetic dmq message buffer\n");
-		pkg_free(buf);
 		return -1;
 	}
 
@@ -357,8 +364,10 @@ int ki_dmq_do_custom(sip_msg_t *msg, str *peer, str *from, str *body,
 	return 1;
 
 error:
-	free_sip_msg(new_msg);
-	pkg_free(new_msg);
+	if(new_msg) {
+		free_sip_msg(new_msg);
+		pkg_free(new_msg);
+	}
 	return -1;
 }
 

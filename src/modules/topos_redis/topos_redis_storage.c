@@ -165,6 +165,7 @@ int tps_redis_insert_dialog(tps_data_t *td)
 	redisc_server_t *rsrv = NULL;
 	redisReply *rrpl = NULL;
 	unsigned long lval = 0;
+	unsigned long bval = 0;
 
 	if(td->a_uuid.len <= 0 && td->b_uuid.len <= 0) {
 		LM_INFO("no uuid for this message\n");
@@ -277,6 +278,14 @@ int tps_redis_insert_dialog(tps_data_t *td)
 		lval = (unsigned long)td->expires;
 	} else {
 		lval = (unsigned long)_tps_api.get_dialog_expire();
+		bval = (unsigned long)_tps_api.get_branch_expire();
+		if(lval != 0 && bval != 0) {
+			/* the dialog is not confirmed at this point - reserve only the
+			 * branch lifetime, extended to dialog_expire when a 2xx reply
+			 * confirms it in tps_redis_update_dialog(). A 0 value means
+			 * expiring is disabled - keep the longer lifetime then. */
+			lval = bval;
+		}
 	}
 
 	if(lval == 0) {
@@ -1280,6 +1289,7 @@ int tps_redis_update_dialog(
 	redisReply *rrpl = NULL;
 	int32_t liflags;
 	unsigned long lval = 0;
+	unsigned long dlgexp = 0;
 
 	if(sd->a_uuid.len <= 0 && sd->b_uuid.len <= 0) {
 		LM_INFO("no uuid for this message\n");
@@ -1357,6 +1367,13 @@ int tps_redis_update_dialog(
 			liflags = sd->iflags | TPS_IFLAG_DLGON;
 			TPS_REDIS_SET_ARGN(
 					liflags, rp, &rval, argc, &td_key_iflags, argv, argvlen);
+
+			/* confirmed - extend the branch lifetime reserved at insert time
+			 * to the full dialog lifetime. SUBSCRIBE is driven by the Expires
+			 * header, not dialog_expire (see tps_redis_insert_dialog()) */
+			if(md->s_method_id != METHOD_SUBSCRIBE) {
+				dlgexp = (unsigned long)_tps_api.get_dialog_expire();
+			}
 		}
 	}
 
@@ -1405,6 +1422,42 @@ int tps_redis_update_dialog(
 	LM_DBG("updated dialog record for [%.*s] with argc %d\n", rkey.len, rkey.s,
 			argc);
 	freeReplyObject(rrpl);
+
+	if(dlgexp != 0) {
+		argc = 0;
+
+		argv[argc] = "EXPIRE";
+		argvlen[argc] = 6;
+		argc++;
+
+		argv[argc] = rkey.s;
+		argvlen[argc] = rkey.len;
+		argc++;
+
+		TPS_REDIS_SET_ARGNV(dlgexp, rp, &rval, argc, argv, argvlen);
+
+		rrpl = _tps_redis_api.exec_argv(
+				rsrv, argc, (const char **)argv, argvlen);
+		if(rrpl == NULL || rrpl->type == REDIS_REPLY_ERROR) {
+			/* the record keeps the shorter branch lifetime and nothing
+			 * revisits it, so the dialog would be dropped while the call is
+			 * up - report it, but do not fail the reply of a confirmed
+			 * dialog over the expire alone */
+			LM_ERR("failed to extend expire of confirmed dialog record [%.*s]"
+				   " - it keeps the branch lifetime\n",
+					rkey.len, rkey.s);
+			if(rrpl != NULL) {
+				LM_ERR("redis replied: %s\n", rrpl->str);
+				freeReplyObject(rrpl);
+			} else if(rsrv->ctxRedis->err) {
+				LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
+			}
+		} else {
+			LM_DBG("expire %lu set on confirmed dialog record for [%.*s]\n",
+					dlgexp, rkey.len, rkey.s);
+			freeReplyObject(rrpl);
+		}
+	}
 
 	if(mode & TPS_DBU_TIME) {
 		/* reset expire for the key */

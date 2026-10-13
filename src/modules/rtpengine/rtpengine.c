@@ -233,6 +233,7 @@ static void rtpengine_ping_check_timer(unsigned int ticks, void *);
 static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar);
 static int fixup_rtpengine_query_v(void **param, int param_no);
 static int fixup_free_rtpengine_query_v(void **param, int param_no);
+static int rtpengine_query_v_print(bencode_item_t *dict, str *fmt, str *bout);
 
 static int rtpengine_subscribe_request_wrap_f(struct sip_msg *msg, char *str1,
 		char *str2, char *str3, char *str4, char *str5);
@@ -364,6 +365,9 @@ static pv_spec_t *read_sdp_pvar = NULL;
 
 static str media_duration_pvar_str = {NULL, 0};
 static pv_spec_t *media_duration_pvar = NULL;
+
+static str stats_reply_pvar_str = {NULL, 0};
+static pv_spec_t *stats_reply_pvar = NULL;
 
 static str dtmf_event_callid_pvar_str = {NULL, 0};
 static pv_spec_t *dtmf_event_callid_pvar = NULL;
@@ -581,6 +585,7 @@ static param_export_t params[] = {
 	{"hash_table_size", PARAM_INT, &hash_table_size},
 	{"setid_default", PARAM_INT, &setid_default},
 	{"media_duration", PARAM_STR, &media_duration_pvar_str},
+	{"stats_reply_pv", PARAM_STR, &stats_reply_pvar_str},
 	{"hash_algo", PARAM_INT, &hash_algo},
 	{"dtmf_events_sock", PARAM_STRING | PARAM_USE_FUNC,
 			(void *)rtpengine_set_dtmf_events_sock},
@@ -1212,6 +1217,7 @@ int get_rtpp_set_id_by_node(struct rtpp_node *node)
 {
 	struct rtpp_set *rtpp_list;
 	struct rtpp_node *crt_rtpp;
+	unsigned int res = 0;
 
 	lock_get(rtpp_set_list->rset_head_lock);
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
@@ -1226,15 +1232,14 @@ int get_rtpp_set_id_by_node(struct rtpp_node *node)
 			}
 		}
 		lock_release(rtpp_list->rset_lock);
-		if(crt_rtpp != NULL)
+		if(crt_rtpp != NULL) {
+			res = rtpp_list->id_set;
 			break;
+		}
 	}
 	lock_release(rtpp_set_list->rset_head_lock);
 
-	if(crt_rtpp != NULL)
-		return rtpp_list->id_set;
-	else
-		return 0;
+	return res;
 }
 
 /**
@@ -2575,6 +2580,18 @@ static int mod_init(void)
 			LM_ERR("media_duration_pv: not a valid AVP or VAR definition "
 				   "<%.*s>\n",
 					media_duration_pvar_str.len, media_duration_pvar_str.s);
+			return -1;
+		}
+	}
+
+	if(stats_reply_pvar_str.len > 0) {
+		stats_reply_pvar = pv_cache_get(&stats_reply_pvar_str);
+		if(stats_reply_pvar == NULL
+				|| (stats_reply_pvar->type != PVT_AVP
+						&& stats_reply_pvar->type != PVT_SCRIPTVAR)) {
+			LM_ERR("stats_reply_pv: not a valid AVP or VAR definition "
+				   "<%.*s>\n",
+					stats_reply_pvar_str.len, stats_reply_pvar_str.s);
 			return -1;
 		}
 	}
@@ -3981,7 +3998,7 @@ select_node:
 					viabranch.s);
 			if(rtpengine_enable_dmq > 0)
 				rtpengine_dmq_replicate_insert(
-						ng_flags.call_id, viabranch, entry);
+						ng_flags.call_id, viabranch, node);
 		}
 	}
 
@@ -4517,6 +4534,29 @@ error:
 	return 1;
 }
 
+static int rtpengine_poll_ms(struct pollfd *fds, nfds_t nfds, int timeout_ms)
+{
+	struct timeval tv_start, tv_now;
+	long elapsed_ms;
+	int time_left_ms = timeout_ms;
+	int ret;
+
+	gettimeofday(&tv_start, NULL);
+	for(;;) {
+		ret = poll(fds, nfds, time_left_ms);
+		if(ret != -1 || errno != EINTR)
+			return ret;
+		gettimeofday(&tv_now, NULL);
+		elapsed_ms = (tv_now.tv_sec - tv_start.tv_sec) * 1000
+					 + (tv_now.tv_usec - tv_start.tv_usec) / 1000;
+		time_left_ms = timeout_ms - (int)elapsed_ms;
+		if(time_left_ms < 0)
+			time_left_ms = 0;
+		else if(time_left_ms > timeout_ms)
+			time_left_ms = timeout_ms;
+	}
+}
+
 static char *send_rtpp_command(
 		struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 {
@@ -4613,7 +4653,7 @@ static char *send_rtpp_command(
 						cmd.len, cmd.s, node->rn_url.s, strerror(errno), errno);
 				goto badproxy;
 			}
-			while((poll(fds, 1, rtpengine_tout_ms) == 1)
+			while((rtpengine_poll_ms(fds, 1, rtpengine_tout_ms) == 1)
 					&& (fds[0].revents & POLLIN) != 0) {
 				do {
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf) - 1, 0);
@@ -5246,8 +5286,34 @@ static void parse_call_stats_1(struct minmax_mos_label_stats *mmls,
 	avp_print_mos(&mmls->average, &average_vals, created, msg);
 }
 
+/* store the entire command reply, serialized as JSON, in the
+ * pseudovariable configured via the stats_reply_pv modparam */
+static void stats_reply_store(struct sip_msg *msg, bencode_item_t *dict)
+{
+	static str jfmt = str_init("j");
+	pv_value_t val = {0};
+
+	if(stats_reply_pvar == NULL)
+		return;
+
+	if(rtpengine_query_v_print(dict, &jfmt, &val.rs) < 0) {
+		LM_ERR("failed to serialize command reply\n");
+		return;
+	}
+
+	val.flags = PV_VAL_STR;
+	if(stats_reply_pvar->setf(msg, &stats_reply_pvar->pvp, (int)EQ_T, &val) < 0)
+		LM_ERR("failed to set stats_reply_pv <%.*s>\n",
+				stats_reply_pvar_str.len, stats_reply_pvar_str.s);
+
+	/* val.rs.s is allocated by srjson print */
+	free(val.rs.s);
+}
+
 static void parse_call_stats(bencode_item_t *dict, struct sip_msg *msg)
 {
+	stats_reply_store(msg, dict);
+
 	if(!got_any_mos_pvs)
 		return;
 

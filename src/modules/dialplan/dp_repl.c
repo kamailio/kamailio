@@ -106,6 +106,7 @@ int dpl_dyn_printf_s(sip_msg_t *msg, const pv_elem_p elem,
 		goto clean;
 	}
 	memcpy(vexpr->s, v.s, v.len);
+	vexpr->s[v.len] = '\0';
 	ret = 0;
 clean:
 	if(s.s)

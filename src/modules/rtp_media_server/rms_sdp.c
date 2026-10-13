@@ -105,7 +105,7 @@ static char *rms_sdp_get_rtpmap(str body, int type_number)
 		int id;
 		int sampling_rate;
 		char codec[64];
-		sscanf(pos, "a=rtpmap:%d %s/%d", &id, codec, &sampling_rate);
+		sscanf(pos, "a=rtpmap:%d %63s/%d", &id, codec, &sampling_rate);
 		if(id == type_number) {
 			LM_INFO("[%d][%s/%d]\n", id, codec, sampling_rate);
 			return rms_char_dup(codec, 1);

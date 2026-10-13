@@ -508,6 +508,14 @@ static void wsconn_run_close_callback(ws_connection_t *wsc)
 	sr_event_exec(SREV_TCP_WS_CLOSE, &evp);
 }
 
+/* wsconn_run_route() runs the websocket:closed event route. It needs no thread
+ * serialization: its only caller, wsconn_dtor(), is reached solely from the
+ * WebSocket connection reaper, which runs in the single-threaded WEBSOCKET
+ * TIMER process. Even in the full tcp reactor (tcp_main_threads == 2) the read
+ * path (a PROC_TCP_MAIN pool thread) only marks the connection WS_S_REMOVING via
+ * wsconn_put(); it never dtors, so it never runs this route. The faked sip_msg /
+ * route_type this touches are therefore never accessed concurrently, in any
+ * tcp_main_threads mode. */
 static void wsconn_run_route(ws_connection_t *wsc)
 {
 	int rt, backup_rt;
@@ -630,7 +638,7 @@ void wsconn_close_now(ws_connection_t *wsc)
 		return;
 	}
 
-	tcpconn_put(con);
+	tcpconn_chld_put(con);
 	con->send_flags.f |= SND_F_CON_CLOSE;
 	con->state = S_CONN_BAD;
 	con->timeout = get_ticks_raw();
@@ -950,7 +958,7 @@ void ws_timer(unsigned int ticks, void *param)
 					wsc->rmticks = get_ticks();
 					wsc->run_event = 1;
 				} else {
-					tcpconn_put(con);
+					tcpconn_chld_put(con);
 				}
 			}
 			wsc = next;
@@ -1016,17 +1024,17 @@ static int ws_rpc_add_node(
 				   con->rcv.dst_port, wsconn_state_str[wsc->state], pong,
 				   interval, sub_protocol)
 				< 0) {
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			rpc->fault(ctx, 500, "Failed to print connection details");
 			return -1;
 		}
 		if(rpc->array_add(ih, "s", rplbuf) < 0) {
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			rpc->fault(ctx, 500, "Failed to add to response");
 			return -1;
 		}
 
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return 1;
 	} else {
 		LM_DBG("ws structure [%p] without an active tcp connection\n", wsc);

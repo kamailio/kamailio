@@ -68,7 +68,7 @@
 
 #define ROUNDTO_MASK (~((unsigned long)ROUNDTO - 1))
 #define ROUNDUP(s) (((s) + (ROUNDTO - 1)) & ROUNDTO_MASK)
-#define ROUNDDOWN(s) ((s)&ROUNDTO_MASK)
+#define ROUNDDOWN(s) ((s) & ROUNDTO_MASK)
 
 
 /* finds the hash value for s, s=ROUNDTO multiple*/
@@ -78,10 +78,10 @@
 					: QM_MALLOC_OPTIMIZE / ROUNDTO + big_hash_idx((s)) \
 							  - QM_MALLOC_OPTIMIZE_FACTOR + 1)
 
-#define UN_HASH(h)                                             \
-	(((unsigned long)(h) <= (QM_MALLOC_OPTIMIZE / ROUNDTO))    \
-					? (unsigned long)(h)*ROUNDTO               \
-					: 1UL << ((h)-QM_MALLOC_OPTIMIZE / ROUNDTO \
+#define UN_HASH(h)                                               \
+	(((unsigned long)(h) <= (QM_MALLOC_OPTIMIZE / ROUNDTO))      \
+					? (unsigned long)(h) * ROUNDTO               \
+					: 1UL << ((h) - QM_MALLOC_OPTIMIZE / ROUNDTO \
 							  + QM_MALLOC_OPTIMIZE_FACTOR - 1))
 
 
@@ -205,15 +205,16 @@ struct qm_block *qm_malloc_init(char *address, unsigned long size, int type)
 		LM_ERR("memory fragment align constraints failure (%lu %% %lu = %lu "
 			   "::: %lu %% "
 			   "%lu = %lu)\n",
-				sizeof(struct qm_frag), ROUNDTO,
-				sizeof(struct qm_frag) % ROUNDTO, sizeof(struct qm_frag_end),
-				ROUNDTO, sizeof(struct qm_frag_end) % ROUNDTO);
+				(unsigned long)sizeof(struct qm_frag), ROUNDTO,
+				(unsigned long)sizeof(struct qm_frag) % ROUNDTO,
+				(unsigned long)sizeof(struct qm_frag_end), ROUNDTO,
+				(unsigned long)sizeof(struct qm_frag_end) % ROUNDTO);
 		return 0;
 	}
 	if(sizeof(struct qm_block) % ROUNDTO != 0) {
 		LM_ERR("memory block align constraints failure (%lu %% %lu = %lu)\n",
-				sizeof(struct qm_block), ROUNDTO,
-				sizeof(struct qm_block) % ROUNDTO);
+				(unsigned long)sizeof(struct qm_block), ROUNDTO,
+				(unsigned long)sizeof(struct qm_block) % ROUNDTO);
 		return 0;
 	}
 	/* make address and size multiple of ROUNDTO */
@@ -515,6 +516,28 @@ void *qm_mallocxz(void *qmp, size_t size)
 
 
 #ifdef DBG_QM_MALLOC
+void *qm_mallocxn(void *qmp, size_t size, const char *file, const char *func,
+		unsigned int line, const char *mname)
+#else
+void *qm_mallocxn(void *qmp, size_t size)
+#endif
+{
+	void *p;
+
+#ifdef DBG_QM_MALLOC
+	p = qm_malloc(qmp, size, file, func, line, mname);
+#else
+	p = qm_malloc(qmp, size);
+#endif
+
+	if(p && size > 0)
+		((char *)p)[size - 1] = 0;
+
+	return p;
+}
+
+
+#ifdef DBG_QM_MALLOC
 void qm_free(void *qmp, void *p, const char *file, const char *func,
 		unsigned int line, const char *mname)
 #else
@@ -635,7 +658,7 @@ void qm_free(void *qmp, void *p)
 		}
 		f->size = size;
 		FRAG_END(f)->size = f->size;
-	}  /* if cfg_core->mem_join */
+	} /* if cfg_core->mem_join */
 #endif /* MEM_JOIN_FREE*/
 #ifdef DBG_QM_MALLOC
 	f->file = file;
@@ -1466,6 +1489,7 @@ int qm_malloc_init_pkg_manager(void)
 	ma.mem_block = _qm_pkg_block;
 	ma.xmalloc = qm_malloc;
 	ma.xmallocxz = qm_mallocxz;
+	ma.xmallocxn = qm_mallocxn;
 	ma.xfree = qm_free;
 	ma.xrealloc = qm_realloc;
 	ma.xreallocxf = qm_reallocxf;
@@ -1566,6 +1590,15 @@ void *qm_shm_mallocxz(void *qmp, size_t size, const char *file,
 	qm_shm_unlock();
 	return r;
 }
+void *qm_shm_mallocxn(void *qmp, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname)
+{
+	void *r;
+	qm_shm_lock();
+	r = qm_mallocxn(qmp, size, file, func, line, mname);
+	qm_shm_unlock();
+	return r;
+}
 void *qm_shm_realloc(void *qmp, void *p, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
@@ -1616,6 +1649,14 @@ void *qm_shm_mallocxz(void *qmp, size_t size)
 	void *r;
 	qm_shm_lock();
 	r = qm_mallocxz(qmp, size);
+	qm_shm_unlock();
+	return r;
+}
+void *qm_shm_mallocxn(void *qmp, size_t size)
+{
+	void *r;
+	qm_shm_lock();
+	r = qm_mallocxn(qmp, size);
 	qm_shm_unlock();
 	return r;
 }
@@ -1735,6 +1776,7 @@ int qm_malloc_init_shm_manager(void)
 	ma.mem_block = _qm_shm_block;
 	ma.xmalloc = qm_shm_malloc;
 	ma.xmallocxz = qm_shm_mallocxz;
+	ma.xmallocxn = qm_shm_mallocxn;
 	ma.xmalloc_unsafe = qm_malloc;
 	ma.xfree = qm_shm_free;
 	ma.xfree_unsafe = qm_free;

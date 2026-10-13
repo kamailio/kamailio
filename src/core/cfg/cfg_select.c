@@ -220,7 +220,8 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	/* use the module's handle to access the variable, so the variables
 	 * are read from the local config */
 	p = *(group->handle) + var->offset;
-
+	if(!p)
+		return -1;
 	switch(CFG_VAR_TYPE(var)) {
 		case CFG_VAR_INT:
 			i = *(int *)p;

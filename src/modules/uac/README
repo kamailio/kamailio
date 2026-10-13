@@ -62,6 +62,10 @@ Tyler Moore
               3.23. default_socket (str)
               3.24. event_callback (str)
               3.25. reload_delta (int)
+              3.26. restore_htable (string)
+              3.27. restore_htable_initexpire (int)
+              3.28. restore_htable_rmexpire (int)
+              3.29. auth_cseq_tracking (int)
 
         4. Functions
 
@@ -202,6 +206,10 @@ Chapter 1. Admin Guide
         3.23. default_socket (str)
         3.24. event_callback (str)
         3.25. reload_delta (int)
+        3.26. restore_htable (string)
+        3.27. restore_htable_initexpire (int)
+        3.28. restore_htable_rmexpire (int)
+        3.29. auth_cseq_tracking (int)
 
    4. Functions
 
@@ -293,6 +301,8 @@ Chapter 1. Admin Guide
      * Dialog Module, but only if restore mode for From: URI is set to
        “auto” and you want uac_replace_from or uac_replace_to to store the
        values of the URIs as dialog variables.
+     * HTable Module, but only if restore_htable is configured. The htable
+       module must be loaded before the uac module.
 
 2.2. External Libraries or Applications
 
@@ -327,6 +337,10 @@ Chapter 1. Admin Guide
    3.23. default_socket (str)
    3.24. event_callback (str)
    3.25. reload_delta (int)
+   3.26. restore_htable (string)
+   3.27. restore_htable_initexpire (int)
+   3.28. restore_htable_rmexpire (int)
+   3.29. auth_cseq_tracking (int)
 
 3.1. rr_from_store_param (string)
 
@@ -362,8 +376,10 @@ modparam("uac","rr_to_store_param","my_param")
        sequential requests - this must be manually updated based on
        original URI.
      * “auto” - all sequential requests and replies will be automatically
-       updated based on stored original URI. For this option you have to
-       set “modparam("rr", "append_fromtag", 1)”.
+       updated based on stored original URI. When using Record-Route
+       parameter storage, you have to set “modparam("rr",
+       "append_fromtag", 1)”. It is not needed when restore_htable is
+       configured.
 
    The default value is “auto”.
 
@@ -696,6 +712,67 @@ end
 modparam("uac", "reload_delta", 20)
 ...
 
+3.26. restore_htable (string)
+
+   Name of an htable used to store the original and replacement From/To
+   URI and display values. When configured, this storage replaces both
+   dialog variables and the encoded “vsf”/“vst” Record-Route parameters.
+   It is available only with restore_mode set to “auto” and cannot be
+   combined with restore_dlg.
+
+   The table must be declared by the htable module with a non-zero
+   “autoexpire” value and must be dedicated to the uac module. The rr
+   module is still required for the route callback, but “append_fromtag”
+   is not required because the original caller From-tag is stored in the
+   htable and used to detect direction. The default value is empty, which
+   keeps the legacy storage behavior.
+...
+loadmodule "htable.so"
+modparam("htable", "htable", "uac_restore=>size=8;autoexpire=7200")
+loadmodule "uac.so"
+modparam("uac", "restore_htable", "uac_restore")
+...
+
+3.27. restore_htable_initexpire (int)
+
+   Initial expiration time, in seconds, assigned to the htable entries
+   created by uac_replace_from, uac_replace_to, or authentication CSeq
+   tracking. This limits the lifetime of state for dialogs that are not
+   established. When the routed ACK is processed, an “a:Call-ID” marker is
+   stored and all dialog entries are refreshed to the htable “autoexpire”
+   value. The default value is 60 seconds.
+...
+modparam("uac", "restore_htable_initexpire", 120)
+...
+
+3.28. restore_htable_rmexpire (int)
+
+   Expiration time, in seconds, assigned to all call entries, including
+   the active marker, when a BYE request is processed. After activation by
+   ACK, the normal lifetime is configured with the htable “autoexpire”
+   option and is refreshed whenever the stored state is used. The default
+   value is 60 seconds.
+...
+modparam("uac", "restore_htable_rmexpire", 30)
+...
+
+3.29. auth_cseq_tracking (int)
+
+   When enabled, CSeq updates made after successful uac_auth()
+   authentication are tracked in the htable configured by restore_htable.
+   This provides the same request CSeq translation, reply restoration, Via
+   cookie, and PRACK RAck adjustment without requiring the dialog module.
+
+   The cumulative difference is stored in an integer item whose key is
+   “c:Call-ID-length:Call-ID:original-From-tag”. Its expiry follows
+   restore_htable_initexpire until ACK, the htable “autoexpire” while the
+   dialog is active, and restore_htable_rmexpire after BYE. Do not enable
+   this parameter together with the dialog module's track_cseq_updates
+   parameter. The default value is 0 (disabled).
+...
+modparam("uac", "auth_cseq_tracking", 1)
+...
+
 4. Functions
 
    4.1. uac_replace_from(display, uri)
@@ -732,7 +809,7 @@ modparam("uac", "reload_delta", 20)
    If you set restore_mode to AUTO, the URI will be modified automatically
    in all subsequent requests and replies in that dialog.
 
-   There are two ways in which the AUTO mode can be achieved.
+   There are three ways in which the AUTO mode can be achieved.
 
    One uses the rr module and appends to the Record-Route header a
    parameter containing some strings from which the original and new URI
@@ -746,6 +823,11 @@ modparam("uac", "reload_delta", 20)
    before calling uac_replace_from(). It works by storing the URIs as
    dialog variables and registering callbacks in dialog module for in
    dialog requests.
+
+   The third mode stores the original and new URI and display values in
+   the htable configured by restore_htable. This avoids dialog variables
+   and does not expose the encoded values in Record-Route/Route
+   parameters.
 
    Example 1.26. uac_replace_from usage
 ...
@@ -822,7 +904,7 @@ uac_replace_to("","");
    If you set restore_mode to AUTO, the URI will be modified automatically
    in all subsequent requests and replies in that dialog.
 
-   There are two ways in which the AUTO mode can be achieved.
+   There are three ways in which the AUTO mode can be achieved.
 
    One uses the rr module and appends to the Record-Route header a
    parameter containing some strings from which the original and new URI
@@ -836,6 +918,11 @@ uac_replace_to("","");
    before calling uac_replace_to(). It works by storing the URIs as dialog
    variables and registering callbacks in dialog module for in dialog
    requests.
+
+   The third mode stores the original and new URI and display values in
+   the htable configured by restore_htable. This avoids dialog variables
+   and does not expose the encoded values in Record-Route/Route
+   parameters.
 
    Example 1.30. uac_replace_to usage
 ...

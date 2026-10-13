@@ -135,9 +135,11 @@
 		will be used for newly created usrloc records. The parameter contains
 		number of second to expire (for example use 3600 for one hour). If it
 		is set to a lower value than the <quote>min_expires</quote> parameter
-		then it will be ignored. This parameter can be modified via ser config framework.
-		A random value in a specific interval can be selected by using the default_expires_range
-		parameter
+		then see <quote>min_expires_mode</quote> for what happens. If it is
+		greater than <quote>min_expires</quote>, the value is lowered to it.
+		This parameter can be modified via &kamailio; config framework. A
+		random value in a specific interval can be selected by using the
+		default_expires_range parameter.
 		</para>
 		<para>
 		<emphasis>

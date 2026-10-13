@@ -40,6 +40,9 @@ int tcp_read_headers(
 int tcp_read_data(int fd, struct tcp_connection *c, char *buf, int b_size,
 		rd_conn_flags_t *flags);
 
+int tcp_read_req(struct tcp_connection *con, int *bytes_read,
+		rd_conn_flags_t *read_flags);
+
 
 #endif /*__tcp_read_h*/
 

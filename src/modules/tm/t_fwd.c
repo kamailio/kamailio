@@ -83,6 +83,7 @@ typedef struct tm_branch_bak
 	snd_flags_t fwd_snd_flags_bak;
 	snd_flags_t rpl_snd_flags_bak;
 	struct socket_info *force_send_socket_bak;
+	send_socket_map_t force_send_socket_map_bak;
 } tm_branch_bak_t;
 
 extern int tm_failure_exec_mode;
@@ -331,9 +332,10 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	struct run_act_ctx *bctx;
 	sr_kemi_eng_t *keng;
 	ksr_msgbuild_t mbd = {0};
+	send_socket_map_t send_socket_map;
 	sip_msg_t l_req;
 	sip_msg_t *b_req = NULL;
-	char l_buf[BUF_SIZE];
+	char l_buf[BUF_SIZE + 1];
 	int l_copy;
 
 	l_copy = 0;
@@ -345,6 +347,11 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	if(unlikely(i_req == NULL)) {
 		LM_BUG("null input sip msg\n");
 		return E_BUG;
+	}
+	if(flags & UAC_DNS_FAILOVER_F) {
+		send_socket_map = t->uac[branch].force_send_socket_map;
+	} else {
+		send_socket_map = i_req->force_send_socket_map;
 	}
 
 	/* ... we calculate branch ... */
@@ -410,6 +417,7 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 				bbak.fwd_snd_flags_bak = b_req->fwd_send_flags;
 				bbak.rpl_snd_flags_bak = b_req->rpl_send_flags;
 				bbak.force_send_socket_bak = b_req->force_send_socket;
+				bbak.force_send_socket_map_bak = b_req->force_send_socket_map;
 				/* set the new values */
 				b_req->fwd_send_flags = snd_flags /* initial value  */;
 				set_force_socket(b_req, fsocket);
@@ -433,9 +441,12 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 				/* update dst send_flags  and send socket*/
 				snd_flags = b_req->fwd_send_flags;
 				fsocket = b_req->force_send_socket;
+				send_socket_map = b_req->force_send_socket_map;
 				if(l_copy == 0) {
 					/* restore ireq_msg force_send_socket & flags */
 					set_force_socket(i_req, bbak.force_send_socket_bak);
+					i_req->force_send_socket_map =
+							bbak.force_send_socket_map_bak;
 					i_req->fwd_send_flags = bbak.fwd_snd_flags_bak;
 					i_req->rpl_send_flags = bbak.rpl_snd_flags_bak;
 				}
@@ -523,15 +534,17 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 	}
 
 	if(likely(next_hop != 0 || (flags & UAC_DNS_FAILOVER_F))) {
+		t->uac[branch].force_send_socket_map = send_socket_map;
 		/* next_hop present => use it for dns resolution */
 #ifdef USE_DNS_FAILOVER
-		test_dst = (uri2dst2(&t->uac[branch].dns_h, dst, fsocket, snd_flags,
-							next_hop ? next_hop : uri, fproto)
-					== 0);
+		test_dst =
+				(uri2dst2(&t->uac[branch].dns_h, dst, fsocket, &send_socket_map,
+						 snd_flags, next_hop ? next_hop : uri, fproto)
+						== 0);
 #else
 		/* dst filled from the uri & request (send_socket) */
-		test_dst = (uri2dst2(dst, fsocket, snd_flags, next_hop ? next_hop : uri,
-							fproto)
+		test_dst = (uri2dst2(dst, fsocket, &send_socket_map, snd_flags,
+							next_hop ? next_hop : uri, fproto)
 					== 0);
 #endif
 		if(test_dst) {
@@ -856,6 +869,7 @@ int add_uac(struct cell *t, struct sip_msg *request, str *uri, str *next_hop,
 
 	int ret;
 	unsigned short branch;
+	struct socket_info *map_send_socket;
 
 	branch = t->nr_of_outgoings;
 	if(branch == sr_dst_max_branches) {
@@ -878,6 +892,10 @@ int add_uac(struct cell *t, struct sip_msg *request, str *uri, str *next_hop,
 		t->uac[branch].request.dst.proto = get_proto(proto, proxy->proto);
 		proxy2su(&t->uac[branch].request.dst.to, proxy);
 		/* fill dst send_sock */
+		map_send_socket =
+				request ? send_socket_map_get(&request->force_send_socket_map,
+								  t->uac[branch].request.dst.proto)
+						: 0;
 		t->uac[branch].request.dst.send_sock =
 				get_send_socket(request, &t->uac[branch].request.dst.to,
 						t->uac[branch].request.dst.proto);
@@ -885,6 +903,8 @@ int add_uac(struct cell *t, struct sip_msg *request, str *uri, str *next_hop,
 			t->uac[branch].request.dst.send_flags = request->fwd_send_flags;
 		else
 			SND_FLAGS_INIT(&t->uac[branch].request.dst.send_flags);
+		if(map_send_socket)
+			t->uac[branch].request.dst.send_flags.f |= SND_F_FORCE_SOCKET;
 		next_hop = 0;
 	} else {
 		next_hop = next_hop ? next_hop : uri;
@@ -953,7 +973,7 @@ static int add_uac_from_buf(struct cell *t, struct sip_msg *request, str *uri,
 	}
 
 	if(uri2dst2(&t->uac[branch].dns_h, &t->uac[branch].request.dst, fsocket,
-			   send_flags, uri, proto)
+			   &t->uac[branch].force_send_socket_map, send_flags, uri, proto)
 			== 0) {
 		ret = ser_error = E_BAD_ADDRESS;
 		goto error;
@@ -1136,6 +1156,9 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg *msg,
 				old_uac->on_branch_failure;
 		/* copy branch flags */
 		t->uac[t->nr_of_outgoings].branch_flags = old_uac->branch_flags;
+		/* preserve the per-transport forced sockets across DNS failover */
+		t->uac[t->nr_of_outgoings].force_send_socket_map =
+				old_uac->force_send_socket_map;
 
 		if(cfg_get(tm, tm_cfg, reparse_on_dns_failover)) {
 			/* Reuse the old buffer and only replace the via header.
@@ -1731,8 +1754,10 @@ int t_forward_nonack(
 	int lock_replies;
 	flag_t backup_bflags = 0;
 	branch_data_t obranch;
+	send_socket_map_t backup_send_socket_map;
 
 	getbflagsval(0, &backup_bflags);
+	backup_send_socket_map = p_msg->force_send_socket_map;
 
 	if(t->flags & T_CANCELED)
 		goto canceled;
@@ -1812,6 +1837,8 @@ int t_forward_nonack(
 	while(next_branch_data(&obranch) == 1) {
 		try_new++;
 		setbflagsval(0, obranch.flags);
+		if(obranch.force_send_socket_map_set)
+			p_msg->force_send_socket_map = obranch.force_send_socket_map;
 
 		branch_ret = add_uac(t, p_msg, &obranch.uri,
 				(obranch.dst_uri.len > 0) ? &obranch.dst_uri : &obranch.uri,
@@ -1819,6 +1846,7 @@ int t_forward_nonack(
 				p_msg->fwd_send_flags, proto,
 				(obranch.dst_uri.len > 0) ? 0 : UAC_SKIP_BR_DST_F,
 				&obranch.instance, &obranch.ruid, &obranch.location_ua);
+		p_msg->force_send_socket_map = backup_send_socket_map;
 		/* test if cancel was received meanwhile */
 		if(t->flags & T_CANCELED)
 			goto canceled;

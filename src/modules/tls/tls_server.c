@@ -37,6 +37,7 @@
 #include "../../core/globals.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/tcp_int_send.h"
+#include "../../core/tcp_reactor.h" /* tcp_reactor_dispatch_tls_event() - mode 2 */
 #include "../../core/tcp_read.h"
 #include "../../core/tcp_mtops.h"
 #include "../../core/cfg/cfg.h"
@@ -395,6 +396,7 @@ static int tls_complete_init(struct tcp_connection *c)
 	/* SSL_set_bio does not allocate memory and has no return value */
 	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
+	data->tcp_conn = c; /* keylog tuple: the memory bio has no fd */
 	return 0;
 
 error:
@@ -505,7 +507,7 @@ static void tls_dump_cert_info(char *s, X509 *cert)
  *
  * Incurs a small overhead per connection but necessary as
  * the *SSL pointer is only valid in PROC_TCP_MAIN
- * 
+ *
  */
 static void tls_free_ssl_cache(struct tls_extra_data *data)
 {
@@ -566,7 +568,11 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 	sni = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if(sni != NULL) {
 		tls_c->ssl_servername = shm_malloc(strlen(sni) + 1);
-		strcpy(tls_c->ssl_servername, sni);
+		if(tls_c->ssl_servername == NULL) {
+			SHM_MEM_ERROR;
+		} else {
+			strcpy(tls_c->ssl_servername, sni);
+		}
 	}
 
 	strcpy(tls_c->ssl_cipher_desc, "unknown");
@@ -577,7 +583,11 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 		cipher_name = SSL_CIPHER_get_name(cipher);
 		if(cipher_name) {
 			tls_c->ssl_cipher_name = shm_malloc(strlen(cipher_name) + 1);
-			strcpy(tls_c->ssl_cipher_name, cipher_name);
+			if(tls_c->ssl_cipher_name == NULL) {
+				SHM_MEM_ERROR;
+			} else {
+				strcpy(tls_c->ssl_cipher_name, cipher_name);
+			}
 		}
 		tls_c->ssl_cipher_bits = SSL_CIPHER_get_bits(cipher, &alg_bits);
 
@@ -873,7 +883,6 @@ int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
 	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
-	c->lifetime = cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
 	tls_store_outbound_xavp(c);
 	return 0;
@@ -1462,6 +1471,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	tcpx_task_result_t *rtask = NULL;
 	tls_encode_params_t *eparams = NULL;
 	char *ps = NULL;
+	const char *obuf = NULL;
 	int ret = 0;
 
 	LM_DBG("preparing task for tcp main process threads\n");
@@ -1480,6 +1490,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	ps = (char *)eparams + sizeof(tls_encode_params_t);
 
 	eparams->c = c;
+	obuf = *pbuf; /* caller plaintext buffer - rest_buf is an offset into it */
 	eparams->pbuf = ps;
 	memcpy(eparams->pbuf, *pbuf, *plen);
 	eparams->plen = *plen;
@@ -1508,7 +1519,7 @@ int tls_h_encode_mt_f(struct tcp_connection *c, const char **pbuf,
 	*pbuf = eparams->pbuf;
 	*plen = eparams->plen;
 	if(eparams->rest_buf != NULL) {
-		*rest_buf = *pbuf + (eparams->rest_buf - ps);
+		*rest_buf = obuf + (eparams->rest_buf - ps);
 	}
 	*rest_len = eparams->rest_len;
 	if(send_flags != NULL) {
@@ -2113,7 +2124,7 @@ int tls_h_read_mt_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	 * tls_run_event_routes() ran in a PROC_TCP_MAIN thread and
 	 * deferred the event route - we are back in the worker
 	 * so run the route now */
-	{
+	if(!is_tcp_main()) {
 		struct tls_extra_data *tls_c = (struct tls_extra_data *)c->extra_data;
 		if(tls_c != NULL && tls_c->run_conn_out_pending) {
 			tls_c->run_conn_out_pending = 0;
@@ -2166,9 +2177,16 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(_tls_evrt_connection_out < 0 && sr_tls_event_callback.len <= 0)
 		return 0;
 
-	/* With tcp_main_threads > 0 - mtops - ensure the route function
-	 * runs in the worker and not PROC_TCP_MAIN; we flag this for
-	 * deferred execution. */
+	/* With tcp_main_threads = 2: we are on a PROC_TCP_MAIN reactor thread.
+	 * Dispatch the event to a TCP worker. */
+	if(is_tcp_main() && ksr_tcp_main_threads == 2) {
+		tcp_reactor_dispatch_tls_event(c);
+		return 0;
+	}
+
+	/* With tcp_main_threads == 1 - mtops - ensure the route function
+         * runs in the worker and not PROC_TCP_MAIN; we flag this for
+         * deferred execution. */
 	if(is_tcp_main()) {
 		struct tls_extra_data *tls_c = (struct tls_extra_data *)c->extra_data;
 		if(tls_c != NULL)
@@ -2179,6 +2197,11 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(faked_msg_init() < 0)
 		return -1;
 	fmsg = faked_msg_next();
+	/* expose the connection's endpoints to the route: for an outbound
+	 * connection rcv.src is the peer we connected to and rcv.dst is the local
+	 * side, so $si/$sp read the peer and $Ri/$Rp the local socket. Without this
+	 * the faked message carries only the placeholder rcv (127.0.0.1:5060). */
+	fmsg->rcv = c->rcv;
 
 	backup_rt = get_route_type();
 	set_route_type(LOCAL_ROUTE);

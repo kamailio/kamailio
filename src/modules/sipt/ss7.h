@@ -149,6 +149,8 @@
 #define SS7_SCREENING_NETWORK_PROVIDED_FAILED 0x02
 #define SS7_SCREENING_NETWORK_PROVIDED 0x03
 
+/* Maximum buffer length */
+#define MAX_SB_BUF_LEN 26
 
 #ifndef bool
 #define bool unsigned char

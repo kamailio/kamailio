@@ -222,6 +222,31 @@ static int metric_generate(
 			group->len, group->s, name->len, name->s, counter_val,
 			(uint64_t)ts);
 
+	/* Print TYPE line. The Prometheus exposition format makes it optional, but
+	 * strict parsers treat a sample with no declared type as untyped and drop
+	 * it, so statistics exported without one are invisible to those scrapers.
+	 * User defined metrics already emit HELP and TYPE (see
+	 * prom_metric_list_print); internal statistics did not.
+	 *
+	 * They are declared gauge rather than counter even though most of them only
+	 * increase: Prometheus reserves the _total suffix for counters, and these
+	 * names do not carry it, so declaring counter makes the output invalid for
+	 * the same strict parsers this is meant to satisfy. */
+	if(prom_body_printf(ctx, "# TYPE ") == -1) {
+		LM_ERR("Fail to print\n");
+		return -1;
+	}
+	if(prom_body_name_printf(ctx, "%.*s%.*s_%.*s", xhttp_prom_beginning.len,
+			   xhttp_prom_beginning.s, group->len, group->s, name->len, name->s)
+			== -1) {
+		LM_ERR("Fail to print\n");
+		return -1;
+	}
+	if(prom_body_printf(ctx, " gauge\n") == -1) {
+		LM_ERR("Fail to print\n");
+		return -1;
+	}
+
 	/* Print metric name. */
 	if(prom_body_name_printf(ctx, "%.*s%.*s_%.*s", xhttp_prom_beginning.len,
 			   xhttp_prom_beginning.s, group->len, group->s, name->len, name->s)

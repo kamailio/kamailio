@@ -20,6 +20,7 @@
  */
 
 #include <stddef.h>
+#include <limits.h>
 #include <regex.h>
 
 #include "../../core/mem/shm_mem.h"
@@ -37,6 +38,7 @@
 
 #include "ht_api.h"
 #include "ht_db.h"
+#include "ht_file.h"
 #include "ht_dmq.h"
 
 
@@ -270,7 +272,8 @@ ht_t *ht_get_table(str *name)
 
 int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 		int dbmode, int itype, int_str *ival, int updateexpire,
-		int dmqreplicate, char coldelim, char colnull, int reloadat)
+		int dmqreplicate, char coldelim, char colnull, int reloadat, str *fpath,
+		int ftype, char fdelim)
 {
 	unsigned int htid;
 	ht_t *ht;
@@ -313,7 +316,11 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 	ht->name = *name;
 	if(dbtable != NULL && dbtable->len > 0)
 		ht->dbtable = *dbtable;
+	if(fpath != NULL && fpath->len > 0)
+		ht->fpath = *fpath;
 	ht->dbmode = dbmode;
+	ht->ftype = ftype;
+	ht->fdelim = fdelim;
 	ht->flags = itype;
 	if(ival != NULL)
 		ht->initval = *ival;
@@ -814,7 +821,8 @@ int ht_del_cell_confirm(ht_t *ht, str *name)
 	return 0;
 }
 
-ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
+static ht_cell_t *ht_cell_value_add_mode(
+		ht_t *ht, str *name, int val, int init_any, int initval, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -855,10 +863,10 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 				if(it->expire) {
 					it->expire += now;
 				}
-				if(ht->flags == PV_VAL_INT) {
+				if(ht->flags == PV_VAL_INT || init_any) {
 					/* initval is integer, use it to create a fresh entry */
 					it->flags &= ~AVP_VAL_STR;
-					it->value.n = ht->initval.n;
+					it->value.n = init_any ? initval : ht->initval.n;
 					/* increment will be done below */
 				} else {
 					ht_slot_unlock(ht, idx);
@@ -871,6 +879,15 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 				ht_slot_unlock(ht, idx);
 				return NULL;
 			} else {
+				if((val > 0
+						   && it->value.n
+									  > (init_any ? INT_MAX : LONG_MAX) - val)
+						|| (val < 0
+								&& it->value.n < (init_any ? INT_MIN : LONG_MIN)
+														 - val)) {
+					ht_slot_unlock(ht, idx);
+					return NULL;
+				}
 				it->value.n += val;
 				if(ht->updateexpire)
 					it->expire = now + ht->htexpire;
@@ -901,11 +918,20 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 		it = it->next;
 	}
 	/* add val if htable has an integer init value */
-	if(ht->flags != PV_VAL_INT) {
+	if(ht->flags != PV_VAL_INT && !init_any) {
 		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
-	isval.n = ht->initval.n + val;
+	if((val > 0
+			   && (init_any ? (long)initval : ht->initval.n)
+						  > (init_any ? INT_MAX : LONG_MAX) - val)
+			|| (val < 0
+					&& (init_any ? (long)initval : ht->initval.n)
+							   < (init_any ? INT_MIN : LONG_MIN) - val)) {
+		ht_slot_unlock(ht, idx);
+		return NULL;
+	}
+	isval.n = (init_any ? initval : ht->initval.n) + val;
 	it = ht_cell_new(name, 0, &isval, hid);
 	if(it == NULL) {
 		LM_ERR("cannot create new cell.\n");
@@ -943,6 +969,17 @@ ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 
 	ht_slot_unlock(ht, idx);
 	return cell;
+}
+
+ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
+{
+	return ht_cell_value_add_mode(ht, name, val, 0, 0, old);
+}
+
+ht_cell_t *ht_cell_value_add_init(
+		ht_t *ht, str *name, int val, int initval, ht_cell_t *old)
+{
+	return ht_cell_value_add_mode(ht, name, val, 1, initval, old);
 }
 
 
@@ -1087,6 +1124,7 @@ int ht_table_spec(char *spec)
 	str name;
 	str dbtable = {0, 0};
 	str dbcols = {0, 0};
+	str fpath = {0, 0};
 	unsigned int autoexpire = 0;
 	unsigned int size = 4;
 	unsigned int dbmode = 0;
@@ -1095,6 +1133,8 @@ int ht_table_spec(char *spec)
 	unsigned int reloadat = 0;
 	char coldelim = ',';
 	char colnull = '*';
+	char fdelim = '|';
+	unsigned int ftype = 0;
 	str in;
 	str tok;
 	param_t *pit = NULL;
@@ -1105,7 +1145,7 @@ int ht_table_spec(char *spec)
 		LM_ERR("shared memory was not initialized\n");
 		return -1;
 	}
-	/* parse: name=>dbtable=abc;autoexpire=123;size=123 */
+	/* parse: name=>dbtable=abc;fpath=/path;autoexpire=123;size=123 */
 	in.s = spec;
 	in.len = strlen(in.s);
 	if(keyvalue_parse_str(&in, KEYVALUE_TYPE_PARAMS, &kval) < 0) {
@@ -1122,6 +1162,20 @@ int ht_table_spec(char *spec)
 			dbtable = tok;
 			LM_DBG("htable [%.*s] - dbtable [%.*s]\n", name.len, name.s,
 					dbtable.len, dbtable.s);
+		} else if(pit->name.len == 5 && strncmp(pit->name.s, "fpath", 5) == 0) {
+			fpath = tok;
+			LM_DBG("htable [%.*s] - fpath [%.*s]\n", name.len, name.s,
+					fpath.len, fpath.s);
+		} else if(pit->name.len == 5 && strncmp(pit->name.s, "ftype", 5) == 0) {
+			if(str2int(&tok, &ftype) != 0 || ftype > 1)
+				goto error;
+			LM_DBG("htable [%.*s] - ftype [%u]\n", name.len, name.s, ftype);
+		} else if(pit->name.len == 6
+				  && strncmp(pit->name.s, "fdelim", 6) == 0) {
+			if(tok.len != 1 || tok.s[0] == '\r' || tok.s[0] == '\n')
+				goto error;
+			fdelim = tok.s[0];
+			LM_DBG("htable [%.*s] - fdelim [%c]\n", name.len, name.s, fdelim);
 		} else if(pit->name.len == 4 && strncmp(pit->name.s, "cols", 4) == 0) {
 			dbcols = tok;
 			LM_DBG("htable [%.*s] - dbcols [%.*s]\n", name.len, name.s,
@@ -1191,10 +1245,24 @@ int ht_table_spec(char *spec)
 			goto error;
 		}
 	}
+	if(fpath.len > 0 && dbtable.len > 0) {
+		LM_ERR("htable [%.*s]: fpath and dbtable cannot be used together\n",
+				name.len, name.s);
+		goto error;
+	}
+	if(ftype == 1
+			&& ((fdelim >= 'A' && fdelim <= 'Z')
+					|| (fdelim >= 'a' && fdelim <= 'z')
+					|| (fdelim >= '0' && fdelim <= '9') || fdelim == '-'
+					|| fdelim == '_' || fdelim == '=')) {
+		LM_ERR("htable [%.*s]: fdelim [%c] conflicts with base64url\n",
+				name.len, name.s, fdelim);
+		goto error;
+	}
 
 	return ht_add_table(&name, autoexpire, &dbtable, &dbcols, size, dbmode,
 			itype, &ival, updateexpire, dmqreplicate, coldelim, colnull,
-			reloadat);
+			reloadat, &fpath, ftype, fdelim);
 
 error:
 	LM_ERR("invalid htable parameter [%.*s]\n", in.len, in.s);

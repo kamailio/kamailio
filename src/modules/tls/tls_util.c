@@ -292,7 +292,17 @@ unsigned char *cert_to_x509_DER(X509 *cert, int *len)
 	}
 
 	*len = i2d_X509(cert, NULL);
+	if(*len <= 0) {
+		LM_ERR("i2d_X509 probe failed\n");
+		*len = 0;
+		return NULL;
+	}
 	buf = result = shm_malloc(*len);
+	if(result == NULL) {
+		SHM_MEM_ERROR;
+		*len = 0;
+		return NULL;
+	}
 	i2d_X509(cert, &buf);
 
 	return result;

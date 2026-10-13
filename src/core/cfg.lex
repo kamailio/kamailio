@@ -182,6 +182,7 @@ EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
 LOCAL_RPORT		"local_rport"
 ADD_LOCAL_RPORT		"add_local_rport"
+VIA_CONID_MODE	"via_conid_mode"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 UDP_MTU		"udp_mtu"
 UDP_MTU_TRY_PROTO	"udp_mtu_try_proto"
@@ -364,6 +365,8 @@ DNS_CACHE_MEM		dns_cache_mem
 DNS_CACHE_GC_INT	dns_cache_gc_interval
 DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
 DNS_CACHE_REC_PREF	dns_cache_rec_pref
+DNS_CACHE_MODE		dns_cache_mode
+
 /* ipv6 auto bind */
 AUTO_BIND_IPV6		auto_bind_ipv6
 BIND_IPV6_LINK_LOCAL	bind_ipv6_link_local
@@ -395,6 +398,7 @@ TCP_MSG_READ_TIMEOUT tcp_msg_read_timeout
 TCP_MSG_DATA_TIMEOUT tcp_msg_data_timeout
 TCP_ACCEPT_IPLIMIT tcp_accept_iplimit
 TCP_MAIN_THREADS tcp_main_threads
+TCP_REACTOR_THREADS tcp_reactor_threads
 TCP_CHECK_TIMER tcp_check_timer
 CHILDREN children
 SOCKET socket
@@ -723,6 +727,8 @@ IMPORTFILE      "import_file"
 								return LOCAL_RPORT; }
 <INITIAL>{ADD_LOCAL_RPORT}	{ count(); yylval.strval=yytext;
 								return ADD_LOCAL_RPORT; }
+<INITIAL>{VIA_CONID_MODE}	{ count(); yylval.strval=yytext;
+								return VIA_CONID_MODE; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }
 <INITIAL>{UDP_MTU}	{ count(); yylval.strval=yytext; return UDP_MTU; }
@@ -866,6 +872,8 @@ IMPORTFILE      "import_file"
 								return DNS_CACHE_DEL_NONEXP; }
 <INITIAL>{DNS_CACHE_REC_PREF}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_REC_PREF; }
+<INITIAL>{DNS_CACHE_MODE}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_MODE; }
 <INITIAL>{AUTO_BIND_IPV6}	{ count(); yylval.strval=yytext;
 								return AUTO_BIND_IPV6; }
 <INITIAL>{BIND_IPV6_LINK_LOCAL}	{ count(); yylval.strval=yytext;
@@ -904,6 +912,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{TCP_MSG_DATA_TIMEOUT}	{ count(); yylval.strval=yytext; return TCP_MSG_DATA_TIMEOUT; }
 <INITIAL>{TCP_ACCEPT_IPLIMIT}	{ count(); yylval.strval=yytext; return TCP_ACCEPT_IPLIMIT; }
 <INITIAL>{TCP_MAIN_THREADS}	{ count(); yylval.strval=yytext; return TCP_MAIN_THREADS; }
+<INITIAL>{TCP_REACTOR_THREADS}	{ count(); yylval.strval=yytext; return TCP_REACTOR_THREADS; }
 <INITIAL>{TCP_CHECK_TIMER}	{ count(); yylval.strval=yytext; return TCP_CHECK_TIMER; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }

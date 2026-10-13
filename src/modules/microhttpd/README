@@ -10,6 +10,11 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Igor Ponomarenko
+
+   DIDWW
+   <igor.p@didww.com>
+
    Copyright © 2023 asipto.com
      __________________________________________________________________
 
@@ -27,8 +32,9 @@ Daniel-Constantin Mierla
 
               3.1. listen_addr (str)
               3.2. listen_port (int)
-              3.3. allowed_ips (str)
-              3.4. event_callback (str)
+              3.3. listen_socket (str)
+              3.4. allowed_ips (str)
+              3.5. event_callback (str)
 
         4. Functions
 
@@ -42,9 +48,10 @@ Daniel-Constantin Mierla
 
    1.1. Set listen_addr parameter
    1.2. Set listen_port parameter
-   1.3. Set allowed_ips parameter
-   1.4. Set event_callback parameter
-   1.5. mhttpd_reply usage
+   1.3. Set listen_socket parameter
+   1.4. Set allowed_ips parameter
+   1.5. Set event_callback parameter
+   1.6. mhttpd_reply usage
 
 Chapter 1. Admin Guide
 
@@ -60,8 +67,9 @@ Chapter 1. Admin Guide
 
         3.1. listen_addr (str)
         3.2. listen_port (int)
-        3.3. allowed_ips (str)
-        3.4. event_callback (str)
+        3.3. listen_socket (str)
+        3.4. allowed_ips (str)
+        3.5. event_callback (str)
 
    4. Functions
 
@@ -95,8 +103,9 @@ Chapter 1. Admin Guide
 
    3.1. listen_addr (str)
    3.2. listen_port (int)
-   3.3. allowed_ips (str)
-   3.4. event_callback (str)
+   3.3. listen_socket (str)
+   3.4. allowed_ips (str)
+   3.5. event_callback (str)
 
 3.1. listen_addr (str)
 
@@ -122,7 +131,45 @@ modparam("microhttpd", "listen_addr", "127.0.0.1")
 modparam("microhttpd", "listen_port", 8284)
 ...
 
-3.3. allowed_ips (str)
+3.3. listen_socket (str)
+
+   One or more address:port pairs the embedded HTTP server should bind to.
+   Unlike listen_addr / listen_port (which define a single IPv4 binding),
+   this parameter accepts multiple sockets and supports both IPv4 and
+   IPv6.
+
+   Each entry has the form host:port. IPv6 addresses must be enclosed in
+   square brackets, e.g. [::1]:8280. Multiple entries can be given either
+   as a comma-separated list in a single modparam call, or by setting
+   listen_socket several times - all entries are accumulated. Whitespace
+   around the comma separator is ignored.
+
+   When listen_socket is set (one or more times), it takes precedence over
+   listen_addr and listen_port, which are then ignored. A separate HTTP
+   daemon is started for each listed socket.
+
+   IPv6 listeners require a libmicrohttpd version that supports binding an
+   IPv6 struct sockaddr. With older libmicrohttpd releases, the
+   length-aware bind API is unavailable and the daemon relies on the
+   MHD_USE_IPv6 flag to interpret the address - which is set automatically
+   when the entry parses as IPv6.
+
+   Default value is "" (empty - not set).
+
+   Example 1.3. Set listen_socket parameter
+...
+# single IPv4 socket
+modparam("microhttpd", "listen_socket", "127.0.0.1:8280")
+
+# multiple sockets in one parameter (IPv4 + IPv6)
+modparam("microhttpd", "listen_socket", "127.0.0.1:8280, [::1]:8280")
+
+# or by setting the parameter multiple times
+modparam("microhttpd", "listen_socket", "127.0.0.1:8280")
+modparam("microhttpd", "listen_socket", "[2001:db8::1]:8284")
+...
+
+3.4. allowed_ips (str)
 
    A comma-separated list of IP subnets allowed to connect to the embedded
    HTTP server. Each entry can be specified as a plain IP address, an IP
@@ -138,14 +185,14 @@ modparam("microhttpd", "listen_port", 8284)
 
    Default value is "" (empty - all ips are allowed).
 
-   Example 1.3. Set allowed_ips parameter
+   Example 1.4. Set allowed_ips parameter
 ...
 modparam("microhttpd", "allowed_ips", "127.0.0.1")
 modparam("microhttpd", "allowed_ips", "192.168.1.0/24, 10.0.0.0/8")
 modparam("microhttpd", "allowed_ips", "::1/128, 2001:db8::/32")
 ...
 
-3.4. event_callback (str)
+3.5. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -156,7 +203,7 @@ modparam("microhttpd", "allowed_ips", "::1/128, 2001:db8::/32")
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.4. Set event_callback parameter
+   Example 1.5. Set event_callback parameter
 ...
 modparam("microhttpd", "event_callback", "ksr_microhttpd_event")
 ...
@@ -175,7 +222,7 @@ end
 
    Send back a reply with content-type and body.
 
-   Example 1.5. mhttpd_reply usage
+   Example 1.6. mhttpd_reply usage
 ...
 event_route[microhttpd:request] {
     mhttpd_reply("200", "OK", "text/html",

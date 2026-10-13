@@ -395,7 +395,7 @@ static int ki_tcp_conid_state(sip_msg_t *msg, int i_conid)
 	ret = 1;
 done:
 	if(s_con)
-		tcpconn_put(s_con);
+		tcpconn_chld_put(s_con);
 	return ret;
 }
 
@@ -440,7 +440,7 @@ static int ki_tcpops_set_connection_lifetime_cid(
 		return 0;
 	} else {
 		ret = tcpops_set_connection_lifetime(s_con, i_time);
-		tcpconn_put(s_con);
+		tcpconn_chld_put(s_con);
 	}
 	return ret;
 }
@@ -470,7 +470,7 @@ static int ki_tcpops_set_connection_lifetime(sip_msg_t *msg, int i_time)
 		return -1;
 	} else {
 		ret = tcpops_set_connection_lifetime(s_con, i_time);
-		tcpconn_put(s_con);
+		tcpconn_chld_put(s_con);
 	}
 	return ret;
 }
@@ -491,7 +491,7 @@ static int ki_tcpops_enable_closed_event_cid(sip_msg_t *msg, int i_conid)
 		return 0;
 	} else {
 		s_con->flags |= F_CONN_CLOSE_EV;
-		tcpconn_put(s_con);
+		tcpconn_chld_put(s_con);
 	}
 	return 1;
 }
@@ -524,7 +524,7 @@ static int ki_tcpops_enable_closed_event(sip_msg_t *msg)
 		return -1;
 	} else {
 		s_con->flags |= F_CONN_CLOSE_EV;
-		tcpconn_put(s_con);
+		tcpconn_chld_put(s_con);
 	}
 	return 1;
 }
@@ -604,7 +604,7 @@ static int ki_tcp_get_conid_helper(sip_msg_t *msg, str *saddr, pv_spec_t *pvs)
 		goto setvalue;
 	}
 	conid = c->id;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 
 setvalue:
 	if(pvs != NULL) {
@@ -759,6 +759,7 @@ static int ki_tcp_close_connection_id(sip_msg_t *msg, int conid)
 		if(unlikely(n <= 0)) {
 			LM_ERR("failed to send close request: %s (%d)\n", strerror(errno),
 					errno);
+			tcpconn_chld_put(con);
 			return -2;
 		}
 		return 1;
@@ -819,7 +820,7 @@ static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				return pv_get_strval(msg, param, res, &sval);
 			}
 			sval.s = ip_addr2a(&con->cinfo.src_ip);
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			sval.len = strlen(sval.s);
 			return pv_get_strval(msg, param, res, &sval);
 		case 2: /* c_sp */
@@ -828,14 +829,14 @@ static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				return pv_get_sintval(msg, param, res, ival);
 			}
 			ival = con->cinfo.src_port;
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			return pv_get_sintval(msg, param, res, ival);
 		case 3: /* ac_si */
 			if(con == NULL) {
 				return pv_get_null(msg, param, res);
 			}
 			sval.s = ip_addr2a(&con->cinfo.src_ip);
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			sval.len = strlen(sval.s);
 			return pv_get_strval(msg, param, res, &sval);
 		case 4: /* ac_sp */
@@ -843,18 +844,18 @@ static int pv_get_tcp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				return pv_get_null(msg, param, res);
 			}
 			ival = con->cinfo.src_port;
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			return pv_get_sintval(msg, param, res, ival);
 		case 5: /* aconid */
 			if(con == NULL) {
 				return pv_get_null(msg, param, res);
 			}
 			ival = con->id;
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			return pv_get_sintval(msg, param, res, ival);
 		default: /* conid */
 			if(con) {
-				tcpconn_put(con);
+				tcpconn_chld_put(con);
 			}
 			return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
 	}

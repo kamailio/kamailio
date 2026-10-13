@@ -126,7 +126,7 @@ int redisc_init(void)
 
 	unsigned int port, db, sock = 0, haspass = 0, sentinel_master = 1;
 	unsigned int enable_ssl = 0;
-	int i, row;
+	int i, row, col;
 	redisc_server_t *rsrv = NULL;
 	param_t *pit = NULL;
 	struct timeval tv_conn = {0};
@@ -289,16 +289,16 @@ int redisc_init(void)
 						if(res && (res->type == REDIS_REPLY_ARRAY)) {
 							for(row = 0; row < res->elements; row++) {
 								res2 = res->element[row];
-								for(i = 0; i < res2->elements; i += 2) {
-									if(strncmp(res2->element[i]->str, "ip", 2)
+								for(col = 0; col + 1 < res2->elements; col += 2) {
+									if(strncmp(res2->element[col]->str, "ip", 2)
 											== 0) {
-										strncpy(addr, res2->element[i + 1]->str,
-												res2->element[i + 1]->len);
-										addr[res2->element[i + 1]->len] = '\0';
-									} else if(strncmp(res2->element[i]->str,
+										strncpy(addr, res2->element[col + 1]->str,
+												res2->element[col + 1]->len);
+										addr[res2->element[col + 1]->len] = '\0';
+									} else if(strncmp(res2->element[col]->str,
 													  "port", 4)
 											  == 0) {
-										port = atoi(res2->element[i + 1]->str);
+										port = atoi(res2->element[col + 1]->str);
 										break;
 									}
 								}
@@ -488,8 +488,7 @@ int redisc_destroy(void)
 	while(rsrv != NULL) {
 		rsrv1 = rsrv;
 		rsrv = rsrv->next;
-		if(rsrv1->ctxRedis != NULL)
-			redisFree(rsrv1->ctxRedis);
+		cleanup_redis_context(rsrv1);
 		free_params(rsrv1->attrs);
 		pkg_free(rsrv1);
 	}
@@ -591,7 +590,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 #endif
 	char sentinels[MAXIMUM_SENTINELS][256];
 	uint8_t sentinels_count = 0;
-	int i, row;
+	int i, row, col;
 	param_t *pit = NULL;
 	struct timeval tv_conn;
 	struct timeval tv_cmd;
@@ -724,16 +723,16 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 					if(res && (res->type == REDIS_REPLY_ARRAY)) {
 						for(row = 0; row < res->elements; row++) {
 							res2 = res->element[row];
-							for(i = 0; i < res2->elements; i += 2) {
-								if(strncmp(res2->element[i]->str, "ip", 2)
+							for(col = 0; col + 1 < res2->elements; col += 2) {
+								if(strncmp(res2->element[col]->str, "ip", 2)
 										== 0) {
-									strncpy(addr, res2->element[i + 1]->str,
-											res2->element[i + 1]->len);
-									addr[res2->element[i + 1]->len] = '\0';
-								} else if(strncmp(res2->element[i]->str, "port",
-												  4)
+									strncpy(addr, res2->element[col + 1]->str,
+											res2->element[col + 1]->len);
+									addr[res2->element[col + 1]->len] = '\0';
+								} else if(strncmp(res2->element[col]->str, "port",
+											  4)
 										  == 0) {
-									port = atoi(res2->element[i + 1]->str);
+									port = atoi(res2->element[col + 1]->str);
 									break;
 								}
 							}
@@ -832,6 +831,7 @@ err:
 		LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
 				rsrv->sname->len, rsrv->sname->s, addr, port, db);
 	}
+	cleanup_redis_context(rsrv);
 	return -1;
 }
 
@@ -1057,6 +1057,8 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 	str addr = {0, 0}, tmpstr = {0, 0}, name = {0, 0};
 	int server_len = 0;
 	char spec_new[512];
+	param_t *pit = NULL, *pnew = NULL;
+	str orig_pass = {0, 0}, orig_tls = {0, 0};
 
 	if(redis_cluster_param) {
 		LM_DBG("Redis replied: \"%.*s\"\n", (int)reply->len, reply->str);
@@ -1102,7 +1104,26 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 				char *server_new;
 
 				memset(spec_new, 0, sizeof(spec_new));
-				/* For now, also include db=0 to prepare attribute inheritance */
+				/* For now, also include db=0 to prepare attribute inheritance.
+				 * pass/tls are inherited too (below, once the node exists)
+				 * so a dynamically-created node for a TLS+auth-required
+				 * Redis Cluster (e.g. ElastiCache with transit encryption
+				 * and AUTH enabled) does not silently connect in plaintext
+				 * with no credentials and get refused. They are attached
+				 * directly to the new server's attrs rather than
+				 * interpolated into spec_new, so a password containing ';'
+				 * or '=' cannot inject or override another attribute here -
+				 * e.g. a password ending in ";tls=0" must not be able to
+				 * downgrade the redirect connection to plaintext. */
+				for(pit = (*rsrv)->attrs; pit; pit = pit->next) {
+					if(pit->name.len == 4
+							&& strncmp(pit->name.s, "pass", 4) == 0) {
+						orig_pass = pit->body;
+					} else if(pit->name.len == 3
+							  && strncmp(pit->name.s, "tls", 3) == 0) {
+						orig_tls = pit->body;
+					}
+				}
 				server_len = snprintf(spec_new, sizeof(spec_new) - 1,
 						"name=%.*s;addr=%.*s;port=%i;db=%d", name.len, name.s,
 						addr.len, addr.s, port, 0);
@@ -1125,6 +1146,36 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 					rsrv_new = redisc_get_server(&name);
 
 					if(rsrv_new) {
+						/* Attach pass/tls verbatim, bypassing parse_params()
+						 * entirely, so the raw values are never re-parsed
+						 * out of a ';'-delimited string (see the comment
+						 * above where orig_pass/orig_tls are captured). */
+						if(orig_pass.len > 0) {
+							pnew = (param_t *)pkg_malloc(sizeof(param_t));
+							if(pnew == NULL) {
+								PKG_MEM_ERROR;
+								return 0;
+							}
+							memset(pnew, 0, sizeof(param_t));
+							pnew->name.s = "pass";
+							pnew->name.len = 4;
+							pnew->body = orig_pass;
+							pnew->next = rsrv_new->attrs;
+							rsrv_new->attrs = pnew;
+						}
+						if(orig_tls.len > 0) {
+							pnew = (param_t *)pkg_malloc(sizeof(param_t));
+							if(pnew == NULL) {
+								PKG_MEM_ERROR;
+								return 0;
+							}
+							memset(pnew, 0, sizeof(param_t));
+							pnew->name.s = "tls";
+							pnew->name.len = 3;
+							pnew->body = orig_tls;
+							pnew->next = rsrv_new->attrs;
+							rsrv_new->attrs = pnew;
+						}
 						*rsrv = rsrv_new;
 						/* Need to connect to the new server now */
 						if(redisc_reconnect_server(rsrv_new) == 0) {

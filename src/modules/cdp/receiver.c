@@ -609,6 +609,12 @@ static inline int do_receive(serviced_peer_t *sp)
 			sp->buf_len += cnt;
 			if(sp->buf_len == DIAMETER_HEADER_LEN) {
 				sp->length = get_3bytes(sp->buf + 1);
+				if(sp->length < DIAMETER_HEADER_LEN) {
+					LM_ERR("[%.*s] Msg too short [%d] bytes\n",
+							sp->p ? sp->p->fqdn.len : 0,
+							sp->p ? sp->p->fqdn.s : 0, sp->length);
+					goto error_and_reset;
+				}
 				if(sp->length > DP_MAX_MSG_LENGTH) {
 					LM_ERR("[%.*s] Msg too big [%d] bytes\n",
 							sp->p ? sp->p->fqdn.len : 0,
