@@ -29,6 +29,12 @@
 #include <sys/time.h>
 #include <time.h>
 
+struct timer_ctx;
+
+time_t ksr_time_ctx(struct timer_ctx *td, time_t *t);
+int ksr_gettimeofday_ctx(
+		struct timer_ctx *td, struct timeval *tv, const struct timezone *tz);
+
 /* time(2) equivalent, using ser internal timers (faster than a syscall) */
 time_t ser_time(time_t *t);
 

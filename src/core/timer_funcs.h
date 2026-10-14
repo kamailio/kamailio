@@ -82,9 +82,6 @@ struct timer_lists
 	struct timer_head expired; /* list of expired entries */
 };
 
-extern struct timer_lists *timer_lst;
-
-
 #define _timer_init_list(head) clist_init((head), next, prev)
 
 
@@ -103,7 +100,8 @@ extern struct timer_lists *timer_lst;
  * from current time to the timer desired expire (should be tl->expire-*tick)
  * If you don't know delta, you probably want to call _timer_add instead.
  */
-static inline int _timer_dist_tl(struct timer_ln *tl, ticks_t delta)
+static inline int _timer_dist_tl(
+		struct timer_lists *timer_lst, struct timer_ln *tl, ticks_t delta)
 {
 	if(delta < H0_ENTRIES) {
 		if(delta == 0) {
@@ -122,7 +120,7 @@ static inline int _timer_dist_tl(struct timer_ln *tl, ticks_t delta)
 }
 
 
-#define _timer_mv_expire(h)                                                 \
+#define _timer_mv_expire(timer_lst, h)                                      \
 	do {                                                                    \
 		if((h)->next != (struct timer_ln *)(h)) {                           \
 			clist_append_sublist(                                           \
@@ -134,54 +132,58 @@ static inline int _timer_dist_tl(struct timer_ln *tl, ticks_t delta)
 
 #if 1
 
-static inline void timer_redist(ticks_t t, struct timer_head *h)
+static inline void timer_redist(
+		struct timer_lists *timer_lst, ticks_t t, struct timer_head *h)
 {
 	struct timer_ln *tl;
 	struct timer_ln *tmp;
 
 	timer_foreach_safe(tl, tmp, h)
 	{
-		_timer_dist_tl(tl, tl->expire - t);
+		_timer_dist_tl(timer_lst, tl, tl->expire - t);
 	}
 	/* clear the current list */
 	_timer_init_list(h);
 }
 
-static inline void timer_run(ticks_t t)
+static inline void timer_run(struct timer_lists *timer_lst, ticks_t t)
 {
 	struct timer_head *thp;
 
 	/* trust the compiler for optimizing */
 	if((t & H0_MASK) == 0) {		/*r1*/
 		if((t & H1_H0_MASK) == 0) { /*r2*/
-			timer_redist(t, &timer_lst->h2[t >> (H0_BITS + H1_BITS)]);
+			timer_redist(
+					timer_lst, t, &timer_lst->h2[t >> (H0_BITS + H1_BITS)]);
 		}
 
-		timer_redist(
-				t, &timer_lst->h1[(t & H1_H0_MASK) >> H0_BITS]); /*r2 >> H0*/
+		timer_redist(timer_lst, t,
+				&timer_lst->h1[(t & H1_H0_MASK) >> H0_BITS]); /*r2 >> H0*/
 	}
 	/*
 	DBG("timer_run: ticks %u, expire h0[%u]\n",
 						(unsigned ) t, (unsigned)(t & H0_MASK));*/
 	thp = &timer_lst->h0[t & H0_MASK];
-	_timer_mv_expire(thp); /*r1*/
+	_timer_mv_expire(timer_lst, thp); /*r1*/
 }
 #else
 
-static inline void timer_lst_mv0(ticks_t t, struct timer_head *h)
+static inline void timer_lst_mv0(
+		struct timer_lists *timer_lst, ticks_t t, struct timer_head *h)
 {
 	struct timer_ln *tl;
 	struct timer_ln *tmp;
 
 	timer_foreach_safe(tl, tmp, h)
 	{
-		_timer_dist_tl(tl, &timer_lst->h0[tl->expire & H0_MASK]);
+		_timer_dist_tl(timer_lst, tl, tl->expire - t);
 	}
 	/* clear the current list */
 	_timer_init_list(h);
 }
 
-static inline void timer_lst_mv1(ticks_t t, struct timer_head *h)
+static inline void timer_lst_mv1(
+		struct timer_lists *timer_lst, ticks_t t, struct timer_head *h)
 {
 	struct timer_ln *tl;
 	struct timer_ln *tmp;
@@ -200,17 +202,19 @@ static inline void timer_lst_mv1(ticks_t t, struct timer_head *h)
 
 
 /** @brief possible faster version */
-static inline void timer_run(ticks_t t)
+static inline void timer_run(struct timer_lists *timer_lst, ticks_t t)
 {
 	/* trust the compiler for optimizing */
 	if((t & H0_MASK) == 0) {	  /*r1*/
 		if((t & H1_H0_MASK) == 0) /*r2*/
 			/* just move the list "down" to hash1 */
-			timer_lst_mv1(&timer_lst->h2[t >> (H0_BITS + H1_BITS)]);
+			timer_lst_mv1(
+					timer_lst, t, &timer_lst->h2[t >> (H0_BITS + H1_BITS)]);
 		/* move "down" to hash0 */
-		timer_lst_mv0(&timer_lst->h1[(t & H1_H0_MASK) >> H0_BITS]);
+		timer_lst_mv0(
+				timer_lst, t, &timer_lst->h1[(t & H1_H0_MASK) >> H0_BITS]);
 	}
-	_timer_mv_expire(t, &timer_lst->h0[t & H0_MASK]); /*r1*/
+	_timer_mv_expire(timer_lst, &timer_lst->h0[t & H0_MASK]); /*r1*/
 }
 #endif
 

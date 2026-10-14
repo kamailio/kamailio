@@ -1531,7 +1531,7 @@ int main_loop(void)
 				goto error;
 			slow_timer_main();
 		} else {
-			slow_timer_pid = pid;
+			ksr_timer_ctx_core.slow_timer_pid = pid;
 		}
 #endif
 		/* we need another process to act as the "main" timer*/
@@ -2012,7 +2012,7 @@ int main_loop(void)
 				goto error;
 			slow_timer_main();
 		} else {
-			slow_timer_pid = pid;
+			ksr_timer_ctx_core.slow_timer_pid = pid;
 		}
 #endif /* USE_SLOW_TIMER */
 
