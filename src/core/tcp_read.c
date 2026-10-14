@@ -221,7 +221,7 @@ int ksr_tcp_parse_accept_protocols(char *protos)
 
 
 #ifdef READ_HTTP11
-int tcp_http11_continue(struct tcp_connection *c)
+int tcp_http11_continue(struct tcp_connection *c, char *headers_end)
 {
 	struct dest_info dst;
 	char *p;
@@ -235,8 +235,11 @@ int tcp_http11_continue(struct tcp_connection *c)
 		return 0;
 	}
 
+	if(headers_end < c->req.start || headers_end > c->req.pos)
+		return 0;
+
 	msg.s = c->req.start;
-	msg.len = c->req.pos - c->req.start;
+	msg.len = headers_end - c->req.start;
 #ifdef READ_MSRP
 	/* skip if MSRP message */
 	if(c->req.flags & F_TCP_REQ_MSRP_FRAME)
@@ -666,7 +669,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 						r->state = H_BODY;
 #ifdef READ_HTTP11
 						if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
-							tcp_http11_continue(c);
+							tcp_http11_continue(c, p + 1);
 #endif
 						if(TCP_REQ_HAS_CLEN(r)) {
 							r->body = p + 1;
@@ -739,7 +742,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t *read_flags)
 					r->state = H_BODY;
 #ifdef READ_HTTP11
 					if(cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
-						tcp_http11_continue(c);
+						tcp_http11_continue(c, p + 1);
 #endif
 					if(TCP_REQ_HAS_CLEN(r)) {
 						r->body = p + 1;
