@@ -1216,7 +1216,17 @@ done:
 		}
 	} while(bytes == -1 && errno == EINTR);
 
-	return (bytes >= 0) ? retval : -1;
+	if(bytes == -1) {
+		LM_ERR("failed to consume PROXY header: %s\n", strerror(errno));
+		return -1;
+	}
+	if(bytes != (int)size) {
+		LM_ERR("short read consuming the PROXY header (%d of %u bytes)\n",
+				bytes, size);
+		return -1;
+	}
+
+	return retval;
 }
 
 int tcp_connection_limit_srcip(union sockaddr_union *srcaddr, int limit)
