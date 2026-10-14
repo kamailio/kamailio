@@ -2869,6 +2869,51 @@ release_c:
 }
 
 
+#ifdef TCP_ASYNC
+/* tcp main loop side of the command channel of its own tcpx threads */
+static struct process_table tcpx_cmd_proc;
+/* tcpx threads side, they have no unix_tcp_sock to tcp main */
+static int tcpx_cmd_sock = -1;
+
+/* lets the tcpx threads hand CONN_* commands to the tcp main loop */
+static int tcpx_cmd_init(void)
+{
+	int sv[2];
+	int flags;
+
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
+		LM_ERR("socketpair failed: %s\n", strerror(errno));
+		return -1;
+	}
+	memset(&tcpx_cmd_proc, 0, sizeof(tcpx_cmd_proc));
+	tcpx_cmd_proc.pid = getpid();
+	tcpx_cmd_proc.unix_sock = sv[0];
+	tcpx_cmd_proc.idx = -1;
+	strcpy(tcpx_cmd_proc.desc, "tcp main threads");
+	if(io_watch_add(&io_h, sv[0], POLLIN, F_PROC, &tcpx_cmd_proc) < 0) {
+		LM_ERR("failed to watch the tcpx command socket\n");
+		close(sv[0]);
+		close(sv[1]);
+		return -1;
+	}
+	/* writer end shared by all tcpx threads: non-blocking so a full buffer
+	 * fails the send (and drops that one conn) instead of blocking a thread
+	 * under c->write_lock */
+	flags = fcntl(sv[1], F_GETFL);
+	if(flags == -1 || fcntl(sv[1], F_SETFL, flags | O_NONBLOCK) == -1) {
+		LM_ERR("failed to set tcpx command socket non-blocking: %s (%d)\n",
+				strerror(errno), errno);
+		io_watch_del(&io_h, sv[0], -1, 0);
+		close(sv[0]);
+		close(sv[1]);
+		return -1;
+	}
+	tcpx_cmd_sock = sv[1];
+	return 0;
+}
+#endif /* TCP_ASYNC */
+
+
 /* unsafe send on a known tcp connection.
  * Directly send on a known tcp connection with a given fd.
  * It is assumed that the connection locks are already held.
@@ -2889,7 +2934,8 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 	long response[2];
 
 #ifdef TCP_ASYNC
-	if(unlikely(ksr_tcp_main_threads == 2 && is_tcp_main())) {
+	if(unlikely((ksr_tcp_main_threads == 1 || ksr_tcp_main_threads == 2)
+				&& is_tcp_main())) {
 		/* mode 2: this runs in PROC_TCP_MAIN's event loop, so write here
 		 * instead of fd-passing / a unix_sock self-send. This is reached from
 		 * the TLS read path (tls_h_read_*), which drives the handshake and may
@@ -2904,6 +2950,27 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 			case CONN_NOP:
 				break;
 			case CONN_QUEUED_WRITE:
+				if(ksr_tcp_main_threads == 1) {
+					/* mode 1: ask the tcp main loop to arm POLLOUT */
+					char ipbuf[IP_ADDR_MAX_STRZ_SIZE];
+					ip_addr2sbufz(&c->rcv.src_ip, ipbuf, sizeof(ipbuf));
+					LM_WARN("tcpx write queued on %p (%s:%u -> :%u), %u of %u"
+							" bytes pending\n",
+							c, ipbuf, c->rcv.src_port, c->rcv.dst_port,
+							c->wbuf_q.queued, len);
+					atomic_inc(&c->refcnt);
+					response[0] = (long)c;
+					if(send_all(tcpx_cmd_sock, response, sizeof(response))
+							<= 0) {
+						LM_ERR("conn %p command %ld send failed: %s (%d)\n", c,
+								response[1], strerror(errno), errno);
+						c->state = S_CONN_BAD;
+						c->timeout = get_ticks_raw();
+						tcpconn_chld_put(c);
+						n = -1;
+					}
+					break;
+				}
 				/* is_tcp_main() is true for the whole process. On a POOL thread
 				 * (this path is reached from tls_read() flushing handshake /
 				 * renegotiation ciphertext, which runs on a pool thread in
@@ -5302,6 +5369,10 @@ void tcp_main_loop()
 		 * concurrent increments from those threads are not lost. Must be set
 		 * before the threads are started. */
 		counter_set_threaded();
+#ifdef TCP_ASYNC
+		if(ksr_tcp_main_threads == 1 && tcpx_cmd_init() < 0)
+			goto error;
+#endif /* TCP_ASYNC */
 		if(ksr_tcpx_proc_list_prepare() < 0) {
 			LM_ERR("failed to prepare multi-thread processing list\n");
 			goto error;
