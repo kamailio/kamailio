@@ -1649,6 +1649,9 @@ static enum rps t_should_relay_response(struct cell *Trans, int new_code,
 								: branch;
 		if(new_code >= 200) {
 			prepare_to_cancel(Trans, &cancel_data->cancel_bitmap, 0);
+			/* still under REPLY_LOCK - mark INVITE branches without reply as
+			 * canceled, to send the CANCEL on their first provisional reply */
+			defer_cancel_unreplied(Trans, &cancel_data->cancel_bitmap);
 			cancel_data->reason.cause = new_code;
 			LM_DBG("rps completed - uas status: %d\n", Trans->uas.status);
 			return RPS_COMPLETED;
@@ -2596,6 +2599,8 @@ int reply_received(struct sip_msg *p_msg)
 					cancel_data.reason.cause = (t->uas.status >= 200)
 													   ? t->uas.status
 													   : CANCEL_REAS_UNKNOWN;
+					/* same reason text as for cancel_uacs() */
+					cancel_reason_text(&cancel_data);
 					cancel_branch(t, branch, NULL, &cancel_data.reason,
 							F_CANCEL_B_FORCE_C);
 				}
