@@ -1,3 +1,1615 @@
+===================== 2026-10-15 Version 6.1.5 Released =====================
+
+===================== Changes Since Version 6.1.4 ===========================
+
+commit b6a2553afe853e18953591b26f93caee6206568f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 15 09:10:06 2026 +0200
+
+    src: version set to 6.1.5
+
+commit e6629afd2473c6d5177f4f4e00a2828475f2ff84
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 15 08:42:43 2026 +0200
+
+    pkg/kamailio/deb: version set 6.1.5 [skip ci]
+
+commit 613706ce9c212c977ab5408ae0b284d6afb653f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 15 08:41:45 2026 +0200
+
+    pkg/kamailio: version set to 6.1.5 for rpms and alpine [skip ci]
+
+commit aee06fa2c9c70ac4e3669e637838f666a35cd7b7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 14 18:32:05 2026 +0200
+
+    core: tcp - haproxy short-read validation
+    
+    - partial backport from development
+
+commit 43da019cd6fbd6c73435e9658d80066c0e7b2598
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 14 17:21:21 2026 +0200
+
+    uac: use 4-bytes read helpers
+    
+    - backport: 9fad3309a3860ac990666e0cbbf48309cf670e54
+
+commit a41668d24e7335a4e578b3c03ce4b90dae5bd145
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 14 17:13:27 2026 +0200
+
+    core: provide headers end to tcp_http11_continue()
+    
+    - backport of a111d818f208e6f0689f62f358e1061b794367e5
+
+commit 5efcd139d2209bac317699d4759b9c2e2a46466d
+Author: disolaterX <42447408+disolaterX@users.noreply.github.com>
+Date:   Mon Oct 12 22:54:32 2026 +0530
+
+    rtpengine: retry poll() on EINTR when waiting for a reply
+    
+    - send_rtpp_command() treated a poll() interrupted by a signal as a
+      timeout and spent one rtpengine_retr attempt on it
+    - the core timer process gets SIGALRM every 1/16 s, so commands sent
+      from there, e.g. rtpengine_delete() in a failure_route run on
+      fr_inv_timer expiry, failed after about 300 ms instead of
+      rtpengine_retr * rtpengine_tout_ms
+    - retry the poll with the remaining time, as writev() and recv()
+      already do on EINTR
+    
+    (cherry picked from commit e0890adfde1a2048dfc393421ee8feb3579a5273)
+
+commit 41326b6567ee6a408ac9606405ff034ca3f1b542
+Author: kaelyn ke <313807495+kaelynkk@users.noreply.github.com>
+Date:   Mon Sep 28 00:22:02 2026 +0800
+
+    ims_qos_npn: check Via host length before copying
+    
+    - the host of the top Via header is copied with its length from the received
+      message into char buff[IP_ADDR_MAX_STR_SIZE], the IPv4 and the bracketed
+      IPv6 branch have to account for the NUL terminator separately
+    - the same class of check was added to ims_qos in commit af1ae1d1, but the
+      ims_qos_npn copy of the module was left out
+    
+    Fixes #4953
+    
+    (cherry picked from commit fb93ca8ca6e2e26e038baab49a566f3ce4b4d62d)
+
+commit 38af459174f47d937c2c4e0e7ee51274ad45a5d4
+Author: MGrimby <98282674+MGrimby@users.noreply.github.com>
+Date:   Mon Oct 5 17:08:26 2026 +0200
+
+    ims_diameter_server: free synchronous response
+    
+    Free the AAAMessage returned by AAASendRecvMessage() and AAASendRecvMessageToPeer() after converting the response to JSON
+    
+    fixes #4116
+    
+    (cherry picked from commit 9130eace417f0f6d1acdddb41abf69b5356ffa85)
+
+commit 1535ba6451eb1448c5ed445162673c5d25758914
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 13 09:31:14 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 9880d5344c54dc979a0e315299a5698743283d8f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 13 09:16:24 2026 +0200
+
+    tls: do not overwrite lifetime initialised by tcp core on new connection
+    
+    - backport of 1bd9d92cec782b533dbe239feec4ecdb78742847
+
+commit da28d5cb8813ac52619c1d5f1403f724206e3f73
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 12 18:18:45 2026 +0200
+
+    tls_wolfssl: do not overwrite lifetime initialised by tcp core on new connection
+    
+    (cherry picked from commit a8d8d2dd5cce568d6f3b540c641c27a2477ea27b)
+
+commit 9491e770c601e820974df06d226d0cf028eda0ca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 12 18:11:29 2026 +0200
+
+    core: tcp - set lifetime also for tls on new connection
+    
+    (cherry picked from commit b78a5ab417c8748ad9bdc18ed831c003770256a2)
+
+commit 7d009298de5f3368f0a23d77d39c569d7142f2a9
+Author: Jacky W J Li <fs_liwenjie@163.com>
+Date:   Sun Oct 11 23:31:09 2026 +0800
+
+    sipcapture: examples - drop dangling mi_fifo params comment
+    
+    mi_fifo was removed in Kamailio 6.1. The example config has no mi_fifo
+    loadmodule or params left, only the section comment, which is now dangling.
+    
+    Deletion only: +0/-2, no lines added.
+    
+    (cherry picked from commit bba1ce2c5d5cad665104dc8ed8bbf7e039992ccf)
+
+commit d6a4bc200b581d440eb9a80fa1af9c281fb8a678
+Author: Jacky W J Li <fs_liwenjie@163.com>
+Date:   Sun Oct 11 23:31:06 2026 +0800
+
+    rtpproxy: test - drop references to the removed mi_fifo/mi_rpc/mi_xmlrpc modules
+    
+    The whole MI module family was removed in Kamailio 6.1, but the test config
+    still loads mi_fifo, mi_rpc and mi_xmlrpc, so it no longer parses on a current
+    release. It is also the only file in the tree referencing mi_xmlrpc.
+    
+    Drop the three loadmodule lines and both params blocks. The unrelated
+    modparam("rtpproxy", "timeout_socket", ...) is left untouched.
+    
+    Deletion only: +0/-19, no lines added.
+    
+    (cherry picked from commit 64497bcdf45f76b18b2e9876d88a9511f36aa542)
+
+commit ec0932e81d0f8853055de3abf7c09c8c9959220d
+Author: Jacky W J Li <fs_liwenjie@163.com>
+Date:   Sun Oct 11 23:31:04 2026 +0800
+
+    ims_ocs: examples - drop loadmodule for the removed mi_rpc
+    
+    mi_rpc was removed in Kamailio 6.1, but the example config still loads it,
+    so it no longer parses on a current release.
+    
+    ctl and cfg_rpc are kept, so the management interface is still available.
+    
+    Deletion only: +0/-1, no lines added.
+    
+    (cherry picked from commit c301711be30aac1d014bf0c31dfce41acc8bf486)
+
+commit 7e9db53acba195b2e6c7c643d2e04b9b956171a9
+Author: Jacky W J Li <fs_liwenjie@163.com>
+Date:   Sun Oct 11 23:31:01 2026 +0800
+
+    imc: doc - drop references to the removed mi_fifo module
+    
+    mi_fifo was removed in Kamailio 6.1, but the imc example config still loads
+    it, so it no longer parses on a current release.
+    
+    Deletion only: +0/-5, no lines added.
+    
+    (cherry picked from commit d4faeb42bf2aca169f8df9e10e40fd0462a65f75)
+
+commit 6eeb41031af8f9bcdd66b5df193f8381e6f86b5b
+Author: Jacky W J Li <fs_liwenjie@163.com>
+Date:   Sun Oct 11 23:30:59 2026 +0800
+
+    misc: examples - drop references to the removed mi_fifo module
+    
+    mi_fifo was removed in Kamailio 6.1, but these example configs still load
+    it, so they no longer parse on a current release (the loadmodule fails and
+    config parsing aborts).
+    
+    Drop the dead loadmodule lines and the mi_fifo params blocks, plus the now
+    dangling params comment left in the sipcapture example.
+    
+    Follow-up to the cleanup done for the outbound and websocket examples
+    (5c6a656795, #4997).
+    
+    Deletion only: +0/-17 across 4 files, no lines added.
+    
+    (cherry picked from commit fa47e6eb9e3ff255f7055b316313a7a81c25cbed)
+
+commit f9d1a5d8e5941786de5e981cc1f861e677404aec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 9 08:48:38 2026 +0200
+
+    core: tcp - malformed chunk sizes and chunk terminators now set TCP_REQ_BAD_LEN
+    
+    (cherry picked from commit bcbd32c5c3fb398df152918e618f4581bc364a98)
+
+commit b999dca0300e4b6191c0f50287faeba1e3d2f5de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 2 15:19:03 2026 +0200
+
+    registrar: docs updates for default_expires param
+    
+    (cherry picked from commit 7bdf077de9a1d858131c0040738d5a05f1890b31)
+
+commit 461c3caabdad8a118eec1807326565d214dd86e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 2 08:11:53 2026 +0200
+
+    tm: kemi wrapper for t_set_no_auto_ack()
+    
+    (cherry picked from commit d63a410a9f6d185c9314d18b1aee8dd25fbac14e)
+
+commit df105b0b37c64951c71e3f456f61500a7e7ea86b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 2 08:06:40 2026 +0200
+
+    auth_web3: format kemi exports structure
+    
+    (cherry picked from commit 339a3725dbbb6e9495a15dcbe2e4a65b79db0430)
+
+commit 45855f6e421c758d5faacbc0ec2e2765b7e003d9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 15:11:47 2026 +0200
+
+    core: updated check for msg_recv_max_size range
+    
+    - GH #4975
+    
+    (cherry picked from commit 9f019f70ada0e874db44886404d9cd0cebb40c1d)
+
+commit 930559c7b3c89685cac02a2a2011ee6a101fc454
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:56:10 2026 +0200
+
+    test/misc/code: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 53236fe4047a7d35a392aaa136af044e935fc3c5)
+
+commit d04e876be075f111524e2302ae0c24467c584282
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:54:58 2026 +0200
+
+    misc/tools/protoshoot: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit ea7b5fb8266d0f88e9c665d04a6f96e80eef38f0)
+
+commit 07568fad27e2da0f57b36e7fba0960ca99244178
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:54:01 2026 +0200
+
+    utils/kamunix: use BUF_SIZE+1 to match received buffer
+    
+    - formatting updates
+    
+    (cherry picked from commit c9d264bc3494ca574110e659af1d9a4ccac85af7)
+
+commit 3e565787140ef7e61fdcfe78621a5a9a37de2c58
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:57 2026 +0200
+
+    tm: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 92725423a9c3233c1d53e64828329d8a564335ae)
+
+commit 780c7543fc42f8b1f697b6f9211c32869cb7fb4f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:57 2026 +0200
+
+    siprepo: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 8a1c4d8b326261e0d5fdd635eaf2058dc935ffdf)
+
+commit ff12b651739968c9b4ec5dd5ebe1161e88d0154d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:57 2026 +0200
+
+    sipdump: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 30fb8ceb4837594444a16c54c3460f05186bb357)
+
+commit 96bd3889dcbf1c6c4a478c67ced083f5e91e6165
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:56 2026 +0200
+
+    misctest: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit be456682ad6cc136f0a7b532fef40af10ecf115c)
+
+commit e627b7f572dcbcf9c9650a563484facacc8bdd6c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:56 2026 +0200
+
+    ims_ipsec_pcscf: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 7bbe44f4d72e187d4c0a0afd3c16d4c833382305)
+
+commit 829c822116eb42356f94bb8e4750789de01b0d13
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:55 2026 +0200
+
+    gzcompress: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 49be8e29f8c9d98d9041eec3470f1b93e7cfd47a)
+
+commit 1dd9a17587882b1c47a89dcc3a5be415db04788d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:55 2026 +0200
+
+    evrexec: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 1628e6a28dde5f8aba84304fc4aaefc909c47ec2)
+
+commit 85051e0213ec484bfeff644fc320500f157f249b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:52:54 2026 +0200
+
+    debugger: use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit af28778fc7ea501bcae78b1b8cc9691cdf64b5de)
+
+commit b1a62bcc1068341d6157326b5ea86799852d8e3d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:46:26 2026 +0200
+
+    core: ksr_buf_oneline() use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit 87671184cb19077e6af59b4f0fe218fd76c5d52d)
+
+commit f1dcf4a97180e8d5de176dad183b541a7ecfdecf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 14:44:02 2026 +0200
+
+    core: fmsg - use BUF_SIZE+1 to match received buffer
+    
+    (cherry picked from commit a5ac1b3e7c1b3aa26a636d9c4b0f2b4f10fa07fa)
+
+commit a51bb750b3db6cb9ea46e0f31716f2ff5bd53331
+Author: Dmitrii Rantovov <rantovov5@gmail.com>
+Date:   Fri Sep 25 00:03:24 2026 +0300
+
+    siputils: walk back from the uri in contact_param_encode()
+    
+    - the loop looking for '<' before the contact uri started one char
+      before it but advanced with p++, so it stepped into the uri and
+      stopped there; walk backwards instead
+    - the whitespace check tested '\n' twice, the second one meant '\r'
+    
+    (cherry picked from commit 2c2a2f311b29853836bbc884709def0f12410009)
+
+commit e3312ec876d7a867ed7b8ac8045b3ff3b5b4df25
+Author: Igor Ponomarenko <igor.p@didww.com>
+Date:   Wed Sep 30 20:11:47 2026 +0300
+
+    core: ip addr - fix buffer size for ip_addr2xa() and ip_addr2xstrz()
+    
+    (cherry picked from commit 5b914a5e5e95dafc80cadd93d20f8d196200a57c)
+
+commit 4232880212fc985e9fcbf3adb50a9db60b03ea4b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 28 20:57:42 2026 +0200
+
+    core: ut - extra checks and cast for str_casesearch()
+    
+    (cherry picked from commit 3912a2d0006803da1a3d9fe663e13086516770b8)
+
+commit e4137926d89c901ed7b2596fbed015db650752df
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 28 12:35:51 2026 +0200
+
+    ims_diameter_server: cjson - set nesting limit for arrays and objects
+    
+    (cherry picked from commit 99c105e309d767164ec4aab855db4e5202a5f47c)
+
+commit 3d674183cb4d176770e25f3a8cb8dd5ebf6296f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 28 12:14:19 2026 +0200
+
+    core: utils/srjson set nesting limit for arrays and objects
+    
+    (cherry picked from commit 7e45107b17273d25f8ac277dfae3c93fde64cebd)
+
+commit 6123674ff5873187197db91e3acd411b30b9ed1e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 28 10:51:12 2026 +0200
+
+    ims_diameter_server: cjson checks for parsing values
+    
+    (cherry picked from commit c88caa56b49f0495d4c1f8aa8d7baca751633018)
+
+commit e3606a920de503aa4134d844738cd13d10243e34
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 28 08:19:34 2026 +0200
+
+    core: utils/srjson - checks for parsing numeric values
+    
+    (cherry picked from commit 038ad038e7a6572eda5d375cb92c187f7a551a33)
+
+commit 2a7bc5282cda291bf4131613915383213e516560
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 27 15:56:57 2026 +0200
+
+    core: parse uri - use read bytes and lowercase helpers
+    
+    (cherry picked from commit 6ee5154a2d3f387790d36530023cef1deb525c3d)
+
+commit f6f61c215c5c05b6083ece5927bf8acc8ca03211
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 27 15:24:30 2026 +0200
+
+    core: parse body - use read bytes and lowercase helpers
+    
+    (cherry picked from commit 16aaf0ea8c19a7f85c589aaee18d3068e711ff16)
+
+commit 32f1ca8f26a2b3de87e601c9cc4f5cab0f44f3e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 27 15:10:14 2026 +0200
+
+    core: parse date - use read bytes and lowercase helpers
+    
+    (cherry picked from commit d262b77494655b5a221acc2e04eaab0a650c19b3)
+
+commit 214dc15f805a4143098ac95fdfe5d8df708f475d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 27 10:17:09 2026 +0200
+
+    rtpproxy: use read bytes helper functions
+    
+    (cherry picked from commit 5ba9165368577b415fafcd943fca955a079f456b)
+
+commit 0cc1f03d47bedaec8bc6f886492c21f8a35e26cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 27 10:00:25 2026 +0200
+
+    nathelper: use read bytes helper functions
+    
+    (cherry picked from commit 7a0712239698c915c241461ccfe43bd029e0dc07)
+
+commit ca20f74f625d439c0335cb3988bd2677b7492fbe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 27 09:59:28 2026 +0200
+
+    lrkproxy: use read bytes helper functions
+    
+    (cherry picked from commit 88599166a960bf71f2577797c92acc9665950b3f)
+
+commit 6602ffffd4ee44112d1d510799cbe6698fa5c4d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 27 09:55:41 2026 +0200
+
+    rtpengine: use read bytes helper functions
+    
+    (cherry picked from commit 5543404973ce923b00bf07f87030b8b4c783e77b)
+
+commit 65c6cef13ebdb17772d54ba371b43873e105c178
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 26 21:52:47 2026 +0200
+
+    core: parser opitons tag - use helper functions to read and lowecase bytes
+    
+    (cherry picked from commit 61d0fc0d0fffa5b85e765862d525269acb0d950f)
+
+commit bc28772289afb9c7fddd623168c9912b080086b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 26 20:49:48 2026 +0200
+
+    core: parser/sdp - use helper functions to read bytes
+    
+    (cherry picked from commit e3041db61a64bb9cededdb5993a73e35d3bade16)
+
+commit d748fa6da7f3e17c20e7c7f8c86b6bf17af7cf8a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 26 19:46:04 2026 +0200
+
+    seas: use helper function to read byest and convert lowercase
+    
+    (cherry picked from commit f178e2c154f6d4c5685b484f7bc6dca7624cad4d)
+
+commit 23a6c42626b5b0c6aa0027b717ad41a0326bd648
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 26 18:43:34 2026 +0200
+
+    sst: use helper functions to read bytes and convert lowercase
+    
+    (cherry picked from commit 8de516b0bc3cb5a90af55f770b0675c598e9691b)
+
+commit 47da47e8d0df77c4723f4aed6670e2452c930143
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 26 18:39:45 2026 +0200
+
+    core: resolve - use helper functions to read bytes and convert lowercase
+    
+    (cherry picked from commit 8bad331d7040ddc21f7b4bcfda64648fbda37f1c)
+
+commit b45a72ceb80a42da0ba9fe30794e6007761fe428
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 10:46:21 2026 +0200
+
+    tm: lw parser - use 4-bytes read helpers
+    
+    (cherry picked from commit cdaa5d138df5eb99f6ad127fe1a5811de4557786)
+
+commit 86f65d9062a70d1f051144d81aa74d36cdb35913
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 10:44:58 2026 +0200
+
+    xmlrpc: use 4-bytes read helpers
+    
+    (cherry picked from commit bf2c195751403bab8c91a04c01ee1c810b2dbf4d)
+
+commit 3b78047d5557da63531f9f820914c23cb7231520
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 10:33:46 2026 +0200
+
+    core: main - use 4-bytes read helpers
+    
+    (cherry picked from commit b4012f879bc16204b0c0ed0a5d25ed282b64d565)
+
+commit ed73f728aab5b3c67a75ab02623073f3a6e96991
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 10:32:20 2026 +0200
+
+    core: parser/digest - use 4-bytes read healpers
+    
+    (cherry picked from commit e71b0f400a9b8c530b0dd1847161cbc2ba2f3449)
+
+commit ab682fc08cc0e4c1989ac426b167b2ecce1dc813
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 10:07:56 2026 +0200
+
+    core: parser - added helper functions to read bytes and convert
+    
+    (cherry picked from commit 10b91dc9f3c43ba3a098608d08dd6ceca163e7c0)
+
+commit e0a8a3a0ca50d49ba5ea0ba67bdf76d836862254
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Sep 26 10:31:14 2026 +0800
+
+    ptimer: gcc -Wall - set iscaled before paused timer resumes into loop
+    
+    - gcc -Wall -O2: 'iscaled' may be used uninitialized [-Wmaybe-uninitialized]
+      pre-script failure jumps to pause before it is set, loop then uses it
+    
+    (cherry picked from commit 114e2605c1a8d27c5d9b97849d9ce06cd917594c)
+
+commit 32ed7023042e31bdb4c946d9f9d989e7be168e3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 08:41:55 2026 +0200
+
+    core: parse option tags - switch a few macros to inline functions with cast of fields
+    
+    (cherry picked from commit 599e295f15c27011159ddb6581707eb69b5b3ab2)
+
+commit 95efdeedc97c31631633ce46dafcd9037ef837bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 08:37:09 2026 +0200
+
+    core: parse body - switch read macro to inline function and cast fields
+    
+    (cherry picked from commit 98fec0d60019977fc37b601a3a086ab78dee7d09)
+
+commit 5c21d2aa1a8d49ee6e8814728aa92f4909bd7027
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 08:31:56 2026 +0200
+
+    core: parse date - switch to static inline function and cast unsigned for READ macro
+    
+    (cherry picked from commit 8d5c78ba32f655ef13e3cbfa6b6e578016889c2a)
+
+commit 4f81b9686d6dc1e2e8193ce96e0248561d4f5d95
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 24 13:44:16 2026 +0200
+
+    core: added dns_cache_mode core parameter
+    
+    - control the dns cache management
+    - if set 1, the dns cache item is destroyed if unlinked
+    - default 0 - wait for reference drying
+    
+    (cherry picked from commit 807dcc36dfee4282c99e556240f662a4286d0427)
+
+commit bb479f4fa6f9c3239ead98131f2b2265006e36e1
+Author: Dmitrii Rantovov <rantovov5@gmail.com>
+Date:   Wed Sep 23 16:47:59 2026 +0300
+
+    tm: wrap upper-case Z in t_calc_branch_ack()
+    
+    - the upper-case branch of the md5 increment compared with 'z' again,
+      so 'Z' was left unchanged instead of wrapping to 'A'
+    
+    (cherry picked from commit 3b48857de3fe6be9dc03ad16980229bef9376357)
+
+commit 5e7d05d9879b4c85ef0b617c3e6c9e0255081a5f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 16 09:58:30 2026 +0200
+
+    pv_headers: cast to fix warnings in log messages on 32b
+    
+    (cherry picked from commit f8e85fd42b901a13b269ebd8bbf28debcf9c2982)
+
+commit 5c7aaf56492bf9c72a67ec1a72b6c6b387b37f1b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 16 09:54:20 2026 +0200
+
+    tm: cast to fix warning in log message on 32b
+    
+    (cherry picked from commit 42da7bb9ca3a8a6dccf75db9526d3a8b3703f173)
+
+commit 782a9ff8d991121987b0f2a4991bc9cd19b624d6
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Oct 12 07:38:52 2026 +0800
+
+    tls: build without warnings and deprecations on OpenSSL 4.0/4.1
+
+commit 48636917799fe558bb6db66d2ba065787c1b66ca
+Author: zohairraza <engineerzohairraza@gmail.com>
+Date:   Thu Oct 8 20:06:23 2026 +0000
+
+    cnxcc: heap buffer overflow in __alloc_new_credit_data()
+    
+    `call_list` is allocated with `sizeof(call_t)` but zeroed with `sizeof(data_t)`.
+    These are unrelated types: `data_t` is the module's global configuration struct
+    (`_data`), embedding three `hash_tables_t` (the money/time/channel tables),
+    `redis_cnn_str`, a `char host[40]` block and pointers. It is larger than
+    `call_t`, so the `memset` writes past the end of the allocation.
+    
+    (cherry picked from commit 781466985168cc62bf5926ab548afd9c132d5f59)
+
+commit 736a373a0bf22d2bd8ce779c85815ac813a75823
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Oct 6 09:31:15 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 22841d390ce93c58b55dd055b68de2c7ac1ad1f0
+Author: Alessio Garzi <agarzi@sipwise.com>
+Date:   Thu Oct 1 09:56:02 2026 +0200
+
+    presence: docs - note about MariaDB error 1020
+    
+    Since MariaDB 11.6.2 innodb_snapshot_isolation is enabled by default and
+    concurrent presence transactions can fail with error 1020, losing the
+    presentity update. Document the issue and how to disable the variable
+    for the presence connections with a my.cnf group.
+    
+    (cherry picked from commit 0674d5115db412033275b17d225d5ec89939dbeb)
+
+commit 7de98db6283bd87b00ce73e75e17d293cbb93a88
+Author: Alessio Garzi <agarzi@sipwise.com>
+Date:   Thu Oct 1 09:55:49 2026 +0200
+
+    db_mysql: docs - add id to the my.cnf section
+    
+    Allow other module docs to link the "Reading configuration from my.cnf"
+    section.
+    
+    (cherry picked from commit 5ff93fcd51f2429be13a0cb193c456cc68c3d5c3)
+
+commit 94631456073bc33e567165847707671974ea1c47
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 21 13:15:25 2026 +0200
+
+    tm: skip further processing for replies of uac-cancelled invites
+    
+    - GH #4881
+    
+    (cherry picked from commit 11ca55f34552d9c14f21682e7e1f2b474b2438b5)
+
+commit c2e167df00c1328dccb8a332ab6e7c3e3dfab108
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 21 12:57:50 2026 +0200
+
+    tm: match also the failure responses for delayed cancelled invites
+    
+    - continue to generate the ACK
+    - GH #4881
+    
+    (cherry picked from commit c551c390e6cdbc1cc3d60e08a43590e142b28717)
+
+commit 61146339076291451aee481e6c73a0e43a408540
+Author: Pier-Luc Auger <pier-luc.auger@dialstack.ai>
+Date:   Thu Oct 1 15:11:26 2026 -0400
+
+    http_async_client: watch curl internal sockets
+    
+    - libcurl may report sockets for internal easy handles that were never
+      added by the module (e.g. a connection doing a graceful TLS shutdown
+      after being evicted from the pool); they were dropped because no cell
+      exists for that handle, so the socket and its TLS state were never freed
+    - watch such sockets with an event attached via curl_multi_assign() and
+      forward their activity to curl_multi_socket_action(), logging its errors;
+      reuse the event when only the watch mask changes, free it on
+      CURL_POLL_REMOVE
+    - delete the multi timer when libcurl asks for timeout -1, and no longer
+      delete it when the last transfer is done, as libcurl may still need it
+      for internal work
+    - remove addsock(), which is no longer used
+    
+    (cherry picked from commit 2e71218dbe5366df00e6600419117b9c47425cde)
+
+commit d1adecb5576753e8e2b141b5430dec4b3110540a
+Author: Ilias Aberkane <286468824+iliasabk@users.noreply.github.com>
+Date:   Fri Sep 25 02:08:59 2026 +0200
+
+    lrkproxy: fix heap overflow in change_media_sdp()
+    
+    The rebuilt SDP body was copied into a fixed 1024-byte pkg_malloc()
+    buffer while every non-rewritten SDP line was appended verbatim with
+    strncat(), with no remaining-capacity tracking. An INVITE carrying
+    more than ~882 bytes of non-standard SDP lines (e.g. x= attributes)
+    overflowed the buffer by an attacker-controlled length.
+    
+    Size the buffer to the original body length plus headroom for the
+    rewritten header lines (o=/s=/c=/m=, each bounded to 128 bytes), and
+    bound every append by the remaining capacity, truncating with a
+    warning instead of overrunning.
+    
+    Fixes GH#4957
+    
+    (cherry picked from commit a9de237d443546d36a90c4d2509aecea16d61019)
+
+commit 05646a0b433b2d07b772a9047291609bf7e3edcf
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Aug 26 06:23:43 2026 +0000
+
+    ims_registrar_scscf: fix warning in new log msg introduced in commit 17ecf4e14dd1
+    
+    (cherry picked from commit c9add4eb9395008bb494c91d2a6cc02a0082303b)
+
+commit 9643fbb7cc93ab23724ac6097d0a23f31f1b19f9
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Sat Mar 14 10:55:12 2026 +0000
+
+    ims_registrar_scscf: in case of time out no further action needs to be taken
+    
+    (cherry picked from commit 17ecf4e14dd11074f0bfc06ad1832a7be7cb7fd8)
+
+commit ab9a39d83a6ab7b5ef35c59fc7a93f1f54089255
+Author: herlesupreeth <herlesupreeth@gmail.com>
+Date:   Sun Mar 8 10:47:24 2026 +0000
+
+    ims_registrar_scscf: check for Retry-After header for non 408 and non-local responses to avoid crash
+    
+    (cherry picked from commit 347c6b135083a06c24519f0795f08e41ff24653c)
+
+commit acecbda1a576020b5da7f9efefb6323000beab1a
+Author: 0xabe-io <alexandre.becholey@gmail.com>
+Date:   Tue Sep 29 09:03:37 2026 +0000
+
+    smsops: fix GSM 7-bit alphabet conversion tables
+    
+    - fix transcription errors (GH #4883)
+    - gsm7bit_codes mapped 0x2D to 0xAD (SOFT HYPHEN) rather than 0x2D
+      (HYPHEN-MINUS), so a hyphen was corrupted on decode
+    - gsm7bit_ext_codes carried VERTICAL LINE at 0x48, which is not an extension
+      code, leaving 0x40 unmapped even though ascii2gsm7bit_ext_codes escapes '|'
+      to it, decoding one emitted a bare 0xFF
+    - ascii2gsm7bit_codes mapped CURRENCY SIGN to 0x23 (NUMBER SIGN) rather
+      than 0x24
+    
+    (cherry picked from commit ce652abba669411b38d0bd015607b9fecaf0613a)
+
+commit 52efa922e780f9ea3eb0bbb8107c6058a94d1770
+Author: Abdulkarim Barbour <63456208+NUCLEAR-WAR@users.noreply.github.com>
+Date:   Mon Sep 28 16:56:16 2026 +0200
+
+    ims_isc: Fix registration check condition in ims_isc_mod.c
+    
+    - Fix registration check condition in ims_isc_mod.c
+    
+    - P-Served-User is now generated on term with the correct regstate corresponding to the user's registration state.
+    
+    (cherry picked from commit 12c61cc397530a370917568f9773179ad80a1b36)
+
+commit bc03c9b0967dd4125a4c0707a82659a3baa32b20
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Feb 13 01:38:41 2026 +0100
+
+    ims_isc: isc_match_filter() don't call isc_is_registered() twice
+    
+    * print string value of impu_regstate
+    
+    (cherry picked from commit 902580a37edf0ceca6f5b00b84ff6e6d644e2277)
+
+commit e103a970cfade3db6719d10507290d11c00f7c9f
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Sep 28 12:01:25 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit fc118b61c9eae72dd8dc329d1209f93b40112000
+Author: li xuanqun <793005378@qq.com>
+Date:   Fri Sep 18 17:32:19 2026 +0800
+
+    topos: document contact_mode 3 A/B mapping and host xavu params
+    
+    (cherry picked from commit 5cc92baa47bc12699ce21ce9fd73e589f5e3ae35)
+
+commit 3142329e327479afeff448d6c3a23ea5f6a1afcb
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Sep 28 09:49:22 2026 +0000
+
+    pv: adapt syntax for contact check to other existing checks
+    
+    (cherry picked from commit 34aff3dbfd4c7f2445a4a714fa2469e6818b78e1)
+
+commit 65c3d841725f1f640c4a45f29326d2a1b407f3ed
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Sep 28 09:46:12 2026 +0200
+
+    pv: check for null contact header in $ctu and $cts
+    
+    (cherry picked from commit 4d8bc97698255b66bc403887f3bb1f1863f17da1)
+
+commit cf4294ac63f2b8770fe08bef5350a941dc751d81
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Sep 25 13:02:17 2026 +0800
+
+    tls_wolfssl: bug fixes
+    
+    - do not read more than the free space of the rd bio
+    - warn that ssl_max_send_fragment is ignored
+    
+    (cherry picked from commit 95215b617d028060fe790e7ace1ef0c042f4029c)
+
+commit 0834dd5b45641ab423083818b620bb1d636731c8
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Sep 25 11:42:29 2026 +0800
+
+    tls_wolfssl: enable partial write mode on its own
+    
+    - wolfSSL_CTX_set_mode() takes a single mode, the or-ed mask with moving
+      write buffer (wolfSSL default) was ignored and partial write stayed off
+    
+    (cherry picked from commit 53aebec3f18fba09bc7f126796cd421319b32b43)
+
+commit 17424cdaf317c1a3e21949f5f5f80428a5cbbefc
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Fri Sep 25 09:31:06 2026 +0800
+
+    websocket: use 8 bytes extended length for payload > 65535
+    
+    - RFC 6455: length code 127 is followed by a 64-bit length, not 32-bit
+    - peers waited forever on frames > 65535 bytes; decoder already expects 8
+    
+    (cherry picked from commit 41bd1ffcfcf6b469ed2b0fd7600b83214891be80)
+
+commit 0da559eaeabb5f755854d834c154c9d9e03b283c
+Author: kaelyn ke <313807495+kaelynkk@users.noreply.github.com>
+Date:   Fri Sep 25 01:21:19 2026 +0800
+
+    ims_registrar_pcscf: check for port size in alias param
+    
+    process_contact() in notify.c parses the alias=<host>~<port>~<proto>
+    NAT parameter and copies the port field into a 5 bytes stack buffer
+    without checking the length, allowing a stack buffer overflow up to
+    MAX_URI_SIZE bytes. Even a 5 digits port (65535) writes one byte past
+    the end since the buffer needs 6 bytes for 5 digits plus the null
+    terminator.
+    
+    The same parser exists in save.c (update_contacts()), where portbuf[5]
+    is filled with memcpy() and no length check.
+    
+    Apply the same fix as the upstream commit 57794cd142 for the sibling
+    module ims_ipsec_pcscf: enlarge the buffer to 6 bytes and reject a
+    port longer than 5 digits.
+    
+    Fixes #4954
+    
+    (cherry picked from commit 21261436492f0014930e804e20586e3833bb91b9)
+
+commit fdc273ec9352e1d72bb875b392dc1cfa2cdea77f
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Sep 23 13:46:16 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit b723fdb06eef443f61f431d47a51a00830c0c82b
+Author: Torrey Searle <torrey.searle@nuso.cloud>
+Date:   Wed Sep 23 12:22:26 2026 +0200
+
+    tm: fix documentation for tm_evelreq_mode parameter
+    
+    Add currently undocumented bit 2 for receiving ACKs
+    
+    (cherry picked from commit 7a8073fe04b4b01619ed11504daec3d0e8c5de7c)
+
+commit 24cbec17f6030f7a9a3c632f0a0842a37b46bdf5
+Author: Rizwan Alam <riscogian@gmail.com>
+Date:   Tue Sep 22 16:17:59 2026 +0530
+
+    ims_ipsec_pcscf: fix IK check and CK/IK comparison
+    
+    - get_ck_ik() checked ck->len twice, so a 401 without ik= was accepted
+      and the SAs were created with an empty integrity key
+    - CK and IK are stored without a trailing NUL, so comparing them with
+      strcmp() to decide on tunnel reuse read past the end of both buffers;
+      compare them as str with STR_EQ()
+    
+    (cherry picked from commit e86fc79334a7a5dfa3c34771cd7165e6ffe7b195)
+
+commit cd81d2d9959ce7db4afc723ebed462ca0b4e12a0
+Author: Mojtaba Esfandiari <mespio@gmail.com>
+Date:   Tue Sep 22 07:59:35 2026 +0000
+
+    lrkproxy: fix Call-ID stack buffer overflow
+    
+    Signed-off-by: Mojtaba Esfandiari <mespio@gmail.com>
+    (cherry picked from commit c6d2630b380f28ac8ec3caec641f2d3ad3b381fe)
+
+commit cac672815faf919bad6e530412d4d4aa6af1cfd2
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Sep 21 14:26:47 2026 +0200
+
+    ims_dialog: lookup_dlg check d_table first
+    
+    (cherry picked from commit 8977c7b859485d18c789a55e7865bf0c288e5989)
+
+commit b1ae15da75fce21006291b7971cf8d4fcaf7edaa
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Sep 21 14:26:41 2026 +0200
+
+    ims_dialog: run dlg callbacks also for PRACK requests (as done for "other" requests)
+    
+    copy from 4efe19f64d8bb787d2d620a833f5dd29619fa588
+    
+    (cherry picked from commit a79647a67bcfa2bb2762757d34eb23ea2f9264d4)
+
+commit e1454befeeac72bff39a69e582127a874dffa8a3
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Sep 14 08:33:42 2026 +0000
+
+    ndb_cassandra: partial revert commit 2fae35767398535fdfe, restore previous symbolic link
+    
+    (cherry picked from commit 69475dab0b8f8b13f33871c656c1d7df4dbec450)
+
+commit f7a00b674218793995a6be778a98ed680d0c1bea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 15 21:39:56 2026 +0200
+
+    textops: rewerked the new line discovery for multipart/mixed
+    
+    (cherry picked from commit 2ebf75c2902bf14006b0b3eefb1760c2738accc5)
+
+commit 0d09797907b957f42767b18a8190edef9f4c3c70
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Sep 15 14:56:37 2026 +0000
+
+    evapi: check frame length with CLIENT_BUFFER_SIZE (backport of ab2115d286b48)
+
+commit 28a1285ee897797c0f221ba662ae2c7ed2b1b2c0
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Tue Sep 15 08:07:20 2026 +0000
+
+    siputils: Add robust check for user uri
+    
+    (cherry picked from commit bf47b3903f789bb3c0a695cafe88555c55839184)
+
+commit 88e1a0ed32e08c184b57b4000998c7b3527ace2a
+Author: Gskill75 <45794145+Gskill75@users.noreply.github.com>
+Date:   Mon Sep 14 09:16:57 2026 +0200
+
+    core: dns - keep the NAPTR failover state in the dns_srv_handle
+    
+    - GH #4916
+    
+    (cherry picked from commit c9af6d0a46616d41d6a5456665c3db1a6a24796e)
+
+commit c677c6d59289a2861842e59a14606705bd4fe946
+Author: Gskill75 <45794145+Gskill75@users.noreply.github.com>
+Date:   Mon Sep 14 09:03:56 2026 +0200
+
+    core: dns - fix the refcounting of the entries kept in dns_srv_handle
+    
+    - GH #4916
+    
+    (cherry picked from commit 3b8a69cf8c01a92b5882b5718d2b42b44936e0bf)
+
+commit 628ed24ca03badd59ddbe1146215f374fa7379dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 20 19:01:06 2026 +0200
+
+    core: resolve - getaddrinfo() wrapper to simulate gethostbyname()
+    
+    (cherry picked from commit 1ae30cf9bd8fe8a9535957a0eec45d0a622ea7b5)
+
+commit f18d2e6ca862e21b80d0dd283d36ad604904d7ce
+Author: Kilian WÃ¶ber <Kilian.Woeber@kontron.com>
+Date:   Thu Jan 29 15:31:48 2026 +0100
+
+    core: dns - Fix lookup of multiple NAPTR entries
+    
+    - Allow storing NAPTR entries in dns_srv_handle
+    - When resolving NAPTR, try to reuse entry after initial lookup
+    
+    (cherry picked from commit 34844f3b235235c9d44681f89098893967e3b408)
+
+commit 02df05131e09d4bea4bc80b886905dd185c404a7
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Sep 15 04:23:40 2026 +0800
+
+    core: tcp - more input validation
+    
+    A 'complete' message spanning zero bytes is treated as a
+    framing error
+    
+    (cherry picked from commit c0a82e1de3996a74b9cf8b367b4762b59a9680c9)
+
+commit 457c1e9849f4f7118cc7a3032c86b84f15f94d8c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Sep 14 21:16:13 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e2b086f991a155fabaee696eb4e2be26966167cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 14 08:49:48 2026 +0200
+
+    xcap_client: use snprintf() and check its result
+    
+    - GH #4928
+    
+    (cherry picked from commit c5c093e9015cabf62836e6e22de75f2ce490042c)
+
+commit 0fcd778484aeae0e1afefe4af2b6880fdb428a52
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 12 12:10:02 2026 +0200
+
+    tm: docs updated for reply_matching parameter
+    
+    (cherry picked from commit 4fc75c19cf8edc06c6a997e3730de4c46e833ea2)
+
+commit fe97314ba4134445092a2e12a3def169cb2a60e0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 12 12:05:00 2026 +0200
+
+    tm: match 1xx replies for cancelled INVITE on WAIT
+    
+    - GH #4881
+    
+    (cherry picked from commit 3826691ddcedd3cb0ce8c0eea7a27f4057c9f478)
+
+commit 7ca5331c6a8ac9a0606270c8d5e6a9b7fd79b867
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 15:09:11 2026 +0200
+
+    ndb_redis: dedicated iterator for fields in sentinel rows
+    
+    (cherry picked from commit 245f42c24b070fb77d1dd4bbfd6e25b63968d47b)
+
+commit 42b6acf146c6736afd6950a17932d5c07aae7b46
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 14:58:34 2026 +0200
+
+    ndb_redis: clean all redis context on redisc_destroy()
+    
+    (cherry picked from commit ca6e9317ed3b2f034244d1cb2f6b5dca89189a41)
+
+commit 1cd2e647b43fe9cd0c662a346663dce38b503886
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 14:56:19 2026 +0200
+
+    ndb_redis: cleanup redis context on connect error
+    
+    (cherry picked from commit 8b9032b3cf40c2ab66ccb63b93f9a91c3cc90c6b)
+
+commit 2fcebdd2b59a280a5ff55afa0f6bb19093b90562
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 14:44:08 2026 +0200
+
+    db_redis: reset connection field after free
+    
+    (cherry picked from commit 3e82f44f79b0cb3056544a4e4d069aa3803def5d)
+
+commit 0eec7c78a2e711899c0b95d855ec3cb2d389fe02
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 10:45:45 2026 +0200
+
+    core: check size of the message on receive()
+    
+    (cherry picked from commit 2fae35767398535fdfe2185327a0757cbca66fb7)
+
+commit 866239b9d996187e82f59d276adf763f30131b3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 10:25:35 2026 +0200
+
+    core: check the range for msg_recv_max_size value
+    
+    (cherry picked from commit f21fc0ac18a0726c3c79d734c1310a9afc1502a5)
+
+commit 9b871413ae5d811d4a820bb1f305086113c4411e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 10 11:04:27 2026 +0200
+
+    tm: replies for local CANCEL are still processed for finished INVITE transaction
+    
+    - the local CANCEL is kept in the INVITE transaction
+    - GH #4881
+    
+    (cherry picked from commit d31b7d611c30ec119ca9bc9ae4994a9b514677b3)
+
+commit d01be2bee511b2114784d965288d7198c5cab370
+Author: Sig-thd <siegfried.roedel@th-deg.de>
+Date:   Wed Sep 9 15:12:21 2026 +0200
+
+    sdpops: fix $sdp(m0:*) to use the first m-line
+    
+    The SDP parser prepends each parsed stream to session->streams, so the
+    head of that list is the last m-line of the body rather than the first.
+    The m0 variants read sdp->sessions->streams directly and therefore
+    returned values taken from the last media stream whenever the body
+    carried more than one. Bodies with a single stream were not affected,
+    which is why this went unnoticed.
+    
+    Select the stream with get_sdp_stream_sdp(sdp, 0, 0), which matches on
+    the parse-ordered stream_num, for $sdp(m0:rtp:port), $sdp(m0:rtcp:port),
+    $sdp(m0:raw), $sdp(m0:b:AS), $sdp(m0:b:RR) and $sdp(m0:b:RS).
+    
+    (cherry picked from commit 56127f2b66177ae13a01004d8805b9816cbfb487)
+
+commit 7e69086fb6a634733f7be91552c4d6a50ad0d068
+Author: Norm Brandinger <n.brandinger@gmail.com>
+Date:   Fri Mar 13 15:39:51 2026 -0400
+
+    tm: fix transaction leak on drop; in branch_route
+    
+    Transactions leak when drop; executes in branch_route and a module
+    like pua_dialoginfo contaminates _tm_kr with REQ_FWDED.
+    
+    - Use bitwise test (kr & REQ_ERR_DELAYED) instead of exact equality
+      so the check fires regardless of other accumulated flags.
+    - Replace the unreachable path 3 BUG check with an orphan fallback
+      that releases transactions with no forwarded branches, covering
+      configs using T_DISABLE_INTERNAL_REPLY.
+    
+    Fixes: #4503
+    (cherry picked from commit bd0aaf89b860995ea875c25e0c011d98b50dcf16)
+
+commit 29b759aecc5deed3dd57c1595d5b2bd4dbae08a7
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Sep 14 21:33:57 2026 +0800
+
+    core: tcp - validate input length of HEP3 frames
+    
+    (cherry picked from commit b264c9c75228b9933c0d7536202844102a1d02b5)
+
+commit 8a1b7816b188ff08244c4fcae8d3d32052ecd8a5
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Sun Sep 13 09:16:53 2026 +0000
+
+    dialplan: properly terminate string after memcpy
+    
+    (cherry picked from commit b79a5ae328a27e1bf9aa9c2a0df627e6f9818f0f)
+
+commit 9bfb706bac7dfe5b83c8c4f3568aba579f1cb649
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Sep 11 12:16:17 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit b4da26ad13cb05c236579d3282ae4dafd7a1ec8c
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Sep 11 09:31:07 2026 +0000
+
+    db_redis: remove redundant hiredis_cluster check
+    
+    (cherry picked from commit 11bf41afbabcf8b31fdbf6a94045ebcee85c09f5)
+
+commit acd4062cc9f58dbefaabec82a27058a1666570ef
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Sep 11 09:17:10 2026 +0000
+
+    db_redis: switch back build scripts to previous logic, sentinel build by default, cluster opt-in, add docs
+    
+    (cherry picked from commit cc49ccf374ae5afec7779b0132f69428bd0bb501)
+
+commit c5b634e80d0e78477571f9d28a343bb263b2f2fc
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Mon Aug 31 13:56:43 2026 +0300
+
+    db_redis: fix incompatible pointer type in build
+    
+    (cherry picked from commit 57c3a3a0939f157e25212f62ad3934dc033fe3d1)
+
+commit 6723e3cd43b6b7fc033269944599bf1b48950a9d
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Fri Aug 14 17:10:54 2026 +0300
+
+    db_redis: reshuffle sentinel code to cleanly build redis cluster/ sentinel
+    
+    (cherry picked from commit a8b2574e339187b6099c03acc99ca26594f0e84a)
+
+commit 91674ac1a26af94ca7e1f31be4ed411db655913d
+Author: Lyubomir Yatanski <lyubomir.yatanski@flolive.net>
+Date:   Thu Sep 10 14:27:29 2026 +0000
+
+    ims_ipsec_pcscf: preserve reg_state on ipsec_create
+    
+    (cherry picked from commit 5aa16b8da73e5507063ef062e516113d44b089cc)
+
+commit 30adc6adc0ca6ba296ad3415caf4ac294d51238c
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu Sep 10 11:22:19 2026 +0000
+
+    pv: better length check for s.prefixes.quoted transformation
+    
+    (cherry picked from commit 808c0bd32310437c431edf3bd119644c0abf8ab8)
+
+commit 254141970ab832573d3e669eb94663a2170d480d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 10 08:23:38 2026 +0200
+
+    pv: check length for str values of string transformations
+    
+    (cherry picked from commit e6428407509ee76450319608e9860babc7557f60)
+
+commit f48c47459f77c8d5cb3c8a7bdc59f51ff50a91a7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 10 08:22:34 2026 +0200
+
+    core: reset lparam when parsing diversion body
+    
+    (cherry picked from commit 205a2643554755225b2cb388bf418f99ce66df5a)
+
+commit 4bc3fb3b42400f298c42ea15e2e8c4c89dd6f68d
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu Sep 10 06:47:56 2026 +0000
+
+    siputils: bugfix in tel2sip2 function, only output '=' when we are having a parameter
+    
+    (cherry picked from commit 8376802cd35a46b70cc15fc685805b137164ad45)
+
+commit 6b0b1538c0ceb1e520f3d15ea111ecbe6363e4fc
+Author: Jacky W J Li <fs_liwenjie@163.com>
+Date:   Wed Sep 9 00:07:55 2026 +0800
+
+    rtp_media_server: fix stack buffer overflow in SDP rtpmap parsing
+    
+    The rtpmap attribute value was parsed with an unbounded "%s" into a
+    64 byte stack buffer. A long codec name in a remote SDP body overruns
+    the buffer. Use a field width matching the buffer size.
+    
+    (cherry picked from commit ddf115dfe992e269a727485baf560cd90554165e)
+
+commit 7253e100cd4f7b15d801968cd0a206af001c7ff0
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Sep 9 17:16:15 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 710527ca427efb197acd97ebde7162b926fb78b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 9 16:40:51 2026 +0200
+
+    topoh: clean incoming cookie attributes
+    
+    (cherry picked from commit e2c514e3e75e7fd36a4f9a022d1a391663bf46ce)
+
+commit 333e9c4b0695535353dca58294d7b581024ba222
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 9 16:37:40 2026 +0200
+
+    topoh: docs for mask_cookie modparam
+    
+    (cherry picked from commit 5a6cbf02e7813617940759075d49038f7f46e394)
+
+commit 5c2716e6a2ecee48c86bb8834d3ed9aa779cc804
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 9 16:28:52 2026 +0200
+
+    topoh: exported topoh cookie name as mask_cookie modparam
+    
+    - the global variable value was expected to be configurable
+    
+    (cherry picked from commit a041e5788b79fbc87e6dad5cf881aa0b4437401c)
+
+commit 76195354be171fe02a3a7e325aa61c7ab7c737e3
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 9 14:03:10 2026 +0000
+
+    pv: transformations s.before and s.rbefore should return the entire input string on not found
+    
+    (cherry picked from commit 8ebde738d9fa8e075d369a3d27c6519ca37a330a)
+
+commit bd5d21b63888accc635268045a805fba9e5e61f9
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 9 13:45:44 2026 +0000
+
+    pv: fix before, rebefore, after and rafter transformations
+    
+    (cherry picked from commit b13970096918cf6af622b0110bfa3db2a0e144cd)
+
+commit 49ba23cc6dc8defff12162944e50643ff36d4e3f
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Sep 9 12:39:33 2026 +0200
+
+    pv_headers: check boundaries for first dimension array at pvh_split_values
+    
+    (cherry picked from commit 3938782758c21db7f356d0e9a27190bf449f03b2)
+
+commit aacdca20315ffc36ba2c51740e8f559b98068c3b
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Sep 9 11:35:51 2026 +0200
+
+    pv_headers: check boundaries at pvh_remove_header_param_helper
+    
+    (cherry picked from commit 596384a6771706c6fe7b8ecd7501eaba4daae77c)
+
+commit de1229fe2ba6ceb54c48d21a989db77f3eb16861
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Tue Sep 8 12:38:58 2026 +0200
+
+    pv_headers: pvh_str_append function to help check boundaries
+    
+    (cherry picked from commit 5d1010c0aa50d363458804bf5d9885b027052c77)
+
+commit 7a8d9c149ae72204b0697d1e18366588852fc1b7
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Sep 9 14:46:14 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 7ecbcabebdcfe9af32a9afb0804b774bbc91a18a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 9 11:00:48 2026 +0200
+
+    core: changed REPLACE_BUFFER_SIZE to 16384 from 1024
+    
+    (cherry picked from commit bb387defeca9c28420935cb5a0a43eab940ddb2a)
+
+commit 6bfb3a2490c15a330fac49ed42493971daceeef3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 3 14:29:00 2026 +0200
+
+    dialog: insert the dialog to db after arming the timer for DB_MODE_REALTIME
+    
+    - ensure the timeout value has proper value for reloading on restart
+    - related to GH #4860
+    
+    (cherry picked from commit 619df70893f062bb3a5c011d38aa0879d1fd52ff)
+
+commit 541b849ea6c1229a2cab0a28db573a74d900f284
+Author: Phil Lavin <phil.lavin@vonage.com>
+Date:   Tue Aug 25 20:42:42 2026 +0100
+
+    topos_redis: expire unconfirmed dialogs early
+    
+    - dialog records were inserted with the full dialog_expire lifetime
+      before the outcome of the initial request was known, and only
+      tps_redis_end_dialog() ever shortened it, on BYE - so a call that is
+      never answered (negative reply, CANCEL or timeout) left its record in
+      redis for the whole dialog_expire
+    - the db backend does not have this problem: tps_db_clean_dialogs()
+      makes a second pass removing records that still have iflags==0 after
+      branch_expire, while tps_redis_clean_dialogs() is a no-op, so nothing
+      compensated for it and the keyspace grew to hold every call attempt
+      for dialog_expire seconds
+    - reserve only branch_expire when inserting the dialog record and extend
+      it to dialog_expire when a 2xx reply confirms the dialog and sets
+      TPS_IFLAG_DLGON - the same rule as the db backend, expressed with the
+      expire redis already provides, so no keyspace scan is needed
+    - SUBSCRIBE is unaffected, its lifetime is driven by the Expires header
+    - if either branch_expire or dialog_expire is 0 expiring is disabled and
+      the previous behaviour is kept, so a confirmed dialog is never dropped
+      early
+    - an expire that fails or is rejected on the confirmed dialog record is
+      reported but does not fail the reply; redisc_exec_argv() returns error
+      replies as a non-NULL redisReply, so the reply type is checked as well
+      as NULL - otherwise a command rejected by redis (NOPERM, OOM,
+      read-only replica, ...) would silently leave a confirmed dialog on the
+      branch lifetime and the call would be dropped when it expired
+    
+    (cherry picked from commit f5f3aebd439c3f19fbd9b7111a4543146a345e50)
+
+commit 449ea46ca6342b6485b8ac8a37b3ae3e3567a51a
+Author: Phil Lavin <phil.lavin@vonage.com>
+Date:   Tue Aug 25 18:57:33 2026 +0100
+
+    topos: docs - expire of unconfirmed dialogs [skip ci]
+    
+    - document that branch_expire also bounds the lifetime of a dialog
+      record that has not been confirmed yet
+    - document that the dialog_expire interval starts when the dialog is
+      confirmed by a 2xx reply
+    
+    (cherry picked from commit 3e5124dadf2398ed0e2a97982deec5b67ade645d)
+
+commit 471c61cfff57613bc131ea09f10ee464a401c47e
+Author: Viktor Litvinov <viktor.litvinov@net2phone.com>
+Date:   Fri Aug 28 02:35:29 2026 +0200
+
+    nat_traversal: Use socket advertise addr and user contact uri
+    
+    (cherry picked from commit 76ed1c81da2f12d496aad15dddb816c53e671f5e)
+
+commit dc324979238e5fff7013c35413da8b40fc22289b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 2 08:23:15 2026 +0200
+
+    cfg_rpc: small formatting updated to exported rpcs commands
+    
+    (cherry picked from commit 3787b9f4d05f4d1cb85a1691e81140052754a38d)
+
+commit 9eece77f00e0c625efba7c704da554377a5b5ac5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 2 08:17:42 2026 +0200
+
+    cfg_rpc: renamed global variable for cfg context
+    
+    (cherry picked from commit 919c250a288a9f77cfb4ec37328ee59bb2f75cca)
+
+commit 2d0d00ae91c6f97620deb13faeed9e6bdb46beb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 28 12:47:06 2026 +0200
+
+    textops: small updates to make parameters easier to understand
+    
+    (cherry picked from commit d3b85f56e3ac95f30e97de0365bd832fd9a91ea7)
+
+commit 612c97032939c3a3ce0acb299be06f928275cf33
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 28 08:44:38 2026 +0200
+
+    core: parse identity checks for end position
+    
+    - function not in use at the moment
+    
+    (cherry picked from commit a14a33d00238d60e9cbcc06f66e8c1df8b018f62)
+
+commit 4abf6c4091293e52c2bbc1564a599c115470e36a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 20 10:16:12 2026 +0200
+
+    core: mem/q_malloc - cast in log message to fix compile warnings
+    
+    (cherry picked from commit 50814a119b23d45178dd74480dc36726097da420)
+
+commit b28d81255fcba99c02bf36926b48a8e96b721915
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 20 10:00:31 2026 +0200
+
+    core: mem/f_malloc - cast in log message to fix compile warnings
+    
+    (cherry picked from commit 3fee70d8ffca0ab40a59fba4de0f10ccd1266fb1)
+
+commit 223274ddfb930436434eb65609b9b3e0c38d0c5f
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 9 11:14:42 2026 +0000
+
+    sca: further checks for message header lengths
+    
+    (cherry picked from commit f0a964f47f908b08866a648e184c352c836e6707)
+
+commit c4475a2c697be94d9e5ce3da988781382e5ab4f3
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Sep 9 12:01:13 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 4e910187e39420f42ca9d60db5cc44fd739c64e5
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 9 09:47:38 2026 +0000
+
+    topos_htable: add note aboute recommended value for topos_htable_base64 on prod
+
+commit d8d713db93395debc77a414bfe4706b6dfab2c1c
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Mon Aug 31 11:23:09 2026 +0000
+
+    ldap: improve parameter parsing in ldap_params_search
+    
+    Fix a format-string vulnerability in ldap_params_search where the LDAP search filter was passed directly to vsnprintf() as a format string by ensuring that search filters are treated as literal string parameters.
+    
+    (cherry picked from commit 578ae4c9f3d3cc5948d5ec336f07472b0430c141)
+
+commit 1a9046b231a2ce00669ffd50f296fefc4bb22e50
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 9 08:58:58 2026 +0200
+
+    core: check exceeding USHRT_MAX for str2s(...)
+    
+    - GH #4922
+    
+    (cherry picked from commit c1eb2365202986e451d5d4261cca4f098eefbe1e)
+
+commit e668dca95ab596e3863066354cece893408386d8
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Wed Sep 2 13:55:32 2026 +0000
+
+    sipt: Add robust length validations in ISUP message parser
+    
+    (cherry picked from commit 3667bebf8d0bea07ed16218fd921d07db87aeb21)
+
+commit 00c715f6a1d7fdc45bf6c9111d922879d7b11c67
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Thu Sep 3 14:45:29 2026 +0000
+
+    cdp:Add robust length validation and erroe handling
+    
+    (cherry picked from commit f8287d43a5d90e23bc9aa499b5c52c18dd1165cf)
+
+commit 5a41cc15a636023b3e9c7e51e6b5bfa17db240d4
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Fri Aug 28 12:47:11 2026 +0000
+
+    sca: Change header building in subscription replies to use safe append functions
+    
+    Add sca_subscription_hdr_append and sca_subscription_hdr_append_cstr helpers to safely append string data with boundary and length checks
+    
+    Replace legacy SCA_STR_APPEND and SCA_STR_COPY_CSTR macros in sca_subscription_reply to  prevent potential overflows when constructing extra headers.
+    
+    (cherry picked from commit 7e4a3f36d3f3b89e6ab08864fc7e953681aecdf1)
+
+commit 970249b83f6e1343ad6338811aaf4fe74daef396
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Sep 1 14:31:17 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit f589d4c85a33d5b51260d14b721c18cc58279411
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Sep 1 12:23:56 2026 +0000
+
+    rtpengine: fix section header in docs, some white-space changes
+
+commit 733ffe68cb5904b04d0cae62b4f11340306d7358
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Fri Aug 28 07:52:04 2026 +0000
+
+    userblocklist: Add robust prefix length validation and client fault handling in RPC helpers
+    
+    Co-authored-by: Pedro J. Nunez-Cacho Fuentes <tunelko@gmail.com>
+    (cherry picked from commit 417d8dfa0af030602bbeb796a1c3616930100a23)
+
+commit 3b744f53d11a4da4c3dea844bbf490fe53516fc2
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Thu Aug 27 13:26:43 2026 +0000
+
+    sipcapture: add bounds check for HEPv2 time header offset
+    
+    (cherry picked from commit 455888e320dfe9b69fffd6a2b60956a6c006b800)
+
+commit 45f9ad5461d31c4477229ad3ee3d4a7d1e63f727
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Aug 26 06:24:36 2026 +0000
+
+    ims_registrar_scsc: allocate space for @ character (GH #4886)
+    
+    (cherry picked from commit c31fd77fe5dd196f4e1cce6cc31fdd060bf966b5)
+
+commit 458eb72117f6afd2402f558ec0708817be752c72
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Tue Aug 25 09:56:07 2026 +0000
+
+    seas: sanitize address length in process_bind_action()
+    Add length validation to prevent stack buffer overflow.
+    
+    Casts my_addr.len to unsigned char.
+    
+    Co-authored-by: Pedro J. Nunez-Cacho Fuentes <tunelko@gmail.com>
+    (cherry picked from commit f98c37a49ffd581850cfb46a0c39533b3ea30d9b)
+
+commit 7b3bf895edfbfd3f5a13fd14c4d35788ea6b4feb
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Aug 25 23:18:35 2026 +0800
+
+    app_python3: fix deadlock when threads_mode = 1
+    
+    threads_mode = 1 allows Python threads to run in parallel
+    with io_wait. Fixes a missing check for already-acquired
+    GIL that could lead to deadlock.
+    
+    Cherry-picked from 05b2da1193e767ead145213db810bef1c5aa88eb.
+
+commit 87cf5a0c1681b8c83f4565c2f0bfc4167bde525f
+Author: Alexis Hadjisotiriou <ah@gilawa.com>
+Date:   Mon Aug 24 09:36:27 2026 +0000
+
+    seas: fix shm buffer overflow during header serialization in encode_msg()
+    
+    Add length validation inside the header processing loop in encode_msg() to prevent shared memory buffer overflow.
+    
+    Previously, encode_msg() wrote header metadata and bodies into a fixed 3200-byte shared memory buffer without validating the remaining available size during each loop iteration. The bounds check occurred only after the entire header processing loop had executed, allowing a SIP request containing a large number of headers to write past the allocated shm buffer.
+    
+    This addresses an incomplete fix condition related to CVE-2016-2385
+    
+    (cherry picked from commit 7a4c5443b02654d330fad9a7d5a29238ded8d036)
+
+commit 4f62235b6f477b649c5cc18b0c81b4e26c949b98
+Author: Darren Carreras <carrerasdarren@gmail.com>
+Date:   Thu Aug 20 19:15:58 2026 -0400
+
+    cdp: reject undersized Diameter messages
+    
+    - validate the declared message length before allocating the receive buffer
+    - prevent the 20-byte header copy from overflowing shorter allocations
+    - reported by GH #4876
+    
+    Assisted-by: OpenAI Codex
+    (cherry picked from commit 38711a3e788de0130d48cb485578c482b57d9351)
+
+
 ===================== 2026-08-20 Version 6.1.4 Released =====================
 
 ===================== Changes Since Version 6.1.3 ===========================
