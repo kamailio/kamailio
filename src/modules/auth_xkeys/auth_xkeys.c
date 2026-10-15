@@ -257,7 +257,7 @@ int auth_xkeys_add(sip_msg_t *msg, str *hdr, str *key, str *alg, str *data)
 
 	xdata.s = pv_get_buffer();
 	sout.s = xout;
-	if(alg->len == 11 && strncasecmp(alg->s, "hmac-sha256", 6) == 0) {
+	if(alg->len == 11 && strncasecmp(alg->s, "hmac-sha256", 11) == 0) {
 		if(cryptoapi.hmac_sha256 == NULL && gcryptapi.hmac_sha256 == NULL) {
 			LM_ERR("no HMAC engine was set\n");
 			return -1;
