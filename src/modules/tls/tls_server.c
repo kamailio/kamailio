@@ -382,7 +382,8 @@ static int tls_complete_init(struct tcp_connection *c)
 #endif
 #endif
 	/* link the extra data struct inside ssl connection*/
-	if(SSL_set_app_data(data->ssl, data) == 0) {
+	if(SSL_set_app_data(data->ssl, data) == 0
+			|| SSL_set_ex_data(data->ssl, ksr_tls_ssl_ex_idx, data) == 0) {
 		LM_ERR("failed to set app_data - possible memory issue\n");
 		if(data->ssl)
 			SSL_free(data->ssl);
