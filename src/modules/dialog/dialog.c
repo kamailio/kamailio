@@ -2867,8 +2867,8 @@ static int ki_dlg_var_is_null(sip_msg_t *msg, str *name)
 /**
  *
  */
-static int ki_dlg_req_within4(struct sip_msg *msg, str *side, str *method,
-		str *content_type, str *content)
+static int ki_dlg_req_within5(struct sip_msg *msg, str *side, str *method,
+		str *headers, str *content_type, str *content)
 {
 	int n = 0;
 	if(side && side->len > 0) {
@@ -2882,7 +2882,33 @@ static int ki_dlg_req_within4(struct sip_msg *msg, str *side, str *method,
 	}
 
 	return ki_dlg_req_with_headers_and_content(
-			msg, n, method, NULL, content_type, content);
+			msg, n, method, headers, content_type, content);
+}
+
+/**
+ *
+ */
+static int ki_dlg_req_within4(struct sip_msg *msg, str *side, str *method,
+		str *content_type, str *content)
+{
+	return ki_dlg_req_within5(msg, side, method, NULL, content_type, content);
+}
+
+/**
+ *
+ */
+static int ki_dlg_req_within3(
+		struct sip_msg *msg, str *side, str *method, str *headers)
+{
+	return ki_dlg_req_within5(msg, side, method, headers, NULL, NULL);
+}
+
+/**
+ *
+ */
+static int ki_dlg_req_within2(struct sip_msg *msg, str *side, str *method)
+{
+	return ki_dlg_req_within5(msg, side, method, NULL, NULL, NULL);
 }
 
 /**
@@ -3075,10 +3101,25 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dialog"), str_init("dlg_req_within2"),
+		SR_KEMIP_INT, ki_dlg_req_within2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_req_within3"),
+		SR_KEMIP_INT, ki_dlg_req_within3,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dialog"), str_init("dlg_req_within4"),
 		SR_KEMIP_INT, ki_dlg_req_within4,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_req_within5"),
+		SR_KEMIP_INT, ki_dlg_req_within5,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
