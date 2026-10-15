@@ -87,6 +87,10 @@ typedef struct tls_extra_data
 	int ssl_cert_chain_len;
 } tls_extra_data_t;
 
+/* SSL ex_data slot marking the SSLs of this module (value: their
+ * tls_extra_data) */
+extern int ksr_tls_ssl_ex_idx;
+
 /* return true if write wants read */
 #define tls_write_wants_read(tls_ed) (tls_ed->flags & F_TLS_CON_WR_WANTS_RD)
 

@@ -1198,6 +1198,11 @@ static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 	if(ksr_tls_keylog_mode == NULL) {
 		return;
 	}
+	/* an LD_PRELOAD key logger can chain other libraries' sessions here
+	 * (e.g. libpq's, whose app data is not a tls_extra_data) */
+	if(SSL_get_ex_data(ssl, ksr_tls_ssl_ex_idx) == NULL) {
+		return;
+	}
 	if(!(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_ACTIVE)) {
 		return;
 	}

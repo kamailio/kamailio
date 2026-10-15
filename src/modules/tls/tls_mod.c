@@ -244,6 +244,7 @@ int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
 int ksr_tls_key_password_mode = 0;
 int *ksr_tls_keylog_mode = NULL;
+int ksr_tls_ssl_ex_idx = -1;
 str ksr_tls_keylog_file = STR_NULL;
 str ksr_tls_keylog_peer = STR_NULL;
 
@@ -426,6 +427,12 @@ static int mod_init(void)
 		LM_WARN("tls support is disabled "
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
+	}
+	ksr_tls_ssl_ex_idx =
+			SSL_get_ex_new_index(0, "ksr_tls_extra_data", NULL, NULL, NULL);
+	if(ksr_tls_ssl_ex_idx < 0) {
+		LM_ERR("failed to get SSL ex_data index\n");
+		return -1;
 	}
 	if(fix_tls_cfg(&default_tls_cfg) < 0) {
 		LM_ERR("initial tls configuration fixup failed\n");
