@@ -102,6 +102,10 @@
 #include "../../core/parser/parser_f.h"
 #include "../../core/ut.h"
 #include "../../core/timer_ticks.h"
+#include "../../core/timer.h"
+#include "../../core/pt.h"
+#include "../../core/sr_module.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../core/compiler_opt.h"
 #include "../../core/sr_compat.h"
 #include "t_funcs.h"
@@ -123,6 +127,88 @@ struct msgid_var user_rt_t1_timeout_ms;
 struct msgid_var user_rt_t2_timeout_ms;
 struct msgid_var user_inv_max_lifetime;
 struct msgid_var user_noninv_max_lifetime;
+
+int tm_timer_mode = 0;
+ksr_timer_ctx_t tm_timer_ctx = {0};
+static int tm_timer_ctx_initialized = 0;
+
+
+int tm_timer_init(void)
+{
+	int timer_procs = 1;
+
+	if(tm_timer_mode < 0 || tm_timer_mode > 1) {
+		LM_ERR("timer_mode must be 0 or 1\n");
+		return -1;
+	}
+	if(tm_timer_mode == 0)
+		return 0;
+
+	if(init_timer_ctx(&tm_timer_ctx) < 0) {
+		LM_ERR("failed to initialize dedicated timer context\n");
+		return -1;
+	}
+	tm_timer_ctx_initialized = 1;
+
+#ifdef USE_SLOW_TIMER
+	timer_procs++;
+#endif
+	if(register_procs(timer_procs) < 0) {
+		LM_ERR("failed to register dedicated timer processes\n");
+		tm_timer_destroy();
+		return -1;
+	}
+	cfg_register_child(timer_procs);
+
+	return 0;
+}
+
+
+int tm_timer_start(void)
+{
+	int pid;
+
+	if(tm_timer_mode == 0)
+		return 0;
+
+#ifdef USE_SLOW_TIMER
+	pid = fork_process(PROC_TIMER, "TM slow timer", 1);
+	if(pid < 0) {
+		LM_ERR("failed to fork dedicated slow timer process\n");
+		return -1;
+	}
+	if(pid == 0) {
+		if(arm_slow_timer_ctx(&tm_timer_ctx) < 0)
+			return -1;
+		slow_timer_main_ctx(&tm_timer_ctx);
+		return 0;
+	}
+	tm_timer_ctx.slow_timer_pid = pid;
+#endif
+
+	pid = fork_process(PROC_TIMER, "TM timer", 1);
+	if(pid < 0) {
+		LM_ERR("failed to fork dedicated timer process\n");
+		return -1;
+	}
+	if(pid == 0) {
+		if(arm_timer_ctx(&tm_timer_ctx) < 0)
+			return -1;
+		timer_main_ctx(&tm_timer_ctx);
+		return 0;
+	}
+
+	return 0;
+}
+
+
+void tm_timer_destroy(void)
+{
+	if(tm_timer_ctx_initialized) {
+		destroy_timer_ctx(&tm_timer_ctx);
+		tm_timer_ctx_initialized = 0;
+	}
+}
 
 
 /**
@@ -448,7 +534,7 @@ inline static void final_response_handler(
 		 * it still hasn't passed more than max_inv_lifetime or
 		 * max_noninv_lifetimesince we started, add another branch/uac */
 		if(cfg_get(core, core_cfg, use_dns_failover)) {
-			now = get_ticks_raw();
+			now = tm_get_ticks_raw();
 			if((s_ticks_t)(t->end_of_life - now) > 0) {
 				LM_DBG("send on branch %d failed, adding another branch\n",
 						r_buf->branch);
@@ -529,7 +615,7 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln *tl, void *p)
 		/* WARNING:  the next line depends on taking care not to start the
 		 *           wait timer before finishing with t (if this is not
 		 *           guaranteed then comment the timer_allow_del() line) */
-		timer_allow_del(); /* [optional] allow timer_dels, since we're done
+		tm_timer_allow_del(); /* [optional] allow timer_dels, since we're done
 							  and there is no race risk */
 		final_response_handler(rbuf, t);
 		return 0;

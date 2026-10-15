@@ -573,7 +573,7 @@ static inline int t_uac_prepare(
 	new_cell->fr_inv_timeout = (uac_r->fr_inv_timeout > 0)
 									   ? uac_r->fr_inv_timeout
 									   : cfg_get(tm, tm_cfg, fr_inv_timeout);
-	new_cell->end_of_life = get_ticks_raw() + lifetime;
+	new_cell->end_of_life = tm_get_ticks_raw() + lifetime;
 	/* same as above for retransmission intervals */
 	new_cell->rt_t1_timeout_ms = cfg_get(tm, tm_cfg, rt_t1_timeout_ms);
 	new_cell->rt_t2_timeout_ms = cfg_get(tm, tm_cfg, rt_t2_timeout_ms);

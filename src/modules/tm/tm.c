@@ -555,6 +555,7 @@ static param_export_t params[] = {
 	{"delayed_reply", PARAM_INT, &_tm_delayed_reply},
 	{"evlreq_mode", PARAM_INT, &_tm_evlreq_mode},
 	{"debug_mode", PARAM_INT, &_tm_debug_mode},
+	{"timer_mode", PARAM_INT, &tm_timer_mode},
 	{0, 0, 0}
 };
 
@@ -944,6 +945,10 @@ static int mod_init(void)
 #ifdef WITH_TM_CTX
 	tm_ctx_init();
 #endif
+	if(tm_timer_init() < 0) {
+		LM_ERR("failed to initialize timer mode\n");
+		return -1;
+	}
 	tm_init = 1;
 	return 0;
 }
@@ -959,10 +964,16 @@ static int child_init(int rank)
 			LM_ERR("Error while initializing tm statistics structures\n");
 			return -1;
 		}
-	} else if(child_init_callid(rank) < 0) {
-		/* don't init callid for PROC_INIT*/
-		LM_ERR("Error while initializing Call-ID generator\n");
-		return -2;
+	} else {
+		if(child_init_callid(rank) < 0) {
+			/* don't init callid for PROC_INIT*/
+			LM_ERR("Error while initializing Call-ID generator\n");
+			return -2;
+		}
+		if(rank == PROC_MAIN && tm_timer_start() < 0) {
+			LM_ERR("failed to start dedicated timer processes\n");
+			return -3;
+		}
 	}
 	return 0;
 }
@@ -2436,7 +2447,7 @@ int t_is_expired(sip_msg_t *msg)
 			   " for which no T-state has been established\n");
 		ret = -1;
 	} else {
-		ret = (TICKS_GT(t->end_of_life, get_ticks_raw())) ? -1 : 1;
+		ret = (TICKS_GT(t->end_of_life, tm_get_ticks_raw())) ? -1 : 1;
 	}
 	return ret;
 }

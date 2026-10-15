@@ -630,7 +630,7 @@ void tm_clean_lifetime(void)
 	tm_cell_t *bcell;
 	ticks_t texp;
 
-	texp = get_ticks_raw() - S_TO_TICKS(TM_LIFETIME_LIMIT);
+	texp = tm_get_ticks_raw() - S_TO_TICKS(TM_LIFETIME_LIMIT);
 
 	for(r = 0; r < TABLE_ENTRIES; r++) {
 		/* faster first try without lock */

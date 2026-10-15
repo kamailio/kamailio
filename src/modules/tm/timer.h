@@ -114,6 +114,39 @@
 				  : cfg_get(tm, tm_cfg, tm_max_noninv_lifetime))
 
 
+extern int tm_timer_mode;
+extern ksr_timer_ctx_t tm_timer_ctx;
+
+int tm_timer_init(void);
+int tm_timer_start(void);
+void tm_timer_destroy(void);
+
+static inline ksr_timer_ctx_t *tm_timer_ctx_get(void)
+{
+	return (tm_timer_mode != 0) ? &tm_timer_ctx : &ksr_timer_ctx_core;
+}
+
+#define tm_get_ticks_raw() get_ticks_raw_ctx(tm_timer_ctx_get())
+
+#ifdef TIMER_DEBUG
+#define tm_timer_add_safe(tl, d, file, func, line) \
+	timer_add_safe_ctx(tm_timer_ctx_get(), (tl), (d), (file), (func), (line))
+#define tm_timer_add(tl, d) \
+	timer_add_safe_ctx(     \
+			tm_timer_ctx_get(), (tl), (d), __FILE__, __FUNCTION__, __LINE__)
+#define tm_timer_del(tl) \
+	timer_del_safe_ctx(  \
+			tm_timer_ctx_get(), (tl), __FILE__, __FUNCTION__, __LINE__)
+#else
+#define tm_timer_add_safe(tl, d) \
+	timer_add_safe_ctx(tm_timer_ctx_get(), (tl), (d))
+#define tm_timer_add(tl, d) timer_add_safe_ctx(tm_timer_ctx_get(), (tl), (d))
+#define tm_timer_del(tl) timer_del_safe_ctx(tm_timer_ctx_get(), (tl))
+#endif
+
+#define tm_timer_allow_del() timer_allow_del_ctx(tm_timer_ctx_get())
+
+
 extern struct msgid_var user_fr_timeout;
 extern struct msgid_var user_fr_inv_timeout;
 extern struct msgid_var user_rt_t1_timeout_ms;
@@ -174,7 +207,7 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 	LM_DBG("starting FR/RETR timers\n");
 #endif
 
-	ticks = get_ticks_raw();
+	ticks = tm_get_ticks_raw();
 	timeout = rb->my_T->fr_timeout;
 	eol = rb->my_T->end_of_life;
 	retr_ticks = (retr_ms != (unsigned)(-1)) ? MS_TO_TICKS(retr_ms) : retr_ms;
@@ -212,10 +245,10 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 		return 0;
 	}
 #ifdef TIMER_DEBUG
-	ret = timer_add_safe(&(rb)->timer,
+	ret = tm_timer_add_safe(&(rb)->timer,
 			(timeout < retr_ticks) ? timeout : retr_ticks, file, func, line);
 #else
-	ret = timer_add(
+	ret = tm_timer_add(
 			&(rb)->timer, (timeout < retr_ticks) ? timeout : retr_ticks);
 #endif
 	if(ret == 0)
@@ -247,7 +280,7 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 		(rb)->flags |= F_RB_DEL_TIMER; /* timer should be deleted */ \
 		if((rb)->t_active) {                                         \
 			(rb)->t_active = 0;                                      \
-			timer_del(&(rb)->timer);                                 \
+			tm_timer_del(&(rb)->timer);                              \
 		}                                                            \
 	} while(0)
 
@@ -255,11 +288,11 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 #define stop_rb_retr(rb) ((rb)->flags |= F_RB_RETR_DISABLED)
 
 /* reset retr. interval to t2 and restart retr. timer */
-#define switch_rb_retr_to_t2(rb)                                     \
-	do {                                                             \
-		(rb)->flags |= F_RB_T2;                                      \
-		(rb)->retr_expire =                                          \
-				get_ticks_raw() + MS_TO_TICKS(RT_T2_TIMEOUT_MS(rb)); \
+#define switch_rb_retr_to_t2(rb)                                        \
+	do {                                                                \
+		(rb)->flags |= F_RB_T2;                                         \
+		(rb)->retr_expire =                                             \
+				tm_get_ticks_raw() + MS_TO_TICKS(RT_T2_TIMEOUT_MS(rb)); \
 	} while(0)
 
 
@@ -268,7 +301,7 @@ inline static void restart_rb_fr(struct retr_buf *rb, ticks_t new_val)
 	ticks_t now;
 	struct cell *t;
 
-	now = get_ticks_raw();
+	now = tm_get_ticks_raw();
 	t = rb->my_T;
 	if(unlikely((rb->rbtype == TYPE_REQUEST)
 				&& (((s_ticks_t)(t->end_of_life - (now + new_val))) < 0)))
@@ -286,7 +319,7 @@ inline static void change_fr(struct cell *t, ticks_t fr_inv, ticks_t fr)
 	int i;
 	ticks_t fr_inv_expire, fr_expire, req_fr_expire;
 
-	fr_expire = get_ticks_raw();
+	fr_expire = tm_get_ticks_raw();
 	fr_inv_expire = fr_expire + fr_inv;
 	fr_expire += fr;
 	req_fr_expire = ((s_ticks_t)(t->end_of_life - fr_expire) < 0)
@@ -351,7 +384,7 @@ inline static void change_end_of_life(struct cell *t, int adj, ticks_t eol)
 {
 	int i;
 
-	t->end_of_life = get_ticks_raw() + eol;
+	t->end_of_life = tm_get_ticks_raw() + eol;
 	if(adj) {
 		for(i = 0; i < t->nr_of_outgoings; i++) {
 			if(t->uac[i].request.t_active) {

@@ -89,6 +89,7 @@ int send_pr_buffer(struct retr_buf *rb, void *buf, int len
 
 void tm_shutdown()
 {
+	tm_timer_destroy();
 	LM_DBG("done\n");
 }
 
@@ -134,14 +135,15 @@ void put_on_wait(struct cell *Trans)
 		4.									WAIT timer executed,
 											transaction deleted
 	*/
-	if(timer_add(&Trans->wait_timer, cfg_get(tm, tm_cfg, wait_timeout)) == 0) {
+	if(tm_timer_add(&Trans->wait_timer, cfg_get(tm, tm_cfg, wait_timeout))
+			== 0) {
 		/* success */
 		t_stats_wait();
 	} else {
 		LM_DBG("transaction %p already on wait\n", Trans);
 	}
 	if(Trans->wait_start == 0) {
-		Trans->wait_start = get_ticks_raw();
+		Trans->wait_start = tm_get_ticks_raw();
 	}
 }
 
