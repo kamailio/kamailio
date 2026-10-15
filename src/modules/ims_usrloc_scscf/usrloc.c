@@ -43,6 +43,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 #include "usrloc.h"
@@ -51,6 +56,7 @@
 #include "ucontact.h"
 #include "udomain.h"
 #include "subscribe.h"
+#include "cx_profile.h"
 #include "../../core/sr_module.h"
 #include "ims_usrloc_scscf_mod.h"
 
@@ -123,6 +129,8 @@ int bind_usrloc(usrloc_api_t *api)
 			get_presentity_from_subscriber_dialog;
 
 	api->register_ulcb = register_ulcb;
+	api->cx_replace_profile = cx_replace_profile;
+	api->cx_deregister = cx_deregister;
 
 	//api->update_user_profile = update_user_profile;
 	api->nat_flag = nat_bflag;

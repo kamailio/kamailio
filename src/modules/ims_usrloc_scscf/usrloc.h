@@ -43,6 +43,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 #ifndef USRLOC_H
@@ -541,6 +546,10 @@ typedef int (*update_impurecord_t)(struct udomain *_d, str *public_identity,
 		str *ecf1, str *ecf2, struct impurecord **_r);
 
 typedef void (*lock_contact_slot_t)(str *contact_uri);
+typedef int (*cx_replace_profile_t)(struct udomain *, ims_subscription *);
+typedef void (*cx_notify_contact_f)(impurecord_t *, ucontact_t *, int);
+typedef int (*cx_deregister_t)(
+		struct udomain *, str *, str *, int, int, cx_notify_contact_f);
 
 typedef void (*unlock_contact_slot_t)(str *contact_uri);
 
@@ -666,6 +675,9 @@ typedef struct usrloc_api
 	get_presentity_from_subscriber_dialog_t
 			get_presentity_from_subscriber_dialog;
 
+	/* Append-only Cx API: rebuild all IMS consumers together. */
+	cx_replace_profile_t cx_replace_profile;
+	cx_deregister_t cx_deregister;
 } usrloc_api_t;
 
 /*! usrloc API export bind function */
