@@ -65,9 +65,9 @@ jobs:
         id: set_value
         working-directory: /code
         run: |
-          val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
+          val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs | sed 's/ /\\ /g')
           echo "val is $val"
-          echo "kam_grps=\"$val\"" >> "$GITHUB_OUTPUT"
+          echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
 
       - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
@@ -78,7 +78,7 @@ jobs:
           build-args: -j$(nproc)
           options: |
             CMAKE_BUILD_TYPE=Release
-            MODULE_GROUP_NAME=${{ steps.set_value.outputs.kam_grps }}
+            MODULE_GROUP_NAME="${{ steps.set_value.outputs.kam_grps }}"
             CMAKE_C_COMPILER=clang
 
       - name: Initialize CodeQL
