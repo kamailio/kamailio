@@ -549,6 +549,14 @@ event_route [tm:branch-failure:contact] {
      * $T_branch(name)
      * $T_inv(pv)
      * $T(name)
+     * $T(failure_route) - name of the failure_route currently armed for
+       the transaction.
+     * $T(branch_route) - name of the branch_route currently armed for the
+       transaction.
+     * $T(onreply_route) - name of the onreply_route currently armed for
+       the transaction.
+     * $T(branch_failure_route) - name of the branch_failure_route
+       currently armed for the transaction.
 
    Exported pseudo-variables are documented at
    https://www.kamailio.org/wikidocs/.

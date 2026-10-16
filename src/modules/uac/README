@@ -659,9 +659,11 @@ modparam("uac", "reg_use_domain", 1)
    several public interfaces are available.
 
    A send socket in the $uac_reg variable used together with the
-   uac_req_send() function will override this parameter. A socket value in
-   the uacreg table will also override the parameter for this particular
-   entry.
+   uac_req_send() function will override this parameter. A legacy socket
+   value in the uacreg table will also override the parameter for that
+   entry. When the uacreg socket value is a socket map, a mapped socket
+   overrides this parameter for its transport, while default_socket
+   remains the fallback for transports omitted from the map.
 
    By default no default socket is defined, the send socket is choosen
    from the “tm” module when the requests is sent out.
@@ -1486,8 +1488,17 @@ event_route[uac:reply] {
        also add the Contact URI parameter line=<l_uuid> so replies can be
        matched to the correct binding.
 
-     * socket - Used socket for sending out registration requests, e.g.:,
-       udp:192.168.0.125:5060
+     * socket - Local socket selection for sending registration requests.
+       A single socket uses the legacy “proto:address:port” form, for
+       example “udp:192.168.0.125:5060”. A transport-specific socket map
+       uses configured socket names, for example
+       “udp=private-udp;tcp=private-tcp;tls=private-tls;sctp=private-sctp”
+       . The corresponding mapped socket is selected after DNS NAPTR/SRV
+       resolution and on each DNS failover attempt. TCP also covers WS,
+       and TLS also covers WSS. An invalid map, duplicate transport,
+       unknown socket name, or socket whose protocol does not match the
+       map entry causes the registration record to be rejected (or skipped
+       while loading records from the database).
 
    The module takes care of sending REGISTER and refresh registrations
    before they expire.
