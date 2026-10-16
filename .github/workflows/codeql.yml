@@ -70,7 +70,7 @@ jobs:
         with:
           run-build: false
           build-dir: ${{github.workspace}}/build
-          build-args: -j8
+          build-args: -j$(nproc)
           options: |
             CMAKE_BUILD_TYPE=${{matrix.build_type}}
             MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
@@ -93,7 +93,7 @@ jobs:
         with:
           run-build: true
           build-dir: ${{github.workspace}}/build
-          build-args: -j8
+          build-args: -j$(nproc)
           options: |
             CMAKE_BUILD_TYPE=${{matrix.build_type}}
             MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
