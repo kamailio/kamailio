@@ -41,6 +41,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v7
 
+    - name: Set values
+      id: set_values
+      run: |
+        echo "nproc=$(nproc)" >> "$GITHUB_OUTPUT"
 
     - name: Install cross-compiler
       if: matrix.os == 'ubuntu-latest' && matrix.target_arch == 'aarch64'
@@ -54,7 +58,7 @@ jobs:
       if: matrix.os != 'ubuntu-latest' || matrix.target_arch != 'aarch64'
       with:
         build-dir: ${{github.workspace}}/build
-        build-args: -j$(nproc)
+        build-args: -j${{ steps.set_values.outputs.nproc }}
         options: |
           CMAKE_BUILD_TYPE=${{matrix.build_type}}
           MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
@@ -65,7 +69,7 @@ jobs:
       uses: threeal/cmake-action@v2.1.0
       with:
         build-dir: ${{github.workspace}}/build
-        build-args: -j$(nproc)
+        build-args: -j${{ steps.set_values.outputs.nproc }}
         options: |
           CMAKE_BUILD_TYPE=${{matrix.build_type}}
           MODULE_GROUP_NAME=${{matrix.kamailio_groups}}

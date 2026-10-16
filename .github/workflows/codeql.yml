@@ -62,11 +62,12 @@ jobs:
           submodules: recursive
 
       - name: List of modules
-        id: set_value
+        id: set_values
         working-directory: /code
         run: |
           val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
           echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
+          echo "nproc=$(nproc)" >> "$GITHUB_OUTPUT"
 
       - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
@@ -74,12 +75,12 @@ jobs:
         with:
           run-build: false
           build-dir: /code/build
-          build-args: -j$(nproc)
+          build-args: -j${{ steps.set_values.outputs.nproc }}
           options: |
             CMAKE_BUILD_TYPE=Release
             CMAKE_C_COMPILER=clang
           args: |
-            -DMODULE_GROUP_NAME='${{ steps.set_value.outputs.kam_grps }}'
+            -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}"
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -98,7 +99,7 @@ jobs:
         with:
           run-build: true
           build-dir: /code/build
-          build-args: -j$(nproc)
+          build-args: -j${{ steps.set_values.outputs.nproc }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
