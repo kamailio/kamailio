@@ -184,6 +184,50 @@ int cxdx_add_sip_auth_data_item_request(AAAMessage *msg, str auth_scheme,
 int cxdx_add_server_name(AAAMessage *msg, str data);
 
 /**
+ * Creates and adds an SCSCF-Restoration-Info AVP (TS 23.380 4.6.2): the
+ * Contact and the Path leading to it (normally just the P-CSCF), backed up
+ * at the HSS so a restarted S-CSCF can ask for them back later. Encoded as
+ * TS 29.229 6.3.46 has it: User-Name plus one Restoration-Info (6.3.52)
+ * grouping the Path, the Contact and, if given, the Call-ID.
+ * @param msg - the Diameter message to add to.
+ * @param user_name - the private identity the binding belongs to
+ * @param path - the Path header value backed up at REGISTER
+ * @param contact - the Contact header field value backed up at REGISTER,
+ * parameters included (6.3.48)
+ * @param call_id - the REGISTER's Call-ID, or empty to leave it out
+ * @returns 1 on success (including nothing to add, when any of user_name,
+ * path and contact is empty) or 0 on error
+ */
+int cxdx_add_scscf_restoration_info(
+		AAAMessage *msg, str user_name, str path, str contact, str call_id);
+
+/**
+ * Returns the Path/Contact/Call-ID of the first Restoration-Info in the first
+ * SCSCF-Restoration-Info AVP, if any. A Restoration-Info missing its Contact
+ * or its Path counts as absent.
+ * @param msg - the Diameter message
+ * @param path - filled with the Path, or {0,0} if absent
+ * @param contact - filled with the Contact, or {0,0} if absent
+ * @param call_id - filled with the Call-ID, or {0,0} if absent (optional in
+ * Restoration-Info, so it can be missing when the other two are there)
+ * @returns 1 if a usable Restoration-Info was present, 0 otherwise
+ */
+int cxdx_get_scscf_restoration_info(
+		AAAMessage *msg, str *path, str *contact, str *call_id);
+
+/**
+ * Creates and adds a Supported-Features AVP for Feature-List-ID 1, the Cx
+ * feature list (TS 29.229 6.3.29, table 7.1.1).
+ * @param msg - the Diameter message to add to.
+ * @param feature_list - the AVP_IMS_Feature_List_ID_* bits supported
+ * @param mandatory - set the M bit: the request was constructed using one of
+ * those features (TS 29.229 7.2.1)
+ * @returns 1 on success or 0 on error
+ */
+int cxdx_add_supported_features(
+		AAAMessage *msg, unsigned int feature_list, int mandatory);
+
+/**
  * Returns the SIP-Number-Auth-Items AVP from a Diameter message.
  * @param msg - the Diameter message
  * @returns the number or 0 on error
