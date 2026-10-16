@@ -589,7 +589,6 @@ mpath="modules_k/:modules/"
 
 loadmodule "sl.so"
 loadmodule "kex.so"
-loadmodule "mi_fifo.so"
 loadmodule "ctl.so"
 loadmodule "msrp.so"
 loadmodule "pv.so"
@@ -597,8 +596,6 @@ loadmodule "auth.so"
 loadmodule "cfgutils.so"
 loadmodule "htable.so"
 loadmodule "xlog.so"
-
-modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
 modparam("auth", "nonce_count", 1)
 modparam("auth", "qop", "auth")
@@ -749,15 +746,12 @@ mpath="modules_k/:modules/"
 
 loadmodule "sl.so"
 loadmodule "kex.so"
-loadmodule "mi_fifo.so"
 loadmodule "ctl.so"
 loadmodule "msrp.so"
 loadmodule "pv.so"
 loadmodule "auth.so"
 loadmodule "cfgutils.so"
 loadmodule "xlog.so"
-
-modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
 modparam("auth", "nonce_count", 1)
 modparam("auth", "qop", "auth")
