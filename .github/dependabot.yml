@@ -17,10 +17,8 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
-    allow:
+    ignore:
       # we want to check with the same version we have in ubuntu_latest
-      - dependency-name: https://github.com/pre-commit/mirrors-clang-format
-        update-types:
-          - "version-update:semver-patch"
+      - dependency-name: github.com/pre-commit/mirrors-clang-format
     commit-message:
       prefix: "pre-commit: [skip ci]"
