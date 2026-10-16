@@ -17,6 +17,7 @@ sed -i -e '/^ python,/d' -e '/python-dev/d' \
   ${DIST}/control
 sed -i -e '/^PACKAGE_GROUPS += python$/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += python' ${DIST}/rules
+rm -rf ${DIST}/kamailio-python-modules.cmake-components
 
 # no lsb-base
 sed -i -e '/lsb-base/d' ${DIST}/control
@@ -36,6 +37,7 @@ sed -i -e '/^ libsecp256k1-dev,/d' \
   ${DIST}/control
 sed -i -e '/^PACKAGE_GROUPS += auth_blockchain$/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += auth_blockchain' ${DIST}/rules
+rm -rf ${DIST}/kamailio-authblockchain-modules.cmake-components
 
 # latest higher lua version available
 sed -i -e 's/liblua5.5-dev/liblua5.4-dev/g' ${DIST}/control

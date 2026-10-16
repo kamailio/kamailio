@@ -23,6 +23,7 @@ sed -i -e '/^ python,/d' -e '/python-dev/d' \
   ${DIST}/control
 sed -i -e '/^PACKAGE_GROUPS += python$/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += python' ${DIST}/rules
+rm -rf ${DIST}/kamailio-python-modules.cmake-components
 
 # no lsb-base
 sed -i -e '/lsb-base/d' ${DIST}/control

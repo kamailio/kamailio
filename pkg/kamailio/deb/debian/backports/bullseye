@@ -20,6 +20,7 @@ sed -i -e '/^ libnats-dev,/d' \
   ${DIST}/control
 sed -i -e '/^PACKAGE_GROUPS += nats/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += nats' ${DIST}/rules
+rm -rf ${DIST}/kamailio-nats-modules.cmake-components
 
 # libwolfssl-dev < 5.2
 sed -i -e '/^ libwolfssl-dev,/d' \
@@ -40,6 +41,7 @@ sed -i -e '/^ libsecp256k1-dev,/d' \
   ${DIST}/control
 sed -i -e '/^PACKAGE_GROUPS += auth_blockchain$/d' ${DIST}/rules
 sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += auth_blockchain' ${DIST}/rules
+rm -rf ${DIST}/kamailio-authblockchain-modules.cmake-components
 
 # latest higher lua version available
 sed -i -e 's/liblua5.5-dev/liblua5.4-dev/g' ${DIST}/control
