@@ -42,6 +42,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../core/counters.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_to.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_handlers.h"
@@ -574,7 +575,11 @@ dlg_t *build_dlg_t_early(
 		}
 		LM_DBG("new route set: %.*s\n", STR_FMT(rr_set));
 
-		if(parse_rr_body(rr_set->s, rr_set->len, &td->route_set) != 0) {
+		/* every record may have been skipped (typically our own, echoed back by
+		 * the callee in its response): an empty route set is valid, the request
+		 * then goes straight to the remote target (the Contact) */
+		if(rr_set->len > 0
+				&& parse_rr_body(rr_set->s, rr_set->len, &td->route_set) != 0) {
 			LM_ERR("failed to parse route set\n");
 			goto error;
 		}
@@ -619,8 +624,11 @@ dlg_t *build_dlg_t_early(
 				((contact_body_t *)msg->contact->parsed)->contacts->uri;
 	}
 
-	td->rem_uri = cell->from_uri;
-	td->loc_uri = cell->to_uri;
+	/* the request goes to the callee, so it has the orientation of the initial
+	 * INVITE (From = caller, To = callee), as build_dlg_t() does for the callee
+	 * leg: rem_* is the callee we send to, loc_* is the caller we speak for */
+	td->rem_uri = cell->to_uri;
+	td->loc_uri = cell->from_uri;
 	LM_DBG("rem_uri: %.*s\n", STR_FMT(&td->rem_uri));
 	LM_DBG("loc_uri: %.*s\n", STR_FMT(&td->loc_uri));
 
@@ -628,8 +636,16 @@ dlg_t *build_dlg_t_early(
 	LM_DBG("dst_uri: %.*s\n", STR_FMT(&td->dst_uri));
 
 	td->id.call_id = cell->callid;
-	td->id.rem_tag = cell->tag[DLG_CALLER_LEG];
-	td->id.loc_tag = cell->tag[DLG_CALLEE_LEG];
+	td->id.rem_tag = cell->tag[DLG_CALLEE_LEG];
+	td->id.loc_tag = cell->tag[DLG_CALLER_LEG];
+	if(td->id.rem_tag.len == 0 && msg->first_line.type == SIP_REPLY) {
+		/* the dialog has not recorded the callee's tag yet when this runs from
+		 * the reply route of its first reply: it is the To tag of that reply */
+		if(msg->to != NULL || parse_headers(msg, HDR_TO_F, 0) >= 0) {
+			if(msg->to != NULL && msg->to->parsed != NULL)
+				td->id.rem_tag = get_to(msg)->tag_value;
+		}
+	}
 
 	td->state = DLG_EARLY;
 	td->send_sock = cell->bind_addr[DLG_CALLER_LEG];
