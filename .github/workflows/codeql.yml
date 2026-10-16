@@ -39,7 +39,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ javascript, cpp, python ]
+        include:
+          - language: javascript
+            build-mode: autobuild
+          - language: python
+            build-mode: autobuild
+          - language: cpp
+            build-mode: manual
+            c_compiler: clang
+            build_type: Release
+            kamailio_groups: DEFAULT
 
     container:
       image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-trixie
@@ -55,27 +64,40 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure (cpp)
+      - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
-        run: make include_modules='app_lua app_python3 cnxcc db_mysql db_postgres db_redis dialplan http_client jansson lcr ndb_redis presence presence_xml presence_dialoginfo pua pua_dialoginfo topos_redis uuid websocket xmlops' cfg
-
-      - name: After Prepare (cpp)
-        if: ${{ matrix.language == 'cpp' }}
-        run: export PKG_CONFIG_PATH=$RUNNER_TEMP/usr/lib/pkgconfig:$PKG_CONFIG_PATH && echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+        uses: threeal/cmake-action@v2.1.0
+        with:
+          run-build: false
+          build-dir: ${{github.workspace}}/build
+          build-args: -j8
+          options: |
+            CMAKE_BUILD_TYPE=${{matrix.build_type}}
+            MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
+            CMAKE_C_COMPILER=${{matrix.c_compiler}}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
           queries: +security-and-quality
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
         if: ${{ matrix.language == 'javascript' || matrix.language == 'python' }}
 
-      - name: Build cpp
+      - name: Cmake Build
         if: ${{ matrix.language == 'cpp' }}
-        run: make -j$(nproc) all
+        uses: threeal/cmake-action@v2.1.0
+        with:
+          run-build: true
+          build-dir: ${{github.workspace}}/build
+          build-args: -j8
+          options: |
+            CMAKE_BUILD_TYPE=${{matrix.build_type}}
+            MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
+            CMAKE_C_COMPILER=${{matrix.c_compiler}}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
