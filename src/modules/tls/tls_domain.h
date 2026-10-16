@@ -31,6 +31,8 @@
 #include "../../core/str.h"
 #include "../../core/ip_addr.h"
 #include "../../core/atomic_ops.h"
+#include "../../core/globals.h"
+#include "../../core/pt.h"
 #include <openssl/ssl.h>
 
 
@@ -144,6 +146,12 @@ typedef struct tls_domain
 	int verify_client;
 	struct tls_domain *next;
 } tls_domain_t;
+
+/* SSL_CTX per domain: one per process in mode 0, one in modes 1/2 (OpenSSL
+ * runs in PROC_TCP_MAIN); TLS_CTX_IDX() is the slot of this process */
+#define TLS_CTX_NO() (ksr_tcp_main_threads == 0 ? get_max_procs() : 1)
+#define TLS_CTX_IDX() (ksr_tcp_main_threads == 0 ? process_no : 0)
+#define DOM_CTX(d) ((d)->ctx[TLS_CTX_IDX()])
 
 
 /**

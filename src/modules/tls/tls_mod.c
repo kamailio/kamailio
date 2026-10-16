@@ -111,7 +111,6 @@ static stat_export_t mod_stats[] = {
 /* clang-format on */
 #endif
 
-extern int ksr_tcp_main_threads;
 extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
 /*

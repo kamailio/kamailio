@@ -43,8 +43,6 @@
 #include "tls_rpc.h"
 #include "tls_cfg.h"
 
-extern int ksr_tcp_main_threads;
-
 /*
  * packed into a single shm alloc: [ tcpx_task_t | tls_reload_task_t ]
  * input params and result are both carried in tls_reload_task_t so no
@@ -128,6 +126,7 @@ static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
  *
  * Runs in PROC_TCP_MAIN thread context — SSL_CTX owned here.
  * Calls tls_reload_do then signals result back via ksr_tcpx_thread_eresult.
+ * keep in sync with tls_wolfssl/tls_rpc.c
  */
 static void tls_reload_mt_thread_cb(void *p, int pidx)
 {

@@ -273,8 +273,6 @@ static str *tls_get_connect_server_name(struct tcp_connection *c)
  * @return 0 on success, -1 on error.
  */
 
-#define DOM_CTX(d) ((d)->ctx[ksr_tcp_main_threads == 0 ? process_no : 0])
-
 static int tls_complete_init(struct tcp_connection *c)
 {
 	tls_domain_t *dom;
@@ -940,6 +938,7 @@ typedef struct tls_clean_params
 
 /**
  * Thread callback: runs in tcp_main thread, safe to call SSL_free.
+ * keep in sync with tls_wolfssl/tls_server.c
  */
 static void tls_h_tcpconn_clean_mt_thread_cb(void *p, int pidx)
 {
@@ -1430,9 +1429,7 @@ typedef struct tls_encode_params
 	int pidx;
 } tls_encode_params_t;
 
-/**
- *
- */
+/* keep in sync with tls_wolfssl/tls_server.c */
 static void tls_h_encode_mt_thread_cb(void *p, int pidx)
 {
 	tls_encode_params_t *eparams = NULL;
@@ -2044,9 +2041,7 @@ typedef struct tls_read_params
 	int pidx;
 } tls_read_params_t;
 
-/**
- *
- */
+/* keep in sync with tls_wolfssl/tls_server.c */
 static void tls_h_read_mt_thread_cb(void *p, int pidx)
 {
 	tls_read_params_t *eparams = NULL;
