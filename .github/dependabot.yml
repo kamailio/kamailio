@@ -20,6 +20,7 @@ updates:
     allow:
       # we want to check with the same version we have in ubuntu_latest
       - dependency-name: https://github.com/pre-commit/mirrors-clang-format
-        version-update: semver-minor
+        update-types:
+          - "version-update:semver-patch"
     commit-message:
       prefix: "pre-commit: [skip ci]"
