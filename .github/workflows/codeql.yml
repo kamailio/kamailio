@@ -40,10 +40,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - language: javascript
-          #   build-mode: none
-          # - language: python
-          #   build-mode: none
+          - language: javascript
+            build-mode: none
+          - language: python
+            build-mode: none
           - language: cpp
             build-mode: manual
 
@@ -66,7 +66,6 @@ jobs:
         working-directory: /code
         run: |
           val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
-          echo "val is $val"
           echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
 
       - name: Configure cmake
