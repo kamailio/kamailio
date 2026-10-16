@@ -2977,7 +2977,7 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 				 * mode 2) we must NOT touch io_h: the conn is shielded out of
 				 * io_h for the duration of the read job, and io_watch_* from a
 				 * pool thread races the io_wait thread. The ciphertext is already
-				 * queued in wbuf_q; tcp_reactor_read_rearm() arms POLLOUT from
+				 * queued in wbuf_q; tcp_reactor_unshield() arms POLLOUT from
 				 * wbuf_q when the read job completes, so the flush is deferred
 				 * safely. Only the io_wait thread arms the watch directly. */
 				if(tcp_reactor_pool_thread_idx() < 0
@@ -4323,14 +4323,10 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			 * read/write job is in flight), do NOT unhash/io_watch_del/free it
 			 * here - that would race the pool thread. The in-pool refcount keeps
 			 * it alive; mark it bad and let the job completion close it (its
-			 * !HASHED/S_CONN_BAD check routes to tcp_reactor_read_close). Only
+			 * !HASHED/S_CONN_BAD check routes to tcp_reactor_pool_close). Only
 			 * release the sender's reference. */
 			if(unlikely(tcpconn_pool_busy(tcpconn))) {
-				tcpconn->state = S_CONN_BAD;
-				tcpconn->timeout = get_ticks_raw();
-				tcpconn->flags |= F_CONN_POOL_CLOSE; /* a job may reset state */
-				if(unlikely(tcpconn_put(tcpconn)))
-					tcpconn_destroy(tcpconn); /* can't happen while busy */
+				tcp_reactor_mark_bad_put(tcpconn);
 				break;
 			}
 #endif /* TCP_ASYNC */
@@ -5445,7 +5441,7 @@ void tcp_main_loop()
 			LM_CRIT("failed to start the tcp reactor thread pool\n");
 			goto error;
 		}
-		if(io_watch_add(&io_h, tcp_rpool.notify_pipe[0], POLLIN,
+		if(io_watch_add(&io_h, tcp_reactor_notify_fd(), POLLIN,
 				   F_TCP_REACTOR_NOTIFY, NULL)
 				< 0) {
 			LM_CRIT("failed to watch the reactor notify pipe\n");

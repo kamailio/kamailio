@@ -23,8 +23,7 @@
 #ifndef _TCP_REACTOR_H_
 #define _TCP_REACTOR_H_
 
-#include "ip_addr.h" /* struct receive_info, snd_flags_t */
-#include "tcp_cond.h" /* tcp_cond_t (pulls in <pthread.h>) - mode 2 thread pool */
+#include "ip_addr.h"   /* struct receive_info, snd_flags_t */
 #include "tcp_mtops.h" /* tcpx_task_t - carried by TCP_R_RUN jobs */
 
 /* TCP reactor implementation for tcp_main_threads = 2 mode */
@@ -138,68 +137,12 @@ void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq);
 void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq);
 void tcp_reactor_handle_tls_event_done(struct tcp_connection *tcpconn);
 void tcp_reactor_handle_script_close(int scid);
+void tcp_reactor_mark_bad_put(struct tcp_connection *c);
 void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task, int pidx);
 void tcp_reactor_handle_notify(void);
+int tcp_reactor_notify_fd(void);
 int tcp_reactor_pool_init(void);
 void tcp_reactor_pool_destroy(void);
 int tcp_reactor_dsock_init(void);
-
-/* =========================================================================
- * PROC_TCP_MAIN/io_wait owns all sockets. Pool threads only run read/write
- * callbacks on connections handed to them, then signal completion over a
- * notify pipe. The io_wait thread shields the conn and enqueues read/write
- * jobs onto task_head; pool threads wait on the PROCESS_SHARED condvar. A
- * write is triggered by a worker's CONN_WRITE_REQ, but it's the io_wait
- * thread's handler that stages the plaintext and enqueues the job - the
- * worker never touches the queue directly.
- * ========================================================================= */
-
-/* job kinds */
-enum tcp_reactor_op
-{
-	TCP_R_READ = 1,	 /* run the read callback on conn (reactor-enqueued) */
-	TCP_R_WRITE = 2, /* drain conn's write staging (io_wait-enqueued) */
-	TCP_R_RUN = 3,	 /* run an arbitrary tcpx_task_t, no connection involved */
-};
-
-/* A read/write job carries the connection and op; write data stays on the
- * connection's wsq. The in-pool ref taken at shield covers every job on it.
- * A TCP_R_RUN job carries a task (conn NULL): its pool thread runs
- * task->exec() and frees the job (tcp_reactor_handle_tcpx_task_req()).
- * The enqueuing thread pkg-allocates every job. */
-struct tcp_reactor_job
-{
-	struct tcp_connection *conn;
-	enum tcp_reactor_op op;
-	int resp; /* callback result (e.g. wbuf still pending); READ/WRITE only */
-	tcpx_task_t *task; /* TCP_R_RUN only */
-	int pidx;		   /* TCP_R_RUN only: requesting process, for the result */
-	struct tcp_reactor_job *next;
-};
-
-/* Wakeup condvar for the reactor pool: the io_wait thread signals it to hand
- * jobs to pool threads, which wait on it. A PROCESS_SHARED + (possibly)ROBUST condvar in
- * shm, allocated before fork; the sharing is only between the io_wait thread
- * and the pool threads inside PROC_TCP_MAIN. */
-struct tcp_reactor_wake
-{
-	tcp_cond_t cond; /* PROCESS_SHARED + ROBUST mutex + cond */
-};
-extern struct tcp_reactor_wake *tcp_reactor_wake;
-
-/* thread pool state, local to PROC_TCP_MAIN (pkg / process-private memory) */
-struct tcp_reactor_pool
-{
-	pthread_t *threads;
-	int threads_no;
-	int stop;
-	struct tcp_reactor_job *task_head; /* all jobs (io_wait-enqueued) */
-	struct tcp_reactor_job *task_tail;
-	pthread_mutex_t done_lock; /* plain mutex: same process only */
-	struct tcp_reactor_job *done_head;
-	struct tcp_reactor_job *done_tail;
-	int notify_pipe[2]; /* [0] watched by reactor, [1] written by threads */
-};
-extern struct tcp_reactor_pool tcp_rpool;
 
 #endif /* _TCP_REACTOR_H_ */
