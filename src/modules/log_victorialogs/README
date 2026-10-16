@@ -1,0 +1,424 @@
+log_victorialogs Module
+
+Alexey Volokitin
+
+   <alexey.v@didww.com>
+
+Michael Furmur
+
+   <michael.f@didww.com>
+
+Edited by
+
+Alexey Volokitin
+
+   <alexey.v@didww.com>
+
+   Copyright © 2019-2026 didww.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Parameters
+
+              1.3.1. target (str)
+              1.3.2. stream_fields (str)
+              1.3.3. msg_field (str)
+              1.3.4. time_field (str)
+              1.3.5. extra_fields (str)
+              1.3.6. account_id (int)
+              1.3.7. project_id (int)
+              1.3.8. auth_username (str)
+              1.3.9. auth_password (str)
+              1.3.10. timeout (int)
+              1.3.11. batch_size (int)
+              1.3.12. batch_delay (int)
+              1.3.13. queue_size (int)
+              1.3.14. default_map (str)
+              1.3.15. map (str)
+
+        1.4. Format of default_map and map parameters
+        1.5. Functions
+
+              1.5.1. vl_log(key[, value1, ...])
+
+        1.6. Statistics
+
+              1.6.1. vl_queue_size
+              1.6.2. vl_drop_total
+              1.6.3. vl_err_total
+
+        1.7. Queue algorithm
+
+   List of Examples
+
+   1.1. Set target parameter
+   1.2. Set stream_fields parameter
+   1.3. Set msg_field parameter
+   1.4. Set time_field parameter
+   1.5. Set extra_fields parameter
+   1.6. Set account_id parameter
+   1.7. Set project_id parameter
+   1.8. Set auth_username parameter
+   1.9. Set auth_password parameter
+   1.10. Set timeout parameter
+   1.11. Set batch_size parameter
+   1.12. Set batch_delay parameter
+   1.13. Set queue_size parameter
+   1.14. Set default_map parameter
+   1.15. Set map parameter
+   1.16. vl_log usage
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module ships structured log entries from the Kamailio
+   configuration script to a VictoriaLogs server. The entries are
+   formatted as JSON lines and sent over HTTP to the VictoriaLogs
+
+   Logging is asynchronous: the SIP worker processes only pack the values
+   of the log entry and pass them to a dedicated sender process. The
+   sender process serializes the entries to JSON, collects them in a queue
+   and posts them in batches, so the SIP processing is never blocked by
+   the HTTP transfer.
+
+   The set of fields of a log entry is described by log groups. A log
+   group is defined with the default_map and map parameters and is
+   referenced by its key as the first argument of the vl_log() function.
+   Fields of the default map are filled automatically (current time, route
+   name, pseudo-variables, static values), fields of the map are filled
+   from the arguments of vl_log().
+
+   Several targets (VictoriaLogs instances) can be configured for high
+   availability. Batches are sent to the targets in round-robin order;
+   when a request fails, the batch is retried on the next target.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * pv - needed when pseudo-variables are used in default_map or in the
+       text arguments of vl_log(), which is the case in any practical
+       configuration.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libcurl.
+
+   The module is available only on Linux: the sender process is built on
+   epoll and timerfd.
+
+1.3. Parameters
+
+1.3.1. target (str)
+
+   URL of the VictoriaLogs jsonline ingestion endpoint, e.g.
+   http://127.0.0.1:9428/insert/jsonline. The parameter can be set
+   multiple times to configure several targets.
+
+   Default value is empty (at least one target is required).
+
+   Example 1.1. Set target parameter
+...
+modparam("log_victorialogs", "target", "http://127.0.0.1:9428/insert/jsonline")
+modparam("log_victorialogs", "target", "http://10.0.0.2:9428/insert/jsonline")
+...
+
+1.3.2. stream_fields (str)
+
+   Comma-separated list of field names that identify the log stream in
+   VictoriaLogs. The value is passed in the VL-Stream-Fields HTTP header.
+   The fields should have a small number of distinct values (host name,
+   application name, log group).
+
+   Default value is empty (all entries go to the default stream).
+
+   Example 1.2. Set stream_fields parameter
+...
+modparam("log_victorialogs", "stream_fields", "host,app")
+...
+
+1.3.3. msg_field (str)
+
+   Name of the field that VictoriaLogs should use as the log message
+   (_msg). The value is passed in the VL-Msg-Field HTTP header.
+   Alternatively the field can be named _msg directly in the map.
+
+   Default value is empty (VictoriaLogs uses the _msg field).
+
+   Example 1.3. Set msg_field parameter
+...
+modparam("log_victorialogs", "msg_field", "message")
+...
+
+1.3.4. time_field (str)
+
+   Name of the field that VictoriaLogs should use as the log entry
+   timestamp (_time). The value is passed in the VL-Time-Field HTTP
+   header. Alternatively the field can be named _time directly in the
+   default map. When no time field is present, VictoriaLogs uses the
+   ingestion time.
+
+   Default value is empty (VictoriaLogs uses the _time field).
+
+   Example 1.4. Set time_field parameter
+...
+modparam("log_victorialogs", "time_field", "ts")
+...
+
+1.3.5. extra_fields (str)
+
+   Comma-separated list of name=value pairs added by VictoriaLogs to every
+   ingested entry. The value is passed in the VL-Extra-Fields HTTP header.
+
+   Default value is empty.
+
+   Example 1.5. Set extra_fields parameter
+...
+modparam("log_victorialogs", "extra_fields", "host=sip1,env=prod")
+...
+
+1.3.6. account_id (int)
+
+   VictoriaLogs tenant account id, sent in the AccountID HTTP header
+   together with project_id. The headers are only sent when at least one
+   of the two is greater than zero.
+
+   Default value is 0.
+
+   Example 1.6. Set account_id parameter
+...
+modparam("log_victorialogs", "account_id", 12)
+...
+
+1.3.7. project_id (int)
+
+   VictoriaLogs tenant project id, sent in the ProjectID HTTP header. See
+   account_id.
+
+   Default value is 0.
+
+   Example 1.7. Set project_id parameter
+...
+modparam("log_victorialogs", "project_id", 34)
+...
+
+1.3.8. auth_username (str)
+
+   User name for HTTP basic authentication on the targets. The
+   authentication is enabled when both auth_username and auth_password are
+   set.
+
+   Default value is empty (no authentication).
+
+   Example 1.8. Set auth_username parameter
+...
+modparam("log_victorialogs", "auth_username", "kamailio")
+...
+
+1.3.9. auth_password (str)
+
+   Password for HTTP basic authentication on the targets. See
+   auth_username.
+
+   Default value is empty (no authentication).
+
+   Example 1.9. Set auth_password parameter
+...
+modparam("log_victorialogs", "auth_password", "secret")
+...
+
+1.3.10. timeout (int)
+
+   Maximum duration of one HTTP request in milliseconds. A request that
+   takes longer is treated as failed and the batch is retried on the next
+   target.
+
+   Default value is 5000.
+
+   Example 1.10. Set timeout parameter
+...
+modparam("log_victorialogs", "timeout", 2000)
+...
+
+1.3.11. batch_size (int)
+
+   Maximum number of log entries in one HTTP request. When the number of
+   queued entries exceeds this value, a request is sent immediately
+   without waiting for batch_delay.
+
+   Default value is 0 (no limit, the whole queue is sent in one request).
+
+   Example 1.11. Set batch_size parameter
+...
+modparam("log_victorialogs", "batch_size", 100)
+...
+
+1.3.12. batch_delay (int)
+
+   Interval in milliseconds between the sending of the queued entries. The
+   minimum value is 100.
+
+   Default value is 0 (100 milliseconds).
+
+   Example 1.12. Set batch_delay parameter
+...
+modparam("log_victorialogs", "batch_delay", 1000)
+...
+
+1.3.13. queue_size (int)
+
+   Maximum number of log entries kept in the queue of the sender process.
+   When the limit is exceeded (e.g. all targets are down), new entries are
+   dropped, an error is logged and the vl_drop_total statistic is
+   incremented.
+
+   Default value is 0 (unlimited).
+
+   Example 1.13. Set queue_size parameter
+...
+modparam("log_victorialogs", "queue_size", 10000)
+...
+
+1.3.14. default_map (str)
+
+   Fields of a log group that are filled automatically on every vl_log()
+   call. The format of the value is described in the section Format of
+   default_map and map parameters. The parameter can be set multiple
+   times, once per log group.
+
+   Default value is empty.
+
+   Example 1.14. Set default_map parameter
+...
+modparam("log_victorialogs", "default_map", "gen(_time:timestamp, route:route_na
+me, src_ip:$si, app:&kamailio)")
+...
+
+1.3.15. map (str)
+
+   Fields of a log group that are filled from the arguments of the
+   vl_log() function. The format of the value is described in the section
+   Format of default_map and map parameters. The parameter can be set
+   multiple times, once per log group.
+
+   Default value is empty (at least one map is required).
+
+   Example 1.15. Set map parameter
+...
+modparam("log_victorialogs", "map", "gen(_msg:text, code:num)")
+...
+
+1.4. Format of default_map and map parameters
+
+   The value of both parameters has the format key(name:type[, name:type
+   ...]).
+     * key - name of the log group, used as the first argument of
+       vl_log().
+     * name - name of the JSON field in the log entry. The VictoriaLogs
+       special fields _msg, _time and the stream fields can be used
+       directly.
+     * type - type of the field, see below.
+
+   Types allowed in default_map:
+     * timestamp - current time in RFC3339 format with millisecond
+       precision (UTC), e.g. 2026-10-06T08:09:41.123Z.
+     * route_name - name of the route block from which vl_log() is called.
+     * $... - a pseudo-variable, its value is taken at the time of the
+       call (e.g. $si, $ci, $var(x)). Null values result in the field
+       being omitted.
+     * &value - a static string value.
+
+   Types allowed in map:
+     * text - string. The argument may contain pseudo-variables, they are
+       evaluated at the time of the call. Empty strings are omitted from
+       the entry.
+     * num - integer number.
+     * float - floating point number.
+     * bool - boolean, the argument must be true, false or a number
+       (non-zero is true).
+     * inet - IPv4 or IPv6 address, stored as a string.
+     * date - date and time in local time zone in the format %Y.%m.%d
+       %H:%M:%S, stored in RFC3339 format (UTC).
+
+1.5. Functions
+
+1.5.1.  vl_log(key[, value1, ...])
+
+   Build a log entry of the log group key and pass it to the sender
+   process. The number of values must be equal to the number of fields in
+   the map of the group, and each value must match the type of the
+   corresponding field. Up to 5 values can be given.
+
+   Returns 1 on success and -1 on error (unknown group, wrong number or
+   type of values, sender process not reachable).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16. vl_log usage
+...
+modparam("log_victorialogs", "target", "http://127.0.0.1:9428/insert/jsonline")
+modparam("log_victorialogs", "stream_fields", "app,group")
+modparam("log_victorialogs", "default_map", "gen(_time:timestamp, app:&kamailio,
+ group:&gen, route:route_name, callid:$ci, src_ip:$si)")
+modparam("log_victorialogs", "map", "gen(_msg:text, code:num)")
+modparam("log_victorialogs", "default_map", "auth(_time:timestamp, app:&kamailio
+, group:&auth, callid:$ci)")
+modparam("log_victorialogs", "map", "auth(_msg:text, user:text, ok:bool)")
+...
+request_route {
+    ...
+    vl_log("gen", "request $rm from $si", "100");
+    ...
+    if (!auth_check("$fd", "subscriber", "1")) {
+        vl_log("auth", "authentication failed", "$au", "false");
+        auth_challenge("$fd", "1");
+        exit;
+    }
+    vl_log("auth", "authenticated", "$au", "true");
+    ...
+}
+...
+
+1.6. Statistics
+
+1.6.1. vl_queue_size
+
+   Current number of log entries waiting in the sender queue.
+
+1.6.2. vl_drop_total
+
+   Total number of log entries dropped because the queue was full.
+
+1.6.3. vl_err_total
+
+   Total number of failed HTTP requests.
+
+1.7. Queue algorithm
+
+   The sender process collects the log entries in a queue. Every
+   batch_delay milliseconds, or as soon as the queue grows over batch_size
+   entries, the first batch_size entries of the queue (the whole queue
+   when batch_size is 0) are posted to the current target in one request.
+   Only one request is in flight at a time.
+
+   On success the entries are removed from the queue and the next batch is
+   sent immediately if the queue is not empty. On failure the vl_err_total
+   statistic is incremented and the same batch is retried on the next
+   target. When all the targets failed, the entries stay in the queue
+   until the next batch_delay tick.
+
+   When the queue holds more than queue_size entries, new entries are
+   dropped and vl_drop_total is incremented.
