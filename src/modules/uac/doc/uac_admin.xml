@@ -617,8 +617,11 @@ modparam("uac", "reg_use_domain", 1)
 		</para>
 		<para>
 			A send socket in the $uac_reg variable used together with the uac_req_send()
-			function will override this parameter. A socket value in the uacreg table will
-			also override the parameter for this particular entry.
+			function will override this parameter. A legacy socket value in the uacreg
+			table will also override the parameter for that entry. When the uacreg socket
+			value is a socket map, a mapped socket overrides this parameter for its
+			transport, while <varname>default_socket</varname> remains the fallback for
+			transports omitted from the map.
 		</para>
 		<para>
 		<emphasis>
@@ -1846,8 +1849,17 @@ event_route[uac:reply] {
 		</itemizedlist>
 		<itemizedlist>
 			<listitem><para>
-			<emphasis>socket</emphasis> - Used socket for sending out registration requests,
-			e.g.:, udp:192.168.0.125:5060
+			<emphasis>socket</emphasis> - Local socket selection for sending registration
+			requests. A single socket uses the legacy
+			<quote>proto:address:port</quote> form, for example
+			<quote>udp:192.168.0.125:5060</quote>. A transport-specific socket map uses
+			configured socket names, for example
+			<quote>udp=private-udp;tcp=private-tcp;tls=private-tls;sctp=private-sctp</quote>.
+			The corresponding mapped socket is selected after DNS NAPTR/SRV resolution
+			and on each DNS failover attempt. TCP also covers WS, and TLS also covers WSS.
+			An invalid map, duplicate transport, unknown socket name, or socket whose
+			protocol does not match the map entry causes the registration record to be
+			rejected (or skipped while loading records from the database).
 			</para></listitem>
 		</itemizedlist>
 
