@@ -294,6 +294,13 @@ int dmq_tm_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 		LM_ERR("error in tm t_request_within()\n");
 		goto error;
 	}
+	/* TM does not invoke TMCB_LOCAL_COMPLETED for a locally dropped request.
+	 * The callback parameter is still owned by DMQ and must be released. */
+	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+		LM_DBG("local DMQ request dropped, releasing callback state\n");
+		shm_free_node(cb_param->node);
+		shm_free(cb_param);
+	}
 	pkg_free(str_hdr.s);
 	pkg_free(from.s);
 	pkg_free(to.s);
