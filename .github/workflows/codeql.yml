@@ -67,7 +67,7 @@ jobs:
         run: |
           val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
           echo "val is $val"
-          echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
+          echo "kam_grps=\"$val\"" >> "$GITHUB_OUTPUT"
 
       - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
@@ -78,7 +78,7 @@ jobs:
           build-args: -j$(nproc)
           options: |
             CMAKE_BUILD_TYPE=Release
-            MODULE_GROUP_NAME="${{ steps.set_value.outputs.kam_grps }}"
+            MODULE_GROUP_NAME=${{ steps.set_value.outputs.kam_grps }}
             CMAKE_C_COMPILER=clang
 
       - name: Initialize CodeQL
@@ -99,10 +99,6 @@ jobs:
           run-build: true
           build-dir: /code/build
           build-args: -j$(nproc)
-          options: |
-            CMAKE_BUILD_TYPE=${{matrix.build_type}}
-            MODULE_GROUP_NAME=${{matrix.kamailio_groups}}
-            CMAKE_C_COMPILER=${{matrix.c_compiler}}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
