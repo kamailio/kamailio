@@ -758,6 +758,7 @@ typedef struct tls_clean_params
 } tls_clean_params_t;
 
 
+/* keep in sync with tls/tls_server.c */
 static void tls_h_tcpconn_clean_mt_thread_cb(void *p, int pidx)
 {
 	tls_clean_params_t *cparams = NULL;
@@ -1263,6 +1264,7 @@ typedef struct tls_encode_params
 	int pidx;
 } tls_encode_params_t;
 
+/* keep in sync with tls/tls_server.c */
 static void tls_h_encode_mt_thread_cb(void *p, int pidx)
 {
 	tls_encode_params_t *eparams = NULL;
@@ -1798,6 +1800,7 @@ typedef struct tls_read_params
 } tls_read_params_t;
 
 
+/* keep in sync with tls/tls_server.c */
 static void tls_h_read_mt_thread_cb(void *p, int pidx)
 {
 	tls_read_params_t *eparams = NULL;

@@ -103,6 +103,7 @@ typedef struct tls_reload_task
 } tls_reload_task_t;
 
 
+/* keep in sync with tls/tls_rpc.c */
 static void tls_reload_mt_thread_cb(void *p, int pidx)
 {
 	tls_reload_task_t *t = (tls_reload_task_t *)p;
