@@ -13,3 +13,9 @@ updates:
       interval: weekly
     commit-message:
       prefix: "github: [skip ci]"
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "pre-commit: [skip ci]"
