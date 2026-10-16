@@ -48,6 +48,8 @@ typedef struct _reg_uac
 	str contact_addr;
 	str contact_user;
 	str socket;
+	send_socket_map_t sockmap;
+	int usesockmap;
 	unsigned int cseq;
 	unsigned int flags;
 	unsigned int expires;

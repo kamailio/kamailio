@@ -70,6 +70,9 @@ static reg_ht_t *_reg_htable = NULL;
 static reg_ht_t *_reg_htable_gc = NULL;
 static gen_lock_t *_reg_htable_gc_lock = NULL;
 
+static int uac_reg_parse_socket(reg_uac_t *reg);
+static void uac_reg_set_send_socket(uac_req_t *uac_r, reg_uac_t *reg);
+
 int _uac_reg_use_domain = 0;
 int reg_timer_interval = 90;
 int reg_retry_interval = 0;
@@ -476,6 +479,8 @@ int reg_ht_add(reg_uac_t *reg)
 	memset(nr, 0, sizeof(reg_uac_t) + len);
 	nr->expires = reg->expires;
 	nr->flags = reg->flags;
+	nr->sockmap = reg->sockmap;
+	nr->usesockmap = reg->usesockmap;
 	if(reg->reg_delay)
 		nr->reg_delay = reg->reg_delay;
 	else if(reg_random_delay > 0)
@@ -518,6 +523,136 @@ int reg_ht_add(reg_uac_t *reg)
 	return 0;
 }
 
+/**
+ * Check whether a configured socket can be used for a socket-map protocol.
+ */
+static int uac_reg_sockmap_proto_match(int map_proto, int socket_proto)
+{
+	switch(map_proto) {
+		case PROTO_UDP:
+			return socket_proto == PROTO_UDP;
+		case PROTO_TCP:
+			return socket_proto == PROTO_TCP || socket_proto == PROTO_WS;
+		case PROTO_TLS:
+			return socket_proto == PROTO_TLS || socket_proto == PROTO_WSS;
+		case PROTO_SCTP:
+			return socket_proto == PROTO_SCTP;
+		default:
+			return 0;
+	}
+}
+
+/**
+ * Parse the registration socket as a transport-to-socket-name map when it
+ * contains an assignment. Values without an assignment keep the legacy
+ * proto:address:port syntax.
+ */
+static int uac_reg_parse_socket(reg_uac_t *reg)
+{
+	send_socket_map_t nmap;
+	struct socket_info *si;
+	param_t *params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit;
+	str sval;
+	unsigned int seen = 0;
+	int map_proto;
+	int ret = -1;
+
+	memset(&reg->sockmap, 0, sizeof(reg->sockmap));
+	reg->usesockmap = 0;
+	if(reg->socket.s == NULL || reg->socket.len <= 0
+			|| memchr(reg->socket.s, '=', reg->socket.len) == NULL)
+		return 0;
+
+	memset(&nmap, 0, sizeof(nmap));
+	sval = reg->socket;
+	trim(&sval);
+	if(sval.len > 0 && sval.s[sval.len - 1] == ';') {
+		sval.len--;
+		trim(&sval);
+	}
+	if(sval.len == 0) {
+		LM_ERR("cannot parse socket map [%.*s]\n", reg->socket.len,
+				reg->socket.s);
+		goto done;
+	}
+	if(parse_params(&sval, CLASS_ANY, &phooks, &params_list) < 0) {
+		LM_ERR("cannot parse socket map [%.*s]\n", reg->socket.len,
+				reg->socket.s);
+		goto done;
+	}
+
+	for(pit = params_list; pit; pit = pit->next) {
+		map_proto = get_valid_proto_id(&pit->name);
+		if(map_proto != PROTO_UDP && map_proto != PROTO_TCP
+				&& map_proto != PROTO_TLS && map_proto != PROTO_SCTP) {
+			LM_ERR("invalid transport [%.*s] in socket map [%.*s]\n",
+					pit->name.len, pit->name.s, reg->socket.len, reg->socket.s);
+			goto done;
+		}
+		if(seen & (1U << map_proto)) {
+			LM_ERR("duplicate transport [%.*s] in socket map [%.*s]\n",
+					pit->name.len, pit->name.s, reg->socket.len, reg->socket.s);
+			goto done;
+		}
+		if(pit->body.len <= 0) {
+			LM_ERR("empty socket name for transport [%.*s]\n", pit->name.len,
+					pit->name.s);
+			goto done;
+		}
+
+		si = ksr_get_socket_by_name(&pit->body);
+		if(si == NULL) {
+			LM_ERR("no local socket found with name [%.*s]\n", pit->body.len,
+					pit->body.s);
+			goto done;
+		}
+		if(!uac_reg_sockmap_proto_match(map_proto, si->proto)) {
+			LM_ERR("socket [%.*s] protocol %s does not match map transport "
+				   "[%.*s]\n",
+					pit->body.len, pit->body.s, proto2a(si->proto),
+					pit->name.len, pit->name.s);
+			goto done;
+		}
+
+		corex_send_socket_map_set(&nmap, map_proto, si);
+		seen |= 1U << map_proto;
+	}
+
+	if(seen == 0) {
+		LM_ERR("empty socket map [%.*s]\n", reg->socket.len, reg->socket.s);
+		goto done;
+	}
+	reg->sockmap = nmap;
+	reg->usesockmap = 1;
+	ret = 0;
+
+done:
+	free_params(params_list);
+	return ret;
+}
+
+/**
+ * Apply per-record socket selection to a local UAC request.
+ */
+static void uac_reg_set_send_socket(uac_req_t *uac_r, reg_uac_t *reg)
+{
+	if(reg->usesockmap) {
+		LM_DBG("using custom socket map %.*s to send request\n",
+				reg->socket.len, reg->socket.s);
+		uac_r->ssockmap = &reg->sockmap;
+		if(uac_default_socket.s != NULL && uac_default_socket.len > 0)
+			uac_r->ssock = &uac_default_socket;
+	} else if(reg->socket.s != NULL && reg->socket.len > 0) {
+		LM_DBG("using custom socket %.*s to send request\n", reg->socket.len,
+				reg->socket.s);
+		uac_r->ssock = &reg->socket;
+	} else if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+		LM_DBG("using configured default_socket to send request\n");
+		uac_r->ssock = &uac_default_socket;
+	}
+}
 
 /**
  *
@@ -1029,18 +1164,7 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		/* Callback parameter */
 		uac_r.cbp = (void *)uuid;
 
-		if(ri->socket.s != NULL && ri->socket.len > 0) {
-			/* custom socket */
-			LM_DBG("using custom socket %.*s to send request\n", ri->socket.len,
-					ri->socket.s);
-			uac_r.ssock = &ri->socket;
-		} else {
-			/* default socket */
-			if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
-				LM_DBG("using configured default_socket to send request\n");
-				uac_r.ssock = &uac_default_socket;
-			}
-		}
+		uac_reg_set_send_socket(&uac_r, ri);
 
 		ret = uac_tmb.t_request_within(&uac_r);
 
@@ -1170,18 +1294,7 @@ int uac_reg_send(reg_uac_t *reg, time_t tn)
 	/* Callback parameter */
 	uac_r.cbp = (void *)uuid;
 
-	if(reg->socket.s != NULL && reg->socket.len > 0) {
-		/* custom socket */
-		LM_DBG("using custom socket %.*s to send request\n", reg->socket.len,
-				reg->socket.s);
-		uac_r.ssock = &reg->socket;
-	} else {
-		/* default socket */
-		if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
-			LM_DBG("using configured default_socket to send request\n");
-			uac_r.ssock = &uac_default_socket;
-		}
-	}
+	uac_reg_set_send_socket(&uac_r, reg);
 
 	if(reg_keep_callid && reg->flags & UAC_REG_ONLINE && reg->cseq > 0
 			&& reg->cseq < 2147483638 && reg->callid.len > 0) {
@@ -1374,6 +1487,11 @@ static int uac_reg_db_to_reg(
 	reg_db_set_attr(contact_addr, 13, 1);
 	/* socket may be empty */
 	reg_db_set_attr(socket, 14, 1);
+	if(uac_reg_parse_socket(reg) < 0) {
+		LM_ERR("invalid socket value for registration [%.*s]\n",
+				reg->l_uuid.len, reg->l_uuid.s);
+		return -1;
+	}
 	/*contact_user may be empty */
 	reg_db_set_attr(contact_user, 15, 1);
 
@@ -2152,6 +2270,10 @@ static void rpc_uac_reg_add(rpc_t *rpc, void *ctx)
 
 	if(uac_reg_check_password(&reg) < 0) {
 		rpc->fault(ctx, 500, "Failed to add record - invalid password or ha1");
+		return;
+	}
+	if(uac_reg_parse_socket(&reg) < 0) {
+		rpc->fault(ctx, 400, "Invalid socket or socket map");
 		return;
 	}
 
