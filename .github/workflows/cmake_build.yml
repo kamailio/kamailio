@@ -44,7 +44,7 @@ jobs:
     - name: Set values
       id: set_values
       run: |
-        echo "nproc=$(nproc)" >> "$GITHUB_OUTPUT"
+        echo "nproc=$(nproc||sysctl -n hw.logicalcpu)" >> "$GITHUB_OUTPUT"
 
     - name: Install cross-compiler
       if: matrix.os == 'ubuntu-latest' && matrix.target_arch == 'aarch64'
