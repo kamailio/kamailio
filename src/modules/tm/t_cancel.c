@@ -103,6 +103,44 @@ void prepare_to_cancel(
 	}
 }
 
+/** Defer the CANCEL for INVITE branches without any reply.
+ * A CANCEL can be sent on a branch only after a provisional reply was
+ * received on it (RFC 3261, section 9.1). The branches prepared for
+ * canceling that have not received any reply yet are marked as canceled
+ * and their CANCEL is sent when the first provisional reply arrives (see
+ * reply_received()). They are removed from the cancel bitmap, so the
+ * subsequent cancel_uacs() does not process them again.
+ * Must be called with REPLY_LOCK held, after prepare_to_cancel(), when a
+ * 2xx reply completes the INVITE transaction. Setting the state before
+ * REPLY_LOCK is released ensures that a provisional reply processed by
+ * another process right after it finds the branch already canceled.
+ * @param t - transaction
+ * @param cancel_bm - branch bitmap filled by prepare_to_cancel(), updated
+ */
+void defer_cancel_unreplied(struct cell *t, branch_bm_t *cancel_bm)
+{
+	int i;
+	void *pcbuf;
+
+	if(!is_invite(t))
+		return;
+	for(i = 0; i < t->nr_of_outgoings; i++) {
+		if(!(*cancel_bm & (1 << i)) || t->uac[i].last_received >= 100
+				|| t->uac[i].request.buffer == NULL)
+			continue;
+		/* same state as left by cancel_branch() with F_CANCEL_B_KILL
+		 * for a branch without reply */
+		t->uac[i].request.flags |= F_RB_CANCELED;
+		stop_rb_timers(&t->uac[i].request);
+		/* remove BUSY_BUFFER set by prepare_to_cancel(), the CANCEL is
+		 * built on the first provisional reply */
+		pcbuf = &t->uac[i].local_cancel.buffer;
+		atomic_set_long(pcbuf, 0);
+		*cancel_bm &= ~(1 << i);
+		LM_DBG("CANCEL on branch %d deferred to first 1xx reply\n", i);
+	}
+}
+
 
 /* cancel branches scheduled for deletion
  * params: t          - transaction
