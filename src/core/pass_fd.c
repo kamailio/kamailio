@@ -280,8 +280,8 @@ again:
 		goto error;
 	}
 	if(ret == 0) {
-		/* EOF */
-		LM_CRIT("EOF on %d\n", unix_socket);
+		/* EOF: the peer closed (e.g. a child exiting); callers report it */
+		LM_DBG("EOF on %d\n", unix_socket);
 		goto error;
 	}
 	if(ret < data_len) {

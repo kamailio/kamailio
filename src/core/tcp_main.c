@@ -2936,9 +2936,10 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 #ifdef TCP_ASYNC
 	if(unlikely((ksr_tcp_main_threads == 1 || ksr_tcp_main_threads == 2)
 				&& is_tcp_main())) {
-		/* mode 2: this runs in PROC_TCP_MAIN's event loop, so write here
-		 * instead of fd-passing / a unix_sock self-send. This is reached from
-		 * the TLS read path (tls_h_read_*), which drives the handshake and may
+		/* modes 1/2: this runs in PROC_TCP_MAIN (mode 1 tcpx threads, mode 2
+		 * io_wait and pool threads), so write here instead of fd-passing / a
+		 * unix_sock self-send. This is reached from the TLS read path
+		 * (tls_h_read_*), which drives the handshake and may
 		 * need to push out ciphertext (handshake records, write-wants-read
 		 * flush, renegotiation). Handle the write result against our own
 		 * reactor instead of shipping a CONN_* command to ourselves.
@@ -2952,12 +2953,9 @@ int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
 			case CONN_QUEUED_WRITE:
 				if(ksr_tcp_main_threads == 1) {
 					/* mode 1: ask the tcp main loop to arm POLLOUT */
-					char ipbuf[IP_ADDR_MAX_STRZ_SIZE];
-					ip_addr2sbufz(&c->rcv.src_ip, ipbuf, sizeof(ipbuf));
-					LM_WARN("tcpx write queued on %p (%s:%u -> :%u), %u of %u"
-							" bytes pending\n",
-							c, ipbuf, c->rcv.src_port, c->rcv.dst_port,
-							c->wbuf_q.queued, len);
+					LM_DBG("tcpx write queued on %p (id %d), %u of %u bytes"
+						   " pending\n",
+							c, c->id, c->wbuf_q.queued, len);
 					atomic_inc(&c->refcnt);
 					response[0] = (long)c;
 					if(send_all(tcpx_cmd_sock, response, sizeof(response))
@@ -3849,7 +3847,7 @@ inline static int send_fd_queue_add(
 					new_size);
 			goto error;
 		}
-		LM_CRIT("queue full: %ld, extending to %ld\n",
+		LM_WARN("queue full: %ld, extending to %ld\n",
 				(long)(q->end - &q->data[0]), new_size);
 		tmp = pkg_realloc(q->data, new_size * sizeof(struct send_fd_info));
 		if(unlikely(tmp == 0)) {
@@ -4238,6 +4236,13 @@ error:
  *           >0 on successfull reads from the fd (the receive buffer might
  *             be non-empty).
  */
+/* index of p in pt[] for logs; -1 for an entry outside it (the mode 1 tcpx
+ * command channel) */
+static inline int tcp_proc_idx(struct process_table *p)
+{
+	return (p >= pt && p < pt + get_max_procs()) ? (int)(p - pt) : -1;
+}
+
 inline static int handle_ser_child(struct process_table *p, int fd_i)
 {
 	struct tcp_connection *tcpconn;
@@ -4257,7 +4262,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 	ret = -1;
 	if(unlikely(p->unix_sock <= 0)) {
 		/* (we can't have a fd==0, 0 is never closed )*/
-		LM_CRIT("fd %d for %d (pid %d)\n", p->unix_sock, (int)(p - &pt[0]),
+		LM_CRIT("fd %d for %d (pid %d)\n", p->unix_sock, tcp_proc_idx(p),
 				p->pid);
 		goto error;
 	}
@@ -4270,8 +4275,8 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 		/* too few bytes read */
 		if(bytes == 0) {
 			/* EOF -> bad, child has died */
-			LM_DBG("dead child %d, pid %d (shutting down?)\n",
-					(int)(p - &pt[0]), p->pid);
+			LM_DBG("dead child %d, pid %d (shutting down?)\n", tcp_proc_idx(p),
+					p->pid);
 			/* don't listen on it any more */
 			io_watch_del(&io_h, p->unix_sock, fd_i, 0);
 			goto error; /* child dead => no further io events from it */
@@ -4280,7 +4285,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			 * e.g: SIGIO_RT overflow mode or EPOLL ET */
 			if((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
 				LM_CRIT("read from child %d  (pid %d):  %s [%d]\n",
-						(int)(p - &pt[0]), p->pid, strerror(errno), errno);
+						tcp_proc_idx(p), p->pid, strerror(errno), errno);
 				ret = -1;
 			} else {
 				ret = 0;
@@ -4298,13 +4303,13 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 	}
 	ret = 1; /* something was received, there might be more queued */
 	LM_DBG("read response= %lx, %ld, fd %d from %d (%d)\n", response[0],
-			response[1], fd, (int)(p - &pt[0]), p->pid);
+			response[1], fd, tcp_proc_idx(p), p->pid);
 	cmd = response[1];
 	tcpconn = (struct tcp_connection *)response[0];
 	if(unlikely(tcpconn == 0)) {
 		LM_CRIT("null tcpconn pointer received from child %d (pid %d): %lx, "
 				"%lx\n",
-				(int)(p - &pt[0]), p->pid, response[0], response[1]);
+				tcp_proc_idx(p), p->pid, response[0], response[1]);
 		goto end;
 	}
 	switch(cmd) {
