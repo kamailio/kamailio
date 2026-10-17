@@ -71,16 +71,9 @@ jobs:
 
       - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
-        uses: threeal/cmake-action@v2.1.0
-        with:
-          run-build: false
-          build-dir: /code/build
-          build-args: -j${{ steps.set_values.outputs.nproc }}
-          options: |
-            CMAKE_BUILD_TYPE=Release
-            CMAKE_C_COMPILER=clang
-          args: |
-            -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}"
+        working-directory: /code
+        run: |
+          cmake -B /code/build -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -95,11 +88,9 @@ jobs:
 
       - name: Cmake Build
         if: ${{ matrix.language == 'cpp' }}
-        uses: threeal/cmake-action@v2.1.0
-        with:
-          run-build: true
-          build-dir: /code/build
-          build-args: -j${{ steps.set_values.outputs.nproc }}
+        working-directory: /code
+        run: |
+          cmake --build /code/build -j${{ steps.set_values.outputs.nproc }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
