@@ -969,7 +969,7 @@ static void tls_h_tcpconn_clean_mt_thread_cb(void *p, int pidx)
 void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 {
 	/* At shutdown in MT mode, PROC_TCP_MAIN is already dead and the OS
-     * reclaims all memory. Avoid touching its heap entirely. */
+	 * reclaims all memory. Avoid touching its heap entirely. */
 	if(_ksr_is_main && ksr_tcp_main_threads != 0)
 		return;
 
@@ -2173,8 +2173,8 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(_tls_evrt_connection_out < 0 && sr_tls_event_callback.len <= 0)
 		return 0;
 
-	/* With tcp_main_threads = 2: we are on a PROC_TCP_MAIN reactor thread.
-	 * Dispatch the event to a TCP worker. */
+	/* With tcp_main_threads = 2: we are on a PROC_TCP_MAIN pool thread (the
+	 * read job). Dispatch the event to a TCP worker. */
 	if(is_tcp_main() && ksr_tcp_main_threads == 2) {
 		tcp_reactor_dispatch_tls_event(c);
 		return 0;
