@@ -70,7 +70,7 @@ static cfg_def_t tcp_cfg_def[] = {
 		{"connect_wait", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 				"parallel simultaneous connects to the same dst. (0) or one "
 				"connect"},
-		{"conn_wq_max", CFG_VAR_INT | CFG_ATOMIC, 0, 1024 * 1024, 0, 0,
+		{"conn_wq_max", CFG_VAR_INT | CFG_ATOMIC, 0, 1 << 30, 0, 0,
 				"maximum bytes queued for write per connection (depends on "
 				"async)"},
 		{"wq_max", CFG_VAR_INT | CFG_ATOMIC, 0, 1 << 30, 0, 0,
