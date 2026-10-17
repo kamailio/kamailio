@@ -38,6 +38,8 @@
 #include <stdio.h>
 #include <strings.h>
 #include <stdint.h>
+#include <errno.h>
+#include <unistd.h>
 
 #include "globals.h"
 #include "dprint.h"
@@ -52,6 +54,54 @@ char *_km_log_engine_data = NULL;
 
 km_log_f _km_log_func = &syslog;
 static sip_msg_t _km_log_prefix_fmsg = {0};
+
+/*
+ * Keep each stderr log record in one write(2) whenever possible.
+ * This prevents interleaving of multiple processes' log records when
+ * stderr is a pipe and the record fits within PIPE_BUF.
+ *
+ * Large records are not truncated: POSIX does not guarantee atomicity
+ * beyond PIPE_BUF and a partial write can require another syscall.
+ * Colored logs emit terminal escape sequences separately.
+ */
+void ksr_stderr_printf(const char *format, ...)
+{
+	char local[4096];
+	char *buf = local;
+	va_list ap, copy;
+	int size;
+	ssize_t written;
+	size_t off = 0;
+
+	va_start(ap, format);
+	va_copy(copy, ap);
+	size = vsnprintf(local, sizeof(local), format, ap);
+	va_end(ap);
+	if(size < 0) {
+		va_end(copy);
+		return;
+	}
+	if((size_t)size >= sizeof(local)) {
+		buf = malloc((size_t)size + 1);
+		if(!buf) {
+			va_end(copy);
+			return;
+		}
+		vsnprintf(buf, (size_t)size + 1, format, copy);
+	}
+	va_end(copy);
+
+	while(off < (size_t)size) {
+		written = write(STDERR_FILENO, buf + off, (size_t)size - off);
+		if(written < 0 && errno == EINTR)
+			continue;
+		if(written <= 0)
+			break;
+		off += written;
+	}
+	if(buf != local)
+		free(buf);
+}
 
 /**
  *
@@ -431,7 +481,7 @@ void dprint_color(int level)
 		return;
 	dprint_term_color(_log_level_colors[level - L_MIN].f,
 			_log_level_colors[level - L_MIN].b, &obuf);
-	fprintf(stderr, "%.*s", obuf.len, obuf.s);
+	ksr_stderr_printf("%.*s", obuf.len, obuf.s);
 }
 
 void dprint_color_reset(void)
@@ -439,7 +489,7 @@ void dprint_color_reset(void)
 	str obuf;
 
 	dprint_term_color('x', 'x', &obuf);
-	fprintf(stderr, "%.*s", obuf.len, obuf.s);
+	ksr_stderr_printf("%.*s", obuf.len, obuf.s);
 }
 
 void dprint_color_update(int level, char f, char b)
@@ -748,7 +798,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	strftime(iso8601buf, ISO8601_BUF_SIZE, "%FT%T", &_tm);
 	if(unlikely(log_stderr)) {
 		if(unlikely(log_cee)) {
-			fprintf(stderr, KSR_SLOG_STDERR_JSON_CEEFMT, iso8601buf,
+			ksr_stderr_printf(KSR_SLOG_STDERR_JSON_CEEFMT, iso8601buf,
 					_tp.tv_nsec, my_pid(),
 #ifdef HAVE_PTHREAD
 					(uintmax_t)pthread_self(),
@@ -761,11 +811,11 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 		} else {
 			if(unlikely(log_color))
 				dprint_color(kld->v_level);
-			fprintf(stderr, efmt, iso8601buf, _tp.tv_nsec, process_no, my_pid(),
-					kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
-					kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR, prname, pmb,
-					LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme, prefmsg, smb,
-					s_out.len, s_out.s, sme,
+			ksr_stderr_printf(efmt, iso8601buf, _tp.tv_nsec, process_no,
+					my_pid(), kld->v_lname, kld->v_mname, kld->v_fname,
+					kld->v_fline, kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
+					prname, pmb, LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme, prefmsg,
+					smb, s_out.len, s_out.s, sme,
 					(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL) ? ""
 																	 : "\n");
 			if(unlikely(log_color))
