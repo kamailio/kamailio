@@ -210,7 +210,7 @@ typedef enum conn_cmds
 						 * tcp_connection*, tcp_main drops the dispatch refcnt */
 	,
 	CONN_SCRIPT_CLOSE /* mode 2: for worker to signal a connection close on error
-                           * when tcp_script_mode = 0 */
+					   * when tcp_script_mode = 0 */
 	,
 	CONN_TCPX_TASK_REQ /* mode 2: any process asks PROC_TCP_MAIN to run a
 						* tcpx_task_t on a pool thread (ksr_tcpx_task_send()'s

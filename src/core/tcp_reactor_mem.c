@@ -183,7 +183,8 @@ void tcp_reactor_pkg_lock_install(void)
 	_pkg_root.xreallocxf = _ksr_pkg_l_xreallocxf;
 	_pkg_root.xfree = _ksr_pkg_l_xfree;
 
-	LM_INFO("PROC_TCP_MAIN pkg allocator serialized for reactor threads\n");
+	LM_INFO("reactor: PROC_TCP_MAIN pkg allocator serialized for the io_wait "
+			"and pool threads\n");
 }
 
 #else /* !PKG_MALLOC */

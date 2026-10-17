@@ -273,6 +273,7 @@ static int tcp_reactor_dispatch_send(uintptr_t ptr)
  *
  * The receiving worker dispatches on task->flags (plain SIP -> receive_msg(),
  * F_TCP_REQ_HEP3 -> hep3_process_msg()) then shm_free()s the task.
+ * Returns 0 when the task is queued, -1 on error.
  */
 int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 		struct receive_info *rcv)
@@ -1047,7 +1048,7 @@ void tcp_reactor_handle_script_close(int scid)
 
 	tcpconn = tcpconn_get(scid, 0, 0, 0, 0); /* takes a ref */
 	if(tcpconn == NULL) {
-		LM_DBG("mode2: script-close for conn id %d: already gone\n", scid);
+		LM_DBG("reactor: script-close for conn id %d: already gone\n", scid);
 		return;
 	}
 	/* if a pool job currently owns it,
@@ -1603,7 +1604,8 @@ static void *tcp_reactor_thread_routine(void *arg)
 				tcp_reactor_run_write(job);
 				break;
 			case TCP_R_RUN:
-				LM_DBG("tcpr-pool-%d: running tcpx task %p (exec=%p)\n",
+				LM_DBG("reactor: pool thread %d running tcpx task %p "
+					   "(exec=%p)\n",
 						tcp_reactor_thread_idx, (void *)job->task,
 						job->task ? (void *)job->task->exec : NULL);
 				if(job->task && job->task->exec)
@@ -1627,7 +1629,7 @@ int tcp_reactor_pool_init(void)
 {
 	int i;
 
-	LM_INFO("TCP reactor: using %d threads\n", ksr_tcp_reactor_threads);
+	LM_INFO("reactor: using %d threads\n", ksr_tcp_reactor_threads);
 
 	/* the io_wait thread keeps its name: as the main thread it names the process,
 	 * which ps -C, pkill -x and killall match (pool threads name themselves) */
@@ -1672,8 +1674,7 @@ int tcp_reactor_pool_init(void)
 		}
 		tcp_rpool.threads_no++;
 	}
-	LM_INFO("tcp reactor mode 2: started %d pool threads\n",
-			tcp_rpool.threads_no);
+	LM_INFO("reactor: started %d pool threads\n", tcp_rpool.threads_no);
 	return 0;
 }
 
@@ -1737,7 +1738,7 @@ int tcp_reactor_dsock_init(void)
 				strerror(errno));
 		return -1;
 	}
-	LM_INFO("tcp reactor dispatch socketpair created (rfd=%d wfd=%d)\n",
+	LM_INFO("reactor: dispatch socketpair created (rfd=%d wfd=%d)\n",
 			ksr_tcp_reactor_dsock[0], ksr_tcp_reactor_dsock[1]);
 
 	/* reactor pool wakeup: its condvar must live in shm and be initialised
@@ -1756,6 +1757,6 @@ int tcp_reactor_dsock_init(void)
 		tcp_reactor_wake = NULL;
 		return -1;
 	}
-	LM_INFO("tcp reactor pool wakeup initialized\n");
+	LM_INFO("reactor: pool wakeup initialized\n");
 	return 0;
 }

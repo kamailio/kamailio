@@ -5161,8 +5161,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	 * defensively: never reap a conn a pool thread is still using - re-arm and
 	 * let the job completion own its lifetime. */
 	if(unlikely(tcpconn_pool_busy(c))) {
-		LM_WARN("tcp reactor: timer fired on pool-busy conn %p - deferring\n",
-				c);
+		LM_WARN("reactor: timer fired on pool-busy conn %p - deferring\n", c);
 		return (ticks_t)cfg_get(tcp, tcp_cfg, con_lifetime);
 	}
 

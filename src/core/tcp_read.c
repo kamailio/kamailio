@@ -2517,7 +2517,7 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 					if(unlikely(tsend_stream(unix_tcp_sock, (char *)clresp,
 										sizeof(clresp), -1)
 								<= 0))
-						LM_ERR("mode2: failed to request script-close for "
+						LM_ERR("reactor: failed to request script-close for "
 							   "conn id %ld\n",
 								(long)task->rcv.proto_reserved1);
 				}
