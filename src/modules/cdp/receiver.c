@@ -129,12 +129,20 @@ static int make_send_pipe(serviced_peer_t *sp)
 {
 	local_id++;
 	sp->send_pipe_name.s = shm_malloc(sizeof(PIPE_PREFIX) + 64);
+	if(sp->send_pipe_name.s == NULL) {
+		SHM_MEM_ERROR;
+		return 0;
+	}
 	sprintf(sp->send_pipe_name.s, "%s%d_%d_%u", PIPE_PREFIX, getpid(), local_id,
 			(unsigned int)(unsigned long long)time(0));
 	sp->send_pipe_name.len = strlen(sp->send_pipe_name.s);
 
 	if(mkfifo(sp->send_pipe_name.s, 0666) < 0) {
 		LM_ERR("FIFO make failed > %s\n", strerror(errno));
+		/* The FIFO was not created; never unlink a possibly existing file. */
+		shm_free(sp->send_pipe_name.s);
+		sp->send_pipe_name.s = NULL;
+		sp->send_pipe_name.len = 0;
 		return 0;
 	}
 	sp->send_pipe_fd = open(sp->send_pipe_name.s, O_RDONLY | O_NDELAY);
@@ -202,17 +210,22 @@ static serviced_peer_t *add_serviced_peer(peer *p)
 
 	sp->p = p;
 	sp->tcp_socket = -1;
+	sp->send_pipe_fd = -1;
+	sp->send_pipe_fd_out = -1;
 	sp->prev = 0;
+
+	/* Do not link a peer until its FIFO resources are ready. A failure
+	 * must not leave serviced_peers containing a freed structure. */
+	if(!make_send_pipe(sp)) {
+		close_send_pipe(sp);
+		pkg_free(sp);
+		return 0;
+	}
 	if(serviced_peers) {
 		serviced_peers->prev = sp;
 		sp->next = serviced_peers;
 	}
 	serviced_peers = sp;
-
-	if(!make_send_pipe(sp)) {
-		pkg_free(sp);
-		return 0;
-	}
 
 	return sp;
 }
@@ -775,6 +788,32 @@ int receive_loop(peer *original_peer)
 			if(n == -1) {
 				if(shutdownx && *shutdownx)
 					return 0;
+				if(errno == EINTR) {
+					n = 0;
+					continue;
+				}
+				if(errno == EBADF) {
+					/* A stale peer FD should not disconnect unrelated Diameter
+					 * peers serviced by this receiver. Rebuild the descriptor
+					 * set after dropping only entries with invalid FDs. */
+					int isolated = 0;
+					for(sp = serviced_peers; sp; sp = sp2) {
+						sp2 = sp->next;
+						if((sp->tcp_socket < 0 || fcntl(sp->tcp_socket, F_GETFD) != -1)
+								&& (sp->send_pipe_fd < 0
+										|| fcntl(sp->send_pipe_fd, F_GETFD) != -1))
+							continue;
+						LM_WARN("isolating Diameter peer with invalid descriptor\n");
+						disconnect_serviced_peer(sp, 0);
+						if(sp->p && sp->p->is_dynamic)
+							drop_serviced_peer(sp, 0);
+						isolated++;
+					}
+					if(isolated) {
+						n = 0;
+						continue;
+					}
+				}
 				LM_ERR("%s\n", strerror(errno));
 				for(sp = serviced_peers; sp; sp = sp2) {
 					sp2 = sp->next;
@@ -806,12 +845,17 @@ int receive_loop(peer *original_peer)
 									sp2 = sp;
 									break;
 								}
-							if(!sp2)
+							if(!sp2) {
 								sp2 = add_serviced_peer(p);
-							else
-								make_send_pipe(sp2);
+							} else if(!sp2->send_pipe_name.s && !make_send_pipe(sp2)) {
+								LM_ERR("Error recreating send FIFO for Diameter peer\n");
+								close_send_pipe(sp2);
+								close(fd);
+								continue;
+							}
 							if(!sp2) {
 								LM_ERR("Error on add_serviced_peer()\n");
+								close(fd);
 								continue;
 							}
 
@@ -833,6 +877,7 @@ int receive_loop(peer *original_peer)
 							sp2 = add_serviced_peer(NULL);
 							if(!sp2) {
 								LM_ERR("Error on add_serviced_peer()\n");
+								close(fd);
 								continue;
 							}
 							sp2->tcp_socket = fd;
