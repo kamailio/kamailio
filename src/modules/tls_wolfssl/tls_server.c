@@ -783,7 +783,7 @@ static void tls_h_tcpconn_clean_mt_thread_cb(void *p, int pidx)
 void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 {
 	/* At shutdown in MT mode, PROC_TCP_MAIN is already dead and the OS
-         * reclaims all memory. Avoid touching its heap entirely. */
+	 * reclaims all memory. Avoid touching its heap entirely. */
 	if(_ksr_is_main)
 		return;
 
