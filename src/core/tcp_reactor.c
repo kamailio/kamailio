@@ -131,42 +131,50 @@ int ksr_tcp_reactor_get_dispatch_wfd(void)
 }
 
 /* =========================================================================
- * PROC_TCP_MAIN/io_wait owns all sockets. Pool threads only run read/write
- * callbacks on connections handed to them, then signal completion over a
- * notify pipe. The io_wait thread shields the conn and enqueues read/write
- * jobs onto job_head; pool threads wait on the PROCESS_SHARED condvar. A
- * write is triggered by a worker's CONN_WRITE_REQ, but it's the io_wait
- * thread's handler that stages the plaintext and enqueues the job - the
- * worker never touches the queue directly.
+ * Job flow inside PROC_TCP_MAIN:
+ *  - the io_wait thread owns every socket, io_h and the local timer
+ *  - io_wait shields c and pushes a read or write job onto job_head, then
+ *    signals the pool condvar
+ *  - a pool thread pops the job, runs the read or write on c, and hands the
+ *    job back on done_head plus one byte on the notify pipe
+ *  - io_wait completes the job (tcp_reactor_handle_done()): close, chain a
+ *    write, or unshield
+ *  - a worker's write arrives as CONN_WRITE_REQ: the io_wait handler stages
+ *    the plaintext on c->wsq and pushes the job; workers stay off the queues
  * ========================================================================= */
 
-/* job kinds */
+/* job kinds; the io_wait thread enqueues all three */
 enum tcp_reactor_op
 {
-	TCP_R_READ = 1,	 /* run the read callback on conn (reactor-enqueued) */
-	TCP_R_WRITE = 2, /* drain conn's write staging (io_wait-enqueued) */
-	TCP_R_RUN = 3,	 /* run an arbitrary tcpx_task_t, no connection involved */
+	TCP_R_READ = 1,	 /* read + reassemble conn, dispatch to workers */
+	TCP_R_WRITE = 2, /* move conn->wsq into wbuf_q, flush wbuf_q */
+	TCP_R_RUN = 3,	 /* run a tcpx_task_t; conn is NULL */
 };
 
-/* A read/write job carries the connection and op; write data stays on the
- * connection's wsq. The in-pool ref taken at shield covers every job on it.
- * A TCP_R_RUN job carries a task (conn NULL): its pool thread runs
- * task->exec() and frees the job (tcp_reactor_handle_tcpx_task_req()).
- * The enqueuing thread pkg-allocates every job. */
+/* one pool job (pkg, allocated by the io_wait thread):
+ *  - TCP_R_READ/_WRITE: conn + op; the write data stays on conn->wsq
+ *  - the in-pool ref taken at shield covers every job on conn
+ *  - the io_wait completion frees a READ/WRITE job
+ *  - TCP_R_RUN: task + pidx, conn NULL; its pool thread runs task->exec()
+ *    and frees the job (tcp_reactor_handle_tcpx_task_req()) */
 struct tcp_reactor_job
 {
 	struct tcp_connection *conn;
 	enum tcp_reactor_op op;
-	int resp; /* callback result (e.g. wbuf still pending); READ/WRITE only */
+	/* READ: tcp_read_req() result (< 0 = close);
+	 * WRITE: -1 close, 0 wbuf_q drained, 1 wbuf_q holds data */
+	int resp;
 	tcpx_task_t *task; /* TCP_R_RUN only */
 	int pidx;		   /* TCP_R_RUN only: requesting process, for the result */
 	struct tcp_reactor_job *next;
 };
 
-/* Wakeup condvar for the reactor pool: the io_wait thread signals it to hand
- * jobs to pool threads, which wait on it. A PROCESS_SHARED + (possibly)ROBUST condvar in
- * shm, allocated before fork; the sharing is only between the io_wait thread
- * and the pool threads inside PROC_TCP_MAIN. */
+/* pool wakeup condvar:
+ *  - the io_wait thread signals it after each job push
+ *  - idle pool threads wait on it; tcp_reactor_pool_destroy() broadcasts stop
+ *  - users: the threads of PROC_TCP_MAIN
+ *  - tcp_cond_t is PROCESS_SHARED (+ ROBUST where supported), so it lives in
+ *    shm, allocated in the main process before fork (tcp_reactor_dsock_init()) */
 struct tcp_reactor_wake
 {
 	tcp_cond_t cond; /* PROCESS_SHARED + ROBUST mutex + cond */
@@ -180,12 +188,12 @@ struct tcp_reactor_pool
 	pthread_t *threads;
 	int threads_no;
 	int stop;
-	struct tcp_reactor_job *job_head; /* all jobs (io_wait-enqueued) */
+	struct tcp_reactor_job *job_head; /* pending jobs, pushed by io_wait */
 	struct tcp_reactor_job *job_tail;
-	pthread_mutex_t done_lock; /* plain mutex: same process only */
-	struct tcp_reactor_job *done_head;
+	pthread_mutex_t done_lock;		   /* plain mutex: same process */
+	struct tcp_reactor_job *done_head; /* finished jobs (pool threads) */
 	struct tcp_reactor_job *done_tail;
-	int notify_pipe[2]; /* [0] watched by reactor, [1] written by threads */
+	int notify_pipe[2]; /* [0] io_wait reads (io_h), [1] pool threads write */
 };
 static struct tcp_reactor_pool tcp_rpool;
 
@@ -209,20 +217,21 @@ int tcp_reactor_pool_thread_idx(void)
 	return tcp_reactor_thread_idx;
 }
 
-/* The dispatch socket carries one task pointer per datagram. A write of at
- * most PIPE_BUF bytes is guaranteed atomic, so the pointer is never torn
- * across concurrent worker recvs (see the _Static_assert below). */
+/* dispatch socket framing:
+ *  - AF_UNIX SOCK_DGRAM: one send() = one datagram = one task pointer
+ *  - each worker recv() returns one whole datagram, so concurrent workers
+ *    each get a complete pointer
+ *  - the assert keeps the pointer within PIPE_BUF (sanity bound) */
 _Static_assert(sizeof(uintptr_t) <= PIPE_BUF,
 		"task pointer too wide for atomic dispatch write");
 
-/* mode 2 [pool]: hand a task pointer to the workers over the dispatch
- * socketpair.
- *
- * The socket is non-blocking: poll briefly for the buffer to drain
- * and retry, giving up only on a hard error or if the workers
- * stay wedged past the bounded wait.
- * Returns 0 on success, -1 on failure
- * (task not sent - the caller must free it). */
+/* mode 2 [pool]: send a task pointer to the workers on the dispatch socket.
+ *  - EINTR: retry
+ *  - socket full (EAGAIN, workers behind): poll up to
+ *    TCP_REACTOR_DISPATCH_POLL_TRIES x TCP_REACTOR_DISPATCH_POLL_MS for room,
+ *    then drop the task (counts reactor_dispatch_drops)
+ *  - other errors: fail
+ * Returns 0 when sent, -1 on failure (the caller frees the task). */
 #define TCP_REACTOR_DISPATCH_POLL_MS 100
 #define TCP_REACTOR_DISPATCH_POLL_TRIES 5
 static int tcp_reactor_dispatch_send(uintptr_t ptr)
@@ -262,18 +271,14 @@ static int tcp_reactor_dispatch_send(uintptr_t ptr)
 }
 
 /*
- * mode 2 [pool]: allocate a tcp_reactor_task_t in shm, copy the reassembled SIP
- * message and receive_info into it, then send the pointer to the workers via
- * the dispatch socketpair write end.
- *
- * Called on a PROC_TCP_MAIN reactor pool thread - the read/reassembly runs in
- * the TCP_R_READ job, not on the io_wait thread - at the point where
- * receive_tcp_msg() would be called inline in modes 0/1. WS delivers here too
- * (ws_deliver_sip), likewise from a pool thread.
- *
- * The receiving worker dispatches on task->flags (plain SIP -> receive_msg(),
- * F_TCP_REQ_HEP3 -> hep3_process_msg()) then shm_free()s the task.
- * Returns 0 when the task is queued, -1 on error.
+ * mode 2 [pool]: hand one reassembled message to a worker.
+ *  - caller: the TCP_R_READ job, where modes 0/1 call receive_tcp_msg();
+ *    WS calls it from ws_deliver_sip() in the same job
+ *  - copies buf, rcv and flags into a shm tcp_reactor_task_t and sends the
+ *    pointer on the dispatch socket
+ *  - the worker picks the entry point from task->flags (plain SIP ->
+ *    receive_msg(), F_TCP_REQ_HEP3 -> hep3_process_msg()) and frees the task
+ * Returns 0 when the task is sent, -1 on error (task freed here).
  */
 int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 		struct receive_info *rcv)
@@ -300,17 +305,18 @@ int tcp_reactor_dispatch_msg(char *buf, unsigned int len, unsigned int flags,
 	return 0;
 }
 
-/* mode 2 [pool]: send a tls:connection-out event for c to a worker, which
- * returns the extra ref via CONN_TLS_EVENT_DONE. 0/-1 */
+/* mode 2 [pool]: send a tls:connection-out event for c to a worker.
+ *  - takes a transient ref on c for the hop
+ *  - the worker runs the route and returns the ref via CONN_TLS_EVENT_DONE
+ *    (tcp_reactor_handle_tls_event_done() drops it)
+ * Returns 0 when sent, -1 on error (ref dropped here). */
 int tcp_reactor_dispatch_tls_event(struct tcp_connection *c)
 {
 	tcp_reactor_task_t *task;
 	uintptr_t ptr;
 
-	/* Keep c alive for the hop to the worker: it reads c's cached TLS metadata
-	 * and hands the refcnt back via CONN_TLS_EVENT_DONE. The read job that
-	 * reached us already holds a ref, so this extra one is never the last -
-	 * the error-path tcpconn_put() below can't free c. */
+	/* transient ref: the worker reads c's cached TLS metadata. The calling
+	 * read job holds the in-pool ref, so the error-path puts keep c alive */
 	tcpconn_ref(c);
 
 	task = shm_malloc(sizeof(tcp_reactor_task_t) + 1);
@@ -339,10 +345,14 @@ int tcp_reactor_dispatch_tls_event(struct tcp_connection *c)
  * ========================================================================= */
 
 
-/* mode 2 [io_wait|pool]: direct - tcpconn_do_send() semantics, write if nothing
- * is queued and queue only the rest (errors too: the following wbufq_run()
- * reports them). direct chunks come from wsq, already checked against
- * tcpconn_wq_max */
+/* mode 2 [io_wait|pool]: append buf (wire bytes) to c's wbuf_q.
+ *  - direct = 0 (io_wait): queue all of buf, capped by tcpconn_wq_max
+ *  - direct = 1 (pool write job): write to the socket first when wbuf_q is
+ *    empty and c is connected, queue the unwritten rest
+ *  - direct: a write error queues the rest too; the job's wbufq_run() then
+ *    reports the error
+ *  - direct chunks skip the per-conn cap: tcp_reactor_wsq_add() applied it
+ * Returns 0, or -1 when _wbufq_add_cap() refuses (queue full / timeout). */
 static int tcp_reactor_wbuf_put_locked(
 		struct tcp_connection *c, const char *buf, unsigned len, int direct)
 {
@@ -362,11 +372,13 @@ static int tcp_reactor_wbuf_put_locked(
 	return _wbufq_add_cap(c, buf + n, len - n, !direct);
 }
 
-/* mode 2 [io_wait|pool]: append an outgoing payload to c's write queue
- * (wbuf_q), encrypting it first for TLS/WSS (tls_encode) or copying it verbatim
- * for plain TCP. direct: write-through first - only from the pool thread owning
- * the conn.
- **/
+/* mode 2 [io_wait|pool]: append a plaintext payload to c's wbuf_q; the caller
+ * holds c->write_lock.
+ *  - TLS/WSS: tls_encode() it chunk by chunk, queue the records
+ *  - TCP/WS: queue it as is
+ *  - direct = 1: write-through first (tcp_reactor_wbuf_put_locked()); for the
+ *    pool thread that owns c
+ * Returns 0, -1 on error (c marked S_CONN_BAD, timeout forced). */
 static int tcp_reactor_wbuf_add_locked(struct tcp_connection *c, char *buf,
 		unsigned len, snd_flags_t send_flags, int direct)
 {
@@ -410,10 +422,10 @@ static int tcp_reactor_wbuf_add_locked(struct tcp_connection *c, char *buf,
 	return 0;
 }
 
-/* mode 2 [io_wait]: the locking wrapper around tcp_reactor_wbuf_add_locked()
- * for callers that do NOT already hold c->write_lock - it takes the lock,
- * appends (encoding for TLS), and releases it. Same 0/-1 return. Mirrors the
- * TLS branch of the legacy tcpconn_send_put(). */
+/* mode 2 [io_wait]: tcp_reactor_wbuf_add_locked() with direct = 0 under
+ * c->write_lock, for callers outside the lock (send_put on io_wait, a new
+ * outbound connection). Same 0/-1 return; the mode 0/1 counterpart is the TLS
+ * branch of tcpconn_send_put() in tcp_main.c. */
 static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 		unsigned len, snd_flags_t send_flags)
 {
@@ -425,22 +437,20 @@ static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 	return ret;
 }
 
-/* mode 2 [io_wait]: enable POLLOUT watching on an already-hashed connection
- * (mirrors the CONN_QUEUED_WRITE logic). Non-destructive: on io_watch failure
- * it clears the write-watch flag and returns -1 WITHOUT freeing c, so callers
- * that keep using c afterwards (e.g. the TLS read path) stay safe. Returns 0
- * on success. */
+/* mode 2 [io_wait|pool]: watch POLLOUT on a hashed c whose wbuf_q holds data
+ * (the mode 2 form of handle_ser_child()'s CONN_QUEUED_WRITE arm).
+ *  - pool-owned c: return 0 untouched; the job completion re-arms POLLOUT
+ *  - pull the local timer in to the write timeout when that comes first
+ *  - add c->s to io_h with POLLOUT, or add POLLOUT to its POLLIN watch
+ *  - io_watch failure: clear F_CONN_WRITE_W, return -1, keep c alive (the TLS
+ *    read path uses c afterwards)
+ * Returns 0 on success or when watched, -1 on io_watch failure. */
 int tcp_reactor_enable_write_watch(struct tcp_connection *c)
 {
 	ticks_t t;
 
-	/* mode 2: if the conn is currently owned by a pool job
-	 * (F_CONN_POOL_BUSY) it is in neither io_h nor the local timer, and is
-	 * being touched by a pool thread. Return immediately WITHOUT touching
-	 * c->flags or io_h - a pool thread (this may be called from its TLS /
-	 * CRLF-pong write-back) must not race the io_wait thread on c->flags. The
-	 * data is already in wbuf_q and the job completion re-arms POLLOUT from it.
-	 * This check MUST come before any c->flags write below. */
+	/* first, before any c->flags write: a pool thread reaches here from a TLS
+	 * or CRLF-pong write-back, and c->flags belongs to the io_wait thread */
 	if(tcpconn_pool_busy(c))
 		return 0;
 	if(c->flags & F_CONN_WANTS_WR)
@@ -494,12 +504,13 @@ static int tcp_reactor_watch_write(struct tcp_connection *c)
 	return 0;
 }
 
-/* mode 2 [io_wait]: modifies the existing per-connection timer:
- * - allows PROC_TCP_MAIN to reap a partial read, instead of
- *   waiting for the slower cross-process tcp_timer_check_connections() scan
- * - pulls c->timeout in to the partial-read deadline (message start +
- *   ksr_tcp_msg_read_timeout) and re-arms c->timer to fire there
- * Caller passes t = current tick.
+/* mode 2 [io_wait]: bound a partially read message by tcp_msg_read_timeout.
+ *  - applies when the timeout is set, c is S_CONN_OK and a message start is
+ *    recorded (c->req.tvrstart)
+ *  - pulls c->timeout in to message start + ksr_tcp_msg_read_timeout
+ *  - re-arms c->timer there, so the local timer of PROC_TCP_MAIN reaps the
+ *    stalled read (ahead of the tcp_timer_check_connections() scan)
+ * t = current tick.
  */
 static void tcp_reactor_arm_read_timeout(struct tcp_connection *c, ticks_t t)
 {
@@ -565,8 +576,8 @@ static int tcp_reactor_enqueue_job(
 	return 0;
 }
 
-/* mode 2 [io_wait]: enqueue a connectionless TCP_R_RUN job carrying task onto
- * the pool queue. No shield/refcount dance concerns. Returns 0/-1. */
+/* mode 2 [io_wait]: enqueue a TCP_R_RUN job carrying task; connectionless, so
+ * it skips the shield and the ref. Returns 0, -1 on pkg OOM. */
 static int tcp_reactor_enqueue_run(tcpx_task_t *task, int pidx)
 {
 	struct tcp_reactor_job *job;
@@ -584,16 +595,17 @@ static int tcp_reactor_enqueue_run(tcpx_task_t *task, int pidx)
 	return 0;
 }
 
-/* mode 2 [io_wait] + mtops: used to send tasks to the thread pool from external
- * processes like jsonrpc with tls.reload; exec() gets the requester's pidx,
- * so a result sent via ksr_tcpx_thread_eresult(rtask, pidx) reaches it
+/* mode 2 [io_wait]: run a tcpx task (tcp_mtops.h) from another process on a
+ * pool thread.
+ *  - sender: e.g. the RPC process running tls.reload
+ *  - exec() gets the requester's pidx; ksr_tcpx_thread_eresult(rtask, pidx)
+ *    sends the result back to it
  */
 void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task, int pidx)
 {
 	if(unlikely(tcp_reactor_enqueue_run(task, pidx) < 0)) {
-		/* Enqueue failed (pkg OOM) - the sender is blocked in
-		 * ksr_tcpx_task_result_recv() so dropping
-		 * the task here would hang it forever. Run it inline instead. */
+		/* pkg OOM: run the task here on the io_wait thread; the sender waits
+		 * in ksr_tcpx_task_result_recv() for its result */
 		LM_ERR("failed to enqueue tcpx task %p - running inline\n",
 				(void *)task);
 		if(task->exec)
@@ -601,12 +613,14 @@ void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task, int pidx)
 	}
 }
 
-/* mode 2 [io_wait]: take pool ownership of a connection. Runs in the io_wait
- * thread. Removes the conn from io_h and the local timer, clears its watch
- * flags, and takes the single "in-pool" refcount that is held until the conn is
- * unshielded or closed (it spans chained jobs); tcp_reactor_enqueue_job() then
- * sets the job's owner bit. No-op (returns 0) if already busy. Returns -1 on
- * io_watch error. */
+/* mode 2 [io_wait]: shield c - hand it to the pool.
+ *  - pool-owned c: return 0 as is (the in-pool ref is held)
+ *  - remove c->s from io_h (fd_i: its io_h index, -1 = look it up)
+ *  - remove c from the local timer, clear the watch flags
+ *  - take the in-pool ref; unshield or pool_close releases it, chained jobs
+ *    share it
+ *  - tcp_reactor_enqueue_job() then sets the job's owner bit
+ * Returns 0, -1 on io_watch error. */
 static int tcp_reactor_shield(struct tcp_connection *c, int fd_i)
 {
 	if(tcpconn_pool_busy(c))
@@ -628,8 +642,11 @@ static int tcp_reactor_shield(struct tcp_connection *c, int fd_i)
 	return 0;
 }
 
-/* mode 2 [io_wait]: mark c bad from the io_wait thread. A pool-owned c also
- * gets F_CONN_POOL_CLOSE, which a job's own state writes cannot undo */
+/* mode 2 [io_wait]: mark c bad for closing.
+ *  - set S_CONN_BAD and force the timeout
+ *  - pool-owned c: also set F_CONN_POOL_CLOSE; a running job writes c->state
+ *    (e.g. S_CONN_ACCEPT -> S_CONN_OK), the flag belongs to io_wait and keeps
+ *    the close request for the job completion */
 static void tcp_reactor_mark_bad(struct tcp_connection *c)
 {
 	c->state = S_CONN_BAD;
@@ -638,17 +655,19 @@ static void tcp_reactor_mark_bad(struct tcp_connection *c)
 		c->flags |= F_CONN_POOL_CLOSE;
 }
 
-/* mode 2 [io_wait]: c is pool-owned: mark it bad for the last job to close and
- * drop the caller's ref; the in-pool ref keeps c alive */
+/* mode 2 [io_wait]: for a pool-owned c:
+ *  - mark it bad; the last job's completion closes it
+ *  - drop the caller's ref; the in-pool ref keeps c alive */
 void tcp_reactor_mark_bad_put(struct tcp_connection *c)
 {
 	tcp_reactor_mark_bad(c);
 	if(unlikely(tcpconn_put(c)))
-		tcpconn_destroy(c); /* last ref: unreachable while busy */
+		tcpconn_destroy(c); /* defensive: the in-pool ref is held */
 }
 
-/* mode 2 [pool]: take/release a job's owner stamp on c (pool thread). A stamp
- * already taken means two jobs of one kind run on c: report it */
+/* mode 2 [pool]: take (take = 1) or release a job's owner stamp on c.
+ *  - c->rd_owner / c->wr_owner = pool thread index + 1, 0 = free
+ *  - take on a set stamp = two jobs of one kind on c: BUG() */
 static void tcp_reactor_stamp(struct tcp_connection *c, int op, int take)
 {
 	int *owner = (op == TCP_R_READ) ? &c->rd_owner : &c->wr_owner;
@@ -661,7 +680,9 @@ static void tcp_reactor_stamp(struct tcp_connection *c, int op, int take)
 }
 
 /* mode 2 [io_wait]: start a write job for c's staged data while its read job
- * runs; the read's shield and in-pool ref cover it. 1/0 */
+ * runs; the read's shield and in-pool ref cover it.
+ * Returns 1 when the write job is queued, 0 when the read job is gone, a
+ * write job or close is pending, c is bad or unhashed, wsq is empty, or OOM. */
 static int tcp_reactor_write_beside_read(struct tcp_connection *c)
 {
 	if(!(c->flags & F_CONN_POOL_RD)
@@ -687,7 +708,9 @@ static int tcp_reactor_sock_readable(int fd)
 }
 
 /* mode 2 [io_wait]: start a read job for c's pending input while its write job
- * runs, so a steady stream of writes cannot starve reads. 1/0 */
+ * runs, so reads keep flowing under a steady stream of writes.
+ * Returns 1 when the read job is queued, 0 when the write job is gone, a
+ * read job or close is pending, c is bad or unhashed, input is empty, or OOM. */
 static int tcp_reactor_read_beside_write(struct tcp_connection *c)
 {
 	if(!(c->flags & F_CONN_POOL_WR)
@@ -722,9 +745,11 @@ static int tcp_reactor_sock_writable(int fd)
 	return (poll(&pfd, 1, 0) == 1) && (pfd.revents == POLLOUT);
 }
 
-/* mode 2 [io_wait|pool]: stage a plaintext write chunk onto c's per-connection
- * write staging list (shm). Taken by a pool TCP_R_WRITE job. Safe to call from
- * the io_wait thread (CONN_WRITE_REQ handler). Returns 0/-1. */
+/* mode 2 [io_wait|pool]: copy a plaintext chunk onto c->wsq (shm, under
+ * c->write_lock); a TCP_R_WRITE job moves it into wbuf_q.
+ *  - io_wait: worker writes (CONN_WRITE_REQ / CONN_CONNECT_REQ reuse)
+ *  - pool: write-backs from the read path (WS pong/close, CRLF pong)
+ * Returns 0, -1 on shm OOM or a full write queue (see the cap below). */
 static int tcp_reactor_wsq_add(struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags)
 {
@@ -748,8 +773,12 @@ static int tcp_reactor_wsq_add(struct tcp_connection *c, const char *buf,
 	ch->send_flags = send_flags;
 	ch->next = NULL;
 	lock_get(&c->write_lock);
-	/* cap only while the socket itself is full, like mode 0: a backlog left by
-	 * a staged batch waiting for its pool flush is not peer backpressure */
+	/* write queue cap (tcpconn_wq_max), refuse when all three hold:
+	 *  - wbuf_q holds data (an earlier write left bytes behind)
+	 *  - wbuf_q + wsq + len exceeds the cap
+	 *  - the socket is full now, i.e. the peer applies backpressure
+	 * a wsq backlog waiting for its write job on a writable socket passes,
+	 * as mode 0 caps on the socket-full state */
 	if(unlikely(_wbufq_non_empty(c)
 				&& (c->wbuf_q.queued + c->wsq_len + len
 						> cfg_get(tcp, tcp_cfg, tcpconn_wq_max))
@@ -776,11 +805,13 @@ static int tcp_reactor_wsq_add(struct tcp_connection *c, const char *buf,
 	return 0;
 }
 
-/* mode 2 [io_wait]: re-arm a connection in the reactor after its pool job(s)
- * finished (unshield). Runs in the io_wait thread. Clears F_CONN_POOL_BUSY,
- * adds POLLIN plus POLLOUT if a write accumulated, and re-arms the local timer
- * the shield removed. Returns 0 on success, -1 on io_watch error (caller
- * should then close the connection). */
+/* mode 2 [io_wait]: unshield c - hand it back to io_wait after its last job.
+ *  - clear the pool owner bits
+ *  - add c->s to io_h with POLLIN, plus POLLOUT when wbuf_q holds data
+ *  - refresh c->timeout (con_lifetime) and re-add the local timer the shield
+ *    removed; a partial read then gets the read deadline
+ *  - the caller drops the in-pool ref
+ * Returns 0, -1 on io_watch error (the caller closes c). */
 static int tcp_reactor_unshield(struct tcp_connection *c)
 {
 	short events = POLLIN;
@@ -811,15 +842,16 @@ static int tcp_reactor_unshield(struct tcp_connection *c)
 	return 0;
 }
 
-/* mode 2 [io_wait]: tear down a connection owned by a pool job (EOF/error). The
- * conn is shielded (out of io_h + timer already); runs on the io_wait thread.
- *
- * Both callers (handle_done on resp < 0, unshield_or_chain's close/re-arm-
- * failure paths) enter with the in-pool ref still held. pool_close drops the
- * hash ref first, then the in-pool ref last - so if a transient ref is still
- * outstanding (e.g. the tls:connection-out dispatch ref), tcpconn_put_destroy()
- * lands above zero and that holder does the final free, instead of this call
- * freeing a still-referenced conn. */
+/* mode 2 [io_wait]: close a shielded c after its last job (EOF, error, mark
+ * bad); c is out of io_h and the timer.
+ *  - callers: tcp_reactor_handle_done() (F_CONN_POOL_CLOSE) and
+ *    tcp_reactor_unshield_or_chain() (bad/unhashed c, re-arm failure); both
+ *    hold the in-pool ref
+ *  - unhash and drop the hash ref
+ *  - emit the tcpops close event
+ *  - drop the in-pool ref last: the last ref frees c; with a transient ref
+ *    outstanding (worker write request, tls-event dispatch) its holder frees
+ *    c later */
 static void tcp_reactor_pool_close(struct tcp_connection *c)
 {
 	if(unlikely(c->rd_owner || c->wr_owner))
@@ -834,14 +866,15 @@ static void tcp_reactor_pool_close(struct tcp_connection *c)
 	tcpconn_put_destroy(c);
 }
 
-/* mode 2 [io_wait]: pool job completion on a healthy conn (io_wait thread).
- * If a write was staged during the job, chain a TCP_R_WRITE job and keep
- * ownership (POOL_BUSY + in-pool ref stay). Otherwise release the in-pool ref
- * and hand the conn back to the reactor (un-shield: re-arm io_h + timer). */
+/* mode 2 [io_wait]: finish c's last pool job (or a failed enqueue), in order:
+ *  - wsq holds data, wbuf_q is empty, c is healthy: chain a TCP_R_WRITE job;
+ *    c stays shielded with the in-pool ref
+ *  - c bad or unhashed: tcp_reactor_pool_close()
+ *  - else unshield c and drop the in-pool ref; on re-arm failure close c */
 static void tcp_reactor_unshield_or_chain(struct tcp_connection *c)
 {
-	/* a full socket (wbuf_q left over) un-shields instead: POLLOUT brings the
-	 * staged data back, rather than a write job spinning on EAGAIN */
+	/* wbuf_q holds data = socket full: unshield; the next POLLOUT in
+	 * tcp_reactor_handle_tcpconn_ev() starts the write job for wsq */
 	if(c->wsq_head != NULL && (c->flags & F_CONN_HASHED)
 			&& c->state != S_CONN_BAD && !_wbufq_non_empty(c)) {
 		if(likely(tcp_reactor_enqueue_job(c, TCP_R_WRITE) == 0)) {
@@ -849,12 +882,9 @@ static void tcp_reactor_unshield_or_chain(struct tcp_connection *c)
 			tcp_reactor_read_beside_write(c);
 			return;
 		}
-		/* enqueue failed: fall through to un-shield; the staged data waits in
-		 * wsq until the next write trigger */
+		/* OOM: unshield; wsq waits for the next write request or POLLOUT */
 	}
-	/* Close paths: hand the still-held in-pool ref to pool_close(), which drops
-	 * it last (see its comment) - safe even if a transient ref (e.g. the
-	 * tls:connection-out dispatch ref) is still outstanding. */
+	/* close: pool_close() takes over the in-pool ref */
 	if(unlikely(!(c->flags & F_CONN_HASHED) || (c->state == S_CONN_BAD))) {
 		tcp_reactor_pool_close(c);
 		return;
@@ -863,31 +893,25 @@ static void tcp_reactor_unshield_or_chain(struct tcp_connection *c)
 		tcp_reactor_pool_close(c);
 		return;
 	}
-	/* healthy: re-armed into io_h + the local timer, so release the in-pool
-	 * ref. The hash ref (and any still-outstanding transient holder) keeps the
-	 * conn alive. */
+	/* back in io_h + the timer: drop the in-pool ref; the hash ref keeps c */
 	if(unlikely(tcpconn_put(c)))
-		tcpconn_destroy(c); /* only if this was somehow the last ref */
+		tcpconn_destroy(c); /* defensive: the hash ref is held */
 }
 
 /* mode 2 write dispatch entry points, called from tcp_send() (tcp_main.c). */
 
-/* mode 2 [any]: a TCP worker hands an outgoing payload to PROC_TCP_MAIN, which
- * owns all writes. TLS is handled in PROC_TCP_MAIN and not at the worker.
- *
- * Ownership: the caller's refcnt on c is transferred into the write request and
- * dropped by tcp_main once the request is handled (see the CONN_WRITE_REQ arm of
- * handle_ser_child()); on any error here we drop it ourselves so c is not leaked.
- *
- * Returns len as soon as the payload is accepted for sending - NOT when it
- * reaches the wire. The send is async (handed to PROC_TCP_MAIN, queued in
- * wbuf_q, written on POLLOUT), so the SIP caller sees success immediately; a
- * later send failure is handled by tearing down the connection, and never comes
- * back through this return value.
- *
- * Fast path: if we are already inside PROC_TCP_MAIN (a core CRLF pong / HTTP 100
- * sent via tcp_send() from the read path) there is no worker->main hop - queue
- * on wbuf_q and arm POLLOUT directly, mirroring the CONN_WRITE_REQ handler. */
+/* mode 2 [any]: send a payload on c; PROC_TCP_MAIN performs every write (and
+ * every tls_encode()).
+ *  - c ref: the caller's ref (tcp_send()) moves into the write request; tcp
+ *    main drops it (handle_ser_child()'s CONN_WRITE_REQ arm); error paths here
+ *    drop it
+ *  - worker: copy the payload into a shm write request, send it on
+ *    unix_tcp_sock as CONN_WRITE_REQ
+ *  - PROC_TCP_MAIN pool thread (a write-back from the read path, e.g. WS
+ *    pong/close): stage on c->wsq; the read job's completion chains the write
+ *  - PROC_TCP_MAIN io_wait thread: queue on wbuf_q, arm POLLOUT
+ * Returns len when the payload is accepted, -1 on error. The write itself is
+ * async: a later failure closes c and stays out of this return value. */
 int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags)
 {
@@ -895,11 +919,10 @@ int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 	long response[2];
 
 	if(unlikely(is_tcp_main())) {
-		/* Called from within PROC_TCP_MAIN itself - no unix_tcp_sock self-send.
-		 * BUT is_tcp_main() is true for the whole process, i.e. BOTH the io_wait
-		 * thread AND the reactor pool threads. Only the io_wait thread owns io_h,
-		 * so the two cases must be handled differently. Release the refcnt the
-		 * caller (tcp_send) took on c either way. */
+		/* inside PROC_TCP_MAIN: skip the unix_tcp_sock self-send.
+		 * is_tcp_main() holds for io_wait and pool threads alike; io_h belongs
+		 * to io_wait, so split on tcp_reactor_thread_idx. Drop the caller's
+		 * ref first */
 		if(unlikely(tcpconn_put(c))) {
 			tcpconn_destroy(c); /* was the last ref */
 			return -1;
@@ -909,23 +932,18 @@ int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 			return -1;
 		}
 		if(tcp_reactor_thread_idx >= 0) {
-			/* On a POOL thread: e.g. WS ws_send_crlf()/pong/close issued inline
-			 * from the read path (ws_frame_receive) while this thread owns the
-			 * shielded conn. We must NOT touch io_h or c's watch flags here -
-			 * that races the io_wait thread and can re-arm the fd while a read
-			 * job owns it, letting a second thread run on the same con->req
-			 * (torn WS frames / double-unmask -> garbage to workers). Stage the
-			 * payload on the conn's wsq (shm, under write_lock); the read job's
-			 * completion (tcp_reactor_unshield_or_chain) drains it via a chained
-			 * write job. */
+			/* pool thread, c shielded by this thread's read job (e.g. WS
+			 * ws_send_crlf()/pong/close from ws_frame_receive()):
+			 *  - stage on c->wsq (shm, under write_lock)
+			 *  - the read job's completion chains a write job for it
+			 *  - leave io_h and c->flags to io_wait: re-arming c->s here lets a
+			 *    second read job run on c->req (torn WS frames) */
 			if(unlikely(tcp_reactor_wsq_add(c, buf, len, send_flags) < 0))
 				return -1;
 			return (int)len;
 		}
-		/* io_wait thread (e.g. a core CRLF keepalive pong or HTTP/1.1
-		 * 100-continue sent via tcp_send() from the reactor's own read path):
-		 * safe to queue the payload and arm POLLOUT directly, mirroring the
-		 * CONN_WRITE_REQ handler. */
+		/* io_wait thread: queue on wbuf_q and arm POLLOUT here; the io_wait
+		 * thread owns io_h and c->flags */
 		if(unlikely(tcp_reactor_wbuf_enqueue(c, (char *)buf, len, send_flags)
 					< 0)) {
 			return -1;
@@ -965,9 +983,14 @@ int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 	return (int)len;
 }
 
-/* mode 2 [worker]: no usable connection exists - ask PROC_TCP_MAIN to open a
- * new outbound connection and send on it. The worker opens no socket and
- * creates no tcp_connection. Returns len (optimistic) or -1. */
+/* mode 2 [worker]: the worker lacks a connection to dst: ask PROC_TCP_MAIN to
+ * open one and send buf on it.
+ *  - copy dst, from and buf into a shm connect request, send it on
+ *    unix_tcp_sock as CONN_CONNECT_REQ
+ *  - tcp main opens the socket and creates the tcp_connection
+ *    (tcp_reactor_handle_connect_req())
+ * Returns len when the request is sent (the connect and write are async), -1
+ * on error. */
 int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 		const char *buf, unsigned len)
 {
@@ -975,12 +998,10 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 	long response[2];
 
 	if(unlikely(is_tcp_main())) {
-		/* A new outbound connection requested by code running inside
-		 * PROC_TCP_MAIN itself. The unix_tcp_sock self-send below is invalid
-		 * here. The known in-tcp_main senders (core read-path CRLF pong /
-		 * HTTP 100-continue) always target an already-established connection
-		 * (handled by tcp_reactor_send_put), so this path is not expected to be
-		 * reached; fail loudly rather than emit a confusing "send on 0" error. */
+		/* a connect from inside PROC_TCP_MAIN: refuse with a clear error.
+		 * The unix_tcp_sock self-send is invalid here; the in-process senders
+		 * (read-path pongs, HTTP 100-continue) reply on an existing connection
+		 * via tcp_reactor_send_put() */
 		LM_ERR("outbound connect requested from within PROC_TCP_MAIN to %s -"
 			   " not supported in mode 2, dropping\n",
 				su2a(&dst->to, sizeof(dst->to)));
@@ -1027,21 +1048,24 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 /* mode 2 handle_ser_child() case bodies (CONN_TLS_EVENT_DONE/CONN_SCRIPT_CLOSE/
  * CONN_WRITE_REQ/CONN_CONNECT_REQ), called from tcp_main.c. */
 
-/* mode 2 [io_wait]: a worker finished a dispatched tls:connection-out event
- * (tcp_reactor_dispatch_tls_event). tcpconn is the connection; drop the
- * dispatch refcnt taken there. Doing it here, in PROC_TCP_MAIN, keeps
- * connection destruction on the owner. Runs on the io_wait thread
- * (handle_ser_child's CONN_TLS_EVENT_DONE arm). */
+/* mode 2 [io_wait]: CONN_TLS_EVENT_DONE arm of handle_ser_child(): a worker ran
+ * the tls:connection-out route for tcpconn.
+ *  - drop the transient ref of tcp_reactor_dispatch_tls_event()
+ *  - the last ref frees tcpconn here, on the io_wait thread */
 void tcp_reactor_handle_tls_event_done(struct tcp_connection *tcpconn)
 {
 	if(unlikely(tcpconn_put(tcpconn)))
 		tcpconn_destroy(tcpconn);
 }
 
-/* mode 2 [io_wait]: close connection on core errors (used with
- * tcp_script_mode=0). scid is the connection id (rcv->proto_reserved1) - the
- * worker never has a tcp_connection pointer for a dispatched task. Runs on the
- * io_wait thread (handle_ser_child's CONN_SCRIPT_CLOSE arm). */
+/* mode 2 [io_wait]: CONN_SCRIPT_CLOSE arm of handle_ser_child(): a worker asks
+ * to close the connection of a message that failed in the core
+ * (tcp_script_mode = 0, tcp_read.c).
+ *  - scid = connection id (rcv->proto_reserved1); a dispatched task carries
+ *    the id, the worker holds no tcp_connection pointer
+ *  - gone: nothing to do
+ *  - pool-owned: mark bad, the last job's completion closes it
+ *  - else unhash, unwatch, emit tcp:closed, free */
 void tcp_reactor_handle_script_close(int scid)
 {
 	struct tcp_connection *tcpconn;
@@ -1102,11 +1126,11 @@ static void tcp_reactor_stage_write(struct tcp_connection *c, char *buf,
 		tcp_reactor_unshield_or_chain(c);
 }
 
-/* mode 2 [io_wait]: worker queued a write; wreq is the write request
- * (shm-allocated by the worker in tcp_reactor_send_put()). Stages the payload
- * on wsq; if c is free and its socket has room, shields c and enqueues a
- * TCP_R_WRITE job. Runs on the io_wait thread (handle_ser_child's
- * CONN_WRITE_REQ arm). Frees wreq and wreq->buf on every path. */
+/* mode 2 [io_wait]: CONN_WRITE_REQ arm of handle_ser_child(); wreq comes from
+ * tcp_reactor_send_put() in a worker.
+ *  - drop the worker's ref; c gone or closing: drop the write
+ *  - else tcp_reactor_stage_write()
+ *  - frees wreq and wreq->buf on every path */
 void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq)
 {
 	struct tcp_connection *tcpconn;
@@ -1126,12 +1150,8 @@ void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq)
 		shm_free(wreq);
 		return;
 	}
-	/* Writes are offloaded to a pool thread. Stage the plaintext, then -
-	 * if the conn is not already owned by a pool job - shield it and
-	 * enqueue a write job; for TLS the job tls_encode()s each staged chunk
-	 * before flushing wbuf_q (the conn is shielded, so that pool thread
-	 * owns the SSL object exclusively). If the conn is busy, the data
-	 * waits in wsq and the running job's completion chains a write job. */
+	/* the write job tls_encode()s on its pool thread: the shield gives it the
+	 * SSL object */
 	tcp_reactor_stage_write(tcpconn, wreq->buf, wreq->len, wreq->send_flags);
 	shm_free(wreq);
 }
@@ -1194,11 +1214,12 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 	}
 }
 
-/* mode 2 [io_wait]: worker has no usable connection - open a new outbound one
- * here in PROC_TCP_MAIN, or reuse a matching one another worker created
- * meanwhile. creq is the connect request (shm-allocated by the worker in
- * tcp_reactor_connect_put()). Runs on the io_wait thread (handle_ser_child's
- * CONN_CONNECT_REQ arm). Frees creq and creq->buf on every path. */
+/* mode 2 [io_wait]: CONN_CONNECT_REQ arm of handle_ser_child(); creq comes from
+ * tcp_reactor_connect_put() in a worker.
+ *  - look dst up again: another worker's request may have opened it since
+ *  - found: stage the payload on it (tcp_reactor_stage_write())
+ *  - else open a new connection (tcp_reactor_connect_new())
+ *  - frees creq and creq->buf on every path */
 void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 {
 	struct tcp_connection *cc;
@@ -1310,30 +1331,26 @@ static void tcp_reactor_ev_close(struct tcp_connection *tcpconn, int fd_i)
 	tcpconn_put_destroy(tcpconn);
 }
 
-/* mode 2 [io_wait]: full read/write handling for a connection's io event,
- * called from handle_tcpconn_ev() as its very first action when
- * ksr_tcp_main_threads==2 - tcp_main.c owns the fd permanently there (no
- * fd-passing, no send2child), so this is effectively a second implementation of
- * handle_tcpconn_ev() for that mode, kept here because the
- * shield/enqueue/unshield dance and its io_h/timer bookkeeping is
- * reactor-exclusive. Runs on the io_wait thread. Same return convention as
- * handle_tcpconn_ev()/handle_io(). */
+/* mode 2 [io_wait]: io event on tcpconn; handle_tcpconn_ev() calls it first in
+ * mode 2 and returns its result (same convention as handle_io()).
+ *  - mode 2 form of handle_tcpconn_ev(): PROC_TCP_MAIN keeps the fd, reads
+ *    and reassembles on the pool, dispatches messages to workers
+ *  - workers take tasks from the shared dispatch socket and the kernel spreads
+ *    them (as udp_receiver_mode = 1); tcp_children[].busy stays unused
+ * Steps, in order:
+ *  - pool-owned tcpconn: unwatch the fd, return
+ *  - POLLOUT with wsq data: shield, start a write job (+ a read beside)
+ *  - POLLOUT/error on a write watch: flush wbuf_q here
+ *  - POLLIN/error: shield, start a read job
+ * Returns 0, -1 when tcpconn was closed here. */
 int tcp_reactor_handle_tcpconn_ev(
 		struct tcp_connection *tcpconn, short ev, int fd_i)
 {
-	/* mode 2: tcp_main owns the fd permanently, reads and
-	 * assembles SIP messages (no fd-passing, no send2child).
-	 *
-	 * Worker busy-tracking (tcp_children[].busy) is skipped: use
-	 * kernel socket load balancing like udp_receiver_mode = 1
-	 */
-	/* Defensive: a shielded conn (F_CONN_POOL_BUSY) should already be out of
-	 * io_h, so this event shouldn't fire. It can if the fd stayed armed while
-	 * busy (e.g. a WS handshake con->type flip in the worker outrunning the
-	 * shield's io_watch_del). Enqueuing a second read job would race two pool
-	 * threads on the same con->req buffer, so just drop the fd from the watch
-	 * set; the in-flight job's completion re-adds it, and level-triggered
-	 * epoll re-fires for any buffered data. */
+	/* pool-owned: the shield removed the fd, an event slipped through
+	 * (e.g. a WS handshake con->type flip outruns the shield's io_watch_del):
+	 *  - drop the fd from io_h; a second read job would share con->req
+	 *  - the job completion re-adds it; level-triggered epoll re-fires for
+	 *    buffered input */
 	if(unlikely(tcpconn_pool_busy(tcpconn))) {
 		tcp_reactor_unwatch_busy(tcpconn, fd_i);
 		return 0;
@@ -1351,21 +1368,19 @@ int tcp_reactor_handle_tcpconn_ev(
 			tcp_reactor_read_beside_write(tcpconn);
 		return 0;
 	}
-	/* drain pending writes first if the fd is write-watched */
+	/* write-watched, wsq empty: flush wbuf_q (wire bytes) here on io_wait */
 	if((ev & (POLLOUT | POLLERR | POLLHUP)) && (tcpconn->flags & F_CONN_WRITE_W)
 			&& tcp_reactor_flush_wbuf(tcpconn, ev, fd_i) < 0)
 		goto reactor_close;
 
 	if(ev & (POLLIN | POLLERR | POLLHUP)) {
-		/* All four transports read on a pool thread. The shield gives that
-		 * thread exclusive ownership of the conn (F_CONN_POOL_BUSY), so the
-		 * SSL object and the WS codec are each touched by one thread at a
-		 * time (tls_encode()'s trampoline scratch buffer is per-thread too,
-		 * see tcp_mtops.c). The pre-upgrade handshake runs as PROTO_TCP/
-		 * PROTO_TLS, already covered, and stays covered after the con->type
-		 * flip to WS/WSS. */
-		/* shield the conn from the (level-triggered) reactor + timer so
-		 * a pool thread can own it exclusively, then enqueue the read */
+		/* read on a pool thread, all four transports:
+		 *  - the shield gives the job c, its SSL object and WS codec
+		 *  - tls_encode()'s trampoline scratch buffer is per thread
+		 *    (tcp_mtops.c)
+		 *  - a WS upgrade starts as TCP/TLS and flips con->type to WS/WSS;
+		 *    the shield covers both
+		 * error/hangup events force EOF handling in the read */
 		if(ev
 				& (POLLHUP | POLLERR
 #ifdef POLLRDHUP
@@ -1391,9 +1406,13 @@ reactor_close:
  * mode 2: reactor thread pool inside PROC_TCP_MAIN (job model: file header)
  * ======================================================================== */
 
-/* mode 2 [io_wait]: on notify_pipe readiness, process all completed
- * jobs (coalesced). Only the io_wait thread touches io_h, so all re-arm / close
- * happens here, never in a pool thread. */
+/* mode 2 [io_wait]: complete every job on done_head (one notify byte or many).
+ *  - clear the job's owner bit; resp < 0 sets F_CONN_POOL_CLOSE
+ *  - the other job still runs on c: start a new job for this direction when
+ *    it has work, finish later
+ *  - last job out: pool_close() on F_CONN_POOL_CLOSE, else
+ *    unshield_or_chain()
+ *  - io_h re-arm and close run here, on the io_wait thread */
 static void tcp_reactor_handle_done(void)
 {
 	struct tcp_reactor_job *job, *next;
@@ -1420,16 +1439,14 @@ static void tcp_reactor_handle_done(void)
 						"%x)\n",
 							conn, op, conn->flags);
 				conn->flags &= ~TCP_REACTOR_OP_FLAG(op);
-				/* The conn carries the single in-pool refcount (taken at
-				 * shield, released by close / unshield - not per job).
-				 * resp < 0 => EOF/error/write-error => tear down; else either
-				 * chain a staged write or hand the conn back to the reactor.
-				 * Only the last job out does either; a failure waits for it. */
+				/* one in-pool ref per shield, released by close or unshield.
+				 * resp < 0 (EOF, read or write error): close when the last
+				 * job is out */
 				if(unlikely(resp < 0))
 					conn->flags |= F_CONN_POOL_CLOSE;
 				if(tcpconn_pool_busy(conn)) {
-					/* rw split: keep each direction flowing while the other
-					 * one's job still runs */
+					/* the other direction's job still runs: start a new
+					 * job for this direction (wsq data / pending input) */
 					if(op == TCP_R_WRITE)
 						tcp_reactor_write_beside_read(conn);
 					else
@@ -1490,10 +1507,8 @@ static struct tcp_reactor_job *tcp_reactor_next_job(void)
 	while(!tcp_rpool.stop && tcp_rpool.job_head == NULL) {
 		tcp_cond_wait(&tcp_reactor_wake->cond);
 	}
-	/* All read/write/run jobs are enqueued onto job_head by the io_wait
-	 * thread, which has already shielded the conn (F_CONN_POOL_BUSY) and
-	 * taken the in-pool refcount, so a pool thread only ever touches a
-	 * connection already out of the reactor's epoll and timer. */
+	/* io_wait pushed the job; for READ/WRITE it shielded the conn first,
+	 * so the conn is out of io_h and the timer and holds the in-pool ref */
 	job = tcp_rpool.job_head;
 	if(job != NULL) {
 		tcp_rpool.job_head = job->next;
@@ -1507,11 +1522,11 @@ static struct tcp_reactor_job *tcp_reactor_next_job(void)
 /* mode 2 [pool]: TCP_R_READ job body; the result goes to job->resp */
 static void tcp_reactor_run_read(struct tcp_reactor_job *job)
 {
-	/* read + reassemble on conn->s (all of PROTO_TCP/TLS/WS/WSS).
-	 * tcp_read_req() reads via _tconfd(conn)==conn->s; for WS the frame
-	 * codec runs here under the shield and dispatches the defragmented
-	 * payload to workers via tcp_reactor_dispatch_msg(). No io_watch /
-	 * no free here - the io_wait thread completes. */
+	/* read + reassemble on conn->s, all of TCP/TLS/WS/WSS:
+	 *  - tcp_read_req() reads _tconfd(conn), which is conn->s in mode 2
+	 *  - WS: the frame codec runs here and dispatches each reassembled
+	 *    payload via tcp_reactor_dispatch_msg()
+	 *  - io_watch and free belong to the io_wait completion */
 	struct tcp_connection *conn = job->conn;
 	rd_conn_flags_t read_flags;
 	int n, resp;
@@ -1532,11 +1547,11 @@ static void tcp_reactor_run_read(struct tcp_reactor_job *job)
 /* mode 2 [pool]: TCP_R_WRITE job body; the result goes to job->resp */
 static void tcp_reactor_run_write(struct tcp_reactor_job *job)
 {
-	/* drain the connection's plaintext staging list into wbuf_q
-	 * (PROTO_TCP: plain copy; PROTO_TLS: tls_encode via the
-	 * direct-call trampoline on this pool thread) and flush wbuf_q to
-	 * the socket. No c->flags writes here (the io_wait completion owns
-	 * those); only buffers/state under write_lock. */
+	/* move conn->wsq into wbuf_q, then flush wbuf_q to the socket:
+	 *  - TCP/WS: copy; TLS/WSS: tls_encode() via the direct-call
+	 *    trampoline on this pool thread
+	 *  - touch buffers and state under write_lock; c->flags belongs to
+	 *    the io_wait completion */
 	struct tcp_connection *conn = job->conn;
 	struct tcp_wchunk *ch;
 	int werr = 0, wempty = 0;
@@ -1646,10 +1661,8 @@ int tcp_reactor_pool_init(void)
 		LM_ERR("reactor notify pipe O_NONBLOCK: %s\n", strerror(errno));
 		return -1;
 	}
-	/* NOT registered in io_h here - tcp_reactor_pool_init() runs on
-	 * PROC_TCP_MAIN's io_wait thread, but io_h itself stays private to
-	 * tcp_main.c (see tcp_conn.h); the caller (tcp_main_loop()) does the
-	 * io_watch_add() for this pipe right after this function returns. */
+	/* the caller (tcp_main_loop()) adds notify_pipe[0] to io_h after this
+	 * returns: io_h is private to tcp_main.c (tcp_conn.h) */
 	if(pthread_mutex_init(&tcp_rpool.done_lock, NULL) != 0) {
 		LM_ERR("failed to init reactor done_lock\n");
 		return -1;
@@ -1709,12 +1722,15 @@ void tcp_reactor_handle_notify(void)
 	tcp_reactor_handle_done();
 }
 
-/* mode 2 [init]: create the reactor dispatch socketpair (AF_UNIX SOCK_DGRAM).
- * MUST be called in the main process before any TCP child (workers AND
- * PROC_TCP_MAIN) is forked, so all of them inherit the shared fds: workers
- * recvfrom dsock[0] (the kernel load-balances across them) and PROC_TCP_MAIN
- * sends reassembled SIP tasks on dsock[1]. Both ends are non-blocking.
- * Returns 0 on success (or when not in mode 2), -1 on error. */
+/* mode 2 [init]: create the shared mode 2 objects, in the main process before
+ * any TCP child (workers and PROC_TCP_MAIN) forks, so every child inherits
+ * them:
+ *  - dispatch socketpair (AF_UNIX SOCK_DGRAM, both ends non-blocking):
+ *    PROC_TCP_MAIN sends task pointers on dsock[1], workers recv on dsock[0]
+ *    and the kernel spreads the datagrams across them
+ *  - the pool wakeup condvar in shm (tcp_reactor_wake)
+ * The pool threads and the notify pipe start later, in PROC_TCP_MAIN.
+ * Returns 0 (also outside mode 2), -1 on error. */
 int tcp_reactor_dsock_init(void)
 {
 	if(ksr_tcp_main_threads != 2)
@@ -1741,10 +1757,7 @@ int tcp_reactor_dsock_init(void)
 	LM_INFO("reactor: dispatch socketpair created (rfd=%d wfd=%d)\n",
 			ksr_tcp_reactor_dsock[0], ksr_tcp_reactor_dsock[1]);
 
-	/* reactor pool wakeup: its condvar must live in shm and be initialised
-	 * before fork so PROC_TCP_MAIN's io_wait thread and pool threads share the
-	 * same PROCESS_SHARED condvar. The pool threads + notify pipe (tcp_rpool)
-	 * are created later, inside PROC_TCP_MAIN. */
+	/* pool wakeup condvar: shm, PROCESS_SHARED (struct tcp_reactor_wake) */
 	tcp_reactor_wake = shm_malloc(sizeof(*tcp_reactor_wake));
 	if(tcp_reactor_wake == NULL) {
 		SHM_MEM_ERROR;
