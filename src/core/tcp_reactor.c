@@ -437,20 +437,23 @@ static int tcp_reactor_wbuf_enqueue(struct tcp_connection *c, char *buf,
 	return ret;
 }
 
-/* mode 2 [io_wait|pool]: watch POLLOUT on a hashed c whose wbuf_q holds data
+/* mode 2 [io_wait]: enable POLLOUT on a hashed c whose wbuf_q holds data
  * (the mode 2 form of handle_ser_child()'s CONN_QUEUED_WRITE arm).
- *  - pool-owned c: return 0 untouched; the job completion re-arms POLLOUT
+ *  - callers: tcp_reactor_watch_write(), tcpconn_send_unsafe() (which skips
+ *    the call on pool threads)
+ *  - pool-owned c: return 0 untouched; the job completion enables POLLOUT
  *  - pull the local timer in to the write timeout when that comes first
  *  - add c->s to io_h with POLLOUT, or add POLLOUT to its POLLIN watch
- *  - io_watch failure: clear F_CONN_WRITE_W, return -1, keep c alive (the TLS
- *    read path uses c afterwards)
- * Returns 0 on success or when watched, -1 on io_watch failure. */
+ *  - io_watch failure: clear F_CONN_WRITE_W, return -1, keep c alive
+ *    (tcpconn_send_unsafe() uses c afterwards)
+ * Returns 0 when POLLOUT is on or left to the job completion, -1 on io_watch
+ * failure. */
 int tcp_reactor_enable_write_watch(struct tcp_connection *c)
 {
 	ticks_t t;
 
-	/* first, before any c->flags write: a pool thread reaches here from a TLS
-	 * or CRLF-pong write-back, and c->flags belongs to the io_wait thread */
+	/* first, before any c->flags write: while a pool job runs on c, the
+	 * shield owns its io_h and timer state */
 	if(tcpconn_pool_busy(c))
 		return 0;
 	if(c->flags & F_CONN_WANTS_WR)
@@ -777,7 +780,8 @@ static int tcp_reactor_sock_writable(int fd)
 /* mode 2 [io_wait|pool]: copy a plaintext chunk onto c->wsq (shm, under
  * c->write_lock); a TCP_R_WRITE job moves it into wbuf_q.
  *  - io_wait: worker writes (CONN_WRITE_REQ / CONN_CONNECT_REQ reuse)
- *  - pool: write-backs from the read path (WS pong/close, CRLF pong)
+ *  - pool: replies the read code sends while it reads c (see
+ *    tcp_reactor_send_from_pool())
  * Returns 0, -1 on shm OOM or a full write queue (see the cap below). */
 static int tcp_reactor_wsq_add(struct tcp_connection *c, const char *buf,
 		unsigned len, snd_flags_t send_flags)
@@ -921,57 +925,17 @@ static void tcp_reactor_unshield_or_chain(struct tcp_connection *c)
 
 /* mode 2 write dispatch entry points, called from tcp_send() (tcp_main.c). */
 
-/* mode 2 [any]: send a payload on c; PROC_TCP_MAIN performs every write (and
- * every tls_encode()).
- *  - c ref: the caller's ref (tcp_send()) moves into the write request; tcp
- *    main drops it (handle_ser_child()'s CONN_WRITE_REQ arm); error paths here
- *    drop it
- *  - worker: copy the payload into a shm write request, send it on
+/* mode 2 [worker]: ship the payload to PROC_TCP_MAIN as a write request:
+ *  - copy buf into a shm tcp_reactor_write_req_t, send its pointer on
  *    unix_tcp_sock as CONN_WRITE_REQ
- *  - PROC_TCP_MAIN pool thread (a write-back from the read path, e.g. WS
- *    pong/close): stage on c->wsq; the read job's completion chains the write
- *  - PROC_TCP_MAIN io_wait thread: queue on wbuf_q, arm POLLOUT
- * Returns len when the payload is accepted, -1 on error. The write itself is
- * async: a later failure closes c and stays out of this return value. */
-int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
-		unsigned len, snd_flags_t send_flags)
+ *  - the request carries the caller's ref; tcp main drops it
+ *    (tcp_reactor_handle_write_req()), the error paths here drop it
+ * Returns len when the request is sent, -1 on error. */
+static int tcp_reactor_send_from_worker(struct tcp_connection *c,
+		const char *buf, unsigned len, snd_flags_t send_flags)
 {
 	tcp_reactor_write_req_t *wreq;
 	long response[2];
-
-	if(unlikely(is_tcp_main())) {
-		/* inside PROC_TCP_MAIN: skip the unix_tcp_sock self-send.
-		 * is_tcp_main() holds for io_wait and pool threads alike; io_h belongs
-		 * to io_wait, so split on tcp_reactor_thread_idx. Drop the caller's
-		 * ref first */
-		if(unlikely(tcpconn_put(c))) {
-			tcpconn_destroy(c); /* was the last ref */
-			return -1;
-		}
-		if(unlikely((c->state == S_CONN_BAD) || !(c->flags & F_CONN_HASHED))) {
-			/* in the process of being destroyed => drop the write */
-			return -1;
-		}
-		if(tcp_reactor_thread_idx >= 0) {
-			/* pool thread, c shielded by this thread's read job (e.g. WS
-			 * ws_send_crlf()/pong/close from ws_frame_receive()):
-			 *  - stage on c->wsq (shm, under write_lock)
-			 *  - the read job's completion chains a write job for it
-			 *  - leave io_h and c->flags to io_wait: re-arming c->s here lets a
-			 *    second read job run on c->req (torn WS frames) */
-			if(unlikely(tcp_reactor_wsq_add(c, buf, len, send_flags) < 0))
-				return -1;
-			return (int)len;
-		}
-		/* io_wait thread: queue on wbuf_q and arm POLLOUT here; the io_wait
-		 * thread owns io_h and c->flags */
-		if(unlikely(tcp_reactor_wbuf_enqueue(c, (char *)buf, len, send_flags)
-					< 0)) {
-			return -1;
-		}
-		tcp_reactor_watch_write(c);
-		return (int)len;
-	}
 
 	wreq = shm_malloc(sizeof(tcp_reactor_write_req_t));
 	if(unlikely(wreq == NULL)) {
@@ -1002,6 +966,70 @@ int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 		return -1;
 	}
 	return (int)len;
+}
+
+/* mode 2 [pool]: a reply the read code sends itself, via tcp_send(), while
+ * this pool thread runs the read job of c:
+ *  - tcp_read.c: CRLF ping reply, HTTP/1.1 100 Continue
+ *  - ws_frame.c: WS pong, close-handshake reply, CRLF keepalive
+ *  - c is out of io_h for the job (every read and write job shields c)
+ *  - stage the reply on c->wsq (shm, under write_lock); the read job's
+ *    completion starts a write job for it
+ *  - leave io_h and c->flags to the io_wait thread: re-arming c->s here lets
+ *    a second read job run on c->req (torn WS frames)
+ * Returns len when staged, -1 on error. */
+static int tcp_reactor_send_from_pool(struct tcp_connection *c, const char *buf,
+		unsigned len, snd_flags_t send_flags)
+{
+	if(unlikely(tcp_reactor_wsq_add(c, buf, len, send_flags) < 0))
+		return -1;
+	return (int)len;
+}
+
+/* mode 2 [io_wait]: queue on wbuf_q and enable POLLOUT here; the io_wait
+ * thread owns io_h and c->flags. Returns len when queued, -1 on error (an
+ * io_watch failure tears c down). */
+static int tcp_reactor_send_from_iowait(struct tcp_connection *c,
+		const char *buf, unsigned len, snd_flags_t send_flags)
+{
+	if(unlikely(
+			   tcp_reactor_wbuf_enqueue(c, (char *)buf, len, send_flags) < 0)) {
+		return -1;
+	}
+	tcp_reactor_watch_write(c);
+	return (int)len;
+}
+
+/* mode 2 [any]: send a payload on c; PROC_TCP_MAIN performs every write (and
+ * every tls_encode()). Dispatch by the calling thread:
+ *  - worker: tcp_reactor_send_from_worker(); the caller's ref (tcp_send())
+ *    travels with the write request
+ *  - PROC_TCP_MAIN: drop the caller's ref here (the hash ref keeps c), skip a
+ *    bad or unhashed c, then the pool thread stages on c->wsq
+ *    (tcp_reactor_send_from_pool()) and the io_wait thread queues on wbuf_q
+ *    (tcp_reactor_send_from_iowait())
+ * Returns len when the payload is accepted, -1 on error. The write itself is
+ * async: a later failure closes c and stays out of this return value. */
+int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
+		unsigned len, snd_flags_t send_flags)
+{
+	if(unlikely(is_tcp_main())) {
+		/* inside PROC_TCP_MAIN: skip the unix_tcp_sock self-send */
+		if(unlikely(tcpconn_put(c))) {
+			tcpconn_destroy(c); /* was the last ref */
+			return -1;
+		}
+		if(unlikely((c->state == S_CONN_BAD) || !(c->flags & F_CONN_HASHED))) {
+			/* in the process of being destroyed => drop the write */
+			return -1;
+		}
+		/* is_tcp_main() holds for io_wait and pool threads alike; io_h belongs
+		 * to io_wait, so split on the pool thread index */
+		if(tcp_reactor_thread_idx >= 0)
+			return tcp_reactor_send_from_pool(c, buf, len, send_flags);
+		return tcp_reactor_send_from_iowait(c, buf, len, send_flags);
+	}
+	return tcp_reactor_send_from_worker(c, buf, len, send_flags);
 }
 
 /* mode 2 [worker]: the worker lacks a connection to dst: ask PROC_TCP_MAIN to
