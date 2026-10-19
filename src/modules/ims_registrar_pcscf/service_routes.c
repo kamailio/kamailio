@@ -162,25 +162,18 @@ int checkcontact(struct sip_msg *_m, pcontact_t *c)
 	if(ipsec_pcscf.ipsec_on_expire == NULL) {
 		LM_DBG("ims_ipsec_pcscf module not loaded - skipping port-uc checks\n");
 	} else if(!ignore_contact_rxport_check) {
-		if(c->security) {
-			switch(c->security->type) {
-				case SECURITY_IPSEC:
-					security_server_port = c->security->data.ipsec->port_uc;
-					break;
-				case SECURITY_TLS:
-				case SECURITY_NONE:
-					break;
-			}
-		} else if(c->security_temp) {
-			switch(c->security_temp->type) {
-				case SECURITY_IPSEC:
-					security_server_port =
-							c->security_temp->data.ipsec->port_uc;
-					break;
-				case SECURITY_TLS:
-				case SECURITY_NONE:
-					break;
-			}
+		// either of the contact's tunnels: the UE keeps sending over the
+		// one it is registered over while it answers the next offer
+		if(c->security && c->security->type == SECURITY_IPSEC
+				&& c->security->data.ipsec) {
+			security_server_port = c->security->data.ipsec->port_uc;
+		}
+		if(c->security_temp && c->security_temp->type == SECURITY_IPSEC
+				&& c->security_temp->data.ipsec
+				&& (security_server_port == -1
+						|| c->security_temp->data.ipsec->port_uc
+								   == received_port)) {
+			security_server_port = c->security_temp->data.ipsec->port_uc;
 		}
 
 		if(c->received_port != received_port
@@ -213,6 +206,30 @@ int checkcontact(struct sip_msg *_m, pcontact_t *c)
 	}
 	LM_DBG("check contact failed\n");
 	return 1;
+}
+
+/*
+ * Lock the udomain slot of the UE's via, as check_service_routes() does, for
+ * reading the contact getContactP() finds: ims_ipsec_pcscf replaces and frees
+ * a contact's security on re-registration with the slot locked.
+ * Returns the via, NULL (and nothing locked) without one.
+ */
+static struct via_body *lock_ue_via(struct sip_msg *_m, udomain_t *_d)
+{
+	struct via_body *vb =
+			trust_bottom_via ? cscf_get_last_via(_m) : cscf_get_ue_via(_m);
+
+	if(vb == NULL) {
+		LM_ERR("no via to find the contact by\n");
+		return NULL;
+	}
+	ul.lock_udomain(_d, &vb->host, vb->port ? vb->port : 5060, vb->proto);
+	return vb;
+}
+
+static void unlock_ue_via(udomain_t *_d, struct via_body *vb)
+{
+	ul.unlock_udomain(_d, &vb->host, vb->port ? vb->port : 5060, vb->proto);
 }
 
 /**
@@ -644,23 +661,24 @@ int force_service_routes(struct sip_msg *_m, udomain_t *_d)
 	str new_route_header;
 	struct lump *lmp = NULL;
 	char *buf;
-	pcontact_t *c = getContactP(_m, _d, PCONTACT_REGISTERED, 0, 0);
+	pcontact_t *c;
 	//	char srcip[20];
 	//	str received_host;
 	struct via_body *vb;
-	unsigned short port;
-	unsigned short proto;
+
+	/* Lock this record while working with the data: */
+	vb = lock_ue_via(_m, _d);
+	if(vb == NULL)
+		return -1;
+
+	c = getContactP(_m, _d, PCONTACT_REGISTERED, 0, 0);
 
 	// Contact not found => not following service-routes
 	if(c == NULL)
-		return -1;
+		goto error;
 
 	/* we need to be sure we have seen all HFs */
 	parse_headers(_m, HDR_EOH_F, 0);
-
-	vb = trust_bottom_via ? cscf_get_last_via(_m) : cscf_get_ue_via(_m);
-	port = vb->port ? vb->port : 5060;
-	proto = vb->proto;
 
 	/* Save current buffer */
 	buf = _m->buf;
@@ -672,7 +690,7 @@ int force_service_routes(struct sip_msg *_m, udomain_t *_d)
 				if((lmp = del_lump(_m, it->name.s - buf, it->len, HDR_ROUTE_T))
 						== 0) {
 					LM_ERR("del_lump failed \n");
-					return -1;
+					goto error;
 				}
 			}
 		}
@@ -687,9 +705,6 @@ int force_service_routes(struct sip_msg *_m, udomain_t *_d)
 
 	//	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 	//	received_host.s = srcip;
-
-	/* Lock this record while working with the data: */
-	ul.lock_udomain(_d, &vb->host, port, proto);
 
 	if(c->num_service_routes > 0) {
 		/* Create anchor for new Route-Header: */
@@ -741,11 +756,11 @@ int force_service_routes(struct sip_msg *_m, udomain_t *_d)
 		}
 	}
 	/* Unlock domain */
-	ul.unlock_udomain(_d, &vb->host, port, proto);
+	unlock_ue_via(_d, vb);
 	return 1;
 error:
 	/* Unlock domain */
-	ul.unlock_udomain(_d, &vb->host, port, proto);
+	unlock_ue_via(_d, vb);
 	return -1;
 
 	return 1;
@@ -756,9 +771,16 @@ error:
  */
 int is_registered(struct sip_msg *_m, udomain_t *_d)
 {
+	struct via_body *vb;
+	int ret = -1;
+
+	vb = lock_ue_via(_m, _d);
+	if(vb == NULL)
+		return -1;
 	if(getContactP(_m, _d, PCONTACT_REGISTERED, 0, 0) != NULL)
-		return 1;
-	return -1;
+		ret = 1;
+	unlock_ue_via(_d, vb);
+	return ret;
 }
 
 /**
@@ -796,6 +818,7 @@ int assert_identity(struct sip_msg *_m, udomain_t *_d, str identity)
 {
 	// Public identities of this contact
 	struct ppublic *p;
+	struct via_body *vb;
 	//remove <> braces if there are
 	if(identity.s[0] == '<' && identity.s[identity.len - 1] == '>') {
 		identity.s++;
@@ -803,11 +826,13 @@ int assert_identity(struct sip_msg *_m, udomain_t *_d, str identity)
 	}
 	LM_DBG("Identity to assert: %.*s\n", identity.len, identity.s);
 
-	if(getContactP(_m, _d,
-			   PCONTACT_REGISTERED | PCONTACT_REG_PENDING_AAR
-					   | PCONTACT_REG_PENDING,
-			   0, 0)
-			!= NULL) {
+	vb = lock_ue_via(_m, _d);
+	if(vb != NULL
+			&& getContactP(_m, _d,
+					   PCONTACT_REGISTERED | PCONTACT_REG_PENDING_AAR
+							   | PCONTACT_REG_PENDING,
+					   0, 0)
+					   != NULL) {
 		for(p = current_ct->head; p; p = p->next) {
 			LM_DBG("Public identity: %.*s\n", p->public_identity.len,
 					p->public_identity.s);
@@ -817,12 +842,15 @@ int assert_identity(struct sip_msg *_m, udomain_t *_d, str identity)
 				if(strncasecmp(identity.s, p->public_identity.s, identity.len)
 						== 0) {
 					LM_DBG("Match!\n");
+					unlock_ue_via(_d, vb);
 					return 1;
 				}
 			} else
 				LM_DBG("Length does not match.\n");
 		}
 	}
+	if(vb != NULL)
+		unlock_ue_via(_d, vb);
 	LM_INFO("Contact not found based on Contact, trying IP/Port/Proto\n");
 	str received_host = {0, 0};
 	char srcip[50];
