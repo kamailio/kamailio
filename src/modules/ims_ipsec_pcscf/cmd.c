@@ -118,6 +118,7 @@ int bind_ipsec_pcscf(ipsec_pcscf_api_t *api)
 
 	api->ipsec_on_expire = ipsec_on_expire;
 	api->ipsec_reconfig = ipsec_reconfig;
+	api->ipsec_promote = ipsec_promote;
 
 	return 0;
 }
@@ -444,8 +445,10 @@ static int get_ck_ik(const struct sip_msg *m, str *ck, str *ik)
 	return 0;
 }
 
+// s_est: the tunnel the UE is registered over, whose P-CSCF ports the new one
+// stays off where it can (see tunnels_collide())
 static int update_contact_ipsec_params(
-		ipsec_t *s, const struct sip_msg *m, ipsec_t *s_old)
+		ipsec_t *s, const struct sip_msg *m, ipsec_t *s_old, ipsec_t *s_est)
 {
 	// Get CK and IK
 	str ck, ik;
@@ -488,7 +491,9 @@ static int update_contact_ipsec_params(
 		}
 	}
 
-	if(acquire_spi(&s->spi_pc, &s->spi_ps, &s->port_pc, &s->port_ps) == 0) {
+	if(acquire_spi(&s->spi_pc, &s->spi_ps, &s->port_pc, &s->port_ps,
+			   s_est ? s_est->port_pc : 0, s_est ? s_est->port_ps : 0)
+			== 0) {
 		LM_ERR("Error generating client SPI for IPSEC tunnel creation\n");
 		shm_free(s->ck.s);
 		s->ck.s = NULL;
@@ -606,8 +611,10 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t *s)
 	return 0;
 }
 
-static int destroy_ipsec_tunnel(
-		str remote_addr, ipsec_t *s, unsigned short received_port)
+// Remove a tunnel's SAs and policies from the kernel, leaving its SPI pair
+// marked used. retire_ipsec_tunnel() is this plus the release.
+// Fails only before removing anything.
+static int remove_ipsec_tunnel(str remote_addr, ipsec_t *s)
 {
 	struct mnl_socket *sock = init_mnl_socket();
 	if(sock == NULL) {
@@ -687,11 +694,162 @@ static int destroy_ipsec_tunnel(
 	remove_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps,
 			s->spi_pc, ip_addr.af, IPSEC_POLICY_DIRECTION_IN);
 
-	// Release SPIs
-	release_spi(s->spi_pc, s->spi_ps, s->port_pc, s->port_ps);
-
 	close_mnl_socket(sock);
 	return 0;
+}
+
+/*
+ * A contact holds up to two tunnels, as TS 33.203 7.4 has it: the one the UE
+ * registered over, in security, and the one a 401 has just offered, in
+ * security_temp, until a REGISTER over it is answered 200 and ipsec_promote()
+ * makes it the registered one. Until then the registered tunnel keeps
+ * carrying everything - MT requests, and whatever the UE still sends over it -
+ * so a challenge the UE never answers costs nothing but the offer.
+ *
+ * An offer that shares kernel state with the registered tunnel (see
+ * tunnels_collide()) cannot be installed beside it. It waits in security_temp,
+ * deferred (tunnel_deferred()), while the 401 that makes it goes out over the
+ * registered tunnel, and replaces that one once the 401 is out
+ * (install_deferred_tunnel()).
+ *
+ * A promotion removes the tunnel it replaces.
+ *
+ * security_temp can also hold what save_pending() stored for a first
+ * registration: the UE's half of the offer only, with the P-CSCF's SPIs and
+ * ports still zero. That is not a tunnel yet; contact_tunnel() leaves it out.
+ */
+
+// The tunnel a security slot holds, or NULL when it holds none (yet)
+static ipsec_t *contact_tunnel(security_t *sec)
+{
+	ipsec_t *s;
+
+	if(!sec || sec->type != SECURITY_IPSEC || !sec->data.ipsec) {
+		return NULL;
+	}
+	s = sec->data.ipsec;
+	return (s->spi_pc && s->spi_ps && s->port_pc && s->port_ps) ? s : NULL;
+}
+
+// Forget a tunnel's SPI pair once it is released (or never installed), so
+// the slot holds only the UE's half again and no later destroy releases the
+// pair a second time - maybe from under another UE that acquired it since
+static inline void clear_spi_pair(ipsec_t *s)
+{
+	s->spi_pc = s->spi_ps = 0;
+	s->port_pc = s->port_ps = 0;
+}
+
+// Whether a message came in over a tunnel: from one of the UE's protected
+// ports to one of the P-CSCF's. Two tunnels of a contact that are installed
+// side by side never both match, as they do not collide.
+static inline int came_over_tunnel(ipsec_t *s, struct receive_info *rcv)
+{
+	return (rcv->src_port == s->port_uc || rcv->src_port == s->port_us)
+		   && (rcv->dst_port == s->port_ps || rcv->dst_port == s->port_pc);
+}
+
+// Whether two tunnels hold the same SPI pair from the generator
+static inline int same_spi_pair(ipsec_t *a, ipsec_t *b)
+{
+	return a->spi_pc == b->spi_pc && a->spi_ps == b->spi_ps;
+}
+
+// Whether two slots hold the same tunnel, both ends of it
+static inline int same_tunnel(ipsec_t *a, ipsec_t *b)
+{
+	return same_spi_pair(a, b) && a->port_pc == b->port_pc
+		   && a->port_ps == b->port_ps && a->spi_uc == b->spi_uc
+		   && a->spi_us == b->spi_us && a->port_uc == b->port_uc
+		   && a->port_us == b->port_us;
+}
+
+static inline int share_any(
+		unsigned int a1, unsigned int a2, unsigned int b1, unsigned int b2)
+{
+	return a1 == b1 || a1 == b2 || a2 == b1 || a2 == b2;
+}
+
+/*
+ * Whether two tunnels of the same UE would be the same kernel state anywhere.
+ *
+ * An SA is keyed by its destination and SPI: the inbound ones by the P-CSCF's
+ * spi_pc/spi_ps, the outbound ones by the UE's address and its spi_uc/spi_us.
+ * A policy is keyed by its selector, a UE port against a P-CSCF port. Two
+ * tunnels that share any of these cannot be installed side by side - the add
+ * of the second one fails with EEXIST and leaves the first one's state, keys
+ * and all - and removing one takes the other's with it.
+ *
+ * Every UE port has a policy against every P-CSCF port, and a UE commonly
+ * keeps its port_us across re-registrations, so two of its tunnels collide
+ * as soon as they share a P-CSCF port too. update_contact_ipsec_params()
+ * therefore has the generator pick the new tunnel's P-CSCF ports apart from
+ * the registered one's, client and server port alike, and never reuses the
+ * registered one's pair. What still collides - a UE that keeps its SPIs, or
+ * port ranges too small to keep the ports apart (see spi_ports_apart(),
+ * warned about at startup) - is deferred.
+ */
+static int tunnels_collide(ipsec_t *a, ipsec_t *b)
+{
+	return share_any(a->spi_pc, a->spi_ps, b->spi_pc, b->spi_ps)
+		   || share_any(a->spi_uc, a->spi_us, b->spi_uc, b->spi_us)
+		   || (share_any(a->port_uc, a->port_us, b->port_uc, b->port_us)
+				   && share_any(
+						   a->port_pc, a->port_ps, b->port_pc, b->port_ps));
+}
+
+// Whether pend, the offer in security_temp, is deferred: one that collides
+// with est, the registered tunnel, cannot have been installed beside it
+static inline int tunnel_deferred(ipsec_t *est, ipsec_t *pend)
+{
+	return est && pend && tunnels_collide(est, pend);
+}
+
+// Remove a tunnel. Its SPI pair goes back to the generator unless keep, the
+// tunnel replacing it, took the same one over, or the removal failed.
+static int retire_ipsec_tunnel(str remote_addr, ipsec_t *s, ipsec_t *keep)
+{
+	if(remove_ipsec_tunnel(remote_addr, s) != 0) {
+		LM_ERR("Failed to remove the tunnel with spi_pc %u, spi_ps %u, keeping "
+			   "its SPIs\n",
+				s->spi_pc, s->spi_ps);
+		return -1;
+	}
+	if(!keep || !same_spi_pair(s, keep)) {
+		release_spi(s->spi_pc, s->spi_ps, s->port_pc, s->port_ps);
+	}
+	return 0;
+}
+
+// Retire the offer s in favour of keep. One that was never installed, as it
+// collides with est, has nothing in the kernel - removing it would take est's
+// with it - so only its pair goes back.
+static int drop_ipsec_tunnel(
+		str remote_addr, ipsec_t *s, ipsec_t *est, ipsec_t *keep)
+{
+	if(!tunnel_deferred(est, s)) {
+		return retire_ipsec_tunnel(remote_addr, s, keep);
+	}
+	if(!keep || !same_spi_pair(s, keep)) {
+		release_spi(s->spi_pc, s->spi_ps, s->port_pc, s->port_ps);
+	}
+	return 0;
+}
+
+// Remove both of a contact's tunnels. Each one removed is cleared from its
+// slot, so the expiry that follows an ipsec_destroy() finds nothing left; one
+// that failed stays for it to retry.
+static void destroy_contact_tunnels(str remote_addr, pcontact_t *c)
+{
+	ipsec_t *est = contact_tunnel(c->security);
+	ipsec_t *pend = contact_tunnel(c->security_temp);
+
+	if(pend && drop_ipsec_tunnel(remote_addr, pend, est, est) == 0) {
+		clear_spi_pair(pend);
+	}
+	if(est && retire_ipsec_tunnel(remote_addr, est, NULL) == 0) {
+		clear_spi_pair(est);
+	}
 }
 
 void ipsec_on_expire(struct pcontact *c, int type, void *param)
@@ -702,19 +860,12 @@ void ipsec_on_expire(struct pcontact *c, int type, void *param)
 	}
 
 
-	if(c->security_temp == NULL) {
-		LM_ERR("No security parameters found in contact\n");
+	if(!contact_tunnel(c->security) && !contact_tunnel(c->security_temp)) {
+		LM_DBG("No tunnel found in contact\n");
 		return;
 	}
 
-	//get security parameters
-	if(c->security_temp->type != SECURITY_IPSEC) {
-		LM_ERR("Unsupported security type: %d\n", c->security_temp->type);
-		return;
-	}
-
-	destroy_ipsec_tunnel(
-			c->received_host, c->security_temp->data.ipsec, c->contact_port);
+	destroy_contact_tunnels(c->received_host, c);
 }
 
 int add_supported_secagree_header(struct sip_msg *m)
@@ -822,33 +973,129 @@ int add_security_server_header(struct sip_msg *m, ipsec_t *s)
 	return 0;
 }
 
-// Free an ipsec_t (the struct and its sec-agree string fields). Used to release
-// the old data.ipsec that gets replaced on the contact at registration, and the
-// request ipsec_t that is not stored on re-registration - both were previously
-// orphaned and leaked.
-static void free_ipsec_data(ipsec_t *p)
+/*
+ * An offer ipsec_create() deferred, to install once the 401 that makes it has
+ * gone out. The contact is looked up again then, the way ipsec_create() found
+ * it.
+ */
+typedef struct deferred_tunnel
 {
-	if(!p) {
-		return;
-	}
-	if(p->ealg.s)
-		shm_free(p->ealg.s);
-	if(p->r_ealg.s)
-		shm_free(p->r_ealg.s);
-	if(p->ck.s)
-		shm_free(p->ck.s);
-	if(p->alg.s)
-		shm_free(p->alg.s);
-	if(p->r_alg.s)
-		shm_free(p->r_alg.s);
-	if(p->ik.s)
-		shm_free(p->ik.s);
-	if(p->prot.s)
-		shm_free(p->prot.s);
-	if(p->mod.s)
-		shm_free(p->mod.s);
-	shm_free(p);
+	udomain_t *d;
+	pcontact_info_t ci; // its strings point into buf
+	ip_addr_t ue_addr;
+	// the offer's pair, to tell it from a later one
+	unsigned int spi_pc, spi_ps;
+	char buf[];
+} deferred_tunnel_t;
+
+static void free_deferred_tunnel(void *param)
+{
+	shm_free(param);
 }
+
+// TMCB_RESPONSE_OUT: the 401 has gone out over the registered tunnel, so the
+// offer it made can replace that one now
+static void install_deferred_tunnel(
+		tm_cell_t *t, int type, struct tmcb_params *ps)
+{
+	deferred_tunnel_t *dt = (deferred_tunnel_t *)*ps->param;
+	pcontact_t *c = NULL;
+	security_t *old_sec;
+	ipsec_t *s, *est;
+
+	ul.lock_udomain(dt->d, &dt->ci.via_host, dt->ci.via_port, dt->ci.via_prot);
+
+	if(ul.get_pcontact(dt->d, &dt->ci, &c, 0) != 0 || c == NULL) {
+		LM_DBG("contact [%.*s] is gone, no tunnel to install\n", dt->ci.aor.len,
+				dt->ci.aor.s);
+		goto done;
+	}
+	s = contact_tunnel(c->security_temp);
+	est = contact_tunnel(c->security);
+	if(!tunnel_deferred(est, s) || s->spi_pc != dt->spi_pc
+			|| s->spi_ps != dt->spi_ps) {
+		LM_DBG("contact [%.*s]: the offer has changed since, no tunnel to "
+			   "install\n",
+				dt->ci.aor.len, dt->ci.aor.s);
+		goto done;
+	}
+
+	if(retire_ipsec_tunnel(dt->ci.received_host, est, s) != 0) {
+		// still installed, so the offer cannot be: it stays deferred
+		goto done;
+	}
+	old_sec = c->security;
+	if(ul.update_security(dt->d, SECURITY_IPSEC, NULL, c) != 0) {
+		LM_ERR("Error clearing security\n");
+	}
+	c->security = NULL;
+	free_security_t(old_sec);
+
+	if(create_ipsec_tunnel(&dt->ue_addr, s) != 0) {
+		// nothing was installed: removing it when it goes finds nothing, and
+		// gives its pair back
+		LM_ERR("IPSEC tunnel creation failed for contact [%.*s]\n",
+				dt->ci.aor.len, dt->ci.aor.s);
+		goto done;
+	}
+	LM_DBG("contact [%.*s]: installed the offered tunnel (spi_pc %u, spi_ps "
+		   "%u) in place of the registered one\n",
+			dt->ci.aor.len, dt->ci.aor.s, s->spi_pc, s->spi_ps);
+
+done:
+	ul.unlock_udomain(
+			dt->d, &dt->ci.via_host, dt->ci.via_port, dt->ci.via_prot);
+}
+
+// Have the deferred offer s installed once t's reply is out
+static int defer_ipsec_tunnel(tm_cell_t *t, udomain_t *d, pcontact_info_t *ci,
+		const ip_addr_t *ue_addr, ipsec_t *s)
+{
+	deferred_tunnel_t *dt;
+	char *p;
+
+	dt = shm_malloc(sizeof(deferred_tunnel_t) + ci->aor.len + ci->via_host.len
+					+ ci->received_host.len);
+	if(dt == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(dt, 0, sizeof(deferred_tunnel_t));
+	dt->d = d;
+	dt->ci.searchflag = ci->searchflag;
+	dt->ci.via_port = ci->via_port;
+	dt->ci.via_prot = ci->via_prot;
+	dt->ci.received_port = ci->received_port;
+	dt->ci.received_proto = ci->received_proto;
+	p = dt->buf;
+	dt->ci.aor.s = p;
+	dt->ci.aor.len = ci->aor.len;
+	memcpy(p, ci->aor.s, ci->aor.len);
+	p += ci->aor.len;
+	dt->ci.via_host.s = p;
+	dt->ci.via_host.len = ci->via_host.len;
+	memcpy(p, ci->via_host.s, ci->via_host.len);
+	p += ci->via_host.len;
+	dt->ci.received_host.s = p;
+	dt->ci.received_host.len = ci->received_host.len;
+	memcpy(p, ci->received_host.s, ci->received_host.len);
+	dt->ue_addr = *ue_addr;
+	dt->spi_pc = s->spi_pc;
+	dt->spi_ps = s->spi_ps;
+
+	if(tmb.register_tmcb(NULL, t, TMCB_RESPONSE_OUT, install_deferred_tunnel,
+			   dt, free_deferred_tunnel)
+			<= 0) {
+		LM_ERR("Error registering the callback to install the tunnel once "
+			   "the 401 is out\n");
+		shm_free(dt);
+		return -1;
+	}
+	return 0;
+}
+
+static int promote_offer(
+		udomain_t *d, pcontact_t *c, struct receive_info *rcv, int registered);
 
 int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 {
@@ -859,12 +1106,17 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 	tm_cell_t *t = NULL;
 	sip_msg_t *req = NULL;
 	security_t *req_sec_params = NULL;
+	security_t *old_sec = NULL;
 	ipsec_t *s = NULL;
 	ipsec_t *old_s = NULL;
-	// set to 1 once req_sec_params->data.ipsec is handed to the contact (initial
-	// registration); if it stays 0 that ipsec_t was only used to build the
-	// tunnel and must be freed before returning, otherwise it leaks
-	int ipsec_swapped = 0;
+	ipsec_t *est = NULL;  // the tunnel the UE is registered over
+	ipsec_t *pend = NULL; // an offer a previous 401 made
+	// set to 1 once req_sec_params is handed to the contact; if it stays 0 it
+	// was only used to build the tunnel and must be freed before returning,
+	// otherwise it leaks
+	int sec_stored = 0;
+	int pend_retired = 0;
+	int deferred = 0; // s collides with est, see tunnel_deferred()
 
 	if(m->first_line.type == SIP_REPLY) {
 		t = tmb.t_gett();
@@ -886,15 +1138,15 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	// Get security parameters
-	if(pcontact->security_temp == NULL) {
-		LM_ERR("No security parameters found in contact\n");
-		goto cleanup;
-	}
+	est = contact_tunnel(pcontact->security);
+	pend = contact_tunnel(pcontact->security_temp);
 
-	if(pcontact->security_temp->type != SECURITY_IPSEC) {
-		LM_ERR("Unsupported security type: %d\n",
-				pcontact->security_temp->type);
+	// Get security parameters
+	if(!est
+			&& (pcontact->security_temp == NULL
+					|| pcontact->security_temp->type != SECURITY_IPSEC
+					|| pcontact->security_temp->data.ipsec == NULL)) {
+		LM_ERR("No security parameters found in contact\n");
 		goto cleanup;
 	}
 
@@ -908,18 +1160,28 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	req = t->uas.request;
 
+	// A REGISTER that came in over the offered tunnel - a re-sync, a wrong
+	// RES, or a 200 that did not promote it - proves the UE has it, and the
+	// 401 to it has to go back over it: make it the registered tunnel now, as
+	// the 200 would have, instead of replacing it as an offer never taken up.
+	if(pend && promote_offer(d, pcontact, &req->rcv, 0)) {
+		// pend may have been taken over from another contact
+		est = contact_tunnel(pcontact->security);
+		// the tunnel it replaced, if removing it failed
+		pend = contact_tunnel(pcontact->security_temp);
+	}
+
 	// Parse security parameters from the REGISTER request and get some data for the new tunnels
 	req_sec_params = cscf_get_security(req);
 
-	// Update contacts only for initial registration, for re-registration the existing contacts shouldn't be updated.
-	if(pcontact->security_temp->data.ipsec->port_ps == 0
-			&& pcontact->security_temp->data.ipsec->port_pc == 0) {
+	if(!est && !pend) {
 		LM_DBG("Registration for contact with AOR [%.*s], VIA [%d://%.*s:%d], "
 			   "received_host [%d://%.*s:%d]\n",
 				ci.aor.len, ci.aor.s, ci.via_prot, ci.via_host.len,
 				ci.via_host.s, ci.via_port, ci.received_proto,
 				ci.received_host.len, ci.received_host.s, ci.received_port);
 
+		// the UE's offer save_pending() stored, when the REGISTER has none
 		if(req_sec_params == NULL)
 			s = pcontact->security_temp->data.ipsec;
 		else
@@ -937,35 +1199,82 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		}
 
 		s = req_sec_params->data.ipsec;
-		old_s = (ipsec_reuse_server_port && pcontact->security_temp)
-						? pcontact->security_temp->data.ipsec
-						: NULL;
+		// the latest offer: for a second 401 to the same challenge, the one
+		// the first 401 made. Never the registered tunnel, which the new one
+		// has to be set up beside.
+		old_s = ipsec_reuse_server_port ? pend : NULL;
 	}
 
-	if(update_contact_ipsec_params(s, m, old_s) != 0) {
+	if(update_contact_ipsec_params(s, m, old_s, est) != 0) {
 		LM_ERR("Could not update ipsec params in contact.\n");
 		goto cleanup;
 	}
 
-	fun_ret_c = create_ipsec_tunnel(&req->rcv.src_ip, s);
-	if(fun_ret_c != 0) {
-		LM_ERR("IPSEC tunnel creation failed.\n");
-		goto cleanup;
+	// What security_temp holds is superseded by this offer: an offer the UE
+	// never registered over - had it, ipsec_promote() would have made it the
+	// registered tunnel - or the tunnel a promotion failed to remove. Remove
+	// it, and before the new one is created: the two may share state (the same
+	// pair again from ipsec_reuse_server_port, or a UE that keeps its SPIs),
+	// and removing it afterwards would take the new tunnel's with it.
+	if(pend) {
+		LM_DBG("Replacing the %s tunnel on contact [%.*s] (client port %d, "
+			   "server port %d, spi_pc %u, spi_ps %u)\n",
+				tunnel_deferred(est, pend) ? "deferred" : "offered", ci.aor.len,
+				ci.aor.s, pend->port_pc, pend->port_ps, pend->spi_pc,
+				pend->spi_ps);
+		// a deferred offer can still hold the registered tunnel's pair
+		if(drop_ipsec_tunnel(ci.received_host, pend, est,
+				   (est && same_spi_pair(pend, est)) ? est : s)
+				!= 0) {
+			// it stays, still installed, and this offer is not made
+			if(!same_spi_pair(pend, s)) {
+				release_spi(s->spi_pc, s->spi_ps, s->port_pc, s->port_ps);
+			}
+			clear_spi_pair(s);
+			goto cleanup;
+		}
+		// what is left in the slot is only the UE's half again: nothing to
+		// re-offer or release should this 401 fail from here on
+		clear_spi_pair(pend);
+		pend_retired = 1;
+	}
+
+	// The registered tunnel stays until the UE has registered over the new
+	// one. A new one that cannot be installed beside it waits, deferred,
+	// while this 401 goes out over the registered tunnel - the UE cannot
+	// read it over any other - and replaces that one then.
+	if(est && tunnels_collide(est, s)) {
+		LM_INFO("Contact [%.*s]: the new tunnel (spi_uc %u, spi_us %u, spi_pc "
+				"%u, spi_ps %u) shares state with the registered one (spi_uc "
+				"%u, spi_us %u, spi_pc %u, spi_ps %u), installing it in place "
+				"of that one once the 401 is out\n",
+				ci.aor.len, ci.aor.s, s->spi_uc, s->spi_us, s->spi_pc,
+				s->spi_ps, est->spi_uc, est->spi_us, est->spi_pc, est->spi_ps);
+		deferred = 1;
+	} else {
+		fun_ret_c = create_ipsec_tunnel(&req->rcv.src_ip, s);
+		if(fun_ret_c != 0) {
+			LM_ERR("IPSEC tunnel creation failed.\n");
+			// Nothing was installed, and no slot holds the pair - one that
+			// shared it was retired above - so give it back
+			release_spi(s->spi_pc, s->spi_ps, s->port_pc, s->port_ps);
+			clear_spi_pair(s);
+			goto cleanup;
+		}
 	}
 
 	if(req_sec_params != NULL) {
-		ipsec_t *old_ipsec = pcontact->security_temp->data.ipsec;
-		pcontact->security_temp->data.ipsec = s;
-		// s is now owned by the contact (freed at contact expiry by
-		// free_security()); do not free it on the cleanup path
-		ipsec_swapped = 1;
-		// free the ipsec_t we just replaced on the contact - it was
-		// stored by save_pending() (or a prior ipsec_create()) and was
-		// previously orphaned on every registration
-		if(old_ipsec && old_ipsec != s) {
-			free_ipsec_data(old_ipsec);
-		}
+		// the contact takes the request's security over, offer and all, and
+		// frees what it replaces: what save_pending() stored, or the slot
+		// cleared above
+		old_sec = pcontact->security_temp;
+		pcontact->security_temp = req_sec_params;
+		sec_stored = 1;
+		free_security_t(old_sec);
 	}
+	// for ipsec_promote() to find this contact again, should the UE register
+	// over the offer from a new client port
+	spi_set_owner(s->spi_pc, s->spi_ps, pcontact->received_port);
 	// Update temp security parameters
 	if(ul.update_temp_security(d, pcontact->security_temp->type,
 			   pcontact->security_temp, pcontact)
@@ -1002,17 +1311,23 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
+	// Only now: a deferred offer this 401 failed to make stays uninstalled,
+	// and costs the registered tunnel nothing
+	if(deferred && defer_ipsec_tunnel(t, d, &ci, &req->rcv.src_ip, s) != 0) {
+		goto cleanup;
+	}
+
 	ret = IPSEC_CMD_SUCCESS; // all good, set ret to SUCCESS, and exit
 
 cleanup:
-	// On the re-registration path the swap did not happen, so
-	// req_sec_params->data.ipsec was only used to build the tunnel and is never
-	// stored on the contact. Free it here, otherwise it leaks on every
-	// re-registration. On the initial path ipsec_swapped==1 and data.ipsec is
-	// now owned by the contact - do NOT free it.
-	if(req_sec_params && !ipsec_swapped && req_sec_params->data.ipsec) {
-		free_ipsec_data(req_sec_params->data.ipsec);
-		req_sec_params->data.ipsec = NULL;
+	if(req_sec_params && !sec_stored) {
+		free_security_t(req_sec_params);
+	}
+	if(pend_retired && !sec_stored
+			&& ul.update_temp_security(d, pcontact->security_temp->type,
+					   pcontact->security_temp, pcontact)
+					   != 0) {
+		LM_ERR("Error updating temp security\n");
 	}
 	ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 	pkg_free(ci.received_host.s);
@@ -1021,6 +1336,214 @@ cleanup:
 		tmb.t_uas_request_clean_parsed(t);
 	}
 	return ret;
+}
+
+// The UE's contact other than c that came from client port port, holding
+// offer in security_temp if offer is given, or no offer at all if not
+static pcontact_t *contact_from_port(
+		udomain_t *d, pcontact_t *c, uint16_t port, ipsec_t *offer)
+{
+	pcontact_info_t ci;
+	pcontact_t *x;
+	ipsec_t *x_pend;
+	int reverse;
+
+	// the same UE, so the same slot, which the caller has locked. The search
+	// also takes a contact whose Contact port is port, which c can be: look
+	// from the other end of the slot too.
+	memset(&ci, 0, sizeof(pcontact_info_t));
+	ci.aor = c->aor;
+	ci.via_host = c->via_host;
+	ci.via_port = c->via_port;
+	ci.via_prot = c->via_proto;
+	ci.received_host = c->received_host;
+	ci.received_port = port;
+	ci.received_proto = c->received_proto;
+	ci.searchflag = SEARCH_RECEIVED;
+	ci.reg_state = PCONTACT_ANY;
+	for(reverse = 0; reverse <= 1; reverse++) {
+		x = NULL;
+		if(ul.get_pcontact(d, &ci, &x, reverse) != 0 || x == NULL || x == c
+				|| x->received_port != port) {
+			continue;
+		}
+		x_pend = contact_tunnel(x->security_temp);
+		if(!offer && !x_pend) {
+			return x;
+		}
+		if(offer && x_pend && same_tunnel(x_pend, offer)
+				&& !tunnel_deferred(contact_tunnel(x->security), x_pend)) {
+			return x;
+		}
+	}
+	return NULL;
+}
+
+// The contact other than c the offer pend was made to, if it still holds it
+static pcontact_t *offering_contact(udomain_t *d, pcontact_t *c, ipsec_t *pend)
+{
+	pcontact_t *x;
+	uint16_t port = spi_get_owner(pend->spi_pc, pend->spi_ps);
+
+	if(!port || port == c->received_port) {
+		return NULL;
+	}
+	if((x = contact_from_port(d, c, port, pend)) == NULL) {
+		LM_WARN("contact [%.*s]: the offer (spi_pc %u, spi_ps %u) was made to "
+				"the contact received from port %u, which no longer holds "
+				"it\n",
+				c->aor.len, c->aor.s, pend->spi_pc, pend->spi_ps, port);
+	}
+	return x;
+}
+
+// Delete x, the UE's registration from a client port it has moved off, with
+// the tunnel x is registered over - unless it is est, which the caller
+// removes. Left without a tunnel x would still be found, by a request to the
+// UE, or by a REGISTER from that port again, for which save_pending() stores
+// no copy of the offer.
+static void drop_superseded_contact(
+		udomain_t *d, pcontact_t *x, ipsec_t *est, ipsec_t *keep)
+{
+	ipsec_t *x_est = contact_tunnel(x->security);
+
+	LM_DBG("deleting contact [%.*s] received from port %u\n", x->aor.len,
+			x->aor.s, x->received_port);
+
+	if(x_est && !(est && same_tunnel(x_est, est))
+			&& retire_ipsec_tunnel(x->received_host, x_est, keep) != 0) {
+		// still installed: x's delete callback, ipsec_on_expire(), retries
+	} else {
+		free_security_t(x->security);
+		x->security = NULL;
+	}
+
+	if(ul.delete_pcontact(d, x) != 0) {
+		LM_ERR("Error deleting the contact received from port %u\n",
+				x->received_port);
+	}
+}
+
+// Move the offer x holds to c, in place of the copy save_pending() stored
+static void take_over_offer(udomain_t *d, pcontact_t *c, pcontact_t *x)
+{
+	security_t *copy = c->security_temp;
+
+	LM_DBG("contact [%.*s]: taking the offered tunnel (spi_pc %u, spi_ps %u) "
+		   "over from the contact received from port %u\n",
+			c->aor.len, c->aor.s, x->security_temp->data.ipsec->spi_pc,
+			x->security_temp->data.ipsec->spi_ps, x->received_port);
+
+	if(ul.update_temp_security(d, SECURITY_IPSEC, x->security_temp, c) != 0) {
+		LM_ERR("Error updating temp security\n");
+	}
+	c->security_temp = x->security_temp;
+	if(ul.update_temp_security(d, SECURITY_IPSEC, NULL, x) != 0) {
+		LM_ERR("Error clearing temp security\n");
+	}
+	x->security_temp = NULL;
+	free_security_t(copy);
+}
+
+/*
+ * Make the offered tunnel the registered one, as ipsec_promote() describes.
+ * registered: the REGISTER has been answered 200, rather than challenged
+ * again, so the UE is registered from c from now on.
+ *
+ * A UE that moves to a new client port with the offer, as TS 33.203 has it,
+ * registers over it from a contact of its own: contacts are told apart by
+ * the port they came from. save_pending() stores a copy of the offer there,
+ * from Security-Verify, while the offer itself and the tunnel it replaces
+ * stay on the contact the 401 went to. c takes the offer over
+ * (take_over_offer()), so that one contact holds each tunnel and no other's
+ * expiry removes it. The contact the 401 went to stays registered, with its
+ * tunnel, until c is: the 200 deletes it (drop_superseded_contact()) - or,
+ * after a REGISTER challenged again, the 200 to the next one, which finds it
+ * by the owner of the tunnel c took over.
+ */
+static int promote_offer(
+		udomain_t *d, pcontact_t *c, struct receive_info *rcv, int registered)
+{
+	ipsec_t *pend = contact_tunnel(c->security_temp);
+	ipsec_t *est = contact_tunnel(c->security);
+	pcontact_t *x;
+	security_t *old_sec;
+	ip_addr_t ue_addr;
+	uint16_t port;
+
+	// a deferred offer is not installed, so cannot have been registered over
+	if(!pend || tunnel_deferred(est, pend) || !rcv) {
+		return 0;
+	}
+	if(!came_over_tunnel(pend, rcv)
+			|| str2ipxbuf(&c->received_host, &ue_addr) < 0
+			|| !ip_addr_cmp(&ue_addr, &rcv->src_ip)) {
+		LM_DBG("contact [%.*s]: REGISTER from port %u to %u did not come over "
+			   "the offered tunnel (%u to %u)\n",
+				c->aor.len, c->aor.s, rcv->src_port, rcv->dst_port,
+				pend->port_uc, pend->port_ps);
+		return 0;
+	}
+
+	if((x = offering_contact(d, c, pend)) != NULL) {
+		take_over_offer(d, c, x);
+		pend = contact_tunnel(c->security_temp);
+		if(registered) {
+			drop_superseded_contact(d, x, est, pend);
+		}
+	}
+	if(registered) {
+		// the contact a 401 to c took est over from, kept until now
+		if(est && (port = spi_get_owner(est->spi_pc, est->spi_ps)) != 0
+				&& port != c->received_port
+				&& (x = contact_from_port(d, c, port, NULL)) != NULL) {
+			drop_superseded_contact(d, x, est, pend);
+		}
+		// c holds it for good: nothing to look for from here on
+		spi_set_owner(pend->spi_pc, pend->spi_ps, c->received_port);
+	}
+
+	LM_DBG("contact [%.*s]: registered over the offered tunnel (client port "
+		   "%d, server port %d, spi_pc %u, spi_ps %u)%s\n",
+			c->aor.len, c->aor.s, pend->port_pc, pend->port_ps, pend->spi_pc,
+			pend->spi_ps, est ? ", removing the previous one" : "");
+
+	old_sec = c->security;
+	if(ul.update_security(d, SECURITY_IPSEC, c->security_temp, c) != 0) {
+		LM_ERR("Error updating security\n");
+	}
+	c->security = c->security_temp;
+	// one that cannot be removed stays in security_temp, for the next 401 or
+	// the contact's expiry to retry
+	if(!est || retire_ipsec_tunnel(c->received_host, est, pend) == 0) {
+		free_security_t(old_sec);
+		old_sec = NULL;
+	}
+	if(ul.update_temp_security(d, SECURITY_IPSEC, old_sec, c) != 0) {
+		LM_ERR("Error updating temp security\n");
+	}
+	c->security_temp = old_sec;
+
+	return 1;
+}
+
+/**
+ * Make the offered tunnel the registered one, once the UE has registered over
+ * it (TS 33.203 7.4).
+ *
+ * Called by ims_registrar_pcscf with the domain locked, for each contact a 200
+ * to a REGISTER updates; ipsec_create() does the same for a REGISTER that is
+ * challenged again. Only a REGISTER that came in over the offered tunnel
+ * proves the UE has it: a 200 to one sent over the registered tunnel (a
+ * refresh that was not challenged), or to another contact's, changes nothing.
+ * The registered tunnel it replaces is removed. See promote_offer() for a UE
+ * that moved to a new client port.
+ *
+ * \return 1 if the tunnel was promoted, 0 if there was nothing to promote
+ */
+int ipsec_promote(udomain_t *d, pcontact_t *c, struct receive_info *rcv)
+{
+	return promote_offer(d, c, rcv, 1);
 }
 
 /**
@@ -1105,19 +1628,30 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		goto cleanup;
 	}
 
-	if(pcontact->security_temp == NULL) {
+	// A reply goes over the tunnel its request came in on, an installed
+	// offer; a request, and the 401 that makes a deferred offer, over the one
+	// the UE is registered over, or, before the first registration has
+	// completed, the one it is registering over.
+	ipsec_t *s = NULL;
+	ipsec_t *est = contact_tunnel(pcontact->security);
+	ipsec_t *pend = contact_tunnel(pcontact->security_temp);
+	if(m->first_line.type == SIP_REPLY && pend && !tunnel_deferred(est, pend)
+			&& came_over_tunnel(pend, &req->rcv)) {
+		s = pend;
+	} else if(est) {
+		s = est;
+	} else if(pend) {
+		s = pend;
+	} else if(pcontact->security_temp
+			  && pcontact->security_temp->type == SECURITY_IPSEC
+			  && pcontact->security_temp->data.ipsec) {
+		s = pcontact->security_temp->data.ipsec;
+	}
+
+	if(s == NULL) {
 		LM_ERR("No security parameters found in contact\n");
 		goto cleanup;
 	}
-
-	//get security parameters
-	if(pcontact->security_temp->type != SECURITY_IPSEC) {
-		LM_ERR("Unsupported security type: %d\n",
-				pcontact->security_temp->type);
-		goto cleanup;
-	}
-
-	ipsec_t *s = pcontact->security_temp->data.ipsec;
 
 	// Update the destination
 	//
@@ -1203,6 +1737,15 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 			// send to UE server port
 			dst_port = s->port_us;
 		}
+	}
+
+	// a slot without a tunnel - save_pending()'s half of an offer, or one
+	// destroyed - has no P-CSCF or UE ports, and port 0 would match any socket
+	if(src_port == 0 || dst_port == 0) {
+		LM_ERR("No tunnel to forward over for contact [%.*s] (ports %u to "
+			   "%u)\n",
+				pcontact->aor.len, pcontact->aor.s, src_port, dst_port);
+		goto cleanup;
 	}
 
 	if(_cflags & IPSEC_FORWARD_TRYTCP) {
@@ -1347,20 +1890,13 @@ int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri)
 	}
 
 
-	if(pcontact->security_temp == NULL) {
+	if(!contact_tunnel(pcontact->security)
+			&& !contact_tunnel(pcontact->security_temp)) {
 		LM_ERR("No security parameters found in contact\n");
 		goto cleanup;
 	}
 
-	//get security parameters
-	if(pcontact->security_temp->type != SECURITY_IPSEC) {
-		LM_ERR("Unsupported security type: %d\n",
-				pcontact->security_temp->type);
-		goto cleanup;
-	}
-
-	destroy_ipsec_tunnel(ci.received_host, pcontact->security_temp->data.ipsec,
-			pcontact->contact_port);
+	destroy_contact_tunnels(ci.received_host, pcontact);
 
 	ret = IPSEC_CMD_SUCCESS; // all good, set ret to SUCCESS, and exit
 
@@ -1413,20 +1949,13 @@ int ipsec_destroy_by_contact(
 	ul.lock_udomain(
 			_d, &pcontact->via_host, pcontact->via_port, pcontact->via_proto);
 
-	if(pcontact->security_temp == NULL) {
+	if(!contact_tunnel(pcontact->security)
+			&& !contact_tunnel(pcontact->security_temp)) {
 		LM_ERR("No security parameters found in contact\n");
 		goto cleanup;
 	}
 
-	//get security parameters
-	if(pcontact->security_temp->type != SECURITY_IPSEC) {
-		LM_ERR("Unsupported security type: %d\n",
-				pcontact->security_temp->type);
-		goto cleanup;
-	}
-
-	destroy_ipsec_tunnel(search_ci.received_host,
-			pcontact->security_temp->data.ipsec, pcontact->contact_port);
+	destroy_contact_tunnels(search_ci.received_host, pcontact);
 
 	ret = IPSEC_CMD_SUCCESS; // all good, set ret to SUCCESS, and exit
 
