@@ -483,22 +483,51 @@ int tcp_reactor_enable_write_watch(struct tcp_connection *c)
 	return 0;
 }
 
-/* mode 2 [io_wait]: enable POLLOUT watching, destroying the connection on
- * io_watch failure. Used by the IPC write/connect handlers, which do not touch
- * c after this returns. Returns 0 on success, -1 on error (c unhashed and
- * destroyed). */
+/* mode 2 [io_wait]: tear down c on the io_wait thread; every reactor teardown
+ * runs here. Steps, in order:
+ *  - unhash c first (hash table, local timer, wbuf_q): try_unhash removes
+ *    the local timer while F_CONN_MAIN_TIMER is set
+ *  - own_ref = 1: the caller holds a ref beside the hash ref (in-pool or
+ *    lookup ref): drop the hash ref here
+ *  - own_ref = 0: the caller holds the hash ref; an unhashed c is logged
+ *  - drop c->s from io_h (fd_i: its io_h index, -1 = look it up)
+ *  - clear the watch, want and pool flags
+ *  - emit tcp:closed (fire-once, reason from c->event)
+ *  - tcpconn_put_destroy(): close the fd, drop the caller's ref; the last ref
+ *    frees c, else the remaining (transient) holder frees it */
+static void tcp_reactor_teardown(
+		struct tcp_connection *c, int fd_i, int own_ref)
+{
+	if(tcpconn_try_unhash(c)) {
+		if(own_ref)
+			tcpconn_put(c);
+	} else if(unlikely(!own_ref)) {
+		LM_CRIT("unhashed connection %p\n", c);
+	}
+	if((c->flags & (F_CONN_WRITE_W | F_CONN_READ_W)) && (c->s != -1)) {
+		if(unlikely(tcpmain_io_watch_del(c->s, fd_i, 1) < 0))
+			LM_ERR("reactor: io_watch_del (teardown) failed for %p fd %d\n", c,
+					c->s);
+		c->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
+	}
+	c->flags &= ~(F_CONN_POOL_BUSY | F_CONN_POOL_CLOSE | F_CONN_WANTS_RD
+				  | F_CONN_WANTS_WR);
+	tcp_emit_closed_event(c);
+	tcpconn_put_destroy(c);
+}
+
+/* mode 2 [io_wait]: enable POLLOUT watching, tearing c down on io_watch
+ * failure. Used by the io_wait send path, which leaves c alone after this
+ * returns. Returns 0 on success, -1 on error (c unhashed and destroyed). */
 static int tcp_reactor_watch_write(struct tcp_connection *c)
 {
 	if(unlikely(tcp_reactor_enable_write_watch(c) < 0)) {
-		if(likely(tcpconn_try_unhash(c))) {
-			if((c->flags & F_CONN_READ_W) && (c->s != -1)) {
-				tcpmain_io_watch_del(c->s, -1, 1);
-				c->flags &= ~F_CONN_READ_W;
-			}
-			tcpconn_put_destroy(c);
-		} else {
+		/* the caller holds the hash ref alone: unhashed, c has no ref left */
+		if(unlikely(!(c->flags & F_CONN_HASHED))) {
 			BUG("unhashed connection watched for IO\n");
+			return -1;
 		}
+		tcp_reactor_teardown(c, -1, 0);
 		return -1;
 	}
 	return 0;
@@ -847,23 +876,15 @@ static int tcp_reactor_unshield(struct tcp_connection *c)
  *  - callers: tcp_reactor_handle_done() (F_CONN_POOL_CLOSE) and
  *    tcp_reactor_unshield_or_chain() (bad/unhashed c, re-arm failure); both
  *    hold the in-pool ref
- *  - unhash and drop the hash ref
- *  - emit the tcpops close event
- *  - drop the in-pool ref last: the last ref frees c; with a transient ref
- *    outstanding (worker write request, tls-event dispatch) its holder frees
- *    c later */
+ *  - tcp_reactor_teardown() with own_ref = 1: the hash ref goes first, the
+ *    in-pool ref last; with a transient ref outstanding (worker write
+ *    request, tls-event dispatch) its holder frees c later */
 static void tcp_reactor_pool_close(struct tcp_connection *c)
 {
 	if(unlikely(c->rd_owner || c->wr_owner))
 		BUG("conn %p closed while owned (rd %d wr %d)\n", c, c->rd_owner - 1,
 				c->wr_owner - 1);
-	if(tcpconn_try_unhash(c))
-		tcpconn_put(c);
-	c->flags &= ~(F_CONN_POOL_BUSY | F_CONN_POOL_CLOSE | F_CONN_WANTS_RD
-				  | F_CONN_WANTS_WR);
-
-	tcp_emit_closed_event(c);
-	tcpconn_put_destroy(c);
+	tcp_reactor_teardown(c, -1, 1);
 }
 
 /* mode 2 [io_wait]: finish c's last pool job (or a failed enqueue), in order:
@@ -1082,17 +1103,9 @@ void tcp_reactor_handle_script_close(int scid)
 		tcp_reactor_mark_bad_put(tcpconn);
 		return;
 	}
-	if(tcpconn_try_unhash(tcpconn))
-		tcpconn_put(tcpconn);
-	if(((tcpconn->flags & (F_CONN_WRITE_W | F_CONN_READ_W)))
-			&& (tcpconn->s != -1)) {
-		tcpmain_io_watch_del(tcpconn->s, -1, 1);
-		tcpconn->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
-	}
-	/* reason stays unset -> reports tcp:closed (EOF), same as the
-	 * mode 0/1 script-error close. */
-	tcp_emit_closed_event(tcpconn);
-	tcpconn_put_destroy(tcpconn); /* release the lookup ref */
+	/* own_ref = 1: the lookup ref; reason stays unset -> tcp:closed reports
+	 * EOF, same as the mode 0/1 script-error close */
+	tcp_reactor_teardown(tcpconn, -1, 1);
 }
 
 /* mode 2 [io_wait]: stage a worker's write on c's wsq (buf: shm, freed here) and
@@ -1305,32 +1318,6 @@ static int tcp_reactor_flush_wbuf(
 	return 0;
 }
 
-/* mode 2 [io_wait]: tear down an unshielded conn after an event handling
- * error */
-static void tcp_reactor_ev_close(struct tcp_connection *tcpconn, int fd_i)
-{
-	/* unhash first, while F_CONN_MAIN_TIMER is still set, so the local
-	 * timer is removed before the connection is freed (try_unhash only
-	 * deletes the timer when the flag is set). Then stop watching the fd. */
-	if(unlikely(!tcpconn_try_unhash(tcpconn)))
-		LM_CRIT("unhashed connection %p\n", tcpconn);
-	if((tcpconn->flags & (F_CONN_WRITE_W | F_CONN_READ_W))
-			&& (tcpconn->s != -1)) {
-		if(unlikely(tcpmain_io_watch_del(tcpconn->s, fd_i, 1) < 0)) {
-			LM_ERR("io_watch_del (reactor) failed for %p fd %d\n", tcpconn,
-					tcpconn->s);
-		}
-		tcpconn->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
-	}
-	tcpconn->flags &= ~(F_CONN_WANTS_RD | F_CONN_WANTS_WR);
-	/* mode 2 inline read teardown (shield/enqueue not taken): same as
-	 * tcp_reactor_pool_close - the reader detected an EOF/error/reset, so
-	 * emit the tcpops close event here too. Fire-once guarded. */
-	tcp_emit_closed_event(tcpconn);
-	/* not shielded: only the hash ref is held - release it once here */
-	tcpconn_put_destroy(tcpconn);
-}
-
 /* mode 2 [io_wait]: io event on tcpconn; handle_tcpconn_ev() calls it first in
  * mode 2 and returns its result (same convention as handle_io()).
  *  - mode 2 form of handle_tcpconn_ev(): PROC_TCP_MAIN keeps the fd, reads
@@ -1398,7 +1385,8 @@ int tcp_reactor_handle_tcpconn_ev(
 	return 0;
 
 reactor_close:
-	tcp_reactor_ev_close(tcpconn, fd_i);
+	/* unshielded: the io event handler holds the hash ref alone */
+	tcp_reactor_teardown(tcpconn, fd_i, 0);
 	return -1;
 }
 
