@@ -1,0 +1,432 @@
+log_http Module
+
+Alexey Volokitin
+
+   <alexey.v@didww.com>
+
+Edited by
+
+Alexey Volokitin
+
+   <alexey.v@didww.com>
+
+   Copyright © 2019-2026 didww.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. Kamailio Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Parameters
+
+              1.3.1. target (str)
+              1.3.2. format (str)
+              1.3.3. auth_username (str)
+              1.3.4. auth_password (str)
+              1.3.5. timeout (int)
+              1.3.6. chunked (int)
+              1.3.7. batch_size (int)
+              1.3.8. batch_delay (int)
+              1.3.9. queue_size (int)
+              1.3.10. default_map (str)
+              1.3.11. map (str)
+
+        1.4. Formats
+
+              1.4.1. elasticsearch
+              1.4.2. ndjson
+
+        1.5. Format of default_map and map parameters
+        1.6. Functions
+
+              1.6.1. http_log(key[, value1, ...])
+
+        1.7. Statistics
+
+              1.7.1. log_http_queue_size
+              1.7.2. log_http_drop_total
+              1.7.3. log_http_err_total
+
+        1.8. Queue algorithm
+
+   List of Examples
+
+   1.1. Set target parameter
+   1.2. Set format parameter
+   1.3. Set auth_username parameter
+   1.4. Set auth_password parameter
+   1.5. Set timeout parameter
+   1.6. Set chunked parameter
+   1.7. Set batch_size parameter
+   1.8. Set batch_delay parameter
+   1.9. Set queue_size parameter
+   1.10. Set default_map parameter
+   1.11. Set map parameter
+   1.12. elasticsearch format
+   1.13. ndjson format
+   1.14. http_log usage with Elasticsearch
+   1.15. http_log usage with ndjson format
+
+Chapter 1. Admin Guide
+
+1.1. Overview
+
+   This module ships structured log entries from the Kamailio
+   configuration script to a log server over HTTP. The entries are
+   collected in batches and posted. The format of the request is selected
+   with the format parameter, the supported formats are described in the
+   section Formats.
+
+   Logging is asynchronous: the SIP worker processes only pack the values
+   of the log entry and pass them to a dedicated sender process. The
+   sender process serializes the entries to JSON, collects them in a queue
+   and posts them in batches, so the SIP processing is never blocked by
+   the HTTP transfer.
+
+   The set of fields of a log entry is described by log groups. A log
+   group is defined with the default_map and map parameters and is
+   referenced by its key as the first argument of the http_log() function.
+   Fields of the default map are filled automatically (current time, route
+   name, pseudo-variables, static values), fields of the map are filled
+   from the arguments of http_log().
+
+   Several targets (log server instances) can be configured for high
+   availability. Batches are sent to the targets in round-robin order;
+   when a request fails, the batch is retried on the next target.
+
+1.2. Dependencies
+
+1.2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * pv - needed when pseudo-variables are used in default_map or in the
+       text arguments of http_log(), which is the case in any practical
+       configuration.
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libcurl.
+
+   The module is available only on Linux: the sender process is built on
+   epoll and timerfd.
+
+1.3. Parameters
+
+1.3.1. target (str)
+
+   URL of the ingestion endpoint of the log server, see the section
+   Formats for the endpoint of each format. The parameter can be set
+   multiple times to configure several targets, they are used in
+   round-robin order with failover to the next target when a request
+   fails.
+
+   Default value is empty (at least one target is required).
+
+   Example 1.1. Set target parameter
+...
+modparam("log_http", "target", "http://127.0.0.1:9200/_bulk")
+modparam("log_http", "target", "http://10.0.0.2:9200/_bulk")
+...
+
+1.3.2. format (str)
+
+   Format of the request and its options, in the form
+   name[=>option=value[;option=value...]]. The name is one of
+   elasticsearch or ndjson, the options are specific to the format and are
+   described in the section Formats. A value containing commas or spaces
+   has to be enclosed in single or double quotes. An unknown option is a
+   configuration error. The parameter can be set only once, a second
+   definition is a configuration error.
+
+   Default value is "elasticsearch" (no options).
+
+   Example 1.2. Set format parameter
+...
+modparam("log_http", "format", "elasticsearch=>index=kamailio-%Y.%m.%d")
+...
+modparam("log_http", "format", "ndjson")
+...
+
+1.3.3. auth_username (str)
+
+   User name for HTTP basic authentication on the targets. The
+   authentication is enabled when both auth_username and auth_password are
+   set.
+
+   Default value is empty (no authentication).
+
+   Example 1.3. Set auth_username parameter
+...
+modparam("log_http", "auth_username", "kamailio")
+...
+
+1.3.4. auth_password (str)
+
+   Password for HTTP basic authentication on the targets. See
+   auth_username.
+
+   Default value is empty (no authentication).
+
+   Example 1.4. Set auth_password parameter
+...
+modparam("log_http", "auth_password", "secret")
+...
+
+1.3.5. timeout (int)
+
+   Maximum duration of one HTTP request in milliseconds. A request that
+   takes longer is treated as failed and the batch is retried on the next
+   target.
+
+   Default value is 5000.
+
+   Example 1.5. Set timeout parameter
+...
+modparam("log_http", "timeout", 2000)
+...
+
+1.3.6. chunked (int)
+
+   If set to 1, the request body is sent with chunked transfer encoding:
+   the entries of a batch are serialized one by one while curl is sending,
+   so only one entry at a time is kept in the request buffer. If set to 0,
+   the whole batch is assembled in memory first and sent with a
+   Content-Length header, for servers or proxies that do not accept
+   chunked requests.
+
+   Default value is 1.
+
+   Example 1.6. Set chunked parameter
+...
+modparam("log_http", "chunked", 0)
+...
+
+1.3.7. batch_size (int)
+
+   Maximum number of log entries in one HTTP request. When the number of
+   queued entries exceeds this value, a request is sent immediately
+   without waiting for batch_delay.
+
+   Default value is 0 (no limit, the whole queue is sent in one request).
+
+   Example 1.7. Set batch_size parameter
+...
+modparam("log_http", "batch_size", 100)
+...
+
+1.3.8. batch_delay (int)
+
+   Interval in milliseconds between the sending of the queued entries. The
+   minimum value is 100.
+
+   Default value is 0 (100 milliseconds).
+
+   Example 1.8. Set batch_delay parameter
+...
+modparam("log_http", "batch_delay", 1000)
+...
+
+1.3.9. queue_size (int)
+
+   Maximum number of log entries kept in the queue of the sender process.
+   When the limit is exceeded (e.g. all targets are down), new entries are
+   dropped, an error is logged and the log_http_drop_total statistic is
+   incremented.
+
+   Default value is 0 (unlimited).
+
+   Example 1.9. Set queue_size parameter
+...
+modparam("log_http", "queue_size", 10000)
+...
+
+1.3.10. default_map (str)
+
+   Fields of a log group that are filled automatically on every http_log()
+   call. The format of the value is described in the section Format of
+   default_map and map parameters. The parameter can be set multiple
+   times, once per log group.
+
+   Default value is empty.
+
+   Example 1.10. Set default_map parameter
+...
+modparam("log_http", "default_map", "gen(@timestamp:timestamp, route:route_name,
+ src_ip:$si, app:&kamailio)")
+...
+
+1.3.11. map (str)
+
+   Fields of a log group that are filled from the arguments of the
+   http_log() function. The format of the value is described in the
+   section Format of default_map and map parameters. The parameter can be
+   set multiple times, once per log group.
+
+   Default value is empty (at least one map is required).
+
+   Example 1.11. Set map parameter
+...
+modparam("log_http", "map", "gen(message:text, code:num)")
+...
+
+1.4. Formats
+
+1.4.1. elasticsearch
+
+   Elasticsearch Bulk API, described in the Elasticsearch documentation:
+   https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-b
+   ulk.
+
+   Options:
+     * index - name of the index to put the entries in. The name may
+       contain strftime() conversion specifiers, evaluated in UTC when a
+       batch is sent, e.g. kamailio-%Y.%m.%d for daily indices. When not
+       set, the index has to be part of the target URL.
+
+   Example 1.12. elasticsearch format
+...
+modparam("log_http", "target", "http://127.0.0.1:9200/_bulk")
+modparam("log_http", "format", "elasticsearch=>index=kamailio-%Y.%m.%d")
+...
+
+1.4.2. ndjson
+
+   Newline delimited JSON: the body of the request is the JSON objects of
+   the entries, one per line, with no envelope. See
+   https://github.com/ndjson/ndjson-spec. The format is accepted by the
+   log servers consuming a stream of JSON lines.
+
+   The format has no options.
+
+   Example 1.13. ndjson format
+...
+modparam("log_http", "target", "http://127.0.0.1:9428/insert/jsonline?_stream_fi
+elds=app,group&_msg_field=message&_time_field=@timestamp")
+modparam("log_http", "format", "ndjson")
+...
+
+1.5. Format of default_map and map parameters
+
+   The value of both parameters has the format key(name:type[, name:type
+   ...]).
+     * key - name of the log group, used as the first argument of
+       http_log().
+     * name - name of the JSON field in the log entry. Special field names
+       of the log server (@timestamp, _msg, _time) can be used directly.
+     * type - type of the field, see below.
+
+   Types allowed in default_map:
+     * timestamp - current time in RFC3339 format with millisecond
+       precision (UTC), e.g. 2026-10-06T08:09:41.123Z.
+     * route_name - name of the route block from which http_log() is
+       called.
+     * $... - a pseudo-variable, its value is taken at the time of the
+       call (e.g. $si, $ci, $var(x)). Null values result in the field
+       being omitted.
+     * &value - a static string value.
+
+   Types allowed in map:
+     * text - string. The argument may contain pseudo-variables, they are
+       evaluated at the time of the call. Empty strings are omitted from
+       the entry.
+     * num - integer number.
+     * float - floating point number.
+     * bool - boolean, the argument must be true, false or a number
+       (non-zero is true).
+     * inet - IPv4 or IPv6 address, stored as a string.
+     * date - date and time in local time zone in the format %Y.%m.%d
+       %H:%M:%S, stored in RFC3339 format (UTC).
+
+1.6. Functions
+
+1.6.1.  http_log(key[, value1, ...])
+
+   Build a log entry of the log group key and pass it to the sender
+   process. The number of values must be equal to the number of fields in
+   the map of the group, and each value must match the type of the
+   corresponding field. Up to 5 values can be given.
+
+   Returns 1 on success and -1 on error (unknown group, wrong number or
+   type of values, sender process not reachable).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. http_log usage with Elasticsearch
+...
+modparam("log_http", "target", "http://127.0.0.1:9200/_bulk")
+modparam("log_http", "format", "elasticsearch=>index=kamailio-%Y.%m.%d")
+modparam("log_http", "default_map", "gen(@timestamp:timestamp, app:&kamailio, gr
+oup:&gen, route:route_name, callid:$ci, src_ip:$si)")
+modparam("log_http", "map", "gen(message:text, code:num)")
+modparam("log_http", "default_map", "auth(@timestamp:timestamp, app:&kamailio, g
+roup:&auth, callid:$ci)")
+modparam("log_http", "map", "auth(message:text, user:text, ok:bool)")
+...
+request_route {
+    ...
+    http_log("gen", "request $rm from $si", "100");
+    ...
+    if (!auth_check("$fd", "subscriber", "1")) {
+        http_log("auth", "authentication failed", "$au", "false");
+        auth_challenge("$fd", "1");
+        exit;
+    }
+    http_log("auth", "authenticated", "$au", "true");
+    ...
+}
+...
+
+   Example 1.15. http_log usage with ndjson format
+...
+modparam("log_http", "target", "http://127.0.0.1:9428/insert/jsonline?_stream_fi
+elds=app,group")
+modparam("log_http", "format", "ndjson")
+modparam("log_http", "default_map", "gen(_time:timestamp, app:&kamailio, group:&
+gen, route:route_name, callid:$ci, src_ip:$si)")
+modparam("log_http", "map", "gen(_msg:text, code:num)")
+...
+request_route {
+    ...
+    http_log("gen", "request $rm from $si", "100");
+    ...
+}
+...
+
+1.7. Statistics
+
+1.7.1. log_http_queue_size
+
+   Current number of log entries waiting in the sender queue.
+
+1.7.2. log_http_drop_total
+
+   Total number of log entries dropped because the queue was full.
+
+1.7.3. log_http_err_total
+
+   Total number of failed HTTP requests.
+
+1.8. Queue algorithm
+
+   The sender process collects the log entries in a queue. Every
+   batch_delay milliseconds, or as soon as the queue grows over batch_size
+   entries, the first batch_size entries of the queue (the whole queue
+   when batch_size is 0) are posted to the current target in one request.
+   Only one request is in flight at a time.
+
+   On success (HTTP 2xx) the entries are removed from the queue and the
+   next batch is sent immediately if the queue is not empty. On failure
+   the log_http_err_total statistic is incremented and the same batch is
+   retried on the next target. When all the targets failed, the entries
+   stay in the queue until the next batch_delay tick.
+
+   When the queue holds more than queue_size entries, new entries are
+   dropped and log_http_drop_total is incremented.
