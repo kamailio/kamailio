@@ -247,9 +247,12 @@ static int pk_rsa_public_in_sw(const wc_CryptoInfo *info)
 
 	switch(info->pk.type) {
 		case WC_PK_TYPE_RSA:
+#ifdef WOLF_CRYPTO_CB_RSA_PAD
+		/* padded types: wolfSSL 5.7.4+, sent with WOLF_CRYPTO_CB_RSA_PAD */
 		case WC_PK_TYPE_RSA_PKCS:
 		case WC_PK_TYPE_RSA_PSS:
 		case WC_PK_TYPE_RSA_OAEP:
+#endif
 			break;
 		default:
 			return 0;
