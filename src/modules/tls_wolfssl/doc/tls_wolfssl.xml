@@ -90,14 +90,17 @@ loadmodule "tls_wolfssl.so"
 
                         <programlisting>
 ...
-# - Debian currently does not use -DWOLF_CRYPTO_CB_RSA_PAD: this affects use of RSA
-#   padding mechanisms on HSMs
-EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --enable-pkcs11
+# - --enable-cryptocb-rsa-pad (wolfSSL 5.9.4+) lets PKCS#11 use the RSA padding
+#   mechanisms (PKCS#1 v1.5, OAEP, PSS) for HSMs that refuse raw RSA; older
+#   wolfSSL: EXTRA_CFLAGS="-DWOLF_CRYPTO_CB_RSA_PAD" instead
+# - Debian currently builds without it
+./configure --enable-distro --enable-pkcs11 --enable-cryptocb-rsa-pad
 
 # additional flags may be used: e.g. what Debian uses on forky for its libwolfssl44 / libwolfssl-dev
-EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure \
+./configure \
     --enable-distro --enable-ech --enable-hpke --enable-jni \
     --enable-jobserver=no --enable-memcached --enable-quic --enable-qt --enable-pkcs11 \
+    --enable-cryptocb-rsa-pad \
     --enable-writedup --disable-asm --disable-crl-monitor --disable-examples \
     --disable-silent-rules
 ...

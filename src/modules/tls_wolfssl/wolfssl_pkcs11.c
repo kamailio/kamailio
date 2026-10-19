@@ -21,6 +21,9 @@
 
 #include <wolfssl/wolfcrypt/wc_pkcs11.h>
 #include <wolfssl/wolfcrypt/cryptocb.h>
+#include <wolfssl/wolfcrypt/asn_public.h>
+#include <wolfssl/wolfcrypt/ecc.h>
+#include <wolfssl/wolfcrypt/random.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -235,15 +238,109 @@ void uri_decode(char *dst, const char *src)
  */
 
 
+/* 1 for an rsa public-key operation (encrypt or verify) on a key holding
+ * n/e, e.g. the tls signature self-check: wolfSSL then runs it in software */
+static int pk_rsa_public_in_sw(const wc_CryptoInfo *info)
+{
+#ifndef NO_RSA
+	const RsaKey *key;
+
+	switch(info->pk.type) {
+		case WC_PK_TYPE_RSA:
+		case WC_PK_TYPE_RSA_PKCS:
+		case WC_PK_TYPE_RSA_PSS:
+		case WC_PK_TYPE_RSA_OAEP:
+			break;
+		default:
+			return 0;
+	}
+	/* the type names the key and the raw rsa direction: public encrypt =
+	 * encrypt, public decrypt = verify; sign and decrypt stay on the token */
+	if(info->pk.rsa.type != RSA_PUBLIC_ENCRYPT
+			&& info->pk.rsa.type != RSA_PUBLIC_DECRYPT)
+		return 0;
+	key = info->pk.rsa.key;
+	return key != NULL && !mp_iszero(&key->n) && !mp_iszero(&key->e);
+#else
+	return 0;
+#endif
+}
+
+#ifdef HAVE_ECC
+/* ec key check for a token holding the private key alone (wolfSSL issue
+ * 10057): sign a random digest on the token, verify it in software with the
+ * certificate's public key. Returns 0 when the key matches the certificate */
+static int pk_ecc_check_by_sign(wc_CryptoInfo *info)
+{
+	ecc_key pub;
+	WC_RNG rng;
+	byte digest[WC_MAX_DIGEST_SIZE];
+	byte sig[ECC_MAX_SIG_SIZE];
+	word32 idx = 0;
+	word32 sig_len = sizeof(sig);
+	int dlen;
+	int res = 0;
+	int ret;
+
+	if(wc_ecc_init(&pub) != 0)
+		return -1;
+	ret = wc_EccPublicKeyDecode(
+			info->pk.ecc_check.pubKey, &idx, &pub, info->pk.ecc_check.pubKeySz);
+	if(ret != 0) {
+		wc_ecc_free(&pub);
+		return ret;
+	}
+	ret = wc_InitRng(&rng);
+	if(ret != 0) {
+		wc_ecc_free(&pub);
+		return ret;
+	}
+	/* digest of the curve size, within the sign limits */
+	dlen = wc_ecc_size(&pub);
+	if(dlen <= 0 || dlen > (int)sizeof(digest))
+		dlen = (int)sizeof(digest);
+	ret = wc_RNG_GenerateBlock(&rng, digest, (word32)dlen);
+	if(ret == 0)
+		ret = wc_ecc_sign_hash(digest, (word32)dlen, sig, &sig_len, &rng,
+				info->pk.ecc_check.key);
+	if(ret == 0)
+		ret = wc_ecc_verify_hash(
+				sig, sig_len, digest, (word32)dlen, &res, &pub);
+	if(ret == 0 && res != 1)
+		ret = -1;
+	wc_FreeRng(&rng);
+	wc_ecc_free(&pub);
+	return ret;
+}
+#endif
+
 static int my_FilterPk(int devId, wc_CryptoInfo *info, void *ctx)
 {
 	int ret = CRYPTOCB_UNAVAILABLE;
 	pkcs11_device_t *data = ctx;
 
 	if(info->algo_type == WC_ALGO_TYPE_PK) {
+		/* keep public ops off the token: strict HSMs refuse raw rsa
+		 * (CKM_RSA_X_509) and session key objects */
+		if(pk_rsa_public_in_sw(info))
+			return CRYPTOCB_UNAVAILABLE;
 		pthread_mutex_lock(&data->mutex);
 		ret = wc_Pkcs11_CryptoDevCb(devId, info, &data->tok);
 		pthread_mutex_unlock(&data->mutex);
+#ifdef HAVE_ECC
+		/* ec key check: the token lacks the public key object (MP_CMP_E is
+		 * a real mismatch); prove the key by sign + verify, outside the lock:
+		 * the sign comes back through this callback */
+		if(ret != 0 && ret != MP_CMP_E
+				&& info->pk.type == WC_PK_TYPE_EC_CHECK_PRIV_KEY
+				&& pk_ecc_check_by_sign(info) == 0) {
+			LM_INFO("ec key '%.*s': token holds the private key alone,"
+					" matched to the certificate by sign + verify\n",
+					info->pk.ecc_check.key->labelLen,
+					info->pk.ecc_check.key->label);
+			ret = 0;
+		}
+#endif
 	}
 	return ret;
 }

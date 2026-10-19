@@ -14,6 +14,19 @@ if(WOLFSSL_INTERNAL)
     set(WOLFSSL_LIB "${WOLFSSL_INSTALL_DIR}/lib/libwolfssl.a")
     set(WOLFSSL_INCLUDE_DIR "${WOLFSSL_INSTALL_DIR}/include")
 
+    # the vendored wolfSSL builds with autotools: Makefile generators pass
+    # $(MAKE) (shares the jobserver), other generators (Ninja) run make
+    if(CMAKE_GENERATOR MATCHES "Makefiles")
+        set(WOLFSSL_MAKE_CMD "$(MAKE)")
+    else()
+        find_program(WOLFSSL_MAKE_PROGRAM NAMES gmake make)
+        if(NOT WOLFSSL_MAKE_PROGRAM)
+            message(FATAL_ERROR "WOLFSSL_INTERNAL needs make for the wolfSSL build")
+        endif()
+        cmake_host_system_information(RESULT WOLFSSL_NPROC QUERY NUMBER_OF_LOGICAL_CORES)
+        set(WOLFSSL_MAKE_CMD "${WOLFSSL_MAKE_PROGRAM}" -j${WOLFSSL_NPROC})
+    endif()
+
     # 2. External Build
     ExternalProject_Add(wolfssl_external
         SOURCE_DIR "${WOLFSSL_SRC_DIR}"
@@ -28,11 +41,12 @@ if(WOLFSSL_INTERNAL)
             <SOURCE_DIR>/configure 
             --prefix=${WOLFSSL_INSTALL_DIR}
             --exec-prefix=${WOLFSSL_INSTALL_DIR}
-            --enable-all --enable-pkcs11 --enable-static --enable-writedup
+            --enable-all --enable-pkcs11 --enable-cryptocb-rsa-pad
+            --enable-static --enable-writedup
             --disable-shared --disable-examples --disable-jni --disable-crl-monitor
             "EXTRA_CFLAGS=-g -O2 -fPIC"
-        BUILD_COMMAND $(MAKE)
-        INSTALL_COMMAND $(MAKE) install
+        BUILD_COMMAND ${WOLFSSL_MAKE_CMD}
+        INSTALL_COMMAND ${WOLFSSL_MAKE_CMD} install
         BUILD_BYPRODUCTS "${WOLFSSL_LIB}"
     )
 
