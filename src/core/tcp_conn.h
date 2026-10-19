@@ -427,9 +427,11 @@ typedef struct tcp_connection
 #define TCP_COMP(c) TCP_RCV_COMP(c->rcv)
 
 
+/* take a ref; drop it with tcpconn_put() in tcp main, tcpconn_chld_put() in
+ * workers and modules */
 #define tcpconn_ref(c) atomic_inc(&((c)->refcnt))
-/* drop a ref, true on the last one for the caller to free; outside tcp main
- * use tcpconn_chld_put() */
+/* tcp main: a bare atomic decrement, true on the last ref; the caller then
+ * frees c (tcpconn_destroy()). Workers and modules: tcpconn_chld_put() */
 #define tcpconn_put(c) atomic_dec_and_test(&((c)->refcnt))
 
 
@@ -565,11 +567,15 @@ int _wbufq_add_cap(struct tcp_connection *c, const char *data,
 int wbufq_run(int fd, struct tcp_connection *c, int *empty);
 /* call from the tcp main io_wait thread: they touch tcp_main_ltimer and io_h;
  * unhash with tcpconn_try_unhash() before tcpconn_put_destroy() */
+/* remove c from the hash and the local timer; 1 when this call unhashed c,
+ * the caller then drops the hash ref */
 int tcpconn_try_unhash(struct tcp_connection *tcpconn);
+/* close the fd and drop a ref; frees c on the last one (returns 1) */
 int tcpconn_put_destroy(struct tcp_connection *tcpconn);
+/* free c after its last ref: refcnt 0, unhashed, fd out of io_h */
 void tcpconn_destroy(struct tcp_connection *tcpconn);
-/* drop a ref outside tcp main (workers, modules): frees the conn on the last
- * ref, or hands a tls/wss conn to tcp main to free in modes 1/2 */
+/* drop a ref outside tcp main (workers, modules); the last ref (returns 1)
+ * frees the conn, or hands a tls/wss conn to tcp main to free in modes 1/2 */
 int tcpconn_chld_put(struct tcp_connection *tcpconn);
 struct tcp_connection *tcpconn_add(struct tcp_connection *c);
 void tcpconn_set_proxied_addr(struct tcp_connection *c, struct ip_addr *src_ip,
