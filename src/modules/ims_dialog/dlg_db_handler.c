@@ -1163,6 +1163,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 		VAL_NULL(GET_FIELD_IDX(values, DLGI_TIMEOUT_COL_IDX)) = 0;
 		VAL_NULL(GET_FIELD_IDX(values, DLGI_CALLER_CONTACT_COL_IDX)) = 0;
 		VAL_NULL(GET_FIELD_IDX(values, DLGI_CALLER_SOCK_IDX)) = 0;
+		VAL_NULL(GET_FIELD_IDX(values, DLGI_TOROUTE_INDEX_COL_IDX)) = 0;
 
 		LM_DBG("Inserting dialog into dialog_in table [%u:%u]\n", cell->h_entry,
 				cell->h_id);
