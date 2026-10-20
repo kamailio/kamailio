@@ -38,6 +38,12 @@
 #endif
 #include <pthread.h>
 #include <dlfcn.h>
+#include <stdint.h>
+/* mach-o binds libcrypto's pthread_self() to libSystem (two-level namespace) */
+#ifndef __APPLE__
+#define KSR_PTHREAD_SELF_NS
+#include <link.h>
+#endif
 #endif
 
 #include <stdio.h>
@@ -3525,5 +3531,86 @@ int SYMBOL_EXPORT pthread_rwlock_init(pthread_rwlock_t *__restrict __rwlock,
 	pthread_rwlockattr_destroy(&attr);
 
 	return ret;
+}
+#endif
+
+#ifdef KSR_PTHREAD_SELF_NS
+/* mode 0: the forked processes inherit the main thread's pthread_self()
+ * value, so OpenSSL's per-thread RSA blinding owner test
+ * (BN_BLINDING_is_current_thread) passes in all of them
+ * - callers in the code segment set by ksr_pthread_self_ns_enable() (libcrypto)
+ *   get the value xor (process_no + 1) in the top 16 bits
+ * - other callers get the real value
+ * - libcrypto compares these ids and feeds them to the DRBG nonce */
+static int ksr_pthread_self_ns = 0;
+static uintptr_t ksr_pthread_self_ns_lo = 0;
+static uintptr_t ksr_pthread_self_ns_hi = 0;
+
+/* resolv.h maps p_type to its resolver function; use the ELF field here */
+#undef p_type
+static int ksr_pthread_self_ns_phdr(
+		struct dl_phdr_info *info, size_t size, void *data)
+{
+	uintptr_t addr = (uintptr_t)data;
+	uintptr_t lo;
+	int i;
+
+	for(i = 0; i < info->dlpi_phnum; i++) {
+		if(info->dlpi_phdr[i].p_type != PT_LOAD
+				|| !(info->dlpi_phdr[i].p_flags & PF_X))
+			continue;
+		lo = info->dlpi_addr + info->dlpi_phdr[i].p_vaddr;
+		if(addr >= lo && addr < lo + info->dlpi_phdr[i].p_memsz) {
+			ksr_pthread_self_ns_lo = lo;
+			ksr_pthread_self_ns_hi = lo + info->dlpi_phdr[i].p_memsz;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/**
+ * namespace pthread_self() per process for callers in the code segment that
+ * holds text; call in the main process before fork
+ *
+ * @return 0 on success, -1 in modes 1/2 or for an unknown address
+ */
+int ksr_pthread_self_ns_enable(void *text)
+{
+	if(ksr_tcp_main_threads != 0)
+		return -1;
+	if(dl_iterate_phdr(ksr_pthread_self_ns_phdr, text) == 0)
+		return -1;
+	ksr_pthread_self_ns = 1;
+	return 0;
+}
+
+pthread_t SYMBOL_EXPORT pthread_self(void)
+{
+	static pthread_t (*real_pthread_self)(void) = 0;
+	uintptr_t ra;
+	pthread_t t;
+
+	if(!real_pthread_self) {
+		real_pthread_self = dlsym(RTLD_NEXT, "pthread_self");
+	}
+	t = real_pthread_self();
+	if(ksr_pthread_self_ns == 0)
+		return t;
+	/* return address: CRYPTO_THREAD_get_current_id() tail-calls here, so it
+	 * points into its caller (e.g. bn_blind.c) */
+	ra = (uintptr_t)__builtin_return_address(0);
+	if(ra < ksr_pthread_self_ns_lo || ra >= ksr_pthread_self_ns_hi)
+		return t;
+	return (pthread_t)((uintptr_t)t
+					   ^ ((uintptr_t)(process_no + 1)
+							   << (sizeof(uintptr_t) * 8 - 16)));
+}
+#else
+/* the namespace relies on the process-shared lock overrides above and on
+ * ELF symbol interposition */
+int ksr_pthread_self_ns_enable(void *text)
+{
+	return -1;
 }
 #endif
