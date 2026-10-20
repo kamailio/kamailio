@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <openssl/crypto.h>
 #include "../../core/locking.h"
 #include "../../core/sr_module.h"
 #include "../../core/ip_addr.h"
@@ -413,6 +414,14 @@ static int mod_init(void)
 	}
 #endif /*  OPENSSL_VERSION_NUMBER*/
 
+	/* mode 0: an SSL* carries its creator's key into other processes;
+	 * per-process thread ids make RSA blinding take its lock there */
+	if(ksr_tcp_main_threads == 0
+			&& ksr_pthread_self_ns_enable((void *)CRYPTO_THREAD_get_current_id)
+					   < 0) {
+		LM_WARN("per-process thread ids for libcrypto unavailable\n");
+	}
+
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L \
 		&& OPENSSL_VERSION_NUMBER < 0x30200000L
 	unsigned long run_ver = OpenSSL_version_num();
@@ -626,6 +635,12 @@ int tls_reload_engine_keys(void)
  * operations—hence we create a separate SSL_CTX for each worker
  *
  * EC operations do not use pthread_self(), so could use shared SSL_CTX
+ *
+ * An SSL* keeps the key of the SSL_CTX it was created from (outbound: the
+ * sending worker; inbound: the first reader, or the SNI callback's process)
+ * when another process continues the handshake; mod_init() gives libcrypto
+ * per-process thread ids (ksr_pthread_self_ns_enable()), so RSA blinding
+ * takes its lock in the other processes
  */
 static int mod_child_hook(int *rank, void *dummy)
 {
