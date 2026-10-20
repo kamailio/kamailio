@@ -324,7 +324,11 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 			m = isc_checker_find(
 					s, new_mark.direction, index, msg, regstate, d);
 			if(m) {
-				index = m->index;
+				/* resume after this trigger: isc_checker_find() returns the
+				 * first matching trigger at or after index, so keeping
+				 * index = m->index found the same trigger again for every
+				 * failed branch */
+				index = m->index + 1;
 				if(k < t->nr_of_outgoings - 1)
 					isc_free_match(m);
 			} else {
@@ -348,7 +352,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 			goto done;
 		}
 		/* skip the failed triggers (IFC_SESSION_CONTINUED) */
-		old_mark.skip = index + 1;
+		old_mark.skip = index;
 
 		isc_free_match(m);
 		isc_mark_drop_route(msg);
