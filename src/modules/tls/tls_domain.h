@@ -148,9 +148,12 @@ typedef struct tls_domain
 } tls_domain_t;
 
 /* SSL_CTX per domain: one per process in mode 0, one in modes 1/2 (OpenSSL
- * runs in PROC_TCP_MAIN); TLS_CTX_IDX() is the slot of this process */
-#define TLS_CTX_NO() (ksr_tcp_main_threads == 0 ? get_max_procs() : 1)
-#define TLS_CTX_IDX() (ksr_tcp_main_threads == 0 ? process_no : 0)
+ * runs in PROC_TCP_MAIN) and in mode 0 with use_shared_context;
+ * TLS_CTX_IDX() is the slot of this process */
+extern int ksr_tls_shared_ctx;
+#define TLS_CTX_PER_PROC() (ksr_tcp_main_threads == 0 && !ksr_tls_shared_ctx)
+#define TLS_CTX_NO() (TLS_CTX_PER_PROC() ? get_max_procs() : 1)
+#define TLS_CTX_IDX() (TLS_CTX_PER_PROC() ? process_no : 0)
 #define DOM_CTX(d) ((d)->ctx[TLS_CTX_IDX()])
 
 

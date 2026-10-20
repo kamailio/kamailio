@@ -225,7 +225,7 @@ void tls_free_domain(tls_domain_t *d)
 
 	if(d->ctx) {
 		if(ksr_tcp_main_threads == 0) {
-			procs_no = get_max_procs();
+			procs_no = TLS_CTX_NO();
 			for(i = 0; i < procs_no; i++) {
 				if(d->ctx[i]) {
 					SSL_CTX_free(d->ctx[i]);
