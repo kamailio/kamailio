@@ -2094,6 +2094,7 @@ int t_unref(struct sip_msg *p_msg)
 			LM_WARN("script writer didn't release transaction\n");
 			t_release_transaction(T);
 		} else if(unlikely(T->nr_of_outgoings == 0
+						   && !(kr & (REQ_RPLD | REQ_RLSD))
 						   && !(T->flags & T_IN_AGONY))) {
 			LM_WARN("dropping orphaned transaction without branches"
 					" T=%p kr=%d\n",
