@@ -242,6 +242,10 @@ gen_lock_t *tls_domains_cfg_lock = NULL;
 
 int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
+/* mode 0: one SSL_CTX per domain for all processes */
+int ksr_tls_shared_ctx = 0;
+/* mode 0: libcrypto sees per-process thread ids */
+static int tls_pthread_self_ns = 0;
 int ksr_tls_key_password_mode = 0;
 int *ksr_tls_keylog_mode = NULL;
 int ksr_tls_ssl_ex_idx = -1;
@@ -319,6 +323,7 @@ static param_export_t params[] = {
 	{"rand_engine", PARAM_STR | PARAM_USE_FUNC,
 			(void *)ksr_rand_engine_param},
 	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
+	{"use_shared_context", PARAM_INT, &ksr_tls_shared_ctx},
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
 	{"keylog_mode", PARAM_INT | PARAM_USE_SHM, &ksr_tls_keylog_mode},
 	{"keylog_file", PARAM_STR, &ksr_tls_keylog_file},
@@ -416,10 +421,28 @@ static int mod_init(void)
 
 	/* mode 0: an SSL* carries its creator's key into other processes;
 	 * per-process thread ids make RSA blinding take its lock there */
-	if(ksr_tcp_main_threads == 0
-			&& ksr_pthread_self_ns_enable((void *)CRYPTO_THREAD_get_current_id)
-					   < 0) {
-		LM_WARN("per-process thread ids for libcrypto unavailable\n");
+	if(ksr_tcp_main_threads == 0) {
+		if(ksr_pthread_self_ns_enable((void *)CRYPTO_THREAD_get_current_id)
+				< 0) {
+			LM_WARN("per-process thread ids for libcrypto unavailable\n");
+		} else {
+			tls_pthread_self_ns = 1;
+		}
+	}
+
+	if(ksr_tls_shared_ctx && ksr_tcp_main_threads != 0) {
+		LM_INFO("use_shared_context: tcp_main_threads=%d has one SSL_CTX "
+				"per domain\n",
+				ksr_tcp_main_threads);
+		ksr_tls_shared_ctx = 0;
+	} else if(ksr_tls_shared_ctx) {
+		if(!tls_pthread_self_ns) {
+			LM_ERR("use_shared_context: needs per-process thread ids for "
+				   "libcrypto\n");
+			return -1;
+		}
+		LM_INFO("use_shared_context: one SSL_CTX per domain for all "
+				"processes\n");
 	}
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L \
@@ -641,6 +664,8 @@ int tls_reload_engine_keys(void)
  * when another process continues the handshake; mod_init() gives libcrypto
  * per-process thread ids (ksr_pthread_self_ns_enable()), so RSA blinding
  * takes its lock in the other processes
+ *
+ * use_shared_context=1: one SSL_CTX for all workers, on the same thread ids
  */
 static int mod_child_hook(int *rank, void *dummy)
 {

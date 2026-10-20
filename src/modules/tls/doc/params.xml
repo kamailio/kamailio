@@ -1184,6 +1184,39 @@ modparam("tls", "init_mode", 1)
 	</example>
 	</section>
 
+	<section id="tls.p.use_shared_context">
+	<title><varname>use_shared_context</varname> (int)</title>
+	<para>
+		With tcp_main_threads=0 (multi-process TLS), the module creates one
+		SSL_CTX per TLS domain in every process: OpenSSL keeps RSA blinding
+		state per thread and tells threads apart by pthread_self(), and the
+		forked processes share that value. Each tls.reload builds and parses
+		the domains (certificates, CA list, CRL) once per process.
+	</para>
+	<para>
+		If set to 1, the module creates one SSL_CTX per TLS domain for all
+		processes. Kamailio then returns a per-process value of pthread_self()
+		to libcrypto, so OpenSSL serializes the RSA blinding of a key used in
+		several processes. This reduces the shared memory and the time of
+		tls.reload by the number of processes.
+	</para>
+	<para>
+		With tcp_main_threads=1 or 2 there is one SSL_CTX per domain and the
+		parameter has no effect.
+	</para>
+	<para>
+		Default value is 0.
+	</para>
+	<example>
+		<title>Set <varname>use_shared_context</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "use_shared_context", 1)
+...
+	</programlisting>
+	</example>
+	</section>
+
 	<section id="tls.p.config">
 	<title><varname>config</varname> (string)</title>
 	<para>
