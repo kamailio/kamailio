@@ -258,7 +258,6 @@ extern int ksr_tcp_msg_read_timeout;
 extern int ksr_tcp_msg_data_timeout;
 extern int ksr_tcp_accept_iplimit;
 extern int ksr_tcp_main_threads;
-int ksr_pthread_self_ns_enable(void *text);
 extern int ksr_tcp_check_timer;
 
 #ifdef USE_DNS_CACHE
