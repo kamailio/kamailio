@@ -564,8 +564,7 @@ static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr)
 	LM_DBG("------------ start ------------\n");
 
 	/* get message body - after that whole SIP MESSAGE is parsed */
-	body.s = get_body(msg);
-	if(body.s == 0) {
+	if(get_body_str(msg, &body) < 0) {
 		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
@@ -575,7 +574,6 @@ static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr)
 		LM_ERR("no Content-Length header found!\n");
 		goto error;
 	}
-	body.len = get_content_length(msg);
 
 	/* check if the body of message contains something */
 	if(body.len <= 0) {
