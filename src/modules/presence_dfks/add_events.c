@@ -86,14 +86,11 @@ int dfks_publ_handler(struct sip_msg *msg)
 	if(get_content_length(msg) == 0)
 		return 1;
 
-	body.s = get_body(msg);
-	if(body.s == NULL) {
+	if(get_body_str(msg, &body) < 0) {
 		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
 
-	/* content-length (if present) must be already parsed */
-	body.len = get_content_length(msg);
 	doc = xmlParseMemory(body.s, body.len);
 	if(doc == NULL) {
 		LM_ERR("bad body format\n");
@@ -152,16 +149,13 @@ int dfks_subs_handler(struct sip_msg *msg)
 		pres_uri.s = msg->first_line.u.request.uri.s;
 		pres_uri.len = msg->first_line.u.request.uri.len;
 	}
-	/* content-length (if present) must be already parsed */
-	body.len = get_content_length(msg);
+	if(get_body_str(msg, &body) < 0) {
+		LM_ERR("cannot extract body from msg\n");
+		goto error;
+	}
 	if(body.len == 0) {
 		LM_DBG("no body. (ok for initial)\n");
 		return 1;
-	}
-	body.s = get_body(msg);
-	if(body.s == NULL) {
-		LM_ERR("cannot extract body from msg\n");
-		goto error;
 	}
 
 	doc = xmlParseMemory(body.s, body.len);
