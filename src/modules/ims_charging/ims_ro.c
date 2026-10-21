@@ -845,6 +845,7 @@ void send_ccr_interim(
 
 	if(ret != 1) {
 		ccr = 0; // If an error is returned from cdp AAASendMessage, the message has been freed there
+		auth = 0; // and the session was unlocked before sending
 		goto error;
 	}
 	//    cdpb.AAASessionsUnlock(auth->hash);
@@ -1176,6 +1177,8 @@ void send_ccr_stop_with_param(
 	}
 
 	if(ret != 1) {
+		/* not sent - the session was unlocked, so look it up (locked) again */
+		auth = cdpb.AAAGetCCAccSession(ro_session->ro_session_id);
 		goto error1;
 	}
 
@@ -1190,7 +1193,7 @@ error1:
 	Ro_free_CCR(ro_ccr_data);
 
 	if(auth) {
-		cdpb.AAASessionsUnlock(auth->hash);
+		/* locked here - dropping the session releases the lock */
 		cdpb.AAADropCCAccSession(auth);
 	}
 
@@ -1508,10 +1511,16 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir,
 	if(ret != 1) {
 		LM_ERR("Failed to send Diameter CCR\n");
 		//        new_session->ccr_sent = 0;
+		/* not sent - the session was unlocked, so look it up (locked) again */
+		cc_acc_session = cdpb.AAAGetCCAccSession(new_session->ro_session_id);
 		goto error;
 	}
 
 	Ro_free_CCR(ro_ccr_data);
+	ro_ccr_data = 0;
+	/* sent - the session and ssd are left to the CCA callback */
+	cc_acc_session = NULL;
+	ssd = NULL;
 
 	LM_DBG("Registering for callbacks on Dialog [%d:%d] and charging session "
 		   "[%p]\n",
@@ -1545,7 +1554,7 @@ error:
 						.s); // shm_malloc in cscf_get_public_identity_from_requri
 	Ro_free_CCR(ro_ccr_data);
 	if(cc_acc_session) {
-		cdpb.AAASessionsUnlock(cc_acc_session->hash);
+		/* locked here - dropping the session releases the lock */
 		cdpb.AAADropSession(cc_acc_session);
 	}
 
@@ -1784,7 +1793,7 @@ void remove_aaa_session(str *session_id)
 
 	if((session = cdpb.AAAGetCCAccSession(*session_id))) {
 		LM_DBG("Found AAA CC App Auth session to delete.\n");
-		cdpb.AAASessionsUnlock(session->hash);
+		/* dropping the session releases the lock */
 		cdpb.AAADropCCAccSession(session);
 	}
 }
