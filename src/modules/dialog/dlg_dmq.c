@@ -138,12 +138,9 @@ int dlg_dmq_handle_msg(
 		goto invalid2;
 	}
 
-	body.s = get_body(msg);
-	body.len = content_length;
-
-	if(!body.s) {
+	if(get_body_str(msg, &body) < 0) {
 		LM_ERR("unable to get body\n");
-		goto error;
+		goto invalid2;
 	}
 
 	/* parse body */
