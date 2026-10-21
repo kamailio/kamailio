@@ -1071,12 +1071,10 @@ int publish_reg(struct sip_msg *msg, char *_t, char *str2)
 		/* No Body? Then there is no published information available, which is ok. */
 		goto done;
 	} else {
-		body.s = get_body(msg);
-		if(body.s == NULL) {
+		if(get_body_str(msg, &body) < 0) {
 			LM_ERR("cannot extract body from msg\n");
 			goto done;
 		}
-		body.len = get_content_length(msg);
 	}
 
 	LM_DBG("Body is %.*s\n", body.len, body.s);
