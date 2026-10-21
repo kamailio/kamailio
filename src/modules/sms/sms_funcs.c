@@ -148,8 +148,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	 * anyhow we have to call this function, so let's do it at the beginning
 	 * to force the parsing of all the headers - like this we avoid separate
 	 * calls of parse_headers function for FROM, CONTENT_LENGTH, TO hdrs  */
-	body.s = get_body(msg);
-	if(body.s == 0) {
+	if(get_body_str(msg, &body) < 0) {
 		LM_ERR("failed to extract body from msg!\n");
 		goto error;
 	}
@@ -159,7 +158,6 @@ int push_on_network(struct sip_msg *msg, int net)
 		LM_ERR("no Content-Length header found!\n");
 		goto error;
 	}
-	body.len = get_content_length(msg);
 
 	/* parse the content-type header */
 	if((mime = parse_content_type_hdr(msg)) < 1) {
