@@ -82,6 +82,7 @@ char *tls_ca_path = NULL; // certificate authority dir path, defaults to NULL
 static char *memory_manager = "shm";
 extern int curl_memory_manager;
 unsigned int default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;
+unsigned int max_reply_size = 0;
 
 static int mod_init(void);
 static int child_init(int);
@@ -194,6 +195,7 @@ static param_export_t params[] = {
 	{"tcp_keepalive", PARAM_INT, &tcp_keepalive},
 	{"tcp_ka_idle", PARAM_INT, &tcp_ka_idle},
 	{"tcp_ka_interval", PARAM_INT, &tcp_ka_interval},
+	{"max_reply_size", PARAM_INT, &max_reply_size},
 	{0, 0, 0}
 };
 

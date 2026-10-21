@@ -380,6 +380,27 @@ modparam("http_async_client", "tcp_ka_interval", 120)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>max_reply_size</varname> (integer)</title>
+		<para>
+			Maximum allowed HTTP reply size in bytes. It's the limit for the whole reply, including the status line and headers, not only for the reply body.
+			Exceeding the limit aborts the HTTP request, sets <emphasis>$http_ok</emphasis> to false and <emphasis>$http_err</emphasis> to the generic cURL write error.
+			In comparison, the similar <varname>maxdatasize</varname> parameter in the http_client module limits only the returned body and doesn't abort reception of the full response.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no limit on the reply size).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_reply_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "max_reply_size", 8192)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

@@ -59,6 +59,7 @@ extern stat_var *timeouts;
 extern int tls_version;
 extern int curl_verbose;
 extern int curl_follow_redirect;
+extern unsigned int max_reply_size;
 
 void set_curl_mem_callbacks(void);
 int init_http_multi(struct event_base *evbase, struct http_m_global *wg);
