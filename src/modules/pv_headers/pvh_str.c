@@ -68,8 +68,10 @@ int pvh_str_append(str *dst, str *src, unsigned int max_size)
 {
 	int src_len = 0;
 
-	if(src == NULL || dst == NULL || src->len <= 0)
+	if(src == NULL || dst == NULL || src->len < 0)
 		return -1;
+	if(src->len == 0)
+		return 1;
 
 	if(dst->len + src->len + 1 >= max_size) {
 		src_len = max_size - dst->len - 1;
