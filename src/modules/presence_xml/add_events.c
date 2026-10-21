@@ -148,14 +148,11 @@ int xml_publ_handl(struct sip_msg *msg)
 	if(get_content_length(msg) == 0)
 		return 1;
 
-	body.s = get_body(msg);
-	if(body.s == NULL) {
+	if(get_body_str(msg, &body) < 0) {
 		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
-	/* content-length (if present) must be already parsed */
 
-	body.len = get_content_length(msg);
 	doc = xmlParseMemory(body.s, body.len);
 	if(doc == NULL) {
 		LM_ERR("bad body format\n");
