@@ -142,6 +142,14 @@ typedef struct tls_domain
 	struct tls_domain *next;
 } tls_domain_t;
 
+/* SSL_CTX per domain: one per process, or one for all processes with
+ * use_shared_context; TLS_CTX_IDX() is the slot of this process */
+extern int ksr_tls_shared_ctx;
+#define TLS_CTX_PER_PROC() (!ksr_tls_shared_ctx)
+#define TLS_CTX_NO() (TLS_CTX_PER_PROC() ? get_max_procs() : 1)
+#define TLS_CTX_IDX() (TLS_CTX_PER_PROC() ? process_no : 0)
+#define DOM_CTX(d) ((d)->ctx[TLS_CTX_IDX()])
+
 
 /**
  * TLS configuration structures
