@@ -1201,6 +1201,11 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 			}
 
 			// freeing the sdp also frees ip, so we need to copy it
+			if(ip.len >= (int)sizeof(ip_c)) {
+				LM_ERR("Request SDP IP too long for buffer (%d)\n", ip.len);
+				free_sdp((sdp_info_t **)(void *)&orig_sip_request_msg->body);
+				goto error;
+			}
 			memcpy(ip_c, ip.s, ip.len);
 			ip_c[ip.len] = 0; // null terminate
 			ip.s = ip_c;
@@ -1215,6 +1220,10 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 				goto error;
 			}
 			// check_ip_version expects a null terminated string
+			if(ip.len >= (int)sizeof(ip_c)) {
+				LM_ERR("Request-URI host too long for buffer (%d)\n", ip.len);
+				goto error;
+			}
 			memcpy(ip_c, ip.s, ip.len);
 			ip_c[ip.len] = 0; // null terminate
 			ip.s = ip_c;
@@ -1266,6 +1275,11 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 			}
 
 			// freeing the sdp also frees ip, so we need to copy it
+			if(ip.len >= (int)sizeof(ip_c)) {
+				LM_ERR("Reply SDP IP too long for buffer (%d)\n", ip.len);
+				free_sdp((sdp_info_t **)(void *)&msg->body);
+				goto error;
+			}
 			memcpy(ip_c, ip.s, ip.len);
 			ip_c[ip.len] = 0; // null terminate
 			ip.s = ip_c;
@@ -1315,8 +1329,6 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 		if(tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel)
 				!= 0) {
 			LM_ERR("failed to suspend the TM processing\n");
-			if(auth_session)
-				cdpb.AAASessionsUnlock(auth_session->hash);
 			goto error;
 		}
 	} else {
@@ -1330,6 +1342,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 	} else {
 		ret = rx_send_aar(msg, 0, auth_session, direction, saved_t_data);
 	}
+	/* rx_send_aar() has unlocked or dropped the session */
+	auth_session = 0;
 	if(!ret) {
 		LM_ERR("Failed to send AAR\n");
 		if(_ims_qos_suspend_transaction) {
@@ -1347,7 +1361,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char *dir, char *c_id,
 error:
 	LM_ERR("Error trying to send AAR (calling)\n");
 	if(auth_session != NULL) {
-		cdpb.AAASessionsUnlock(auth_session->hash);
+		/* still locked here - dropping the session releases the lock */
 		cdpb.AAADropAuthSession(auth_session);
 	}
 	// ignore:
@@ -1633,6 +1647,8 @@ static int w_rx_aar_register(
 									pcontact->rx_session_id.s);
 							if(auth)
 								cdpb.AAASessionsUnlock(auth->hash);
+							ul.unlock_udomain(
+									domain_t, &vb->host, vb->port, vb->proto);
 							lock_release(saved_t_data->lock);
 							goto error;
 						}
@@ -1695,6 +1711,9 @@ static int w_rx_aar_register(
 					if(!local_data) {
 						LM_ERR("unable to alloc memory for local data, trying "
 							   "to send AAR Register\n");
+						cdpb.AAASessionsUnlock(auth->hash);
+						ul.unlock_udomain(
+								domain_t, &vb->host, via_port, via_proto);
 						lock_release(saved_t_data->lock);
 						goto error;
 					}
@@ -1733,6 +1752,10 @@ static int w_rx_aar_register(
 					if(p != (((char *)local_data) + local_data_len)) {
 						LM_CRIT("buffer overflow\n");
 						free_saved_transaction_data(local_data);
+						cdpb.AAASessionsUnlock(auth->hash);
+						ul.unlock_udomain(
+								domain_t, &vb->host, via_port, via_proto);
+						lock_release(saved_t_data->lock);
 						goto error;
 					}
 
