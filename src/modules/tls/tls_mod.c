@@ -393,17 +393,22 @@ static tls_domains_cfg_t* tls_use_modparams(void)
  *     is < 10
  *
  */
-static void tls_atfork_prepare(void)
+static int tls_pthreads_key_mark;
+static void fork_child(void)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-	OPENSSL_thread_stop();
-#endif
+	int k;
+	for(k = 0; k < tls_pthreads_key_mark; k++) {
+		if(pthread_getspecific(k) != 0)
+			pthread_setspecific(k, 0x0);
+	}
 }
 
 static int mod_init(void)
 {
 	int method;
 	int verify_client;
+	unsigned char rand_buf[32];
+	int k;
 
 #ifdef STATISTICS
 	/* register statistics */
@@ -412,15 +417,6 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
-
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
-	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP) {
-		LM_WARN("tls_threads_mode=1 is invalid on kamailio version >= 6; "
-				"forcing tls_threads_mode=2\n");
-		ksr_tls_threads_mode = KSR_TLS_THREADS_MFORK;
-	}
-#endif /*  OPENSSL_VERSION_NUMBER*/
-
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L \
 		&& OPENSSL_VERSION_NUMBER < 0x30200000L
 	unsigned long run_ver = OpenSSL_version_num();
@@ -429,6 +425,25 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+	{
+		pthread_key_t _ksr_tsd_init;
+		pthread_key_create(&_ksr_tsd_init, NULL);
+		pthread_key_delete(_ksr_tsd_init);
+	}
+	for(k = 0; k < 32; k++) {
+		if(pthread_getspecific(k) != 0) {
+			LM_WARN("detected initialized thread-locals created before tls.so; "
+					"tls.so must be the first module loaded\n");
+		}
+	}
+
+	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP) {
+		LM_WARN("tls_threads_mode=1 is invalid on kamailio version >= 6; "
+				"forcing tls_threads_mode=2\n");
+		ksr_tls_threads_mode = KSR_TLS_THREADS_MFORK;
+	}
+#endif /*  OPENSSL_VERSION_NUMBER*/
 
 	if(tls_disable) {
 		LM_WARN("tls support is disabled "
@@ -550,10 +565,26 @@ static int mod_init(void)
 		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
 #endif
-	/* 6.1: OpenSSL state is in shm in every mode */
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK) {
-		pthread_atfork(&tls_atfork_prepare, NULL, NULL);
+		pthread_atfork(NULL, NULL, &fork_child);
 	}
+
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+	/*
+	 * force creation of all thread-locals now so that other libraries
+	 * that use pthread_key_create(), e.g. python,
+	 * will have larger key values
+	 */
+	if(ksr_tls_threads_mode > KSR_TLS_THREADS_MNONE) {
+		ERR_clear_error();
+		RAND_bytes(rand_buf, sizeof(rand_buf));
+		for(k = 0; k < 32; k++) {
+			if(pthread_getspecific(k))
+				tls_pthreads_key_mark = k + 1;
+		}
+		LM_WARN("set maximum pthreads key to %d\n", tls_pthreads_key_mark);
+	}
+#endif
 
 	if(ksr_tls_keylog_file_init() < 0) {
 		LM_ERR("failed to init keylog file\n");
