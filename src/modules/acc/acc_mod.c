@@ -166,6 +166,7 @@ str acc_sipcode_col = str_init("sip_code");
 str acc_sipreason_col = str_init("sip_reason");
 str acc_time_col = str_init("time");
 int acc_db_insert_mode = 0;
+int acc_db_connect_mode = 0;
 
 /*@}*/
 
@@ -248,6 +249,7 @@ static param_export_t params[] = {
 	{"acc_sip_reason_column",PARAM_STR, &acc_sipreason_col  },
 	{"acc_time_column",      PARAM_STR, &acc_time_col       },
 	{"db_insert_mode",       PARAM_INT, &acc_db_insert_mode },
+	{"db_connect_mode",      PARAM_INT, &acc_db_connect_mode },
 	/* time-mode-specific */
 	{"time_mode",            PARAM_INT, &acc_time_mode        },
 	{"time_attr",            PARAM_STR, &acc_time_attr        },
@@ -574,6 +576,11 @@ static int mod_init(void)
 			LM_ERR("db_missed_flag set to invalid value\n");
 			return -1;
 		}
+
+		if(acc_db_connect_mode < 0 || acc_db_connect_mode > 2) {
+			LM_ERR("db_connect_mode set to invalid value\n");
+			return -1;
+		}
 	} else {
 		db_url.s = NULL;
 		db_url.len = 0;
@@ -602,9 +609,20 @@ static int child_init(int rank)
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if(db_url.s && acc_db_init_child(&db_url) < 0) {
-		LM_ERR("could not open database connection");
-		return -1;
+	if(db_url.s) {
+		if(acc_db_connect_mode == 2) {
+			/* connect on first use */
+			return 0;
+		}
+		if(acc_db_init_child(&db_url) < 0) {
+			if(acc_db_connect_mode == 1) {
+				LM_INFO("could not open database connection - retrying on"
+						" first use\n");
+				return 0;
+			}
+			LM_ERR("could not open database connection");
+			return -1;
+		}
 	}
 
 	return 0;
