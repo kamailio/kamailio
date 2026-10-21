@@ -368,7 +368,7 @@ static int cmd_send_message(struct sip_msg *msg, char *_foo, char *_bar)
 	LM_DBG("cmd_send_message\n");
 
 	/* extract body */
-	if(!(body.s = get_body(msg))) {
+	if(get_body_str(msg, &body) < 0) {
 		LM_ERR("failed to extract body\n");
 		return -1;
 	}
@@ -376,7 +376,6 @@ static int cmd_send_message(struct sip_msg *msg, char *_foo, char *_bar)
 		LM_ERR("no content-length found\n");
 		return -1;
 	}
-	body.len = get_content_length(msg);
 	if((mime = parse_content_type_hdr(msg)) < 1) {
 		LM_ERR("failed parse content-type\n");
 		return -1;
