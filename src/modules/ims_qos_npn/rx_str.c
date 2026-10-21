@@ -177,7 +177,7 @@ error:
 	if(str)
 		cdpb.AAAFreeMessage(&str);
 	if(auth) {
-		cdpb.AAASessionsUnlock(auth->hash);
+		/* still locked here - dropping the session releases the lock */
 		cdpb.AAADropAuthSession(auth);
 		auth = 0;
 	}
