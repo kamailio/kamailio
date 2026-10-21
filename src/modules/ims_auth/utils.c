@@ -216,8 +216,8 @@ str ims_get_body(struct sip_msg *msg)
 		// Content-Length header might be missing
 		x.len = (int)(long)msg->content_length->parsed;
 
-	if(x.len > 0)
-		x.s = get_body(msg);
+	if(x.len > 0 && get_body_str(msg, &x) < 0)
+		LM_ERR("Error getting the message body\n");
 
 	return x;
 }
