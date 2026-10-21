@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <openssl/crypto.h>
+
 #include "../../core/locking.h"
 #include "../../core/sr_module.h"
 #include "../../core/ip_addr.h"
@@ -251,10 +251,6 @@ gen_lock_t *tls_domains_cfg_lock = NULL;
 
 int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
-/* one SSL_CTX per domain for all processes */
-int ksr_tls_shared_ctx = 0;
-/* libcrypto sees per-process thread ids */
-static int tls_pthread_self_ns = 0;
 int ksr_tls_key_password_mode = 0;
 int *ksr_tls_keylog_mode = NULL;
 str ksr_tls_keylog_file = STR_NULL;
@@ -331,7 +327,6 @@ static param_export_t params[] = {
 	{"rand_engine", PARAM_STR | PARAM_USE_FUNC,
 			(void *)ksr_rand_engine_param},
 	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
-	{"use_shared_context", PARAM_INT, &ksr_tls_shared_ctx},
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
 	{"keylog_mode", PARAM_INT | PARAM_USE_SHM, &ksr_tls_keylog_mode},
 	{"keylog_file", PARAM_STR, &ksr_tls_keylog_file},
@@ -425,30 +420,6 @@ static int mod_init(void)
 		ksr_tls_threads_mode = KSR_TLS_THREADS_MFORK;
 	}
 #endif /*  OPENSSL_VERSION_NUMBER*/
-
-	/* mode 0: an SSL* carries its creator's key into other processes;
-	 * per-process thread ids make RSA blinding take its lock there */
-	if(ksr_tcp_main_threads == 0) {
-		if(ksr_pthread_self_ns_enable((void *)CRYPTO_THREAD_get_current_id)
-				< 0) {
-			LM_WARN("per-process thread ids for libcrypto unavailable\n");
-		} else {
-			tls_pthread_self_ns = 1;
-		}
-	}
-
-	if(ksr_tls_shared_ctx) {
-		/* mode 0: RSA blinding of the shared key needs the per-process ids;
-		 * mode 1: tcp main runs all TLS operations in its own threads */
-		if(ksr_tcp_main_threads == 0 && !tls_pthread_self_ns) {
-			LM_ERR("use_shared_context: needs per-process thread ids for "
-				   "libcrypto\n");
-			return -1;
-		}
-		LM_INFO("use_shared_context: one SSL_CTX per domain for all "
-				"processes (tcp_main_threads=%d)\n",
-				ksr_tcp_main_threads);
-	}
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L \
 		&& OPENSSL_VERSION_NUMBER < 0x30200000L
@@ -614,14 +585,6 @@ int tls_fix_engine_keys(tls_domains_cfg_t *, tls_domain_t *, tls_domain_t *);
  * operations—hence we create a separate SSL_CTX for each worker
  *
  * EC operations do not use pthread_self(), so could use shared SSL_CTX
- *
- * An SSL* keeps the key of the SSL_CTX it was created from (outbound: the
- * sending worker; inbound: the first reader, or the SNI callback's process)
- * when another process continues the handshake; mod_init() gives libcrypto
- * per-process thread ids (ksr_pthread_self_ns_enable()), so RSA blinding
- * takes its lock in the other processes
- *
- * use_shared_context=1: one SSL_CTX for all workers, on the same thread ids
  */
 static int mod_child_hook(int *rank, void *dummy)
 {

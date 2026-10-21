@@ -230,7 +230,7 @@ void tls_free_domain(tls_domain_t *d)
 	if(!d)
 		return;
 	if(d->ctx) {
-		procs_no = TLS_CTX_NO();
+		procs_no = get_max_procs();
 		for(i = 0; i < procs_no; i++) {
 			if(d->ctx[i])
 				SSL_CTX_free(d->ctx[i]);
@@ -456,7 +456,7 @@ static int tls_domain_foreach_CTX(
 	int i, ret;
 	int procs_no;
 
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if((ret = ctx_cbk(d->ctx[i], l1, p2)) < 0)
 			return ret;
@@ -603,7 +603,7 @@ static int load_cert(tls_domain_t *d)
 	}
 	if(fix_shm_pathname(&d->cert_file) < 0)
 		return -1;
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if(!SSL_CTX_use_certificate_chain_file(d->ctx[i], d->cert_file.s)) {
 			ERR("%s: Unable to load certificate file '%s'\n", tls_domain_str(d),
@@ -635,7 +635,7 @@ static int load_ca_list(tls_domain_t *d)
 		return -1;
 	if(d->ca_path.s && d->ca_path.len > 0 && fix_shm_pathname(&d->ca_path) < 0)
 		return -1;
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if(SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s, d->ca_path.s)
 				!= 1) {
@@ -680,7 +680,7 @@ static int load_crl(tls_domain_t *d)
 		return -1;
 	LOG(L_INFO, "%s: Certificate revocation lists will be checked (%.*s)\n",
 			tls_domain_str(d), d->crl_file.len, d->crl_file.s);
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if(SSL_CTX_load_verify_locations(d->ctx[i], d->crl_file.s, 0) != 1) {
 			ERR("%s: Unable to load certificate revocation list '%s'\n",
@@ -736,7 +736,7 @@ static int set_cipher_list(tls_domain_t *d)
 #endif /* TLS_KSSL_WORKAROUND */
 	if(!cipher_list)
 		return 0;
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 #if OPENSSL_VERSION_NUMBER < 0x010101000L
 		if(SSL_CTX_set_cipher_list(d->ctx[i], cipher_list) == 0) {
@@ -811,7 +811,7 @@ static int set_verification(tls_domain_t *d)
 		}
 	}
 
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if(d->verify_client >= TLS_VERIFY_CLIENT_OPTIONAL_NO_CA) {
 			/* Note that actual verification result is available in $tls_peer_verified */
@@ -877,7 +877,7 @@ static int set_ssl_options(tls_domain_t *d)
 	STACK_OF(SSL_COMP) * comp_methods;
 #endif
 
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	options = SSL_OP_ALL; /* all the bug workarounds by default */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	options |= SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
@@ -928,7 +928,7 @@ static int set_session_cache(tls_domain_t *d)
 	int procs_no;
 	str tls_session_id;
 
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	tls_session_id = cfg_get(tls, tls_cfg, session_id);
 	for(i = 0; i < procs_no; i++) {
 		/* janakj: I am not sure if session cache makes sense in ser, session
@@ -1064,9 +1064,10 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 		   " socket [%s:%d] server name='%s' -"
 		   " switching SSL CTX to %p dom %p%s\n",
 			server_name.s, ip_addr2a(&new_domain->ip), new_domain->port,
-			ZSW(new_domain->server_name.s), DOM_CTX(new_domain), new_domain,
+			ZSW(new_domain->server_name.s), new_domain->ctx[process_no],
+			new_domain,
 			(new_domain->type & TLS_DOMAIN_DEF) ? " (default)" : "");
-	SSL_set_SSL_CTX(ssl, DOM_CTX(new_domain));
+	SSL_set_SSL_CTX(ssl, new_domain->ctx[process_no]);
 	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
 	   set the proper verify options. Thus this will be done manually! */
 
@@ -1129,7 +1130,7 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 		}
 	}
 
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	d->ctx = (SSL_CTX **)shm_malloc(sizeof(SSL_CTX *) * procs_no);
 	if(!d->ctx) {
 		ERR("%s: Cannot allocate shared memory\n", tls_domain_str(d));
@@ -1341,15 +1342,9 @@ static int load_engine_private_key(tls_domain_t *d)
 	}
 	if(strncmp(d->pkey_file.s, KEY_PREFIX, KEY_PREFIX_LEN) != 0)
 		return 0;
-	/* each process loads its HSM key into its own SSL_CTX */
-	if(!TLS_CTX_PER_PROC()) {
-		LM_ERR("%s: use_shared_context=1 requires software private keys\n",
-				tls_domain_str(d));
-		return -1;
-	}
 
 	do {
-		i = TLS_CTX_IDX();
+		i = process_no;
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 			pkey = tls_engine_private_key(d->pkey_file.s + KEY_PREFIX_LEN);
 			if(pkey) {
@@ -1405,7 +1400,7 @@ static int load_private_key(tls_domain_t *d)
 	if(fix_shm_pathname(&d->pkey_file) < 0)
 		return -1;
 
-	procs_no = TLS_CTX_NO();
+	procs_no = get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if(ksr_tls_key_password_mode == 1) {
 			SSL_CTX_set_default_passwd_cb(d->ctx[i], ksr_passwd_ui_cb);

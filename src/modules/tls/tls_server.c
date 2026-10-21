@@ -322,7 +322,8 @@ static int tls_complete_init(struct tcp_connection *c)
 
 
 	DBG("Using initial TLS domain %s (dom %p ctx %p sn [%s])\n",
-			tls_domain_str(dom), dom, DOM_CTX(dom), ZSW(dom->server_name.s));
+			tls_domain_str(dom), dom, dom->ctx[process_no],
+			ZSW(dom->server_name.s));
 
 	dom_str = tls_domain_str(dom);
 	dom_str_size = strlen(dom_str) + 1;
@@ -336,7 +337,7 @@ static int tls_complete_init(struct tcp_connection *c)
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	tls_openssl_clear_errors();
-	data->ssl = SSL_new(DOM_CTX(dom));
+	data->ssl = SSL_new(dom->ctx[process_no]);
 	data->rwbio = tls_BIO_new_mbuf(0, 0);
 	data->cfg = cfg;
 	data->state = state;
