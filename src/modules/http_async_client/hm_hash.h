@@ -97,6 +97,7 @@ typedef struct hm_params
 	int tcp_ka_idle;
 	int tcp_ka_interval;
 	unsigned int http_version;
+	unsigned int max_reply_size;
 } http_m_params_t;
 
 typedef struct http_m_cell

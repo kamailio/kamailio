@@ -66,6 +66,7 @@ extern char *tls_client_key;
 extern char *tls_ca_path;
 
 extern unsigned int default_authmethod;
+extern unsigned int default_max_reply_size;
 
 typedef struct async_http_worker
 {
@@ -118,6 +119,7 @@ struct query_params
 	unsigned int tcp_ka_idle;
 	unsigned int tcp_ka_interval;
 	unsigned int http_version; /* 0=default, 1=HTTP/2 upgrade, 2=HTTP/2 prior knowledge */
+	unsigned int max_reply_size;
 };
 
 extern struct query_params ah_params;
