@@ -528,12 +528,14 @@ void siprepo_msg_timer(unsigned int ticks, int worker, void *param)
 	time_t tnow;
 	int i;
 	siprepo_msg_t *it = NULL;
+	siprepo_msg_t *it0 = NULL;
 	siprepo_msg_t *elist = NULL;
 
 	tnow = time(NULL);
 	for(i=0; i<_siprepo_table_size; i++) {
 		lock_get(&_siprepo_table[i].lock);
-		for(it=_siprepo_table[i].plist; it!=NULL; it=it->next) {
+		for(it=_siprepo_table[i].plist; it!=NULL; it=it0) {
+			it0 = it->next;
 			if(it->itime+_siprepo_expire < tnow) {
 				siprepo_msg_unlink(it, i);
 				if(elist) {
