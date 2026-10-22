@@ -1068,7 +1068,7 @@ static int ah_set_req(
 					return -1;
 				}
 				if(tval->ri < 0 || tval->ri > 2) {
-					LM_ERR("invalid value for $http_req(http_version): %d "
+					LM_ERR("invalid value for $http_req(http_version): %ld "
 						   "(0=default, 1=HTTP/2 upgrade, "
 						   "2=HTTP/2 prior knowledge)\n",
 							tval->ri);
