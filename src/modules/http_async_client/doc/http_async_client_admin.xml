@@ -607,6 +607,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
 			</itemizedlist>
 			Setting to <literal>$null</literal> resets to 0 (default).
 		</para></listitem>
+		<listitem><para><emphasis>max_reply_size</emphasis>: set the maximum allowed reply size (0 disables the limit, <literal>$null</literal> restores the module default; see the corresponding <varname>max_reply_size</varname> modparam)</para></listitem>
 	</itemizedlist>
 	<example>
 		<title><literal>$http_req(key)</literal> variable usage</title>
