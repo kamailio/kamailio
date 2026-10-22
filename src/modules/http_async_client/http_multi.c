@@ -362,6 +362,7 @@ size_t write_cb(void *ptr, size_t size, size_t nmemb, void *data)
 		if(cell->reply->result == NULL) {
 			LM_ERR("Cannot allocate shm memory for reply's result\n");
 			shm_free(cell->reply);
+			cell->reply = NULL;
 			return -1;
 		}
 		memset(cell->reply->result, 0, sizeof(str));
