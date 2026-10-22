@@ -347,6 +347,7 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	int rtype;
 	int rtbk;
 	int rtno;
+	int mtype;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("siprepo:msg");
 	char lbuf[BUF_SIZE + 1];
@@ -368,6 +369,7 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	lmsg.pid = it->pid;
 	lmsg.set_global_address = default_global_address;
 	lmsg.set_global_port = default_global_port;
+	mtype = it->mtype;
 
 	if(rmode & SIPREPO_RMODE_RM) {
 		siprepo_msg_unlink(it, slotid);
@@ -391,7 +393,7 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	/* ... clear branches from previous message */
 	clear_branches();
 
-	if(it->mtype==SIP_REQUEST) {
+	if(mtype==SIP_REQUEST) {
 		ruri_mark_new();
 		rtype = REQUEST_ROUTE;
 	} else {
