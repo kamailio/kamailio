@@ -1,5 +1,5 @@
 #include "rfc1918_parser.h"
-
+#include <string.h>
 
 /** Ragel machine **/
 %%{
@@ -30,6 +30,7 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 {
   int cs = 0;
   const char *p, *pe;
+  const char *ts = NULL, *te = NULL;
   unsigned int is_ip_rfc1918 = 0;
 
   p = str;
@@ -38,6 +39,10 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
   %% write init;
   %% write exec;
 
-  return is_ip_rfc1918;
+  if (is_ip_rfc1918 && (size_t)(te - ts) == len && strcmp(p, pe) == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
