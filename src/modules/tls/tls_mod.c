@@ -141,6 +141,7 @@ static tls_domain_t mod_params = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 
@@ -171,6 +172,7 @@ tls_domain_t srv_defaults = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 /* clang-format on */
@@ -228,6 +230,7 @@ tls_domain_t cli_defaults = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 /* clang-format on */

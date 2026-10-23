@@ -45,4 +45,11 @@
 #define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
 #endif /* KSR_SSL_PROVIDER */
 
+/* verify_server_name: SSL_set1_host() (OpenSSL 1.1.0+, LibreSSL 2.7.0+) */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L     \
+		&& (!defined(LIBRESSL_VERSION_NUMBER) \
+				|| LIBRESSL_VERSION_NUMBER >= 0x20700000L)
+#define KSR_TLS_VERIFY_SERVER_NAME
+#endif
+
 #endif /* _TLS_OPENSSL_H */
