@@ -371,6 +371,12 @@ int check_via1_header(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
+	if(msg->via1 == NULL) {
+		LM_WARN("missing Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
 	if(msg->via1->host.s == NULL || msg->via1->host.len <= 0) {
 		LM_WARN("failed to parse the Via1 host\n");
 		msg->msg_flags |= FL_MSG_NOREPLY;
