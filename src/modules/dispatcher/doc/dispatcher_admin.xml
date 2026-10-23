@@ -1628,6 +1628,22 @@ GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
 			</listitem>
 			<listitem>
 				<para>
+				<quote>16</quote> - pressure based dispatching. Each destination's
+				pressure is initialized from its non-negative priority value when
+				the dispatcher list is loaded or reloaded. The active destination
+				with the lowest pressure is selected. If several destinations have
+				the same lowest pressure, they are selected in round-robin order.
+				Routing does not change the pressure value.
+				</para>
+				<para>
+				Failover destinations are ordered by increasing pressure, with
+				round-robin ordering among destinations having equal pressure.
+				Runtime updates preserve the current pressure; reload the dispatcher
+				list to initialize pressure again from priority.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
