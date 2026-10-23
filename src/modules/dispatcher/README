@@ -149,6 +149,7 @@ Tyler Moore
               5.8. dispatcher.remove
               5.9. dispatcher.hash
               5.10. dispatcher.oclist
+              5.11. dispatcher.pressure_dec
 
         6. Installation and Running
 
@@ -335,6 +336,7 @@ Chapter 1. Admin Guide
         5.8. dispatcher.remove
         5.9. dispatcher.hash
         5.10. dispatcher.oclist
+        5.11. dispatcher.pressure_dec
 
    6. Installation and Running
 
@@ -1936,6 +1938,7 @@ event_route[dialog:failed] {
    5.8. dispatcher.remove
    5.9. dispatcher.hash
    5.10. dispatcher.oclist
+   5.11. dispatcher.pressure_dec
 
 5.1.  dispatcher.set_state
 
@@ -1995,6 +1998,7 @@ DEST: {
         URI: sip:192.168.0.1:5060
         FLAGS: AP
         PRIORITY: 12
+        PRESSURE: 12
 }
 ...
 
@@ -2159,6 +2163,24 @@ kamctl rpc dispatcher.hash 4 bob server.com
 ...
 # prototype: kamcli dispatcher.oclist _group_
 kamcli dispatcher.oclist 1
+...
+
+5.11.  dispatcher.pressure_dec
+
+   Decrement by one the pressure associated with a destination address.
+   Pressure is unsigned and remains at zero when it is already zero. The
+   updated pressure is returned. When the new value matches the lowest
+   pressure in the group, algorithm 16 includes the destination in its
+   round-robin selection.
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the group
+
+   Example:
+...
+# prototype: kamcmd dispatcher.pressure_dec _group_ _address_
+kamcmd dispatcher.pressure_dec 2 sip:127.0.0.1:5080
 ...
 
 6. Installation and Running
