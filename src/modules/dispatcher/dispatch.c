@@ -3458,6 +3458,7 @@ static int ds_manage_routes_fill_pressure_xavp(
 	}
 
 	start = (hash + 1) % n;
+	lock_get(&idx->lock);
 	for(i = 0; i < n; i++) {
 		if(i == (int)hash || ds_skip_dst(idx->dlist[i].flags))
 			continue;
@@ -3466,6 +3467,7 @@ static int ds_manage_routes_fill_pressure_xavp(
 		ordered[count].order = (i - start + n) % n;
 		count++;
 	}
+	lock_release(&idx->lock);
 
 	for(i = 1; i < count; i++) {
 		temp = ordered[i];
@@ -4322,6 +4324,51 @@ error:
 	ds_put_list(cur);
 	ds_free_list(next);
 	return -1;
+}
+
+/** Decrement the pressure of a destination, stopping at zero. */
+int ds_pressure_dec(int group, str *address, uint32_t *pressure)
+{
+	int i;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	lock_get(ds_list_write_lock);
+	list = ds_get_list();
+	if(list == NULL || list->nr <= 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("no destination sets\n");
+		return -1;
+	}
+
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+
+	lock_get(&idx->lock);
+	for(i = 0; i < idx->nr; i++) {
+		if(idx->dlist[i].uri.len == address->len
+				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
+						   == 0) {
+			if(idx->dlist[i].pressure > 0)
+				idx->dlist[i].pressure--;
+			*pressure = idx->dlist[i].pressure;
+			lock_release(&idx->lock);
+			ds_put_list(list);
+			lock_release(ds_list_write_lock);
+			return 0;
+		}
+	}
+	lock_release(&idx->lock);
+	ds_put_list(list);
+	lock_release(ds_list_write_lock);
+	LM_ERR("destination [%.*s] not found in set [%d]\n", address->len,
+			address->s, group);
+	return -2;
 }
 
 int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)

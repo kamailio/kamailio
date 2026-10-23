@@ -2477,6 +2477,41 @@ static void dispatcher_rpc_update(rpc_t *rpc, void *ctx)
 	return;
 }
 
+static const char *dispatcher_rpc_pressure_dec_doc[2] = {
+		"Decrement the pressure of a destination address", 0};
+
+/* RPC command to decrement destination pressure. */
+static void dispatcher_rpc_pressure_dec(rpc_t *rpc, void *ctx)
+{
+	int group;
+	int ret;
+	str dest;
+	uint32_t pressure;
+	void *th;
+
+	if(rpc->scan(ctx, "dS", &group, &dest) < 2) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	ret = ds_pressure_dec(group, &dest, &pressure);
+	if(ret == -1) {
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+	if(ret == -2) {
+		rpc->fault(ctx, 404, "Destination Not Found");
+		return;
+	}
+
+	if(rpc->add(ctx, "{", &th) < 0
+			|| rpc->struct_add(th, "dSu", "GROUP", group, "URI", &dest,
+					   "PRESSURE", pressure)
+					   < 0) {
+		rpc->fault(ctx, 500, "Internal error reply structure");
+	}
+}
+
 static const char *dispatcher_rpc_hash_doc[2] = {
 		"Compute the hash if the values", 0};
 
@@ -2592,6 +2627,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_add_doc, 0},
 	{"dispatcher.update", dispatcher_rpc_update,
 		dispatcher_rpc_update_doc, 0},
+	{"dispatcher.pressure_dec", dispatcher_rpc_pressure_dec,
+		dispatcher_rpc_pressure_dec_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,
