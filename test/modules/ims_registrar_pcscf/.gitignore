@@ -1,0 +1,8 @@
+# unit test binaries
+test_gruu_extract
+test_path_build
+
+# build artifacts
+*.o
+*.d
+.DS_Store
