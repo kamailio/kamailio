@@ -1256,6 +1256,8 @@ modparam("tls", "use_shared_context", 1)
 			<listitem><para>server_name - (str) - SNI (server name identification)</para></listitem>
 			<listitem><para>server_name_mode - (int) - how to match server_name</para></listitem>
 			<listitem><para>server_id - (str) - server id</para></listitem>
+			<listitem><para>verify_server_name - (bool) - client profiles: check
+			the name of the server certificate</para></listitem>
 	</itemizedlist>
 	<para>
 		The value for server_name_mode specifies how to match the server_name
@@ -1270,6 +1272,31 @@ modparam("tls", "use_shared_context", 1)
 		TLS client config profile, because the local or remote port is hard
 		to predict for a stream connection - see parameter
 		<varname>xavp_cfg</varname> to learn how to enable it.
+	</para>
+	<para>
+		The value for verify_server_name is used only by client profiles
+		that also have verify_certificate enabled (default: off). When it is
+		on, the server certificate must match the server name of the
+		connection: the server_name of the <varname>xavp_cfg</varname>
+		attributes if set (also sent as SNI), else the server_name of the
+		profile. A DNS name is matched against the Subject Alternative Name
+		DNS entries, else the Common Name (RFC 6125, no partial wildcards).
+		An IP address is matched against the Subject Alternative Name IP
+		entries only. The check is done by OpenSSL during the TLS handshake,
+		so a mismatch fails the connection before any SIP message is sent.
+		If no server name is available, the connection fails. A warning is
+		printed at load time for a server profile or a client profile without
+		verify_certificate, where the attribute is ignored;
+		require_certificate alone does not enable it. On a client profile
+		with verify_client set to optional_no_ca, any certificate is
+		accepted, so a name mismatch is accepted too.
+	</para>
+	<para>
+		The check is done once, when the connection is established. An
+		existing connection to the same address and port can be reused for
+		later requests to a different server name, without a new check.
+		Setting the core parameter <varname>tls_connection_match_domain</varname>
+		with one client profile per server name avoids this reuse.
 	</para>
 	<para>
 		All the parameters that take filenames as values will be resolved
@@ -1345,6 +1372,7 @@ ca_list = default_ca.pem
 crl = default_crl.pem
 server_name = kamailio.org
 server_id = kamailio.org
+verify_server_name = yes
 
 # server profile on any address
 [server:any]
