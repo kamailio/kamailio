@@ -403,7 +403,14 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
-	if(msg->via1->branch->value.len < 7
+	if(msg->via1 == NULL) {
+		LM_WARN("missing Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1->branch == NULL || msg->via1->branch->value.s == NULL
+			|| msg->via1->branch->value.len < 7
 			|| memcmp(msg->via1->branch->value.s, "z9hG4bK", 7) != 0) {
 		LM_WARN("Via1 branch parameter does not start with the magic cookie\n");
 		return SANITY_CHECK_FAILED;
