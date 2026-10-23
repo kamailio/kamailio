@@ -26,6 +26,11 @@
  * History:
  * ---------
  * 2003-03-12 added support for zombie state (nils)
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 /*!
  * \file
@@ -325,6 +330,38 @@ int impu_registered(struct sip_msg *_m, char *_t, char *_s)
 	return ret;
 }
 
+/* Called only after the script has established a trusted access peer.
+ * P-Asserted-Identity is the caller; To is the destination on an INVITE. */
+int orig_impu_has_contact(struct sip_msg *_m, char *_t, char *_s)
+{
+	impurecord_t *r;
+	impu_contact_t *link;
+	str identity = cscf_get_asserted_identity(_m, 0);
+	int result = -1, i;
+	if(!identity.len)
+		return -1;
+	for(i = 0; i < identity.len; i++)
+		if(identity.s[i] == ';' || identity.s[i] == '?') {
+			identity.len = i;
+			break;
+		}
+	get_act_time();
+	ul.lock_udomain((udomain_t *)_t, &identity);
+	if(ul.get_impurecord((udomain_t *)_t, &identity, &r) == 0 && r->s
+			&& r->reg_state == IMPU_REGISTERED && !r->barring) {
+		for(link = r->linked_contacts.head; link; link = link->next) {
+			ul.lock_contact_slot_i(link->contact->sl);
+			if(VALID_CONTACT(link->contact, act_time))
+				result = 1;
+			ul.unlock_contact_slot_i(link->contact->sl);
+			if(result == 1)
+				break;
+		}
+	}
+	ul.unlock_udomain((udomain_t *)_t, &identity);
+	return result;
+}
+
 /**
  * Check that the IMPU at the Term S has at least one valid contact...
  * @param _m - msg
@@ -435,7 +472,7 @@ int term_impu_registered(struct sip_msg *_m, char *_t, char *_s)
 		return -1;
 	}
 
+	res = r->s && r->reg_state != IMPU_NOT_REGISTERED ? 1 : -1;
 	ul.unlock_udomain((udomain_t *)_t, &uri);
-	LM_DBG("'%.*s' found in usrloc\n", uri.len, ZSW(uri.s));
-	return 1;
+	return res;
 }

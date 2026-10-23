@@ -22,6 +22,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 /*!
@@ -50,6 +55,7 @@ int lookup_path_to_contact(struct sip_msg *_m, char *contact_uri);
  * the Request-URI nor appends branches
  */
 int impu_registered(struct sip_msg *_m, char *_t, char *_s);
+int orig_impu_has_contact(struct sip_msg *_m, char *_t, char *_s);
 int term_impu_registered(struct sip_msg *_m, char *_t, char *_s);
 int term_impu_has_contact(struct sip_msg *_m, udomain_t *_d, char *_s);
 
