@@ -2618,6 +2618,7 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 	int httpreq;
 	char *pvia;
 	str xparams = STR_NULL;
+	hdr_flags_t copied_sip_quad_hf = 0;
 
 	body = 0;
 	buf = 0;
@@ -2677,6 +2678,8 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 	for(hdr = msg->headers; hdr; hdr = hdr->next) {
 		switch(hdr->type) {
 			case HDR_TO_T:
+				if(hdr != msg->to)
+					break;
 				if(new_tag && new_tag->len) {
 					to_tag = get_to(msg)->tag_value;
 					if(to_tag.len && to_tag.s)
@@ -2696,10 +2699,21 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 				/* RR only for 1xx and 2xx replies */
 				if(code < 180 || code >= 300)
 					break;
+				len += hdr->len;
+				break;
 			case HDR_FROM_T:
+				if(hdr != msg->from)
+					break;
+				len += hdr->len;
+				break;
 			case HDR_CALLID_T:
+				if(hdr != msg->callid)
+					break;
+				len += hdr->len;
+				break;
 			case HDR_CSEQ_T:
-				/* we keep the original termination for these headers*/
+				if(hdr != msg->cseq)
+					break;
 				len += hdr->len;
 				break;
 			default:
@@ -2828,6 +2842,9 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 				append_str(p, hdr->name.s, hdr->len);
 				break;
 			case HDR_TO_T:
+				if(copied_sip_quad_hf & HDR_TO_F)
+					break;
+				copied_sip_quad_hf |= HDR_TO_F;
 				if(new_tag && new_tag->len) {
 					if(to_tag.len && to_tag.s) { /* replacement */
 						/* before to-tag */
@@ -2862,10 +2879,24 @@ char *build_res_buf_from_sip_req(unsigned int code, str *text, str *new_tag,
 					bmark->to_tag_val.s =
 							p + (hdr->body.s + hdr->body.len - hdr->name.s);
 				}
-				/* no break */
+				append_str(p, hdr->name.s, hdr->len);
+				break;
 			case HDR_FROM_T:
+				if(copied_sip_quad_hf & HDR_FROM_F)
+					break;
+				copied_sip_quad_hf |= HDR_FROM_F;
+				append_str(p, hdr->name.s, hdr->len);
+				break;
 			case HDR_CALLID_T:
+				if(copied_sip_quad_hf & HDR_CALLID_F)
+					break;
+				copied_sip_quad_hf |= HDR_CALLID_F;
+				append_str(p, hdr->name.s, hdr->len);
+				break;
 			case HDR_CSEQ_T:
+				if(copied_sip_quad_hf & HDR_CSEQ_F)
+					break;
+				copied_sip_quad_hf |= HDR_CSEQ_F;
 				append_str(p, hdr->name.s, hdr->len);
 				break;
 			default:
