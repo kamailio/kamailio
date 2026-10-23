@@ -1397,6 +1397,16 @@ If gateways 1 and 2 become inactive:
 GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
    3    |    20    |   50   |   50%
    4    |    20    |   50   |   50%
+          + “16” - pressure based dispatching. Each destination's pressure
+            is initialized from its non-negative priority value when the
+            dispatcher list is loaded or reloaded. The active destination
+            with the lowest pressure is selected. If several destinations
+            have the same lowest pressure, they are selected in
+            round-robin order. Routing does not change the pressure value.
+            Failover destinations are ordered by increasing pressure, with
+            round-robin ordering among destinations having equal pressure.
+            Runtime updates preserve the current pressure; reload the
+            dispatcher list to initialize pressure again from priority.
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in XAVP list for
