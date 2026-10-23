@@ -1,7 +1,7 @@
 
 #line 1 "rfc1918_parser.rl"
 #include "rfc1918_parser.h"
-
+#include <string.h>
 
 /** Ragel machine **/
 
@@ -10,8 +10,13 @@
 
 /** Data **/
 
-#line 15 "rfc1918_parser.c"
+#line 10 "rfc1918_parser.c"
 static const int rfc1918_parser_start = 1;
+static const int rfc1918_parser_first_final = 28;
+static const int rfc1918_parser_error = 0;
+
+static const int rfc1918_parser_en_main = 1;
+
 
 #line 26 "rfc1918_parser.rl"
 
@@ -21,20 +26,21 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 {
 	int cs = 0;
 	const char *p, *pe;
+	const char *ts = NULL, *te = NULL;
 	unsigned int is_ip_rfc1918 = 0;
 
 	p = str;
 	pe = str + len;
 
 
-#line 37 "rfc1918_parser.c"
+#line 29 "rfc1918_parser.c"
 	{
 		cs = rfc1918_parser_start;
 	}
 
-#line 39 "rfc1918_parser.rl"
+#line 40 "rfc1918_parser.rl"
 
-#line 44 "rfc1918_parser.c"
+#line 32 "rfc1918_parser.c"
 	{
 		if(p == pe)
 			goto _test_eof;
@@ -125,7 +131,7 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 				if(51 <= (*p) && (*p) <= 57)
 					goto tr19;
 				goto st0;
-			tr16 :
+			tr16:
 #line 8 "rfc1918_parser.rl"
 			{
 				is_ip_rfc1918 = 1;
@@ -135,9 +141,9 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 				if(++p == pe)
 					goto _test_eof28;
 			case 28:
-#line 134 "rfc1918_parser.c"
+#line 120 "rfc1918_parser.c"
 				goto st0;
-			tr17 :
+			tr17:
 #line 8 "rfc1918_parser.rl"
 			{
 				is_ip_rfc1918 = 1;
@@ -147,11 +153,11 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 				if(++p == pe)
 					goto _test_eof29;
 			case 29:
-#line 146 "rfc1918_parser.c"
+#line 130 "rfc1918_parser.c"
 				if(48 <= (*p) && (*p) <= 57)
 					goto tr19;
 				goto st0;
-			tr19 :
+			tr19:
 #line 8 "rfc1918_parser.rl"
 			{
 				is_ip_rfc1918 = 1;
@@ -161,11 +167,11 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 				if(++p == pe)
 					goto _test_eof30;
 			case 30:
-#line 160 "rfc1918_parser.c"
+#line 142 "rfc1918_parser.c"
 				if(48 <= (*p) && (*p) <= 57)
 					goto tr16;
 				goto st0;
-			tr18 :
+			tr18:
 #line 8 "rfc1918_parser.rl"
 			{
 				is_ip_rfc1918 = 1;
@@ -175,7 +181,7 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 				if(++p == pe)
 					goto _test_eof31;
 			case 31:
-#line 174 "rfc1918_parser.c"
+#line 154 "rfc1918_parser.c"
 				if((*p) == 53)
 					goto tr31;
 				if((*p) > 52) {
@@ -184,7 +190,7 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 				} else if((*p) >= 48)
 					goto tr19;
 				goto st0;
-			tr31 :
+			tr31:
 #line 8 "rfc1918_parser.rl"
 			{
 				is_ip_rfc1918 = 1;
@@ -194,7 +200,7 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 				if(++p == pe)
 					goto _test_eof32;
 			case 32:
-#line 193 "rfc1918_parser.c"
+#line 171 "rfc1918_parser.c"
 				if(48 <= (*p) && (*p) <= 53)
 					goto tr16;
 				goto st0;
@@ -462,13 +468,17 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 		cs = 27;
 		goto _test_eof;
 
-	_test_eof : {
+	_test_eof: {
 	}
-	_out : {
+	_out: {
 	}
 	}
 
-#line 40 "rfc1918_parser.rl"
+#line 41 "rfc1918_parser.rl"
 
-	return is_ip_rfc1918;
+	if(is_ip_rfc1918 && (size_t)(te - ts) == len && strcmp(p, pe) == 0) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
