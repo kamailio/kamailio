@@ -137,7 +137,7 @@ int sanity_reply(sip_msg_t *msg, int code, char *reason)
 int str2valid_uint(str *_number, unsigned int *_result)
 {
 	int i;
-	int result = 0;
+	unsigned int result = 0;
 	int equal = 1;
 	char mui[10] = "4294967296";
 
