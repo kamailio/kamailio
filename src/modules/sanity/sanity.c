@@ -739,11 +739,9 @@ int check_proxy_require(sip_msg_t *msg)
 					if(add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR) == 0) {
 						LM_ERR("failed to append Unsupported header to "
 							   "reply\n");
-						pkg_free(u);
-						u = NULL;
-					} else {
-						u = NULL;
 					}
+					pkg_free(u);
+					u = NULL;
 				}
 
 				if(sanity_reply(msg, 420, "Bad Proxy Require Extension") < 0) {
