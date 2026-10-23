@@ -2074,9 +2074,9 @@ int ds_rpc_print_set(
 		else
 			c[1] = 'X';
 
-		if(rpc->struct_add(vh, "dSsdS", "IDX", j, "URI", &node->dlist[j].uri,
-				   "FLAGS", c, "PRIORITY", node->dlist[j].priority, "IUID",
-				   &node->dlist[j].suid)
+		if(rpc->struct_add(vh, "dSsduS", "IDX", j, "URI", &node->dlist[j].uri,
+				   "FLAGS", c, "PRIORITY", node->dlist[j].priority, "PRESSURE",
+				   node->dlist[j].pressure, "IUID", &node->dlist[j].suid)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error creating dest struct");
 			return -1;

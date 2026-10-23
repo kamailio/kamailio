@@ -30,6 +30,7 @@
 #ifndef _DISPATCH_H_
 #define _DISPATCH_H_
 
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include "../../core/pvar.h"
@@ -281,6 +282,7 @@ typedef struct _ds_dest {
 	str host;         /*!< shortcut to host part */
 	int flags;        /*!< flags */
 	int priority;     /*!< priority */
+	uint32_t pressure; /*!< routing pressure (initialized from priority) */
 	int dload;        /*!< load */
 	ds_attrs_t attrs; /*!< the attributes */
 	ds_latency_stats_t latency_stats; /*!< latency statistics */
@@ -307,6 +309,7 @@ typedef struct _ds_set {
 	int wlast;			/*!< last used item in dst set (by weight) */
 	int rwlast;			/*!< last used item in dst set (by relative weight) */
 	int pwlast;			/*!< last used item in dst set (by priority+weight) */
+	int plast;			/*!< next item to inspect for pressure tie breaking */
 	ds_dest_t *dlist;
 	unsigned int wlist[100];
 	unsigned int rwlist[100];

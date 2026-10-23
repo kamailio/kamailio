@@ -86,6 +86,7 @@
 #define DS_ALG_LATENCY 13
 #define DS_ALG_RRSERIAL 14
 #define DS_ALG_PRIORITY_WEIGHT 15
+#define DS_ALG_PRESSURE 16
 #define DS_ALG_OVERLOAD 64 /* 2^6 - can be also used as a flag */
 
 #define DS_HN_SIZE 256
@@ -810,6 +811,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 
 	dp->flags = flags;
 	dp->priority = priority;
+	dp->pressure = (priority < 0) ? 0U : (uint32_t)priority;
 	dp->dload = dload;
 	dp->ocdata.ocmax = 100;
 
@@ -3414,6 +3416,119 @@ int ds_manage_routes_fill_xavp(
 	return 0;
 }
 
+typedef struct pressure_order_ds
+{
+	int idx;
+	uint32_t pressure;
+	int order;
+} pressure_order_ds_t;
+
+/**
+ * Add pressure-selected destinations to the failover XAVP. The selected
+ * destination is first, followed by the remaining destinations in ascending
+ * pressure order. Equal-pressure destinations retain round-robin order.
+ */
+static int ds_manage_routes_fill_pressure_xavp(
+		unsigned int hash, ds_set_t *idx, ds_select_state_t *rstate)
+{
+	int i;
+	int j;
+	int n;
+	int start;
+	int count = 0;
+	pressure_order_ds_t temp;
+	pressure_order_ds_t *ordered;
+
+	if(ds_add_xavp_record(idx, hash, rstate->setid, rstate->alg, &rstate->lxavp,
+			   &rstate->default_sockmap, rstate->use_sockmap)
+			< 0) {
+		LM_ERR("failed to add destination in the xavp (%u/%d)\n", hash,
+				rstate->setid);
+		return -1;
+	}
+	rstate->cnt++;
+	if(rstate->cnt >= rstate->limit)
+		return 0;
+
+	n = (ds_use_default != 0 && idx->nr != 1) ? idx->nr - 1 : idx->nr;
+	ordered = pkg_malloc(sizeof(pressure_order_ds_t) * n);
+	if(ordered == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	start = (hash + 1) % n;
+	for(i = 0; i < n; i++) {
+		if(i == (int)hash || ds_skip_dst(idx->dlist[i].flags))
+			continue;
+		ordered[count].idx = i;
+		ordered[count].pressure = idx->dlist[i].pressure;
+		ordered[count].order = (i - start + n) % n;
+		count++;
+	}
+
+	for(i = 1; i < count; i++) {
+		temp = ordered[i];
+		j = i;
+		while(j > 0
+				&& (ordered[j - 1].pressure > temp.pressure
+						|| (ordered[j - 1].pressure == temp.pressure
+								&& ordered[j - 1].order > temp.order))) {
+			ordered[j] = ordered[j - 1];
+			j--;
+		}
+		ordered[j] = temp;
+	}
+
+	for(i = 0; i < count && rstate->cnt < rstate->limit; i++) {
+		if(ds_add_xavp_record(idx, ordered[i].idx, rstate->setid, rstate->alg,
+				   &rstate->lxavp, &rstate->default_sockmap,
+				   rstate->use_sockmap)
+				< 0) {
+			LM_ERR("failed to add destination in the xavp (%d/%d)\n",
+					ordered[i].idx, rstate->setid);
+			pkg_free(ordered);
+			return -1;
+		}
+		rstate->cnt++;
+	}
+
+	pkg_free(ordered);
+	return 0;
+}
+
+/** Select the lowest-pressure active destination, with round-robin ties. */
+static int ds_manage_route_algo16(ds_set_t *idx)
+{
+	int i;
+	int n;
+	int pos;
+	int selected = -1;
+	uint32_t best_pressure = UINT32_MAX;
+
+	n = (ds_use_default != 0 && idx->nr != 1) ? idx->nr - 1 : idx->nr;
+	if(n <= 0)
+		return -1;
+
+	for(i = 0; i < n; i++) {
+		pos = (idx->plast + i) % n;
+		if(ds_skip_dst(idx->dlist[pos].flags))
+			continue;
+		if(selected < 0 || idx->dlist[pos].pressure < best_pressure) {
+			selected = pos;
+			best_pressure = idx->dlist[pos].pressure;
+		}
+	}
+
+	if(selected >= 0) {
+		idx->plast = (selected + 1) % n;
+		LM_DBG("pressure[%u] destination[%d] next_index[%d]\n", best_pressure,
+				selected, idx->plast);
+	}
+
+	return selected;
+}
+
 
 void ds_sorted_by_priority(sorted_ds_t *sorted_ds, int size)
 {
@@ -3695,6 +3810,20 @@ int ds_manage_routes(
 			idx->pwlast = (idx->pwlast + 1) % 100;
 			lock_release(&idx->lock);
 			break;
+		case DS_ALG_PRESSURE: /* 16 - lowest pressure, round-robin on ties */
+			lock_get(&idx->lock);
+			i = ds_manage_route_algo16(idx);
+			lock_release(&idx->lock);
+			if(i < 0) {
+				if(ds_use_default != 0
+						&& !ds_skip_dst(idx->dlist[idx->nr - 1].flags))
+					hash = idx->nr - 1;
+				else
+					goto error;
+			} else {
+				hash = i;
+			}
+			break;
 		case DS_ALG_OVERLOAD: /* 64 - round robin with overload control */
 			lock_get(&idx->lock);
 			hash = idx->last;
@@ -3804,7 +3933,11 @@ int ds_manage_routes(
 	}
 
 	if(!xavp_filled) {
-		if(ds_manage_routes_fill_xavp(hash, idx, rstate) == -1) {
+		if((rstate->alg == DS_ALG_PRESSURE
+						   ? ds_manage_routes_fill_pressure_xavp(
+									 hash, idx, rstate)
+						   : ds_manage_routes_fill_xavp(hash, idx, rstate))
+				== -1) {
 			goto error;
 		}
 	}
@@ -3934,6 +4067,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 		LM_WARN("failed to add destination in group %d - %.*s\n", node->id,
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
 	} else {
+		ndst->pressure = node->dlist[i].pressure;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 		memcpy(ndst->buid, node->dlist[i].suid.s, node->dlist[i].suid.len);
 		ndst->suid.s = ndst->buid;
@@ -4014,8 +4148,10 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 			&& node->dlist[i].uri.len == filter_arg->dest->uri.len
 			&& strncmp(node->dlist[i].uri.s, filter_arg->dest->uri.s,
 					   filter_arg->dest->uri.len)
-					   == 0)
+					   == 0) {
+		filter_arg->dest->pressure = node->dlist[i].pressure;
 		return;
+	}
 
 	ndst = add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body,
@@ -4027,6 +4163,7 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
 		filter_arg->error = 1;
 	} else {
+		ndst->pressure = node->dlist[i].pressure;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 	}
 	return;
