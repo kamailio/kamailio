@@ -372,10 +372,16 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 		return 1;
 	}
 	slotid = it->hid % _siprepo_table_size;
+	if(it->dbuf.len < 0 || it->dbuf.len >= (int)sizeof(lbuf)) {
+		LM_ERR("invalid stored message size: %d\n", it->dbuf.len);
+		lock_release(&_siprepo_table[slotid].lock);
+		return -1;
+	}
 	memset(&lmsg, 0, sizeof(sip_msg_t));
 	lmsg.buf = lbuf;
 	memcpy(lmsg.buf, it->dbuf.s, it->dbuf.len);
 	lmsg.len = it->dbuf.len;
+	lmsg.buf[lmsg.len] = '\0';
 	lmsg.rcv = it->rcv;
 	lmsg.id = it->msgno;
 	lmsg.pid = it->pid;
