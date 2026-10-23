@@ -441,31 +441,32 @@ int _ip_is_in_subnet_v6(
 {
 	struct in6_addr net_addr;
 	char _net[INET6_ADDRSTRLEN];
-	uint8_t ipv6_mask[16];
-	int i;
+	int bytes, bits;
+	uint8_t mask;
+
+	if(netmask < 0 || netmask > 128)
+		return 0;
 
 	memcpy(_net, net, netlen);
 	_net[netlen] = '\0';
 
 	if(inet_pton(AF_INET6, _net, &net_addr) != 1)
 		return 0;
-	if(netmask < 0 || netmask > 128)
+
+	bytes = netmask / 8;
+
+	if(memcmp(ip->s6_addr, net_addr.s6_addr, bytes) != 0)
 		return 0;
-	for(i = 0; i < 16; i++) {
-		if(netmask > ((i + 1) * 8))
-			ipv6_mask[i] = 0xFF;
-		else if(netmask > (i * 8))
-			ipv6_mask[i] = ~(0xFF >> (netmask - (i * 8)));
-		else
-			ipv6_mask[i] = 0x00;
+
+	bits = netmask % 8;
+
+	if(bits) {
+		mask = (uint8_t)(0xFF << (8 - bits));
+		if((ip->s6_addr[bytes] ^ net_addr.s6_addr[bytes]) & mask)
+			return 0;
 	}
-	for(i = 0; i < 16; i++)
-		ip->s6_addr[i] &= ipv6_mask[i];
-	for(i = 0; i < 16; i++)
-		net_addr.s6_addr[i] &= ipv6_mask[i];
-	if(memcmp(ip->s6_addr, net_addr.s6_addr, sizeof(net_addr.s6_addr)) == 0)
-		return 1;
-	return 0;
+
+	return 1;
 }
 
 int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen)
