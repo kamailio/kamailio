@@ -2487,6 +2487,7 @@ DEST: {
         URI: sip:192.168.0.1:5060
         FLAGS: AP
         PRIORITY: 12
+        PRESSURE: 12
 }
 ...
 </programlisting>
@@ -2734,6 +2735,30 @@ kamcli dispatcher.oclist 1
 ...
 </programlisting>
     </section>
+	<section id="dispatcher.r.pressure_dec">
+		<title>
+		<function moreinfo="none">dispatcher.pressure_dec</function>
+		</title>
+		<para>
+		Decrement by one the pressure associated with a destination address.
+		Pressure is unsigned and remains at zero when it is already zero. The
+		updated pressure is returned. When the new value matches the lowest
+		pressure in the group, algorithm 16 includes the destination in its
+		round-robin selection.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: address of the destination in the group</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.pressure_dec _group_ _address_
+&sercmd; dispatcher.pressure_dec 2 sip:127.0.0.1:5080
+...
+</programlisting>
+	</section>
 
    </section>
 
