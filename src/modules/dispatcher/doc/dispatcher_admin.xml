@@ -2782,6 +2782,29 @@ kamcli dispatcher.oclist 1
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.pressure_set">
+		<title>
+		<function moreinfo="none">dispatcher.pressure_set</function>
+		</title>
+		<para>
+		Set the unsigned 32-bit pressure associated with a destination address.
+		The updated pressure is returned. Algorithm 16 considers the new value
+		during its next destination selection.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: address of the destination in the group</para></listitem>
+			<listitem><para>_pressure_: new unsigned pressure value</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.pressure_set _group_ _address_ _pressure_
+&sercmd; dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
+...
+</programlisting>
+	</section>
 
    </section>
 
