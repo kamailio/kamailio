@@ -495,6 +495,16 @@ int check_service_routes(struct sip_msg *_m, udomain_t *_d)
 
 			int i = 0;
 			while(r) {
+				if(i >= MAXROUTES) {
+					LM_DBG("Request has more than %d route headers\n",
+							MAXROUTES);
+					goto error;
+				}
+				if(r->nameaddr.uri.len >= MAXROUTESIZE) {
+					LM_DBG("Route %.*s is too long to check\n",
+							r->nameaddr.uri.len, r->nameaddr.uri.s);
+					goto error;
+				}
 				memset(routes[i], 0, MAXROUTESIZE);
 				memcpy(routes[i], r->nameaddr.uri.s, r->nameaddr.uri.len);
 
