@@ -17,6 +17,7 @@ Shih-Ping Chan
         6. Parameters
 
               6.1. crl
+              6.2. verify_server_name
 
         7. Additional RPC Commands
 
@@ -38,6 +39,7 @@ Chapter 1. Admin Guide
    6. Parameters
 
         6.1. crl
+        6.2. verify_server_name
 
    7. Additional RPC Commands
 
@@ -142,12 +144,22 @@ bsoftokn3.so&pin-value=12345678[pin-source=....]
 6. Parameters
 
    6.1. crl
+   6.2. verify_server_name
 
    Important differences to the tls module
 
 6.1. crl
 
    The value is a folder containing PEM CRL files with extension .pem.
+
+6.2. verify_server_name
+
+   Same as in the tls module, with one difference: wolfSSL accepts partial
+   wildcards in the server certificate (e.g., a Subject Alternative Name
+   a*.example.com matches ab.example.com), because it ignores the
+   no-partial-wildcards flag during the handshake. Certificates from
+   public CAs carry full left-most label wildcards only (*.example.com),
+   so the difference concerns private CAs.
 
 7. Additional RPC Commands
 
