@@ -2483,6 +2483,9 @@ static const char *dispatcher_rpc_pressure_dec_doc[2] = {
 static const char *dispatcher_rpc_pressure_inc_doc[2] = {
 		"Increment the pressure of a destination address", 0};
 
+static const char *dispatcher_rpc_pressure_set_doc[2] = {
+		"Set the pressure of a destination address", 0};
+
 static void dispatcher_rpc_pressure_update(rpc_t *rpc, void *ctx, int increment)
 {
 	int group;
@@ -2525,6 +2528,39 @@ static void dispatcher_rpc_pressure_dec(rpc_t *rpc, void *ctx)
 static void dispatcher_rpc_pressure_inc(rpc_t *rpc, void *ctx)
 {
 	dispatcher_rpc_pressure_update(rpc, ctx, 1);
+}
+
+/* RPC command to set destination pressure. */
+static void dispatcher_rpc_pressure_set(rpc_t *rpc, void *ctx)
+{
+	int group;
+	int ret;
+	str dest;
+	uint32_t pressure;
+	uint32_t value;
+	void *th;
+
+	if(rpc->scan(ctx, "dSu", &group, &dest, &value) < 3) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	ret = ds_pressure_set(group, &dest, value, &pressure);
+	if(ret == -1) {
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+	if(ret == -2) {
+		rpc->fault(ctx, 404, "Destination Not Found");
+		return;
+	}
+
+	if(rpc->add(ctx, "{", &th) < 0
+			|| rpc->struct_add(th, "dSu", "GROUP", group, "URI", &dest,
+					   "PRESSURE", pressure)
+					   < 0) {
+		rpc->fault(ctx, 500, "Internal error reply structure");
+	}
 }
 
 static const char *dispatcher_rpc_hash_doc[2] = {
@@ -2646,6 +2682,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_pressure_dec_doc, 0},
 	{"dispatcher.pressure_inc", dispatcher_rpc_pressure_inc,
 		dispatcher_rpc_pressure_inc_doc, 0},
+	{"dispatcher.pressure_set", dispatcher_rpc_pressure_set,
+		dispatcher_rpc_pressure_set_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,

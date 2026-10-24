@@ -4327,8 +4327,8 @@ error:
 }
 
 /** Update the pressure of a destination, saturating at the type boundary. */
-static int ds_pressure_update(
-		int group, str *address, uint32_t *pressure, int increment)
+static int ds_pressure_update(int group, str *address, uint32_t *pressure,
+		int adjustment, uint32_t value)
 {
 	int i;
 	ds_set_t *idx = NULL;
@@ -4355,11 +4355,13 @@ static int ds_pressure_update(
 		if(idx->dlist[i].uri.len == address->len
 				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
 						   == 0) {
-			if(increment) {
+			if(adjustment > 0) {
 				if(idx->dlist[i].pressure < UINT32_MAX)
 					idx->dlist[i].pressure++;
-			} else if(idx->dlist[i].pressure > 0) {
+			} else if(adjustment < 0 && idx->dlist[i].pressure > 0) {
 				idx->dlist[i].pressure--;
+			} else if(adjustment == 0) {
+				idx->dlist[i].pressure = value;
 			}
 			*pressure = idx->dlist[i].pressure;
 			lock_release(&idx->lock);
@@ -4378,12 +4380,17 @@ static int ds_pressure_update(
 
 int ds_pressure_dec(int group, str *address, uint32_t *pressure)
 {
-	return ds_pressure_update(group, address, pressure, 0);
+	return ds_pressure_update(group, address, pressure, -1, 0);
 }
 
 int ds_pressure_inc(int group, str *address, uint32_t *pressure)
 {
-	return ds_pressure_update(group, address, pressure, 1);
+	return ds_pressure_update(group, address, pressure, 1, 0);
+}
+
+int ds_pressure_set(int group, str *address, uint32_t value, uint32_t *pressure)
+{
+	return ds_pressure_update(group, address, pressure, 0, value);
 }
 
 int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)
