@@ -76,6 +76,8 @@ typedef struct tcp_reactor_write_req
  *  - tcp main (tcp_reactor_handle_connect_req()) looks dst up again and
  *    reuses a connection another worker opened meanwhile, else connects,
  *    creates the connection and queues the payload
+ *  - for TLS the worker snapshots its tls xavp (tls_hook.connect_info): tcp
+ *    main has no access to the worker's xavps
  *  - tcp main frees buf and the request
  */
 typedef struct tcp_reactor_connect_req
@@ -89,6 +91,7 @@ typedef struct tcp_reactor_connect_req
 	snd_flags_t send_flags;
 	char *buf; /* shm payload (plaintext for TLS) */
 	unsigned int len;
+	ksr_coninfo_t cinfo; /* tls server_name/server_id (shm), for the new conn */
 } tcp_reactor_connect_req_t;
 
 /* mode 2 [pool]: hand one reassembled message to a worker, where modes 0/1

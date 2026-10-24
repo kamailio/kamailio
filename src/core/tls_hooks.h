@@ -91,6 +91,11 @@ typedef struct tls_hooks
 	 * receives a F_TCP_REQ_TLS_EVENT dispatch task (the SSL metadata the route
 	 * reads is already cached in shm c->extra_data). */
 	int (*run_event_route)(struct tcp_connection *c);
+	/* mode 2: copy the outbound tls attributes of the calling worker
+	 * (server_name, server_id) into ci as shm strings, owned by ci. Invoked
+	 * by tcp_reactor_connect_put(); tcp main moves them to the new
+	 * connection's cinfo before the handshake. */
+	void (*connect_info)(ksr_coninfo_t *ci);
 } tls_hooks_t;
 
 
