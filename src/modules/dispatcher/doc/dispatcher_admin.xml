@@ -2759,6 +2759,29 @@ kamcli dispatcher.oclist 1
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.pressure_inc">
+		<title>
+		<function moreinfo="none">dispatcher.pressure_inc</function>
+		</title>
+		<para>
+		Increment by one the pressure associated with a destination address.
+		Pressure remains at its maximum unsigned 32-bit value when it is already
+		at that limit. The updated pressure is returned. Algorithm 16 considers
+		the new value during its next destination selection.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: address of the destination in the group</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.pressure_inc _group_ _address_
+&sercmd; dispatcher.pressure_inc 2 sip:127.0.0.1:5080
+...
+</programlisting>
+	</section>
 
    </section>
 
