@@ -175,7 +175,8 @@ static cfg_option_t options[] = {
 		{"server_id", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 		{"verify_client", .param = verify_client_params,
 				.f = cfg_parse_enum_opt},
-		{"ca_path", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM}, {0}};
+		{"ca_path", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"verify_server_name", .f = cfg_parse_bool_opt}, {0}};
 
 
 static void update_opt_variables(void)
@@ -204,6 +205,7 @@ static void update_opt_variables(void)
 		verify_client_params[i].param = &_ksr_tls_domain->verify_client;
 	}
 	options[19].param = &_ksr_tls_domain->ca_path;
+	options[20].param = &_ksr_tls_domain->verify_server_name;
 }
 
 

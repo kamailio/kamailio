@@ -40,6 +40,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/pt.h"
 #include "../../core/timer.h"
@@ -361,6 +362,61 @@ static str *tls_get_connect_server_name(struct tcp_connection *c)
 #endif
 }
 
+/**
+ * set the name the server certificate must match (RFC 6125) for an outbound
+ * connection: the server name of the connection (xavp, also sent as SNI),
+ * else the server_name of the client profile; an IP address is matched
+ * against the IP address entries of the certificate
+ * keep in sync with tls/tls_server.c
+ * @return 0 on success, -1 on error (no name available or set failure)
+ */
+static int tls_set_verify_server_name(
+		WOLFSSL *ssl, tls_domain_t *dom, str *sname)
+{
+	char name[256];
+	str *vname;
+	ip_addr_t ip;
+	int len;
+
+	vname = (sname != NULL && sname->len > 0) ? sname : &dom->server_name;
+	if(vname->s == NULL || vname->len <= 0) {
+		LM_ERR("%s: verify_server_name is set but no server name is"
+			   " available (xavp or server_name)\n",
+				tls_domain_str(dom));
+		return -1;
+	}
+	if((size_t)vname->len >= sizeof(name)) {
+		LM_ERR("%s: server name too long (%d)\n", tls_domain_str(dom),
+				vname->len);
+		return -1;
+	}
+	if(str2ipxbuf(vname, &ip) == 0) {
+		/* IP address: check the IP address entries, without brackets */
+		len = ip_addr2sbuf(&ip, name, sizeof(name) - 1);
+		name[len] = '\0';
+		if(wolfSSL_X509_VERIFY_PARAM_set1_ip_asc(wolfSSL_get0_param(ssl), name)
+				!= WOLFSSL_SUCCESS) {
+			LM_ERR("%s: failed to set the server address to verify: %s\n",
+					tls_domain_str(dom), name);
+			return -1;
+		}
+		LM_DBG("outbound TLS server address to verify: %s\n", name);
+		return 0;
+	}
+	memcpy(name, vname->s, vname->len);
+	name[vname->len] = '\0';
+	wolfSSL_X509_VERIFY_PARAM_set_hostflags(
+			wolfSSL_get0_param(ssl), WOLFSSL_NO_PARTIAL_WILDCARDS);
+	if(wolfSSL_set1_host(ssl, name) != WOLFSSL_SUCCESS) {
+		LM_ERR("%s: failed to set the server name to verify: %s\n",
+				tls_domain_str(dom), name);
+		return -1;
+	}
+	LM_DBG("outbound TLS server name to verify: %s\n", name);
+	return 0;
+}
+
+
 /** finish the ssl init.
  * Creates the SSL context + internal tls_extra_data and sets
  * extra_data to it.
@@ -464,6 +520,16 @@ static int tls_complete_init(struct tcp_connection *c)
 		LM_DBG("outbound TLS server name set to: %s\n", sname->s);
 	}
 #endif
+
+	if(state == S_TLS_CONNECTING && dom->verify_cert > 0
+			&& dom->verify_server_name > 0) {
+		if(tls_set_verify_server_name(data->ssl, dom, sname) < 0) {
+			wolfSSL_free(data->ssl);
+			tls_free_ssl_cache(data);
+			wolfSSL_BIO_free(data->rwbio);
+			goto error;
+		}
+	}
 
 	wolfSSL_set_bio(data->ssl, internal_bio, internal_bio);
 	c->extra_data = data;
