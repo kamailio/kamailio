@@ -609,12 +609,10 @@ int reginfo_handle_notify(struct sip_msg *msg, char *domain, char *s2)
 		/* No Body? Then there is no published information available, which is ok. */
 		return 1;
 	} else {
-		body.s = get_body(msg);
-		if(body.s == NULL) {
+		if(get_body_str(msg, &body) < 0) {
 			LM_ERR("cannot extract body from msg\n");
 			return -1;
 		}
-		body.len = get_content_length(msg);
 	}
 
 	LM_DBG("Body is %.*s\n", body.len, body.s);

@@ -659,12 +659,10 @@ int ki_rls_handle_notify(sip_msg_t *msg)
 			LM_ERR("content length != 0 and no content type header found\n");
 			goto error;
 		}
-		body.s = get_body(msg);
-		if(body.s == NULL) {
+		if(get_body_str(msg, &body) < 0) {
 			LM_ERR("cannot extract body from msg\n");
 			goto error;
 		}
-		body.len = get_content_length(msg);
 	}
 	/* update in rlpres_table where rlsusb_did= res_id and resource_uri= from_uri*/
 

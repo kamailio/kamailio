@@ -497,6 +497,10 @@ int check_transaction_quadruple(sip_msg_t *const msg);
  */
 char *get_body(sip_msg_t *const msg);
 
+/*! \brief sets body to the msg's body, bounded by the received data
+ */
+int get_body_str(sip_msg_t *const msg, str *const body);
+
 /*! \brief If the new_uri is set, then reset it */
 void reset_new_uri(struct sip_msg *const msg);
 

@@ -182,12 +182,10 @@ int Notify2Xmpp(struct sip_msg *msg, char *s1, char *s2)
 		body.s = NULL;
 		body.len = 0;
 	} else {
-		body.s = get_body(msg);
-		if(body.s == NULL) {
+		if(get_body_str(msg, &body) < 0) {
 			LM_ERR("cannot extract body from msg\n");
 			goto error;
 		}
-		body.len = get_content_length(msg);
 	}
 
 	/* treat the two cases: event= presence & event=presence.winfo */
