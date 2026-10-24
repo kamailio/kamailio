@@ -146,6 +146,52 @@ static int is_ue_ipsec_params_selected(ipsec_t *params)
 	return 1;
 }
 
+// The same piece of code also lives in modules/ims_usrloc_pcscf/pcontact.c
+// Function - free_security()
+// Keep them in sync!
+void free_security_t(security_t *params)
+{
+	if(!params) {
+		return;
+	}
+
+	switch(params->type) {
+		case SECURITY_IPSEC:
+			if(params->data.ipsec) {
+				if(params->data.ipsec->ealg.s)
+					shm_free(params->data.ipsec->ealg.s);
+				if(params->data.ipsec->r_ealg.s)
+					shm_free(params->data.ipsec->r_ealg.s);
+				if(params->data.ipsec->ck.s)
+					shm_free(params->data.ipsec->ck.s);
+				if(params->data.ipsec->alg.s)
+					shm_free(params->data.ipsec->alg.s);
+				if(params->data.ipsec->r_alg.s)
+					shm_free(params->data.ipsec->r_alg.s);
+				if(params->data.ipsec->ik.s)
+					shm_free(params->data.ipsec->ik.s);
+				if(params->data.ipsec->prot.s)
+					shm_free(params->data.ipsec->prot.s);
+				if(params->data.ipsec->mod.s)
+					shm_free(params->data.ipsec->mod.s);
+
+				shm_free(params->data.ipsec);
+			}
+			break;
+
+		case SECURITY_TLS:
+			if(params->data.tls) {
+				shm_free(params->data.tls);
+			}
+			break;
+
+		case SECURITY_NONE:
+			break;
+	}
+
+	shm_free(params);
+}
+
 static security_t *parse_sec_agree(struct hdr_field *h)
 {
 	int i = 0;
@@ -283,34 +329,7 @@ static security_t *parse_sec_agree(struct hdr_field *h)
 	return params;
 
 cleanup:
-	// The same piece of code also lives in modules/ims_usrloc_pcscf/pcontact.c
-	// Function - free_security()
-	// Keep them in sync!
-	if(params) {
-		if(params->type == SECURITY_IPSEC && params->data.ipsec) {
-			if(params->data.ipsec->ealg.s)
-				shm_free(params->data.ipsec->ealg.s);
-			if(params->data.ipsec->r_ealg.s)
-				shm_free(params->data.ipsec->r_ealg.s);
-			if(params->data.ipsec->ck.s)
-				shm_free(params->data.ipsec->ck.s);
-			if(params->data.ipsec->alg.s)
-				shm_free(params->data.ipsec->alg.s);
-			if(params->data.ipsec->r_alg.s)
-				shm_free(params->data.ipsec->r_alg.s);
-			if(params->data.ipsec->ik.s)
-				shm_free(params->data.ipsec->ik.s);
-			if(params->data.ipsec->prot.s)
-				shm_free(params->data.ipsec->prot.s);
-			if(params->data.ipsec->mod.s)
-				shm_free(params->data.ipsec->mod.s);
-			shm_free(params->data.ipsec);
-		} else {
-			shm_free(params->data.ipsec);
-		}
-
-		shm_free(params);
-	}
+	free_security_t(params);
 
 	return NULL;
 }
