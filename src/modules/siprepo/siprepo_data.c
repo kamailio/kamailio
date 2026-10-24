@@ -468,7 +468,14 @@ void siprepo_exec_task(void *param)
 int siprepo_send_task(str *gname, siprepo_task_param_t *stp)
 {
 	async_task_t *at = NULL;
+	async_wgroup_t *awg = NULL;
 	int ret;
+
+	awg = async_task_group_find(gname);
+	if(awg == NULL) {
+		LM_ERR("async group [%.*s] not found\n", gname->len, gname->s);
+		return -1;
+	}
 
 	at = (async_task_t *)shm_malloc(sizeof(async_task_t));
 	if(at == NULL) {
@@ -479,7 +486,7 @@ int siprepo_send_task(str *gname, siprepo_task_param_t *stp)
 	at->exec = siprepo_exec_task;
 	at->param = stp;
 
-	ret = async_task_group_push(gname, at);
+	ret = async_task_group_send(awg, at);
 	if(ret < 0) {
 		shm_free(at);
 		return ret;
