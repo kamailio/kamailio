@@ -132,42 +132,51 @@ extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
 
-static void tls_store_outbound_xavp(struct tcp_connection *c)
+/* copy the outbound tls xavp of the calling process (server_name,
+ * server_id) into ci as shm strings
+ * - also the mode 2 tls_hook.connect_info: tcp main moves them from the
+ *   connect request to the new connection */
+void tls_h_connect_info_f(ksr_coninfo_t *ci)
 {
 	sr_xavp_t *vavp = NULL;
 	str sname = str_init("server_name");
 	str sid = str_init("server_id");
 
-	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
-		return;
-	}
 	if(sr_tls_xavp_cfg.s == NULL) {
 		return;
 	}
 
-	LM_DBG("storing outbound xavp (root=%.*s pid=%d proc=%d '%s' conn=%p)\n",
+	LM_DBG("storing outbound xavp (root=%.*s pid=%d proc=%d '%s' ci=%p)\n",
 			sr_tls_xavp_cfg.len, sr_tls_xavp_cfg.s, my_pid(), process_no,
-			my_desc(), c);
+			my_desc(), ci);
 
 	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
 	if(vavp != NULL && vavp->val.v.s.len > 0) {
-		if(shm_str_update(&c->cinfo.server_name, &vavp->val.v.s) < 0) {
+		if(shm_str_update(&ci->server_name, &vavp->val.v.s) < 0) {
 			LM_WARN("failed to store outbound tls server_name in shm\n");
 		} else {
-			LM_DBG("stored outbound server_name: %.*s\n",
-					c->cinfo.server_name.len, c->cinfo.server_name.s);
+			LM_DBG("stored outbound server_name: %.*s\n", ci->server_name.len,
+					ci->server_name.s);
 		}
 	}
 
 	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
 	if(vavp != NULL && vavp->val.v.s.len > 0) {
-		if(shm_str_update(&c->cinfo.server_id, &vavp->val.v.s) < 0) {
+		if(shm_str_update(&ci->server_id, &vavp->val.v.s) < 0) {
 			LM_WARN("failed to store outbound tls server_id in shm\n");
 		} else {
-			LM_DBG("tls: stored outbound server_id: %.*s\n",
-					c->cinfo.server_id.len, c->cinfo.server_id.s);
+			LM_DBG("tls: stored outbound server_id: %.*s\n", ci->server_id.len,
+					ci->server_id.s);
 		}
 	}
+}
+
+static void tls_store_outbound_xavp(struct tcp_connection *c)
+{
+	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
+		return;
+	}
+	tls_h_connect_info_f(&c->cinfo);
 }
 
 int ksr_tls_set_connect_server_id(str *srvid)

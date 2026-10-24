@@ -366,6 +366,7 @@ static struct tls_hooks tls_h = {
 	tls_h_match_domain_f,
 	tls_h_match_connections_domain_f,
 	tls_run_event_routes,
+	tls_h_connect_info_f,
 };
 /* clang-format on */
 
