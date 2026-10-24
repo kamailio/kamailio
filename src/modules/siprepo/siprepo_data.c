@@ -398,12 +398,13 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 
 	if(parse_msg(lmsg.buf, lmsg.len, &lmsg) != 0) {
 		LM_ERR("failed to parse msg id [%.*s]\n", msgid->len, msgid->s);
-		return 1;
+		goto error;
 	}
 	if(unlikely(parse_headers(&lmsg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0)
 			< 0)) {
 		LOG(cfg_get(core, core_cfg, sip_parser_log),
 				"parsing relevant headers failed\n");
+		goto error;
 	}
 	/* set log prefix */
 	log_prefix_set(&lmsg);
@@ -438,6 +439,10 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	/* reset log prefix */
 	log_prefix_set(NULL);
 	return 0;
+
+error:
+	free_sip_msg(&lmsg);
+	return -1;
 }
 
 /**
