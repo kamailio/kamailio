@@ -188,6 +188,7 @@ int ds_remove_dst(int group, str *address);
 int ds_update_dst_record(
 		int group, str *address, int flags, int priority, str *attrs);
 int ds_pressure_dec(int group, str *address, uint32_t *pressure);
+int ds_pressure_inc(int group, str *address, uint32_t *pressure);
 int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 		int state, int mode, ds_rctx_t *rctx);
 int ds_reinit_state(int group, str *address, str *iuid, int state);

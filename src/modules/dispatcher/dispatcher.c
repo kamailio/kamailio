@@ -2480,8 +2480,10 @@ static void dispatcher_rpc_update(rpc_t *rpc, void *ctx)
 static const char *dispatcher_rpc_pressure_dec_doc[2] = {
 		"Decrement the pressure of a destination address", 0};
 
-/* RPC command to decrement destination pressure. */
-static void dispatcher_rpc_pressure_dec(rpc_t *rpc, void *ctx)
+static const char *dispatcher_rpc_pressure_inc_doc[2] = {
+		"Increment the pressure of a destination address", 0};
+
+static void dispatcher_rpc_pressure_update(rpc_t *rpc, void *ctx, int increment)
 {
 	int group;
 	int ret;
@@ -2494,7 +2496,8 @@ static void dispatcher_rpc_pressure_dec(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	ret = ds_pressure_dec(group, &dest, &pressure);
+	ret = increment ? ds_pressure_inc(group, &dest, &pressure)
+					: ds_pressure_dec(group, &dest, &pressure);
 	if(ret == -1) {
 		rpc->fault(ctx, 404, "Destination Group Not Found");
 		return;
@@ -2510,6 +2513,18 @@ static void dispatcher_rpc_pressure_dec(rpc_t *rpc, void *ctx)
 					   < 0) {
 		rpc->fault(ctx, 500, "Internal error reply structure");
 	}
+}
+
+/* RPC command to decrement destination pressure. */
+static void dispatcher_rpc_pressure_dec(rpc_t *rpc, void *ctx)
+{
+	dispatcher_rpc_pressure_update(rpc, ctx, 0);
+}
+
+/* RPC command to increment destination pressure. */
+static void dispatcher_rpc_pressure_inc(rpc_t *rpc, void *ctx)
+{
+	dispatcher_rpc_pressure_update(rpc, ctx, 1);
 }
 
 static const char *dispatcher_rpc_hash_doc[2] = {
@@ -2629,6 +2644,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_update_doc, 0},
 	{"dispatcher.pressure_dec", dispatcher_rpc_pressure_dec,
 		dispatcher_rpc_pressure_dec_doc, 0},
+	{"dispatcher.pressure_inc", dispatcher_rpc_pressure_inc,
+		dispatcher_rpc_pressure_inc_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,
