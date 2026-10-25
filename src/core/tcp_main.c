@@ -6009,8 +6009,12 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 					/* message read/data timeout: record the close reason
 					 * so that tcpops can identify tcp:timeout */
 					con->event = TCP_CLOSED_TIMEOUT;
-					con->send_flags.f |= SND_F_CON_CLOSE;
-					con->flags |= F_CONN_FORCE_EOF;
+					/* mode 2: the flag words belong to the io_wait thread;
+					 * CONN_EOF closes con there */
+					if(ksr_tcp_main_threads != 2) {
+						con->send_flags.f |= SND_F_CON_CLOSE;
+						con->flags |= F_CONN_FORCE_EOF;
+					}
 
 					rc = send_all(unix_tcp_sock, mcmd, sizeof(mcmd));
 					if(unlikely(rc <= 0)) {
