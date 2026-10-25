@@ -1361,7 +1361,9 @@ bug:
 	return -1;
 ssl_eof:
 	c->state = S_CONN_EOF;
-	c->flags |= F_CONN_FORCE_EOF;
+	/* mode 2: c->flags belongs to the io_wait thread; the write job's -1 closes c */
+	if(ksr_tcp_main_threads != 2)
+		c->flags |= F_CONN_FORCE_EOF;
 	/* use 2-pass read for wolfSSL ring buffer */
 	wr_used = wolfSSL_BIO_pending(rwbio);
 	for(nr = 0; nr < wr_used;) {
