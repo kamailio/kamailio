@@ -1190,8 +1190,10 @@ int dp_init_weights(ds_set_t *dset)
 		return -1;
 
 	/* is weight set for dst list? (first address must have weight!=0) */
-	if(dset->dlist[0].attrs.weight == 0)
+	if(dset->dlist[0].attrs.weight == 0) {
+		memset(dset->wlist, 0, sizeof(dset->wlist));
 		return 0;
+	}
 
 	/* first fill the array based on the weight of each destination
 	 * - the weight is the percentage (e.g., if weight=20, the afferent
@@ -4070,6 +4072,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
 	} else {
 		ndst->pressure = node->dlist[i].pressure;
+		ndst->attrs.weight = node->dlist[i].attrs.weight;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 		memcpy(ndst->buid, node->dlist[i].suid.s, node->dlist[i].suid.len);
 		ndst->suid.s = ndst->buid;
@@ -4166,6 +4169,7 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 		filter_arg->error = 1;
 	} else {
 		ndst->pressure = node->dlist[i].pressure;
+		ndst->attrs.weight = node->dlist[i].attrs.weight;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 	}
 	return;
@@ -4391,6 +4395,58 @@ int ds_pressure_inc(int group, str *address, uint32_t *pressure)
 int ds_pressure_set(int group, str *address, uint32_t value, uint32_t *pressure)
 {
 	return ds_pressure_update(group, address, pressure, 0, value);
+}
+
+/** Replace all destination weights in a group and rebuild weight tables. */
+int ds_weight_set(int group, int *weights, int count)
+{
+	int i;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	if(weights == NULL || count <= 0)
+		return -3;
+	for(i = 0; i < count; i++) {
+		if(weights[i] < 0 || weights[i] > 100)
+			return -3;
+	}
+
+	lock_get(ds_list_write_lock);
+	list = ds_get_list();
+	if(list == NULL || list->nr <= 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("no destination sets\n");
+		return -1;
+	}
+
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+	if(count != idx->nr) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("weight count [%d] does not match destination count [%d] in "
+			   "set [%d]\n",
+				count, idx->nr, group);
+		return -2;
+	}
+
+	lock_get(&idx->lock);
+	for(i = 0; i < count; i++)
+		idx->dlist[i].attrs.weight = weights[i];
+	dp_init_weights(idx);
+	dp_init_priority_weights(idx);
+	idx->wlast = 0;
+	idx->pwlast = 0;
+	lock_release(&idx->lock);
+
+	ds_put_list(list);
+	lock_release(ds_list_write_lock);
+	return 0;
 }
 
 int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)

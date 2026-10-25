@@ -2486,6 +2486,9 @@ static const char *dispatcher_rpc_pressure_inc_doc[2] = {
 static const char *dispatcher_rpc_pressure_set_doc[2] = {
 		"Set the pressure of a destination address", 0};
 
+static const char *dispatcher_rpc_weight_set_doc[2] = {
+		"Set all destination weights in a group", 0};
+
 static void dispatcher_rpc_pressure_update(rpc_t *rpc, void *ctx, int increment)
 {
 	int group;
@@ -2558,6 +2561,88 @@ static void dispatcher_rpc_pressure_set(rpc_t *rpc, void *ctx)
 	if(rpc->add(ctx, "{", &th) < 0
 			|| rpc->struct_add(th, "dSu", "GROUP", group, "URI", &dest,
 					   "PRESSURE", pressure)
+					   < 0) {
+		rpc->fault(ctx, 500, "Internal error reply structure");
+	}
+}
+
+/* RPC command to replace all destination weights in a group. */
+static void dispatcher_rpc_weight_set(rpc_t *rpc, void *ctx)
+{
+	int group;
+	int weight;
+	int count = 0;
+	int nr;
+	int ret;
+	int *weights;
+	ds_list_t *list;
+	ds_set_t *node;
+	void *th;
+
+	if(rpc->scan(ctx, "d", &group) < 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	list = ds_get_list();
+	if(list == NULL) {
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+	node = ds_list_lookup(list, group);
+	if(node == NULL) {
+		ds_put_list(list);
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+	nr = node->nr;
+	ds_put_list(list);
+
+	weights = pkg_malloc(sizeof(int) * nr);
+	if(weights == NULL) {
+		PKG_MEM_ERROR;
+		rpc->fault(ctx, 500, "Internal memory error");
+		return;
+	}
+
+	while(rpc->scan(ctx, "*d", &weight) > 0) {
+		if(count >= nr) {
+			pkg_free(weights);
+			rpc->fault(
+					ctx, 400, "Weight count does not match destination count");
+			return;
+		}
+		if(weight < 0 || weight > 100) {
+			pkg_free(weights);
+			rpc->fault(ctx, 400, "Weight must be between 0 and 100");
+			return;
+		}
+		weights[count++] = weight;
+	}
+	if(count != nr) {
+		pkg_free(weights);
+		rpc->fault(ctx, 400, "Weight count does not match destination count");
+		return;
+	}
+
+	ret = ds_weight_set(group, weights, count);
+	pkg_free(weights);
+	if(ret == -1) {
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+	if(ret == -2) {
+		rpc->fault(
+				ctx, 409, "Destination count changed while updating weights");
+		return;
+	}
+	if(ret == -3) {
+		rpc->fault(ctx, 400, "Invalid Weight");
+		return;
+	}
+
+	if(rpc->add(ctx, "{", &th) < 0
+			|| rpc->struct_add(th, "dd", "GROUP", group, "DESTINATIONS", count)
 					   < 0) {
 		rpc->fault(ctx, 500, "Internal error reply structure");
 	}
@@ -2684,6 +2769,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_pressure_inc_doc, 0},
 	{"dispatcher.pressure_set", dispatcher_rpc_pressure_set,
 		dispatcher_rpc_pressure_set_doc, 0},
+	{"dispatcher.weight_set", dispatcher_rpc_weight_set,
+		dispatcher_rpc_weight_set_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,
