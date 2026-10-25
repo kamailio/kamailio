@@ -2805,6 +2805,39 @@ kamcli dispatcher.oclist 1
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.weight_set">
+		<title>
+		<function moreinfo="none">dispatcher.weight_set</function>
+		</title>
+		<para>
+		Set the weights for all destinations in a group without reloading the
+		dispatcher. Weights are mapped positionally to the current destination
+		indexes shown by <emphasis>dispatcher.list</emphasis>. The number of
+		weights must exactly match the number of destinations in the group,
+		including a default destination when configured. Each value must be
+		between 0 and 100.
+		</para>
+		<para>
+		The update is atomic and immediately rebuilds the distributions used by
+		algorithms 9 and 15. Runtime weights are preserved by in-memory add and
+		remove operations; a full reload restores weights from the configured
+		file or database. The structured weight value in
+		<emphasis>dispatcher.list</emphasis> reflects the runtime value; the
+		original attributes body text is not rewritten.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_weight0_ ... _weightN_: one weight for each destination index</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.weight_set _group_ _weight0_ [_weight1_ ...]
+&sercmd; dispatcher.weight_set 2 50 30 20
+...
+</programlisting>
+	</section>
 
    </section>
 
