@@ -1092,13 +1092,11 @@ void shuffle_char100array(char *arr)
  *   destination address to be used. The Nth call will use
  *   the address with the index at possition N%100
  */
-int dp_init_relative_weights(ds_set_t *dset)
+static int dp_init_relative_weights_locked(ds_set_t *dset)
 {
 	int j;
 	int k;
 	int t;
-	int *ds_dests_flags = NULL;
-	int *ds_dests_rweights = NULL;
 	int current_slice;
 	int rw_sum;
 	unsigned int last_insert;
@@ -1106,42 +1104,27 @@ int dp_init_relative_weights(ds_set_t *dset)
 	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
 		return -1;
 
-	/* local copy to avoid synchronization problems */
-	ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
-	if(ds_dests_flags == NULL) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-	ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
-	if(ds_dests_rweights == NULL) {
-		PKG_MEM_ERROR;
-		pkg_free(ds_dests_flags);
-		return -1;
-	}
-
-
-	/* needed to sync the rwlist access */
-	lock_get(&dset->lock);
 	rw_sum = 0;
 	/* find the sum of relative weights */
 	for(j = 0; j < dset->nr; j++) {
-		ds_dests_flags[j] = dset->dlist[j].flags;
-		ds_dests_rweights[j] = dset->dlist[j].attrs.rweight;
-		if(ds_skip_dst(ds_dests_flags[j]))
+		if(ds_skip_dst(dset->dlist[j].flags))
 			continue;
-		rw_sum += ds_dests_rweights[j];
+		rw_sum += dset->dlist[j].attrs.rweight;
 	}
 
-	if(rw_sum == 0)
-		goto ret;
+	if(rw_sum == 0) {
+		memset(dset->rwlist, 0, sizeof(dset->rwlist));
+		return 0;
+	}
 
 	/* fill the array based on the relative weight of each destination */
 	t = 0;
 	for(j = 0; j < dset->nr; j++) {
-		if(ds_skip_dst(ds_dests_flags[j]))
+		if(ds_skip_dst(dset->dlist[j].flags))
 			continue;
 
-		current_slice = ds_dests_rweights[j] * 100 / rw_sum; /* truncate here */
+		current_slice =
+				dset->dlist[j].attrs.rweight * 100 / rw_sum; /* truncate here */
 		LM_DBG("rw_sum[%d][%d][%d]\n", j, rw_sum, current_slice);
 		for(k = 0; k < current_slice; k++) {
 			dset->rwlist[t] = (unsigned int)j;
@@ -1164,13 +1147,21 @@ int dp_init_relative_weights(ds_set_t *dset)
 	 * sending first 20 calls to it, but ensure that within a 100 calls,
 	 * 20 go to first address */
 	shuffle_uint100array(dset->rwlist);
-	goto ret;
-
-ret:
-	lock_release(&dset->lock);
-	pkg_free(ds_dests_flags);
-	pkg_free(ds_dests_rweights);
 	return 0;
+}
+
+int dp_init_relative_weights(ds_set_t *dset)
+{
+	int ret;
+
+	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
+		return -1;
+
+	/* needed to sync the rwlist access */
+	lock_get(&dset->lock);
+	ret = dp_init_relative_weights_locked(dset);
+	lock_release(&dset->lock);
+	return ret;
 }
 
 
@@ -4073,6 +4064,7 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 	} else {
 		ndst->pressure = node->dlist[i].pressure;
 		ndst->attrs.weight = node->dlist[i].attrs.weight;
+		ndst->attrs.rweight = node->dlist[i].attrs.rweight;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 		memcpy(ndst->buid, node->dlist[i].suid.s, node->dlist[i].suid.len);
 		ndst->suid.s = ndst->buid;
@@ -4170,6 +4162,7 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 	} else {
 		ndst->pressure = node->dlist[i].pressure;
 		ndst->attrs.weight = node->dlist[i].attrs.weight;
+		ndst->attrs.rweight = node->dlist[i].attrs.rweight;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 	}
 	return;
@@ -4442,6 +4435,57 @@ int ds_weight_set(int group, int *weights, int count)
 	dp_init_priority_weights(idx);
 	idx->wlast = 0;
 	idx->pwlast = 0;
+	lock_release(&idx->lock);
+
+	ds_put_list(list);
+	lock_release(ds_list_write_lock);
+	return 0;
+}
+
+/** Replace all destination relative weights in a group and rebuild its table. */
+int ds_rweight_set(int group, int *rweights, int count)
+{
+	int i;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	if(rweights == NULL || count <= 0)
+		return -3;
+	for(i = 0; i < count; i++) {
+		if(rweights[i] < 0 || rweights[i] > 100)
+			return -3;
+	}
+
+	lock_get(ds_list_write_lock);
+	list = ds_get_list();
+	if(list == NULL || list->nr <= 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("no destination sets\n");
+		return -1;
+	}
+
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+	if(count != idx->nr) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("relative weight count [%d] does not match destination count "
+			   "[%d] in set [%d]\n",
+				count, idx->nr, group);
+		return -2;
+	}
+
+	lock_get(&idx->lock);
+	for(i = 0; i < count; i++)
+		idx->dlist[i].attrs.rweight = rweights[i];
+	if(idx->nr >= 2)
+		dp_init_relative_weights_locked(idx);
+	idx->rwlast = 0;
 	lock_release(&idx->lock);
 
 	ds_put_list(list);

@@ -2489,6 +2489,9 @@ static const char *dispatcher_rpc_pressure_set_doc[2] = {
 static const char *dispatcher_rpc_weight_set_doc[2] = {
 		"Set all destination weights in a group", 0};
 
+static const char *dispatcher_rpc_rweight_set_doc[2] = {
+		"Set all destination relative weights in a group", 0};
+
 static void dispatcher_rpc_pressure_update(rpc_t *rpc, void *ctx, int increment)
 {
 	int group;
@@ -2566,8 +2569,7 @@ static void dispatcher_rpc_pressure_set(rpc_t *rpc, void *ctx)
 	}
 }
 
-/* RPC command to replace all destination weights in a group. */
-static void dispatcher_rpc_weight_set(rpc_t *rpc, void *ctx)
+static void dispatcher_rpc_weights_set(rpc_t *rpc, void *ctx, int relative)
 {
 	int group;
 	int weight;
@@ -2608,36 +2610,40 @@ static void dispatcher_rpc_weight_set(rpc_t *rpc, void *ctx)
 	while(rpc->scan(ctx, "*d", &weight) > 0) {
 		if(count >= nr) {
 			pkg_free(weights);
-			rpc->fault(
-					ctx, 400, "Weight count does not match destination count");
+			rpc->fault(ctx, 400, "%s count does not match destination count",
+					relative ? "Relative weight" : "Weight");
 			return;
 		}
 		if(weight < 0 || weight > 100) {
 			pkg_free(weights);
-			rpc->fault(ctx, 400, "Weight must be between 0 and 100");
+			rpc->fault(ctx, 400, "%s must be between 0 and 100",
+					relative ? "Relative weight" : "Weight");
 			return;
 		}
 		weights[count++] = weight;
 	}
 	if(count != nr) {
 		pkg_free(weights);
-		rpc->fault(ctx, 400, "Weight count does not match destination count");
+		rpc->fault(ctx, 400, "%s count does not match destination count",
+				relative ? "Relative weight" : "Weight");
 		return;
 	}
 
-	ret = ds_weight_set(group, weights, count);
+	ret = relative ? ds_rweight_set(group, weights, count)
+				   : ds_weight_set(group, weights, count);
 	pkg_free(weights);
 	if(ret == -1) {
 		rpc->fault(ctx, 404, "Destination Group Not Found");
 		return;
 	}
 	if(ret == -2) {
-		rpc->fault(
-				ctx, 409, "Destination count changed while updating weights");
+		rpc->fault(ctx, 409, "Destination count changed while updating %s",
+				relative ? "relative weights" : "weights");
 		return;
 	}
 	if(ret == -3) {
-		rpc->fault(ctx, 400, "Invalid Weight");
+		rpc->fault(ctx, 400, "Invalid %s",
+				relative ? "Relative Weight" : "Weight");
 		return;
 	}
 
@@ -2646,6 +2652,18 @@ static void dispatcher_rpc_weight_set(rpc_t *rpc, void *ctx)
 					   < 0) {
 		rpc->fault(ctx, 500, "Internal error reply structure");
 	}
+}
+
+/* RPC command to replace all destination weights in a group. */
+static void dispatcher_rpc_weight_set(rpc_t *rpc, void *ctx)
+{
+	dispatcher_rpc_weights_set(rpc, ctx, 0);
+}
+
+/* RPC command to replace all destination relative weights in a group. */
+static void dispatcher_rpc_rweight_set(rpc_t *rpc, void *ctx)
+{
+	dispatcher_rpc_weights_set(rpc, ctx, 1);
 }
 
 static const char *dispatcher_rpc_hash_doc[2] = {
@@ -2771,6 +2789,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_pressure_set_doc, 0},
 	{"dispatcher.weight_set", dispatcher_rpc_weight_set,
 		dispatcher_rpc_weight_set_doc, 0},
+	{"dispatcher.rweight_set", dispatcher_rpc_rweight_set,
+		dispatcher_rpc_rweight_set_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,

@@ -192,6 +192,7 @@ int ds_pressure_inc(int group, str *address, uint32_t *pressure);
 int ds_pressure_set(
 		int group, str *address, uint32_t value, uint32_t *pressure);
 int ds_weight_set(int group, int *weights, int count);
+int ds_rweight_set(int group, int *rweights, int count);
 int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 		int state, int mode, ds_rctx_t *rctx);
 int ds_reinit_state(int group, str *address, str *iuid, int state);
