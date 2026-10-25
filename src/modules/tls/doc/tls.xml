@@ -330,6 +330,11 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 			&kamailio;. If drop() is executed in the event route, then the
 			data is no longer sent over the connection.
 		</para>
+		<para>
+			With tcp_main_threads set to 2, the event route is executed in a
+			SIP worker after the TLS handshake and drop() has no effect on the
+			connection.
+		</para>
 	<example>
 	    <title>Use of <varname>event_route[tls:connection-out]</varname></title>
 	    <programlisting>

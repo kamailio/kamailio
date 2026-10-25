@@ -1454,7 +1454,9 @@ bug:
 	return -1;
 ssl_eof:
 	c->state = S_CONN_EOF;
-	c->flags |= F_CONN_FORCE_EOF;
+	/* mode 2: c->flags belongs to the io_wait thread; the write job's -1 closes c */
+	if(ksr_tcp_main_threads != 2)
+		c->flags |= F_CONN_FORCE_EOF;
 	*pbuf = (const char *)wr.buf;
 	*plen = wr.used;
 	DBG("TLS connection has been closed\n");
@@ -2298,8 +2300,9 @@ int tls_run_event_routes(struct tcp_connection *c)
 			}
 		}
 	}
-	/* drop() executed in the event route - set nosend flag */
-	if(unlikely(ctx.run_flags & DROP_R_F)) {
+	/* drop() executed in the event route - set nosend flag
+	 * mode 2: the route runs in a worker; c->flags belongs to the io_wait thread */
+	if(unlikely(ctx.run_flags & DROP_R_F) && ksr_tcp_main_threads != 2) {
 		c->flags |= F_CONN_NOSEND;
 	}
 	tls_set_pv_con(0);
