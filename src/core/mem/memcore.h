@@ -46,4 +46,10 @@ int tlsf_malloc_init_pkg_manager(void);
 int tlsf_malloc_init_shm_manager(void);
 #endif
 
+#ifdef HG_MALLOC
+/* size classes with per-thread caches - implemented in hg_malloc.c */
+int hg_malloc_init_pkg_manager(void);
+int hg_malloc_init_shm_manager(void);
+#endif
+
 #endif

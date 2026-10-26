@@ -156,6 +156,8 @@ typedef struct sr_shm_api
 	sr_shm_gunlock_f xgunlock;
 	/*memory chunk set func pointer*/
 	sr_setfunc_f xsetfunc;
+	/*the manager locks internally: as the only block it is used directly*/
+	int xlocked;
 } sr_shm_api_t;
 
 #endif
