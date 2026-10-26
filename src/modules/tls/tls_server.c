@@ -136,7 +136,8 @@ extern str sr_tls_xavp_cfg;
 static str _ksr_tls_connect_server_id = STR_NULL;
 
 /* copy the outbound tls xavp of the calling process (server_name,
- * server_id) into ci as shm strings
+ * server_id) into ci as shm strings; without a server_id in the xavp, the
+ * one set by tls_set_connect_server_id() in this process
  * - also the mode 2 tls_hook.connect_info: tcp main moves them from the
  *   connect request to the new connection */
 void tls_h_connect_info_f(ksr_coninfo_t *ci)
@@ -144,6 +145,18 @@ void tls_h_connect_info_f(ksr_coninfo_t *ci)
 	sr_xavp_t *vavp = NULL;
 	str sname = str_init("server_name");
 	str sid = str_init("server_id");
+
+	/* the value set by tls_set_connect_server_id() for the next connect,
+	 * overwritten below by the xavp server_id, then reset */
+	if(_ksr_tls_connect_server_id.len > 0) {
+		if(shm_str_update(&ci->server_id, &_ksr_tls_connect_server_id) < 0) {
+			LM_WARN("failed to store outbound tls server_id in shm\n");
+		} else {
+			LM_DBG("stored outbound server_id: %.*s\n", ci->server_id.len,
+					ci->server_id.s);
+			ksr_tls_set_connect_server_id(NULL);
+		}
+	}
 
 	if(sr_tls_xavp_cfg.s == NULL) {
 		return;
