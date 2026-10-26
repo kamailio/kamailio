@@ -55,7 +55,7 @@
 #include "checker.h"
 #include "mark.h"
 
-#define IFC_AS_UNAVAILABLE_STATUS_CODE 555
+#define IFC_AS_UNAVAILABLE_STATUS_CODE 500
 
 extern struct tm_binds
 		isc_tmb; /**< Structure with pointers to tm funcs 		*/
