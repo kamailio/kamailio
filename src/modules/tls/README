@@ -2019,6 +2019,10 @@ modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
+   With tcp_main_threads set to 2, the event route is executed in a SIP
+   worker after the TLS handshake and drop() has no effect on the
+   connection.
+
    Example 1.63. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
