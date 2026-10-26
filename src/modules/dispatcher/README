@@ -1410,15 +1410,17 @@ GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
    3    |    20    |   50   |   50%
    4    |    20    |   50   |   50%
           + “16” - pressure based dispatching. Each destination's pressure
-            is initialized from its non-negative priority value when the
-            dispatcher list is loaded or reloaded. The active destination
+            is initialized from its unsigned “pressure” attribute when the
+            dispatcher list is loaded or reloaded. When the attribute is
+            missing, pressure is initialized to 0. The active destination
             with the lowest pressure is selected. If several destinations
             have the same lowest pressure, they are selected in
             round-robin order. Routing does not change the pressure value.
             Failover destinations are ordered by increasing pressure, with
             round-robin ordering among destinations having equal pressure.
             Runtime updates preserve the current pressure; reload the
-            dispatcher list to initialize pressure again from priority.
+            dispatcher list to initialize pressure again from the
+            configured attribute.
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in XAVP list for
@@ -2368,6 +2370,10 @@ kamcmd dispatcher.rweight_gset 2 50 30 20
        relative weight distribution type - its rweight is set to 0. See
        also the description of the corresponding algorithm parameter for
        ds_select_dst().
+     * 'pressure' - sets the initial unsigned 32-bit pressure used by
+       algorithm 16. When this attribute is missing or invalid, the
+       initial pressure is 0. Runtime pressure updates do not rewrite the
+       attribute; reloading the dispatcher restores its configured value.
      * 'socket' - used to set the sending socket for the gateway,
        overwriting ds_default_socket parameter. It is used for sending the
        SIP traffic as well as OPTIONS pings/keepalives (if no specific
