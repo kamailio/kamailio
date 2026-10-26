@@ -1402,10 +1402,13 @@ int tcp_reactor_handle_tcpconn_ev(
 			&& (tcpconn->flags & F_CONN_WRITE_W) && tcpconn->wsq_head != NULL) {
 		if(unlikely(tcp_reactor_shield(tcpconn, fd_i) < 0))
 			goto reactor_close;
-		if(unlikely(tcp_reactor_enqueue_job(tcpconn, TCP_R_WRITE) < 0))
+		if(unlikely(tcp_reactor_enqueue_job(tcpconn, TCP_R_WRITE) < 0)) {
+			/* a re-armed watch re-fires on the writable socket: close c */
+			tcp_reactor_mark_bad(tcpconn);
 			tcp_reactor_unshield_or_chain(tcpconn);
-		else
+		} else {
 			tcp_reactor_read_beside_write(tcpconn);
+		}
 		return 0;
 	}
 	/* write-watched, wsq empty: flush wbuf_q (wire bytes) here on io_wait */
@@ -1431,7 +1434,8 @@ int tcp_reactor_handle_tcpconn_ev(
 		if(unlikely(tcp_reactor_shield(tcpconn, fd_i) < 0))
 			goto reactor_close;
 		if(unlikely(tcp_reactor_enqueue_job(tcpconn, TCP_R_READ) < 0)) {
-			/* could not enqueue: release the in-pool ref and un-shield */
+			/* a re-armed watch re-fires on the pending input: close c */
+			tcp_reactor_mark_bad(tcpconn);
 			tcp_reactor_unshield_or_chain(tcpconn);
 		}
 	}
