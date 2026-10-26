@@ -2838,6 +2838,39 @@ kamcli dispatcher.oclist 1
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.rweight_set">
+		<title>
+		<function moreinfo="none">dispatcher.rweight_set</function>
+		</title>
+		<para>
+		Set the relative weights for all destinations in a group without
+		reloading the dispatcher. Relative weights are mapped positionally to
+		the current destination indexes shown by
+		<emphasis>dispatcher.list</emphasis>. The number of values must exactly
+		match the number of destinations in the group, including a default
+		destination when configured. Each value must be between 0 and 100.
+		</para>
+		<para>
+		The update is atomic and immediately rebuilds the distribution used by
+		algorithm 11. Runtime relative weights are preserved by in-memory add
+		and remove operations; a full reload restores relative weights from the
+		configured file or database. The structured relative weight value in
+		<emphasis>dispatcher.list</emphasis> reflects the runtime value; the
+		original attributes body text is not rewritten.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_rweight0_ ... _rweightN_: one relative weight for each destination index</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.rweight_set _group_ _rweight0_ [_rweight1_ ...]
+&sercmd; dispatcher.rweight_set 2 50 30 20
+...
+</programlisting>
+	</section>
 
    </section>
 
