@@ -389,9 +389,21 @@ static inline void wb_timer(urecord_t *_r)
 					ptr->c.len, ptr->c.s);
 			t = ptr;
 			ptr = ptr->next;
-			if(delete_ucontact(_r, t) < 0) {
-				LM_ERR("failed to delete contact with lost tcp connection\n");
+
+			/* run callbacks for DELETE event */
+			if(exists_ulcb_type(UL_CONTACT_DELETE)) {
+				run_ul_callbacks(UL_CONTACT_DELETE, t);
 			}
+
+			/* Should we remove the contact from the database ? */
+			if(st_expired_ucontact(t) == 1) {
+				if(db_delete_ucontact(t) < 0) {
+					LM_ERR("failed to delete contact with lost tcp connection"
+						   " from the database (aor: %.*s)\n",
+							t->aor->len, ZSW(t->aor->s));
+				}
+			}
+			mem_delete_ucontact(_r, t);
 			continue;
 		}
 
