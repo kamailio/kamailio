@@ -78,7 +78,9 @@ typedef struct tls_hooks
 	int (*pre_init)(void);
 	/* match the given connection TLS domain
 	 * with the TLS domain looked up by ip:port
-	 * see: _tcpconn_find */
+	 * see: _tcpconn_find
+	 * mode 2: in tcp main, the module takes the connect request's tls
+	 * attributes from tcp_reactor_connect_info() */
 	int (*match_domain)(
 			struct tcp_connection *c, struct ip_addr *ip, unsigned short port);
 	/* match connections TLS domain

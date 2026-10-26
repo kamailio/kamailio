@@ -217,6 +217,19 @@ int tcp_reactor_pool_thread_idx(void)
 	return tcp_reactor_thread_idx;
 }
 
+/* &creq->cinfo while tcp_reactor_handle_connect_req() looks dst up (io_wait
+ * thread); NULL otherwise and in the other threads */
+static _Thread_local ksr_coninfo_t *tcp_reactor_creq_cinfo = NULL;
+
+/* mode 2 [io_wait]: the worker's tls attributes (server_name, server_id) of
+ * the connect request being looked up, for tls_connection_match_domain:
+ * tcp main has no access to the worker's xavps. NULL in other threads,
+ * processes and in modes 0/1 */
+ksr_coninfo_t *tcp_reactor_connect_info(void)
+{
+	return tcp_reactor_creq_cinfo;
+}
+
 /* dispatch socket framing:
  *  - AF_UNIX SOCK_DGRAM: one send() = one datagram = one task pointer
  *  - each worker recv() returns one whole datagram, so concurrent workers
@@ -1299,7 +1312,9 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 	cport = su_getport(&creq->dst);
 	con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
 	/* dedup: another worker may have created a matching connection
-	 * since this worker's lookup missed => reuse it if so */
+	 * since this worker's lookup missed => reuse it if so; the tls
+	 * match_domain hook takes the worker's attributes from creq->cinfo */
+	tcp_reactor_creq_cinfo = &creq->cinfo;
 	if(tcp_connection_match == TCPCONN_MATCH_STRICT
 			|| (creq->send_flags.f & SND_F_FORCE_PROTO)) {
 		cc = tcpconn_lookup(creq->id, &cip, cport, cfrom, creq->try_local_port,
@@ -1307,6 +1322,7 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 	} else {
 		cc = tcpconn_get(creq->id, &cip, cport, cfrom, con_lifetime);
 	}
+	tcp_reactor_creq_cinfo = NULL;
 	if(cc != NULL) {
 		/* reuse: stage on wsq for a pool write job, as for CONN_WRITE_REQ;
 		 * a pool job may own cc (mid-read) */

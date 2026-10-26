@@ -77,7 +77,8 @@ typedef struct tcp_reactor_write_req
  *    reuses a connection another worker opened meanwhile, else connects,
  *    creates the connection and queues the payload
  *  - for TLS the worker snapshots its tls xavp (tls_hook.connect_info): tcp
- *    main has no access to the worker's xavps
+ *    main has no access to the worker's xavps; it uses the snapshot for the
+ *    lookup (tcp_reactor_connect_info()) and for the new connection
  *  - tcp main frees buf and the request
  */
 typedef struct tcp_reactor_connect_req
@@ -91,7 +92,8 @@ typedef struct tcp_reactor_connect_req
 	snd_flags_t send_flags;
 	char *buf; /* shm payload (plaintext for TLS) */
 	unsigned int len;
-	ksr_coninfo_t cinfo; /* tls server_name/server_id (shm), for the new conn */
+	ksr_coninfo_t cinfo; /* tls server_name/server_id (shm), for the lookup
+						  * and the new conn */
 } tcp_reactor_connect_req_t;
 
 /* mode 2 [pool]: hand one reassembled message to a worker, where modes 0/1
@@ -114,6 +116,11 @@ int tcp_reactor_dispatch_tls_event(struct tcp_connection *c);
  *  - -1 on the io_wait thread, in other processes and in modes 0/1
  * tcp_main.c uses it to tell a pool thread from the io_wait thread. */
 int tcp_reactor_pool_thread_idx(void);
+
+/* mode 2 [io_wait]: tls attributes (server_name, server_id) of the connect
+ * request tcp_reactor_handle_connect_req() is looking up, NULL otherwise.
+ * The tls match_domain hook uses them in place of the worker's xavps. */
+ksr_coninfo_t *tcp_reactor_connect_info(void);
 
 /* mode 2 write entry points, called from tcp_main.c:
  *  - tcp_reactor_send_put() (tcp_send()): send on an existing connection;
