@@ -2500,6 +2500,32 @@ DEST: {
 		respectively is disabled destination that is not tested, etc.
 		</para>
 	</section>
+	<section id="dispatcher.r.show">
+		<title>
+		<function moreinfo="none">dispatcher.show</function>
+		</title>
+		<para>
+		Lists destinations from one dispatcher group. When an address is
+		provided, only records whose full destination URI matches that address
+		are returned. The address comparison is case-insensitive. When the
+		address is omitted, all destinations in the group are returned.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: optional destination URI</para></listitem>
+		</itemizedlist>
+		<para>Examples:</para>
+<programlisting format="linespecific">
+...
+# list all destinations in group 2
+&sercmd; dispatcher.show 2
+
+# list the matching destination in group 2
+&sercmd; dispatcher.show 2 sip:127.0.0.1:5080
+...
+</programlisting>
+	</section>
 	<section id="dispatcher.r.reload">
 		<title>
 		<function moreinfo="none">dispatcher.reload</function>
