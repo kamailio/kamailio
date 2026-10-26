@@ -153,8 +153,8 @@ Tyler Moore
               5.12. dispatcher.pressure_dec
               5.13. dispatcher.pressure_inc
               5.14. dispatcher.pressure_set
-              5.15. dispatcher.weight_set
-              5.16. dispatcher.rweight_set
+              5.15. dispatcher.weight_gset
+              5.16. dispatcher.rweight_gset
 
         6. Installation and Running
 
@@ -345,8 +345,8 @@ Chapter 1. Admin Guide
         5.12. dispatcher.pressure_dec
         5.13. dispatcher.pressure_inc
         5.14. dispatcher.pressure_set
-        5.15. dispatcher.weight_set
-        5.16. dispatcher.rweight_set
+        5.15. dispatcher.weight_gset
+        5.16. dispatcher.rweight_gset
 
    6. Installation and Running
 
@@ -1952,8 +1952,8 @@ event_route[dialog:failed] {
    5.12. dispatcher.pressure_dec
    5.13. dispatcher.pressure_inc
    5.14. dispatcher.pressure_set
-   5.15. dispatcher.weight_set
-   5.16. dispatcher.rweight_set
+   5.15. dispatcher.weight_gset
+   5.16. dispatcher.rweight_gset
 
 5.1.  dispatcher.set_state
 
@@ -2252,7 +2252,7 @@ kamcmd dispatcher.pressure_inc 2 sip:127.0.0.1:5080
 kamcmd dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
 ...
 
-5.15.  dispatcher.weight_set
+5.15.  dispatcher.weight_gset
 
    Set the weights for all destinations in a group without reloading the
    dispatcher. Weights are mapped positionally to the current destination
@@ -2273,11 +2273,11 @@ kamcmd dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
 
    Example:
 ...
-# prototype: kamcmd dispatcher.weight_set _group_ _weight0_ [_weight1_ ...]
-kamcmd dispatcher.weight_set 2 50 30 20
+# prototype: kamcmd dispatcher.weight_gset _group_ _weight0_ [_weight1_ ...]
+kamcmd dispatcher.weight_gset 2 50 30 20
 ...
 
-5.16.  dispatcher.rweight_set
+5.16.  dispatcher.rweight_gset
 
    Set the relative weights for all destinations in a group without
    reloading the dispatcher. Relative weights are mapped positionally to
@@ -2300,8 +2300,8 @@ kamcmd dispatcher.weight_set 2 50 30 20
 
    Example:
 ...
-# prototype: kamcmd dispatcher.rweight_set _group_ _rweight0_ [_rweight1_ ...]
-kamcmd dispatcher.rweight_set 2 50 30 20
+# prototype: kamcmd dispatcher.rweight_gset _group_ _rweight0_ [_rweight1_ ...]
+kamcmd dispatcher.rweight_gset 2 50 30 20
 ...
 
 6. Installation and Running
@@ -2338,7 +2338,8 @@ kamcmd dispatcher.rweight_set 2 50 30 20
             matched anymore with ds_is_from_list(...).
           + 32 (bit at index 5 - 1 <<5) - no ping to destination
      * priority: sets the priority in destination list (based on it is
-       done the initial ordering inside the set)
+       done the initial ordering inside the set: descending mode - first
+       record is the one with highest priority)
      * attributes: extra fields in form of name1=value1;...;nameN=valueN.
 
 6.1.1. Special Attributes
