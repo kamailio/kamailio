@@ -150,8 +150,6 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-static rpc_export_t rpc_methods[];
-
 /** module exports */
 struct module_exports exports = {
 	"dmq",				/* module name */
