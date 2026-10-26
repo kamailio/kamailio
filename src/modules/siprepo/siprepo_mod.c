@@ -128,7 +128,10 @@ static int mod_init(void)
 		LM_ERR("failed to initialize hash table\n");
 		return -1;
 	}
-	register_basic_timers(_siprepo_timer_procs);
+	if(register_basic_timers(_siprepo_timer_procs) < 0) {
+		LM_ERR("failed to register timer processes\n");
+		return -1;
+	}
 	return 0;
 }
 
