@@ -153,6 +153,7 @@ Tyler Moore
               5.12. dispatcher.pressure_inc
               5.13. dispatcher.pressure_set
               5.14. dispatcher.weight_set
+              5.15. dispatcher.rweight_set
 
         6. Installation and Running
 
@@ -343,6 +344,7 @@ Chapter 1. Admin Guide
         5.12. dispatcher.pressure_inc
         5.13. dispatcher.pressure_set
         5.14. dispatcher.weight_set
+        5.15. dispatcher.rweight_set
 
    6. Installation and Running
 
@@ -1948,6 +1950,7 @@ event_route[dialog:failed] {
    5.12. dispatcher.pressure_inc
    5.13. dispatcher.pressure_set
    5.14. dispatcher.weight_set
+   5.15. dispatcher.rweight_set
 
 5.1.  dispatcher.set_state
 
@@ -2249,6 +2252,33 @@ kamcmd dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
 ...
 # prototype: kamcmd dispatcher.weight_set _group_ _weight0_ [_weight1_ ...]
 kamcmd dispatcher.weight_set 2 50 30 20
+...
+
+5.15.  dispatcher.rweight_set
+
+   Set the relative weights for all destinations in a group without
+   reloading the dispatcher. Relative weights are mapped positionally to
+   the current destination indexes shown by dispatcher.list. The number of
+   values must exactly match the number of destinations in the group,
+   including a default destination when configured. Each value must be
+   between 0 and 100.
+
+   The update is atomic and immediately rebuilds the distribution used by
+   algorithm 11. Runtime relative weights are preserved by in-memory add
+   and remove operations; a full reload restores relative weights from the
+   configured file or database. The structured relative weight value in
+   dispatcher.list reflects the runtime value; the original attributes
+   body text is not rewritten.
+
+   Parameters:
+     * _group_: destination group id
+     * _rweight0_ ... _rweightN_: one relative weight for each destination
+       index
+
+   Example:
+...
+# prototype: kamcmd dispatcher.rweight_set _group_ _rweight0_ [_rweight1_ ...]
+kamcmd dispatcher.rweight_set 2 50 30 20
 ...
 
 6. Installation and Running
