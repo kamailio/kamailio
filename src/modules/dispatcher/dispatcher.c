@@ -2566,10 +2566,10 @@ static const char *dispatcher_rpc_pressure_inc_doc[2] = {
 static const char *dispatcher_rpc_pressure_set_doc[2] = {
 		"Set the pressure of a destination address", 0};
 
-static const char *dispatcher_rpc_weight_set_doc[2] = {
+static const char *dispatcher_rpc_weight_gset_doc[2] = {
 		"Set all destination weights in a group", 0};
 
-static const char *dispatcher_rpc_rweight_set_doc[2] = {
+static const char *dispatcher_rpc_rweight_gset_doc[2] = {
 		"Set all destination relative weights in a group", 0};
 
 static void dispatcher_rpc_pressure_update(rpc_t *rpc, void *ctx, int increment)
@@ -2735,13 +2735,13 @@ static void dispatcher_rpc_weights_set(rpc_t *rpc, void *ctx, int relative)
 }
 
 /* RPC command to replace all destination weights in a group. */
-static void dispatcher_rpc_weight_set(rpc_t *rpc, void *ctx)
+static void dispatcher_rpc_weight_gset(rpc_t *rpc, void *ctx)
 {
 	dispatcher_rpc_weights_set(rpc, ctx, 0);
 }
 
 /* RPC command to replace all destination relative weights in a group. */
-static void dispatcher_rpc_rweight_set(rpc_t *rpc, void *ctx)
+static void dispatcher_rpc_rweight_gset(rpc_t *rpc, void *ctx)
 {
 	dispatcher_rpc_weights_set(rpc, ctx, 1);
 }
@@ -2869,10 +2869,10 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_pressure_inc_doc, 0},
 	{"dispatcher.pressure_set", dispatcher_rpc_pressure_set,
 		dispatcher_rpc_pressure_set_doc, 0},
-	{"dispatcher.weight_set", dispatcher_rpc_weight_set,
-		dispatcher_rpc_weight_set_doc, 0},
-	{"dispatcher.rweight_set", dispatcher_rpc_rweight_set,
-		dispatcher_rpc_rweight_set_doc, 0},
+	{"dispatcher.weight_gset", dispatcher_rpc_weight_gset,
+		dispatcher_rpc_weight_gset_doc, 0},
+	{"dispatcher.rweight_gset", dispatcher_rpc_rweight_gset,
+		dispatcher_rpc_rweight_gset_doc, 0},
 	{"dispatcher.remove",   dispatcher_rpc_remove,
 		dispatcher_rpc_remove_doc, 0},
 	{"dispatcher.hash",   dispatcher_rpc_hash,
