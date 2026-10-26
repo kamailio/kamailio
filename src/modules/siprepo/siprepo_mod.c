@@ -107,6 +107,23 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(_siprepo_table_size <= 0) {
+		LM_ERR("invalid hash_size value: %d\n", _siprepo_table_size);
+		return -1;
+	}
+	if(_siprepo_expire <= 0) {
+		LM_ERR("invalid expire value: %d\n", _siprepo_expire);
+		return -1;
+	}
+	if(_siprepo_timer_interval <= 0) {
+		LM_ERR("invalid timer_interval value: %d\n", _siprepo_timer_interval);
+		return -1;
+	}
+	if(_siprepo_timer_procs <= 0) {
+		LM_ERR("invalid timer_procs value: %d\n", _siprepo_timer_procs);
+		return -1;
+	}
+
 	if(siprepo_table_init() < 0) {
 		LM_ERR("failed to initialize hash table\n");
 		return -1;
