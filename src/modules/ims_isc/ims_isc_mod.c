@@ -342,7 +342,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 			/* Terminate the session */
 			LM_DBG("Terminating session.\n");
 			isc_tmb.t_reply(msg, IFC_AS_UNAVAILABLE_STATUS_CODE,
-					"AS Contacting Failed - iFC terminated dialog");
+					"Server Internal Error (AS Failure)");
 			LM_DBG("Responding with %d to URI: %.*s\n",
 					IFC_AS_UNAVAILABLE_STATUS_CODE,
 					msg->first_line.u.request.uri.len,
