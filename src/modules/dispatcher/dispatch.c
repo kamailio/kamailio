@@ -486,6 +486,14 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 				dest->attrs.rweight = 0;
 				LM_WARN("rweight %d not in 1-100 range - ignoring\n", tmp_ival);
 			}
+		} else if(pit->name.len == 8
+				  && strncasecmp(pit->name.s, "pressure", 8) == 0) {
+			if(pit->body.len <= 0
+					|| (pit->body.len == 1 && pit->body.s[0] == '+')
+					|| str2int(&pit->body, &dest->pressure) < 0) {
+				dest->pressure = 0;
+				LM_WARN("invalid pressure value - using 0\n");
+			}
 		} else if(pit->name.len == 9
 				  && strncasecmp(pit->name.s, "ping_from", 9) == 0) {
 			dest->attrs.ping_from = pit->body;
@@ -811,7 +819,6 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 
 	dp->flags = flags;
 	dp->priority = priority;
-	dp->pressure = (priority < 0) ? 0U : (uint32_t)priority;
 	dp->dload = dload;
 	dp->ocdata.ocmax = 100;
 

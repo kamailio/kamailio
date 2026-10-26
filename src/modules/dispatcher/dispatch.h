@@ -288,7 +288,7 @@ typedef struct _ds_dest {
 	str host;         /*!< shortcut to host part */
 	int flags;        /*!< flags */
 	int priority;     /*!< priority */
-	uint32_t pressure; /*!< routing pressure (initialized from priority) */
+	uint32_t pressure; /*!< routing pressure (initialized from attributes) */
 	int dload;        /*!< load */
 	ds_attrs_t attrs; /*!< the attributes */
 	ds_latency_stats_t latency_stats; /*!< latency statistics */
