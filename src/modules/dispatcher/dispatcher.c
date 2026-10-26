@@ -2010,6 +2010,9 @@ static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 static const char *dispatcher_rpc_list_doc[2] = {
 		"Return the content of dispatcher sets", 0};
 
+static const char *dispatcher_rpc_show_doc[2] = {
+		"Return destinations matching a group and optional address", 0};
+
 
 #define DS_RPC_PRINT_NORMAL 1
 #define DS_RPC_PRINT_SHORT 2
@@ -2018,10 +2021,9 @@ static const char *dispatcher_rpc_list_doc[2] = {
 /**
  *
  */
-int ds_rpc_print_set(
-		ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle, int mode)
+static int ds_rpc_print_group(ds_set_t *node, rpc_t *rpc, void *ctx,
+		void *rpc_handle, int mode, str *address)
 {
-	int i = 0, rc = 0;
 	void *rh;
 	void *sh;
 	void *vh;
@@ -2036,12 +2038,6 @@ int ds_rpc_print_set(
 	if(!node)
 		return 0;
 
-	for(; i < 2; ++i) {
-		rc = ds_rpc_print_set(node->next[i], rpc, ctx, rpc_handle, mode);
-		if(rc != 0)
-			return rc;
-	}
-
 	if(rpc->struct_add(rpc_handle, "{", "SET", &sh) < 0) {
 		rpc->fault(ctx, 500, "Internal error set structure");
 		return -1;
@@ -2052,6 +2048,13 @@ int ds_rpc_print_set(
 	}
 
 	for(j = 0; j < node->nr; j++) {
+		if(address != NULL
+				&& (node->dlist[j].uri.len != address->len
+						|| strncasecmp(node->dlist[j].uri.s, address->s,
+								   address->len)
+								   != 0))
+			continue;
+
 		if(rpc->struct_add(rh, "{", "DEST", &vh) < 0) {
 			rpc->fault(ctx, 500, "Internal error creating dest");
 			return -1;
@@ -2176,6 +2179,24 @@ int ds_rpc_print_set(
 	return 0;
 }
 
+static int ds_rpc_print_set(
+		ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle, int mode)
+{
+	int i;
+	int rc;
+
+	if(!node)
+		return 0;
+
+	for(i = 0; i < 2; ++i) {
+		rc = ds_rpc_print_set(node->next[i], rpc, ctx, rpc_handle, mode);
+		if(rc != 0)
+			return rc;
+	}
+
+	return ds_rpc_print_group(node, rpc, ctx, rpc_handle, mode, NULL);
+}
+
 /*
  * RPC command to print dispatcher destination sets
  */
@@ -2224,6 +2245,65 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	ds_put_list(dslist);
 
 	return;
+}
+
+/* RPC command to print one destination group, optionally filtered by URI. */
+static void dispatcher_rpc_show(rpc_t *rpc, void *ctx)
+{
+	int group;
+	int i;
+	int n;
+	int matched = 0;
+	str address = STR_NULL;
+	ds_list_t *list;
+	ds_set_t *node;
+	void *th;
+	void *ih;
+
+	n = rpc->scan(ctx, "d*S", &group, &address);
+	if(n < 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	list = ds_get_list();
+	node = ds_list_lookup(list, group);
+	if(node == NULL) {
+		ds_put_list(list);
+		rpc->fault(ctx, 404, "Destination Group Not Found");
+		return;
+	}
+
+	if(n == 2) {
+		for(i = 0; i < node->nr; i++) {
+			if(node->dlist[i].uri.len == address.len
+					&& strncasecmp(node->dlist[i].uri.s, address.s, address.len)
+							   == 0) {
+				matched = 1;
+				break;
+			}
+		}
+		if(!matched) {
+			ds_put_list(list);
+			rpc->fault(ctx, 404, "Destination Not Found");
+			return;
+		}
+	}
+
+	if(rpc->add(ctx, "{", &th) < 0) {
+		ds_put_list(list);
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	if(rpc->struct_add(th, "d[", "NRSETS", 1, "RECORDS", &ih) < 0) {
+		ds_put_list(list);
+		rpc->fault(ctx, 500, "Internal error sets structure");
+		return;
+	}
+
+	ds_rpc_print_group(
+			node, rpc, ctx, ih, DS_RPC_PRINT_NORMAL, n == 2 ? &address : NULL);
+	ds_put_list(list);
 }
 
 
@@ -2771,6 +2851,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_reload_doc, 0},
 	{"dispatcher.list",   dispatcher_rpc_list,
 		dispatcher_rpc_list_doc,   0},
+	{"dispatcher.show", dispatcher_rpc_show,
+		dispatcher_rpc_show_doc, 0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
 		dispatcher_rpc_set_state_doc,   0},
 	{"dispatcher.set_duid_state",   dispatcher_rpc_set_duid_state,
