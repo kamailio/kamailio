@@ -2616,6 +2616,8 @@ inline static void tcp_reader_timer_run(void)
 {
 	ticks_t ticks;
 
+	/* an idle reader wakes here too, every TCP_CHILD_SELECT_TIMEOUT */
+	KSR_MEM_SWEEP_POINT();
 	ticks = get_ticks_raw();
 	if(unlikely((ticks - tcp_reader_prev_ticks) < TCPCONN_TIMEOUT_MIN_RUN))
 		return;

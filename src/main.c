@@ -157,6 +157,7 @@
 #include "core/srapi.h"
 #include "core/receive.h"
 #include "core/coreparam.h"
+#include "core/mem/hg_hooks.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -228,11 +229,13 @@ Options:\n\
     --log-engine=log engine name and data\n\
     -L path      Modules search path (default: " MODS_DIR ")\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
+                  (INIT:CAP for an elastic hg arena, e.g. 128:1g)\n\
     --modparam=modname:paramname:type:value set the module parameter\n\
                   type has to be 's' for string value and 'i' for int value, \n\
                   example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
     --all-errors Print details about all config errors that can be detected\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
+                  (INIT:CAP for an elastic hg arena, e.g. 8:32)\n\
     --no-stdprint-logs  Do not print startup logs to std terminal\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
@@ -266,9 +269,9 @@ Options:\n\
     --version    Long option for `-v`\n\
     -V           Alternative for `-v`\n\
     -x name      Specify internal manager for shared memory (shm)\n\
-                  - can be: fm, qm or tlsf\n\
+                  - can be: fm, qm, tlsf, hg or hgdbg\n\
     -X name      Specify internal manager for private memory (pkg)\n\
-                  - can be: fm, qm, tlsf or sm\n\
+                  - can be: fm, qm, tlsf, hg, hgdbg or sm\n\
                   - if omitted, the one for shm is used\n\
     -Y dir       Runtime dir path\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n"
@@ -539,8 +542,12 @@ int ksr_no_stdprint_logs = 0;
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size = 0;
+/* -m INIT:CAP: the size an elastic hg shm arena may grow to; 0 = fixed */
+unsigned long shm_mem_cap = 0;
 /* private (pkg) memory (in MB) */
 unsigned long pkg_mem_size = 0;
+/* -M INIT:CAP: the same for each process's hg pkg arena */
+unsigned long pkg_mem_cap = 0;
 
 /* export command-line to anywhere else */
 int my_argc;
@@ -1602,7 +1609,7 @@ int main_loop(void)
 #ifdef USE_SLOW_TIMER
 						   + 1 /* slow timer */
 #endif
-		);
+						   + hg_maint_count_processes());
 
 		for(si = udp_listen; si; si = si->next) {
 			/* create the listening socket (for each address)*/
@@ -2004,6 +2011,10 @@ int main_loop(void)
 		/*this is the main process*/
 		bind_address = 0; /* main proc -> it shouldn't send anything, */
 
+		/* the hg memory manager's maintenance process */
+		if(hg_maint_start() < 0)
+			goto error;
+
 #ifdef USE_SLOW_TIMER
 		/* fork again for the "slow" timer process*/
 		pid = fork_process(PROC_TIMER, "slow timer", 1);
@@ -2121,6 +2132,56 @@ error:
  * Calculate number of processes, this does not
  * include processes created by modules
  */
+/* -m/-M value INIT[:CAP], in MB or with a k/m/g suffix; CAP is 0 if absent.
+ * -1 if unparsable or outside (0, max_mb] */
+static int ksr_mem_size_arg(char *arg, unsigned long max_mb,
+		unsigned long *init, unsigned long *cap)
+{
+	unsigned long v[2] = {0, 0};
+	unsigned long long b, max_b = (unsigned long long)max_mb << 20;
+	char *p, *end;
+	int i, shift;
+
+	p = arg;
+	for(i = 0; i < 2; i++) {
+		if(*p < '0' || *p > '9')
+			return -1;
+		b = strtoull(p, &end, 10);
+		switch(*end) {
+			case 'k':
+			case 'K':
+				shift = 10;
+				end++;
+				break;
+			case 'g':
+			case 'G':
+				shift = 30;
+				end++;
+				break;
+			case 'm':
+			case 'M':
+				end++;
+				/* fall through */
+			default:
+				shift = 20;
+				break;
+		}
+		/* the limit is checked before the shift, so no value can wrap */
+		if(b == 0 || b > (max_b >> shift))
+			return -1;
+		b <<= shift;
+		v[i] = (unsigned long)b;
+		if(*end == '\0')
+			break;
+		if(*end != ':' || i == 1)
+			return -1;
+		p = end + 1;
+	}
+	*init = v[0];
+	*cap = v[1];
+	return 0;
+}
+
 static int calc_proc_no(void)
 {
 	int udp_listeners = 0;
@@ -2204,7 +2265,8 @@ static int calc_proc_no(void)
 #ifdef USE_SCTP
 			+ ((!sctp_disable) ? sctp_listeners : 0)
 #endif
-					;
+			/* hg maintenance process */
+			+ hg_maint_count_processes();
 }
 
 int main(int argc, char **argv)
@@ -2231,7 +2293,6 @@ int main(int argc, char **argv)
 	char *tbuf;
 	char *tbuf_tmp;
 	struct stat st = {0};
-	long l1 = 0;
 	struct rlimit lim;
 
 	int option_index = 0;
@@ -2326,20 +2387,13 @@ int main(int argc, char **argv)
 					fprintf(stderr, "bad private mem size\n");
 					goto error;
 				}
-				l1 = strtol(optarg, &tmp, 10);
-				if(tmp && (*tmp)) {
-					fprintf(stderr, "bad private mem size number: -M %s\n",
-							optarg);
-					goto error;
-				}
 				/* safety check for upper limit of 1TB */
-				if(l1 <= 0 || l1 > 1024L * 1024) {
-					fprintf(stderr,
-							"out of limits private mem size number: -M %s\n",
-							optarg);
+				if(ksr_mem_size_arg(
+						   optarg, 1024UL * 1024, &pkg_mem_size, &pkg_mem_cap)
+						< 0) {
+					fprintf(stderr, "bad private mem size: -M %s\n", optarg);
 					goto error;
 				}
-				pkg_mem_size = 1024UL * 1024 * l1;
 				break;
 			case 'x':
 				sr_memmng_shm = optarg;
@@ -2410,6 +2464,19 @@ int main(int argc, char **argv)
 	if(pkg_mem_size == 0) {
 		pkg_mem_size = PKG_MEM_POOL_SIZE;
 	}
+	if(pkg_mem_cap) {
+		if(strncmp(sr_memmng_pkg, "hg", 2) != 0) {
+			fprintf(stderr, "-M: INIT:CAP needs the hg memory manager (-X)\n");
+			goto error;
+		}
+		if(pkg_mem_cap < pkg_mem_size) {
+			fprintf(stderr, "-M: the cap is below the initial size\n");
+			goto error;
+		}
+#ifdef HG_MALLOC
+		hg_pkg_cap_bytes = pkg_mem_cap;
+#endif
+	}
 
 	/*init pkg mallocs (before parsing cfg or the rest of the cmd line !)*/
 	if(strcmp(sr_memmng_pkg, "sm") == 0)
@@ -2474,18 +2541,13 @@ int main(int argc, char **argv)
 					fprintf(stderr, "bad shared mem size\n");
 					goto error;
 				}
-				l1 = strtol(optarg, &tmp, 10);
-				if(tmp && (*tmp)) {
-					fprintf(stderr, "bad shmem size number: -m %s\n", optarg);
-					goto error;
-				}
 				/* safety check for upper limit of 16TB */
-				if(l1 <= 0 || l1 > 16L * 1024 * 1024) {
-					fprintf(stderr, "out of limits shmem size number: -m %s\n",
-							optarg);
+				if(ksr_mem_size_arg(optarg, 16UL * 1024 * 1024, &shm_mem_size,
+						   &shm_mem_cap)
+						< 0) {
+					fprintf(stderr, "bad shared mem size: -m %s\n", optarg);
 					goto error;
 				}
-				shm_mem_size = 1024UL * 1024 * l1;
 				LM_INFO("shared memory: %ld bytes\n", shm_mem_size);
 				break;
 			case 'd':
@@ -2693,6 +2755,19 @@ int main(int argc, char **argv)
 	}
 	if(shm_mem_size == 0) {
 		shm_mem_size = SHM_MEM_POOL_SIZE;
+	}
+	if(shm_mem_cap) {
+		if(strncmp(sr_memmng_shm, "hg", 2) != 0) {
+			fprintf(stderr, "-m: INIT:CAP needs the hg memory manager (-x)\n");
+			goto error;
+		}
+		if(shm_mem_cap < shm_mem_size) {
+			fprintf(stderr, "-m: the cap is below the initial size\n");
+			goto error;
+		}
+#ifdef HG_MALLOC
+		hg_shm_cap_bytes = shm_mem_cap;
+#endif
 	}
 
 	if(endianness_sanity_check() != 0) {
@@ -3241,6 +3316,8 @@ int main(int argc, char **argv)
 		goto error;
 	pkg_print_manager();
 	shm_print_manager();
+	if(hg_kam_post_cfg() < 0)
+		goto error;
 
 	if(register_core_rpcs() != 0)
 		goto error;
@@ -3346,7 +3423,9 @@ int main(int argc, char **argv)
 	if(disable_core_dump)
 		set_core_dump(0, 0);
 	else
-		set_core_dump(1, shm_mem_size + pkg_mem_size + 4 * 1024 * 1024);
+		set_core_dump(1, (shm_mem_cap ? shm_mem_cap : shm_mem_size)
+								 + (pkg_mem_cap ? pkg_mem_cap : pkg_mem_size)
+								 + 4 * 1024 * 1024);
 	if(open_files_limit > 0) {
 		if(increase_open_fds(open_files_limit) < 0) {
 			fprintf(stderr, "ERROR: error could not increase file limits\n");
@@ -3366,8 +3445,15 @@ int main(int argc, char **argv)
 		   "fastrand %u, cryptorand %u\n",
 			kam_rand(), random(), fastrand(), cryptorand());
 
-	if(mlock_pages)
-		mem_lock_pages();
+	if(mlock_pages) {
+		if(HG_ACTIVE())
+			/* mlockall() would lock the whole reserved cap for good;
+			 * hg pins what it commits */
+			LM_NOTICE("mlock_pages ignored: the hg memory manager pins its"
+					  " own arenas\n");
+		else
+			mem_lock_pages();
+	}
 
 	if(real_time & 4)
 		set_rt_prio(rt_prio, rt_policy);
@@ -3405,6 +3491,8 @@ int main(int argc, char **argv)
 	/* initialize process_table, add core process no. (calc_proc_no()) to the
 	 * processes registered from the modules*/
 	if(init_pt(calc_proc_no()) == -1)
+		goto error;
+	if(hg_kam_prefork() < 0)
 		goto error;
 #ifdef USE_TCP
 #ifdef USE_TLS

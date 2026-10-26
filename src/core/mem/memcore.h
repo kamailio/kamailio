@@ -46,4 +46,12 @@ int tlsf_malloc_init_pkg_manager(void);
 int tlsf_malloc_init_shm_manager(void);
 #endif
 
+#ifdef HG_MALLOC
+/* slab allocator with elastic arenas - implemented in hg_*.c;
+ * @dbg selects the debug checks ("hgdbg") */
+int hg_malloc_init_pkg_manager(int dbg);
+int hg_malloc_init_shm_manager(int dbg);
+int hg_shm_address_in(void *p);
+#endif
+
 #endif

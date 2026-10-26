@@ -79,6 +79,14 @@ int pkg_init_manager(char *name)
 	} else if(strcmp(name, "tlsf") == 0 || strcmp(name, "tlsf_malloc") == 0) {
 		/*tlsf malloc*/
 		return tlsf_malloc_init_pkg_manager();
+#ifdef HG_MALLOC
+	} else if(strcmp(name, "hg") == 0 || strcmp(name, "hg_malloc") == 0) {
+		/*slab allocator with elastic arenas*/
+		return hg_malloc_init_pkg_manager(0);
+	} else if(strcmp(name, "hgdbg") == 0) {
+		/*the same, with the debug checks*/
+		return hg_malloc_init_pkg_manager(1);
+#endif
 	} else if(strcmp(name, "sm") == 0) {
 		/*system malloc*/
 		return sm_malloc_init_pkg_manager();

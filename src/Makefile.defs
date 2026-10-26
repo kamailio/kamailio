@@ -761,6 +761,8 @@ C_DEFS+= -DF_MALLOC
 C_DEFS+= -DQ_MALLOC
 # enable TLSF malloc
 C_DEFS+= -DTLSF_MALLOC
+# enable hg malloc
+C_DEFS+= -DHG_MALLOC
 
 ifeq ($(MEMDBG), 1)
 	C_DEFS+= -DDBG_SR_MEMORY

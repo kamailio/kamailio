@@ -179,6 +179,11 @@ int shm_address_in(void *p)
 {
 	int i;
 
+#ifdef HG_MALLOC
+	/* hg reserves its own mapping instead of the core pool */
+	if(_shm_root.mname != NULL && strcmp(_shm_root.mname, "hg_malloc") == 0)
+		return hg_shm_address_in(p);
+#endif
 	for(i = 0; i < _shm_core_pools_num; i++) {
 		if(_shm_core_pools_mem[i] == (void *)-1) {
 			continue;
@@ -273,6 +278,14 @@ int shm_init_manager(char *name)
 	} else if(strcmp(name, "tlsf") == 0 || strcmp(name, "tlsf_malloc") == 0) {
 		/*tlsf malloc*/
 		return tlsf_malloc_init_shm_manager();
+#ifdef HG_MALLOC
+	} else if(strcmp(name, "hg") == 0 || strcmp(name, "hg_malloc") == 0) {
+		/*slab allocator with elastic arenas*/
+		return hg_malloc_init_shm_manager(0);
+	} else if(strcmp(name, "hgdbg") == 0) {
+		/*the same, with the debug checks*/
+		return hg_malloc_init_shm_manager(1);
+#endif
 	} else if(strcmp(name, "sm") == 0) {
 		/*system malloc - process private, cannot back shared memory*/
 		LM_ERR("sm (system malloc) is only for pkg, not for shm\n");

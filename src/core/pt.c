@@ -21,6 +21,7 @@
  */
 
 
+#include "mem/hg_hooks.h"
 #include "pt.h"
 #include "tcp_init.h"
 #include "sr_module.h"
@@ -281,6 +282,11 @@ int fork_process(int child_id, char *desc, int make_sock)
 		goto error;
 	}
 	child_process_no = *process_count;
+	if(!hg_kam_fork_fits()) {
+		/* the new process's hg pkg arena would not fit in host memory */
+		lock_release(process_lock);
+		goto error;
+	}
 	pid = fork();
 	if(pid < 0) {
 		lock_release(process_lock);
@@ -290,6 +296,9 @@ int fork_process(int child_id, char *desc, int make_sock)
 		/* child */
 		_ksr_is_main = 0; /* a forked process cannot be the "main" one */
 		process_no = child_process_no;
+		/* before anything allocates: drop the inherited hg caches, give
+		 * this process a pkg arena of its own */
+		hg_kam_child_init(desc);
 		daemon_status_on_fork_cleanup();
 		/* close tcp unix sockets if this is not tcp main */
 #ifdef USE_TCP
@@ -433,6 +442,12 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	child_process_no = *process_count;
 	new_seed1 = kam_rand();
 	new_seed2 = random();
+	if(!hg_kam_fork_fits()) {
+		/* the new process's hg pkg arena would not fit in host memory */
+		lock_release(process_lock);
+		ret = -1;
+		goto error;
+	}
 	pid = fork();
 	if(pid < 0) {
 		lock_release(process_lock);
@@ -442,6 +457,9 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	if(pid == 0) {
 		_ksr_is_main = 0; /* a forked process cannot be the "main" one */
 		process_no = child_process_no;
+		/* before anything allocates: drop the inherited hg caches, give
+		 * this process a pkg arena of its own */
+		hg_kam_child_init(desc);
 		/* close unneeded unix sockets */
 		close_extra_socks(child_id, process_no);
 		/* same for unneeded tcp_children <-> tcp_main unix socks */

@@ -417,6 +417,7 @@ MEMLOG		"memlog"|"mem_log"
 MEMDBG		"memdbg"|"mem_dbg"
 MEMSUM		"mem_summary"
 MEMSAFETY	"mem_safety"
+MEMGUARD	"mem_guard"
 MEMADDSIZE	"mem_add_size"
 MEMJOIN		"mem_join"
 MEMSTATUSMODE		"mem_status_mode"
@@ -930,6 +931,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MEMDBG}	{ count(); yylval.strval=yytext; return MEMDBG; }
 <INITIAL>{MEMSUM}	{ count(); yylval.strval=yytext; return MEMSUM; }
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
+<INITIAL>{MEMGUARD}	{ count(); yylval.strval=yytext; return MEMGUARD; }
 <INITIAL>{MEMADDSIZE}	{ count(); yylval.strval=yytext; return MEMADDSIZE; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
 <INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }

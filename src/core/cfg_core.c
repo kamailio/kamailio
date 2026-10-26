@@ -112,9 +112,14 @@ struct cfg_group_core default_core_cfg = {
 		-1,						 /**< udp4_raw_ttl (auto detect by default) */
 		0,						 /*!< force_rport */
 		L_DBG + 1,				 /*!< memlog */
-		12,	   /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
+		12, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums, 16 short_status */
-		1,	   /*!< mem_safety - 0 disabled; 1 enabled */
+		1,	/*!< mem_safety - 0 disabled; 1 enabled */
+#ifdef DBG_SR_MEMORY
+		1, /*!< mem_guard - hg only; on with memory debugging */
+#else
+		0, /*!< mem_guard - hg only; off without memory debugging */
+#endif
 		1,	   /*!< mem_join - 1 enabled */
 		0,	   /*!< mem_status_mode - 0 only free fragments, 1 all fragements */
 		0,	   /*!< sip msg parser print on one line*/
@@ -323,6 +328,9 @@ cfg_def_t core_cfg_def[] = {
 				" 16 - short status instead of dump"},
 		{"mem_safety", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
 				"safety level for memory operations"},
+		{"mem_guard", CFG_VAR_INT | CFG_ATOMIC, 0, 1, 0, 0,
+				"hg memory manager: guard the end of every new allocation, "
+				"checked at free and realloc"},
 		{"mem_join", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
 				"join free memory fragments"},
 		{"mem_status_mode", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,

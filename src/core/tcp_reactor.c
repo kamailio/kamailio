@@ -95,6 +95,7 @@
 #include "tcp_stats.h"
 #include "tcp_ev.h"
 #include "tcp_reactor_mem.h" /* tcp_reactor_pkg_lock_install() */
+#include "mem/hg_hooks.h"	 /* per-thread hg state */
 #include "tcp_mtops.h"		 /* tcpx_task_t, KSR_TCPX_MAIN_PIDX */
 #include "tcp_server.h"		 /* ksr_tcp_reactor_get_dispatch_wfd() */
 #include "tcp_read.h"		 /* tcp_read_req(), rd_conn_flags_t, RD_CONN_* */
@@ -1650,7 +1651,15 @@ static void *tcp_reactor_thread_routine(void *arg)
 	struct tcp_reactor_job *job;
 
 	tcp_reactor_thread_init((int)(long)arg);
-	while((job = tcp_reactor_next_job()) != NULL) {
+	if(HG_ACTIVE())
+		hg_thread_stats_init();
+	for(;;) {
+		/* a job boundary, no lock held: flush this thread's hg caches if
+		 * its process ran an idle-cache sweep since the last one */
+		if(HG_ACTIVE())
+			hg_cache_flush_if_due();
+		if((job = tcp_reactor_next_job()) == NULL)
+			break;
 		counter_inc(ksr_cnt_busy_rthreads);
 		switch(job->op) {
 			case TCP_R_READ:

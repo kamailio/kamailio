@@ -105,6 +105,7 @@ struct cfg_group_core
 	int memlog;			   /*!< log level for memory status/summary info */
 	int mem_summary;	   /*!< display memory status/summary info on exit */
 	int mem_safety;		   /*!< memory safety control option */
+	int mem_guard;		   /*!< hg: guard the end of new allocations */
 	int mem_join;		   /*!< memory free fragments join option */
 	int mem_status_mode;   /*!< memory status printed for free/all fragments */
 	int sip_parser_log_oneline; /*!< sip msg on one line */

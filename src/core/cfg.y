@@ -412,6 +412,7 @@ extern char *default_routename;
 %token MEMDBG
 %token MEMSUM
 %token MEMSAFETY
+%token MEMGUARD
 %token MEMADDSIZE
 %token MEMJOIN
 %token MEMSTATUSMODE
@@ -1177,6 +1178,8 @@ assign_stm:
 	| MEMSUM EQUAL error { yyerror("int value expected"); }
 	| MEMSAFETY EQUAL intno { default_core_cfg.mem_safety=$3; }
 	| MEMSAFETY EQUAL error { yyerror("int value expected"); }
+	| MEMGUARD EQUAL intno { default_core_cfg.mem_guard=$3; }
+	| MEMGUARD EQUAL error { yyerror("int value expected"); }
 	| MEMADDSIZE EQUAL intno { ksr_mem_add_size=$3; }
 	| MEMADDSIZE EQUAL error { yyerror("int value expected"); }
 	| MEMJOIN EQUAL intno { default_core_cfg.mem_join=$3; }

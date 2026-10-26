@@ -30,6 +30,7 @@
 #include "../locking.h"
 #include "../compiler_opt.h"
 #include "../bit_test.h"
+#include "../mem/hg_hooks.h"
 #include "cfg.h"
 
 /*! \brief Maximum number of variables within a configuration group. */
@@ -433,6 +434,7 @@ static inline void cfg_reset_handles(void)
  * an infinite loop, put cfg_update() to the beginning of
  * the cycle to make sure, that subsequent function calls see the
  * up-to-date config set.
+ * It also runs the hg idle-cache sweep when due (no-op otherwise).
  */
 #define cfg_update()                           \
 	do {                                       \
@@ -440,6 +442,7 @@ static inline void cfg_reset_handles(void)
 			cfg_reset_handles();               \
 		if(unlikely(cfg_local != *cfg_global)) \
 			cfg_update_local(0);               \
+		KSR_MEM_SWEEP_POINT();                 \
 	} while(0)
 
 /* like cfg_update(), but does not execute callbacks

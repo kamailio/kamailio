@@ -67,6 +67,7 @@
 #include <net/if.h>
 #endif /* USE_MCAST */
 #include "locking.h"
+#include "mem/hg_hooks.h"
 #include "rpc.h"
 #include "rpc_lookup.h"
 
@@ -1307,13 +1308,30 @@ int udp_rcv_loop()
 	if(cfg_child_init())
 		goto error;
 
+	if(HG_ACTIVE()) {
+		/* wake up every second when idle, for the hg idle-cache sweep */
+		struct timeval rcvto = {1, 0};
+
+		if(setsockopt(bind_address->socket, SOL_SOCKET, SO_RCVTIMEO, &rcvto,
+				   sizeof(rcvto))
+				< 0)
+			LM_WARN("cannot set the receive timeout on %.*s: %s\n",
+					bind_address->sock_str.len, bind_address->sock_str.s,
+					strerror(errno));
+	}
+
 	for(;;) {
 		fromaddrlen = sizeof(union sockaddr_union);
 		len = recvfrom(bind_address->socket, raw_buf, BUF_SIZE, 0,
 				(struct sockaddr *)fromaddr, &fromaddrlen);
 		if(len == -1) {
-			if(errno == EAGAIN) {
-				LM_DBG("packet with bad checksum received\n");
+			/* with the receive timeout, a stop and resume ends it with EINTR */
+			if(errno == EAGAIN || (errno == EINTR && HG_ACTIVE())) {
+				if(HG_ACTIVE())
+					/* the receive timeout, a signal or a bad checksum */
+					KSR_MEM_SWEEP_POINT();
+				else
+					LM_DBG("packet with bad checksum received\n");
 				continue;
 			}
 			LM_ERR("recvfrom:[%d] %s\n", errno, strerror(errno));
