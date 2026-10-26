@@ -2394,7 +2394,7 @@ event_route[dialog:failed] {
 	</section>
 	</section>
 
-	<section>
+	<section id="dispatcher.sec.rpcs">
 	<title>RPC Commands</title>
 	<section id="dispatcher.r.set_state">
 		<title>
@@ -2941,7 +2941,8 @@ kamcli dispatcher.oclist 1
 			</listitem>
 			<listitem>
 			<para>priority: sets the priority in destination list (based on it
-			is done the initial ordering inside the set)</para>
+			is done the initial ordering inside the set: descending mode - first record
+			is the one with highest priority)</para>
 			</listitem>
 			<listitem>
 			<para>attributes: extra fields in form of
