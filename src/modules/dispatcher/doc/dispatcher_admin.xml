@@ -2831,9 +2831,9 @@ kamcli dispatcher.oclist 1
 ...
 </programlisting>
 	</section>
-	<section id="dispatcher.r.weight_set">
+	<section id="dispatcher.r.weight_gset">
 		<title>
-		<function moreinfo="none">dispatcher.weight_set</function>
+		<function moreinfo="none">dispatcher.weight_gset</function>
 		</title>
 		<para>
 		Set the weights for all destinations in a group without reloading the
@@ -2859,14 +2859,14 @@ kamcli dispatcher.oclist 1
 		<para>Example:</para>
 <programlisting format="linespecific">
 ...
-# prototype: &sercmd; dispatcher.weight_set _group_ _weight0_ [_weight1_ ...]
-&sercmd; dispatcher.weight_set 2 50 30 20
+# prototype: &sercmd; dispatcher.weight_gset _group_ _weight0_ [_weight1_ ...]
+&sercmd; dispatcher.weight_gset 2 50 30 20
 ...
 </programlisting>
 	</section>
-	<section id="dispatcher.r.rweight_set">
+	<section id="dispatcher.r.rweight_gset">
 		<title>
-		<function moreinfo="none">dispatcher.rweight_set</function>
+		<function moreinfo="none">dispatcher.rweight_gset</function>
 		</title>
 		<para>
 		Set the relative weights for all destinations in a group without
@@ -2892,8 +2892,8 @@ kamcli dispatcher.oclist 1
 		<para>Example:</para>
 <programlisting format="linespecific">
 ...
-# prototype: &sercmd; dispatcher.rweight_set _group_ _rweight0_ [_rweight1_ ...]
-&sercmd; dispatcher.rweight_set 2 50 30 20
+# prototype: &sercmd; dispatcher.rweight_gset _group_ _rweight0_ [_rweight1_ ...]
+&sercmd; dispatcher.rweight_gset 2 50 30 20
 ...
 </programlisting>
 	</section>
