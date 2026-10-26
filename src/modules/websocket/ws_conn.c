@@ -638,10 +638,14 @@ void wsconn_close_now(ws_connection_t *wsc)
 		return;
 	}
 
-	tcpconn_chld_put(con);
+	/* write while the reference holds con; send_flags under write_lock, as the
+	 * core writes it */
+	lock_get(&con->write_lock);
 	con->send_flags.f |= SND_F_CON_CLOSE;
+	lock_release(&con->write_lock);
 	con->state = S_CONN_BAD;
 	con->timeout = get_ticks_raw();
+	tcpconn_chld_put(con);
 }
 
 void wsconn_detach_connection(ws_connection_t *wsc)
