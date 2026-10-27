@@ -203,11 +203,11 @@
 			</para></listitem>
 			<listitem><para>
 				<emphasis>fr_timeout</emphasis> - the fr_timeout value for the
-				local transaction.
+				local transaction, in milliseconds.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>fr_inv_timeout</emphasis> - the fr_inv_timeout value
-				for the local transaction.
+				for the local transaction, in milliseconds.
 			</para></listitem>
 		</itemizedlist>
 		<example>
