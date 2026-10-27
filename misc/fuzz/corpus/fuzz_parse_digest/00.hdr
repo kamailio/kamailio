@@ -1,0 +1,1 @@
+Digest username="alice", realm="atlanta.example.com", nonce="84a4c6ffe2ba9com", uri="sip:atlanta.example.com", response="45c99f3eec75328cabd7fc935e00de53", algorithm=MD5, qop=auth, nc=00000001, cnonce="0a4f113b"
