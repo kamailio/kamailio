@@ -209,6 +209,10 @@ int ds_is_active_uri(sip_msg_t *msg, int group, str *uri);
 int ds_load_unset(struct sip_msg *msg);
 int ds_load_unset_callid(struct sip_msg *msg, str *callid);
 int ds_load_update(struct sip_msg *msg);
+struct _ds_cell;
+typedef int (*ds_load_cell_cb_t)(
+		unsigned int slot, const struct _ds_cell *cell, void *param);
+int ds_load_for_each(ds_load_cell_cb_t callback, void *param);
 
 int ds_hash_load_init(unsigned int htsize, int expire, int initexpire);
 int ds_hash_load_destroy(void);

@@ -2013,6 +2013,9 @@ static const char *dispatcher_rpc_list_doc[2] = {
 static const char *dispatcher_rpc_show_doc[2] = {
 		"Return destinations matching a group and optional address", 0};
 
+static const char *dispatcher_rpc_load_list_doc[2] = {
+		"Return the content of the call-load hash table", 0};
+
 
 #define DS_RPC_PRINT_NORMAL 1
 #define DS_RPC_PRINT_SHORT 2
@@ -2304,6 +2307,44 @@ static void dispatcher_rpc_show(rpc_t *rpc, void *ctx)
 	ds_rpc_print_group(
 			node, rpc, ctx, ih, DS_RPC_PRINT_NORMAL, n == 2 ? &address : NULL);
 	ds_put_list(list);
+}
+
+typedef struct ds_rpc_ctx
+{
+	rpc_t *rpc;
+	void *ctx;
+} ds_rpc_ctx_t;
+
+static int dispatcher_rpc_load_list_cell(
+		unsigned int slot, const ds_cell_t *cell, void *param)
+{
+	ds_rpc_ctx_t *rctx = param;
+	void *th;
+
+	if(rctx->rpc->add(rctx->ctx, "{", &th) < 0) {
+		return -1;
+	}
+	if(rctx->rpc->struct_add(th, "uudSSdjj", "SLOT", slot, "CELLID",
+			   cell->cellid, "GROUP", cell->dset, "DUID", &cell->duid, "CALLID",
+			   &cell->callid, "STATE", cell->state, "EXPIRE",
+			   (unsigned long)cell->expire, "INITEXPIRE",
+			   (unsigned long)cell->initexpire)
+			< 0) {
+		return -1;
+	}
+	return 0;
+}
+
+/* RPC command to print the call-load hash table. */
+static void dispatcher_rpc_load_list(rpc_t *rpc, void *ctx)
+{
+	ds_rpc_ctx_t rctx;
+
+	rctx.rpc = rpc;
+	rctx.ctx = ctx;
+	if(ds_load_for_each(dispatcher_rpc_load_list_cell, &rctx) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating load list");
+	}
 }
 
 
@@ -2853,6 +2894,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_list_doc,   0},
 	{"dispatcher.show", dispatcher_rpc_show,
 		dispatcher_rpc_show_doc, 0},
+	{"dispatcher.load_list", dispatcher_rpc_load_list,
+		dispatcher_rpc_load_list_doc, RPC_RET_ARRAY},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
 		dispatcher_rpc_set_state_doc,   0},
 	{"dispatcher.set_duid_state",   dispatcher_rpc_set_duid_state,

@@ -250,6 +250,36 @@ int ds_hash_load_destroy(void)
 	return 0;
 }
 
+/** Iterate the call-load hash table while holding each slot's lock. */
+int ds_load_for_each(ds_load_cell_cb_t callback, void *param)
+{
+	unsigned int i;
+	int count = 0;
+	int ret;
+	ds_cell_t *cell;
+
+	if(callback == NULL)
+		return -1;
+	if(_dsht_load == NULL)
+		return 0;
+
+	for(i = 0; i < _dsht_load->htsize; i++) {
+		lock_get(&_dsht_load->entries[i].lock);
+		for(cell = _dsht_load->entries[i].first; cell != NULL;
+				cell = cell->next) {
+			ret = callback(i, cell, param);
+			if(ret < 0) {
+				lock_release(&_dsht_load->entries[i].lock);
+				return ret;
+			}
+			count++;
+		}
+		lock_release(&_dsht_load->entries[i].lock);
+	}
+
+	return count;
+}
+
 /**
  *
  */
