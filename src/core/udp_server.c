@@ -36,6 +36,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <errno.h>
+#include <strings.h>
 #include <arpa/inet.h>
 #ifdef __linux__
 #include <linux/types.h>
@@ -1032,7 +1033,77 @@ static int setup_mcast_rcvr(
 #endif /* USE_MCAST */
 
 
-int udp_init(struct socket_info *sock_info)
+int ksr_udp_rx_mode = KSR_UDP_RX_SHARED;
+
+int ksr_udp_rx_mode_set(const char *mode)
+{
+	if(mode == NULL) {
+		return -1;
+	}
+	if(strcasecmp(mode, "shared") == 0) {
+		ksr_udp_rx_mode = KSR_UDP_RX_SHARED;
+	} else if(strcasecmp(mode, "auto") == 0) {
+		ksr_udp_rx_mode = KSR_UDP_RX_AUTO;
+	} else if(strcasecmp(mode, "hash") == 0) {
+		ksr_udp_rx_mode = KSR_UDP_RX_HASH;
+	} else {
+		return -1;
+	}
+	return 0;
+}
+
+#if defined(__OS_linux) && defined(SO_REUSEPORT)
+#define KSR_UDP_RX_REUSEPORT 1
+#else
+#define KSR_UDP_RX_REUSEPORT 0
+#endif
+
+#if KSR_UDP_RX_REUSEPORT && defined(SO_ATTACH_REUSEPORT_CBPF)
+#include <linux/filter.h>
+static int udp_rx_attach_picker(int fd, int n)
+{
+	struct sock_filter prog[] = {
+			{BPF_LD | BPF_W | BPF_ABS, 0, 0, SKF_AD_OFF + SKF_AD_RANDOM},
+			{BPF_ALU | BPF_MOD | BPF_K, 0, 0, (unsigned int)n},
+			{BPF_RET | BPF_A, 0, 0, 0}};
+	struct sock_fprog fprog = {.len = 3, .filter = prog};
+
+	if(setsockopt(
+			   fd, SOL_SOCKET, SO_ATTACH_REUSEPORT_CBPF, &fprog, sizeof(fprog))
+			== -1) {
+		LM_WARN("setsockopt SO_ATTACH_REUSEPORT_CBPF: %s\n", strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+#else
+static int udp_rx_attach_picker(int fd, int n)
+{
+	return -1;
+}
+#endif
+
+#if KSR_UDP_RX_REUSEPORT
+static int udp_rx_reuseport_probe(void)
+{
+	int s, one = 1, ok;
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if(s < 0) {
+		return 0;
+	}
+	ok = (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) == 0);
+	close(s);
+	return ok;
+}
+#else
+static int udp_rx_reuseport_probe(void)
+{
+	return 0;
+}
+#endif
+
+static int udp_sock_init(struct socket_info *sock_info, int reuseport)
 {
 	union sockaddr_union *addr;
 	int optval;
@@ -1056,6 +1127,7 @@ int udp_init(struct socket_info *sock_info)
 	}
 */
 	sock_info->proto = PROTO_UDP;
+	sock_info->socket = -1;
 	if(init_su(addr, &sock_info->address, sock_info->port_no) < 0) {
 		LM_ERR("could not init sockaddr_union\n");
 		goto error;
@@ -1074,6 +1146,17 @@ int udp_init(struct socket_info *sock_info)
 		LM_ERR("setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
+#if KSR_UDP_RX_REUSEPORT
+	if(reuseport) {
+		optval = 1;
+		if(setsockopt(sock_info->socket, SOL_SOCKET, SO_REUSEPORT,
+				   (void *)&optval, sizeof(optval))
+				== -1) {
+			LM_ERR("setsockopt SO_REUSEPORT: %s\n", strerror(errno));
+			goto error;
+		}
+	}
+#endif
 	/* tos */
 	optval = tos;
 	if(addr->s.sa_family == AF_INET) {
@@ -1265,7 +1348,75 @@ int udp_init(struct socket_info *sock_info)
 
 error:
 	/*	if (addr) pkg_free(addr);*/
+	if(sock_info->socket != -1) {
+		close(sock_info->socket);
+		sock_info->socket = -1;
+	}
 	return -1;
+}
+
+/* member 0 stays the listener's socket; each worker switches in main.c */
+int udp_init(struct socket_info *sock_info)
+{
+	int n, i, mode;
+
+	mode = ksr_udp_rx_mode;
+	n = 1;
+	if(mode != KSR_UDP_RX_SHARED) {
+		if(dont_fork || ksr_udp_receiver_mode == 1
+				|| (ksr_udp_receiver_mode == 2
+						&& sock_info->agroup.agname[0] != '\0')
+				|| (sock_info->flags & SI_IS_MCAST)) {
+			LM_WARN("udp_rx_mode applies to forked udp workers of unicast "
+					"listeners; %.*s keeps the shared socket\n",
+					sock_info->sock_str.len, sock_info->sock_str.s);
+			mode = KSR_UDP_RX_SHARED;
+		} else if(!udp_rx_reuseport_probe()) {
+			LM_WARN("udp_rx_mode: no SO_REUSEPORT, Linux 3.9 or later "
+					"needed; %.*s keeps the shared socket\n",
+					sock_info->sock_str.len, sock_info->sock_str.s);
+			mode = KSR_UDP_RX_SHARED;
+		} else {
+			n = (sock_info->workers > 0) ? sock_info->workers : children_no;
+			if(n < 1) {
+				n = 1;
+			}
+		}
+	}
+	sock_info->rx_socks = (int *)pkg_malloc(n * sizeof(int));
+	if(sock_info->rx_socks == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	for(i = 0; i < n; i++) {
+		if(udp_sock_init(sock_info, n > 1) < 0) {
+			while(i-- > 0) {
+				close(sock_info->rx_socks[i]);
+			}
+			pkg_free(sock_info->rx_socks);
+			sock_info->rx_socks = NULL;
+			return -1;
+		}
+		sock_info->rx_socks[i] = sock_info->socket;
+	}
+	sock_info->rx_nsocks = n;
+	sock_info->socket = sock_info->rx_socks[0];
+	if(n > 1) {
+		if(mode == KSR_UDP_RX_AUTO
+				&& udp_rx_attach_picker(sock_info->socket, n) < 0) {
+			LM_WARN("udp_rx_mode auto: no SO_ATTACH_REUSEPORT_CBPF, Linux "
+					"4.5 or later needed; %.*s uses the kernel's 4-tuple hash "
+					"(hash mode)\n",
+					sock_info->sock_str.len, sock_info->sock_str.s);
+			mode = KSR_UDP_RX_HASH;
+		}
+		LM_INFO("listener %.*s: %d per-worker SO_REUSEPORT sockets, %s\n",
+				sock_info->sock_str.len, sock_info->sock_str.s, n,
+				(mode == KSR_UDP_RX_AUTO) ? "spread evenly by a cBPF picker"
+										  : "picked by the kernel's 4-tuple "
+											"hash");
+	}
+	return 0;
 }
 
 

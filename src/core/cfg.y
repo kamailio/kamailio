@@ -52,6 +52,7 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "socket_info.h"
+#include "udp_server.h"
 #include "name_alias.h"
 #include "ut.h"
 #include "dset.h"
@@ -266,6 +267,7 @@ extern char *default_routename;
 %token UDP_MTU
 %token UDP_MTU_TRY_PROTO
 %token UDP_RECEIVER_MODE
+%token UDP_RX_MODE
 %token UDP_ACCEPT_PROXY
 %token UDP4_RAW
 %token UDP4_RAW_MTU
@@ -2227,6 +2229,12 @@ assign_stm:
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
 	| UDP_RECEIVER_MODE EQUAL NUMBER { ksr_udp_receiver_mode=$3; }
 	| UDP_RECEIVER_MODE EQUAL error { yyerror("number expected"); }
+	| UDP_RX_MODE EQUAL STRING {
+		if(ksr_udp_rx_mode_set($3) < 0) {
+			yyerror("udp_rx_mode: \"shared\", \"auto\" or \"hash\" expected");
+		}
+	}
+	| UDP_RX_MODE EQUAL error { yyerror("string value expected"); }
 	| UDP_ACCEPT_PROXY EQUAL NUMBER { ksr_udp_accept_proxy=$3; }
 	| UDP_ACCEPT_PROXY EQUAL error { yyerror("number expected"); }
 	| FORCE_RPORT EQUAL NUMBER

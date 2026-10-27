@@ -39,6 +39,12 @@
 
 
 int udp_main_init(void);
+/* udp_rx_mode; the per-worker sockets need Linux 3.9, auto's picker 4.5 */
+#define KSR_UDP_RX_SHARED 0 /* one socket read by every worker (default) */
+#define KSR_UDP_RX_AUTO 1	/* a socket per worker, a cBPF picker spreads */
+#define KSR_UDP_RX_HASH 2	/* a socket per worker, the 4-tuple hash picks */
+int ksr_udp_rx_mode_set(const char *mode);
+
 int udp_init(struct socket_info *si);
 int udp_send(struct dest_info *dst, char *buf, unsigned len);
 int udp_rcv_loop(void);
