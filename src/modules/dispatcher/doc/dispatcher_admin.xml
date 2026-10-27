@@ -2527,6 +2527,34 @@ DEST: {
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.load_list">
+		<title>
+		<function moreinfo="none">dispatcher.load_list</function>
+		</title>
+		<para>
+		Lists all records in the internal call-load hash table used by
+		algorithm 10. The result is an array and is empty when the load hash
+		table has not been initialized or contains no records.
+		</para>
+		<para>The returned fields are:</para>
+		<itemizedlist>
+			<listitem><para><emphasis>SLOT</emphasis>: hash-table slot</para></listitem>
+			<listitem><para><emphasis>CELLID</emphasis>: full hash value</para></listitem>
+			<listitem><para><emphasis>GROUP</emphasis>: destination group id</para></listitem>
+			<listitem><para><emphasis>DUID</emphasis>: destination unique id</para></listitem>
+			<listitem><para><emphasis>CALLID</emphasis>: SIP Call-ID</para></listitem>
+			<listitem><para><emphasis>STATE</emphasis>: 0 for initial or 1 for confirmed</para></listitem>
+			<listitem><para><emphasis>EXPIRE</emphasis>: expiration as a Unix timestamp</para></listitem>
+			<listitem><para><emphasis>INITEXPIRE</emphasis>: initial-state expiration as a Unix timestamp</para></listitem>
+		</itemizedlist>
+		<para>This command has no parameters.</para>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+&sercmd; dispatcher.load_list
+...
+</programlisting>
+	</section>
 	<section id="dispatcher.r.reload">
 		<title>
 		<function moreinfo="none">dispatcher.reload</function>
