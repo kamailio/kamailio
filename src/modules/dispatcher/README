@@ -143,18 +143,19 @@ Tyler Moore
               5.2. dispatcher.set_duid_state
               5.3. dispatcher.list
               5.4. dispatcher.show
-              5.5. dispatcher.reload
-              5.6. dispatcher.ping_active
-              5.7. dispatcher.add
-              5.8. dispatcher.update
-              5.9. dispatcher.remove
-              5.10. dispatcher.hash
-              5.11. dispatcher.oclist
-              5.12. dispatcher.pressure_dec
-              5.13. dispatcher.pressure_inc
-              5.14. dispatcher.pressure_set
-              5.15. dispatcher.weight_gset
-              5.16. dispatcher.rweight_gset
+              5.5. dispatcher.load_list
+              5.6. dispatcher.reload
+              5.7. dispatcher.ping_active
+              5.8. dispatcher.add
+              5.9. dispatcher.update
+              5.10. dispatcher.remove
+              5.11. dispatcher.hash
+              5.12. dispatcher.oclist
+              5.13. dispatcher.pressure_dec
+              5.14. dispatcher.pressure_inc
+              5.15. dispatcher.pressure_set
+              5.16. dispatcher.weight_gset
+              5.17. dispatcher.rweight_gset
 
         6. Installation and Running
 
@@ -335,18 +336,19 @@ Chapter 1. Admin Guide
         5.2. dispatcher.set_duid_state
         5.3. dispatcher.list
         5.4. dispatcher.show
-        5.5. dispatcher.reload
-        5.6. dispatcher.ping_active
-        5.7. dispatcher.add
-        5.8. dispatcher.update
-        5.9. dispatcher.remove
-        5.10. dispatcher.hash
-        5.11. dispatcher.oclist
-        5.12. dispatcher.pressure_dec
-        5.13. dispatcher.pressure_inc
-        5.14. dispatcher.pressure_set
-        5.15. dispatcher.weight_gset
-        5.16. dispatcher.rweight_gset
+        5.5. dispatcher.load_list
+        5.6. dispatcher.reload
+        5.7. dispatcher.ping_active
+        5.8. dispatcher.add
+        5.9. dispatcher.update
+        5.10. dispatcher.remove
+        5.11. dispatcher.hash
+        5.12. dispatcher.oclist
+        5.13. dispatcher.pressure_dec
+        5.14. dispatcher.pressure_inc
+        5.15. dispatcher.pressure_set
+        5.16. dispatcher.weight_gset
+        5.17. dispatcher.rweight_gset
 
    6. Installation and Running
 
@@ -1944,18 +1946,19 @@ event_route[dialog:failed] {
    5.2. dispatcher.set_duid_state
    5.3. dispatcher.list
    5.4. dispatcher.show
-   5.5. dispatcher.reload
-   5.6. dispatcher.ping_active
-   5.7. dispatcher.add
-   5.8. dispatcher.update
-   5.9. dispatcher.remove
-   5.10. dispatcher.hash
-   5.11. dispatcher.oclist
-   5.12. dispatcher.pressure_dec
-   5.13. dispatcher.pressure_inc
-   5.14. dispatcher.pressure_set
-   5.15. dispatcher.weight_gset
-   5.16. dispatcher.rweight_gset
+   5.5. dispatcher.load_list
+   5.6. dispatcher.reload
+   5.7. dispatcher.ping_active
+   5.8. dispatcher.add
+   5.9. dispatcher.update
+   5.10. dispatcher.remove
+   5.11. dispatcher.hash
+   5.12. dispatcher.oclist
+   5.13. dispatcher.pressure_dec
+   5.14. dispatcher.pressure_inc
+   5.15. dispatcher.pressure_set
+   5.16. dispatcher.weight_gset
+   5.17. dispatcher.rweight_gset
 
 5.1.  dispatcher.set_state
 
@@ -2047,7 +2050,30 @@ kamcmd dispatcher.show 2
 kamcmd dispatcher.show 2 sip:127.0.0.1:5080
 ...
 
-5.5.  dispatcher.reload
+5.5.  dispatcher.load_list
+
+   Lists all records in the internal call-load hash table used by
+   algorithm 10. The result is an array and is empty when the load hash
+   table has not been initialized or contains no records.
+
+   The returned fields are:
+     * SLOT: hash-table slot
+     * CELLID: full hash value
+     * GROUP: destination group id
+     * DUID: destination unique id
+     * CALLID: SIP Call-ID
+     * STATE: 0 for initial or 1 for confirmed
+     * EXPIRE: expiration as a Unix timestamp
+     * INITEXPIRE: initial-state expiration as a Unix timestamp
+
+   This command has no parameters.
+
+   Example:
+...
+kamcmd dispatcher.load_list
+...
+
+5.6.  dispatcher.reload
 
    Reloads the groups and included destinations. The command is disabled
    for call load based dispatching (algorithm 10) since removal of
@@ -2060,7 +2086,7 @@ kamcmd dispatcher.show 2 sip:127.0.0.1:5080
    Example
                 kamcmd dispatcher.reload
 
-5.6.  dispatcher.ping_active
+5.7.  dispatcher.ping_active
 
    Sets the global state for sending keepalive requests to destinations.
 
@@ -2081,7 +2107,7 @@ kamcmd dispatcher.show 2 sip:127.0.0.1:5080
 kamctl rpc dispatcher.ping_active 0
 ...
 
-5.7.  dispatcher.add
+5.8.  dispatcher.add
 
    Add a destination address to the in-memory dispatcher list. Reloading
    the dispatcher will remove any destinations that are only added to the
@@ -2107,7 +2133,7 @@ kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:506
 0
 ...
 
-5.8.  dispatcher.update
+5.9.  dispatcher.update
 
    Replace a destination address in the in-memory dispatcher list. All
    records matching the destination group and address are removed and the
@@ -2136,7 +2162,7 @@ kamcmd dispatcher.update 3 sip:127.0.0.1:5075 8 10 duid=abc;socket=udp:127.0.0.1
 :5060
 ...
 
-5.9.  dispatcher.remove
+5.10.  dispatcher.remove
 
    Remove a destination address from the in-memory dispatcher list.
    Reloading the dispatcher from file or database will re-add destinations
@@ -2157,7 +2183,7 @@ kamcmd dispatcher.remove 2 sip:127.0.0.1:5080
 kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 ...
 
-5.10.  dispatcher.hash
+5.11.  dispatcher.hash
 
    Compute the hash id corresponding to the string parameter values.
 
@@ -2186,7 +2212,7 @@ kamctl rpc dispatcher.hash 0 alice server.com
 kamctl rpc dispatcher.hash 4 bob server.com
 ...
 
-5.11.  dispatcher.oclist
+5.12.  dispatcher.oclist
 
    List the overload control attributes for the records in a specific
    group.
@@ -2202,7 +2228,7 @@ kamctl rpc dispatcher.hash 4 bob server.com
 kamcli dispatcher.oclist 1
 ...
 
-5.12.  dispatcher.pressure_dec
+5.13.  dispatcher.pressure_dec
 
    Decrement by one the pressure associated with a destination address.
    Pressure is unsigned and remains at zero when it is already zero. The
@@ -2220,7 +2246,7 @@ kamcli dispatcher.oclist 1
 kamcmd dispatcher.pressure_dec 2 sip:127.0.0.1:5080
 ...
 
-5.13.  dispatcher.pressure_inc
+5.14.  dispatcher.pressure_inc
 
    Increment by one the pressure associated with a destination address.
    Pressure remains at its maximum unsigned 32-bit value when it is
@@ -2237,7 +2263,7 @@ kamcmd dispatcher.pressure_dec 2 sip:127.0.0.1:5080
 kamcmd dispatcher.pressure_inc 2 sip:127.0.0.1:5080
 ...
 
-5.14.  dispatcher.pressure_set
+5.15.  dispatcher.pressure_set
 
    Set the unsigned 32-bit pressure associated with a destination address.
    The updated pressure is returned. Algorithm 16 considers the new value
@@ -2254,7 +2280,7 @@ kamcmd dispatcher.pressure_inc 2 sip:127.0.0.1:5080
 kamcmd dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
 ...
 
-5.15.  dispatcher.weight_gset
+5.16.  dispatcher.weight_gset
 
    Set the weights for all destinations in a group without reloading the
    dispatcher. Weights are mapped positionally to the current destination
@@ -2279,7 +2305,7 @@ kamcmd dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
 kamcmd dispatcher.weight_gset 2 50 30 20
 ...
 
-5.16.  dispatcher.rweight_gset
+5.17.  dispatcher.rweight_gset
 
    Set the relative weights for all destinations in a group without
    reloading the dispatcher. Relative weights are mapped positionally to
