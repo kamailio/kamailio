@@ -1907,6 +1907,10 @@ int main_loop(void)
 				} else if(pid == 0) {
 					/* child */
 					bind_address = si; /* shortcut */
+					if(si->rx_nsocks > 1 && i < si->rx_nsocks) {
+						/* si is pkg memory: other processes keep rx_socks[0] */
+						si->socket = si->rx_socks[i];
+					}
 
 					if(woneinit == 0) {
 						if(run_child_one_init_route() < 0)

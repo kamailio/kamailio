@@ -187,6 +187,7 @@ FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 UDP_MTU		"udp_mtu"
 UDP_MTU_TRY_PROTO	"udp_mtu_try_proto"
 UDP_RECEIVER_MODE "udp_receiver_mode"
+UDP_RX_MODE "udp_rx_mode"
 UDP4_RAW		"udp4_raw"
 UDP4_RAW_MTU	"udp4_raw_mtu"
 UDP4_RAW_TTL	"udp4_raw_ttl"
@@ -738,6 +739,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{UDP4_RAW_MTU}	{ count(); yylval.strval=yytext; return UDP4_RAW_MTU; }
 <INITIAL>{UDP4_RAW_TTL}	{ count(); yylval.strval=yytext; return UDP4_RAW_TTL; }
 <INITIAL>{UDP_RECEIVER_MODE}	{ count(); yylval.strval=yytext; return UDP_RECEIVER_MODE; }
+<INITIAL>{UDP_RX_MODE}	{ count(); yylval.strval=yytext; return UDP_RX_MODE; }
 <INITIAL>{UDP_ACCEPT_PROXY}	{ count(); yylval.strval=yytext; return UDP_ACCEPT_PROXY; }
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
