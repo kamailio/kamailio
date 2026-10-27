@@ -1014,14 +1014,13 @@ static int proto_type_to_int(char *proto)
 static int add_contact_alias_3(
 		sip_msg_t *msg, str *ip_str, str *port_str, str *proto_str)
 {
-	int param_len, proto;
+	int len, param_len, proto, ip_len;
 	unsigned int tmp;
 	contact_t *c;
 	struct lump *anchor;
 	struct sip_uri uri;
-	char *bracket, *lt, *param, *at, *start;
-	int is_ipv6 = 0;
-	int i;
+	struct ip_addr *ip;
+	char *bracket, *lt, *param, *at, *port, *start;
 	int rc = 0;
 
 	if((rc = get_contact_uri(msg, &uri, &c)) < 0) {
@@ -1034,7 +1033,7 @@ static int add_contact_alias_3(
 		return -1;
 	}
 
-	if((str2ip(ip_str) == NULL) && (str2ip6(ip_str) == NULL)) {
+	if(((ip = str2ip(ip_str)) == NULL) && ((ip = str2ip6(ip_str)) == NULL)) {
 		LM_ERR("ip param value %s is not valid IP address\n", ip_str->s);
 		return -1;
 	}
@@ -1086,24 +1085,24 @@ static int add_contact_alias_3(
 		goto err;
 	}
 	at = param;
-	/* ip address */
-	for(i = 0; i < ip_str->len; i++) {
-		if(ip_str->s[i] == ':') {
-			is_ipv6 = 1;
-			break;
-		}
-	}
-	if(is_ipv6 && ip_str->s[0] != '[') {
+	append_str(at, _ksr_contact_salias.s, _ksr_contact_salias.len);
+	/* Serialize the parsed values so their lengths match the allocation. */
+	if(ip->af == AF_INET6) {
 		append_chr(at, '[');
 	}
-	append_str(at, _ksr_contact_salias.s, _ksr_contact_salias.len);
-	append_str(at, ip_str->s, ip_str->len);
-	if(is_ipv6 && ip_str->s[0] != '[') {
+	ip_len = ip_addr2sbuf(ip, at, param_len - (at - param));
+	if(ip_len <= 0) {
+		LM_ERR("failed to copy ip address\n");
+		goto err;
+	}
+	at += ip_len;
+	if(ip->af == AF_INET6) {
 		append_chr(at, ']');
 	}
 	/* port */
 	append_chr(at, '~');
-	append_str(at, port_str->s, port_str->len);
+	port = int2str(tmp, &len);
+	append_str(at, port, len);
 	/* proto */
 	append_chr(at, '~');
 	append_chr(at, proto + '0');
