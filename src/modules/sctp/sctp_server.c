@@ -1984,7 +1984,7 @@ int init_sctp()
 		goto error;
 	}
 	/* sctp options must be initialized before  calling this function */
-	sctp_conn_no = shm_malloc(sizeof(*sctp_conn_tracked));
+	sctp_conn_no = shm_malloc(sizeof(*sctp_conn_no));
 	if(sctp_conn_no == 0) {
 		ERR("sctp init: memory allocation error\n");
 		ret = E_OUT_OF_MEM;
@@ -2140,7 +2140,7 @@ static int sctp_handle_send_failed(struct socket_info *si,
 			sinfo.sinfo_pr_policy = SCTP_PR_SCTP_TTL;
 			sinfo.sinfo_pr_value = send_ttl;
 		} else
-			sinfo.info_pr_policy = SCTP_PR_SCTP_NONE;
+			sinfo.sinfo_pr_policy = SCTP_PR_SCTP_NONE;
 #else
 		sinfo.sinfo_timetolive = cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
@@ -2563,7 +2563,7 @@ int sctp_rcv_loop()
 		} else
 			ri.proto_reserved1 = 0;
 #else  /* SCTP_CONN_REUSE */
-		ri.proto_received1 = 0;
+		ri.proto_reserved1 = 0;
 #endif /* SCTP_CONN_REUSE */
 		receive_msg(buf, len, &ri);
 	}
@@ -2914,7 +2914,7 @@ int sctp_msg_send(struct dest_info *dst, char *buf, unsigned len)
 		sinfo.sinfo_pr_policy = SCTP_PR_SCTP_TTL;
 		sinfo.sinfo_pr_value = send_ttl;
 	} else
-		sinfo->sinfo_pr_policy = SCTP_PR_SCTP_NONE;
+		sinfo.sinfo_pr_policy = SCTP_PR_SCTP_NONE;
 #else
 	sinfo.sinfo_timetolive = cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
@@ -2933,10 +2933,11 @@ void sctp_get_info(struct sctp_gen_info *i)
 			i->sctp_tracked_no = atomic_get(sctp_conn_tracked);
 		else
 			i->sctp_tracked_no = -1;
+		i->sctp_total_connections = atomic_get(sctp_id);
 #else  /* SCTP_CONN_REUSE */
 		i->sctp_tracked_no = -1;
+		i->sctp_total_connections = -1;
 #endif /* SCTP_CONN_REUSE */
-		i->sctp_total_connections = atomic_get(sctp_id);
 	}
 }
 
