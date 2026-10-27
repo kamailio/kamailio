@@ -1514,7 +1514,8 @@ int uac_reg_load_db(void)
 			&flags_column, &reg_delay_column, &contact_addr_column,
 			&socket_column, &contact_user_column};
 	db1_res_t *db_res = NULL;
-	int i, ret;
+	int i, qret;
+	int ret = -1;
 
 	/* binding to db module */
 	if(reg_db_url.s == NULL) {
@@ -1544,12 +1545,12 @@ int uac_reg_load_db(void)
 			   &reg_dbf, reg_db_con, &reg_db_table, UACREG_TABLE_VERSION)
 			< 0) {
 		DB_TABLE_VERSION_ERROR(reg_db_table);
-		return -1;
+		goto done;
 	}
 
 	if(reg_dbf.use_table(reg_db_con, &reg_db_table) < 0) {
 		LM_ERR("failed to use_table\n");
-		return -1;
+		goto done;
 	}
 
 	if(DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
@@ -1557,29 +1558,25 @@ int uac_reg_load_db(void)
 				   reg_db_con, 0, 0, 0, db_cols, 0, UAC_REG_DB_COLS_NUM, 0, 0)
 				< 0) {
 			LM_ERR("Error while querying db\n");
-			return -1;
+			goto done;
 		}
 		if(reg_dbf.fetch_result(reg_db_con, &db_res, reg_fetch_rows) < 0) {
 			LM_ERR("Error while fetching result\n");
-			if(db_res)
-				reg_dbf.free_result(reg_db_con, db_res);
-			goto error;
+			goto done;
 		} else {
 			if(RES_ROW_N(db_res) == 0) {
+				ret = 0;
 				goto done;
 			}
 		}
 	} else {
-		if((ret = reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols, 0,
+		if((qret = reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols, 0,
 					UAC_REG_DB_COLS_NUM, 0, &db_res))
 						!= 0
 				|| RES_ROW_N(db_res) <= 0) {
-			reg_dbf.free_result(reg_db_con, db_res);
-			if(ret == 0) {
-				return 0;
-			} else {
-				goto error;
-			}
+			if(qret == 0)
+				ret = 0;
+			goto done;
 		}
 	}
 
@@ -1589,32 +1586,26 @@ int uac_reg_load_db(void)
 				continue;
 			if(reg_ht_add(&reg) < 0) {
 				LM_ERR("Error adding reg to htable\n");
-				goto error;
+				goto done;
 			}
 		}
 		if(DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
 			if(reg_dbf.fetch_result(reg_db_con, &db_res, reg_fetch_rows) < 0) {
 				LM_ERR("Error while fetching!\n");
-				if(db_res)
-					reg_dbf.free_result(reg_db_con, db_res);
-				goto error;
+				goto done;
 			}
 		} else {
 			break;
 		}
 	} while(RES_ROW_N(db_res) > 0);
-	reg_dbf.free_result(reg_db_con, db_res);
-	reg_dbf.close(reg_db_con);
+	ret = 0;
 
 done:
-	return 0;
-
-error:
-	if(reg_db_con) {
+	if(db_res)
 		reg_dbf.free_result(reg_db_con, db_res);
+	if(reg_db_con)
 		reg_dbf.close(reg_db_con);
-	}
-	return -1;
+	return ret;
 }
 
 /**
@@ -1636,7 +1627,8 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_val_t db_vals[1];
 
 	db1_res_t *db_res = NULL;
-	int ret;
+	int qret;
+	int ret = -1;
 
 	/* binding to db module */
 	if(reg_db_url.s == NULL) {
@@ -1663,7 +1655,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	}
 	if(reg_dbf.use_table(reg_db_con, &reg_db_table) < 0) {
 		LM_ERR("failed to use_table\n");
-		return -1;
+		goto done;
 	}
 
 	db_vals[0].type = DB1_STR;
@@ -1671,16 +1663,13 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_vals[0].val.str_val.s = pl_uuid->s;
 	db_vals[0].val.str_val.len = pl_uuid->len;
 
-	if((ret = reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
+	if((qret = reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
 				1 /*nr keys*/, UAC_REG_DB_COLS_NUM /*nr cols*/, 0, &db_res))
 					!= 0
 			|| RES_ROW_N(db_res) <= 0) {
-		reg_dbf.free_result(reg_db_con, db_res);
-		if(ret == 0) {
-			return 0;
-		} else {
-			goto error;
-		}
+		if(qret == 0)
+			ret = 0;
+		goto done;
 	}
 
 	if(uac_reg_db_to_reg(&reg, db_res, 0, db_cols) == 0) {
@@ -1693,22 +1682,19 @@ int uac_reg_db_refresh(str *pl_uuid)
 		if(reg_ht_add(&reg) < 0) {
 			lock_release(_reg_htable_gc_lock);
 			LM_ERR("Error adding reg to htable\n");
-			goto error;
+			goto done;
 		}
 		lock_release(_reg_htable_gc_lock);
 	}
 
-	reg_dbf.free_result(reg_db_con, db_res);
-	reg_dbf.close(reg_db_con);
+	ret = 1;
 
-	return 1;
-
-error:
-	if(reg_db_con) {
+done:
+	if(db_res)
 		reg_dbf.free_result(reg_db_con, db_res);
+	if(reg_db_con)
 		reg_dbf.close(reg_db_con);
-	}
-	return -1;
+	return ret;
 }
 
 /**
