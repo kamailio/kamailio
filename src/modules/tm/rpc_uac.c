@@ -24,6 +24,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/str_list.h"
 #include "../../core/timer_proc.h"
+#include "../../core/timer_ticks.h"
 #include "../../core/utils/sruid.h"
 #include "ut.h"
 #include "dlg.h"
@@ -819,8 +820,8 @@ static void rpc_t_uac_attrs_helper(
 		uac_req.cb_flags = TMCB_LOCAL_COMPLETED;
 	}
 	uac_req.cb_flags |= tattrs->cbflags;
-	uac_req.fr_timeout = tattrs->fr_timeout;
-	uac_req.fr_inv_timeout = tattrs->fr_inv_timeout;
+	uac_req.fr_timeout = MS_TO_TICKS(tattrs->fr_timeout);
+	uac_req.fr_inv_timeout = MS_TO_TICKS(tattrs->fr_inv_timeout);
 
 	ret = t_uac(&uac_req);
 
