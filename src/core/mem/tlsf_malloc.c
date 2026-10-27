@@ -365,7 +365,7 @@ static void mapping_insert(size_t size, int *fli, int *sli)
 	} else {
 		fl = tlsf_fls_sizet(size);
 		sl = tlsf_cast(int, size >> (fl - SL_INDEX_COUNT_LOG2))
-			 ^ (1 << SL_INDEX_COUNT_LOG2);
+			 ^ (1U << SL_INDEX_COUNT_LOG2);
 		fl -= (FL_INDEX_SHIFT - 1);
 	}
 	*fli = fl;
@@ -375,9 +375,10 @@ static void mapping_insert(size_t size, int *fli, int *sli)
 /* This version rounds up to the next block size (for allocations) */
 static void mapping_search(size_t size, int *fli, int *sli)
 {
-	if(size >= (1 << SL_INDEX_COUNT_LOG2)) {
-		const size_t round =
-				(1 << (tlsf_fls_sizet(size) - SL_INDEX_COUNT_LOG2)) - 1;
+	if(size >= (1U << SL_INDEX_COUNT_LOG2)) {
+		const size_t round = (tlsf_cast(size_t, 1) << (tlsf_fls_sizet(size)
+													   - SL_INDEX_COUNT_LOG2))
+							 - 1;
 		size += round;
 	}
 	mapping_insert(size, fli, sli);
@@ -393,10 +394,10 @@ static block_header_t *search_suitable_block(
 	** First, search for a block in the list associated with the given
 	** fl/sl index.
 	*/
-	unsigned int sl_map = control->sl_bitmap[fl] & (~0 << sl);
+	unsigned int sl_map = control->sl_bitmap[fl] & (~0U << sl);
 	if(!sl_map) {
 		/* No block exists. Search in the next largest first-level list. */
-		const unsigned int fl_map = control->fl_bitmap & (~0 << (fl + 1));
+		const unsigned int fl_map = control->fl_bitmap & (~0U << (fl + 1));
 		if(!fl_map) {
 			/* No free blocks available, memory has been exhausted. */
 			return 0;
@@ -431,11 +432,11 @@ static void remove_free_block(
 
 		/* If the new head is null, clear the bitmap. */
 		if(next == &control->block_null) {
-			control->sl_bitmap[fl] &= ~(1 << sl);
+			control->sl_bitmap[fl] &= ~(1U << sl);
 
 			/* If the second bitmap is now empty, clear the fl bitmap. */
 			if(!control->sl_bitmap[fl]) {
-				control->fl_bitmap &= ~(1 << fl);
+				control->fl_bitmap &= ~(1U << fl);
 			}
 		}
 	}
@@ -461,8 +462,8 @@ static void insert_free_block(
 	** and second-level bitmaps appropriately.
 	*/
 	control->blocks[fl][sl] = block;
-	control->fl_bitmap |= (1 << fl);
-	control->sl_bitmap[fl] |= (1 << sl);
+	control->fl_bitmap |= (1U << fl);
+	control->sl_bitmap[fl] |= (1U << sl);
 	TLSF_INCREASE_FRAGMENTS(control);
 }
 
@@ -598,7 +599,10 @@ static block_header_t *block_locate_free(control_t *control, size_t size)
 
 	if(size) {
 		mapping_search(size, &fl, &sl);
-		block = search_suitable_block(control, &fl, &sl);
+		/* rounding up can push sizes close to the max past the last list */
+		if(fl < FL_INDEX_COUNT) {
+			block = search_suitable_block(control, &fl, &sl);
+		}
 	}
 
 	if(block) {
@@ -701,9 +705,9 @@ int tlsf_check(tlsf_t tlsf)
 	/* Check that the free lists and bitmaps are accurate. */
 	for(i = 0; i < FL_INDEX_COUNT; ++i) {
 		for(j = 0; j < SL_INDEX_COUNT; ++j) {
-			const int fl_map = control->fl_bitmap & (1 << i);
-			const int sl_list = control->sl_bitmap[i];
-			const int sl_map = sl_list & (1 << j);
+			const unsigned int fl_map = control->fl_bitmap & (1U << i);
+			const unsigned int sl_list = control->sl_bitmap[i];
+			const unsigned int sl_map = sl_list & (1U << j);
 			const block_header_t *block = control->blocks[i][j];
 
 			/* Check that first- and second-level lists agree. */
@@ -1133,6 +1137,11 @@ void *tlsf_realloc(tlsf_t tlsf, void *ptr, size_t size)
 		const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
 
 		tlsf_assert(!block_is_free(block) && "block already marked as free");
+
+		/* size too large - do not shrink the block to 0 and return it */
+		if(adjust == 0) {
+			return 0;
+		}
 
 		/*
 		** If the next block is used, or when combined with the current
