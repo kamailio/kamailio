@@ -1240,7 +1240,7 @@ int pv_parse_alt_name(pv_spec_p sp, str *in)
 static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 {
 	static char buf[1024];
-	int n, found = 0;
+	int n, found = 0, set = 0;
 	STACK_OF(GENERAL_NAME) *names = 0;
 	GENERAL_NAME *nm;
 	X509 *cert;
@@ -1275,6 +1275,7 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 					memcpy(buf, text.s, text.len);
 					res->s = buf;
 					res->len = text.len;
+					set = 1;
 					break;
 				case GEN_IPADD:
 					ip.len = KSR_ASN1_STRING_LEN(nm->d.iPAddress);
@@ -1290,12 +1291,15 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 					memcpy(buf, text.s, text.len);
 					res->s = buf;
 					res->len = text.len;
+					set = 1;
 					break;
 			}
+			break;
 		}
 		found++;
 	}
-	if(!found)
+	/* no entry of this type at the requested index */
+	if(!set)
 		goto err;
 
 	if(names)
