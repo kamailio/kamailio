@@ -31,9 +31,11 @@
 #include "../../core/mem/pkg.h"
 #include "../../core/ip_addr.h"
 #include "../../core/resolve.h"
+#include "../../core/crypto/sha256.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
 #include <errno.h>
+#include <ctype.h>
 #include <arpa/inet.h>
 #include <libmnl/libmnl.h>
 #include <linux/xfrm.h>
@@ -51,6 +53,14 @@ extern str ipsec_listen_addr6;
 extern ip_addr_t ipsec_listen_ip_addr;
 extern ip_addr_t ipsec_listen_ip_addr6;
 extern int xfrm_user_selector;
+
+/* AES-GCM / AES-GMAC (3GPP TS 33.203 Annex H and I) */
+#define IPSEC_AES_KEY_LEN 16   /* 128 bit CK / IK */
+#define IPSEC_AES_SALT_LEN 4   /* RFC 4106 / RFC 4543 salt */
+#define IPSEC_AES_ICV_BITS 128 /* 16 bytes ICV */
+
+#define IPSEC_KDF_FC_GMAC_SALT 0x58
+#define IPSEC_KDF_FC_GCM_SALT 0x59
 
 struct xfrm_buffer
 {
@@ -109,6 +119,163 @@ static uint choose_nlmsg_seq(void)
 	struct timespec ts;
 	ksr_clock_gettime(&ts);
 	return (1000 * (ts.tv_sec - Tini + (ts.tv_nsec * 1E-9))); // us
+}
+
+/* exact, case insensitive match of an algorithm name */
+static int ipsec_alg_is(str alg, const char *name)
+{
+	int len = strlen(name);
+
+	return (alg.len == len && strncasecmp(alg.s, name, len) == 0);
+}
+
+/* decode a 128 bit key given as 32 hex chars */
+static int ipsec_hex_to_key(str hex, unsigned char *key)
+{
+	int i;
+	unsigned int b;
+
+	if(hex.len != IPSEC_AES_KEY_LEN * 2) {
+		LM_ERR("invalid key length %d, expected %d hex chars\n", hex.len,
+				IPSEC_AES_KEY_LEN * 2);
+		return -1;
+	}
+	for(i = 0; i < IPSEC_AES_KEY_LEN; i++) {
+		if(!isxdigit((unsigned char)hex.s[2 * i])
+				|| !isxdigit((unsigned char)hex.s[2 * i + 1])
+				|| sscanf(hex.s + 2 * i, "%2x", &b) != 1) {
+			LM_ERR("invalid hex key\n");
+			return -1;
+		}
+		key[i] = (unsigned char)b;
+	}
+	return 0;
+}
+
+/* HMAC-SHA-256 (RFC 2104), key no longer than one block */
+static void ipsec_hmac_sha256(const unsigned char *key, int key_len,
+		const unsigned char *msg, int msg_len,
+		unsigned char out[SHA256_DIGEST_LENGTH])
+{
+	unsigned char pad[SHA256_BLOCK_LENGTH];
+	unsigned char inner[SHA256_DIGEST_LENGTH];
+	SHA256_CTX ctx;
+	int i;
+
+	memset(pad, 0, sizeof(pad));
+	memcpy(pad, key, key_len);
+	for(i = 0; i < SHA256_BLOCK_LENGTH; i++)
+		pad[i] ^= 0x36;
+	sr_SHA256_Init(&ctx);
+	sr_SHA256_Update(&ctx, pad, SHA256_BLOCK_LENGTH);
+	sr_SHA256_Update(&ctx, msg, msg_len);
+	sr_SHA256_Final(inner, &ctx);
+
+	for(i = 0; i < SHA256_BLOCK_LENGTH; i++)
+		pad[i] ^= 0x36 ^ 0x5c;
+	sr_SHA256_Init(&ctx);
+	sr_SHA256_Update(&ctx, pad, SHA256_BLOCK_LENGTH);
+	sr_SHA256_Update(&ctx, inner, SHA256_DIGEST_LENGTH);
+	sr_SHA256_Final(out, &ctx);
+
+	memset(pad, 0, sizeof(pad));
+	memset(inner, 0, sizeof(inner));
+	memset(&ctx, 0, sizeof(ctx));
+}
+
+/*
+ * Derive the RFC 4106 / RFC 4543 salt as per 3GPP TS 33.203 Annex I:
+ * KDF of TS 33.220 Annex B with Key = CKim || IKim and
+ * S = FC || P0 || L0; the salt is the 32 least significant bits of the
+ * 256 bit output.
+ */
+static int ipsec_derive_salt(str ck, str ik, unsigned char fc,
+		const char *label, unsigned char salt[IPSEC_AES_SALT_LEN])
+{
+	unsigned char key[2 * IPSEC_AES_KEY_LEN];
+	unsigned char s[1 + 32 + 2];
+	unsigned char out[SHA256_DIGEST_LENGTH];
+	int label_len = strlen(label);
+
+	if(label_len > 32) {
+		return -1;
+	}
+	if(ipsec_hex_to_key(ck, key) != 0
+			|| ipsec_hex_to_key(ik, key + IPSEC_AES_KEY_LEN) != 0) {
+		return -1;
+	}
+
+	s[0] = fc;
+	memcpy(s + 1, label, label_len);
+	s[1 + label_len] = (label_len >> 8) & 0xff;
+	s[2 + label_len] = label_len & 0xff;
+
+	ipsec_hmac_sha256(key, sizeof(key), s, 3 + label_len, out);
+	memcpy(salt, out + SHA256_DIGEST_LENGTH - IPSEC_AES_SALT_LEN,
+			IPSEC_AES_SALT_LEN);
+
+	memset(key, 0, sizeof(key));
+	memset(out, 0, sizeof(out));
+	return 0;
+}
+
+/*
+ * Add the AEAD algorithm for alg=null;ealg=aes-gcm (RFC 4106) or
+ * alg=aes-gmac;ealg=null (RFC 4543). The kernel takes key || salt.
+ * returns 1 if an AEAD algorithm was added, 0 if the pair is not AEAD,
+ * -1 on error
+ */
+static int ipsec_add_aead(
+		struct nlmsghdr *nlh, str ck, str ik, str r_alg, str r_ealg)
+{
+	char buf[sizeof(struct xfrm_algo_aead) + IPSEC_AES_KEY_LEN
+			 + IPSEC_AES_SALT_LEN];
+	struct xfrm_algo_aead *aead = (struct xfrm_algo_aead *)buf;
+	unsigned char *key = (unsigned char *)aead->alg_key;
+
+	memset(buf, 0, sizeof(buf));
+
+	if(ipsec_alg_is(r_ealg, "aes-gcm")) {
+		if(!ipsec_alg_is(r_alg, "null")) {
+			LM_ERR("ealg aes-gcm must be used with alg null, not %.*s\n",
+					r_alg.len, r_alg.s);
+			return -1;
+		}
+		strcpy(aead->alg_name, "rfc4106(gcm(aes))");
+		if(ipsec_hex_to_key(ck, key) != 0
+				|| ipsec_derive_salt(ck, ik, IPSEC_KDF_FC_GCM_SALT,
+						   "AES_GCM_SALT", key + IPSEC_AES_KEY_LEN)
+						   != 0) {
+			LM_ERR("failed to build aes-gcm key\n");
+			goto error;
+		}
+	} else if(ipsec_alg_is(r_alg, "aes-gmac")) {
+		if(r_ealg.len != 0 && !ipsec_alg_is(r_ealg, "null")) {
+			LM_ERR("alg aes-gmac must be used with ealg null, not %.*s\n",
+					r_ealg.len, r_ealg.s);
+			return -1;
+		}
+		strcpy(aead->alg_name, "rfc4543(gcm(aes))");
+		if(ipsec_hex_to_key(ik, key) != 0
+				|| ipsec_derive_salt(ck, ik, IPSEC_KDF_FC_GMAC_SALT,
+						   "AES_GMAC_SALT", key + IPSEC_AES_KEY_LEN)
+						   != 0) {
+			LM_ERR("failed to build aes-gmac key\n");
+			goto error;
+		}
+	} else {
+		return 0;
+	}
+
+	aead->alg_key_len = (IPSEC_AES_KEY_LEN + IPSEC_AES_SALT_LEN) * 8;
+	aead->alg_icv_len = IPSEC_AES_ICV_BITS;
+	mnl_attr_put(nlh, XFRMA_ALG_AEAD, sizeof(buf), aead);
+	memset(buf, 0, sizeof(buf));
+	return 1;
+
+error:
+	memset(buf, 0, sizeof(buf));
+	return -1;
 }
 
 int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
@@ -180,6 +347,17 @@ int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
 	l_xsainfo->mode = XFRM_MODE_TRANSPORT;
 	l_xsainfo->replay_window = 32;
 
+	// AEAD algorithms (aes-gcm / aes-gmac) carry both encryption and
+	// integrity in a single attribute
+	switch(ipsec_add_aead(l_nlh, ck, ik, r_alg, r_ealg)) {
+		case 1:
+			goto send;
+		case 0:
+			break;
+		default:
+			return -1;
+	}
+
 	// Add authentication algorithm for this SA
 	// 3GPP TS 33.203 Annex I
 	// NOTE: hmac-md5-96 and des-ede3-cbc has been deprecated in Rel12+
@@ -248,6 +426,7 @@ int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
 	mnl_attr_put(l_nlh, XFRMA_ALG_CRYPT,
 			sizeof(struct xfrm_algo) + l_enc_algo->alg_key_len, l_enc_algo);
 
+send:
 	// send it to Netlink socket
 	if(mnl_socket_sendto(nl_sock, l_nlh, l_nlh->nlmsg_len) < 0) {
 		LM_ERR("Failed to send Netlink message for SA creation, error: %s\n",
