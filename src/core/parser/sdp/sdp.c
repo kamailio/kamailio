@@ -1480,12 +1480,14 @@ sdp_stream_cell_t *clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 	if(stream->bw_type.len) {
 		clone_stream->bw_type.s = p;
 		clone_stream->bw_type.len = stream->bw_type.len;
+		memcpy(p, stream->bw_type.s, stream->bw_type.len);
 		p += stream->bw_type.len;
 	}
 
 	if(stream->bw_width.len) {
 		clone_stream->bw_width.s = p;
 		clone_stream->bw_width.len = stream->bw_width.len;
+		memcpy(p, stream->bw_width.s, stream->bw_width.len);
 		p += stream->bw_width.len;
 	}
 
