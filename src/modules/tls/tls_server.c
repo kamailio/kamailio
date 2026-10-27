@@ -136,7 +136,8 @@ extern str sr_tls_xavp_cfg;
 static str _ksr_tls_connect_server_id = STR_NULL;
 
 /* copy the outbound tls xavp of the calling process (server_name,
- * server_id) into ci as shm strings
+ * server_id) into ci as shm strings; without a server_id in the xavp, the
+ * one set by tls_set_connect_server_id() in this process
  * - also the mode 2 tls_hook.connect_info: tcp main moves them from the
  *   connect request to the new connection */
 void tls_h_connect_info_f(ksr_coninfo_t *ci)
@@ -144,6 +145,18 @@ void tls_h_connect_info_f(ksr_coninfo_t *ci)
 	sr_xavp_t *vavp = NULL;
 	str sname = str_init("server_name");
 	str sid = str_init("server_id");
+
+	/* the value set by tls_set_connect_server_id() for the next connect,
+	 * overwritten below by the xavp server_id, then reset */
+	if(_ksr_tls_connect_server_id.len > 0) {
+		if(shm_str_update(&ci->server_id, &_ksr_tls_connect_server_id) < 0) {
+			LM_WARN("failed to store outbound tls server_id in shm\n");
+		} else {
+			LM_DBG("stored outbound server_id: %.*s\n", ci->server_id.len,
+					ci->server_id.s);
+			ksr_tls_set_connect_server_id(NULL);
+		}
+	}
 
 	if(sr_tls_xavp_cfg.s == NULL) {
 		return;
@@ -216,16 +229,15 @@ int ksr_tls_set_connect_server_id(str *srvid)
 	return 0;
 }
 
-static str *tls_get_connect_server_id(struct tcp_connection *c)
+static str *tls_get_connect_server_id(ksr_coninfo_t *ci)
 {
 	sr_xavp_t *vavp = NULL;
 	str sid = {"server_id", 9};
 
-	if(c != NULL && c->cinfo.server_id.s != NULL
-			&& c->cinfo.server_id.len > 0) {
+	if(ci != NULL && ci->server_id.s != NULL && ci->server_id.len > 0) {
 		LM_DBG("found outbound server id in tcp connection: %.*s\n",
-				c->cinfo.server_id.len, c->cinfo.server_id.s);
-		return &c->cinfo.server_id;
+				ci->server_id.len, ci->server_id.s);
+		return &ci->server_id;
 	}
 
 	if(sr_tls_xavp_cfg.s != NULL) {
@@ -249,17 +261,16 @@ static str *tls_get_connect_server_id(struct tcp_connection *c)
 /**
  * get the server name (sni) for outbound connections from xavp
  */
-static str *tls_get_connect_server_name(struct tcp_connection *c)
+static str *tls_get_connect_server_name(ksr_coninfo_t *ci)
 {
 #ifndef OPENSSL_NO_TLSEXT
 	sr_xavp_t *vavp = NULL;
 	str sname = {"server_name", 11};
 
-	if(c != NULL && c->cinfo.server_name.s != NULL
-			&& c->cinfo.server_name.len > 0) {
-		LM_NOTICE("found outbound server name in tcp connection: %.*s\n",
-				c->cinfo.server_name.len, c->cinfo.server_name.s);
-		return &c->cinfo.server_name;
+	if(ci != NULL && ci->server_name.s != NULL && ci->server_name.len > 0) {
+		LM_DBG("found outbound server name in tcp connection: %.*s\n",
+				ci->server_name.len, ci->server_name.s);
+		return &ci->server_name;
 	}
 
 	if(sr_tls_xavp_cfg.s != NULL)
@@ -385,8 +396,8 @@ static int tls_complete_init(struct tcp_connection *c)
 				cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
 	} else {
 		state = S_TLS_CONNECTING;
-		sname = tls_get_connect_server_name(c);
-		srvid = tls_get_connect_server_id(c);
+		sname = tls_get_connect_server_name(&c->cinfo);
+		srvid = tls_get_connect_server_id(&c->cinfo);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip,
 				c->rcv.dst_port, sname, srvid);
 		ksr_tls_set_connect_server_id(NULL);
@@ -1153,6 +1164,7 @@ static char *get_tls_domain_str(
 	tls_domains_cfg_t *cfg;
 	str *sname = NULL;
 	str *srvid = NULL;
+	ksr_coninfo_t *ci;
 
 	lock_get(tls_domains_cfg_lock);
 	cfg = *tls_domains_cfg;
@@ -1162,8 +1174,11 @@ static char *get_tls_domain_str(
 	if(c && (c->flags & F_CONN_PASSIVE)) {
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV, ip, port, 0, 0);
 	} else {
-		sname = tls_get_connect_server_name(c);
-		srvid = tls_get_connect_server_id(c);
+		/* no connection: the xavps, or in mode 2 tcp main the worker's
+		 * attributes from the connect request being looked up */
+		ci = (c != NULL) ? &c->cinfo : tcp_reactor_connect_info();
+		sname = tls_get_connect_server_name(ci);
+		srvid = tls_get_connect_server_id(ci);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, ip, port, sname, srvid);
 	}
 
@@ -1193,7 +1208,8 @@ int tls_h_match_domain_f(
 		return 0;
 	}
 
-	dom_str = get_tls_domain_str(NULL /* to use XAVPs only */, ip, port);
+	dom_str = get_tls_domain_str(
+			NULL /* XAVPs, or the mode 2 connect request */, ip, port);
 	STR_SET(dom, dom_str);
 
 	return STR_EQ(tls_c->dom, dom);
