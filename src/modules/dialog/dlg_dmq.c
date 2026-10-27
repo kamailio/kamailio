@@ -96,6 +96,22 @@ int dlg_dmq_send(str *body, dmq_node_t *node)
 
 
 /**
+* @brief apply peer leg info, if does not have local socket already
+*/
+static void dlg_dmq_set_leg_info(dlg_cell_t *dlg, str *tag, str *rr, str *ct,
+		str *cseq, unsigned int leg)
+{
+	/* own socket for this leg: take only the cseq */
+	if(dlg->bind_addr[leg] != NULL && dlg->tag[leg].len > 0) {
+		if(cseq->len > 0) {
+			dlg_update_cseq(dlg, leg, cseq);
+		}
+		return;
+	}
+	dlg_set_leg_info(dlg, tag, rr, ct, cseq, leg);
+}
+
+/**
 * @brief ht dmq callback
 */
 int dlg_dmq_handle_msg(
@@ -372,7 +388,7 @@ int dlg_dmq_handle_msg(
 						dlg->lifetime = lifetime;
 					/* apply leg info if it carries data */
 					if(tag1.len > 0) {
-						dlg_set_leg_info(
+						dlg_dmq_set_leg_info(
 								dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
 					}
 					break;
@@ -382,11 +398,11 @@ int dlg_dmq_handle_msg(
 						dlg->lifetime = lifetime;
 					/* apply leg info if it carries data */
 					if(tag1.len > 0) {
-						dlg_set_leg_info(
+						dlg_dmq_set_leg_info(
 								dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
 					}
 					if(tag2.len > 0) {
-						dlg_set_leg_info(
+						dlg_dmq_set_leg_info(
 								dlg, &tag2, &route_set2, &contact2, &cseq2, 1);
 					}
 					ret = insert_dlg_timer(&dlg->tl, dlg->lifetime);

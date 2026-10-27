@@ -1299,6 +1299,7 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 	dlg_cell_t *dlg = NULL;
 	dlg_iuid_t *iuid = NULL;
 	str val, callid, ftag, ttag;
+	str none = STR_NULL;
 	int h_entry = 0, h_id = 0, new_state = 0, old_state = 0;
 	int unref = 0, event = 0, timeout = 0, reset = 0;
 	unsigned int dir = 0;
@@ -1477,6 +1478,11 @@ void dlg_onroute(struct sip_msg *req, str *route_params, void *param)
 			if_update_stat(dlg_enable_stats, early_dlgs, -1);
 		}
 		if_update_stat(dlg_enable_stats, active_dlgs, 1);
+		/* copy has no callee leg: take its tag from the ACK */
+		dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+		dlg_set_leg_info(dlg, (dir == DLG_DIR_UPSTREAM) ? &ftag : &ttag, &none,
+				&none, &none, DLG_CALLEE_LEG);
+		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 	}
 
 	/* run actions for the transition */
