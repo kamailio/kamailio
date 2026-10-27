@@ -2112,6 +2112,20 @@ static int sctp_handle_send_failed(struct socket_info *si,
 	 * reasons (e.g. ABORT received, INIT timeout a.s.o)
 	 */
 	if(retries && (snp->sn_send_failed.ssf_error == 0)) {
+		/* ssf_length is the full notification length, including the
+		 * undelivered data. If the failed message was too big to fit in the
+		 * receive buffer the notification was truncated, so the data is
+		 * incomplete and ssf_length points past what was received:
+		 * do not retry in this case (it would send garbage) */
+		if(unlikely(snp->sn_send_failed.ssf_length
+							< sizeof(struct sctp_send_failed)
+					|| snp->sn_send_failed.ssf_length > len)) {
+			LM_WARN("cannot retry failed send to %s: notification length"
+					" %u, received only %u bytes (message too big?)\n",
+					su2a(su, sizeof(*su)),
+					(unsigned)snp->sn_send_failed.ssf_length, len);
+			goto skip_retry;
+		}
 		DBG("sctp: RETRY-ing (%d)\n", retries);
 		SCTP_STATS_SEND_FORCE_RETRY();
 		retries--;
@@ -2141,9 +2155,11 @@ static int sctp_handle_send_failed(struct socket_info *si,
 #endif
 
 		ret = sctp_msg_send_ext(&dst, data, data_len, &sinfo);
+		return (ret > 0) ? 0 : ret;
 	}
+skip_retry:
 #ifdef USE_DST_BLOCKLIST
-	else if(cfg_get(sctp, sctp_cfg, send_retries)) {
+	if(cfg_get(sctp, sctp_cfg, send_retries)) {
 		/* blocklist only if send_retries is on, if off we blocklist
 		   from SCTP_ASSOC_CHANGE: SCTP_COMM_LOST/SCTP_CANT_STR_ASSOC
 		   which is better (because we can tell connect errors from send
