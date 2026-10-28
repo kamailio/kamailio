@@ -43,7 +43,6 @@ str spi_ps_col = str_init(SPIPS_COL);
 str spi_uc_col = str_init(SPIUC_COL);
 str spi_us_col = str_init(SPIUS_COL);
 str t_security_type_col = str_init(T_SECURITY_TYPE_COL);
-str t_protocol_col = str_init(T_PROTOCOL_COL);
 str t_mode_col = str_init(T_MODE_COL);
 str t_ck_col = str_init(T_CK_COL);
 str t_ik_col = str_init(T_IK_COL);
@@ -371,11 +370,11 @@ int db_update_pcontact_security_temp(
 	db_key_t match_keys[2] = {&aor_col, &received_port_col};
 	db_op_t op[2];
 
-	db_key_t update_keys[15] = {&t_security_type_col, &t_protocol_col,
-			&t_mode_col, &t_ck_col, &t_ik_col, &t_ealg_col, &t_ialg_col,
-			&t_port_pc_col, &t_port_ps_col, &t_port_uc_col, &t_port_us_col,
-			&t_spi_pc_col, &t_spi_ps_col, &t_spi_uc_col, &t_spi_us_col};
-	db_val_t values[15];
+	db_key_t update_keys[14] = {&t_security_type_col, &t_mode_col, &t_ck_col,
+			&t_ik_col, &t_ealg_col, &t_ialg_col, &t_port_pc_col, &t_port_ps_col,
+			&t_port_uc_col, &t_port_us_col, &t_spi_pc_col, &t_spi_ps_col,
+			&t_spi_uc_col, &t_spi_us_col};
+	db_val_t values[14];
 
 	LM_CRIT("updating temp security for pcontact: aor[%.*s], received port "
 			"%u\n",
@@ -408,10 +407,6 @@ int db_update_pcontact_security_temp(
 			str s_empty = {0, 0};
 			int i = 1;
 			VAL_TYPE(values + i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->prot : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
 			VAL_STR(values + i) = ipsec ? ipsec->mod : s_empty;
 
@@ -464,7 +459,7 @@ int db_update_pcontact_security_temp(
 			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_us : 0;
 
 			if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
-					   values, 2, 15))
+					   values, 2, 14))
 					!= 0) {
 				LM_ERR("could not update database info\n");
 				return -1;
@@ -493,11 +488,10 @@ int db_update_pcontact_security(
 	db_key_t match_keys[2] = {&aor_col, &received_port_col};
 	db_op_t op[2];
 
-	// No protocol column: unlike t_protocol, "protocol" is not part of the
-	// security set but the contact's own transport, written by
-	// db_insert_pcontact() and read back by preload_udomain(). Writing the
-	// IPsec protocol ("esp") over it corrupts the contact. The tunnel is always
-	// esp, so nothing is lost.
+	// No protocol column: "protocol" is not part of the security set but the
+	// contact's own transport, written by db_insert_pcontact() and read back
+	// by preload_udomain(). The tunnel is always esp (TS 33.203 Annex H), so
+	// neither security set stores its protocol.
 	db_key_t update_keys[14] = {&security_type_col, &mode_col, &ck_col, &ik_col,
 			&ealg_col, &ialg_col, &port_pc_col, &port_ps_col, &port_uc_col,
 			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col};

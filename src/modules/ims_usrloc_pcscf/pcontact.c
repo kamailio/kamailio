@@ -137,8 +137,6 @@ void free_security(security_t *_p)
 					shm_free(_p->data.ipsec->r_alg.s);
 				if(_p->data.ipsec->ik.s)
 					shm_free(_p->data.ipsec->ik.s);
-				if(_p->data.ipsec->prot.s)
-					shm_free(_p->data.ipsec->prot.s);
 				if(_p->data.ipsec->mod.s)
 					shm_free(_p->data.ipsec->mod.s);
 
