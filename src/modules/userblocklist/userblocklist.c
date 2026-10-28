@@ -434,11 +434,17 @@ static int load_source(struct source_t *src)
  */
 static int add_source(const char *table)
 {
+	struct source_t *src;
+
+	/* avoids dirty reads when adding source and d-tree */
+	lock_get(lock);
+
 	/* check if the table is already present */
-	struct source_t *src = sources->head;
+	src = sources->head;
 	while(src) {
-		if(strcmp(table, src->table) == 0) {
+		if(src->table && strcmp(table, src->table) == 0) {
 			LM_DBG("table %s is already present", src->table);
+			lock_release(lock);
 			return 0;
 		}
 		src = src->next;
@@ -447,15 +453,10 @@ static int add_source(const char *table)
 	src = shm_malloc(sizeof(struct source_t));
 	if(!src) {
 		SHM_MEM_ERROR;
+		lock_release(lock);
 		return -1;
 	}
 	memset(src, 0, sizeof(struct source_t));
-
-	/* avoids dirty reads when adding source and d-tree */
-	lock_get(lock);
-
-	src->next = sources->head;
-	sources->head = src;
 
 	src->table = shm_malloc(strlen(table) + 1);
 	if(!src->table) {
@@ -471,15 +472,24 @@ static int add_source(const char *table)
 
 	if(src->dtrie_root == NULL) {
 		LM_ERR("could not initialize data");
+		shm_free(src->table);
+		shm_free(src);
 		lock_release(lock);
 		return -1;
 	}
 
 	if(load_source(src) < 0) {
 		LM_ERR("could not load table data");
+		dtrie_destroy(&(src->dtrie_root), NULL, match_mode);
+		shm_free(src->table);
+		shm_free(src);
 		lock_release(lock);
 		return -1;
 	}
+
+	/* publish only a fully built entry */
+	src->next = sources->head;
+	sources->head = src;
 
 	lock_release(lock);
 	return 0;
