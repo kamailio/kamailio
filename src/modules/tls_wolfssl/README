@@ -154,12 +154,16 @@ bsoftokn3.so&pin-value=12345678[pin-source=....]
 
 6.2. verify_server_name
 
-   Same as in the tls module, with one difference: wolfSSL accepts partial
-   wildcards in the server certificate (e.g., a Subject Alternative Name
-   a*.example.com matches ab.example.com), because it ignores the
-   no-partial-wildcards flag during the handshake. Certificates from
-   public CAs carry full left-most label wildcards only (*.example.com),
-   so the difference concerns private CAs.
+   Same as in the tls module, with two differences. wolfSSL accepts
+   partial wildcards in the server certificate (e.g., a Subject
+   Alternative Name a*.example.com matches ab.example.com), because it
+   ignores the no-partial-wildcards flag during the handshake.
+   Certificates from public CAs carry full left-most label wildcards only
+   (*.example.com), so the difference concerns private CAs.
+
+   On a client profile with verify_client set to optional_no_ca, the name
+   is still checked when the certificate chain verifies; the tls module
+   accepts any name there.
 
 7. Additional RPC Commands
 
