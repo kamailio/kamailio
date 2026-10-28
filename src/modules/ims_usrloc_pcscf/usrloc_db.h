@@ -86,7 +86,6 @@ typedef enum location_pcscf_fields_idx
 #define SPIUC_COL "spi_uc"
 #define SPIUS_COL "spi_us"
 #define T_SECURITY_TYPE_COL "t_security_type"
-#define T_PROTOCOL_COL "t_protocol"
 #define T_MODE_COL "t_mode"
 #define T_CK_COL "t_ck"
 #define T_IK_COL "t_ik"
