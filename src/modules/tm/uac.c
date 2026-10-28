@@ -848,11 +848,19 @@ void send_prepared_request(struct retr_buf *request)
 {
 	struct cell *cell;
 
-	cell = (request != NULL) ? request->my_T : NULL;
-	if(likely(cell != NULL)) {
-		send_prepared_request_branches(cell, 1 /* retransmit */);
-		UNREF(cell);
+	if(unlikely(request == NULL)) {
+		LM_ERR("null prepared request\n");
+		return;
 	}
+
+	cell = request->my_T;
+	if(unlikely(cell == NULL)) {
+		LM_BUG("prepared request has no transaction\n");
+		return;
+	}
+
+	send_prepared_request_branches(cell, 1 /* retransmit */);
+	UNREF(cell);
 }
 
 /*
