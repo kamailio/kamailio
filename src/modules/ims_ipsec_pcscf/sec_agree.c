@@ -95,8 +95,6 @@ static int process_sec_agree_param(
 		if(ipsec_preferred_alg.len && STR_EQ(value, ipsec_preferred_alg)) {
 			*alg_found = 1;
 		}
-	} else if(strncasecmp(name.s, "prot", name.len) == 0) {
-		SEC_COPY_STR_PARAM(ret->prot, value);
 	} else if(strncasecmp(name.s, "mod", name.len) == 0) {
 		SEC_COPY_STR_PARAM(ret->mod, value);
 	} else if(strncasecmp(name.s, "ealg", name.len) == 0) {
@@ -137,9 +135,8 @@ static int process_sec_agree_param(
 static int is_ue_ipsec_params_selected(ipsec_t *params)
 {
 	if(params->spi_uc == 0 || params->spi_us == 0 || params->port_uc == 0
-			|| params->port_us == 0 || params->prot.len == 0
-			|| params->mod.len == 0 || params->r_alg.len == 0
-			|| params->r_ealg.len == 0) {
+			|| params->port_us == 0 || params->mod.len == 0
+			|| params->r_alg.len == 0 || params->r_ealg.len == 0) {
 		return 0;
 	}
 
@@ -170,8 +167,6 @@ void free_security_t(security_t *params)
 					shm_free(params->data.ipsec->r_alg.s);
 				if(params->data.ipsec->ik.s)
 					shm_free(params->data.ipsec->ik.s);
-				if(params->data.ipsec->prot.s)
-					shm_free(params->data.ipsec->prot.s);
 				if(params->data.ipsec->mod.s)
 					shm_free(params->data.ipsec->mod.s);
 
