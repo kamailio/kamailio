@@ -1113,6 +1113,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	tps_data_t stsd;
 	str lkey;
 	str nuri;
+	str *nsrr;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
 	int use_branch = 0;
@@ -1245,12 +1246,69 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		return -1;
 	}
 
+	/* sn refresh: route this request via this node's own s_rr too */
+	nsrr = &stsd.s_rr;
+	if(_tps_sn_refresh_topology && !(metid & METHOD_OPTIONS)) {
+
+		/* reset all interesting headers needed for refresh */
+		mtsd.s_rr.s = mtsd.as_contact.s = mtsd.bs_contact.s = 0;
+		mtsd.s_rr.len = mtsd.as_contact.len = mtsd.bs_contact.len = 0;
+
+		if(stsd.s_rr.len > 0
+				&& parse_rr_body(stsd.s_rr.s, stsd.s_rr.len, &srr) < 0) {
+			LM_ERR("failed to parse stored s_rr [%.*s]\n", stsd.s_rr.len,
+					stsd.s_rr.s);
+			srr = NULL;
+		}
+
+		/* refresh mtsd's s_rr */
+		tps_refresh_srr_from_sn(&mtsd, srr);
+		if(mtsd.s_rr.len > 0) {
+			LM_DBG("dialog refresh call_id=%.*s method=%.*s cseq=%.*s: "
+				   "s_rr differs: stored=[%.*s] "
+				   "new=[%.*s]\n",
+					msg->callid->body.len, msg->callid->body.s,
+					get_cseq(msg)->method.len, get_cseq(msg)->method.s,
+					get_cseq(msg)->number.len, get_cseq(msg)->number.s,
+					stsd.s_rr.len, stsd.s_rr.s, mtsd.s_rr.len, mtsd.s_rr.s);
+			up_mode |= TPS_DBU_SRR;
+			nsrr = &mtsd.s_rr;
+		}
+
+		/* refresh mtsd's as/bs contacts */
+		tps_refresh_scontacts_from_sn(&mtsd, &stsd, srr);
+		if(mtsd.as_contact.len > 0) {
+			LM_DBG("dialog refresh call_id=%.*s method=%.*s cseq=%.*s: "
+				   "as_contact differs: stored=[%.*s] "
+				   "new=[%.*s]\n",
+					msg->callid->body.len, msg->callid->body.s,
+					get_cseq(msg)->method.len, get_cseq(msg)->method.s,
+					get_cseq(msg)->number.len, get_cseq(msg)->number.s,
+					stsd.as_contact.len, stsd.as_contact.s, mtsd.as_contact.len,
+					mtsd.as_contact.s);
+			up_mode |= TPS_DBU_SCONTACT;
+		}
+		if(mtsd.bs_contact.len > 0) {
+			LM_DBG("dialog refresh call_id=%.*s method=%.*s cseq=%.*s: "
+				   "bs_contact differs: stored=[%.*s] "
+				   "new=[%.*s]\n",
+					msg->callid->body.len, msg->callid->body.s,
+					get_cseq(msg)->method.len, get_cseq(msg)->method.s,
+					get_cseq(msg)->number.len, get_cseq(msg)->number.s,
+					stsd.bs_contact.len, stsd.bs_contact.s, mtsd.bs_contact.len,
+					mtsd.bs_contact.s);
+			up_mode |= TPS_DBU_SCONTACT;
+		}
+
+		free_rr(&srr);
+	}
+
 	if(use_branch) {
 		LM_DBG("use branch for routing information, request from direction "
 			   "%d\n",
 				direction);
-		if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
-				   (direction == TPS_DIR_UPSTREAM) ? 0 : 1)
+		if(tps_reappend_route(
+				   msg, &stsd, nsrr, (direction == TPS_DIR_UPSTREAM) ? 0 : 1)
 				< 0) {
 			LM_ERR("failed to reappend s-route\n");
 			return -1;
@@ -1267,8 +1325,8 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			}
 		}
 	} else {
-		if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
-				   (direction == TPS_DIR_UPSTREAM) ? 0 : 1)
+		if(tps_reappend_route(
+				   msg, &stsd, nsrr, (direction == TPS_DIR_UPSTREAM) ? 0 : 1)
 				< 0) {
 			LM_ERR("failed to reappend s-route\n");
 			return -1;
@@ -1319,32 +1377,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			}
 		}
 
-		/* refresh topology */
 		if(_tps_sn_refresh_topology && !(metid & METHOD_OPTIONS)) {
-
-			/* reset all interesting headers needed for refresh */
-			mtsd.s_rr.s = mtsd.as_contact.s = mtsd.bs_contact.s = 0;
-			mtsd.s_rr.len = mtsd.as_contact.len = mtsd.bs_contact.len = 0;
-
-			if(stsd.s_rr.len > 0
-					&& parse_rr_body(stsd.s_rr.s, stsd.s_rr.len, &srr) < 0) {
-				LM_ERR("failed to parse stored s_rr [%.*s]\n", stsd.s_rr.len,
-						stsd.s_rr.s);
-				srr = NULL;
-			}
-
-			/* refresh mtsd's s_rr */
-			tps_refresh_srr_from_sn(&mtsd, srr);
-			if(mtsd.s_rr.len > 0) {
-				up_mode |= TPS_DBU_SRR;
-			}
-
-			/* refresh mtsd's as/bs contacts */
-			tps_refresh_scontacts_from_sn(&mtsd, &stsd, srr);
-			if(mtsd.as_contact.len > 0 || mtsd.bs_contact.len > 0) {
-				up_mode |= TPS_DBU_SCONTACT;
-			}
-
 			/* store mtsd's s_rr/as/bs contacts if refreshed */
 			if(up_mode != 0) {
 				LM_DBG("dialog refresh call_id=%.*s method=%.*s cseq=%.*s: "
@@ -1354,7 +1387,6 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 						get_cseq(msg)->number.len, get_cseq(msg)->number.s,
 						up_mode);
 				if(tps_storage_update_dialog(msg, &mtsd, &stsd, up_mode) < 0) {
-					free_rr(&srr);
 					goto error;
 				}
 			} else {
@@ -1364,8 +1396,6 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 						get_cseq(msg)->method.len, get_cseq(msg)->method.s,
 						get_cseq(msg)->number.len, get_cseq(msg)->number.s);
 			}
-
-			free_rr(&srr);
 		}
 	}
 	return 0;
