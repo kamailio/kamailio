@@ -2526,6 +2526,49 @@ int ds_load_remove_byid(int set, str *duid)
 }
 
 /**
+ * remove a call-load item by group, DUID and Call-ID
+ */
+int ds_load_remove_match(int group, str *duid, str *callid)
+{
+	unsigned int slot;
+	ds_cell_t *cell;
+
+	if(_dsht_load == NULL || duid == NULL || duid->s == NULL || duid->len <= 0
+			|| callid == NULL || callid->s == NULL || callid->len <= 0) {
+		return -1;
+	}
+
+	cell = ds_get_cell(_dsht_load, callid);
+	if(cell == NULL) {
+		return -2;
+	}
+
+	if(cell->dset != group || cell->duid.len != duid->len
+			|| strncasecmp(cell->duid.s, duid->s, duid->len) != 0) {
+		ds_unlock_cell(_dsht_load, callid);
+		return -2;
+	}
+
+	/* keep per-destination load in sync */
+	ds_load_remove_byid(cell->dset, &cell->duid);
+
+	slot = cell->cellid & (_dsht_load->htsize - 1);
+	if(cell->prev == NULL) {
+		_dsht_load->entries[slot].first = cell->next;
+	} else {
+		cell->prev->next = cell->next;
+	}
+	if(cell->next != NULL) {
+		cell->next->prev = cell->prev;
+	}
+	_dsht_load->entries[slot].esize--;
+	lock_release(&_dsht_load->entries[slot].lock);
+	ds_cell_free(cell);
+
+	return 0;
+}
+
+/**
  *
  */
 static int ds_load_remove_bycallid(str *callid)

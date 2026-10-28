@@ -2016,6 +2016,9 @@ static const char *dispatcher_rpc_show_doc[2] = {
 static const char *dispatcher_rpc_load_list_doc[2] = {
 		"Return the content of the call-load hash table", 0};
 
+static const char *dispatcher_rpc_load_rm_doc[2] = {
+		"Remove a matching call-load hash-table entry", 0};
+
 
 #define DS_RPC_PRINT_NORMAL 1
 #define DS_RPC_PRINT_SHORT 2
@@ -2345,6 +2348,34 @@ static void dispatcher_rpc_load_list(rpc_t *rpc, void *ctx)
 	if(ds_load_for_each(dispatcher_rpc_load_list_cell, &rctx) < 0) {
 		rpc->fault(ctx, 500, "Internal error creating load list");
 	}
+}
+
+/**
+ * RPC command to remove a matching call-load hash-table entry
+ */
+static void dispatcher_rpc_load_rm(rpc_t *rpc, void *ctx)
+{
+	int group;
+	int ret;
+	str duid;
+	str callid;
+
+	if(rpc->scan(ctx, "dSS", &group, &duid, &callid) < 3) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	ret = ds_load_remove_match(group, &duid, &callid);
+	if(ret == -2) {
+		rpc->fault(ctx, 404, "Load Entry Not Found");
+		return;
+	}
+	if(ret < 0) {
+		rpc->fault(ctx, 500, "Removing load entry failed");
+		return;
+	}
+
+	rpc->rpl_printf(ctx, "Ok. Load entry removed.");
 }
 
 
@@ -2896,6 +2927,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_show_doc, 0},
 	{"dispatcher.load_list", dispatcher_rpc_load_list,
 		dispatcher_rpc_load_list_doc, RPC_RET_ARRAY},
+	{"dispatcher.load_rm", dispatcher_rpc_load_rm,
+		dispatcher_rpc_load_rm_doc, 0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
 		dispatcher_rpc_set_state_doc,   0},
 	{"dispatcher.set_duid_state",   dispatcher_rpc_set_duid_state,
