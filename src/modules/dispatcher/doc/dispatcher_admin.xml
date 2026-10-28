@@ -2555,6 +2555,30 @@ DEST: {
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.load_rm">
+		<title>
+		<function moreinfo="none">dispatcher.load_rm</function>
+		</title>
+		<para>
+		Removes an entry from the internal call-load hash table used by
+		algorithm 10. The entry is removed only when its group id, destination
+		unique id and Call-ID all match the supplied parameters. When the
+		destination still exists, its tracked load is decremented as well.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_duid_: destination unique id</para></listitem>
+			<listitem><para>_callid_: SIP Call-ID</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.load_rm _group_ _duid_ _callid_
+&sercmd; dispatcher.load_rm 2 gateway-a 7f3d2@example.net
+...
+</programlisting>
+	</section>
 	<section id="dispatcher.r.reload">
 		<title>
 		<function moreinfo="none">dispatcher.reload</function>
