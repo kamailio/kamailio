@@ -24,6 +24,8 @@
  * Module: @ref tls
  */
 
+#include <openssl/ssl.h> /* OPENSSL_VERSION_NUMBER for the defaults below */
+
 #include "tls_cfg.h"
 #include "../../core/config.h"
 #include "../../core/str.h"
