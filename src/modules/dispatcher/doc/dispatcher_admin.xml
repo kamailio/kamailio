@@ -2592,6 +2592,45 @@ DEST: {
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.load_set">
+		<title>
+		<function moreinfo="none">dispatcher.load_set</function>
+		</title>
+		<para>
+		Updates selected fields of an existing entry in the internal call-load
+		hash table. The group id, destination unique id and Call-ID must all
+		match the entry. One, two or all three supported attributes can be
+		updated in one call, in any order. An attribute cannot be repeated.
+		</para>
+		<para>
+		The supported attributes are <emphasis>state</emphasis>,
+		<emphasis>expire</emphasis> and <emphasis>initexpire</emphasis>.
+		State must be 0 (initial) or 1 (confirmed). Expiration values are
+		durations in seconds from the moment the command is executed. The
+		corresponding absolute Unix timestamps are stored in the hash-table
+		entry and displayed by <emphasis>dispatcher.load_list</emphasis>.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_duid_: destination unique id</para></listitem>
+			<listitem><para>_callid_: SIP Call-ID</para></listitem>
+			<listitem><para>_attribute value_: one to three attribute/value pairs</para></listitem>
+		</itemizedlist>
+		<para>Examples:</para>
+<programlisting format="linespecific">
+...
+# update one field
+&sercmd; dispatcher.load_set 2 gateway-a 7f3d2@example.net state 1
+
+# update two fields: expire in one hour and initial state in one minute
+&sercmd; dispatcher.load_set 2 gateway-a 7f3d2@example.net expire 3600 initexpire 60
+
+# update all fields
+&sercmd; dispatcher.load_set 2 gateway-a 7f3d2@example.net state 0 expire 3600 initexpire 60
+...
+</programlisting>
+	</section>
 	<section id="dispatcher.r.load_rm">
 		<title>
 		<function moreinfo="none">dispatcher.load_rm</function>
