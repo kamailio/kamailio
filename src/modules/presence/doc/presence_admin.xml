@@ -301,6 +301,63 @@ modparam("presence", "notifier_processes", 2)
 		</example>
 	</section>
 
+	<section id="presence.p.notifier_cluster_size">
+		<title><varname>notifier_cluster_size</varname> (int)</title>
+		<para>
+		The number of &kamailio; instances that share the same presence
+		database and run notifier processes. The notifier rounds are
+		split between the instances, so that each pending update is
+		processed by only one of them and the same watcher is not
+		notified more than once.
+		</para>
+		<para>
+		All the instances in the cluster must use the same value for
+		this parameter and for waitn_time, notifier_poll_rate and
+		notifier_processes. Each instance must have a different
+		notifier_cluster_id.
+		</para>
+		<para>
+		Separate notifier processes are only run when subs_db_mode is
+		3 (DB only mode).
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notifier_cluster_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "notifier_cluster_size", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="presence.p.notifier_cluster_id">
+		<title><varname>notifier_cluster_id</varname> (int)</title>
+		<para>
+		The index of the current &kamailio; instance in the cluster
+		that shares the presence database (see notifier_cluster_size).
+		It must be in the range [0, notifier_cluster_size), otherwise
+		the module fails to load.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>notifier_cluster_id</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# second of two instances sharing the presence database
+modparam("presence", "notifier_cluster_size", 2)
+modparam("presence", "notifier_cluster_id", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="presence.p.force_delete">
 		<title><varname>force_delete</varname> (int)</title>
 		<para>
