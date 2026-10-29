@@ -861,7 +861,9 @@ static int set_verification(tls_domain_t *d)
 
 /* This callback function is executed when libssl processes the SSL
  * handshake and does SSL record layer stuff. It's used to trap
- * client-initiated renegotiations.
+ * client-initiated renegotiations (when renegotiation is disabled) and to
+ * refresh the cached ssl metadata (peer certificate, verify result, cipher,
+ * ...) once an allowed renegotiation is completed.
  */
 
 static void sr_ssl_ctx_info_callback(const SSL *ssl, int event, int ret)
@@ -869,24 +871,32 @@ static void sr_ssl_ctx_info_callback(const SSL *ssl, int event, int ret)
 	struct tls_extra_data *data = 0;
 	int tls_dbg;
 
+	if(!(event & (SSL_CB_HANDSHAKE_START | SSL_CB_HANDSHAKE_DONE)))
+		return;
+	data = (struct tls_extra_data *)SSL_get_app_data(ssl);
+	if(data == 0)
+		return; /* not (yet) a connection of this module */
+
 	if(event & SSL_CB_HANDSHAKE_START) {
 		tls_dbg = cfg_get(tls, tls_cfg, debug);
 		LOG(tls_dbg, "SSL handshake started\n");
-		if(data == 0)
-			data = (struct tls_extra_data *)SSL_get_app_data(ssl);
-		if(data->flags & F_TLS_CON_HANDSHAKED) {
+		if((data->flags & F_TLS_CON_HANDSHAKED) && sr_tls_renegotiation == 0) {
 			LOG(tls_dbg, "SSL renegotiation initiated by client\n");
 			data->flags |= F_TLS_CON_RENEGOTIATION;
 		}
 	}
 	if(event & SSL_CB_HANDSHAKE_DONE) {
 		tls_dbg = cfg_get(tls, tls_cfg, debug);
-		if(data == 0)
-			data = (struct tls_extra_data *)SSL_get_app_data(ssl);
 		LOG(tls_dbg, "SSL handshake done\n");
+		if((data->flags & F_TLS_CON_HANDSHAKED) && sr_tls_renegotiation != 0) {
+			/* allowed renegotiation completed: the values cached at the end
+			 * of the initial handshake (tls_accept()/tls_connect()) are stale */
+			LOG(tls_dbg, "SSL renegotiation done - refreshing ssl cache\n");
+			tls_refresh_ssl_cache(data);
+		}
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
 		/* CVE-2009-3555 - disable renegotiation */
-		if(ssl->s3) {
+		if(sr_tls_renegotiation == 0 && ssl->s3) {
 			LOG(tls_dbg, "SSL disable renegotiation\n");
 			ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
 		}
@@ -943,8 +953,9 @@ static int set_ssl_options(tls_domain_t *d)
 #endif
 	for(i = 0; i < procs_no; i++) {
 		SSL_CTX_set_options(d->ctx[i], options);
-		if(sr_tls_renegotiation == 0)
-			SSL_CTX_set_info_callback(d->ctx[i], sr_ssl_ctx_info_callback);
+		/* always needed: blocks client renegotiations when disabled,
+		 * refreshes the ssl cache after a renegotiation when enabled */
+		SSL_CTX_set_info_callback(d->ctx[i], sr_ssl_ctx_info_callback);
 	}
 	return 0;
 }
