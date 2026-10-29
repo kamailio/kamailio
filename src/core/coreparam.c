@@ -98,6 +98,48 @@ int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval)
 }
 
 /**
+ * set the value of a numeric core parameter stored in shm
+ * - return -1 if the parameter is not found
+ * - return -2 if the parameter is not a numeric shm parameter
+ * - return -3 if the parameter storage is not allocated in shm
+ */
+int ksr_coreparam_set_nval_shm(char *name, long nval, long *oval)
+{
+	int i;
+	str sname;
+	long **v;
+
+	sname.s = name;
+	sname.len = strlen(sname.s);
+
+	for(i = 0; _ksr_cpexports[i].name.s != NULL; i++) {
+		if((_ksr_cpexports[i].name.len == sname.len)
+				&& (strncmp(_ksr_cpexports[i].name.s, sname.s, sname.len)
+						== 0)) {
+			if((_ksr_cpexports[i].ptype & (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM))
+					!= (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM)) {
+				LM_ERR("core parameter [%.*s] is not a numeric shm parameter\n",
+						sname.len, sname.s);
+				return -2;
+			}
+			v = (long **)_ksr_cpexports[i].ep;
+			if(v == NULL || *v == NULL || !shm_address_in(*v)) {
+				LM_ERR("core parameter [%.*s] is not allocated in shm\n",
+						sname.len, sname.s);
+				return -3;
+			}
+			if(oval != NULL) {
+				*oval = **v;
+			}
+			**v = nval;
+			return 0;
+		}
+	}
+	LM_ERR("core parameter [%.*s] not found\n", sname.len, sname.s);
+	return -1;
+}
+
+/**
  *
  */
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam)

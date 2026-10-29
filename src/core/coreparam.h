@@ -48,6 +48,7 @@ typedef struct ksr_cpexport {
 /* clang-format on */
 
 int ksr_coreparam_set_nval(char *name, long nval);
+int ksr_coreparam_set_nval_shm(char *name, long nval, long *oval);
 int ksr_coreparam_set_sval(char *name, char *sval);
 int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval);
 
