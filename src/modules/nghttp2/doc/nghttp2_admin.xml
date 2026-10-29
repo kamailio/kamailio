@@ -93,6 +93,52 @@ modparam("nghttp2", "listen_port", "8284")
 </programlisting>
 		</example>
 	</section>
+	<section id="nghttp2.p.tls_public_key">
+		<title><varname>tls_public_key</varname> (str)</title>
+		<para>
+			Path to the certificate (chain) file in PEM format used for HTTP/2
+			over TLS (h2, negotiated with ALPN).
+		</para>
+		<para>
+			If neither <varname>tls_public_key</varname> nor
+			<varname>tls_private_key</varname> is set, the server accepts
+			cleartext HTTP/2 with prior knowledge (h2c) instead, as used by
+			5G service-based interface peers on plain TCP (3GPP TS 29.500).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote> (empty, h2c).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_public_key</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nghttp2", "tls_public_key", "/etc/kamailio/tls/server.pem")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="nghttp2.p.tls_private_key">
+		<title><varname>tls_private_key</varname> (str)</title>
+		<para>
+			Path to the private key file in PEM format for HTTP/2 over TLS.
+			See <varname>tls_public_key</varname>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote> (empty, h2c).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_private_key</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nghttp2", "tls_private_key", "/etc/kamailio/tls/server.key")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="nghttp2.p.event_callback">
 		<title><varname>event_callback</varname> (str)</title>
 		<para>
