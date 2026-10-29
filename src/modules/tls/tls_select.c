@@ -188,9 +188,11 @@ static int get_cert(
 	if(!extra)
 		goto err;
 	/* both branches return a new reference - caller must X509_free() it */
+	tls_ssl_cache_lock(extra);
 	*cert = my ? x509_DER_to_cert(extra->ssl_my_cert, extra->ssl_my_cert_len)
 			   : x509_DER_to_cert(
 						 extra->ssl_peer_cert, extra->ssl_peer_cert_len);
+	tls_ssl_cache_unlock(extra);
 	if(!*cert) {
 		if(my) {
 			ERR("Unable to retrieve my TLS certificate from SSL structure\n");
@@ -225,9 +227,11 @@ static int get_cipher(str *res, sip_msg_t *msg)
 	if(!extra)
 		goto err;
 
+	tls_ssl_cache_lock(extra);
 	cipher.s = extra->ssl_cipher_name;
 	cipher.len = cipher.s ? strlen(cipher.s) : 0;
 	if(cipher.len >= 1024) {
+		tls_ssl_cache_unlock(extra);
 		ERR("Cipher name too long\n");
 		goto err;
 	}
@@ -236,6 +240,7 @@ static int get_cipher(str *res, sip_msg_t *msg)
 	} else {
 		buf[0] = '\0';
 	}
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 	res->len = cipher.len;
 	tcpconn_chld_put(c);
@@ -281,7 +286,9 @@ static int get_bits(str *res, long *i, sip_msg_t *msg)
 	if(!extra)
 		goto err;
 
+	tls_ssl_cache_lock(extra);
 	b = extra->ssl_cipher_bits;
+	tls_ssl_cache_unlock(extra);
 	bits.s = int2str(b, &bits.len);
 	if(bits.len >= 1024) {
 		ERR("Bits string too long\n");
@@ -334,9 +341,11 @@ static int get_version(str *res, sip_msg_t *msg)
 	if(!extra)
 		goto err;
 
+	tls_ssl_cache_lock(extra);
 	version.s = extra->ssl_version;
 	version.len = version.s ? strlen(version.s) : 0;
 	if(version.len >= 1024) {
+		tls_ssl_cache_unlock(extra);
 		ERR("Version string too long\n");
 		goto err;
 	}
@@ -345,6 +354,7 @@ static int get_version(str *res, sip_msg_t *msg)
 	} else {
 		buf[0] = '\0';
 	}
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 	res->len = version.len;
 	tcpconn_chld_put(c);
@@ -390,7 +400,9 @@ static int get_desc(str *res, sip_msg_t *msg)
 		goto err;
 
 	buf[0] = '\0';
+	tls_ssl_cache_lock(extra);
 	strcpy(buf, extra->ssl_cipher_desc);
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 	res->len = strlen(buf);
 	tcpconn_chld_put(c);
@@ -499,7 +511,11 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 		DBG("Verification of local certificates not supported\n");
 		goto error;
 	} else {
-		if(extra->ssl_peer_cert && extra->ssl_verify_result == err) {
+		int ok;
+		tls_ssl_cache_lock(extra);
+		ok = (extra->ssl_peer_cert && extra->ssl_verify_result == err);
+		tls_ssl_cache_unlock(extra);
+		if(ok) {
 			*res = succ;
 			if(ires)
 				*ires = 1;
@@ -945,8 +961,10 @@ static int get_verified_cert_chain(
 	extra = get_extra(*c);
 	if(!extra)
 		goto err;
+	tls_ssl_cache_lock(extra);
 	*chain = x509_DER_to_stack((const unsigned char *)extra->ssl_cert_chain,
 			extra->ssl_cert_chain_len);
+	tls_ssl_cache_unlock(extra);
 	if(!*chain) {
 		ERR("Unable to retrieve peer TLS verified chain from SSL structure\n");
 		goto err;
@@ -1595,12 +1613,14 @@ static int get_tlsext_sn(str *res, sip_msg_t *msg)
 
 	buf[0] = '\0';
 
+	tls_ssl_cache_lock(extra);
 	server_name.s = extra->ssl_servername;
 	if(server_name.s) {
 		server_name.len = strlen(server_name.s);
 		DBG("received server_name (TLS extension): '%.*s'\n",
 				STR_FMT(&server_name));
 	} else {
+		tls_ssl_cache_unlock(extra);
 		DBG("SSL_get_servername returned NULL\n");
 		goto error;
 	}
@@ -1618,6 +1638,7 @@ static int get_tlsext_sn(str *res, sip_msg_t *msg)
 		memcpy(buf, server_name.s, server_name.len);
 		res->len = server_name.len;
 	}
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 
 	tcpconn_chld_put(c);
@@ -1709,11 +1730,13 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	if(extra == NULL) {
 		goto error;
 	}
+	tls_ssl_cache_lock(extra);
 	cert = (param->pvn.u.isname.name.n < 5000)
 				   ? x509_DER_to_cert(
 							 extra->ssl_my_cert, extra->ssl_my_cert_len)
 				   : x509_DER_to_cert(
 							 extra->ssl_peer_cert, extra->ssl_peer_cert_len);
+	tls_ssl_cache_unlock(extra);
 	if(cert == NULL) {
 		if(param->pvn.u.isname.name.n < 5000) {
 			LM_ERR("failed to retrieve my TLS certificate from SSL "

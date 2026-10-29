@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "../../core/tcp_conn.h"
 #include "../../core/tcp_read.h"
+#include "../../core/locking.h"
 #include "tls_domain.h"
 #include "tls_ct_wrq.h"
 
@@ -85,7 +86,17 @@ typedef struct tls_extra_data
 
 	unsigned char *ssl_cert_chain;
 	int ssl_cert_chain_len;
+
+	/* protects the ssl_* cached fields above: they are rebuilt after a
+	 * renegotiation by the process owning the SSL*, while other processes
+	 * (or tcp_main threads) may be reading them */
+	gen_lock_t cache_lock;
 } tls_extra_data_t;
+
+#define tls_ssl_cache_lock(ed) lock_get(&(ed)->cache_lock)
+#define tls_ssl_cache_unlock(ed) lock_release(&(ed)->cache_lock)
+
+void tls_refresh_ssl_cache(struct tls_extra_data *data);
 
 /* SSL ex_data slot marking the SSLs of this module (value: their
  * tls_extra_data) */

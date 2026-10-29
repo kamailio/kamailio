@@ -422,6 +422,10 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
+	if(lock_init(&data->cache_lock) == NULL) {
+		LM_ERR("failed to init ssl cache lock\n");
+		goto error;
+	}
 	tls_openssl_clear_errors();
 	data->ssl = SSL_new(DOM_CTX(dom));
 	data->rwbio = tls_BIO_new_mbuf(0, 0);
@@ -731,6 +735,57 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 }
 
 
+/** rebuild the ssl metadata cache after a renegotiation.
+ * The handshake may have changed the peer certificate (or removed it), the
+ * verify result, the verified chain, the cipher and the SNI, so the values
+ * cached at the end of the initial handshake are stale.
+ * Must be called by the process/thread owning data->ssl (from within an
+ * SSL_* call on the connection). The new values are built first and then
+ * swapped in under the cache lock, so readers in other processes never see
+ * a freed buffer or a half-updated cache.
+ */
+void tls_refresh_ssl_cache(struct tls_extra_data *data)
+{
+	/* on stack: may run on a tcp_main thread, where pkg memory is
+	 * not usable */
+	struct tls_extra_data tmp_data;
+	struct tls_extra_data *tmp = &tmp_data;
+
+	memset(tmp, 0, sizeof(*tmp));
+	tmp->ssl = data->ssl;
+	tls_init_ssl_cache(tmp);
+	tls_build_ssl_cache(tmp, NULL);
+
+#define TLS_CACHE_SWAP(f)   \
+	do {                    \
+		void *_p = data->f; \
+		data->f = tmp->f;   \
+		tmp->f = _p;        \
+	} while(0)
+
+	tls_ssl_cache_lock(data);
+	TLS_CACHE_SWAP(ssl_servername);
+	TLS_CACHE_SWAP(ssl_cipher_name);
+	TLS_CACHE_SWAP(ssl_my_cert);
+	TLS_CACHE_SWAP(ssl_peer_cert);
+	TLS_CACHE_SWAP(ssl_cert_chain);
+	data->ssl_my_cert_len = tmp->ssl_my_cert_len;
+	data->ssl_peer_cert_len = tmp->ssl_peer_cert_len;
+	data->ssl_cert_chain_len = tmp->ssl_cert_chain_len;
+	data->ssl_verify_result = tmp->ssl_verify_result;
+	data->ssl_cipher_bits = tmp->ssl_cipher_bits;
+	memcpy(data->ssl_version, tmp->ssl_version, sizeof(data->ssl_version));
+	memcpy(data->ssl_cipher_desc, tmp->ssl_cipher_desc,
+			sizeof(data->ssl_cipher_desc));
+	tls_ssl_cache_unlock(data);
+
+#undef TLS_CACHE_SWAP
+
+	/* tmp now holds the old buffers */
+	tls_free_ssl_cache(tmp);
+}
+
+
 /** wrapper around SSL_accept, usin SSL return convention.
  * It will also log critical errors and certificate debugging info.
  * @param c - tcp connection with tls (extra_data must be a filled
@@ -997,6 +1052,7 @@ static void tls_h_tcpconn_clean_direct(struct tcp_connection *c)
 		extra = (struct tls_extra_data *)c->extra_data;
 		SSL_free(extra->ssl);
 		tls_free_ssl_cache(extra);
+		lock_destroy(&extra->cache_lock);
 		atomic_dec(&extra->cfg->ref_count);
 		if(extra->ct_wq)
 			tls_ct_wq_free(&extra->ct_wq);
