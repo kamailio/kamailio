@@ -406,6 +406,9 @@ tls_domains_cfg_t *tls_load_config(str *filename)
 	in_fd = out_fd = filename_is_directory = 0;
 	file_path = (char *)0;
 
+	/* the domain from a previous load can belong to a configuration that
+	 * was freed in the meantime (failed load, fixup or socket check) */
+	_ksr_tls_domain = NULL;
 	if((_ksr_tls_cfg = tls_new_cfg()) == NULL)
 		goto error;
 
@@ -484,6 +487,7 @@ tls_domains_cfg_t *tls_load_config(str *filename)
 	cfg_section_parser(parser, ksr_tls_parse_domain, NULL);
 	if(sr_cfg_parse(parser))
 		goto error;
+	_ksr_tls_domain = NULL;
 	cfg_parser_close(parser);
 	if(file_path)
 		pkg_free(file_path);
@@ -500,6 +504,7 @@ error:
 		pkg_free(file_path);
 	if(parser)
 		cfg_parser_close(parser);
+	_ksr_tls_domain = NULL;
 	if(_ksr_tls_cfg) {
 		tls_free_cfg(_ksr_tls_cfg);
 		_ksr_tls_cfg = NULL;
