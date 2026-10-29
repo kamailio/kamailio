@@ -2555,6 +2555,43 @@ DEST: {
 ...
 </programlisting>
 	</section>
+	<section id="dispatcher.r.load_add">
+		<title>
+		<function moreinfo="none">dispatcher.load_add</function>
+		</title>
+		<para>
+		Adds an item to the internal call-load hash table used by algorithm 10
+		and increments the tracked load of the matching destination. The group
+		and destination unique id must identify an existing destination, and
+		the Call-ID must not already exist in the table.
+		</para>
+		<para>
+		The optional expiration values are durations in seconds from the time
+		the item is added. When <emphasis>expire</emphasis> or
+		<emphasis>initexpire</emphasis> is omitted or set to 0, the value of
+		<emphasis>ds_hash_expire</emphasis> or
+		<emphasis>ds_hash_initexpire</emphasis>, respectively, is used.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_duid_: destination unique id</para></listitem>
+			<listitem><para>_callid_: SIP Call-ID</para></listitem>
+			<listitem><para>_state_: 0 for initial or 1 for confirmed</para></listitem>
+			<listitem><para>_expire_: optional general expiration duration</para></listitem>
+			<listitem><para>_initexpire_: optional initial-state expiration duration</para></listitem>
+		</itemizedlist>
+		<para>Examples:</para>
+<programlisting format="linespecific">
+...
+# use the module expiration parameters
+&sercmd; dispatcher.load_add 2 gateway-a 7f3d2 0
+
+# expire after 3600 seconds, with a 60 second initial-state expiration
+&sercmd; dispatcher.load_add 2 gateway-a 7f3d2 0 3600 60
+...
+</programlisting>
+	</section>
 	<section id="dispatcher.r.load_rm">
 		<title>
 		<function moreinfo="none">dispatcher.load_rm</function>
