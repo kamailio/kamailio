@@ -209,6 +209,8 @@ int ds_is_active_uri(sip_msg_t *msg, int group, str *uri);
 int ds_load_unset(struct sip_msg *msg);
 int ds_load_unset_callid(struct sip_msg *msg, str *callid);
 int ds_load_update(struct sip_msg *msg);
+int ds_load_add_record(int group, str *duid, str *callid, int state,
+		unsigned int expire, unsigned int initexpire);
 int ds_load_remove_match(int group, str *duid, str *callid);
 struct _ds_cell;
 typedef int (*ds_load_cell_cb_t)(

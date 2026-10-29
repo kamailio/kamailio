@@ -2016,6 +2016,9 @@ static const char *dispatcher_rpc_show_doc[2] = {
 static const char *dispatcher_rpc_load_list_doc[2] = {
 		"Return the content of the call-load hash table", 0};
 
+static const char *dispatcher_rpc_load_add_doc[2] = {
+		"Add a call-load hash-table entry", 0};
+
 static const char *dispatcher_rpc_load_rm_doc[2] = {
 		"Remove a matching call-load hash-table entry", 0};
 
@@ -2348,6 +2351,48 @@ static void dispatcher_rpc_load_list(rpc_t *rpc, void *ctx)
 	if(ds_load_for_each(dispatcher_rpc_load_list_cell, &rctx) < 0) {
 		rpc->fault(ctx, 500, "Internal error creating load list");
 	}
+}
+
+/**
+ * RPC command to add a call-load hash-table item
+ */
+static void dispatcher_rpc_load_add(rpc_t *rpc, void *ctx)
+{
+	int group;
+	int n;
+	int ret;
+	int state;
+	unsigned int expire = 0;
+	unsigned int initexpire = 0;
+	str duid;
+	str callid;
+
+	n = rpc->scan(ctx, "dSSd*uu", &group, &duid, &callid, &state, &expire,
+			&initexpire);
+	if(n < 4) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(state != DS_LOAD_INIT && state != DS_LOAD_CONFIRMED) {
+		rpc->fault(ctx, 400, "State must be 0 or 1");
+		return;
+	}
+
+	ret = ds_load_add_record(group, &duid, &callid, state, expire, initexpire);
+	if(ret == -2) {
+		rpc->fault(ctx, 404, "Destination Not Found");
+		return;
+	}
+	if(ret == -3) {
+		rpc->fault(ctx, 409, "Call-ID Already Exists");
+		return;
+	}
+	if(ret < 0) {
+		rpc->fault(ctx, 500, "Adding load item failed");
+		return;
+	}
+
+	rpc->rpl_printf(ctx, "Ok. Load item added.");
 }
 
 /**
@@ -2927,6 +2972,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_show_doc, 0},
 	{"dispatcher.load_list", dispatcher_rpc_load_list,
 		dispatcher_rpc_load_list_doc, RPC_RET_ARRAY},
+	{"dispatcher.load_add", dispatcher_rpc_load_add,
+		dispatcher_rpc_load_add_doc, 0},
 	{"dispatcher.load_rm", dispatcher_rpc_load_rm,
 		dispatcher_rpc_load_rm_doc, 0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,

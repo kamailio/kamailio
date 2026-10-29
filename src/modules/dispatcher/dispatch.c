@@ -2526,6 +2526,56 @@ int ds_load_remove_byid(int set, str *duid)
 }
 
 /**
+ * add a call-load item for an existing destination
+ */
+int ds_load_add_record(int group, str *duid, str *callid, int state,
+		unsigned int expire, unsigned int initexpire)
+{
+	int i;
+	int ret;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	if(_dsht_load == NULL || duid == NULL || duid->s == NULL || duid->len <= 0
+			|| callid == NULL || callid->s == NULL || callid->len <= 0
+			|| (state != DS_LOAD_INIT && state != DS_LOAD_CONFIRMED)) {
+		return -1;
+	}
+
+	list = ds_get_list();
+	if(list == NULL) {
+		return -1;
+	}
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		return -2;
+	}
+
+	for(i = 0; i < idx->nr; i++) {
+		if(idx->dlist[i].attrs.duid.len == duid->len
+				&& strncasecmp(idx->dlist[i].attrs.duid.s, duid->s, duid->len)
+						   == 0) {
+			break;
+		}
+	}
+	if(i == idx->nr) {
+		ds_put_list(list);
+		return -2;
+	}
+
+	ret = ds_add_cell_ex(_dsht_load, callid, &idx->dlist[i].attrs.duid, group,
+			state, expire, initexpire);
+	if(ret < 0) {
+		ds_put_list(list);
+		return ret == -2 ? -3 : -1;
+	}
+
+	DS_LOAD_INC(idx, i);
+	ds_put_list(list);
+	return 0;
+}
+
+/**
  * remove a call-load item by group, DUID and Call-ID
  */
 int ds_load_remove_match(int group, str *duid, str *callid)
