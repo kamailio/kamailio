@@ -689,8 +689,10 @@ static int jwks_fetch_url(jwks_cache_entry_t *entry)
 	if(hdrs.buf && hdrs.len > 0) {
 		char *p = strcasestr(hdrs.buf, "cache-control:");
 		if(p) {
+			/* look for max-age only in the Cache-Control line */
+			char *eol = strpbrk(p, "\r\n");
 			char *ma = strcasestr(p, "max-age=");
-			if(ma) {
+			if(ma && (eol == NULL || ma < eol)) {
 				int max_age = 0;
 				ma += 8;
 				while(*ma >= '0' && *ma <= '9') {
