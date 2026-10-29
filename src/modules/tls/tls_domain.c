@@ -98,7 +98,7 @@ static void setup_ecdh(SSL_CTX *ctx)
 #ifndef OPENSSL_NO_DH
 
 /*
- * not needed for OpenSSL 1.1.0+ and LibreSSL
+ * not needed for OpenSSL 1.1.0+
  */
 #if !defined(SSL_CTX_set_dh_auto)
 static unsigned char dh3072_p[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -143,7 +143,7 @@ static unsigned char dh3072_g[] = {0x02};
 static void setup_dh(SSL_CTX *ctx)
 {
 /*
- * not needed for OpenSSL 1.1.0+ and LibreSSL
+ * not needed for OpenSSL 1.1.0+
  * DH_new() is deprecated in OpenSSL 3
  */
 #if !defined(SSL_CTX_set_dh_auto)
@@ -1239,8 +1239,7 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 
 	if(d->verify_server_name > 0) {
 #ifndef KSR_TLS_VERIFY_SERVER_NAME
-		LM_ERR("%s: verify_server_name requires OpenSSL 1.1.0 or newer"
-			   " (LibreSSL 2.7.0 or newer)\n",
+		LM_ERR("%s: verify_server_name requires OpenSSL 1.1.0 or newer\n",
 				tls_domain_str(d));
 		return -1;
 #endif
