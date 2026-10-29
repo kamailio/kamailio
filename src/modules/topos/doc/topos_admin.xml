@@ -461,6 +461,25 @@ modparam("topos", "cparam_name", "xyz")
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.uuid_prefix">
+		<title><varname>uuid_prefix</varname> (str)</title>
+		<para>
+		<emphasis>
+			Set the prefix of the uuid that topos generates for the masked values.
+			Only the first 4 characters are used. A shorter value gets the
+			missing ones from <quote>srid</quote>, e.g. <quote>ab</quote>
+			becomes <quote>abid</quote>. Default value is <quote>tpsh</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>uuid_prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "uuid_prefix", "abcd")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="topos.p.xavu_cfg">
 		<title><varname>xavu_cfg</varname> (str)</title>
 		<para>
