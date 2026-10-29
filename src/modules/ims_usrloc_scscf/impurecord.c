@@ -43,6 +43,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 #include "impurecord.h"
@@ -539,7 +544,7 @@ static inline void process_impurecord(impurecord_t *_r)
 		register_udomain("location", &_d);
 		delete_impurecord(_d, &_r->public_identity, _r);
 	} else {
-		if(!hascontacts) {
+		if(!hascontacts && _r->reg_state != IMPU_NOT_REGISTERED) {
 			LM_DBG("This impu is not to be deleted but has no contacts - "
 				   "changing state to IMPU_UNREGISTERED\n");
 			//run callback  here UL_IMPU_UNREG_NC for UL_IMPU_UNREG_NC
@@ -1249,8 +1254,9 @@ int update_impurecord(struct udomain *_d, str *public_identity,
 		if((*_r)->s != subs_ptr) {
 			LM_DBG("new subscription for IMPU... swapping - TODO need to unref "
 				   "the old one...and then ref the new one\n");
-			unref_subscription(
-					(*_r)->s); //different subscription which we don't have lock on yet.
+			/* An RTR may have removed this record's previous profile. */
+			if((*_r)->s)
+				unref_subscription((*_r)->s);
 			ref_subscription_unsafe(subs_ptr);
 			(*_r)->s = subs_ptr;
 		} else {

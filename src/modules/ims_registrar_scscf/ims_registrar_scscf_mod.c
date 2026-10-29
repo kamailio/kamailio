@@ -41,6 +41,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ *
+ * As a special exception, the copyright holders of the new contributions
+ * permit linking those contributions with the OpenSSL library and
+ * distributing the resulting combined work. The GNU General Public
+ * License applies to all other code.
  */
 
 #include <stdio.h>
@@ -265,6 +270,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE},
 	{"impu_registered", (cmd_function)impu_registered, 1, domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"orig_impu_has_contact", (cmd_function)orig_impu_has_contact, 1, domain_fixup, 0,
+			REQUEST_ROUTE},
 	{"assign_server_unreg", (cmd_function)w_assign_server_unreg, 3, assign_save_fixup3_async, assign_save_fixup_free,
 			REQUEST_ROUTE},
 	{"assign_server", (cmd_function)w_assign_server, 4, assign_server_fixup4, assign_server_fixup4_free,
@@ -660,6 +667,9 @@ AAAMessage *callback_cdp_request(AAAMessage *request, void *param)
 			case IMS_Cx:
 				//case IMS_Dx:  IMS_Cx is same as IMS_Dx 16777216
 				switch(request->commandCode) {
+					case IMS_PPR:
+						LM_INFO("Cx/Dx request handler: received PPR\n");
+						return cxdx_process_ppr(request);
 					case IMS_RTR:
 						LM_INFO("Cx/Dx request handler():- Received an IMS_RTR "
 								"\n");
