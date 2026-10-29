@@ -177,6 +177,51 @@ modparam("jwt3", "jwks_max_misses", 3)
 		</example>
 	</section>
 
+	<section id="jwt.p.jwks_fetch_timeout">
+		<title><varname>jwks_fetch_timeout</varname> (int)</title>
+		<para>
+			Maximum time in seconds allowed for the whole download of a remote
+			JWKS, including connection, redirects and transfer. The fetch is
+			blocking, so the SIP worker process handling the request waits
+			for up to this time.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10. Must be greater than 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_fetch_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_fetch_timeout", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jwt.p.jwks_connect_timeout">
+		<title><varname>jwks_connect_timeout</varname> (int)</title>
+		<para>
+			Maximum time in seconds allowed to establish the connection to
+			the remote JWKS server. It should not be greater than
+			jwks_fetch_timeout.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3. Must be greater than 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_connect_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_connect_timeout", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
