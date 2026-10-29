@@ -24,9 +24,12 @@
 #include "str.h"
 #include "rand/ksrxrand.h"
 #include "mem/pkg.h"
+#include "mem/shm.h"
+#include "shm_init.h"
 #include "coreparam.h"
 
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam);
+int ksr_coreparam_store_nval_shm(str *pname, ksr_cpval_t *pval, void *eparam);
 int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam);
 
 int ksr_iuid_cp(str *pname, ksr_cpval_t *pval, void *eparam);
@@ -100,6 +103,36 @@ int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval)
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam)
 {
 	*(long *)eparam = pval->v.nval;
+	return 0;
+}
+
+/**
+ * store the value in a long* variable allocated in shm
+ * - target long* has to be initially null or shm-allocated to cope properly
+ *   with setting the parameter many times
+ */
+int ksr_coreparam_store_nval_shm(str *pname, ksr_cpval_t *pval, void *eparam)
+{
+	long **v;
+
+	v = (long **)eparam;
+	if(v == NULL) {
+		LM_ERR("store parameter not provided\n");
+		return -1;
+	}
+	if(*v == NULL) {
+		if(!shm_initialized() && init_shm() < 0) {
+			LM_ERR("failed to initialize shared memory\n");
+			return -1;
+		}
+		*v = (long *)shm_malloc(sizeof(long));
+		if(*v == NULL) {
+			SHM_MEM_ERROR;
+			return -1;
+		}
+	}
+	**v = pval->v.nval;
+
 	return 0;
 }
 

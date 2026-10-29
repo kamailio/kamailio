@@ -25,6 +25,8 @@
 #define KSR_CPTYPE_STR 2
 #define KSR_CPTYPE_ID 4
 #define KSR_CPTYPE_STRUCT 8
+/* SHM storage flag - e.g., 'ep' points to a 'long*' for NUM type */
+#define KSR_CPTYPE_SHM 256
 
 /* clang-format off */
 typedef struct ksr_cpval {
