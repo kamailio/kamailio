@@ -211,6 +211,9 @@ int ds_load_unset_callid(struct sip_msg *msg, str *callid);
 int ds_load_update(struct sip_msg *msg);
 int ds_load_add_record(int group, str *duid, str *callid, int state,
 		unsigned int expire, unsigned int initexpire);
+int ds_load_set_record(int group, str *duid, str *callid, int set_state,
+		int state, int set_expire, unsigned long expire, int set_initexpire,
+		unsigned long initexpire);
 int ds_load_remove_match(int group, str *duid, str *callid);
 struct _ds_cell;
 typedef int (*ds_load_cell_cb_t)(

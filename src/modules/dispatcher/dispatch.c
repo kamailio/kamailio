@@ -2576,6 +2576,49 @@ int ds_load_add_record(int group, str *duid, str *callid, int state,
 }
 
 /**
+ * update specified fields of a matching call-load item
+ */
+int ds_load_set_record(int group, str *duid, str *callid, int set_state,
+		int state, int set_expire, unsigned long expire, int set_initexpire,
+		unsigned long initexpire)
+{
+	time_t now;
+	ds_cell_t *cell;
+
+	if(_dsht_load == NULL || duid == NULL || duid->s == NULL || duid->len <= 0
+			|| callid == NULL || callid->s == NULL || callid->len <= 0
+			|| (!set_state && !set_expire && !set_initexpire)
+			|| (set_state && state != DS_LOAD_INIT
+					&& state != DS_LOAD_CONFIRMED)) {
+		return -1;
+	}
+
+	cell = ds_get_cell(_dsht_load, callid);
+	if(cell == NULL) {
+		return -2;
+	}
+	if(cell->dset != group || cell->duid.len != duid->len
+			|| strncasecmp(cell->duid.s, duid->s, duid->len) != 0) {
+		ds_unlock_cell(_dsht_load, callid);
+		return -2;
+	}
+
+	if(set_state) {
+		cell->state = state;
+	}
+	now = time(NULL);
+	if(set_expire) {
+		cell->expire = now + (time_t)expire;
+	}
+	if(set_initexpire) {
+		cell->initexpire = now + (time_t)initexpire;
+	}
+	ds_unlock_cell(_dsht_load, callid);
+
+	return 0;
+}
+
+/**
  * remove a call-load item by group, DUID and Call-ID
  */
 int ds_load_remove_match(int group, str *duid, str *callid)

@@ -2019,6 +2019,9 @@ static const char *dispatcher_rpc_load_list_doc[2] = {
 static const char *dispatcher_rpc_load_add_doc[2] = {
 		"Add a call-load hash-table entry", 0};
 
+static const char *dispatcher_rpc_load_set_doc[2] = {
+		"Update fields of a call-load hash-table entry", 0};
+
 static const char *dispatcher_rpc_load_rm_doc[2] = {
 		"Remove a matching call-load hash-table entry", 0};
 
@@ -2393,6 +2396,86 @@ static void dispatcher_rpc_load_add(rpc_t *rpc, void *ctx)
 	}
 
 	rpc->rpl_printf(ctx, "Ok. Load item added.");
+}
+
+/**
+ * RPC command to update selected fields of a call-load hash-table item
+ */
+static void dispatcher_rpc_load_set(rpc_t *rpc, void *ctx)
+{
+	int group;
+	int n;
+	int ret;
+	int state = 0;
+	int set_state = 0;
+	int set_expire = 0;
+	int set_initexpire = 0;
+	unsigned long expire = 0;
+	unsigned long initexpire = 0;
+	unsigned long value;
+	str attr;
+	str duid;
+	str callid;
+
+	if(rpc->scan(ctx, "dSS", &group, &duid, &callid) < 3) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	while((n = rpc->scan(ctx, "*Sj", &attr, &value)) != 0) {
+		if(n != 2) {
+			rpc->fault(ctx, 400, "Attribute requires a value");
+			return;
+		}
+		if(attr.len == 5 && strncasecmp(attr.s, "state", 5) == 0) {
+			if(set_state) {
+				rpc->fault(ctx, 400, "Duplicate state attribute");
+				return;
+			}
+			if(value != DS_LOAD_INIT && value != DS_LOAD_CONFIRMED) {
+				rpc->fault(ctx, 400, "State must be 0 or 1");
+				return;
+			}
+			state = (int)value;
+			set_state = 1;
+		} else if(attr.len == 6 && strncasecmp(attr.s, "expire", 6) == 0) {
+			if(set_expire) {
+				rpc->fault(ctx, 400, "Duplicate expire attribute");
+				return;
+			}
+			expire = value;
+			set_expire = 1;
+		} else if(attr.len == 10
+				  && strncasecmp(attr.s, "initexpire", 10) == 0) {
+			if(set_initexpire) {
+				rpc->fault(ctx, 400, "Duplicate initexpire attribute");
+				return;
+			}
+			initexpire = value;
+			set_initexpire = 1;
+		} else {
+			rpc->fault(ctx, 400, "Unknown load attribute");
+			return;
+		}
+	}
+
+	if(!set_state && !set_expire && !set_initexpire) {
+		rpc->fault(ctx, 400, "At least one attribute is required");
+		return;
+	}
+
+	ret = ds_load_set_record(group, &duid, &callid, set_state, state,
+			set_expire, expire, set_initexpire, initexpire);
+	if(ret == -2) {
+		rpc->fault(ctx, 404, "Load Entry Not Found");
+		return;
+	}
+	if(ret < 0) {
+		rpc->fault(ctx, 500, "Updating load item failed");
+		return;
+	}
+
+	rpc->rpl_printf(ctx, "Ok. Load item updated.");
 }
 
 /**
@@ -2974,6 +3057,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_load_list_doc, RPC_RET_ARRAY},
 	{"dispatcher.load_add", dispatcher_rpc_load_add,
 		dispatcher_rpc_load_add_doc, 0},
+	{"dispatcher.load_set", dispatcher_rpc_load_set,
+		dispatcher_rpc_load_set_doc, 0},
 	{"dispatcher.load_rm", dispatcher_rpc_load_rm,
 		dispatcher_rpc_load_rm_doc, 0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
