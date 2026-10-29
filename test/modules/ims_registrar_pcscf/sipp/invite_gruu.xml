@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<scenario name="GRUU INVITE Lookup">
+  <send retrans="500">
+<![CDATA[
+INVITE sip:lookup@ims.local;gr=urn:uuid:3333-4444 SIP/2.0
+Via: SIP/2.0/UDP [local_ip]:[local_port];branch=[branch]
+From: <sip:caller@ims.local>;tag=[call_number]
+To: <sip:lookup@ims.local>
+Call-ID: [call_id]
+CSeq: 1 INVITE
+Contact: <sip:caller@[local_ip]:[local_port]>
+Max-Forwards: 70
+Content-Length: 0
+
+]]>
+  </send>
+
+  <recv response="200" optional="false"/>
+
+  <send>
+<![CDATA[
+ACK sip:lookup@ims.local SIP/2.0
+Via: SIP/2.0/UDP [local_ip]:[local_port];branch=[branch]
+From: <sip:caller@ims.local>;tag=[call_number]
+To: <sip:lookup@ims.local>[peer_tag_param]
+Call-ID: [call_id]
+CSeq: 1 ACK
+Content-Length: 0
+
+]]>
+  </send>
+</scenario>
