@@ -2539,7 +2539,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		update_vals[n_update_cols].val.int_val =
 				core_case_hash(&callid, &from_tag, 0)
 				% (pres_waitn_time * pres_notifier_poll_rate
-						* pres_notifier_processes);
+						* pres_notifier_processes * pres_notifier_cluster_size);
 		n_update_cols++;
 
 		if(full) {
@@ -2599,9 +2599,10 @@ int set_updated(subs_t *sub)
 	update_cols[0] = &str_updated_col;
 	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
-	update_vals[0].val.int_val = core_case_hash(&sub->callid, &sub->from_tag, 0)
-								 % (pres_waitn_time * pres_notifier_poll_rate
-										 * pres_notifier_processes);
+	update_vals[0].val.int_val =
+			core_case_hash(&sub->callid, &sub->from_tag, 0)
+			% (pres_waitn_time * pres_notifier_poll_rate
+					* pres_notifier_processes * pres_notifier_cluster_size);
 
 	if(pa_dbf.use_table(pa_db, &active_watchers_table) < 0) {
 		LM_ERR("use table failed\n");
@@ -3217,8 +3218,10 @@ error:
 void pres_timer_send_notify(unsigned int ticks, void *param)
 {
 	int process_num = *((int *)param);
-	int round =
-			subset + (pres_waitn_time * pres_notifier_poll_rate * process_num);
+	int round = subset
+				+ (pres_waitn_time * pres_notifier_poll_rate
+						* (pres_notifier_cluster_id * pres_notifier_processes
+								+ process_num));
 
 	if(++subset > (pres_waitn_time * pres_notifier_poll_rate) - 1)
 		subset = 0;

@@ -166,6 +166,8 @@ int publ_cache_mode = PS_PCACHE_HYBRID;
 int pres_waitn_time = 5;
 int pres_notifier_poll_rate = 10;
 int pres_notifier_processes = 1;
+int pres_notifier_cluster_size = 1;
+int pres_notifier_cluster_id = 0;
 int pres_force_delete = 0;
 int pres_startup_mode = 1;
 str pres_xavp_cfg = {0};
@@ -230,6 +232,8 @@ static param_export_t params[]={
 	{ "waitn_time",             PARAM_INT, &pres_waitn_time },
 	{ "notifier_poll_rate",     PARAM_INT, &pres_notifier_poll_rate },
 	{ "notifier_processes",     PARAM_INT, &pres_notifier_processes },
+	{ "notifier_cluster_size",  PARAM_INT, &pres_notifier_cluster_size },
+	{ "notifier_cluster_id",    PARAM_INT, &pres_notifier_cluster_id },
 	{ "force_delete",           PARAM_INT, &pres_force_delete },
 	{ "startup_mode",           PARAM_INT, &pres_startup_mode },
 	{ "expires_offset",         PARAM_INT, &pres_expires_offset },
@@ -515,6 +519,18 @@ static int mod_init(void)
 
 	if(pres_notifier_processes < 0 || pres_subs_dbmode != DB_ONLY) {
 		pres_notifier_processes = 0;
+	}
+
+	if(pres_notifier_cluster_size <= 0) {
+		pres_notifier_cluster_size = 1;
+	}
+
+	if(pres_notifier_cluster_id < 0
+			|| pres_notifier_cluster_id >= pres_notifier_cluster_size) {
+		LM_ERR("notifier_cluster_id (%d) must be in [0, notifier_cluster_size) "
+			   "(notifier_cluster_size=%d)\n",
+				pres_notifier_cluster_id, pres_notifier_cluster_size);
+		goto dberror;
 	}
 
 	if(pres_notifier_processes > 0) {
@@ -1395,12 +1411,13 @@ static int update_pw_dialogs_dbonlymode(subs_t *subs, subs_t **subs_array)
 		db_vals[n_update_cols].val.int_val =
 				(int)((kam_rand() / (KAM_RAND_MAX + 1.0))
 						* (pres_waitn_time * pres_notifier_poll_rate
-								* pres_notifier_processes));
+								* pres_notifier_processes
+								* pres_notifier_cluster_size));
 	} else {
 		db_vals[n_update_cols].val.int_val =
 				core_case_hash(&subs->callid, &subs->from_tag, 0)
 				% (pres_waitn_time * pres_notifier_poll_rate
-						* pres_notifier_processes);
+						* pres_notifier_processes * pres_notifier_cluster_size);
 	}
 	n_update_cols++;
 
