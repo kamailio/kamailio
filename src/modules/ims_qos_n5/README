@@ -1,0 +1,382 @@
+IMS QoS N5 Module
+
+Rizwan Alam
+
+   Centre for Development of Telematics (C-DOT)
+   <riscogian@gmail.com>
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. pcf_uri (str)
+              3.2. notif_uri (str)
+              3.3. af_app_id (str)
+              3.4. dnn (str)
+              3.5. events (str)
+              3.6. release_headers (str)
+              3.7. http_timeout (int)
+              3.8. http2 (int)
+              3.9. audio_default_bandwidth (int)
+              3.10. video_default_bandwidth (int)
+              3.11. authorize_video_flow (int)
+              3.12. include_rtcp_fd (int)
+              3.13. oauth (int)
+              3.14. nrf_uri (str)
+              3.15. nf_instance_id (str)
+              3.16. nf_type (str)
+              3.17. nf_ipv4 (str)
+              3.18. heartbeat_interval (int)
+
+        4. Functions
+
+              4.1. N5_create(direction[, subscription_id])
+              4.2. N5_notification(path, body)
+
+   List of Examples
+
+   1.1. pcf_uri parameter usage
+   1.2. notif_uri parameter usage
+   1.3. events parameter usage
+   1.4. oauth parameter usage
+   1.5. nrf_uri parameter usage
+   1.6. nf_instance_id parameter usage
+   1.7. nf_ipv4 parameter usage
+   1.8. N5_create usage
+   1.9. N5_notification usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. pcf_uri (str)
+        3.2. notif_uri (str)
+        3.3. af_app_id (str)
+        3.4. dnn (str)
+        3.5. events (str)
+        3.6. release_headers (str)
+        3.7. http_timeout (int)
+        3.8. http2 (int)
+        3.9. audio_default_bandwidth (int)
+        3.10. video_default_bandwidth (int)
+        3.11. authorize_video_flow (int)
+        3.12. include_rtcp_fd (int)
+        3.13. oauth (int)
+        3.14. nrf_uri (str)
+        3.15. nf_instance_id (str)
+        3.16. nf_type (str)
+        3.17. nf_ipv4 (str)
+        3.18. heartbeat_interval (int)
+
+   4. Functions
+
+        4.1. N5_create(direction[, subscription_id])
+        4.2. N5_notification(path, body)
+
+1. Overview
+
+   This module lets a P-CSCF authorise media resources in a 5G core
+   directly over the N5 reference point, acting as an Application Function
+   (AF) towards the PCF with the Npcf_PolicyAuthorization service of 3GPP
+   TS 29.514, instead of using Rx (Diameter) towards a PCRF as the ims_qos
+   module does. The mapping of SDP to media components follows TS 29.513.
+
+   N5_create() is called in the reply route of an INVITE, UPDATE or PRACK
+   that completes an SDP offer/answer. The first call for a dialog and
+   direction creates an Individual Application Session Context (HTTP POST
+   to /npcf-policyauthorization/v1/app-sessions), containing the UE's IPv4
+   address, the AF application identifier, the media components and the
+   event subscription; later calls update it (PATCH). When the dialog ends
+   (BYE, failure or expiry), the application session is deleted (POST
+   .../delete). An answer of 404 to the delete is accepted, as the PCF may
+   already have removed it.
+
+   The PCF reports events with POST {notifUri}/notify and requests the
+   termination of an application session, e.g. when the PDU session is
+   released, with POST {notifUri}/terminate (TS 29.514 clauses 4.2.5.2 and
+   4.2.5.3). These callbacks are received with the nghttp2 module and
+   passed to N5_notification(); a termination releases the dialog, as
+   ims_qos does on an Rx Abort-Session-Request. The notifUri given to the
+   PCF identifies the dialog and direction, so callbacks need no other
+   state.
+
+   The callback path identifies a dialog by its hash entry and id, which
+   are predictable: the nghttp2 listener must be reachable only from the
+   5G core's service-based interface network (bind it with the nghttp2
+   listen_addr parameter and filter it), as Diameter peers are restricted
+   for Rx.
+
+   Requests to the PCF use HTTP/2 with prior knowledge (cleartext h2c) by
+   default. A request that fails on a reused connection without any
+   response, e.g. because the producer closed the idle connection with
+   GOAWAY, is retried once on a new connection (RFC 9113 clause 6.8).
+
+   If the 5G core enforces OAuth2 (3GPP TS 29.500 clause 6.7), set oauth:
+   the module then registers the P-CSCF with the NRF as an NF instance
+   (NFRegister, then heartbeats) from a dedicated process, obtains access
+   tokens with AccessTokenReq (TS 29.510) and sends them as bearer tokens
+   to the PCF. They are sent synchronously by the SIP worker that executes
+   the reply route, bounded by http_timeout.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm.
+     * ims_dialog - the dialog must be created (dialog flag set) before
+       the request is relayed.
+     * nghttp2 - to receive the PCF's callbacks.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libcurl with HTTP/2 (nghttp2) support.
+     * libjansson.
+
+3. Parameters
+
+   3.1. pcf_uri (str)
+   3.2. notif_uri (str)
+   3.3. af_app_id (str)
+   3.4. dnn (str)
+   3.5. events (str)
+   3.6. release_headers (str)
+   3.7. http_timeout (int)
+   3.8. http2 (int)
+   3.9. audio_default_bandwidth (int)
+   3.10. video_default_bandwidth (int)
+   3.11. authorize_video_flow (int)
+   3.12. include_rtcp_fd (int)
+   3.13. oauth (int)
+   3.14. nrf_uri (str)
+   3.15. nf_instance_id (str)
+   3.16. nf_type (str)
+   3.17. nf_ipv4 (str)
+   3.18. heartbeat_interval (int)
+
+3.1. pcf_uri (str)
+
+   Scheme, address and port of the PCF's Npcf_PolicyAuthorization service.
+   Mandatory.
+
+   Example 1.1. pcf_uri parameter usage
+...
+modparam("ims_qos_n5", "pcf_uri", "http://10.0.0.13:7777")
+...
+
+3.2. notif_uri (str)
+
+   Base URI at which the PCF reaches this P-CSCF's nghttp2 listener. The
+   module appends /<dialog id>-<o|t> for each application session.
+   Mandatory.
+
+   Example 1.2. notif_uri parameter usage
+...
+modparam("ims_qos_n5", "notif_uri", "http://10.0.0.20:8090/n5")
+...
+
+3.3. af_app_id (str)
+
+   Value of afAppId.
+
+   Default value is “IMS Services”.
+
+3.4. dnn (str)
+
+   Value of dnn, if set (e.g. “ims”).
+
+   Default value is “” (not sent).
+
+3.5. events (str)
+
+   Comma-separated AfEvent values subscribed in evSubsc (TS 29.514 clause
+   5.6.3.3), the N5 counterparts of the Rx Specific-Action values a P-CSCF
+   requests. Empty: no subscription.
+
+   Default value is
+   “SUCCESSFUL_RESOURCES_ALLOCATION,FAILED_RESOURCES_ALLOCATION”.
+
+   Example 1.3. events parameter usage
+...
+modparam("ims_qos_n5", "events", "QOS_NOTIF,ACCESS_TYPE_CHANGE,SUCCESSFUL_RESOUR
+CES_ALLOCATION")
+...
+
+3.6. release_headers (str)
+
+   Extra headers for the BYEs sent when the PCF terminates an application
+   session.
+
+   Default value is “”.
+
+3.7. http_timeout (int)
+
+   Timeout in milliseconds for connecting to the PCF and for each request.
+
+   Default value is 2000.
+
+3.8. http2 (int)
+
+   If 1, requests use HTTP/2 with prior knowledge; if 0, libcurl's default
+   (HTTP/1.1, or h2 negotiated over TLS).
+
+   Default value is 1.
+
+3.9. audio_default_bandwidth (int)
+
+   Bandwidth in kbit/s for marBwUl/marBwDl of an audio stream whose SDP
+   has no b=AS line.
+
+   Default value is 64.
+
+3.10. video_default_bandwidth (int)
+
+   As audio_default_bandwidth, for video streams.
+
+   Default value is 128.
+
+3.11. authorize_video_flow (int)
+
+   If 0, video streams are not included in the media components.
+
+   Default value is 1.
+
+3.12. include_rtcp_fd (int)
+
+   If 1, each media component gets a second sub-component with the RTCP
+   flows (port + 1).
+
+   Default value is 0.
+
+3.13. oauth (int)
+
+   If 1, use OAuth2 towards the PCF: register with the NRF and send access
+   tokens. Requires nrf_uri and nf_instance_id.
+
+   Default value is 0 (disabled).
+
+   Example 1.4. oauth parameter usage
+...
+modparam("ims_qos_n5", "oauth", 1)
+...
+
+3.14. nrf_uri (str)
+
+   Scheme, address and port of the NRF (NFManagement and access token
+   services).
+
+   Default value is “”.
+
+   Example 1.5. nrf_uri parameter usage
+...
+modparam("ims_qos_n5", "nrf_uri", "http://10.0.0.10:8000")
+...
+
+3.15. nf_instance_id (str)
+
+   NF instance id (a UUID) under which the P-CSCF registers with the NRF
+   and requests tokens.
+
+   Default value is “”.
+
+   Example 1.6. nf_instance_id parameter usage
+...
+modparam("ims_qos_n5", "nf_instance_id", "6d682299-e82e-416f-96a3-94ef589f7e03")
+...
+
+3.16. nf_type (str)
+
+   NF type registered with the NRF and used as nfType in AccessTokenReq.
+
+   Default value is “AF”.
+
+3.17. nf_ipv4 (str)
+
+   IPv4 address put in the registered NF profile (ipv4Addresses), if set.
+
+   Default value is “”.
+
+   Example 1.7. nf_ipv4 parameter usage
+...
+modparam("ims_qos_n5", "nf_ipv4", "10.0.0.20")
+...
+
+3.18. heartbeat_interval (int)
+
+   Heartbeat interval in seconds offered at registration; the interval
+   granted by the NRF is used.
+
+   Default value is 30.
+
+4. Functions
+
+   4.1. N5_create(direction[, subscription_id])
+   4.2. N5_notification(path, body)
+
+4.1.  N5_create(direction[, subscription_id])
+
+   Creates or updates the application session for the dialog of this
+   reply. Use in an onreply_route of INVITE, UPDATE or PRACK.
+     * direction - “orig” if the UE is the caller, “term” if it is the
+       callee. It selects whose SDP holds the UE's address; requests from
+       either end of the dialog are handled.
+     * subscription_id (optional) - the served user: “imsi-...” is sent as
+       supi; a tel or SIP URI with a number, or “msisdn-...”, as gpsi.
+
+   Returns 1 on success (201 for a creation, 200/204 for an update), -1
+   otherwise.
+
+   Example 1.8. N5_create usage
+...
+onreply_route[N5_ORIG] {
+    if(status =~ "^(18[03]|200)$" && has_body("application/sdp")) {
+        if(!N5_create("orig", "$fU")) {
+            xlog("L_ERR", "N5 media authorisation failed\n");
+        }
+    }
+}
+...
+
+4.2.  N5_notification(path, body)
+
+   Handles a callback from the PCF received by the nghttp2 module. Returns
+   1 for a termination (the dialog is being released), 2 for an event
+   notification, -2 if the dialog no longer exists and -1 if the path is
+   not an N5 callback of this module.
+
+   Example 1.9. N5_notification usage
+...
+loadmodule "nghttp2.so"
+modparam("nghttp2", "listen_port", "8090")
+
+event_route[nghttp2:request] {
+    N5_notification("$nghttp2(path)", "$nghttp2(data)");
+    if($rc > 0) {
+        nghttp2_reply("204", "");
+    } else {
+        nghttp2_reply("404", "");
+    }
+}
+...
