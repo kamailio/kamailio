@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 #include <resolv.h>
 #include <string.h>
 
@@ -57,6 +58,7 @@
 #include "error.h"
 #include "globals.h" /* tcp_disable, tls_disable a.s.o */
 #include "cfg_core.h"
+#include "coreparam.h"
 #include "socket_info.h"
 
 #ifdef USE_DNS_CACHE
@@ -168,6 +170,199 @@ struct hostent *ksr_gethostbyname(const char *name)
 
 	freeaddrinfo(res);
 	return &he;
+}
+
+#define KSR_DNS_RESOLVER_LOG_ADDRS 8
+
+static inline const char *ksr_dns_herror_name(int err)
+{
+	switch(err) {
+#ifdef NETDB_INTERNAL
+		case NETDB_INTERNAL:
+			return "NETDB_INTERNAL";
+#endif
+		case HOST_NOT_FOUND:
+			return "HOST_NOT_FOUND";
+		case TRY_AGAIN:
+			return "TRY_AGAIN";
+		case NO_RECOVERY:
+			return "NO_RECOVERY";
+#ifdef NO_DATA
+		case NO_DATA:
+			return "NO_DATA";
+#endif
+#if defined(NO_ADDRESS) && (!defined(NO_DATA) || (NO_ADDRESS != NO_DATA))
+		case NO_ADDRESS:
+			return "NO_ADDRESS";
+#endif
+		case 0:
+			return "NONE";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+
+static inline int ksr_dns_resolver_log_level(void)
+{
+	return (ksr_dns_resolver_log != NULL) ? (int)*ksr_dns_resolver_log : L_DBG;
+}
+
+
+static inline void ksr_dns_resolver_log_failure(
+		const char *name, int af, int resolver_error)
+{
+	LOG(ksr_dns_resolver_log_level(),
+			"system resolver: name=\"%s\" family=%s result=failed "
+			"h_errno=%d h_error=\"%s\"\n",
+			name, get_af_name((unsigned int)af), resolver_error,
+			ksr_dns_herror_name(resolver_error));
+}
+
+
+static inline void ksr_dns_resolver_log_success(
+		const char *name, int af, struct hostent *he)
+{
+	char addrbuf[INET6_ADDRSTRLEN];
+	int i;
+	int log_level;
+
+	log_level = ksr_dns_resolver_log_level();
+	LOG(log_level,
+			"system resolver: name=\"%s\" family=%s result=success "
+			"canonical=\"%s\" addrtype=%s addrlen=%d\n",
+			name, get_af_name((unsigned int)af),
+			(he->h_name != NULL) ? he->h_name : "",
+			get_af_name((unsigned int)he->h_addrtype), he->h_length);
+
+	if(he->h_addr_list == NULL) {
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s "
+				"result=success addresses=none\n",
+				name, get_af_name((unsigned int)af));
+		return;
+	}
+	if((he->h_addrtype == AF_INET
+			   && he->h_length != (int)sizeof(struct in_addr))
+			|| (he->h_addrtype == AF_INET6
+					&& he->h_length != (int)sizeof(struct in6_addr))) {
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s addresses=<invalid> "
+				"addrtype=%s addrlen=%d\n",
+				name, get_af_name((unsigned int)af),
+				get_af_name((unsigned int)he->h_addrtype), he->h_length);
+		return;
+	}
+
+	for(i = 0; i < KSR_DNS_RESOLVER_LOG_ADDRS && he->h_addr_list[i] != NULL;
+			i++) {
+		if(inet_ntop(
+				   he->h_addrtype, he->h_addr_list[i], addrbuf, sizeof(addrbuf))
+				== NULL) {
+			LOG(log_level,
+					"system resolver: name=\"%s\" family=%s address[%d]="
+					"<invalid>\n",
+					name, get_af_name((unsigned int)af), i);
+			continue;
+		}
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s address[%d]="
+				"\"%s\"\n",
+				name, get_af_name((unsigned int)af), i, addrbuf);
+	}
+	if(i == KSR_DNS_RESOLVER_LOG_ADDRS && he->h_addr_list[i] != NULL) {
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s addresses=truncated "
+				"limit=%d\n",
+				name, get_af_name((unsigned int)af),
+				KSR_DNS_RESOLVER_LOG_ADDRS);
+	}
+}
+
+
+/* gethostbyname wrapper, handles ip/ipv6 automatically */
+struct hostent *_resolvehost(char *name)
+{
+	static struct hostent *he = 0;
+	int resolver_error;
+#ifdef HAVE_GETIPNODEBYNAME
+	int err;
+	static struct hostent *he2 = 0;
+#endif
+#ifndef DNS_IP_HACK
+	int len;
+#endif
+#ifdef DNS_IP_HACK
+	struct ip_addr *ip;
+	str s;
+
+	s.s = (char *)name;
+	s.len = strlen(name);
+
+	/* check if it's an ip address */
+	if(((ip = str2ip(&s)) != 0) || ((ip = str2ip6(&s)) != 0)) {
+		/* we are lucky, this is an ip address */
+		return ip_addr2he(&s, ip);
+	}
+
+#else /* DNS_IP_HACK */
+	len = 0;
+	if(*name == '[') {
+		len = strlen(name);
+		if(len && (name[len - 1] == ']')) {
+			name[len - 1] = 0; /* remove '[' */
+			name++;			   /* skip '[' */
+			goto skip_ipv4;
+		}
+	}
+#endif
+	/* ipv4 */
+	h_errno = 0;
+	he = dns_func.sr_gethostbyname(name);
+	resolver_error = h_errno;
+	if(he == 0) {
+		ksr_dns_resolver_log_failure(name, AF_INET, resolver_error);
+	} else {
+		ksr_dns_resolver_log_success(name, AF_INET, he);
+	}
+
+	if(he == 0 && cfg_get(core, core_cfg, dns_try_ipv6)) {
+#ifndef DNS_IP_HACK
+	skip_ipv4:
+#endif
+		/*try ipv6*/
+#ifdef HAVE_GETHOSTBYNAME2
+		h_errno = 0;
+		he = dns_func.sr_gethostbyname2(name, AF_INET6);
+		resolver_error = h_errno;
+#elif defined HAVE_GETIPNODEBYNAME
+		/* on solaris 8 getipnodebyname has a memory leak,
+		 * after some time calls to it will fail with err=3
+		 * solution: patch your solaris 8 installation */
+		if(he2)
+			freehostent(he2);
+		err = 0;
+		he = he2 = getipnodebyname(name, AF_INET6, 0, &err);
+		resolver_error = err;
+#else
+#error neither gethostbyname2 or getipnodebyname present
+#endif
+		if(he == 0) {
+			ksr_dns_resolver_log_failure(name, AF_INET6, resolver_error);
+		} else {
+			ksr_dns_resolver_log_success(name, AF_INET6, he);
+		}
+#ifndef DNS_IP_HACK
+		if(len)
+			name[len - 2] = ']'; /* restore */
+#endif
+	} else if(he == 0) {
+		LOG(ksr_dns_resolver_log_level(),
+				"system resolver: name=\"%s\" IPv6 fallback=skipped "
+				"dns_try_ipv6=0\n",
+				name);
+	}
+	return he;
 }
 
 /* counters framework */
