@@ -456,6 +456,7 @@ int rls_handle_subscribe(
 	str reason;
 	int rt;
 	str rlsubs_did = {0, 0};
+	str frontend_contact = {0, 0};
 
 	memset(&subs, 0, sizeof(subs_t));
 
@@ -538,9 +539,13 @@ int rls_handle_subscribe(
 		ev_param = ev_param->next;
 	}
 
+	/* empty address: the watcher Contact is built from the receiving socket
+	 * in pkg memory, freed on both cleanup paths below */
+	if(!rls_dynamic_frontend_contact)
+		frontend_contact = rls_server_address;
 	/* extract dialog information from message headers */
 	if(pres_extract_sdialog_info(&subs, msg, rls_max_expires, &to_tag_gen,
-			   rls_server_address, watcher_user, watcher_domain)
+			   frontend_contact, watcher_user, watcher_domain)
 			< 0) {
 		LM_ERR("bad subscribe request\n");
 		goto error;
@@ -725,6 +730,8 @@ done:
 	ret = 1;
 stop:
 forpresence:
+	if(rls_dynamic_frontend_contact && subs.local_contact.s != NULL)
+		pkg_free(subs.local_contact.s);
 	if(subs.pres_uri.s != NULL)
 		pkg_free(subs.pres_uri.s);
 	if(subs.record_route.s != NULL)
@@ -744,6 +751,8 @@ bad_event:
 
 error:
 	LM_ERR("occurred in rls_handle_subscribe\n");
+	if(rls_dynamic_frontend_contact && subs.local_contact.s != NULL)
+		pkg_free(subs.local_contact.s);
 	if(subs.pres_uri.s != NULL)
 		pkg_free(subs.pres_uri.s);
 

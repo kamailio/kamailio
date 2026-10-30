@@ -550,6 +550,33 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 		</example>
 	</section>
 
+	<section id="rls.p.dynamic_frontend_contact">
+		<title><varname>dynamic_frontend_contact</varname> (int)</title>
+		<para>
+			If set to 1, the Contact of 200 OK replies to watcher SUBSCRIBE
+			requests (and of the NOTIFY requests in those dialogs) is built from
+			the socket that received the SUBSCRIBE, including its advertised
+			address, as the presence module does when its
+			<varname>server_address</varname> is not set. Backend SUBSCRIBE
+			requests sent by RLS keep using <varname>server_address</varname>.
+			This allows <varname>server_address</varname> to be a private
+			address of the backend presence server while watchers get a
+			Contact they can reach.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote> (use
+		<varname>server_address</varname> for both).</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dynamic_frontend_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "dynamic_frontend_contact", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="rls.p.max_notify_body_length">
 		<title><varname>max_notify_body_length</varname> (int)</title>
 		<para>
