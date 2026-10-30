@@ -228,6 +228,9 @@ static inline void ksr_dns_resolver_log_success(
 	int log_level;
 
 	log_level = ksr_dns_resolver_log_level();
+	if(!is_printable(log_level)) {
+		return;
+	}
 	LOG(log_level,
 			"system resolver: name=\"%s\" family=%s result=success "
 			"canonical=\"%s\" addrtype=%s addrlen=%d\n",
