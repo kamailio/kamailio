@@ -322,6 +322,7 @@ static int ksr_nghttp2_send_reply(sip_msg_t *msg, str *rcode, str *sbody)
 			LM_ERR("Fatal error: %s", nghttp2_strerror(rv));
 			return -1;
 		}
+		_ksr_nghttp2_ctx.replied = 1;
 		return 1;
 	}
 
@@ -356,6 +357,7 @@ static int ksr_nghttp2_send_reply(sip_msg_t *msg, str *rcode, str *sbody)
 		close(pipefd[0]);
 		return -1;
 	}
+	_ksr_nghttp2_ctx.replied = 1;
 	return 1;
 }
 
