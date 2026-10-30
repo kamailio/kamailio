@@ -108,6 +108,7 @@ typedef struct ksr_nghttp2_ctx
 	http2_stream_data *stream_data;
 	nghttp2_nv rplhdrs_v[KSR_NGHTTP2_RPLHDRS_SIZE];
 	int rplhdrs_n;
+	int replied; /* the script sent the response */
 	str method;
 	str path;
 	str pathfull;
