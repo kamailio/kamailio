@@ -3239,6 +3239,8 @@ int main(int argc, char **argv)
 	 * --andrei */
 	if(!shm_initialized() && init_shm() < 0)
 		goto error;
+	if(ksr_coreparam_set_defaults() < 0)
+		goto error;
 	pkg_print_manager();
 	shm_print_manager();
 

@@ -500,7 +500,7 @@ static int mod_init(void)
 	verify_client =
 			tls_parse_verify_client(&cfg_get(tls, tls_cfg, verify_client));
 	if(verify_client < 0) {
-		LM_ERR("Invalid tls_method parameter value\n");
+		LM_ERR("Invalid verify_client parameter value\n");
 		return -1;
 	}
 	mod_params.verify_client = verify_client;

@@ -21,10 +21,13 @@
 
 #include "str.h"
 
+#define KSR_CPTYPE_NONE 0
 #define KSR_CPTYPE_NUM 1
 #define KSR_CPTYPE_STR 2
 #define KSR_CPTYPE_ID 4
 #define KSR_CPTYPE_STRUCT 8
+/* SHM storage flag - e.g., 'ep' points to a 'long*' for NUM type */
+#define KSR_CPTYPE_SHM 256
 
 /* clang-format off */
 typedef struct ksr_cpval {
@@ -42,12 +45,17 @@ typedef struct ksr_cpexport {
 	unsigned int ptype;			/* parameter value type */
 	ksr_cpexport_set_f setf;	/* function to set the parameter */
 	void *ep;					/* extra parameter for set function */
+	ksr_cpval_t dval;			/* default value; NONE means no default */
 } ksr_cpexport_t;
 /* clang-format on */
 
+int ksr_coreparam_set_defaults(void);
 int ksr_coreparam_set_nval(char *name, long nval);
+int ksr_coreparam_set_nval_shm(char *name, long nval, long *oval);
 int ksr_coreparam_set_sval(char *name, char *sval);
 int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval);
+
+extern long *ksr_dns_resolver_log;
 
 int ksr_iuid_set(char *viuid, int mode);
 
