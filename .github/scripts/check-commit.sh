@@ -1,5 +1,7 @@
 #!/bin/bash
 COMMIT_MESSAGE_SUBJECT_FORMAT="%s"
+COMMIT_MESSAGE_BODY_FORMAT="%b"
+BODY_AI_CHECK="Copilot|Claude|Cursor|Codex|AI"
 
 set -eu
 
@@ -12,6 +14,19 @@ git_log_format() {
   local pattern="$1"
   local reference="$2"
   git log -1 --pretty=format:"$pattern" "$reference"
+}
+
+check_body() {
+  local commit="$1"
+  local body="$2"
+
+  # AI clutter
+  if echo "${body}" | grep -qiE "Co-authored-by:.*(${BODY_AI_CHECK})" ; then
+    fail "[${commit}] AI Co-Author detected"
+  fi
+  if echo "${body}" | grep -qiE "(${BODY_AI_CHECK})-session:.*" ; then
+    fail "[${commit}] AI session detected"
+  fi
 }
 
 check_subject() {
@@ -108,8 +123,10 @@ git fetch -q "--depth=${fetch_depth}" origin "+${ref}"
 src_sha=$(git rev-parse -q --verify "${ref}") || die "fatal: couldn't find ref ${ref}"
 echo "Checking $(git rev-list --count "${src_sha}" "^${target_sha}") commits since revision ${target_sha}"
 for commit in $(git rev-list --reverse "${src_sha}" "^${target_sha}"); do
-  COMMIT_MESSAGE_SUBJECT=$(git_log_format "${COMMIT_MESSAGE_SUBJECT_FORMAT}" "${commit}")
-  check_subject "${commit}" "${COMMIT_MESSAGE_SUBJECT}"
+  commit_message_subject=$(git_log_format "${COMMIT_MESSAGE_SUBJECT_FORMAT}" "${commit}")
+  check_subject "${commit}" "${commit_message_subject}"
+  commit_message_body=$(git_log_format "${COMMIT_MESSAGE_BODY_FORMAT}" "${commit}")
+  check_body "${commit}" "${commit_message_body}"
 done
 
 echo "Result: ${res}"
