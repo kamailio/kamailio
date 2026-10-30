@@ -35,6 +35,7 @@ int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam);
 int ksr_iuid_cp(str *pname, ksr_cpval_t *pval, void *eparam);
 
 long ksr_timer_sanity_check = 0;
+long *ksr_dns_resolver_log = NULL;
 str _ksr_iuid = STR_NULL;
 
 /* clang-format off */
@@ -43,6 +44,9 @@ static ksr_cpexport_t _ksr_cpexports[] = {
 		ksr_iuid_cp, NULL, { KSR_CPTYPE_NONE, { 0 } } },
 	{ str_init("random_engine"), KSR_CPTYPE_STR,
 		ksr_xrand_cp, NULL, { KSR_CPTYPE_NONE, { 0 } } },
+	{ str_init("dns_resolver_log"), KSR_CPTYPE_NUM | KSR_CPTYPE_SHM,
+		ksr_coreparam_store_nval_shm, &ksr_dns_resolver_log,
+		{ KSR_CPTYPE_NUM, { .nval = 3 } } },
 	{ str_init("timer_sanity_check"), KSR_CPTYPE_NUM,
 		ksr_coreparam_store_nval, &ksr_timer_sanity_check,
 		{ KSR_CPTYPE_NONE, { 0 } } },
