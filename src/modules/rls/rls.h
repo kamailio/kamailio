@@ -84,6 +84,7 @@ extern int dbmode;
 extern char *xcap_root;
 extern unsigned int xcap_port;
 extern str rls_server_address;
+extern int rls_dynamic_frontend_contact;
 extern int waitn_time;
 extern int rls_notifier_poll_rate;
 extern int rls_notifier_processes;
