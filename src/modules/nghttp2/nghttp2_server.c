@@ -511,6 +511,7 @@ static int on_request_recv(nghttp2_session *session,
 	LM_DBG("%s GET %s\n", session_data->client_addr, stream_data->request_path);
 
 	_ksr_nghttp2_ctx.rplhdrs_n = 0;
+	_ksr_nghttp2_ctx.replied = 0;
 
 	_ksr_nghttp2_ctx.session = session;
 	_ksr_nghttp2_ctx.session_data = session_data;
@@ -545,7 +546,10 @@ static int on_request_recv(nghttp2_session *session,
 
 	ksr_event_route();
 
-	if(send_response_204(session, stream_data->stream_id) != 0) {
+	/* default response only if the script did not reply: a second response
+	 * on a stream still sending the first one's body is a protocol error */
+	if(!_ksr_nghttp2_ctx.replied
+			&& send_response_204(session, stream_data->stream_id) != 0) {
 		return NGHTTP2_ERR_CALLBACK_FAILURE;
 	}
 
