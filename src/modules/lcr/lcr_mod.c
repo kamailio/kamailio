@@ -2180,7 +2180,7 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 	struct gw_info *gws;
 	struct target *t;
 	pcre2_match_data *pcre_md = NULL;
-	struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
+	struct matched_gw_info *matched_gws;
 	struct sip_uri furi;
 	struct usr_avp *avp;
 	struct search_state st;
@@ -2191,6 +2191,14 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 
 	if((lcr_id < 1) || (lcr_id > lcr_count_param)) {
 		LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
+		return -1;
+	}
+
+	matched_gws = (struct matched_gw_info *)pkg_malloc(
+			(lcr_gw_count_param + 1) * sizeof(struct matched_gw_info));
+
+	if(!matched_gws) {
+		LM_ERR("out of pkg memory for matched_gws\n");
 		return -1;
 	}
 
@@ -2206,6 +2214,7 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 	if((from_uri->len > 0) && mt_pv_values_param) {
 		if(parse_uri(from_uri->s, from_uri->len, &furi) < 0) {
 			LM_ERR("error while parsing caller_uri\n");
+			pkg_free(matched_gws);
 			return -1;
 		}
 	}
@@ -2230,6 +2239,7 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 				if(pcre_md == NULL) {
 					LM_ERR("failed to allocate pcre2 match data for "
 						   "from_uri\n");
+					pkg_free(matched_gws);
 					return -1;
 				}
 				rc = pcre2_match(rule->from_uri_re, (PCRE2_SPTR)from_uri->s,
@@ -2271,6 +2281,7 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 				if(request_uri->len == 0) {
 					LM_ERR("lcr_rule has non-null request_uri and request_uri "
 						   "param has not been given.\n");
+					pkg_free(matched_gws);
 					return -1;
 				}
 				pcre_md = pcre2_match_data_create_from_pattern(
@@ -2278,6 +2289,7 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 				if(pcre_md == NULL) {
 					LM_ERR("failed to allocate pcre2 match data for "
 						   "request_uri\n");
+					pkg_free(matched_gws);
 					return -1;
 				}
 				rc = pcre2_match(rule->request_uri_re,
@@ -2296,6 +2308,12 @@ int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri, str *request_uri,
 				if((gws[t->gw_index].defunct_until > now)
 						|| (gws[t->gw_index].state == GW_INACTIVE))
 					goto skip_gw;
+
+				if(gw_index >= lcr_gw_count_param) {
+					LM_WARN("too many matched gateways, limiting at %d\n",
+							lcr_gw_count_param);
+					goto skip_gw;
+				}
 				matched_gws[gw_index].gw_index = t->gw_index;
 				matched_gws[gw_index].rule_id = rule->rule_id;
 				matched_gws[gw_index].prefix_len = pl->prefix_len;
@@ -2339,6 +2357,7 @@ done:
 		gw_indexes[j] = matched_gws[i].gw_index;
 		j++;
 	}
+	pkg_free(matched_gws);
 
 	return j;
 }
@@ -2355,7 +2374,7 @@ static int ki_load_gws_furi(
 	unsigned int gw_index, now, dex;
 	int_str val;
 	pcre2_match_data *pcre_md = NULL;
-	struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
+	struct matched_gw_info *matched_gws;
 	struct rule_info **rules, *rule, *pl;
 	struct gw_info *gws;
 	struct target *t;
@@ -2389,6 +2408,12 @@ static int ki_load_gws_furi(
      * gateways of matching entries into matched_gws array so that each
      * gateway appears in the array only once.
      */
+	matched_gws = (struct matched_gw_info *)pkg_malloc(
+			(lcr_gw_count_param + 1) * sizeof(struct matched_gw_info));
+	if(!matched_gws) {
+		LM_ERR("out of pkg memory for matched_gws\n");
+		return -1;
+	}
 
 	pl = rules[lcr_rule_hash_size_param];
 	gw_index = 0;
@@ -2419,6 +2444,7 @@ static int ki_load_gws_furi(
 				if(pcre_md == NULL) {
 					LM_ERR("failed to allocate pcre2 match data for "
 						   "from_uri\n");
+					pkg_free(matched_gws);
 					return -1;
 				}
 				rc = pcre2_match(rule->from_uri_re, (PCRE2_SPTR)from_uri->s,
@@ -2468,6 +2494,7 @@ static int ki_load_gws_furi(
 				if(pcre_md == NULL) {
 					LM_ERR("failed to allocate pcre2 match data for "
 						   "request_uri\n");
+					pkg_free(matched_gws);
 					return -1;
 				}
 				rc = pcre2_match(rule->request_uri_re,
@@ -2493,6 +2520,11 @@ static int ki_load_gws_furi(
 				if((gws[t->gw_index].defunct_until > now)
 						|| (gws[t->gw_index].state == GW_INACTIVE))
 					goto skip_gw;
+				if(gw_index >= lcr_gw_count_param) {
+					LM_WARN("too many matched gateways, limiting at %u\n",
+							lcr_gw_count_param);
+					goto skip_gw;
+				}
 				matched_gws[gw_index].gw_index = t->gw_index;
 				matched_gws[gw_index].rule_id = rule->rule_id;
 				matched_gws[gw_index].prefix_len = pl->prefix_len;
@@ -2542,6 +2574,8 @@ done:
 		val.n = lcr_id;
 		add_avp(lcr_id_avp_type, lcr_id_avp, val);
 	}
+
+	pkg_free(matched_gws);
 
 	if(gw_index > 0) {
 		return 1;
