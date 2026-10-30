@@ -33,6 +33,11 @@
  *
  * The notifUri given to the PCF is <notif_uri>/<h_entry>-<h_id>-<o|t>, so a
  * callback identifies its dialog without module state.
+ *
+ * $n5(key) gives the outcome of the last N5_create or N5_notification in
+ * this process: code (HTTP status, 0 if none), cause (ProblemDetails cause),
+ * events (events reported, from evsNotif in the PCF's answer or from a
+ * notification), access_type and rat_type (from the same report).
  */
 
 #include <stdio.h>
@@ -47,6 +52,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/kemi.h"
+#include "../../core/pvar.h"
 #include "../../core/timer_proc.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_from.h"
@@ -102,6 +108,8 @@ static void mod_destroy(void);
 static int w_n5_create1(struct sip_msg *msg, char *dir, char *p2);
 static int w_n5_create2(struct sip_msg *msg, char *dir, char *sid);
 static int w_n5_notification(struct sip_msg *msg, char *path, char *body);
+static int pv_parse_n5_name(pv_spec_p sp, str *in);
+static int pv_get_n5(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
@@ -136,13 +144,19 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+static pv_export_t mod_pvs[] = {
+	{{"n5", (sizeof("n5") - 1)}, PVT_OTHER, pv_get_n5, 0,
+		pv_parse_n5_name, 0, 0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
 struct module_exports exports = {
 	"ims_qos_n5",    /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	params,          /* exported parameters */
 	0,               /* RPC method exports */
-	0,               /* exported pseudo-variables */
+	mod_pvs,         /* exported pseudo-variables */
 	0,               /* response handling function */
 	mod_init,        /* module initialization function */
 	child_init,      /* per-child init function */
@@ -309,6 +323,83 @@ static void n5_sess_free(void *param)
 		shm_free(param);
 }
 
+/* ------------------------------------------------------------ last result */
+
+/* outcome of the last N5_create / N5_notification in this process ($n5) */
+static long n5_last_code = 0;
+static char n5_last_cause[64];
+static char n5_last_events[256];
+static char n5_last_access_type[32];
+static char n5_last_rat_type[32];
+
+static void n5_last_reset(void)
+{
+	n5_last_code = 0;
+	n5_last_cause[0] = '\0';
+	n5_last_events[0] = '\0';
+	n5_last_access_type[0] = '\0';
+	n5_last_rat_type[0] = '\0';
+}
+
+static void n5_copy_jstr(json_t *o, const char *key, char *dst, size_t n)
+{
+	const char *v = json_string_value(json_object_get(o, key));
+	if(v)
+		snprintf(dst, n, "%s", v);
+}
+
+/* EventsNotification (TS 29.514 5.6.2.5): event names, access and RAT type */
+static void n5_last_events_from(json_t *evs)
+{
+	json_t *list, *e;
+	size_t i;
+	int n = 0;
+
+	if(!json_is_object(evs))
+		return;
+	list = json_object_get(evs, "evNotifs");
+	json_array_foreach(list, i, e)
+	{
+		const char *ev = json_string_value(json_object_get(e, "event"));
+		if(ev == NULL)
+			continue;
+		n += snprintf(n5_last_events + n, sizeof(n5_last_events) - n, "%s%s",
+				n ? "," : "", ev);
+		if(n >= (int)sizeof(n5_last_events)) {
+			n5_last_events[sizeof(n5_last_events) - 1] = '\0';
+			break;
+		}
+	}
+	n5_copy_jstr(evs, "accessType", n5_last_access_type,
+			sizeof(n5_last_access_type));
+	n5_copy_jstr(evs, "ratType", n5_last_rat_type, sizeof(n5_last_rat_type));
+}
+
+/* remember the PCF's answer; body is AppSessionContext or ProblemDetails */
+static void n5_last_from_res(n5_http_res_t *res)
+{
+	json_t *doc;
+
+	n5_last_code = res->code;
+	if(res->body.len <= 0 || res->body.s == NULL)
+		return;
+	doc = json_loadb(res->body.s, (size_t)res->body.len, 0, NULL);
+	if(doc == NULL)
+		return;
+	n5_copy_jstr(doc, "cause", n5_last_cause, sizeof(n5_last_cause));
+	n5_last_events_from(json_object_get(doc, "evsNotif"));
+	json_decref(doc);
+}
+
+/* failure return code for a PCF answer: -3 transient (no answer, timeout,
+ * 408, 429 or 5xx: the same request may succeed later), -2 rejected */
+static int n5_fail_rc(long code)
+{
+	if(code == 0 || code == 408 || code == 429 || code >= 500)
+		return -3;
+	return -2;
+}
+
 /* --------------------------------------------------------------- N5_create */
 
 static int n5_create(struct sip_msg *rpl, str *dir, str *sid)
@@ -325,6 +416,7 @@ static int n5_create(struct sip_msg *rpl, str *dir, str *sid)
 
 	memset(&req, 0, sizeof(req));
 	memset(&res, 0, sizeof(res));
+	n5_last_reset();
 
 	if(dir->len >= 4 && strncasecmp(dir->s, "orig", 4) == 0)
 		orig = 1;
@@ -414,16 +506,21 @@ static int n5_create(struct sip_msg *rpl, str *dir, str *sid)
 		json_object_set_new(doc, "ascReqData", asc);
 		body = json_dumps(doc, JSON_COMPACT);
 		snprintf(url, sizeof(url), "%.*s", existing->len, existing->s);
-		if(body == NULL
-				|| n5_http_request("PATCH", url, "application/merge-patch+json",
-						   body, n5_oauth_pcf_token(), &res)
-						   < 0)
+		if(body == NULL)
 			goto done;
+		if(n5_http_request("PATCH", url, "application/merge-patch+json", body,
+				   n5_oauth_pcf_token(), &res)
+				< 0) {
+			ret = -3;
+			goto done;
+		}
+		n5_last_from_res(&res);
 		if(res.code == 200 || res.code == 204) {
 			ret = 1;
 		} else {
 			LM_ERR("app-session update answered %ld: %.*s\n", res.code,
 					res.body.len, res.body.s ? res.body.s : "");
+			ret = n5_fail_rc(res.code);
 		}
 		goto done;
 	}
@@ -454,15 +551,20 @@ static int n5_create(struct sip_msg *rpl, str *dir, str *sid)
 	body = json_dumps(doc, JSON_COMPACT);
 	snprintf(url, sizeof(url), "%.*s/npcf-policyauthorization/v1/app-sessions",
 			n5_pcf_uri.len, n5_pcf_uri.s);
-	if(body == NULL
-			|| n5_http_request("POST", url, "application/json", body,
-					   n5_oauth_pcf_token(), &res)
-					   < 0)
+	if(body == NULL)
 		goto done;
+	if(n5_http_request("POST", url, "application/json", body,
+			   n5_oauth_pcf_token(), &res)
+			< 0) {
+		ret = -3;
+		goto done;
+	}
+	n5_last_from_res(&res);
 	if(res.code != 201 || res.location.len <= 0) {
 		LM_ERR("app-session create answered %ld%s: %.*s\n", res.code,
 				res.location.len ? "" : " without Location", res.body.len,
 				res.body.s ? res.body.s : "");
+		ret = res.code == 201 ? -2 : n5_fail_rc(res.code);
 		goto done;
 	}
 
@@ -541,6 +643,7 @@ static int n5_notification(str *ppath, str *body)
 	char side, *p, *q;
 	int i;
 
+	n5_last_reset();
 	/* strip a query string */
 	for(i = 0; i < path.len; i++)
 		if(path.s[i] == '?') {
@@ -582,8 +685,15 @@ static int n5_notification(str *ppath, str *body)
 		return 1;
 	}
 	if(op.len == 6 && strncmp(op.s, "notify", 6) == 0) {
+		json_t *doc = NULL;
 		LM_INFO("PCF event notification for %u-%u-%c: %.*s\n", h_entry, h_id,
 				side, body->len, body->s);
+		if(body->len > 0)
+			doc = json_loadb(body->s, (size_t)body->len, 0, NULL);
+		if(doc) {
+			n5_last_events_from(doc);
+			json_decref(doc);
+		}
 		return 2;
 	}
 	return -1;
@@ -597,6 +707,72 @@ static int w_n5_notification(struct sip_msg *msg, char *ppath, char *pbody)
 			|| fixup_get_svalue(msg, (gparam_t *)pbody, &body) != 0)
 		return -1;
 	return n5_notification(&path, &body);
+}
+
+/* --------------------------------------------------------------------- $n5 */
+
+enum
+{
+	N5_PV_CODE = 1,
+	N5_PV_CAUSE,
+	N5_PV_EVENTS,
+	N5_PV_ACCESS_TYPE,
+	N5_PV_RAT_TYPE
+};
+
+static int pv_parse_n5_name(pv_spec_p sp, str *in)
+{
+	static const struct
+	{
+		const char *name;
+		int id;
+	} keys[] = {{"code", N5_PV_CODE}, {"cause", N5_PV_CAUSE},
+			{"events", N5_PV_EVENTS}, {"access_type", N5_PV_ACCESS_TYPE},
+			{"rat_type", N5_PV_RAT_TYPE}};
+	int i;
+
+	if(sp == NULL || in == NULL || in->len <= 0)
+		return -1;
+	for(i = 0; i < (int)(sizeof(keys) / sizeof(keys[0])); i++) {
+		if(in->len == (int)strlen(keys[i].name)
+				&& strncmp(in->s, keys[i].name, in->len) == 0) {
+			sp->pvp.pvn.type = PV_NAME_INTSTR;
+			sp->pvp.pvn.u.isname.type = 0;
+			sp->pvp.pvn.u.isname.name.n = keys[i].id;
+			return 0;
+		}
+	}
+	LM_ERR("unknown key $n5(%.*s)\n", in->len, in->s);
+	return -1;
+}
+
+static int pv_get_n5(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	char *v;
+
+	if(param == NULL)
+		return -1;
+	switch(param->pvn.u.isname.name.n) {
+		case N5_PV_CODE:
+			return pv_get_sintval(msg, param, res, (long)n5_last_code);
+		case N5_PV_CAUSE:
+			v = n5_last_cause;
+			break;
+		case N5_PV_EVENTS:
+			v = n5_last_events;
+			break;
+		case N5_PV_ACCESS_TYPE:
+			v = n5_last_access_type;
+			break;
+		case N5_PV_RAT_TYPE:
+			v = n5_last_rat_type;
+			break;
+		default:
+			return pv_get_null(msg, param, res);
+	}
+	if(v[0] == '\0')
+		return pv_get_null(msg, param, res);
+	return pv_get_strzval(msg, param, res, v);
 }
 
 /* ------------------------------------------------------------------- KEMI */

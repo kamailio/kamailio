@@ -42,6 +42,10 @@ Rizwan Alam
               4.1. N5_create(direction[, subscription_id])
               4.2. N5_notification(path, body)
 
+        5. Pseudo-Variables
+
+              5.1. $n5(key)
+
    List of Examples
 
    1.1. pcf_uri parameter usage
@@ -53,6 +57,7 @@ Rizwan Alam
    1.7. nf_ipv4 parameter usage
    1.8. N5_create usage
    1.9. N5_notification usage
+   1.10. $n5(key) usage
 
 Chapter 1. Admin Guide
 
@@ -89,6 +94,10 @@ Chapter 1. Admin Guide
 
         4.1. N5_create(direction[, subscription_id])
         4.2. N5_notification(path, body)
+
+   5. Pseudo-Variables
+
+        5.1. $n5(key)
 
 1. Overview
 
@@ -345,15 +354,23 @@ modparam("ims_qos_n5", "nf_ipv4", "10.0.0.20")
      * subscription_id (optional) - the served user: “imsi-...” is sent as
        supi; a tel or SIP URI with a number, or “msisdn-...”, as gpsi.
 
-   Returns 1 on success (201 for a creation, 200/204 for an update), -1
-   otherwise.
+   Returns:
+     * 1 - success (201 for a creation, 200/204 for an update).
+     * -1 - nothing to authorise or a local error (not a reply to INVITE,
+       UPDATE or PRACK, no SDP, no dialog).
+     * -2 - rejected by the PCF (4xx other than 408 and 429, or a 201
+       without Location): repeating the same request will not help.
+     * -3 - transient: no answer (connection failure or timeout), 408, 429
+       or 5xx. The same request may succeed later or at another PCF.
+
+   The PCF's answer is available in $n5(key) afterwards.
 
    Example 1.8. N5_create usage
 ...
 onreply_route[N5_ORIG] {
     if(status =~ "^(18[03]|200)$" && has_body("application/sdp")) {
         if(!N5_create("orig", "$fU")) {
-            xlog("L_ERR", "N5 media authorisation failed\n");
+            xlog("L_ERR", "N5 failed: rc=$rc HTTP $n5(code) $n5(cause)\n");
         }
     }
 }
@@ -378,5 +395,39 @@ event_route[nghttp2:request] {
     } else {
         nghttp2_reply("404", "");
     }
+}
+...
+
+5. Pseudo-Variables
+
+   5.1. $n5(key)
+
+5.1.  $n5(key)
+
+   The outcome of the last N5_create or N5_notification executed by this
+   process. A key without a value gives $null.
+     * code - HTTP status of the PCF's answer, 0 if there was none.
+     * cause - the “cause” of the ProblemDetails in an error answer (TS
+       29.514 clause 5.7), e.g. REQUESTED_SERVICE_NOT_AUTHORIZED.
+     * events - comma-separated events reported: from “evsNotif” in the
+       PCF's answer to a creation (events already met when the app-session
+       is created, e.g. ACCESS_TYPE_CHANGE) or from the body of a
+       notification.
+     * access_type, rat_type - from the same report, e.g. 3GPP_ACCESS and
+       NR.
+
+   Example 1.10. $n5(key) usage
+...
+N5_create("orig", "$fU");
+switch($rc) {
+    case 1:
+        xlog("L_INFO", "$n5(access_type)/$n5(rat_type), events $n5(events)\n");
+        break;
+    case -3:
+        xlog("L_WARN", "PCF unavailable ($n5(code)), retry later\n");
+        break;
+    case -2:
+        xlog("L_ERR", "PCF rejected the session: $n5(cause)\n");
+        break;
 }
 ...

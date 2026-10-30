@@ -400,8 +400,31 @@ modparam("ims_qos_n5", "nf_ipv4", "10.0.0.20")
 		</para></listitem>
 		</itemizedlist>
 		<para>
-			Returns 1 on success (201 for a creation, 200/204 for an update),
-			-1 otherwise.
+			Returns:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>1</emphasis> - success (201 for a creation, 200/204 for
+			an update).
+		</para></listitem>
+		<listitem><para>
+			<emphasis>-1</emphasis> - nothing to authorise or a local error
+			(not a reply to INVITE, UPDATE or PRACK, no SDP, no dialog).
+		</para></listitem>
+		<listitem><para>
+			<emphasis>-2</emphasis> - rejected by the PCF (4xx other than 408
+			and 429, or a 201 without Location): repeating the same request
+			will not help.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>-3</emphasis> - transient: no answer (connection
+			failure or timeout), 408, 429 or 5xx. The same request may
+			succeed later or at another PCF.
+		</para></listitem>
+		</itemizedlist>
+		<para>
+			The PCF's answer is available in <varname>$n5(key)</varname>
+			afterwards.
 		</para>
 		<example>
 		<title><function>N5_create</function> usage</title>
@@ -410,7 +433,7 @@ modparam("ims_qos_n5", "nf_ipv4", "10.0.0.20")
 onreply_route[N5_ORIG] {
     if(status =~ "^(18[03]|200)$" &amp;&amp; has_body("application/sdp")) {
         if(!N5_create("orig", "$fU")) {
-            xlog("L_ERR", "N5 media authorisation failed\n");
+            xlog("L_ERR", "N5 failed: rc=$rc HTTP $n5(code) $n5(cause)\n");
         }
     }
 }
@@ -442,6 +465,58 @@ event_route[nghttp2:request] {
     } else {
         nghttp2_reply("404", "");
     }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Pseudo-Variables</title>
+	<section id="ims_qos_n5.pv.n5">
+		<title><varname>$n5(key)</varname></title>
+		<para>
+			The outcome of the last <function>N5_create</function> or
+			<function>N5_notification</function> executed by this process.
+			A key without a value gives $null.
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>code</emphasis> - HTTP status of the PCF's answer, 0 if
+			there was none.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>cause</emphasis> - the <quote>cause</quote> of the
+			ProblemDetails in an error answer (TS 29.514 clause 5.7), e.g.
+			REQUESTED_SERVICE_NOT_AUTHORIZED.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>events</emphasis> - comma-separated events reported:
+			from <quote>evsNotif</quote> in the PCF's answer to a creation
+			(events already met when the app-session is created, e.g.
+			ACCESS_TYPE_CHANGE) or from the body of a notification.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>access_type</emphasis>,
+			<emphasis>rat_type</emphasis> - from the same report, e.g.
+			3GPP_ACCESS and NR.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><varname>$n5(key)</varname> usage</title>
+		<programlisting format="linespecific">
+...
+N5_create("orig", "$fU");
+switch($rc) {
+    case 1:
+        xlog("L_INFO", "$n5(access_type)/$n5(rat_type), events $n5(events)\n");
+        break;
+    case -3:
+        xlog("L_WARN", "PCF unavailable ($n5(code)), retry later\n");
+        break;
+    case -2:
+        xlog("L_ERR", "PCF rejected the session: $n5(cause)\n");
+        break;
 }
 ...
 </programlisting>
