@@ -844,8 +844,7 @@ static void timer_send_full_state_notifies(int round)
 	xmlDocPtr doc = NULL;
 	xmlNodePtr service_node = NULL;
 	int now = (int)time(NULL);
-	db_query_f query_fn =
-			rls_dbf.query_lock ? rls_dbf.query_lock : rls_dbf.query;
+	db_query_f query_fn = rls_dbf.query;
 
 	query_cols[0] = &str_updated_col;
 	query_vals[0].type = DB1_INT;
@@ -890,6 +889,9 @@ static void timer_send_full_state_notifies(int round)
 			LM_ERR("in start_transaction\n");
 			goto done;
 		}
+		/* query_lock needs the transaction started above */
+		if(rls_dbf.query_lock)
+			query_fn = rls_dbf.query_lock;
 	}
 
 	/* Step 1: Find rls_watchers that require full-state notification */
@@ -997,8 +999,7 @@ static void timer_send_update_notifies(int round)
 			content_type_col;
 	int n_result_cols = 0;
 	db1_res_t *result = NULL;
-	db_query_f query_fn =
-			rlpres_dbf.query_lock ? rlpres_dbf.query_lock : rlpres_dbf.query;
+	db_query_f query_fn = rlpres_dbf.query;
 
 	query_cols[0] = &str_updated_col;
 	query_vals[0].type = DB1_INT;
@@ -1030,6 +1031,9 @@ static void timer_send_update_notifies(int round)
 			LM_ERR("in start_transaction\n");
 			goto done;
 		}
+		/* query_lock needs the transaction started above */
+		if(rlpres_dbf.query_lock)
+			query_fn = rlpres_dbf.query_lock;
 	}
 
 	if(query_fn(rlpres_db, query_cols, 0, query_vals, result_cols, 1,
