@@ -550,15 +550,15 @@ int isc_from_as(struct sip_msg *msg, char *str1, char *str2)
 
 	/* starting or resuming? */
 	if(isc_mark_get_from_msg(msg, &old_mark)) {
-		LM_DBG("Message returned s=%d;h=%d;d=%d\n", old_mark.skip,
-				old_mark.handling, old_mark.direction);
+		LM_DBG("Mark found: s=%d;h=%d;d=%d\n", old_mark.skip, old_mark.handling,
+				old_mark.direction);
 
 		/*according to spec 24.229, 5.4.3.3 if the URI is different then the RURI is retargeted and we can do one of 2 things,
          * a) mark as originating session and forward according to normal RURI procedures,
-         * b) run IFC criteria on new retrageturi  and route accordingly.
+         * b) run IFC criteria on new retargeturi  and route accordingly.
          *
          * We will therefore leave it in the hands of the config writer to decide. We will make them aware here that retargeting has happened
-         * by retirning a special error code ISC_RETURN_RETARGET(-2).
+         * by returning a special error code ISC_RETURN_RETARGET(-2).
          */
 		if(dir == DLG_MOBILE_TERMINATING) {
 			cscf_get_terminating_user(msg, &s);
@@ -566,22 +566,28 @@ int isc_from_as(struct sip_msg *msg, char *str1, char *str2)
 			free_s = 1;
 			if(!old_mark.aor.s || !s.len
 					|| memcmp(old_mark.aor.s, s.s, s.len) != 0) {
-				LM_DBG("This is a new call....... RURI has been retargeted\n");
-				return ISC_RETURN_RETARGET;
+				LM_DBG("R-URI retargeted from [%.*s] to [%.*s]\n",
+						STR_FMT(&old_mark.aor), STR_FMT(&s));
+				ret = ISC_RETURN_RETARGET;
+				goto done;
 			}
 		}
+		/* Check if direction matches. If not, not from AS. */
 		if(old_mark.direction == IFC_ORIGINATING_SESSION
-				&& dir != DLG_MOBILE_ORIGINATING)
+				&& dir != DLG_MOBILE_ORIGINATING) {
 			ret = ISC_RETURN_FALSE;
-		else if((old_mark.direction == IFC_TERMINATING_SESSION
-						|| old_mark.direction == IFC_TERMINATING_UNREGISTERED)
-				&& dir != DLG_MOBILE_TERMINATING)
+		} else if((old_mark.direction == IFC_TERMINATING_SESSION
+						  || old_mark.direction == IFC_TERMINATING_UNREGISTERED)
+				  && dir != DLG_MOBILE_TERMINATING) {
 			ret = ISC_RETURN_FALSE;
-		else
+		} else {
+			LM_DBG("ISC message from AS\n");
 			ret = ISC_RETURN_TRUE;
+		}
 	} else {
 		ret = ISC_RETURN_FALSE;
 	}
+done:
 	if(old_mark.aor.s)
 		pkg_free(old_mark.aor.s);
 
