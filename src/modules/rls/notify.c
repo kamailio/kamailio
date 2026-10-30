@@ -103,8 +103,7 @@ int send_full_notify(
 	int resource_added = 0; /* Flag to indicate that we have added
 							 * at least one resource */
 	multipart_body = NULL;
-	db_query_f query_fn =
-			rlpres_dbf.query_lock ? rlpres_dbf.query_lock : rlpres_dbf.query;
+	db_query_f query_fn = rlpres_dbf.query;
 
 	LM_DBG("start\n");
 
@@ -139,6 +138,9 @@ int send_full_notify(
 			LM_ERR("in start_transaction\n");
 			goto error;
 		}
+		/* query_lock needs the transaction started above */
+		if(rlpres_dbf.query_lock)
+			query_fn = rlpres_dbf.query_lock;
 	}
 
 	if(query_fn(rlpres_db, query_cols, 0, query_vals, result_cols, 1,
