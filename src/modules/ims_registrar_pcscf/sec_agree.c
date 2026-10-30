@@ -88,8 +88,6 @@ static int process_sec_agree_param(str name, str value, ipsec_t *ret)
 
 	if(strncasecmp(name.s, "alg", name.len) == 0) {
 		SEC_COPY_STR_PARAM(ret->r_alg, value);
-	} else if(strncasecmp(name.s, "prot", name.len) == 0) {
-		SEC_COPY_STR_PARAM(ret->prot, value);
 	} else if(strncasecmp(name.s, "mod", name.len) == 0) {
 		SEC_COPY_STR_PARAM(ret->mod, value);
 	} else if(strncasecmp(name.s, "ealg", name.len) == 0) {
@@ -130,8 +128,6 @@ void free_security_t(security_t *params)
 					shm_free(params->data.ipsec->r_alg.s);
 				if(params->data.ipsec->ik.s)
 					shm_free(params->data.ipsec->ik.s);
-				if(params->data.ipsec->prot.s)
-					shm_free(params->data.ipsec->prot.s);
 				if(params->data.ipsec->mod.s)
 					shm_free(params->data.ipsec->mod.s);
 

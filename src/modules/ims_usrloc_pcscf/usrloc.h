@@ -124,7 +124,6 @@ typedef struct ipsec
 	str alg;	/**< Integrity Algorithm - AH			*/
 	str r_alg;	/**<received Integrity Algorithm - AH	*/
 	str ik;		/**< Integrity Key						*/
-	str prot;	/**< Protocol (ah/esp) */
 	str mod;	/**< Mode (transport/tunnel) */
 } ipsec_t;
 
