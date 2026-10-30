@@ -781,6 +781,7 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	struct tcp_connection *c;
 	struct tls_extra_data *tls_c;
 	long ssl_verify;
+	int has_peer_cert;
 
 	LM_DBG("started...\n");
 	if(msg->rcv.proto != PROTO_TLS) {
@@ -812,7 +813,10 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 
 	tls_c = (struct tls_extra_data *)c->extra_data;
 
+	tls_ssl_cache_lock(tls_c);
 	ssl_verify = tls_c->ssl_verify_result;
+	has_peer_cert = (tls_c->ssl_peer_cert != NULL);
+	tls_ssl_cache_unlock(tls_c);
 	if(ssl_verify != X509_V_OK) {
 		LM_WARN("verification of presented certificate failed... return -1\n");
 		tcpconn_chld_put(c);
@@ -822,7 +826,7 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	/* now, we have only valid peer certificates or peers without certificates.
 	 * Thus we have to check for the existence of a peer certificate
 	 */
-	if(!tls_c->ssl_peer_cert) {
+	if(!has_peer_cert) {
 		LM_INFO("tlsops:is_peer_verified: WARNING: peer did not present "
 				"a certificate. Thus it could not be verified... return -1\n");
 		tcpconn_chld_put(c);
