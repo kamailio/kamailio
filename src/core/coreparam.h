@@ -55,6 +55,8 @@ int ksr_coreparam_set_nval_shm(char *name, long nval, long *oval);
 int ksr_coreparam_set_sval(char *name, char *sval);
 int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval);
 
+extern long *ksr_dns_resolver_log;
+
 int ksr_iuid_set(char *viuid, int mode);
 
 #endif
