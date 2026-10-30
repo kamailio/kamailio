@@ -21,6 +21,7 @@
 
 #include "str.h"
 
+#define KSR_CPTYPE_NONE 0
 #define KSR_CPTYPE_NUM 1
 #define KSR_CPTYPE_STR 2
 #define KSR_CPTYPE_ID 4
@@ -44,9 +45,11 @@ typedef struct ksr_cpexport {
 	unsigned int ptype;			/* parameter value type */
 	ksr_cpexport_set_f setf;	/* function to set the parameter */
 	void *ep;					/* extra parameter for set function */
+	ksr_cpval_t dval;			/* default value; NONE means no default */
 } ksr_cpexport_t;
 /* clang-format on */
 
+int ksr_coreparam_set_defaults(void);
 int ksr_coreparam_set_nval(char *name, long nval);
 int ksr_coreparam_set_nval_shm(char *name, long nval, long *oval);
 int ksr_coreparam_set_sval(char *name, char *sval);

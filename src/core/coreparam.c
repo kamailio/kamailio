@@ -40,14 +40,65 @@ str _ksr_iuid = STR_NULL;
 /* clang-format off */
 static ksr_cpexport_t _ksr_cpexports[] = {
 	{ str_init("iuid"), KSR_CPTYPE_STR,
-		ksr_iuid_cp, NULL },
+		ksr_iuid_cp, NULL, { KSR_CPTYPE_NONE, { 0 } } },
 	{ str_init("random_engine"), KSR_CPTYPE_STR,
-		ksr_xrand_cp, NULL },
+		ksr_xrand_cp, NULL, { KSR_CPTYPE_NONE, { 0 } } },
 	{ str_init("timer_sanity_check"), KSR_CPTYPE_NUM,
-		ksr_coreparam_store_nval, &ksr_timer_sanity_check },
-	{ {0, 0}, 0, NULL, NULL }
+		ksr_coreparam_store_nval, &ksr_timer_sanity_check,
+		{ KSR_CPTYPE_NONE, { 0 } } },
+	{ {0, 0}, 0, NULL, NULL, { KSR_CPTYPE_NONE, { 0 } } }
 };
 /* clang-format on */
+
+/**
+ * set default values for core parameters not set in the configuration
+ */
+int ksr_coreparam_set_defaults(void)
+{
+	int i;
+	long **v;
+
+	for(i = 0; _ksr_cpexports[i].name.s != NULL; i++) {
+		if(_ksr_cpexports[i].dval.vtype == KSR_CPTYPE_NONE) {
+			continue;
+		}
+		if((_ksr_cpexports[i].ptype & (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM))
+						!= (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM)
+				|| _ksr_cpexports[i].dval.vtype != KSR_CPTYPE_NUM) {
+			LM_ERR("invalid default value for core parameter [%.*s]\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+		if(_ksr_cpexports[i].setf == NULL || _ksr_cpexports[i].ep == NULL) {
+			LM_ERR("invalid export for core parameter [%.*s]\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+		v = (long **)_ksr_cpexports[i].ep;
+		if(*v != NULL) {
+			if(!shm_address_in(*v)) {
+				LM_ERR("core parameter [%.*s] is not allocated in shm\n",
+						_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+				return -1;
+			}
+			continue;
+		}
+		if(_ksr_cpexports[i].setf(&_ksr_cpexports[i].name,
+				   &_ksr_cpexports[i].dval, _ksr_cpexports[i].ep)
+				< 0) {
+			LM_ERR("failed to set default for core parameter [%.*s]\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+		if(*v == NULL || !shm_address_in(*v)) {
+			LM_ERR("default for core parameter [%.*s] is not stored in shm\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+	}
+
+	return 0;
+}
 
 /**
  *
