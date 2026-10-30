@@ -3518,9 +3518,10 @@ branch_route[OUT] {
        "noack" - to not automatically send ACK for local INVITE requests
      * rpflags - RPC parameters flags. The values can be: 1 - the body is
        hexa-encoded value.
-     * fr_timeout - the fr_timeout value for the local transaction.
+     * fr_timeout - the fr_timeout value for the local transaction, in
+       milliseconds.
      * fr_inv_timeout - the fr_inv_timeout value for the local
-       transaction.
+       transaction, in milliseconds.
 
    Example 1.121. Using “tm.t_uac_attrs”
 ...

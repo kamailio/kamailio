@@ -33,7 +33,7 @@
 
 
 #define ds_compute_hash(_s) core_case_hash(_s, 0, 0)
-#define ds_get_entry(_h, _size) (_h) & ((_size)-1)
+#define ds_get_entry(_h, _size) (_h) & ((_size) - 1)
 
 
 ds_cell_t *ds_cell_new(str *cid, str *duid, int dset, unsigned int cellid)
@@ -165,14 +165,18 @@ int ds_ht_clear_slots(ds_ht_t *dsht)
 }
 
 
-int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
+int ds_add_cell_ex(ds_ht_t *dsht, str *cid, str *duid, int dset, int state,
+		unsigned int expire, unsigned int initexpire)
 {
 	unsigned int idx;
 	unsigned int hid;
 	ds_cell_t *it, *prev, *cell;
 	time_t now;
 
-	if(dsht == NULL || dsht->entries == NULL) {
+	if(dsht == NULL || dsht->entries == NULL || cid == NULL || cid->s == NULL
+			|| cid->len <= 0 || duid == NULL || duid->s == NULL
+			|| duid->len <= 0
+			|| (state != DS_LOAD_INIT && state != DS_LOAD_CONFIRMED)) {
 		LM_ERR("invalid parameters.\n");
 		return -1;
 	}
@@ -207,8 +211,10 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
 		lock_release(&dsht->entries[idx].lock);
 		return -1;
 	}
-	cell->expire = now + dsht->htexpire;
-	cell->initexpire = now + dsht->htinitexpire;
+	cell->state = state;
+	cell->expire = now + (expire == 0 ? dsht->htexpire : expire);
+	cell->initexpire =
+			now + (initexpire == 0 ? dsht->htinitexpire : initexpire);
 	if(prev == NULL) {
 		if(dsht->entries[idx].first != NULL) {
 			cell->next = dsht->entries[idx].first;
@@ -225,6 +231,11 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
 	dsht->entries[idx].esize++;
 	lock_release(&dsht->entries[idx].lock);
 	return 0;
+}
+
+int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
+{
+	return ds_add_cell_ex(dsht, cid, duid, dset, DS_LOAD_INIT, 0, 0);
 }
 
 int ds_unlock_cell(ds_ht_t *dsht, str *cid)

@@ -479,7 +479,7 @@ int tr_eval_string(
 		case TR_S_NUMERIC:
 			if(!(val->flags & PV_VAL_STR))
 				return -1;
-			if(val->rs.len > TR_BUFFER_SIZE)
+			if(val->rs.len > TR_BUFFER_SIZE - 1)
 				return -1;
 			i = getNumericValue(val->rs);
 			memset(val, 0, sizeof(pv_value_t));
@@ -1146,7 +1146,10 @@ int tr_eval_string(
 				}
 			}
 
-			if(max * (max / 2 + (subtype == TR_S_PREFIXES ? 1 : 3))
+			/* prefixes of 1..max chars, each with ',' (and two quotes):
+			 * max * (max + 1) / 2 + max * (1 or 3) */
+			if(max * (max + 1LL) / 2
+							+ max * (subtype == TR_S_PREFIXES ? 1LL : 3LL)
 					> TR_BUFFER_SIZE - 1) {
 				LM_ERR("prefixes buffer too short (cfg line: %d)\n",
 						get_cfg_crt_line());
@@ -1665,26 +1668,17 @@ int tr_eval_string(
 						get_cfg_crt_line());
 				return -1;
 			}
-			if(m >= val->rs.len) {
-				if(val->rs.len > TR_BUFFER_SIZE - 2) {
-					LM_ERR("value too large: %d\n", val->rs.len);
-					return -1;
-				}
-
-				memcpy(_tr_buffer, val->rs.s, val->rs.len);
-				val->flags = PV_VAL_STR;
-				val->rs.s = _tr_buffer;
-				val->rs.s[val->rs.len] = '\0';
-			}
-			if(val->rs.len + (((val->rs.len) / n) * (2 + m))
-					> TR_BUFFER_SIZE - 2) {
+			/* a line break of 2 + m chars before every n-th char but
+			 * the first, and the terminating zero */
+			max = (val->rs.len > 0) ? (val->rs.len - 1) / n : 0;
+			if(val->rs.len + max * (2LL + m) > TR_BUFFER_SIZE - 1) {
 				LM_ERR("value too large: %d\n", val->rs.len);
 				return -1;
 			}
 
 			p = _tr_buffer;
 			for(i = 0; i < val->rs.len; i++) {
-				if(i != 0 && (i / n) == 0) {
+				if(i != 0 && (i % n) == 0) {
 					*p = '\r';
 					p++;
 					*p = '\n';

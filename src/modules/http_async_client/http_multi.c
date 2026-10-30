@@ -362,6 +362,7 @@ size_t write_cb(void *ptr, size_t size, size_t nmemb, void *data)
 		if(cell->reply->result == NULL) {
 			LM_ERR("Cannot allocate shm memory for reply's result\n");
 			shm_free(cell->reply);
+			cell->reply = NULL;
 			return -1;
 		}
 		memset(cell->reply->result, 0, sizeof(str));
@@ -369,6 +370,17 @@ size_t write_cb(void *ptr, size_t size, size_t nmemb, void *data)
 
 	old_len = cell->reply->result->len;
 	cell->reply->result->len += realsize;
+	if(cell->params.max_reply_size != 0
+			&& (unsigned int)cell->reply->result->len
+					   > cell->params.max_reply_size) {
+		LM_ERR("Reply size %d exceeds specified max_reply_size %u\n",
+				cell->reply->result->len, cell->params.max_reply_size);
+		shm_free(cell->reply->result->s);
+		shm_free(cell->reply->result);
+		shm_free(cell->reply);
+		cell->reply = NULL;
+		return -1;
+	}
 	cell->reply->result->s = (char *)shm_reallocxf(
 			cell->reply->result->s, cell->reply->result->len);
 	if(cell->reply->result->s == NULL) {

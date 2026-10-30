@@ -217,6 +217,19 @@ int tcp_reactor_pool_thread_idx(void)
 	return tcp_reactor_thread_idx;
 }
 
+/* &creq->cinfo while tcp_reactor_handle_connect_req() looks dst up (io_wait
+ * thread); NULL otherwise and in the other threads */
+static _Thread_local ksr_coninfo_t *tcp_reactor_creq_cinfo = NULL;
+
+/* mode 2 [io_wait]: the worker's tls attributes (server_name, server_id) of
+ * the connect request being looked up, for tls_connection_match_domain:
+ * tcp main has no access to the worker's xavps. NULL in other threads,
+ * processes and in modes 0/1 */
+ksr_coninfo_t *tcp_reactor_connect_info(void)
+{
+	return tcp_reactor_creq_cinfo;
+}
+
 /* dispatch socket framing:
  *  - AF_UNIX SOCK_DGRAM: one send() = one datagram = one task pointer
  *  - each worker recv() returns one whole datagram, so concurrent workers
@@ -1032,6 +1045,17 @@ int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 	return tcp_reactor_send_from_worker(c, buf, len, send_flags);
 }
 
+/* mode 2 [worker, io_wait]: free creq and its tls attributes; the caller
+ * frees or hands off creq->buf */
+static void tcp_reactor_connect_req_free(tcp_reactor_connect_req_t *creq)
+{
+	if(creq->cinfo.server_name.s)
+		shm_free(creq->cinfo.server_name.s);
+	if(creq->cinfo.server_id.s)
+		shm_free(creq->cinfo.server_id.s);
+	shm_free(creq);
+}
+
 /* mode 2 [worker]: the worker lacks a connection to dst: ask PROC_TCP_MAIN to
  * open one and send buf on it.
  *  - copy dst, from and buf into a shm connect request, send it on
@@ -1057,7 +1081,7 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 		return -1;
 	}
 
-	creq = shm_malloc(sizeof(tcp_reactor_connect_req_t));
+	creq = shm_mallocxz(sizeof(tcp_reactor_connect_req_t));
 	if(unlikely(creq == NULL)) {
 		SHM_MEM_ERROR;
 		return -1;
@@ -1065,7 +1089,7 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 	creq->buf = shm_malloc(len);
 	if(unlikely(creq->buf == NULL)) {
 		SHM_MEM_ERROR;
-		shm_free(creq);
+		tcp_reactor_connect_req_free(creq);
 		return -1;
 	}
 	memcpy(creq->buf, buf, len);
@@ -1081,6 +1105,10 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 	creq->id = dst->id;
 	creq->try_local_port = (dst->send_sock) ? dst->send_sock->port_no : 0;
 	creq->send_flags = dst->send_flags;
+	/* the tls xavp lives in this worker: snapshot it for tcp main */
+	if((creq->proto == PROTO_TLS || creq->proto == PROTO_WSS)
+			&& tls_hook.connect_info != NULL)
+		tls_hook.connect_info(&creq->cinfo);
 
 	response[0] = (long)(uintptr_t)creq;
 	response[1] = CONN_CONNECT_REQ;
@@ -1088,7 +1116,7 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 		LM_ERR("failed to send connect request to tcp main: %s (%d)\n",
 				strerror(errno), errno);
 		shm_free(creq->buf);
-		shm_free(creq);
+		tcp_reactor_connect_req_free(creq);
 		return -1;
 	}
 	return (int)len;
@@ -1211,8 +1239,18 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 		LM_ERR("failed to open outbound connection to %s\n",
 				su2a(&creq->dst, sizeof(creq->dst)));
 		shm_free(creq->buf);
-		shm_free(creq);
+		tcp_reactor_connect_req_free(creq);
 		return;
+	}
+	/* tls: the worker's server_name/server_id select the client profile
+	 * and the sni in tls_complete_init() */
+	if(creq->cinfo.server_name.s && cc->cinfo.server_name.s == NULL) {
+		cc->cinfo.server_name = creq->cinfo.server_name;
+		creq->cinfo.server_name.s = NULL;
+	}
+	if(creq->cinfo.server_id.s && cc->cinfo.server_id.s == NULL) {
+		cc->cinfo.server_id = creq->cinfo.server_id;
+		creq->cinfo.server_id.s = NULL;
 	}
 	atomic_set(&cc->refcnt, 1); /* owned solely by tcp_main (hash) */
 	if(unlikely(tcpconn_add(cc) == 0)) {
@@ -1221,7 +1259,7 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 		cc->flags |= F_CONN_FD_CLOSED;
 		_tcpconn_free(cc);
 		shm_free(creq->buf);
-		shm_free(creq);
+		tcp_reactor_connect_req_free(creq);
 		return;
 	}
 	tcpmain_note_new_conn(cc->type == PROTO_TLS);
@@ -1234,11 +1272,11 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 		tcpconn_try_unhash(cc);
 		tcpconn_put_destroy(cc);
 		shm_free(creq->buf);
-		shm_free(creq);
+		tcp_reactor_connect_req_free(creq);
 		return;
 	}
 	shm_free(creq->buf);
-	shm_free(creq);
+	tcp_reactor_connect_req_free(creq);
 	/* register in the reactor: watch read + write. The POLLOUT event
 	 * completes the connect and drains the wbuf_q. */
 	t = get_ticks_raw();
@@ -1274,7 +1312,9 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 	cport = su_getport(&creq->dst);
 	con_lifetime = cfg_get(tcp, tcp_cfg, con_lifetime);
 	/* dedup: another worker may have created a matching connection
-	 * since this worker's lookup missed => reuse it if so */
+	 * since this worker's lookup missed => reuse it if so; the tls
+	 * match_domain hook takes the worker's attributes from creq->cinfo */
+	tcp_reactor_creq_cinfo = &creq->cinfo;
 	if(tcp_connection_match == TCPCONN_MATCH_STRICT
 			|| (creq->send_flags.f & SND_F_FORCE_PROTO)) {
 		cc = tcpconn_lookup(creq->id, &cip, cport, cfrom, creq->try_local_port,
@@ -1282,23 +1322,24 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 	} else {
 		cc = tcpconn_get(creq->id, &cip, cport, cfrom, con_lifetime);
 	}
+	tcp_reactor_creq_cinfo = NULL;
 	if(cc != NULL) {
 		/* reuse: stage on wsq for a pool write job, as for CONN_WRITE_REQ;
 		 * a pool job may own cc (mid-read) */
 		if(unlikely(tcpconn_put(cc))) {
 			tcpconn_destroy(cc);
 			shm_free(creq->buf);
-			shm_free(creq);
+			tcp_reactor_connect_req_free(creq);
 			return;
 		}
 		if(unlikely(
 				   (cc->state == S_CONN_BAD) || !(cc->flags & F_CONN_HASHED))) {
 			shm_free(creq->buf);
-			shm_free(creq);
+			tcp_reactor_connect_req_free(creq);
 			return;
 		}
 		tcp_reactor_stage_write(cc, creq->buf, creq->len, creq->send_flags);
-		shm_free(creq);
+		tcp_reactor_connect_req_free(creq);
 		return;
 	}
 	tcp_reactor_connect_new(creq, cfrom, con_lifetime);
@@ -1377,10 +1418,13 @@ int tcp_reactor_handle_tcpconn_ev(
 			&& (tcpconn->flags & F_CONN_WRITE_W) && tcpconn->wsq_head != NULL) {
 		if(unlikely(tcp_reactor_shield(tcpconn, fd_i) < 0))
 			goto reactor_close;
-		if(unlikely(tcp_reactor_enqueue_job(tcpconn, TCP_R_WRITE) < 0))
+		if(unlikely(tcp_reactor_enqueue_job(tcpconn, TCP_R_WRITE) < 0)) {
+			/* a re-armed watch re-fires on the writable socket: close c */
+			tcp_reactor_mark_bad(tcpconn);
 			tcp_reactor_unshield_or_chain(tcpconn);
-		else
+		} else {
 			tcp_reactor_read_beside_write(tcpconn);
+		}
 		return 0;
 	}
 	/* write-watched, wsq empty: flush wbuf_q (wire bytes) here on io_wait */
@@ -1406,7 +1450,8 @@ int tcp_reactor_handle_tcpconn_ev(
 		if(unlikely(tcp_reactor_shield(tcpconn, fd_i) < 0))
 			goto reactor_close;
 		if(unlikely(tcp_reactor_enqueue_job(tcpconn, TCP_R_READ) < 0)) {
-			/* could not enqueue: release the in-pool ref and un-shield */
+			/* a re-armed watch re-fires on the pending input: close c */
+			tcp_reactor_mark_bad(tcpconn);
 			tcp_reactor_unshield_or_chain(tcpconn);
 		}
 	}

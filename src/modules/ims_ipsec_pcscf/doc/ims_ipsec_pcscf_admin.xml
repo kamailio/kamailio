@@ -163,6 +163,12 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_agname", "imsudp")
 
       <para>Maximum simultaneous IPSec connections</para>
 
+      <para>On re-registration, the tunnel offered in the 401 is set up
+      on different P-CSCF ports from the registered one. If
+      ipsec_max_connections leaves too few free ports for this, the new
+      tunnel replaces the registered one as soon as the 401 is sent, and a
+      warning is logged at startup.</para>
+
       <para><emphasis>Default value is 2.</emphasis></para>
 
       <example>

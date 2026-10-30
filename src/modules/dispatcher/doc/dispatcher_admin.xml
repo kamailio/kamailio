@@ -1628,6 +1628,23 @@ GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
 			</listitem>
 			<listitem>
 				<para>
+				<quote>16</quote> - pressure based dispatching. Each destination's
+				pressure is initialized from its unsigned <quote>pressure</quote>
+				attribute when the dispatcher list is loaded or reloaded. When the
+				attribute is missing, pressure is initialized to 0. The active destination
+				with the lowest pressure is selected. If several destinations have
+				the same lowest pressure, they are selected in round-robin order.
+				Routing does not change the pressure value.
+				</para>
+				<para>
+				Failover destinations are ordered by increasing pressure, with
+				round-robin ordering among destinations having equal pressure.
+				Runtime updates preserve the current pressure; reload the dispatcher
+				list to initialize pressure again from the configured attribute.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
@@ -2378,7 +2395,7 @@ event_route[dialog:failed] {
 	</section>
 	</section>
 
-	<section>
+	<section id="dispatcher.sec.rpcs">
 	<title>RPC Commands</title>
 	<section id="dispatcher.r.set_state">
 		<title>
@@ -2471,6 +2488,7 @@ DEST: {
         URI: sip:192.168.0.1:5060
         FLAGS: AP
         PRIORITY: 12
+        PRESSURE: 12
 }
 ...
 </programlisting>
@@ -2482,6 +2500,160 @@ DEST: {
 		assumed as active and it is not tested by SIP options. DX
 		respectively is disabled destination that is not tested, etc.
 		</para>
+	</section>
+	<section id="dispatcher.r.show">
+		<title>
+		<function moreinfo="none">dispatcher.show</function>
+		</title>
+		<para>
+		Lists destinations from one dispatcher group. When an address is
+		provided, only records whose full destination URI matches that address
+		are returned. The address comparison is case-insensitive. When the
+		address is omitted, all destinations in the group are returned.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: optional destination URI</para></listitem>
+		</itemizedlist>
+		<para>Examples:</para>
+<programlisting format="linespecific">
+...
+# list all destinations in group 2
+&sercmd; dispatcher.show 2
+
+# list the matching destination in group 2
+&sercmd; dispatcher.show 2 sip:127.0.0.1:5080
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.load_list">
+		<title>
+		<function moreinfo="none">dispatcher.load_list</function>
+		</title>
+		<para>
+		Lists all records in the internal call-load hash table used by
+		algorithm 10. The result is an array and is empty when the load hash
+		table has not been initialized or contains no records.
+		</para>
+		<para>The returned fields are:</para>
+		<itemizedlist>
+			<listitem><para><emphasis>SLOT</emphasis>: hash-table slot</para></listitem>
+			<listitem><para><emphasis>CELLID</emphasis>: full hash value</para></listitem>
+			<listitem><para><emphasis>GROUP</emphasis>: destination group id</para></listitem>
+			<listitem><para><emphasis>DUID</emphasis>: destination unique id</para></listitem>
+			<listitem><para><emphasis>CALLID</emphasis>: SIP Call-ID</para></listitem>
+			<listitem><para><emphasis>STATE</emphasis>: 0 for initial or 1 for confirmed</para></listitem>
+			<listitem><para><emphasis>EXPIRE</emphasis>: expiration as a Unix timestamp</para></listitem>
+			<listitem><para><emphasis>INITEXPIRE</emphasis>: initial-state expiration as a Unix timestamp</para></listitem>
+		</itemizedlist>
+		<para>This command has no parameters.</para>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+&sercmd; dispatcher.load_list
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.load_add">
+		<title>
+		<function moreinfo="none">dispatcher.load_add</function>
+		</title>
+		<para>
+		Adds an item to the internal call-load hash table used by algorithm 10
+		and increments the tracked load of the matching destination. The group
+		and destination unique id must identify an existing destination, and
+		the Call-ID must not already exist in the table.
+		</para>
+		<para>
+		The optional expiration values are durations in seconds from the time
+		the item is added. When <emphasis>expire</emphasis> or
+		<emphasis>initexpire</emphasis> is omitted or set to 0, the value of
+		<emphasis>ds_hash_expire</emphasis> or
+		<emphasis>ds_hash_initexpire</emphasis>, respectively, is used.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_duid_: destination unique id</para></listitem>
+			<listitem><para>_callid_: SIP Call-ID</para></listitem>
+			<listitem><para>_state_: 0 for initial or 1 for confirmed</para></listitem>
+			<listitem><para>_expire_: optional general expiration duration</para></listitem>
+			<listitem><para>_initexpire_: optional initial-state expiration duration</para></listitem>
+		</itemizedlist>
+		<para>Examples:</para>
+<programlisting format="linespecific">
+...
+# use the module expiration parameters
+&sercmd; dispatcher.load_add 2 gateway-a 7f3d2 0
+
+# expire after 3600 seconds, with a 60 second initial-state expiration
+&sercmd; dispatcher.load_add 2 gateway-a 7f3d2 0 3600 60
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.load_set">
+		<title>
+		<function moreinfo="none">dispatcher.load_set</function>
+		</title>
+		<para>
+		Updates selected fields of an existing entry in the internal call-load
+		hash table. The group id, destination unique id and Call-ID must all
+		match the entry. One, two or all three supported attributes can be
+		updated in one call, in any order. An attribute cannot be repeated.
+		</para>
+		<para>
+		The supported attributes are <emphasis>state</emphasis>,
+		<emphasis>expire</emphasis> and <emphasis>initexpire</emphasis>.
+		State must be 0 (initial) or 1 (confirmed). Expiration values are
+		durations in seconds from the moment the command is executed. The
+		corresponding absolute Unix timestamps are stored in the hash-table
+		entry and displayed by <emphasis>dispatcher.load_list</emphasis>.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_duid_: destination unique id</para></listitem>
+			<listitem><para>_callid_: SIP Call-ID</para></listitem>
+			<listitem><para>_attribute value_: one to three attribute/value pairs</para></listitem>
+		</itemizedlist>
+		<para>Examples:</para>
+<programlisting format="linespecific">
+...
+# update one field
+&sercmd; dispatcher.load_set 2 gateway-a 7f3d2@example.net state 1
+
+# update two fields: expire in one hour and initial state in one minute
+&sercmd; dispatcher.load_set 2 gateway-a 7f3d2@example.net expire 3600 initexpire 60
+
+# update all fields
+&sercmd; dispatcher.load_set 2 gateway-a 7f3d2@example.net state 0 expire 3600 initexpire 60
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.load_rm">
+		<title>
+		<function moreinfo="none">dispatcher.load_rm</function>
+		</title>
+		<para>
+		Removes an entry from the internal call-load hash table used by
+		algorithm 10. The entry is removed only when its group id, destination
+		unique id and Call-ID all match the supplied parameters. When the
+		destination still exists, its tracked load is decremented as well.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_duid_: destination unique id</para></listitem>
+			<listitem><para>_callid_: SIP Call-ID</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.load_rm _group_ _duid_ _callid_
+&sercmd; dispatcher.load_rm 2 gateway-a 7f3d2@example.net
+...
+</programlisting>
 	</section>
 	<section id="dispatcher.r.reload">
 		<title>
@@ -2718,6 +2890,142 @@ kamcli dispatcher.oclist 1
 ...
 </programlisting>
     </section>
+	<section id="dispatcher.r.pressure_dec">
+		<title>
+		<function moreinfo="none">dispatcher.pressure_dec</function>
+		</title>
+		<para>
+		Decrement by one the pressure associated with a destination address.
+		Pressure is unsigned and remains at zero when it is already zero. The
+		updated pressure is returned. When the new value matches the lowest
+		pressure in the group, algorithm 16 includes the destination in its
+		round-robin selection.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: address of the destination in the group</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.pressure_dec _group_ _address_
+&sercmd; dispatcher.pressure_dec 2 sip:127.0.0.1:5080
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.pressure_inc">
+		<title>
+		<function moreinfo="none">dispatcher.pressure_inc</function>
+		</title>
+		<para>
+		Increment by one the pressure associated with a destination address.
+		Pressure remains at its maximum unsigned 32-bit value when it is already
+		at that limit. The updated pressure is returned. Algorithm 16 considers
+		the new value during its next destination selection.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: address of the destination in the group</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.pressure_inc _group_ _address_
+&sercmd; dispatcher.pressure_inc 2 sip:127.0.0.1:5080
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.pressure_set">
+		<title>
+		<function moreinfo="none">dispatcher.pressure_set</function>
+		</title>
+		<para>
+		Set the unsigned 32-bit pressure associated with a destination address.
+		The updated pressure is returned. Algorithm 16 considers the new value
+		during its next destination selection.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_address_: address of the destination in the group</para></listitem>
+			<listitem><para>_pressure_: new unsigned pressure value</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.pressure_set _group_ _address_ _pressure_
+&sercmd; dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.weight_gset">
+		<title>
+		<function moreinfo="none">dispatcher.weight_gset</function>
+		</title>
+		<para>
+		Set the weights for all destinations in a group without reloading the
+		dispatcher. Weights are mapped positionally to the current destination
+		indexes shown by <emphasis>dispatcher.list</emphasis>. The number of
+		weights must exactly match the number of destinations in the group,
+		including a default destination when configured. Each value must be
+		between 0 and 100.
+		</para>
+		<para>
+		The update is atomic and immediately rebuilds the distributions used by
+		algorithms 9 and 15. Runtime weights are preserved by in-memory add and
+		remove operations; a full reload restores weights from the configured
+		file or database. The structured weight value in
+		<emphasis>dispatcher.list</emphasis> reflects the runtime value; the
+		original attributes body text is not rewritten.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_weight0_ ... _weightN_: one weight for each destination index</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.weight_gset _group_ _weight0_ [_weight1_ ...]
+&sercmd; dispatcher.weight_gset 2 50 30 20
+...
+</programlisting>
+	</section>
+	<section id="dispatcher.r.rweight_gset">
+		<title>
+		<function moreinfo="none">dispatcher.rweight_gset</function>
+		</title>
+		<para>
+		Set the relative weights for all destinations in a group without
+		reloading the dispatcher. Relative weights are mapped positionally to
+		the current destination indexes shown by
+		<emphasis>dispatcher.list</emphasis>. The number of values must exactly
+		match the number of destinations in the group, including a default
+		destination when configured. Each value must be between 0 and 100.
+		</para>
+		<para>
+		The update is atomic and immediately rebuilds the distribution used by
+		algorithm 11. Runtime relative weights are preserved by in-memory add
+		and remove operations; a full reload restores relative weights from the
+		configured file or database. The structured relative weight value in
+		<emphasis>dispatcher.list</emphasis> reflects the runtime value; the
+		original attributes body text is not rewritten.
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_group_: destination group id</para></listitem>
+			<listitem><para>_rweight0_ ... _rweightN_: one relative weight for each destination index</para></listitem>
+		</itemizedlist>
+		<para>Example:</para>
+<programlisting format="linespecific">
+...
+# prototype: &sercmd; dispatcher.rweight_gset _group_ _rweight0_ [_rweight1_ ...]
+&sercmd; dispatcher.rweight_gset 2 50 30 20
+...
+</programlisting>
+	</section>
 
    </section>
 
@@ -2762,7 +3070,8 @@ kamcli dispatcher.oclist 1
 			</listitem>
 			<listitem>
 			<para>priority: sets the priority in destination list (based on it
-			is done the initial ordering inside the set)</para>
+			is done the initial ordering inside the set: descending mode - first record
+			is the one with highest priority)</para>
 			</listitem>
 			<listitem>
 			<para>attributes: extra fields in form of
@@ -2804,6 +3113,12 @@ kamcli dispatcher.oclist 1
 								the limits) otherwise host will be excluded from relative weight
 								distribution type - its rweight is set to 0. See also the description
 								of the corresponding algorithm parameter for ds_select_dst().</para>
+						</listitem>
+						<listitem>
+							<para>'pressure' - sets the initial unsigned 32-bit pressure used by
+								algorithm 16. When this attribute is missing or invalid, the initial
+								pressure is 0. Runtime pressure updates do not rewrite the attribute;
+								reloading the dispatcher restores its configured value.</para>
 						</listitem>
 						<listitem>
 							<para>'socket' - used to set the sending socket for the gateway, overwriting

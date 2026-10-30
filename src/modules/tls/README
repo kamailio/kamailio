@@ -443,10 +443,13 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 
    The TLS certificate verifications ignores the certificate name, Subject
    Altname and IP extensions, it just checks if the certificate is signed
-   by a recognized CA. One can use the select framework to try to overcome
-   this limitation (check in the script for the contents of various
-   certificate fields), but this is not only slow, but also not exactly
-   standard conforming (the verification should happen during TLS
+   by a recognized CA, except for client profiles with verify_server_name
+   enabled (see the config parameter), where the server certificate name
+   is checked against the server name of the connection during the TLS
+   handshake. Otherwise one can use the select framework to try to
+   overcome this limitation (check in the script for the contents of
+   various certificate fields), but this is not only slow, but also not
+   exactly standard conforming (the verification should happen during TLS
    connection establishment and not after).
 
    This documentation is incomplete. The provided selects are not
@@ -1483,6 +1486,8 @@ modparam("tls", "use_shared_context", 1)
      * server_name - (str) - SNI (server name identification)
      * server_name_mode - (int) - how to match server_name
      * server_id - (str) - server id
+     * verify_server_name - (bool) - client profiles: check the name of
+       the server certificate
 
    The value for server_name_mode specifies how to match the server_name
    (SNI). If set to 1, match the domain and all its subdomains. If set to
@@ -1494,6 +1499,28 @@ modparam("tls", "use_shared_context", 1)
    This is the recommended way for selecting a specific TLS client config
    profile, because the local or remote port is hard to predict for a
    stream connection - see parameter xavp_cfg to learn how to enable it.
+
+   The value for verify_server_name is used only by client profiles that
+   also have verify_certificate enabled (default: off). When it is on, the
+   server certificate must match the server name of the connection: the
+   server_name of the xavp_cfg attributes if set (also sent as SNI), else
+   the server_name of the profile. A DNS name is matched against the
+   Subject Alternative Name DNS entries, else the Common Name (RFC 6125,
+   no partial wildcards). An IP address is matched against the Subject
+   Alternative Name IP entries only. The check is done by OpenSSL during
+   the TLS handshake, so a mismatch fails the connection before any SIP
+   message is sent. If no server name is available, the connection fails.
+   A warning is printed at load time for a server profile or a client
+   profile without verify_certificate, where the attribute is ignored;
+   require_certificate alone does not enable it. On a client profile with
+   verify_client set to optional_no_ca, any certificate is accepted, so a
+   name mismatch is accepted too.
+
+   The check is done once, when the connection is established. An existing
+   connection to the same address and port can be reused for later
+   requests to a different server name, without a new check. Setting the
+   core parameter tls_connection_match_domain with one client profile per
+   server name avoids this reuse.
 
    All the parameters that take filenames as values will be resolved using
    the same rules as for the tls config filename itself: starting with a
@@ -1561,6 +1588,7 @@ ca_list = default_ca.pem
 crl = default_crl.pem
 server_name = kamailio.org
 server_id = kamailio.org
+verify_server_name = yes
 
 # server profile on any address
 [server:any]
@@ -1990,6 +2018,10 @@ modparam("tls", "keylog_peer", "udp:127.0.0.1:8020")
    Event route to be executed when a TLS connection is opened by Kamailio.
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
+
+   With tcp_main_threads set to 2, the event route is executed in a SIP
+   worker after the TLS handshake and drop() has no effect on the
+   connection.
 
    Example 1.63. Use of event_route[tls:connection-out]
 ...

@@ -752,8 +752,12 @@ static int ki_tcp_close_connection_id(sip_msg_t *msg, int conid)
 		mcmd[0] = (long)con;
 		mcmd[1] = CONN_EOF;
 
-		con->send_flags.f |= SND_F_CON_CLOSE;
-		con->flags |= F_CONN_FORCE_EOF;
+		/* mode 2: the flag words belong to the io_wait thread; CONN_EOF
+		 * closes con there */
+		if(ksr_tcp_main_threads != 2) {
+			con->send_flags.f |= SND_F_CON_CLOSE;
+			con->flags |= F_CONN_FORCE_EOF;
+		}
 
 		n = send_all(unix_tcp_sock, mcmd, sizeof(mcmd));
 		if(unlikely(n <= 0)) {

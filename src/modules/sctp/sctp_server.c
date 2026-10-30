@@ -1984,7 +1984,7 @@ int init_sctp()
 		goto error;
 	}
 	/* sctp options must be initialized before  calling this function */
-	sctp_conn_no = shm_malloc(sizeof(*sctp_conn_tracked));
+	sctp_conn_no = shm_malloc(sizeof(*sctp_conn_no));
 	if(sctp_conn_no == 0) {
 		ERR("sctp init: memory allocation error\n");
 		ret = E_OUT_OF_MEM;
@@ -2112,6 +2112,20 @@ static int sctp_handle_send_failed(struct socket_info *si,
 	 * reasons (e.g. ABORT received, INIT timeout a.s.o)
 	 */
 	if(retries && (snp->sn_send_failed.ssf_error == 0)) {
+		/* ssf_length is the full notification length, including the
+		 * undelivered data. If the failed message was too big to fit in the
+		 * receive buffer the notification was truncated, so the data is
+		 * incomplete and ssf_length points past what was received:
+		 * do not retry in this case (it would send garbage) */
+		if(unlikely(snp->sn_send_failed.ssf_length
+							< sizeof(struct sctp_send_failed)
+					|| snp->sn_send_failed.ssf_length > len)) {
+			LM_WARN("cannot retry failed send to %s: notification length"
+					" %u, received only %u bytes (message too big?)\n",
+					su2a(su, sizeof(*su)),
+					(unsigned)snp->sn_send_failed.ssf_length, len);
+			goto skip_retry;
+		}
 		DBG("sctp: RETRY-ing (%d)\n", retries);
 		SCTP_STATS_SEND_FORCE_RETRY();
 		retries--;
@@ -2126,7 +2140,7 @@ static int sctp_handle_send_failed(struct socket_info *si,
 			sinfo.sinfo_pr_policy = SCTP_PR_SCTP_TTL;
 			sinfo.sinfo_pr_value = send_ttl;
 		} else
-			sinfo.info_pr_policy = SCTP_PR_SCTP_NONE;
+			sinfo.sinfo_pr_policy = SCTP_PR_SCTP_NONE;
 #else
 		sinfo.sinfo_timetolive = cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
@@ -2141,9 +2155,11 @@ static int sctp_handle_send_failed(struct socket_info *si,
 #endif
 
 		ret = sctp_msg_send_ext(&dst, data, data_len, &sinfo);
+		return (ret > 0) ? 0 : ret;
 	}
+skip_retry:
 #ifdef USE_DST_BLOCKLIST
-	else if(cfg_get(sctp, sctp_cfg, send_retries)) {
+	if(cfg_get(sctp, sctp_cfg, send_retries)) {
 		/* blocklist only if send_retries is on, if off we blocklist
 		   from SCTP_ASSOC_CHANGE: SCTP_COMM_LOST/SCTP_CANT_STR_ASSOC
 		   which is better (because we can tell connect errors from send
@@ -2547,7 +2563,7 @@ int sctp_rcv_loop()
 		} else
 			ri.proto_reserved1 = 0;
 #else  /* SCTP_CONN_REUSE */
-		ri.proto_received1 = 0;
+		ri.proto_reserved1 = 0;
 #endif /* SCTP_CONN_REUSE */
 		receive_msg(buf, len, &ri);
 	}
@@ -2898,7 +2914,7 @@ int sctp_msg_send(struct dest_info *dst, char *buf, unsigned len)
 		sinfo.sinfo_pr_policy = SCTP_PR_SCTP_TTL;
 		sinfo.sinfo_pr_value = send_ttl;
 	} else
-		sinfo->sinfo_pr_policy = SCTP_PR_SCTP_NONE;
+		sinfo.sinfo_pr_policy = SCTP_PR_SCTP_NONE;
 #else
 	sinfo.sinfo_timetolive = cfg_get(sctp, sctp_cfg, send_ttl);
 #endif
@@ -2917,10 +2933,11 @@ void sctp_get_info(struct sctp_gen_info *i)
 			i->sctp_tracked_no = atomic_get(sctp_conn_tracked);
 		else
 			i->sctp_tracked_no = -1;
+		i->sctp_total_connections = atomic_get(sctp_id);
 #else  /* SCTP_CONN_REUSE */
 		i->sctp_tracked_no = -1;
+		i->sctp_total_connections = -1;
 #endif /* SCTP_CONN_REUSE */
-		i->sctp_total_connections = atomic_get(sctp_id);
 	}
 }
 

@@ -111,6 +111,7 @@ static tls_domain_t mod_params = {
 		0,								 /* Server name (SNI) mode */
 		{0, 0},							 /* Server id */
 		TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+		0,								 /* Verify server name */
 		0								 /* next */
 };
 
@@ -137,6 +138,7 @@ tls_domain_t srv_defaults = {
 		0,								 /* Server name (SNI) mode */
 		{0, 0},							 /* Server id */
 		TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+		0,								 /* Verify server name */
 		0								 /* next */
 };
 
@@ -163,6 +165,7 @@ tls_domain_t cli_defaults = {
 		0,								 /* Server name (SNI) mode */
 		{0, 0},							 /* Server id */
 		TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+		0,								 /* Verify server name */
 		0								 /* next */
 };
 
@@ -261,6 +264,8 @@ static struct tls_hooks tls_h = {
 		tls_h_mod_pre_init_f,
 		tls_h_match_domain_f,
 		tls_h_match_connections_domain_f,
+		NULL, /* run_event_route */
+		tls_h_connect_info_f,
 };
 
 

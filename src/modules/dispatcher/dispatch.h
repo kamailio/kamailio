@@ -30,6 +30,7 @@
 #ifndef _DISPATCH_H_
 #define _DISPATCH_H_
 
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include "../../core/pvar.h"
@@ -186,6 +187,12 @@ int ds_add_dst(int group, str *address, int flags, int priority, str *attrs);
 int ds_remove_dst(int group, str *address);
 int ds_update_dst_record(
 		int group, str *address, int flags, int priority, str *attrs);
+int ds_pressure_dec(int group, str *address, uint32_t *pressure);
+int ds_pressure_inc(int group, str *address, uint32_t *pressure);
+int ds_pressure_set(
+		int group, str *address, uint32_t value, uint32_t *pressure);
+int ds_weight_set(int group, int *weights, int count);
+int ds_rweight_set(int group, int *rweights, int count);
 int ds_update_state(sip_msg_t *msg, int group, str *address, str *iuid,
 		int state, int mode, ds_rctx_t *rctx);
 int ds_reinit_state(int group, str *address, str *iuid, int state);
@@ -202,6 +209,16 @@ int ds_is_active_uri(sip_msg_t *msg, int group, str *uri);
 int ds_load_unset(struct sip_msg *msg);
 int ds_load_unset_callid(struct sip_msg *msg, str *callid);
 int ds_load_update(struct sip_msg *msg);
+int ds_load_add_record(int group, str *duid, str *callid, int state,
+		unsigned int expire, unsigned int initexpire);
+int ds_load_set_record(int group, str *duid, str *callid, int set_state,
+		int state, int set_expire, unsigned long expire, int set_initexpire,
+		unsigned long initexpire);
+int ds_load_remove_match(int group, str *duid, str *callid);
+struct _ds_cell;
+typedef int (*ds_load_cell_cb_t)(
+		unsigned int slot, const struct _ds_cell *cell, void *param);
+int ds_load_for_each(ds_load_cell_cb_t callback, void *param);
 
 int ds_hash_load_init(unsigned int htsize, int expire, int initexpire);
 int ds_hash_load_destroy(void);
@@ -281,6 +298,7 @@ typedef struct _ds_dest {
 	str host;         /*!< shortcut to host part */
 	int flags;        /*!< flags */
 	int priority;     /*!< priority */
+	uint32_t pressure; /*!< routing pressure (initialized from attributes) */
 	int dload;        /*!< load */
 	ds_attrs_t attrs; /*!< the attributes */
 	ds_latency_stats_t latency_stats; /*!< latency statistics */
@@ -307,6 +325,7 @@ typedef struct _ds_set {
 	int wlast;			/*!< last used item in dst set (by weight) */
 	int rwlast;			/*!< last used item in dst set (by relative weight) */
 	int pwlast;			/*!< last used item in dst set (by priority+weight) */
+	int plast;			/*!< next item to inspect for pressure tie breaking */
 	ds_dest_t *dlist;
 	unsigned int wlist[100];
 	unsigned int rwlist[100];

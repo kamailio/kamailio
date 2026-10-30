@@ -80,6 +80,7 @@ extern str acc_sipreason_col;
 extern str acc_time_col;
 
 extern int acc_db_insert_mode;
+extern int acc_db_connect_mode;
 
 /* time mode */
 extern int acc_time_mode;

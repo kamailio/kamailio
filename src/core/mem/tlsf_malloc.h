@@ -16,6 +16,10 @@
 **
 ** This implementation was written to the specification
 ** of the document, therefore no GPL restrictions apply.
+**
+** As some of the links are not working anymore, here the link to the
+** original research paper:
+** http://www.gii.upv.es/tlsf/files/papers/ecrts04_tlsf.pdf
 */
 
 #include <stddef.h>

@@ -137,7 +137,7 @@ int sanity_reply(sip_msg_t *msg, int code, char *reason)
 int str2valid_uint(str *_number, unsigned int *_result)
 {
 	int i;
-	int result = 0;
+	unsigned int result = 0;
 	int equal = 1;
 	char mui[10] = "4294967296";
 
@@ -371,6 +371,12 @@ int check_via1_header(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
+	if(msg->via1 == NULL) {
+		LM_WARN("missing Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
 	if(msg->via1->host.s == NULL || msg->via1->host.len <= 0) {
 		LM_WARN("failed to parse the Via1 host\n");
 		msg->msg_flags |= FL_MSG_NOREPLY;
@@ -403,7 +409,14 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
-	if(msg->via1->branch->value.len < 7
+	if(msg->via1 == NULL) {
+		LM_WARN("missing Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1->branch == NULL || msg->via1->branch->value.s == NULL
+			|| msg->via1->branch->value.len < 7
 			|| memcmp(msg->via1->branch->value.s, "z9hG4bK", 7) != 0) {
 		LM_WARN("Via1 branch parameter does not start with the magic cookie\n");
 		return SANITY_CHECK_FAILED;
@@ -833,11 +846,9 @@ int check_proxy_require(sip_msg_t *msg)
 					if(add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR) == 0) {
 						LM_ERR("failed to append Unsupported header to "
 							   "reply\n");
-						pkg_free(u);
-						u = NULL;
-					} else {
-						u = NULL;
 					}
+					pkg_free(u);
+					u = NULL;
 				}
 
 				if(sanity_reply(msg, 420, "Bad Proxy Require Extension") < 0) {

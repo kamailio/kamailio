@@ -171,6 +171,24 @@ private_key = pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib64/li
           with extension <varname>.pem</varname>.
 	</para>
 			</section>
+			<section id="tls.p.verify_server_name">
+	<title><varname>verify_server_name</varname></title>
+	<para>
+          Same as in the tls module, with two differences. wolfSSL accepts
+          partial wildcards in the server certificate (e.g., a Subject
+          Alternative Name <varname>a*.example.com</varname> matches
+          <varname>ab.example.com</varname>), because it ignores the
+          no-partial-wildcards flag during the handshake. Certificates from
+          public CAs carry full left-most label wildcards only
+          (<varname>*.example.com</varname>), so the difference concerns
+          private CAs.
+	</para>
+	<para>
+          On a client profile with <varname>verify_client</varname> set to
+          optional_no_ca, the name is still checked when the certificate
+          chain verifies; the tls module accepts any name there.
+	</para>
+			</section>
 		</section>
 
 

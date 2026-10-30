@@ -63,6 +63,8 @@ typedef struct _ds_ht {
 ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire);
 int ds_ht_destroy(ds_ht_t *dsht);
 int ds_add_cell(ds_ht_t *dsht, str *cid, str *did, int dset);
+int ds_add_cell_ex(ds_ht_t *dsht, str *cid, str *did, int dset, int state,
+		unsigned int expire, unsigned int initexpire);
 int ds_del_cell(ds_ht_t *dsht, str *cid);
 ds_cell_t *ds_get_cell(ds_ht_t *dsht, str *cid);
 int ds_unlock_cell(ds_ht_t *dsht, str *cid);

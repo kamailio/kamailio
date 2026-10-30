@@ -296,8 +296,11 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 		</para>
 		<para>
 			The TLS certificate verifications ignores the certificate name, Subject Altname
-			and IP extensions, it just checks if the certificate is signed by a recognized CA.
-			One can use the select framework to try to overcome this limitation (check in the
+			and IP extensions, it just checks if the certificate is signed by a recognized CA,
+			except for client profiles with verify_server_name enabled (see the
+			<varname>config</varname> parameter), where the server certificate name is
+			checked against the server name of the connection during the TLS handshake.
+			Otherwise one can use the select framework to try to overcome this limitation (check in the
 			script for the contents of various certificate fields), but this is not only slow,
 			but also not exactly standard conforming (the verification should happen during TLS
 			connection establishment and not after).
@@ -326,6 +329,11 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 			Event route to be executed when a TLS connection is opened by
 			&kamailio;. If drop() is executed in the event route, then the
 			data is no longer sent over the connection.
+		</para>
+		<para>
+			With tcp_main_threads set to 2, the event route is executed in a
+			SIP worker after the TLS handshake and drop() has no effect on the
+			connection.
 		</para>
 	<example>
 	    <title>Use of <varname>event_route[tls:connection-out]</varname></title>

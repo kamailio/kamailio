@@ -86,6 +86,7 @@
 #define DS_ALG_LATENCY 13
 #define DS_ALG_RRSERIAL 14
 #define DS_ALG_PRIORITY_WEIGHT 15
+#define DS_ALG_PRESSURE 16
 #define DS_ALG_OVERLOAD 64 /* 2^6 - can be also used as a flag */
 
 #define DS_HN_SIZE 256
@@ -247,6 +248,36 @@ int ds_hash_load_destroy(void)
 	ds_ht_destroy(_dsht_load);
 	_dsht_load = NULL;
 	return 0;
+}
+
+/** Iterate the call-load hash table while holding each slot's lock. */
+int ds_load_for_each(ds_load_cell_cb_t callback, void *param)
+{
+	unsigned int i;
+	int count = 0;
+	int ret;
+	ds_cell_t *cell;
+
+	if(callback == NULL)
+		return -1;
+	if(_dsht_load == NULL)
+		return 0;
+
+	for(i = 0; i < _dsht_load->htsize; i++) {
+		lock_get(&_dsht_load->entries[i].lock);
+		for(cell = _dsht_load->entries[i].first; cell != NULL;
+				cell = cell->next) {
+			ret = callback(i, cell, param);
+			if(ret < 0) {
+				lock_release(&_dsht_load->entries[i].lock);
+				return ret;
+			}
+			count++;
+		}
+		lock_release(&_dsht_load->entries[i].lock);
+	}
+
+	return count;
 }
 
 /**
@@ -484,6 +515,14 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 			} else {
 				dest->attrs.rweight = 0;
 				LM_WARN("rweight %d not in 1-100 range - ignoring\n", tmp_ival);
+			}
+		} else if(pit->name.len == 8
+				  && strncasecmp(pit->name.s, "pressure", 8) == 0) {
+			if(pit->body.len <= 0
+					|| (pit->body.len == 1 && pit->body.s[0] == '+')
+					|| str2int(&pit->body, &dest->pressure) < 0) {
+				dest->pressure = 0;
+				LM_WARN("invalid pressure value - using 0\n");
 			}
 		} else if(pit->name.len == 9
 				  && strncasecmp(pit->name.s, "ping_from", 9) == 0) {
@@ -1090,13 +1129,11 @@ void shuffle_char100array(char *arr)
  *   destination address to be used. The Nth call will use
  *   the address with the index at possition N%100
  */
-int dp_init_relative_weights(ds_set_t *dset)
+static int dp_init_relative_weights_locked(ds_set_t *dset)
 {
 	int j;
 	int k;
 	int t;
-	int *ds_dests_flags = NULL;
-	int *ds_dests_rweights = NULL;
 	int current_slice;
 	int rw_sum;
 	unsigned int last_insert;
@@ -1104,42 +1141,27 @@ int dp_init_relative_weights(ds_set_t *dset)
 	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
 		return -1;
 
-	/* local copy to avoid synchronization problems */
-	ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
-	if(ds_dests_flags == NULL) {
-		PKG_MEM_ERROR;
-		return -1;
-	}
-	ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
-	if(ds_dests_rweights == NULL) {
-		PKG_MEM_ERROR;
-		pkg_free(ds_dests_flags);
-		return -1;
-	}
-
-
-	/* needed to sync the rwlist access */
-	lock_get(&dset->lock);
 	rw_sum = 0;
 	/* find the sum of relative weights */
 	for(j = 0; j < dset->nr; j++) {
-		ds_dests_flags[j] = dset->dlist[j].flags;
-		ds_dests_rweights[j] = dset->dlist[j].attrs.rweight;
-		if(ds_skip_dst(ds_dests_flags[j]))
+		if(ds_skip_dst(dset->dlist[j].flags))
 			continue;
-		rw_sum += ds_dests_rweights[j];
+		rw_sum += dset->dlist[j].attrs.rweight;
 	}
 
-	if(rw_sum == 0)
-		goto ret;
+	if(rw_sum == 0) {
+		memset(dset->rwlist, 0, sizeof(dset->rwlist));
+		return 0;
+	}
 
 	/* fill the array based on the relative weight of each destination */
 	t = 0;
 	for(j = 0; j < dset->nr; j++) {
-		if(ds_skip_dst(ds_dests_flags[j]))
+		if(ds_skip_dst(dset->dlist[j].flags))
 			continue;
 
-		current_slice = ds_dests_rweights[j] * 100 / rw_sum; /* truncate here */
+		current_slice =
+				dset->dlist[j].attrs.rweight * 100 / rw_sum; /* truncate here */
 		LM_DBG("rw_sum[%d][%d][%d]\n", j, rw_sum, current_slice);
 		for(k = 0; k < current_slice; k++) {
 			dset->rwlist[t] = (unsigned int)j;
@@ -1162,13 +1184,21 @@ int dp_init_relative_weights(ds_set_t *dset)
 	 * sending first 20 calls to it, but ensure that within a 100 calls,
 	 * 20 go to first address */
 	shuffle_uint100array(dset->rwlist);
-	goto ret;
-
-ret:
-	lock_release(&dset->lock);
-	pkg_free(ds_dests_flags);
-	pkg_free(ds_dests_rweights);
 	return 0;
+}
+
+int dp_init_relative_weights(ds_set_t *dset)
+{
+	int ret;
+
+	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
+		return -1;
+
+	/* needed to sync the rwlist access */
+	lock_get(&dset->lock);
+	ret = dp_init_relative_weights_locked(dset);
+	lock_release(&dset->lock);
+	return ret;
 }
 
 
@@ -1188,8 +1218,10 @@ int dp_init_weights(ds_set_t *dset)
 		return -1;
 
 	/* is weight set for dst list? (first address must have weight!=0) */
-	if(dset->dlist[0].attrs.weight == 0)
+	if(dset->dlist[0].attrs.weight == 0) {
+		memset(dset->wlist, 0, sizeof(dset->wlist));
 		return 0;
+	}
 
 	/* first fill the array based on the weight of each destination
 	 * - the weight is the percentage (e.g., if weight=20, the afferent
@@ -2494,6 +2526,142 @@ int ds_load_remove_byid(int set, str *duid)
 }
 
 /**
+ * add a call-load item for an existing destination
+ */
+int ds_load_add_record(int group, str *duid, str *callid, int state,
+		unsigned int expire, unsigned int initexpire)
+{
+	int i;
+	int ret;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	if(_dsht_load == NULL || duid == NULL || duid->s == NULL || duid->len <= 0
+			|| callid == NULL || callid->s == NULL || callid->len <= 0
+			|| (state != DS_LOAD_INIT && state != DS_LOAD_CONFIRMED)) {
+		return -1;
+	}
+
+	list = ds_get_list();
+	if(list == NULL) {
+		return -1;
+	}
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		return -2;
+	}
+
+	for(i = 0; i < idx->nr; i++) {
+		if(idx->dlist[i].attrs.duid.len == duid->len
+				&& strncasecmp(idx->dlist[i].attrs.duid.s, duid->s, duid->len)
+						   == 0) {
+			break;
+		}
+	}
+	if(i == idx->nr) {
+		ds_put_list(list);
+		return -2;
+	}
+
+	ret = ds_add_cell_ex(_dsht_load, callid, &idx->dlist[i].attrs.duid, group,
+			state, expire, initexpire);
+	if(ret < 0) {
+		ds_put_list(list);
+		return ret == -2 ? -3 : -1;
+	}
+
+	DS_LOAD_INC(idx, i);
+	ds_put_list(list);
+	return 0;
+}
+
+/**
+ * update specified fields of a matching call-load item
+ */
+int ds_load_set_record(int group, str *duid, str *callid, int set_state,
+		int state, int set_expire, unsigned long expire, int set_initexpire,
+		unsigned long initexpire)
+{
+	time_t now;
+	ds_cell_t *cell;
+
+	if(_dsht_load == NULL || duid == NULL || duid->s == NULL || duid->len <= 0
+			|| callid == NULL || callid->s == NULL || callid->len <= 0
+			|| (!set_state && !set_expire && !set_initexpire)
+			|| (set_state && state != DS_LOAD_INIT
+					&& state != DS_LOAD_CONFIRMED)) {
+		return -1;
+	}
+
+	cell = ds_get_cell(_dsht_load, callid);
+	if(cell == NULL) {
+		return -2;
+	}
+	if(cell->dset != group || cell->duid.len != duid->len
+			|| strncasecmp(cell->duid.s, duid->s, duid->len) != 0) {
+		ds_unlock_cell(_dsht_load, callid);
+		return -2;
+	}
+
+	if(set_state) {
+		cell->state = state;
+	}
+	now = time(NULL);
+	if(set_expire) {
+		cell->expire = now + (time_t)expire;
+	}
+	if(set_initexpire) {
+		cell->initexpire = now + (time_t)initexpire;
+	}
+	ds_unlock_cell(_dsht_load, callid);
+
+	return 0;
+}
+
+/**
+ * remove a call-load item by group, DUID and Call-ID
+ */
+int ds_load_remove_match(int group, str *duid, str *callid)
+{
+	unsigned int slot;
+	ds_cell_t *cell;
+
+	if(_dsht_load == NULL || duid == NULL || duid->s == NULL || duid->len <= 0
+			|| callid == NULL || callid->s == NULL || callid->len <= 0) {
+		return -1;
+	}
+
+	cell = ds_get_cell(_dsht_load, callid);
+	if(cell == NULL) {
+		return -2;
+	}
+
+	if(cell->dset != group || cell->duid.len != duid->len
+			|| strncasecmp(cell->duid.s, duid->s, duid->len) != 0) {
+		ds_unlock_cell(_dsht_load, callid);
+		return -2;
+	}
+
+	/* keep per-destination load in sync */
+	ds_load_remove_byid(cell->dset, &cell->duid);
+
+	slot = cell->cellid & (_dsht_load->htsize - 1);
+	if(cell->prev == NULL) {
+		_dsht_load->entries[slot].first = cell->next;
+	} else {
+		cell->prev->next = cell->next;
+	}
+	if(cell->next != NULL) {
+		cell->next->prev = cell->prev;
+	}
+	_dsht_load->entries[slot].esize--;
+	lock_release(&_dsht_load->entries[slot].lock);
+	ds_cell_free(cell);
+
+	return 0;
+}
+
+/**
  *
  */
 static int ds_load_remove_bycallid(str *callid)
@@ -3414,6 +3582,121 @@ int ds_manage_routes_fill_xavp(
 	return 0;
 }
 
+typedef struct pressure_order_ds
+{
+	int idx;
+	uint32_t pressure;
+	int order;
+} pressure_order_ds_t;
+
+/**
+ * Add pressure-selected destinations to the failover XAVP. The selected
+ * destination is first, followed by the remaining destinations in ascending
+ * pressure order. Equal-pressure destinations retain round-robin order.
+ */
+static int ds_manage_routes_fill_pressure_xavp(
+		unsigned int hash, ds_set_t *idx, ds_select_state_t *rstate)
+{
+	int i;
+	int j;
+	int n;
+	int start;
+	int count = 0;
+	pressure_order_ds_t temp;
+	pressure_order_ds_t *ordered;
+
+	if(ds_add_xavp_record(idx, hash, rstate->setid, rstate->alg, &rstate->lxavp,
+			   &rstate->default_sockmap, rstate->use_sockmap)
+			< 0) {
+		LM_ERR("failed to add destination in the xavp (%u/%d)\n", hash,
+				rstate->setid);
+		return -1;
+	}
+	rstate->cnt++;
+	if(rstate->cnt >= rstate->limit)
+		return 0;
+
+	n = (ds_use_default != 0 && idx->nr != 1) ? idx->nr - 1 : idx->nr;
+	ordered = pkg_malloc(sizeof(pressure_order_ds_t) * n);
+	if(ordered == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	start = (hash + 1) % n;
+	lock_get(&idx->lock);
+	for(i = 0; i < n; i++) {
+		if(i == (int)hash || ds_skip_dst(idx->dlist[i].flags))
+			continue;
+		ordered[count].idx = i;
+		ordered[count].pressure = idx->dlist[i].pressure;
+		ordered[count].order = (i - start + n) % n;
+		count++;
+	}
+	lock_release(&idx->lock);
+
+	for(i = 1; i < count; i++) {
+		temp = ordered[i];
+		j = i;
+		while(j > 0
+				&& (ordered[j - 1].pressure > temp.pressure
+						|| (ordered[j - 1].pressure == temp.pressure
+								&& ordered[j - 1].order > temp.order))) {
+			ordered[j] = ordered[j - 1];
+			j--;
+		}
+		ordered[j] = temp;
+	}
+
+	for(i = 0; i < count && rstate->cnt < rstate->limit; i++) {
+		if(ds_add_xavp_record(idx, ordered[i].idx, rstate->setid, rstate->alg,
+				   &rstate->lxavp, &rstate->default_sockmap,
+				   rstate->use_sockmap)
+				< 0) {
+			LM_ERR("failed to add destination in the xavp (%d/%d)\n",
+					ordered[i].idx, rstate->setid);
+			pkg_free(ordered);
+			return -1;
+		}
+		rstate->cnt++;
+	}
+
+	pkg_free(ordered);
+	return 0;
+}
+
+/** Select the lowest-pressure active destination, with round-robin ties. */
+static int ds_manage_route_algo16(ds_set_t *idx)
+{
+	int i;
+	int n;
+	int pos;
+	int selected = -1;
+	uint32_t best_pressure = UINT32_MAX;
+
+	n = (ds_use_default != 0 && idx->nr != 1) ? idx->nr - 1 : idx->nr;
+	if(n <= 0)
+		return -1;
+
+	for(i = 0; i < n; i++) {
+		pos = (idx->plast + i) % n;
+		if(ds_skip_dst(idx->dlist[pos].flags))
+			continue;
+		if(selected < 0 || idx->dlist[pos].pressure < best_pressure) {
+			selected = pos;
+			best_pressure = idx->dlist[pos].pressure;
+		}
+	}
+
+	if(selected >= 0) {
+		idx->plast = (selected + 1) % n;
+		LM_DBG("pressure[%u] destination[%d] next_index[%d]\n", best_pressure,
+				selected, idx->plast);
+	}
+
+	return selected;
+}
+
 
 void ds_sorted_by_priority(sorted_ds_t *sorted_ds, int size)
 {
@@ -3695,6 +3978,20 @@ int ds_manage_routes(
 			idx->pwlast = (idx->pwlast + 1) % 100;
 			lock_release(&idx->lock);
 			break;
+		case DS_ALG_PRESSURE: /* 16 - lowest pressure, round-robin on ties */
+			lock_get(&idx->lock);
+			i = ds_manage_route_algo16(idx);
+			lock_release(&idx->lock);
+			if(i < 0) {
+				if(ds_use_default != 0
+						&& !ds_skip_dst(idx->dlist[idx->nr - 1].flags))
+					hash = idx->nr - 1;
+				else
+					goto error;
+			} else {
+				hash = i;
+			}
+			break;
 		case DS_ALG_OVERLOAD: /* 64 - round robin with overload control */
 			lock_get(&idx->lock);
 			hash = idx->last;
@@ -3804,7 +4101,11 @@ int ds_manage_routes(
 	}
 
 	if(!xavp_filled) {
-		if(ds_manage_routes_fill_xavp(hash, idx, rstate) == -1) {
+		if((rstate->alg == DS_ALG_PRESSURE
+						   ? ds_manage_routes_fill_pressure_xavp(
+									 hash, idx, rstate)
+						   : ds_manage_routes_fill_xavp(hash, idx, rstate))
+				== -1) {
 			goto error;
 		}
 	}
@@ -3934,6 +4235,9 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 		LM_WARN("failed to add destination in group %d - %.*s\n", node->id,
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
 	} else {
+		ndst->pressure = node->dlist[i].pressure;
+		ndst->attrs.weight = node->dlist[i].attrs.weight;
+		ndst->attrs.rweight = node->dlist[i].attrs.rweight;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 		memcpy(ndst->buid, node->dlist[i].suid.s, node->dlist[i].suid.len);
 		ndst->suid.s = ndst->buid;
@@ -4014,8 +4318,10 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 			&& node->dlist[i].uri.len == filter_arg->dest->uri.len
 			&& strncmp(node->dlist[i].uri.s, filter_arg->dest->uri.s,
 					   filter_arg->dest->uri.len)
-					   == 0)
+					   == 0) {
+		filter_arg->dest->pressure = node->dlist[i].pressure;
 		return;
+	}
 
 	ndst = add_dest2list(node->id, node->dlist[i].uri, node->dlist[i].flags,
 			node->dlist[i].priority, &node->dlist[i].attrs.body,
@@ -4027,6 +4333,9 @@ void ds_filter_dest_cb(ds_set_t *node, int i, void *arg)
 				node->dlist[i].uri.len, node->dlist[i].uri.s);
 		filter_arg->error = 1;
 	} else {
+		ndst->pressure = node->dlist[i].pressure;
+		ndst->attrs.weight = node->dlist[i].attrs.weight;
+		ndst->attrs.rweight = node->dlist[i].attrs.rweight;
 		memcpy(&ndst->ocdata, &node->dlist[i].ocdata, sizeof(ds_ocdata_t));
 	}
 	return;
@@ -4185,6 +4494,176 @@ error:
 	ds_put_list(cur);
 	ds_free_list(next);
 	return -1;
+}
+
+/** Update the pressure of a destination, saturating at the type boundary. */
+static int ds_pressure_update(int group, str *address, uint32_t *pressure,
+		int adjustment, uint32_t value)
+{
+	int i;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	lock_get(ds_list_write_lock);
+	list = ds_get_list();
+	if(list == NULL || list->nr <= 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("no destination sets\n");
+		return -1;
+	}
+
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+
+	lock_get(&idx->lock);
+	for(i = 0; i < idx->nr; i++) {
+		if(idx->dlist[i].uri.len == address->len
+				&& strncasecmp(idx->dlist[i].uri.s, address->s, address->len)
+						   == 0) {
+			if(adjustment > 0) {
+				if(idx->dlist[i].pressure < UINT32_MAX)
+					idx->dlist[i].pressure++;
+			} else if(adjustment < 0 && idx->dlist[i].pressure > 0) {
+				idx->dlist[i].pressure--;
+			} else if(adjustment == 0) {
+				idx->dlist[i].pressure = value;
+			}
+			*pressure = idx->dlist[i].pressure;
+			lock_release(&idx->lock);
+			ds_put_list(list);
+			lock_release(ds_list_write_lock);
+			return 0;
+		}
+	}
+	lock_release(&idx->lock);
+	ds_put_list(list);
+	lock_release(ds_list_write_lock);
+	LM_ERR("destination [%.*s] not found in set [%d]\n", address->len,
+			address->s, group);
+	return -2;
+}
+
+int ds_pressure_dec(int group, str *address, uint32_t *pressure)
+{
+	return ds_pressure_update(group, address, pressure, -1, 0);
+}
+
+int ds_pressure_inc(int group, str *address, uint32_t *pressure)
+{
+	return ds_pressure_update(group, address, pressure, 1, 0);
+}
+
+int ds_pressure_set(int group, str *address, uint32_t value, uint32_t *pressure)
+{
+	return ds_pressure_update(group, address, pressure, 0, value);
+}
+
+/** Replace all destination weights in a group and rebuild weight tables. */
+int ds_weight_set(int group, int *weights, int count)
+{
+	int i;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	if(weights == NULL || count <= 0)
+		return -3;
+	for(i = 0; i < count; i++) {
+		if(weights[i] < 0 || weights[i] > 100)
+			return -3;
+	}
+
+	lock_get(ds_list_write_lock);
+	list = ds_get_list();
+	if(list == NULL || list->nr <= 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("no destination sets\n");
+		return -1;
+	}
+
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+	if(count != idx->nr) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("weight count [%d] does not match destination count [%d] in "
+			   "set [%d]\n",
+				count, idx->nr, group);
+		return -2;
+	}
+
+	lock_get(&idx->lock);
+	for(i = 0; i < count; i++)
+		idx->dlist[i].attrs.weight = weights[i];
+	dp_init_weights(idx);
+	dp_init_priority_weights(idx);
+	idx->wlast = 0;
+	idx->pwlast = 0;
+	lock_release(&idx->lock);
+
+	ds_put_list(list);
+	lock_release(ds_list_write_lock);
+	return 0;
+}
+
+/** Replace all destination relative weights in a group and rebuild its table. */
+int ds_rweight_set(int group, int *rweights, int count)
+{
+	int i;
+	ds_set_t *idx = NULL;
+	ds_list_t *list;
+
+	if(rweights == NULL || count <= 0)
+		return -3;
+	for(i = 0; i < count; i++) {
+		if(rweights[i] < 0 || rweights[i] > 100)
+			return -3;
+	}
+
+	lock_get(ds_list_write_lock);
+	list = ds_get_list();
+	if(list == NULL || list->nr <= 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("no destination sets\n");
+		return -1;
+	}
+
+	if(ds_get_index(group, list, &idx) != 0) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("destination set [%d] not found\n", group);
+		return -1;
+	}
+	if(count != idx->nr) {
+		ds_put_list(list);
+		lock_release(ds_list_write_lock);
+		LM_ERR("relative weight count [%d] does not match destination count "
+			   "[%d] in set [%d]\n",
+				count, idx->nr, group);
+		return -2;
+	}
+
+	lock_get(&idx->lock);
+	for(i = 0; i < count; i++)
+		idx->dlist[i].attrs.rweight = rweights[i];
+	if(idx->nr >= 2)
+		dp_init_relative_weights_locked(idx);
+	idx->rwlast = 0;
+	lock_release(&idx->lock);
+
+	ds_put_list(list);
+	lock_release(ds_list_write_lock);
+	return 0;
 }
 
 int ds_mark_addr(sip_msg_t *msg, int state, int group, str *uri, int mode)

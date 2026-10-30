@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 #include <resolv.h>
 #include <string.h>
 
@@ -57,6 +58,7 @@
 #include "error.h"
 #include "globals.h" /* tcp_disable, tls_disable a.s.o */
 #include "cfg_core.h"
+#include "coreparam.h"
 #include "socket_info.h"
 
 #ifdef USE_DNS_CACHE
@@ -168,6 +170,199 @@ struct hostent *ksr_gethostbyname(const char *name)
 
 	freeaddrinfo(res);
 	return &he;
+}
+
+#define KSR_DNS_RESOLVER_LOG_ADDRS 8
+
+static inline const char *ksr_dns_herror_name(int err)
+{
+	switch(err) {
+#ifdef NETDB_INTERNAL
+		case NETDB_INTERNAL:
+			return "NETDB_INTERNAL";
+#endif
+		case HOST_NOT_FOUND:
+			return "HOST_NOT_FOUND";
+		case TRY_AGAIN:
+			return "TRY_AGAIN";
+		case NO_RECOVERY:
+			return "NO_RECOVERY";
+#ifdef NO_DATA
+		case NO_DATA:
+			return "NO_DATA";
+#endif
+#if defined(NO_ADDRESS) && (!defined(NO_DATA) || (NO_ADDRESS != NO_DATA))
+		case NO_ADDRESS:
+			return "NO_ADDRESS";
+#endif
+		case 0:
+			return "NONE";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+
+static inline int ksr_dns_resolver_log_level(void)
+{
+	return (ksr_dns_resolver_log != NULL) ? (int)*ksr_dns_resolver_log : L_DBG;
+}
+
+
+static inline void ksr_dns_resolver_log_failure(
+		const char *name, int af, int resolver_error)
+{
+	LOG(ksr_dns_resolver_log_level(),
+			"system resolver: name=\"%s\" family=%s result=failed "
+			"h_errno=%d h_error=\"%s\"\n",
+			name, get_af_name((unsigned int)af), resolver_error,
+			ksr_dns_herror_name(resolver_error));
+}
+
+
+static inline void ksr_dns_resolver_log_success(
+		const char *name, int af, struct hostent *he)
+{
+	char addrbuf[INET6_ADDRSTRLEN];
+	int i;
+	int log_level;
+
+	log_level = ksr_dns_resolver_log_level();
+	LOG(log_level,
+			"system resolver: name=\"%s\" family=%s result=success "
+			"canonical=\"%s\" addrtype=%s addrlen=%d\n",
+			name, get_af_name((unsigned int)af),
+			(he->h_name != NULL) ? he->h_name : "",
+			get_af_name((unsigned int)he->h_addrtype), he->h_length);
+
+	if(he->h_addr_list == NULL) {
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s "
+				"result=success addresses=none\n",
+				name, get_af_name((unsigned int)af));
+		return;
+	}
+	if((he->h_addrtype == AF_INET
+			   && he->h_length != (int)sizeof(struct in_addr))
+			|| (he->h_addrtype == AF_INET6
+					&& he->h_length != (int)sizeof(struct in6_addr))) {
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s addresses=<invalid> "
+				"addrtype=%s addrlen=%d\n",
+				name, get_af_name((unsigned int)af),
+				get_af_name((unsigned int)he->h_addrtype), he->h_length);
+		return;
+	}
+
+	for(i = 0; i < KSR_DNS_RESOLVER_LOG_ADDRS && he->h_addr_list[i] != NULL;
+			i++) {
+		if(inet_ntop(
+				   he->h_addrtype, he->h_addr_list[i], addrbuf, sizeof(addrbuf))
+				== NULL) {
+			LOG(log_level,
+					"system resolver: name=\"%s\" family=%s address[%d]="
+					"<invalid>\n",
+					name, get_af_name((unsigned int)af), i);
+			continue;
+		}
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s address[%d]="
+				"\"%s\"\n",
+				name, get_af_name((unsigned int)af), i, addrbuf);
+	}
+	if(i == KSR_DNS_RESOLVER_LOG_ADDRS && he->h_addr_list[i] != NULL) {
+		LOG(log_level,
+				"system resolver: name=\"%s\" family=%s addresses=truncated "
+				"limit=%d\n",
+				name, get_af_name((unsigned int)af),
+				KSR_DNS_RESOLVER_LOG_ADDRS);
+	}
+}
+
+
+/* gethostbyname wrapper, handles ip/ipv6 automatically */
+struct hostent *_resolvehost(char *name)
+{
+	static struct hostent *he = 0;
+	int resolver_error;
+#ifdef HAVE_GETIPNODEBYNAME
+	int err;
+	static struct hostent *he2 = 0;
+#endif
+#ifndef DNS_IP_HACK
+	int len;
+#endif
+#ifdef DNS_IP_HACK
+	struct ip_addr *ip;
+	str s;
+
+	s.s = (char *)name;
+	s.len = strlen(name);
+
+	/* check if it's an ip address */
+	if(((ip = str2ip(&s)) != 0) || ((ip = str2ip6(&s)) != 0)) {
+		/* we are lucky, this is an ip address */
+		return ip_addr2he(&s, ip);
+	}
+
+#else /* DNS_IP_HACK */
+	len = 0;
+	if(*name == '[') {
+		len = strlen(name);
+		if(len && (name[len - 1] == ']')) {
+			name[len - 1] = 0; /* remove '[' */
+			name++;			   /* skip '[' */
+			goto skip_ipv4;
+		}
+	}
+#endif
+	/* ipv4 */
+	h_errno = 0;
+	he = dns_func.sr_gethostbyname(name);
+	resolver_error = h_errno;
+	if(he == 0) {
+		ksr_dns_resolver_log_failure(name, AF_INET, resolver_error);
+	} else {
+		ksr_dns_resolver_log_success(name, AF_INET, he);
+	}
+
+	if(he == 0 && cfg_get(core, core_cfg, dns_try_ipv6)) {
+#ifndef DNS_IP_HACK
+	skip_ipv4:
+#endif
+		/*try ipv6*/
+#ifdef HAVE_GETHOSTBYNAME2
+		h_errno = 0;
+		he = dns_func.sr_gethostbyname2(name, AF_INET6);
+		resolver_error = h_errno;
+#elif defined HAVE_GETIPNODEBYNAME
+		/* on solaris 8 getipnodebyname has a memory leak,
+		 * after some time calls to it will fail with err=3
+		 * solution: patch your solaris 8 installation */
+		if(he2)
+			freehostent(he2);
+		err = 0;
+		he = he2 = getipnodebyname(name, AF_INET6, 0, &err);
+		resolver_error = err;
+#else
+#error neither gethostbyname2 or getipnodebyname present
+#endif
+		if(he == 0) {
+			ksr_dns_resolver_log_failure(name, AF_INET6, resolver_error);
+		} else {
+			ksr_dns_resolver_log_success(name, AF_INET6, he);
+		}
+#ifndef DNS_IP_HACK
+		if(len)
+			name[len - 2] = ']'; /* restore */
+#endif
+	} else if(he == 0) {
+		LOG(ksr_dns_resolver_log_level(),
+				"system resolver: name=\"%s\" IPv6 fallback=skipped "
+				"dns_try_ipv6=0\n",
+				name);
+	}
+	return he;
 }
 
 /* counters framework */
@@ -824,6 +1019,59 @@ int match_search_list(const struct __res_state *res, char *name)
 #define SR_DNS_MAX_ANO 100
 #endif
 
+static inline const char *ksr_dns_type_name(unsigned short type)
+{
+	switch(type) {
+		case T_A:
+			return "A";
+		case T_NS:
+			return "NS";
+		case T_CNAME:
+			return "CNAME";
+		case T_SOA:
+			return "SOA";
+		case T_PTR:
+			return "PTR";
+		case T_MX:
+			return "MX";
+		case T_TXT:
+			return "TXT";
+		case T_AAAA:
+			return "AAAA";
+		case T_SRV:
+			return "SRV";
+		case T_NAPTR:
+			return "NAPTR";
+		case T_OPT:
+			return "OPT";
+		case T_EBL:
+			return "EBL";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+
+static inline const char *ksr_dns_rcode_name(unsigned short rcode)
+{
+	switch(rcode) {
+		case NOERROR:
+			return "NOERROR";
+		case FORMERR:
+			return "FORMERR";
+		case SERVFAIL:
+			return "SERVFAIL";
+		case NXDOMAIN:
+			return "NXDOMAIN";
+		case NOTIMP:
+			return "NOTIMP";
+		case REFUSED:
+			return "REFUSED";
+		default:
+			return "UNKNOWN";
+	}
+}
+
 /** gets the DNS records for name:type
  * returns a dyn. alloc'ed struct rdata linked list with the parsed responses
  * or 0 on error
@@ -831,9 +1079,14 @@ int match_search_list(const struct __res_state *res, char *name)
 struct rdata *get_record(char *name, int type, int flags)
 {
 	int size;
+	int response_size;
+	int resolver_error;
 	int skip;
 	unsigned short qno, answers_no, r;
+	unsigned short query_id, response_flags, rcode;
+	unsigned short authority_no, additional_no;
 	int i;
+	int parsed_records;
 	static union dns_query buff;
 	unsigned char *p;
 	unsigned char *end;
@@ -854,8 +1107,11 @@ struct rdata *get_record(char *name, int type, int flags)
 	char c;
 	struct timeval start, stop;
 	int slow_query_ms = cfg_get(core, core_cfg, dns_slow_query_ms);
+	const char *record_section;
+	int log_level;
 
 	name_len = strlen(name);
+	log_level = ksr_dns_resolver_log_level();
 
 	for(i = 0; i < name_len; i++) {
 		c = name[i];
@@ -880,7 +1136,15 @@ struct rdata *get_record(char *name, int type, int flags)
 	if(slow_query_ms > 0)
 		gettimeofday(&start, NULL);
 
+	LOG(log_level,
+			"dns query: name=\"%s\" type=%s(%d) class=IN parser_flags=0x%x "
+			"search_list=%s\n",
+			name, ksr_dns_type_name((unsigned short)type), type, flags,
+			search_list_used ? "enabled" : "disabled");
+	h_errno = 0;
 	size = dns_func.sr_res_search(name, C_IN, type, buff.buff, sizeof(buff));
+	resolver_error = h_errno;
+	response_size = size;
 
 	if(slow_query_ms > 0) {
 		gettimeofday(&stop, NULL);
@@ -895,18 +1159,40 @@ struct rdata *get_record(char *name, int type, int flags)
 	}
 
 	if(unlikely(size < 0)) {
+		LOG(log_level,
+				"dns response: name=\"%s\" type=%s(%d) result=failed "
+				"h_errno=%d h_error=\"%s\"\n",
+				name, ksr_dns_type_name((unsigned short)type), type,
+				resolver_error, ksr_dns_herror_name(resolver_error));
 		LM_DBG("lookup(%s, %d) failed\n", name, type);
 		goto not_found;
 	} else if(unlikely(size > sizeof(buff)))
 		size = sizeof(buff);
 	head = rd = 0;
 	last = crt = &head;
+	parsed_records = 0;
+	record_section = "answer";
 
 	p = buff.buff + DNS_HDR_SIZE;
 	end = buff.buff + size;
 	if(unlikely(p >= end))
 		goto error_boundary;
+	query_id = ntohs((unsigned short)buff.hdr.id);
+	memcpy((void *)&response_flags, (void *)(buff.buff + 2), 2);
+	response_flags = ntohs(response_flags);
+	rcode = (unsigned short)buff.hdr.rcode;
 	qno = ntohs((unsigned short)buff.hdr.qdcount);
+	answers_no = ntohs((unsigned short)buff.hdr.ancount);
+	authority_no = ntohs((unsigned short)buff.hdr.nscount);
+	additional_no = ntohs((unsigned short)buff.hdr.arcount);
+	LOG(log_level,
+			"dns response: name=\"%s\" type=%s(%d) result=received "
+			"bytes=%d parsed_bytes=%d id=0x%04x flags=0x%04x "
+			"rcode=%s(%u) questions=%u answers=%u authority=%u additional=%u\n",
+			name, ksr_dns_type_name((unsigned short)type), type, response_size,
+			size, query_id, response_flags, ksr_dns_rcode_name(rcode),
+			(uint32_t)rcode, (uint32_t)qno, (uint32_t)answers_no,
+			(uint32_t)authority_no, (uint32_t)additional_no);
 
 	if(qno != 1) {
 		/* usually the query is with a single domain name */
@@ -933,7 +1219,6 @@ struct rdata *get_record(char *name, int type, int flags)
 			goto error;
 		}
 	}
-	answers_no = ntohs((unsigned short)buff.hdr.ancount);
 	if(answers_no > SR_DNS_MAX_ANO) {
 		/* early safety check on answers number */
 		LM_ERR("dns answers number is too high: %u\n", (uint32_t)answers_no);
@@ -983,6 +1268,14 @@ again:
 		rd_end = p + rdlength;
 		if(unlikely((rd_end) > end))
 			goto error_boundary;
+		LOG(log_level,
+				"dns record: query_name=\"%s\" query_type=%s(%d) section=%s "
+				"index=%u owner=\"%s\" type=%s(%u) class=%u ttl=%u "
+				"rdlength=%u selected=%s\n",
+				name, ksr_dns_type_name((unsigned short)type), type,
+				record_section, (uint32_t)r, rec_name, ksr_dns_type_name(rtype),
+				(uint32_t)rtype, (uint32_t) class, ttl, (uint32_t)rdlength,
+				((flags & RES_ONLY_TYPE) && (rtype != type)) ? "no" : "yes");
 		if((flags & RES_ONLY_TYPE) && (rtype != type)) {
 			/* skip */
 			p = rd_end;
@@ -1116,6 +1409,7 @@ again:
 				last = &(rd->next);
 		}
 
+		parsed_records++;
 		p += rdlength;
 	}
 	if(flags & RES_AR) {
@@ -1135,6 +1429,7 @@ again:
 			p += 2 + 2 + 4 + 2 + ntohs(rdlength);
 		}
 		answers_no = ntohs((unsigned short)buff.hdr.arcount);
+		record_section = "additional";
 		LM_DBG("parsing %d ARs (p=%p, end=%p)\n", answers_no, p, end);
 		goto again; /* add also the additional records */
 	}
@@ -1169,8 +1464,20 @@ again:
 				fullname_rd->name_len);
 		((struct cname_rdata *)(rd->rdata))->name[head->name_len] = 0;
 		head = rd;
+		parsed_records++;
+		LOG(log_level,
+				"dns record: query_name=\"%s\" query_type=%s(%d) "
+				"section=synthetic owner=\"%s\" type=CNAME(%u) class=%u "
+				"ttl=%u target=\"%s\" source=search-list\n",
+				name, ksr_dns_type_name((unsigned short)type), type, rd->name,
+				(uint32_t)T_CNAME, (uint32_t)rd->pclass, rd->ttl,
+				((struct cname_rdata *)(rd->rdata))->name);
 	}
 
+	LOG(log_level,
+			"dns response: name=\"%s\" type=%s(%d) result=parsed records=%d\n",
+			name, ksr_dns_type_name((unsigned short)type), type,
+			parsed_records);
 	return head;
 error_boundary:
 	LM_ERR("end of query buff reached\n");

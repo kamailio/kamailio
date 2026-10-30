@@ -69,6 +69,7 @@ int spi_add(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid,
 	n->spi_sid = spi_sid;
 	n->sport = sport;
 	n->cport = cport;
+	n->owner = 0;
 
 	//when list is empty
 	if(!list->head) {
@@ -155,20 +156,22 @@ int spi_remove(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid)
 
 int spi_in_list(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid)
 {
-	if(!list) {
-		return 0;
-	}
+	return spi_find(list, spi_cid, spi_sid) != NULL;
+}
 
-	if(!list->head)
-		return 0;
+spi_node_t *spi_find(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid)
+{
+	if(!list) {
+		return NULL;
+	}
 
 	spi_node_t *n = list->head;
 	while(n) {
 		if(n->spi_cid == spi_cid && n->spi_sid == spi_sid) {
-			return 1;
+			return n;
 		}
 		n = n->next;
 	}
 
-	return 0;
+	return NULL;
 }

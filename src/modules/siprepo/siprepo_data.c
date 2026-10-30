@@ -359,6 +359,7 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	int rtype;
 	int rtbk;
 	int rtno;
+	int mtype;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("siprepo:msg");
 	char lbuf[BUF_SIZE + 1];
@@ -371,15 +372,22 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 		return 1;
 	}
 	slotid = it->hid % _siprepo_table_size;
+	if(it->dbuf.len < 0 || it->dbuf.len >= (int)sizeof(lbuf)) {
+		LM_ERR("invalid stored message size: %d\n", it->dbuf.len);
+		lock_release(&_siprepo_table[slotid].lock);
+		return -1;
+	}
 	memset(&lmsg, 0, sizeof(sip_msg_t));
 	lmsg.buf = lbuf;
 	memcpy(lmsg.buf, it->dbuf.s, it->dbuf.len);
 	lmsg.len = it->dbuf.len;
+	lmsg.buf[lmsg.len] = '\0';
 	lmsg.rcv = it->rcv;
 	lmsg.id = it->msgno;
 	lmsg.pid = it->pid;
 	lmsg.set_global_address = default_global_address;
 	lmsg.set_global_port = default_global_port;
+	mtype = it->mtype;
 
 	if(rmode & SIPREPO_RMODE_RM) {
 		siprepo_msg_unlink(it, slotid);
@@ -390,12 +398,13 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 
 	if(parse_msg(lmsg.buf, lmsg.len, &lmsg) != 0) {
 		LM_ERR("failed to parse msg id [%.*s]\n", msgid->len, msgid->s);
-		return 1;
+		goto error;
 	}
 	if(unlikely(parse_headers(&lmsg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0)
 			< 0)) {
 		LOG(cfg_get(core, core_cfg, sip_parser_log),
 				"parsing relevant headers failed\n");
+		goto error;
 	}
 	/* set log prefix */
 	log_prefix_set(&lmsg);
@@ -403,7 +412,7 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	/* ... clear branches from previous message */
 	clear_branches();
 
-	if(it->mtype==SIP_REQUEST) {
+	if(mtype==SIP_REQUEST) {
 		ruri_mark_new();
 		rtype = REQUEST_ROUTE;
 	} else {
@@ -430,6 +439,10 @@ int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 	/* reset log prefix */
 	log_prefix_set(NULL);
 	return 0;
+
+error:
+	free_sip_msg(&lmsg);
+	return -1;
 }
 
 /**
@@ -460,7 +473,14 @@ void siprepo_exec_task(void *param)
 int siprepo_send_task(str *gname, siprepo_task_param_t *stp)
 {
 	async_task_t *at = NULL;
+	async_wgroup_t *awg = NULL;
 	int ret;
+
+	awg = async_task_group_find(gname);
+	if(awg == NULL) {
+		LM_ERR("async group [%.*s] not found\n", gname->len, gname->s);
+		return -1;
+	}
 
 	at = (async_task_t *)shm_malloc(sizeof(async_task_t));
 	if(at == NULL) {
@@ -471,7 +491,7 @@ int siprepo_send_task(str *gname, siprepo_task_param_t *stp)
 	at->exec = siprepo_exec_task;
 	at->param = stp;
 
-	ret = async_task_group_push(gname, at);
+	ret = async_task_group_send(awg, at);
 	if(ret < 0) {
 		shm_free(at);
 		return ret;
@@ -528,12 +548,14 @@ void siprepo_msg_timer(unsigned int ticks, int worker, void *param)
 	time_t tnow;
 	int i;
 	siprepo_msg_t *it = NULL;
+	siprepo_msg_t *it0 = NULL;
 	siprepo_msg_t *elist = NULL;
 
 	tnow = time(NULL);
 	for(i=0; i<_siprepo_table_size; i++) {
 		lock_get(&_siprepo_table[i].lock);
-		for(it=_siprepo_table[i].plist; it!=NULL; it=it->next) {
+		for(it=_siprepo_table[i].plist; it!=NULL; it=it0) {
+			it0 = it->next;
 			if(it->itime+_siprepo_expire < tnow) {
 				siprepo_msg_unlink(it, i);
 				if(elist) {

@@ -141,6 +141,7 @@ static tls_domain_t mod_params = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 
@@ -171,6 +172,7 @@ tls_domain_t srv_defaults = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 /* clang-format on */
@@ -228,6 +230,7 @@ tls_domain_t cli_defaults = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 /* clang-format on */
@@ -366,6 +369,7 @@ static struct tls_hooks tls_h = {
 	tls_h_match_domain_f,
 	tls_h_match_connections_domain_f,
 	tls_run_event_routes,
+	tls_h_connect_info_f,
 };
 /* clang-format on */
 
@@ -496,7 +500,7 @@ static int mod_init(void)
 	verify_client =
 			tls_parse_verify_client(&cfg_get(tls, tls_cfg, verify_client));
 	if(verify_client < 0) {
-		LM_ERR("Invalid tls_method parameter value\n");
+		LM_ERR("Invalid verify_client parameter value\n");
 		return -1;
 	}
 	mod_params.verify_client = verify_client;

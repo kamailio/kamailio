@@ -28,6 +28,10 @@
 
 #include <openssl/opensslv.h>
 
+#ifdef LIBRESSL_VERSION_NUMBER
+#error "LibreSSL is not supported"
+#endif
+
 /* OpenSSL ENGINE API (deprecated in OpenSSL 3) */
 #if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER < 0x030000000L
 #define KSR_SSL_COMMON
@@ -44,5 +48,10 @@
 #define KEY_PREFIX "/uri:"
 #define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
 #endif /* KSR_SSL_PROVIDER */
+
+/* verify_server_name: SSL_set1_host() (OpenSSL 1.1.0+) */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#define KSR_TLS_VERIFY_SERVER_NAME
+#endif
 
 #endif /* _TLS_OPENSSL_H */

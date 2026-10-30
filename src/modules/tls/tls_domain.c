@@ -98,7 +98,7 @@ static void setup_ecdh(SSL_CTX *ctx)
 #ifndef OPENSSL_NO_DH
 
 /*
- * not needed for OpenSSL 1.1.0+ and LibreSSL
+ * not needed for OpenSSL 1.1.0+
  */
 #if !defined(SSL_CTX_set_dh_auto)
 static unsigned char dh3072_p[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -143,7 +143,7 @@ static unsigned char dh3072_g[] = {0x02};
 static void setup_dh(SSL_CTX *ctx)
 {
 /*
- * not needed for OpenSSL 1.1.0+ and LibreSSL
+ * not needed for OpenSSL 1.1.0+
  * DH_new() is deprecated in OpenSSL 3
  */
 #if !defined(SSL_CTX_set_dh_auto)
@@ -207,6 +207,7 @@ tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 	d->verify_depth = -1;
 	d->require_cert = -1;
 	d->verify_client = -1;
+	d->verify_server_name = -1;
 	return d;
 }
 
@@ -439,6 +440,11 @@ static int ksr_tls_fill_missing(tls_domain_t *d, tls_domain_t *parent)
 	if(d->verify_client == -1)
 		d->verify_client = parent->verify_client;
 	LOG(L_INFO, "%s: verify_client=%d\n", tls_domain_str(d), d->verify_client);
+
+	if(d->verify_server_name == -1)
+		d->verify_server_name = parent->verify_server_name;
+	LOG(L_INFO, "%s: verify_server_name=%d\n", tls_domain_str(d),
+			d->verify_server_name);
 
 	return 0;
 }
@@ -1230,6 +1236,23 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 
 	if(ksr_tls_fill_missing(d, def) < 0)
 		return -1;
+
+	if(d->verify_server_name > 0) {
+#ifndef KSR_TLS_VERIFY_SERVER_NAME
+		LM_ERR("%s: verify_server_name requires OpenSSL 1.1.0 or newer\n",
+				tls_domain_str(d));
+		return -1;
+#endif
+		if(d->type & TLS_DOMAIN_SRV) {
+			LM_WARN("%s: verify_server_name is only used by client profiles"
+					" - ignored\n",
+					tls_domain_str(d));
+		} else if(d->verify_cert <= 0) {
+			LM_WARN("%s: verify_server_name is used only with"
+					" verify_certificate enabled - ignored\n",
+					tls_domain_str(d));
+		}
+	}
 
 	if(d->type & TLS_DOMAIN_ANY) {
 		if(d->server_name.s == NULL || d->server_name.len < 0) {

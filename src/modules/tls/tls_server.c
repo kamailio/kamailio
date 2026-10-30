@@ -29,8 +29,10 @@
 #include <poll.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <openssl/x509v3.h>
 #include "../../core/dprint.h"
 #include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/pt.h"
 #include "../../core/timer.h"
@@ -57,6 +59,7 @@
 #include "tls_bio.h"
 #include "tls_dump_vf.h"
 #include "tls_cfg.h"
+#include "tls_openssl.h"
 
 int tls_run_event_routes(struct tcp_connection *c);
 static void tls_free_ssl_cache(struct tls_extra_data *data);
@@ -132,42 +135,64 @@ extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
 
-static void tls_store_outbound_xavp(struct tcp_connection *c)
+/* copy the outbound tls xavp of the calling process (server_name,
+ * server_id) into ci as shm strings; without a server_id in the xavp, the
+ * one set by tls_set_connect_server_id() in this process
+ * - also the mode 2 tls_hook.connect_info: tcp main moves them from the
+ *   connect request to the new connection */
+void tls_h_connect_info_f(ksr_coninfo_t *ci)
 {
 	sr_xavp_t *vavp = NULL;
 	str sname = str_init("server_name");
 	str sid = str_init("server_id");
 
-	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
-		return;
+	/* the value set by tls_set_connect_server_id() for the next connect,
+	 * overwritten below by the xavp server_id, then reset */
+	if(_ksr_tls_connect_server_id.len > 0) {
+		if(shm_str_update(&ci->server_id, &_ksr_tls_connect_server_id) < 0) {
+			LM_WARN("failed to store outbound tls server_id in shm\n");
+		} else {
+			LM_DBG("stored outbound server_id: %.*s\n", ci->server_id.len,
+					ci->server_id.s);
+			ksr_tls_set_connect_server_id(NULL);
+		}
 	}
+
 	if(sr_tls_xavp_cfg.s == NULL) {
 		return;
 	}
 
-	LM_DBG("storing outbound xavp (root=%.*s pid=%d proc=%d '%s' conn=%p)\n",
+	LM_DBG("storing outbound xavp (root=%.*s pid=%d proc=%d '%s' ci=%p)\n",
 			sr_tls_xavp_cfg.len, sr_tls_xavp_cfg.s, my_pid(), process_no,
-			my_desc(), c);
+			my_desc(), ci);
 
 	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
 	if(vavp != NULL && vavp->val.v.s.len > 0) {
-		if(shm_str_update(&c->cinfo.server_name, &vavp->val.v.s) < 0) {
+		if(shm_str_update(&ci->server_name, &vavp->val.v.s) < 0) {
 			LM_WARN("failed to store outbound tls server_name in shm\n");
 		} else {
-			LM_DBG("stored outbound server_name: %.*s\n",
-					c->cinfo.server_name.len, c->cinfo.server_name.s);
+			LM_DBG("stored outbound server_name: %.*s\n", ci->server_name.len,
+					ci->server_name.s);
 		}
 	}
 
 	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
 	if(vavp != NULL && vavp->val.v.s.len > 0) {
-		if(shm_str_update(&c->cinfo.server_id, &vavp->val.v.s) < 0) {
+		if(shm_str_update(&ci->server_id, &vavp->val.v.s) < 0) {
 			LM_WARN("failed to store outbound tls server_id in shm\n");
 		} else {
-			LM_DBG("tls: stored outbound server_id: %.*s\n",
-					c->cinfo.server_id.len, c->cinfo.server_id.s);
+			LM_DBG("tls: stored outbound server_id: %.*s\n", ci->server_id.len,
+					ci->server_id.s);
 		}
 	}
+}
+
+static void tls_store_outbound_xavp(struct tcp_connection *c)
+{
+	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
+		return;
+	}
+	tls_h_connect_info_f(&c->cinfo);
 }
 
 int ksr_tls_set_connect_server_id(str *srvid)
@@ -204,16 +229,15 @@ int ksr_tls_set_connect_server_id(str *srvid)
 	return 0;
 }
 
-static str *tls_get_connect_server_id(struct tcp_connection *c)
+static str *tls_get_connect_server_id(ksr_coninfo_t *ci)
 {
 	sr_xavp_t *vavp = NULL;
 	str sid = {"server_id", 9};
 
-	if(c != NULL && c->cinfo.server_id.s != NULL
-			&& c->cinfo.server_id.len > 0) {
+	if(ci != NULL && ci->server_id.s != NULL && ci->server_id.len > 0) {
 		LM_DBG("found outbound server id in tcp connection: %.*s\n",
-				c->cinfo.server_id.len, c->cinfo.server_id.s);
-		return &c->cinfo.server_id;
+				ci->server_id.len, ci->server_id.s);
+		return &ci->server_id;
 	}
 
 	if(sr_tls_xavp_cfg.s != NULL) {
@@ -237,17 +261,16 @@ static str *tls_get_connect_server_id(struct tcp_connection *c)
 /**
  * get the server name (sni) for outbound connections from xavp
  */
-static str *tls_get_connect_server_name(struct tcp_connection *c)
+static str *tls_get_connect_server_name(ksr_coninfo_t *ci)
 {
 #ifndef OPENSSL_NO_TLSEXT
 	sr_xavp_t *vavp = NULL;
 	str sname = {"server_name", 11};
 
-	if(c != NULL && c->cinfo.server_name.s != NULL
-			&& c->cinfo.server_name.len > 0) {
-		LM_NOTICE("found outbound server name in tcp connection: %.*s\n",
-				c->cinfo.server_name.len, c->cinfo.server_name.s);
-		return &c->cinfo.server_name;
+	if(ci != NULL && ci->server_name.s != NULL && ci->server_name.len > 0) {
+		LM_DBG("found outbound server name in tcp connection: %.*s\n",
+				ci->server_name.len, ci->server_name.s);
+		return &ci->server_name;
 	}
 
 	if(sr_tls_xavp_cfg.s != NULL)
@@ -260,6 +283,66 @@ static str *tls_get_connect_server_name(struct tcp_connection *c)
 	return &vavp->val.v.s;
 #else
 	return NULL;
+#endif
+}
+
+
+/**
+ * set the name the server certificate must match (RFC 6125) for an outbound
+ * connection: the server name of the connection (xavp, also sent as SNI),
+ * else the server_name of the client profile; an IP address is matched
+ * against the IP address entries of the certificate
+ * @return 0 on success, -1 on error (no name available or set failure)
+ */
+static int tls_set_verify_server_name(SSL *ssl, tls_domain_t *dom, str *sname)
+{
+	char name[256];
+	str *vname;
+#ifdef KSR_TLS_VERIFY_SERVER_NAME
+	ip_addr_t ip;
+	int len;
+#endif
+
+	vname = (sname != NULL && sname->len > 0) ? sname : &dom->server_name;
+	if(vname->s == NULL || vname->len <= 0) {
+		LM_ERR("%s: verify_server_name is set but no server name is"
+			   " available (xavp or server_name)\n",
+				tls_domain_str(dom));
+		return -1;
+	}
+	if((size_t)vname->len >= sizeof(name)) {
+		LM_ERR("%s: server name too long (%d)\n", tls_domain_str(dom),
+				vname->len);
+		return -1;
+	}
+#ifdef KSR_TLS_VERIFY_SERVER_NAME
+	if(str2ipxbuf(vname, &ip) == 0) {
+		/* IP address: check the IP address entries, without brackets */
+		len = ip_addr2sbuf(&ip, name, sizeof(name) - 1);
+		name[len] = '\0';
+		if(!X509_VERIFY_PARAM_set1_ip_asc(SSL_get0_param(ssl), name)) {
+			LM_ERR("%s: failed to set the server address to verify: %s\n",
+					tls_domain_str(dom), name);
+			return -1;
+		}
+		LM_DBG("outbound TLS server address to verify: %s\n", name);
+		return 0;
+	}
+	memcpy(name, vname->s, vname->len);
+	name[vname->len] = '\0';
+	SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+	if(!SSL_set1_host(ssl, name)) {
+		LM_ERR("%s: failed to set the server name to verify: %s\n",
+				tls_domain_str(dom), name);
+		return -1;
+	}
+	LM_DBG("outbound TLS server name to verify: %s\n", name);
+	return 0;
+#else
+	/* not reached: rejected when the profile is loaded */
+	LM_ERR("%s: verify_server_name is not supported by this libssl\n",
+			tls_domain_str(dom));
+	return -1;
 #endif
 }
 
@@ -313,8 +396,8 @@ static int tls_complete_init(struct tcp_connection *c)
 				cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
 	} else {
 		state = S_TLS_CONNECTING;
-		sname = tls_get_connect_server_name(c);
-		srvid = tls_get_connect_server_id(c);
+		sname = tls_get_connect_server_name(&c->cinfo);
+		srvid = tls_get_connect_server_id(&c->cinfo);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip,
 				c->rcv.dst_port, sname, srvid);
 		ksr_tls_set_connect_server_id(NULL);
@@ -371,6 +454,16 @@ static int tls_complete_init(struct tcp_connection *c)
 		LM_DBG("outbound TLS server name set to: %s\n", sname->s);
 	}
 #endif
+
+	if(state == S_TLS_CONNECTING && dom->verify_cert > 0
+			&& dom->verify_server_name > 0) {
+		if(tls_set_verify_server_name(data->ssl, dom, sname) < 0) {
+			SSL_free(data->ssl);
+			tls_free_ssl_cache(data);
+			BIO_free(data->rwbio);
+			goto error;
+		}
+	}
 
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
 #ifdef TLS_KSSL_WORKAROUND
@@ -1071,6 +1164,7 @@ static char *get_tls_domain_str(
 	tls_domains_cfg_t *cfg;
 	str *sname = NULL;
 	str *srvid = NULL;
+	ksr_coninfo_t *ci;
 
 	lock_get(tls_domains_cfg_lock);
 	cfg = *tls_domains_cfg;
@@ -1080,8 +1174,11 @@ static char *get_tls_domain_str(
 	if(c && (c->flags & F_CONN_PASSIVE)) {
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV, ip, port, 0, 0);
 	} else {
-		sname = tls_get_connect_server_name(c);
-		srvid = tls_get_connect_server_id(c);
+		/* no connection: the xavps, or in mode 2 tcp main the worker's
+		 * attributes from the connect request being looked up */
+		ci = (c != NULL) ? &c->cinfo : tcp_reactor_connect_info();
+		sname = tls_get_connect_server_name(ci);
+		srvid = tls_get_connect_server_id(ci);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, ip, port, sname, srvid);
 	}
 
@@ -1111,7 +1208,8 @@ int tls_h_match_domain_f(
 		return 0;
 	}
 
-	dom_str = get_tls_domain_str(NULL /* to use XAVPs only */, ip, port);
+	dom_str = get_tls_domain_str(
+			NULL /* XAVPs, or the mode 2 connect request */, ip, port);
 	STR_SET(dom, dom_str);
 
 	return STR_EQ(tls_c->dom, dom);
@@ -1372,7 +1470,9 @@ bug:
 	return -1;
 ssl_eof:
 	c->state = S_CONN_EOF;
-	c->flags |= F_CONN_FORCE_EOF;
+	/* mode 2: c->flags belongs to the io_wait thread; the write job's -1 closes c */
+	if(ksr_tcp_main_threads != 2)
+		c->flags |= F_CONN_FORCE_EOF;
 	*pbuf = (const char *)wr.buf;
 	*plen = wr.used;
 	DBG("TLS connection has been closed\n");
@@ -2216,8 +2316,9 @@ int tls_run_event_routes(struct tcp_connection *c)
 			}
 		}
 	}
-	/* drop() executed in the event route - set nosend flag */
-	if(unlikely(ctx.run_flags & DROP_R_F)) {
+	/* drop() executed in the event route - set nosend flag
+	 * mode 2: the route runs in a worker; c->flags belongs to the io_wait thread */
+	if(unlikely(ctx.run_flags & DROP_R_F) && ksr_tcp_main_threads != 2) {
 		c->flags |= F_CONN_NOSEND;
 	}
 	tls_set_pv_con(0);

@@ -236,69 +236,8 @@ struct hostent *_sip_resolvehost(str *name, unsigned short *port, char *proto);
 struct hostent *ksr_gethostbyname(const char *name);
 
 
-/* gethostbyname wrapper, handles ip/ipv6 automatically */
-static inline struct hostent *_resolvehost(char *name)
-{
-	static struct hostent *he = 0;
-#ifdef HAVE_GETIPNODEBYNAME
-	int err;
-	static struct hostent *he2 = 0;
-#endif
-#ifndef DNS_IP_HACK
-	int len;
-#endif
-#ifdef DNS_IP_HACK
-	struct ip_addr *ip;
-	str s;
-
-	s.s = (char *)name;
-	s.len = strlen(name);
-
-	/* check if it's an ip address */
-	if(((ip = str2ip(&s)) != 0) || ((ip = str2ip6(&s)) != 0)) {
-		/* we are lucky, this is an ip address */
-		return ip_addr2he(&s, ip);
-	}
-
-#else /* DNS_IP_HACK */
-	len = 0;
-	if(*name == '[') {
-		len = strlen(name);
-		if(len && (name[len - 1] == ']')) {
-			name[len - 1] = 0; /* remove '[' */
-			name++;			   /* skip '[' */
-			goto skip_ipv4;
-		}
-	}
-#endif
-	/* ipv4 */
-	he = dns_func.sr_gethostbyname(name);
-
-	if(he == 0 && cfg_get(core, core_cfg, dns_try_ipv6)) {
-#ifndef DNS_IP_HACK
-	skip_ipv4:
-#endif
-		/*try ipv6*/
-#ifdef HAVE_GETHOSTBYNAME2
-		he = dns_func.sr_gethostbyname2(name, AF_INET6);
-#elif defined HAVE_GETIPNODEBYNAME
-		/* on solaris 8 getipnodebyname has a memory leak,
-		 * after some time calls to it will fail with err=3
-		 * solution: patch your solaris 8 installation */
-		if(he2)
-			freehostent(he2);
-		he = he2 = getipnodebyname(name, AF_INET6, 0, &err);
-#else
-#error neither gethostbyname2 or getipnodebyname present
-#endif
-#ifndef DNS_IP_HACK
-		if(len)
-			name[len - 2] = ']'; /* restore */
-#endif
-	}
-	return he;
-}
-
+/* internal system resolver, bypassing internal DNS cache */
+struct hostent *_resolvehost(char *name);
 
 int resolv_init(void);
 
