@@ -1704,16 +1704,21 @@ int dlg_new_dialog(
 	}
 	trim(&req_uri);
 
-	mlock = 1;
 	dlg = search_dlg(&callid, &ftag, &ttag, &dir);
+	/* search_dlg() keeps the hash table slot locked only if no dialog
+	 * is found */
+	mlock = (dlg == NULL);
 	if(detect_spirals) {
 		if(spiral_detected == 1) {
 			LM_DBG("spiral detected - returning 0\n");
+			if(dlg)
+				dlg_release(dlg);
+			else
+				dlg_hash_release(&callid);
 			return 0;
 		}
 		dir = DLG_DIR_NONE;
 		if(dlg) {
-			mlock = 0;
 			if(dlg->state != DLG_STATE_DELETED) {
 				LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
 						callid.len, callid.s);
@@ -1768,6 +1773,8 @@ int dlg_new_dialog(
 	if(populate_leg_info(
 			   dlg, req, t, DLG_CALLER_LEG, &(get_from(req)->tag_value))
 			!= 0) {
+		if(likely(mlock == 1))
+			dlg_hash_release(&callid);
 		LM_ERR("could not add further info to the dialog\n");
 		lock_destroy(dlg->dlg_out_entries_lock);
 		lock_dealloc(dlg->dlg_out_entries_lock);

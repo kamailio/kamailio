@@ -93,8 +93,10 @@ AAAMessage *rx_process_rar(AAAMessage *request)
 
 	//Here the session is locked
 	p_session_data = (rx_authsessiondata_t *)session->u.auth.generic_data;
-	if(!p_session_data)
+	if(!p_session_data) {
+		cdpb.AAASessionsUnlock(session->hash);
 		goto unknown_session;
+	}
 	for(avp = request->avpList.head; avp; avp = avp->next) {
 		switch(avp->code) {
 			case AVP_IMS_Specific_Action:

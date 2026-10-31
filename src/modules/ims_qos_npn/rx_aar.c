@@ -617,6 +617,7 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 
 				//check if the src or dst port is 0 and if so then don't add to rx
 				intportA = atoi(req_sdp_stream->port.s);
+				intportB = 0;
 				if(rpl_sdp_stream) {
 					intportB = atoi(rpl_sdp_stream->port.s);
 				}
@@ -901,7 +902,7 @@ error:
 	if(aar)
 		cdpb.AAAFreeMessage(&aar);
 	if(auth) {
-		cdpb.AAASessionsUnlock(auth->hash);
+		/* still locked here - dropping the session releases the lock */
 		cdpb.AAADropAuthSession(auth);
 		auth = 0;
 	}
@@ -913,9 +914,11 @@ error:
  * Sends the Authorization Authentication Request.
  * @param req - SIP request
  * @param res - SIP response
+ * @param auth - the Rx session, locked - it is unlocked when the AAR is sent
+ *               and dropped when it is not, so don't use it after this
  * @param direction - 0/o/orig for originating side, 1/t/term for terminating side
- * @param rx_auth_data - the returned rx auth data
- * @returns AAA message or NULL on error
+ * @param saved_t_data - transaction data passed to the AAA callback
+ * @returns 1 if the AAR was sent, 0 on error
  */
 
 int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
@@ -923,6 +926,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
 {
 
 	AAAMessage *aar = 0;
+	str session_id = {0, 0};
 
 	str identifier;
 	int identifier_type;
@@ -1064,6 +1068,10 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
 
 	show_callsessiondata(p_session_data);
 
+	/* keep the session id to drop the session if the AAR is not sent */
+	if(pkg_str_dup(&session_id, &auth->id) < 0)
+		goto error;
+
 	LM_DBG("Unlocking AAA session...\n");
 
 	if(auth)
@@ -1077,6 +1085,14 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
 		ret = cdpb.AAASendMessage(
 				aar, (void *)async_aar_callback, (void *)saved_t_data);
 
+	if(!ret) {
+		/* not sent - the session was unlocked, so look it up (locked) again */
+		auth = cdpb.AAAGetAuthSession(session_id);
+		if(auth)
+			cdpb.AAADropAuthSession(auth);
+	}
+	pkg_free(session_id.s);
+
 	return ret;
 
 error:
@@ -1084,7 +1100,7 @@ error:
 	if(aar)
 		cdpb.AAAFreeMessage(&aar);
 	if(auth) {
-		cdpb.AAASessionsUnlock(auth->hash);
+		/* still locked here - dropping the session releases the lock */
 		cdpb.AAADropAuthSession(auth);
 		auth = 0;
 	}
@@ -1241,7 +1257,7 @@ error:
 	if(aar)
 		cdpb.AAAFreeMessage(&aar);
 	if(auth) {
-		cdpb.AAASessionsUnlock(auth->hash);
+		/* still locked here - dropping the session releases the lock */
 		cdpb.AAADropAuthSession(auth);
 		auth = 0;
 	}
