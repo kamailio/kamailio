@@ -146,9 +146,15 @@ typedef enum request_method
 #define FL_MTU_FB_MASK (FL_MTU_TCP_FB | FL_MTU_TLS_FB | FL_MTU_SCTP_FB)
 
 
-/* sip parser mode flags (1<<n) */
+/* sip_parser_mode: 0 none, 1 strict lazy, 2 strict eager */
 #define KSR_SIP_PARSER_MODE_NONE 0
-#define KSR_SIP_PARSER_MODE_STRICT 1
+#define KSR_SIP_PARSER_MODE_STRICT_LAZY 1
+#define KSR_SIP_PARSER_MODE_STRICT_EAGER 2
+
+/* both strict modes reject bad headers and duplicate SIP quad fields */
+#define KSR_SIP_PARSER_MODE_IS_STRICT(mode)                                \
+	((mode) == KSR_SIP_PARSER_MODE_STRICT_LAZY                             \
+			|| (mode) == KSR_SIP_PARSER_MODE_STRICT_EAGER)
 
 #define IFISMETHOD(methodname, firstchar)                                  \
 	if((*tmp == (firstchar) || *tmp == ((firstchar) | 32))                 \
@@ -346,6 +352,7 @@ typedef struct sip_msg
 	struct hdr_field *headers;	   /*!< All the parsed headers*/
 	struct hdr_field *last_header; /*!< Pointer to the last parsed header*/
 	hdr_flags_t parsed_flag;	   /*!< Already parsed header field types */
+	hdr_flags_t errored_hdrs; /*!< Header types that failed parse (skipped) */
 
 	/* Via, To, CSeq, Call-Id, From, end of header*/
 	/* pointers to the first occurrences of these headers;
@@ -483,8 +490,8 @@ int parse_msg(
 int parse_headers(
 		struct sip_msg *const msg, const hdr_flags_t flags, const int next);
 
-char *get_hdr_field(
-		char *const buf, char *const end, struct hdr_field *const hdr);
+int get_hdr_field(char *const buf, char *const end, struct hdr_field *const hdr,
+		char **next);
 
 void free_sip_msg(struct sip_msg *const msg);
 

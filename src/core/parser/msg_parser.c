@@ -67,14 +67,29 @@ int via_cnt;
 /* global request flags */
 msg_flags_t global_req_flags = 0;
 
-int ksr_sip_parser_mode = KSR_SIP_PARSER_MODE_STRICT;
+int ksr_sip_parser_mode = KSR_SIP_PARSER_MODE_STRICT_LAZY;
 
-/* returns pointer to next header line, and fill hdr_f ;
- * if at end of header returns pointer to the last crlf  (always buf)*/
-char *get_hdr_field(
-		char *const buf, char *const end, struct hdr_field *const hdr)
+/* advance _p to the next header, including folded continuation lines.
+ * _match is NULL if no '\n' is found. */
+#define GET_HDR_NEXT(_p, _end, _match)                                   \
+	do {                                                                 \
+		do {                                                             \
+			(_match) = q_memchr((_p), '\n', (_end) - (_p));              \
+			if((_match) == NULL)                                         \
+				break;                                                   \
+			(_match)++;                                                  \
+			(_p) = (_match);                                             \
+		} while(((_p) < (_end)) && ((*(_p) == ' ') || (*(_p) == '\t'))); \
+	} while(0)
+
+/* fill hdr and set *next to the following header line (or the EOH crlf).
+ * next may be NULL if the caller does not need that pointer.
+ * returns 0 on success, -1 on parse error, -2 if the Via body cannot be
+ * allocated. hdr->type is HDR_ERROR_T only when parse_hname failed; a body
+ * parse error keeps the name type. */
+int get_hdr_field(char *const buf, char *const end, struct hdr_field *const hdr,
+		char **next)
 {
-
 	char *tmp = 0;
 	char *match;
 	struct via_body *vb;
@@ -82,6 +97,9 @@ char *get_hdr_field(
 	struct to_body *to_b;
 	int integer, err;
 	unsigned uval;
+
+	if(next)
+		*next = NULL;
 
 	if(!buf) {
 		DBG("null buffer pointer\n");
@@ -92,7 +110,9 @@ char *get_hdr_field(
 		/* double crlf or lflf or crcr */
 		DBG("found end of header\n");
 		hdr->type = HDR_EOH_T;
-		return buf;
+		if(next)
+			*next = buf;
+		return 0;
 	}
 
 	tmp = parse_hname(buf, end, hdr);
@@ -119,8 +139,8 @@ char *get_hdr_field(
 			via_cnt++;
 			vb = pkg_malloc(sizeof(struct via_body));
 			if(vb == 0) {
-				PKG_MEM_ERROR;
-				goto error;
+				ERR("Error allocating Via body\n");
+				return E_OUT_OF_MEM;
 			}
 			memset(vb, 0, sizeof(struct via_body));
 			hdr->body.s = tmp;
@@ -138,8 +158,8 @@ char *get_hdr_field(
 		case HDR_CSEQ_T:
 			cseq_b = pkg_malloc(sizeof(struct cseq_body));
 			if(cseq_b == 0) {
-				PKG_MEM_ERROR;
-				goto error;
+				ERR("Error allocating CSeq body\n");
+				return E_OUT_OF_MEM;
 			}
 			memset(cseq_b, 0, sizeof(struct cseq_body));
 			hdr->body.s = tmp;
@@ -252,24 +272,15 @@ char *get_hdr_field(
 		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s = tmp;
-			/* find end of header */
-			/* find lf */
-			do {
-				match = q_memchr(tmp, '\n', end - tmp);
-				if(match) {
-					match++;
-				} else {
-					ERR("no eol - bad body for <%.*s> (hdr type: %d) [%.*s]\n",
-							hdr->name.len, hdr->name.s, hdr->type,
-							((end - tmp) > 128) ? 128 : (int)(end - tmp), tmp);
-					/* abort(); */
-					tmp = end;
-					goto error;
-				}
-				tmp = match;
-			} while(match < end && ((*match == ' ') || (*match == '\t')));
-			tmp = match;
-			hdr->body.len = match - hdr->body.s;
+			GET_HDR_NEXT(tmp, end, match);
+			if(match == NULL) {
+				ERR("no eol - bad body for <%.*s> (hdr type: %d) [%.*s]\n",
+						hdr->name.len, hdr->name.s, hdr->type,
+						((end - tmp) > 128) ? 128 : (int)(end - tmp), tmp);
+				tmp = end;
+				goto error;
+			}
+			hdr->body.len = tmp - hdr->body.s;
 			break;
 		default:
 			BUG("unknown header type %d [%.*s]\n", hdr->type,
@@ -279,13 +290,32 @@ char *get_hdr_field(
 	/* jku: if \r covered by current length, shrink it */
 	trim_r(hdr->body);
 	hdr->len = tmp - hdr->name.s;
-	return tmp;
+	if(next)
+		*next = tmp;
+	return 0;
+
 error:
 	DBG("error exit\n");
 	STATS_BAD_MSG_HDR();
-	hdr->type = HDR_ERROR_T;
-	hdr->len = tmp - hdr->name.s;
-	return tmp;
+	/* tmp is not the next header here (often NULL or mid-body) */
+	if((buf == NULL) || (buf >= end)) {
+		hdr->len = 0;
+		if(next)
+			*next = NULL;
+		return E_UNSPEC;
+	}
+	tmp = buf;
+	GET_HDR_NEXT(tmp, end, match);
+	if(match == NULL) {
+		hdr->len = 0;
+		if(next)
+			*next = NULL;
+		return E_UNSPEC;
+	}
+	hdr->len = tmp - buf;
+	if(next)
+		*next = tmp;
+	return E_UNSPEC;
 }
 
 
@@ -312,6 +342,7 @@ int parse_headers(
 	char *rest;
 	char *end;
 	hdr_flags_t orig_flag;
+	int hdr_field_rc;
 
 	end = msg->buf + msg->len;
 	tmp = msg->unparsed;
@@ -326,7 +357,12 @@ int parse_headers(
 #ifdef EXTRA_DEBUG
 	DBG("flags=%llx\n", (unsigned long long)flags);
 #endif
-	while(tmp < end && (flags & msg->parsed_flag) != flags) {
+	/* eager: keep walking to EOH so later bad/duplicate headers are
+	 * seen on this call; lazy and none: stop once the requested flags are set */
+	while(tmp < end
+			&& ((ksr_sip_parser_mode == KSR_SIP_PARSER_MODE_STRICT_EAGER)
+							? ((msg->parsed_flag & HDR_EOH_F) == 0)
+							: ((flags & msg->parsed_flag) != flags))) {
 		prefetch_loc_r(tmp + 64, 1);
 		hf = pkg_malloc(sizeof(struct hdr_field));
 		if(unlikely(hf == 0)) {
@@ -336,12 +372,39 @@ int parse_headers(
 		}
 		memset(hf, 0, sizeof(struct hdr_field));
 		hf->type = HDR_ERROR_T;
-		rest = get_hdr_field(tmp, end, hf);
+		rest = NULL;
+		if((hdr_field_rc = get_hdr_field(tmp, end, hf, &rest)) < 0) {
+			LOG(cfg_get(core, core_cfg, sip_parser_log),
+					"bad header field [%.*s]\n",
+					(end - tmp > 100) ? 100 : (int)(end - tmp), tmp);
+
+			if((KSR_SIP_PARSER_MODE_IS_STRICT(ksr_sip_parser_mode))
+					|| (hdr_field_rc == E_OUT_OF_MEM)) {
+				goto error;
+			}
+
+			if(rest == NULL) {
+				LOG(cfg_get(core, core_cfg, sip_parser_log),
+						"bad header field, no eol\n");
+				goto error;
+			}
+
+			LOG(cfg_get(core, core_cfg, sip_parser_log),
+					"skipping bad %.*s header field, type %d recorded as "
+					"flag\n",
+					hf->name.len, ZSW(hf->name.s), hf->type);
+
+			msg->errored_hdrs |=
+					(hf->type == HDR_ERROR_T || hf->type == HDR_EOH_T)
+							? HDR_OTHER_F
+							: HDR_T2F(hf->type);
+			clean_hdr_field(hf);
+			pkg_free(hf);
+			tmp = rest;
+			continue;
+		}
 		switch(hf->type) {
 			case HDR_ERROR_T:
-				LOG(cfg_get(core, core_cfg, sip_parser_log),
-						"bad header field [%.*s]\n",
-						(end - tmp > 100) ? 100 : (int)(end - tmp), tmp);
 				goto error;
 			case HDR_EOH_T:
 				msg->eoh = tmp; /* or rest?*/
@@ -363,7 +426,7 @@ int parse_headers(
 			case HDR_CALLID_T:
 				if(msg->callid == 0) {
 					msg->callid = hf;
-				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
+				} else if(KSR_SIP_PARSER_MODE_IS_STRICT(ksr_sip_parser_mode)) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate Call-ID header field [%.*s]\n",
@@ -382,7 +445,7 @@ int parse_headers(
 			case HDR_TO_T:
 				if(msg->to == 0) {
 					msg->to = hf;
-				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
+				} else if(KSR_SIP_PARSER_MODE_IS_STRICT(ksr_sip_parser_mode)) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate To header field [%.*s]\n",
@@ -396,7 +459,7 @@ int parse_headers(
 			case HDR_CSEQ_T:
 				if(msg->cseq == 0) {
 					msg->cseq = hf;
-				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
+				} else if(KSR_SIP_PARSER_MODE_IS_STRICT(ksr_sip_parser_mode)) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate CSeq header field [%.*s]\n",
@@ -410,7 +473,7 @@ int parse_headers(
 			case HDR_FROM_T:
 				if(msg->from == 0) {
 					msg->from = hf;
-				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
+				} else if(KSR_SIP_PARSER_MODE_IS_STRICT(ksr_sip_parser_mode)) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate From header field [%.*s]\n",
@@ -458,7 +521,7 @@ int parse_headers(
 			case HDR_CONTENTLENGTH_T:
 				if(msg->content_length == 0) {
 					msg->content_length = hf;
-				} else if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
+				} else if(KSR_SIP_PARSER_MODE_IS_STRICT(ksr_sip_parser_mode)) {
 					if(IS_SIP(msg)) {
 						LOG(cfg_get(core, core_cfg, sip_parser_log),
 								"duplicate Content-Length header field "
@@ -670,7 +733,7 @@ int parse_headers(
 
 skip:
 	msg->unparsed = tmp;
-	if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
+	if(KSR_SIP_PARSER_MODE_IS_STRICT(ksr_sip_parser_mode)) {
 		if(msg->headers == NULL) {
 			/* nothing parsed - invalid input sip message */
 			goto error1;
