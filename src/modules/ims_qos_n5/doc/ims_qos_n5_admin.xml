@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module lets a P-CSCF authorise media resources in a 5G core
+		directly over the N5 reference point, acting as an Application
+		Function (AF) towards the PCF with the Npcf_PolicyAuthorization service
+		of 3GPP TS 29.514, instead of using Rx (Diameter) towards a PCRF as
+		the <emphasis>ims_qos</emphasis> module does. The mapping of SDP to
+		media components follows TS 29.513.
+	</para>
+	<para>
+		<function>N5_create()</function> is called in the reply route of an
+		INVITE, UPDATE or PRACK that completes an SDP offer/answer. The first
+		call for a dialog and direction creates an Individual Application
+		Session Context (HTTP POST to
+		<emphasis>/npcf-policyauthorization/v1/app-sessions</emphasis>),
+		containing the UE's IPv4 address, the AF application identifier, the
+		media components and the event subscription; later calls update it
+		(PATCH). When the dialog ends (BYE, failure or expiry), the
+		application session is deleted (POST .../delete). An answer of 404 to
+		the delete is accepted, as the PCF may already have removed it.
+	</para>
+	<para>
+		The PCF reports events with POST {notifUri}/notify and requests the
+		termination of an application session, e.g. when the PDU session is
+		released, with POST {notifUri}/terminate (TS 29.514 clauses 4.2.5.2 and
+		4.2.5.3). These callbacks are received with the
+		<emphasis>nghttp2</emphasis> module and passed to
+		<function>N5_notification()</function>; a termination releases the
+		dialog, as <emphasis>ims_qos</emphasis> does on an Rx
+		Abort-Session-Request. The notifUri given to the PCF identifies the
+		dialog and direction, so callbacks need no other state.
+	</para>
+	<para>
+		The callback path identifies a dialog by its hash entry and id,
+		which are predictable: the nghttp2 listener must be reachable only
+		from the 5G core's service-based interface network (bind it with
+		the nghttp2 listen_addr parameter and filter it), as Diameter peers
+		are restricted for Rx.
+	</para>
+	<para>
+		Requests to the PCF use HTTP/2 with prior knowledge (cleartext h2c)
+		by default. A request that fails on a reused connection without any
+		response, e.g. because the producer closed the idle connection with
+		GOAWAY, is retried once on a new connection (RFC 9113 clause 6.8).
+	</para>
+	<para>
+		If the 5G core enforces OAuth2 (3GPP TS 29.500 clause 6.7), set
+		<varname>oauth</varname>: the module then registers the P-CSCF with
+		the NRF as an NF instance (NFRegister, then heartbeats) from a
+		dedicated process, obtains access tokens with AccessTokenReq
+		(TS 29.510) and sends them as bearer tokens to the PCF. They are sent synchronously by the SIP worker that
+		executes the reply route, bounded by <varname>http_timeout</varname>.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>ims_dialog</emphasis> - the dialog must be created
+				(dialog flag set) before the request is relayed.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>nghttp2</emphasis> - to receive the PCF's callbacks.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libcurl</emphasis> with HTTP/2 (nghttp2) support.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>libjansson</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="ims_qos_n5.p.pcf_uri">
+		<title><varname>pcf_uri</varname> (str)</title>
+		<para>
+			Scheme, address and port of the PCF's Npcf_PolicyAuthorization
+			service. Mandatory.
+		</para>
+		<example>
+		<title><varname>pcf_uri</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("ims_qos_n5", "pcf_uri", "http://10.0.0.13:7777")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.p.notif_uri">
+		<title><varname>notif_uri</varname> (str)</title>
+		<para>
+			Base URI at which the PCF reaches this P-CSCF's
+			<emphasis>nghttp2</emphasis> listener. The module appends
+			/&lt;dialog id&gt;-&lt;o|t&gt; for each application session.
+			Mandatory.
+		</para>
+		<example>
+		<title><varname>notif_uri</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("ims_qos_n5", "notif_uri", "http://10.0.0.20:8090/n5")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.p.af_app_id">
+		<title><varname>af_app_id</varname> (str)</title>
+		<para>
+			Value of afAppId.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>IMS Services</quote>.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.dnn">
+		<title><varname>dnn</varname> (str)</title>
+		<para>
+			Value of dnn, if set (e.g. <quote>ims</quote>).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote> (not sent).
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.events">
+		<title><varname>events</varname> (str)</title>
+		<para>
+			Comma-separated AfEvent values subscribed in evSubsc (TS 29.514
+			clause 5.6.3.3), the N5 counterparts of the Rx Specific-Action
+			values a P-CSCF requests. Empty: no subscription.
+		</para>
+		<para>
+		<emphasis>
+			Default value is
+			<quote>SUCCESSFUL_RESOURCES_ALLOCATION,FAILED_RESOURCES_ALLOCATION</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title><varname>events</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("ims_qos_n5", "events", "QOS_NOTIF,ACCESS_TYPE_CHANGE,SUCCESSFUL_RESOURCES_ALLOCATION")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.p.release_headers">
+		<title><varname>release_headers</varname> (str)</title>
+		<para>
+			Extra headers for the BYEs sent when the PCF terminates an
+			application session.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.http_timeout">
+		<title><varname>http_timeout</varname> (int)</title>
+		<para>
+			Timeout in milliseconds for connecting to the PCF and for each
+			request.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2000.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.http2">
+		<title><varname>http2</varname> (int)</title>
+		<para>
+			If 1, requests use HTTP/2 with prior knowledge; if 0, libcurl's
+			default (HTTP/1.1, or h2 negotiated over TLS).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.audio_default_bandwidth">
+		<title><varname>audio_default_bandwidth</varname> (int)</title>
+		<para>
+			Bandwidth in kbit/s for marBwUl/marBwDl of an audio stream whose
+			SDP has no b=AS line.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 64.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.video_default_bandwidth">
+		<title><varname>video_default_bandwidth</varname> (int)</title>
+		<para>
+			As <varname>audio_default_bandwidth</varname>, for video streams.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 128.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.authorize_video_flow">
+		<title><varname>authorize_video_flow</varname> (int)</title>
+		<para>
+			If 0, video streams are not included in the media components.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.include_rtcp_fd">
+		<title><varname>include_rtcp_fd</varname> (int)</title>
+		<para>
+			If 1, each media component gets a second sub-component with the
+			RTCP flows (port + 1).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.oauth">
+		<title><varname>oauth</varname> (int)</title>
+		<para>
+			If 1, use OAuth2 towards the PCF: register with the NRF and send access tokens. Requires <varname>nrf_uri</varname> and <varname>nf_instance_id</varname>.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title><varname>oauth</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("ims_qos_n5", "oauth", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.p.nrf_uri">
+		<title><varname>nrf_uri</varname> (str)</title>
+		<para>
+			Scheme, address and port of the NRF (NFManagement and access token services).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title><varname>nrf_uri</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("ims_qos_n5", "nrf_uri", "http://10.0.0.10:8000")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.p.nf_instance_id">
+		<title><varname>nf_instance_id</varname> (str)</title>
+		<para>
+			NF instance id (a UUID) under which the P-CSCF registers with the NRF and requests tokens.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title><varname>nf_instance_id</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("ims_qos_n5", "nf_instance_id", "6d682299-e82e-416f-96a3-94ef589f7e03")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.p.nf_type">
+		<title><varname>nf_type</varname> (str)</title>
+		<para>
+			NF type registered with the NRF and used as nfType in AccessTokenReq.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>AF</quote>.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ims_qos_n5.p.nf_ipv4">
+		<title><varname>nf_ipv4</varname> (str)</title>
+		<para>
+			IPv4 address put in the registered NF profile (ipv4Addresses), if set.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title><varname>nf_ipv4</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("ims_qos_n5", "nf_ipv4", "10.0.0.20")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.p.heartbeat_interval">
+		<title><varname>heartbeat_interval</varname> (int)</title>
+		<para>
+			Heartbeat interval in seconds offered at registration; the interval granted by the NRF is used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30.
+		</emphasis>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="ims_qos_n5.f.N5_create">
+		<title>
+		<function moreinfo="none">N5_create(direction[, subscription_id])</function>
+		</title>
+		<para>
+			Creates or updates the application session for the dialog of this
+			reply. Use in an onreply_route of INVITE, UPDATE or PRACK.
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>direction</emphasis> - <quote>orig</quote> if the UE is
+			the caller, <quote>term</quote> if it is the callee. It selects
+			whose SDP holds the UE's address; requests from either end of the
+			dialog are handled.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>subscription_id</emphasis> (optional) - the served
+			user: <quote>imsi-...</quote> is sent as supi; a tel or SIP URI
+			with a number, or <quote>msisdn-...</quote>, as gpsi.
+		</para></listitem>
+		</itemizedlist>
+		<para>
+			Returns:
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>1</emphasis> - success (201 for a creation, 200/204 for
+			an update).
+		</para></listitem>
+		<listitem><para>
+			<emphasis>-1</emphasis> - nothing to authorise or a local error
+			(not a reply to INVITE, UPDATE or PRACK, no SDP, no dialog).
+		</para></listitem>
+		<listitem><para>
+			<emphasis>-2</emphasis> - rejected by the PCF (4xx other than 408
+			and 429, or a 201 without Location): repeating the same request
+			will not help.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>-3</emphasis> - transient: no answer (connection
+			failure or timeout), 408, 429 or 5xx. The same request may
+			succeed later or at another PCF.
+		</para></listitem>
+		</itemizedlist>
+		<para>
+			The PCF's answer is available in <varname>$n5(key)</varname>
+			afterwards.
+		</para>
+		<example>
+		<title><function>N5_create</function> usage</title>
+		<programlisting format="linespecific">
+...
+onreply_route[N5_ORIG] {
+    if(status =~ "^(18[03]|200)$" &amp;&amp; has_body("application/sdp")) {
+        if(!N5_create("orig", "$fU")) {
+            xlog("L_ERR", "N5 failed: rc=$rc HTTP $n5(code) $n5(cause)\n");
+        }
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ims_qos_n5.f.N5_notification">
+		<title>
+		<function moreinfo="none">N5_notification(path, body)</function>
+		</title>
+		<para>
+			Handles a callback from the PCF received by the nghttp2 module.
+			Returns 1 for a termination (the dialog is being released), 2 for
+			an event notification, -2 if the dialog no longer exists and -1 if
+			the path is not an N5 callback of this module.
+		</para>
+		<example>
+		<title><function>N5_notification</function> usage</title>
+		<programlisting format="linespecific">
+...
+loadmodule "nghttp2.so"
+modparam("nghttp2", "listen_port", "8090")
+
+event_route[nghttp2:request] {
+    N5_notification("$nghttp2(path)", "$nghttp2(data)");
+    if($rc > 0) {
+        nghttp2_reply("204", "");
+    } else {
+        nghttp2_reply("404", "");
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Pseudo-Variables</title>
+	<section id="ims_qos_n5.pv.n5">
+		<title><varname>$n5(key)</varname></title>
+		<para>
+			The outcome of the last <function>N5_create</function> or
+			<function>N5_notification</function> executed by this process.
+			A key without a value gives $null.
+		</para>
+		<itemizedlist>
+		<listitem><para>
+			<emphasis>code</emphasis> - HTTP status of the PCF's answer, 0 if
+			there was none.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>cause</emphasis> - the <quote>cause</quote> of the
+			ProblemDetails in an error answer (TS 29.514 clause 5.7), e.g.
+			REQUESTED_SERVICE_NOT_AUTHORIZED.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>events</emphasis> - comma-separated events reported:
+			from <quote>evsNotif</quote> in the PCF's answer to a creation
+			(events already met when the app-session is created, e.g.
+			ACCESS_TYPE_CHANGE) or from the body of a notification.
+		</para></listitem>
+		<listitem><para>
+			<emphasis>access_type</emphasis>,
+			<emphasis>rat_type</emphasis> - from the same report, e.g.
+			3GPP_ACCESS and NR.
+		</para></listitem>
+		</itemizedlist>
+		<example>
+		<title><varname>$n5(key)</varname> usage</title>
+		<programlisting format="linespecific">
+...
+N5_create("orig", "$fU");
+switch($rc) {
+    case 1:
+        xlog("L_INFO", "$n5(access_type)/$n5(rat_type), events $n5(events)\n");
+        break;
+    case -3:
+        xlog("L_WARN", "PCF unavailable ($n5(code)), retry later\n");
+        break;
+    case -2:
+        xlog("L_ERR", "PCF rejected the session: $n5(cause)\n");
+        break;
+}
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>

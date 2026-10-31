@@ -198,7 +198,6 @@ static http2_session_data *create_http2_session_data(
 	char host[NI_MAXHOST];
 	int val = 1;
 
-	ssl = create_ssl(app_ctx->ssl_ctx);
 	session_data = malloc(sizeof(http2_session_data));
 	memset(session_data, 0, sizeof(http2_session_data));
 	session_data->app_ctx = app_ctx;
@@ -206,9 +205,17 @@ static http2_session_data *create_http2_session_data(
 			< 0) {
 		LM_ERR("failed to set TCP_NODELAY socket option\n");
 	}
-	session_data->bev = bufferevent_openssl_socket_new(app_ctx->evbase, fd, ssl,
-			BUFFEREVENT_SSL_ACCEPTING,
-			BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
+	if(app_ctx->ssl_ctx) {
+		ssl = create_ssl(app_ctx->ssl_ctx);
+		session_data->bev = bufferevent_openssl_socket_new(app_ctx->evbase, fd,
+				ssl, BUFFEREVENT_SSL_ACCEPTING,
+				BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
+	} else {
+		/* cleartext HTTP/2 with prior knowledge (h2c), e.g. for 5G SBI
+		 * peers on plain TCP (TS 29.500) */
+		session_data->bev = bufferevent_socket_new(app_ctx->evbase, fd,
+				BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
+	}
 	bufferevent_enable(session_data->bev, EV_READ | EV_WRITE);
 	rv = getnameinfo(addr, (socklen_t)addrlen, host, sizeof(host), NULL, 0,
 			NI_NUMERICHOST);
@@ -769,6 +776,17 @@ static void acceptcb(struct evconnlistener *listener, int fd,
 
 	bufferevent_setcb(
 			session_data->bev, readcb, writecb, eventcb, session_data);
+
+	if(app_ctx->ssl_ctx == NULL) {
+		/* h2c: no TLS handshake, hence no BEV_EVENT_CONNECTED; the client
+		 * starts with the connection preface right away */
+		LM_DBG("%s connected (h2c)\n", session_data->client_addr);
+		initialize_nghttp2_session(session_data);
+		if(send_server_connection_header(session_data) != 0
+				|| session_send(session_data) != 0) {
+			delete_http2_session_data(session_data);
+		}
+	}
 }
 
 static void start_listen(struct event_base *evbase, app_context *app_ctx)
@@ -836,8 +854,13 @@ int nghttp2_server_run(void)
 #endif /* !(OPENSSL_VERSION_NUMBER >= 0x1010000fL) &&                          \
           !defined(OPENSSL_IS_BORINGSSL) */
 
-	ssl_ctx = create_ssl_ctx(
-			_nghttp2_tls_private_key.s, _nghttp2_tls_public_key.s);
+	if(_nghttp2_tls_private_key.len > 0 || _nghttp2_tls_public_key.len > 0) {
+		ssl_ctx = create_ssl_ctx(
+				_nghttp2_tls_private_key.s, _nghttp2_tls_public_key.s);
+	} else {
+		LM_INFO("no TLS key configured: serving cleartext HTTP/2 (h2c)\n");
+		ssl_ctx = NULL;
+	}
 	evbase = event_base_new();
 	initialize_app_context(&app_ctx, ssl_ctx, evbase);
 	start_listen(evbase, &app_ctx);
@@ -845,7 +868,8 @@ int nghttp2_server_run(void)
 	event_base_loop(evbase, 0);
 
 	event_base_free(evbase);
-	SSL_CTX_free(ssl_ctx);
+	if(ssl_ctx)
+		SSL_CTX_free(ssl_ctx);
 
 
 	return 0;
