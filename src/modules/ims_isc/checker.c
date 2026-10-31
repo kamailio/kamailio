@@ -155,8 +155,8 @@ static str sdp = {"application/sdp", 15};
  */
 static int isc_check_session_desc(ims_spt *spt, struct sip_msg *msg)
 {
-	int len;
-	char *body, c;
+	str body;
+	char c;
 	char *x;
 	regex_t comp;
 
@@ -169,19 +169,13 @@ static int isc_check_session_desc(ims_spt *spt, struct sip_msg *msg)
 	LM_DBG("     Found Content-Type == "
 		   "appliction/sdp\n");
 	//check for sdp line
-	body = get_body(msg);
-	if(body == 0)
+	if(get_body_str(msg, &body) < 0) {
+		LM_ERR("cannot extract body from msg\n");
 		return FALSE;
-	if(msg->content_length->parsed == NULL) {
-		parse_content_length(msg->content_length->body.s,
-				msg->content_length->body.s + msg->content_length->body.len,
-				&len);
-		msg->content_length->parsed = (void *)(long)len;
-	} else
-		len = (long)msg->content_length->parsed;
+	}
 
-	c = body[len];
-	body[len] = 0;
+	c = body.s[body.len];
+	body.s[body.len] = 0;
 	x = pkg_malloc(
 			spt->session_desc.line.len + 2 + spt->session_desc.content.len);
 	sprintf(x, "%.*s=%.*s", spt->session_desc.line.len,
@@ -189,14 +183,14 @@ static int isc_check_session_desc(ims_spt *spt, struct sip_msg *msg)
 			spt->session_desc.content.s);
 	/* compile the whole  regexp */
 	regcomp(&(comp), x, REG_ICASE | REG_EXTENDED);
-	if(regexec(&(comp), body, 0, NULL, 0) == 0) //regex match
+	if(regexec(&(comp), body.s, 0, NULL, 0) == 0) //regex match
 	{
-		body[len] = c;
-		LM_DBG("     Found Session Desc. > %s\n", body);
+		body.s[body.len] = c;
+		LM_DBG("     Found Session Desc. > %s\n", body.s);
 		pkg_free(x);
 		return TRUE;
 	}
-	body[len] = c;
+	body.s[body.len] = c;
 	pkg_free(x);
 	return FALSE;
 }

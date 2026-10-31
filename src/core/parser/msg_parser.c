@@ -1462,6 +1462,38 @@ char *get_body(sip_msg_t *const msg)
 	return msg->unparsed + offset;
 }
 
+/*! \brief sets body to the msg's body, bounded by the received data
+ * - body->len is the Content-Length value, or the size of the rest
+ *   of the message when there is no Content-Length header
+ * - returns 0 on success, -1 on error (end of headers not found or
+ *   Content-Length larger than the received body), with body->s set
+ *   to NULL and body->len to 0
+ */
+int get_body_str(sip_msg_t *const msg, str *const body)
+{
+	long clen;
+	int rlen;
+
+	body->s = get_body(msg);
+	body->len = 0;
+	if(body->s == NULL) {
+		return -1;
+	}
+	rlen = (int)(msg->buf + msg->len - body->s);
+	if(msg->content_length == NULL) {
+		body->len = rlen;
+		return 0;
+	}
+	clen = get_content_length(msg);
+	if(clen > rlen) {
+		LM_ERR("content-length exceeds packet-length by %ld\n", clen - rlen);
+		body->s = NULL;
+		return -1;
+	}
+	body->len = (int)clen;
+	return 0;
+}
+
 /*! \brief make sure all HFs needed for transaction identification have been
  * parsed; return 0 if those HFs can't be found
 */

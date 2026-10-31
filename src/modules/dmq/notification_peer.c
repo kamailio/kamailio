@@ -406,8 +406,10 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 		LM_DBG("content length is 0\n");
 		return total_nodes;
 	}
-	body.s = get_body(msg);
-	body.len = content_length;
+	if(get_body_str(msg, &body) < 0) {
+		LM_ERR("unable to get body\n");
+		return -1;
+	}
 	tmp = body.s;
 	end = body.s + body.len;
 
