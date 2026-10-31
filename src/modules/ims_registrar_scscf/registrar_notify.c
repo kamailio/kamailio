@@ -57,6 +57,7 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/dprint.h" /* TIME_T_FMT */
+#include <stdarg.h>
 #include <libxml/parser.h>
 
 #include "../../lib/ims/useful_defs.h"
@@ -1903,26 +1904,56 @@ static str contact_e = {"\t\t</contact>\n", 13};
 static str uri_s = {"\t\t\t<uri>", 8};
 static str uri_e = {"</uri>\n", 7};
 
+/**
+ * The reginfo XML is built in a buffer of MAX_REGINFO_SIZE bytes. Once
+ * something does not fit, buf->len is set to MAX_REGINFO_SIZE and all
+ * further writes are skipped, so the caller checks only at the end.
+ */
+static void reginfo_append(str *buf, str *src)
+{
+	if(buf->len >= MAX_REGINFO_SIZE
+			|| src->len >= MAX_REGINFO_SIZE - buf->len) {
+		buf->len = MAX_REGINFO_SIZE;
+		return;
+	}
+	memcpy(buf->s + buf->len, src->s, src->len);
+	buf->len += src->len;
+}
+
+static void reginfo_printf(str *buf, const char *fmt, ...)
+{
+	va_list ap;
+	int n;
+
+	if(buf->len >= MAX_REGINFO_SIZE)
+		return;
+	va_start(ap, fmt);
+	n = vsnprintf(buf->s + buf->len, MAX_REGINFO_SIZE - buf->len, fmt, ap);
+	va_end(ap);
+	if(n < 0 || n >= MAX_REGINFO_SIZE - buf->len) {
+		buf->len = MAX_REGINFO_SIZE;
+		return;
+	}
+	buf->len += n;
+}
+
 static void process_xml_for_explit_dereg_contact(
-		str *buf, str *pad, str explit_dereg_contact)
+		str *buf, str explit_dereg_contact)
 {
 
 	LM_DBG("Processing XML for explicit dereg contact address: <%.*s>\n",
 			explit_dereg_contact.len, explit_dereg_contact.s);
 
-	sprintf(pad->s, contact_s_q.s, 1, r_terminated.len, r_terminated.s,
-			r_expired.len, r_expired.s, 0);
+	reginfo_printf(buf, contact_s_q.s, (void *)1, r_terminated.len,
+			r_terminated.s, r_expired.len, r_expired.s, 0, 0.0);
+	reginfo_append(buf, &uri_s);
 
-	pad->len = strlen(pad->s);
-	STR_APPEND(*buf, *pad);
-	STR_APPEND(*buf, uri_s);
-
-	STR_APPEND(*buf, (explit_dereg_contact));
-	STR_APPEND(*buf, uri_e);
-	STR_APPEND(*buf, contact_e);
+	reginfo_append(buf, &explit_dereg_contact);
+	reginfo_append(buf, &uri_e);
+	reginfo_append(buf, &contact_e);
 }
 
-static void process_xml_for_contact(str *buf, str *pad, ucontact_t *ptr)
+static void process_xml_for_contact(str *buf, ucontact_t *ptr)
 {
 	int expires;
 	param_t *param;
@@ -1939,31 +1970,29 @@ static void process_xml_for_contact(str *buf, str *pad, ucontact_t *ptr)
 	if(expires == 0) {
 		if(ptr->q != -1) {
 			float q = (float)ptr->q / 1000;
-			sprintf(pad->s, contact_s_q.s, ptr, r_terminated.len,
+			reginfo_printf(buf, contact_s_q.s, ptr, r_terminated.len,
 					r_terminated.s, r_expired.len, r_expired.s, expires, q);
 		} else {
-			sprintf(pad->s, contact_s_q.s, ptr, r_terminated.len,
+			reginfo_printf(buf, contact_s.s, ptr, r_terminated.len,
 					r_terminated.s, r_expired.len, r_expired.s, expires);
 		}
 	} else {
 		if(ptr->q != -1) {
 			float q = (float)ptr->q / 1000;
-			sprintf(pad->s, contact_s_q.s, ptr, r_active.len, r_active.s,
+			reginfo_printf(buf, contact_s_q.s, ptr, r_active.len, r_active.s,
 					r_registered.len, r_registered.s, expires, q);
 		} else {
-			sprintf(pad->s, contact_s_q.s, ptr, r_active.len, r_active.s,
+			reginfo_printf(buf, contact_s.s, ptr, r_active.len, r_active.s,
 					r_registered.len, r_registered.s, expires);
 		}
 	}
 
-	pad->len = strlen(pad->s);
-	STR_APPEND(*buf, *pad);
-	STR_APPEND(*buf, uri_s);
+	reginfo_append(buf, &uri_s);
 
 	LM_DBG("Appending contact address: <%.*s>\n", ptr->c.len, ptr->c.s);
 
-	STR_APPEND(*buf, (ptr->c));
-	STR_APPEND(*buf, uri_e);
+	reginfo_append(buf, &ptr->c);
+	reginfo_append(buf, &uri_e);
 
 	param = ptr->params;
 	while(param) {
@@ -1981,27 +2010,23 @@ static void process_xml_for_contact(str *buf, str *pad, ucontact_t *ptr)
 				LM_DBG("This param body starts with '<' and ends with '>' we "
 					   "will clean these for the NOTIFY XML with &lt; and "
 					   "&gt;\n");
-				sprintf(pad->s, contact_s_params_with_body_fix.s,
+				reginfo_printf(buf, contact_s_params_with_body_fix.s,
 						param->name.len, param->name.s, param->body.len - 2,
 						param->body.s + 1);
 			} else {
-				sprintf(pad->s, contact_s_params_with_body.s, param->name.len,
-						param->name.s, param->body.len, param->body.s);
+				reginfo_printf(buf, contact_s_params_with_body.s,
+						param->name.len, param->name.s, param->body.len,
+						param->body.s);
 			}
-
-			pad->len = strlen(pad->s);
-			STR_APPEND(*buf, *pad);
 		} else {
 			LM_DBG("This contact has params name: [%.*s] \n", param->name.len,
 					param->name.s);
-			sprintf(pad->s, contact_s_params_no_body.s, param->name.len,
+			reginfo_printf(buf, contact_s_params_no_body.s, param->name.len,
 					param->name.s);
-			pad->len = strlen(pad->s);
-			STR_APPEND(*buf, *pad);
 		}
 		param = param->next;
 	}
-	STR_APPEND(*buf, contact_e);
+	reginfo_append(buf, &contact_e);
 }
 
 /**
@@ -2017,16 +2042,14 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 		int num_explit_dereg_contact, unsigned int reginfo_version)
 {
 	str x = {0, 0};
-	str buf, pad;
-	char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
+	str buf;
+	char bufc[MAX_REGINFO_SIZE];
 	impurecord_t *r;
 	int i, k, res;
 	ucontact_t *ptr;
 
 	buf.s = bufc;
 	buf.len = 0;
-	pad.s = padc;
-	pad.len = 0;
 	get_act_time();
 	//    int domain_locked = 1;
 	int terminate_impu = 1;
@@ -2038,10 +2061,8 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 
 	LM_DBG("Getting reginfo_full\n");
 
-	STR_APPEND(buf, xml_start);
-	sprintf(pad.s, r_reginfo_s.s, reginfo_version, r_full.len, r_full.s);
-	pad.len = strlen(pad.s);
-	STR_APPEND(buf, pad);
+	reginfo_append(&buf, &xml_start);
+	reginfo_printf(&buf, r_reginfo_s.s, reginfo_version, r_full.len, r_full.s);
 
 	// reserve memory for all contacts for all impus
 	for(i = 0; i < num_impus; i++) {
@@ -2111,16 +2132,13 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 		if(terminate_impu) {
 			LM_DBG("IMPU reg state has no active contacts so putting in status "
 				   "terminated\n");
-			sprintf(pad.s, registration_s.s, r->public_identity.len,
+			reginfo_printf(&buf, registration_s.s, r->public_identity.len,
 					r->public_identity.s, r, r_terminated.len, r_terminated.s);
 		} else {
 			LM_DBG("IMPU has active contacts so putting in status active\n");
-			sprintf(pad.s, registration_s.s, r->public_identity.len,
+			reginfo_printf(&buf, registration_s.s, r->public_identity.len,
 					r->public_identity.s, r, r_active.len, r_active.s);
 		}
-
-		pad.len = strlen(pad.s);
-		STR_APPEND(buf, pad);
 
 		LM_DBG("Scrolling through contact for this IMPU\n");
 		//        if (contact && !domain_locked /* we're dealing with the primary impu most likely related to de-reg */) {
@@ -2135,8 +2153,7 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 			LM_DBG("Scrolling through list of provided "
 				   "num_explit_dereg_contact: [%.*s]\n",
 					explit_dereg_contact[k].len, explit_dereg_contact[k].s);
-			process_xml_for_explit_dereg_contact(
-					&buf, &pad, explit_dereg_contact[k]);
+			process_xml_for_explit_dereg_contact(&buf, explit_dereg_contact[k]);
 		}
 
 		impucontact = r->linked_contacts.head;
@@ -2145,7 +2162,7 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 
 			ul.lock_contact_slot_i(ptr->sl);
 
-			process_xml_for_contact(&buf, &pad, ptr);
+			process_xml_for_contact(&buf, ptr);
 
 			if(ptr->state == CONTACT_EXPIRE_PENDING_NOTIFY
 					&& num_pending_notify_contacts
@@ -2158,7 +2175,7 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 			impucontact = impucontact->next;
 		}
 
-		STR_APPEND(buf, registration_e);
+		reginfo_append(&buf, &registration_e);
 
 		//        if (domain_locked) {
 		ul.unlock_udomain(_t, &impu_list[i]);
@@ -2184,7 +2201,12 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 		pkg_free(pending_notify_contacts);
 	}
 
-	STR_APPEND(buf, r_reginfo_e);
+	reginfo_append(&buf, &r_reginfo_e);
+	if(buf.len >= MAX_REGINFO_SIZE) {
+		LM_ERR("full reg-info exceeds MAX_REGINFO_SIZE (%d)\n",
+				MAX_REGINFO_SIZE);
+		return x;
+	}
 
 	x.s = pkg_malloc(buf.len + 1);
 	if(x.s) {
@@ -2213,8 +2235,8 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type,
 		unsigned int reginfo_version)
 {
 	str x = {0, 0};
-	str buf, pad;
-	char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
+	str buf;
+	char bufc[MAX_REGINFO_SIZE];
 	int expires = -1;
 	int terminate_impu = 1;
 	ucontact_t *c_tmp;
@@ -2224,13 +2246,10 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type,
 
 	buf.s = bufc;
 	buf.len = 0;
-	pad.s = padc;
-	pad.len = 0;
 
-	STR_APPEND(buf, xml_start);
-	sprintf(pad.s, r_reginfo_s.s, reginfo_version, r_partial.len, r_partial.s);
-	pad.len = strlen(pad.s);
-	STR_APPEND(buf, pad);
+	reginfo_append(&buf, &xml_start);
+	reginfo_printf(
+			&buf, r_reginfo_s.s, reginfo_version, r_partial.len, r_partial.s);
 
 
 	if(r) {
@@ -2263,19 +2282,17 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type,
 				impurecord = impurecord->next;
 			}
 			if(terminate_impu)
-				sprintf(pad.s, registration_s.s, r->public_identity.len,
+				reginfo_printf(&buf, registration_s.s, r->public_identity.len,
 						r->public_identity.s, r, r_terminated.len,
 						r_terminated.s);
 			else
-				sprintf(pad.s, registration_s.s, r->public_identity.len,
+				reginfo_printf(&buf, registration_s.s, r->public_identity.len,
 						r->public_identity.s, r, r_active.len, r_active.s);
 		} else {
-			sprintf(pad.s, registration_s.s, r->public_identity.len,
+			reginfo_printf(&buf, registration_s.s, r->public_identity.len,
 					r->public_identity.s, r, r_active.len, r_active.s);
 		}
 
-		pad.len = strlen(pad.s);
-		STR_APPEND(buf, pad);
 		if(c) {
 			switch(event_type) {
 
@@ -2305,16 +2322,14 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type,
 			}
 			if(c->q != -1) {
 				float q = (float)c->q / 1000;
-				sprintf(pad.s, contact_s_q.s, c, state.len, state.s, event.len,
-						event.s, expires, q);
+				reginfo_printf(&buf, contact_s_q.s, c, state.len, state.s,
+						event.len, event.s, expires, q);
 			} else
-				sprintf(pad.s, contact_s.s, c, state.len, state.s, event.len,
-						event.s, expires);
-			pad.len = strlen(pad.s);
-			STR_APPEND(buf, pad);
-			STR_APPEND(buf, uri_s);
-			STR_APPEND(buf, (c->c));
-			STR_APPEND(buf, uri_e);
+				reginfo_printf(&buf, contact_s.s, c, state.len, state.s,
+						event.len, event.s, expires);
+			reginfo_append(&buf, &uri_s);
+			reginfo_append(&buf, &c->c);
+			reginfo_append(&buf, &uri_e);
 
 			param = c->params;
 			while(param && supported_param(&param->name) == 0) {
@@ -2328,35 +2343,34 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type,
 						LM_DBG("This param body starts with '<' and ends with "
 							   "'>' we will clean these for the NOTIFY XML "
 							   "with &lt; and &gt;\n");
-						sprintf(pad.s, contact_s_params_with_body_fix.s,
+						reginfo_printf(&buf, contact_s_params_with_body_fix.s,
 								param->name.len, param->name.s,
 								param->body.len - 2, param->body.s + 1);
 					} else {
-						sprintf(pad.s, contact_s_params_with_body.s,
+						reginfo_printf(&buf, contact_s_params_with_body.s,
 								param->name.len, param->name.s, param->body.len,
 								param->body.s);
 					}
-
-					pad.len = strlen(pad.s);
-					STR_APPEND(buf, pad);
 				} else {
 					LM_DBG("This contact has params name: [%.*s] \n",
 							param->name.len, param->name.s);
-					sprintf(pad.s, contact_s_params_no_body.s, param->name.len,
-							param->name.s);
-					pad.len = strlen(pad.s);
-					STR_APPEND(buf, pad);
+					reginfo_printf(&buf, contact_s_params_no_body.s,
+							param->name.len, param->name.s);
 				}
 				param = param->next;
 			}
 
-			STR_APPEND(buf, contact_e);
-			STR_APPEND(buf, registration_e);
+			reginfo_append(&buf, &contact_e);
+			reginfo_append(&buf, &registration_e);
 		}
 	}
 
-	STR_APPEND(buf, r_reginfo_e);
-
+	reginfo_append(&buf, &r_reginfo_e);
+	if(buf.len >= MAX_REGINFO_SIZE) {
+		LM_ERR("partial reg-info exceeds MAX_REGINFO_SIZE (%d)\n",
+				MAX_REGINFO_SIZE);
+		return x;
+	}
 
 	x.s = pkg_malloc(buf.len + 1);
 	if(x.s) {
@@ -2540,7 +2554,11 @@ void send_notification(reg_notification *n)
 			n->explit_dereg_contact, &n->watcher_contact,
 			n->num_explit_dereg_contact, n->reginfo_s_version);
 
-	if(content.len > MAX_REGINFO_SIZE) {
+	if(content.len <= 0) {
+		LM_ERR("no reg-info content to send\n");
+		return;
+	}
+	if(content.len >= MAX_REGINFO_SIZE) {
 		LM_ERR("content size (%d) exceeds MAX_REGINFO_SIZE (%d)!\n",
 				content.len, MAX_REGINFO_SIZE);
 		if(content.s) {

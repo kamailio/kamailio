@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "../../core/parser/parse_uri.h"
 #include "userdata_parser.h"
@@ -70,7 +71,7 @@ void space_quotes_trim_dup(str *dest, char *src)
 		return;
 	dest->len = strlen(src);
 	i = dest->len - 1;
-	while((src[i] == ' ' || src[i] == '\t') && i > 0) {
+	while(i > 0 && (src[i] == ' ' || src[i] == '\t')) {
 		dest->len--;
 		i--;
 	}
@@ -102,6 +103,8 @@ void space_quotes_trim_dup(str *dest, char *src)
 static inline char ifc_tBool2char(xmlChar *x)
 {
 	int r = 0;
+	if(!x)
+		return 0;
 	while(x[r]) {
 		switch(x[r]) {
 			case '0':
@@ -130,6 +133,8 @@ static inline char ifc_tBool2char(xmlChar *x)
 static inline char ifc_tDefaultHandling2char(xmlChar *x)
 {
 	char r;
+	if(!x)
+		return 0;
 	r = strtol((char *)x, (char **)NULL, 10);
 	if(errno == EINVAL) {
 		while(x[0]) {
@@ -155,6 +160,8 @@ static inline char ifc_tDefaultHandling2char(xmlChar *x)
 static inline char ifc_tDirectionOfRequest2char(xmlChar *x)
 {
 	int r;
+	if(!x)
+		return 0;
 	r = strtol((char *)x, (char **)NULL, 10);
 	if(errno == EINVAL) {
 		while(x[0]) {
@@ -212,7 +219,7 @@ static inline void space_trim_dup(str *dest, char *src)
 		return;
 	dest->len = strlen(src);
 	i = dest->len - 1;
-	while((src[i] == ' ' || src[i] == '\t') && i > 0)
+	while(i > 0 && (src[i] == ' ' || src[i] == '\t'))
 		i--;
 	i = 0;
 	while((src[i] == ' ' || src[i] == '\t') && i < dest->len)
@@ -229,6 +236,25 @@ static inline void space_trim_dup(str *dest, char *src)
 }
 
 /**
+ * Get the integer value of an element.
+ * @param doc - the XML document
+ * @param node - the element
+ * @param v - where to store the value
+ * @returns 1 on success, 0 if the element has no value
+ */
+static int get_int_value(xmlDocPtr doc, xmlNodePtr node, int *v)
+{
+	xmlChar *x;
+
+	x = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+	if(!x)
+		return 0;
+	*v = atoi((char *)x);
+	xmlFree(x);
+	return 1;
+}
+
+/**
  *      Parse an Application Server Extension.
  * @param doc - the XML document
  * @param node - the current node
@@ -241,23 +267,13 @@ static int parse_application_server_extension(
 	xmlNodePtr child;
 
 	for(child = node->children; child; child = child->next)
-		if(child->type == XML_ELEMENT_NODE)
-			switch(child->name[0]) {
-				case 'I':
-				case 'i': { //IncludeRegisterRequest / IncludeRegisterResponse
-					switch(child->name[17]) {
-						case 'Q':
-						case 'q': //IncludeRegisterRequest
-							as->include_register_request = 1;
-							break;
-						case 'S':
-						case 's': //IncludeRegisterResponse
-							as->include_register_response = 1;
-							break;
-					}
-					break;
-				}
-			}
+		if(child->type == XML_ELEMENT_NODE) {
+			if(!xmlStrcasecmp(child->name, BAD_CAST "IncludeRegisterRequest"))
+				as->include_register_request = 1;
+			else if(!xmlStrcasecmp(
+							child->name, BAD_CAST "IncludeRegisterResponse"))
+				as->include_register_response = 1;
+		}
 	return 1;
 }
 
@@ -286,27 +302,25 @@ static int parse_application_server(
 			switch(child->name[0]) {
 				case 'S':
 				case 's': { //ServerName / ServiceInfo
-					switch(child->name[4]) {
-						case 'E':
-						case 'e': //ServerName
-							x = xmlNodeListGetString(
-									doc, child->xmlChildrenNode, 1);
-							space_trim_dup(&(as->server_name), (char *)x);
-							xmlFree((char *)x);
-							break;
-						case 'I':
-						case 'i': //ServiceInfo
-							x = xmlNodeListGetString(
-									doc, child->xmlChildrenNode, 1);
-							space_trim_dup(&(as->service_info), (char *)x);
-							xmlFree(x);
-							break;
+					if(!xmlStrcasecmp(child->name, BAD_CAST "ServerName")) {
+						x = xmlNodeListGetString(
+								doc, child->xmlChildrenNode, 1);
+						space_trim_dup(&(as->server_name), (char *)x);
+						xmlFree((char *)x);
+					} else if(!xmlStrcasecmp(
+									  child->name, BAD_CAST "ServiceInfo")) {
+						x = xmlNodeListGetString(
+								doc, child->xmlChildrenNode, 1);
+						space_trim_dup(&(as->service_info), (char *)x);
+						xmlFree(x);
 					}
 					break;
 				}
 				case 'D':
 				case 'd': //DefaultHandling
 					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
+					if(!x)
+						break;
 					as->default_handling = ifc_tDefaultHandling2char(x);
 					xmlFree(x);
 					break;
@@ -416,13 +430,14 @@ static int parse_session_desc(
 static int parse_spt_extension(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt)
 {
 	xmlNodePtr child;
-	xmlChar *x;
+	int type;
 
 	for(child = node->children; child; child = child->next) {
 		if(child->type == XML_ELEMENT_NODE
 				&& (child->name[0] == 'R' || child->name[0] == 'r')) {
-			x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
-			switch(atoi((char *)x)) {
+			if(!get_int_value(doc, child, &type))
+				continue;
+			switch(type) {
 				case 0:
 					spt->registration_type |= IFC_INITIAL_REGISTRATION;
 					break;
@@ -433,7 +448,6 @@ static int parse_spt_extension(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt)
 					spt->registration_type |= IFC_DE_REGISTRATION;
 					break;
 			}
-			xmlFree(x);
 		}
 	}
 	//	LOG(L_CRIT,"INFO:"M_NAME":parse_spt_extension: spt->registration_type=%d\n",spt->registration_type);
@@ -446,10 +460,11 @@ static int parse_spt_extension(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt)
  * @param node - the current node
  * @param spt_to - structure to fill
  * @param spt_cnt - structure to fill with the spt count
+ * @param spt_max - number of entries in spt_to
  * @returns 1 on success, 0 on failure
  */
 static int parse_spt(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt_to,
-		unsigned short *spt_cnt)
+		unsigned short *spt_cnt, int spt_max)
 {
 	xmlNodePtr child, saved = 0;
 	xmlChar *x;
@@ -457,6 +472,10 @@ static int parse_spt(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt_to,
 	ims_spt *spt, *spt2;
 	int group;
 
+	if(*spt_cnt >= spt_max) {
+		LM_ERR("No room for SPT (%d entries)\n", spt_max);
+		return 0;
+	}
 	spt = spt_to + *spt_cnt;
 
 	spt->condition_negated = 0;
@@ -475,9 +494,7 @@ static int parse_spt(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt_to,
 					break;
 				case 'G':
 				case 'g': //Group
-					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
-					spt->group = atoi((char *)x);
-					xmlFree(x);
+					get_int_value(doc, child, &spt->group);
 					break;
 				case 'R':
 				case 'r': //RequestUri
@@ -499,30 +516,23 @@ static int parse_spt(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt_to,
 					break;
 				case 'S':
 				case 's': { //SIPHeader/SessionCase/SessionDescription
-					switch(child->name[7]) {
-						case 'E':
-						case 'e': //SIP_HEADER
-							spt->type = IFC_SIP_HEADER;
-							parse_sip_header(doc, child, &(spt->sip_header));
-							saved = child;
-							break;
-						case 'C':
-						case 'c': //Session Case
-							spt->type = IFC_SESSION_CASE;
-							x = xmlNodeListGetString(
-									doc, child->xmlChildrenNode, 1);
-							spt->session_case = ifc_tDirectionOfRequest2char(x);
-							xmlFree(x);
-							break;
-						case 'D':
-						case 'd': //Session Description
-							spt->type = IFC_SESSION_DESC;
-							parse_session_desc(
-									doc, child, &(spt->session_desc));
-							saved = child;
-							break;
+					if(!xmlStrcasecmp(child->name, BAD_CAST "SIPHeader")) {
+						spt->type = IFC_SIP_HEADER;
+						parse_sip_header(doc, child, &(spt->sip_header));
+						saved = child;
+					} else if(!xmlStrcasecmp(
+									  child->name, BAD_CAST "SessionCase")) {
+						spt->type = IFC_SESSION_CASE;
+						x = xmlNodeListGetString(
+								doc, child->xmlChildrenNode, 1);
+						spt->session_case = ifc_tDirectionOfRequest2char(x);
+						xmlFree(x);
+					} else if(!xmlStrcasecmp(child->name,
+									  BAD_CAST "SessionDescription")) {
+						spt->type = IFC_SESSION_DESC;
+						parse_session_desc(doc, child, &(spt->session_desc));
+						saved = child;
 					}
-
 				} break;
 			}
 	*spt_cnt = *spt_cnt + 1;
@@ -533,10 +543,14 @@ static int parse_spt(xmlDocPtr doc, xmlNodePtr node, ims_spt *spt_to,
 			switch(child->name[0]) {
 				case 'G':
 				case 'g': //Group
-					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
-					group = atoi((char *)x);
-					xmlFree(x);
+					if(!get_int_value(doc, child, &group))
+						break;
 					if(group != spt->group) {
+						if(*spt_cnt >= spt_max) {
+							LM_ERR("No room for SPT group %d (%d entries)\n",
+									group, spt_max);
+							return 0;
+						}
 						spt2 = spt_to + *spt_cnt;
 						spt2->condition_negated = spt->condition_negated;
 						spt2->group = group;
@@ -601,7 +615,7 @@ static int parse_trigger_point(
 {
 	xmlNodePtr child, child2;
 	xmlChar *x;
-	unsigned short spt_cnt = 0;
+	int spt_max = 0;
 	int i, j;
 	ims_spt spttemp;
 	tp->condition_type_cnf = IFC_DNF; //0
@@ -619,20 +633,25 @@ static int parse_trigger_point(
 					break;
 				case 'S':
 				case 's': //SPT - Service Point Trigger
-					// COUNT all in another groups
+					// one entry for the SPT and one for each of its groups
+					spt_max++;
 					for(child2 = child->children; child2; child2 = child2->next)
 						if(child2->type == XML_ELEMENT_NODE)
 							switch(child2->name[0]) {
 								case 'G':
 								case 'g':
-									spt_cnt++;
+									spt_max++;
 							}
 					break;
 			}
-	tp->spt = (ims_spt *)shm_malloc(sizeof(ims_spt) * spt_cnt);
+	if(spt_max > USHRT_MAX) {
+		LM_ERR("Too many SPT and Group elements (%d)\n", spt_max);
+		return 0;
+	}
+	tp->spt = (ims_spt *)shm_malloc(sizeof(ims_spt) * spt_max);
 	if(!tp->spt) {
 		LM_ERR("Out of memory allocating %lx bytes\n",
-				sizeof(ims_spt) * spt_cnt);
+				sizeof(ims_spt) * spt_max);
 		return 0;
 	}
 	for(child = node->children; child; child = child->next)
@@ -640,7 +659,7 @@ static int parse_trigger_point(
 			switch(child->name[0]) {
 				case 'S':
 				case 's': //SPT - Service Point Trigger
-					parse_spt(doc, child, tp->spt, &(tp->spt_cnt));
+					parse_spt(doc, child, tp->spt, &(tp->spt_cnt), spt_max);
 					/*i=0;
 					while(i<tp->spt_cnt&&tp->spt[i].group<spttemp.group)
 						i++;
@@ -683,52 +702,41 @@ static int parse_filter_criteria(
 	fc->trigger_point = NULL;
 	fc->profile_part_indicator = NULL;
 	//fc->apllication_server init mai tarziu
-	for(child = node->children; child; child = child->next)
-		if(child->type == XML_ELEMENT_NODE)
-			switch(child->name[3]) {
-				case 'O':
-				case 'o': //Priority
-					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
-					fc->priority = atoi((char *)x);
-					xmlFree(x);
-					break;
-				case 'G':
-				case 'g': //TriggerPoint
-					fc->trigger_point = (ims_trigger_point *)shm_malloc(
-							sizeof(ims_trigger_point));
-					if(!fc->trigger_point) {
-						LM_ERR("Out of memory allocating %lx bytes\n",
-								sizeof(ims_trigger_point));
-						break;
-					}
-					if(!parse_trigger_point(doc, child, fc->trigger_point)) {
-						shm_free(fc->trigger_point);
-						fc->trigger_point = 0;
-						return 0;
-					}
-					break;
-				case 'L':
-				case 'l': //ApplicationServer
-					parse_application_server(
-							doc, child, &(fc->application_server));
-					break;
-				case 'F':
-				case 'f': //ProfilePartIndicator
-					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
-					k = ifc_tProfilePartIndicator2char(x);
-					if(k < 0)
-						break;
-					fc->profile_part_indicator =
-							(char *)shm_malloc(sizeof(char));
-					if(!fc->profile_part_indicator) {
-						LM_ERR("Out of memory allocating %lx bytes\n",
-								sizeof(ims_trigger_point));
-						break;
-					}
-					*fc->profile_part_indicator = k;
-					xmlFree(x);
-					break;
+	for(child = node->children; child; child = child->next) {
+		if(child->type != XML_ELEMENT_NODE)
+			continue;
+		if(!xmlStrcasecmp(child->name, BAD_CAST "Priority")) {
+			get_int_value(doc, child, &fc->priority);
+		} else if(!xmlStrcasecmp(child->name, BAD_CAST "TriggerPoint")) {
+			fc->trigger_point =
+					(ims_trigger_point *)shm_malloc(sizeof(ims_trigger_point));
+			if(!fc->trigger_point) {
+				LM_ERR("Out of memory allocating %lx bytes\n",
+						sizeof(ims_trigger_point));
+				continue;
 			}
+			if(!parse_trigger_point(doc, child, fc->trigger_point)) {
+				shm_free(fc->trigger_point);
+				fc->trigger_point = 0;
+				return 0;
+			}
+		} else if(!xmlStrcasecmp(child->name, BAD_CAST "ApplicationServer")) {
+			parse_application_server(doc, child, &(fc->application_server));
+		} else if(!xmlStrcasecmp(
+						  child->name, BAD_CAST "ProfilePartIndicator")) {
+			x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
+			k = ifc_tProfilePartIndicator2char(x);
+			xmlFree(x);
+			if(k < 0)
+				continue;
+			fc->profile_part_indicator = (char *)shm_malloc(sizeof(char));
+			if(!fc->profile_part_indicator) {
+				LM_ERR("Out of memory allocating %lx bytes\n", sizeof(char));
+				continue;
+			}
+			*fc->profile_part_indicator = k;
+		}
+	}
 	return 1;
 }
 
@@ -834,18 +842,14 @@ static int parse_cn_service_auth(
 		xmlDocPtr doc, xmlNodePtr node, ims_cn_service_auth *cn)
 {
 	xmlNodePtr child;
-	xmlChar *x;
 	cn->subscribed_media_profile_id = -1;
 	for(child = node->children; child; child = child->next)
 		if(child->type == XML_ELEMENT_NODE)
 			switch(child->name[0]) {
 				case 'S':
 				case 's': //BarringIndication
-					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
-					cn->subscribed_media_profile_id = atoi((char *)x);
-					xmlFree(x);
-					return 1;
-					break;
+					return get_int_value(
+							doc, child, &cn->subscribed_media_profile_id);
 			}
 	return 0;
 }
@@ -861,8 +865,7 @@ static int parse_service_profile(
 		xmlDocPtr doc, xmlNodePtr root, ims_service_profile *sp)
 {
 	xmlNodePtr child;
-	xmlChar *x;
-	unsigned short pi_cnt = 0, ifc_cnt = 0, sh_cnt = 0;
+	int pi_cnt = 0, ifc_cnt = 0, sh_cnt = 0, cn_cnt = 0, cn_done = 0;
 	int i, j;
 	ims_filter_criteria fctemp;
 	int returncode = 0;
@@ -881,8 +884,7 @@ static int parse_service_profile(
 					break;
 				case 'c':
 				case 'C': //CoreNetworkServiceAuthorization
-					sp->cn_service_auth = (ims_cn_service_auth *)shm_malloc(
-							sizeof(ims_cn_service_auth));
+					cn_cnt++;
 					break;
 				case 's':
 				case 'S': //SharedIFCSet
@@ -890,6 +892,12 @@ static int parse_service_profile(
 					break;
 			}
 		}
+
+	if(pi_cnt > USHRT_MAX || ifc_cnt > USHRT_MAX || sh_cnt > USHRT_MAX) {
+		LM_ERR("Too many elements in service profile (%d %d %d)\n", pi_cnt,
+				ifc_cnt, sh_cnt);
+		return 0;
+	}
 
 	sp->public_identities = shm_malloc(pi_cnt * sizeof(ims_public_identity));
 	if(!sp->public_identities) {
@@ -915,6 +923,14 @@ static int parse_service_profile(
 	}
 	memset(sp->shared_ifc_set, 0, sh_cnt * sizeof(int));
 
+	if(cn_cnt) {
+		sp->cn_service_auth =
+				(ims_cn_service_auth *)shm_malloc(sizeof(ims_cn_service_auth));
+		if(!sp->cn_service_auth)
+			LM_ERR("Out of memory allocating %lx bytes\n",
+					sizeof(ims_cn_service_auth));
+	}
+
 	for(child = root->children; child; child = child->next)
 		if(child->type == XML_ELEMENT_NODE)
 			switch(child->name[0]) {
@@ -928,6 +944,7 @@ static int parse_service_profile(
 					break;
 				case 'I':
 				case 'i': //InitialFilterCriteria
+					memset(&fctemp, 0, sizeof(fctemp));
 					if(!parse_filter_criteria(doc, child, &(fctemp)))
 						break;
 					i = 0;
@@ -942,6 +959,10 @@ static int parse_service_profile(
 					break;
 				case 'C':
 				case 'c': //CoreNetworkServiceAuthorization
+					/* 0..1: only the first one is parsed */
+					if(cn_done || !sp->cn_service_auth)
+						break;
+					cn_done = 1;
 					if(!parse_cn_service_auth(
 							   doc, child, sp->cn_service_auth)) {
 						shm_free(sp->cn_service_auth);
@@ -950,10 +971,9 @@ static int parse_service_profile(
 					break;
 				case 'S':
 				case 's': //SharedIFCSet
-					x = xmlNodeListGetString(doc, child->xmlChildrenNode, 1);
-					sp->shared_ifc_set[sp->shared_ifc_set_cnt++] =
-							atoi((char *)x);
-					xmlFree(x);
+					if(get_int_value(doc, child,
+							   &sp->shared_ifc_set[sp->shared_ifc_set_cnt]))
+						sp->shared_ifc_set_cnt++;
 					break;
 			}
 	if(returncode == 2)
@@ -972,13 +992,13 @@ static ims_subscription *parse_ims_subscription(xmlDocPtr doc, xmlNodePtr root)
 	xmlNodePtr child;
 	xmlChar *x;
 	ims_subscription *s;
-	unsigned short sp_cnt = 0;
+	int sp_cnt = 0;
 	int rc;
 
-	if(!root)
-		return 0;
-	while(root->type != XML_ELEMENT_NODE
-			|| strcasecmp((char *)root->name, "IMSSubscription") != 0) {
+	while(root
+			&& (root->type != XML_ELEMENT_NODE
+					|| strcasecmp((char *)root->name, "IMSSubscription")
+							   != 0)) {
 		root = root->next;
 	}
 	if(!root) {
@@ -1009,6 +1029,13 @@ static ims_subscription *parse_ims_subscription(xmlDocPtr doc, xmlNodePtr root)
 					sp_cnt++;
 					break;
 			}
+	if(sp_cnt > USHRT_MAX) {
+		LM_ERR("Too many ServiceProfile elements (%d)\n", sp_cnt);
+		if(s->private_identity.s)
+			shm_free(s->private_identity.s);
+		shm_free(s);
+		return 0;
+	}
 	s->service_profiles = (ims_service_profile *)shm_malloc(
 			sp_cnt * sizeof(ims_service_profile));
 	if(!s->service_profiles) {

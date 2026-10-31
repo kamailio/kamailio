@@ -57,18 +57,24 @@ static int filter_default_port(str *src, str *dst)
 	char *port;
 
 	if((port = str_search(src, &default_port))) {
+		if(src->len - 5 >= dst->len) {
+			LM_ERR("contact too long [%d]\n", src->len);
+			return -1;
+		}
 		dst->len = port - src->s;
 		memcpy(dst->s, src->s, dst->len);
 		memcpy(dst->s + dst->len, port + 5, src->len - dst->len - 5);
 		dst->len = src->len - 5;
+		dst->s[dst->len] = '\0';
 		return 0;
 	}
-	if(dst->len < src->len) {
-		LM_BUG("dst len < src len\n");
+	if(src->len >= dst->len) {
+		LM_ERR("contact too long [%d]\n", src->len);
 		return -1;
 	}
 	dst->len = src->len;
 	memcpy(dst->s, src->s, src->len);
+	dst->s[dst->len] = '\0';
 	return 1;
 }
 
@@ -103,6 +109,9 @@ static inline int find_contact_from_impu(
 	s_term = strstr(str_aor.s, "@");
 	if(!s_term) {
 		s_term = strstr(str_aor.s, ":");
+		if(!s_term) {
+			goto error;
+		}
 	}
 	s_term += 1;
 	if(s_term - str_aor.s >= str_aor.len) {
@@ -135,6 +144,12 @@ static inline int find_contact_from_impu(
 			c_term = strstr(str_c.s, "@");
 			if(!c_term) {
 				c_term = strstr(str_c.s, ":");
+				if(!c_term) {
+					LM_DBG("Skipping %.*s\n",
+							STR_FMT(&impucontact->contact->c));
+					impucontact = impucontact->next;
+					continue;
+				}
 			}
 			c_term += 1;
 			c_searchlen = str_c.len - (c_term - str_c.s);

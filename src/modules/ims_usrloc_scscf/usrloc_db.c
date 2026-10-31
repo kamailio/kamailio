@@ -323,13 +323,12 @@ static str param_name_no_body_last = {"%.*s", 1};
 int db_insert_ucontact(impurecord_t *_r, ucontact_t *_c)
 {
 
-	str param_buf, param_pad;
+	str param_buf;
 	param_t *tmp;
-	char param_bufc[MAX_PARAMS_SIZE], param_padc[MAX_PARAMS_SIZE];
+	char param_bufc[MAX_PARAMS_SIZE];
+	int len;
 	param_buf.s = param_bufc;
 	param_buf.len = 0;
-	param_pad.s = param_padc;
-	param_pad.len = 0;
 	char *format_name_and_body, *format_name_no_body;
 
 	db_key_t key[7];
@@ -348,14 +347,20 @@ int db_insert_ucontact(impurecord_t *_r, ucontact_t *_c)
 				format_name_no_body = param_name_no_body.s;
 			}
 			if(tmp->body.len > 0) {
-				sprintf(param_pad.s, format_name_and_body, tmp->name.len,
-						tmp->name.s, tmp->body.len, tmp->body.s);
+				len = snprintf(param_buf.s + param_buf.len,
+						MAX_PARAMS_SIZE - param_buf.len, format_name_and_body,
+						tmp->name.len, tmp->name.s, tmp->body.len, tmp->body.s);
 			} else {
-				sprintf(param_pad.s, format_name_no_body, tmp->name.len,
-						tmp->name.s);
+				len = snprintf(param_buf.s + param_buf.len,
+						MAX_PARAMS_SIZE - param_buf.len, format_name_no_body,
+						tmp->name.len, tmp->name.s);
 			}
-			param_pad.len = strlen(param_pad.s);
-			STR_APPEND(param_buf, param_pad);
+			if(len < 0 || len >= MAX_PARAMS_SIZE - param_buf.len) {
+				LM_ERR("params of contact [%.*s] exceed %d bytes\n", _c->c.len,
+						_c->c.s, MAX_PARAMS_SIZE);
+				return -1;
+			}
+			param_buf.len += len;
 		}
 		tmp = tmp->next;
 	}
