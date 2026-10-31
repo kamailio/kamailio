@@ -2940,8 +2940,9 @@ int process_dialogs(int round, int presence_winfo)
 		goto error;
 	}
 
-	/* Step 1: Find active_watchers that require notification */
-	if(query_fn(pa_db, query_cols, query_ops, query_vals, result_cols,
+	/* Step 1: Find active_watchers that require notification
+	 * (no transaction, so idle runs do not open one) */
+	if(pa_dbf.query(pa_db, query_cols, query_ops, query_vals, result_cols,
 			   n_query_cols, n_result_cols, 0, &dialog_list)
 			< 0) {
 		LM_ERR("in sql query\n");
@@ -2961,6 +2962,33 @@ int process_dialogs(int round, int presence_winfo)
 		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 			LM_ERR("in start_transaction\n");
 			goto error;
+		}
+	}
+
+	/* repeat Step 1 locked inside the transaction; another server sharing
+	 * the database may have taken the rows meanwhile */
+	if(pa_dbf.query_lock && pa_dbf.start_transaction) {
+		pa_dbf.free_result(pa_db, dialog_list);
+		dialog_list = NULL;
+		if(pa_dbf.query_lock(pa_db, query_cols, query_ops, query_vals,
+				   result_cols, n_query_cols, n_result_cols, 0, &dialog_list)
+				< 0) {
+			LM_ERR("in sql query\n");
+			goto error;
+		}
+		if(dialog_list == NULL) {
+			LM_ERR("bad result\n");
+			goto error;
+		}
+		if(dialog_list->n <= 0) {
+			if(pa_dbf.end_transaction) {
+				if(pa_dbf.end_transaction(pa_db) < 0) {
+					LM_ERR("in end_transaction\n");
+					goto error;
+				}
+			}
+			no_active_watchers = 1;
+			goto done;
 		}
 	}
 

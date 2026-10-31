@@ -1810,7 +1810,9 @@ int get_database_info(
 		return -1;
 	}
 
-	if(pres_notifier_processes > 0 && pa_dbf.start_transaction)
+	/* handle_subscribe() opens the transaction only without fast notify */
+	if(pres_notifier_processes > 0 && !pres_send_fast_notify
+			&& pa_dbf.start_transaction)
 		query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	if(query_fn(pa_db, query_cols, 0, query_vals, result_cols, n_query_cols,
