@@ -41,6 +41,24 @@
   </section>
 
   <section>
+    <title>GRUU and multi-IMPU storage</title>
+    <para>
+      Contacts may store <emphasis>instance_id</emphasis>,
+      <emphasis>pub_gruu</emphasis>, and <emphasis>temp_gruu</emphasis>
+      (current Temporary GRUU) on the <emphasis>pcscf_location</emphasis> row.
+      Previously issued Temporary GRUUs that remain valid until expiry are kept
+      in <emphasis>pcscf_gruu_history</emphasis> (RFC 5627 rotation). Both are
+      required: the location column is the current binding; the history table
+      supports lookup of older Temporary GRUUs still within their validity window.
+    </para>
+    <para>
+      If upgrading from a schema that used the old table name
+      <emphasis>pcscf_temp_gruu_history</emphasis>, rename or recreate the table
+      as <emphasis>pcscf_gruu_history</emphasis>.
+    </para>
+  </section>
+
+  <section>
     <title>Dependencies</title>
 
     <section>
@@ -306,6 +324,25 @@ modparam("ims_usrloc_pcscf", "audit_expired_pcontacts_timeout", 120)
     <title>ulpcscf.status</title>
 
     <para>Status of pcscf_usrloc, AORs, max slots, etc.</para>
+    <para>
+      Status of pcscf_usrloc, AORs, max slots, etc. Contact dump includes
+      Path, LocationID, PubGruu, TempGruu, and InstanceId when present.
+    </para>
+  </section>
+
+  <section>
+    <title>ulpcscf.lookup_temp_gruu</title>
+    <para>
+      Look up a contact by Temporary GRUU. Parameters: domain name, Temporary
+      GRUU string (may include encoded <emphasis>;gr=</emphasis> form).
+      Returns whether a contact was found, AoR, and location id.
+    </para>
+    <example>
+      <title>ulpcscf.lookup_temp_gruu</title>
+      <programlisting format="linespecific">
+kamcmd ulpcscf.lookup_temp_gruu location sip:user@example.com;gr=...
+      </programlisting>
+    </example>
   </section>
 </section>
 

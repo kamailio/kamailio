@@ -44,7 +44,11 @@ CREATE TABLE pcscf_location (
     t_spi_pc NUMBER(10) DEFAULT NULL,
     t_spi_ps NUMBER(10) DEFAULT NULL,
     t_spi_uc NUMBER(10) DEFAULT NULL,
-    t_spi_us NUMBER(10) DEFAULT NULL
+    t_spi_us NUMBER(10) DEFAULT NULL,
+    instance_id VARCHAR2(255) DEFAULT NULL,
+    pub_gruu VARCHAR2(255) DEFAULT NULL,
+    temp_gruu VARCHAR2(255) DEFAULT NULL,
+    public_ids_barred VARCHAR2(2048) DEFAULT NULL
 );
 
 CREATE OR REPLACE TRIGGER pcscf_location_tr
@@ -57,4 +61,27 @@ BEGIN map2users('pcscf_location'); END;
 /
 CREATE INDEX pcscf_location_aor_idx  ON pcscf_location (aor);
 
-INSERT INTO version (table_name, table_version) values ('pcscf_location','7');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','8');
+
+CREATE TABLE pcscf_gruu_history (
+    id NUMBER(10) PRIMARY KEY,
+    location_id NUMBER(10),
+    temp_gruu VARCHAR2(255),
+    created DATE,
+    expires DATE
+);
+
+CREATE OR REPLACE TRIGGER pcscf_gruu_history_tr
+before insert on pcscf_gruu_history FOR EACH ROW
+BEGIN
+  auto_id(:NEW.id);
+END pcscf_gruu_history_tr;
+/
+BEGIN map2users('pcscf_gruu_history'); END;
+/
+CREATE INDEX ORA_idx_loc  ON pcscf_gruu_history (location_id);
+CREATE INDEX ORA_idx_tgruu  ON pcscf_gruu_history (temp_gruu);
+CREATE INDEX ORA_idx_exp  ON pcscf_gruu_history (expires);
+
+INSERT INTO version (table_name, table_version) values ('pcscf_gruu_history','1');
+

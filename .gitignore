@@ -31,6 +31,8 @@ TAGS
 # vi swaps
 .*.swp
 .*.swo
+# FUSE hidden temp files on some mounted filesystems
+.fuse_hidden*
 # various other binaries
 test/udp_flood
 utils/gen_ha1/gen_ha1
@@ -55,3 +57,5 @@ libiname.lst
 # compiling tools files
 .clangd
 compile_commands.json
+# local design / brainstorm docs (not for upstream)
+docs/
