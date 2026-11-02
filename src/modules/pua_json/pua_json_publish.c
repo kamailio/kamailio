@@ -30,6 +30,7 @@
 
 #include "defs.h"
 #include "pua_json_publish.h"
+#include "pua_json_xml.h"
 
 extern json_api_t json_api;
 extern presence_api_t presence_api;
@@ -114,6 +115,8 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj)
 	str activity = str_init("");
 	str note = str_init("Available");
 	str status = str_presence_status_online;
+	str xml_src[2], xml_dst[2];
+	char *xml_storage = NULL;
 	int expires = 0;
 
 	char *body = (char *)pkg_malloc(PRESENCE_BODY_BUFFER_SIZE);
@@ -157,8 +160,20 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj)
 	//	note = str_presence_note_idle;
 	//}
 
-	len = snprintf(body, PRESENCE_BODY_BUFFER_SIZE, PRESENCE_BODY, from_user.s,
-			callid.s, status.s, note.s, activity.s, note.s);
+	xml_src[0] = from_user;
+	xml_src[1] = callid;
+	if(pua_json_xml_escape_fields(xml_src, xml_dst, 2, &xml_storage) < 0) {
+		LM_ERR("invalid XML field in presence update\n");
+		ret = -1;
+		goto error;
+	}
+	len = snprintf(body, PRESENCE_BODY_BUFFER_SIZE, PRESENCE_BODY, xml_dst[0].s,
+			xml_dst[1].s, status.s, note.s, activity.s, note.s);
+	if(len < 0 || len >= PRESENCE_BODY_BUFFER_SIZE) {
+		LM_ERR("presence XML body too large\n");
+		ret = -1;
+		goto error;
+	}
 
 	presence_body.s = body;
 	presence_body.len = len;
@@ -168,6 +183,8 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj)
 
 error:
 
+	if(xml_storage)
+		pkg_free(xml_storage);
 	if(body)
 		pkg_free(body);
 
@@ -246,6 +263,22 @@ error:
 
 int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj)
 {
+	enum
+	{
+		XML_PRES,
+		XML_CALLID,
+		XML_FROMTAG,
+		XML_TOTAG,
+		XML_DIRECTION,
+		XML_STATE,
+		XML_FROM_USER,
+		XML_FROM,
+		XML_FROM_URI,
+		XML_TO_USER,
+		XML_TO,
+		XML_TO_URI,
+		XML_FIELDS
+	};
 	int ret = 1;
 	int len;
 	str from = {0, 0}, to = {0, 0}, pres = {0, 0};
@@ -260,6 +293,9 @@ int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj)
 	str dialoginfo_body = {0, 0};
 	int expires = 0;
 	str event = str_init("dialog");
+	str raw_callid;
+	str xml_src[XML_FIELDS], xml_dst[XML_FIELDS];
+	char *xml_storage = NULL;
 	char to_tag_buffer[TO_TAG_BUFFER_SIZE + 1];
 	char from_tag_buffer[FROM_TAG_BUFFER_SIZE + 1];
 
@@ -309,15 +345,60 @@ int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj)
 	if(!to_uri.len)
 		to_uri = to;
 
+	/* Escape XML fields without altering SIP/DB identifiers. */
+	raw_callid = callid;
+	xml_src[XML_PRES] = pres;
+	xml_src[XML_CALLID] = callid;
+	xml_src[XML_FROMTAG] = fromtag;
+	xml_src[XML_TOTAG] = totag;
+	xml_src[XML_DIRECTION] = direction;
+	xml_src[XML_STATE] = state;
+	xml_src[XML_FROM_USER] = from_user;
+	xml_src[XML_FROM] = from;
+	xml_src[XML_FROM_URI] = from_uri;
+	xml_src[XML_TO_USER] = to_user;
+	xml_src[XML_TO] = to;
+	xml_src[XML_TO_URI] = to_uri;
+	if(pua_json_xml_escape_fields(xml_src, xml_dst, XML_FIELDS, &xml_storage)
+			< 0) {
+		LM_ERR("invalid XML field in dialog-info update\n");
+		ret = -1;
+		goto error;
+	}
+	pres = xml_dst[XML_PRES];
+	callid = xml_dst[XML_CALLID];
+	fromtag = xml_dst[XML_FROMTAG];
+	totag = xml_dst[XML_TOTAG];
+	direction = xml_dst[XML_DIRECTION];
+	state = xml_dst[XML_STATE];
+	from_user = xml_dst[XML_FROM_USER];
+	from = xml_dst[XML_FROM];
+	from_uri = xml_dst[XML_FROM_URI];
+	to_user = xml_dst[XML_TO_USER];
+	to = xml_dst[XML_TO];
+	to_uri = xml_dst[XML_TO_URI];
+
 	if(fromtag.len > 0) {
-		fromtag.len = snprintf(from_tag_buffer, TO_TAG_BUFFER_SIZE, LOCAL_TAG,
+		len = snprintf(from_tag_buffer, sizeof(from_tag_buffer), LOCAL_TAG,
 				fromtag.len, fromtag.s);
+		if(len < 0 || len >= (int)sizeof(from_tag_buffer)) {
+			LM_ERR("local tag too large for XML\n");
+			ret = -1;
+			goto error;
+		}
+		fromtag.len = len;
 		fromtag.s = from_tag_buffer;
 	}
 
 	if(totag.len > 0) {
-		totag.len = snprintf(to_tag_buffer, FROM_TAG_BUFFER_SIZE, REMOTE_TAG,
+		len = snprintf(to_tag_buffer, sizeof(to_tag_buffer), REMOTE_TAG,
 				totag.len, totag.s);
+		if(len < 0 || len >= (int)sizeof(to_tag_buffer)) {
+			LM_ERR("remote tag too large for XML\n");
+			ret = -1;
+			goto error;
+		}
+		totag.len = len;
 		totag.s = to_tag_buffer;
 	}
 
@@ -343,17 +424,35 @@ int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj)
 				pres.len, pres.s);
 	}
 
-	sender.len = snprintf(sender_buf, SENDER_BUFFER_SIZE, "sip:%s", callid.s);
+	if(len < 0 || len >= DIALOGINFO_BODY_BUFFER_SIZE) {
+		LM_ERR("dialog-info XML body too large\n");
+		ret = -1;
+		goto error;
+	}
+	if(raw_callid.len <= 0 || !raw_callid.s) {
+		LM_ERR("missing Call-ID for dialog-info update\n");
+		ret = -1;
+		goto error;
+	}
+	sender.len = snprintf(sender_buf, sizeof(sender_buf), "sip:%.*s",
+			raw_callid.len, raw_callid.s);
+	if(sender.len < 0 || sender.len >= (int)sizeof(sender_buf)) {
+		LM_ERR("dialog-info sender too long\n");
+		ret = -1;
+		goto error;
+	}
 	sender.s = sender_buf;
 
 	dialoginfo_body.s = body;
 	dialoginfo_body.len = len;
 
-	pua_json_update_presentity(&event, &pres_realm, &pres_user, &callid,
+	pua_json_update_presentity(&event, &pres_realm, &pres_user, &raw_callid,
 			&sender, &dialoginfo_body, expires, 1, 1);
 
 error:
 
+	if(xml_storage)
+		pkg_free(xml_storage);
 	if(body)
 		pkg_free(body);
 
@@ -372,6 +471,8 @@ int pua_json_publish_as_feature_to_presentity(struct json_object *json_obj)
 	str dnd_status = {0, 0};
 	int expires = 0;
 	str as_feature_body = {0, 0};
+	str xml_src[2], xml_dst[2];
+	char *xml_storage = NULL;
 
 	char *body = (char *)pkg_malloc(AS_FEATURE_BODY_BUFFER_SIZE);
 
@@ -400,8 +501,20 @@ int pua_json_publish_as_feature_to_presentity(struct json_object *json_obj)
 		goto error;
 	}
 
+	xml_src[0] = from_user;
+	xml_src[1] = dnd_status;
+	if(pua_json_xml_escape_fields(xml_src, xml_dst, 2, &xml_storage) < 0) {
+		LM_ERR("invalid XML field in as-feature update\n");
+		ret = -1;
+		goto error;
+	}
 	len = snprintf(body, AS_FEATURE_BODY_BUFFER_SIZE, AS_FEATURE_BODY,
-			from_user.len, from_user.s, dnd_status.len, dnd_status.s);
+			xml_dst[0].len, xml_dst[0].s, xml_dst[1].len, xml_dst[1].s);
+	if(len < 0 || len >= AS_FEATURE_BODY_BUFFER_SIZE) {
+		LM_ERR("as-feature XML body too large\n");
+		ret = -1;
+		goto error;
+	}
 
 	as_feature_body.s = body;
 	as_feature_body.len = len;
@@ -411,6 +524,8 @@ int pua_json_publish_as_feature_to_presentity(struct json_object *json_obj)
 
 error:
 
+	if(xml_storage)
+		pkg_free(xml_storage);
 	if(body)
 		pkg_free(body);
 
