@@ -80,6 +80,37 @@ static ip_addr_t *get_next_ipaddr_buf(void)
 }
 
 #define KSR_GETHOSTBYNAME_ADDRS 8
+#define KSR_DNS_QUERY_NAME_SIZE (MAX_DNS_NAME + 2)
+
+/** Return the resolver name according to the configured search policy. */
+static const char *ksr_dns_query_name(
+		const char *name, char *namebuf, size_t namebuf_size)
+{
+	struct in_addr addr4;
+	struct in6_addr addr6;
+	size_t len;
+
+	if(name == NULL || cfg_get(core, core_cfg, dns_search_list) != 0
+			|| cfg_get(core, core_cfg, dns_query_absolute) == 0) {
+		return name;
+	}
+
+	len = strlen(name);
+	if(len == 0 || name[len - 1] == '.' || inet_pton(AF_INET, name, &addr4) == 1
+			|| inet_pton(AF_INET6, name, &addr6) == 1
+			|| (name[0] == '[' && name[len - 1] == ']')) {
+		return name;
+	}
+	if(len + 2 > namebuf_size) {
+		LM_ERR("resolver name is too long: [%s]\n", name);
+		return NULL;
+	}
+
+	memcpy(namebuf, name, len);
+	namebuf[len] = '.';
+	namebuf[len + 1] = '\0';
+	return namebuf;
+}
 
 struct hostent *ksr_gethostbyname(const char *name)
 {
@@ -89,15 +120,22 @@ struct hostent *ksr_gethostbyname(const char *name)
 	static unsigned char addr_buf[KSR_GETHOSTBYNAME_ADDRS]
 								 [sizeof(struct in6_addr)];
 	static char name_buf[MAX_DNS_NAME];
+	char query_name_buf[KSR_DNS_QUERY_NAME_SIZE];
 	struct addrinfo hints;
 	struct addrinfo *res = NULL;
 	struct addrinfo *ai;
 	const char *hname;
+	const char *query_name;
 	int af;
 	int hlen;
 	int i;
 
 	if(name == NULL || *name == '\0') {
+		return NULL;
+	}
+	query_name =
+			ksr_dns_query_name(name, query_name_buf, sizeof(query_name_buf));
+	if(query_name == NULL) {
 		return NULL;
 	}
 
@@ -110,7 +148,7 @@ struct hostent *ksr_gethostbyname(const char *name)
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_ADDRCONFIG;
 
-	if(getaddrinfo(name, NULL, &hints, &res) != 0 || res == NULL) {
+	if(getaddrinfo(query_name, NULL, &hints, &res) != 0 || res == NULL) {
 		return NULL;
 	}
 
@@ -287,6 +325,8 @@ static inline void ksr_dns_resolver_log_success(
 struct hostent *_resolvehost(char *name)
 {
 	static struct hostent *he = 0;
+	char query_name_buf[KSR_DNS_QUERY_NAME_SIZE];
+	const char *query_name;
 	int resolver_error;
 #ifdef HAVE_GETIPNODEBYNAME
 	int err;
@@ -319,24 +359,36 @@ struct hostent *_resolvehost(char *name)
 		}
 	}
 #endif
+	query_name =
+			ksr_dns_query_name(name, query_name_buf, sizeof(query_name_buf));
+	if(query_name == NULL) {
+		return NULL;
+	}
 	/* ipv4 */
 	h_errno = 0;
-	he = dns_func.sr_gethostbyname(name);
+	he = dns_func.sr_gethostbyname(query_name);
 	resolver_error = h_errno;
 	if(he == 0) {
-		ksr_dns_resolver_log_failure(name, AF_INET, resolver_error);
+		ksr_dns_resolver_log_failure(query_name, AF_INET, resolver_error);
 	} else {
-		ksr_dns_resolver_log_success(name, AF_INET, he);
+		ksr_dns_resolver_log_success(query_name, AF_INET, he);
 	}
 
 	if(he == 0 && cfg_get(core, core_cfg, dns_try_ipv6)) {
 #ifndef DNS_IP_HACK
 	skip_ipv4:
+		query_name = ksr_dns_query_name(
+				name, query_name_buf, sizeof(query_name_buf));
+		if(query_name == NULL) {
+			if(len)
+				name[len - 2] = ']'; /* restore */
+			return NULL;
+		}
 #endif
 		/*try ipv6*/
 #ifdef HAVE_GETHOSTBYNAME2
 		h_errno = 0;
-		he = dns_func.sr_gethostbyname2(name, AF_INET6);
+		he = dns_func.sr_gethostbyname2(query_name, AF_INET6);
 		resolver_error = h_errno;
 #elif defined HAVE_GETIPNODEBYNAME
 		/* on solaris 8 getipnodebyname has a memory leak,
@@ -345,15 +397,15 @@ struct hostent *_resolvehost(char *name)
 		if(he2)
 			freehostent(he2);
 		err = 0;
-		he = he2 = getipnodebyname(name, AF_INET6, 0, &err);
+		he = he2 = getipnodebyname(query_name, AF_INET6, 0, &err);
 		resolver_error = err;
 #else
 #error neither gethostbyname2 or getipnodebyname present
 #endif
 		if(he == 0) {
-			ksr_dns_resolver_log_failure(name, AF_INET6, resolver_error);
+			ksr_dns_resolver_log_failure(query_name, AF_INET6, resolver_error);
 		} else {
-			ksr_dns_resolver_log_success(name, AF_INET6, he);
+			ksr_dns_resolver_log_success(query_name, AF_INET6, he);
 		}
 #ifndef DNS_IP_HACK
 		if(len)
@@ -363,7 +415,7 @@ struct hostent *_resolvehost(char *name)
 		LOG(ksr_dns_resolver_log_level(),
 				"system resolver: name=\"%s\" IPv6 fallback=skipped "
 				"dns_try_ipv6=0\n",
-				name);
+				query_name);
 	}
 	return he;
 }
@@ -1106,6 +1158,8 @@ struct rdata *get_record(char *name, int type, int flags)
 	struct srv_rdata *crt_srv;
 	int search_list_used;
 	int name_len;
+	char query_name_buf[KSR_DNS_QUERY_NAME_SIZE];
+	const char *query_name;
 	struct rdata *fullname_rd;
 	char c;
 	struct timeval start, stop;
@@ -1132,6 +1186,11 @@ struct rdata *get_record(char *name, int type, int flags)
 	} else {
 		search_list_used = 1;
 	}
+	query_name =
+			ksr_dns_query_name(name, query_name_buf, sizeof(query_name_buf));
+	if(query_name == NULL) {
+		return 0;
+	}
 	fullname_rd = 0;
 
 	counter_inc(dns_cnts_h.total_dns_req);
@@ -1141,11 +1200,13 @@ struct rdata *get_record(char *name, int type, int flags)
 
 	LOG(log_level,
 			"dns query: name=\"%s\" type=%s(%d) class=IN parser_flags=0x%x "
-			"search_list=%s\n",
-			name, ksr_dns_type_name((unsigned short)type), type, flags,
-			search_list_used ? "enabled" : "disabled");
+			"search_list=%s root_dot_added=%s\n",
+			query_name, ksr_dns_type_name((unsigned short)type), type, flags,
+			search_list_used ? "enabled" : "disabled",
+			(query_name == name) ? "no" : "yes");
 	h_errno = 0;
-	size = dns_func.sr_res_search(name, C_IN, type, buff.buff, sizeof(buff));
+	size = dns_func.sr_res_search(
+			query_name, C_IN, type, buff.buff, sizeof(buff));
 	resolver_error = h_errno;
 	response_size = size;
 
@@ -1155,7 +1216,7 @@ struct rdata *get_record(char *name, int type, int flags)
 						 + (stop.tv_usec - start.tv_usec) / 1000;
 		if(slow_query_ms < latency_ms) {
 			LOG(cfg_get(core, core_cfg, latency_log),
-					"res_search[%d][%s]elapsed[%dms]\n", type, name,
+					"res_search[%d][%s]elapsed[%dms]\n", type, query_name,
 					latency_ms);
 			counter_inc(dns_cnts_h.slow_dns_req);
 		}
@@ -1165,7 +1226,7 @@ struct rdata *get_record(char *name, int type, int flags)
 		LOG(log_level,
 				"dns response: name=\"%s\" type=%s(%d) result=failed "
 				"h_errno=%d h_error=\"%s\"\n",
-				name, ksr_dns_type_name((unsigned short)type), type,
+				query_name, ksr_dns_type_name((unsigned short)type), type,
 				resolver_error, ksr_dns_herror_name(resolver_error));
 		LM_DBG("lookup(%s, %d) failed\n", name, type);
 		goto not_found;

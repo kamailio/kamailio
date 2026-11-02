@@ -359,6 +359,7 @@ extern char *default_routename;
 %token DNS_RETR_NO
 %token DNS_SERVERS_NO
 %token DNS_USE_SEARCH
+%token DNS_QUERY_ABSOLUTE
 %token DNS_SEARCH_FMATCH
 %token DNS_NAPTR_IGNORE_RFC
 %token DNS_CACHE_INIT
@@ -1027,6 +1028,10 @@ assign_stm:
 	| DNS_SERVERS_NO error { yyerror("number expected"); }
 	| DNS_USE_SEARCH EQUAL NUMBER   { default_core_cfg.dns_search_list=$3; }
 	| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
+	| DNS_QUERY_ABSOLUTE EQUAL NUMBER {
+		default_core_cfg.dns_query_absolute=$3;
+	}
+	| DNS_QUERY_ABSOLUTE error { yyerror("boolean value expected"); }
 	| DNS_SEARCH_FMATCH EQUAL NUMBER   { default_core_cfg.dns_search_fmatch=$3; }
 	| DNS_SEARCH_FMATCH error { yyerror("boolean value expected"); }
 	| DNS_NAPTR_IGNORE_RFC EQUAL NUMBER   { default_core_cfg.dns_naptr_ignore_rfc=$3; }

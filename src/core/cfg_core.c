@@ -83,6 +83,7 @@ struct cfg_group_core default_core_cfg = {
 		-1, /*!< dns_retr_no */
 		-1, /*!< dns_servers_no */
 		1,	/*!< dns_search_list */
+		0,	/*!< dns_query_absolute */
 		1,	/*!< dns_search_fmatch */
 		0,	/*!< dns_reinit */
 		1,	/*!< dns_naptr_ignore_rfc */
@@ -238,6 +239,10 @@ cfg_def_t core_cfg_def[] = {
 				"/etc/resolv.conf will be used"},
 		{"dns_use_search_list", CFG_VAR_INT, 0, 1, 0, resolv_reinit,
 				"if set to 0, the search list in /etc/resolv.conf is ignored"},
+		{"dns_query_absolute", CFG_VAR_INT, 0, 1, 0, 0,
+				"append the root dot to DNS query names when the search list "
+				"is "
+				"disabled"},
 		{"dns_search_full_match", CFG_VAR_INT, 0, 1, 0, 0,
 				"enable/disable domain name checks against the search list "
 				"in DNS answers"},
