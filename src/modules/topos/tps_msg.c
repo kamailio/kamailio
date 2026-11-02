@@ -52,7 +52,7 @@
 #include "tps_storage.h"
 
 extern int _tps_param_mask_callid;
-extern int _tps_contact_mode;
+extern int _tps_key_location;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
 extern int _tps_header_mode;
@@ -254,7 +254,8 @@ int tps_get_uri_type(str *uri, int *mode, str *value)
 /**
  *
  */
-static int tps_extract_uuid_from_uri(str *uri, int ctmode, tps_data_t *ptsd)
+static int tps_extract_uuid_from_uri(
+		str *uri, int key_location, tps_data_t *ptsd)
 {
 	struct sip_uri puri;
 	int ret;
@@ -271,8 +272,7 @@ static int tps_extract_uuid_from_uri(str *uri, int ctmode, tps_data_t *ptsd)
 		return -1;
 	}
 
-	if(ctmode == TPS_CONTACT_MODE_RURIUSER
-			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
+	if(key_location == TPS_KEY_LOCATION_PARAM) {
 		if(puri.sip_params.len > 0) {
 			ret = tps_get_param_value(
 					&puri.sip_params, &_tps_cparam_name, &tuuid);
@@ -344,7 +344,7 @@ static int tps_unmask_refer_to(
 	memset(&ltsd, 0, sizeof(tps_data_t));
 	memset(&rtsd, 0, sizeof(tps_data_t));
 
-	ret = tps_extract_uuid_from_uri(uri, _tps_contact_mode, &ltsd);
+	ret = tps_extract_uuid_from_uri(uri, _tps_key_location, &ltsd);
 	if(ret != 0) {
 		return (ret > 0) ? 0 : -1;
 	}
@@ -377,7 +377,7 @@ static int tps_unmask_refer_to(
 		return -1;
 	}
 
-	vuri.s = (char*)pkg_malloc(nuri.len + 1);
+	vuri.s = (char *)pkg_malloc(nuri.len + 1);
 	if(vuri.s == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
@@ -477,7 +477,7 @@ error:
 /**
  *
  */
-int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
+int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int key_location)
 {
 	str tuuid = STR_NULL;
 	int ret;
@@ -489,8 +489,7 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 		return -1;
 	}
 
-	if(ctmode == TPS_CONTACT_MODE_RURIUSER
-			|| ctmode == TPS_CONTACT_MODE_XAVPUSER) {
+	if(key_location == TPS_KEY_LOCATION_PARAM) {
 		if(msg->parsed_uri.sip_params.len < TPS_TUUID_MIN_LEN) {
 			LM_DBG("not an expected param format\n");
 			return 1;
@@ -1143,7 +1142,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		return -1;
 	}
 
-	ret = tps_dlg_message_update(msg, &mtsd, _tps_contact_mode);
+	ret = tps_dlg_message_update(msg, &mtsd, _tps_key_location);
 	if(ret < 0) {
 		LM_ERR("failed to update on dlg message\n");
 		return -1;
