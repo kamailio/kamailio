@@ -63,6 +63,7 @@
 #include "tls_locking.h"
 #include "tls_ct_wrq.h"
 #include "tls_cfg.h"
+#include "tls_openssl.h"
 
 /* will be set to 1 when the TLS env is initialized to make destroy safe */
 static int tls_mod_preinitialized = 0;
@@ -174,6 +175,11 @@ sr_tls_methods_t sr_tls_methods[TLS_METHOD_MAX];
 #undef TLS_MALLOC_DBG /* extra malloc debug info from openssl */
 #endif				  /* NO_TLS_MALLOC_DBG */
 
+/* mode 0: libssl allocates from shm through these hooks */
+#ifndef KSR_TLS_LIBSSL_COMPAT
+#define KSR_TLS_MEM_HOOKS
+#endif
+
 /*
  * Wrappers around SER shared memory functions
  * (which can be macros)
@@ -188,6 +194,7 @@ sr_tls_methods_t sr_tls_methods[TLS_METHOD_MAX];
 */
 
 
+#ifdef KSR_TLS_MEM_HOOKS
 inline static char *buf_append(char *buf, char *end, char *str, int str_len)
 {
 	if((buf + str_len) < end) {
@@ -334,9 +341,11 @@ static void ser_free(void *ptr, const char *fname, int fline)
 	}
 }
 
+#endif /* KSR_TLS_MEM_HOOKS */
 
 #else /*TLS_MALLOC_DBG */
 
+#ifdef KSR_TLS_MEM_HOOKS
 
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
 static void *ser_malloc(size_t size)
@@ -371,7 +380,6 @@ static void *ser_realloc(void *ptr, size_t size, const char *fname, int fline)
 }
 #endif
 
-
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
 static void ser_free(void *ptr)
 {
@@ -394,6 +402,8 @@ static void ser_free(void *ptr, const char *fname, int fline)
 	}
 }
 #endif
+
+#endif /* KSR_TLS_MEM_HOOKS */
 
 #endif /* TLS_MALLOC_DBG */
 
@@ -661,6 +671,7 @@ end:
  */
 int tls_pre_init(void)
 {
+#ifdef KSR_TLS_MEM_HOOKS
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
 	void *(*mf)(size_t) = NULL;
 	void *(*rf)(void *, size_t) = NULL;
@@ -714,6 +725,7 @@ int tls_pre_init(void)
 		LM_DBG("updated memory functions - malloc: %p realloc: %p free: %p\n",
 				ser_malloc, ser_realloc, ser_free);
 	}
+#endif /* KSR_TLS_MEM_HOOKS */
 
 	if(tls_init_locks() < 0)
 		return -1;

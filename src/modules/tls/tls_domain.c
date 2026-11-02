@@ -100,7 +100,7 @@ static void setup_ecdh(SSL_CTX *ctx)
 /*
  * not needed for OpenSSL 1.1.0+
  */
-#if !defined(SSL_CTX_set_dh_auto)
+#if !defined(SSL_CTX_set_dh_auto) && !defined(OPENSSL_IS_AWSLC)
 static unsigned char dh3072_p[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 		0xFF, 0xC9, 0x0F, 0xDA, 0xA2, 0x21, 0x68, 0xC2, 0x34, 0xC4, 0xC6, 0x62,
 		0x8B, 0x80, 0xDC, 0x1C, 0xD1, 0x29, 0x02, 0x4E, 0x08, 0x8A, 0x67, 0xCC,
@@ -146,7 +146,7 @@ static void setup_dh(SSL_CTX *ctx)
  * not needed for OpenSSL 1.1.0+
  * DH_new() is deprecated in OpenSSL 3
  */
-#if !defined(SSL_CTX_set_dh_auto)
+#if !defined(SSL_CTX_set_dh_auto) && !defined(OPENSSL_IS_AWSLC)
 	DH *dh;
 	BIGNUM *p;
 	BIGNUM *g;
@@ -172,7 +172,7 @@ static void setup_dh(SSL_CTX *ctx)
 	SSL_CTX_set_tmp_dh(ctx, dh);
 
 	DH_free(dh);
-#else
+#elif !defined(OPENSSL_IS_AWSLC)
 	SSL_CTX_set_dh_auto(ctx, 1);
 #endif
 }
@@ -915,7 +915,7 @@ static int set_ssl_options(tls_domain_t *d)
 	int i;
 	int procs_no;
 	long options;
-#if OPENSSL_VERSION_NUMBER >= 0x00908000L
+#if OPENSSL_VERSION_NUMBER >= 0x00908000L && !defined(OPENSSL_IS_AWSLC)
 	long ssl_version;
 	STACK_OF(SSL_COMP) * comp_methods;
 #endif
@@ -925,7 +925,7 @@ static int set_ssl_options(tls_domain_t *d)
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	options |= SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
 			   | SSL_OP_CIPHER_SERVER_PREFERENCE;
-#if OPENSSL_VERSION_NUMBER >= 0x00908000L
+#if OPENSSL_VERSION_NUMBER >= 0x00908000L && !defined(OPENSSL_IS_AWSLC)
 	ssl_version = SSLeay();
 	if((ssl_version >= 0x0090800L) && (ssl_version < 0x0090803fL)) {
 		/* if 0.9.8 <= openssl version < 0.9.8c and compression support is
@@ -1011,6 +1011,7 @@ static int tls_ssl_ctx_mode(SSL_CTX *ctx, long mode, void *clear)
 }
 
 
+#ifndef OPENSSL_NO_BUF_FREELISTS
 /**
  * @brief TLS set ctx->free_list_max_len
  * @param ctx TLS context
@@ -1033,6 +1034,7 @@ static int tls_ssl_ctx_set_freelist(SSL_CTX *ctx, long val, void *unused)
 #endif
 	return 0;
 }
+#endif
 
 /**
  * @brief TLS SSL_CTX_set_max_send_fragment wrapper
@@ -1454,7 +1456,10 @@ static int ksr_passwd_cfg_cb2(char *buf, int size, int rwflag, void *tlsd)
  */
 static int ksr_passwd_ui_cb(char *buf, int size, int rwflag, void *filename)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+#if defined(OPENSSL_IS_AWSLC)
+	ERR("aws-lc: no passphrase prompt, set private_key_password\n");
+	return 0;
+#elif OPENSSL_VERSION_NUMBER >= 0x00907000L
 	UI *ui;
 	const char *prompt;
 

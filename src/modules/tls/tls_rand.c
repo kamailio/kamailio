@@ -29,8 +29,9 @@
 
 #include "tls_rand.h"
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L        \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L \
+		&& !defined(KSR_TLS_LIBSSL_COMPAT)
 
 #include "../../core/dprint.h"
 #include "../../core/locking.h"

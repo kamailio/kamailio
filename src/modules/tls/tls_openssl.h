@@ -27,9 +27,17 @@
 #define _TLS_OPENSSL_H
 
 #include <openssl/opensslv.h>
+#include <openssl/opensslconf.h> /* OPENSSL_NO_* */
 
 #ifdef LIBRESSL_VERSION_NUMBER
 #error "LibreSSL is not supported"
+#endif
+
+/* the OpenSSL 1.1.1 API without the custom RAND method, allocator hooks
+ * and per-thread state; modes 1/2. _NAME names the library in messages */
+#if defined(OPENSSL_IS_AWSLC)
+#define KSR_TLS_LIBSSL_COMPAT
+#define KSR_TLS_LIBSSL_COMPAT_NAME "AWS-LC"
 #endif
 
 /* OpenSSL ENGINE API (deprecated in OpenSSL 3) */

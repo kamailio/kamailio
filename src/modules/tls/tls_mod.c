@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <pthread.h> /* pthread_atfork(): AWS-LC headers skip it */
 #include <openssl/crypto.h>
 #include "../../core/locking.h"
 #include "../../core/sr_module.h"
@@ -397,7 +398,7 @@ static tls_domains_cfg_t* tls_use_modparams(void)
  */
 static void tls_atfork_prepare(void)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(KSR_TLS_LIBSSL_COMPAT)
 	OPENSSL_thread_stop();
 #endif
 }
@@ -423,6 +424,14 @@ static int mod_init(void)
 	}
 #endif /*  OPENSSL_VERSION_NUMBER*/
 
+#if defined(KSR_TLS_LIBSSL_COMPAT)
+	/* libssl in one process: modes 1/2 */
+	if(ksr_tcp_main_threads == 0) {
+		LM_ERR("%s requires tcp_main_threads = 1 or 2\n",
+				KSR_TLS_LIBSSL_COMPAT_NAME);
+		return -1;
+	}
+#else
 	/* mode 0: an SSL* carries its creator's key into other processes;
 	 * per-process thread ids make RSA blinding take its lock there */
 	if(ksr_tcp_main_threads == 0) {
@@ -433,6 +442,7 @@ static int mod_init(void)
 			tls_pthread_self_ns = 1;
 		}
 	}
+#endif
 
 	if(ksr_tls_shared_ctx && ksr_tcp_main_threads != 0) {
 		LM_INFO("use_shared_context: tcp_main_threads=%d has one SSL_CTX "
@@ -750,8 +760,9 @@ static void mod_destroy(void)
 
 int ksr_rand_engine_param(modparam_t type, void *val)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L        \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L \
+		&& !defined(KSR_TLS_LIBSSL_COMPAT)
 	str *reng;
 
 	if(val == NULL) {
@@ -927,8 +938,9 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
          * GH #3695: OpenSSL 1.1.1 historical note: it is no longer
          * needed to replace RAND with cryptorand
          */
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L        \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L \
+		&& !defined(KSR_TLS_LIBSSL_COMPAT)
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE) {
 		LM_WARN("OpenSSL 1.1.1 setting cryptorand random engine\n");
 		RAND_set_rand_method(RAND_ksr_cryptorand_method());
