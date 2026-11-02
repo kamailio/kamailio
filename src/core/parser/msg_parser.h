@@ -152,8 +152,8 @@ typedef enum request_method
 #define KSR_SIP_PARSER_MODE_STRICT_EAGER 2
 
 /* both strict modes reject bad headers and duplicate SIP quad fields */
-#define KSR_SIP_PARSER_MODE_IS_STRICT(mode)                                \
-	((mode) == KSR_SIP_PARSER_MODE_STRICT_LAZY                             \
+#define KSR_SIP_PARSER_MODE_IS_STRICT(mode)    \
+	((mode) == KSR_SIP_PARSER_MODE_STRICT_LAZY \
 			|| (mode) == KSR_SIP_PARSER_MODE_STRICT_EAGER)
 
 #define IFISMETHOD(methodname, firstchar)                                  \

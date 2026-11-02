@@ -95,7 +95,7 @@ int get_hdr_field(char *const buf, char *const end, struct hdr_field *const hdr,
 	struct via_body *vb;
 	struct cseq_body *cseq_b;
 	struct to_body *to_b;
-	int integer, err;
+	int integer, err, parse_rc;
 	unsigned uval;
 
 	if(next)
@@ -144,10 +144,12 @@ int get_hdr_field(char *const buf, char *const end, struct hdr_field *const hdr,
 			}
 			memset(vb, 0, sizeof(struct via_body));
 			hdr->body.s = tmp;
-			tmp = parse_via(tmp, end, vb);
+			tmp = parse_via_ex(tmp, end, vb, &parse_rc);
 			if(vb->error == PARSE_ERROR) {
 				ERR("bad via\n");
 				free_via_list(vb);
+				if(parse_rc == E_OUT_OF_MEM)
+					return parse_rc;
 				goto error;
 			}
 			hdr->parsed = vb;
@@ -176,8 +178,10 @@ int get_hdr_field(char *const buf, char *const end, struct hdr_field *const hdr,
 					cseq_b->method.len, cseq_b->method.s);
 			break;
 		case HDR_FROM_T:
-			tmp = parse_to_body(tmp, end, hdr);
+			tmp = parse_to_body_ex(tmp, end, hdr, &parse_rc);
 			if(tmp == NULL) {
+				if(parse_rc == E_OUT_OF_MEM)
+					return parse_rc;
 				goto error;
 			}
 			to_b = (struct to_body *)hdr->parsed;
@@ -188,8 +192,10 @@ int get_hdr_field(char *const buf, char *const end, struct hdr_field *const hdr,
 					to_b->tag_value.len, ZSW(to_b->tag_value.s));
 			break;
 		case HDR_TO_T:
-			tmp = parse_to_body(tmp, end, hdr);
+			tmp = parse_to_body_ex(tmp, end, hdr, &parse_rc);
 			if(tmp == NULL) {
+				if(parse_rc == E_OUT_OF_MEM)
+					return parse_rc;
 				goto error;
 			}
 			to_b = (struct to_body *)hdr->parsed;
