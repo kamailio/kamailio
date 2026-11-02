@@ -380,33 +380,30 @@ static inline void wb_timer(urecord_t *_r)
 	cstate_t old_state;
 	int op;
 	int res;
+	int rgone;
 
 	ptr = _r->contacts;
 
 	while(ptr) {
+		rgone = 0;
 		if(ul_handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
 			LM_DBG("tcp connection has been lost, deleting contact %.*s\n",
 					ptr->c.len, ptr->c.s);
-			t = ptr;
-			ptr = ptr->next;
-			if(delete_ucontact(_r, t) < 0) {
-				LM_ERR("failed to delete contact with lost tcp connection\n");
-			}
-			continue;
-		}
-
-		if(!VALID_CONTACT(ptr, ul_act_time)) {
-			/* run callbacks for EXPIRE event */
-			if(exists_ulcb_type(UL_CONTACT_EXPIRE)) {
-				run_ul_callbacks(UL_CONTACT_EXPIRE, ptr);
-			}
-
+			rgone = 2;
+		} else if(!VALID_CONTACT(ptr, ul_act_time)) {
 			LM_DBG("Binding '%.*s','%.*s' has expired\n", ptr->aor->len,
 					ZSW(ptr->aor->s), ptr->c.len, ZSW(ptr->c.s));
 			update_stat(_r->slot->d->expires, 1);
-
 			if(ul_close_expired_tcp && is_valid_tcpconn(ptr)) {
 				close_connection(ptr->tcpconn_id);
+			}
+			rgone = 1;
+		}
+
+		if(rgone != 0) {
+			/* run callbacks for EXPIRE event */
+			if(exists_ulcb_type(UL_CONTACT_EXPIRE)) {
+				run_ul_callbacks(UL_CONTACT_EXPIRE, ptr);
 			}
 
 			t = ptr;
