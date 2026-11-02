@@ -214,9 +214,12 @@ int ksr_tcpx_task_result_recv(tcpx_task_result_t **rtask, int pidx)
 			ksr_tcp_main_eresult = NULL;
 			return 0;
 		}
-		/* mode 2 + mtops: block for response */
-		received = receive_fd(
-				unix_tcp_sock, resp, sizeof(resp), &fd_unused, MSG_WAITALL);
+		/* mode 2 + mtops: block for response; skip a connect result left
+		 * over from a timed out tcp_reactor_connect_put() */
+		do {
+			received = receive_fd(
+					unix_tcp_sock, resp, sizeof(resp), &fd_unused, MSG_WAITALL);
+		} while(received == (int)sizeof(resp) && resp[1] == CONN_CONNECT_DONE);
 		if(received != (int)sizeof(resp) || resp[1] != CONN_TCPX_TASK_DONE) {
 			LM_ERR("failed/invalid tcpx task result recv from PROC_TCP_MAIN"
 				   " (n=%d)\n",

@@ -4522,7 +4522,7 @@ inline static int handle_ser_child(struct process_table *p, int fd_i)
 			break;
 		case CONN_CONNECT_REQ:
 			tcp_reactor_handle_connect_req(
-					(tcp_reactor_connect_req_t *)response[0]);
+					(tcp_reactor_connect_req_t *)response[0], (int)(p - pt));
 			break;
 		case CONN_TCPX_TASK_REQ:
 			/* mode 2 + mtops: send task to PROC_TCP_MAIN; needed by

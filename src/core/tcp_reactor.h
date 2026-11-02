@@ -94,6 +94,7 @@ typedef struct tcp_reactor_connect_req
 	unsigned int len;
 	ksr_coninfo_t cinfo; /* tls server_name/server_id (shm), for the lookup
 						  * and the new conn */
+	long token;			 /* reply cookie: per-process sequence, bit 0 clear */
 } tcp_reactor_connect_req_t;
 
 /* mode 2 [pool]: hand one reassembled message to a worker, where modes 0/1
@@ -145,7 +146,7 @@ int tcp_reactor_enable_write_watch(struct tcp_connection *c);
 int tcp_reactor_handle_tcpconn_ev(
 		struct tcp_connection *tcpconn, short ev, int fd_i);
 void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq);
-void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq);
+void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq, int pidx);
 void tcp_reactor_handle_tls_event_done(struct tcp_connection *tcpconn);
 void tcp_reactor_handle_script_close(int scid);
 void tcp_reactor_mark_bad_put(struct tcp_connection *c);

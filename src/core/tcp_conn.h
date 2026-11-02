@@ -225,6 +225,10 @@ typedef enum conn_cmds
 	CONN_FREE_REQ /* modes 1/2: a process other than tcp_main dropped the last
 				   * ref of a TLS/WSS connection; response[0] is the
 				   * tcp_connection*, tcp_main frees it (and its TLS state) */
+	,
+	CONN_CONNECT_DONE /* mode 2: PROC_TCP_MAIN answers a CONN_CONNECT_REQ over the
+					   * requester's unix_sock; response[0] is the request's
+					   * token, bit 0 set when the connect failed at once */
 } conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */

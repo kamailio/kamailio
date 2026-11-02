@@ -86,6 +86,7 @@
 #include "mem/shm_mem.h"
 #include "mem/pkg.h"
 #include "pass_fd.h"  /* send_all() */
+#include "pt.h"		  /* pt[], get_max_procs() */
 #include "tcp_conn.h" /* struct tcp_connection, tcpconn_ref/put, F_TCP_REQ_*,
 						 * tcpconn_try_unhash()/_put_destroy()/etc. and the
 						 * tcpmain_* io_h/timer wrappers */
@@ -94,6 +95,7 @@
 #include "tcp_int_send.h" /* _tcpconn_write_nb() */
 #include "tcp_stats.h"
 #include "tcp_ev.h"
+#include "dst_blocklist.h"
 #include "tcp_reactor_mem.h" /* tcp_reactor_pkg_lock_install() */
 #include "tcp_mtops.h"		 /* tcpx_task_t, KSR_TCPX_MAIN_PIDX */
 #include "tcp_server.h"		 /* ksr_tcp_reactor_get_dispatch_wfd() */
@@ -1056,19 +1058,60 @@ static void tcp_reactor_connect_req_free(tcp_reactor_connect_req_t *creq)
 	shm_free(creq);
 }
 
+/* mode 2 [worker]: wait for tcp main's CONN_CONNECT_DONE that carries token;
+ * a reply left over from an earlier timed out wait carries an older token
+ * and is skipped.
+ * Returns -1 when the connect failed at once, else 0 (also when no reply
+ * arrives within TCP_REACTOR_CONNECT_WAIT_MS: the request stays queued) */
+#define TCP_REACTOR_CONNECT_WAIT_MS 2000
+static int tcp_reactor_connect_wait(long token)
+{
+	struct pollfd pfd;
+	long resp[2];
+	int fd_unused = -1;
+	int n;
+
+	for(;;) {
+		pfd.fd = unix_tcp_sock;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		n = poll(&pfd, 1, TCP_REACTOR_CONNECT_WAIT_MS);
+		if(n < 0 && errno == EINTR)
+			continue;
+		if(n <= 0) {
+			LM_WARN("no connect result from tcp main within %d ms\n",
+					TCP_REACTOR_CONNECT_WAIT_MS);
+			return 0;
+		}
+		n = receive_fd(
+				unix_tcp_sock, resp, sizeof(resp), &fd_unused, MSG_WAITALL);
+		if(n != (int)sizeof(resp)) {
+			LM_ERR("failed to read the connect result from tcp main (%d)\n", n);
+			return 0;
+		}
+		if(resp[1] == CONN_CONNECT_DONE && (resp[0] & ~1L) == token)
+			return (resp[0] & 1L) ? -1 : 0;
+		LM_DBG("skipping a stale reply (cmd %ld)\n", resp[1]);
+	}
+}
+
 /* mode 2 [worker]: the worker lacks a connection to dst: ask PROC_TCP_MAIN to
  * open one and send buf on it.
  *  - copy dst, from and buf into a shm connect request, send it on
  *    unix_tcp_sock as CONN_CONNECT_REQ
  *  - tcp main opens the socket and creates the tcp_connection
- *    (tcp_reactor_handle_connect_req())
- * Returns len when the request is sent (the connect and write are async), -1
- * on error. */
+ *    (tcp_reactor_handle_connect_req()), then replies with the immediate
+ *    connect result: -1 here, as tcp_send() returns in modes 0/1 for a connect
+ *    that fails at once (e.g. no route), so tm can fail the branch now
+ * Returns len when the connect is under way (the connect and write complete
+ * async), -1 on error. */
 int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 		const char *buf, unsigned len)
 {
+	static unsigned long connect_seq = 0;
 	tcp_reactor_connect_req_t *creq;
 	long response[2];
+	long token;
 
 	if(unlikely(is_tcp_main())) {
 		/* a connect from inside PROC_TCP_MAIN: refuse with a clear error.
@@ -1109,6 +1152,10 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 	if((creq->proto == PROTO_TLS || creq->proto == PROTO_WSS)
 			&& tls_hook.connect_info != NULL)
 		tls_hook.connect_info(&creq->cinfo);
+	/* a sequence, unlike the creq address, stays unique after tcp main frees
+	 * creq: a late reply for an earlier request matches no later wait */
+	token = (long)(++connect_seq << 1);
+	creq->token = token;
 
 	response[0] = (long)(uintptr_t)creq;
 	response[1] = CONN_CONNECT_REQ;
@@ -1119,6 +1166,8 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 		tcp_reactor_connect_req_free(creq);
 		return -1;
 	}
+	if(tcp_reactor_connect_wait(token) < 0)
+		return -1;
 	return (int)len;
 }
 
@@ -1226,12 +1275,15 @@ void tcp_reactor_handle_write_req(tcp_reactor_write_req_t *wreq)
 }
 
 /* mode 2 [io_wait]: open, hash and watch a new outbound connection for creq
- * and queue its payload; frees creq */
-static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
+ * and queue its payload; frees creq.
+ * Returns 0 when the connect is under way, -1 when it failed at once */
+static int tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 		union sockaddr_union *cfrom, ticks_t con_lifetime)
 {
 	struct tcp_connection *cc;
 	ticks_t t;
+	int err = 0;
+	socklen_t err_len = sizeof(err);
 
 	/* open the connection (socket + non-blocking connect) here */
 	cc = tcpconn_connect(&creq->dst, cfrom, creq->proto, &creq->send_flags);
@@ -1240,7 +1292,25 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 				su2a(&creq->dst, sizeof(creq->dst)));
 		shm_free(creq->buf);
 		tcp_reactor_connect_req_free(creq);
-		return;
+		return -1;
+	}
+	/* a connect to a local address may fail (e.g. refused) before connect()
+	 * returns: report it now, as the first write does in modes 0/1 */
+	if(unlikely(getsockopt(cc->s, SOL_SOCKET, SO_ERROR, &err, &err_len) == 0
+				&& err != 0)) {
+#ifdef USE_DST_BLOCKLIST
+		(void)dst_blocklist_su(BLST_ERR_CONNECT, cc->rcv.proto, &cc->rcv.src_su,
+				&cc->send_flags, 0);
+#endif /* USE_DST_BLOCKLIST */
+		TCP_EV_CONNECT_ERR(
+				err, TCP_LADDR(cc), TCP_LPORT(cc), TCP_PSU(cc), TCP_PROTO(cc));
+		TCP_STATS_CONNECT_FAILED();
+		tcp_safe_close(cc->s);
+		cc->flags |= F_CONN_FD_CLOSED;
+		_tcpconn_free(cc);
+		shm_free(creq->buf);
+		tcp_reactor_connect_req_free(creq);
+		return -1;
 	}
 	/* tls: the worker's server_name/server_id select the client profile
 	 * and the sni in tls_complete_init() */
@@ -1260,7 +1330,7 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 		_tcpconn_free(cc);
 		shm_free(creq->buf);
 		tcp_reactor_connect_req_free(creq);
-		return;
+		return -1;
 	}
 	tcpmain_note_new_conn(cc->type == PROTO_TLS);
 	/* queue the payload; for TLS, tls_encode() buffers it until the
@@ -1273,7 +1343,7 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 		tcpconn_put_destroy(cc);
 		shm_free(creq->buf);
 		tcp_reactor_connect_req_free(creq);
-		return;
+		return -1;
 	}
 	shm_free(creq->buf);
 	tcp_reactor_connect_req_free(creq);
@@ -1290,16 +1360,48 @@ static void tcp_reactor_connect_new(tcp_reactor_connect_req_t *creq,
 		cc->flags &= ~(F_CONN_WRITE_W | F_CONN_READ_W);
 		tcpconn_try_unhash(cc);
 		tcpconn_put_destroy(cc);
+		return -1;
 	}
+	return 0;
 }
+
+/* mode 2 [io_wait]: answer the worker waiting in tcp_reactor_connect_put():
+ * response[0] = its request token, bit 0 set when ret < 0 */
+static void tcp_reactor_connect_done(int pidx, long token, int ret)
+{
+	long resp[2];
+
+	if(unlikely(pidx < 0 || pidx >= get_max_procs()
+				|| pt[pidx].unix_sock <= 0)) {
+		LM_ERR("invalid pidx %d for the connect result\n", pidx);
+		return;
+	}
+	resp[0] = token | ((ret < 0) ? 1L : 0L);
+	resp[1] = CONN_CONNECT_DONE;
+	if(unlikely(send_all(pt[pidx].unix_sock, resp, sizeof(resp)) <= 0))
+		LM_ERR("failed to send the connect result to pidx %d\n", pidx);
+}
+
+static int tcp_reactor_connect_do(tcp_reactor_connect_req_t *creq);
 
 /* mode 2 [io_wait]: CONN_CONNECT_REQ arm of handle_ser_child(); creq comes from
  * tcp_reactor_connect_put() in a worker.
  *  - look dst up again: another worker's request may have opened it since
  *  - found: stage the payload on it (tcp_reactor_stage_write())
  *  - else open a new connection (tcp_reactor_connect_new())
- *  - frees creq and creq->buf on every path */
-void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
+ *  - frees creq and creq->buf on every path
+ *  - replies CONN_CONNECT_DONE to the requester (pidx) with the result */
+void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq, int pidx)
+{
+	/* read the token before tcp_reactor_connect_do() frees creq */
+	long token = creq->token;
+
+	tcp_reactor_connect_done(pidx, token, tcp_reactor_connect_do(creq));
+}
+
+/* mode 2 [io_wait]: the body of tcp_reactor_handle_connect_req().
+ * Returns 0 when the payload is queued, -1 when it was dropped */
+static int tcp_reactor_connect_do(tcp_reactor_connect_req_t *creq)
 {
 	struct tcp_connection *cc;
 	union sockaddr_union *cfrom;
@@ -1330,19 +1432,19 @@ void tcp_reactor_handle_connect_req(tcp_reactor_connect_req_t *creq)
 			tcpconn_destroy(cc);
 			shm_free(creq->buf);
 			tcp_reactor_connect_req_free(creq);
-			return;
+			return -1;
 		}
 		if(unlikely(
 				   (cc->state == S_CONN_BAD) || !(cc->flags & F_CONN_HASHED))) {
 			shm_free(creq->buf);
 			tcp_reactor_connect_req_free(creq);
-			return;
+			return -1;
 		}
 		tcp_reactor_stage_write(cc, creq->buf, creq->len, creq->send_flags);
 		tcp_reactor_connect_req_free(creq);
-		return;
+		return 0;
 	}
-	tcp_reactor_connect_new(creq, cfrom, con_lifetime);
+	return tcp_reactor_connect_new(creq, cfrom, con_lifetime);
 }
 
 /* mode 2 [io_wait]: an event on a pool-owned conn: drop its fd from the watch
