@@ -43,6 +43,12 @@ char *parse_to_body(
 		char *const buffer, const char *const end, struct hdr_field *const hdr);
 
 /*! \brief
+ * Extended variant reporting E_OK, E_UNSPEC or E_OUT_OF_MEM
+ */
+char *parse_to_body_ex(char *const buffer, const char *const end,
+		struct hdr_field *const hdr, int *parse_rc);
+
+/*! \brief
  * To header field parser
  */
 char *parse_to(

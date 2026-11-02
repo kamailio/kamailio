@@ -70,6 +70,12 @@ typedef struct to_body
 char *parse_addr_spec(char *const buffer, const char *const end,
 		struct to_body *const to_b, int allow_comma_separated);
 
+/*! \brief
+ * Extended variant reporting E_OK, E_UNSPEC or E_OUT_OF_MEM
+ */
+char *parse_addr_spec_ex(char *const buffer, const char *const end,
+		struct to_body *const to_b, int allow_comma_separated, int *parse_rc);
+
 void free_to_params(struct to_body *const tb);
 
 void free_to(struct to_body *const tb);
