@@ -18,6 +18,7 @@ Shih-Ping Chan
 
               6.1. crl
               6.2. verify_server_name
+              6.3. renegotiation
 
         7. Additional RPC Commands
 
@@ -40,6 +41,7 @@ Chapter 1. Admin Guide
 
         6.1. crl
         6.2. verify_server_name
+        6.3. renegotiation
 
    7. Additional RPC Commands
 
@@ -145,6 +147,7 @@ bsoftokn3.so&pin-value=12345678[pin-source=....]
 
    6.1. crl
    6.2. verify_server_name
+   6.3. renegotiation
 
    Important differences to the tls module
 
@@ -164,6 +167,20 @@ bsoftokn3.so&pin-value=12345678[pin-source=....]
    On a client profile with verify_client set to optional_no_ca, the name
    is still checked when the certificate chain verifies; the tls module
    accepts any name there.
+
+6.3. renegotiation
+
+   Not supported; the parameter has no effect. wolfSSL as packaged by
+   Debian (built with --enable-distro, see the flags above) and the
+   bundled wolfSSL (--enable-all) are built without secure renegotiation,
+   and the module does not request it. A renegotiation from the peer is
+   refused:
+     * As TLS client: the connection stays on the original session (the
+       server may close it).
+     * As TLS server: the connection is closed.
+
+   The connection information ($tls_* variables, tls.list) always matches
+   the initial handshake.
 
 7. Additional RPC Commands
 
