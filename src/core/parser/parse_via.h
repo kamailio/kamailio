@@ -126,6 +126,11 @@ typedef struct via_body
 char *parse_via(
 		char *buffer, const char *const end, struct via_body *const vbody);
 
+/*
+ * Extended variant reporting E_OK, E_UNSPEC or E_OUT_OF_MEM
+ */
+char *parse_via_ex(char *buffer, const char *const end,
+		struct via_body *const vbody, int *parse_rc);
 
 /*
  * Free allocated memory

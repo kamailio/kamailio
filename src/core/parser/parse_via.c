@@ -1345,8 +1345,8 @@ error:
  * returns: pointer after the parsed parts and sets vb->error
  * WARNING: don't forget to cleanup on error with free_via_list(vb)!
  */
-char *parse_via(
-		char *buffer, const char *const end, struct via_body *const vbody)
+char *parse_via_ex(char *buffer, const char *const end,
+		struct via_body *const vbody, int *parse_rc)
 {
 	char *tmp;
 	char *param_start;
@@ -1359,6 +1359,8 @@ char *parse_via(
 
 	vb = vbody; /* keep original vbody value, needed to set the error member
 				* in case of multiple via bodies in the same header */
+	if(parse_rc)
+		*parse_rc = E_UNSPEC;
 parse_again:
 	vb->error = PARSE_ERROR;
 	/* parse start of via ( SIP/2.0/UDP    )*/
@@ -2537,7 +2539,8 @@ main_via:
 						param = pkg_malloc(sizeof(struct via_param));
 						if(param == 0) {
 							PKG_MEM_ERROR;
-							ser_error = E_OUT_OF_MEM;
+							if(parse_rc)
+								*parse_rc = E_OUT_OF_MEM;
 							goto error;
 						}
 						memset(param, 0, sizeof(struct via_param));
@@ -2715,6 +2718,8 @@ endofpacket:
 			}
 		}
 	}
+	if(parse_rc)
+		*parse_rc = E_OK;
 	return tmp;
 nextvia:
 	DBG("parsing via: next via\n");
@@ -2744,7 +2749,8 @@ nextvia:
 	vb->next = pkg_malloc(sizeof(struct via_body));
 	if(vb->next == 0) {
 		PKG_MEM_ERROR;
-		ser_error = E_OUT_OF_MEM;
+		if(parse_rc)
+			*parse_rc = E_OUT_OF_MEM;
 		goto error;
 	}
 	vb = vb->next;
@@ -2769,6 +2775,11 @@ error:
 	return tmp;
 }
 
+char *parse_via(
+		char *buffer, const char *const end, struct via_body *const vbody)
+{
+	return parse_via_ex(buffer, end, vbody, NULL);
+}
 
 static inline void free_via_param_list(struct via_param *vp)
 {
