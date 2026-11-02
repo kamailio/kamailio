@@ -119,14 +119,18 @@ enum parse_sst_result parse_session_expires_body(struct hdr_field *hf)
 			if(pos + 4 < len) {
 				switch(ksr_ascii_lower_u32(ksr_read_u32le(p))) {
 					case /*refr*/ MAKE_4BYTES('r', 'e', 'f', 'r'):
-						if(pos + 9 <= len
+						if(pos + 10 <= len
 								&& ksr_ascii_lower_u32(ksr_read_u32le(p + 4))
 										   == /*eshe*/ MAKE_4BYTES(
 												   'e', 's', 'h', 'e')
 								&& ksr_ascii_lower_u8((unsigned char)*(p + 8))
 										   == 'r'
 								&& *(p + 9) == '=') {
-							tok = ksr_ascii_lower_u24(ksr_read_u24le(p + 10));
+							/* a value shorter than 3 chars is unrecognized */
+							tok = (pos + 13 <= len)
+										  ? ksr_ascii_lower_u24(
+													ksr_read_u24le(p + 10))
+										  : 0;
 							if(tok == MAKE_3BYTES('u', 'a', 'c')) {
 								se.refresher = sst_refresher_uac;
 								p += 13;
