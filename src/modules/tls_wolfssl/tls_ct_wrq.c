@@ -99,19 +99,19 @@ static int ssl_flush(void *tcp_c, void *error, const void *buf, unsigned size)
 		if(unlikely(n >= 1)) {
 			n = wolfSSL_write(ssl, buf, size);
 			if(unlikely(n <= 0))
-				ssl_error = wolfSSL_get_error(ssl, n);
+				ssl_error = tls_get_error(ssl, n);
 		}
 	} else if(unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 		n = tls_accept(tcp_c, &ssl_error);
 		if(unlikely(n >= 1)) {
 			n = wolfSSL_write(ssl, buf, size);
 			if(unlikely(n <= 0))
-				ssl_error = wolfSSL_get_error(ssl, n);
+				ssl_error = tls_get_error(ssl, n);
 		}
 	} else {
 		n = wolfSSL_write(ssl, buf, size);
 		if(unlikely(n <= 0))
-			ssl_error = wolfSSL_get_error(ssl, n);
+			ssl_error = tls_get_error(ssl, n);
 	}
 
 	*(long *)error = ssl_error;

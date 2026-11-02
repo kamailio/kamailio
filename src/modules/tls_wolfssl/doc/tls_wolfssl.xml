@@ -189,6 +189,29 @@ private_key = pkcs11:token=MyToken;object=MyPrivateKey?module-path=/usr/lib64/li
           chain verifies; the tls module accepts any name there.
 	</para>
 			</section>
+			<section id="tls.p.renegotiation">
+	<title><varname>renegotiation</varname></title>
+	<para>
+          Not supported; the parameter has no effect. wolfSSL as packaged by
+          Debian (built with <emphasis>--enable-distro</emphasis>, see the
+          flags above) and the bundled wolfSSL (<emphasis>--enable-all</emphasis>)
+          are built without secure renegotiation, and the module does not
+          request it. A renegotiation from the peer is refused:
+	</para>
+	<itemizedlist>
+	  <listitem><para>
+          As TLS client: the connection stays on the original session (the
+          server may close it).
+	  </para></listitem>
+	  <listitem><para>
+          As TLS server: the connection is closed.
+	  </para></listitem>
+	</itemizedlist>
+	<para>
+          The connection information (<varname>$tls_*</varname> variables,
+          <function>tls.list</function>) always matches the initial handshake.
+	</para>
+			</section>
 		</section>
 
 

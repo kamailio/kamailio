@@ -85,6 +85,16 @@ typedef struct tls_extra_data
 /* return true if write wants read */
 #define tls_write_wants_read(tls_ed) (tls_ed->flags & F_TLS_CON_WR_WANTS_RD)
 
+/* wolfSSL_get_error() wrapper: wolfSSL returns its own negative codes for
+ * protocol errors (e.g. a fatal alert from the peer): map them to
+ * WOLFSSL_ERROR_SSL, as OpenSSL reports them */
+static inline int tls_get_error(WOLFSSL *ssl, int ret)
+{
+	int err = wolfSSL_get_error(ssl, ret);
+
+	return (err < 0) ? WOLFSSL_ERROR_SSL : err;
+}
+
 
 /*
  * Called when new tcp connection is accepted

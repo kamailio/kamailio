@@ -676,7 +676,7 @@ int tls_accept(struct tcp_connection *c, int *error)
 			LOG(tls_log, "tls_accept: client did not present a certificate\n");
 		}
 	} else { /* ret == 0 or < 0 */
-		*error = wolfSSL_get_error(ssl, ret);
+		*error = tls_get_error(ssl, ret);
 	}
 	return ret;
 err:
@@ -744,7 +744,7 @@ int tls_connect(struct tcp_connection *c, int *error)
 						 "present a certificate\n");
 		}
 	} else { /* 0 or < 0 */
-		*error = wolfSSL_get_error(ssl, ret);
+		*error = tls_get_error(ssl, ret);
 	}
 	return ret;
 err:
@@ -1215,7 +1215,7 @@ redo_wr:
 		if(unlikely(n >= 1)) {
 			n = wolfSSL_write(ssl, buf + offs, len - offs);
 			if(unlikely(n <= 0))
-				ssl_error = wolfSSL_get_error(ssl, n);
+				ssl_error = tls_get_error(ssl, n);
 		} else {
 			/* tls_connect failed/needs more IO */
 			if(unlikely(n < 0 && ssl_error == WOLFSSL_ERROR_NONE))
@@ -1228,7 +1228,7 @@ redo_wr:
 		if(unlikely(n >= 1)) {
 			n = wolfSSL_write(ssl, buf + offs, len - offs);
 			if(unlikely(n <= 0))
-				ssl_error = wolfSSL_get_error(ssl, n);
+				ssl_error = tls_get_error(ssl, n);
 		} else {
 			/* tls_accept failed/needs more IO */
 			if(unlikely(n < 0 && ssl_error == WOLFSSL_ERROR_NONE))
@@ -1238,7 +1238,7 @@ redo_wr:
 	} else {
 		n = wolfSSL_write(ssl, buf + offs, len - offs);
 		if(unlikely(n <= 0))
-			ssl_error = wolfSSL_get_error(ssl, n);
+			ssl_error = tls_get_error(ssl, n);
 	}
 	TLS_WR_TRACE("(%p) wolfSSL_write(%p + %d, %d) => %d (err=%d)\n", c, buf,
 			offs, len - offs, n, ssl_error);
@@ -1746,7 +1746,7 @@ continue_ssl_read:
 			ssl_error = WOLFSSL_ERROR_ZERO_RETURN;
 		} else {
 			if(unlikely(n <= 0)) {
-				ssl_error = wolfSSL_get_error(ssl, n);
+				ssl_error = tls_get_error(ssl, n);
 				err_src = "TLS read:";
 				/*  errors handled below, outside the lock */
 			} else {
