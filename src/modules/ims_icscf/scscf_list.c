@@ -55,6 +55,7 @@ extern struct tm_binds tmb; //Structure with pointers to tm funcs
 
 extern int use_preferred_scscf_uri;
 extern str preferred_scscf_uri;
+extern str ims_icscf_selected_scscf_avp;
 
 int i_hash_size;
 i_hash_slot *i_hash_table = 0;
@@ -695,22 +696,18 @@ void ims_icscf_timer_routine(unsigned int ticks, void *param)
 //we use pseudo variables to communicate back to config file the selected SCSCF
 static int create_selected_scscf_pv(str scscf_name)
 {
-	int rc;
 	int_str avp_val, avp_name;
-	avp_name.s.s = "i_selected_scscf";
-	avp_name.s.len = 16;
+	avp_name.s = ims_icscf_selected_scscf_avp;
 
-	//build avp spec for uaa_return_code
+	// build avp spec for uaa_return_code
 	avp_val.s = scscf_name;
 
-	rc = add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
-
-	if(rc < 0) {
+	if(add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val) < 0) {
 		LM_ERR("couldnt create AVP\n");
 		return 0;
-	} else
-		LM_DBG("created AVP successfully : [%.*s]\n", avp_name.s.len,
-				avp_name.s.s);
+	}
+	LM_DBG("created AVP successfully : [%.*s]\n",
+			STR_FMT(&ims_icscf_selected_scscf_avp));
 
 	return 1;
 }

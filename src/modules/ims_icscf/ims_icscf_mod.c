@@ -94,6 +94,8 @@ int use_preferred_scscf_uri = 0;
 char *cxdx_forced_peer_s = "";
 str cxdx_forced_peer;
 
+str ims_icscf_selected_scscf_avp = str_init("i_selected_scscf");
+
 /**
  * Name of the route, if a user is not found in the HSS (LIR)
  */
@@ -143,6 +145,7 @@ static param_export_t params[] = {
 	{"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
 	{"preferred_scscf_uri", PARAM_STR, &preferred_scscf_uri},
 	{"use_preferred_scscf_uri", PARAM_INT, &use_preferred_scscf_uri},
+	{"selected_scscf_avp", PARAM_STR, &ims_icscf_selected_scscf_avp},
 	{0, 0, 0}
 };
 
