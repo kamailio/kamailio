@@ -123,10 +123,10 @@ static int pkcs11_resolve_pin(const char *raw, char *out, int out_sz)
 			return 0;
 		}
 		fclose(f);
-		/* strip trailing newline */
+		/* strip trailing newline (LF or CRLF) */
 		int n = (int)strlen(out);
-		if(n > 0 && out[n - 1] == '\n')
-			out[n - 1] = '\0';
+		while(n > 0 && (out[n - 1] == '\n' || out[n - 1] == '\r'))
+			out[--n] = '\0';
 		return 1;
 	}
 	/* literal PIN */
@@ -393,6 +393,21 @@ int tls_pkcs11_open_token(WOLFSSL *ssl)
 	return 0;
 }
 
+/* length of the part of a private key setting that is safe to log: for a
+ * pkcs11 URI the query attributes (module-path, pin-value, pin-source) are
+ * left out, so the PIN never reaches the logs */
+int tls_pkcs11_uri_loglen(const char *uri, int len)
+{
+	const char *q;
+
+	if(uri == NULL || len <= 0)
+		return 0;
+	if(len < 7 || strncmp(uri, "pkcs11:", 7) != 0)
+		return len;
+	q = memchr(uri, '?', len);
+	return q ? (int)(q - uri) : len;
+}
+
 int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 {
 	char uri[1024];
@@ -420,7 +435,8 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 		return -1;
 	}
 	if(strncmp(key, "pkcs11:", 7) != 0) {
-		LM_ERR("tls_pkcs11_set_key: not a pkcs11 URI: '%s'\n", key);
+		LM_ERR("tls_pkcs11_set_key: not a pkcs11 URI: '%.*s'\n",
+				tls_pkcs11_uri_loglen(key, strlen(key)), key);
 		return -1;
 	}
 	uri_decode(uri, key + 7);
@@ -444,25 +460,34 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 	}
 
 	if(!lib_path[0]) {
-		LM_ERR("tls_pkcs11_set_key: missing 'module' in URI: '%s'\n", key);
+		LM_ERR("tls_pkcs11_set_key: missing 'module' in URI: '%.*s'\n",
+				tls_pkcs11_uri_loglen(key, strlen(key)), key);
 		return -1;
 	}
 	if(!token_name[0]) {
-		LM_ERR("tls_pkcs11_set_key: missing 'token' in URI: '%s'\n", key);
+		LM_ERR("tls_pkcs11_set_key: missing 'token' in URI: '%.*s'\n",
+				tls_pkcs11_uri_loglen(key, strlen(key)), key);
 		return -1;
 	}
 	if(!obj_name[0]) {
-		LM_ERR("tls_pkcs11_set_key: missing 'object' in URI: '%s'\n", key);
+		LM_ERR("tls_pkcs11_set_key: missing 'object' in URI: '%.*s'\n",
+				tls_pkcs11_uri_loglen(key, strlen(key)), key);
 		return -1;
 	}
 
 	/* Search the cache for an already-initialised (lib, token) pair */
 	pkcs11_token_t *cur_token = NULL;
-	int size = snprintf(NULL, 0, "%s:%s", lib_path, token_name);
-	char *lookup_name = malloc(size + 1);
+	char lookup_name[sizeof(_pkcs11_tokens[0].longname)];
+	int size;
 	int token_slot;
+	WOLFSSL *ssl = NULL;
 
-	snprintf(lookup_name, size + 1, "%s:%s", lib_path, token_name);
+	size = snprintf(
+			lookup_name, sizeof(lookup_name), "%s:%s", lib_path, token_name);
+	if(size < 0 || size >= (int)sizeof(lookup_name)) {
+		LM_ERR("tls_pkcs11_set_key: module path and token name too long\n");
+		return -1;
+	}
 	for(i = 0; i < PKCS11_MAX_DEVS; i++) {
 		if(!_pkcs11_tokens[i].used)
 			break;
@@ -500,22 +525,31 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 			}
 
 			cur_module = &(_pkcs11_modules[i]);
-			cur_module->used = 1;
-			cur_module->module_id = i;
-			int rc = wc_Pkcs11_Initialize(&(cur_module->dev), lib_path, NULL);
 			LM_INFO("Creating a new device: key = %s, slot = %d\n", lib_path,
 					i);
-			if(rc != 0) {
-				LM_ERR("tls_pkcs11_set_key: could not register  modules: %s\n",
+			if(strlen(lib_path) >= sizeof(cur_module->lib)) {
+				LM_ERR("tls_pkcs11_set_key: PKCS#11 module path too long:"
+					   " %s\n",
 						lib_path);
+				return -1;
 			}
+			int rc = wc_Pkcs11_Initialize(&(cur_module->dev), lib_path, NULL);
+			if(rc != 0) {
+				LM_ERR("tls_pkcs11_set_key: could not initialize PKCS#11"
+					   " module: %s (ret=%d)\n",
+						lib_path, rc);
+				return -1;
+			}
+			strcpy(cur_module->lib, lib_path);
+			cur_module->module_id = i;
+			cur_module->used = 1;
 		}
 
-		cur_token->used = 1;
 		cur_token->token_id = token_slot;
 
-		strncpy(cur_token->longname, lookup_name, 254);
-		cur_token->longname[254] = '\0';
+		strncpy(cur_token->longname, lookup_name,
+				sizeof(cur_token->longname) - 1);
+		cur_token->longname[sizeof(cur_token->longname) - 1] = '\0';
 
 		strncpy(cur_token->token, token_name, 127);
 		cur_token->token[127] = '\0';
@@ -525,7 +559,11 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 
 		cur_token->dev = cur_module;
 
-		pkcs11_init_token(&_pkcs11_devices[token_slot].tok, cur_token);
+		if(pkcs11_init_token(&_pkcs11_devices[token_slot].tok, cur_token) < 0) {
+			memset(cur_token, 0, sizeof(*cur_token));
+			return -1;
+		}
+		cur_token->used = 1;
 	}
 
 	int devId = token_slot;
@@ -543,8 +581,8 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 	ctxd->private_key[sizeof(ctxd->private_key) - 1] = '\0';
 
 	if(wc_CryptoCb_RegisterDevice(devId, my_FilterPk, token) != 0) {
-		LM_ERR("pkcs11: failed to register runtime devId=%d token='%s'\n", 0,
-				token_name);
+		LM_ERR("pkcs11: failed to register runtime devId=%d token='%s'\n",
+				devId, token_name);
 		wc_Pkcs11Token_Final(token);
 		return -1;
 	} else {
@@ -559,13 +597,16 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 	if(!check_key) {
 		return 0;
 	}
-	WOLFSSL *ssl;
 	ssl = wolfSSL_new(ctx);
+	if(ssl == NULL) {
+		LM_ERR("tls_pkcs11_set_key: wolfSSL_new failed\n");
+		return -1;
+	}
 	if(wolfSSL_SetDevId(ssl, devId) != WOLFSSL_SUCCESS) {
 		LM_ERR("tls_pkcs11_set_key: wolfSSL_SetDevId failed"
 			   " devId=%d\n",
 				devId);
-		return -1;
+		goto error;
 	}
 
 	/* Register the private key by its PKCS#11 label */
@@ -573,13 +614,13 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 		LM_ERR("tls_pkcs11_set_key: wolfSSL_use_PrivateKey_Label"
 			   " failed label='%s' devId=%d\n",
 				obj_name, devId);
-		return -1;
+		goto error;
 	}
 	if(wolfSSL_check_private_key(ssl) != WOLFSSL_SUCCESS) {
 		LM_ERR("tls_pkcs11_set_key: wolfSSL_check_private_key"
 			   " failed label='%s' devId=%d\n",
 				obj_name, devId);
-		return -1;
+		goto error;
 	}
 
 	wolfSSL_free(ssl);
@@ -589,4 +630,8 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 
 
 	return 0;
+
+error:
+	wolfSSL_free(ssl);
+	return -1;
 }

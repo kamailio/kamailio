@@ -312,7 +312,11 @@ static int ksr_tls_fill_missing(tls_domain_t *d, tls_domain_t *parent)
 			return -1;
 		d->pkey_file.len = parent->pkey_file.len;
 	}
-	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file.s);
+	LM_DBG("%s: private_key='%.*s'\n", tls_domain_str(d),
+			d->pkey_file.s ? tls_pkcs11_uri_loglen(
+									 d->pkey_file.s, strlen(d->pkey_file.s))
+						   : 0,
+			ZSW(d->pkey_file.s));
 
 	if(d->verify_cert == -1)
 		d->verify_cert = parent->verify_cert;
@@ -1015,12 +1019,12 @@ static int load_private_key(tls_domain_t *d)
 			} else {
 				pkcs11_context_t *ctxd;
 				ctxd = pkg_malloc(sizeof(pkcs11_context_t));
-				memset(ctxd, 0, sizeof(pkcs11_context_t));
 				if(ctxd == NULL) {
 					ERR("%s: Cannot allocate memory for PKCS#11 context\n",
 							tls_domain_str(d));
 					return -1;
 				}
+				memset(ctxd, 0, sizeof(pkcs11_context_t));
 				ctxd->token_id = -1;
 				strncpy(ctxd->config_key, d->pkey_file.s,
 						sizeof(ctxd->config_key) - 1);
@@ -1057,7 +1061,8 @@ static int load_private_key(tls_domain_t *d)
 		}
 	} while(0);
 
-	DBG("%s: Key '%s' successfully loaded\n", tls_domain_str(d),
+	DBG("%s: Key '%.*s' successfully loaded\n", tls_domain_str(d),
+			tls_pkcs11_uri_loglen(d->pkey_file.s, d->pkey_file.len),
 			d->pkey_file.s);
 	return 0;
 }
@@ -1407,19 +1412,22 @@ static int load_pkcs11_private_key(tls_domain_t *d)
 	char temp_name[512];
 	if(d->pkey_file.len > sizeof(temp_name) - 1) {
 		ERR("%s: PKCS#11 key label too long '%.*s'\n", tls_domain_str(d),
-				d->pkey_file.len, d->pkey_file.s);
+				tls_pkcs11_uri_loglen(d->pkey_file.s, d->pkey_file.len),
+				d->pkey_file.s);
 		return -1;
 	}
 
 	memcpy(temp_name, d->pkey_file.s, d->pkey_file.len);
 	temp_name[d->pkey_file.len] = '\0';
 
-	LM_WARN("%s: Loading PKCS#11 key label '%s' for domain %p\n",
-			tls_domain_str(d), temp_name, d);
+	LM_WARN("%s: Loading PKCS#11 key label '%.*s' for domain %p\n",
+			tls_domain_str(d),
+			tls_pkcs11_uri_loglen(temp_name, d->pkey_file.len), temp_name, d);
 	ret_pwd = tls_pkcs11_set_key(d->ctx[0], temp_name, 1);
 
 	if(ret_pwd) {
-		ERR("%s: Unable to load engine key label '%s'\n", tls_domain_str(d),
+		ERR("%s: Unable to load engine key label '%.*s'\n", tls_domain_str(d),
+				tls_pkcs11_uri_loglen(d->pkey_file.s, d->pkey_file.len),
 				d->pkey_file.s);
 		TLS_ERR("load_private_key:");
 		return -1;
