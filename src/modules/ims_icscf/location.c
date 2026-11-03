@@ -72,7 +72,7 @@ int I_perform_location_information_request(
 
 	if(fixup_get_svalue(msg, (gparam_t *)route, &route_name) != 0) {
 		LM_ERR("no async route block for assign_server_unreg\n");
-		return -1;
+		return CSCF_RETURN_ERROR;
 	}
 
 	LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
@@ -80,20 +80,20 @@ int I_perform_location_information_request(
 	if(ri < 0) {
 		LM_ERR("unable to find route block [%.*s]\n", route_name.len,
 				route_name.s);
-		return -1;
+		return CSCF_RETURN_ERROR;
 	}
 	cfg_action = main_rt.rlist[ri];
 	if(cfg_action == NULL) {
 		LM_ERR("empty action lists in route block [%.*s]\n", route_name.len,
 				route_name.s);
-		return -1;
+		return CSCF_RETURN_ERROR;
 	}
 
 	LM_DBG("DBG:I_LIR: Starting ...\n");
 	/* check if we received what we should */
 	if(msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("ERR:I_LIR: The message is not a request\n");
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_ERROR;
 	}
 
 	/* check orig uri parameter in topmost Route */
