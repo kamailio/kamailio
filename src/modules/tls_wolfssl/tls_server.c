@@ -492,9 +492,6 @@ static int tls_complete_init(struct tcp_connection *c)
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
 	data->ssl = wolfSSL_new(dom->ctx[0]);
-
-	/* Load PKCS#11 keys */
-	tls_pkcs11_open_token(data->ssl);
 	data->cfg = cfg;
 	data->state = state;
 	data->dom.s = (char *)data + sizeof(struct tls_extra_data);
@@ -506,6 +503,9 @@ static int tls_complete_init(struct tcp_connection *c)
 		tls_free_ssl_cache(data);
 		goto error;
 	}
+
+	/* Load PKCS#11 keys */
+	tls_pkcs11_open_token(data->ssl);
 
 #ifndef OPENSSL_NO_TLSEXT
 	if(sname != NULL) {
