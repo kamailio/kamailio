@@ -2396,6 +2396,8 @@ modparam("rtpengine", "wsapi", "lwsc")
 		<programlisting format="linespecific">
 ...
 modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
+# or, for IPv6
+modparam("rtpengine", "dtmf_events_sock", "[::1]:2223")
 ...
 </programlisting>
 		</example>
