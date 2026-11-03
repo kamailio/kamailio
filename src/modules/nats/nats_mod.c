@@ -214,6 +214,11 @@ void nats_consumer_worker_proc(nats_consumer_worker_t *worker)
 {
 	natsStatus s = NATS_OK;
 
+	if(nats_init_connection(worker->nc) < 0) {
+		LM_ERR("failed to init nats connection\n");
+		return;
+	}
+
 	// create a loop
 	natsLibuv_Init();
 
@@ -276,7 +281,7 @@ static int mod_init(void)
 	cfg_register_child(total_procs);
 
 	nats_pub_worker_pipes_fds =
-			(int *)shm_malloc(sizeof(int) * (nats_pub_workers_num)*2);
+			(int *)shm_malloc(sizeof(int) * (nats_pub_workers_num) * 2);
 	nats_pub_worker_pipes =
 			(int *)shm_malloc(sizeof(int) * nats_pub_workers_num);
 	for(i = 0; i < nats_pub_workers_num; i++) {
@@ -320,10 +325,6 @@ int init_worker(
 
 	nats_init_environment();
 	nc = _init_nats_connection();
-	if(nats_init_connection(nc) < 0) {
-		LM_ERR("failed to init nat connections\n");
-		return -1;
-	}
 
 	memset(worker, 0, sizeof(*worker));
 	worker->subject = shm_malloc(strlen(subject) + 1);
@@ -358,10 +359,6 @@ int init_pub_worker(nats_pub_worker_t *worker)
 {
 	nats_connection_ptr nc = NULL;
 	nc = _init_nats_connection();
-	if(nats_init_connection(nc) < 0) {
-		LM_ERR("failed to init nat connections\n");
-		return -1;
-	}
 	memset(worker, 0, sizeof(*worker));
 	worker->nc = nc;
 	return 0;
@@ -379,6 +376,11 @@ void worker_loop(int id)
 int _nats_pub_worker_proc(nats_pub_worker_t *worker, int fd)
 {
 	natsStatus s = NATS_OK;
+
+	if(nats_init_connection(worker->nc) < 0) {
+		LM_ERR("failed to init nats connection\n");
+		return -1;
+	}
 
 	natsLibuv_Init();
 	worker->fd = fd;
