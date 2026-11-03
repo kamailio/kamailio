@@ -100,12 +100,11 @@ void async_cdp_uar_callback(
 	int rc = -1, experimental_rc = -1;
 	saved_uar_transaction_t *data = (saved_uar_transaction_t *)param;
 	struct cell *t = 0;
-	int result = CSCF_RETURN_TRUE;
+	int result = CSCF_RETURN_ERROR;
 	scscf_entry *list = 0;
 
 	if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
 		LM_ERR("ERROR: t_continue: transaction not found\n");
-		//result = CSCF_RETURN_ERROR;//not needed we set by default to error!
 		goto error;
 	}
 
@@ -121,7 +120,6 @@ void async_cdp_uar_callback(
 
 	if(!uaa) {
 		LM_ERR("Error sending message via CDP\n");
-		//result = CSCF_RETURN_ERROR;//not needed we set by default to error!
 		goto error;
 	}
 
@@ -264,6 +262,7 @@ done:
 	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
 	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
+error:
 	create_uaa_return_code(result);
 
 	if(t)
@@ -275,16 +274,6 @@ done:
 	tmb.t_continue(data->tindex, data->tlabel, data->act);
 	free_saved_uar_transaction_data(data);
 	return;
-
-error:
-	if(t)
-		tmb.unref_cell(t);
-	//free memory
-	if(uaa)
-		cdpb.AAAFreeMessage(&uaa);
-
-	tmb.t_continue(data->tindex, data->tlabel, data->act);
-	free_saved_uar_transaction_data(data);
 }
 
 /**
