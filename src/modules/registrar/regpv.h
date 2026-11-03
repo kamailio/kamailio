@@ -49,6 +49,8 @@ int ki_reg_free_contacts(sip_msg_t *msg, str *profile);
 void regpv_free_profiles(void);
 
 void reg_ul_expired_contact(ucontact_t *c, int type, void *param);
+void reg_ul_saved_contact(ucontact_t *c, int type, void *param);
+void reg_ul_set_event_msg(sip_msg_t *msg);
 
 sr_kemi_xval_t *ki_reg_ulc_rget(sip_msg_t *msg, str *rid, str *attr);
 sr_kemi_xval_t *ki_reg_ulc_cget(sip_msg_t *msg, str *rid, str *attr, int idx);

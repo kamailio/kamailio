@@ -144,6 +144,10 @@ int reg_sock_mode = 0;
 /* where to go for event route ("usrloc:contact-expired") */
 int reg_expire_event_rt = -1; /* default disabled */
 str reg_event_callback = STR_NULL;
+/* where to go for event routes ("usrloc:contact-inserted" and
+ * "usrloc:contact-updated") */
+int reg_insert_event_rt = -1; /* default disabled */
+int reg_update_event_rt = -1; /* default disabled */
 
 int reg_lookup_filter_mode = 0;
 int reg_min_expires_mode = 0;
@@ -302,6 +306,7 @@ static int mod_init(void)
 	str s;
 	bind_usrloc_t bind_usrloc;
 	qvalue_t dq;
+	int ulcb_types = 0;
 
 	if(sruid_init(&_reg_sruid, '-', "uloc", SRUID_INC) < 0) {
 		return -1;
@@ -391,6 +396,26 @@ static int mod_init(void)
 					   UL_CONTACT_EXPIRE, reg_ul_expired_contact, 0)
 					< 0) {
 				LM_ERR("Can not register callback for expired contacts"
+					   " (usrloc module)\n");
+				return -1;
+			}
+		}
+		/* usrloc:contact-inserted and usrloc:contact-updated events */
+		reg_insert_event_rt =
+				route_lookup(&event_rt, "usrloc:contact-inserted");
+		if(reg_insert_event_rt >= 0 && event_rt.rlist[reg_insert_event_rt] == 0)
+			reg_insert_event_rt = -1; /* disable */
+		if(reg_insert_event_rt >= 0)
+			ulcb_types |= UL_CONTACT_INSERT;
+		reg_update_event_rt = route_lookup(&event_rt, "usrloc:contact-updated");
+		if(reg_update_event_rt >= 0 && event_rt.rlist[reg_update_event_rt] == 0)
+			reg_update_event_rt = -1; /* disable */
+		if(reg_update_event_rt >= 0)
+			ulcb_types |= UL_CONTACT_UPDATE;
+		if(ulcb_types != 0) {
+			set_child_rpc_sip_mode();
+			if(_reg_ul.register_ulcb(ulcb_types, reg_ul_saved_contact, 0) < 0) {
+				LM_ERR("Can not register callback for saved contacts"
 					   " (usrloc module)\n");
 				return -1;
 			}
