@@ -1563,14 +1563,14 @@ int tr_eval_string(
 					}
 				}
 			} else {
-				for(i = val->rs.len - 1; i > 0; i--) {
+				for(i = val->rs.len - 1; i >= 0; i--) {
 					if(val->rs.s[i] == st.s[0]) {
 						break;
 					}
 				}
 			}
 
-			if(i == 0 || i >= val->rs.len) {
+			if(i < 0 || i >= val->rs.len) {
 				memcpy(_tr_buffer, val->rs.s, val->rs.len);
 			} else {
 				memcpy(_tr_buffer, val->rs.s, i);
@@ -1613,14 +1613,14 @@ int tr_eval_string(
 					}
 				}
 			} else {
-				for(i = val->rs.len - 1; i > 0; i--) {
+				for(i = val->rs.len - 1; i >= 0; i--) {
 					if(val->rs.s[i] == st.s[0]) {
 						break;
 					}
 				}
 			}
 
-			if(i == 0 || i >= val->rs.len) {
+			if(i < 0 || i >= val->rs.len - 1) {
 				_tr_buffer[0] = '\0';
 				val->rs.len = 0;
 			} else {
