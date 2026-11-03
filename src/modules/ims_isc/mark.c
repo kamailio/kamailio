@@ -377,7 +377,7 @@ int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark)
  */
 int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark)
 {
-	struct lump *l = msg->add_rm;
+	struct lump *anchor;
 	size_t hlen;
 	char *hstr = NULL;
 	const str *regstate, *sescase;
@@ -417,10 +417,19 @@ int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark)
 	}
 
 	LM_DBG("%.*s\n", (int)hlen - 3 /* don't print \r\n\0 */, hstr);
-	if(append_new_lump(&l, hstr, hlen - 1, HDR_OTHER_T) == 0) {
-		LM_ERR("append_new_lump(%p, \"%.*s\\\r\\n\", %zu, "
-			   "0) failed\n",
-				&l, (int)hlen - 3 /* don't print \r\n\0 */, hstr, hlen - 1);
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse headers\n");
+		pkg_free(hstr);
+		return 0;
+	}
+	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	if(anchor == NULL) {
+		LM_ERR("anchor_lump failed\n");
+		pkg_free(hstr);
+		return 0;
+	}
+	if(insert_new_lump_before(anchor, hstr, hlen - 1, HDR_OTHER_T) == 0) {
+		LM_ERR("failed to add P-Served-User header\n");
 		pkg_free(hstr);
 		return 0;
 	}
