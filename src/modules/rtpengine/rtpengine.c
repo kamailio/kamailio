@@ -1550,7 +1550,8 @@ static void rtpengine_dtmf_events_loop(void)
 	union sockaddr_union udp_addr;
 	char buffer[RTPENGINE_DTMF_EVENT_BUFFER];
 
-	p = q_memchr(
+	/* the port follows the last ':', so IPv6 addresses can contain ':' */
+	p = q_memrchr(
 			rtpengine_dtmf_event_sock.s, ':', rtpengine_dtmf_event_sock.len);
 
 	if(!p) {
@@ -1572,11 +1573,21 @@ static void rtpengine_dtmf_events_loop(void)
 	}
 	rtpengine_dtmf_event_sock.len -= s_port.len + 1;
 	trim(&rtpengine_dtmf_event_sock);
+
+	/* strip the brackets around an IPv6 address: [addr]:port */
+	if(rtpengine_dtmf_event_sock.len >= 2
+			&& rtpengine_dtmf_event_sock.s[0] == '['
+			&& rtpengine_dtmf_event_sock.s[rtpengine_dtmf_event_sock.len - 1]
+					   == ']') {
+		rtpengine_dtmf_event_sock.s++;
+		rtpengine_dtmf_event_sock.len -= 2;
+	}
 	rtpengine_dtmf_event_sock.s[rtpengine_dtmf_event_sock.len] = '\0';
 
 	memset(&udp_addr, 0, sizeof(union sockaddr_union));
 
-	if(rtpengine_dtmf_event_sock.s[0] == '[') {
+	if(q_memchr(rtpengine_dtmf_event_sock.s, ':', rtpengine_dtmf_event_sock.len)
+			!= NULL) {
 		udp_addr.sin6.sin6_family = AF_INET6;
 		udp_addr.sin6.sin6_port = htons(port);
 		socket_len = sizeof(struct sockaddr_in6);
