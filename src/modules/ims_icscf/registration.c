@@ -119,14 +119,14 @@ int I_perform_user_authorization_request(
 	if(!private_identity.len) {
 		LM_ERR("ERR:I_UAR: Private Identity not found, responding with 400\n");
 		cscf_reply_transactional(msg, 400, MSG_400_NO_PRIVATE);
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 
 	public_identity = cscf_get_public_identity(msg);
 	if(!public_identity.len) {
 		LM_ERR("ERR:I_UAR: Public Identity not found, responding with 400\n");
 		cscf_reply_transactional(msg, 400, MSG_400_NO_PUBLIC);
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 
 	b = cscf_parse_contacts(msg);
@@ -141,13 +141,13 @@ int I_perform_user_authorization_request(
 				LM_ERR("ERR:I_UAR: MSG_400_MALFORMED_CONTACT, responding with "
 					   "400\n");
 				cscf_reply_transactional(msg, 400, MSG_400_MALFORMED_CONTACT);
-				return CSCF_RETURN_BREAK;
+				return CSCF_RETURN_FALSE;
 			} else if(sos_reg == -2) {
 				LM_ERR("ERR:I_UAR: MSG_500_SERVER_ERROR_OUT_OF_MEMORY, "
 					   "responding with 500\n");
 				cscf_reply_transactional(
 						msg, 500, MSG_500_SERVER_ERROR_OUT_OF_MEMORY);
-				return CSCF_RETURN_BREAK;
+				return CSCF_RETURN_FALSE;
 			}
 		}
 	}
@@ -157,7 +157,7 @@ int I_perform_user_authorization_request(
 		LM_ERR("ERR:I_UAR: Visited Network Identity not found, responding with "
 			   "400\n");
 		cscf_reply_transactional(msg, 400, MSG_400_NO_VISITED);
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 
 	if(atoi(str1))
@@ -178,13 +178,13 @@ int I_perform_user_authorization_request(
 		if(tmb.t_newtran(msg) < 0) {
 			LM_ERR("cannot create the transaction for UAR async\n");
 			cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
-			return CSCF_RETURN_BREAK;
+			return CSCF_RETURN_FALSE;
 		}
 		t = tmb.t_gett();
 		if(t == NULL || t == T_UNDEFINED) {
 			LM_ERR("cannot lookup the transaction\n");
 			cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
-			return CSCF_RETURN_BREAK;
+			return CSCF_RETURN_FALSE;
 		}
 	}
 
@@ -217,7 +217,7 @@ int I_perform_user_authorization_request(
 		free_saved_uar_transaction_data(saved_t);
 
 		cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 
 	if(cxdx_send_uar(msg, private_identity, public_identity, visited_network_id,
@@ -227,7 +227,7 @@ int I_perform_user_authorization_request(
 		tmb.t_cancel_suspend(saved_t->tindex, saved_t->tlabel);
 		free_saved_uar_transaction_data(saved_t);
 		cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 	//we use async replies therefore we send break and not true when successful
 	return CSCF_RETURN_BREAK;
