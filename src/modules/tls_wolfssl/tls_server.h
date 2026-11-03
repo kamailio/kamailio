@@ -33,6 +33,7 @@
 #include "../../core/tcp_read.h"
 #include "tls_domain.h"
 #include "tls_ct_wrq.h"
+#include "tls_bio.h"
 
 typedef enum tls_conn_states
 {
@@ -56,13 +57,12 @@ typedef struct tls_rd_buf
 
 typedef struct tls_extra_data
 {
-	tls_domains_cfg_t *cfg; /* Configuration used for this connection */
-	str dom;				/* tls_domain_str() for this connection */
-	WOLFSSL *ssl;			/* SSL context used for the connection */
-	WOLFSSL_BIO *rwbio;		/* bio used for read/write
-							 * (openssl code might add buffering BIOs so
-							 * it's better to remember our original BIO) */
+	tls_domains_cfg_t *cfg;		  /* Configuration used for this connection */
+	str dom;					  /* tls_domain_str() for this connection */
+	WOLFSSL *ssl;				  /* SSL context used for the connection */
+	struct tls_bio_mbuf_data mbd; /* I/O context: current rd/wr mbufs */
 	tls_ct_q *ct_wq;
+	struct tls_rd_buf *enc_rd_buf; /* ciphertext read but not yet decoded */
 
 	unsigned int flags;
 	enum tls_conn_states state;

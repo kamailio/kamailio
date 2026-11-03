@@ -446,9 +446,6 @@ static int tls_complete_init(struct tcp_connection *c)
 	str *sname = NULL;
 	str *srvid = NULL;
 
-	WOLFSSL_BIO *internal_bio, *rw_bio;
-
-
 	/* Get current TLS configuration and increase reference
 	 * count immediately.
 	 */
@@ -498,22 +495,15 @@ static int tls_complete_init(struct tcp_connection *c)
 
 	/* Load PKCS#11 keys */
 	tls_pkcs11_open_token(data->ssl);
-	wolfSSL_BIO_new_bio_pair(
-			&internal_bio, TLS_WR_MBUF_SZ, &rw_bio, TLS_RD_MBUF_SZ);
-	data->rwbio = rw_bio;
 	data->cfg = cfg;
 	data->state = state;
 	data->dom.s = (char *)data + sizeof(struct tls_extra_data);
 	data->dom.len = dom_str_size - 1;
 	memcpy(data->dom.s, dom_str, dom_str_size);
 
-	if(unlikely(data->ssl == 0 || data->rwbio == 0)) {
-		TLS_ERR_SSL("Failed to create SSL or BIO structure:", data->ssl);
-		if(data->ssl)
-			wolfSSL_free(data->ssl);
+	if(unlikely(data->ssl == 0)) {
+		TLS_ERR_SSL("Failed to create SSL structure:", data->ssl);
 		tls_free_ssl_cache(data);
-		if(data->rwbio)
-			wolfSSL_BIO_free(data->rwbio);
 		goto error;
 	}
 
@@ -523,8 +513,6 @@ static int tls_complete_init(struct tcp_connection *c)
 			if(data->ssl)
 				wolfSSL_free(data->ssl);
 			tls_free_ssl_cache(data);
-			if(data->rwbio)
-				wolfSSL_BIO_free(data->rwbio);
 			goto error;
 		}
 		LM_DBG("outbound TLS server name set to: %s\n", sname->s);
@@ -536,12 +524,12 @@ static int tls_complete_init(struct tcp_connection *c)
 		if(tls_set_verify_server_name(data->ssl, dom, sname) < 0) {
 			wolfSSL_free(data->ssl);
 			tls_free_ssl_cache(data);
-			wolfSSL_BIO_free(data->rwbio);
 			goto error;
 		}
 	}
 
-	wolfSSL_set_bio(data->ssl, internal_bio, internal_bio);
+	/* ciphertext goes through the mbufs set by tls_set_mbufs() */
+	tls_bio_mbuf_attach(data->ssl, &data->mbd);
 	c->extra_data = data;
 
 	/* link the extra data struct inside ssl connection*/
@@ -594,6 +582,27 @@ static int tls_fix_connection(struct tcp_connection *c)
 		}
 		lock_release(&c->write_lock);
 	}
+	return 0;
+}
+
+
+/** sets the read and write mbufs used by the connection's I/O callbacks.
+ * @param rd - read mbuf (ciphertext in), NULL for none
+ * @param wr - write mbuf (ciphertext out), NULL for none
+ * @return 0 on success, -1 on error.
+ */
+static int tls_set_mbufs(
+		struct tcp_connection *c, struct tls_mbuf *rd, struct tls_mbuf *wr)
+{
+	struct tls_extra_data *tls_c;
+
+	tls_c = (struct tls_extra_data *)c->extra_data;
+	if(unlikely(tls_c == NULL)) {
+		BUG("null extra data for %p\n", c);
+		return -1;
+	}
+	tls_c->mbd.rd = rd;
+	tls_c->mbd.wr = wr;
 	return 0;
 }
 
@@ -871,10 +880,13 @@ void tls_h_tcpconn_clean_direct(struct tcp_connection *c)
 		extra = (struct tls_extra_data *)c->extra_data;
 		wolfSSL_free(extra->ssl);
 		tls_free_ssl_cache(extra);
-		wolfSSL_BIO_free_all(extra->rwbio);
 		atomic_dec(&extra->cfg->ref_count);
 		if(extra->ct_wq)
 			tls_ct_wq_free(&extra->ct_wq);
+		if(extra->enc_rd_buf) {
+			shm_free(extra->enc_rd_buf);
+			extra->enc_rd_buf = 0;
+		}
 		shm_free(c->extra_data);
 		c->extra_data = 0;
 	}
@@ -976,19 +988,10 @@ direct_clean:
 /** perform one-way shutdown, do not wait for notify from the remote peer.
  */
 
-/*
- * wolfSSL implementation detail: BIO pair uses a ring buffer -
- * wolfSSL_BIO_read does not do wrap-around; you may need a 2-pass read
- * 1st read - front of buffer, 2nd read - wrap-around
- * fixed in 4f1d777090 post-v5.6.6-stable
- */
-
 void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 {
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
-	WOLFSSL_BIO *rwbio;
-	size_t wr_used, nr, npos;
-
+	struct tls_mbuf rd, wr;
 
 	/*
 	 * runs either within global tcp lock or after the connection has
@@ -1005,30 +1008,20 @@ void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 			lock_release(&c->write_lock);
 			return;
 		}
-		rwbio = ((struct tls_extra_data *)c->extra_data)->rwbio;
-		tls_shutdown(c); /* shutdown only on successful set fd */
-		/* write as much as possible and update wr.
-		 * Since this is a close, we don't want to queue the write
-		 * (if it can't write immediately, just fail silently)
-		 */
-		/* use 2-pass read for wolfSSL ring buffer */
-		wr_used = wolfSSL_BIO_pending(rwbio);
-		if(wr_used) {
-			for(nr = 0; nr < wr_used;) {
-				npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
-				if(npos <= 0)
-					break;
-				nr += npos;
-			}
-			if(nr == wr_used) {
-				_tcpconn_write_nb(fd, c, (char *)wr_buf, wr_used);
-			} else {
-				LM_ERR("skip tcp con write - nr(%lu) != wr_used(%lu)\n",
-						(unsigned long)nr, (unsigned long)wr_used);
-			}
+		tls_mbuf_init(&rd, 0, 0); /* no read */
+		tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
+		if(tls_set_mbufs(c, &rd, &wr) == 0) {
+			tls_shutdown(c); /* shutdown only on successful set fd */
+			/* write as much as possible and update wr.
+			 * Since this is a close, we don't want to queue the write
+			 * (if it can't write immediately, just fail silently)
+			 */
+			if(wr.used)
+				_tcpconn_write_nb(fd, c, (char *)wr.buf, wr.used);
+			/* we don't bother reading anything (we don't want to wait
+			   on close) */
+			tls_set_mbufs(c, 0, 0);
 		}
-		/* we don't bother reading anything (we don't want to wait
-           on close) */
 
 		lock_release(&c->write_lock);
 	}
@@ -1159,9 +1152,8 @@ int tls_h_encode_helper_f(struct tcp_connection *c, const char **pbuf,
 {
 	int n, offs;
 	WOLFSSL *ssl = NULL;
-	WOLFSSL_BIO *rwbio;
 	struct tls_extra_data *tls_c;
-	size_t wr_used = 0, nr, npos;
+	struct tls_mbuf rd, wr;
 
 	int ssl_error;
 	char *err_src;
@@ -1190,7 +1182,8 @@ int tls_h_encode_helper_f(struct tcp_connection *c, const char **pbuf,
 	}
 	tls_c = (struct tls_extra_data *)c->extra_data;
 	ssl = tls_c->ssl;
-	rwbio = tls_c->rwbio;
+	tls_mbuf_init(&rd, 0, 0); /* no read */
+	tls_mbuf_init(&wr, wr_buf, TLS_WR_MBUF_SZ * sizeof(unsigned char));
 	/* clear text already queued (WANTS_READ) queue directly*/
 	if(unlikely(tls_write_wants_read(tls_c))) {
 		TLS_WR_TRACE("(%p) WANTS_READ queue present => queueing"
@@ -1206,6 +1199,10 @@ int tls_h_encode_helper_f(struct tcp_connection *c, const char **pbuf,
 		 * the connection */
 		send_flags->f &= ~SND_F_CON_CLOSE;
 		goto end;
+	}
+	if(unlikely(tls_set_mbufs(c, &rd, &wr) < 0)) {
+		ERR("tls_set_mbufs failed\n");
+		goto error;
 	}
 
 redo_wr:
@@ -1243,8 +1240,6 @@ redo_wr:
 	TLS_WR_TRACE("(%p) wolfSSL_write(%p + %d, %d) => %d (err=%d)\n", c, buf,
 			offs, len - offs, n, ssl_error);
 	/* check for possible ssl errors */
-	wr_used = wolfSSL_BIO_pending(rwbio);
-
 	if(unlikely(n <= 0)) {
 		switch(ssl_error) {
 			case WOLFSSL_ERROR_NONE:
@@ -1273,10 +1268,10 @@ redo_wr:
 				send_flags->f &= ~SND_F_CON_CLOSE;
 				break; /* or goto end */
 			case WOLFSSL_ERROR_WANT_WRITE:
-				if(unlikely(wr_used == 0)) {
+				if(unlikely(wr.used == 0)) {
 					/* error, nothing encoded - no record fits in the buffer */
-					BUG("write buffer too small (%d/%d bytes)\n", (int)wr_used,
-							TLS_WR_MBUF_SZ);
+					BUG("write buffer too small (%d/%d bytes)\n", wr.used,
+							wr.size);
 					goto bug;
 				} else {
 					/* wr_buf full, maybe with offs == 0: flush it and retry
@@ -1348,22 +1343,10 @@ redo_wr:
 		offs += n;
 		goto redo_wr;
 	}
+	tls_set_mbufs(c, 0, 0);
 end:
-	/* use 2-pass read for wolfSSL ring buffer */
-	wr_used = wolfSSL_BIO_pending(rwbio);
-	for(nr = 0; nr < wr_used;) {
-		npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
-		if(npos <= 0)
-			break;
-		nr += npos;
-	}
-	if(unlikely(nr != wr_used)) {
-		LM_ERR("failure - nr(%lu) != wr_used(%lu)\n", (unsigned long)nr,
-				(unsigned long)wr_used);
-		goto error;
-	}
-	*plen = wr_used;
-	*pbuf = (const char *)wr_buf;
+	*pbuf = (const char *)wr.buf;
+	*plen = wr.used;
 	TLS_WR_TRACE("(%p) end (offs %d, rest_buf=%p rest_len=%d 0x%0x) => %d \n",
 			c, offs, *rest_buf, *rest_len, send_flags->f, *plen);
 	return *plen;
@@ -1371,29 +1354,18 @@ error:
 	/*error_send:*/
 error_wq_full:
 bug:
+	tls_set_mbufs(c, 0, 0);
 	TLS_WR_TRACE(
-			"(%p) end error (offs %d, %d encoded) => -1\n", c, offs, wr_used);
+			"(%p) end error (offs %d, %d encoded) => -1\n", c, offs, wr.used);
 	return -1;
 ssl_eof:
 	c->state = S_CONN_EOF;
 	/* mode 2: c->flags belongs to the io_wait thread; the write job's -1 closes c */
 	if(ksr_tcp_main_threads != 2)
 		c->flags |= F_CONN_FORCE_EOF;
-	/* use 2-pass read for wolfSSL ring buffer */
-	wr_used = wolfSSL_BIO_pending(rwbio);
-	for(nr = 0; nr < wr_used;) {
-		npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
-		if(npos <= 0)
-			break;
-		nr += npos;
-	}
-	if(unlikely(nr != wr_used)) {
-		LM_ERR("failure - nr(%lu) != wr_used(%lu)\n", (unsigned long)nr,
-				(unsigned long)wr_used);
-		return -1;
-	}
-	*plen = wr_used;
-	*pbuf = (const char *)wr_buf;
+	tls_set_mbufs(c, 0, 0);
+	*pbuf = (const char *)wr.buf;
+	*plen = wr.used;
 	DBG("TLS connection has been closed\n");
 	TLS_WR_TRACE("(%p) end EOF (offs %d) => (%d\n", c, offs, *plen);
 	return *plen;
@@ -1551,12 +1523,11 @@ int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 	struct tcp_req *r;
 	int bytes_free, bytes_read, read_size, ssl_error, ssl_read;
 	WOLFSSL *ssl;
-	WOLFSSL_BIO *rwbio;
 	unsigned char rd_buf[TLS_RD_MBUF_SZ];
 	unsigned char wr_buf[TLS_WR_MBUF_SZ];
-	size_t wr_used, rd_pending;
-	size_t nr, npos, nw;
+	struct tls_mbuf rd, wr;
 	struct tls_extra_data *tls_c;
+	struct tls_rd_buf *enc_rd_buf;
 	int n, flush_flags;
 	char *err_src;
 	char ip_buf[64];
@@ -1569,7 +1540,7 @@ int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 			ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 	ssl_read = 0;
 	r = &c->req;
-
+	enc_rd_buf = 0;
 	*flags &= ~RD_CONN_REPEAT_READ;
 	if(unlikely(tls_fix_connection(c) < 0)) {
 		TLS_RD_TRACE("(%p, %p) end: tls_fix_connection failed =>"
@@ -1578,10 +1549,9 @@ int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 		return -1;
 	}
 	/* here it's safe to use c->extra_data in read-only mode.
-	 * If it's != 0 is changed only on destroy. It's not possible to have
-	 * parallel reads.*/
+     * If it's != 0 is changed only on destroy. It's not possible to have
+     * parallel reads.*/
 	tls_c = c->extra_data;
-	rwbio = tls_c->rwbio;
 	bytes_free = c->req.b_size - (unsigned int)(r->pos - r->buf);
 	if(unlikely(bytes_free <= 0)) {
 		ERR("Buffer overrun, dropping\n");
@@ -1589,50 +1559,61 @@ int tls_h_read_mp_f(struct tcp_connection *c, rd_conn_flags_t *flags)
 		return -1;
 	}
 redo_read:
-	/* real read() */
-	/* read() only if no previously detected EOF, or previous
-     * short read (which means the socket buffer was emptied) */
-	/* ciphertext left unread in the rd BIO when the tcp req buffer filled */
-	rd_pending = wolfSSL_BIO_ctrl_pending(wolfSSL_SSL_get_rbio(tls_c->ssl));
-	if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ))
-			   && rd_pending < TLS_RD_MBUF_SZ)) {
-		/* don't read more than the free bytes in the tcp req buffer or BIO */
-		read_size = MIN_unsigned(TLS_RD_MBUF_SZ - rd_pending, bytes_free);
-		bytes_read =
-				tcp_read_data(_tconfd(c), c, (char *)rd_buf, read_size, flags);
-		TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n", c,
-				flags, read_size, *flags, bytes_read);
-		/* try SSL_read even on 0 bytes read, it might have
-		 * internally buffered data */
-		if(unlikely(bytes_read < 0)) {
-			goto error;
+	/* if data queued from a previous read(), use it (don't perform
+     * a real read()).
+     */
+	if(unlikely(tls_c->enc_rd_buf)) {
+		/* use queued data */
+		/* safe to use without locks, because only read changes it and
+         * there can't be parallel reads on the same connection */
+		enc_rd_buf = tls_c->enc_rd_buf;
+		tls_c->enc_rd_buf = 0;
+		TLS_RD_TRACE("(%p, %p) using queued data (%p: %p %d bytes)\n", c, flags,
+				enc_rd_buf, enc_rd_buf->buf + enc_rd_buf->pos,
+				enc_rd_buf->size - enc_rd_buf->pos);
+		tls_mbuf_init(&rd, enc_rd_buf->buf + enc_rd_buf->pos,
+				enc_rd_buf->size - enc_rd_buf->pos);
+		rd.used = enc_rd_buf->size - enc_rd_buf->pos;
+	} else {
+		/* if we were using using queued data before, free & reset the
+           the queued read data before performing the real read() */
+		if(unlikely(enc_rd_buf)) {
+			TLS_RD_TRACE("(%p, %p) reset prev. used enc_rd_buf (%p)\n", c,
+					flags, enc_rd_buf);
+			shm_free(enc_rd_buf);
+			enc_rd_buf = 0;
 		}
-
-		/*
-		 * use 2-pass write for wolfSSL ring buffer
-		 * fixed in 4f1d777090, post-v5.6.6-stable
-		 */
-		for(nw = 0; nw < bytes_read;) {
-			npos = wolfSSL_BIO_write(rwbio, rd_buf + nw, bytes_read - nw);
-			if(npos <= 0)
-				break;
-			nw += npos;
-		}
-		if(unlikely(nw != bytes_read)) {
-			LM_ERR("failure - nw(%lu) != bytes_read(%lu)\n", (unsigned long)nw,
-					(unsigned long)bytes_read);
-			goto error;
+		/* real read() */
+		tls_mbuf_init(&rd, rd_buf, sizeof(rd_buf));
+		/* read() only if no previously detected EOF, or previous
+         * short read (which means the socket buffer was emptied) */
+		if(likely(!(*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)))) {
+			/* don't read more than the free bytes in the tcp req buffer */
+			read_size = MIN_unsigned(rd.size, bytes_free);
+			bytes_read = tcp_read_data(
+					_tconfd(c), c, (char *)rd.buf, read_size, flags);
+			TLS_RD_TRACE("(%p, %p) tcp_read_data(..., %d, *%d) => %d bytes\n",
+					c, flags, read_size, *flags, bytes_read);
+			/* try wolfSSL_read even on 0 bytes read, it might have
+             * internally buffered data */
+			if(unlikely(bytes_read < 0)) {
+				goto error;
+			}
+			rd.used = bytes_read;
 		}
 	}
+
 continue_ssl_read:
+	tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
 	ssl_error = WOLFSSL_ERROR_NONE;
 	err_src = "TLS read:";
 	/* we have to avoid to run in the same time
-	 * with a tls_write because of the
-	 * update bio stuff  (we don't want a write
-	 * stealing the wbio or rbio under us or vice versa)
-	 * => lock on con->write_lock (ugly hack) */
+     * with a tls_write because of the
+     * update bio stuff  (we don't want a write
+     * stealing the wbio or rbio under us or vice versa)
+     * => lock on con->write_lock (ugly hack) */
 	lock_get(&c->write_lock);
+	tls_set_mbufs(c, &rd, &wr);
 	ssl = tls_c->ssl;
 	n = 0;
 	if(unlikely(tls_write_wants_read(tls_c) && !(*flags & RD_CONN_EOF))) {
@@ -1641,6 +1622,7 @@ continue_ssl_read:
 					 " ct_wq_flush()=> %d (ff=%d ssl_error=%d))\n",
 				c, flags, n, flush_flags, ssl_error);
 		if(unlikely(n < 0)) {
+			tls_set_mbufs(c, 0, 0);
 			lock_release(&c->write_lock);
 			ERR("write flush error (%d)\n", n);
 			goto error;
@@ -1660,6 +1642,7 @@ continue_ssl_read:
 			} else {
 				/* tls_connect failed/needs more IO */
 				if(unlikely(n < 0 && ssl_error == WOLFSSL_ERROR_NONE)) {
+					tls_set_mbufs(c, 0, 0);
 					lock_release(&c->write_lock);
 					goto error;
 				}
@@ -1675,6 +1658,7 @@ continue_ssl_read:
 			} else {
 				/* tls_accept failed/needs more IO */
 				if(unlikely(n < 0 && ssl_error == WOLFSSL_ERROR_NONE)) {
+					tls_set_mbufs(c, 0, 0);
 					lock_release(&c->write_lock);
 					goto error;
 				}
@@ -1683,61 +1667,61 @@ continue_ssl_read:
 			}
 		} else {
 			/* if bytes in then decrypt read buffer into tcpconn req.
-			 * buffer */
+             * buffer */
 			n = wolfSSL_read(ssl, r->pos, bytes_free);
 		}
-		/** handle SSL_read() return.
-		 *  There are 3 main cases, each with several sub-cases, depending
-		 *  on whether or not the output buffer was filled, if there
-		 *  is still unconsumed input data in the input buffer (rd)
-		 *  and if there is "cached" data in the internal openssl
-		 *  buffers.
-		 *  0. error (n<=0):
-		 *     SSL_ERROR_WANT_READ - input data fully
-		 *       consumed, no more returnable cached data inside openssl
-		 *       => exit.
-		 *     SSL_ERROR_WANT_WRITE - should never happen (the write
-		 *       buffer is big enough to handle any re-negociation).
-		 *     SSL_ERROR_ZERO_RETURN - ssl level shutdown => exit.
-		 *    other errors are unexpected.
-		 * 1. output buffer filled (n == bytes_free):
-		 *    1i.  - still unconsumed input, nothing buffered by openssl
-		 *    1ip. - unconsumed input + buffered data by openssl (pending
-		 *			 on the next SSL_read).
-		 *    1p.  - completely consumed input, buffered data internally
-		 *            by openssl (pending).
-		 *           Likely to happen, about the only case when
-		 *           SSL_pending() could be used (but only if readahead=0).
-		 *    1f.  - consumed input, no buffered data.
-		 * 2. output buffer not fully filled (n < bytes_free):
-		 *     2i. - still unconsumed input, nothing buffered by openssl.
-		 *           This can appear if SSL readahead is 0 (SSL_read()
-		 *           tries to get only 1 record from the input).
-		 *     2ip. - unconsumed input and buffered data by openssl.
-		 *            Unlikely to happen (e.g. readahead is 1, more
-		 *            records are buffered internally by openssl, but
-		 *            there was not enough space for buffering the whole
-		 *            input).
-		 *     2p  - consumed input, but buffered data by openssl.
-		 *            It happens especially when readahead is 1.
-		 *     2f.  - consumed input, no buffered data.
-		 *
-		 * One should repeat SSL_read() until and error is detected
-		 *  (0*) or the input and internal ssl buffers are fully consumed
-		 *  (1f or 2f). However in general is not possible to see if
-		 *  SSL_read() could return more data. SSL_pending() has very
-		 *  limited usability (basically it would return !=0 only if there
-		 *  was no enough space in the output buffer and only if this did
-		 *  not happen at a record boundary).
-		 * The solution is to repeat SSL_read() until error or until
-		 *  the output buffer is filled (0* or 1*).
-		 *  In the later case, this whole function should be called again
-		 *  once there is more output space (set RD_CONN_REPEAT_READ).
-		 */
+		/** handle wolfSSL_read() return.
+         *  There are 3 main cases, each with several sub-cases, depending
+         *  on whether or not the output buffer was filled, if there
+         *  is still unconsumed input data in the input buffer (rd)
+         *  and if there is "cached" data in the internal openssl
+         *  buffers.
+         *  0. error (n<=0):
+         *     WOLFSSL_ERROR_WANT_READ - input data fully
+         *       consumed, no more returnable cached data inside openssl
+         *       => exit.
+         *     WOLFSSL_ERROR_WANT_WRITE - should never happen (the write
+         *       buffer is big enough to handle any re-negociation).
+         *     WOLFSSL_ERROR_ZERO_RETURN - ssl level shutdown => exit.
+         *    other errors are unexpected.
+         * 1. output buffer filled (n == bytes_free):
+         *    1i.  - still unconsumed input, nothing buffered by openssl
+         *    1ip. - unconsumed input + buffered data by openssl (pending
+         *			 on the next wolfSSL_read).
+         *    1p.  - completely consumed input, buffered data internally
+         *            by openssl (pending).
+         *           Likely to happen, about the only case when
+         *           wolfSSL_pending() could be used (but only if readahead=0).
+         *    1f.  - consumed input, no buffered data.
+         * 2. output buffer not fully filled (n < bytes_free):
+         *     2i. - still unconsumed input, nothing buffered by openssl.
+         *           This can appear if SSL readahead is 0 (wolfSSL_read()
+         *           tries to get only 1 record from the input).
+         *     2ip. - unconsumed input and buffered data by openssl.
+         *            Unlikely to happen (e.g. readahead is 1, more
+         *            records are buffered internally by openssl, but
+         *            there was not enough space for buffering the whole
+         *            input).
+         *     2p  - consumed input, but buffered data by openssl.
+         *            It happens especially when readahead is 1.
+         *     2f.  - consumed input, no buffered data.
+         *
+         * One should repeat wolfSSL_read() until and error is detected
+         *  (0*) or the input and internal ssl buffers are fully consumed
+         *  (1f or 2f). However in general is not possible to see if
+         *  wolfSSL_read() could return more data. wolfSSL_pending() has very
+         *  limited usability (basically it would return !=0 only if there
+         *  was no enough space in the output buffer and only if this did
+         *  not happen at a record boundary).
+         * The solution is to repeat wolfSSL_read() until error or until
+         *  the output buffer is filled (0* or 1*).
+         *  In the later case, this whole function should be called again
+         *  once there is more output space (set RD_CONN_REPEAT_READ).
+         */
 
 		if(unlikely(tls_c->flags & F_TLS_CON_RENEGOTIATION)) {
 			/* Fix CVE-2009-3555 - disable renegotiation if started by client
-			 * - simulate SSL EOF to force close connection*/
+             * - simulate SSL EOF to force close connection*/
 			tls_dbg = cfg_get(tls, tls_cfg, debug);
 			LOG(tls_dbg,
 					"Reading on a renegotiation of connection (n:%d) (%d)\n", n,
@@ -1756,44 +1740,31 @@ continue_ssl_read:
 				bytes_free -= n;
 			}
 		}
-		TLS_RD_TRACE("(%p, %p) SSL_read() => %d (err=%d) ssl_read=%d"
+		TLS_RD_TRACE("(%p, %p) wolfSSL_read() => %d (err=%d) ssl_read=%d"
 					 " *flags=%d tls_c->flags=%d\n",
 				c, flags, n, ssl_error, ssl_read, *flags, tls_c->flags);
 	ssl_read_skipped:;
 	}
-	wr_used = wolfSSL_BIO_pending(rwbio);
-	if(unlikely(wr_used != 0 && ssl_error != WOLFSSL_ERROR_ZERO_RETURN)) {
+	if(unlikely(wr.used != 0 && ssl_error != WOLFSSL_ERROR_ZERO_RETURN)) {
 		TLS_RD_TRACE(
-				"(%p, %p) tcpconn_send_unsafe %d bytes\n", c, flags, wr_used);
+				"(%p, %p) tcpconn_send_unsafe %d bytes\n", c, flags, wr.used);
 		/* something was written and it's not ssl EOF*/
-		/* use 2-pass read for wolfSSL ring buffer */
-		for(nr = 0; nr < wr_used;) {
-			npos = wolfSSL_BIO_read(rwbio, wr_buf + nr, wr_used - nr);
-			if(npos <= 0)
-				break;
-			nr += npos;
-		}
-		if(unlikely(nr != wr_used)) {
-			LM_ERR("failure - nr(%lu) != wr_used(%lu)\n", (unsigned long)nr,
-					(unsigned long)wr_used);
-			lock_release(&c->write_lock);
-			TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe failure\n", c, flags);
-			goto error_send;
-		}
-		if(unlikely(tcpconn_send_unsafe(_tconfd(c), c, (char *)wr_buf, wr_used,
+		if(unlikely(tcpconn_send_unsafe(_tconfd(c), c, (char *)wr.buf, wr.used,
 							c->send_flags)
 					< 0)) {
+			tls_set_mbufs(c, 0, 0);
 			lock_release(&c->write_lock);
 			TLS_RD_TRACE("(%p, %p) tcpconn_send_unsafe error\n", c, flags);
 			goto error_send;
 		}
 	}
 	/* quickly catch bugs: segfault if accessed and not set */
+	tls_set_mbufs(c, 0, 0);
 	lock_release(&c->write_lock);
 	switch(ssl_error) {
 		case WOLFSSL_ERROR_NONE:
 			if(unlikely(n < 0)) {
-				BUG("unexpected SSL_ERROR_NONE for n=%d\n", n);
+				BUG("unexpected WOLFSSL_ERROR_NONE for n=%d\n", n);
 				goto error;
 			}
 			break;
@@ -1802,32 +1773,38 @@ continue_ssl_read:
 			TLS_RD_TRACE("(%p, %p) SSL EOF (fd=%d)\n", c, flags, _tconfd(c));
 			goto ssl_eof;
 		case WOLFSSL_ERROR_WANT_READ:
-			TLS_RD_TRACE("(%p, %p) SSL_ERROR_WANT_READ *flags=%d\n", c, flags,
-					*flags);
-			/* needs to read more data (a partial record may wait in the rbio) */
+			TLS_RD_TRACE("(%p, %p) WOLFSSL_ERROR_WANT_READ *flags=%d\n", c,
+					flags, *flags);
+			/* needs to read more data */
+			if(unlikely(rd.pos != rd.used)) {
+				/* data still in the read buffer */
+				BUG("WOLFSSL_ERROR_WANT_READ but data still in"
+					" the rbio (%p, %d bytes at %d)\n",
+						rd.buf, rd.used - rd.pos, rd.pos);
+				goto bug;
+			}
 			if(unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0)
 					&& bytes_free) {
 				/* there might still be data to read and there is space
-			 * to decrypt it in tcp_req (no byte has been written into
-			 * tcp_req in this case) */
+             * to decrypt it in tcp_req (no byte has been written into
+             * tcp_req in this case) */
 				TLS_RD_TRACE("(%p, %p) redo read *flags=%d bytes_free=%d\n", c,
 						flags, *flags, bytes_free);
 				goto redo_read;
 			}
 			goto end; /* no more data to read */
 		case WOLFSSL_ERROR_WANT_WRITE:
-			if(wr_used) {
+			if(wr.used) {
 				/* something was written => buffer not big enough to hold
-			 * everything => reset buffer & retry (the tcp_write already
-			 * happened if we are here) */
-				TLS_RD_TRACE("(%p) SSL_ERROR_WANT_WRITE partial write"
+             * everything => reset buffer & retry (the tcp_write already
+             * happened if we are here) */
+				TLS_RD_TRACE("(%p) WOLFSSL_ERROR_WANT_WRITE partial write"
 							 " (written  %d), retrying\n",
-						c, wr_used);
+						c, wr.used);
 				goto continue_ssl_read;
 			}
 			/* else write buffer too small, nothing written */
-			BUG("write buffer too small (%d/%d bytes)\n", (int)wr_used,
-					TLS_WR_MBUF_SZ);
+			BUG("write buffer too small (%d/%d bytes)\n", wr.used, wr.size);
 			goto bug;
 		case WOLFSSL_ERROR_SSL:
 			/* protocol level error */
@@ -1841,26 +1818,24 @@ continue_ssl_read:
 			ERR("dst addr: %s:%d\n", ip_buf, c->rcv.dst_port);
 
 			goto error;
-
 		case WOLFSSL_ERROR_WANT_CONNECT:
-			/* only if the underlying BIO is not yet connected
-		 * and the call would block in connect().
-		 * (not possible in our case) */
-			BUG("unexpected SSL_ERROR_WANT_CONNECT\n");
+			/* only if the underlying WOLFSSL_BIO is not yet connected
+         * and the call would block in connect().
+         * (not possible in our case) */
+			BUG("unexpected WOLFSSL_ERROR_WANT_CONNECT\n");
 			goto bug;
 		case WOLFSSL_ERROR_WANT_ACCEPT:
-			/* only if the underlying BIO is not yet connected
-		 * and call would block in accept()
-		 * (not possible in our case) */
-			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
+			/* only if the underlying WOLFSSL_BIO is not yet connected
+         * and call would block in accept()
+         * (not possible in our case) */
+			BUG("unexpected WOLFSSL_ERROR_WANT_ACCEPT\n");
 			goto bug;
-
 		case WOLFSSL_ERROR_WANT_X509_LOOKUP:
 			/* can only appear on client application and it indicates that
-		 * an installed client cert. callback should be called again
-		 * (it returned < 0 indicated that it wants to be called
-		 * later). Not possible in our case */
-			BUG("unsupported SSL_ERROR_WANT_X509_LOOKUP");
+         * an installed client cert. callback should be called again
+         * (it returned < 0 indicated that it wants to be called
+         * later). Not possible in our case */
+			BUG("unsupported WOLFSSL_ERROR_WANT_X509_LOOKUP");
 			goto bug;
 		case WOLFSSL_ERROR_SYSCALL:
 			TLS_ERR_RET(x, err_src);
@@ -1882,36 +1857,93 @@ continue_ssl_read:
 		BUG("unexpected value (n = %d)\n", n);
 		goto bug;
 	}
-
-	if(bytes_free != 0) {
+	if(unlikely(rd.pos != rd.used)) {
+		/* encrypted data still in the read buffer (wolfSSL_read() did not
+         * consume all of it) */
+		if(unlikely(n < 0))
+			/* here n should always be >= 0 */
+			BUG("unexpected value (n = %d)\n", n);
+		else {
+			if(unlikely(bytes_free != 0)) {
+				/* 2i or 2ip: unconsumed input and output buffer not filled =>
+                 * retry ssl read (wolfSSL_read() will read will stop at
+                 * record boundaries, unless readahead==1).
+                 * No tcp_read() is attempted, since that would reset the
+                 * current no-yet-consumed input data.
+                 */
+				TLS_RD_TRACE("(%p, %p) input not fully consumed =>"
+							 " retry wolfSSL_read"
+							 " (pos: %d, remaining %d, output free %d)\n",
+						c, flags, rd.pos, rd.used - rd.pos, bytes_free);
+				goto continue_ssl_read;
+			}
+			/* 1i or 1ip: bytes_free == 0
+             * (unconsumed input, but filled output  buffer) =>
+             * queue read data, and exit asking for repeating the call
+             * once there is some space in the output buffer.
+             */
+			if(likely(!enc_rd_buf)) {
+				TLS_RD_TRACE("(%p, %p) creating enc_rd_buf (for %d bytes)\n", c,
+						flags, rd.used - rd.pos);
+				enc_rd_buf =
+						shm_malloc(sizeof(*enc_rd_buf) - sizeof(enc_rd_buf->buf)
+								   + rd.used - rd.pos);
+				if(unlikely(enc_rd_buf == 0)) {
+					ERR("memory allocation error (%d bytes requested)\n",
+							(int)(sizeof(*enc_rd_buf) + sizeof(enc_rd_buf->buf)
+									+ rd.used - rd.pos));
+					goto error;
+				}
+				enc_rd_buf->pos = 0;
+				enc_rd_buf->size = rd.used - rd.pos;
+				memcpy(enc_rd_buf->buf, rd.buf + rd.pos, enc_rd_buf->size);
+			} else if((enc_rd_buf->buf + enc_rd_buf->pos) == rd.buf) {
+				TLS_RD_TRACE("(%p, %p) enc_rd_buf already in use,"
+							 " updating pos %d\n",
+						c, flags, enc_rd_buf->pos);
+				enc_rd_buf->pos += rd.pos;
+			} else {
+				BUG("enc_rd_buf->buf = %p, pos = %d, rd_buf.buf = %p\n",
+						enc_rd_buf->buf, enc_rd_buf->pos, rd.buf);
+				goto bug;
+			}
+			if(unlikely(tls_c->enc_rd_buf))
+				BUG("tls_c->enc_rd_buf!=0 (%p)\n", tls_c->enc_rd_buf);
+			/* there can't be 2 reads in parallel, so no locking is needed
+             * here */
+			tls_c->enc_rd_buf = enc_rd_buf;
+			enc_rd_buf = 0;
+			*flags |= RD_CONN_REPEAT_READ;
+		}
+	} else if(bytes_free != 0) {
 		/*  2f or 2p: input fully consumed (rd.pos == rd.used),
-		 *  output buffer not filled, still possible to have pending
-		 *  data buffered by openssl */
+         *  output buffer not filled, still possible to have pending
+         *  data buffered by openssl */
 		if(unlikely((*flags & (RD_CONN_EOF | RD_CONN_SHORT_READ)) == 0)) {
-			/* still space in the tcp unenc. req. buffer, no SSL_read error,
-			 * not a short read and not an EOF (possible more data in
-			 * the socket buffer) => try a new tcp read too */
+			/* still space in the tcp unenc. req. buffer, no wolfSSL_read error,
+             * not a short read and not an EOF (possible more data in
+             * the socket buffer) => try a new tcp read too */
 			TLS_RD_TRACE("(%p, %p) retry read (still space and no short"
 						 " tcp read: %d)\n",
 					c, flags, *flags);
 			goto redo_read;
 		} else {
 			/* don't tcp_read() anymore, but there might still be data
-			 * buffered internally by openssl (e.g. if readahead==1) =>
-			 * retry SSL_read() with the current full input buffer
-			 * (if no more internally SSL buffered data => WANT_READ => exit).
-			 */
-			TLS_RD_TRACE("(%p, %p) retry SSL_read only (*flags =%d)\n", c,
+             * buffered internally by openssl (e.g. if readahead==1) =>
+             * retry wolfSSL_read() with the current full input buffer
+             * (if no more internally SSL buffered data => WANT_READ => exit).
+             */
+			TLS_RD_TRACE("(%p, %p) retry wolfSSL_read only (*flags =%d)\n", c,
 					flags, *flags);
 			goto continue_ssl_read;
 		}
 	} else {
 		/*   1p or 1f: rd.pos == rd.used && bytes_free == 0
-		 *   (input fully consumed && output buffer filled) */
+         *   (input fully consumed && output buffer filled) */
 		/* ask for a repeat when there is more buffer space
-		 * (there is no definitive way to know if ssl doesn't still have
-		 * some internal buffered data until we get WANT_READ, see
-		 * SSL_read() comment above) */
+         * (there is no definitive way to know if ssl doesn't still have
+         * some internal buffered data until we get WANT_READ, see
+         * wolfSSL_read() comment above) */
 		*flags |= RD_CONN_REPEAT_READ;
 		TLS_RD_TRACE("(%p, %p) output filled, exit asking to be called again"
 					 " (*flags =%d)\n",
@@ -1919,11 +1951,15 @@ continue_ssl_read:
 	}
 
 end:
+	if(enc_rd_buf)
+		shm_free(enc_rd_buf);
 	TLS_RD_TRACE(
 			"(%p, %p) end => %d (*flags=%d)\n", c, flags, ssl_read, *flags);
 	return ssl_read;
 ssl_eof:
 	/* behave as an EOF would have been received at the tcp level */
+	if(enc_rd_buf)
+		shm_free(enc_rd_buf);
 	c->state = S_CONN_EOF;
 	*flags |= RD_CONN_EOF;
 	TLS_RD_TRACE(
@@ -1932,6 +1968,8 @@ ssl_eof:
 error_send:
 error:
 bug:
+	if(enc_rd_buf)
+		shm_free(enc_rd_buf);
 	r->error = TCP_READ_ERROR;
 	TLS_RD_TRACE("(%p, %p) end error => %d (*flags=%d)\n", c, flags, ssl_read,
 			*flags);
