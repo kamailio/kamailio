@@ -1094,7 +1094,8 @@ int decode_3gpp_sms(struct sip_msg *msg)
 								int udh_bit_len =
 										(1 + udh_len)
 										* 8; // add 1 octet for the udh length
-								udh_bit_len += (7 - (udh_bit_len % 7));
+								if(udh_bit_len % 7)
+									udh_bit_len += (7 - (udh_bit_len % 7));
 								len -= (udh_bit_len / 7);
 							} else {
 								len -= (1
@@ -1112,7 +1113,7 @@ int decode_3gpp_sms(struct sip_msg *msg)
 						// Check for maximum TP-User-Data payload length since SMS concatenation is not supported
 						if((_smsops_rp_data->pdu.coding == 0x00 && len > 160)
 								|| (_smsops_rp_data->pdu.coding != 0x00
-										&& len > 70)) {
+										&& len > 140)) {
 							LM_ERR("Length of TP-User-Data payload exceeds "
 								   "maximum length!\n");
 							return -1;
