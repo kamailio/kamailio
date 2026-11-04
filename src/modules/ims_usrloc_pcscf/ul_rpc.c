@@ -57,6 +57,59 @@
 static const char *ul_rpc_dump_doc[2] = {
 		"Dump PCSCF contacts and associated identitites", 0};
 
+/*!
+ * \brief Add one P-CSCF contact as its own struct to the AoRs array
+ *
+ * Each contact is its own struct, so the "AoRs" node holds only the
+ * struct headers and not the attributes of all contacts.
+ * \return 0 on success, -1 on error (rpc fault already set)
+ */
+static int ul_rpc_dump_contact(
+		rpc_t *rpc, void *ctx, void *ah, pcontact_t *c, time_t t)
+{
+	void *ch;
+
+	if(rpc->struct_add(ah, "{", "Contact", &ch) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating contact struct");
+		return -1;
+	}
+	if(rpc->struct_add(ch, "S", "AoR", &c->aor) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating aor struct");
+		return -1;
+	}
+	if(rpc->struct_add(ch, "s", "State", reg_state_to_string(c->reg_state))
+			< 0) {
+		rpc->fault(ctx, 500, "Internal error creating reg state struct");
+		return -1;
+	}
+	if(c->expires == 0) {
+		if(rpc->struct_add(ch, "s", "Expires", "permanent") < 0) {
+			rpc->fault(ctx, 500, "Internal error adding expire");
+			return -1;
+		}
+	} else if(c->expires == -1 /*UL_EXPIRED_TIME*/) {
+		if(rpc->struct_add(ch, "s", "Expires", "deleted") < 0) {
+			rpc->fault(ctx, 500, "Internal error adding expire");
+			return -1;
+		}
+	} else if(t > c->expires) {
+		if(rpc->struct_add(ch, "s", "Expires", "expired") < 0) {
+			rpc->fault(ctx, 500, "Internal error adding expire");
+			return -1;
+		}
+	} else {
+		if(rpc->struct_add(ch, "d", "Expires", (int)(c->expires - t)) < 0) {
+			rpc->fault(ctx, 500, "Internal error adding expire");
+			return -1;
+		}
+	}
+	if(rpc->struct_add(ch, "S", "Path", &c->path) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating path struct");
+		return -1;
+	}
+	return 0;
+}
+
 static void ul_rpc_dump(rpc_t *rpc, void *ctx)
 {
 	dlist_t *dl;
@@ -76,7 +129,7 @@ static void ul_rpc_dump(rpc_t *rpc, void *ctx)
 			rpc->fault(ctx, 500, "Internal error creating top rpc");
 			return;
 		}
-		if(rpc->struct_add(th, "Sd{", "Domain", &dl->name, "Size",
+		if(rpc->struct_add(th, "Sd[", "Domain", &dl->name, "Size",
 				   (int)dom->size, "AoRs", &ah)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -89,88 +142,20 @@ static void ul_rpc_dump(rpc_t *rpc, void *ctx)
 			if(max < dom->table[i].n)
 				max = dom->table[i].n;
 			for(c = dom->table[i].first; c; c = c->next) {
-				if(rpc->struct_add(ah, "S", "AoR", &c->aor) < 0) {
+				if(ul_rpc_dump_contact(rpc, ctx, ah, c, t) < 0) {
 					unlock_ulslot(dom, i);
-					rpc->fault(ctx, 500, "Internal error creating aor struct");
 					return;
 				}
-				if(rpc->struct_add(
-						   ah, "s", "State", reg_state_to_string(c->reg_state))
-						< 0) {
-					unlock_ulslot(dom, i);
-					rpc->fault(ctx, 500,
-							"Internal error creating reg state struct");
-					return;
-				}
-				if(c->expires == 0) {
-					if(rpc->struct_add(ah, "s", "Expires", "permanent") < 0) {
-						unlock_ulslot(dom, i);
-						rpc->fault(ctx, 500, "Internal error adding expire");
-						return;
-					}
-				} else if(c->expires == -1 /*UL_EXPIRED_TIME*/) {
-					if(rpc->struct_add(ah, "s", "Expires", "deleted") < 0) {
-						unlock_ulslot(dom, i);
-						rpc->fault(ctx, 500, "Internal error adding expire");
-						return;
-					}
-				} else if(t > c->expires) {
-					if(rpc->struct_add(ah, "s", "Expires", "expired") < 0) {
-						unlock_ulslot(dom, i);
-						rpc->fault(ctx, 500, "Internal error adding expire");
-						return;
-					}
-				} else {
-					if(rpc->struct_add(
-							   ah, "d", "Expires", (int)(c->expires - t))
-							< 0) {
-						unlock_ulslot(dom, i);
-						rpc->fault(ctx, 500, "Internal error adding expire");
-						return;
-					}
-				}
-
-				if(rpc->struct_add(ah, "S", "Path", &c->path) < 0) {
-					unlock_ulslot(dom, i);
-					rpc->fault(ctx, 500, "Internal error creating path struct");
-					return;
-				}
-
-				//		if (rpc->struct_add(ah, "{", "Service Routes", &sr) < 0) {
-				//			unlock_ulslot(dom, i);
-				//			rpc->fault(ctx, 500, "Internal error creating Service Routes");
-				//			return;
-				//		}
-
-				//				for (j = 0; j < c->num_service_routes; j++) {
-				//				if (rpc->struct_add(sr, "S", "Route", &c->service_routes[j]) < 0) {
-				//					unlock_ulslot(dom, i);
-				//					rpc->fault(ctx, 500, "Internal error creating Service Route struct");
-				//					return;
-				//				}
-				//		}
-
-				//			if (rpc->struct_add(ah, "{", "Public Identities", &ih) < 0) {
-				//				unlock_ulslot(dom, i);
-				//				rpc->fault(ctx, 500, "Internal error creating IMPU struct");
-				//				return;
-				//			}
-
-				//			for (p = c->head; p; p = p->next) {
-				//				if (rpc->struct_add(ih, "S", "IMPU", &p->public_identity) < 0) {
-				//					unlock_ulslot(dom, i);
-				//					rpc->fault(ctx, 500, "Internal error creating IMPU struct");
-				//					return;
-				//				}
-				//			}
 			}
 			unlock_ulslot(dom, i);
 		}
-		if(rpc->struct_add(ah, "{", "Stats", &sh) > 0) {
+		if(rpc->struct_add(th, "{", "Stats", &sh) < 0) {
 			rpc->fault(ctx, 500, "Internal error creating stats");
+			return;
 		}
 		if(rpc->struct_add(sh, "dd", "Records", n, "Max-Slots", max) < 0) {
 			rpc->fault(ctx, 500, "Internal error creating stats struct");
+			return;
 		}
 	}
 }
