@@ -250,6 +250,7 @@ typedef enum send_flags
 	SND_F_FORCE_SOCKET = (1 << 2),	  /* send socket in dst is forced */
 	SND_F_FORCE_PROTO = (1 << 3),	  /* reuse connections of same proto */
 	SND_F_WSX_OUTBOUND = (1 << 4),	  /* allow no ws/wss open connection */
+	SND_F_WS_HANDSHAKE = (1 << 5), /* new conn: first reply is a ws handshake */
 } send_flags_t;
 
 typedef struct snd_flags

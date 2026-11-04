@@ -1321,6 +1321,16 @@ error:
 }
 
 
+/* send flags of a new outbound c, set before c is shared:
+ * SND_F_WS_HANDSHAKE marks its first reply as the ws handshake (ws_connect()) */
+static inline void tcpconn_new_send_flags(
+		struct tcp_connection *c, snd_flags_t *send_flags)
+{
+	if(send_flags->f & SND_F_WS_HANDSHAKE)
+		c->req.flags |= F_TCP_REQ_WS_HANDSHAKE;
+	tcpconn_set_send_flags(c, *send_flags);
+}
+
 struct tcp_connection *tcpconn_connect(union sockaddr_union *server,
 		union sockaddr_union *from, int type, snd_flags_t *send_flags)
 {
@@ -1360,7 +1370,7 @@ struct tcp_connection *tcpconn_connect(union sockaddr_union *server,
 				su2a(server, sizeof(*server)));
 		goto error;
 	}
-	tcpconn_set_send_flags(con, *send_flags);
+	tcpconn_new_send_flags(con, send_flags);
 	return con;
 error:
 	if(s != -1)
@@ -2259,7 +2269,7 @@ int tcp_send(struct dest_info *dst, union sockaddr_union *from, const char *buf,
 				return -1;
 			}
 			c->flags |= F_CONN_PENDING | F_CONN_FD_CLOSED;
-			tcpconn_set_send_flags(c, dst->send_flags);
+			tcpconn_new_send_flags(c, &dst->send_flags);
 			atomic_set(&c->refcnt, 2); /* ref from here and from main hash
 										* table */
 			/* add it to id hash and aliases */
