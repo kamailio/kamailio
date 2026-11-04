@@ -38,6 +38,7 @@
 #include "../../core/pt.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/tcp_mtops.h"
+#include "../../core/tcp_reactor.h"
 
 #include "tcpops.h"
 
@@ -228,30 +229,46 @@ int tcpops_keepalive_disable(int fd, int closefd)
 
 #endif
 
-/* mode 2: the keepalive request, run by tcp main on its io_wait thread */
-typedef struct tcpops_ka_task
+/* mode 2: a connection request, run by tcp main on its io_wait thread, the
+ * owner of the socket, the flags and the timer */
+typedef struct tcpops_mt_task
 {
 	struct tcp_connection *con; /* the requester holds a ref */
-	int enable;
-	int idle;
-	int cnt;
-	int intvl;
-} tcpops_ka_task_t;
+	int op;						/* TCPOPS_MT_* */
+	int p1;
+	int p2;
+	int p3;
+} tcpops_mt_task_t;
 
-/* mode 2 [io_wait]: setsockopt() on con->s, result code back to pidx */
-static void tcpops_ka_task_exec(void *p, int pidx)
+/* mode 2 [io_wait]: run the request on con, result code back to pidx */
+static void tcpops_mt_task_exec(void *p, int pidx)
 {
-	tcpops_ka_task_t *t = (tcpops_ka_task_t *)p;
+	tcpops_mt_task_t *t = (tcpops_mt_task_t *)p;
 	struct tcp_connection *con = t->con;
 	tcpx_task_result_t *rtask;
 	int rc = -1;
 
-	if(con->state != S_CONN_BAD && !(con->flags & F_CONN_FD_CLOSED)
-			&& con->s != -1) {
-		if(t->enable)
-			rc = tcpops_keepalive_enable(con->s, t->idle, t->cnt, t->intvl, 0);
-		else
-			rc = tcpops_keepalive_disable(con->s, 0);
+	switch(t->op) {
+		case TCPOPS_MT_KA_ON:
+		case TCPOPS_MT_KA_OFF:
+			if(con->state == S_CONN_BAD || (con->flags & F_CONN_FD_CLOSED)
+					|| con->s == -1)
+				break;
+			if(t->op == TCPOPS_MT_KA_ON)
+				rc = tcpops_keepalive_enable(con->s, t->p1, t->p2, t->p3, 0);
+			else
+				rc = tcpops_keepalive_disable(con->s, 0);
+			break;
+		case TCPOPS_MT_CLOSE_EV:
+			con->flags |= F_CONN_CLOSE_EV;
+			rc = 1;
+			break;
+		case TCPOPS_MT_LIFETIME:
+			tcp_reactor_set_lifetime(con, S_TO_TICKS(t->p1));
+			rc = 1;
+			break;
+		default:
+			LM_BUG("unknown request %d\n", t->op);
 	}
 	rtask = (tcpx_task_result_t *)shm_mallocxz(sizeof(tcpx_task_result_t));
 	if(rtask == NULL)
@@ -262,56 +279,66 @@ static void tcpops_ka_task_exec(void *p, int pidx)
 }
 
 /**
- * mode 2: tcp main owns the sockets; ask it to enable/disable keepalive
- * on connection conid and wait for the result
+ * mode 2: tcp main owns the connection's socket, flags and timer; run the
+ * request (TCPOPS_MT_*) there and wait for the result
  *
- * @return 1 on success, -1 on failure
+ * @param con - connection, the caller holds a ref
+ * @return the request's result (1 on success), -1 on failure
  */
-int tcpops_keepalive_mt(int conid, int enable, int idle, int cnt, int intvl)
+int tcpops_con_mt(struct tcp_connection *con, int op, int p1, int p2, int p3)
 {
-	struct tcp_connection *con;
 	tcpx_task_t *ptask;
 	tcpx_task_result_t *rtask = NULL;
-	tcpops_ka_task_t *t;
+	tcpops_mt_task_t *t;
 	int rc = -1;
 
-	if(unlikely((con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
-		LM_ERR("invalid connection id %d, (must be a TCP connid)\n", conid);
-		return -1;
-	}
 	ptask = (tcpx_task_t *)shm_mallocxz(
-			sizeof(tcpx_task_t) + sizeof(tcpops_ka_task_t));
+			sizeof(tcpx_task_t) + sizeof(tcpops_mt_task_t));
 	if(ptask == NULL) {
 		SHM_MEM_ERROR;
-		goto done;
+		return -1;
 	}
-	ptask->exec = tcpops_ka_task_exec;
+	ptask->exec = tcpops_mt_task_exec;
 	ptask->param = (void *)((char *)ptask + sizeof(tcpx_task_t));
 	ptask->flags = KSR_TCPX_F_IOWAIT;
-	t = (tcpops_ka_task_t *)ptask->param;
+	t = (tcpops_mt_task_t *)ptask->param;
 	t->con = con;
-	t->enable = enable;
-	t->idle = idle;
-	t->cnt = cnt;
-	t->intvl = intvl;
+	t->op = op;
+	t->p1 = p1;
+	t->p2 = p2;
+	t->p3 = p3;
 
 	if(ksr_tcpx_task_send(ptask, process_no) < 0) {
-		LM_ERR("failed to send the keepalive task to tcp main\n");
+		LM_ERR("failed to send the request to tcp main\n");
 		shm_free(ptask);
-		goto done;
+		return -1;
 	}
 	if(ksr_tcpx_task_result_recv(&rtask, process_no) < 0) {
 		/* tcp main may still use ptask: leave it */
-		LM_ERR("failed to receive the keepalive result from tcp main\n");
-		goto done;
+		LM_ERR("failed to receive the result from tcp main\n");
+		return -1;
 	}
 	if(rtask != NULL) {
 		rc = rtask->code;
 		shm_free(rtask);
 	}
 	shm_free(ptask);
+	return rc;
+}
 
-done:
+/**
+ * mode 2: tcpops_con_mt() for connection id conid
+ */
+int tcpops_conn_mt(int conid, int op, int p1, int p2, int p3)
+{
+	struct tcp_connection *con;
+	int rc;
+
+	if(unlikely((con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
+		LM_ERR("invalid connection id %d, (must be a TCP connid)\n", conid);
+		return -1;
+	}
+	rc = tcpops_con_mt(con, op, p1, p2, p3);
 	tcpconn_chld_put(con);
 	return rc;
 }
@@ -326,9 +353,25 @@ int tcpops_set_connection_lifetime(struct tcp_connection *con, int time)
 		LM_ERR("Invalid timeout value, %d, must be >= 0\n", time);
 		return -1;
 	}
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the timer */
+		return tcpops_con_mt(con, TCPOPS_MT_LIFETIME, time, 0, 0);
 	con->lifetime = S_TO_TICKS(time);
 	con->timeout = get_ticks_raw() + con->lifetime;
 	LM_DBG("new connection lifetime for conid=%d: %d\n", con->id, con->timeout);
+	return 1;
+}
+
+/**
+ * request the tcp:closed event route for con
+ *
+ * @param con - connection, the caller holds a ref
+ * @return 1 on success, -1 on failure
+ */
+int tcpops_set_closed_event(struct tcp_connection *con)
+{
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the flags */
+		return tcpops_con_mt(con, TCPOPS_MT_CLOSE_EV, 0, 0, 0);
+	con->flags |= F_CONN_CLOSE_EV;
 	return 1;
 }
 
