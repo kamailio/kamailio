@@ -32,10 +32,15 @@
 
 typedef void (*tcpx_cbe_f)(void *p, int pidx);
 
+/* mode 2: run exec() on the io_wait thread, the owner of the tcp sockets
+ * (e.g. setsockopt() on c->s); default: a pool thread */
+#define KSR_TCPX_F_IOWAIT (1 << 0)
+
 typedef struct tcpx_task
 {
 	tcpx_cbe_f exec;
 	void *param;
+	int flags; /* KSR_TCPX_F_* */
 } tcpx_task_t;
 
 typedef struct tcpx_task_result

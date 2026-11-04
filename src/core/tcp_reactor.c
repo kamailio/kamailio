@@ -645,11 +645,18 @@ static int tcp_reactor_enqueue_run(tcpx_task_t *task, int pidx)
 /* mode 2 [io_wait]: run a tcpx task (tcp_mtops.h) from another process on a
  * pool thread.
  *  - sender: e.g. the RPC process running tls.reload
+ *  - KSR_TCPX_F_IOWAIT: run it here, on the socket owner (tcpops keepalive)
  *  - exec() gets the requester's pidx; ksr_tcpx_thread_eresult(rtask, pidx)
  *    sends the result back to it
  */
 void tcp_reactor_handle_tcpx_task_req(tcpx_task_t *task, int pidx)
 {
+	if(task->flags & KSR_TCPX_F_IOWAIT) {
+		/* the task works on sockets: run it on their owner, this thread */
+		if(task->exec)
+			task->exec(task->param, pidx);
+		return;
+	}
 	if(unlikely(tcp_reactor_enqueue_run(task, pidx) < 0)) {
 		/* pkg OOM: run the task here on the io_wait thread; the sender waits
 		 * in ksr_tcpx_task_result_recv() for its result */
