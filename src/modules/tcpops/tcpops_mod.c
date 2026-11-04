@@ -207,6 +207,12 @@ static int w_tcp_keepalive_enable4(
 	int closefd = 0;
 
 	_IVALUE(con)
+	_IVALUE(idle)
+	_IVALUE(cnt)
+	_IVALUE(intvl)
+
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the fd */
+		return tcpops_keepalive_mt(i_con, 1, i_idle, i_cnt, i_intvl);
 
 	if(msg != NULL && msg->rcv.proto_reserved1 == i_con) {
 		if(!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
@@ -219,10 +225,6 @@ static int w_tcp_keepalive_enable4(
 		closefd = 1;
 	}
 
-	_IVALUE(idle)
-	_IVALUE(cnt)
-	_IVALUE(intvl)
-
 	return tcpops_keepalive_enable(fd, i_idle, i_cnt, i_intvl, closefd);
 }
 
@@ -234,6 +236,9 @@ static int ki_tcp_keepalive_enable_cid(
 {
 	int fd;
 	int closefd = 0;
+
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the fd */
+		return tcpops_keepalive_mt(i_con, 1, i_idle, i_cnt, i_intvl);
 
 	if(msg != NULL && msg->rcv.proto_reserved1 == i_con) {
 		if(!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
@@ -264,13 +269,17 @@ static int w_tcp_keepalive_enable3(
 		return -1;
 	}
 
-	if(!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
-		return -1;
-	}
-
 	_IVALUE(idle)
 	_IVALUE(cnt)
 	_IVALUE(intvl)
+
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the fd */
+		return tcpops_keepalive_mt(
+				msg->rcv.proto_reserved1, 1, i_idle, i_cnt, i_intvl);
+
+	if(!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
+		return -1;
+	}
 
 	return tcpops_keepalive_enable(fd, i_idle, i_cnt, i_intvl, 0);
 }
@@ -290,6 +299,10 @@ static int ki_tcp_keepalive_enable(
 		return -1;
 	}
 
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the fd */
+		return tcpops_keepalive_mt(
+				msg->rcv.proto_reserved1, 1, i_idle, i_cnt, i_intvl);
+
 	if(!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
 		return -1;
 	}
@@ -301,6 +314,9 @@ static int ki_tcp_keepalive_disable_cid(sip_msg_t *msg, int i_con)
 {
 	int fd;
 	int closefd = 0;
+
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the fd */
+		return tcpops_keepalive_mt(i_con, 0, 0, 0, 0);
 
 	if(msg != NULL && msg->rcv.proto_reserved1 == i_con) {
 		if(!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
@@ -334,6 +350,9 @@ static int ki_tcp_keepalive_disable(sip_msg_t *msg)
 		LM_ERR("the current message does not come from a TCP connection\n");
 		return -1;
 	}
+
+	if(ksr_tcp_main_threads == 2) /* mode 2: tcp main owns the fd */
+		return tcpops_keepalive_mt(msg->rcv.proto_reserved1, 0, 0, 0, 0);
 
 	if(!tcpops_get_current_fd(msg->rcv.proto_reserved1, &fd)) {
 		return -1;

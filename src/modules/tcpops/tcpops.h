@@ -32,6 +32,7 @@ extern int tcp_closed_routes[_TCP_CLOSED_REASON_MAX];
 
 int tcpops_get_current_fd(int conid, int *fd);
 int tcpops_acquire_fd_from_tcpmain(int conid, int *fd);
+int tcpops_keepalive_mt(int conid, int enable, int idle, int cnt, int intvl);
 int tcpops_keepalive_enable(
 		int fd, int idle, int count, int interval, int closefd);
 int tcpops_keepalive_disable(int fd, int closefd);

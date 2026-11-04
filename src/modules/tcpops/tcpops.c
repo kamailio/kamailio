@@ -35,6 +35,9 @@
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
 #include "../../core/sr_module.h"
+#include "../../core/pt.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/tcp_mtops.h"
 
 #include "tcpops.h"
 
@@ -224,6 +227,94 @@ int tcpops_keepalive_disable(int fd, int closefd)
 }
 
 #endif
+
+/* mode 2: the keepalive request, run by tcp main on its io_wait thread */
+typedef struct tcpops_ka_task
+{
+	struct tcp_connection *con; /* the requester holds a ref */
+	int enable;
+	int idle;
+	int cnt;
+	int intvl;
+} tcpops_ka_task_t;
+
+/* mode 2 [io_wait]: setsockopt() on con->s, result code back to pidx */
+static void tcpops_ka_task_exec(void *p, int pidx)
+{
+	tcpops_ka_task_t *t = (tcpops_ka_task_t *)p;
+	struct tcp_connection *con = t->con;
+	tcpx_task_result_t *rtask;
+	int rc = -1;
+
+	if(con->state != S_CONN_BAD && !(con->flags & F_CONN_FD_CLOSED)
+			&& con->s != -1) {
+		if(t->enable)
+			rc = tcpops_keepalive_enable(con->s, t->idle, t->cnt, t->intvl, 0);
+		else
+			rc = tcpops_keepalive_disable(con->s, 0);
+	}
+	rtask = (tcpx_task_result_t *)shm_mallocxz(sizeof(tcpx_task_result_t));
+	if(rtask == NULL)
+		SHM_MEM_ERROR;
+	else
+		rtask->code = rc;
+	ksr_tcpx_thread_eresult(rtask, pidx);
+}
+
+/**
+ * mode 2: tcp main owns the sockets; ask it to enable/disable keepalive
+ * on connection conid and wait for the result
+ *
+ * @return 1 on success, -1 on failure
+ */
+int tcpops_keepalive_mt(int conid, int enable, int idle, int cnt, int intvl)
+{
+	struct tcp_connection *con;
+	tcpx_task_t *ptask;
+	tcpx_task_result_t *rtask = NULL;
+	tcpops_ka_task_t *t;
+	int rc = -1;
+
+	if(unlikely((con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
+		LM_ERR("invalid connection id %d, (must be a TCP connid)\n", conid);
+		return -1;
+	}
+	ptask = (tcpx_task_t *)shm_mallocxz(
+			sizeof(tcpx_task_t) + sizeof(tcpops_ka_task_t));
+	if(ptask == NULL) {
+		SHM_MEM_ERROR;
+		goto done;
+	}
+	ptask->exec = tcpops_ka_task_exec;
+	ptask->param = (void *)((char *)ptask + sizeof(tcpx_task_t));
+	ptask->flags = KSR_TCPX_F_IOWAIT;
+	t = (tcpops_ka_task_t *)ptask->param;
+	t->con = con;
+	t->enable = enable;
+	t->idle = idle;
+	t->cnt = cnt;
+	t->intvl = intvl;
+
+	if(ksr_tcpx_task_send(ptask, process_no) < 0) {
+		LM_ERR("failed to send the keepalive task to tcp main\n");
+		shm_free(ptask);
+		goto done;
+	}
+	if(ksr_tcpx_task_result_recv(&rtask, process_no) < 0) {
+		/* tcp main may still use ptask: leave it */
+		LM_ERR("failed to receive the keepalive result from tcp main\n");
+		goto done;
+	}
+	if(rtask != NULL) {
+		rc = rtask->code;
+		shm_free(rtask);
+	}
+	shm_free(ptask);
+
+done:
+	tcpconn_chld_put(con);
+	return rc;
+}
 
 int tcpops_set_connection_lifetime(struct tcp_connection *con, int time)
 {
