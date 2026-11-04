@@ -585,6 +585,30 @@ static void tcp_reactor_arm_read_timeout(struct tcp_connection *c, ticks_t t)
 	}
 }
 
+/* mode 2 [io_wait]: apply a new lifetime to c (tcpops)
+ *  - an idle c gets its timeout and timer from it now, bounded by a pending
+ *    write and the read deadline
+ *  - a shielded c gets them at tcp_reactor_unshield() */
+void tcp_reactor_set_lifetime(struct tcp_connection *c, ticks_t lifetime)
+{
+	ticks_t t;
+	ticks_t delta;
+
+	c->lifetime = lifetime;
+	if(tcpconn_pool_busy(c) || !(c->flags & F_CONN_MAIN_TIMER))
+		return;
+	t = get_ticks_raw();
+	c->timeout = t + lifetime;
+	delta = lifetime;
+	if(_wbufq_non_empty(c) && TICKS_LT(c->wbuf_q.wr_timeout, c->timeout)
+			&& TICKS_LT(t, c->wbuf_q.wr_timeout))
+		delta = c->wbuf_q.wr_timeout - t;
+	tcpmain_local_timer_del(&c->timer);
+	local_timer_reinit(&c->timer);
+	tcpmain_local_timer_add(&c->timer, delta, t);
+	tcp_reactor_arm_read_timeout(c, t);
+}
+
 /* mode 2: owner bit of a read/write job in c->flags */
 #define TCP_REACTOR_OP_FLAG(op) \
 	((op) == TCP_R_READ ? F_CONN_POOL_RD : F_CONN_POOL_WR)
@@ -884,7 +908,7 @@ static int tcp_reactor_unshield(struct tcp_connection *c)
 		return -1;
 	}
 	t = get_ticks_raw();
-	c->timeout = t + cfg_get(tcp, tcp_cfg, con_lifetime);
+	c->timeout = t + c->lifetime; /* the global or the tcpops lifetime */
 	/* re-arm the local timer disarmed by the shield (it was removed from the
 	 * timer list, so reinit + add - no del). arm_read_timeout() below may then
 	 * shorten it to the partial-read deadline if a message is mid-read. */

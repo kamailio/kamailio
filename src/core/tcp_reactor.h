@@ -23,8 +23,9 @@
 #ifndef _TCP_REACTOR_H_
 #define _TCP_REACTOR_H_
 
-#include "ip_addr.h"   /* struct receive_info, snd_flags_t */
-#include "tcp_mtops.h" /* tcpx_task_t - carried by TCP_R_RUN jobs */
+#include "ip_addr.h"	 /* struct receive_info, snd_flags_t */
+#include "tcp_mtops.h"	 /* tcpx_task_t - carried by TCP_R_RUN jobs */
+#include "timer_ticks.h" /* ticks_t */
 
 /* TCP reactor implementation for tcp_main_threads = 2 mode */
 
@@ -135,6 +136,9 @@ int tcp_reactor_send_put(struct tcp_connection *c, const char *buf,
 int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 		const char *buf, unsigned len);
 int tcp_reactor_enable_write_watch(struct tcp_connection *c);
+
+/* mode 2 [io_wait]: apply a new lifetime (ticks) to c - tcpops */
+void tcp_reactor_set_lifetime(struct tcp_connection *c, ticks_t lifetime);
 
 /* mode 2 hooks, one per integration point in tcp_main.c:
  *  - handle_tcpconn_ev(): tcp_reactor_handle_tcpconn_ev()
