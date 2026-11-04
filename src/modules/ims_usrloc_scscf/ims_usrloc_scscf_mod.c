@@ -465,10 +465,6 @@ static int child_init(int rank)
  */
 static void destroy(void)
 {
-	if(sub_dialog_table) {
-		pres_destroy_shtable(sub_dialog_table, sub_dialog_hash_size);
-	}
-
 	if(ul_dbh) {
 		ul_unlock_locks();
 		if(synchronize_all_udomains(0, 1) != 0) {
@@ -478,6 +474,14 @@ static void destroy(void)
 	}
 
 	free_all_udomains();
+
+	/* the subscriber dialogs are looked up by synchronize_all_udomains()
+	 * (process_impurecord()) and removed by free_all_udomains()
+	 * (free_subscriber()), so destroy the table after both */
+	if(sub_dialog_table) {
+		pres_destroy_shtable(sub_dialog_table, sub_dialog_hash_size);
+		sub_dialog_table = NULL;
+	}
 	ul_destroy_locks();
 	subs_destroy_locks();
 	destroy_contacts_locks();
