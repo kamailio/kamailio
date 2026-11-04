@@ -124,6 +124,7 @@ static void tls_free_ssl_cache(struct tls_extra_data *data);
 extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
+static str _ksr_tls_connect_server_name = STR_NULL;
 
 /* copy the outbound tls xavp of the calling process (server_name,
  * server_id) into ci as shm strings; without a server_id in the xavp, the
@@ -135,6 +136,28 @@ void tls_h_connect_info_f(ksr_coninfo_t *ci)
 	sr_xavp_t *vavp = NULL;
 	str sname = str_init("server_name");
 	str sid = str_init("server_id");
+
+	/* the value set by tls_set_connect_server_name() for the next connect,
+	 * only with the one of tls_set_connect_server_id() (both set by the same
+	 * route) and not when the xavp has a server_id (another destination),
+	 * overwritten below by the xavp server_name, then reset */
+	if(_ksr_tls_connect_server_name.len > 0) {
+		if(_ksr_tls_connect_server_id.len > 0) {
+			if(sr_tls_xavp_cfg.s != NULL) {
+				vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
+			}
+			if(vavp == NULL || vavp->val.v.s.len <= 0) {
+				if(shm_str_update(
+						   &ci->server_name, &_ksr_tls_connect_server_name)
+						< 0) {
+					LM_WARN("failed to store outbound tls server_name in "
+							"shm\n");
+				}
+			}
+			vavp = NULL;
+		}
+		ksr_tls_set_connect_server_name(NULL);
+	}
 
 	/* the value set by tls_set_connect_server_id() for the next connect,
 	 * overwritten below by the xavp server_id, then reset */
@@ -215,6 +238,30 @@ int ksr_tls_set_connect_server_id(str *srvid)
 
 	memcpy(_ksr_tls_connect_server_id.s, srvid->s, srvid->len);
 	_ksr_tls_connect_server_id.len = srvid->len;
+
+	return 0;
+}
+
+int ksr_tls_set_connect_server_name(str *sname)
+{
+	if(_ksr_tls_connect_server_name.s) {
+		pkg_free(_ksr_tls_connect_server_name.s);
+	}
+	_ksr_tls_connect_server_name.s = NULL;
+	_ksr_tls_connect_server_name.len = 0;
+
+	if(sname == NULL || sname->len <= 0) {
+		return 0;
+	}
+
+	_ksr_tls_connect_server_name.s = (char *)pkg_mallocxz(sname->len + 1);
+	if(_ksr_tls_connect_server_name.s == NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+
+	memcpy(_ksr_tls_connect_server_name.s, sname->s, sname->len);
+	_ksr_tls_connect_server_name.len = sname->len;
 
 	return 0;
 }
@@ -371,6 +418,7 @@ static int tls_complete_init(struct tcp_connection *c)
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip,
 				c->rcv.dst_port, sname, srvid);
 		ksr_tls_set_connect_server_id(NULL);
+		ksr_tls_set_connect_server_name(NULL);
 	}
 	if(unlikely(c->state < 0)) {
 		BUG("Invalid connection (state %d)\n", c->state);
@@ -1168,6 +1216,11 @@ static char *get_tls_domain_str(
 		ci = (c != NULL) ? &c->cinfo : tcp_reactor_connect_info();
 		sname = tls_get_connect_server_name(ci);
 		srvid = tls_get_connect_server_id(ci);
+		if(sname == NULL && srvid == &_ksr_tls_connect_server_id
+				&& _ksr_tls_connect_server_name.len > 0) {
+			/* the next connect would get it (tls_h_connect_info_f()) */
+			sname = &_ksr_tls_connect_server_name;
+		}
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, ip, port, sname, srvid);
 	}
 
