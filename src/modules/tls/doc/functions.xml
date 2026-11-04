@@ -60,4 +60,39 @@
 </programlisting>
 		</example>
 	</section>
+	<section id="tls.f.tls_set_connect_server_name">
+		<title><function>tls_set_connect_server_name(sname)</function></title>
+		<para>
+			Set the server name (SNI) to be used by the next client connect,
+			being reset after use. It is the server_name counterpart of
+			<function>tls_set_connect_server_id()</function>, for the cases
+			when xavps are no longer available (e.g., after
+			event_route[tm:local-request]). It is also the name checked by
+			the verify_server_name attribute of the client profile.
+		</para>
+		<para>
+			It is used only when the server id of the connection is the one set
+			by <function>tls_set_connect_server_id()</function>, and only when
+			the server_name attribute of the xavp is not set. A value left
+			over by a request sent on an existing connection is not used by
+			a new connection whose server id is given by the xavp.
+		</para>
+		<para>
+			If the parameter is an empty string, then the value is reset.
+		</para>
+		<para>
+			It can be used only in ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>tls_set_connect_server_name</function> usage</title>
+			<programlisting>
+...
+event_route[tm:local-request] {
+    tls_set_connect_server_id("clientone");
+    tls_set_connect_server_name("$dlg_var(tls_name)");
+}
+...
+</programlisting>
+		</example>
+	</section>
 </section>

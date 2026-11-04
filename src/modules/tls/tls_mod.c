@@ -88,6 +88,8 @@ static void mod_destroy(void);
 
 static int w_is_peer_verified(struct sip_msg *msg, char *p1, char *p2);
 static int w_tls_set_connect_server_id(sip_msg_t *msg, char *psrvid, char *p2);
+static int w_tls_set_connect_server_name(
+		sip_msg_t *msg, char *psname, char *p2);
 
 int ksr_rand_engine_param(modparam_t type, void *val);
 
@@ -265,6 +267,9 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE},
 	{"tls_set_connect_server_id", (cmd_function)w_tls_set_connect_server_id,
 			1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"tls_set_connect_server_name",
+			(cmd_function)w_tls_set_connect_server_name, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -877,6 +882,27 @@ static int w_tls_set_connect_server_id(sip_msg_t *msg, char *psrvid, char *p2)
 	return ki_tls_set_connect_server_id(msg, &ssrvid);
 }
 
+static int ki_tls_set_connect_server_name(sip_msg_t *msg, str *sname)
+{
+	if(ksr_tls_set_connect_server_name(sname) < 0) {
+		return -1;
+	}
+
+	return 1;
+}
+
+static int w_tls_set_connect_server_name(sip_msg_t *msg, char *psname, char *p2)
+{
+	str ssname = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)psname, &ssname) < 0) {
+		LM_ERR("failed to get server name parameter\n");
+		return -1;
+	}
+
+	return ki_tls_set_connect_server_name(msg, &ssname);
+}
+
 /**
  *
  */
@@ -897,6 +923,11 @@ static sr_kemi_t sr_kemi_tls_exports[] = {
 	},
 	{ str_init("tls"), str_init("set_connect_server_id"),
 		SR_KEMIP_INT, ki_tls_set_connect_server_id,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tls"), str_init("set_connect_server_name"),
+		SR_KEMIP_INT, ki_tls_set_connect_server_name,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
