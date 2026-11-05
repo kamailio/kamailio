@@ -30,7 +30,9 @@
 /* TCP connection API for modules: change a connection by its id from any
  * process; the core applies the change where the connection's owner is
  *  - tcp_main_threads 0/1: in the calling process, as modules did before
- *  - tcp_main_threads 2: in PROC_TCP_MAIN (a command or an io_wait task)
+ *  - tcp_main_threads 2: in PROC_TCP_MAIN (a command or an io_wait task); on
+ *    a tcp main pool thread the setting commands return -1 (io_wait owns the
+ *    flags, the timer and the socket), TCPCONN_CTRL_MARK_BAD acts as the job
  * Reads (state, id, rcv, type) stay direct. */
 
 /* return codes: 1 success, -1 failure, TCPCONN_API_NOCONN unknown conid */
@@ -45,13 +47,16 @@
  *  - TCPCONN_CTRL_SET_KEEPALIVE (struct tcpconn_keepalive *): enable (on = 1:
  *    idle, cnt, intvl) or disable TCP keepalive on conid
  *  - TCPCONN_CTRL_SET_FLAGS (unsigned int): set connection flags on conid;
- *    allowed: F_CONN_CLOSE_EV */
+ *    allowed: F_CONN_CLOSE_EV
+ *  - TCPCONN_CTRL_MARK_BAD (none): mark conid bad: close it now (after a
+ *    send in flight), no further sends */
 enum tcpconn_ctrl_cmd
 {
 	TCPCONN_CTRL_CLOSE = 1,
 	TCPCONN_CTRL_SET_LIFETIME,
 	TCPCONN_CTRL_SET_KEEPALIVE,
-	TCPCONN_CTRL_SET_FLAGS
+	TCPCONN_CTRL_SET_FLAGS,
+	TCPCONN_CTRL_MARK_BAD
 };
 
 /* TCPCONN_CTRL_SET_KEEPALIVE argument */

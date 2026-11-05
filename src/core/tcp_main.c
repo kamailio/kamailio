@@ -70,6 +70,7 @@
 #include "ip_addr.h"
 #include "pass_fd.h"
 #include "tcp_conn.h"
+#include "tcp_conn_api.h"
 #include "globals.h"
 #include "pt.h"
 #include "locking.h"
@@ -5952,11 +5953,9 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 #define TCPIDLIST_SIZE 1024
 	int tcpidlist[TCPIDLIST_SIZE];
 	int n;
-	int rc;
 	int i;
 	struct timeval tvnow;
 	long long tvdiff;
-	long mcmd[2];
 	int cidset = 0;
 
 	if(tcp_disable) {
@@ -6006,30 +6005,12 @@ void tcp_timer_check_connections(unsigned int ticks, void *param)
 		TCPCONN_UNLOCK;
 		if(n > 0) {
 			for(i = 0; i < n; i++) {
-				if((con = tcpconn_get(tcpidlist[i], 0, 0, 0, 0))) {
-					LM_DBG("message processing timeout on connection id: %d "
-						   "(state: %d) - "
-						   "closing\n",
-							tcpidlist[i], con->state);
-					mcmd[0] = (long)con;
-					mcmd[1] = CONN_EOF;
-
-					/* message read/data timeout: record the close reason
-					 * so that tcpops can identify tcp:timeout */
-					con->event = TCP_CLOSED_TIMEOUT;
-					/* mode 2: the flag words belong to the io_wait thread;
-					 * CONN_EOF closes con there */
-					if(ksr_tcp_main_threads != 2) {
-						con->send_flags.f |= SND_F_CON_CLOSE;
-						con->flags |= F_CONN_FORCE_EOF;
-					}
-
-					rc = send_all(unix_tcp_sock, mcmd, sizeof(mcmd));
-					if(unlikely(rc <= 0)) {
-						LM_ERR("failed to send close request: %s (%d)\n",
-								strerror(errno), errno);
-					}
-				}
+				LM_DBG("message processing timeout on connection id: %d - "
+					   "closing\n",
+						tcpidlist[i]);
+				/* the close reason lets tcpops identify tcp:timeout */
+				tcpconn_ctrl(
+						tcpidlist[i], TCPCONN_CTRL_CLOSE, TCP_CLOSED_TIMEOUT);
 			}
 		}
 	} while(n == TCPIDLIST_SIZE);

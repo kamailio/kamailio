@@ -725,7 +725,7 @@ static int tcp_reactor_shield(struct tcp_connection *c, int fd_i)
  *  - pool-owned c: also set F_CONN_POOL_CLOSE; a running job writes c->state
  *    (e.g. S_CONN_ACCEPT -> S_CONN_OK), the flag belongs to io_wait and keeps
  *    the close request for the job completion */
-static void tcp_reactor_mark_bad(struct tcp_connection *c)
+void tcp_reactor_mark_bad(struct tcp_connection *c)
 {
 	c->state = S_CONN_BAD;
 	c->timeout = get_ticks_raw(); /* force reaper */
