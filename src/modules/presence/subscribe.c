@@ -2214,6 +2214,7 @@ void update_db_subs_timer_dbnone(int no_lock)
 				del_s = s;
 				s = s->next;
 				prev_s->next = s;
+				update_stat(pres_subs_stat, -1);
 
 				if(del_s->contact.s)
 					shm_free(del_s->contact.s);
@@ -2440,6 +2441,7 @@ void update_db_subs_timer(db1_con_t *db, db_func_t *dbf, shtable_t hash_table,
 				del_s = s;
 				s = s->next;
 				prev_s->next = s;
+				if_update_stat(hash_table == subs_htable, pres_subs_stat, -1);
 
 				/* need for a struct free/destroy? */
 				if(del_s->contact.s)

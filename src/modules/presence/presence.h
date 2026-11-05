@@ -37,6 +37,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/utils/sruid.h"
+#include "../../core/counters.h"
 #include "event_list.h"
 #include "hash.h"
 
@@ -90,6 +91,7 @@ extern int pres_refresh_record_route;
 extern int pres_send_fast_notify;
 extern int shtable_size;
 extern shtable_t subs_htable;
+extern stat_var *pres_subs_stat;
 
 extern int pres_fetch_rows;
 
@@ -114,6 +116,7 @@ extern int pres_subs_respond_200;
 
 extern int phtable_size;
 extern phtable_t *pres_htable;
+extern stat_var *pres_presentity_stat;
 
 extern sruid_t pres_sruid;
 

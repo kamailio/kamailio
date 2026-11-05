@@ -1504,6 +1504,24 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 </section>
 
 <section>
+	<title>Statistics</title>
+	<section>
+		<title><varname>subscriptions</varname></title>
+		<para>
+		Number of subscriptions in the in-memory subscriptions table
+		(<varname>subs_db_mode</varname> other than 3).
+		</para>
+	</section>
+	<section>
+		<title><varname>presentities</varname></title>
+		<para>
+		Number of presentity records in the in-memory presentity table
+		(<varname>publ_cache</varname> 2).
+		</para>
+	</section>
+</section>
+
+<section>
 	<title>RPC Commands</title>
 	<section id="presence.r.cleanup">
 	  <title>presence.cleanup</title>
