@@ -413,6 +413,18 @@ ipsec_create("location", "1");
           </para>
         </listitem>
       </itemizedlist>
+      <para>
+      The function can also be used in event_route[tm:local-request], for
+      requests Kamailio generates itself, such as the BYE sent by
+      dlg_terminate() of ims_dialog. Such a request leaves from the socket its
+      dialog was set up on, which for a call from the UE is the protected
+      server port of the P-CSCF, outside the security associations. There the
+      function acts only on a request that leaves from an IPSec socket,
+      finds the tunnel by the next hop (as with flag 0x04), and changes only
+      the send socket: tm does not take a new destination from the
+      local-request route. Other requests are left unchanged and the
+      function returns -1.
+      </para>
       <example>
         <title>ipsec_forward</title>
 
@@ -421,6 +433,10 @@ ipsec_create("location", "1");
 ipsec_forward("location");
 # or
 ipsec_forward("location", "1");
+...
+event_route[tm:local-request] {
+    ipsec_forward("location", "897");
+}
 ...
         </programlisting>
       </example>
