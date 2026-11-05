@@ -27,6 +27,7 @@
 
 #include "../../core/rpc.h"
 #include "../../core/tcp_conn.h"
+#include "../../core/tcp_conn_api.h"
 #include "../../core/tcp_info.h"
 #include "../../core/timer.h"
 #include "../../core/cfg/cfg.h"
@@ -424,7 +425,7 @@ static const char *tls_kill_doc[2] = {
 static void tls_kill(rpc_t *rpc, void *c)
 {
 	struct tcp_connection *con;
-	int i, kill_id = 0;
+	int i, found, kill_id = 0;
 
 	if(rpc->scan(c, "d", &kill_id) < 0) {
 		/* Reply is set automatically by scan upon failure,
@@ -433,24 +434,24 @@ static void tls_kill(rpc_t *rpc, void *c)
 		return;
 	}
 
+	found = 0;
 	TCPCONN_LOCK;
-	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
+	for(i = 0; i < TCP_ID_HASH_SIZE && !found; i++) {
 		for(con = tcpconn_id_hash[i]; con; con = con->id_next) {
-			if(con->rcv.proto != PROTO_TLS && con->rcv.proto != PROTO_WSS)
-				continue;
-			if(con->id == kill_id) {
-				con->state = -2;
-				con->timeout = get_ticks_raw();
-
-				TCPCONN_UNLOCK;
-
-				rpc->add(c, "s", "OK");
-				return;
+			if(con->id == kill_id
+					&& (con->rcv.proto == PROTO_TLS
+							|| con->rcv.proto == PROTO_WSS)) {
+				found = 1;
+				break;
 			}
 		}
 	}
 	TCPCONN_UNLOCK;
 
+	if(found && tcpconn_ctrl(kill_id, TCPCONN_CTRL_MARK_BAD) == 1) {
+		rpc->add(c, "s", "OK");
+		return;
+	}
 	rpc->add(c, "s", "TLS connection id not found");
 }
 
