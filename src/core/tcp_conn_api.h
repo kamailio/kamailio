@@ -48,8 +48,8 @@
  *    idle, cnt, intvl) or disable TCP keepalive on conid
  *  - TCPCONN_CTRL_SET_FLAGS (unsigned int): set connection flags on conid;
  *    allowed: F_CONN_CLOSE_EV
- *  - TCPCONN_CTRL_MARK_BAD (none): mark conid bad: close it now (after a
- *    send in flight), no further sends */
+ *  - TCPCONN_CTRL_MARK_BAD (none): mark conid bad and close it now; data
+ *    still queued for it is dropped */
 enum tcpconn_ctrl_cmd
 {
 	TCPCONN_CTRL_CLOSE = 1,

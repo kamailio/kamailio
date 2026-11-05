@@ -137,9 +137,6 @@ int tcp_reactor_connect_put(struct dest_info *dst, union sockaddr_union *from,
 		const char *buf, unsigned len);
 int tcp_reactor_enable_write_watch(struct tcp_connection *c);
 
-/* mode 2 [io_wait]: mark c bad for closing (S_CONN_BAD, forced timeout;
- * F_CONN_POOL_CLOSE for a pool-owned c) */
-void tcp_reactor_mark_bad(struct tcp_connection *c);
 /* mode 2 [io_wait]: apply a new lifetime (ticks) to c - tcpops */
 void tcp_reactor_set_lifetime(struct tcp_connection *c, ticks_t lifetime);
 

@@ -57,9 +57,8 @@ enum tcpconn_api_op
 {
 	TCPCONN_OP_KA_ON = 1, /* p1 idle, p2 cnt, p3 intvl */
 	TCPCONN_OP_KA_OFF,
-	TCPCONN_OP_FLAGS,	 /* p1 flags */
-	TCPCONN_OP_LIFETIME, /* p1 seconds */
-	TCPCONN_OP_MARK_BAD
+	TCPCONN_OP_FLAGS,	/* p1 flags */
+	TCPCONN_OP_LIFETIME /* p1 seconds */
 };
 
 /* mode 2: the caller is a tcp main pool thread (a read or write job) */
@@ -167,13 +166,6 @@ static void tcpconn_api_task_exec(void *p, int pidx)
 			break;
 		case TCPCONN_OP_LIFETIME:
 			tcp_reactor_set_lifetime(c, S_TO_TICKS(t->p1));
-			rc = 1;
-			break;
-		case TCPCONN_OP_MARK_BAD:
-			lock_get(&c->write_lock);
-			c->send_flags.f |= SND_F_CON_CLOSE;
-			lock_release(&c->write_lock);
-			tcp_reactor_mark_bad(c);
 			rc = 1;
 			break;
 		default:
@@ -345,23 +337,35 @@ static int tcpconn_api_set_flags(int conid, unsigned int flags)
 static int tcpconn_api_mark_bad(int conid)
 {
 	struct tcp_connection *c;
-	int rc = 1;
+	long mcmd[2];
 
 	if((c = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)
 		return TCPCONN_API_NOCONN;
-	if(ksr_tcp_main_threads == 2 && !TCPCONN_API_ON_POOL()) {
-		rc = tcpconn_api_run(c, TCPCONN_OP_MARK_BAD, 0, 0, 0);
-	} else {
-		/* modes 0/1, and a mode 2 job on its own c: the job writes c->state,
-		 * its completion on io_wait closes c */
+	if(ksr_tcp_main_threads != 2 || TCPCONN_API_ON_POOL()) {
+		/* modes 0/1, and a mode 2 job on its own c (its completion on
+		 * io_wait closes c): stop further sends */
 		lock_get(&c->write_lock);
 		c->send_flags.f |= SND_F_CON_CLOSE;
 		lock_release(&c->write_lock);
 		c->state = S_CONN_BAD;
 		c->timeout = get_ticks_raw();
+		if(TCPCONN_API_ON_POOL()) {
+			tcpconn_chld_put(c);
+			return 1;
+		}
 	}
-	tcpconn_chld_put(c);
-	return rc;
+	/* have tcp main close c now: a forced timeout alone waits for the timer
+	 * of c, up to its lifetime */
+	mcmd[0] = (long)c;
+	mcmd[1] = CONN_EOF;
+	if(unlikely(send_all(unix_tcp_sock, mcmd, sizeof(mcmd)) <= 0)) {
+		LM_ERR("failed to send close request: %s (%d)\n", strerror(errno),
+				errno);
+		tcpconn_chld_put(c);
+		return -1;
+	}
+	/* the ref travels with CONN_EOF */
+	return 1;
 }
 
 int tcpconn_ctrl(int conid, int cmd, ...)
