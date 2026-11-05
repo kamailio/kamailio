@@ -36,8 +36,7 @@
 #include "../../core/ut.h"
 #include "../../core/hashes.h"
 #include "../../core/tcp_conn.h"
-#include "../../core/pass_fd.h"
-#include "../../core/globals.h"
+#include "../../core/tcp_conn_api.h"
 #include "usrloc_mod.h"
 #include "usrloc.h"
 #include "utime.h"
@@ -249,30 +248,7 @@ int is_tcp_alive(ucontact_t *c)
  */
 static inline int close_connection(int conid)
 {
-	struct tcp_connection *con;
-	long msg[2];
-	int n;
-	if((con = tcpconn_get(conid, 0, 0, 0, 0))) {
-		msg[0] = (long)con;
-		msg[1] = CONN_EOF;
-
-		/* mode 2: the flag words belong to the io_wait thread; CONN_EOF
-		 * closes con there */
-		if(ksr_tcp_main_threads != 2) {
-			con->send_flags.f |= SND_F_CON_CLOSE;
-			con->flags |= F_CONN_FORCE_EOF;
-		}
-
-		n = send_all(unix_tcp_sock, msg, sizeof(msg));
-		if(unlikely(n <= 0)) {
-			LM_ERR("failed to send close request: %s (%d)\n", strerror(errno),
-					errno);
-			tcpconn_chld_put(con);
-			return 0;
-		}
-		return 1;
-	}
-	return 0;
+	return (tcpconn_ctrl(conid, TCPCONN_CTRL_CLOSE, 0) == 1) ? 1 : 0;
 }
 
 /*!
