@@ -32,6 +32,7 @@
 #include "../../core/str.h"
 #include "../../core/ut.h"
 #include "../../core/tcp_conn.h"
+#include "../../core/tcp_conn_api.h"
 #include "../../core/fmsg.h"
 #include "../../core/counters.h"
 #include "../../core/kemi.h"
@@ -796,24 +797,13 @@ end:
 
 void wsconn_close_now(ws_connection_t *wsc)
 {
-	struct tcp_connection *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
+	int id = wsc->id; /* wsconn_rm() may free wsc */
 
 	if(wsconn_rm(wsc, WSCONN_EVENTROUTE_YES) < 0)
 		LM_ERR("removing WebSocket connection\n");
 
-	if(con == NULL) {
+	if(tcpconn_ctrl(id, TCPCONN_CTRL_MARK_BAD) == TCPCONN_API_NOCONN)
 		LM_ERR("getting TCP/TLS connection\n");
-		return;
-	}
-
-	/* write while the reference holds con; send_flags under write_lock, as the
-	 * core writes it */
-	lock_get(&con->write_lock);
-	con->send_flags.f |= SND_F_CON_CLOSE;
-	lock_release(&con->write_lock);
-	con->state = S_CONN_BAD;
-	con->timeout = get_ticks_raw();
-	tcpconn_chld_put(con);
 }
 
 void wsconn_detach_connection(ws_connection_t *wsc)

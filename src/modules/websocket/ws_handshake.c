@@ -37,6 +37,7 @@
 #include "../../core/str.h"
 #include "../../core/trim.h"
 #include "../../core/tcp_conn.h"
+#include "../../core/tcp_conn_api.h"
 #include "../../core/tcp_server.h"
 #include "../../core/counters.h"
 #include "../../core/strutils.h"
@@ -969,14 +970,8 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 	ret = 1;
 
 done:
-	if(ret < 0 && con != NULL) {
-		/* send_flags under write_lock, as the core writes it */
-		lock_get(&con->write_lock);
-		con->send_flags.f |= SND_F_CON_CLOSE;
-		lock_release(&con->write_lock);
-		con->state = S_CONN_BAD;
-		con->timeout = get_ticks_raw();
-	}
+	if(ret < 0 && con != NULL)
+		tcpconn_ctrl(con->id, TCPCONN_CTRL_MARK_BAD);
 	if(con)
 		tcpconn_chld_put(con);
 	if(proxy)
