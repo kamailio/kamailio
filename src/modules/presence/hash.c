@@ -339,6 +339,8 @@ int insert_and_replace_shtable(
 					htable[hash_code].entries->next = rec->next;
 				}
 
+				if_update_stat(htable == subs_htable, pres_subs_stat, -1);
+
 				if(pres_subs_dbmode != NO_DB) {
 					delete_db_subs(&rec->to_tag, &rec->from_tag, &rec->callid);
 				}
@@ -366,6 +368,7 @@ int insert_and_replace_shtable(
 
 	new_rec->next = htable[hash_code].entries->next;
 	htable[hash_code].entries->next = new_rec;
+	if_update_stat(htable == subs_htable, pres_subs_stat, 1);
 	lock_release(&htable[hash_code].lock);
 
 	return 0;
@@ -431,6 +434,7 @@ int delete_shtable(shtable_t htable, unsigned int hash_code, subs_t *subs)
 			}
 			found = s->local_cseq + 1;
 			ps->next = s->next;
+			if_update_stat(htable == subs_htable, pres_subs_stat, -1);
 			if(s) {
 				if(s->contact.s != NULL) {
 					shm_free(s->contact.s);
@@ -1112,6 +1116,7 @@ int ps_ptable_insert(ps_presentity_t *pt)
 		ptn->next = _ps_ptable->slots[idx].plist;
 		_ps_ptable->slots[idx].plist = ptn;
 	}
+	update_stat(pres_presentity_stat, 1);
 	lock_release(&_ps_ptable->slots[idx].lock);
 
 	return 0;
@@ -1166,6 +1171,7 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 			} else {
 				_ps_ptable->slots[idx].plist = ptn->next;
 			}
+			update_stat(pres_presentity_stat, -1);
 			ptnx = ptn->next;
 			ps_presentity_free(ptn, 0);
 			ptn = ptnx;
@@ -1187,6 +1193,7 @@ int ps_ptable_replace(ps_presentity_t *ptm, ps_presentity_t *pt)
 		ptn->next = _ps_ptable->slots[idx].plist;
 		_ps_ptable->slots[idx].plist = ptn;
 	}
+	update_stat(pres_presentity_stat, 1);
 	lock_release(&_ps_ptable->slots[idx].lock);
 
 	return 0;
@@ -1240,6 +1247,7 @@ int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 			} else {
 				_ps_ptable->slots[idx].plist = ptn->next;
 			}
+			update_stat(pres_presentity_stat, -1);
 			break;
 		}
 		ptn = ptn->next;
@@ -1264,6 +1272,7 @@ int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 		ptn->next = _ps_ptable->slots[idx].plist;
 		_ps_ptable->slots[idx].plist = ptn;
 	}
+	update_stat(pres_presentity_stat, 1);
 	lock_release(&_ps_ptable->slots[idx].lock);
 
 	return 1; /* affected items */
@@ -1306,6 +1315,7 @@ int ps_ptable_remove(ps_presentity_t *pt)
 			} else {
 				_ps_ptable->slots[idx].plist = ptn->next;
 			}
+			update_stat(pres_presentity_stat, -1);
 			break;
 		}
 		ptn = ptn->next;
