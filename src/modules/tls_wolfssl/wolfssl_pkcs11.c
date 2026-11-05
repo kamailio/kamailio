@@ -1,13 +1,14 @@
 /*
  * tls_wolfssl - PKCS#11 private key loader
  *
- * Parses a PKCS#11 URI of the form:
- *   pkcs11:module=/path/to/pkcs11.so;token=token_name;object=key_label[;pin=<pin>]
+ * Parses a PKCS#11 URI (RFC 7512) of the form (%-decoded before parsing):
+ *   pkcs11:token=<token>;object=<key_label>?module-path=/path/to/pkcs11.so
+ *       [&pin-value=<pin> | &pin-source=<source>]
  *
- * pin= variants:
- *   pin=secret          literal PIN
- *   pin=env:VAR_NAME    read PIN from environment variable VAR_NAME
- *   pin=file:/path      read PIN from first line of file at /path
+ * path attributes before '?', query attributes after it; pin-source forms:
+ *   pin-source=env:VAR_NAME    read PIN from environment variable VAR_NAME
+ *   pin-source=file:/path      read PIN from first line of file at /path
+ *   pin-source=<pin>           literal PIN
  *
  * Caches up to PKCS11_MAX_DEVS wolfSSL crypto devices.
  * Each unique (module, token) pair is registered as a separate device;
@@ -88,11 +89,11 @@ extern int wolfssl_child_rank;
 
 
 /*
- * Resolve a pin= value into a NUL-terminated PIN string written into
+ * Resolve a pin-source value into a NUL-terminated PIN string written into
  * out[0..out_sz-1].  Supports three forms:
- *   plain text  : pin=secret
- *   env variable: pin=env:VAR_NAME
- *   file        : pin=file:/path/to/pin-file  (first line, newline stripped)
+ *   plain text  : pin-source=secret
+ *   env variable: pin-source=env:VAR_NAME
+ *   file        : pin-source=file:/path/to/pin-file  (first line, CR/LF stripped)
  * Returns 1 on success, 0 on failure.
  */
 static int pkcs11_resolve_pin(const char *raw, char *out, int out_sz)
@@ -395,17 +396,24 @@ int tls_pkcs11_open_token(WOLFSSL *ssl)
 
 /* length of the part of a private key setting that is safe to log: for a
  * pkcs11 URI the query attributes (module-path, pin-value, pin-source) are
- * left out, so the PIN never reaches the logs */
+ * left out, so the PIN never reaches the logs
+ * - the parser %-decodes the URI first: stop at an encoded '?' (%3F) too */
 int tls_pkcs11_uri_loglen(const char *uri, int len)
 {
-	const char *q;
+	int i;
 
 	if(uri == NULL || len <= 0)
 		return 0;
 	if(len < 7 || strncmp(uri, "pkcs11:", 7) != 0)
 		return len;
-	q = memchr(uri, '?', len);
-	return q ? (int)(q - uri) : len;
+	for(i = 7; i < len; i++) {
+		if(uri[i] == '?')
+			return i;
+		if(uri[i] == '%' && i + 2 < len && uri[i + 1] == '3'
+				&& (uri[i + 2] == 'f' || uri[i + 2] == 'F'))
+			return i;
+	}
+	return len;
 }
 
 int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
@@ -460,7 +468,7 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 	}
 
 	if(!lib_path[0]) {
-		LM_ERR("tls_pkcs11_set_key: missing 'module' in URI: '%.*s'\n",
+		LM_ERR("tls_pkcs11_set_key: missing 'module-path' in URI: '%.*s'\n",
 				tls_pkcs11_uri_loglen(key, strlen(key)), key);
 		return -1;
 	}
@@ -480,6 +488,7 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 	char lookup_name[sizeof(_pkcs11_tokens[0].longname)];
 	int size;
 	int token_slot;
+	int new_token = 0;
 	WOLFSSL *ssl = NULL;
 
 	size = snprintf(
@@ -564,6 +573,7 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 			return -1;
 		}
 		cur_token->used = 1;
+		new_token = 1;
 	}
 
 	int devId = token_slot;
@@ -580,12 +590,16 @@ int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key)
 	strncpy(ctxd->private_key, obj_name, sizeof(ctxd->private_key) - 1);
 	ctxd->private_key[sizeof(ctxd->private_key) - 1] = '\0';
 
-	if(wc_CryptoCb_RegisterDevice(devId, my_FilterPk, token) != 0) {
+	/* register the device of a new token; a cached token has its devId
+	 * registered already (wolfSSL rejects a second one: ALREADY_E) */
+	if(new_token
+			&& wc_CryptoCb_RegisterDevice(devId, my_FilterPk, token) != 0) {
 		LM_ERR("pkcs11: failed to register runtime devId=%d token='%s'\n",
 				devId, token_name);
+		/* free the slot of the token added here (the last one) */
 		wc_Pkcs11Token_Final(token);
+		memset(cur_token, 0, sizeof(*cur_token));
 		return -1;
-	} else {
 	}
 
 	/* Create a temporary SSL object for the cert/key check.

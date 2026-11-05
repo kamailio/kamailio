@@ -1420,7 +1420,7 @@ static int load_pkcs11_private_key(tls_domain_t *d)
 	memcpy(temp_name, d->pkey_file.s, d->pkey_file.len);
 	temp_name[d->pkey_file.len] = '\0';
 
-	LM_WARN("%s: Loading PKCS#11 key label '%.*s' for domain %p\n",
+	LM_INFO("%s: Loading PKCS#11 key label '%.*s' for domain %p\n",
 			tls_domain_str(d),
 			tls_pkcs11_uri_loglen(temp_name, d->pkey_file.len), temp_name, d);
 	ret_pwd = tls_pkcs11_set_key(d->ctx[0], temp_name, 1);
