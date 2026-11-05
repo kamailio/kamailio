@@ -45,6 +45,7 @@
  */
 
 #include "../../core/parser/msg_parser.h"
+#include "../../core/route.h"
 #include "../../core/socket_info.h"
 #include "../../lib/ims/ims_getters.h"
 #include "../../modules/tm/tm_load.h"
@@ -68,6 +69,9 @@ extern ip_addr_t ipsec_listen_ip_addr;
 extern ip_addr_t ipsec_listen_ip_addr6;
 
 extern int spi_id_start;
+extern int ipsec_client_port;
+extern int ipsec_server_port;
+extern int ipsec_max_connections;
 
 extern atomic_t *ipsec_reconfig_flag;
 extern unsigned int ipsec_init_flag;
@@ -1578,6 +1582,34 @@ int ims_ipsec_get_forward_proto(sip_msg_t *msg)
 	return parsed_uri.proto;
 }
 
+/**
+ * Whether si is one of the sockets opened for the tunnels: the IPsec listen
+ * address with a protected client or server port.
+ */
+static int is_ipsec_socket(struct socket_info *si)
+{
+	if(si == NULL) {
+		return 0;
+	}
+	if(si->address.af == AF_INET) {
+		if(ipsec_listen_addr.len <= 0
+				|| !ip_addr_cmp(&si->address, &ipsec_listen_ip_addr)) {
+			return 0;
+		}
+	} else if(si->address.af == AF_INET6) {
+		if(ipsec_listen_addr6.len <= 0
+				|| !ip_addr_cmp(&si->address, &ipsec_listen_ip_addr6)) {
+			return 0;
+		}
+	} else {
+		return 0;
+	}
+	return (si->port_no >= ipsec_client_port
+				   && si->port_no < ipsec_client_port + ipsec_max_connections)
+		   || (si->port_no >= ipsec_server_port
+				   && si->port_no < ipsec_server_port + ipsec_max_connections);
+}
+
 int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 {
 	struct pcontact_info ci;
@@ -1593,6 +1625,23 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	via_body_t *vb = NULL;
 
 	LM_DBG("processing with flags: 0x%x\n", _cflags);
+
+	if(is_route_type(LOCAL_ROUTE)) {
+		// event_route[tm:local-request]: a request Kamailio generates, such
+		// as the BYE of dlg_terminate(). tm sends it from the socket the
+		// dialog was set up on, which for a call from the UE is the protected
+		// server port, outside the SAs the UE expects requests on. Only a
+		// request leaving from a tunnel socket goes to a UE over IPsec; the
+		// others, e.g. the BYE towards the core, are left alone even when
+		// their R-URI is a registered contact. The contact is found by the
+		// next hop, where tm will send the request.
+		if(m->first_line.type != SIP_REQUEST
+				|| !is_ipsec_socket(m->force_send_socket)) {
+			LM_DBG("local request not sent over a tunnel - nothing to do\n");
+			return IPSEC_CMD_FAIL;
+		}
+		_cflags |= IPSEC_DSTADDR_SEARCH;
+	}
 
 	if(m->first_line.type == SIP_REPLY) {
 		// Get request from reply
@@ -1746,6 +1795,21 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 			   "%u)\n",
 				pcontact->aor.len, pcontact->aor.s, src_port, dst_port);
 		goto cleanup;
+	}
+
+	if(is_route_type(LOCAL_ROUTE)) {
+		// tm takes the send socket of a local request from here, but not a
+		// new destination
+		struct sip_uri nh;
+		if(m->dst_uri.len > 0
+				&& parse_uri(m->dst_uri.s, m->dst_uri.len, &nh) == 0
+				&& (nh.port_no ? nh.port_no : SIP_PORT) != dst_port) {
+			LM_WARN("local %.*s goes to [%.*s], not to port %u of the tunnel "
+					"of contact [%.*s]\n",
+					m->first_line.u.request.method.len,
+					m->first_line.u.request.method.s, m->dst_uri.len,
+					m->dst_uri.s, dst_port, pcontact->aor.len, pcontact->aor.s);
+		}
 	}
 
 	if(_cflags & IPSEC_FORWARD_TRYTCP) {
