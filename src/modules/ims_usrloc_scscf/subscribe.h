@@ -72,7 +72,7 @@ void free_subscriber(reg_subscriber *s);
 
 int valid_subscriber(reg_subscriber *s, time_t act_time);
 
-str get_presentity_from_subscriber_dialog(
-		str *callid, str *to_tag, str *from_tag);
+int get_presentity_from_subscriber_dialog(
+		str *callid, str *to_tag, str *from_tag, str *pres_uri);
 
 #endif /* SUBSCRIBE_USRLOC_H */
