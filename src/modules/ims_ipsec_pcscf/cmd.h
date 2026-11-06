@@ -73,6 +73,7 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags);
 int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags);
 int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri);
 int ipsec_cleanall();
+int ipsec_restore_tunnels();
 int ipsec_reconfig();
 void ipsec_on_expire(pcontact_t *c, int type, void *param);
 int ipsec_promote(udomain_t *d, pcontact_t *c, struct receive_info *rcv);
