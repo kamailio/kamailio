@@ -864,6 +864,7 @@ int get_impus_from_subscription_as_string(udomain_t *_d, impurecord_t *impu_rec,
 			LM_ERR("no more shm_mem\n");
 		else
 			LM_ERR("no more pkg_mem\n");
+		unlock_subscription(impu_rec->s);
 		return 1;
 	}
 	char *ptr = (char *)(*impus + *num_impus);
@@ -907,6 +908,7 @@ int get_impus_from_subscription_as_string(udomain_t *_d, impurecord_t *impu_rec,
 
 	if(ptr != ((char *)*impus + len)) {
 		LM_CRIT("buffer overflow\n");
+		unlock_subscription(impu_rec->s);
 		return 1;
 	}
 
