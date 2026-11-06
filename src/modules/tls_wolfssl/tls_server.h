@@ -130,5 +130,6 @@ int tls_accept(struct tcp_connection *c, int *error);
 
 void tls_h_connect_info_f(ksr_coninfo_t *ci);
 int ksr_tls_set_connect_server_id(str *srvid);
+int ksr_tls_set_connect_server_name(str *sname);
 
 #endif /* _TLS_SERVER_H */
