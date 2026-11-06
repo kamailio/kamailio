@@ -29,6 +29,10 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x1010100fL
+#error "OpenSSL 1.1.1 or newer is required"
+#endif
+
 #include "../../core/basex.h"
 #include "../../core/dprint.h"
 #include "../../core/dset.h"

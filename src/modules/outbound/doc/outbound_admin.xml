@@ -481,7 +481,7 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 		&kamailio; with this module loaded:
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>&openssl;</emphasis>.</para>
+		<para><emphasis>&openssl;</emphasis> (1.1.1 or newer).</para>
 		</listitem>
 		</itemizedlist>
 		</para>
