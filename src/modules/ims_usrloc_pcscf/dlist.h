@@ -72,6 +72,8 @@ void print_all_udomains(FILE *_f);
 int synchronize_all_udomains(void);
 int get_all_ucontacts(void *buf, int len, unsigned int flags,
 		unsigned int part_idx, unsigned int part_max);
+
+int walk_pcontacts(pcontact_walk_f f, void *param);
 int get_udomain(const char *_n, udomain_t **_d);
 unsigned long get_number_of_users(void);
 int find_domain(str *_d, udomain_t **_p);

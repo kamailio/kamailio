@@ -83,6 +83,7 @@ int bind_usrloc(usrloc_api_t *api)
 	api->update_pcontact = update_pcontact;
 	api->update_rx_regsession = update_rx_regsession;
 	api->get_all_ucontacts = get_all_ucontacts;
+	api->walk_pcontacts = walk_pcontacts;
 	api->update_security = update_security;
 	api->update_temp_security = update_temp_security;
 	api->register_ulcb = register_ulcb;
