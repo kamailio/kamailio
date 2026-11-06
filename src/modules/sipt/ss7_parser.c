@@ -213,7 +213,7 @@ static int get_optional_header(
 
 	/* Optional paramter parsing code */
 	if(optional_pointer) {
-		while((len > 0) && (buf[offset] != 0)) {
+		while((len > 1) && (buf[offset] != 0)) {
 			struct isup_parm_opt *optparm =
 					(struct isup_parm_opt *)(buf + offset);
 
@@ -705,7 +705,7 @@ int isup_get_generic_number(unsigned char *buf, int len, char *sb_buf)
 						sb_i);
 				break;
 			}
-			if(offset + 4 + sb_j >= len) {
+			if(offset + 5 + sb_j >= len) {
 				LM_WARN("Stopped loop to prevent out-of-bounds packet read. "
 						"sb_j=%d, len=%d\n",
 						sb_j, len);
