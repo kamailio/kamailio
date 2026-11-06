@@ -84,6 +84,8 @@
 #define CSCF_RETURN_FALSE -1
 /** Return error in the routing script */
 #define CSCF_RETURN_ERROR -2
+/** Return subscription gone (481 sent) in the routing script */
+#define CSCF_RETURN_SUBSCRIPTION_GONE -3
 
 
 extern int nat_flag;

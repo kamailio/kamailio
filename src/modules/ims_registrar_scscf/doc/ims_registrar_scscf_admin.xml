@@ -1073,11 +1073,38 @@ if (can_subscribe_to_reg("location")){
 
       <para>This function can be used in REQUEST_ROUTE</para>
 
+      <para>Return codes:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>1</emphasis> - success, 200 (OK) sent</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>-1</emphasis> - failure, no reply sent</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>-2</emphasis> - error after the 200 (OK) was
+          sent</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>-3</emphasis> - SUBSCRIBE within a dialog for which
+          no subscription exists (any more), 481 (Call/Transaction Does Not
+          Exist) sent</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>A SUBSCRIBE within a dialog should not be checked with
+      <function>can_subscribe_to_reg</function> first: it returns false for
+      a dialog without subscription, so the 481 would not be sent.</para>
+
       <example>
         <title><function>subscribe_to_reg</function> usage</title>
 
         <programlisting format="linespecific">...
-if (can_subscribe_to_reg("location")){
+if (has_totag() || can_subscribe_to_reg("location")){
      $var(ret)= subscribe_to_reg("location");
 }
 ...
