@@ -9,7 +9,7 @@
 
 <table id="pcscf_location" xmlns:db="http://docbook.org/ns/docbook">
     <name>pcscf_location</name>
-    <version>7</version>
+    <version>8</version>
     <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>Persistent user location information for the ims_usrloc_pcscf module.
@@ -302,15 +302,6 @@
       <null/>
       <default><null/></default>
       <description>t_security_type</description>
-    </column>
-
-    <column id="t_protocol">
-      <name>t_protocol</name>
-      <type>string</type>
-      <size>5</size>
-      <null/>
-      <default><null/></default>
-      <description>t_protocol</description>
     </column>
 
     <column id="t_mode">
