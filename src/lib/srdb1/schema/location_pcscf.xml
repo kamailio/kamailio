@@ -9,7 +9,7 @@
 
 <table id="pcscf_location" xmlns:db="http://docbook.org/ns/docbook">
     <name>pcscf_location</name>
-    <version>8</version>
+    <version>9</version>
     <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>Persistent user location information for the ims_usrloc_pcscf module.
@@ -295,6 +295,15 @@
       <description>spi_us</description>
     </column>
 
+    <column id="start_time">
+      <name>start_time</name>
+      <type>unsigned int</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+      <description>When the tunnel's SAs were installed (unix time)</description>
+    </column>
+
     <column id="t_security_type">
       <name>t_security_type</name>
       <type>int</type>
@@ -419,6 +428,15 @@
       <null/>
       <default><null/></default>
       <description>t_spi_us</description>
+    </column>
+
+    <column id="t_start_time">
+      <name>t_start_time</name>
+      <type>unsigned int</type>
+      <size>10</size>
+      <null/>
+      <default><null/></default>
+      <description>When the tunnel's SAs were installed (unix time)</description>
     </column>
 
     <index>
