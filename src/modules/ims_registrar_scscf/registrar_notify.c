@@ -2486,7 +2486,8 @@ void uac_request_cb(struct cell *t, int type, struct tmcb_params *ps)
 	// A NOTIFY request is considered failed if the response times out, or a non-200 class
 	// response code is received which has no "Retry-After" header and no implied further
 	// action which can be taken to retry the request.
-	if(ps->code != 408 && !(ps->flags & TMCB_LOCAL_F)) {
+	if(ps->code != 408 && ps->rpl != FAKED_REPLY
+			&& !(ps->flags & TMCB_LOCAL_F)) {
 		int has_retry_after = 0;
 		if(ps->rpl != NULL && ps->rpl->headers != NULL) {
 			struct hdr_field *hf = ps->rpl->headers;
@@ -2510,7 +2511,9 @@ void uac_request_cb(struct cell *t, int type, struct tmcb_params *ps)
 			LM_ERR("Error dropping subscription\n");
 		}
 	} else {
-		LM_INFO("NOTIFY request timed out. No further action can be taken.\n");
+		LM_INFO("NOTIFY failed with code [%d] (time out or local failure) - no "
+				"further action can be taken\n",
+				ps->code);
 	}
 done:
 	if(watcher_contact) {
