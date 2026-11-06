@@ -363,9 +363,13 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 			   "URI from req URI\n");
 		presentity_uri = cscf_get_public_identity_from_requri(msg);
 	} else {
-		presentity_uri =
-				ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
-		if(presentity_uri.len == 0) {
+		res = ul.get_presentity_from_subscriber_dialog(
+				&callid, &ttag, &ftag, &presentity_uri);
+		if(res < 0) {
+			LM_ERR("Unable to copy presentity uri of subscriber dialog\n");
+			goto error;
+		}
+		if(res == 0) {
 			LM_ERR("Unable to get presentity uri from subscriber dialog with "
 				   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
 					callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
@@ -1199,9 +1203,14 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 			   "subscriber dialog\n");
 		//get the presentity uri from To Header
 		//cscf_get_to_uri(msg, &presentity_uri);
-		presentity_uri =
-				ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
-		if(presentity_uri.len == 0) {
+		res = ul.get_presentity_from_subscriber_dialog(
+				&callid, &ttag, &ftag, &presentity_uri);
+		if(res < 0) {
+			LM_ERR("Unable to copy presentity uri of subscriber dialog\n");
+			ret = CSCF_RETURN_FALSE;
+			goto doneorerror;
+		}
+		if(res == 0) {
 			LM_ERR("Unable to get presentity uri from subscriber dialog with "
 				   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
 					callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
@@ -2403,9 +2412,9 @@ int drop_subscription(struct sip_msg *msg, str *watcher_contact)
 		goto error;
 	}
 	// ftag and totag are swapped, since NOTIFY goes in the other direction
-	presentity_uri =
-			ul.get_presentity_from_subscriber_dialog(&callid, &ftag, &ttag);
-	if(presentity_uri.len == 0) {
+	if(ul.get_presentity_from_subscriber_dialog(
+			   &callid, &ftag, &ttag, &presentity_uri)
+			<= 0) {
 		LM_ERR("Unable to get presentity uri from subscriber dialog with "
 			   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
 				callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
