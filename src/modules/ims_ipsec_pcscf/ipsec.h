@@ -29,6 +29,7 @@
 
 #include "../../core/str.h"
 #include "../../core/ip_addr.h"
+#include <stdint.h>
 
 
 struct mnl_socket;
@@ -43,9 +44,11 @@ enum ipsec_policy_direction
 struct mnl_socket *init_mnl_socket();
 void close_mnl_socket(struct mnl_socket *sock);
 
+// add_sa() and add_policy(): 0 when added or when the kernel already holds it,
+// negative when it could not be added
 int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
 		const struct ip_addr *dest_addr_param, int s_port, int d_port,
-		int long id, str ck, str ik, str r_alg, str r_ealg);
+		int long id, str ck, str ik, str r_alg, str r_ealg, uint32_t oseq);
 int remove_sa(struct mnl_socket *nl_sock, str src_addr_param,
 		str dest_addr_param, int s_port, int d_port, int long id,
 		unsigned int af);

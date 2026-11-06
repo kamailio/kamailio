@@ -60,6 +60,8 @@
 #include <string.h>
 
 #include <arpa/inet.h>
+#include <stdint.h>
+#include <time.h>
 
 
 extern str ipsec_listen_addr;
@@ -511,9 +513,28 @@ static int update_contact_ipsec_params(
 	return 0;
 }
 
-static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t *s)
+static int remove_ipsec_tunnel(str remote_addr, ipsec_t *s);
+
+/*
+ * Install a tunnel's SAs and policies.
+ *
+ * What the kernel already holds is left as it is: the adds use NLM_F_EXCL.
+ * That is always so for SA5-SA8, which are SA1-SA4 again as far as the kernel
+ * is concerned (an SA is keyed by its destination and SPI), and for whatever
+ * of a tunnel survived a restart. An add that fails for any other reason fails
+ * the whole tunnel, and what there is of it is removed again, so a failure
+ * leaves nothing installed.
+ *
+ * nlsock: the netlink socket to use, NULL to open one for this tunnel.
+ * oseq: the sequence number the SAs from the P-CSCF to the UE start at, 0 for
+ * the kernel's default. Only a tunnel put back for a UE that is still using it
+ * needs one.
+ */
+static int create_ipsec_tunnel(struct mnl_socket *nlsock,
+		const struct ip_addr *remote_addr, ipsec_t *s, uint32_t oseq)
 {
-	struct mnl_socket *sock = init_mnl_socket();
+	int failed = 0;
+	struct mnl_socket *sock = nlsock ? nlsock : init_mnl_socket();
 	if(sock == NULL) {
 		return -1;
 	}
@@ -527,7 +548,9 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t *s)
 		ipsec_addr = &ipsec_listen_ip_addr6;
 	} else {
 		LM_ERR("Unsupported AF %d\n", remote_addr->af);
-		close_mnl_socket(sock);
+		if(!nlsock) {
+			close_mnl_socket(sock);
+		}
 		return -1;
 	}
 
@@ -538,7 +561,9 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t *s)
 			   sizeof(remote_addr_str))
 			== NULL) {
 		LM_CRIT("Error converting remote IP address: %s\n", strerror(errno));
-		close_mnl_socket(sock);
+		if(!nlsock) {
+			close_mnl_socket(sock);
+		}
 		return -1;
 	}
 
@@ -555,62 +580,74 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t *s)
 
 	// SA1 UE client to P-CSCF server
 	//               src adrr     dst addr     src port    dst port
-	add_sa(sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps, s->spi_ps,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps, s->spi_ps,
-			IPSEC_POLICY_DIRECTION_IN);
+	failed |= add_sa(sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps,
+			s->spi_ps, s->ck, s->ik, s->r_alg, s->r_ealg, 0);
+	failed |= add_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps,
+			s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
 
 	// SA2 P-CSCF client to UE server
 	//               src adrr     dst addr     src port           dst port
-	add_sa(sock, ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us,
-			IPSEC_POLICY_DIRECTION_OUT);
+	failed |= add_sa(sock, ipsec_addr, remote_addr, s->port_pc, s->port_us,
+			s->spi_us, s->ck, s->ik, s->r_alg, s->r_ealg, oseq);
+	failed |= add_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_us,
+			s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
 
 	// SA3 P-CSCF server to UE client
 	//               src adrr     dst addr     src port           dst port
-	add_sa(sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc,
-			IPSEC_POLICY_DIRECTION_OUT);
+	failed |= add_sa(sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc,
+			s->spi_uc, s->ck, s->ik, s->r_alg, s->r_ealg, oseq);
+	failed |= add_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc,
+			s->spi_uc, IPSEC_POLICY_DIRECTION_OUT);
 
 	// SA4 UE server to P-CSCF client
 	//               src adrr     dst addr     src port    dst port
-	add_sa(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc,
-			IPSEC_POLICY_DIRECTION_IN);
+	failed |= add_sa(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc,
+			s->spi_pc, s->ck, s->ik, s->r_alg, s->r_ealg, 0);
+	failed |= add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc,
+			s->spi_pc, IPSEC_POLICY_DIRECTION_IN);
 
 	/* cope with some broken In-Dialog routing */
 	// SA5 UE client to P-CSCF client
 	//               src adrr     dst addr     src port    dst port
-	add_sa(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc, s->spi_ps,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc, s->spi_ps,
-			IPSEC_POLICY_DIRECTION_IN);
+	failed |= add_sa(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc,
+			s->spi_ps, s->ck, s->ik, s->r_alg, s->r_ealg, 0);
+	failed |= add_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_pc,
+			s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
 
 	// SA6 P-CSCF client to UE client
 	//               src adrr     dst addr     src port    dst port
-	add_sa(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc, s->spi_us,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc, s->spi_us,
-			IPSEC_POLICY_DIRECTION_OUT);
+	failed |= add_sa(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc,
+			s->spi_us, s->ck, s->ik, s->r_alg, s->r_ealg, oseq);
+	failed |= add_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_uc,
+			s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
 
 	// SA7 P-CSCF server to UE server
 	//               src adrr     dst addr     src port    dst port
-	add_sa(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us, s->spi_uc,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us, s->spi_uc,
-			IPSEC_POLICY_DIRECTION_OUT);
+	failed |= add_sa(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us,
+			s->spi_uc, s->ck, s->ik, s->r_alg, s->r_ealg, oseq);
+	failed |= add_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_us,
+			s->spi_uc, IPSEC_POLICY_DIRECTION_OUT);
 
 	// SA8 UE server to P-CSCF server
 	//               src adrr     dst addr     src port    dst port
-	add_sa(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps, s->spi_pc,
-			s->ck, s->ik, s->r_alg, s->r_ealg);
-	add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps, s->spi_pc,
-			IPSEC_POLICY_DIRECTION_IN);
+	failed |= add_sa(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps,
+			s->spi_pc, s->ck, s->ik, s->r_alg, s->r_ealg, 0);
+	failed |= add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_ps,
+			s->spi_pc, IPSEC_POLICY_DIRECTION_IN);
 
-	close_mnl_socket(sock);
+	if(!nlsock) {
+		close_mnl_socket(sock);
+	}
+
+	if(failed) {
+		str remote = {remote_addr_str, strlen(remote_addr_str)};
+
+		LM_ERR("Failed to install the tunnel to %s (spi_pc %u, spi_ps %u), "
+			   "removing what there is of it\n",
+				remote_addr_str, s->spi_pc, s->spi_ps);
+		remove_ipsec_tunnel(remote, s);
+		return -1;
+	}
 
 	return 0;
 }
@@ -1035,12 +1072,18 @@ static void install_deferred_tunnel(
 	c->security = NULL;
 	free_security_t(old_sec);
 
-	if(create_ipsec_tunnel(&dt->ue_addr, s) != 0) {
+	if(create_ipsec_tunnel(NULL, &dt->ue_addr, s, 0) != 0) {
 		// nothing was installed: removing it when it goes finds nothing, and
 		// gives its pair back
 		LM_ERR("IPSEC tunnel creation failed for contact [%.*s]\n",
 				dt->ci.aor.len, dt->ci.aor.s);
 		goto done;
+	}
+	// for restore_oseq()
+	s->start_time = time(NULL);
+	if(ul.update_temp_security(dt->d, SECURITY_IPSEC, c->security_temp, c)
+			!= 0) {
+		LM_ERR("Error updating temp security\n");
 	}
 	LM_DBG("contact [%.*s]: installed the offered tunnel (spi_pc %u, spi_ps "
 		   "%u) in place of the registered one\n",
@@ -1238,7 +1281,7 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 			goto cleanup;
 		}
 		// what is left in the slot is only the UE's half again: nothing to
-		// re-offer or release should this 401 fail from here on
+		// re-offer, restore or release should this 401 fail from here on
 		clear_spi_pair(pend);
 		pend_retired = 1;
 	}
@@ -1256,7 +1299,7 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 				s->spi_ps, est->spi_uc, est->spi_us, est->spi_pc, est->spi_ps);
 		deferred = 1;
 	} else {
-		fun_ret_c = create_ipsec_tunnel(&req->rcv.src_ip, s);
+		fun_ret_c = create_ipsec_tunnel(NULL, &req->rcv.src_ip, s, 0);
 		if(fun_ret_c != 0) {
 			LM_ERR("IPSEC tunnel creation failed.\n");
 			// Nothing was installed, and no slot holds the pair - one that
@@ -1265,6 +1308,8 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 			clear_spi_pair(s);
 			goto cleanup;
 		}
+		// written through with the rest below, for restore_oseq()
+		s->start_time = time(NULL);
 	}
 
 	if(req_sec_params != NULL) {
@@ -2051,6 +2096,247 @@ int ipsec_reconfig()
 	ret = ipsec_cleanall();
 	atomic_set(ipsec_reconfig_flag, 0);
 	return ret;
+}
+
+typedef struct restore_ctx
+{
+	struct mnl_socket *nlsock; /* shared by all the tunnels put back */
+	int registered;			   /* the pass: registered contacts, or the rest */
+	int tunnels;			   /* complete tunnels the contacts hold */
+	int failed;				   /* ... that could not be installed */
+	int reserved;			   /* ... whose SPI pair was reserved */
+	int shared;		/* ... held by a contact restored before, left to it */
+	int subscribed; /* contacts that now have ipsec_on_expire */
+} restore_ctx_t;
+
+/* the most packets a second an outbound SA is taken to have sent, on average
+ * over its life */
+#define IPSEC_RESTORE_OSEQ_RATE 1000
+/* where a tunnel with no usable start time is taken to be: as if it had sent
+ * at IPSEC_RESTORE_OSEQ_RATE for about 37 days */
+#define IPSEC_RESTORE_OSEQ_UNKNOWN 0xC0000000U
+/* the highest start there is, a little short of where a 32-bit sequence
+ * number runs out */
+#define IPSEC_RESTORE_OSEQ_MAX 0xFFFF0000U
+
+/**
+ * The sequence number the outbound SAs of s start at when they are put back
+ * for a UE still using the tunnel.
+ *
+ * The UE's inbound SA drops what it has already seen and everything more than
+ * its replay window (32) below the highest, so an SA put back at 1 is silent
+ * towards the UE until it has caught up with the one it replaces - which the
+ * UE may have seen send thousands. Nothing records how far that was, so this
+ * bounds it instead: at most IPSEC_RESTORE_OSEQ_RATE packets a second since
+ * s->start_time, when its SAs were first installed, counting the second they
+ * were installed in as a whole one. A put-back SA keeps that start time, so
+ * the bound grows with it and also holds across a second restart while the UE
+ * is still on it. It only has to be above what the UE
+ * saw; the jump itself costs nothing but headroom, and the next registration
+ * replaces the SA anyway.
+ *
+ * A tunnel without a start time - written before the column existed - or
+ * with one ahead of this host's clock starts at IPSEC_RESTORE_OSEQ_UNKNOWN,
+ * and is given the start time that bound stands for, written through with
+ * update_sec, so that a later restart numbers past what this one sends.
+ */
+static uint32_t restore_oseq(udomain_t *d, pcontact_t *c, security_t *sec,
+		ipsec_t *s, update_security_t update_sec)
+{
+	time_t now = time(NULL);
+	uint64_t oseq;
+
+	if(s->start_time == 0 || s->start_time > now) {
+		LM_INFO("contact [%.*s]: no usable start time for the tunnel (spi_pc "
+				"%u, spi_ps %u), missing outbound SAs start at %u\n",
+				c->aor.len, c->aor.s, s->spi_pc, s->spi_ps,
+				IPSEC_RESTORE_OSEQ_UNKNOWN);
+		s->start_time =
+				now - IPSEC_RESTORE_OSEQ_UNKNOWN / IPSEC_RESTORE_OSEQ_RATE;
+		if(update_sec(d, SECURITY_IPSEC, sec, c) != 0) {
+			LM_ERR("contact [%.*s]: failed to store the tunnel's start time, "
+				   "a later restart may number its outbound SAs too low\n",
+					c->aor.len, c->aor.s);
+		}
+		return IPSEC_RESTORE_OSEQ_UNKNOWN;
+	}
+	// the start time is whole seconds, rounded down: count the second it
+	// is in as a whole one, which also keeps the start off 0, the kernel's
+	// default
+	oseq = (uint64_t)(now - s->start_time + 1) * IPSEC_RESTORE_OSEQ_RATE;
+	if(oseq > IPSEC_RESTORE_OSEQ_MAX) {
+		LM_WARN("contact [%.*s]: the tunnel (spi_pc %u, spi_ps %u) is %ld "
+				"seconds old, too old to bound what its outbound SAs have "
+				"sent, missing ones start at %u\n",
+				c->aor.len, c->aor.s, s->spi_pc, s->spi_ps,
+				(long)(now - s->start_time), IPSEC_RESTORE_OSEQ_MAX);
+		oseq = IPSEC_RESTORE_OSEQ_MAX;
+	}
+	return (uint32_t)oseq;
+}
+
+// Put one of a contact's tunnels back.
+// install: 0 for a tunnel that was never in the kernel to begin with;
+// update_sec: how sec, which holds s, is written through.
+// Returns 1, leaving it alone, when the tunnel is one a contact restored
+// before holds, 0 otherwise.
+static int restore_tunnel(udomain_t *d, pcontact_t *c, security_t *sec,
+		ipsec_t *s, update_security_t update_sec, restore_ctx_t *rc,
+		int install)
+{
+	ip_addr_t ue_addr;
+	int r;
+
+	r = reserve_spi(s->spi_pc, s->spi_ps, s->port_pc, s->port_ps);
+	if(r == 1 && !rc->registered) {
+		// A tunnel a contact restored before holds, the registered ones going
+		// first: this is the pending contact of that UE's REGISTER, which
+		// unreg_pending_contacts_cb() took ipsec_on_expire from so that its
+		// expiry does not remove the tunnel in use. It stays that way.
+		LM_DBG("contact [%.*s] (%s): the tunnel (spi_pc %u, spi_ps %u) is "
+			   "another contact's, leaving it to that one\n",
+				c->aor.len, c->aor.s, reg_state_to_string(c->reg_state),
+				s->spi_pc, s->spi_ps);
+		rc->shared++;
+		return 1;
+	}
+
+	rc->tunnels++;
+	if(r == 0) {
+		rc->reserved++;
+	} else {
+		LM_WARN("contact [%.*s]: SPI pair %u/%u (ports %u/%u) is not free, "
+				"another tunnel may be handed the same pair\n",
+				c->aor.len, c->aor.s, s->spi_pc, s->spi_ps, s->port_pc,
+				s->port_ps);
+	}
+
+	if(!install) {
+		return 0;
+	}
+
+	// Put the tunnel in again. Whatever survived the restart stays as it is,
+	// counters and all (see create_ipsec_tunnel()). What is missing, all of
+	// it after a restart into a new network namespace, is created from what
+	// was preloaded. The UE's side never went anywhere.
+	if(str2ipxbuf(&c->received_host, &ue_addr) < 0) {
+		LM_ERR("contact [%.*s]: unable to convert received host [%.*s]\n",
+				c->aor.len, c->aor.s, c->received_host.len, c->received_host.s);
+		rc->failed++;
+	} else if(create_ipsec_tunnel(rc->nlsock, &ue_addr, s,
+					  restore_oseq(d, c, sec, s, update_sec))
+			  != 0) {
+		LM_ERR("contact [%.*s]: failed to install its tunnel\n", c->aor.len,
+				c->aor.s);
+		rc->failed++;
+	}
+	return 0;
+}
+
+static void restore_contact_tunnel(udomain_t *d, pcontact_t *c, void *param)
+{
+	restore_ctx_t *rc = (restore_ctx_t *)param;
+	ipsec_t *est = contact_tunnel(c->security);
+	ipsec_t *pend = contact_tunnel(c->security_temp);
+	int est_own = 0, pend_own = 0;
+
+	if((c->reg_state == PCONTACT_REGISTERED) != rc->registered) {
+		return;
+	}
+	if(!est && !pend) {
+		return;
+	}
+	// Both: the UE may answer the offer over the new one, and still sends
+	// over the one it is registered over until then
+	if(est) {
+		est_own = restore_tunnel(
+						  d, c, c->security, est, ul.update_security, rc, 1)
+				  == 0;
+	}
+	if(pend) {
+		if(est && same_spi_pair(pend, est)) {
+			// a deferred offer still holding the registered tunnel's pair
+			// (see tunnel_deferred()), reserved above
+			pend_own = est_own;
+			rc->tunnels += pend_own;
+		} else {
+			// deferred, it was never installed, and the reply callback that
+			// would have installed it went with the old instance: it waits
+			// for ipsec_promote() or a new offer
+			pend_own = restore_tunnel(d, c, c->security_temp, pend,
+							   ul.update_temp_security, rc,
+							   !tunnel_deferred(est, pend))
+					   == 0;
+		}
+		if(pend_own) {
+			// for ipsec_promote() to find this contact again, as
+			// ipsec_create() has it
+			spi_set_owner(pend->spi_pc, pend->spi_ps, c->received_port);
+		}
+	}
+	if(!est_own && !pend_own) {
+		return;
+	}
+
+	// The same subscription ipsec_create() takes: without it the contact's
+	// expiry would leave its tunnel in the kernel and its SPI pair used.
+	if(ul.is_ulcb_registered(c, ipsec_on_expire)
+			|| ul.register_ulcb(c, PCSCF_CONTACT_EXPIRE | PCSCF_CONTACT_DELETE,
+					   ipsec_on_expire, (void *)&c->received_port)
+					   == 1) {
+		rc->subscribed++;
+	} else {
+		LM_ERR("contact [%.*s]: failed to subscribe for its expiry\n",
+				c->aor.len, c->aor.s);
+	}
+}
+
+/**
+ * Take over, or put back, the tunnels of the contacts a previous instance left.
+ *
+ * A tunnel can only be put back on the address the UE built it with: the new
+ * instance needs the same ipsec_listen_addr.
+ *
+ * SAs and policies that no preloaded contact holds - all of them when none
+ * holds a tunnel - are removed first, before any SPI pair is marked used:
+ * delete_unused_tunnels() frees an SPI pair for every SA it removes, so run
+ * later it could free a pair a restored tunnel is using.
+ *
+ * The registered contacts go first, so that a tunnel a pending contact shares
+ * with a registered one stays the registered one's (see restore_tunnel()).
+ *
+ * Runs in the PROC_SIPINIT child, after ims_usrloc_pcscf's preload, which is
+ * why this module has to be loaded after ims_usrloc_pcscf. The other SIP
+ * workers are not forked until it is done (wait_worker1_mode).
+ */
+int ipsec_restore_tunnels()
+{
+	restore_ctx_t rc;
+	int contacts;
+
+	if(delete_unused_tunnels() != 0) {
+		LM_WARN("failed to remove the tunnels no contact accounts for\n");
+	}
+
+	memset(&rc, 0, sizeof(rc));
+	if((rc.nlsock = init_mnl_socket()) == NULL) {
+		LM_ERR("Can't init mnl socket\n");
+		return -1;
+	}
+	rc.registered = 1;
+	contacts = ul.walk_pcontacts(restore_contact_tunnel, &rc);
+	rc.registered = 0;
+	ul.walk_pcontacts(restore_contact_tunnel, &rc);
+	close_mnl_socket(rc.nlsock);
+
+	LM_INFO("restored %d IPSec tunnels from %d preloaded contacts: missing "
+			"SAs and policies installed (%d failed), %d SPI pairs reserved, %d "
+			"tunnels left to the contact they are shared with, %d contacts "
+			"subscribed for expiry\n",
+			rc.tunnels, contacts, rc.failed, rc.reserved, rc.shared,
+			rc.subscribed);
+
+	return 0;
 }
 
 int ipsec_cleanall()
