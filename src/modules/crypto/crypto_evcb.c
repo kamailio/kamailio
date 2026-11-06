@@ -218,7 +218,7 @@ int crypto_nio_received(sr_event_param_t *evp)
 	memcpy(obuf->s, dtext.s, obuf->len);
 	obuf->s[obuf->len] = '\0';
 
-	EVP_CIPHER_CTX_cleanup(de);
+	EVP_CIPHER_CTX_reset(de);
 	EVP_CIPHER_CTX_free(de);
 	free(dtext.s);
 
@@ -291,7 +291,7 @@ int crypto_nio_sent(sr_event_param_t *evp)
 	memcpy(nbuf.s, etext.s, nbuf.len);
 	nbuf.s[nbuf.len] = '\0';
 
-	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_reset(en);
 	EVP_CIPHER_CTX_free(en);
 	free(etext.s);
 

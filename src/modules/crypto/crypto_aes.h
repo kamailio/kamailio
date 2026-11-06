@@ -24,6 +24,10 @@
 
 #include <openssl/evp.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x1010100fL
+#error "OpenSSL 1.1.1 or newer is required"
+#endif
+
 #define AES_BLOCK_SIZE 256
 #define CRYPTO_SALT_BSIZE 16
 

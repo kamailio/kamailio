@@ -123,11 +123,11 @@ int crypto_aes_init(unsigned char *key_data, int key_data_len,
 	}
 
 	if(e_ctx) {
-		EVP_CIPHER_CTX_init(e_ctx);
+		EVP_CIPHER_CTX_reset(e_ctx);
 		EVP_EncryptInit_ex(e_ctx, cipher, NULL, key, iv);
 	}
 	if(d_ctx) {
-		EVP_CIPHER_CTX_init(d_ctx);
+		EVP_CIPHER_CTX_reset(d_ctx);
 		EVP_DecryptInit_ex(d_ctx, cipher, NULL, key, iv);
 	}
 
