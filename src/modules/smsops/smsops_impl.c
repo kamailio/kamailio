@@ -201,6 +201,9 @@ void freeRP_DATA(sms_rp_data_t *rpdata)
 #define BITMASK_8BITS 0xFF
 #define BITMASK_HIGH_4BITS 0xF0
 #define BITMASK_LOW_4BITS 0x0F
+#define BITMASK_TON 0x70 // Type-of-Number bits of an address-type octet
+#define TON_ALPHANUMERIC \
+	0x50 // TS 23.040 9.1.2.5: alphanumeric, GSM 7-bit default alphabet
 #define BITMASK_TP_UDHI 0x40
 #define BITMASK_TP_VPF 0x18
 #define BITMASK_TP_VPF_RELATIVE 0x10
@@ -659,7 +662,7 @@ static int EncodePhoneNumber(str phone, char *output_buffer, int buffer_size)
 
 	int i = 0;
 	for(; i < phone.len; ++i) {
-		if(phone.s[i] < '0' && phone.s[i] > '9')
+		if(phone.s[i] < '0' || phone.s[i] > '9')
 			return -1;
 		if(i % 2 == 0) {
 			output_buffer[output_buffer_length++] =
@@ -673,6 +676,39 @@ static int EncodePhoneNumber(str phone, char *output_buffer, int buffer_size)
 	}
 
 	return output_buffer_length;
+}
+
+// Encode an alphanumeric address (TS 23.040 9.1.2.5): GSM 7-bit default alphabet, packed, at most 11 characters.
+// Writes Address-Length (useful semi-octets), the address-type octet and the packed characters; returns bytes written or -1.
+static int EncodeAlphanumericAddress(
+		str text, unsigned char flags, char *output_buffer, int buffer_size)
+{
+	int septets = 0, bytes;
+	if(buffer_size < 2)
+		return -1;
+	bytes = ascii_to_gsm(text, &output_buffer[2], buffer_size - 2, &septets, 0);
+	if(bytes <= 0 || septets > 11) {
+		LM_ERR("alphanumeric address too long or not encodable (%d septets)\\n",
+				septets);
+		return -1;
+	}
+	output_buffer[0] = (unsigned char)((septets * 7 + 3) / 4);
+	output_buffer[1] = flags;
+	return bytes + 2;
+}
+
+// Decode an alphanumeric address: len is Address-Length in semi-octets; allocates address.s (pkg), returns octets consumed.
+static int DecodeAlphanumericAddress(char *buffer, int len, str *address)
+{
+	int octets = (len + 1) / 2, septets = (len * 4) / 7;
+	address->s = pkg_malloc(septets * 2 + 2);
+	if(address->s == NULL) {
+		LM_ERR("no more pkg\\n");
+		address->len = 0;
+		return octets;
+	}
+	address->len = gsm_to_ascii(buffer, septets, *address, 0);
+	return octets;
 }
 
 // Decode a digit based phone number for SMS based format.
@@ -897,15 +933,24 @@ int decode_3gpp_sms(struct sip_msg *msg)
 										  / 2);
 						_smsops_rp_data->pdu.destination_flags =
 								(unsigned char)body.s[p++];
-						_smsops_rp_data->pdu.destination.s = pkg_malloc(
-								_smsops_rp_data->pdu.destination.len);
-						DecodePhoneNumber(&body.s[p],
-								_smsops_rp_data->pdu.destination.len,
-								_smsops_rp_data->pdu.destination);
-						if(_smsops_rp_data->pdu.destination.len % 2 == 0) {
-							p += _smsops_rp_data->pdu.destination.len / 2;
+						if((_smsops_rp_data->pdu.destination_flags
+								   & BITMASK_TON)
+								== TON_ALPHANUMERIC) {
+							p += DecodeAlphanumericAddress(&body.s[p],
+									_smsops_rp_data->pdu.destination.len,
+									&_smsops_rp_data->pdu.destination);
 						} else {
-							p += (_smsops_rp_data->pdu.destination.len / 2) + 1;
+							_smsops_rp_data->pdu.destination.s = pkg_malloc(
+									_smsops_rp_data->pdu.destination.len);
+							DecodePhoneNumber(&body.s[p],
+									_smsops_rp_data->pdu.destination.len,
+									_smsops_rp_data->pdu.destination);
+							if(_smsops_rp_data->pdu.destination.len % 2 == 0) {
+								p += _smsops_rp_data->pdu.destination.len / 2;
+							} else {
+								p += (_smsops_rp_data->pdu.destination.len / 2)
+									 + 1;
+							}
 						}
 					}
 				} else if(_smsops_rp_data->pdu.msg_type == DELIVER) {
@@ -922,19 +967,33 @@ int decode_3gpp_sms(struct sip_msg *msg)
 										  / 2);
 						_smsops_rp_data->pdu.originating_address_flags =
 								(unsigned char)body.s[p++];
-						_smsops_rp_data->pdu.originating_address.s = pkg_malloc(
-								_smsops_rp_data->pdu.originating_address.len);
-						DecodePhoneNumber(&body.s[p],
-								_smsops_rp_data->pdu.originating_address.len,
-								_smsops_rp_data->pdu.originating_address);
-						if(_smsops_rp_data->pdu.originating_address.len % 2
-								== 0) {
-							p += _smsops_rp_data->pdu.originating_address.len
-								 / 2;
+						if((_smsops_rp_data->pdu.originating_address_flags
+								   & BITMASK_TON)
+								== TON_ALPHANUMERIC) {
+							p += DecodeAlphanumericAddress(&body.s[p],
+									_smsops_rp_data->pdu.originating_address
+											.len,
+									&_smsops_rp_data->pdu.originating_address);
 						} else {
-							p += (_smsops_rp_data->pdu.originating_address.len
-										 / 2)
-								 + 1;
+							_smsops_rp_data->pdu.originating_address.s =
+									pkg_malloc(
+											_smsops_rp_data->pdu
+													.originating_address.len);
+							DecodePhoneNumber(&body.s[p],
+									_smsops_rp_data->pdu.originating_address
+											.len,
+									_smsops_rp_data->pdu.originating_address);
+							if(_smsops_rp_data->pdu.originating_address.len % 2
+									== 0) {
+								p += _smsops_rp_data->pdu.originating_address
+											 .len
+									 / 2;
+							} else {
+								p += (_smsops_rp_data->pdu.originating_address
+													 .len
+											 / 2)
+									 + 1;
+							}
 						}
 					}
 				}
@@ -1316,15 +1375,27 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	_smsops_sms_body.s[_smsops_sms_body.len++] =
 			_smsops_rp_send_data->pdu.msg_type | _smsops_rp_send_data->pdu.flags
 			| 0x4; // We've always got no more messages to send.
-	// Originating Address:
-	_smsops_sms_body.s[_smsops_sms_body.len++] =
-			_smsops_rp_send_data->pdu.originating_address.len;
-	_smsops_sms_body.s[_smsops_sms_body.len++] =
-			_smsops_rp_send_data->pdu.originating_address_flags;
-	_smsops_sms_body.len +=
-			EncodePhoneNumber(_smsops_rp_send_data->pdu.originating_address,
-					&_smsops_sms_body.s[_smsops_sms_body.len],
-					buffer_size - _smsops_sms_body.len);
+	// Originating Address: alphanumeric (e.g. a service name) is GSM 7-bit packed, otherwise BCD digits
+	if((_smsops_rp_send_data->pdu.originating_address_flags & BITMASK_TON)
+			== TON_ALPHANUMERIC) {
+		i = EncodeAlphanumericAddress(
+				_smsops_rp_send_data->pdu.originating_address,
+				_smsops_rp_send_data->pdu.originating_address_flags,
+				&_smsops_sms_body.s[_smsops_sms_body.len],
+				buffer_size - _smsops_sms_body.len);
+		if(i < 0)
+			return -1;
+		_smsops_sms_body.len += i;
+	} else {
+		_smsops_sms_body.s[_smsops_sms_body.len++] =
+				_smsops_rp_send_data->pdu.originating_address.len;
+		_smsops_sms_body.s[_smsops_sms_body.len++] =
+				_smsops_rp_send_data->pdu.originating_address_flags;
+		_smsops_sms_body.len +=
+				EncodePhoneNumber(_smsops_rp_send_data->pdu.originating_address,
+						&_smsops_sms_body.s[_smsops_sms_body.len],
+						buffer_size - _smsops_sms_body.len);
+	}
 	// Protocol ID
 	_smsops_sms_body.s[_smsops_sms_body.len++] = _smsops_rp_send_data->pdu.pid;
 	// Encoding (0 => default 7 Bit)
