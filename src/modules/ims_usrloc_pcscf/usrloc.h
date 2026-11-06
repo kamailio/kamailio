@@ -125,6 +125,8 @@ typedef struct ipsec
 	str r_alg;	/**<received Integrity Algorithm - AH	*/
 	str ik;		/**< Integrity Key						*/
 	str mod;	/**< Mode (transport/tunnel) */
+	/** when its SAs were installed, 0 if they are not */
+	time_t start_time;
 } ipsec_t;
 
 typedef enum sec_type
@@ -283,6 +285,9 @@ typedef int (*register_udomain_t)(const char *_n, struct udomain **_d);
 typedef int (*get_udomain_t)(const char *_n, udomain_t **_d);
 typedef int (*get_all_ucontacts_t)(void *buf, int len, unsigned int flags,
 		unsigned int part_idx, unsigned int part_max);
+typedef void (*pcontact_walk_f)(
+		struct udomain *_d, struct pcontact *_c, void *param);
+typedef int (*walk_pcontacts_t)(pcontact_walk_f f, void *param);
 
 /*security related API signatures */
 typedef int (*update_security_t)(struct udomain *_d, security_type _t,
@@ -324,6 +329,7 @@ typedef struct usrloc_api
 	is_ulcb_registered_t is_ulcb_registered;
 	register_ulcb_t register_ulcb_method;
 	db_load_pcontact_t db_load_pcontact;
+	walk_pcontacts_t walk_pcontacts;
 } usrloc_api_t;
 
 /*! usrloc API export bind function */
