@@ -263,7 +263,6 @@ static str *tls_get_connect_server_id(ksr_coninfo_t *ci)
  */
 static str *tls_get_connect_server_name(ksr_coninfo_t *ci)
 {
-#ifndef OPENSSL_NO_TLSEXT
 	sr_xavp_t *vavp = NULL;
 	str sname = {"server_name", 11};
 
@@ -281,9 +280,6 @@ static str *tls_get_connect_server_name(ksr_coninfo_t *ci)
 	}
 	LM_DBG("found xavp with outbound server name: %s\n", vavp->val.v.s.s);
 	return &vavp->val.v.s;
-#else
-	return NULL;
-#endif
 }
 
 
@@ -298,10 +294,8 @@ static int tls_set_verify_server_name(SSL *ssl, tls_domain_t *dom, str *sname)
 {
 	char name[256];
 	str *vname;
-#ifdef KSR_TLS_VERIFY_SERVER_NAME
 	ip_addr_t ip;
 	int len;
-#endif
 
 	vname = (sname != NULL && sname->len > 0) ? sname : &dom->server_name;
 	if(vname->s == NULL || vname->len <= 0) {
@@ -315,7 +309,6 @@ static int tls_set_verify_server_name(SSL *ssl, tls_domain_t *dom, str *sname)
 				vname->len);
 		return -1;
 	}
-#ifdef KSR_TLS_VERIFY_SERVER_NAME
 	if(str2ipxbuf(vname, &ip) == 0) {
 		/* IP address: check the IP address entries, without brackets */
 		len = ip_addr2sbuf(&ip, name, sizeof(name) - 1);
@@ -338,12 +331,6 @@ static int tls_set_verify_server_name(SSL *ssl, tls_domain_t *dom, str *sname)
 	}
 	LM_DBG("outbound TLS server name to verify: %s\n", name);
 	return 0;
-#else
-	/* not reached: rejected when the profile is loaded */
-	LM_ERR("%s: verify_server_name is not supported by this libssl\n",
-			tls_domain_str(dom));
-	return -1;
-#endif
 }
 
 
@@ -445,7 +432,6 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 
-#ifndef OPENSSL_NO_TLSEXT
 	if(sname != NULL) {
 		if(!SSL_set_tlsext_host_name(data->ssl, sname->s)) {
 			if(data->ssl)
@@ -457,7 +443,6 @@ static int tls_complete_init(struct tcp_connection *c)
 		}
 		LM_DBG("outbound TLS server name set to: %s\n", sname->s);
 	}
-#endif
 
 	if(state == S_TLS_CONNECTING && dom->verify_cert > 0
 			&& dom->verify_server_name > 0) {
@@ -469,15 +454,6 @@ static int tls_complete_init(struct tcp_connection *c)
 		}
 	}
 
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-#ifdef TLS_KSSL_WORKAROUND
-	/* if needed apply workaround for openssl bug #1467 */
-	if(data->ssl->kssl_ctx && openssl_kssl_malloc_bug) {
-		kssl_ctx_free(data->ssl->kssl_ctx);
-		data->ssl->kssl_ctx = 0;
-	}
-#endif
-#endif
 	/* link the extra data struct inside ssl connection*/
 	if(SSL_set_app_data(data->ssl, data) == 0
 			|| SSL_set_ex_data(data->ssl, ksr_tls_ssl_ex_idx, data) == 0) {
@@ -975,7 +951,6 @@ static int tls_shutdown(struct tcp_connection *c)
 				DBG("Need to send more data to finish TLS shutdown\n");
 				break;
 
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
 				DBG("Need to retry connect\n");
 				break;
@@ -983,7 +958,6 @@ static int tls_shutdown(struct tcp_connection *c)
 			case SSL_ERROR_WANT_ACCEPT:
 				DBG("Need to retry accept\n");
 				break;
-#endif
 			case SSL_ERROR_WANT_X509_LOOKUP:
 				DBG("Application callback asked to be called again\n");
 				break;
@@ -1465,7 +1439,6 @@ redo_wr:
 				ERR("destination IP: %s\n", ip_buf);
 
 				goto error;
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
 				/* only if the underlying BIO is not yet connected
              * and the call would block in connect().
@@ -1478,7 +1451,6 @@ redo_wr:
              * (not possible in our case) */
 				BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
 				break;
-#endif
 			case SSL_ERROR_WANT_X509_LOOKUP:
 				/* can only appear on client application and it indicates that
              * an installed client cert. callback should be called again
@@ -2028,7 +2000,6 @@ continue_ssl_read:
 			ERR("dst addr: %s:%d\n", ip_buf, c->rcv.dst_port);
 
 			goto error;
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 		case SSL_ERROR_WANT_CONNECT:
 			/* only if the underlying BIO is not yet connected
          * and the call would block in connect().
@@ -2041,7 +2012,6 @@ continue_ssl_read:
          * (not possible in our case) */
 			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
 			goto bug;
-#endif
 		case SSL_ERROR_WANT_X509_LOOKUP:
 			/* can only appear on client application and it indicates that
          * an installed client cert. callback should be called again

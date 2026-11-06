@@ -24,8 +24,6 @@
  * Module: @ref tls
  */
 
-#include <openssl/ssl.h> /* OPENSSL_VERSION_NUMBER for the defaults below */
-
 #include "tls_cfg.h"
 #include "../../core/config.h"
 #include "../../core/str.h"
@@ -58,18 +56,9 @@ struct cfg_group_tls default_tls_cfg = {
 		3,									   /* debug (L_DBG) */
 		600,								   /* con_lifetime (s)*/
 		1,									   /* disable_compression */
-#if OPENSSL_VERSION_NUMBER >= 0x01000000L
-		1, /* ssl_release_buffers (on, avoid extra buffering) */
-#else
-		-1, /* ssl_release_buffers: old openssl, leave it untouched */
-#endif /* openssl >= 1.0.0 */
-#if OPENSSL_VERSION_NUMBER >= 0x01000000L && !defined OPENSSL_NO_BUF_FREELISTS
-		0, /* ssl_freelist_max  (immediately free) */
-#else
-		-1, /* ssl_freelist_max: old openssl, leave it untouched */
-#endif		/* openssl >= 1.0.0 */
-		-1, /* ssl_max_send_fragment (use the default: 16k), requires openssl
-		   > 0.9.9 */
+		1,	/* ssl_release_buffers (on, avoid extra buffering) */
+		0,	/* ssl_freelist_max: unused (no freelists since openssl 1.1.0) */
+		-1, /* ssl_max_send_fragment (use the default: 16k) */
 		0,	/* ssl_read_ahead (off, not needed, we have our own buffering BIO)*/
 		-1, /* low_mem_threshold1 */
 		-1, /* low_mem_threshold2 */
@@ -195,18 +184,16 @@ cfg_def_t tls_cfg_def[] = {{"force_run", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 				MAX_TLS_CON_LIFETIME, fix_con_lt, 0,
 				"initial connection lifetime (in s) (obsolete)"},
 		{"disable_compression", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
-				"if set disable the built-in OpenSSL compression"},
+				"unused since OpenSSL 1.1.0 (compression off by default)"},
 		{"ssl_release_buffers", CFG_VAR_INT | CFG_READONLY, -1, 1, 0, 0,
-				"quickly release internal OpenSSL read or write buffers."
-				" Works only for OpenSSL >= 1.0."},
+				"quickly release internal OpenSSL read or write buffers."},
 		{"ssl_free_list_max", CFG_VAR_INT | CFG_READONLY, -1, 1 << 30, 0, 0,
 				"maximum number of free/cached memory chunks that OpenSSL"
-				" will keep per connection. Works only for OpenSSL >= 1.0."},
+				" will keep per connection. Unused since OpenSSL 1.1.0."},
 		{"ssl_max_send_fragment", CFG_VAR_INT | CFG_READONLY, -1, 65536, 0, 0,
 				"sets the maximum number of bytes (clear text) send into one "
 				"TLS"
-				" record. Valid values are between 512 and 16384."
-				" Works only for OpenSSL >= 0.9.9"},
+				" record. Valid values are between 512 and 16384."},
 		{"ssl_read_ahead", CFG_VAR_INT | CFG_READONLY, -1, 1, 0, 0,
 				"Enables read ahead, reducing the number of BIO read calls done"
 				" internally by the OpenSSL library. Note that in newer tls"

@@ -398,7 +398,7 @@ static tls_domains_cfg_t* tls_use_modparams(void)
  */
 static void tls_atfork_prepare(void)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(KSR_TLS_LIBSSL_COMPAT)
+#ifndef KSR_TLS_LIBSSL_COMPAT
 	OPENSSL_thread_stop();
 #endif
 }
@@ -416,13 +416,11 @@ static int mod_init(void)
 	}
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP) {
 		LM_WARN("tls_threads_mode=1 is invalid on kamailio version >= 6; "
 				"forcing tls_threads_mode=2\n");
 		ksr_tls_threads_mode = KSR_TLS_THREADS_MFORK;
 	}
-#endif /*  OPENSSL_VERSION_NUMBER*/
 
 #if defined(KSR_TLS_LIBSSL_COMPAT)
 	/* libssl in one process: modes 1/2 */
@@ -585,7 +583,6 @@ static int mod_init(void)
 	if(sr_tls_event_callback.s == NULL || sr_tls_event_callback.len <= 0) {
 		tls_lookup_event_routes();
 	}
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
 	/*
 	 * register the need to be called post-fork of all children
 	 * with the special rank PROC_POSTCHILDINIT
@@ -593,7 +590,6 @@ static int mod_init(void)
 	if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
 		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
-#endif
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
 			&& ksr_tcp_main_threads == 0) {
 		pthread_atfork(&tls_atfork_prepare, NULL, NULL);
@@ -760,9 +756,7 @@ static void mod_destroy(void)
 
 int ksr_rand_engine_param(modparam_t type, void *val)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L        \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L \
-		&& !defined(KSR_TLS_LIBSSL_COMPAT)
+#if OPENSSL_VERSION_NUMBER < 0x030000000L && !defined(KSR_TLS_LIBSSL_COMPAT)
 	str *reng;
 
 	if(val == NULL) {
@@ -938,9 +932,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
          * GH #3695: OpenSSL 1.1.1 historical note: it is no longer
          * needed to replace RAND with cryptorand
          */
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L        \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L \
-		&& !defined(KSR_TLS_LIBSSL_COMPAT)
+#if OPENSSL_VERSION_NUMBER < 0x030000000L && !defined(KSR_TLS_LIBSSL_COMPAT)
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE) {
 		LM_WARN("OpenSSL 1.1.1 setting cryptorand random engine\n");
 		RAND_set_rand_method(RAND_ksr_cryptorand_method());

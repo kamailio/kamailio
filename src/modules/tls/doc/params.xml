@@ -40,19 +40,19 @@
 			<listitem>
 				<para>
 				<emphasis>TLSv1.2</emphasis> - only TLSv1.2 connections are accepted
-				(available starting with openssl/libssl v1.0.1e)
+				
 				</para>
 			</listitem>
 			<listitem>
 				<para>
 				<emphasis>TLSv1.1+</emphasis> - TLSv1.1 or newer (TLSv1.2, ...)
-				connections are accepted (available starting with openssl/libssl v1.0.1)
+				connections are accepted
 				</para>
 			</listitem>
 			<listitem>
 				<para>
 				<emphasis>TLSv1.1</emphasis> - only TLSv1.1 connections are accepted
-				(available starting with openssl/libssl v1.0.1)
+				
 				</para>
 			</listitem>
 			<listitem>
@@ -594,7 +594,8 @@ modparam("tls", "connection_timeout", 60)
 		CRIME</ulink> security vulnerability.
 	</para>
 	<para>
-		By default TLS compression is disabled.
+		By default TLS compression is disabled. OpenSSL 1.1.0 and newer
+		disable compression by default: the value has no effect.
 	</para>
 	<example>
 	    <title>Set <varname>tls_disable_compression</varname> parameter</title>
@@ -625,14 +626,6 @@ modparam("tls", "tls_disable_compression", 0) # enable
 	<para>
 		By default the value is 1 (enabled).
 	</para>
-	<note>
-		<para>
-			This option is supported only for
-			OpenSSL versions >= <emphasis>1.0.0</emphasis>.
-			On all the other versions attempting
-			to change the default will trigger an error.
-		</para>
-	</note>
 	<example>
 	    <title>Set <varname>ssl_release_buffers</varname> parameter</title>
 	    <programlisting>
@@ -654,21 +647,9 @@ modparam("tls", "ssl_release_buffers", 1)
 		Should be combined with <varname>ssl_release_buffers</varname>.
 	</para>
 	<para>
-		A value of -1 has a special meaning: the OpenSSL default will be used
-		(no attempt on changing the value will be made). For OpenSSL 1.0
-		the internal default is 32.
+		OpenSSL 1.1.0 and newer have no freelists: the value is
+		accepted and has no effect.
 	</para>
-	<para>
-		By default the value is 0 (no freelist).
-	</para>
-	<note>
-		<para>
-			This option is supported only for
-			OpenSSL versions >= <emphasis>1.0.0</emphasis>.
-			On all the other versions attempting
-			to change the default will trigger an error.
-		</para>
-	</note>
 	<example>
 		<title>Set <varname>ssl_freelist_max_len</varname> parameter</title>
 		<programlisting>
@@ -708,17 +689,8 @@ modparam("tls", "ssl_freelist_max_len", 0)
 		(no attempt on changing the value will be made).
 	</para>
 	<para>
-		By default the value is -1 (the OpenSSL default, which at least in
-		OpenSSL 1.0.0 is ~ 16k).
+		By default the value is -1 (the OpenSSL default, 16k).
 	</para>
-	<note>
-		<para>
-			This option is supported only for
-			OpenSSL versions >= <emphasis>0.9.9</emphasis>.
-			On all the other versions attempting
-			to change the default will trigger an error.
-		</para>
-	</note>
 	<example>
 		<title>Set <varname>ssl_max_send_fragment</varname> parameter</title>
 		<programlisting>
@@ -959,7 +931,6 @@ modparam("tls", "tls_debug", 10)
 	<para>
 		The default value depends on whether the OpenSSL library used handles
 		low memory situations in a good way (openssl bug #1491).
-		As of this writing this is not true for any OpenSSL version (including 0.9.8e).
 	</para>
 	<para>
 		If an ill-behaved OpenSSL version is detected, a very conservative value is chosen,
@@ -1013,7 +984,6 @@ modparam("tls", "low_mem_threshold1", -1)
 	<para>
 		The default value depends on whether the OpenSSL library used handles low memory
 		situations (openssl bug #1491).
-		As of this writing this is not true for any OpenSSL version (including 0.9.8e).
 	</para>
 	<para>
 		If an ill-behaved OpenSSL version is detected, a very conservative value is chosen,
@@ -1071,13 +1041,7 @@ modparam("tls", "low_mem_threshold2", -1)
 			<para>
 				the version of the library the TLS module was compiled with is
 				"too different" from the library used at runtime. The versions should have the same major,
-				minor and fix level (e.g.: 0.9.8a and 0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
-			</para>
-		</listitem>
-		<listitem>
-			<para>
-				the OpenSSL library used at compile time and the one used at
-				runtime have different Kerberos options
+				minor and fix level (e.g.: 1.1.1k and 1.1.1w are ok, but 1.1.1 and 3.0 are not)
 			</para>
 		</listitem>
 	</itemizedlist>
@@ -1703,8 +1667,7 @@ activate = 1
 	<section id="tls.p.keylog_mode">
 	<title><varname>keylog_mode</varname> (int)</title>
 	<para>
-		Control the TLS key logging functionality, available for libssl version
-		greater than 1.1.0. Its value is composed from bitwise values (can be
+		Control the TLS key logging functionality. Its value is composed from bitwise values (can be
 		made as sum of them):
 	</para>
 	<itemizedlist>

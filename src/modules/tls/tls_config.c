@@ -577,27 +577,6 @@ int tls_parse_method(str *method)
 	if(!opt)
 		return -1;
 
-#if OPENSSL_VERSION_NUMBER < 0x1000100fL
-	if(opt->val == TLS_USE_TLSv1_1 || opt->val == TLS_USE_TLSv1_1_PLUS) {
-		LM_ERR("tls v1.1 not supported by this libssl version: %ld\n",
-				(long)OPENSSL_VERSION_NUMBER);
-		return -1;
-	}
-#endif
-#if OPENSSL_VERSION_NUMBER < 0x1000105fL
-	if(opt->val == TLS_USE_TLSv1_2 || opt->val == TLS_USE_TLSv1_2_PLUS) {
-		LM_ERR("tls v1.2 not supported by this libssl version: %ld\n",
-				(long)OPENSSL_VERSION_NUMBER);
-		return -1;
-	}
-#endif
-#if OPENSSL_VERSION_NUMBER < 0x1010100fL
-	if(opt->val == TLS_USE_TLSv1_3 || opt->val == TLS_USE_TLSv1_3_PLUS) {
-		LM_ERR("tls v1.3 not supported by this libssl version: %ld\n",
-				(long)OPENSSL_VERSION_NUMBER);
-		return -1;
-	}
-#endif
 
 	return opt->val;
 }

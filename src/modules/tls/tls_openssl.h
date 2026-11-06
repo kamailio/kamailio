@@ -33,6 +33,10 @@
 #error "LibreSSL is not supported"
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x1010100fL
+#error "OpenSSL 1.1.1 or newer is required"
+#endif
+
 /* the OpenSSL 1.1.1 API without the custom RAND method, allocator hooks
  * and per-thread state; modes 1/2. _NAME names the library in messages */
 #if defined(OPENSSL_IS_AWSLC)
@@ -56,10 +60,5 @@
 #define KEY_PREFIX "/uri:"
 #define KEY_PREFIX_LEN (strlen(KEY_PREFIX))
 #endif /* KSR_SSL_PROVIDER */
-
-/* verify_server_name: SSL_set1_host() (OpenSSL 1.1.0+) */
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-#define KSR_TLS_VERIFY_SERVER_NAME
-#endif
 
 #endif /* _TLS_OPENSSL_H */

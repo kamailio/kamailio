@@ -31,23 +31,6 @@
 #include "../../core/ip_addr.h"
 #include "tls_domain.h"
 
-/* openssl < 1. 0 */
-#if OPENSSL_VERSION_NUMBER < 0x01000000L
-/* alternative: check ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME */
-#define OPENSSL_NO_TLSEXT
-#endif /* OPENSSL_VERSION < 1.0 */
-#ifndef OPENSSL_NO_KRB5
-/* enable workaround for openssl kerberos wrong malloc bug
- * (kssl code uses libc malloc/free/calloc instead of OPENSSL_malloc &
- * friends)*/
-#define TLS_KSSL_WORKAROUND
-extern int openssl_kssl_malloc_bug; /* is openssl bug #1467 present ? */
-#endif
-
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-extern const SSL_METHOD *ssl_methods[];
-#else
 typedef struct sr_tls_methods_s
 {
 	const SSL_METHOD *TLSMethod;
@@ -55,7 +38,6 @@ typedef struct sr_tls_methods_s
 	int TLSMethodMax;
 } sr_tls_methods_t;
 extern sr_tls_methods_t sr_tls_methods[];
-#endif
 
 #define TLS_MODE_PTHREAD_LOCK_SHM (1)
 #define TLS_MODE_FORK_PREPARE (1 << 1)
