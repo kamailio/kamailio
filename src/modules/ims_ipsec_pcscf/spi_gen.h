@@ -50,5 +50,7 @@ int release_spi(
 // until the pair is released (0 for none)
 int spi_set_owner(uint32_t spi_cid, uint32_t spi_sid, uint16_t owner);
 uint16_t spi_get_owner(uint32_t spi_cid, uint32_t spi_sid);
+int reserve_spi(
+		uint32_t spi_cid, uint32_t spi_sid, uint16_t cport, uint16_t sport);
 
 #endif /*  _SPI_GEN_H_ */

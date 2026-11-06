@@ -278,9 +278,51 @@ error:
 	return -1;
 }
 
+// Send an add request and wait for the kernel's answer to it: 0 when it was
+// added or the kernel already holds it (EEXIST), negative when it failed.
+// Answers to anything else sent over the socket earlier are skipped.
+static int send_add_request(
+		struct mnl_socket *nl_sock, struct nlmsghdr *nlh, const char *what)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	unsigned int seq = nlh->nlmsg_seq;
+	struct nlmsghdr *rep;
+	struct nlmsgerr *err;
+	int len;
+
+	nlh->nlmsg_flags |= NLM_F_ACK;
+	if(mnl_socket_sendto(nl_sock, nlh, nlh->nlmsg_len) < 0) {
+		LM_ERR("Failed to send Netlink message for %s creation, error: %s\n",
+				what, strerror(errno));
+		return -1;
+	}
+
+	while((len = mnl_socket_recvfrom(nl_sock, buf, sizeof(buf))) > 0) {
+		for(rep = (struct nlmsghdr *)buf; mnl_nlmsg_ok(rep, len);
+				rep = mnl_nlmsg_next(rep, &len)) {
+			if(rep->nlmsg_seq != seq || rep->nlmsg_type != NLMSG_ERROR) {
+				continue;
+			}
+			err = mnl_nlmsg_get_payload(rep);
+			if(err->error == 0) {
+				return 0;
+			}
+			if(err->error == -EEXIST) {
+				LM_DBG("%s already installed\n", what);
+				return 0;
+			}
+			LM_ERR("Failed to create %s, error: %s\n", what,
+					strerror(-err->error));
+			return -1;
+		}
+	}
+	LM_ERR("No answer to the %s creation, error: %s\n", what, strerror(errno));
+	return -1;
+}
+
 int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
 		const struct ip_addr *dest_addr_param, int s_port, int d_port,
-		int long id, str ck, str ik, str r_alg, str r_ealg)
+		int long id, str ck, str ik, str r_alg, str r_ealg, uint32_t oseq)
 {
 	char l_msg_buf[MNL_SOCKET_BUFFER_SIZE];
 	char l_auth_algo_buf[XFRM_TMPLS_BUF_SIZE];
@@ -427,14 +469,17 @@ int add_sa(struct mnl_socket *nl_sock, const struct ip_addr *src_addr_param,
 			sizeof(struct xfrm_algo) + l_enc_algo->alg_key_len, l_enc_algo);
 
 send:
-	// send it to Netlink socket
-	if(mnl_socket_sendto(nl_sock, l_nlh, l_nlh->nlmsg_len) < 0) {
-		LM_ERR("Failed to send Netlink message for SA creation, error: %s\n",
-				strerror(errno));
-		return -3;
+	// Start the outbound sequence number somewhere other than 1: an SA put
+	// back for a tunnel the peer is still using has to number past what the
+	// peer's replay window has already seen
+	if(oseq) {
+		struct xfrm_replay_state l_replay;
+		memset(&l_replay, 0, sizeof(l_replay));
+		l_replay.oseq = oseq;
+		mnl_attr_put(l_nlh, XFRMA_REPLAY_VAL, sizeof(l_replay), &l_replay);
 	}
 
-	return 0;
+	return send_add_request(nl_sock, l_nlh, "SA");
 }
 
 
@@ -605,12 +650,7 @@ int add_policy(struct mnl_socket *mnl_socket,
 
 	mnl_attr_put(l_nlh, XFRMA_TMPL, sizeof(struct xfrm_user_tmpl), l_tmpl);
 
-	if(mnl_socket_sendto(mnl_socket, l_nlh, l_nlh->nlmsg_len) < 0) {
-		LM_ERR("Failed to send Netlink message, error: %s\n", strerror(errno));
-		return -4;
-	}
-
-	return 0;
+	return send_add_request(mnl_socket, l_nlh, "policy");
 }
 
 int remove_policy(struct mnl_socket *mnl_socket, str src_addr_param,
@@ -1102,10 +1142,11 @@ static int delete_unused_sa(struct mnl_socket *mnl_socket, void *contacts)
 		ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
 	}
 
-	// DELETE unused SAs
-	if(mnl_socket_sendto(
-			   mnl_socket, &del_data.delmsg_buf.buf, del_data.delmsg_buf.offset)
-			== -1) {
+	// DELETE unused SAs - if there are any: an empty batch is an error
+	if(del_data.delmsg_buf.offset > 0
+			&& mnl_socket_sendto(mnl_socket, &del_data.delmsg_buf.buf,
+					   del_data.delmsg_buf.offset)
+					   == -1) {
 		LM_ERR("Error sending delete unused SAs command via netlink socket: "
 			   "%s\n",
 				strerror(errno));
@@ -1214,38 +1255,26 @@ static int delete_unused_policy_cb(const struct nlmsghdr *nlh, void *data)
 			return 1;
 		}
 
-		// Policy  Src address  Dst address Src port    Dst port
-		// Policy1 UE-IP        Proxy-IP    UE-Server   Proxy-Client
-		// Policy2 UE-IP        Proxy-IP    UE-Client   Proxy-Server
-		// Policy3 Proxy-IP     UE-IP       P-Server    UE-Client
-		// Policy4 Proxy-IP     UE-IP       P-Client    UE-Server
+		// A tunnel has a policy for every UE port against every P-CSCF
+		// port, both ways (see create_ipsec_tunnel()):
+		// Policy  Src address  Dst address Src port         Dst port
+		// IN      UE-IP        Proxy-IP    UE-Client/Server Proxy-Client/Server
+		// OUT     Proxy-IP     UE-IP       P-Client/Server  UE-Client/Server
 
-		// Check for Policy1 or Policy2
+		// Check for an IN policy
 		if(ip_addr_cmp(&sa_src_addr, &received_host_addr)
-				&& ip_addr_cmp(&sa_dst_addr, proxy_ip_addr)) {
-			// check for SA1
-			if(sa_sport == ipsec.port_us && sa_dport == ipsec.port_pc) {
-				return MNL_CB_OK;
-			}
-
-			// check for SA2
-			if(sa_sport == ipsec.port_uc && sa_dport == ipsec.port_ps) {
-				return MNL_CB_OK;
-			}
+				&& ip_addr_cmp(&sa_dst_addr, proxy_ip_addr)
+				&& (sa_sport == ipsec.port_us || sa_sport == ipsec.port_uc)
+				&& (sa_dport == ipsec.port_pc || sa_dport == ipsec.port_ps)) {
+			return MNL_CB_OK;
 		}
 
-		// Check for Policy3 or Policy4
+		// Check for an OUT policy
 		if(ip_addr_cmp(&sa_src_addr, proxy_ip_addr)
-				&& ip_addr_cmp(&sa_dst_addr, &received_host_addr)) {
-			// check for SA3
-			if(sa_sport == ipsec.port_ps && sa_dport == ipsec.port_uc) {
-				return MNL_CB_OK;
-			}
-
-			// check for SA4
-			if(sa_sport == ipsec.port_pc && sa_dport == ipsec.port_us) {
-				return MNL_CB_OK;
-			}
+				&& ip_addr_cmp(&sa_dst_addr, &received_host_addr)
+				&& (sa_sport == ipsec.port_pc || sa_sport == ipsec.port_ps)
+				&& (sa_dport == ipsec.port_uc || sa_dport == ipsec.port_us)) {
+			return MNL_CB_OK;
 		}
 	}
 
@@ -1318,10 +1347,11 @@ static int delete_unused_policy(struct mnl_socket *mnl_socket, void *contacts)
 		ret = mnl_socket_recvfrom(mnl_socket, buf, sizeof(buf));
 	}
 
-	// DELETE unused POLICIES
-	if(mnl_socket_sendto(
-			   mnl_socket, &del_data.delmsg_buf.buf, del_data.delmsg_buf.offset)
-			== -1) {
+	// DELETE unused POLICIES - if there are any: an empty batch is an error
+	if(del_data.delmsg_buf.offset > 0
+			&& mnl_socket_sendto(mnl_socket, &del_data.delmsg_buf.buf,
+					   del_data.delmsg_buf.offset)
+					   == -1) {
 		LM_ERR("Error sending delete unused policies command via netlink "
 			   "socket: %s\n",
 				strerror(errno));
