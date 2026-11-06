@@ -256,6 +256,7 @@ str get_presentity_from_subscriber_dialog(
 	//make copy of pres_uri
 	pres_uri.s = (char *)shm_malloc(s->pres_uri.len);
 	if(pres_uri.s == 0) {
+		lock_release(&sub_dialog_table[hash_code].lock);
 		LM_ERR("no more shm mem\n");
 		return pres_uri;
 	}
