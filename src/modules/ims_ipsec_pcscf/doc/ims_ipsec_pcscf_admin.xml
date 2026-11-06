@@ -23,6 +23,27 @@
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
       </programlisting>
     </example>
+
+    <para>Supported algorithms (3GPP TS 33.203), as alg/ealg pairs from the
+    Security-Client header:</para>
+    <itemizedlist>
+      <listitem>
+        <para><emphasis>hmac-md5-96</emphasis> or <emphasis>hmac-sha-1-96</emphasis>
+        with <emphasis>aes-cbc</emphasis>, <emphasis>des-ede3-cbc</emphasis>
+        or <emphasis>null</emphasis>.</para>
+      </listitem>
+      <listitem>
+        <para><emphasis>null</emphasis> with <emphasis>aes-gcm</emphasis>
+        (RFC 4106, kernel algorithm rfc4106(gcm(aes))).</para>
+      </listitem>
+      <listitem>
+        <para><emphasis>aes-gmac</emphasis> with <emphasis>null</emphasis>
+        (RFC 4543, kernel algorithm rfc4543(gcm(aes))).</para>
+      </listitem>
+    </itemizedlist>
+    <para>For aes-gcm and aes-gmac the 128 bit key is CK, respectively IK, and
+    the salt is derived from CK and IK as specified in TS 33.203 Annex I.
+    The kernel must provide the gcm crypto module.</para>
   </section>
 
   <section>
