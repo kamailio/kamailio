@@ -123,8 +123,7 @@ err:
 }
 
 
-static cfg_option_t methods[] = {{"SSLv2", .val = TLS_USE_SSLv2},
-		{"SSLv3", .val = TLS_USE_SSLv3}, {"SSLv23", .val = TLS_USE_SSLv23},
+static cfg_option_t methods[] = {{"SSLv23", .val = TLS_USE_SSLv23},
 		{"TLSv1", .val = TLS_USE_TLSv1}, {"TLSv1.0", .val = TLS_USE_TLSv1},
 		{"TLSv1+", .val = TLS_USE_TLSv1_PLUS},
 		{"TLSv1.0+", .val = TLS_USE_TLSv1_PLUS},

@@ -69,44 +69,17 @@
 			</listitem>
 			<listitem>
 				<para>
-				<emphasis>SSLv3</emphasis> - only SSLv3 connections are accepted.
-				Note: you shouldn't use SSLv3 for anything which should be secure.
-				</para>
-			</listitem>
-			<listitem>
-				<para>
-				<emphasis>SSLv2</emphasis> - only SSLv2 connections, for old clients.
-				Note: you shouldn't use SSLv2 for anything which should be secure.
-				Newer versions of OpenSSL libraries don't include support for it anymore.
-				</para>
-			</listitem>
-			<listitem>
-				<para>
-				<emphasis>SSLv23</emphasis> - any of the SSLv2, SSLv3 and TLSv1 or
-				newer methods will be accepted.
-				</para>
-				<para>
-				From the OpenSSL manual: "A TLS/SSL connection established with these
-				methods may understand the SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols.
-				If extensions are required (for example server name) a client will
-				send out TLSv1 client hello messages including extensions and will
-				indicate that it also understands TLSv1.1, TLSv1.2 and permits a
-				fallback to SSLv3. A server will support SSLv3, TLSv1, TLSv1.1
-				and TLSv1.2 protocols. This is the best choice when compatibility
-				is a concern."
-				</para>
-				<para>
-				Note: For older OpenSSL library versions, this option allows SSLv2, with hello
-				messages done over SSLv2. You shouldn't use SSLv2 or SSLv3 for anything
-				which should be secure.
+				<emphasis>SSLv23</emphasis> - any TLS version supported by the
+				OpenSSL library (TLS_method()).
 				</para>
 			</listitem>
 	</itemizedlist>
 	<para>
 		If RFC 3261 conformance is desired, at least TLSv1 must be used. For
 		compatibility with older clients SSLv23 is the option, but again, be aware
-		of security concerns, SSLv2/3 as well as TLS v1.0 and v1.1 are being considered very insecure
-		and are therefore deprecated since March 2021 (RFC 8996).
+		of security concerns, TLS v1.0 and v1.1 are being considered very insecure
+		and are therefore deprecated since March 2021 (RFC 8996). SSLv2 and SSLv3
+		are not supported.
 		For current information about what's considered secure, please consult,
 		IETF BCP 195, currently RFC 9325  - "Recommendations for Secure Use of
 		Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)"
@@ -922,112 +895,6 @@ modparam("tls", "tls_debug", 10)
 	</section>
 
 
-<section id="tls.p.low_mem_threshold1">
-	<title><varname>low_mem_threshold1</varname> (integer)</title>
-	<para>
-		Sets the minimal free memory from which attempts to open or accept
-		new TLS connections will start to fail. The value is expressed in KB.
-	</para>
-	<para>
-		The default value depends on whether the OpenSSL library used handles
-		low memory situations in a good way (openssl bug #1491).
-	</para>
-	<para>
-		If an ill-behaved OpenSSL version is detected, a very conservative value is chosen,
-		which depends on the maximum possible number of simultaneously created TLS connections
-		(and hence on the process number).
-	</para>
-	<para>
-		The following values have a special meaning:
-	</para>
-	<itemizedlist>
-			<listitem>
-				<para>
-					-1 - use the default value
-				</para>
-			</listitem>
-			<listitem>
-				<para>
-					0 - disable (TLS connections will not fail preemptively)
-				</para>
-			</listitem>
-	</itemizedlist>
-	<para>
-		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is <varname>tls.low_mem_threshold1</varname>.
-	</para>
-	<para>
-		See also <varname>tls.low_mem_threshold2</varname>.
-	</para>
-	<example>
-		<title>Set <varname>low_mem_threshold1</varname> parameter</title>
-		<programlisting>
-...
-modparam("tls", "low_mem_threshold1", -1)
-...
-	</programlisting>
-	</example>
-	<example>
-		<title>Set <varname>tls.low_mem_threshold1</varname> at runtime</title>
-		<programlisting>
- $ &sercmd; cfg.set_now_int tls low_mem_threshold1 2048
-		</programlisting>
-	</example>
-	</section>
-
-<section id="tls.p.low_mem_threshold2">
-	<title><varname>low_mem_threshold2</varname> (integer)</title>
-	<para>
-		Sets the minimal free memory from which TLS operations on already established
-		TLS connections will start to fail preemptively.  The value is expressed in KB.
-	</para>
-	<para>
-		The default value depends on whether the OpenSSL library used handles low memory
-		situations (openssl bug #1491).
-	</para>
-	<para>
-		If an ill-behaved OpenSSL version is detected, a very conservative value is chosen,
-		which depends on the maximum possible number of simultaneously created
-		TLS connections (and hence on the process number).
-	</para>
-	<para>
-		The following values have a special meaning:
-	</para>
-	<itemizedlist>
-			<listitem>
-				<para>
-					-1 - use the default value
-				</para>
-			</listitem>
-			<listitem>
-				<para>
-					0 - disable (TLS operations will not fail preemptively)
-				</para>
-			</listitem>
-	</itemizedlist>
-	<para>
-		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is <varname>tls.low_mem_threshold2</varname>.
-	</para>
-	<para>
-		See also <varname>tls.low_mem_threshold1</varname>.
-	</para>
-	<example>
-		<title>Set <varname>tls.low_mem_threshold2</varname> parameter</title>
-		<programlisting>
-...
-modparam("tls", "low_mem_threshold2", -1)
-...
-	</programlisting>
-	</example>
-	<example>
-		<title>Set <varname>tls.low_mem_threshold2</varname> at runtime</title>
-		<programlisting>
- $ &sercmd; cfg.set_now_int tls low_mem_threshold2 1024
-		</programlisting>
-	</example>
-	</section>
-
 	<section id="tls.p.tls_force_run">
 	<title><varname>tls_force_run</varname> (boolean)</title>
 	<para>
@@ -1124,16 +991,13 @@ modparam("tls", "renegotiation", 1)
 		with 0-indexing.
 	</para>
 	<para>
-		If flag (bit) at index 0 is set (value 1), the memory management operations
-		registered for TLS are wrapped within a pthread mutex lock. It can be useful
-		with newer versions of libssl and libcrypto, which have a more pthread
-		multi-threading oriented design.
+		Flag (bit) at index 0 (value 1) has no effect; it is accepted for
+		compatibility.
 	</para>
 	<para>
 		If flag (bit) at index 1 is set (value 2), the module executes openssl fork
 		prepare API functions (see
-		<ulink url="https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_fork_prepare.html">https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_fork_prepare.html</ulink>). It is done only for openssl version greater or equal
-		with 1.1.1.
+		<ulink url="https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_fork_prepare.html">https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_fork_prepare.html</ulink>).
 	</para>
 	<para>
 		Default value is 0.
@@ -1142,7 +1006,7 @@ modparam("tls", "renegotiation", 1)
 		<title>Set <varname>init_mode</varname> parameter</title>
 		<programlisting>
 ...
-modparam("tls", "init_mode", 1)
+modparam("tls", "init_mode", 2)
 ...
 	</programlisting>
 	</example>
@@ -1446,14 +1310,14 @@ end
 	<section id="tls.p.rand_engine">
 	<title><varname>rand_engine</varname> (str)</title>
 	<para>
-		Set the random number generator engine for libssl.
+		Set the random number generator engine for libssl. It applies only to
+		OpenSSL 1.1.1; with OpenSSL 3 and AWS-LC the value is ignored.
 	</para>
 	<para>
-		Note: the default random number generator (PRNG) engine of libssl v1.1.x
-		is not designed for multi-process applications and can result in a crash.
-		Therefore set the PRNG engine to one of the options listed in this
-		section. If libssl 1.1.x (or newer) is detected at compile time, then
-		the PRNG engine is set to "cryptorand".
+		Note: the default random number generator (PRNG) engine of OpenSSL 1.1.1
+		is not designed for multi-process applications and can result in a crash
+		with the core parameter tls_threads_mode set to 0. In that case the
+		PRNG engine is set to "cryptorand".
 	</para>
 	<para>
 		The following options are available:
@@ -1470,8 +1334,8 @@ end
 		with enough randomness and are not cryptographically secure.
 	</para>
 	<para>
-		The default value is empty (not set) for libssl v1.0.x or older, and
-		"cryptorand" for libssl v1.1.x or newer.
+		The default value is empty (not set): the libssl default, or
+		"cryptorand" with OpenSSL 1.1.1 and tls_threads_mode set to 0.
 	</para>
 	<example>
 	    <title>Set <varname>rand_engine</varname> parameter</title>

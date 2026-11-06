@@ -62,8 +62,8 @@ else # ifneq ($(SSL_BUILDER),)
 			-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
 			-lssl -lcrypto
 	# NOTE: depending on the way in which libssl was compiled you might
-	#       have to add -lz -lkrb5   (zlib and kerberos5).
-	#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz -lkrb5"
+	#       have to add -lz (zlib).
+	#       E.g.: make TLS_HOOKS=1 TLS_EXTRA_LIBS="-lz"
 
 endif # ifneq ($(SSL_BUILDER),)
 

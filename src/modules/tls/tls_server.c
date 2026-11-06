@@ -64,16 +64,6 @@
 int tls_run_event_routes(struct tcp_connection *c);
 static void tls_free_ssl_cache(struct tls_extra_data *data);
 
-/* low memory threshold for openssl bug #1491 workaround */
-#define LOW_MEM_NEW_CONNECTION_TEST()          \
-	(cfg_get(tls, tls_cfg, low_mem_threshold1) \
-			&& (shm_available_safe()           \
-					< cfg_get(tls, tls_cfg, low_mem_threshold1)))
-#define LOW_MEM_CONNECTED_TEST()               \
-	(cfg_get(tls, tls_cfg, low_mem_threshold2) \
-			&& (shm_available_safe()           \
-					< cfg_get(tls, tls_cfg, low_mem_threshold2)))
-
 /* debugging */
 #ifdef NO_TLS_RD_DEBUG
 #undef TLS_RD_DEBUG
@@ -354,13 +344,6 @@ static int tls_complete_init(struct tcp_connection *c)
 	str *sname = NULL;
 	str *srvid = NULL;
 
-	if(LOW_MEM_NEW_CONNECTION_TEST()) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold1=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold1));
-		goto error2;
-	}
 	/* Get current TLS configuration and increase reference
      * count immediately.
      */
@@ -475,13 +458,11 @@ error:
 	atomic_dec(&cfg->ref_count);
 	if(data)
 		shm_free(data);
-error2:
 	return -1;
 }
 
 
 /** completes tls init if needed and checks if tls can be used (unsafe).
- *  It will check for low memory.
  *  If it returns success, c->extra_data is guaranteed to be !=0.
  *  WARNING: must be called with c->write_lock held.
  *  @return 0 on success, < 0 on error (complete init failed or out of memory).
@@ -492,19 +473,12 @@ static int tls_fix_connection_unsafe(struct tcp_connection *c)
 		if(unlikely(tls_complete_init(c) < 0)) {
 			return -1;
 		}
-	} else if(unlikely(LOW_MEM_CONNECTED_TEST())) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold2=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		return -1;
 	}
 	return 0;
 }
 
 
 /** completes tls init if needed and checks if tls can be used, (safe).
- *  It will check for low memory.
  *  If it returns success, c->extra_data is guaranteed to be !=0.
  *  WARNING: must _not_ be called with c->write_lock held (it will
  *   lock/unlock internally), see also tls_fix_connection_unsafe().
@@ -522,13 +496,6 @@ static int tls_fix_connection(struct tcp_connection *c)
 			return ret;
 		}
 		lock_release(&c->write_lock);
-	}
-	if(unlikely(LOW_MEM_CONNECTED_TEST())) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold2=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		return -1;
 	}
 	return 0;
 }
@@ -920,14 +887,6 @@ static int tls_shutdown(struct tcp_connection *c)
      * if the connection is not fully initialized */
 	if(unlikely(tls_c->state != S_TLS_ESTABLISHED))
 		return 0;
-	if(unlikely(LOW_MEM_CONNECTED_TEST())) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold2=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		goto err;
-	}
-
 	tls_openssl_clear_errors();
 	ret = SSL_shutdown(ssl);
 	if(ret == 1) {

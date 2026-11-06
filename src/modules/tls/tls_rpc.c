@@ -388,7 +388,7 @@ static void tls_options(rpc_t *rpc, void *c)
 {
 	void *handle;
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "dSdddSSSSSdSSdddddddddddddd", "force_run",
+	rpc->struct_add(handle, "dSdddSSSSSdSSdddddddddddd", "force_run",
 			cfg_get(tls, tls_cfg, force_run), "method",
 			&cfg_get(tls, tls_cfg, method), "verify_certificate",
 			cfg_get(tls, tls_cfg, verify_cert),
@@ -412,9 +412,7 @@ static void tls_options(rpc_t *rpc, void *c)
 			"ssl_max_send_fragment",
 			cfg_get(tls, tls_cfg, ssl_max_send_fragment), "ssl_read_ahead",
 			cfg_get(tls, tls_cfg, ssl_read_ahead), "send_close_notify",
-			cfg_get(tls, tls_cfg, send_close_notify), "low_mem_threshold1",
-			cfg_get(tls, tls_cfg, low_mem_threshold1), "low_mem_threshold2",
-			cfg_get(tls, tls_cfg, low_mem_threshold2), "ct_wq_max",
+			cfg_get(tls, tls_cfg, send_close_notify), "ct_wq_max",
 			cfg_get(tls, tls_cfg, ct_wq_max), "con_ct_wq_max",
 			cfg_get(tls, tls_cfg, con_ct_wq_max), "ct_wq_blk_size",
 			cfg_get(tls, tls_cfg, ct_wq_blk_size));

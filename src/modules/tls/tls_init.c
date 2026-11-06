@@ -41,7 +41,6 @@
 #include <netinet/ip.h>
 #include <unistd.h>
 #include <string.h>
-#include <pthread.h>
 #include <openssl/ssl.h>
 
 #if OPENSSL_VERSION_NUMBER >= 0x030000000L
@@ -54,7 +53,6 @@
 #include "../../core/socket_info.h"
 #include "../../core/pt.h"
 #include "../../core/cfg/cfg.h"
-#include "../../core/cfg/cfg_ctx.h"
 #include "tls_verify.h"
 #include "tls_domain.h"
 #include "tls_util.h"
@@ -67,48 +65,6 @@
 /* will be set to 1 when the TLS env is initialized to make destroy safe */
 static int tls_mod_preinitialized = 0;
 static int tls_mod_initialized = 0;
-
-extern int ksr_tls_init_mode;
-static pthread_mutex_t *ksr_tls_lock_shm = NULL;
-
-/**
- *
- */
-int ksr_tls_lock_init(void)
-{
-	pthread_mutexattr_t attr;
-
-	if(ksr_tls_lock_shm != NULL) {
-		return 0;
-	}
-	ksr_tls_lock_shm = (pthread_mutex_t *)shm_mallocxz(sizeof(pthread_mutex_t));
-	if(ksr_tls_lock_shm == NULL) {
-		LM_ERR("mutex allocation failed\n");
-		return -1;
-	}
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-	if(pthread_mutex_init(ksr_tls_lock_shm, &attr) != 0) {
-		pthread_mutexattr_destroy(&attr);
-		LM_ERR("mutex init failed\n");
-		return -1;
-	}
-	pthread_mutexattr_destroy(&attr);
-	return 0;
-}
-
-/**
- *
- */
-void ksr_tls_lock_destroy(void)
-{
-	if(!(ksr_tls_init_mode & TLS_MODE_PTHREAD_LOCK_SHM)) {
-		return;
-	}
-	pthread_mutex_destroy(ksr_tls_lock_shm);
-	shm_free(ksr_tls_lock_shm);
-	return;
-}
 
 sr_tls_methods_t sr_tls_methods[TLS_METHOD_MAX];
 
@@ -355,18 +311,6 @@ static void init_ssl_methods(void)
 	sr_tls_methods[TLS_USE_SSLv23_srv - 1].TLSMethod = TLS_server_method();
 	sr_tls_methods[TLS_USE_SSLv23 - 1].TLSMethod = TLS_method();
 
-#ifndef OPENSSL_NO_SSL3_METHOD
-	sr_tls_methods[TLS_USE_SSLv3_cli - 1].TLSMethod = TLS_client_method();
-	sr_tls_methods[TLS_USE_SSLv3_cli - 1].TLSMethodMin = SSL3_VERSION;
-	sr_tls_methods[TLS_USE_SSLv3_cli - 1].TLSMethodMax = SSL3_VERSION;
-	sr_tls_methods[TLS_USE_SSLv3_srv - 1].TLSMethod = TLS_server_method();
-	sr_tls_methods[TLS_USE_SSLv3_srv - 1].TLSMethodMin = SSL3_VERSION;
-	sr_tls_methods[TLS_USE_SSLv3_srv - 1].TLSMethodMax = SSL3_VERSION;
-	sr_tls_methods[TLS_USE_SSLv3 - 1].TLSMethod = TLS_method();
-	sr_tls_methods[TLS_USE_SSLv3 - 1].TLSMethodMin = SSL3_VERSION;
-	sr_tls_methods[TLS_USE_SSLv3 - 1].TLSMethodMax = SSL3_VERSION;
-#endif
-
 	sr_tls_methods[TLS_USE_TLSv1_cli - 1].TLSMethod = TLS_client_method();
 	sr_tls_methods[TLS_USE_TLSv1_cli - 1].TLSMethodMin = TLS1_VERSION;
 	sr_tls_methods[TLS_USE_TLSv1_cli - 1].TLSMethodMax = TLS1_VERSION;
@@ -436,11 +380,6 @@ int tls_pre_init(void)
 #ifdef KSR_LIBSSL_STATIC
 	LM_INFO("libssl linked mode: static\n");
 #endif
-
-	if(ksr_tls_lock_init() < 0) {
-		LM_ERR("failed to init local lock\n");
-		return -1;
-	}
 
 	/*
 	 * this has to be called before any function calling CRYPTO_malloc,
@@ -530,10 +469,6 @@ int tls_h_mod_pre_init_f(void)
 		LM_DBG("already mod pre-initialized\n");
 		return 0;
 	}
-	if(ksr_tls_lock_init() < 0) {
-		LM_ERR("failed to init local lock\n");
-		return -1;
-	}
 	LM_DBG("preparing tls env for modules initialization\n");
 
 #if 0
@@ -564,11 +499,6 @@ int tls_h_mod_init_f(void)
 	/*struct socket_info* si;*/
 	long ssl_version;
 	const char *ssl_version_txt;
-	int low_mem_threshold1;
-	int low_mem_threshold2;
-	str tls_grp;
-	str s;
-	cfg_ctx_t *cfg_ctx;
 
 	if(tls_mod_initialized == 1) {
 		LM_DBG("already initialized\n");
@@ -597,65 +527,6 @@ int tls_h_mod_init_f(void)
 					" openssl version mismatch\n");
 		else
 			return -1; /* safer to exit */
-	}
-
-	/* set free memory threshold for openssl bug #1491 workaround */
-	low_mem_threshold1 = cfg_get(tls, tls_cfg, low_mem_threshold1);
-	low_mem_threshold2 = cfg_get(tls, tls_cfg, low_mem_threshold2);
-	if(low_mem_threshold1 < 0) {
-		/* default */
-		low_mem_threshold1 = 512 * 1024 * get_max_procs();
-	} else
-		low_mem_threshold1 *= 1024; /* KB */
-	if(low_mem_threshold2 < 0) {
-		/* default */
-		low_mem_threshold2 = 256 * 1024 * get_max_procs();
-	} else
-		low_mem_threshold2 *= 1024; /* KB */
-	if((low_mem_threshold1 == 0) || (low_mem_threshold2 == 0))
-		LM_WARN("tls: openssl bug #1491 (crash/mem leaks on low memory)"
-				" workaround disabled\n");
-	else
-		LM_WARN("openssl bug #1491 (crash/mem leaks on low memory)"
-				" workaround enabled (on low memory tls operations will fail"
-				" preemptively) with free memory thresholds %d and %d bytes\n",
-				low_mem_threshold1, low_mem_threshold2);
-
-	if(shm_available() == (unsigned long)(-1)) {
-		LM_WARN(NAME " is compiled without MALLOC_STATS support:"
-					 " the workaround for low mem. openssl bugs will _not_ "
-					 "work\n");
-		low_mem_threshold1 = 0;
-		low_mem_threshold2 = 0;
-	}
-	if((low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1))
-			|| (low_mem_threshold2
-					!= cfg_get(tls, tls_cfg, low_mem_threshold2))) {
-		/* ugly hack to set the initial values for the mem thresholds */
-		if(cfg_register_ctx(&cfg_ctx, 0)) {
-			LM_ERR("failed to register cfg context\n");
-			return -1;
-		}
-		tls_grp.s = "tls";
-		tls_grp.len = strlen(tls_grp.s);
-		s.s = "low_mem_threshold1";
-		s.len = strlen(s.s);
-		if(low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1)
-				&& cfg_set_now_int(cfg_ctx, &tls_grp, NULL /* group id */, &s,
-						low_mem_threshold1)) {
-			LM_ERR("failed to set tls.low_mem_threshold1 to %d\n",
-					low_mem_threshold1);
-			return -1;
-		}
-		s.s = "low_mem_threshold2";
-		s.len = strlen(s.s);
-		if(low_mem_threshold2 != cfg_get(tls, tls_cfg, low_mem_threshold2)
-				&& cfg_set_now_int(cfg_ctx, &tls_grp, NULL /* group id */, &s,
-						low_mem_threshold2)) {
-			LM_ERR("failed to set tls.low_mem_threshold1 to %d\n",
-					low_mem_threshold2);
-			return -1;
-		}
 	}
 
 	init_ssl_methods();

@@ -139,10 +139,6 @@ request_route {
 			anyway, see the <varname>tls_force_run</varname> module parameter).
 		</para>
 		<para>
-			The TLS module stops using TLS in low memory situations, due to the
-			very high risk of OpenSSL crashing or leaking memory (openssl #1491).
-		</para>
-		<para>
 			Note 1: the tls module must be loaded before any other &kamailio; module
 			that uses libssl (OpenSSL library). A safe option is to have the tls module
 			loaded first (be in the first "loadmodule" in &kamailioconfig;).
@@ -187,29 +183,16 @@ make all include_modules=tls
 		</para>
 		<para>
 			However in some cases the OpenSSL library requires linking with other libraries.
-			For example compiling the OpenSSL library with Kerberos and zlib-shared support
-			will require linking the TLS module with libkrb5 and libz. In this case just add
-			<emphasis>TLS_EXTRA_LIBS</emphasis>="library list" to make's command line. E.g.:
+			In this case just add <emphasis>TLS_EXTRA_LIBS</emphasis>="library list" to
+			make's command line. E.g.:
 			<programlisting>
-make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
+make TLS_EXTRA_LIBS="-lz" all include_modules=tls
 			</programlisting>
 		</para>
 		<para>
 			In general, if Kamailio fails to start with a symbol not found error when trying
 			to load the TLS module (check the log), it means some needed library was not
 			linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
-		</para>
-	</section>
-
-	<section id="tls.low_memory">
-		<title>TLS and Low Memory</title>
-		<para>
-			The Openssl library doesn't handle low memory situations very well. If memory
-			allocations start to fail (due to memory shortage), Openssl can crash or cause memory
-			leaks (making the memory shortage even worse), see Openssl bug #1491. The TLS module has some
-			workarounds for preventing this problem (see <varname>low_mem_threshold1</varname>
-			and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared
-			memory is higly recommended.
 		</para>
 	</section>
 
@@ -251,9 +234,6 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 
 	<section id="tls.known_limitations">
 		<title>Known Limitations</title>
-		<para>
-			The private key must not be encrypted (Kamailio cannot ask you for a password on startup).
-		</para>
 		<para>
 			The TLS certificate verifications ignores the certificate name, Subject Altname
 			and IP extensions, it just checks if the certificate is signed by a recognized CA,
