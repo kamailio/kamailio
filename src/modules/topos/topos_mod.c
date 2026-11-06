@@ -127,12 +127,12 @@ static int _tps_eventrt_receiving = -1;
 static str _tps_eventrt_receiving_name = str_init("topos:msg-receiving");
 
 str _tps_contact_host = str_init("");
-int _tps_contact_mode = TPS_CONTACT_MODE_SKEYUSER;
+int _tps_key_location = TPS_KEY_LOCATION_USER;
 str _tps_cparam_name = str_init("tps");
 
 str _tps_xavu_cfg = STR_NULL;
-str _tps_xavu_field_acontact = STR_NULL;
-str _tps_xavu_field_bcontact = STR_NULL;
+str _tps_xavu_field_acontact_user = STR_NULL;
+str _tps_xavu_field_bcontact_user = STR_NULL;
 str _tps_xavu_field_contact_host = STR_NULL;
 str _tps_xavu_field_acontact_host = STR_NULL;
 str _tps_xavu_field_bcontact_host = STR_NULL;
@@ -182,11 +182,11 @@ static param_export_t params[] = {
 	{"event_callback", PARAM_STR, &_tps_eventrt_callback},
 	{"event_mode", PARAM_INT, &_tps_eventrt_mode},
 	{"contact_host", PARAM_STR, &_tps_contact_host},
-	{"contact_mode", PARAM_INT, &_tps_contact_mode},
+	{"key_location", PARAM_INT, &_tps_key_location},
 	{"cparam_name", PARAM_STR, &_tps_cparam_name},
 	{"xavu_cfg", PARAM_STR, &_tps_xavu_cfg},
-	{"xavu_field_a_contact", PARAM_STR, &_tps_xavu_field_acontact},
-	{"xavu_field_b_contact", PARAM_STR, &_tps_xavu_field_bcontact},
+	{"xavu_field_a_contact_user", PARAM_STR, &_tps_xavu_field_acontact_user},
+	{"xavu_field_b_contact_user", PARAM_STR, &_tps_xavu_field_bcontact_user},
 	{"xavu_field_contact_host", PARAM_STR, &_tps_xavu_field_contact_host},
 	{"xavu_field_a_contact_host", PARAM_STR, &_tps_xavu_field_acontact_host},
 	{"xavu_field_b_contact_host", PARAM_STR, &_tps_xavu_field_bcontact_host},
@@ -224,6 +224,32 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	db1_con_t *topos_db_con = NULL;
+
+	if(_tps_key_location != TPS_KEY_LOCATION_PARAM
+			&& _tps_key_location != TPS_KEY_LOCATION_USER) {
+		LM_ERR("invalid hash_location value: %d. Must be 0 or 1\n",
+				_tps_key_location);
+		return -1;
+	}
+
+	if(_tps_key_location != TPS_KEY_LOCATION_PARAM
+			&& (_tps_xavu_field_acontact_user.len > 0
+					|| _tps_xavu_field_bcontact_user.len > 0)) {
+		LM_ERR("contact user XAVU fields require hash_location=1\n");
+		return -1;
+	}
+
+	if(_tps_xavu_cfg.len <= 0
+			&& (_tps_xavu_field_acontact_user.len > 0
+					|| _tps_xavu_field_bcontact_user.len > 0
+					|| _tps_xavu_field_acontact_host.len > 0
+					|| _tps_xavu_field_bcontact_host.len > 0
+					|| _tps_xavu_field_contact_host.len > 0)) {
+		LM_ERR("xavu_cfg is required when contact XAVU fields are "
+			   "configured\n");
+		return -1;
+	}
+
 	_tps_eventrt_outgoing =
 			route_lookup(&event_rt, _tps_eventrt_outgoing_name.s);
 	if(_tps_eventrt_outgoing < 0
@@ -337,24 +363,6 @@ static int mod_init(void)
 
 	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC) < 0)
 		return -1;
-
-	if(_tps_contact_mode == TPS_CONTACT_MODE_XAVPUSER
-			&& (_tps_xavu_cfg.len <= 0 || _tps_xavu_field_acontact.len <= 0
-					|| _tps_xavu_field_bcontact.len <= 0)) {
-		LM_ERR("contact_mode parameter is 2,"
-			   " but a_contact or b_contact xavu fields not defined\n");
-		return -1;
-	}
-
-	if((_tps_contact_mode == TPS_CONTACT_MODE_XAVPHOST
-			   || _tps_contact_mode == TPS_CONTACT_MODE_XAVPHOSTONLY)
-			&& (_tps_xavu_cfg.len <= 0 || _tps_xavu_field_acontact_host.len <= 0
-					|| _tps_xavu_field_bcontact_host.len <= 0)) {
-		LM_ERR("contact_mode parameter is 3 or 4,"
-			   " but a_contact_host or b_contact_host xavu fields not "
-			   "defined\n");
-		return -1;
-	}
 
 	if(_tps_param_mask_callid == 1) {
 		/* bind the topoh API */
