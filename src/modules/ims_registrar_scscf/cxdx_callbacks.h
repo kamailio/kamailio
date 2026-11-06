@@ -32,5 +32,6 @@
 int PPR_RTR_Event(void *parsed_message, int type, void *param);
 
 AAAMessage *cxdx_process_rtr(AAAMessage *request);
+AAAMessage *cxdx_process_ppr(AAAMessage *request);
 
 #endif /* CXDX_CALLBACKS_H */
