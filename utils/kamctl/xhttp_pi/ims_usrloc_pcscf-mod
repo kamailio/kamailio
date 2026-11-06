@@ -36,7 +36,6 @@
 				<col><field>spi_uc</field></col>
 				<col><field>spi_us</field></col>
 				<col><field>t_security_type</field></col>
-				<col><field>t_protocol</field></col>
 				<col><field>t_mode</field></col>
 				<col><field>t_ck</field></col>
 				<col><field>t_ik</field></col>
@@ -87,7 +86,6 @@
 				<col><field>spi_uc</field></col>
 				<col><field>spi_us</field></col>
 				<col><field>t_security_type</field></col>
-				<col><field>t_protocol</field></col>
 				<col><field>t_mode</field></col>
 				<col><field>t_ck</field></col>
 				<col><field>t_ik</field></col>
@@ -141,7 +139,6 @@
 				<col><field>spi_uc</field></col>
 				<col><field>spi_us</field></col>
 				<col><field>t_security_type</field></col>
-				<col><field>t_protocol</field></col>
 				<col><field>t_mode</field></col>
 				<col><field>t_ck</field></col>
 				<col><field>t_ik</field></col>

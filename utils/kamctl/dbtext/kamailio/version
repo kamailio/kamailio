@@ -45,7 +45,7 @@ id(int,auto) table_name(string) table_version(int)
 0:mtree:1
 0:mtrees:2
 0:nds_trusted_domains:1
-0:pcscf_location:7
+0:pcscf_location:8
 0:pdt:1
 0:pl_pipes:1
 0:presentity:5

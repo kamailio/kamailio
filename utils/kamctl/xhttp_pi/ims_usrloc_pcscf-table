@@ -34,7 +34,6 @@
 		<column><field>spi_uc</field><type>DB1_INT</type></column>
 		<column><field>spi_us</field><type>DB1_INT</type></column>
 		<column><field>t_security_type</field><type>DB1_INT</type></column>
-		<column><field>t_protocol</field><type>DB1_STR</type></column>
 		<column><field>t_mode</field><type>DB1_STR</type></column>
 		<column><field>t_ck</field><type>DB1_STR</type></column>
 		<column><field>t_ik</field><type>DB1_STR</type></column>
