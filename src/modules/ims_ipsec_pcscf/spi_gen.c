@@ -252,6 +252,45 @@ int release_spi(
 	return 0;
 }
 
+// Mark a specific SPI pair as used - the one a tunnel that outlived a restart
+// already holds - so that acquire_spi() does not hand it out a second time.
+// Returns 0 when the pair was free and is now used, 1 when it is used already,
+// and -1 otherwise (outside the configured range, or no generator).
+int reserve_spi(
+		uint32_t spi_cid, uint32_t spi_sid, uint16_t cport, uint16_t sport)
+{
+	int ret = -1;
+
+	if(!spi_data) {
+		return -1;
+	}
+
+	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
+		return -1;
+	}
+
+	// spi_remove() is 1 when it removed the pair, and 0 or -1 when it is not
+	// in the list
+	if(spi_remove(&spi_data->free_spi, spi_cid, spi_sid) == 1) {
+		spi_add(&spi_data->used_spis[spi_cid % MAX_HASH_SPI], spi_cid, spi_sid,
+				cport, sport);
+		ret = 0;
+	} else if(spi_in_list(&spi_data->used_spis[spi_cid % MAX_HASH_SPI], spi_cid,
+					  spi_sid)) {
+		ret = 1;
+	}
+
+	pthread_mutex_unlock(&spi_data->spis_mut);
+
+	LM_DBG("spi %s spi_cid:%u spi_sid:%u cport:%u sport:%u\n",
+			ret == 0   ? "reserved"
+			: ret == 1 ? "already used"
+					   : "not reserved",
+			spi_cid, spi_sid, cport, sport);
+
+	return ret;
+}
+
 int spi_set_owner(uint32_t spi_cid, uint32_t spi_sid, uint16_t owner)
 {
 	spi_node_t *n;
