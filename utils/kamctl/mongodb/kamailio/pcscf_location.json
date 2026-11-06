@@ -1,6 +1,6 @@
 {
   "name": "pcscf_location",
-  "version": 8,
+  "version": 9,
   "columns": [
     "id": {
       "type": "int",
@@ -157,6 +157,11 @@
       "default": null,
       "null": true
     },
+    "start_time": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
     "t_security_type": {
       "type": "int",
       "default": null,
@@ -223,6 +228,11 @@
       "null": true
     },
     "t_spi_us": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "t_start_time": {
       "type": "int",
       "default": null,
       "null": true

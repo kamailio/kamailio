@@ -30,6 +30,7 @@ CREATE TABLE pcscf_location (
     spi_ps NUMBER(10) DEFAULT NULL,
     spi_uc NUMBER(10) DEFAULT NULL,
     spi_us NUMBER(10) DEFAULT NULL,
+    start_time NUMBER(10) DEFAULT NULL,
     t_security_type NUMBER(10) DEFAULT NULL,
     t_mode VARCHAR2(10) DEFAULT NULL,
     t_ck VARCHAR2(100) DEFAULT NULL,
@@ -43,7 +44,8 @@ CREATE TABLE pcscf_location (
     t_spi_pc NUMBER(10) DEFAULT NULL,
     t_spi_ps NUMBER(10) DEFAULT NULL,
     t_spi_uc NUMBER(10) DEFAULT NULL,
-    t_spi_us NUMBER(10) DEFAULT NULL
+    t_spi_us NUMBER(10) DEFAULT NULL,
+    t_start_time NUMBER(10) DEFAULT NULL
 );
 
 CREATE OR REPLACE TRIGGER pcscf_location_tr
@@ -56,5 +58,5 @@ BEGIN map2users('pcscf_location'); END;
 /
 CREATE INDEX pcscf_location_aor_idx  ON pcscf_location (aor);
 
-INSERT INTO version (table_name, table_version) values ('pcscf_location','8');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','9');
 

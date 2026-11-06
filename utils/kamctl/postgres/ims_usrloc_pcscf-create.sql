@@ -30,6 +30,7 @@ CREATE TABLE pcscf_location (
     spi_ps INTEGER DEFAULT NULL,
     spi_uc INTEGER DEFAULT NULL,
     spi_us INTEGER DEFAULT NULL,
+    start_time INTEGER DEFAULT NULL,
     t_security_type INTEGER DEFAULT NULL,
     t_mode VARCHAR(10) DEFAULT NULL,
     t_ck VARCHAR(100) DEFAULT NULL,
@@ -43,10 +44,11 @@ CREATE TABLE pcscf_location (
     t_spi_pc INTEGER DEFAULT NULL,
     t_spi_ps INTEGER DEFAULT NULL,
     t_spi_uc INTEGER DEFAULT NULL,
-    t_spi_us INTEGER DEFAULT NULL
+    t_spi_us INTEGER DEFAULT NULL,
+    t_start_time INTEGER DEFAULT NULL
 );
 
 CREATE INDEX pcscf_location_aor_idx ON pcscf_location (aor);
 
-INSERT INTO version (table_name, table_version) values ('pcscf_location','8');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','9');
 

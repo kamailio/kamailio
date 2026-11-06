@@ -33,6 +33,7 @@
 		<column><field>spi_ps</field><type>DB1_INT</type></column>
 		<column><field>spi_uc</field><type>DB1_INT</type></column>
 		<column><field>spi_us</field><type>DB1_INT</type></column>
+		<column><field>start_time</field><type>DB1_INT</type></column>
 		<column><field>t_security_type</field><type>DB1_INT</type></column>
 		<column><field>t_mode</field><type>DB1_STR</type></column>
 		<column><field>t_ck</field><type>DB1_STR</type></column>
@@ -47,4 +48,5 @@
 		<column><field>t_spi_ps</field><type>DB1_INT</type></column>
 		<column><field>t_spi_uc</field><type>DB1_INT</type></column>
 		<column><field>t_spi_us</field><type>DB1_INT</type></column>
+		<column><field>t_start_time</field><type>DB1_INT</type></column>
 	</db_table>
