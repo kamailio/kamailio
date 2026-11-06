@@ -46,6 +46,11 @@
 				<emphasis>libnghttp2</emphasis> - libnghttpd library (v1.43.0+)
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>libssl</emphasis> - OpenSSL library (1.1.1 or newer)
+			</para>
+			</listitem>
 			</itemizedlist>
 		</para>
 	</section>

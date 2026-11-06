@@ -51,6 +51,10 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x1010100fL
+#error "OpenSSL 1.1.1 or newer is required"
+#endif
+
 #include <event.h>
 #include <event2/event.h>
 #include <event2/bufferevent_ssl.h>
