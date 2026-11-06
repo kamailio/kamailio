@@ -614,8 +614,8 @@ typedef int (*get_impus_from_subscription_as_string_t)(udomain_t *_d,
 		impurecord_t *impu_rec, int barring, str **impus, int *num_impus,
 		int is_shm);
 
-typedef str (*get_presentity_from_subscriber_dialog_t)(
-		str *callid, str *to_tag, str *from_tag);
+typedef int (*get_presentity_from_subscriber_dialog_t)(
+		str *callid, str *to_tag, str *from_tag, str *pres_uri);
 
 /*! usrloc API export structure */
 typedef struct usrloc_api
