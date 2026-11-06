@@ -42,6 +42,7 @@ str spi_pc_col = str_init(SPIPC_COL);
 str spi_ps_col = str_init(SPIPS_COL);
 str spi_uc_col = str_init(SPIUC_COL);
 str spi_us_col = str_init(SPIUS_COL);
+str start_time_col = str_init(START_TIME_COL);
 str t_security_type_col = str_init(T_SECURITY_TYPE_COL);
 str t_mode_col = str_init(T_MODE_COL);
 str t_ck_col = str_init(T_CK_COL);
@@ -56,6 +57,7 @@ str t_spi_pc_col = str_init(T_SPIPC_COL);
 str t_spi_ps_col = str_init(T_SPIPS_COL);
 str t_spi_uc_col = str_init(T_SPIUC_COL);
 str t_spi_us_col = str_init(T_SPIUS_COL);
+str t_start_time_col = str_init(T_START_TIME_COL);
 
 t_reusable_buffer service_route_buffer = {0, 0, 0};
 t_reusable_buffer impu_buffer = {0, 0, 0};
@@ -370,11 +372,11 @@ int db_update_pcontact_security_temp(
 	db_key_t match_keys[2] = {&aor_col, &received_port_col};
 	db_op_t op[2];
 
-	db_key_t update_keys[14] = {&t_security_type_col, &t_mode_col, &t_ck_col,
+	db_key_t update_keys[15] = {&t_security_type_col, &t_mode_col, &t_ck_col,
 			&t_ik_col, &t_ealg_col, &t_ialg_col, &t_port_pc_col, &t_port_ps_col,
 			&t_port_uc_col, &t_port_us_col, &t_spi_pc_col, &t_spi_ps_col,
-			&t_spi_uc_col, &t_spi_us_col};
-	db_val_t values[14];
+			&t_spi_uc_col, &t_spi_us_col, &t_start_time_col};
+	db_val_t values[15];
 
 	LM_CRIT("updating temp security for pcontact: aor[%.*s], received port "
 			"%u\n",
@@ -420,11 +422,11 @@ int db_update_pcontact_security_temp(
 
 			VAL_TYPE(values + ++i) = DB1_STR;
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->ealg : s_empty;
+			VAL_STR(values + i) = ipsec ? ipsec->r_ealg : s_empty;
 
 			VAL_TYPE(values + ++i) = DB1_STR;
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->alg : s_empty;
+			VAL_STR(values + i) = ipsec ? ipsec->r_alg : s_empty;
 
 			VAL_TYPE(values + ++i) = DB1_INT;
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
@@ -458,8 +460,13 @@ int db_update_pcontact_security_temp(
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
 			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_us : 0;
 
+			// NULL for a tunnel not installed (yet)
+			VAL_TYPE(values + ++i) = DB1_BIGINT;
+			VAL_NULL(values + i) = (ipsec && ipsec->start_time) ? 0 : 1;
+			VAL_BIGINT(values + i) = ipsec ? ipsec->start_time : 0;
+
 			if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
-					   values, 2, 14))
+					   values, 2, 15))
 					!= 0) {
 				LM_ERR("could not update database info\n");
 				return -1;
@@ -492,10 +499,11 @@ int db_update_pcontact_security(
 	// contact's own transport, written by db_insert_pcontact() and read back
 	// by preload_udomain(). The tunnel is always esp (TS 33.203 Annex H), so
 	// neither security set stores its protocol.
-	db_key_t update_keys[14] = {&security_type_col, &mode_col, &ck_col, &ik_col,
+	db_key_t update_keys[15] = {&security_type_col, &mode_col, &ck_col, &ik_col,
 			&ealg_col, &ialg_col, &port_pc_col, &port_ps_col, &port_uc_col,
-			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col};
-	db_val_t values[14];
+			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col,
+			&start_time_col};
+	db_val_t values[15];
 
 	LM_DBG("updating security for pcontact: aor[%.*s], received port %u\n",
 			_c->aor.len, _c->aor.s, _c->received_port);
@@ -540,11 +548,11 @@ int db_update_pcontact_security(
 
 			VAL_TYPE(values + ++i) = DB1_STR;
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->ealg : s_empty;
+			VAL_STR(values + i) = ipsec ? ipsec->r_ealg : s_empty;
 
 			VAL_TYPE(values + ++i) = DB1_STR;
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->alg : s_empty;
+			VAL_STR(values + i) = ipsec ? ipsec->r_alg : s_empty;
 
 			VAL_TYPE(values + ++i) = DB1_INT;
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
@@ -578,8 +586,13 @@ int db_update_pcontact_security(
 			VAL_NULL(values + i) = ipsec ? 0 : 1;
 			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_us : 0;
 
+			// NULL for a tunnel not installed (yet)
+			VAL_TYPE(values + ++i) = DB1_BIGINT;
+			VAL_NULL(values + i) = (ipsec && ipsec->start_time) ? 0 : 1;
+			VAL_BIGINT(values + i) = ipsec ? ipsec->start_time : 0;
+
 			if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
-					   values, 2, 14))
+					   values, 2, 15))
 					!= 0) {
 				LM_ERR("could not update database info\n");
 				return -1;

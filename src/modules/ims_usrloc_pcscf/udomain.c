@@ -1077,6 +1077,114 @@ static inline pcontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 }
 
 /*!
+ * \brief Copy a string column of a preloaded row into shm
+ * \return 0 on success (an empty or NULL column leaves dst empty), -1 on failure
+ */
+static int dbval2shm_str(db_val_t *val, str *dst)
+{
+	str src = STR_NULL;
+
+	dst->s = NULL;
+	dst->len = 0;
+	if(VAL_NULL(val)) {
+		return 0;
+	}
+	if(VAL_TYPE(val) == DB1_STR) {
+		src = VAL_STR(val);
+	} else if(VAL_STRING(val)) {
+		src.s = (char *)VAL_STRING(val);
+		src.len = strlen(src.s);
+	}
+	if(src.len <= 0) {
+		return 0;
+	}
+	return shm_str_dup(dst, &src);
+}
+
+/*!
+ * \brief Rebuild one of a contact's tunnels from its preloaded columns
+ *
+ * ims_ipsec_pcscf keeps two tunnels per contact - CK, IK, the negotiated
+ * algorithms, both sides' SPIs and ports, when it was installed: the one
+ * being negotiated in security_temp, written through to the t_* columns, and
+ * the one the UE registered over in security, written through to the
+ * unprefixed columns.
+ * Reading them back is what lets a restarted P-CSCF forward to and tear down
+ * the tunnels its preloaded contacts still hold; without it they come back
+ * looking registered but with no tunnel at all.
+ *
+ * SPIs and the start time are unsigned 32-bit and the columns are int:
+ * db_str2int() accepts the whole unsigned range and the casts below take it
+ * back.
+ *
+ * A tunnel with no algorithms is dropped: the UE picked them from its
+ * Security-Client offer and nothing else records them, so its SAs can't be
+ * rebuilt. Rows written before the algorithm columns were filled in from
+ * r_alg and r_ealg all look like that; the contact comes back without the
+ * tunnel and its UE has to register again.
+ *
+ * \param vals the security type value
+ * \param rest the 14 values that follow, mode to start_time
+ * \param aor the contact's AOR, for the log
+ * \param slot which tunnel this is, for the log
+ * \return the security in shm, or NULL when the row carries none or one that
+ * can't be reinstalled
+ */
+static security_t *dbrow2security(
+		db_val_t *vals, db_val_t *rest, str *aor, const char *slot)
+{
+	security_t *sec;
+	ipsec_t *ipsec;
+
+	if(VAL_NULL(vals) || VAL_INT(vals) != SECURITY_IPSEC) {
+		return NULL;
+	}
+
+	sec = shm_malloc(sizeof(security_t));
+	ipsec = shm_malloc(sizeof(ipsec_t));
+	if(!sec || !ipsec) {
+		SHM_MEM_ERROR;
+		if(sec)
+			shm_free(sec);
+		if(ipsec)
+			shm_free(ipsec);
+		return NULL;
+	}
+	memset(sec, 0, sizeof(security_t));
+	memset(ipsec, 0, sizeof(ipsec_t));
+	sec->type = SECURITY_IPSEC;
+	sec->data.ipsec = ipsec;
+
+	if(dbval2shm_str(rest + 0, &ipsec->mod) < 0
+			|| dbval2shm_str(rest + 1, &ipsec->ck) < 0
+			|| dbval2shm_str(rest + 2, &ipsec->ik) < 0
+			|| dbval2shm_str(rest + 3, &ipsec->r_ealg) < 0
+			|| dbval2shm_str(rest + 4, &ipsec->r_alg) < 0) {
+		free_security(sec);
+		return NULL;
+	}
+	if(ipsec->r_alg.len == 0 || ipsec->r_ealg.len == 0) {
+		LM_WARN("dropping the %s tunnel of <%.*s>: no algorithms stored\n",
+				slot, aor->len, aor->s);
+		free_security(sec);
+		return NULL;
+	}
+
+	ipsec->port_pc = VAL_NULL(rest + 5) ? 0 : (unsigned short)VAL_INT(rest + 5);
+	ipsec->port_ps = VAL_NULL(rest + 6) ? 0 : (unsigned short)VAL_INT(rest + 6);
+	ipsec->port_uc = VAL_NULL(rest + 7) ? 0 : (unsigned short)VAL_INT(rest + 7);
+	ipsec->port_us = VAL_NULL(rest + 8) ? 0 : (unsigned short)VAL_INT(rest + 8);
+	ipsec->spi_pc = VAL_NULL(rest + 9) ? 0 : (unsigned int)VAL_INT(rest + 9);
+	ipsec->spi_ps = VAL_NULL(rest + 10) ? 0 : (unsigned int)VAL_INT(rest + 10);
+	ipsec->spi_uc = VAL_NULL(rest + 11) ? 0 : (unsigned int)VAL_INT(rest + 11);
+	ipsec->spi_us = VAL_NULL(rest + 12) ? 0 : (unsigned int)VAL_INT(rest + 12);
+	ipsec->start_time =
+			VAL_NULL(rest + 13) ? 0 : (time_t)(unsigned int)VAL_INT(rest + 13);
+
+	return sec;
+}
+
+/*!
  * \brief Load all records from a udomain
  *
  * Load all records from a udomain, useful to populate the
@@ -1089,7 +1197,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 {
 	pcontact_info_t *ci;
 	db_row_t *row;
-	db_key_t columns[15];
+	db_key_t columns[45];
 	db1_res_t *res = NULL;
 	str aor;
 	int i, n;
@@ -1113,6 +1221,36 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 	columns[12] = &service_routes_col;
 	columns[13] = &public_ids_col;
 	columns[14] = &path_col;
+	columns[15] = &t_security_type_col;
+	columns[16] = &t_mode_col;
+	columns[17] = &t_ck_col;
+	columns[18] = &t_ik_col;
+	columns[19] = &t_ealg_col;
+	columns[20] = &t_ialg_col;
+	columns[21] = &t_port_pc_col;
+	columns[22] = &t_port_ps_col;
+	columns[23] = &t_port_uc_col;
+	columns[24] = &t_port_us_col;
+	columns[25] = &t_spi_pc_col;
+	columns[26] = &t_spi_ps_col;
+	columns[27] = &t_spi_uc_col;
+	columns[28] = &t_spi_us_col;
+	columns[29] = &t_start_time_col;
+	columns[30] = &security_type_col;
+	columns[31] = &mode_col;
+	columns[32] = &ck_col;
+	columns[33] = &ik_col;
+	columns[34] = &ealg_col;
+	columns[35] = &ialg_col;
+	columns[36] = &port_pc_col;
+	columns[37] = &port_ps_col;
+	columns[38] = &port_uc_col;
+	columns[39] = &port_us_col;
+	columns[40] = &spi_pc_col;
+	columns[41] = &spi_ps_col;
+	columns[42] = &spi_uc_col;
+	columns[43] = &spi_us_col;
+	columns[44] = &start_time_col;
 
 	if(ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -1124,7 +1262,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 #endif
 
 	if(DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 15, 0, 0) < 0) {
+		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 45, 0, 0) < 0) {
 			LM_ERR("db_query (1) failed\n");
 			return -1;
 		}
@@ -1133,7 +1271,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 			return -1;
 		}
 	} else {
-		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 15, 0, &res) < 0) {
+		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 45, 0, &res) < 0) {
 			LM_ERR("db_query failed\n");
 			return -1;
 		}
@@ -1179,6 +1317,10 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 				}
 				goto error1;
 			}
+			c->security_temp = dbrow2security(ROW_VALUES(row) + 15,
+					ROW_VALUES(row) + 16, &aor, "pending");
+			c->security = dbrow2security(ROW_VALUES(row) + 30,
+					ROW_VALUES(row) + 31, &aor, "registered");
 			//c->flags = c->flags|(1<<FLAG_READFROMDB);
 			//TODO: need to subscribe to s-cscf for first public identity
 			unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);

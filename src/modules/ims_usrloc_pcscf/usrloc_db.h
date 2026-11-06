@@ -85,6 +85,7 @@ typedef enum location_pcscf_fields_idx
 #define SPIPS_COL "spi_ps"
 #define SPIUC_COL "spi_uc"
 #define SPIUS_COL "spi_us"
+#define START_TIME_COL "start_time"
 #define T_SECURITY_TYPE_COL "t_security_type"
 #define T_MODE_COL "t_mode"
 #define T_CK_COL "t_ck"
@@ -99,6 +100,7 @@ typedef enum location_pcscf_fields_idx
 #define T_SPIPS_COL "t_spi_ps"
 #define T_SPIUC_COL "t_spi_uc"
 #define T_SPIUS_COL "t_spi_us"
+#define T_START_TIME_COL "t_start_time"
 
 extern db1_con_t *ul_dbh;
 extern db_func_t ul_dbf;
@@ -119,6 +121,36 @@ extern str expires_col;
 extern str service_routes_col;
 extern str socket_col;
 extern str public_ids_col;
+extern str security_type_col;
+extern str mode_col;
+extern str ck_col;
+extern str ik_col;
+extern str ealg_col;
+extern str ialg_col;
+extern str port_pc_col;
+extern str port_ps_col;
+extern str port_uc_col;
+extern str port_us_col;
+extern str spi_pc_col;
+extern str spi_ps_col;
+extern str spi_uc_col;
+extern str spi_us_col;
+extern str start_time_col;
+extern str t_security_type_col;
+extern str t_mode_col;
+extern str t_ck_col;
+extern str t_ik_col;
+extern str t_ealg_col;
+extern str t_ialg_col;
+extern str t_port_pc_col;
+extern str t_port_ps_col;
+extern str t_port_uc_col;
+extern str t_port_us_col;
+extern str t_spi_pc_col;
+extern str t_spi_ps_col;
+extern str t_spi_uc_col;
+extern str t_spi_us_col;
+extern str t_start_time_col;
 
 typedef struct reusable_buffer
 {
