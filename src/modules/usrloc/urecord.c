@@ -386,6 +386,7 @@ static inline void wb_timer(urecord_t *_r)
 	int op;
 	int res;
 	int rgone;
+	int cbtype;
 
 	ptr = _r->contacts;
 
@@ -406,9 +407,10 @@ static inline void wb_timer(urecord_t *_r)
 		}
 
 		if(rgone != 0) {
-			/* run callbacks for EXPIRE event */
-			if(exists_ulcb_type(UL_CONTACT_EXPIRE)) {
-				run_ul_callbacks(UL_CONTACT_EXPIRE, ptr);
+			/* run callbacks for DELETE or EXPIRE event */
+			cbtype = (rgone == 2) ? UL_CONTACT_DELETE : UL_CONTACT_EXPIRE;
+			if(exists_ulcb_type(cbtype)) {
+				run_ul_callbacks(cbtype, ptr);
 			}
 
 			t = ptr;
