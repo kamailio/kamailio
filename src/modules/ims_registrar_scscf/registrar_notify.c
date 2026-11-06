@@ -1106,7 +1106,8 @@ done:
  * @param msg - the SIP SUBSCRIBE message
  * @param str1 - not used
  * @param str2 - not used
- * @returns #CSCF_RETURN_TRUE if allowed, #CSCF_RETURN_FALSE if not, #CSCF_RETURN_ERROR on error
+ * @returns #CSCF_RETURN_TRUE if allowed, #CSCF_RETURN_FALSE if not, #CSCF_RETURN_ERROR on error,
+ * #CSCF_RETURN_SUBSCRIPTION_GONE if 481 was sent for a SUBSCRIBE within a dialog
  */
 int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 {
@@ -1212,10 +1213,15 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 			goto doneorerror;
 		}
 		if(res == 0) {
-			LM_ERR("Unable to get presentity uri from subscriber dialog with "
-				   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
+			LM_INFO("No subscription for dialog with callid <%.*s>, ttag "
+					"<%.*s> and ftag <%.*s> - replying 481\n",
 					callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
-			ret = CSCF_RETURN_FALSE;
+			if(subscribe_reply(msg, 481, MSG_REG_SUBSCRIBE_GONE, 0, 0) < 0) {
+				LM_ERR("Unable to reply 481 to SUBSCRIBE\n");
+				ret = CSCF_RETURN_FALSE;
+			} else {
+				ret = CSCF_RETURN_SUBSCRIPTION_GONE;
+			}
 			goto doneorerror;
 		}
 		event_type = IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE;
