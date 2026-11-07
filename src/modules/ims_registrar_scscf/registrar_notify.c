@@ -1908,7 +1908,7 @@ static void process_xml_for_explit_dereg_contact(
 	LM_DBG("Processing XML for explicit dereg contact address: <%.*s>\n",
 			explit_dereg_contact.len, explit_dereg_contact.s);
 
-	sprintf(pad->s, contact_s_q.s, 1, r_terminated.len, r_terminated.s,
+	sprintf(pad->s, contact_s.s, (void *)1, r_terminated.len, r_terminated.s,
 			r_expired.len, r_expired.s, 0);
 
 	pad->len = strlen(pad->s);
@@ -1940,8 +1940,8 @@ static void process_xml_for_contact(str *buf, str *pad, ucontact_t *ptr)
 			sprintf(pad->s, contact_s_q.s, ptr, r_terminated.len,
 					r_terminated.s, r_expired.len, r_expired.s, expires, q);
 		} else {
-			sprintf(pad->s, contact_s_q.s, ptr, r_terminated.len,
-					r_terminated.s, r_expired.len, r_expired.s, expires);
+			sprintf(pad->s, contact_s.s, ptr, r_terminated.len, r_terminated.s,
+					r_expired.len, r_expired.s, expires);
 		}
 	} else {
 		if(ptr->q != -1) {
@@ -1949,7 +1949,7 @@ static void process_xml_for_contact(str *buf, str *pad, ucontact_t *ptr)
 			sprintf(pad->s, contact_s_q.s, ptr, r_active.len, r_active.s,
 					r_registered.len, r_registered.s, expires, q);
 		} else {
-			sprintf(pad->s, contact_s_q.s, ptr, r_active.len, r_active.s,
+			sprintf(pad->s, contact_s.s, ptr, r_active.len, r_active.s,
 					r_registered.len, r_registered.s, expires);
 		}
 	}
