@@ -114,6 +114,8 @@ extern usrloc_api_t _reg_ul;
 extern sl_api_t _reg_slb;
 
 extern int reg_expire_event_rt;
+extern int reg_insert_event_rt;
+extern int reg_update_event_rt;
 extern int reg_min_expires_mode;
 
 extern stat_var *accepted_registrations;

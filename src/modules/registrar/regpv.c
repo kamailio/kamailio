@@ -722,28 +722,53 @@ int pv_free_contacts(struct sip_msg *msg, char *profile, char *s2)
 	return ki_reg_free_contacts(msg, (str *)profile);
 }
 
-void reg_ul_expired_contact(ucontact_t *ptr, int type, void *param)
+/* sip message used to run the contact events triggered by save() */
+static sip_msg_t *_reg_ul_event_msg = NULL;
+
+/*!
+ * \brief Set the SIP message used to run the usrloc contact events
+ *
+ * The usrloc callbacks for inserted and updated contacts are triggered from
+ * save(), while processing a SIP message. Set the message before calling the
+ * usrloc functions and reset it (NULL) afterwards, so the event routes are
+ * executed in the context of that message instead of a faked one.
+ *
+ * \param msg SIP message being processed, or NULL to reset
+ */
+void reg_ul_set_event_msg(sip_msg_t *msg)
 {
-	str profile = {"exp", 3};
+	_reg_ul_event_msg = msg;
+}
+
+/*!
+ * \brief Store a copy of the contact in a $ulc(...) profile and run the
+ * event route or the kemi event callback
+ *
+ * \param ptr the usrloc contact
+ * \param profile name of the $ulc(...) profile to fill with the contact
+ * \param rtidx index of the event route (negative if not defined)
+ * \param cbname name of the kemi callback function (NULL if none)
+ * \param evname name of the event passed to the kemi callback (NULL if none)
+ */
+static void reg_ul_run_contact_event(
+		ucontact_t *ptr, str *profile, int rtidx, str *cbname, str *evname)
+{
 	regpv_profile_t *rpp;
 	ucontact_t *c0;
 	int backup_rt;
 	struct run_act_ctx ctx;
-	sip_msg_t *fmsg;
+	sip_msg_t *emsg;
 	int olen;
 	int ilen;
 	char *p;
 	sr_kemi_eng_t *keng = NULL;
 
-	if(reg_expire_event_rt < 0 && reg_event_callback.s == NULL)
-		return;
-
-	if(faked_msg_init() < 0) {
+	if(_reg_ul_event_msg == NULL && faked_msg_init() < 0) {
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
 
-	rpp = regpv_get_profile(&profile);
+	rpp = regpv_get_profile(profile);
 	if(rpp == 0) {
 		LM_ERR("error getting profile structure\n");
 		return;
@@ -826,30 +851,73 @@ void reg_ul_expired_contact(ucontact_t *ptr, int type, void *param)
 	LM_DBG("saved contact for <%.*s> in [%.*s]\n", ptr->aor->len, ptr->aor->s,
 			rpp->pname.len, rpp->pname.s);
 
-	fmsg = faked_msg_next();
 	backup_rt = get_route_type();
-	set_route_type(REQUEST_ROUTE);
+	if(_reg_ul_event_msg != NULL) {
+		/* triggered by save() - run in the context of the sip message */
+		emsg = _reg_ul_event_msg;
+	} else {
+		emsg = faked_msg_next();
+		set_route_type(REQUEST_ROUTE);
+	}
 	init_run_actions_ctx(&ctx);
 
-	if(reg_expire_event_rt >= 0) {
-		run_top_route(event_rt.rlist[reg_expire_event_rt], fmsg, 0);
-	} else {
+	if(rtidx >= 0) {
+		run_top_route(event_rt.rlist[rtidx], emsg, 0);
+	} else if(cbname != NULL && evname != NULL) {
 		keng = sr_kemi_eng_get();
 		if(keng != NULL) {
-			str evname = str_init("usrloc:contact-expired");
-			if(sr_kemi_route(
-					   keng, fmsg, EVENT_ROUTE, &reg_event_callback, &evname)
-					< 0) {
+			if(sr_kemi_route(keng, emsg, EVENT_ROUTE, cbname, evname) < 0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
 	}
 	set_route_type(backup_rt);
-	ksr_msg_env_reset();
+	if(_reg_ul_event_msg == NULL) {
+		/* not inside sip message processing - clean up the message env */
+		ksr_msg_env_reset();
+	}
 	return;
 error:
 	regpv_free_profile(rpp);
 	return;
+}
+
+/*!
+ * \brief usrloc callback for expired contacts - event usrloc:contact-expired
+ */
+void reg_ul_expired_contact(ucontact_t *ptr, int type, void *param)
+{
+	str profile = str_init("exp");
+	str evname = str_init("usrloc:contact-expired");
+
+	if(reg_expire_event_rt < 0 && reg_event_callback.s == NULL)
+		return;
+
+	reg_ul_run_contact_event(
+			ptr, &profile, reg_expire_event_rt, &reg_event_callback, &evname);
+}
+
+/*!
+ * \brief usrloc callback for inserted and updated contacts - events
+ * usrloc:contact-inserted and usrloc:contact-updated
+ */
+void reg_ul_saved_contact(ucontact_t *ptr, int type, void *param)
+{
+	str profile = str_init("saved");
+	int rtidx;
+
+	if(type & UL_CONTACT_INSERT) {
+		rtidx = reg_insert_event_rt;
+	} else if(type & UL_CONTACT_UPDATE) {
+		rtidx = reg_update_event_rt;
+	} else {
+		return;
+	}
+
+	if(rtidx < 0)
+		return;
+
+	reg_ul_run_contact_event(ptr, &profile, rtidx, NULL, NULL);
 }
 
 int ki_lookup_xavp(

@@ -1906,6 +1906,61 @@ event_route[usrloc:contact-expired] {
 		</example>
 
 	</section>
+	<section>
+		<title><varname>event_route[usrloc:contact-inserted]</varname></title>
+		<para>
+		Executed when a new contact has been inserted in the location table,
+		typically on the initial REGISTER of a device. The variable
+		$ulc(saved=&gt;...) is filled with the attributes of the new contact.
+		</para>
+		<para>
+		The event is triggered by the usrloc module for every inserted
+		contact, no matter if the insert is done by save(), by RPC commands
+		(e.g., ul.add) or by replication (e.g., dmq_usrloc). When it is
+		triggered by save(), the event route is executed in the context of
+		the SIP message being processed, therefore its headers,
+		pseudo-variables, AVPs and XAVPs are available; otherwise a faked SIP
+		message is used.
+		</para>
+		<para>
+		Note that the event route is executed while the location record is
+		locked: it must not call functions that access the same location
+		table (e.g., save(), lookup(), registered(), ...) and it should not
+		send SIP replies, those are handled by save().
+		</para>
+		<example>
+		<title><function>event_route[usrloc:contact-inserted]</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[usrloc:contact-inserted] {
+    xlog("new contact $ulc(saved=>addr) for $ulc(saved=>aor) from $si:$sp\n");
+}
+...
+</programlisting>
+		</example>
+
+	</section>
+	<section>
+		<title><varname>event_route[usrloc:contact-updated]</varname></title>
+		<para>
+		Executed when an existing contact has been updated in the location
+		table, typically on a REGISTER refresh of a device. The variable
+		$ulc(saved=&gt;...) is filled with the attributes of the updated
+		contact. The notes for event_route[usrloc:contact-inserted] apply
+		here as well.
+		</para>
+		<example>
+		<title><function>event_route[usrloc:contact-updated]</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[usrloc:contact-updated] {
+    xlog("contact $ulc(saved=>addr) refreshed for $ulc(saved=>aor), expires at $ulc(saved=>expires)\n");
+}
+...
+</programlisting>
+		</example>
+
+	</section>
 </section>
 
 <section>

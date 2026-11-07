@@ -62,6 +62,7 @@
 #include "regtime.h"
 #include "path.h"
 #include "save.h"
+#include "regpv.h"
 #include "config.h"
 
 #define REG_SOCK_USE_ADVERTISED 1 /* 1<<0 */
@@ -1130,9 +1131,12 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)
 		}
 	} else {
 		mode = is_cflag_set(REG_SAVE_REPL_FL) ? 1 : 0;
-		if((ret = add_contacts(
-					_m, (udomain_t *)_d, &aor, mode, use_regid, novariation))
-				< 0)
+		/* run the usrloc contact events in the context of this message */
+		reg_ul_set_event_msg(_m);
+		ret = add_contacts(
+				_m, (udomain_t *)_d, &aor, mode, use_regid, novariation);
+		reg_ul_set_event_msg(NULL);
+		if(ret < 0)
 			goto error;
 		ret = (ret == 0) ? 1 : ret;
 	}
