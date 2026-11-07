@@ -128,6 +128,58 @@ db1_con_t *get_db_handle()
 	return ul_dbh;
 }
 
+/*!
+ * \brief Insert the contact if the UPDATE before did not find its row
+ *
+ * affected_rows() of an UPDATE is not a reliable "row not found": MySQL
+ * counts only the rows it changed (unless db_mysql update_affected_found
+ * is set), so an UPDATE that writes the values already stored returns 0
+ * as well. Inserting would then add a duplicate row of the contact.
+ * Look the row up before inserting. Expects the location table to be in
+ * use.
+ */
+static void db_insert_pcontact_if_missing(pcontact_t *_c)
+{
+	db_key_t keys[2] = {&aor_col, &received_port_col};
+	db_val_t vals[2];
+	db_key_t cols[1] = {&id_col};
+	db1_res_t *res = NULL;
+	int rows;
+
+	if(!ul_dbf.affected_rows || ul_dbf.affected_rows(ul_dbh) != 0) {
+		return;
+	}
+
+	VAL_TYPE(vals) = DB1_STR;
+	VAL_NULL(vals) = 0;
+	VAL_STR(vals) = _c->aor;
+
+	VAL_TYPE(vals + 1) = DB1_INT;
+	VAL_NULL(vals + 1) = 0;
+	VAL_INT(vals + 1) = _c->received_port;
+
+	if(ul_dbf.query(ul_dbh, keys, 0, vals, cols, 2, 1, 0, &res) < 0
+			|| res == NULL) {
+		/* a missing row loses the contact at the next restart, a duplicate
+		 * row is removed at the next preload - insert as before */
+		LM_ERR("failed to look up pcontact: aor[%.*s], received port %u - "
+			   "inserting\n",
+				_c->aor.len, _c->aor.s, _c->received_port);
+	} else {
+		rows = RES_ROW_N(res);
+		ul_dbf.free_result(ul_dbh, res);
+		if(rows > 0) {
+			LM_DBG("row of pcontact exists, values unchanged\n");
+			return;
+		}
+	}
+
+	LM_DBG("no existing rows for an update... doing insert\n");
+	if(db_insert_pcontact(_c) != 0) {
+		LM_ERR("Failed to insert a pcontact on update\n");
+	}
+}
+
 int db_update_pcontact(pcontact_t *_c)
 {
 	str impus, service_routes;
@@ -212,12 +264,7 @@ int db_update_pcontact(pcontact_t *_c)
 	}
 
 
-	if(ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
-		LM_DBG("no existing rows for an update... doing insert\n");
-		if(db_insert_pcontact(_c) != 0) {
-			LM_ERR("Failed to insert a pcontact on update\n");
-		}
-	}
+	db_insert_pcontact_if_missing(_c);
 
 	return 0;
 }
@@ -465,12 +512,7 @@ int db_update_pcontact_security_temp(
 				return -1;
 			}
 
-			if(ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
-				LM_CRIT("no existing rows for an update... doing insert\n");
-				if(db_insert_pcontact(_c) != 0) {
-					LM_ERR("Failed to insert a pcontact on update\n");
-				}
-			}
+			db_insert_pcontact_if_missing(_c);
 			break;
 		}
 		default:
@@ -585,12 +627,7 @@ int db_update_pcontact_security(
 				return -1;
 			}
 
-			if(ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
-				LM_DBG("no existing rows for an update... doing insert\n");
-				if(db_insert_pcontact(_c) != 0) {
-					LM_ERR("Failed to insert a pcontact on update\n");
-				}
-			}
+			db_insert_pcontact_if_missing(_c);
 			break;
 		}
 		default:

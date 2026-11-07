@@ -1077,6 +1077,50 @@ static inline pcontact_info_t *dbrow2info(db_val_t *vals, str *contact)
 }
 
 /*!
+ * \brief Find a contact loaded before with the same aor and received port
+ * \return the contact, NULL if none was loaded before
+ */
+static pcontact_t *preload_find_loaded(
+		udomain_t *_d, str *_aor, pcontact_info_t *_ci)
+{
+	pcontact_t *c;
+	unsigned int sl;
+
+	sl = get_hash_slot(_d, &_ci->via_host, _ci->via_port, _ci->via_prot);
+	for(c = _d->table[sl].first; c; c = c->next) {
+		if(c->received_port == _ci->received_port && c->aor.len == _aor->len
+				&& memcmp(c->aor.s, _aor->s, _aor->len) == 0) {
+			return c;
+		}
+	}
+	return NULL;
+}
+
+/*!
+ * \brief Delete the rows of duplicate contacts found by preload_udomain()
+ */
+static void preload_delete_duplicates(db1_con_t *_c, int *ids, int n)
+{
+	db_key_t keys[1] = {&id_col};
+	db_val_t vals[1];
+	int i, deleted = 0;
+
+	VAL_TYPE(vals) = DB1_INT;
+	VAL_NULL(vals) = 0;
+	for(i = 0; i < n; i++) {
+		VAL_INT(vals) = ids[i];
+		if(ul_dbf.delete(_c, keys, 0, vals, 1) < 0) {
+			/* database gone: do not delay the start for every row, the
+			 * rows are skipped again at the next start */
+			LM_ERR("failed to delete duplicate row id %d\n", ids[i]);
+			break;
+		}
+		deleted++;
+	}
+	LM_WARN("deleted %d of %d duplicate contact rows\n", deleted, n);
+}
+
+/*!
  * \brief Load all records from a udomain
  *
  * Load all records from a udomain, useful to populate the
@@ -1089,10 +1133,12 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 {
 	pcontact_info_t *ci;
 	db_row_t *row;
-	db_key_t columns[15];
+	db_key_t columns[16];
 	db1_res_t *res = NULL;
 	str aor;
 	int i, n;
+	int *dup_ids = NULL, *tmp_ids;
+	int dup_n = 0, dup_size = 0;
 
 	pcontact_t *c;
 
@@ -1113,6 +1159,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 	columns[12] = &service_routes_col;
 	columns[13] = &public_ids_col;
 	columns[14] = &path_col;
+	columns[15] = &id_col;
 
 	if(ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("sql use_table failed\n");
@@ -1124,7 +1171,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 #endif
 
 	if(DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 15, 0, 0) < 0) {
+		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 16, 0, 0) < 0) {
 			LM_ERR("db_query (1) failed\n");
 			return -1;
 		}
@@ -1133,7 +1180,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 			return -1;
 		}
 	} else {
-		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 15, 0, &res) < 0) {
+		if(ul_dbf.query(_c, 0, 0, 0, columns, 0, 16, 0, &res) < 0) {
 			LM_ERR("db_query failed\n");
 			return -1;
 		}
@@ -1168,6 +1215,38 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 			}
 			lock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
 
+			/* a row with the aor and received port of a contact loaded
+			 * before (same hash slot) is a duplicate: load the contact
+			 * once and delete the other rows after loading */
+			if(preload_find_loaded(_d, &aor, ci) != NULL) {
+				unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
+				LM_DBG("duplicate row for contact <%.*s> received port %u\n",
+						aor.len, aor.s, ci->received_port);
+				if(!VAL_NULL(ROW_VALUES(row) + 15)) {
+					if(dup_n == dup_size) {
+						dup_size = dup_size ? 2 * dup_size : 16;
+						tmp_ids = (int *)pkg_realloc(
+								dup_ids, dup_size * sizeof(int));
+						if(tmp_ids == NULL) {
+							PKG_MEM_ERROR;
+							dup_size = dup_n;
+						} else {
+							dup_ids = tmp_ids;
+						}
+					}
+					if(dup_n < dup_size) {
+						dup_ids[dup_n++] = VAL_INT(ROW_VALUES(row) + 15);
+					}
+				}
+				if(ci->public_ids) {
+					pkg_free(ci->public_ids);
+				}
+				if(ci->service_routes) {
+					pkg_free(ci->service_routes);
+				}
+				continue;
+			}
+
 			if((mem_insert_pcontact(_d, &aor, ci, &c)) != 0) {
 				LM_ERR("inserting contact failed\n");
 				unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
@@ -1194,6 +1273,9 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 			if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows) < 0) {
 				LM_ERR("fetching rows (1) failed\n");
 				ul_dbf.free_result(_c, res);
+				if(dup_ids) {
+					pkg_free(dup_ids);
+				}
 				return -1;
 			}
 		} else {
@@ -1202,6 +1284,13 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 	} while(RES_ROW_N(res) > 0);
 
 	ul_dbf.free_result(_c, res);
+
+	if(dup_n > 0) {
+		preload_delete_duplicates(_c, dup_ids, dup_n);
+	}
+	if(dup_ids) {
+		pkg_free(dup_ids);
+	}
 
 #ifdef EXTRA_DEBUG
 	LM_NOTICE("load end time [%d]\n", (int)time(NULL));
@@ -1212,6 +1301,9 @@ error1:
 	free_pcontact(c);
 
 	ul_dbf.free_result(_c, res);
+	if(dup_ids) {
+		pkg_free(dup_ids);
+	}
 	return -1;
 }
 
