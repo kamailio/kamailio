@@ -230,14 +230,15 @@ reg_subscriber *new_subscriber(subscriber_data_t *subscriber_data)
 }
 
 /* Used for subsequent SUBSCRIBE messages to get presentity URI from dialog struct*/
-/* NB: free returned result str when done from shm */
-str get_presentity_from_subscriber_dialog(
-		str *callid, str *to_tag, str *from_tag)
+/* NB: free *pres_uri from shm when done */
+int get_presentity_from_subscriber_dialog(
+		str *callid, str *to_tag, str *from_tag, str *pres_uri)
 {
 	subs_t *s;
 	unsigned int hash_code = 0;
-	str pres_uri = {0, 0};
 
+	pres_uri->s = 0;
+	pres_uri->len = 0;
 	hash_code = core_hash(callid, to_tag, sub_dialog_hash_size);
 	/* search the record in hash table */
 	lock_get(&sub_dialog_table[hash_code].lock);
@@ -250,24 +251,25 @@ str get_presentity_from_subscriber_dialog(
 	if(s == NULL) {
 		LM_DBG("Subscriber dialog record not found in hash table\n");
 		lock_release(&sub_dialog_table[hash_code].lock);
-		return pres_uri;
+		return 0;
 	}
 
 	//make copy of pres_uri
-	pres_uri.s = (char *)shm_malloc(s->pres_uri.len);
-	if(pres_uri.s == 0) {
+	pres_uri->s = (char *)shm_malloc(s->pres_uri.len);
+	if(pres_uri->s == 0) {
+		lock_release(&sub_dialog_table[hash_code].lock);
 		LM_ERR("no more shm mem\n");
-		return pres_uri;
+		return -1;
 	}
-	memcpy(pres_uri.s, s->pres_uri.s, s->pres_uri.len);
-	pres_uri.len = s->pres_uri.len;
+	memcpy(pres_uri->s, s->pres_uri.s, s->pres_uri.len);
+	pres_uri->len = s->pres_uri.len;
 
 	lock_release(&sub_dialog_table[hash_code].lock);
 
 	LM_DBG("Found subscriber dialog record in hash table with pres_uri: "
 		   "[%.*s]\n",
-			pres_uri.len, pres_uri.s);
-	return pres_uri;
+			pres_uri->len, pres_uri->s);
+	return 1;
 }
 
 /*db_load:  if this is a db_load then we don't write to db - as it will be an unnecessary rewrite*/
