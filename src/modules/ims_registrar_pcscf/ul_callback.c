@@ -238,6 +238,11 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 
 	id_buf_len = snprintf(id_buf, sizeof(id_buf), "IMSPCSCF_PUBLISH.%.*s",
 			c->aor.len, c->aor.s);
+	if(id_buf_len < 0 || id_buf_len >= (int)sizeof(id_buf)) {
+		LM_ERR("AOR too long for the publish id: [%.*s]\n", c->aor.len,
+				c->aor.s);
+		goto error;
+	}
 	publ_id.s = id_buf;
 	publ_id.len = id_buf_len;
 
