@@ -273,7 +273,8 @@ static inline int msg_send_buffer(
 						&& dst->send_sock)) {
 				local_addr = dst->send_sock->su;
 #ifdef SO_REUSEPORT
-				if(cfg_get(tcp, tcp_cfg, reuse_port)) {
+				if(cfg_get(tcp, tcp_cfg, reuse_port)
+						|| (dst->send_sock->flags & SI_REUSEPORT)) {
 					LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
 							su2a(&dst->to, sizeof(struct sockaddr_in)),
 							(dst->send_flags.f & SND_F_FORCE_SOCKET),

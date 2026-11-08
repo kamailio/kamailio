@@ -106,6 +106,8 @@ typedef enum si_flags
 	SI_IS_ANY = (1 << 3),
 	SI_IS_MHOMED = (1 << 4),
 	SI_IS_VIRTUAL = (1 << 5),
+	SI_REUSEPORT = (1 << 6), /* tcp listener with SO_REUSEPORT: new connections
+								* sent through it keep its port as source port */
 } si_flags_t;
 
 typedef struct addr_info

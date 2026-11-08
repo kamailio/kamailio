@@ -1172,6 +1172,9 @@ inline static int tcp_do_connect(union sockaddr_union *server,
 #ifdef TCP_ASYNC
 	int n;
 #endif /* TCP_ASYNC */
+	/* the caller asked for a specific source port (reuse_port or a send
+	 * socket flagged SI_REUSEPORT): bind to it, not to an ephemeral port */
+	int src_port = (from != 0) && (su_getport(from) != 0);
 
 	s = socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
 	if(unlikely(s == -1)) {
@@ -1185,6 +1188,16 @@ inline static int tcp_do_connect(union sockaddr_union *server,
 	}
 
 	if(unlikely(from != 0)) {
+#ifdef SO_REUSEPORT
+		if(src_port && !cfg_get(tcp, tcp_cfg, reuse_port)) {
+			int optval = 1;
+			if(setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (void *)&optval,
+					   sizeof(optval))
+					== -1) {
+				LM_ERR("setsockopt SO_REUSEPORT %s\n", strerror(errno));
+			}
+		}
+#endif
 		if(unlikely(bind(s, &from->s, sockaddru_len(*from)) != 0)) {
 			LM_WARN("binding to source address %s failed: %s [%d]\n",
 					su2a(from, sizeof(*from)), strerror(errno), errno);
@@ -1275,7 +1288,8 @@ inline static int tcp_do_connect(union sockaddr_union *server,
 	su2ip_addr(&ip, &my_name);
 find_socket:
 #ifdef SO_REUSEPORT
-	port = cfg_get(tcp, tcp_cfg, reuse_port) ? su_getport(from) : 0;
+	port = (cfg_get(tcp, tcp_cfg, reuse_port) || src_port) ? su_getport(from)
+														   : 0;
 #else
 	port = 0;
 #endif
@@ -3408,7 +3422,8 @@ int tcp_init(struct socket_info *sock_info)
 #endif
 
 #ifdef SO_REUSEPORT
-	if((optval = cfg_get(tcp, tcp_cfg, reuse_port))) {
+	if((optval = cfg_get(tcp, tcp_cfg, reuse_port))
+			|| ((sock_info->flags & SI_REUSEPORT) && (optval = 1))) {
 		if(setsockopt(sock_info->socket, SOL_SOCKET, SO_REUSEPORT,
 				   (void *)&optval, sizeof(optval))
 				== -1) {
@@ -5888,7 +5903,8 @@ int wss_send(dest_info_t *dst, const char *buf, unsigned len)
 
 			local_addr = dst->send_sock->su;
 #ifdef SO_REUSEPORT
-			if(cfg_get(tcp, tcp_cfg, reuse_port)) {
+			if(cfg_get(tcp, tcp_cfg, reuse_port)
+					|| (dst->send_sock->flags & SI_REUSEPORT)) {
 				LM_DBG("sending to: %s, force_socket=%d, send_sock=%p\n",
 						su2a(&dst->to, sizeof(struct sockaddr_in)),
 						(dst->send_flags.f & SND_F_FORCE_SOCKET),
