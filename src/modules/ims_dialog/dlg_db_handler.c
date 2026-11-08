@@ -1006,8 +1006,9 @@ int update_dialog_out_dbinfo_unsafe(struct dlg_cell *cell)
 			LM_DBG("Inserting into dialog out table for dlg_in: [%u:%u] and "
 				   "dlg_out [%u:%u]\n",
 					cell->h_entry, cell->h_id, dlg_out->h_entry, dlg_out->h_id);
-			if((dialog_dbf.insert(dialog_db_handle, insert_keys, values,
-					   DIALOG_OUT_TABLE_COL_NO))
+			/* id assigned by the database, see dialog_in above */
+			if((dialog_dbf.insert(dialog_db_handle, insert_keys + 1, values + 1,
+					   DIALOG_OUT_TABLE_COL_NO - 1))
 					!= 0) {
 				LM_ERR("could not add another dialog_out to db\n");
 				goto error;
@@ -1167,8 +1168,11 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 
 		LM_DBG("Inserting dialog into dialog_in table [%u:%u]\n", cell->h_entry,
 				cell->h_id);
-		if((dialog_dbf.insert(dialog_db_handle, insert_keys, values,
-				   DIALOG_IN_TABLE_COL_NO))
+		/* the id column is assigned by the database (auto-increment /
+		 * serial): leave it out, an explicit NULL is rejected by PostgreSQL
+		 * and an unset value would store whatever is on the stack */
+		if((dialog_dbf.insert(dialog_db_handle, insert_keys + 1, values + 1,
+				   DIALOG_IN_TABLE_COL_NO - 1))
 				!= 0) {
 			LM_ERR("could not add another dialog_in to db\n");
 			goto error;
