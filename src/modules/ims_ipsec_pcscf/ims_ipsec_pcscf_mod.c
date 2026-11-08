@@ -244,6 +244,9 @@ static int ipsec_add_listen_ifaces()
 		sa.bindaddr = ipsec_listen_addr;
 		sa.agname = ipsec_listen_agname;
 		sa.bindproto = PROTO_TCP;
+		/* TS 33.203 7.1: TCP to the UE must leave from the protected client
+		 * port, otherwise the SA selectors do not match */
+		sa.sflags |= SI_REUSEPORT;
 		sa.bindport = ipsec_client_port;
 		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
 		if(ipsec_listen_name.len > 0) {
@@ -301,6 +304,9 @@ static int ipsec_add_listen_ifaces()
 		sa.bindaddr = ipsec_listen_addr6;
 		sa.agname = ipsec_listen_agname;
 		sa.bindproto = PROTO_TCP;
+		/* TS 33.203 7.1: TCP to the UE must leave from the protected client
+		 * port, otherwise the SA selectors do not match */
+		sa.sflags |= SI_REUSEPORT;
 		sa.bindport = ipsec_client_port;
 		sa.bindportend = ipsec_client_port + ipsec_max_connections - 1;
 		if(ipsec_listen_name.len > 0) {
