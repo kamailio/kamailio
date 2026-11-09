@@ -1666,6 +1666,9 @@ int get_stored_info(
 	pkg_free(pres_uri.s);
 	pres_uri.s = NULL;
 
+	if(!pres_subs_iterative_search)
+		goto not_found;
+
 	LM_DBG("record not found using R-URI search iteratively\n");
 	/* take one row at a time */
 	for(i = 0; i < shtable_size; i++) {

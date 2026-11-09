@@ -162,6 +162,7 @@ int pres_subs_dbmode = WRITE_BACK;
 int pres_sphere_enable = 0;
 int pres_timeout_rm_subs = 1;
 int pres_refresh_record_route = 0;
+int pres_subs_iterative_search = 1;
 int pres_send_fast_notify = 1;
 int publ_cache_mode = PS_PCACHE_HYBRID;
 int pres_waitn_time = 5;
@@ -246,6 +247,7 @@ static param_export_t params[]={
 	{ "subs_htable_size",       PARAM_INT, &shtable_size},
 	{ "pres_htable_size",       PARAM_INT, &phtable_size},
 	{ "subs_db_mode",           PARAM_INT, &pres_subs_dbmode},
+	{ "subs_iterative_search",  PARAM_INT, &pres_subs_iterative_search},
 	{ "publ_cache",             PARAM_INT, &publ_cache_mode},
 	{ "enable_sphere_check",    PARAM_INT, &pres_sphere_enable},
 	{ "timeout_rm_subs",        PARAM_INT, &pres_timeout_rm_subs},
