@@ -945,6 +945,7 @@ long rval_get_long(struct run_act_ctx *h, struct sip_msg *msg, long *i,
 	pv_value_t pval;
 	str tmp;
 	str *s;
+	unsigned int ui;
 	int r, ret;
 	int destroy_pval;
 
@@ -1063,9 +1064,10 @@ rv_str:
 		*i = 0;
 	else if(unlikely(str2slong(s, i) != 0)) {
 		/* dec to int failed, try hex to int */
-		if(!(s->len > 2 && s->s[0] == '0' && (s->s[1] == 'x' || s->s[1] == 'X')
-				   && (hexstr2int(s->s + 2, s->len - 2, (unsigned int *)i)
-						   == 0))) {
+		if(s->len > 2 && s->s[0] == '0' && (s->s[1] == 'x' || s->s[1] == 'X')
+				&& hexstr2int(s->s + 2, s->len - 2, &ui) == 0) {
+			*i = (long)ui;
+		} else {
 			/* error converting to int => non numeric => 0 */
 			*i = 0;
 #ifdef RV_STR2INT_VERBOSE_ERR
