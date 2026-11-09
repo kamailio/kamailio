@@ -33,6 +33,7 @@ id(int,auto) table_name(string) table_version(int)
 0:impu:6
 0:impu_contact:6
 0:impu_subscriber:6
+0:ims_dialog_vars:7
 0:lcr_gw:3
 0:lcr_rule:3
 0:lcr_rule_target:1

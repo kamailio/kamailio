@@ -57,7 +57,7 @@ CREATE INDEX dialog_out_hash_idx  ON dialog_out (hash_entry, hash_id);
 
 INSERT INTO version (table_name, table_version) values ('dialog_out','7');
 
-CREATE TABLE dialog_vars (
+CREATE TABLE ims_dialog_vars (
     id NUMBER(10) PRIMARY KEY,
     hash_entry NUMBER(10),
     hash_id NUMBER(10),
@@ -65,14 +65,15 @@ CREATE TABLE dialog_vars (
     dialog_value VARCHAR2(512)
 );
 
-CREATE OR REPLACE TRIGGER dialog_vars_tr
-before insert on dialog_vars FOR EACH ROW
+CREATE OR REPLACE TRIGGER ims_dialog_vars_tr
+before insert on ims_dialog_vars FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
-END dialog_vars_tr;
+END ims_dialog_vars_tr;
 /
-BEGIN map2users('dialog_vars'); END;
+BEGIN map2users('ims_dialog_vars'); END;
 /
-CREATE INDEX dialog_vars_hash_idx  ON dialog_vars (hash_entry, hash_id);
+CREATE INDEX ims_dialog_vars_hash_idx  ON ims_dialog_vars (hash_entry, hash_id);
 
-INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
+INSERT INTO version (table_name, table_version) values ('ims_dialog_vars','7');
+
