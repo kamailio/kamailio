@@ -1432,11 +1432,19 @@ inline static int long_longop2(
 				LM_ERR("rv div by 0\n");
 				return -1;
 			}
+			if(unlikely(v1 == LONG_MIN && v2 == -1)) {
+				LM_ERR("rv div overflow\n");
+				return -1;
+			}
 			*res = v1 / v2;
 			break;
 		case RVE_MOD_OP:
 			if(unlikely(v2 == 0)) {
 				LM_ERR("rv mod by 0\n");
+				return -1;
+			}
+			if(unlikely(v1 == LONG_MIN && v2 == -1)) {
+				LM_ERR("rv mod overflow\n");
 				return -1;
 			}
 			*res = v1 % v2;
