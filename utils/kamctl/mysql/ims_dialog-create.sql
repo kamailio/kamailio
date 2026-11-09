@@ -51,5 +51,4 @@ CREATE TABLE `dialog_vars` (
 
 CREATE INDEX hash_idx ON dialog_vars (`hash_entry`, `hash_id`);
 
-INSERT INTO version (table_name, table_version) values ('dialog_vars','7');
-
+INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
