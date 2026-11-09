@@ -1418,6 +1418,10 @@ inline static int long_longop1(long *res, enum rval_expr_op op, long v)
 inline static int long_longop2(
 		long *res, enum rval_expr_op op, long v1, long v2)
 {
+	unsigned long u;
+	unsigned int shift;
+	unsigned int width;
+
 	switch(op) {
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
@@ -1461,10 +1465,26 @@ inline static int long_longop2(
 			*res = v1 ^ v2;
 			break;
 		case RVE_BLSHIFT_OP:
-			*res = v1 << v2;
+			width = sizeof(u) * CHAR_BIT;
+			if(unlikely(v2 < 0 || (unsigned long)v2 >= width)) {
+				LM_ERR("rv invalid left shift count %ld\n", v2);
+				return -1;
+			}
+			shift = (unsigned int)v2;
+			u = (unsigned long)v1 << shift;
+			memcpy(res, &u, sizeof(u));
 			break;
 		case RVE_BRSHIFT_OP:
-			*res = v1 >> v2;
+			width = sizeof(u) * CHAR_BIT;
+			if(unlikely(v2 < 0 || (unsigned long)v2 >= width)) {
+				LM_ERR("rv invalid right shift count %ld\n", v2);
+				return -1;
+			}
+			shift = (unsigned int)v2;
+			u = (unsigned long)v1 >> shift;
+			if(v1 < 0 && shift != 0)
+				u |= ~0UL << (width - shift);
+			memcpy(res, &u, sizeof(u));
 			break;
 		case RVE_LAND_OP:
 			*res = v1 && v2;
