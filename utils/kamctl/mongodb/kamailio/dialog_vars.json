@@ -1,6 +1,6 @@
 {
   "name": "dialog_vars",
-  "version": 7,
+  "version": 1,
   "columns": [
     "id": {
       "type": "int",
