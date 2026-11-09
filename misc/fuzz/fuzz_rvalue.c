@@ -87,6 +87,7 @@ static struct rval_expr *rve_build(struct rvbuild *b, int depth)
 {
 	struct rval_expr *rve;
 	enum rval_expr_op op;
+	unsigned long bits;
 	char *tmp;
 	int len;
 	int i;
@@ -111,9 +112,11 @@ static struct rval_expr *rve_build(struct rvbuild *b, int depth)
 		if(nxt(b) & 1) {
 			rve->left.rval.type = RV_LONG;
 			rve->left.rval.refcnt = 1;
-			for(i = 0; i < 8; i++) {
-				rve->left.rval.v.l |= (long)nxt(b) << (8 * i);
+			bits = 0;
+			for(i = 0; i < (int)sizeof(bits); i++) {
+				bits |= (unsigned long)nxt(b) << (8 * i);
 			}
+			memcpy(&rve->left.rval.v.l, &bits, sizeof(bits));
 		} else {
 			/* string leaf, built the way the grammar does it: the
 			 * content is its own allocation (flagged for free in
