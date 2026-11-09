@@ -601,6 +601,7 @@ int handle_msg_branch_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 {
 	int vref = 0;
+	int ret = 1;
 	tm_cell_t *t = NULL;
 	sr_xavp_t **backup_xavis = NULL;
 	sr_xavp_t **list = NULL;
@@ -615,6 +616,10 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 
 	t = pvh_tmb.t_find(msg, &pvh_branch, &vref);
 	if(t != NULL && t != T_UNDEFINED) {
+		/* t->xavis_list is shared with other workers handling replies of
+		 * this transaction and with reply/failure routes, which modify it
+		 * under the reply lock */
+		pvh_tmb.t_reply_lock(t);
 		LM_DBG("T:%p t_check-branch:%d xavi_list:%p branches:%d\n", t,
 				pvh_branch, &t->xavis_list, t->nr_of_outgoings);
 		list = &t->xavis_list;
@@ -626,21 +631,27 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 			pvh_tmb.t_get_picked_branch());
 
 	if((pvh_reply_counter = pvh_reply_append(list)) < 0) {
-		return -1;
+		ret = -1;
+		goto done;
 	}
 	pvh_collect_headers(msg);
+
+done:
 	if(backup_xavis) {
 		xavi_set_list(backup_xavis);
 		LM_DBG("restored backup_xavis:%p\n", *backup_xavis);
 	}
-	if(t != NULL && t != T_UNDEFINED && vref != 0) {
-		/*  t_find() above has the side effect of setting T and
-			REFerencing T => we must unref and unset it */
-		pvh_tmb.t_unset();
-		LM_DBG("T:%p unref\n", t);
+	if(t != NULL && t != T_UNDEFINED) {
+		pvh_tmb.t_reply_unlock(t);
+		if(vref != 0) {
+			/*  t_find() above has the side effect of setting T and
+				REFerencing T => we must unref and unset it */
+			pvh_tmb.t_unset();
+			LM_DBG("T:%p unref\n", t);
+		}
 	}
 
-	return 1;
+	return ret;
 }
 
 /* clang-format off */
