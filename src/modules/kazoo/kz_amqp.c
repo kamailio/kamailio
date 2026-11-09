@@ -1724,7 +1724,7 @@ kz_amqp_queue_ptr kz_amqp_queue_new(str *name)
 		return NULL;
 	}
 	memset(queue, 0, sizeof(kz_amqp_queue));
-	queue->auto_delete = 1;
+	queue->exclusive = 1;
 
 	if(name != NULL) {
 		queue->name = kz_amqp_bytes_dup_from_str(name);
