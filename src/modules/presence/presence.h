@@ -88,6 +88,7 @@ extern int publ_cache_mode;
 extern int pres_sphere_enable;
 extern int pres_timeout_rm_subs;
 extern int pres_refresh_record_route;
+extern int pres_subs_iterative_search;
 extern int pres_send_fast_notify;
 extern int shtable_size;
 extern shtable_t subs_htable;

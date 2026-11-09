@@ -745,6 +745,29 @@ modparam("presence", "refresh_record_route", 1)
 		</example>
 	</section>
 
+	<section id="presence.p.subs_iterative_search">
+		<title><varname>subs_iterative_search</varname> (int)</title>
+		<para>
+		An in-dialog SUBSCRIBE is first looked up in the subs hash table using hash(to_user@domain).
+		If it is not found there and this parameter is set to 1, every slot is searched by Call-ID and tags,
+		which finds a subscription stored under an initial Request-URI that differs from its To header.
+		The cost is looking into the entire subs hash table for every subscription that does not exist.
+		If set to 0, the SUBSCRIBE gets a 481 reply without that search.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>subs_iterative_search</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "subs_iterative_search", 0)
+...
+	</programlisting>
+		</example>
+	</section>
+
 	<section id="presence.p.fetch_rows">
 	    <title><varname>fetch_rows</varname> (integer)</title>
 	    <para>
