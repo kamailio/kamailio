@@ -762,6 +762,7 @@ int isup_update_destination(struct sdp_mangler *mangle, char *dest, int hops,
 	int res, res2;
 	struct isup_iam_fixed *orig_message = (struct isup_iam_fixed *)buf;
 	unsigned char tmp_buf[255];
+	int total_len = len;
 
 
 	// not an iam? do nothing
@@ -819,7 +820,7 @@ int isup_update_destination(struct sdp_mangler *mangle, char *dest, int hops,
 
 		bool has_hops = 0;
 
-		while((len > 0) && (buf[offset] != 0)) {
+		while((offset + 2 <= total_len) && (buf[offset] != 0)) {
 			struct isup_parm_opt *optparm =
 					(struct isup_parm_opt *)(buf + offset);
 
@@ -860,6 +861,7 @@ int isup_update_calling(struct sdp_mangler *mangle, char *origin, int nai,
 	int offset = 0;
 	int res;
 	struct isup_iam_fixed *orig_message = (struct isup_iam_fixed *)buf;
+	int total_len = len;
 
 	// not an iam? do nothing
 	if(orig_message->type != ISUP_IAM) {
@@ -891,7 +893,7 @@ int isup_update_calling(struct sdp_mangler *mangle, char *origin, int nai,
 
 		bool has_calling = 0;
 
-		while((len > 0) && (buf[offset] != 0)) {
+		while((offset + 2 <= total_len) && (buf[offset] != 0)) {
 			int res2 = 0;
 			struct isup_parm_opt *optparm =
 					(struct isup_parm_opt *)(buf + offset);
@@ -943,6 +945,7 @@ int isup_update_forwarding(struct sdp_mangler *mangle, char *forwardn, int nai,
 	int offset = 0;
 	int res;
 	struct isup_iam_fixed *orig_message = (struct isup_iam_fixed *)buf;
+	int total_len = len;
 
 	// not an iam? do nothing
 	if(orig_message->type != ISUP_IAM) {
@@ -971,7 +974,7 @@ int isup_update_forwarding(struct sdp_mangler *mangle, char *forwardn, int nai,
 	/* Optional paramter parsing code */
 	if(orig_message->optional_pointer) {
 
-		while((len > 0) && (buf[offset] != 0)) {
+		while((offset + 2 <= total_len) && (buf[offset] != 0)) {
 			int res2 = 0;
 			struct isup_parm_opt *optparm =
 					(struct isup_parm_opt *)(buf + offset);
