@@ -14,7 +14,7 @@ id(int,auto) table_name(string) table_version(int)
 0:dialog:7
 0:dialog_in:7
 0:dialog_out:7
-0:dialog_vars:7
+0:dialog_vars:1
 0:dialplan:2
 0:dispatcher:4
 0:domain:2
