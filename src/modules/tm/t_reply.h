@@ -129,6 +129,7 @@ int t_get_reply_totag(struct sip_msg *msg, str *totag);
 
 void tm_reply_mutex_lock(tm_cell_t *t);
 void tm_reply_mutex_unlock(tm_cell_t *t);
+typedef void (*treply_mutex_f)(tm_cell_t *t);
 
 #define LOCK_REPLIES(_t) tm_reply_mutex_lock((_t))
 #define UNLOCK_REPLIES(_t) tm_reply_mutex_unlock((_t))
