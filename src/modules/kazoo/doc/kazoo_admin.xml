@@ -653,7 +653,10 @@ event_route[kazoo:consumer-event]
 							<para>routing : str, required</para>
 						</listitem>
 						<listitem>
-							<para>auto_delete : int, default 1</para>
+							<para>exclusive : int, default 1</para>
+						</listitem>
+						<listitem>
+							<para>auto_delete : int, default 0</para>
 						</listitem>
 						<listitem>
 							<para>durable : int, default 0</para>
@@ -679,7 +682,7 @@ event_route[kazoo:consumer-event]
 ...
 event_route[kazoo:mod-init]
 {
-    $var(payload) = "{ 'exchange' : 'dialoginfo' , 'type' : 'direct', 'queue' : 'BLF-QUEUE-MY_HOSTNAME', 'routing' : 'BLF-MY_HOSTNAME', 'auto_delete' : 0, 'durable' : 1, 'no_ack' : 0, 'wait_for_consumer_ack' : 1 }";
+    $var(payload) = "{ 'exchange' : 'dialoginfo' , 'type' : 'direct', 'queue' : 'BLF-QUEUE-MY_HOSTNAME', 'routing' : 'BLF-MY_HOSTNAME', 'exclusive' : 0, 'durable' : 1, 'no_ack' : 0, 'wait_for_consumer_ack' : 1 }";
     kazoo_subscribe("$var(payload)");
 }
 
