@@ -149,6 +149,9 @@ int lookup(struct sip_msg *_m, udomain_t *_d, char *ue_type_c)
 		impucontact = impucontact->next;
 	}
 
+	if(!impucontact)
+		ptr = 0;
+
 	/* look first for an un-expired and supported contact */
 	if(ptr == 0) {
 		LM_INFO("No contacts founds for IMPU <%.*s>\n", aor.len, aor.s);
@@ -212,7 +215,7 @@ int lookup(struct sip_msg *_m, udomain_t *_d, char *ue_type_c)
 	//the last i was the first valid contact we found - let's go through the rest of valid contacts and append the branches.
 	if(impucontact)
 		impucontact = impucontact->next;
-	while(impucontact) {
+	for(; impucontact; impucontact = impucontact->next) {
 		ptr = impucontact->contact;
 		if(VALID_UE_TYPE(ptr, ue_type) && VALID_CONTACT(ptr, act_time)
 				&& allowed_method(_m, ptr)) {
@@ -234,7 +237,6 @@ int lookup(struct sip_msg *_m, udomain_t *_d, char *ue_type_c)
 				continue;
 			}
 		}
-		impucontact = impucontact->next;
 	}
 
 done:
