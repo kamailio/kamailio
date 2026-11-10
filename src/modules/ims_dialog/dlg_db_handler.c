@@ -46,7 +46,6 @@
 #include "dlg_db_handler.h"
 #include "dlg_ng_stats.h"
 
-str id_column = str_init(ID_COL);									  // 0
 str h_entry_column = str_init(HASH_ENTRY_COL);						  // 1
 str h_id_column = str_init(HASH_ID_COL);							  // 2
 str did_column = str_init(DID_COL);									  // 3
@@ -76,8 +75,7 @@ str callee_sock_column = str_init(CALLEE_SOCK);
 
 typedef enum dialog_in_field_idx
 {
-	DLGI_ID_COL_IDX = 0,
-	DLGI_HASH_ENTRY_COL_IDX,
+	DLGI_HASH_ENTRY_COL_IDX = 0,
 	DLGI_HASH_ID_COL_IDX,
 	DLGI_DID_COL_IDX,
 	DLGI_CALLID_COL_IDX,
@@ -98,8 +96,7 @@ typedef enum dialog_in_field_idx
 
 typedef enum dialog_out_field_idx
 {
-	DLGO_ID_COL_IDX = 0,
-	DLGO_HASH_ENTRY_COL_IDX,
+	DLGO_HASH_ENTRY_COL_IDX = 0,
 	DLGO_HASH_ID_COL_IDX,
 	DLGO_DID_COL_IDX,
 	DLGO_TO_URI_IDX,
@@ -297,7 +294,7 @@ static int use_dialog_vars_table(void)
 static int select_dialog_out_by_did(
 		str *did, db1_res_t **res, int fetch_num_rows)
 {
-	db_key_t query_cols[DIALOG_IN_TABLE_COL_NO] = {&id_column, &h_entry_column,
+	db_key_t query_cols[DIALOG_IN_TABLE_COL_NO] = {&h_entry_column,
 			&h_id_column, &did_column, &to_uri_column, &to_tag_column,
 			&caller_cseq_column, &callee_cseq_column, &callee_contact_column,
 			&callee_routeset_column, &callee_sock_column};
@@ -339,7 +336,7 @@ static int select_dialog_out_by_did(
 
 static int select_entire_dialog_in_table(db1_res_t **res, int fetch_num_rows)
 {
-	db_key_t query_cols[DIALOG_IN_TABLE_COL_NO] = {&id_column, &h_entry_column,
+	db_key_t query_cols[DIALOG_IN_TABLE_COL_NO] = {&h_entry_column,
 			&h_id_column, &did_column, &call_id, &from_uri_column,
 			&from_tag_column, &caller_original_cseq_column, &req_uri_column,
 			&caller_route_set_column, &caller_contact_column,
@@ -940,13 +937,12 @@ int update_dialog_out_dbinfo_unsafe(struct dlg_cell *cell)
 
 	if((cell->dflags & DLG_FLAG_NEW) != 0) {
 		db_val_t values[DIALOG_OUT_TABLE_COL_NO];
-		db_key_t insert_keys[DIALOG_OUT_TABLE_COL_NO] = {&id_column,
-				&h_entry_column, &h_id_column, &did_column, &to_uri_column,
-				&to_tag_column, &caller_cseq_column, &callee_cseq_column,
+		db_key_t insert_keys[DIALOG_OUT_TABLE_COL_NO] = {&h_entry_column,
+				&h_id_column, &did_column, &to_uri_column, &to_tag_column,
+				&caller_cseq_column, &callee_cseq_column,
 				&callee_contact_column, &callee_routeset_column,
 				&callee_sock_column};
 
-		VAL_TYPE(GET_FIELD_IDX(values, DLGO_ID_COL_IDX)) = DB1_INT;
 		VAL_TYPE(GET_FIELD_IDX(values, DLGO_HASH_ENTRY_COL_IDX)) = DB1_INT;
 		VAL_TYPE(GET_FIELD_IDX(values, DLGO_HASH_ID_COL_IDX)) = DB1_INT;
 
@@ -959,7 +955,6 @@ int update_dialog_out_dbinfo_unsafe(struct dlg_cell *cell)
 		VAL_TYPE(GET_FIELD_IDX(values, DLGO_CALLEE_ROUTESET_IDX)) = DB1_STR;
 		VAL_TYPE(GET_FIELD_IDX(values, DLGO_CALLEE_SOCK_IDX)) = DB1_STR;
 
-		VAL_NULL(GET_FIELD_IDX(values, DLGO_ID_COL_IDX)) = 1;
 		VAL_NULL(GET_FIELD_IDX(values, DLGO_HASH_ENTRY_COL_IDX)) = 0;
 		VAL_NULL(GET_FIELD_IDX(values, DLGO_HASH_ID_COL_IDX)) = 0;
 		VAL_NULL(GET_FIELD_IDX(values, DLGO_DID_COL_IDX)) = 0;
@@ -971,7 +966,6 @@ int update_dialog_out_dbinfo_unsafe(struct dlg_cell *cell)
 		VAL_NULL(GET_FIELD_IDX(values, DLGO_CALLEE_SOCK_IDX)) = 0;
 
 		do {
-			VAL_INT(GET_FIELD_IDX(values, DLGO_ID_COL_IDX)) = 0;
 			VAL_INT(GET_FIELD_IDX(values, DLGO_HASH_ENTRY_COL_IDX)) =
 					dlg_out->h_entry;
 			VAL_INT(GET_FIELD_IDX(values, DLGO_HASH_ID_COL_IDX)) =
@@ -1073,17 +1067,15 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 
 	if((cell->dflags & DLG_FLAG_NEW) != 0) {
 		db_val_t values[DIALOG_IN_TABLE_COL_NO];
-		db_key_t insert_keys[DIALOG_IN_TABLE_COL_NO] = {&id_column,
-				&h_entry_column, &h_id_column, &did_column, &call_id,
-				&from_uri_column, &from_tag_column,
-				&caller_original_cseq_column, &req_uri_column,
+		db_key_t insert_keys[DIALOG_IN_TABLE_COL_NO] = {&h_entry_column,
+				&h_id_column, &did_column, &call_id, &from_uri_column,
+				&from_tag_column, &caller_original_cseq_column, &req_uri_column,
 				&caller_route_set_column, &caller_contact_column,
 				&caller_sock_column, &timeout_column, &state_column,
 				&start_time_column, &sflags_column, &to_route_name_column,
 				&to_route_index_column};
 
 		/* save all the current dialogs information*/
-		VAL_TYPE(GET_FIELD_IDX(values, DLGI_ID_COL_IDX)) = DB1_INT;
 		VAL_TYPE(GET_FIELD_IDX(values, DLGI_HASH_ENTRY_COL_IDX)) = DB1_INT;
 		VAL_TYPE(GET_FIELD_IDX(values, DLGI_HASH_ID_COL_IDX)) = DB1_INT;
 
@@ -1155,7 +1147,6 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell *cell)
 		SET_PROPER_NULL_FLAG(
 				cell->first_req_cseq, values, DLGI_CALLER_CSEQ_COL_IDX);
 
-		VAL_NULL(GET_FIELD_IDX(values, DLGI_ID_COL_IDX)) = 1;
 		VAL_NULL(GET_FIELD_IDX(values, DLGI_HASH_ENTRY_COL_IDX)) = 0;
 		VAL_NULL(GET_FIELD_IDX(values, DLGI_HASH_ID_COL_IDX)) = 0;
 		VAL_NULL(GET_FIELD_IDX(values, DLGI_STATE_COL_IDX)) = 0;

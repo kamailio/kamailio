@@ -34,7 +34,6 @@
 #include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 
-#define ID_COL "id"
 #define HASH_ENTRY_COL "hash_entry"
 #define HASH_ID_COL "hash_id"
 #define DID_COL "did"
@@ -66,8 +65,8 @@
 #define DIALOG_IN_TABLE_NAME "dialog_in"
 #define DIALOG_OUT_TABLE_NAME "dialog_out"
 #define DLG_TABLE_VERSION 7
-#define DIALOG_IN_TABLE_COL_NO 18
-#define DIALOG_OUT_TABLE_COL_NO 11
+#define DIALOG_IN_TABLE_COL_NO 17
+#define DIALOG_OUT_TABLE_COL_NO 10
 
 #define VARS_HASH_ID_COL "hash_id"
 #define VARS_HASH_ENTRY_COL "hash_entry"
