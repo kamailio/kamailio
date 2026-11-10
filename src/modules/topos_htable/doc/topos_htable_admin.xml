@@ -58,14 +58,21 @@
 		</para>
 		<para>
 			<emphasis>
-				Default value is <quote>topos_dialog=>size=4;autoexpire=7200;dmqreplicate=1</quote>.
+				Default value is <quote>topos_dialog=>size=4;autoexpire=7200;updateexpire=0;dmqreplicate=1</quote>.
 			</emphasis>
+		</para>
+		<para>
+			The <quote>updateexpire=0</quote> setting preserves the explicit
+			dialog lifetime assigned by the <emphasis>topos</emphasis> module when
+			the stored dialog data is updated. Custom table definitions should
+			keep this setting unless resetting the expiry on every update is
+			intended.
 		</para>
 		<example>
 			<title>Set <varname>topos_htable_dialog</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("topos_htable", "topos_htable_dialog", "my_dialogs=>size=4;autoexpire=7200;dmqreplicate=1")
+modparam("topos_htable", "topos_htable_dialog", "my_dialogs=>size=4;autoexpire=7200;updateexpire=0;dmqreplicate=1")
 ...
 			</programlisting>
 		</example>
@@ -92,4 +99,3 @@ modparam("topos_htable", "topos_htable_transaction", "my_transactions=>size=4;au
 	</section>
 	</section>
 </chapter>
-
