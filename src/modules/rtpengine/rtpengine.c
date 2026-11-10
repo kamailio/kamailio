@@ -231,8 +231,12 @@ static int rtpengine_connect1_f(struct sip_msg *, char *, char *);
 static void rtpengine_ping_check_timer(unsigned int ticks, void *);
 
 static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar);
+static int w_rtpengine_xquery_v(
+		sip_msg_t *msg, char *pflags, char *pfmt, char *pvar);
 static int fixup_rtpengine_query_v(void **param, int param_no);
 static int fixup_free_rtpengine_query_v(void **param, int param_no);
+static int fixup_rtpengine_xquery_v(void **param, int param_no);
+static int fixup_free_rtpengine_xquery_v(void **param, int param_no);
 static int rtpengine_query_v_print(bencode_item_t *dict, str *fmt, str *bout);
 
 static int rtpengine_subscribe_request_wrap_f(struct sip_msg *msg, char *str1,
@@ -523,6 +527,8 @@ static cmd_export_t cmds[] = {
 		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{"rtpengine_query_v", (cmd_function)w_rtpengine_query_v, 2,
 		fixup_rtpengine_query_v, fixup_free_rtpengine_query_v, ANY_ROUTE},
+	{"rtpengine_xquery_v", (cmd_function)w_rtpengine_xquery_v, 3,
+		fixup_rtpengine_xquery_v, fixup_free_rtpengine_xquery_v, ANY_ROUTE},
 	{"rtpengine_connect", (cmd_function)rtpengine_connect1_f, 0, 0, 0, ANY_ROUTE},
 	{"rtpengine_connect", (cmd_function)rtpengine_connect1_f, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
@@ -6330,6 +6336,7 @@ static int rtpengine_query_v_wrap(
 {
 	void **parms;
 	str *fmt = NULL;
+	str *flags = NULL;
 	pv_spec_t *dst = NULL;
 	pv_value_t val = {0};
 	bencode_buffer_t bencbuf;
@@ -6338,9 +6345,10 @@ static int rtpengine_query_v_wrap(
 	parms = d;
 	fmt = parms[0];
 	dst = parms[1];
+	flags = parms[2];
 
 	dict = rtpp_function_call_ok(
-			&bencbuf, msg, OP_QUERY, NULL, NULL, NULL, NULL, NULL);
+			&bencbuf, msg, OP_QUERY, flags, NULL, NULL, NULL, NULL);
 	if(!dict) {
 		return -1;
 	}
@@ -6371,7 +6379,7 @@ error:
  */
 static int ki_rtpengine_query_v(sip_msg_t *msg, str *fmt, str *dpv)
 {
-	void *parms[2];
+	void *parms[3] = {fmt, NULL, NULL};
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
@@ -6383,7 +6391,25 @@ static int ki_rtpengine_query_v(sip_msg_t *msg, str *fmt, str *dpv)
 		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
-	parms[0] = fmt;
+	parms[1] = dst;
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
+}
+
+static int ki_rtpengine_xquery_v(sip_msg_t *msg, str *flags, str *fmt, str *dpv)
+{
+	void *parms[3] = {fmt, NULL, flags};
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst == NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf == NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
 	parms[1] = dst;
 	return rtpengine_rtpp_set_wrap(
 			msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
@@ -6394,7 +6420,7 @@ static int ki_rtpengine_query_v(sip_msg_t *msg, str *fmt, str *dpv)
  */
 static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar)
 {
-	void *parms[2];
+	void *parms[3] = {NULL, NULL, NULL};
 	str fmt = {NULL, 0};
 	pv_spec_t *dst;
 
@@ -6406,6 +6432,33 @@ static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar)
 
 	parms[0] = &fmt;
 	parms[1] = dst;
+
+	return rtpengine_rtpp_set_wrap(
+			msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
+}
+
+/*
+ * Store the cmd QUERY result to variable, using the supplied flags.
+ */
+static int w_rtpengine_xquery_v(
+		sip_msg_t *msg, char *pflags, char *pfmt, char *pvar)
+{
+	void *parms[3] = {NULL, NULL, NULL};
+	str flags = STR_NULL;
+	str fmt = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pflags, &flags) < 0) {
+		LM_ERR("flags have no value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pfmt, &fmt) < 0 || fmt.len <= 0) {
+		LM_ERR("fmt has no value\n");
+		return -1;
+	}
+
+	parms[0] = &fmt;
+	parms[1] = (pv_spec_t *)pvar;
+	parms[2] = &flags;
 
 	return rtpengine_rtpp_set_wrap(
 			msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
@@ -6448,6 +6501,39 @@ static int fixup_free_rtpengine_query_v(void **param, int param_no)
 	if(param_no == 2) {
 		return fixup_free_pvar_null(param, 1);
 	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+static int fixup_rtpengine_xquery_v(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2)
+		return fixup_spve_null(param, 1);
+
+	if(param_no == 3) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writable\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+static int fixup_free_rtpengine_xquery_v(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2)
+		return fixup_free_spve_null(param, 1);
+
+	if(param_no == 3)
+		return fixup_free_pvar_null(param, 1);
 
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
@@ -7177,6 +7263,11 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+	{ str_init("rtpengine"), str_init("rtpengine_xquery_v"),
+		SR_KEMIP_INT, ki_rtpengine_xquery_v,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("rtpengine"), str_init("rtpengine_connect0"),
 		SR_KEMIP_INT, ki_rtpengine_connect0,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
