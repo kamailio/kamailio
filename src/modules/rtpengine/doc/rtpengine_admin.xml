@@ -3253,6 +3253,42 @@ if(rtpengine_query_v("j", "$var(rdata)")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.f.rtpengine_xquery_v">
+		<title>
+		<function moreinfo="none">rtpengine_xquery_v(flags, fmt, var)</function>
+		</title>
+		<para>
+		Queries the &rtp; proxy about the current status and statistics of a running
+		call using the supplied flags, converts the response to JSON according to
+		fmt and sets the variable var with the result.
+		</para>
+		<para>
+		The flags parameter has the same meaning as for
+		<quote>rtpengine_query</quote>. It can be used to override the call
+		identifiers, for example with <quote>call-id=...</quote>,
+		<quote>from-tag=...</quote>, or <quote>to-tag=...</quote>.
+		</para>
+		<para>
+		The fmt parameter can be 'j' for compacted JSON and 'jp' for pretty-formatted
+		JSON.
+		</para>
+		<para>
+		The var parameter has to be the name of a writable variable.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>rtpengine_xquery_v</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(rtpengine_xquery_v("call-id=$var(callid)", "j", "$var(rdata)")) {
+    xinfo("rtpengine query response: $var(rdata)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.f.rtpengine_connect">
 	<title>
 		<function moreinfo="none">rtpengine_connect([flags][,via-branch])</function>
