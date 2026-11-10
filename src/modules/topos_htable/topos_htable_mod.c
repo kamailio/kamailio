@@ -44,8 +44,8 @@ tps_storage_api_t _tps_storage_api = {0};
 topos_api_t _tps_api = {0};
 htable_api_t _tps_htable_api = {0};
 
-str _tps_htable_dialog = {
-		"topos_dialog=>size=4;autoexpire=7200;dmqreplicate=1", 52};
+str _tps_htable_dialog = str_init(
+		"topos_dialog=>size=4;autoexpire=7200;updateexpire=0;dmqreplicate=1");
 str _tps_htable_transaction = {"topos_transaction=>size=4;autoexpire=7200", 42};
 
 static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
