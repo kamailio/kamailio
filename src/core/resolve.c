@@ -1526,7 +1526,7 @@ again:
 		((struct cname_rdata *)(rd->rdata))->name_len = fullname_rd->name_len;
 		memcpy(((struct cname_rdata *)(rd->rdata))->name, fullname_rd->name,
 				fullname_rd->name_len);
-		((struct cname_rdata *)(rd->rdata))->name[head->name_len] = 0;
+		((struct cname_rdata *)(rd->rdata))->name[fullname_rd->name_len] = 0;
 		head = rd;
 		parsed_records++;
 		LOG(log_level,
