@@ -14,9 +14,8 @@
 
 #define RO_TABLE_VERSION 3
 #define RO_SESSION_TABLE_NAME "ro_session"
-#define RO_SESSION_TABLE_COL_NUM 25
+#define RO_SESSION_TABLE_COL_NUM 24
 
-#define ID_COL "id"
 #define HASH_ENTRY_COL "hash_entry"
 #define HASH_ID_COL "hash_id"
 #define SESSION_ID_COL "session_id"
