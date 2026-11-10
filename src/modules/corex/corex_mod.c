@@ -71,6 +71,7 @@ static int w_resetxflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_setxflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_set_send_socket(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_send_socket_name(sip_msg_t *msg, char *psock, char *p2);
+static int w_set_send_socket_map(sip_msg_t *msg, char *pmap, char *p2);
 static int w_set_recv_socket(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_recv_socket_name(sip_msg_t *msg, char *psock, char *p2);
 static int w_set_source_address(sip_msg_t *msg, char *paddr, char *p2);
@@ -180,6 +181,8 @@ static cmd_export_t cmds[] = {
 	{"set_send_socket", (cmd_function)w_set_send_socket, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"set_send_socket_name", (cmd_function)w_set_send_socket_name, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"set_send_socket_map", (cmd_function)w_set_send_socket_map, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"set_recv_socket", (cmd_function)w_set_recv_socket, 1,
 		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
@@ -1385,6 +1388,90 @@ static int w_set_send_socket_name(sip_msg_t *msg, char *psock, char *p2)
 }
 
 /**
+ * Set forced send sockets by transport. The update is atomic: the message is
+ * changed only after the complete map has been parsed and validated.
+ */
+static int ki_set_send_socket_map(sip_msg_t *msg, str *smap)
+{
+	send_socket_map_t nmap;
+	struct socket_info *si;
+	param_t *params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit;
+	str sval;
+	int map_proto;
+	unsigned int seen;
+	int ret;
+
+	if(msg == NULL || smap == NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	memset(&nmap, 0, sizeof(nmap));
+	sval = *smap;
+	trim(&sval);
+	if(sval.len == 0) {
+		msg->force_send_socket_map = nmap;
+		return 1;
+	}
+	if(sval.s[sval.len - 1] == ';') {
+		sval.len--;
+		trim(&sval);
+	}
+	if(sval.len == 0) {
+		msg->force_send_socket_map = nmap;
+		return 1;
+	}
+	if(parse_params(&sval, CLASS_ANY, &phooks, &params_list) < 0) {
+		LM_ERR("cannot parse send socket map [%.*s]\n", sval.len, sval.s);
+		return -1;
+	}
+
+	seen = 0;
+	ret = -1;
+	for(pit = params_list; pit; pit = pit->next) {
+		map_proto = get_valid_proto_id(&pit->name);
+		if(seen & (1U << map_proto)) {
+			LM_ERR("duplicate transport [%.*s] in send socket map\n",
+					pit->name.len, pit->name.s);
+			goto done;
+		}
+
+		si = ksr_get_socket_by_name(&pit->body);
+		if(si == NULL) {
+			LM_ERR("no local socket found with name [%.*s]\n", pit->body.len,
+					pit->body.s);
+			goto done;
+		}
+
+		corex_send_socket_map_set(&nmap, map_proto, si);
+		seen |= 1U << map_proto;
+	}
+
+	msg->force_send_socket_map = nmap;
+	ret = 1;
+
+done:
+	free_params(params_list);
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_set_send_socket_map(sip_msg_t *msg, char *pmap, char *p2)
+{
+	str smap;
+
+	if(fixup_get_svalue(msg, (gparam_t *)pmap, &smap) != 0) {
+		LM_ERR("cannot get send socket map value\n");
+		return -1;
+	}
+	return ki_set_send_socket_map(msg, &smap);
+}
+
+/**
  *
  */
 static int ki_set_recv_socket(sip_msg_t *msg, str *ssock)
@@ -1842,6 +1929,11 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 	},
 	{ str_init("corex"), str_init("set_send_socket_name"),
 		SR_KEMIP_INT, ki_set_send_socket_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("corex"), str_init("set_send_socket_map"),
+		SR_KEMIP_INT, ki_set_send_socket_map,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

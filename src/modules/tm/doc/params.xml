@@ -1863,4 +1863,53 @@ modparam("tm", "evlreq_mode", 1)
 		</example>
 	</section>
 
+	<section id="tm.p.debug_mode">
+		<title><varname>debug_mode</varname> (int)</title>
+		<para>
+			Control printing additional log messages that can be useful for
+			troubleshooting.
+		</para>
+		<para>
+			If bit 1 is set (value 1), the modue prints additional info log
+			messages about outgoing INVITE transactions.
+		</para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		<example>
+			<title>debug_mode example</title>
+			<programlisting>
+...
+modparam("tm", "debug_mode", 1)
+....
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.p.timer_mode">
+		<title><varname>timer_mode</varname> (int)</title>
+		<para>
+			Select the timer processes used for transaction timers. If set to 0,
+			transaction timers use the core fast and slow timer processes. If set
+			to 1, the module creates and uses a dedicated fast and slow timer
+			process pair.
+		</para>
+		<para>
+			The dedicated processes handle the transaction wait, retransmission,
+			final-response and lifetime timers. Secondary timers, such as the
+			RPC UAC response cleanup timer, are not affected.
+		</para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		<example>
+			<title>timer_mode example</title>
+			<programlisting>
+...
+modparam("tm", "timer_mode", 1)
+....
+			</programlisting>
+		</example>
+	</section>
+
 </section>

@@ -38,6 +38,12 @@
 #endif
 #include <pthread.h>
 #include <dlfcn.h>
+#include <stdint.h>
+/* mach-o binds libcrypto's pthread_self() to libSystem (two-level namespace) */
+#ifndef __APPLE__
+#define KSR_PTHREAD_SELF_NS
+#include <link.h>
+#endif
 #endif
 
 #include <stdio.h>
@@ -86,6 +92,7 @@
 #include "core/modparam.h"
 #include "core/timer.h"
 #include "core/parser/msg_parser.h"
+#include "core/parser/parse_bytes.h"
 #include "core/ip_addr.h"
 #include "core/resolve.h"
 #include "core/parser/parse_hname2.h"
@@ -134,6 +141,7 @@
 #include "core/rand/cryptorand.h"
 
 #include "core/counters.h"
+#include "core/worker_stats.h"
 #include "core/cfg/cfg.h"
 #include "core/cfg/cfg_struct.h"
 #include "core/cfg_core.h"
@@ -206,7 +214,8 @@ Options:\n\
                   [proto:]addr_lst[:port][/advaddr][/socket_name], \n\
                   where proto=udp|tcp|tls|sctp, \n\
                   addr_lst= addr|(addr, addr_lst), \n\
-                  addr=host|ip_address|interface_name, \n\
+                  addr=host|ip_address|interface_name|*|[*], \n\
+                  where *=all IPv4 and [*]=all IPv6 addresses, \n\
                   advaddr=addr[:port] (advertised address) and \n\
                   socket_name=identifying name.\n\
                   E.g: -l localhost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
@@ -224,6 +233,7 @@ Options:\n\
                   example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
     --all-errors Print details about all config errors that can be detected\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
+    --no-stdprint-logs  Do not print startup logs to std terminal\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
 #ifdef USE_TCP
@@ -258,6 +268,7 @@ Options:\n\
     -x name      Specify internal manager for shared memory (shm)\n\
                   - can be: fm, qm or tlsf\n\
     -X name      Specify internal manager for private memory (pkg)\n\
+                  - can be: fm, qm, tlsf or sm\n\
                   - if omitted, the one for shm is used\n\
     -Y dir       Runtime dir path\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n"
@@ -524,6 +535,7 @@ int ksr_udp_mtreceivers = 0;
 int cfg_errors = 0;
 int cfg_warnings = 0;
 
+int ksr_no_stdprint_logs = 0;
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size = 0;
@@ -1017,7 +1029,7 @@ int parse_proto(unsigned char *s, long len, int *proto)
 			| 0x20202020)
 	unsigned int i;
 	if(likely(len == 3)) {
-		i = PROTO2UINT3(s[0], s[1], s[2]);
+		i = ksr_ascii_lower_u32(ksr_read_u24be((const char *)s));
 		switch(i) {
 			case PROTO2UINT3('u', 'd', 'p'):
 				*proto = PROTO_UDP;
@@ -1044,7 +1056,7 @@ int parse_proto(unsigned char *s, long len, int *proto)
 	}
 #ifdef USE_SCTP
 	else if(likely(len == 4)) {
-		i = PROTO2UINT4(s[0], s[1], s[2], s[3]);
+		i = ksr_ascii_lower_u32(ksr_read_u32be((const char *)s));
 		if(i == PROTO2UINT4('s', 'c', 't', 'p')) {
 			if(sctp_disable) {
 				return -1;
@@ -1525,7 +1537,7 @@ int main_loop(void)
 				goto error;
 			slow_timer_main();
 		} else {
-			slow_timer_pid = pid;
+			ksr_timer_ctx_core.slow_timer_pid = pid;
 		}
 #endif
 		/* we need another process to act as the "main" timer*/
@@ -2006,7 +2018,7 @@ int main_loop(void)
 				goto error;
 			slow_timer_main();
 		} else {
-			slow_timer_pid = pid;
+			ksr_timer_ctx_core.slow_timer_pid = pid;
 		}
 #endif /* USE_SLOW_TIMER */
 
@@ -2245,6 +2257,7 @@ int main(int argc, char **argv)
 			{"atexit", required_argument, 0, KARGOPTVAL + 10},
 			{"all-errors", no_argument, 0, KARGOPTVAL + 11},
 			{"iuid", required_argument, 0, KARGOPTVAL + 12},
+			{"no-stdprint-logs", no_argument, 0, KARGOPTVAL + 14},
 			{0, 0, 0, 0}
 		};
 	/* clang-format on */
@@ -2369,6 +2382,9 @@ int main(int argc, char **argv)
 			case KARGOPTVAL + 11:
 				ksr_all_errors = 1;
 				break;
+			case KARGOPTVAL + 14:
+				ksr_no_stdprint_logs = 1;
+				break;
 
 			default:
 				if(c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
@@ -2396,7 +2412,10 @@ int main(int argc, char **argv)
 	}
 
 	/*init pkg mallocs (before parsing cfg or the rest of the cmd line !)*/
-	if(pkg_mem_size)
+	if(strcmp(sr_memmng_pkg, "sm") == 0)
+		LM_INFO("private (per process) memory: system malloc, -M "
+				"ignored\n");
+	else if(pkg_mem_size)
 		LM_INFO("private (per process) memory: %ld bytes\n", pkg_mem_size);
 	if(pkg_init_manager(sr_memmng_pkg) < 0)
 		goto error;
@@ -2568,6 +2587,7 @@ int main(int argc, char **argv)
 			case KARGOPTVAL + 9:
 			case KARGOPTVAL + 10:
 			case KARGOPTVAL + 11:
+			case KARGOPTVAL + 14:
 				break;
 
 			/* long options */
@@ -3182,12 +3202,14 @@ int main(int argc, char **argv)
 		default_core_cfg.dns_try_ipv6 = 0;
 	}
 	/* print all the listen addresses */
-	printf("Listening on \n");
-	print_all_socket_lists();
-	printf("Aliases: \n");
-	/*print_aliases();*/
-	print_aliases();
-	printf("\n");
+	if(!ksr_no_stdprint_logs) {
+		printf("Listening on \n");
+		print_all_socket_lists();
+		printf("Aliases: \n");
+		/*print_aliases();*/
+		print_aliases();
+		printf("\n");
+	}
 
 	if(dont_fork) {
 		fprintf(stderr, "WARNING: no fork mode %s\n",
@@ -3216,6 +3238,8 @@ int main(int argc, char **argv)
 	 *  why checking for a prior initialization is needed.
 	 * --andrei */
 	if(!shm_initialized() && init_shm() < 0)
+		goto error;
+	if(ksr_coreparam_set_defaults() < 0)
 		goto error;
 	pkg_print_manager();
 	shm_print_manager();
@@ -3375,6 +3399,10 @@ int main(int argc, char **argv)
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
+
+	/* occupancy counters - must be registered before counters_prefork_init() */
+	if(ksr_worker_stats_init() < 0)
+		goto error;
 
 	/* initialize process_table, add core process no. (calc_proc_no()) to the
 	 * processes registered from the modules*/
@@ -3540,5 +3568,86 @@ int SYMBOL_EXPORT pthread_rwlock_init(pthread_rwlock_t *__restrict __rwlock,
 	pthread_rwlockattr_destroy(&attr);
 
 	return ret;
+}
+#endif
+
+#ifdef KSR_PTHREAD_SELF_NS
+/* mode 0: the forked processes inherit the main thread's pthread_self()
+ * value, so OpenSSL's per-thread RSA blinding owner test
+ * (BN_BLINDING_is_current_thread) passes in all of them
+ * - callers in the code segment set by ksr_pthread_self_ns_enable() (libcrypto)
+ *   get the value xor (process_no + 1) in the top 16 bits
+ * - other callers get the real value
+ * - libcrypto compares these ids and feeds them to the DRBG nonce */
+static int ksr_pthread_self_ns = 0;
+static uintptr_t ksr_pthread_self_ns_lo = 0;
+static uintptr_t ksr_pthread_self_ns_hi = 0;
+
+/* resolv.h maps p_type to its resolver function; use the ELF field here */
+#undef p_type
+static int ksr_pthread_self_ns_phdr(
+		struct dl_phdr_info *info, size_t size, void *data)
+{
+	uintptr_t addr = (uintptr_t)data;
+	uintptr_t lo;
+	int i;
+
+	for(i = 0; i < info->dlpi_phnum; i++) {
+		if(info->dlpi_phdr[i].p_type != PT_LOAD
+				|| !(info->dlpi_phdr[i].p_flags & PF_X))
+			continue;
+		lo = info->dlpi_addr + info->dlpi_phdr[i].p_vaddr;
+		if(addr >= lo && addr < lo + info->dlpi_phdr[i].p_memsz) {
+			ksr_pthread_self_ns_lo = lo;
+			ksr_pthread_self_ns_hi = lo + info->dlpi_phdr[i].p_memsz;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/**
+ * namespace pthread_self() per process for callers in the code segment that
+ * holds text; call in the main process before fork
+ *
+ * @return 0 on success, -1 in modes 1/2 or for an unknown address
+ */
+int ksr_pthread_self_ns_enable(void *text)
+{
+	if(ksr_tcp_main_threads != 0)
+		return -1;
+	if(dl_iterate_phdr(ksr_pthread_self_ns_phdr, text) == 0)
+		return -1;
+	ksr_pthread_self_ns = 1;
+	return 0;
+}
+
+pthread_t SYMBOL_EXPORT pthread_self(void)
+{
+	static pthread_t (*real_pthread_self)(void) = 0;
+	uintptr_t ra;
+	pthread_t t;
+
+	if(!real_pthread_self) {
+		real_pthread_self = dlsym(RTLD_NEXT, "pthread_self");
+	}
+	t = real_pthread_self();
+	if(ksr_pthread_self_ns == 0)
+		return t;
+	/* return address: CRYPTO_THREAD_get_current_id() tail-calls here, so it
+	 * points into its caller (e.g. bn_blind.c) */
+	ra = (uintptr_t)__builtin_return_address(0);
+	if(ra < ksr_pthread_self_ns_lo || ra >= ksr_pthread_self_ns_hi)
+		return t;
+	return (pthread_t)((uintptr_t)t
+					   ^ ((uintptr_t)(process_no + 1)
+							   << (sizeof(uintptr_t) * 8 - 16)));
+}
+#else
+/* the namespace relies on the process-shared lock overrides above and on
+ * ELF symbol interposition */
+int ksr_pthread_self_ns_enable(void *text)
+{
+	return -1;
 }
 #endif

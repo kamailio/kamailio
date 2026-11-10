@@ -13,3 +13,12 @@ updates:
       interval: weekly
     commit-message:
       prefix: "github: [skip ci]"
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: weekly
+    ignore:
+      # we want to check with the same version we have in ubuntu_latest
+      - dependency-name: github.com/pre-commit/mirrors-clang-format
+    commit-message:
+      prefix: "pre-commit: [skip ci]"

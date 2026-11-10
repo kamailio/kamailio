@@ -2539,7 +2539,7 @@ int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full)
 		update_vals[n_update_cols].val.int_val =
 				core_case_hash(&callid, &from_tag, 0)
 				% (pres_waitn_time * pres_notifier_poll_rate
-						* pres_notifier_processes);
+						* pres_notifier_processes * pres_notifier_cluster_size);
 		n_update_cols++;
 
 		if(full) {
@@ -2599,9 +2599,10 @@ int set_updated(subs_t *sub)
 	update_cols[0] = &str_updated_col;
 	update_vals[0].type = DB1_INT;
 	update_vals[0].nul = 0;
-	update_vals[0].val.int_val = core_case_hash(&sub->callid, &sub->from_tag, 0)
-								 % (pres_waitn_time * pres_notifier_poll_rate
-										 * pres_notifier_processes);
+	update_vals[0].val.int_val =
+			core_case_hash(&sub->callid, &sub->from_tag, 0)
+			% (pres_waitn_time * pres_notifier_poll_rate
+					* pres_notifier_processes * pres_notifier_cluster_size);
 
 	if(pa_dbf.use_table(pa_db, &active_watchers_table) < 0) {
 		LM_ERR("use table failed\n");
@@ -2940,8 +2941,9 @@ int process_dialogs(int round, int presence_winfo)
 		goto error;
 	}
 
-	/* Step 1: Find active_watchers that require notification */
-	if(query_fn(pa_db, query_cols, query_ops, query_vals, result_cols,
+	/* Step 1: Find active_watchers that require notification
+	 * (no transaction, so idle runs do not open one) */
+	if(pa_dbf.query(pa_db, query_cols, query_ops, query_vals, result_cols,
 			   n_query_cols, n_result_cols, 0, &dialog_list)
 			< 0) {
 		LM_ERR("in sql query\n");
@@ -2961,6 +2963,33 @@ int process_dialogs(int round, int presence_winfo)
 		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
 			LM_ERR("in start_transaction\n");
 			goto error;
+		}
+	}
+
+	/* repeat Step 1 locked inside the transaction; another server sharing
+	 * the database may have taken the rows meanwhile */
+	if(pa_dbf.query_lock && pa_dbf.start_transaction) {
+		pa_dbf.free_result(pa_db, dialog_list);
+		dialog_list = NULL;
+		if(pa_dbf.query_lock(pa_db, query_cols, query_ops, query_vals,
+				   result_cols, n_query_cols, n_result_cols, 0, &dialog_list)
+				< 0) {
+			LM_ERR("in sql query\n");
+			goto error;
+		}
+		if(dialog_list == NULL) {
+			LM_ERR("bad result\n");
+			goto error;
+		}
+		if(dialog_list->n <= 0) {
+			if(pa_dbf.end_transaction) {
+				if(pa_dbf.end_transaction(pa_db) < 0) {
+					LM_ERR("in end_transaction\n");
+					goto error;
+				}
+			}
+			no_active_watchers = 1;
+			goto done;
 		}
 	}
 
@@ -3217,8 +3246,10 @@ error:
 void pres_timer_send_notify(unsigned int ticks, void *param)
 {
 	int process_num = *((int *)param);
-	int round =
-			subset + (pres_waitn_time * pres_notifier_poll_rate * process_num);
+	int round = subset
+				+ (pres_waitn_time * pres_notifier_poll_rate
+						* (pres_notifier_cluster_id * pres_notifier_processes
+								+ process_num));
 
 	if(++subset > (pres_waitn_time * pres_notifier_poll_rate) - 1)
 		subset = 0;

@@ -33,6 +33,7 @@
 #include "../../core/tcp_read.h"
 #include "tls_domain.h"
 #include "tls_ct_wrq.h"
+#include "tls_bio.h"
 
 typedef enum tls_conn_states
 {
@@ -56,13 +57,12 @@ typedef struct tls_rd_buf
 
 typedef struct tls_extra_data
 {
-	tls_domains_cfg_t *cfg; /* Configuration used for this connection */
-	str dom;				/* tls_domain_str() for this connection */
-	WOLFSSL *ssl;			/* SSL context used for the connection */
-	WOLFSSL_BIO *rwbio;		/* bio used for read/write
-							 * (openssl code might add buffering BIOs so
-							 * it's better to remember our original BIO) */
+	tls_domains_cfg_t *cfg;		  /* Configuration used for this connection */
+	str dom;					  /* tls_domain_str() for this connection */
+	WOLFSSL *ssl;				  /* SSL context used for the connection */
+	struct tls_bio_mbuf_data mbd; /* I/O context: current rd/wr mbufs */
 	tls_ct_q *ct_wq;
+	struct tls_rd_buf *enc_rd_buf; /* ciphertext read but not yet decoded */
 
 	unsigned int flags;
 	enum tls_conn_states state;
@@ -84,6 +84,16 @@ typedef struct tls_extra_data
 
 /* return true if write wants read */
 #define tls_write_wants_read(tls_ed) (tls_ed->flags & F_TLS_CON_WR_WANTS_RD)
+
+/* wolfSSL_get_error() wrapper: wolfSSL returns its own negative codes for
+ * protocol errors (e.g. a fatal alert from the peer): map them to
+ * WOLFSSL_ERROR_SSL, as OpenSSL reports them */
+static inline int tls_get_error(WOLFSSL *ssl, int ret)
+{
+	int err = wolfSSL_get_error(ssl, ret);
+
+	return (err < 0) ? WOLFSSL_ERROR_SSL : err;
+}
 
 
 /*
@@ -118,6 +128,7 @@ int tls_h_fix_read_conn(struct tcp_connection *c);
 int tls_connect(struct tcp_connection *c, int *error);
 int tls_accept(struct tcp_connection *c, int *error);
 
+void tls_h_connect_info_f(ksr_coninfo_t *ci);
 int ksr_tls_set_connect_server_id(str *srvid);
 
 #endif /* _TLS_SERVER_H */

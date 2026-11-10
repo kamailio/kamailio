@@ -29,8 +29,10 @@
 #include <poll.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <openssl/x509v3.h>
 #include "../../core/dprint.h"
 #include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/pt.h"
 #include "../../core/timer.h"
@@ -57,19 +59,10 @@
 #include "tls_bio.h"
 #include "tls_dump_vf.h"
 #include "tls_cfg.h"
+#include "tls_openssl.h"
 
 int tls_run_event_routes(struct tcp_connection *c);
 static void tls_free_ssl_cache(struct tls_extra_data *data);
-
-/* low memory threshold for openssl bug #1491 workaround */
-#define LOW_MEM_NEW_CONNECTION_TEST()          \
-	(cfg_get(tls, tls_cfg, low_mem_threshold1) \
-			&& (shm_available_safe()           \
-					< cfg_get(tls, tls_cfg, low_mem_threshold1)))
-#define LOW_MEM_CONNECTED_TEST()               \
-	(cfg_get(tls, tls_cfg, low_mem_threshold2) \
-			&& (shm_available_safe()           \
-					< cfg_get(tls, tls_cfg, low_mem_threshold2)))
 
 /* debugging */
 #ifdef NO_TLS_RD_DEBUG
@@ -132,42 +125,64 @@ extern str sr_tls_xavp_cfg;
 
 static str _ksr_tls_connect_server_id = STR_NULL;
 
-static void tls_store_outbound_xavp(struct tcp_connection *c)
+/* copy the outbound tls xavp of the calling process (server_name,
+ * server_id) into ci as shm strings; without a server_id in the xavp, the
+ * one set by tls_set_connect_server_id() in this process
+ * - also the mode 2 tls_hook.connect_info: tcp main moves them from the
+ *   connect request to the new connection */
+void tls_h_connect_info_f(ksr_coninfo_t *ci)
 {
 	sr_xavp_t *vavp = NULL;
 	str sname = str_init("server_name");
 	str sid = str_init("server_id");
 
-	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
-		return;
+	/* the value set by tls_set_connect_server_id() for the next connect,
+	 * overwritten below by the xavp server_id, then reset */
+	if(_ksr_tls_connect_server_id.len > 0) {
+		if(shm_str_update(&ci->server_id, &_ksr_tls_connect_server_id) < 0) {
+			LM_WARN("failed to store outbound tls server_id in shm\n");
+		} else {
+			LM_DBG("stored outbound server_id: %.*s\n", ci->server_id.len,
+					ci->server_id.s);
+			ksr_tls_set_connect_server_id(NULL);
+		}
 	}
+
 	if(sr_tls_xavp_cfg.s == NULL) {
 		return;
 	}
 
-	LM_DBG("storing outbound xavp (root=%.*s pid=%d proc=%d '%s' conn=%p)\n",
+	LM_DBG("storing outbound xavp (root=%.*s pid=%d proc=%d '%s' ci=%p)\n",
 			sr_tls_xavp_cfg.len, sr_tls_xavp_cfg.s, my_pid(), process_no,
-			my_desc(), c);
+			my_desc(), ci);
 
 	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sname);
 	if(vavp != NULL && vavp->val.v.s.len > 0) {
-		if(shm_str_update(&c->cinfo.server_name, &vavp->val.v.s) < 0) {
+		if(shm_str_update(&ci->server_name, &vavp->val.v.s) < 0) {
 			LM_WARN("failed to store outbound tls server_name in shm\n");
 		} else {
-			LM_DBG("stored outbound server_name: %.*s\n",
-					c->cinfo.server_name.len, c->cinfo.server_name.s);
+			LM_DBG("stored outbound server_name: %.*s\n", ci->server_name.len,
+					ci->server_name.s);
 		}
 	}
 
 	vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
 	if(vavp != NULL && vavp->val.v.s.len > 0) {
-		if(shm_str_update(&c->cinfo.server_id, &vavp->val.v.s) < 0) {
+		if(shm_str_update(&ci->server_id, &vavp->val.v.s) < 0) {
 			LM_WARN("failed to store outbound tls server_id in shm\n");
 		} else {
-			LM_DBG("tls: stored outbound server_id: %.*s\n",
-					c->cinfo.server_id.len, c->cinfo.server_id.s);
+			LM_DBG("tls: stored outbound server_id: %.*s\n", ci->server_id.len,
+					ci->server_id.s);
 		}
 	}
+}
+
+static void tls_store_outbound_xavp(struct tcp_connection *c)
+{
+	if(c == NULL || (c->flags & F_CONN_PASSIVE)) {
+		return;
+	}
+	tls_h_connect_info_f(&c->cinfo);
 }
 
 int ksr_tls_set_connect_server_id(str *srvid)
@@ -204,16 +219,15 @@ int ksr_tls_set_connect_server_id(str *srvid)
 	return 0;
 }
 
-static str *tls_get_connect_server_id(struct tcp_connection *c)
+static str *tls_get_connect_server_id(ksr_coninfo_t *ci)
 {
 	sr_xavp_t *vavp = NULL;
 	str sid = {"server_id", 9};
 
-	if(c != NULL && c->cinfo.server_id.s != NULL
-			&& c->cinfo.server_id.len > 0) {
+	if(ci != NULL && ci->server_id.s != NULL && ci->server_id.len > 0) {
 		LM_DBG("found outbound server id in tcp connection: %.*s\n",
-				c->cinfo.server_id.len, c->cinfo.server_id.s);
-		return &c->cinfo.server_id;
+				ci->server_id.len, ci->server_id.s);
+		return &ci->server_id;
 	}
 
 	if(sr_tls_xavp_cfg.s != NULL) {
@@ -237,17 +251,15 @@ static str *tls_get_connect_server_id(struct tcp_connection *c)
 /**
  * get the server name (sni) for outbound connections from xavp
  */
-static str *tls_get_connect_server_name(struct tcp_connection *c)
+static str *tls_get_connect_server_name(ksr_coninfo_t *ci)
 {
-#ifndef OPENSSL_NO_TLSEXT
 	sr_xavp_t *vavp = NULL;
 	str sname = {"server_name", 11};
 
-	if(c != NULL && c->cinfo.server_name.s != NULL
-			&& c->cinfo.server_name.len > 0) {
-		LM_NOTICE("found outbound server name in tcp connection: %.*s\n",
-				c->cinfo.server_name.len, c->cinfo.server_name.s);
-		return &c->cinfo.server_name;
+	if(ci != NULL && ci->server_name.s != NULL && ci->server_name.len > 0) {
+		LM_DBG("found outbound server name in tcp connection: %.*s\n",
+				ci->server_name.len, ci->server_name.s);
+		return &ci->server_name;
 	}
 
 	if(sr_tls_xavp_cfg.s != NULL)
@@ -258,9 +270,57 @@ static str *tls_get_connect_server_name(struct tcp_connection *c)
 	}
 	LM_DBG("found xavp with outbound server name: %s\n", vavp->val.v.s.s);
 	return &vavp->val.v.s;
-#else
-	return NULL;
-#endif
+}
+
+
+/**
+ * set the name the server certificate must match (RFC 6125) for an outbound
+ * connection: the server name of the connection (xavp, also sent as SNI),
+ * else the server_name of the client profile; an IP address is matched
+ * against the IP address entries of the certificate
+ * @return 0 on success, -1 on error (no name available or set failure)
+ */
+static int tls_set_verify_server_name(SSL *ssl, tls_domain_t *dom, str *sname)
+{
+	char name[256];
+	str *vname;
+	ip_addr_t ip;
+	int len;
+
+	vname = (sname != NULL && sname->len > 0) ? sname : &dom->server_name;
+	if(vname->s == NULL || vname->len <= 0) {
+		LM_ERR("%s: verify_server_name is set but no server name is"
+			   " available (xavp or server_name)\n",
+				tls_domain_str(dom));
+		return -1;
+	}
+	if((size_t)vname->len >= sizeof(name)) {
+		LM_ERR("%s: server name too long (%d)\n", tls_domain_str(dom),
+				vname->len);
+		return -1;
+	}
+	if(str2ipxbuf(vname, &ip) == 0) {
+		/* IP address: check the IP address entries, without brackets */
+		len = ip_addr2sbuf(&ip, name, sizeof(name) - 1);
+		name[len] = '\0';
+		if(!X509_VERIFY_PARAM_set1_ip_asc(SSL_get0_param(ssl), name)) {
+			LM_ERR("%s: failed to set the server address to verify: %s\n",
+					tls_domain_str(dom), name);
+			return -1;
+		}
+		LM_DBG("outbound TLS server address to verify: %s\n", name);
+		return 0;
+	}
+	memcpy(name, vname->s, vname->len);
+	name[vname->len] = '\0';
+	SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+	if(!SSL_set1_host(ssl, name)) {
+		LM_ERR("%s: failed to set the server name to verify: %s\n",
+				tls_domain_str(dom), name);
+		return -1;
+	}
+	LM_DBG("outbound TLS server name to verify: %s\n", name);
+	return 0;
 }
 
 
@@ -273,8 +333,6 @@ static str *tls_get_connect_server_name(struct tcp_connection *c)
  * @return 0 on success, -1 on error.
  */
 
-#define DOM_CTX(d) ((d)->ctx[ksr_tcp_main_threads == 0 ? process_no : 0])
-
 static int tls_complete_init(struct tcp_connection *c)
 {
 	tls_domain_t *dom;
@@ -286,13 +344,6 @@ static int tls_complete_init(struct tcp_connection *c)
 	str *sname = NULL;
 	str *srvid = NULL;
 
-	if(LOW_MEM_NEW_CONNECTION_TEST()) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold1=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold1));
-		goto error2;
-	}
 	/* Get current TLS configuration and increase reference
      * count immediately.
      */
@@ -315,8 +366,8 @@ static int tls_complete_init(struct tcp_connection *c)
 				cfg, TLS_DOMAIN_SRV, &c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
 	} else {
 		state = S_TLS_CONNECTING;
-		sname = tls_get_connect_server_name(c);
-		srvid = tls_get_connect_server_id(c);
+		sname = tls_get_connect_server_name(&c->cinfo);
+		srvid = tls_get_connect_server_id(&c->cinfo);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, &c->rcv.dst_ip,
 				c->rcv.dst_port, sname, srvid);
 		ksr_tls_set_connect_server_id(NULL);
@@ -341,6 +392,10 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 	memset(data, '\0', sizeof(struct tls_extra_data));
+	if(lock_init(&data->cache_lock) == NULL) {
+		LM_ERR("failed to init ssl cache lock\n");
+		goto error;
+	}
 	tls_openssl_clear_errors();
 	data->ssl = SSL_new(DOM_CTX(dom));
 	data->rwbio = tls_BIO_new_mbuf(0, 0);
@@ -360,7 +415,6 @@ static int tls_complete_init(struct tcp_connection *c)
 		goto error;
 	}
 
-#ifndef OPENSSL_NO_TLSEXT
 	if(sname != NULL) {
 		if(!SSL_set_tlsext_host_name(data->ssl, sname->s)) {
 			if(data->ssl)
@@ -372,19 +426,20 @@ static int tls_complete_init(struct tcp_connection *c)
 		}
 		LM_DBG("outbound TLS server name set to: %s\n", sname->s);
 	}
-#endif
 
-#if OPENSSL_VERSION_NUMBER < 0x010100000L
-#ifdef TLS_KSSL_WORKAROUND
-	/* if needed apply workaround for openssl bug #1467 */
-	if(data->ssl->kssl_ctx && openssl_kssl_malloc_bug) {
-		kssl_ctx_free(data->ssl->kssl_ctx);
-		data->ssl->kssl_ctx = 0;
+	if(state == S_TLS_CONNECTING && dom->verify_cert > 0
+			&& dom->verify_server_name > 0) {
+		if(tls_set_verify_server_name(data->ssl, dom, sname) < 0) {
+			SSL_free(data->ssl);
+			tls_free_ssl_cache(data);
+			BIO_free(data->rwbio);
+			goto error;
+		}
 	}
-#endif
-#endif
+
 	/* link the extra data struct inside ssl connection*/
-	if(SSL_set_app_data(data->ssl, data) == 0) {
+	if(SSL_set_app_data(data->ssl, data) == 0
+			|| SSL_set_ex_data(data->ssl, ksr_tls_ssl_ex_idx, data) == 0) {
 		LM_ERR("failed to set app_data - possible memory issue\n");
 		if(data->ssl)
 			SSL_free(data->ssl);
@@ -396,19 +451,18 @@ static int tls_complete_init(struct tcp_connection *c)
 	/* SSL_set_bio does not allocate memory and has no return value */
 	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;
+	data->tcp_conn = c; /* keylog tuple: the memory bio has no fd */
 	return 0;
 
 error:
 	atomic_dec(&cfg->ref_count);
 	if(data)
 		shm_free(data);
-error2:
 	return -1;
 }
 
 
 /** completes tls init if needed and checks if tls can be used (unsafe).
- *  It will check for low memory.
  *  If it returns success, c->extra_data is guaranteed to be !=0.
  *  WARNING: must be called with c->write_lock held.
  *  @return 0 on success, < 0 on error (complete init failed or out of memory).
@@ -419,19 +473,12 @@ static int tls_fix_connection_unsafe(struct tcp_connection *c)
 		if(unlikely(tls_complete_init(c) < 0)) {
 			return -1;
 		}
-	} else if(unlikely(LOW_MEM_CONNECTED_TEST())) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold2=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		return -1;
 	}
 	return 0;
 }
 
 
 /** completes tls init if needed and checks if tls can be used, (safe).
- *  It will check for low memory.
  *  If it returns success, c->extra_data is guaranteed to be !=0.
  *  WARNING: must _not_ be called with c->write_lock held (it will
  *   lock/unlock internally), see also tls_fix_connection_unsafe().
@@ -449,13 +496,6 @@ static int tls_fix_connection(struct tcp_connection *c)
 			return ret;
 		}
 		lock_release(&c->write_lock);
-	}
-	if(unlikely(LOW_MEM_CONNECTED_TEST())) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold2=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		return -1;
 	}
 	return 0;
 }
@@ -506,7 +546,7 @@ static void tls_dump_cert_info(char *s, X509 *cert)
  *
  * Incurs a small overhead per connection but necessary as
  * the *SSL pointer is only valid in PROC_TCP_MAIN
- * 
+ *
  */
 static void tls_free_ssl_cache(struct tls_extra_data *data)
 {
@@ -635,6 +675,57 @@ static void tls_build_ssl_cache(struct tls_extra_data *tls_c, X509 *cert)
 		tls_c->ssl_cert_chain =
 				stack_to_x509_DER(chain, &tls_c->ssl_cert_chain_len);
 	}
+}
+
+
+/** rebuild the ssl metadata cache after a renegotiation.
+ * The handshake may have changed the peer certificate (or removed it), the
+ * verify result, the verified chain, the cipher and the SNI, so the values
+ * cached at the end of the initial handshake are stale.
+ * Must be called by the process/thread owning data->ssl (from within an
+ * SSL_* call on the connection). The new values are built first and then
+ * swapped in under the cache lock, so readers in other processes never see
+ * a freed buffer or a half-updated cache.
+ */
+void tls_refresh_ssl_cache(struct tls_extra_data *data)
+{
+	/* on stack: may run on a tcp_main thread, where pkg memory is
+	 * not usable */
+	struct tls_extra_data tmp_data;
+	struct tls_extra_data *tmp = &tmp_data;
+
+	memset(tmp, 0, sizeof(*tmp));
+	tmp->ssl = data->ssl;
+	tls_init_ssl_cache(tmp);
+	tls_build_ssl_cache(tmp, NULL);
+
+#define TLS_CACHE_SWAP(f)   \
+	do {                    \
+		void *_p = data->f; \
+		data->f = tmp->f;   \
+		tmp->f = _p;        \
+	} while(0)
+
+	tls_ssl_cache_lock(data);
+	TLS_CACHE_SWAP(ssl_servername);
+	TLS_CACHE_SWAP(ssl_cipher_name);
+	TLS_CACHE_SWAP(ssl_my_cert);
+	TLS_CACHE_SWAP(ssl_peer_cert);
+	TLS_CACHE_SWAP(ssl_cert_chain);
+	data->ssl_my_cert_len = tmp->ssl_my_cert_len;
+	data->ssl_peer_cert_len = tmp->ssl_peer_cert_len;
+	data->ssl_cert_chain_len = tmp->ssl_cert_chain_len;
+	data->ssl_verify_result = tmp->ssl_verify_result;
+	data->ssl_cipher_bits = tmp->ssl_cipher_bits;
+	memcpy(data->ssl_version, tmp->ssl_version, sizeof(data->ssl_version));
+	memcpy(data->ssl_cipher_desc, tmp->ssl_cipher_desc,
+			sizeof(data->ssl_cipher_desc));
+	tls_ssl_cache_unlock(data);
+
+#undef TLS_CACHE_SWAP
+
+	/* tmp now holds the old buffers */
+	tls_free_ssl_cache(tmp);
 }
 
 
@@ -796,14 +887,6 @@ static int tls_shutdown(struct tcp_connection *c)
      * if the connection is not fully initialized */
 	if(unlikely(tls_c->state != S_TLS_ESTABLISHED))
 		return 0;
-	if(unlikely(LOW_MEM_CONNECTED_TEST())) {
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-			" operation: shm=%lu threshold2=%d\n",
-				shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		goto err;
-	}
-
 	tls_openssl_clear_errors();
 	ret = SSL_shutdown(ssl);
 	if(ret == 1) {
@@ -827,7 +910,6 @@ static int tls_shutdown(struct tcp_connection *c)
 				DBG("Need to send more data to finish TLS shutdown\n");
 				break;
 
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
 				DBG("Need to retry connect\n");
 				break;
@@ -835,7 +917,6 @@ static int tls_shutdown(struct tcp_connection *c)
 			case SSL_ERROR_WANT_ACCEPT:
 				DBG("Need to retry accept\n");
 				break;
-#endif
 			case SSL_ERROR_WANT_X509_LOOKUP:
 				DBG("Application callback asked to be called again\n");
 				break;
@@ -882,7 +963,6 @@ int tls_h_tcpconn_init_f(struct tcp_connection *c, int sock)
 	c->type = PROTO_TLS;
 	c->rcv.proto = PROTO_TLS;
 	c->timeout = get_ticks_raw() + cfg_get(tls, tls_cfg, con_lifetime);
-	c->lifetime = cfg_get(tls, tls_cfg, con_lifetime);
 	c->extra_data = 0;
 	tls_store_outbound_xavp(c);
 	return 0;
@@ -905,6 +985,7 @@ static void tls_h_tcpconn_clean_direct(struct tcp_connection *c)
 		extra = (struct tls_extra_data *)c->extra_data;
 		SSL_free(extra->ssl);
 		tls_free_ssl_cache(extra);
+		lock_destroy(&extra->cache_lock);
 		atomic_dec(&extra->cfg->ref_count);
 		if(extra->ct_wq)
 			tls_ct_wq_free(&extra->ct_wq);
@@ -940,6 +1021,7 @@ typedef struct tls_clean_params
 
 /**
  * Thread callback: runs in tcp_main thread, safe to call SSL_free.
+ * keep in sync with tls_wolfssl/tls_server.c
  */
 static void tls_h_tcpconn_clean_mt_thread_cb(void *p, int pidx)
 {
@@ -969,7 +1051,7 @@ static void tls_h_tcpconn_clean_mt_thread_cb(void *p, int pidx)
 void tls_h_tcpconn_clean_f(struct tcp_connection *c)
 {
 	/* At shutdown in MT mode, PROC_TCP_MAIN is already dead and the OS
-     * reclaims all memory. Avoid touching its heap entirely. */
+	 * reclaims all memory. Avoid touching its heap entirely. */
 	if(_ksr_is_main && ksr_tcp_main_threads != 0)
 		return;
 
@@ -1071,6 +1153,7 @@ static char *get_tls_domain_str(
 	tls_domains_cfg_t *cfg;
 	str *sname = NULL;
 	str *srvid = NULL;
+	ksr_coninfo_t *ci;
 
 	lock_get(tls_domains_cfg_lock);
 	cfg = *tls_domains_cfg;
@@ -1080,8 +1163,11 @@ static char *get_tls_domain_str(
 	if(c && (c->flags & F_CONN_PASSIVE)) {
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV, ip, port, 0, 0);
 	} else {
-		sname = tls_get_connect_server_name(c);
-		srvid = tls_get_connect_server_id(c);
+		/* no connection: the xavps, or in mode 2 tcp main the worker's
+		 * attributes from the connect request being looked up */
+		ci = (c != NULL) ? &c->cinfo : tcp_reactor_connect_info();
+		sname = tls_get_connect_server_name(ci);
+		srvid = tls_get_connect_server_id(ci);
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI, ip, port, sname, srvid);
 	}
 
@@ -1111,7 +1197,8 @@ int tls_h_match_domain_f(
 		return 0;
 	}
 
-	dom_str = get_tls_domain_str(NULL /* to use XAVPs only */, ip, port);
+	dom_str = get_tls_domain_str(
+			NULL /* XAVPs, or the mode 2 connect request */, ip, port);
 	STR_SET(dom, dom_str);
 
 	return STR_EQ(tls_c->dom, dom);
@@ -1311,7 +1398,6 @@ redo_wr:
 				ERR("destination IP: %s\n", ip_buf);
 
 				goto error;
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 			case SSL_ERROR_WANT_CONNECT:
 				/* only if the underlying BIO is not yet connected
              * and the call would block in connect().
@@ -1324,7 +1410,6 @@ redo_wr:
              * (not possible in our case) */
 				BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
 				break;
-#endif
 			case SSL_ERROR_WANT_X509_LOOKUP:
 				/* can only appear on client application and it indicates that
              * an installed client cert. callback should be called again
@@ -1372,7 +1457,9 @@ bug:
 	return -1;
 ssl_eof:
 	c->state = S_CONN_EOF;
-	c->flags |= F_CONN_FORCE_EOF;
+	/* mode 2: c->flags belongs to the io_wait thread; the write job's -1 closes c */
+	if(ksr_tcp_main_threads != 2)
+		c->flags |= F_CONN_FORCE_EOF;
 	*pbuf = (const char *)wr.buf;
 	*plen = wr.used;
 	DBG("TLS connection has been closed\n");
@@ -1430,9 +1517,7 @@ typedef struct tls_encode_params
 	int pidx;
 } tls_encode_params_t;
 
-/**
- *
- */
+/* keep in sync with tls_wolfssl/tls_server.c */
 static void tls_h_encode_mt_thread_cb(void *p, int pidx)
 {
 	tls_encode_params_t *eparams = NULL;
@@ -1874,7 +1959,6 @@ continue_ssl_read:
 			ERR("dst addr: %s:%d\n", ip_buf, c->rcv.dst_port);
 
 			goto error;
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
 		case SSL_ERROR_WANT_CONNECT:
 			/* only if the underlying BIO is not yet connected
          * and the call would block in connect().
@@ -1887,7 +1971,6 @@ continue_ssl_read:
          * (not possible in our case) */
 			BUG("unexpected SSL_ERROR_WANT_ACCEPT\n");
 			goto bug;
-#endif
 		case SSL_ERROR_WANT_X509_LOOKUP:
 			/* can only appear on client application and it indicates that
          * an installed client cert. callback should be called again
@@ -2044,9 +2127,7 @@ typedef struct tls_read_params
 	int pidx;
 } tls_read_params_t;
 
-/**
- *
- */
+/* keep in sync with tls_wolfssl/tls_server.c */
 static void tls_h_read_mt_thread_cb(void *p, int pidx)
 {
 	tls_read_params_t *eparams = NULL;
@@ -2177,8 +2258,8 @@ int tls_run_event_routes(struct tcp_connection *c)
 	if(_tls_evrt_connection_out < 0 && sr_tls_event_callback.len <= 0)
 		return 0;
 
-	/* With tcp_main_threads = 2: we are on a PROC_TCP_MAIN reactor thread.
-	 * Dispatch the event to a TCP worker. */
+	/* With tcp_main_threads = 2: we are on a PROC_TCP_MAIN pool thread (the
+	 * read job). Dispatch the event to a TCP worker. */
 	if(is_tcp_main() && ksr_tcp_main_threads == 2) {
 		tcp_reactor_dispatch_tls_event(c);
 		return 0;
@@ -2220,8 +2301,9 @@ int tls_run_event_routes(struct tcp_connection *c)
 			}
 		}
 	}
-	/* drop() executed in the event route - set nosend flag */
-	if(unlikely(ctx.run_flags & DROP_R_F)) {
+	/* drop() executed in the event route - set nosend flag
+	 * mode 2: the route runs in a worker; c->flags belongs to the io_wait thread */
+	if(unlikely(ctx.run_flags & DROP_R_F) && ksr_tcp_main_threads != 2) {
 		c->flags |= F_CONN_NOSEND;
 	}
 	tls_set_pv_con(0);

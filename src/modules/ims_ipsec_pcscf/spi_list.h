@@ -42,6 +42,7 @@ struct _spi_node
 	uint32_t spi_sid;
 	uint16_t sport;
 	uint16_t cport;
+	uint16_t owner; // see spi_set_owner()
 };
 
 typedef struct _spi_list
@@ -58,5 +59,6 @@ int spi_add(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid,
 int spi_remove_head(spi_list_t *list);
 int spi_remove(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid);
 int spi_in_list(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid);
+spi_node_t *spi_find(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid);
 
 #endif /* _SPI_LIST_H_ */

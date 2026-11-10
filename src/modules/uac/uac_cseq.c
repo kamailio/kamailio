@@ -108,7 +108,7 @@ static void uac_cseq_sort_edits(uac_cseq_edit_t *edits, int count)
 static int uac_cseq_apply_edits(
 		sip_msg_t *msg, uac_cseq_edit_t *edits, int count, str *obuf)
 {
-	char tbuf[BUF_SIZE];
+	char tbuf[BUF_SIZE + 1];
 	char *src;
 	char *end;
 	char *nbuf;

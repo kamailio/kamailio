@@ -988,7 +988,7 @@ static int ki_kx_get_conid(sip_msg_t *msg)
 		return -1;
 
 	conid = con->id;
-	tcpconn_put(con);
+	tcpconn_chld_put(con);
 
 	return conid;
 }

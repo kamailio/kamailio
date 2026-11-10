@@ -26,15 +26,12 @@
 #include <pthread.h>
 
 /*
- * Cross-process condition variable for the TCP reactor thread pool
- * (tcp_main_threads == 2). The mutex and the condvar are PTHREAD_PROCESS_SHARED.
- *
- * The struct is meant to live in shared memory: TCP worker processes signal it
- * to submit write jobs, while the pool threads inside PROC_TCP_MAIN wait on it.
- *
- * Where the platform supports it the mutex is additionally PTHREAD_MUTEX_ROBUST.
- * On platforms without robust mutexes (e.g. macOS) the mutex is
- * process-shared but not robust.
+ * Condition variable for the mode 2 reactor pool (tcp_main_threads = 2):
+ *  - mutex and condvar are PTHREAD_PROCESS_SHARED; the struct lives in shm
+ *  - the mutex is PTHREAD_MUTEX_ROBUST where the platform supports it (macOS:
+ *    process-shared, plain)
+ *  - user: tcp_reactor.c - the io_wait thread of PROC_TCP_MAIN signals a job
+ *    push, its pool threads wait for jobs
  */
 typedef struct tcp_cond
 {

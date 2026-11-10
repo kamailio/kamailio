@@ -65,6 +65,7 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark,
 	struct cell *t;
 	unsigned int hash, label;
 	ticks_t fr_timeout, fr_inv_timeout;
+	int ret;
 	LM_DBG("marking for AS <%.*s>\n", m->server_name.len, m->server_name.s);
 
 	isc_mark_set(msg, m, mark);
@@ -110,13 +111,21 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark,
 	t->fr_inv_timeout = S_TO_TICKS(isc_fr_inv_timeout) / 1000;
 
 	/* send it */
-	isc_tmb.t_relay(msg, 0, 0);
+	ret = isc_tmb.t_relay(msg, 0, 0);
 
 	/* recover the timeouts */
 	t->fr_timeout = fr_timeout;
 	t->fr_inv_timeout = fr_inv_timeout;
-
-	LM_INFO(">>       msg was fwded to AS\n");
-
-	return ISC_RETURN_TRUE;
+	if(ret) {
+		LM_INFO("Message forwarded to AS (%.*s)\n", STR_FMT(&m->server_name));
+		return ISC_RETURN_TRUE;
+	} else {
+		LM_ERR("Error forwarding message to AS (%.*s)\n",
+				STR_FMT(&m->server_name));
+		/* Depending on the default handling, return a different RC */
+		if(m->default_handling == IFC_SESSION_TERMINATED)
+			return ISC_RETURN_TERMINATE;
+		else
+			return ISC_RETURN_ERROR;
+	}
 }

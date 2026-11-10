@@ -548,15 +548,18 @@ error:
  */
 peer_event_t I_Snd_Conn_Req(peer *p)
 {
+	int sock;
+
 	LM_INFO("Peer %.*s \n", p->fqdn.len, p->fqdn.s);
 
 	if(p->I_sock > 0)
 		close(p->I_sock);
 	p->I_sock = -1;
-	p->I_sock = peer_connect(p);
-	if(p->I_sock < 0) {
+	sock = peer_connect(p);
+	if(sock < 0) {
 		return I_Rcv_Conn_NAck;
 	}
+	close(sock);
 
 	return I_Rcv_Conn_Ack;
 }

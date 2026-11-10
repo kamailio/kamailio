@@ -1026,7 +1026,8 @@ static int do_parse(
 
 			ie_left = ptrs_size;
 			ie_data = ptrs;
-			if(ie_left < ie_data[0]) {
+			/* the pointed-to length octet must be inside the message */
+			if(ie_left <= ie_data[0]) {
 				LM_ERR("ISUP no space for len %zu vs. %u\n", ie_left,
 						ie_data[0]);
 				return -1;

@@ -52,7 +52,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libcrypto</emphasis> - part of OpenSSL project
+				<emphasis>libcrypto</emphasis> - part of OpenSSL project (1.1.1 or newer)
 			</para>
 			</listitem>
 			</itemizedlist>

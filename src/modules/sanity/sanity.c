@@ -137,7 +137,7 @@ int sanity_reply(sip_msg_t *msg, int code, char *reason)
 int str2valid_uint(str *_number, unsigned int *_result)
 {
 	int i;
-	int result = 0;
+	unsigned int result = 0;
 	int equal = 1;
 	char mui[10] = "4294967296";
 
@@ -315,7 +315,7 @@ int check_ruri_scheme(sip_msg_t *msg)
 		if((_hf)->type == _hdr_type) {                                        \
 			if(_hdr_flags & _hdr_flag) {                                      \
 				LM_DBG("duplicated %s header\n", _hdr_name);                  \
-				return SANITY_CHECK_FAILED;                                   \
+				sanity_check_status = SANITY_CHECK_FAILED;                    \
 			}                                                                 \
 			_hdr_flags |= _hdr_flag;                                          \
 		}                                                                     \
@@ -326,6 +326,7 @@ int check_required_headers(sip_msg_t *msg)
 {
 	hdr_field_t *hf;
 	hdr_flags_t hdr_flags = 0;
+	int sanity_check_status = SANITY_CHECK_PASSED;
 
 	LM_DBG("check_required_headers entered\n");
 
@@ -342,11 +343,15 @@ int check_required_headers(sip_msg_t *msg)
 
 	if(parse_headers(msg, HDR_EOH_F, 0) != 0) {
 		LM_ERR("failed to parse headers\n");
-		if(sanity_reply(msg, 400, "Bad Headers") < 0) {
-			LM_WARN("failed to send 400 reply\n");
-		}
-		return SANITY_CHECK_FAILED;
+		sanity_check_status = SANITY_CHECK_FAILED;
 	}
+
+	if(msg->errored_hdrs
+			& (HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F)) {
+		LM_ERR("errored headers found\n");
+		sanity_check_status = SANITY_CHECK_FAILED;
+	}
+
 	for(hf = msg->headers; hf; hf = hf->next) {
 		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_FROM_T, HDR_FROM_F, "From");
 		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_TO_T, HDR_TO_F, "To");
@@ -355,10 +360,16 @@ int check_required_headers(sip_msg_t *msg)
 		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_CSEQ_T, HDR_CSEQ_F, "CSeq");
 	}
 
-	/* TODO: check for other required headers according to request type */
-	LM_DBG("check_required_headers passed\n");
+	if(sanity_check_status == SANITY_CHECK_FAILED
+			&& sanity_reply(msg, 400, "Bad Headers") < 0) {
+		LM_WARN("failed to send 400 reply\n");
+	}
 
-	return SANITY_CHECK_PASSED;
+	/* TODO: check for other required headers according to request type */
+	LM_DBG("check_required_headers status: %s\n",
+			sanity_check_status ? "PASSED" : "FAILED");
+
+	return sanity_check_status;
 }
 
 /* check if the SIP version in the Via header is 2.0 */
@@ -367,6 +378,12 @@ int check_via1_header(sip_msg_t *msg)
 	LM_DBG("check via1 header\n");
 	if(parse_headers(msg, HDR_VIA1_F, 0) != 0) {
 		LM_WARN("failed to parse the Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1 == NULL) {
+		LM_WARN("missing Via1 header\n");
 		msg->msg_flags |= FL_MSG_NOREPLY;
 		return SANITY_CHECK_FAILED;
 	}
@@ -403,7 +420,14 @@ int check_rfc3261_compliance(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
-	if(msg->via1->branch->value.len < 7
+	if(msg->via1 == NULL) {
+		LM_WARN("missing Via1 header\n");
+		msg->msg_flags |= FL_MSG_NOREPLY;
+		return SANITY_CHECK_FAILED;
+	}
+
+	if(msg->via1->branch == NULL || msg->via1->branch->value.s == NULL
+			|| msg->via1->branch->value.len < 7
 			|| memcmp(msg->via1->branch->value.s, "z9hG4bK", 7) != 0) {
 		LM_WARN("Via1 branch parameter does not start with the magic cookie\n");
 		return SANITY_CHECK_FAILED;
@@ -833,11 +857,9 @@ int check_proxy_require(sip_msg_t *msg)
 					if(add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR) == 0) {
 						LM_ERR("failed to append Unsupported header to "
 							   "reply\n");
-						pkg_free(u);
-						u = NULL;
-					} else {
-						u = NULL;
 					}
+					pkg_free(u);
+					u = NULL;
 				}
 
 				if(sanity_reply(msg, 420, "Bad Proxy Require Extension") < 0) {

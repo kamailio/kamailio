@@ -74,6 +74,7 @@ struct cfg_group_core
 	int dns_retr_no;
 	int dns_servers_no;
 	int dns_search_list;
+	int dns_query_absolute;
 	int dns_search_fmatch;
 	int dns_reinit;
 	int dns_naptr_ignore_rfc;

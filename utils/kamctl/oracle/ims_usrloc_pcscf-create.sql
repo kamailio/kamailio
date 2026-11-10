@@ -31,7 +31,6 @@ CREATE TABLE pcscf_location (
     spi_uc NUMBER(10) DEFAULT NULL,
     spi_us NUMBER(10) DEFAULT NULL,
     t_security_type NUMBER(10) DEFAULT NULL,
-    t_protocol VARCHAR2(5) DEFAULT NULL,
     t_mode VARCHAR2(10) DEFAULT NULL,
     t_ck VARCHAR2(100) DEFAULT NULL,
     t_ik VARCHAR2(100) DEFAULT NULL,
@@ -57,4 +56,5 @@ BEGIN map2users('pcscf_location'); END;
 /
 CREATE INDEX pcscf_location_aor_idx  ON pcscf_location (aor);
 
-INSERT INTO version (table_name, table_version) values ('pcscf_location','7');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','8');
+

@@ -23,6 +23,7 @@
  */
 int tls_pkcs11_set_key(WOLFSSL_CTX *ctx, char *key, int check_key);
 int tls_pkcs11_open_token(WOLFSSL *ssl);
+int tls_pkcs11_uri_loglen(const char *uri, int len);
 
 typedef struct
 {

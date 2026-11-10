@@ -712,6 +712,40 @@ set_send_socket_name("sock1");
 </programlisting>
 		</example>
 		</section>
+		<section id="corex.f.set_send_socket_map">
+		<title><function moreinfo="none">set_send_socket_map(smap)</function></title>
+		<para>
+			Set local sending sockets by transport. The map is consulted after
+			DNS resolution, allowing each transport selected by NAPTR failover to
+			use a different local socket. WebSocket uses the TCP entry and secure
+			WebSocket uses the TLS entry. If an entry is not present, the existing
+			forced-socket and default socket selection behavior is used. An empty
+			string clears the map.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>smap</emphasis> - semicolon-separated assignments using
+				the keys <quote>udp</quote>, <quote>tcp</quote>,
+				<quote>tls</quote>, and <quote>sctp</quote>. Values are configured
+				local socket names. The value can be a static string or contain a
+				pseudo-variable.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>set_send_socket_map</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_send_socket_map("udp=private-udp;tcp=private-tcp;tls=private-tls");
+...
+</programlisting>
+		</example>
+		</section>
 		<section id="corex.f.set_recv_socket">
 		<title><function moreinfo="none">set_recv_socket(saddr)</function></title>
 		<para>

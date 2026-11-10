@@ -146,4 +146,7 @@ extern struct cfg_group_tm default_tm_cfg;
 extern void *tm_cfg;
 extern cfg_def_t tm_cfg_def[];
 
+#define TM_DEBUG_MODE_INVSEND 1
+extern int _tm_debug_mode;
+
 #endif

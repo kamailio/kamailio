@@ -50,6 +50,7 @@
 #include "config.h"
 #include "dprint.h"
 #include "receive.h"
+#include "worker_stats.h"
 #include "mem/mem.h"
 #include "pt.h"
 #include "action.h"
@@ -1686,6 +1687,7 @@ void *ksr_udp_mtworker(void *si)
 		gname.len = strlen(gname.s);
 	}
 	awg = async_task_group_find(&gname);
+	KSR_POOL_MEMBER_ONCE(ksr_cnt_udp_threads);
 
 	while(1) {
 		fromaddrlen = sizeof(union sockaddr_union);
@@ -1732,7 +1734,10 @@ void *ksr_udp_mtworker(void *si)
 			awg = async_task_group_find(&gname);
 		}
 		if(awg != NULL) {
+			/* blocks here when workers stop draining (unless nonblock=1) */
+			counter_inc(ksr_cnt_busy_udp_threads);
 			udpworker_task_send(awg, buf, len, &rcvi);
+			counter_add(ksr_cnt_busy_udp_threads, -1);
 		} else {
 			LM_WARN("workers group [%s] not found\n", gname.s);
 		}
@@ -1779,6 +1784,9 @@ int ksr_udp_start_mtreceiver(int child_rank, char *agname, int *woneinit)
 			*ksr_wait_worker1_done = 1;
 			LM_DBG("child one finished initialization\n");
 		}
+		/* the threads below share this process's single counter row */
+		counter_set_threaded();
+
 		/* udp workers */
 		for(si = udp_listen; si; si = si->next) {
 			if(agname == NULL) {

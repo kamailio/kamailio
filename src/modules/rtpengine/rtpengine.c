@@ -1550,7 +1550,8 @@ static void rtpengine_dtmf_events_loop(void)
 	union sockaddr_union udp_addr;
 	char buffer[RTPENGINE_DTMF_EVENT_BUFFER];
 
-	p = q_memchr(
+	/* the port follows the last ':', so IPv6 addresses can contain ':' */
+	p = q_memrchr(
 			rtpengine_dtmf_event_sock.s, ':', rtpengine_dtmf_event_sock.len);
 
 	if(!p) {
@@ -1572,11 +1573,21 @@ static void rtpengine_dtmf_events_loop(void)
 	}
 	rtpengine_dtmf_event_sock.len -= s_port.len + 1;
 	trim(&rtpengine_dtmf_event_sock);
+
+	/* strip the brackets around an IPv6 address: [addr]:port */
+	if(rtpengine_dtmf_event_sock.len >= 2
+			&& rtpengine_dtmf_event_sock.s[0] == '['
+			&& rtpengine_dtmf_event_sock.s[rtpengine_dtmf_event_sock.len - 1]
+					   == ']') {
+		rtpengine_dtmf_event_sock.s++;
+		rtpengine_dtmf_event_sock.len -= 2;
+	}
 	rtpengine_dtmf_event_sock.s[rtpengine_dtmf_event_sock.len] = '\0';
 
 	memset(&udp_addr, 0, sizeof(union sockaddr_union));
 
-	if(rtpengine_dtmf_event_sock.s[0] == '[') {
+	if(q_memchr(rtpengine_dtmf_event_sock.s, ':', rtpengine_dtmf_event_sock.len)
+			!= NULL) {
 		udp_addr.sin6.sin6_family = AF_INET6;
 		udp_addr.sin6.sin6_port = htons(port);
 		socket_len = sizeof(struct sockaddr_in6);
@@ -2872,8 +2883,7 @@ static int build_rtpp_socks(int lmode, int rtest)
 			char *hostname;
 			char *hp;
 
-			if(pnode->rn_umode == RNU_WS
-					|| pnode->rn_umode == RNU_WSS) {
+			if(pnode->rn_umode == RNU_WS || pnode->rn_umode == RNU_WSS) {
 				rtpp_socks[pnode->idx] = -1;
 				goto rptest;
 			}
@@ -3332,7 +3342,7 @@ static int parse_from_to_tags(struct ng_flags_parse *ng_flags,
 static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 		enum rtpe_operation *op, const char *flags_str)
 {
-	char *e;
+	char *e, v;
 	const char *err;
 	str key, val, s, s1;
 	int ip_af = AF_UNSPEC;
@@ -3370,7 +3380,9 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg,
 			goto next;
 		}
 		if(str_key_val_prefix(&key, "received-from", &val, &s)) {
+			STR_VTOZ(s.s[s.len], v);
 			ip_af = get_ip_type(s.s);
+			STR_ZTOV(s.s[s.len], v);
 			if(ip_af == AF_INET) {
 				s1.s = "IP4";
 				s1.len = 3;
@@ -4534,6 +4546,29 @@ error:
 	return 1;
 }
 
+static int rtpengine_poll_ms(struct pollfd *fds, nfds_t nfds, int timeout_ms)
+{
+	struct timeval tv_start, tv_now;
+	long elapsed_ms;
+	int time_left_ms = timeout_ms;
+	int ret;
+
+	gettimeofday(&tv_start, NULL);
+	for(;;) {
+		ret = poll(fds, nfds, time_left_ms);
+		if(ret != -1 || errno != EINTR)
+			return ret;
+		gettimeofday(&tv_now, NULL);
+		elapsed_ms = (tv_now.tv_sec - tv_start.tv_sec) * 1000
+					 + (tv_now.tv_usec - tv_start.tv_usec) / 1000;
+		time_left_ms = timeout_ms - (int)elapsed_ms;
+		if(time_left_ms < 0)
+			time_left_ms = 0;
+		else if(time_left_ms > timeout_ms)
+			time_left_ms = timeout_ms;
+	}
+}
+
 static char *send_rtpp_command(
 		struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 {
@@ -4630,7 +4665,7 @@ static char *send_rtpp_command(
 						cmd.len, cmd.s, node->rn_url.s, strerror(errno), errno);
 				goto badproxy;
 			}
-			while((poll(fds, 1, rtpengine_tout_ms) == 1)
+			while((rtpengine_poll_ms(fds, 1, rtpengine_tout_ms) == 1)
 					&& (fds[0].revents & POLLIN) != 0) {
 				do {
 					len = recv(rtpp_socks[node->idx], buf, sizeof(buf) - 1, 0);

@@ -711,8 +711,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 				goto error_1;
 			}
 			/* get the message's body */
-			body.s = get_body(msg);
-			if(body.s == 0) {
+			if(get_body_str(msg, &body) < 0) {
 				LM_ERR("cannot extract body from msg!\n");
 				goto error_1;
 			}

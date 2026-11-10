@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include "parse_date.h"
+#include "parse_bytes.h"
 #include "parse_def.h"
 #include "parser_f.h" /* eat_space_end and so on */
 #include "../mem/mem.h"
@@ -36,14 +37,6 @@
 /*
  * Parse Date header field
  */
-
-inline static unsigned int date_read_u32le(const char *val)
-{
-	return (unsigned int)(unsigned char)val[0]
-		   | ((unsigned int)(unsigned char)val[1] << 8)
-		   | ((unsigned int)(unsigned char)val[2] << 16)
-		   | ((unsigned int)(unsigned char)val[3] << 24);
-}
 
 inline static int char2int(char *p, int *t)
 {
@@ -72,7 +65,7 @@ static int rfc1123totm(char *stime, struct tm *ttm)
 	unsigned int uval;
 	int ires;
 
-	uval = date_read_u32le(ptime);
+	uval = ksr_read_u32le(ptime);
 	ptime += 4;
 	switch(uval) {
 		/* Sun, */
@@ -123,7 +116,7 @@ static int rfc1123totm(char *stime, struct tm *ttm)
 	if(*(ptime++) != ' ')
 		return -5;
 
-	uval = date_read_u32le(ptime);
+	uval = ksr_read_u32le(ptime);
 	ptime += 4;
 	switch(uval) {
 		/* Jan, */
@@ -206,8 +199,8 @@ static int rfc1123totm(char *stime, struct tm *ttm)
 	ptime += 2;
 
 	/* " GMT" */
-	uval = date_read_u32le(ptime);
-	if((uval | 0x20202020) != 0x746d6720)
+	uval = ksr_read_u32le(ptime);
+	if(ksr_ascii_lower_u32(uval) != 0x746d6720)
 		return -15;
 
 	return 0;

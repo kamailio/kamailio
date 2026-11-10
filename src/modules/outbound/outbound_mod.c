@@ -29,6 +29,10 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x1010100fL
+#error "OpenSSL 1.1.1 or newer is required"
+#endif
+
 #include "../../core/basex.h"
 #include "../../core/dprint.h"
 #include "../../core/dset.h"
@@ -586,7 +590,7 @@ int check_flow_token(struct sip_msg *msg)
 					ip_addr2a(&rcv->src_ip), rcv->src_port);
 			return CHECK_FLOW_NO_TCP_CONNECTION;
 		}
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return CHECK_FLOW_SUCCESS;
 	} else if(rcv->proto == PROTO_UDP) {
 		return CHECK_FLOW_SUCCESS;

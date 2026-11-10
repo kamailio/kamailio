@@ -66,6 +66,7 @@ MODULE_VERSION
 #define DEF_REFRESH_PUBRURI_AVPS_FLAG -1
 #define DEF_PUBRURI_CALLER_AVP 0
 #define DEF_PUBRURI_CALLEE_AVP 0
+#define DEF_CALLER_TRYING 1
 #define DEF_CALLEE_TRYING 0
 #define DEF_DISABLE_CALLER_PUBLISH_FLAG -1
 #define DEF_DISABLE_CALLEE_PUBLISH_FLAG -1
@@ -104,6 +105,7 @@ int include_req_uri = DEF_INCLUDE_REQ_URI;
 int send_publish_flag = DEF_SEND_PUBLISH_FLAG;
 int use_pubruri_avps = DEF_USE_PUBRURI_AVPS;
 int refresh_pubruri_avps_flag = DEF_REFRESH_PUBRURI_AVPS_FLAG;
+int caller_trying = DEF_CALLER_TRYING;
 int callee_trying = DEF_CALLEE_TRYING;
 int disable_caller_publish_flag = DEF_DISABLE_CALLER_PUBLISH_FLAG;
 int disable_callee_publish_flag = DEF_DISABLE_CALLEE_PUBLISH_FLAG;
@@ -142,6 +144,7 @@ static param_export_t params[] = {
 	{"pubruri_caller_dlg_var", PARAM_STR, &caller_dlg_var},
 	{"pubruri_callee_dlg_var", PARAM_STR, &callee_dlg_var},
 	{"local_identity_dlg_var", PARAM_STR, &local_identity_dlg_var},
+	{"caller_trying", PARAM_INT, &caller_trying},
 	{"callee_trying", PARAM_INT, &callee_trying},
 	{"disable_caller_publish_flag", PARAM_INT, &disable_caller_publish_flag},
 	{"disable_callee_publish_flag", PARAM_INT, &disable_callee_publish_flag},
@@ -947,11 +950,12 @@ static void __dialog_created(
 		identity_remote = (include_req_uri) ? dlg->req_uri : dlg->to_uri;
 	}
 
-	if((!disable_caller_publish)
-			&& (disable_caller_publish_flag == -1
-					|| !(request
-							&& (request->flags
-									& (1 << disable_caller_publish_flag))))) {
+	if(caller_trying
+			&& ((!disable_caller_publish)
+					&& (disable_caller_publish_flag == -1
+							|| !(request
+									&& (request->flags
+											& (1 << disable_caller_publish_flag)))))) {
 		if(use_pubruri_avps)
 			lock_get(&dlginfo->lock);
 		dialog_publish_multi("Trying", dlginfo->pubruris_caller,

@@ -698,12 +698,12 @@ int ki_contact_param_encode_helper(
 				return -1;
 			}
 			q = 1;
-			for(p = c->uri.s - 1; p > msg->buf; p++) {
+			for(p = c->uri.s - 1; p > msg->buf; p--) {
 				if(*p == '<') {
 					q = 0;
 					break;
 				}
-				if(*p != ' ' && *p != '\t' && *p != '\n' && *p != '\n') {
+				if(*p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
 					break;
 				}
 			}

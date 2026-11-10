@@ -32,6 +32,7 @@
 #include "../../core/str.h"
 #include "../../core/ut.h"
 #include "../../core/tcp_conn.h"
+#include "../../core/tcp_conn_api.h"
 #include "../../core/fmsg.h"
 #include "../../core/counters.h"
 #include "../../core/kemi.h"
@@ -55,6 +56,27 @@ ws_connection_t **wsconn_id_hash = NULL;
 gen_lock_t *wsconn_lock = NULL;
 #define WSCONN_LOCK lock_get(wsconn_lock)
 #define WSCONN_UNLOCK lock_release(wsconn_lock)
+
+/* outbound handshakes whose request left before the tcp connection id was
+ * known (ws_connect()); the first of ws_connect() and the 101 handler binds
+ * an entry to its connection (wsconn_pending_bind()) */
+typedef struct ws_pending
+{
+	struct ws_pending *next;
+	struct ip_addr ip; /* peer */
+	unsigned short port;
+	int proto;
+	unsigned int sub_protocol;
+	char key[WS_HANDSHAKE_KEY_SIZE];
+	int key_len;
+	str host; /* shm */
+	str path; /* shm */
+	int target_port;
+	int target_proto;
+} ws_pending_t;
+
+static ws_pending_t **wsconn_pending = NULL;
+static gen_lock_t *wsconn_pending_lock = NULL;
 
 #define wsconn_ref(c) atomic_inc(&((c)->refcnt))
 #define wsconn_unref(c) atomic_dec_and_test(&((c)->refcnt))
@@ -136,6 +158,32 @@ static int wsconn_str_eq(const str *v1, const str *v2)
 	return (strncasecmp(v1->s, v2->s, v1->len) == 0) ? 1 : 0;
 }
 
+static void wsconn_pending_free(ws_pending_t *e)
+{
+	if(e->host.s)
+		shm_free(e->host.s);
+	if(e->path.s)
+		shm_free(e->path.s);
+	shm_free(e);
+}
+
+/* unlink the entry for the peer ip:port/proto; the caller holds the lock */
+static ws_pending_t *wsconn_pending_unlink(
+		struct ip_addr *ip, unsigned short port, int proto)
+{
+	ws_pending_t **pe;
+	ws_pending_t *e;
+
+	for(pe = wsconn_pending; *pe != NULL; pe = &(*pe)->next) {
+		e = *pe;
+		if(e->port == port && e->proto == proto && ip_addr_cmp(&e->ip, ip)) {
+			*pe = e->next;
+			return e;
+		}
+	}
+	return NULL;
+}
+
 int wsconn_init(void)
 {
 	wsconn_lock = lock_alloc();
@@ -175,6 +223,14 @@ int wsconn_init(void)
 	}
 	memset((void *)wsconn_used_list, 0, sizeof(ws_connection_list_t));
 
+	wsconn_pending = (ws_pending_t **)shm_mallocxz(sizeof(ws_pending_t *));
+	wsconn_pending_lock = lock_alloc();
+	if(wsconn_pending == NULL || wsconn_pending_lock == NULL
+			|| lock_init(wsconn_pending_lock) == NULL) {
+		LM_ERR("allocating the pending handshake list\n");
+		goto error;
+	}
+
 	return 0;
 
 error:
@@ -190,6 +246,12 @@ error:
 		shm_free(wsconn_used_list);
 	wsconn_id_hash = NULL;
 	wsconn_used_list = NULL;
+	if(wsconn_pending)
+		shm_free(wsconn_pending);
+	if(wsconn_pending_lock)
+		lock_dealloc((void *)wsconn_pending_lock);
+	wsconn_pending = NULL;
+	wsconn_pending_lock = NULL;
 
 	return -1;
 }
@@ -281,6 +343,21 @@ void wsconn_destroy(void)
 		lock_destroy(wsstat_lock);
 		lock_dealloc((void *)wsstat_lock);
 		wsstat_lock = NULL;
+	}
+
+	if(wsconn_pending) {
+		while(*wsconn_pending) {
+			ws_pending_t *e = *wsconn_pending;
+			*wsconn_pending = e->next;
+			wsconn_pending_free(e);
+		}
+		shm_free(wsconn_pending);
+		wsconn_pending = NULL;
+	}
+	if(wsconn_pending_lock) {
+		lock_destroy(wsconn_pending_lock);
+		lock_dealloc((void *)wsconn_pending_lock);
+		wsconn_pending_lock = NULL;
 	}
 }
 
@@ -391,6 +468,98 @@ int wsconn_add_outgoing(struct receive_info *rcv, unsigned int sub_protocol,
 	wsconn_put(wsc);
 
 	return 0;
+}
+
+/**
+ * record an outbound handshake before its request is sent (ws_connect())
+ * - one per peer ip:port/proto
+ * @return 0 on success, -1 on failure
+ */
+int wsconn_pending_add(struct ip_addr *ip, unsigned short port, int proto,
+		unsigned int sub_protocol, str *handshake_key, str *host,
+		int target_port, str *path, int target_proto)
+{
+	ws_pending_t *e;
+	ws_pending_t *it;
+
+	if(handshake_key->len >= WS_HANDSHAKE_KEY_SIZE)
+		return -1;
+	e = (ws_pending_t *)shm_mallocxz(sizeof(ws_pending_t));
+	if(e == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	e->ip = *ip;
+	e->port = port;
+	e->proto = proto;
+	e->sub_protocol = sub_protocol;
+	memcpy(e->key, handshake_key->s, handshake_key->len);
+	e->key_len = handshake_key->len;
+	e->target_port = target_port;
+	e->target_proto = target_proto;
+	if((host != NULL && host->len > 0 && shm_str_dup(&e->host, host) < 0)
+			|| (path != NULL && path->len > 0
+					&& shm_str_dup(&e->path, path) < 0)) {
+		wsconn_pending_free(e);
+		return -1;
+	}
+	lock_get(wsconn_pending_lock);
+	for(it = *wsconn_pending; it != NULL; it = it->next) {
+		if(it->port == port && it->proto == proto && ip_addr_cmp(&it->ip, ip)) {
+			lock_release(wsconn_pending_lock);
+			LM_ERR("outbound websocket handshake to this peer in progress\n");
+			wsconn_pending_free(e);
+			return -1;
+		}
+	}
+	e->next = *wsconn_pending;
+	*wsconn_pending = e;
+	lock_release(wsconn_pending_lock);
+	return 0;
+}
+
+/**
+ * drop the pending handshake for the peer ip:port/proto, if any
+ */
+void wsconn_pending_rm(struct ip_addr *ip, unsigned short port, int proto)
+{
+	ws_pending_t *e;
+
+	lock_get(wsconn_pending_lock);
+	e = wsconn_pending_unlink(ip, port, proto);
+	lock_release(wsconn_pending_lock);
+	if(e)
+		wsconn_pending_free(e);
+}
+
+/**
+ * bind the pending handshake of the peer in rcv (src ip:port, proto) to the
+ * connection rcv->proto_reserved1 and return its websocket connection
+ * - the 101 handler and ws_connect() both call it; the first binds the entry
+ * @return the connection with a ref (wsconn_put() it), NULL if unknown
+ */
+ws_connection_t *wsconn_pending_bind(struct receive_info *rcv)
+{
+	ws_connection_t *wsc;
+	ws_pending_t *e;
+	str key;
+
+	lock_get(wsconn_pending_lock);
+	wsc = wsconn_get(rcv->proto_reserved1);
+	if(wsc == NULL) {
+		e = wsconn_pending_unlink(&rcv->src_ip, rcv->src_port, rcv->proto);
+		if(e != NULL) {
+			key.s = e->key;
+			key.len = e->key_len;
+			if(wsconn_add_outgoing(rcv, e->sub_protocol, &key, &e->host,
+					   e->target_port, &e->path, e->target_proto)
+					== 0)
+				wsc = wsconn_get(rcv->proto_reserved1);
+			wsconn_pending_free(e);
+		}
+	}
+	lock_release(wsconn_pending_lock);
+	return wsc;
 }
 
 ws_connection_t *wsconn_get_outgoing(
@@ -628,20 +797,13 @@ end:
 
 void wsconn_close_now(ws_connection_t *wsc)
 {
-	struct tcp_connection *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
+	int id = wsc->id; /* wsconn_rm() may free wsc */
 
 	if(wsconn_rm(wsc, WSCONN_EVENTROUTE_YES) < 0)
 		LM_ERR("removing WebSocket connection\n");
 
-	if(con == NULL) {
+	if(tcpconn_ctrl(id, TCPCONN_CTRL_MARK_BAD) == TCPCONN_API_NOCONN)
 		LM_ERR("getting TCP/TLS connection\n");
-		return;
-	}
-
-	tcpconn_put(con);
-	con->send_flags.f |= SND_F_CON_CLOSE;
-	con->state = S_CONN_BAD;
-	con->timeout = get_ticks_raw();
 }
 
 void wsconn_detach_connection(ws_connection_t *wsc)
@@ -958,7 +1120,7 @@ void ws_timer(unsigned int ticks, void *param)
 					wsc->rmticks = get_ticks();
 					wsc->run_event = 1;
 				} else {
-					tcpconn_put(con);
+					tcpconn_chld_put(con);
 				}
 			}
 			wsc = next;
@@ -1024,17 +1186,17 @@ static int ws_rpc_add_node(
 				   con->rcv.dst_port, wsconn_state_str[wsc->state], pong,
 				   interval, sub_protocol)
 				< 0) {
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			rpc->fault(ctx, 500, "Failed to print connection details");
 			return -1;
 		}
 		if(rpc->array_add(ih, "s", rplbuf) < 0) {
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			rpc->fault(ctx, 500, "Failed to add to response");
 			return -1;
 		}
 
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return 1;
 	} else {
 		LM_DBG("ws structure [%p] without an active tcp connection\n", wsc);

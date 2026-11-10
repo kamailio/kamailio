@@ -1804,7 +1804,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	new_cell->on_failure = get_on_failure();
 	new_cell->on_branch_failure = get_on_branch_failure();
 	new_cell->on_reply = get_on_reply();
-	new_cell->end_of_life = get_ticks_raw() + lifetime;
+	new_cell->end_of_life = tm_get_ticks_raw() + lifetime;
 	;
 	new_cell->fr_timeout =
 			(ticks_t)get_msgid_val(user_fr_timeout, p_msg->id, int);
@@ -1826,6 +1826,16 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 		} else {
 			new_cell->fr_inv_timeout = cfg_get(tm, tm_cfg, fr_inv_timeout);
 		}
+	}
+	/* diagnostics for tracking transaction attributes */
+	if((_tm_debug_mode & TM_DEBUG_MODE_INVSEND)
+			&& (p_msg->REQ_METHOD == METHOD_INVITE)) {
+		LM_INFO("diagnostics: initialized transaction=%p on_failure=%d "
+				"fr_timeout=%u ticks (%u ms) fr_inv_timeout=%u ticks (%u ms) "
+				"end_of_life=%u ticks\n",
+				new_cell, new_cell->on_failure, new_cell->fr_timeout,
+				TICKS_TO_MS(new_cell->fr_timeout), new_cell->fr_inv_timeout,
+				TICKS_TO_MS(new_cell->fr_inv_timeout), new_cell->end_of_life);
 	}
 	new_cell->rt_t1_timeout_ms = (retr_timeout_t)get_msgid_val(
 			user_rt_t1_timeout_ms, p_msg->id, int);
@@ -2094,6 +2104,7 @@ int t_unref(struct sip_msg *p_msg)
 			LM_WARN("script writer didn't release transaction\n");
 			t_release_transaction(T);
 		} else if(unlikely(T->nr_of_outgoings == 0
+						   && !(kr & (REQ_RPLD | REQ_RLSD))
 						   && !(T->flags & T_IN_AGONY))) {
 			LM_WARN("dropping orphaned transaction without branches"
 					" T=%p kr=%d\n",

@@ -192,7 +192,7 @@ static inline unsigned short str2s(const char *s, unsigned int len, int *err)
 	for(; str < limit; str++) {
 		if((*str <= '9') && (*str >= '0')) {
 			ret = ret * 10 + *str - '0';
-			if (ret > USHRT_MAX) {
+			if(ret > USHRT_MAX) {
 				goto error_digits;
 			}
 			i++;
@@ -1156,21 +1156,24 @@ static inline char *int2bstr(unsigned long l, char *s, int *len)
 inline static int hexstr2int(char *c, int len, unsigned int *val)
 {
 	char *pc;
-	int r;
+	unsigned int r;
+	unsigned int digit;
 	char mychar;
 
 	r = 0;
 	for(pc = c; pc < c + len; pc++) {
-		r <<= 4;
 		mychar = *pc;
 		if(mychar >= '0' && mychar <= '9')
-			r += mychar - '0';
+			digit = mychar - '0';
 		else if(mychar >= 'a' && mychar <= 'f')
-			r += mychar - 'a' + 10;
+			digit = mychar - 'a' + 10;
 		else if(mychar >= 'A' && mychar <= 'F')
-			r += mychar - 'A' + 10;
+			digit = mychar - 'A' + 10;
 		else
 			return -1;
+		if(unlikely(r > (UINT_MAX - digit) / 16))
+			return -1;
+		r = (r << 4) + digit;
 	}
 	*val = r;
 	return 0;

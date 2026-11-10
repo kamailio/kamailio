@@ -30,11 +30,9 @@
 
 #define ARRLEN(x) (sizeof(x) / sizeof(x[0]))
 
-#define MAKE_NV(NAME, VALUE)                                 \
-	{                                                        \
-		(uint8_t *)NAME, (uint8_t *)VALUE, sizeof(NAME) - 1, \
-				sizeof(VALUE) - 1, NGHTTP2_NV_FLAG_NONE      \
-	}
+#define MAKE_NV(NAME, VALUE)                                                 \
+	{(uint8_t *)NAME, (uint8_t *)VALUE, sizeof(NAME) - 1, sizeof(VALUE) - 1, \
+			NGHTTP2_NV_FLAG_NONE}
 
 
 static unsigned char next_proto_list[256];
@@ -53,7 +51,6 @@ static int next_proto_cb(
 }
 #endif /* !OPENSSL_NO_NEXTPROTONEG */
 
-#if OPENSSL_VERSION_NUMBER >= 0x10002000L
 static int alpn_select_proto_cb(SSL *ssl, const unsigned char **out,
 		unsigned char *outlen, const unsigned char *in, unsigned int inlen,
 		void *arg)
@@ -70,7 +67,6 @@ static int alpn_select_proto_cb(SSL *ssl, const unsigned char **out,
 
 	return SSL_TLSEXT_ERR_OK;
 }
-#endif /* OPENSSL_VERSION_NUMBER >= 0x10002000L */
 
 /* Create SSL_CTX. */
 static SSL_CTX *create_ssl_ctx(const char *key_file, const char *cert_file)
@@ -120,9 +116,7 @@ static SSL_CTX *create_ssl_ctx(const char *key_file, const char *cert_file)
 	SSL_CTX_set_next_protos_advertised_cb(ssl_ctx, next_proto_cb, NULL);
 #endif /* !OPENSSL_NO_NEXTPROTONEG */
 
-#if OPENSSL_VERSION_NUMBER >= 0x10002000L
 	SSL_CTX_set_alpn_select_cb(ssl_ctx, alpn_select_proto_cb, NULL);
-#endif /* OPENSSL_VERSION_NUMBER >= 0x10002000L */
 
 	return ssl_ctx;
 }
@@ -198,7 +192,6 @@ static http2_session_data *create_http2_session_data(
 	char host[NI_MAXHOST];
 	int val = 1;
 
-	ssl = create_ssl(app_ctx->ssl_ctx);
 	session_data = malloc(sizeof(http2_session_data));
 	memset(session_data, 0, sizeof(http2_session_data));
 	session_data->app_ctx = app_ctx;
@@ -206,9 +199,17 @@ static http2_session_data *create_http2_session_data(
 			< 0) {
 		LM_ERR("failed to set TCP_NODELAY socket option\n");
 	}
-	session_data->bev = bufferevent_openssl_socket_new(app_ctx->evbase, fd, ssl,
-			BUFFEREVENT_SSL_ACCEPTING,
-			BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
+	if(app_ctx->ssl_ctx) {
+		ssl = create_ssl(app_ctx->ssl_ctx);
+		session_data->bev = bufferevent_openssl_socket_new(app_ctx->evbase, fd,
+				ssl, BUFFEREVENT_SSL_ACCEPTING,
+				BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
+	} else {
+		/* cleartext HTTP/2 with prior knowledge (h2c), e.g. for 5G SBI
+		 * peers on plain TCP (TS 29.500) */
+		session_data->bev = bufferevent_socket_new(app_ctx->evbase, fd,
+				BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
+	}
 	bufferevent_enable(session_data->bev, EV_READ | EV_WRITE);
 	rv = getnameinfo(addr, (socklen_t)addrlen, host, sizeof(host), NULL, 0,
 			NI_NUMERICHOST);
@@ -511,6 +512,7 @@ static int on_request_recv(nghttp2_session *session,
 	LM_DBG("%s GET %s\n", session_data->client_addr, stream_data->request_path);
 
 	_ksr_nghttp2_ctx.rplhdrs_n = 0;
+	_ksr_nghttp2_ctx.replied = 0;
 
 	_ksr_nghttp2_ctx.session = session;
 	_ksr_nghttp2_ctx.session_data = session_data;
@@ -545,7 +547,10 @@ static int on_request_recv(nghttp2_session *session,
 
 	ksr_event_route();
 
-	if(send_response_204(session, stream_data->stream_id) != 0) {
+	/* default response only if the script did not reply: a second response
+	 * on a stream still sending the first one's body is a protocol error */
+	if(!_ksr_nghttp2_ctx.replied
+			&& send_response_204(session, stream_data->stream_id) != 0) {
 		return NGHTTP2_ERR_CALLBACK_FAILURE;
 	}
 
@@ -725,11 +730,9 @@ static void eventcb(struct bufferevent *bev, short events, void *ptr)
 #ifndef OPENSSL_NO_NEXTPROTONEG
 		SSL_get0_next_proto_negotiated(ssl, &alpn, &alpnlen);
 #endif /* !OPENSSL_NO_NEXTPROTONEG */
-#if OPENSSL_VERSION_NUMBER >= 0x10002000L
 		if(alpn == NULL) {
 			SSL_get0_alpn_selected(ssl, &alpn, &alpnlen);
 		}
-#endif /* OPENSSL_VERSION_NUMBER >= 0x10002000L */
 
 		if(alpn == NULL || alpnlen != 2 || memcmp("h2", alpn, 2) != 0) {
 			LM_DBG("%s h2 is not negotiated\n", session_data->client_addr);
@@ -769,6 +772,17 @@ static void acceptcb(struct evconnlistener *listener, int fd,
 
 	bufferevent_setcb(
 			session_data->bev, readcb, writecb, eventcb, session_data);
+
+	if(app_ctx->ssl_ctx == NULL) {
+		/* h2c: no TLS handshake, hence no BEV_EVENT_CONNECTED; the client
+		 * starts with the connection preface right away */
+		LM_DBG("%s connected (h2c)\n", session_data->client_addr);
+		initialize_nghttp2_session(session_data);
+		if(send_server_connection_header(session_data) != 0
+				|| session_send(session_data) != 0) {
+			delete_http2_session_data(session_data);
+		}
+	}
 }
 
 static void start_listen(struct event_base *evbase, app_context *app_ctx)
@@ -823,21 +837,13 @@ int nghttp2_server_run(void)
 	act.sa_handler = SIG_IGN;
 	sigaction(SIGPIPE, &act, NULL);
 
-#if OPENSSL_VERSION_NUMBER >= 0x1010000fL
-	/* No explicit initialization is required. */
-#elif defined(OPENSSL_IS_BORINGSSL)
-	CRYPTO_library_init();
-#else  /* !(OPENSSL_VERSION_NUMBER >= 0x1010000fL) &&                          \
-          !defined(OPENSSL_IS_BORINGSSL) */
-	OPENSSL_config(NULL);
-	SSL_load_error_strings();
-	SSL_library_init();
-	OpenSSL_add_all_algorithms();
-#endif /* !(OPENSSL_VERSION_NUMBER >= 0x1010000fL) &&                          \
-          !defined(OPENSSL_IS_BORINGSSL) */
-
-	ssl_ctx = create_ssl_ctx(
-			_nghttp2_tls_private_key.s, _nghttp2_tls_public_key.s);
+	if(_nghttp2_tls_private_key.len > 0 || _nghttp2_tls_public_key.len > 0) {
+		ssl_ctx = create_ssl_ctx(
+				_nghttp2_tls_private_key.s, _nghttp2_tls_public_key.s);
+	} else {
+		LM_INFO("no TLS key configured: serving cleartext HTTP/2 (h2c)\n");
+		ssl_ctx = NULL;
+	}
 	evbase = event_base_new();
 	initialize_app_context(&app_ctx, ssl_ctx, evbase);
 	start_listen(evbase, &app_ctx);
@@ -845,7 +851,8 @@ int nghttp2_server_run(void)
 	event_base_loop(evbase, 0);
 
 	event_base_free(evbase);
-	SSL_CTX_free(ssl_ctx);
+	if(ssl_ctx)
+		SSL_CTX_free(ssl_ctx);
 
 
 	return 0;

@@ -13,10 +13,8 @@ cfg_option_t methods[] = {{"TLSv1", .val = TLS_USE_TLSv1},
 
 tls_methods_t tls_methods[TLS_METHOD_MAX];
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 void init_ssl_methods(void)
 {
-	/* openssl 1.1.0+ */
 	memset(tls_methods, 0, sizeof(tls_methods));
 
 	tls_methods[TLS_USE_TLSv1_cli - 1].TLSMethod = TLS_client_method();
@@ -49,7 +47,6 @@ void init_ssl_methods(void)
 	tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMin = TLS1_2_VERSION;
 	tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMax = TLS1_2_VERSION;
 
-#if OPENSSL_VERSION_NUMBER >= 0x1010100fL && !defined(LIBRESSL_VERSION_NUMBER)
 	tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethod = TLS_client_method();
 	tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethodMin = TLS1_3_VERSION;
 	tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethodMax = TLS1_3_VERSION;
@@ -59,7 +56,6 @@ void init_ssl_methods(void)
 	tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethod = TLS_method();
 	tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethodMin = TLS1_3_VERSION;
 	tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethodMax = TLS1_3_VERSION;
-#endif
 
 	/* ranges of TLS versions (require a minimum TLS version) */
 	tls_methods[TLS_USE_TLSv1_PLUS - 1].TLSMethod = TLS_method();
@@ -71,17 +67,13 @@ void init_ssl_methods(void)
 	tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethod = TLS_method();
 	tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethodMin = TLS1_2_VERSION;
 
-#if OPENSSL_VERSION_NUMBER >= 0x1010100fL && !defined(LIBRESSL_VERSION_NUMBER)
 	tls_methods[TLS_USE_TLSv1_3_PLUS - 1].TLSMethod = TLS_method();
 	tls_methods[TLS_USE_TLSv1_3_PLUS - 1].TLSMethodMin = TLS1_3_VERSION;
-#endif
 }
-#endif
 
 /*
  * Convert TLS method string to integer
  */
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 int tls_parse_method(str *m)
 {
 	cfg_option_t *opt;
@@ -97,18 +89,11 @@ int tls_parse_method(str *m)
 
 	return opt->val;
 }
-#endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 SSL_CTX *init_ssl_ctx(int method)
 {
 	SSL_CTX *ctx;
 
-	SSL_library_init();
-	OpenSSL_add_all_algorithms();
-	SSL_load_error_strings();
-
-	/* libssl >= 1.1.0 */
 	ctx = SSL_CTX_new(tls_methods[method - 1].TLSMethod);
 	if(ctx == NULL) {
 		unsigned long e = 0;
@@ -135,9 +120,7 @@ SSL_CTX *init_ssl_ctx(int method)
 	}
 	return ctx;
 }
-#endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 int load_certificates(SSL_CTX *ctx, str *cert, str *key)
 {
 	str cert_fixed = STR_NULL;
@@ -173,7 +156,6 @@ int load_certificates(SSL_CTX *ctx, str *cert, str *key)
 	}
 	return 0;
 }
-#endif
 
 /*
  * Get any leftover errors from OpenSSL and print them.
@@ -181,7 +163,6 @@ int load_certificates(SSL_CTX *ctx, str *cert, str *key)
  * This is useful to call before any SSL_* IO calls to make sure
  * we don't have any leftover errors from previous calls (OpenSSL docs).
  */
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 void cdp_openssl_clear_errors(void)
 {
 	int i;
@@ -191,9 +172,7 @@ void cdp_openssl_clear_errors(void)
 		LM_INFO("clearing leftover error before SSL_* calls: %s\n", err);
 	}
 }
-#endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 SSL *init_ssl_conn(int client_fd, SSL_CTX *ctx)
 {
 	X509 *cert = NULL;
@@ -251,9 +230,7 @@ cleanup:
 
 	return NULL;
 }
-#endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 void cleanup_ssl(SSL_CTX *tls_ctx, SSL *tls_conn)
 {
 	if(tls_conn) {
@@ -264,9 +241,7 @@ void cleanup_ssl(SSL_CTX *tls_ctx, SSL *tls_conn)
 		SSL_CTX_free(tls_ctx);
 	}
 }
-#endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 int to_ssl(SSL_CTX **tls_ctx_p, SSL **tls_conn_p, int tcp_sock, int method)
 {
 	*tls_ctx_p = init_ssl_ctx(method);
@@ -295,4 +270,3 @@ int to_ssl(SSL_CTX **tls_ctx_p, SSL **tls_conn_p, int tcp_sock, int method)
 	}
 	return 0;
 }
-#endif

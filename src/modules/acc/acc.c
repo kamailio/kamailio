@@ -34,6 +34,7 @@
 #include <time.h>
 
 #include "../../core/dprint.h"
+#include "../../core/globals.h"
 #include "../../core/error.h"
 #include "../../core/mem/mem.h"
 #include "../../core/usr_avp.h"
@@ -58,6 +59,7 @@ extern int acc_extra_nullable;
 
 static db_func_t acc_dbf;
 static db1_con_t *db_handle = 0;
+static str acc_db_url = STR_NULL;
 extern struct acc_extra *db_extra;
 
 /* arrays used to collect the values before being
@@ -304,6 +306,8 @@ int acc_is_db_ready(void)
 {
 	if(db_handle != 0)
 		return 1;
+	if(acc_db_connect_mode != 0 && acc_db_url.s != NULL && !_ksr_is_main)
+		return 1;
 
 	return 0;
 }
@@ -316,7 +320,7 @@ static db_val_t *db_vals = NULL;
 
 int acc_get_db_handlers(void **vf, void **vh)
 {
-	if(db_handle == 0)
+	if(db_handle == 0 && (acc_db_connect_mode == 0 || acc_db_connect() < 0))
 		return -1;
 	*vf = (void *)&acc_dbf;
 	*vh = (void *)db_handle;
@@ -385,6 +389,7 @@ int acc_db_init(const str *db_url)
 		LM_ERR("bind_db failed\n");
 		return -1;
 	}
+	acc_db_url = *db_url;
 
 	/* Check database capabilities */
 	if(!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
@@ -449,6 +454,23 @@ int acc_db_init_child(const str *db_url)
 }
 
 
+/* open the database connection on first use (db_connect_mode 1 or 2)
+ * returns 0 on success, -1 on error */
+int acc_db_connect(void)
+{
+	if(db_handle != 0)
+		return 0;
+	if(acc_db_url.s == NULL || _ksr_is_main)
+		return -1;
+	db_handle = acc_dbf.init(&acc_db_url);
+	if(db_handle == 0) {
+		LM_ERR("unable to connect to the database\n");
+		return -1;
+	}
+	return 0;
+}
+
+
 /* close a db connection */
 void acc_db_close(void)
 {
@@ -465,6 +487,9 @@ int acc_db_request(struct sip_msg *rq)
 	int o;
 	struct tm t;
 	double dtime;
+
+	if(db_handle == 0 && acc_db_connect_mode != 0 && acc_db_connect() < 0)
+		return -1;
 
 	/* formatted database columns */
 	m = core2strar(rq, val_arr, int_arr, type_arr);

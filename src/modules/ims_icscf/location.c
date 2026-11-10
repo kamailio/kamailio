@@ -72,7 +72,7 @@ int I_perform_location_information_request(
 
 	if(fixup_get_svalue(msg, (gparam_t *)route, &route_name) != 0) {
 		LM_ERR("no async route block for assign_server_unreg\n");
-		return -1;
+		return CSCF_RETURN_ERROR;
 	}
 
 	LM_DBG("Looking for route block [%.*s]\n", route_name.len, route_name.s);
@@ -80,20 +80,20 @@ int I_perform_location_information_request(
 	if(ri < 0) {
 		LM_ERR("unable to find route block [%.*s]\n", route_name.len,
 				route_name.s);
-		return -1;
+		return CSCF_RETURN_ERROR;
 	}
 	cfg_action = main_rt.rlist[ri];
 	if(cfg_action == NULL) {
 		LM_ERR("empty action lists in route block [%.*s]\n", route_name.len,
 				route_name.s);
-		return -1;
+		return CSCF_RETURN_ERROR;
 	}
 
 	LM_DBG("DBG:I_LIR: Starting ...\n");
 	/* check if we received what we should */
 	if(msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("ERR:I_LIR: The message is not a request\n");
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_ERROR;
 	}
 
 	/* check orig uri parameter in topmost Route */
@@ -114,7 +114,7 @@ int I_perform_location_information_request(
 			cscf_reply_transactional(msg, 400, MSG_400_NO_PUBLIC_FROM);
 		else
 			cscf_reply_transactional(msg, 400, MSG_400_NO_PUBLIC);
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 
 
@@ -124,13 +124,13 @@ int I_perform_location_information_request(
 		if(tmb.t_newtran(msg) < 0) {
 			LM_ERR("cannot create the transaction for UAR async\n");
 			cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
-			return CSCF_RETURN_BREAK;
+			return CSCF_RETURN_FALSE;
 		}
 		t = tmb.t_gett();
 		if(t == NULL || t == T_UNDEFINED) {
 			LM_ERR("cannot lookup the transaction\n");
 			cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
-			return CSCF_RETURN_BREAK;
+			return CSCF_RETURN_FALSE;
 		}
 	}
 
@@ -154,7 +154,7 @@ int I_perform_location_information_request(
 		free_saved_lir_transaction_data(saved_t);
 
 		cscf_reply_transactional(msg, 480, MSG_480_DIAMETER_ERROR);
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 
 	if(cxdx_send_lir(msg, public_identity, saved_t) != 0) {
@@ -167,7 +167,7 @@ int I_perform_location_information_request(
 			shm_free(
 					public_identity
 							.s); // shm_malloc in cscf_get_public_identity_from_requri
-		return CSCF_RETURN_BREAK;
+		return CSCF_RETURN_FALSE;
 	}
 	if(public_identity.s && !orig)
 		shm_free(

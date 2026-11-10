@@ -29,8 +29,7 @@
 
 #include "tls_rand.h"
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER < 0x030000000L && !defined(KSR_TLS_LIBSSL_COMPAT)
 
 #include "../../core/dprint.h"
 #include "../../core/locking.h"
@@ -354,4 +353,4 @@ const RAND_METHOD *RAND_ksr_kxlibssl_method(void)
 
 	return &_ksr_kxlibssl_method;
 }
-#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
+#endif /* OPENSSL_VERSION_NUMBER < 0x030000000L */

@@ -139,6 +139,7 @@ typedef struct tls_domain
 	int server_name_mode;
 	str server_id;
 	int verify_client;
+	int verify_server_name;
 	struct tls_domain *next;
 } tls_domain_t;
 

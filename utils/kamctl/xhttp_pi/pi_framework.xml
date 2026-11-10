@@ -410,9 +410,9 @@
 		<column><field>callee_route_set</field><type>DB1_STR</type></column>
 		<column><field>callee_sock</field><type>DB1_STR</type></column>
 	</db_table>
-	<!-- Declaration of dialog_vars table-->
-	<db_table id="dialog_vars">
-		<table_name>dialog_vars</table_name>
+	<!-- Declaration of ims_dialog_vars table-->
+	<db_table id="ims_dialog_vars">
+		<table_name>ims_dialog_vars</table_name>
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>hash_entry</field><type>DB1_INT</type></column>
@@ -479,7 +479,6 @@
 		<column><field>spi_uc</field><type>DB1_INT</type></column>
 		<column><field>spi_us</field><type>DB1_INT</type></column>
 		<column><field>t_security_type</field><type>DB1_INT</type></column>
-		<column><field>t_protocol</field><type>DB1_STR</type></column>
 		<column><field>t_mode</field><type>DB1_STR</type></column>
 		<column><field>t_ck</field><type>DB1_STR</type></column>
 		<column><field>t_ik</field><type>DB1_STR</type></column>
@@ -2811,10 +2810,10 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dialog_vars provisioning -->
-	<mod><mod_name>dialog_vars</mod_name>
+	<!-- ims_dialog_vars provisioning -->
+	<mod><mod_name>ims_dialog_vars</mod_name>
 		<cmd><cmd_name>show</cmd_name>
-			<db_table_id>dialog_vars</db_table_id>
+			<db_table_id>ims_dialog_vars</db_table_id>
 			<cmd_type>DB1_QUERY</cmd_type>
 			<query_cols>
 				<col><field>id</field><link_cmd>update</link_cmd></col>
@@ -2825,7 +2824,7 @@
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
-			<db_table_id>dialog_vars</db_table_id>
+			<db_table_id>ims_dialog_vars</db_table_id>
 			<cmd_type>DB1_INSERT</cmd_type>
 			<query_cols>
 				<col><field>hash_entry</field></col>
@@ -2835,7 +2834,7 @@
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
-			<db_table_id>dialog_vars</db_table_id>
+			<db_table_id>ims_dialog_vars</db_table_id>
 			<cmd_type>DB1_UPDATE</cmd_type>
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>
@@ -2848,7 +2847,7 @@
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
-			<db_table_id>dialog_vars</db_table_id>
+			<db_table_id>ims_dialog_vars</db_table_id>
 			<cmd_type>DB1_DELETE</cmd_type>
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>
@@ -3004,7 +3003,6 @@
 				<col><field>spi_uc</field></col>
 				<col><field>spi_us</field></col>
 				<col><field>t_security_type</field></col>
-				<col><field>t_protocol</field></col>
 				<col><field>t_mode</field></col>
 				<col><field>t_ck</field></col>
 				<col><field>t_ik</field></col>
@@ -3055,7 +3053,6 @@
 				<col><field>spi_uc</field></col>
 				<col><field>spi_us</field></col>
 				<col><field>t_security_type</field></col>
-				<col><field>t_protocol</field></col>
 				<col><field>t_mode</field></col>
 				<col><field>t_ck</field></col>
 				<col><field>t_ik</field></col>
@@ -3109,7 +3106,6 @@
 				<col><field>spi_uc</field></col>
 				<col><field>spi_us</field></col>
 				<col><field>t_security_type</field></col>
-				<col><field>t_protocol</field></col>
 				<col><field>t_mode</field></col>
 				<col><field>t_ck</field></col>
 				<col><field>t_ik</field></col>

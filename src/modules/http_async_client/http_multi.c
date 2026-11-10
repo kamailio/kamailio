@@ -48,6 +48,11 @@ int multi_timer_cb(CURLM *multi, long timeout_ms, struct http_m_global *g)
 	struct timeval timeout;
 	(void)multi; /* unused */
 
+	if(timeout_ms < 0) {
+		LM_DBG("multi_timer_cb: deleting timeout\n");
+		evtimer_del(g->timer_event);
+		return 0;
+	}
 	timeout.tv_sec = timeout_ms / 1000;
 	timeout.tv_usec = (timeout_ms % 1000) * 1000;
 	LM_DBG("multi_timer_cb: Setting timeout to %ld ms\n", timeout_ms);
@@ -155,13 +160,39 @@ void event_cb(int fd, short kind, void *userp)
 		}
 	}
 
+	/* the timer is owned by libcurl (multi_timer_cb): it may still be
+	 * needed for internal work, e.g. connection shutdowns, after the last
+	 * transfer is done */
 	check_multi_info(g);
-	if(g->still_running <= 0) {
-		LM_DBG("last transfer done, kill timeout\n");
-		if(evtimer_pending(g->timer_event, NULL)) {
-			evtimer_del(g->timer_event);
-		}
+}
+
+/* Called by libevent for a socket that libcurl reported for an easy handle
+ * without a cell: an internal handle, e.g. the one closing connections that
+ * left the pool */
+static void internal_event_cb(int fd, short kind, void *userp)
+{
+	struct http_m_global *g = (struct http_m_global *)userp;
+	CURLMcode rc;
+	char error[CURL_ERROR_SIZE];
+	int action = (kind & EV_READ ? CURL_CSELECT_IN : 0)
+				 | (kind & EV_WRITE ? CURL_CSELECT_OUT : 0);
+
+	LM_DBG("activity %d on internal socket %d\n", kind, fd);
+	rc = curl_multi_socket_action(g->multi, fd, action, &g->still_running);
+	if(check_mcode(rc, error) < 0) {
+		LM_ERR("curl_multi_socket_action error on internal socket %d: %s\n", fd,
+				error);
 	}
+	check_multi_info(g);
+}
+
+static void free_internal_sock(
+		struct http_m_global *g, curl_socket_t s, struct event *ev)
+{
+	LM_DBG("freeing event %p of internal socket %d\n", ev, s);
+	event_del(ev);
+	event_free(ev);
+	curl_multi_assign(g->multi, s, NULL);
 }
 
 /* CURLMOPT_SOCKETFUNCTION */
@@ -169,7 +200,10 @@ int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp)
 {
 	struct http_m_cell *cell;
 	struct http_m_global *g = (struct http_m_global *)cbp;
+	/* only sockets watched for internal handles get a socketp */
+	struct event *iev = (struct event *)sockp;
 	const char *whatstr[] = {"none", "IN", "OUT", "INOUT", "REMOVE"};
+	short kind;
 
 	cell = http_m_cell_lookup(e);
 
@@ -184,14 +218,40 @@ int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp)
 				cell->ev = NULL;
 				cell->evset = 0;
 			}
-		} else {
+		} else if(!iev) {
 			LM_DBG("REMOVE action without cell, handler timed out.\n");
 		}
+		if(iev)
+			free_internal_sock(g, s, iev);
 	} else {
 		if(!cell) {
-			LM_DBG("Adding data: %s\n", whatstr[what]);
-			addsock(s, e, what, g);
+			/* libcurl may report sockets of internal easy handles (e.g. a
+			 * connection being shut down after leaving the pool); they must
+			 * be watched as well, or they are never closed */
+			LM_DBG("watching internal socket %d: %s\n", s, whatstr[what]);
+			kind = (what & CURL_POLL_IN ? EV_READ : 0)
+				   | (what & CURL_POLL_OUT ? EV_WRITE : 0) | EV_PERSIST;
+			if(iev) {
+				event_del(iev);
+				if(event_assign(iev, g->evbase, s, kind, internal_event_cb, g)
+						< 0) {
+					event_free(iev);
+					iev = NULL;
+				}
+			} else {
+				iev = event_new(g->evbase, s, kind, internal_event_cb, g);
+			}
+			if(iev == NULL || event_add(iev, NULL) < 0) {
+				LM_ERR("cannot watch socket %d\n", s);
+				if(iev)
+					event_free(iev);
+				curl_multi_assign(g->multi, s, NULL);
+				return 0;
+			}
+			curl_multi_assign(g->multi, s, iev);
 		} else {
+			if(iev)
+				free_internal_sock(g, s, iev);
 			LM_DBG("Changing action from %s to %s\n", whatstr[cell->action],
 					whatstr[what]);
 			if(cell->action == CURL_POLL_IN && what == CURL_POLL_OUT) {
@@ -302,6 +362,7 @@ size_t write_cb(void *ptr, size_t size, size_t nmemb, void *data)
 		if(cell->reply->result == NULL) {
 			LM_ERR("Cannot allocate shm memory for reply's result\n");
 			shm_free(cell->reply);
+			cell->reply = NULL;
 			return -1;
 		}
 		memset(cell->reply->result, 0, sizeof(str));
@@ -309,6 +370,17 @@ size_t write_cb(void *ptr, size_t size, size_t nmemb, void *data)
 
 	old_len = cell->reply->result->len;
 	cell->reply->result->len += realsize;
+	if(cell->params.max_reply_size != 0
+			&& (unsigned int)cell->reply->result->len
+					   > cell->params.max_reply_size) {
+		LM_ERR("Reply size %d exceeds specified max_reply_size %u\n",
+				cell->reply->result->len, cell->params.max_reply_size);
+		shm_free(cell->reply->result->s);
+		shm_free(cell->reply->result);
+		shm_free(cell->reply);
+		cell->reply = NULL;
+		return -1;
+	}
 	cell->reply->result->s = (char *)shm_reallocxf(
 			cell->reply->result->s, cell->reply->result->len);
 	if(cell->reply->result->s == NULL) {
@@ -779,17 +851,4 @@ void setsock(struct http_m_cell *cell, curl_socket_t s, CURL *e, int act)
 	timeout.tv_usec = (cell->params.timeout % 1000) * 1000;
 
 	event_add(cell->ev, &timeout);
-}
-
-
-/* assign a socket to the multi handler */
-void addsock(curl_socket_t s, CURL *easy, int action, struct http_m_global *g)
-{
-	struct http_m_cell *cell;
-
-	cell = http_m_cell_lookup(easy);
-	if(!cell)
-		return;
-	setsock(cell, s, cell->easy, action);
-	curl_multi_assign(g->multi, s, cell);
 }

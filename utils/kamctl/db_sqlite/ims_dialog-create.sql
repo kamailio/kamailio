@@ -41,7 +41,7 @@ CREATE INDEX dialog_out_hash_idx ON dialog_out (hash_entry, hash_id);
 
 INSERT INTO version (table_name, table_version) values ('dialog_out','7');
 
-CREATE TABLE dialog_vars (
+CREATE TABLE ims_dialog_vars (
     id INTEGER PRIMARY KEY NOT NULL,
     hash_entry INTEGER NOT NULL,
     hash_id INTEGER NOT NULL,
@@ -49,6 +49,7 @@ CREATE TABLE dialog_vars (
     dialog_value VARCHAR(512) NOT NULL
 );
 
-CREATE INDEX dialog_vars_hash_idx ON dialog_vars (hash_entry, hash_id);
+CREATE INDEX ims_dialog_vars_hash_idx ON ims_dialog_vars (hash_entry, hash_id);
 
-INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
+INSERT INTO version (table_name, table_version) values ('ims_dialog_vars','7');
+

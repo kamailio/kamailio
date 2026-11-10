@@ -146,9 +146,15 @@ typedef enum request_method
 #define FL_MTU_FB_MASK (FL_MTU_TCP_FB | FL_MTU_TLS_FB | FL_MTU_SCTP_FB)
 
 
-/* sip parser mode flags (1<<n) */
+/* sip_parser_mode: 0 none, 1 strict lazy, 2 strict eager */
 #define KSR_SIP_PARSER_MODE_NONE 0
-#define KSR_SIP_PARSER_MODE_STRICT 1
+#define KSR_SIP_PARSER_MODE_STRICT_LAZY 1
+#define KSR_SIP_PARSER_MODE_STRICT_EAGER 2
+
+/* both strict modes reject bad headers and duplicate SIP quad fields */
+#define KSR_SIP_PARSER_MODE_IS_STRICT(mode)    \
+	((mode) == KSR_SIP_PARSER_MODE_STRICT_LAZY \
+			|| (mode) == KSR_SIP_PARSER_MODE_STRICT_EAGER)
 
 #define IFISMETHOD(methodname, firstchar)                                  \
 	if((*tmp == (firstchar) || *tmp == ((firstchar) | 32))                 \
@@ -346,6 +352,7 @@ typedef struct sip_msg
 	struct hdr_field *headers;	   /*!< All the parsed headers*/
 	struct hdr_field *last_header; /*!< Pointer to the last parsed header*/
 	hdr_flags_t parsed_flag;	   /*!< Already parsed header field types */
+	hdr_flags_t errored_hdrs; /*!< Header types that failed parse (skipped) */
 
 	/* Via, To, CSeq, Call-Id, From, end of header*/
 	/* pointers to the first occurrences of these headers;
@@ -443,6 +450,7 @@ typedef struct sip_msg
 	str set_global_address;
 	str set_global_port;
 	struct socket_info *force_send_socket; /*!< force sending on this socket */
+	send_socket_map_t force_send_socket_map; /*!< forced socket by transport */
 	str path_vec;
 	str instance;
 	unsigned int reg_id;
@@ -482,8 +490,8 @@ int parse_msg(
 int parse_headers(
 		struct sip_msg *const msg, const hdr_flags_t flags, const int next);
 
-char *get_hdr_field(
-		char *const buf, char *const end, struct hdr_field *const hdr);
+int get_hdr_field(char *const buf, char *const end, struct hdr_field *const hdr,
+		char **next);
 
 void free_sip_msg(struct sip_msg *const msg);
 
@@ -495,6 +503,10 @@ int check_transaction_quadruple(sip_msg_t *const msg);
 /*! \brief returns a pointer to the beginning of the msg's body
  */
 char *get_body(sip_msg_t *const msg);
+
+/*! \brief sets body to the msg's body, bounded by the received data
+ */
+int get_body_str(sip_msg_t *const msg, str *const body);
 
 /*! \brief If the new_uri is set, then reset it */
 void reset_new_uri(struct sip_msg *const msg);

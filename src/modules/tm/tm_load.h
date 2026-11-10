@@ -47,6 +47,8 @@
 
 typedef void (*t_on_route_f)(unsigned int);
 typedef int (*t_no_param_f)(struct sip_msg *);
+typedef int (*t_get_on_route_f)(void);
+typedef unsigned int (*t_get_on_branch_route_f)(void);
 
 struct tm_binds
 {
@@ -136,6 +138,10 @@ struct tm_binds
 	t_no_param_f t_reply_error;
 	tm_get_tb_f get_tb;
 	tm_set_tb_f set_tb;
+	t_get_on_route_f get_on_failure;
+	t_get_on_branch_route_f get_on_branch;
+	t_get_on_route_f get_on_reply;
+	t_get_on_route_f get_on_branch_failure;
 };
 
 typedef struct tm_binds tm_api_t;

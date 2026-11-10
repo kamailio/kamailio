@@ -119,6 +119,7 @@ tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, unsigned short port)
 	d->verify_depth = -1;
 	d->require_cert = -1;
 	d->verify_client = -1;
+	d->verify_server_name = -1;
 	return d;
 }
 
@@ -221,7 +222,8 @@ void tls_destroy_cfg(void)
  */
 char *tls_domain_str(tls_domain_t *d)
 {
-	static char buf[1024];
+	/* per thread: mode 2 completes the TLS init on tcp reactor pool threads */
+	static _Thread_local char buf[1024];
 	char *p;
 
 	buf[0] = '\0';
@@ -310,7 +312,11 @@ static int ksr_tls_fill_missing(tls_domain_t *d, tls_domain_t *parent)
 			return -1;
 		d->pkey_file.len = parent->pkey_file.len;
 	}
-	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file.s);
+	LM_DBG("%s: private_key='%.*s'\n", tls_domain_str(d),
+			d->pkey_file.s ? tls_pkcs11_uri_loglen(
+									 d->pkey_file.s, strlen(d->pkey_file.s))
+						   : 0,
+			ZSW(d->pkey_file.s));
 
 	if(d->verify_cert == -1)
 		d->verify_cert = parent->verify_cert;
@@ -324,6 +330,11 @@ static int ksr_tls_fill_missing(tls_domain_t *d, tls_domain_t *parent)
 	if(d->verify_client == -1)
 		d->verify_client = parent->verify_client;
 	LOG(L_INFO, "%s: verify_client=%d\n", tls_domain_str(d), d->verify_client);
+
+	if(d->verify_server_name == -1)
+		d->verify_server_name = parent->verify_server_name;
+	LOG(L_INFO, "%s: verify_server_name=%d\n", tls_domain_str(d),
+			d->verify_server_name);
 
 	return 0;
 }
@@ -886,6 +897,18 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 	if(ksr_tls_fill_missing(d, def) < 0)
 		return -1;
 
+	if(d->verify_server_name > 0) {
+		if(d->type & TLS_DOMAIN_SRV) {
+			LM_WARN("%s: verify_server_name is only used by client profiles"
+					" - ignored\n",
+					tls_domain_str(d));
+		} else if(d->verify_cert <= 0) {
+			LM_WARN("%s: verify_server_name is used only with"
+					" verify_certificate enabled - ignored\n",
+					tls_domain_str(d));
+		}
+	}
+
 	if(d->type & TLS_DOMAIN_ANY) {
 		if(d->server_name.s == NULL || d->server_name.len < 0) {
 			LM_ERR("%s: tls domain for any address but no server name\n",
@@ -996,12 +1019,12 @@ static int load_private_key(tls_domain_t *d)
 			} else {
 				pkcs11_context_t *ctxd;
 				ctxd = pkg_malloc(sizeof(pkcs11_context_t));
-				memset(ctxd, 0, sizeof(pkcs11_context_t));
 				if(ctxd == NULL) {
 					ERR("%s: Cannot allocate memory for PKCS#11 context\n",
 							tls_domain_str(d));
 					return -1;
 				}
+				memset(ctxd, 0, sizeof(pkcs11_context_t));
 				ctxd->token_id = -1;
 				strncpy(ctxd->config_key, d->pkey_file.s,
 						sizeof(ctxd->config_key) - 1);
@@ -1038,7 +1061,8 @@ static int load_private_key(tls_domain_t *d)
 		}
 	} while(0);
 
-	DBG("%s: Key '%s' successfully loaded\n", tls_domain_str(d),
+	DBG("%s: Key '%.*s' successfully loaded\n", tls_domain_str(d),
+			tls_pkcs11_uri_loglen(d->pkey_file.s, d->pkey_file.len),
 			d->pkey_file.s);
 	return 0;
 }
@@ -1388,19 +1412,22 @@ static int load_pkcs11_private_key(tls_domain_t *d)
 	char temp_name[512];
 	if(d->pkey_file.len > sizeof(temp_name) - 1) {
 		ERR("%s: PKCS#11 key label too long '%.*s'\n", tls_domain_str(d),
-				d->pkey_file.len, d->pkey_file.s);
+				tls_pkcs11_uri_loglen(d->pkey_file.s, d->pkey_file.len),
+				d->pkey_file.s);
 		return -1;
 	}
 
 	memcpy(temp_name, d->pkey_file.s, d->pkey_file.len);
 	temp_name[d->pkey_file.len] = '\0';
 
-	LM_WARN("%s: Loading PKCS#11 key label '%s' for domain %p\n",
-			tls_domain_str(d), temp_name, d);
+	LM_INFO("%s: Loading PKCS#11 key label '%.*s' for domain %p\n",
+			tls_domain_str(d),
+			tls_pkcs11_uri_loglen(temp_name, d->pkey_file.len), temp_name, d);
 	ret_pwd = tls_pkcs11_set_key(d->ctx[0], temp_name, 1);
 
 	if(ret_pwd) {
-		ERR("%s: Unable to load engine key label '%s'\n", tls_domain_str(d),
+		ERR("%s: Unable to load engine key label '%.*s'\n", tls_domain_str(d),
+				tls_pkcs11_uri_loglen(d->pkey_file.s, d->pkey_file.len),
 				d->pkey_file.s);
 		TLS_ERR("load_private_key:");
 		return -1;

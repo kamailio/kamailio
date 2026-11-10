@@ -199,8 +199,8 @@
  * only.
  */
 void SHA512_Last(SHA512_CTX *);
-void SHA256_Transform(SHA256_CTX *, const sha2_word32 *);
-void SHA512_Transform(SHA512_CTX *, const sha2_word64 *);
+static void SHA256_Transform(SHA256_CTX *, const sha2_word32 *);
+static void SHA512_Transform(SHA512_CTX *, const sha2_word64 *);
 
 
 /*** SHA-XYZ INITIAL HASH VALUES AND CONSTANTS ************************/
@@ -328,7 +328,7 @@ void sr_SHA256_Init(SHA256_CTX *context)
 	(h) = T1 + Sigma0_256(a) + Maj((a), (b), (c));             \
 	j++
 
-void SHA256_Transform(SHA256_CTX *context, const sha2_word32 *data)
+static void SHA256_Transform(SHA256_CTX *context, const sha2_word32 *data)
 {
 	sha2_word32 a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word32 T1, *W256;
@@ -387,7 +387,7 @@ void SHA256_Transform(SHA256_CTX *context, const sha2_word32 *data)
 
 #else /* SHA2_UNROLL_TRANSFORM */
 
-void SHA256_Transform(SHA256_CTX *context, const sha2_word32 *data)
+static void SHA256_Transform(SHA256_CTX *context, const sha2_word32 *data)
 {
 	sha2_word32 a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word32 T1, T2, *W256;
@@ -677,7 +677,7 @@ void sr_SHA512_256_Init(SHA512_CTX *context)
 	(h) = T1 + Sigma0_512(a) + Maj((a), (b), (c));             \
 	j++
 
-void SHA512_Transform(SHA512_CTX *context, const sha2_word64 *data)
+static void SHA512_Transform(SHA512_CTX *context, const sha2_word64 *data)
 {
 	sha2_word64 a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word64 T1, *W512 = (sha2_word64 *)context->buffer;
@@ -733,7 +733,7 @@ void SHA512_Transform(SHA512_CTX *context, const sha2_word64 *data)
 
 #else /* SHA2_UNROLL_TRANSFORM */
 
-void SHA512_Transform(SHA512_CTX *context, const sha2_word64 *data)
+static void SHA512_Transform(SHA512_CTX *context, const sha2_word64 *data)
 {
 	sha2_word64 a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word64 T1, T2, *W512 = (sha2_word64 *)context->buffer;

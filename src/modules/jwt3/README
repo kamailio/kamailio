@@ -33,6 +33,8 @@ Daniel-Constantin Mierla
               3.2. jwks_cache_ttl (int)
               3.3. jwks_miss_window (int)
               3.4. jwks_max_misses (int)
+              3.5. jwks_fetch_timeout (int)
+              3.6. jwks_connect_timeout (int)
 
         4. Functions
 
@@ -50,10 +52,12 @@ Daniel-Constantin Mierla
    1.2. Set jwks_cache_ttl parameter
    1.3. Set jwks_miss_window parameter
    1.4. Set jwks_max_misses parameter
-   1.5. jwt3_generate usage
-   1.6. jwt3_verify usage
-   1.7. jwt3_verify_key usage
-   1.8. $jwt3(name) usage
+   1.5. Set jwks_fetch_timeout parameter
+   1.6. Set jwks_connect_timeout parameter
+   1.7. jwt3_generate usage
+   1.8. jwt3_verify usage
+   1.9. jwt3_verify_key usage
+   1.10. $jwt3(name) usage
 
 Chapter 1. Admin Guide
 
@@ -71,6 +75,8 @@ Chapter 1. Admin Guide
         3.2. jwks_cache_ttl (int)
         3.3. jwks_miss_window (int)
         3.4. jwks_max_misses (int)
+        3.5. jwks_fetch_timeout (int)
+        3.6. jwks_connect_timeout (int)
 
    4. Functions
 
@@ -128,6 +134,8 @@ Chapter 1. Admin Guide
    3.2. jwks_cache_ttl (int)
    3.3. jwks_miss_window (int)
    3.4. jwks_max_misses (int)
+   3.5. jwks_fetch_timeout (int)
+   3.6. jwks_connect_timeout (int)
 
 3.1. leeway_sec (int)
 
@@ -188,6 +196,32 @@ modparam("jwt3", "jwks_miss_window", 120)
 modparam("jwt3", "jwks_max_misses", 3)
 ...
 
+3.5. jwks_fetch_timeout (int)
+
+   Maximum time in seconds allowed for the whole download of a remote
+   JWKS, including connection, redirects and transfer. The fetch is
+   blocking, so the SIP worker process handling the request waits for up
+   to this time.
+
+   Default value is 10. Must be greater than 0.
+
+   Example 1.5. Set jwks_fetch_timeout parameter
+...
+modparam("jwt3", "jwks_fetch_timeout", 5)
+...
+
+3.6. jwks_connect_timeout (int)
+
+   Maximum time in seconds allowed to establish the connection to the
+   remote JWKS server. It should not be greater than jwks_fetch_timeout.
+
+   Default value is 3. Must be greater than 0.
+
+   Example 1.6. Set jwks_connect_timeout parameter
+...
+modparam("jwt3", "jwks_connect_timeout", 2)
+...
+
 4. Functions
 
    4.1. jwt3_generate(prvkey, alg, claims[, headers])
@@ -221,7 +255,7 @@ modparam("jwt3", "jwks_max_misses", 3)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. jwt3_generate usage
+   Example 1.7. jwt3_generate usage
 ...
   jwt3_generate("/path/to/prvkey.json", "ES256",
         "caller='$fU';callee='$tU';callid='$ci';index=100");
@@ -248,7 +282,7 @@ modparam("jwt3", "jwks_max_misses", 3)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. jwt3_verify usage
+   Example 1.8. jwt3_verify usage
 ...
   if(!jwt3_verify("/path/to/pubkey.json", "ES256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
@@ -276,7 +310,7 @@ modparam("jwt3", "jwks_max_misses", 3)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. jwt3_verify_key usage
+   Example 1.9. jwt3_verify_key usage
 ...
   if(!jwt3_verify_key("...", "RS256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
@@ -304,7 +338,7 @@ modparam("jwt3", "jwks_max_misses", 3)
      * val - the value of JWT after a successful jwt3_generate().
      * status - the status of verification after a failed jwt3_verify().
 
-   Example 1.8. $jwt3(name) usage
+   Example 1.10. $jwt3(name) usage
 ...
   jwt3_generate("/path/to/prvkey.pem", "RS256",
         "caller='$fU';callee='$tU';callid='$ci';index=100");

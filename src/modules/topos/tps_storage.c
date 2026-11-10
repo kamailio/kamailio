@@ -451,26 +451,28 @@ int tps_storage_fill_contact(
 	dir: TPS_DIR_DOWNSTREAM or TPS_DIR_UPSTREAM
 	return: the xavu or NULL if not found
 
-	TODO: Who is responsible to free the xavu?
+	Note: contact_mode=3 maps A/B opposite to contact_mode=2:
+	- mode 2: a_contact = downstream, b_contact = upstream
+	- mode 3: a_contact_host = upstream, b_contact_host = downstream
+	This matches the internal a/b uuid side (upstream=a, downstream=b).
+	Do not change without a compatibility plan; see GH #4725.
 */
 static sr_xavp_t *get_xavu_host(int dir)
 {
-	/* Downstream should be B side, upstream should be A side
-	otherwise the config related params are used in reversed for some reason */
 	sr_xavp_t *vavu;
 	str *field;
 
 	if(dir == TPS_DIR_DOWNSTREAM) {
-		field = &_tps_xavu_field_bcontact_host;
-	} else {
 		field = &_tps_xavu_field_acontact_host;
+	} else {
+		field = &_tps_xavu_field_bcontact_host;
 	}
 
 	vavu = xavu_get_child_with_sval(&_tps_xavu_cfg, field);
 	if(vavu == NULL || vavu->val.v.s.len <= 0) {
 		LM_ERR("could not evaluate %s_contact_host xavu. Make sure it has a "
 			   "non-empty value or it is set in the related routes.\n",
-				(dir == TPS_DIR_DOWNSTREAM) ? "b" : "a");
+				(dir == TPS_DIR_DOWNSTREAM) ? "a" : "b");
 		return NULL;
 	}
 	return vavu;
@@ -764,6 +766,10 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 		if(td->as_contact.len <= 0 && td->bs_contact.len <= 0) {
 			LM_WARN("no local address - do record routing for all initial "
 					"requests\n");
+		} else if(td->as_contact.len <= 0 || td->bs_contact.len <= 0) {
+			LM_DBG("one local contact missing (a: %d b: %d) - dialog record"
+				   " stored with an empty uuid on that side\n",
+					td->as_contact.len, td->bs_contact.len);
 		}
 		ret = _tps_storage_api.insert_dialog(td);
 		if(ret < 0)

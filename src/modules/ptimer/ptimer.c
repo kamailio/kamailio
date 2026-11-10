@@ -437,6 +437,8 @@ static int sync_timer(pt_timer_t *timer, unsigned int worker,
 	}
 	current_timer = timer;
 	current_worker = &current_timer->workers[worker];
+	/* also set here: a paused timer can be resumed straight into loop */
+	iscaled = time_to_ns(current_timer->ival, current_timer->iprec);
 	set_route_type(REQUEST_ROUTE);
 	keng = sr_kemi_eng_get();
 	if(keng == NULL) {
@@ -617,6 +619,8 @@ static int synced_slice_timer(pt_timer_t *timer, unsigned int worker,
 	}
 	current_timer = timer;
 	current_worker = &current_timer->workers[worker];
+	/* also set here: a paused timer can be resumed straight into loop */
+	iscaled = time_to_ns(current_timer->ival, current_timer->iprec);
 	set_route_type(REQUEST_ROUTE);
 	keng = sr_kemi_eng_get();
 	if(keng == NULL) {

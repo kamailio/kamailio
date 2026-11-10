@@ -514,6 +514,27 @@ static inline int is_impu_registered(udomain_t *_d, str *public_identity)
 	return ret;
 }
 
+/*! Call-ID of a binding restored from an HSS that did not keep the REGISTER's
+ * own (restore_ucontact()) */
+static str restoration_callid = str_init("scscf-restoration");
+
+/*!
+ * A binding restore_ucontact() made without the REGISTER's Call-ID, which a
+ * lookup by the UE's own Call-ID misses when usrloc matches on it
+ * (matching_mode CONTACT_CALLID).
+ * @returns 0 and the contact (to release) if found, 1 otherwise
+ */
+static int get_restored_ucontact(str *uri, str *path, struct ucontact **c)
+{
+	if(ul.get_ucontact(uri, &restoration_callid, path, 0, c) != 0)
+		return 1;
+	if(!str_strcmp(&(*c)->callid, &restoration_callid))
+		return 0;
+	ul.release_ucontact(*c);
+	*c = NULL;
+	return 1;
+}
+
 /**
  * update the contacts for a public identity. Make sure you have the lock on the domain before calling this
  * returns 0 on success, -1 on failure
@@ -578,6 +599,9 @@ static inline int update_contacts_helper(struct sip_msg *msg,
 						//ul.lock_contact_slot(&chi->uri);
 						result = ul.get_ucontact(&chi->uri, ci->callid,
 								ci->path, ci->cseq, &ucontact);
+						if(result != 0)
+							result = get_restored_ucontact(
+									&chi->uri, ci->path, &ucontact);
 						if(result != 0) { //get_contact returns with lock
 							LM_DBG("inserting new contact\n");
 							if(ul.insert_ucontact(
@@ -1243,33 +1267,161 @@ done:
 	return 1;
 }
 
-static int update_contacts_sar_unregistered_user(udomain_t *_d,
-		ims_subscription **s, str *ccf1, str *ccf2, str *ecf1, str *ecf2)
+/*!
+ * TS 23.380 4.6.2 restoration information, the other half: give the restored
+ * Contact and its Path a binding in usrloc the way a REGISTER would, so a
+ * terminating request finds someone to deliver to instead of falling back to
+ * unregistered-service handling.
+ *
+ * The Contact is the header field value backed up at REGISTER, parameters
+ * included (TS 29.229 6.3.48), so feature tags, q, methods and the expires
+ * the REGISTER asked for all come back with it - see
+ * build_restoration_contact(). The expiry is counted from now, as the time of
+ * that REGISTER was not backed up: the restored binding can outlive the UE's
+ * by up to one registration period, never the other way round, so the UE's
+ * own re-REGISTER always arrives before usrloc would expire it and have the
+ * user de-registered at the HSS.
+ *
+ * CSeq was not backed up and the Call-ID may not have been (both optional in
+ * Restoration-Info); a missing Call-ID is replaced with restoration_callid,
+ * which update_contacts_helper() knows to supersede with the UE's own.
+ *
+ * A binding the S-CSCF still holds is the UE's, and newer than the backup: it
+ * is only linked to impu_rec, never overwritten. One that has lapsed is
+ * refreshed from the backup.
+ * @returns 0 on success, -1 on error
+ */
+static int restore_ucontact(
+		struct sip_msg *_m, impurecord_t *impu_rec, restoration_info_t *ri)
+{
+	static str no_ua = str_init("n/a");
+	ucontact_info_t ci;
+	struct ucontact *ucontact = NULL;
+	contact_t *c = NULL;
+	str value = ri->contact;
+	int sl, sos, ret = -1;
+
+	if(parse_contacts(&value, &c) < 0 || !c || c->uri.len < 3) {
+		LM_ERR("invalid restored contact <%.*s>\n", ri->contact.len,
+				ri->contact.s);
+		goto done;
+	}
+
+	memset(&ci, 0, sizeof(ucontact_info_t));
+	ci.callid = ri->callid.len ? &ri->callid : &restoration_callid;
+	ci.cseq = 0;
+	if(calc_contact_q(c->q, &ci.q) < 0) {
+		LM_ERR("invalid q in restored contact <%.*s>\n", c->uri.len, c->uri.s);
+		goto done;
+	}
+	sos = cscf_get_sos_uri_param(c->uri);
+	ci.expires = calc_contact_expires(c, -1, sos > 0 ? sos : 0);
+	ci.methods = ALL_METHODS;
+	if(c->methods && parse_methods(&c->methods->body, &ci.methods) < 0) {
+		LM_ERR("invalid methods in restored contact <%.*s>\n", c->uri.len,
+				c->uri.s);
+		goto done;
+	}
+	if(c->received)
+		ci.received = c->received->body;
+	ci.params = c->params;
+	ci.user_agent = &no_ua;
+	ci.sock = _m ? _m->rcv.bind_address : 0;
+	ci.path = &ri->path;
+
+	if(ul.get_ucontact(&c->uri, ci.callid, ci.path, ci.cseq, &ucontact) != 0) {
+		LM_DBG("restoring contact <%.*s> for IMPU <%.*s>\n", c->uri.len,
+				c->uri.s, impu_rec->public_identity.len,
+				impu_rec->public_identity.s);
+		if(ul.insert_ucontact(impu_rec, &c->uri, &ci, &ucontact) != 0) {
+			LM_ERR("Error restoring contact <%.*s>\n", c->uri.len, c->uri.s);
+			goto done;
+		}
+		ret = 0;
+		goto done;
+	}
+
+	sl = ucontact->sl;
+	ul.lock_contact_slot_i(sl);
+	get_act_time();
+	if(VALID_CONTACT(ucontact, act_time)) {
+		LM_DBG("contact <%.*s> still bound - linking it to IMPU <%.*s> "
+			   "without touching it\n",
+				c->uri.len, c->uri.s, impu_rec->public_identity.len,
+				impu_rec->public_identity.s);
+		ret = ul.link_contact_to_impu(impu_rec, ucontact, 1) == 0 ? 0 : -1;
+	} else {
+		LM_DBG("refreshing lapsed contact <%.*s> from restoration info\n",
+				c->uri.len, c->uri.s);
+		ucontact->state = CONTACT_VALID;
+		ret = ul.update_ucontact(impu_rec, ucontact, &ci) == 0 ? 0 : -1;
+	}
+	if(ret != 0)
+		LM_ERR("Error restoring contact <%.*s>\n", c->uri.len, c->uri.s);
+	ul.unlock_contact_slot_i(sl);
+	ul.release_ucontact(ucontact);
+
+done:
+	if(c)
+		free_contacts(&c);
+	return ret;
+}
+
+/*!
+ * Store the profile a script-sent SAR (assign_server()) downloaded, for every
+ * IMPU in it.
+ *
+ * Restoration information comes back only for an identity the HSS holds as
+ * registered (TS 29.228 6.1.2.1), which TS 23.380 4.3.2/4.4.2 have the S-CSCF
+ * serve as registered, whichever type asked: the IMPU becomes
+ * IMPU_REGISTERED and the backed-up contact is bound to it. Without it:
+ *  - UNREGISTERED_USER: IMPU_UNREGISTERED, as the HSS now has it.
+ *  - NO_ASSIGNMENT: the HSS changed nothing, so neither does this. An IMPU
+ *    already in usrloc keeps its state and bindings and only has its profile
+ *    refreshed; one that is not is stored IMPU_UNREGISTERED - which is also
+ *    what the usrloc timer makes of any record without a valid contact.
+ */
+static int update_contacts_sar_script(struct sip_msg *msg, udomain_t *_d,
+		int assignment_type, ims_subscription **s, str *ccf1, str *ccf2,
+		str *ecf1, str *ecf2, restoration_info_t *ri)
 {
 	int i, j;
 	impurecord_t *impu_rec = NULL;
 	ims_public_identity *pi = NULL;
-	int reg_state = IMS_USER_UNREGISTERED;
+	int restore = ri && ri->contact.len && ri->path.len;
+	int reg_state;
 
-	LM_DBG("updating contacts for UNREGISTERED_USER state\n");
+	LM_DBG("updating contacts for %s%s\n",
+			assignment_type == AVP_IMS_SAR_NO_ASSIGNMENT ? "NO_ASSIGNMENT"
+														 : "UNREGISTERED_USER",
+			restore ? " with restoration information" : "");
 	for(i = 0; i < (*s)->service_profiles_cnt; i++)
 		for(j = 0; j < (*s)->service_profiles[i].public_identities_cnt; j++) {
 			pi = &((*s)->service_profiles[i].public_identities[j]);
 			ul.lock_udomain(_d, &pi->public_identity);
-			if(ul.update_impurecord(_d, &pi->public_identity, 0, reg_state,
-					   -1 /*do not change send sar on delete */, pi->barring, 0,
-					   s, ccf1, ccf2, ecf1, ecf2, &impu_rec)
+			if(ul.get_impurecord(_d, &pi->public_identity, &impu_rec) != 0)
+				impu_rec = NULL;
+			if(restore)
+				reg_state = IMPU_REGISTERED;
+			else if(assignment_type == AVP_IMS_SAR_NO_ASSIGNMENT && impu_rec)
+				reg_state = impu_rec->reg_state;
+			else
+				reg_state = IMPU_UNREGISTERED;
+			if(ul.update_impurecord(_d, &pi->public_identity, impu_rec,
+					   reg_state, -1 /*do not change send sar on delete */,
+					   pi->barring, 0, s, ccf1, ccf2, ecf1, ecf2, &impu_rec)
 					!= 0) {
 				LM_ERR("Unable to update impurecord for <%.*s>\n",
 						STR_FMT(&pi->public_identity));
 				ul.unlock_udomain(_d, &pi->public_identity);
 				return -1;
 			}
+			if(restore && restore_ucontact(msg, impu_rec, ri) != 0) {
+				ul.unlock_udomain(_d, &pi->public_identity);
+				return -1;
+			}
 			ul.unlock_udomain(_d, &pi->public_identity);
 		}
-	/* if we were successful up to this point, then we need to copy the contacts
-	 * from main impu record (asserted IMPU) into the register response
-	 */
 	return 1;
 }
 
@@ -1292,7 +1444,8 @@ static int update_contacts_sar_unregistered_user(udomain_t *_d,
 
 int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 		int assignment_type, ims_subscription **s, str *ccf1, str *ccf2,
-		str *ecf1, str *ecf2, contact_for_header_t **contact_header)
+		str *ecf1, str *ecf2, contact_for_header_t **contact_header,
+		restoration_info_t *ri)
 {
 	int expires_hdr = -1; //by default registration doesn't expire
 	int ret = -1;
@@ -1319,8 +1472,9 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 					contact_header, expires_hdr);
 			break;
 		case AVP_IMS_SAR_UNREGISTERED_USER:
-			ret = update_contacts_sar_unregistered_user(
-					_d, s, ccf1, ccf2, ecf1, ecf2);
+		case AVP_IMS_SAR_NO_ASSIGNMENT:
+			ret = update_contacts_sar_script(
+					msg, _d, assignment_type, s, ccf1, ccf2, ecf1, ecf2, ri);
 			break;
 		default:
 			LM_ERR("unimplemented assignment_type[%d] when trying to update "
@@ -1333,8 +1487,30 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 int assign_server_unreg(
 		struct sip_msg *_m, char *str1, str *direction, char *route)
 {
+	return assign_server_type(
+			_m, str1, direction, route, AVP_IMS_SAR_UNREGISTERED_USER);
+}
+
+/*!
+ * A SAR on behalf of a request other than REGISTER, resumed in the async route
+ * with $avp(saa_return_code) set. Only the types that download a profile
+ * without the S-CSCF owning any binding change are accepted:
+ *  - UNREGISTERED_USER: the served user is unregistered here, and the HSS is
+ *    told so (TS 29.228 6.1.2.1). The profile is stored IMPU_UNREGISTERED.
+ *  - NO_ASSIGNMENT: the profile is fetched and nothing changes at the HSS -
+ *    the HSS refuses it with DIAMETER_UNABLE_TO_COMPLY if another S-CSCF is
+ *    assigned (TS 23.380 4.4.2), which is how an S-CSCF that lost its data
+ *    restores it for an originating request.
+ * Either answer may carry restoration information, for a user the HSS holds
+ * as registered: the profile is then stored IMPU_REGISTERED with the backed-up
+ * binding (update_contacts_sar_script()).
+ * REGISTRATION and RE_REGISTRATION are save()'s, and the de-registration types
+ * have to move usrloc with them, which a script-initiated SAR does not do.
+ */
+int assign_server_type(struct sip_msg *_m, char *str1, str *direction,
+		char *route, int assignment_type)
+{
 	str private_identity = {0, 0}, public_identity = {0, 0};
-	int assignment_type = AVP_IMS_SAR_NO_ASSIGNMENT;
 	int data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE;
 	int require_user_data = 1;
 	rerrno = R_FINE;
@@ -1343,11 +1519,20 @@ int assign_server_unreg(
 
 	saved_transaction_t *saved_t;
 	cfg_action_t *cfg_action;
+	enum cscf_dialog_direction dir = CSCF_MOBILE_UNKNOWN;
+	int ret;
 
 	udomain_t *_d = (udomain_t *)str1;
 
+	if(assignment_type != AVP_IMS_SAR_UNREGISTERED_USER
+			&& assignment_type != AVP_IMS_SAR_NO_ASSIGNMENT) {
+		LM_ERR("assignment type %d cannot be sent from the script\n",
+				assignment_type);
+		return -1;
+	}
+
 	if(fixup_get_svalue(_m, (gparam_t *)route, &route_name) != 0) {
-		LM_ERR("no async route block for assign_server_unreg\n");
+		LM_ERR("no async route block for assign_server\n");
 		return -1;
 	}
 
@@ -1365,10 +1550,10 @@ int assign_server_unreg(
 		return -1;
 	}
 
-	LM_DBG("Assigning unregistered user for direction [%.*s]\n", direction->len,
-			direction->s);
+	LM_DBG("Assigning server (type %d) for direction [%.*s]\n", assignment_type,
+			direction->len, direction->s);
 
-	enum cscf_dialog_direction dir = cscf_get_dialog_direction(direction->s);
+	dir = cscf_get_dialog_direction(direction->s);
 	switch(dir) {
 		case CSCF_MOBILE_ORIGINATING:
 			public_identity = cscf_get_asserted_identity(_m, 0);
@@ -1389,7 +1574,6 @@ int assign_server_unreg(
 		goto error;
 	}
 
-	assignment_type = AVP_IMS_SAR_UNREGISTERED_USER;
 	data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE; //TODO: check this
 
 
@@ -1421,6 +1605,7 @@ int assign_server_unreg(
 	saved_t->expires = 1; //not a dereg as this is server_assign_unreg
 	saved_t->require_user_data = require_user_data;
 	saved_t->sar_assignment_type = assignment_type;
+	saved_t->script_assignment = 1;
 	saved_t->domain = (udomain_t *)_d;
 
 	saved_t->contact_header = 0;
@@ -1447,18 +1632,21 @@ int assign_server_unreg(
 		goto error;
 	}
 
+	ret = CSCF_RETURN_BREAK;
+	goto done;
+
+error:
+	update_stat(rejected_registrations, 1);
+	ret = CSCF_RETURN_BREAK;
+	if((is_route_type(REQUEST_ROUTE)) && (reg_send_reply(_m, 0) < 0))
+		ret = CSCF_RETURN_ERROR;
+
+done:
 	if(public_identity.s && dir == CSCF_MOBILE_TERMINATING) {
 		// shm_malloc in cscf_get_public_identity_from_requri
 		shm_free(public_identity.s);
 	}
-	return CSCF_RETURN_BREAK;
-
-
-error:
-	update_stat(rejected_registrations, 1);
-	if((is_route_type(REQUEST_ROUTE)) && (reg_send_reply(_m, 0) < 0))
-		return CSCF_RETURN_ERROR;
-	return CSCF_RETURN_BREAK;
+	return ret;
 }
 
 /*!\brief
@@ -1595,7 +1783,7 @@ int save(struct sip_msg *msg, char *str1, char *route, int _cflags)
 			LM_DBG("need to unregister contacts\n");
 			//lets update the contacts - we need to know if all were deleted or not for the public identity
 			int res = update_contacts(msg, _d, &public_identity,
-					sar_assignment_type, 0, 0, 0, 0, 0, &contact_header);
+					sar_assignment_type, 0, 0, 0, 0, 0, &contact_header, 0);
 			if(res <= 0) {
 				LM_DBG("Error processing REGISTER for de-registration\n");
 				free_contact_buf(contact_header);

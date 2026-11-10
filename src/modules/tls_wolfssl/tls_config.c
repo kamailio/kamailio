@@ -175,7 +175,8 @@ static cfg_option_t options[] = {
 		{"server_id", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 		{"verify_client", .param = verify_client_params,
 				.f = cfg_parse_enum_opt},
-		{"ca_path", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM}, {0}};
+		{"ca_path", .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+		{"verify_server_name", .f = cfg_parse_bool_opt}, {0}};
 
 
 static void update_opt_variables(void)
@@ -204,6 +205,7 @@ static void update_opt_variables(void)
 		verify_client_params[i].param = &_ksr_tls_domain->verify_client;
 	}
 	options[19].param = &_ksr_tls_domain->ca_path;
+	options[20].param = &_ksr_tls_domain->verify_server_name;
 }
 
 
@@ -404,6 +406,9 @@ tls_domains_cfg_t *tls_load_config(str *filename)
 	in_fd = out_fd = filename_is_directory = 0;
 	file_path = (char *)0;
 
+	/* the domain from a previous load can belong to a configuration that
+	 * was freed in the meantime (failed load, fixup or socket check) */
+	_ksr_tls_domain = NULL;
 	if((_ksr_tls_cfg = tls_new_cfg()) == NULL)
 		goto error;
 
@@ -482,6 +487,7 @@ tls_domains_cfg_t *tls_load_config(str *filename)
 	cfg_section_parser(parser, ksr_tls_parse_domain, NULL);
 	if(sr_cfg_parse(parser))
 		goto error;
+	_ksr_tls_domain = NULL;
 	cfg_parser_close(parser);
 	if(file_path)
 		pkg_free(file_path);
@@ -498,6 +504,7 @@ error:
 		pkg_free(file_path);
 	if(parser)
 		cfg_parser_close(parser);
+	_ksr_tls_domain = NULL;
 	if(_ksr_tls_cfg) {
 		tls_free_cfg(_ksr_tls_cfg);
 		_ksr_tls_cfg = NULL;

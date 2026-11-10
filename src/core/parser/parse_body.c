@@ -35,6 +35,7 @@
 #include "parse_param.h"
 #include "keys.h"
 #include "parse_body.h"
+#include "parse_bytes.h"
 
 /*! \brief returns the value of boundary parameter from the Content-Type HF */
 static inline int get_boundary_param(struct sip_msg *msg, str *boundary)
@@ -151,19 +152,6 @@ error:
 }
 
 
-inline static unsigned int body_read_u32le(const char *val)
-{
-	return (unsigned int)(unsigned char)val[0]
-		   | ((unsigned int)(unsigned char)val[1] << 8)
-		   | ((unsigned int)(unsigned char)val[2] << 16)
-		   | ((unsigned int)(unsigned char)val[3] << 24);
-}
-
-inline static unsigned int body_lower_u32(unsigned int val)
-{
-	return val | 0x20202020U;
-}
-
 /*! \brief Returns the pointer within the msg body to the given type/subtype,
  * and sets the length of the body part.
  * The result can be the whole msg body, or a part of a multipart body.
@@ -224,9 +212,11 @@ char *get_body_part(struct sip_msg *msg, unsigned short type,
 				if(c + content_type_len >= buf_end)
 					return NULL;
 
-				if((body_lower_u32(body_read_u32le(c)) == _cont_)
-						&& (body_lower_u32(body_read_u32le(c + 4)) == _ent__)
-						&& (body_lower_u32(body_read_u32le(c + 8)) == _type_)) {
+				if((ksr_ascii_lower_u32(ksr_read_u32le(c)) == _cont_)
+						&& (ksr_ascii_lower_u32(ksr_read_u32le(c + 4))
+								== _ent__)
+						&& (ksr_ascii_lower_u32(ksr_read_u32le(c + 8))
+								== _type_)) {
 					/* Content-Type HF found */
 					c += content_type_len;
 					while((c < buf_end) && ((*c == ' ') || (*c == '\t')))
@@ -384,8 +374,8 @@ int part_multipart_headers_cmp(char *buffer, char *end_buffer,
 		found = found_content_type * found_content_id * found_content_length;
 		while((!found) && (!error) && (cpy_c < cpy_d)) {
 			if((cpy_c + 8) < cpy_d) {
-				if((body_lower_u32(body_read_u32le(cpy_c)) == _cont_)
-						&& (body_lower_u32(body_read_u32le(cpy_c + 4))
+				if((ksr_ascii_lower_u32(ksr_read_u32le(cpy_c)) == _cont_)
+						&& (ksr_ascii_lower_u32(ksr_read_u32le(cpy_c + 4))
 								== _ent__)) {
 					cpy_c += 8;
 					if((!found_content_type) && ((cpy_c + 5) < cpy_d)

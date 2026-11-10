@@ -283,7 +283,7 @@ static int ki_crypto_aes_encrypt_helper(
 		pkg_free(ttext.s);
 	}
 	free(etext.s);
-	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_reset(en);
 	EVP_CIPHER_CTX_free(en);
 	return 1;
 
@@ -293,7 +293,7 @@ error:
 	}
 error1:
 	free(etext.s);
-	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_reset(en);
 	EVP_CIPHER_CTX_free(en);
 	return -1;
 }
@@ -560,7 +560,7 @@ static int ki_crypto_aes_decrypt_helper(
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
 	free(val.rs.s);
-	EVP_CIPHER_CTX_cleanup(de);
+	EVP_CIPHER_CTX_reset(de);
 	EVP_CIPHER_CTX_free(de);
 	return 1;
 }
@@ -673,9 +673,9 @@ int crypto_aes_test(void)
 		free(plaintext);
 	}
 
-	EVP_CIPHER_CTX_cleanup(de);
+	EVP_CIPHER_CTX_reset(de);
 	EVP_CIPHER_CTX_free(de);
-	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_reset(en);
 	EVP_CIPHER_CTX_free(en);
 
 	return 0;

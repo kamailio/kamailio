@@ -49,6 +49,7 @@ Federico Cabiddu
               3.13. tcp_keepalive (integer)
               3.14. tcp_ka_idle (integer)
               3.15. tcp_ka_interval (integer)
+              3.16. max_reply_size (integer)
 
         4. Functions
 
@@ -83,11 +84,12 @@ Federico Cabiddu
    1.13. Set tcp_keepalive parameter
    1.14. Set tcp_ka_idle parameter
    1.15. Set tcp_ka_interval parameter
-   1.16. http_async_query() usage
-   1.17. http_async_send() usage
-   1.18. http_async_send_xdata() usage
-   1.19. $http_req_id variable usage
-   1.20. $http_req(key) variable usage
+   1.16. Set max_reply_size parameter
+   1.17. http_async_query() usage
+   1.18. http_async_send() usage
+   1.19. http_async_send_xdata() usage
+   1.20. $http_req_id variable usage
+   1.21. $http_req(key) variable usage
 
 Chapter 1. Admin Guide
 
@@ -116,6 +118,7 @@ Chapter 1. Admin Guide
         3.13. tcp_keepalive (integer)
         3.14. tcp_ka_idle (integer)
         3.15. tcp_ka_interval (integer)
+        3.16. max_reply_size (integer)
 
    4. Functions
 
@@ -172,6 +175,7 @@ Chapter 1. Admin Guide
    3.13. tcp_keepalive (integer)
    3.14. tcp_ka_idle (integer)
    3.15. tcp_ka_interval (integer)
+   3.16. max_reply_size (integer)
 
 3.1. workers (integer)
 
@@ -367,6 +371,22 @@ modparam("http_async_client", "tcp_ka_idle", 30)
 modparam("http_async_client", "tcp_ka_interval", 120)
 ...
 
+3.16. max_reply_size (integer)
+
+   Maximum allowed HTTP reply size in bytes. It's the limit for the whole
+   reply, including the status line and headers, not only for the reply
+   body. Exceeding the limit aborts the HTTP request, sets $http_ok to
+   false and $http_err to the generic cURL write error. In comparison, the
+   similar maxdatasize parameter in the http_client module limits only the
+   returned body and doesn't abort reception of the full response.
+
+   Default value is 0 (no limit on the reply size).
+
+   Example 1.16. Set max_reply_size parameter
+...
+modparam("http_async_client", "max_reply_size", 8192)
+...
+
 4. Functions
 
    4.1. http_async_query(url, route_name)
@@ -396,7 +416,7 @@ modparam("http_async_client", "tcp_ka_interval", 120)
    error are returned in the module-specific $http_* PVs (see below). See
    example on how to retrieve return values.
 
-   Example 1.16. http_async_query() usage
+   Example 1.17. http_async_query() usage
 ...
 # create a transaction to be paused, and resumed in route[HTTP_REPLY]
 t_newtran();
@@ -439,7 +459,7 @@ route[HTTP_REPLY] {
    module-specific $http_* PVs (see below) and are available inside the
    callback route.
 
-   Example 1.17. http_async_send() usage
+   Example 1.18. http_async_send() usage
 ...
 http_async_send("https://example.com/test.php?r_uri=$rU", "HTTP_REPLY");
 
@@ -475,7 +495,7 @@ route[HTTP_REPLY] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.18. http_async_send_xdata() usage
+   Example 1.19. http_async_send_xdata() usage
 ...
 http_async_send_xdata("https://example.com/test.php?r_uri=$rU",
         "HTTP_REPLY", "callid=" + $ci + ";from=" + $fu);
@@ -492,7 +512,7 @@ route[HTTP_REPLY] {
    HTTP callback route to retrieve the id of the query the reply belongs
    to. Useful mainly in non-transactional context.
 
-   Example 1.19. $http_req_id variable usage
+   Example 1.20. $http_req_id variable usage
 ...
 $http_req(suspend) = 0;
 
@@ -554,8 +574,11 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
             (CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE): use HTTP/2 directly
             without upgrade negotiation (h2c, cleartext)
        Setting to $null resets to 0 (default).
+     * max_reply_size: set the maximum allowed reply size (0 disables the
+       limit, $null restores the module default; see the corresponding
+       max_reply_size modparam)
 
-   Example 1.20. $http_req(key) variable usage
+   Example 1.21. $http_req(key) variable usage
 ...
 $http_req(all) = $null;                    # reset the parameters
 $http_req(timeout) = 100;                  # 100 ms

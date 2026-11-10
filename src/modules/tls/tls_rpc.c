@@ -27,6 +27,7 @@
 
 #include "../../core/rpc.h"
 #include "../../core/tcp_conn.h"
+#include "../../core/tcp_conn_api.h"
 #include "../../core/tcp_info.h"
 #include "../../core/timer.h"
 #include "../../core/cfg/cfg.h"
@@ -42,8 +43,6 @@
 #include "tls_ct_wrq.h"
 #include "tls_rpc.h"
 #include "tls_cfg.h"
-
-extern int ksr_tcp_main_threads;
 
 /*
  * packed into a single shm alloc: [ tcpx_task_t | tls_reload_task_t ]
@@ -76,9 +75,6 @@ static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
 	tls_domains_cfg_t *cfg = NULL;
 
 	collect_garbage();
-
-	(*tls_config_rev)++;
-        LM_INFO("Setting tls config version to %d\n", *tls_config_rev);
 
 	cfg = tls_load_config(config_file);
 	if(cfg == NULL) {
@@ -131,6 +127,7 @@ static int tls_reload_do(str *config_file, char *errmsg, int errmsg_size)
  *
  * Runs in PROC_TCP_MAIN thread context — SSL_CTX owned here.
  * Calls tls_reload_do then signals result back via ksr_tcpx_thread_eresult.
+ * keep in sync with tls_wolfssl/tls_rpc.c
  */
 static void tls_reload_mt_thread_cb(void *p, int pidx)
 {
@@ -277,6 +274,8 @@ static void tls_list(rpc_t *rpc, void *c)
 	struct tm timestamp;
 	char timestamp_s[128];
 	const char *sni, *dom;
+	char sni_buf[256];
+	char tls_info_buf[sizeof(((struct tls_extra_data *)0)->ssl_cipher_desc)];
 
 	TCPCONN_LOCK;
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
@@ -308,11 +307,21 @@ static void tls_list(rpc_t *rpc, void *c)
 			}
 
 			if(tls_d) {
-				sni = tls_d->ssl_servername;
-				dom = tls_d->dom.s;
-				if(sni == NULL) {
+				/* copy out of the ssl cache: it can be rebuilt (and the old
+				 * buffers freed) after a renegotiation */
+				tls_ssl_cache_lock(tls_d);
+				if(tls_d->ssl_servername != NULL) {
+					snprintf(sni_buf, sizeof(sni_buf), "%s",
+							tls_d->ssl_servername);
+					sni = sni_buf;
+				} else {
 					sni = "N/A";
 				}
+				memcpy(tls_info_buf, tls_d->ssl_cipher_desc,
+						sizeof(tls_info_buf));
+				tls_info_buf[sizeof(tls_info_buf) - 1] = '\0';
+				tls_ssl_cache_unlock(tls_d);
+				dom = tls_d->dom.s;
 			} else {
 				sni = "N/A";
 				dom = "N/A";
@@ -323,7 +332,7 @@ static void tls_list(rpc_t *rpc, void *c)
 					"src_ip", src_ip, "src_port", con->rcv.src_port, "dst_ip",
 					dst_ip, "dst_port", con->rcv.dst_port);
 			if(tls_d) {
-				tls_info = tls_d->ssl_cipher_desc;
+				tls_info = tls_info_buf;
 				/* tls data */
 				state = "unknown/error";
 				lock_get(&con->write_lock);
@@ -380,7 +389,7 @@ static void tls_options(rpc_t *rpc, void *c)
 {
 	void *handle;
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "dSdddSSSSSdSSdddddddddddddd", "force_run",
+	rpc->struct_add(handle, "dSdddSSSSSdSSdddddddddddd", "force_run",
 			cfg_get(tls, tls_cfg, force_run), "method",
 			&cfg_get(tls, tls_cfg, method), "verify_certificate",
 			cfg_get(tls, tls_cfg, verify_cert),
@@ -404,9 +413,7 @@ static void tls_options(rpc_t *rpc, void *c)
 			"ssl_max_send_fragment",
 			cfg_get(tls, tls_cfg, ssl_max_send_fragment), "ssl_read_ahead",
 			cfg_get(tls, tls_cfg, ssl_read_ahead), "send_close_notify",
-			cfg_get(tls, tls_cfg, send_close_notify), "low_mem_threshold1",
-			cfg_get(tls, tls_cfg, low_mem_threshold1), "low_mem_threshold2",
-			cfg_get(tls, tls_cfg, low_mem_threshold2), "ct_wq_max",
+			cfg_get(tls, tls_cfg, send_close_notify), "ct_wq_max",
 			cfg_get(tls, tls_cfg, ct_wq_max), "con_ct_wq_max",
 			cfg_get(tls, tls_cfg, con_ct_wq_max), "ct_wq_blk_size",
 			cfg_get(tls, tls_cfg, ct_wq_blk_size));
@@ -418,7 +425,7 @@ static const char *tls_kill_doc[2] = {
 static void tls_kill(rpc_t *rpc, void *c)
 {
 	struct tcp_connection *con;
-	int i, kill_id = 0;
+	int i, found, kill_id = 0;
 
 	if(rpc->scan(c, "d", &kill_id) < 0) {
 		/* Reply is set automatically by scan upon failure,
@@ -427,24 +434,24 @@ static void tls_kill(rpc_t *rpc, void *c)
 		return;
 	}
 
+	found = 0;
 	TCPCONN_LOCK;
-	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
+	for(i = 0; i < TCP_ID_HASH_SIZE && !found; i++) {
 		for(con = tcpconn_id_hash[i]; con; con = con->id_next) {
-			if(con->rcv.proto != PROTO_TLS && con->rcv.proto != PROTO_WSS)
-				continue;
-			if(con->id == kill_id) {
-				con->state = -2;
-				con->timeout = get_ticks_raw();
-
-				TCPCONN_UNLOCK;
-
-				rpc->add(c, "s", "OK");
-				return;
+			if(con->id == kill_id
+					&& (con->rcv.proto == PROTO_TLS
+							|| con->rcv.proto == PROTO_WSS)) {
+				found = 1;
+				break;
 			}
 		}
 	}
 	TCPCONN_UNLOCK;
 
+	if(found && tcpconn_ctrl(kill_id, TCPCONN_CTRL_MARK_BAD) == 1) {
+		rpc->add(c, "s", "OK");
+		return;
+	}
 	rpc->add(c, "s", "TLS connection id not found");
 }
 

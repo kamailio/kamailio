@@ -49,6 +49,7 @@ typedef struct uac_req
 	str *body;
 	str *ssock;
 	str *ssockname;
+	send_socket_map_t *ssockmap; /* optional forced socket map by transport */
 	dlg_t *dialog;
 	unsigned int cb_flags;
 	transaction_cb *cb;

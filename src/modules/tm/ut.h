@@ -208,6 +208,8 @@ inline static int get_uri_send_info(
  *         dst   - will be filled
  *         force_send_sock - if 0 dst->send_sock will be set to the default
  *                 (see get_send_socket2())
+ *         send_socket_map - transport-specific forced sockets; an entry for
+ *                 the resolved protocol takes precedence over force_send_sock
  *         sflags - send flags
  *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
@@ -218,10 +220,12 @@ inline static int get_uri_send_info(
 #ifdef USE_DNS_FAILOVER
 inline static struct dest_info *uri2dst2(struct dns_srv_handle *dns_h,
 		struct dest_info *dst, struct socket_info *force_send_socket,
-		snd_flags_t sflags, str *uri, int proto)
+		const send_socket_map_t *send_socket_map, snd_flags_t sflags, str *uri,
+		int proto)
 #else
 inline static struct dest_info *uri2dst2(struct dest_info *dst,
-		struct socket_info *force_send_socket, snd_flags_t sflags, str *uri,
+		struct socket_info *force_send_socket,
+		const send_socket_map_t *send_socket_map, snd_flags_t sflags, str *uri,
 		int proto)
 #endif
 {
@@ -233,6 +237,7 @@ inline static struct dest_info *uri2dst2(struct dest_info *dst,
 	union sockaddr_union to;
 	int err;
 #endif
+	struct socket_info *send_socket;
 
 	if(parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
 		LM_ERR("bad_uri: [%.*s]\n", uri->len, uri->s);
@@ -286,8 +291,15 @@ inline static struct dest_info *uri2dst2(struct dest_info *dst,
 				dst->to = to;
 				ip_found = 1;
 			}
-			dst->send_sock =
-					get_send_socket2(force_send_socket, &to, dst->proto, 0);
+			send_socket = send_socket_map_get(send_socket_map, dst->proto);
+			if(send_socket) {
+				dst->send_flags.f |= SND_F_FORCE_SOCKET;
+			} else {
+				send_socket = force_send_socket;
+				if(send_socket == 0)
+					dst->send_flags.f &= ~SND_F_FORCE_SOCKET;
+			}
+			dst->send_sock = get_send_socket2(send_socket, &to, dst->proto, 0);
 			if(dst->send_sock) {
 				dst->to = to;
 				return dst; /* found a good one */
@@ -303,8 +315,15 @@ inline static struct dest_info *uri2dst2(struct dest_info *dst,
 		LM_ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
 		return 0;
 	}
-	dst->send_sock =
-			get_send_socket2(force_send_socket, &dst->to, dst->proto, 0);
+	send_socket = send_socket_map_get(send_socket_map, dst->proto);
+	if(send_socket) {
+		dst->send_flags.f |= SND_F_FORCE_SOCKET;
+	} else {
+		send_socket = force_send_socket;
+		if(send_socket == 0)
+			dst->send_flags.f &= ~SND_F_FORCE_SOCKET;
+	}
+	dst->send_sock = get_send_socket2(send_socket, &dst->to, dst->proto, 0);
 	if(dst->send_sock == 0) {
 		LM_ERR("no corresponding socket found for \"%.*s\" af %d (%s:%s)\n",
 				host->len, ZSW(host->s), dst->to.s.sa_family,
@@ -342,10 +361,10 @@ inline static struct dest_info *uri2dst(struct dns_srv_handle *dns_h,
 {
 	snd_flags_t sflags;
 	if(msg)
-		return uri2dst2(dns_h, dst, msg->force_send_socket, msg->fwd_send_flags,
-				uri, proto);
+		return uri2dst2(dns_h, dst, msg->force_send_socket,
+				&msg->force_send_socket_map, msg->fwd_send_flags, uri, proto);
 	SND_FLAGS_INIT(&sflags);
-	return uri2dst2(dns_h, dst, 0, sflags, uri, proto);
+	return uri2dst2(dns_h, dst, 0, 0, sflags, uri, proto);
 }
 #else
 inline static struct dest_info *uri2dst(
@@ -353,10 +372,10 @@ inline static struct dest_info *uri2dst(
 {
 	snd_flags_t sflags;
 	if(msg)
-		return uri2dst2(
-				dst, msg->force_send_socket, msg->fwd_send_flags, uri, proto);
+		return uri2dst2(dst, msg->force_send_socket,
+				&msg->force_send_socket_map, msg->fwd_send_flags, uri, proto);
 	SND_FLAGS_INIT(&sflags);
-	return uri2dst2(dst, 0, sflags, uri, proto);
+	return uri2dst2(dst, 0, 0, sflags, uri, proto);
 }
 #endif /* USE_DNS_FAILOVER */
 

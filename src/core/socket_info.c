@@ -1285,6 +1285,7 @@ int add_listen_socket(socket_attrs_t *sa)
 {
 	socket_info_t *newsi;
 	name_lst_t addr_l;
+	name_lst_t *addr_lp;
 	char sname[128];
 	char *psname = NULL;
 	int i;
@@ -1295,10 +1296,16 @@ int add_listen_socket(socket_attrs_t *sa)
 	}
 	memset(&addr_l, 0, sizeof(name_lst_t));
 	addr_l.name = sa->bindaddr.s;
+	addr_lp = &addr_l;
+	if((sa->bindaddr.len == 1 && sa->bindaddr.s[0] == '*')
+			|| (sa->bindaddr.len == 3
+					&& strncmp(sa->bindaddr.s, "[*]", 3) == 0)) {
+		addr_lp = 0;
+	}
 
 	/* binding on single port */
 	if(sa->bindportend <= sa->bindport) {
-		newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
+		newsi = add_listen_socket_info(sa->bindaddr.s, addr_lp, sa->bindport,
 				sa->bindproto, sa->useproto, sa->useaddr.s, sa->useport,
 				sa->sockname.s, sa->sflags);
 		if(newsi == NULL) {
@@ -1319,7 +1326,7 @@ int add_listen_socket(socket_attrs_t *sa)
 		} else {
 			psname = NULL;
 		}
-		newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l,
+		newsi = add_listen_socket_info(sa->bindaddr.s, addr_lp,
 				sa->bindport + i, sa->bindproto, sa->useproto, sa->useaddr.s,
 				sa->useport + i, psname, sa->sflags);
 		if(newsi == NULL) {
@@ -2004,6 +2011,9 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 	struct addr_info *tmp_ail;
 	struct addr_info *tmp_ail_next;
 	struct addr_info *ail_next;
+	int all_ipv4;
+	int all_ipv6;
+	int iface_ret;
 
 	if(type_flags)
 		*type_flags = 0;
@@ -2012,9 +2022,27 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 	for(si = *list; si;) {
 		next = si->next;
 		ai_lst = 0;
-		if(add_interfaces(si->name.s, auto_bind_ipv6 ? 0 : AF_INET, si->port_no,
-				   si->proto, &ai_lst)
-				!= -1) {
+		all_ipv4 = (si->name.len == 1 && si->name.s[0] == '*');
+		all_ipv6 = (si->name.len == 3 && strncmp(si->name.s, "[*]", 3) == 0);
+		if(all_ipv6) {
+#ifdef __OS_linux
+			iface_ret = add_interfaces_via_netlink(
+					0, AF_INET6, si->port_no, si->proto, &ai_lst);
+			if(iface_ret == -1 || ai_lst == 0) {
+				free_addr_info_lst(&ai_lst);
+				iface_ret = add_interfaces(
+						0, AF_INET6, si->port_no, si->proto, &ai_lst);
+			}
+#else
+			iface_ret = add_interfaces(
+					0, AF_INET6, si->port_no, si->proto, &ai_lst);
+#endif
+		} else {
+			iface_ret = add_interfaces(all_ipv4 ? 0 : si->name.s,
+					all_ipv4 ? AF_INET : (auto_bind_ipv6 ? 0 : AF_INET),
+					si->port_no, si->proto, &ai_lst);
+		}
+		if(iface_ret != -1) {
 			if(si->flags & SI_IS_MHOMED) {
 				if((new_si = new_sock2list_after(ai_lst->name.s, 0, si->port_no,
 							si->proto, si->useinfo.proto, si->useinfo.name.s,
@@ -2047,6 +2075,22 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 						   si->useinfo.port_no, si->sockname.s, si->flags, si)
 						!= 0)
 					goto error;
+				for(new_si = si->next; new_si != next; new_si = new_si->next) {
+					new_si->workers = si->workers;
+					memcpy(new_si->agroup.agname, si->agroup.agname,
+							KSR_AGROUP_NAME_SIZE);
+					if(si->vrfinfo.name.len > 0) {
+						new_si->vrfinfo.name.s =
+								(char *)pkg_mallocxn(si->vrfinfo.name.len + 1);
+						if(new_si->vrfinfo.name.s == 0) {
+							PKG_MEM_ERROR;
+							goto error;
+						}
+						new_si->vrfinfo.name.len = si->vrfinfo.name.len;
+						memcpy(new_si->vrfinfo.name.s, si->vrfinfo.name.s,
+								si->vrfinfo.name.len);
+					}
+				}
 				/* ai_lst not needed anymore */
 				free_addr_info_lst(&ai_lst);
 				ail = 0;
@@ -2056,6 +2100,12 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 			sock_listrm(list, si);
 			free_sock_info(si);
 		} else {
+			if(all_ipv4 || all_ipv6) {
+				LM_ERR("could not find any local IPv%d address for wildcard "
+					   "listen\n",
+						all_ipv6 ? 6 : 4);
+				goto error;
+			}
 			new_si = si;
 			ail = si->addr_info_lst;
 		}

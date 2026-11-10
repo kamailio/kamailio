@@ -560,6 +560,29 @@ modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 		</example>
 		</section>
 
+		<section id="pua_dialoginfo.p.caller_trying">
+		<title><varname>caller_trying</varname> (int)</title>
+		<para>
+			If this parameter is set, a "Trying" state is sent for the caller
+			when the dialog is created. If it is set to 0, the caller is
+			published only from the first provisional reply ("early" state,
+			or "confirmed" if <varname>caller_confirmed</varname> is set),
+			so no state is published for calls rejected or redirected before
+			any provisional reply.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>caller_trying</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "caller_trying", 0)
+...
+</programlisting>
+		</example>
+		</section>
+
 		<section id="pua_dialoginfo.p.callee_trying">
 		<title><varname>callee_trying</varname> (int)</title>
 		<para>

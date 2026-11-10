@@ -79,6 +79,7 @@
 #include "events.h"
 #include "stun.h"
 #include "nonsip_hooks.h"
+#include "arpa/inet.h" /* for inet_pton() */
 
 #ifdef READ_HTTP11
 #define HTTP11CONTINUE "HTTP/1.1 100 Continue\r\nContent-Length: 0\r\n\r\n"
@@ -226,7 +227,7 @@ int ksr_tcp_parse_accept_protocols(char *protos)
 
 
 #ifdef READ_HTTP11
-int tcp_http11_continue(struct tcp_connection *c)
+int tcp_http11_continue(struct tcp_connection *c, char *headers_end)
 {
 	struct dest_info dst;
 	char *p;
@@ -240,8 +241,11 @@ int tcp_http11_continue(struct tcp_connection *c)
 		return 0;
 	}
 
+	if(headers_end < c->req.start || headers_end > c->req.pos)
+		return 0;
+
 	msg.s = c->req.start;
-	msg.len = c->req.pos - c->req.start;
+	msg.len = headers_end - c->req.start;
 #ifdef READ_MSRP
 	/* skip if MSRP message */
 	if(c->req.flags & F_TCP_REQ_MSRP_FRAME)
@@ -679,7 +683,7 @@ int tcp_read_headers(
 #ifdef READ_HTTP11
 						if(rmode != 0
 								|| cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
-							tcp_http11_continue(c);
+							tcp_http11_continue(c, p + 1);
 #endif
 						if(TCP_REQ_HAS_CLEN(r)) {
 							r->body = p + 1;
@@ -754,7 +758,7 @@ int tcp_read_headers(
 					r->state = H_BODY;
 #ifdef READ_HTTP11
 					if(rmode != 0 || cfg_get(tcp, tcp_cfg, accept_no_cl) != 0)
-						tcp_http11_continue(c);
+						tcp_http11_continue(c, p + 1);
 #endif
 					if(TCP_REQ_HAS_CLEN(r)) {
 						r->body = p + 1;
@@ -1096,7 +1100,7 @@ int tcp_read_headers(
 								r->chunk_size);
 						r->content_len += r->chunk_size;
 					}
-					goto skip;
+					/* continue with the buffered bytes (next chunk) */
 				}
 				break;
 
@@ -1113,7 +1117,8 @@ int tcp_read_headers(
 						LM_ERR("bad chunk, unexpected "
 							   "char %c in state %d\n",
 								*p, r->state);
-						r->state = H_SKIP; /* try to find another?*/
+						r->error = TCP_REQ_BAD_LEN;
+						r->state = H_SKIP;
 				}
 				p++;
 				break;
@@ -1176,7 +1181,8 @@ int tcp_read_headers(
 						LM_ERR("bad chunk size value, unexpected "
 							   "char %c in state %d\n",
 								*p, r->state);
-						r->state = H_SKIP; /* try to find another?*/
+						r->error = TCP_REQ_BAD_LEN;
+						r->state = H_SKIP;
 				}
 				p++;
 				break;
@@ -1719,6 +1725,257 @@ int receive_tcp_msg(char *tcpbuf, unsigned int len,
 #endif /* TCP_CLONE_RCVBUF */
 }
 
+/* Attempt to extract real connection information from an upstream load
+ * balancer or reverse proxy. This should be called right after accept()ing the
+ * connection, and before TLS negotiation.
+ *
+ * Returns:
+ *    -1 on parsing error (connection should be closed)
+ *    0 on parser success, and connection information was extracted
+ *    1 on parser success, but no connection information was provided by the
+ *      upstream load balancer or reverse proxy.
+ *    2 when the data does not start with a PROXY header
+ *    3 when no data is available yet (the caller retries on the next POLLIN)
+ */
+int tcpconn_read_haproxy(struct tcp_connection *c)
+{
+	int bytes, fd, retval = 0;
+	uint32_t size, port;
+	char *p, *end;
+	struct ip_addr src, dst, *src_ip, *dst_ip;
+	unsigned short src_port, dst_port;
+
+	const char v2sig[12] = "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A";
+
+	// proxy header union
+	union
+	{
+		// v1 struct
+		struct
+		{
+			char line[108];
+		} v1;
+
+		// v2 struct
+		struct
+		{
+			uint8_t sig[12];
+			uint8_t ver_cmd;
+			uint8_t fam;
+			uint16_t len;
+
+			union
+			{
+				struct
+				{ /* for TCP/UDP over IPv4, len = 12 */
+					uint32_t src_addr;
+					uint32_t dst_addr;
+					uint16_t src_port;
+					uint16_t dst_port;
+				} ip4;
+
+				struct
+				{ /* for TCP/UDP over IPv6, len = 36 */
+					uint8_t src_addr[16];
+					uint8_t dst_addr[16];
+					uint16_t src_port;
+					uint16_t dst_port;
+				} ip6;
+
+				struct
+				{ /* for AF_UNIX sockets, len = 216 */
+					uint8_t src_addr[108];
+					uint8_t dst_addr[108];
+				} unx;
+			} addr;
+		} v2;
+
+	} hdr;
+
+	/* c->s in tcp main (mode 2 pool threads), c->fd in a worker (modes 0/1) */
+	fd = _tconfd(c);
+	bytes = recv(fd, &hdr, sizeof(hdr), MSG_PEEK | MSG_DONTWAIT);
+	if(bytes == -1) {
+		if(errno == EAGAIN || errno == EINTR) {
+			return 3; /* no data yet: stay in S_CONN_HAPROXY */
+		}
+		LM_ERR("recv(MSG_PEEK) failed: %s\n", strerror(errno));
+		return -1; /* Real error */
+	}
+
+	if(bytes == 0) {
+		return 1; /* EOF — no IP change */
+	}
+	/* copy original tunnel address details */
+	memcpy(&c->cinfo.src_ip, &c->rcv.src_ip, sizeof(ip_addr_t));
+	memcpy(&c->cinfo.dst_ip, &c->rcv.dst_ip, sizeof(ip_addr_t));
+	c->cinfo.src_port = c->rcv.src_port;
+	c->cinfo.dst_port = c->rcv.dst_port;
+	c->cinfo.proto = (int)c->rcv.proto;
+	c->cinfo.csocket = c->rcv.bind_address;
+
+	/* parse into copies: tcpconn_set_proxied_addr() applies them under lock */
+	src = c->rcv.src_ip;
+	dst = c->rcv.dst_ip;
+	src_port = c->rcv.src_port;
+	dst_port = c->rcv.dst_port;
+	src_ip = &src;
+	dst_ip = &dst;
+
+	if(bytes >= 16 && memcmp(&hdr.v2, v2sig, 12) == 0
+			&& (hdr.v2.ver_cmd & 0xF0) == 0x20) {
+		LM_DBG("received PROXY protocol v2 header\n");
+		size = 16 + ntohs(hdr.v2.len);
+
+		if(bytes < size) {
+			return -1; /* truncated or too large header */
+		}
+
+		switch(hdr.v2.ver_cmd & 0xF) {
+			case 0x01: /* PROXY command */
+				switch(hdr.v2.fam) {
+					case 0x11: /* TCPv4 */
+						src_ip->af = AF_INET;
+						src_ip->len = 4;
+						src_ip->u.addr32[0] = hdr.v2.addr.ip4.src_addr;
+						src_port = htons(hdr.v2.addr.ip4.src_port);
+
+						dst_ip->af = AF_INET;
+						dst_ip->len = 4;
+						dst_ip->u.addr32[0] = hdr.v2.addr.ip4.dst_addr;
+						dst_port = htons(hdr.v2.addr.ip4.dst_port);
+
+						goto done;
+
+					case 0x21: /* TCPv6 */
+						src_ip->af = AF_INET6;
+						src_ip->len = 16;
+						memcpy(src_ip->u.addr, hdr.v2.addr.ip6.src_addr, 16);
+						src_port = htons(hdr.v2.addr.ip6.src_port);
+
+						dst_ip->af = AF_INET6;
+						dst_ip->len = 16;
+						memcpy(dst_ip->u.addr, hdr.v2.addr.ip6.dst_addr, 16);
+						dst_port = htons(hdr.v2.addr.ip6.dst_port);
+
+						goto done;
+
+					default: /* unsupported protocol */
+						return -1;
+				}
+
+			case 0x00:		/* LOCAL command */
+				retval = 1; /* keep local connection address for LOCAL */
+				goto done;
+
+			default:
+				return -1; /* not a supported command */
+		}
+	} else if(bytes >= 8 && memcmp(hdr.v1.line, "PROXY", 5) == 0) {
+		LM_DBG("received PROXY protocol v1 header\n");
+		end = memchr(hdr.v1.line, '\r', bytes - 1);
+		if(!end || end[1] != '\n') {
+			return -1; /* partial or invalid header */
+		}
+		*end = '\0'; /* terminate the string to ease parsing */
+		size = end + 2 - hdr.v1.line;
+		p = hdr.v1.line + 5;
+
+		if(strncmp(p, " TCP", 4) == 0) {
+			switch(p[4]) {
+				case '4':
+					src_ip->af = dst_ip->af = AF_INET;
+					src_ip->len = dst_ip->len = 4;
+					break;
+				case '6':
+					src_ip->af = dst_ip->af = AF_INET6;
+					src_ip->len = dst_ip->len = 16;
+					break;
+				default:
+					return -1; /* unknown TCP version */
+			}
+
+			if(p[5] != ' ') {
+				return -1; /* misformatted header */
+			}
+			p += 6; /* skip over the already-parsed bytes */
+
+			/* Parse the source IP address */
+			end = strchr(p, ' ');
+			if(!end) {
+				return -1; /* truncated header */
+			}
+			*end = '\0'; /* mark the end of the IP address */
+			if(inet_pton(src_ip->af, p, src_ip->u.addr) != 1) {
+				return -1; /* missing IP address */
+			}
+			p = end + 1;
+
+			/* Parse the destination IP address */
+			end = strchr(p, ' ');
+			if(!end) {
+				return -1;
+			}
+			*end = '\0'; /* mark the end of the IP address */
+			if(inet_pton(dst_ip->af, p, dst_ip->u.addr) != 1) {
+				return -1;
+			}
+			p = end + 1;
+
+			/* Parse the source port */
+			port = strtoul(p, &end, 10);
+			if(port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
+				return -1; /* invalid port number */
+			}
+			src_port = port;
+
+			if(*end != ' ') {
+				return -1; /* invalid header */
+			}
+			p = end + 1;
+
+			/* Parse the destination port */
+			port = strtoul(p, NULL, 10);
+			if(port == UINT32_MAX || port == 0 || port >= (1 << 16)) {
+				return -1; /* invalid port number */
+			}
+			dst_port = port;
+
+			goto done;
+		} else if(strncmp(p, " UNKNOWN", 8) == 0) {
+			/* We know that the sender speaks the correct PROXY protocol with the
+			 * appropriate version, and we SHOULD accept the connection and use the
+			 * real connection's parameters as if there were no PROXY protocol header
+			 * on the wire.
+			 */
+			retval = 1; /* PROXY protocol parsed, but no IP override */
+			goto done;
+		} else {
+			return -1; /* invalid header */
+		}
+	} else if(bytes == 0) {
+		return 1; /* EOF? Return "no IP change" in any case */
+	} else {
+		/* not haproxy protocol */
+		return 2;
+	}
+
+done:
+	bytes = recv(fd, &hdr, size, 0);
+	if(bytes == -1) {
+		LM_ERR("failed to consume PROXY header: %s\n", strerror(errno));
+		return -1;
+	}
+	if(bytes != (int)size) {
+		LM_ERR("short read consuming the PROXY header (%d of %u bytes)\n",
+				bytes, size);
+		return -1;
+	}
+	if(retval == 0)
+		tcpconn_set_proxied_addr(c, &src, src_port, &dst, dst_port);
+	return retval;
+}
+
 int tcp_read_req(struct tcp_connection *con, int *bytes_read,
 		rd_conn_flags_t *read_flags)
 {
@@ -1735,6 +1992,26 @@ int tcp_read_req(struct tcp_connection *con, int *bytes_read,
 	total_bytes = 0;
 	resp = CONN_RELEASE;
 	req = &con->req;
+	/* PROXY protocol: parse the header before any SIP or TLS data, on the
+	 * first read of a connection accepted on a haproxy-enabled server */
+	if(unlikely(con->state == S_CONN_HAPROXY)) {
+		ret = tcpconn_read_haproxy(con);
+		if(ret == -1) {
+			LM_ERR("invalid PROXY protocol header from %s\n",
+					ip_addr2a(&con->rcv.src_ip));
+			*bytes_read = 0;
+			return CONN_ERROR;
+		} else if(ret == 3) {
+			/* no data yet: POLLIN brings the connection back */
+			*bytes_read = 0;
+			return CONN_RELEASE;
+		} else if(ret == 1) {
+			LM_DBG("PROXY protocol did not override IP addresses\n");
+		} else if(ret == 2) {
+			LM_DBG("PROXY protocol header not found\n");
+		}
+		con->state = S_CONN_ACCEPT;
+	}
 	if(req->tvrstart.tv_sec == 0) {
 		gettimeofday(&req->tvrstart, NULL);
 	}
@@ -2240,7 +2517,7 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 					if(unlikely(tsend_stream(unix_tcp_sock, (char *)clresp,
 										sizeof(clresp), -1)
 								<= 0))
-						LM_ERR("mode2: failed to request script-close for "
+						LM_ERR("reactor: failed to request script-close for "
 							   "conn id %ld\n",
 								(long)task->rcv.proto_reserved1);
 				}

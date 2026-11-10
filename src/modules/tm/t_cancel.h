@@ -69,6 +69,8 @@
 
 
 void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm, branch_bm_t s);
+void defer_cancel_unreplied(struct cell *t, branch_bm_t *cancel_bm);
+void cancel_reason_text(struct cancel_info *cancel_data);
 int cancel_uacs(struct cell *t, struct cancel_info *cancel_data, int flags);
 int cancel_all_uacs(struct cell *trans, int how);
 int cancel_branch(struct cell *t, int branch, sip_msg_t *cancel_msg,

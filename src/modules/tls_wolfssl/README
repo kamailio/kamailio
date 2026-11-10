@@ -17,6 +17,8 @@ Shih-Ping Chan
         6. Parameters
 
               6.1. crl
+              6.2. verify_server_name
+              6.3. renegotiation
 
         7. Additional RPC Commands
 
@@ -38,6 +40,8 @@ Chapter 1. Admin Guide
    6. Parameters
 
         6.1. crl
+        6.2. verify_server_name
+        6.3. renegotiation
 
    7. Additional RPC Commands
 
@@ -87,18 +91,19 @@ loadmodule "tls_wolfssl.so"
 
    For reference the ideal build flags are:
 ...
-# - Debian currently does not use -DWOLF_CRYPTO_CB_RSA_PAD: this affects use of
-RSA
-#   padding mechanisms on HSMs
-EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure --enable-distro --ena
-ble-pkcs11
+# - --enable-cryptocb-rsa-pad (wolfSSL 5.9.4+) lets PKCS#11 use the RSA padding
+#   mechanisms (PKCS#1 v1.5, OAEP, PSS) for HSMs that refuse raw RSA; older
+#   wolfSSL: EXTRA_CFLAGS="-DWOLF_CRYPTO_CB_RSA_PAD" instead
+# - Debian currently builds without it
+./configure --enable-distro --enable-pkcs11 --enable-cryptocb-rsa-pad
 
 # additional flags may be used: e.g. what Debian uses on forky for its libwolfss
 l44 / libwolfssl-dev
-EXTRA_CFLAGS="-g -O2 -DWOLF_CRYPTO_CB_RSA_PAD" ./configure \
+./configure \
     --enable-distro --enable-ech --enable-hpke --enable-jni \
     --enable-jobserver=no --enable-memcached --enable-quic --enable-qt --enable-
 pkcs11 \
+    --enable-cryptocb-rsa-pad \
     --enable-writedup --disable-asm --disable-crl-monitor --disable-examples \
     --disable-silent-rules
 ...
@@ -141,12 +146,41 @@ bsoftokn3.so&pin-value=12345678[pin-source=....]
 6. Parameters
 
    6.1. crl
+   6.2. verify_server_name
+   6.3. renegotiation
 
    Important differences to the tls module
 
 6.1. crl
 
    The value is a folder containing PEM CRL files with extension .pem.
+
+6.2. verify_server_name
+
+   Same as in the tls module, with two differences. wolfSSL accepts
+   partial wildcards in the server certificate (e.g., a Subject
+   Alternative Name a*.example.com matches ab.example.com), because it
+   ignores the no-partial-wildcards flag during the handshake.
+   Certificates from public CAs carry full left-most label wildcards only
+   (*.example.com), so the difference concerns private CAs.
+
+   On a client profile with verify_client set to optional_no_ca, the name
+   is still checked when the certificate chain verifies; the tls module
+   accepts any name there.
+
+6.3. renegotiation
+
+   Not supported; the parameter has no effect. wolfSSL as packaged by
+   Debian (built with --enable-distro, see the flags above) and the
+   bundled wolfSSL (--enable-all) are built without secure renegotiation,
+   and the module does not request it. A renegotiation from the peer is
+   refused:
+     * As TLS client: the connection stays on the original session (the
+       server may close it).
+     * As TLS server: the connection is closed.
+
+   The connection information ($tls_* variables, tls.list) always matches
+   the initial handshake.
 
 7. Additional RPC Commands
 

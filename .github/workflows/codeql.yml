@@ -39,7 +39,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ javascript, cpp, python ]
+        include:
+          - language: javascript
+            build-mode: none
+          - language: python
+            build-mode: none
+          - language: cpp
+            build-mode: manual
 
     container:
       image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-trixie
@@ -55,27 +61,36 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure (cpp)
-        if: ${{ matrix.language == 'cpp' }}
-        run: make include_modules='app_lua app_python3 cnxcc db_mysql db_postgres db_redis dialplan http_client jansson lcr ndb_redis presence presence_xml presence_dialoginfo pua pua_dialoginfo topos_redis uuid websocket xmlops' cfg
+      - name: List of modules
+        id: set_values
+        working-directory: /code
+        run: |
+          val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
+          echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
+          echo "nproc=$(nproc)" >> "$GITHUB_OUTPUT"
 
-      - name: After Prepare (cpp)
+      - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
-        run: export PKG_CONFIG_PATH=$RUNNER_TEMP/usr/lib/pkgconfig:$PKG_CONFIG_PATH && echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+        working-directory: /code
+        run: |
+          cmake -B /code/build -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
           queries: +security-and-quality
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
         if: ${{ matrix.language == 'javascript' || matrix.language == 'python' }}
 
-      - name: Build cpp
+      - name: Cmake Build
         if: ${{ matrix.language == 'cpp' }}
-        run: make -j$(nproc) all
+        working-directory: /code
+        run: |
+          cmake --build /code/build -j${{ steps.set_values.outputs.nproc }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

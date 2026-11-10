@@ -37,6 +37,7 @@
  * the no-op install at the bottom of this file. */
 
 #include <pthread.h>
+#include <string.h>
 
 /* The single mutex that serializes all pkg allocation in this process once the
  * wrappers are installed, plus the saved originals we delegate to. Only ever
@@ -160,6 +161,12 @@ void tcp_reactor_pkg_lock_install(void)
 {
 	if(_ksr_pkg_orig_xmalloc != NULL)
 		return; /* already installed */
+	/* sm pkg manager: thread-safe system malloc - nothing to serialize */
+	if(_pkg_root.mname != NULL && strcmp(_pkg_root.mname, "sm") == 0) {
+		LM_DBG("pkg manager is sm (system malloc); reactor pkg lock "
+			   "not needed\n");
+		return;
+	}
 	_ksr_pkg_orig_xmalloc = _pkg_root.xmalloc;
 	_ksr_pkg_orig_xmallocxz = _pkg_root.xmallocxz;
 	_ksr_pkg_orig_xmallocxn = _pkg_root.xmallocxn;
@@ -176,7 +183,8 @@ void tcp_reactor_pkg_lock_install(void)
 	_pkg_root.xreallocxf = _ksr_pkg_l_xreallocxf;
 	_pkg_root.xfree = _ksr_pkg_l_xfree;
 
-	LM_WARN("PROC_TCP_MAIN pkg allocator serialized for reactor threads\n");
+	LM_INFO("reactor: PROC_TCP_MAIN pkg allocator serialized for the io_wait "
+			"and pool threads\n");
 }
 
 #else /* !PKG_MALLOC */

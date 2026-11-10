@@ -31,25 +31,10 @@
 #include "../../core/str.h"
 #include "../../core/ip_addr.h"
 #include "../../core/atomic_ops.h"
+#include "../../core/globals.h"
+#include "../../core/pt.h"
 #include <openssl/ssl.h>
 
-
-#define TLS_OP_SSLv2_PLUS 0
-#define TLS_OP_SSLv3_PLUS (TLS_OP_SSLv2_PLUS | SSL_OP_NO_SSLv2)
-#define TLS_OP_TLSv1_PLUS (TLS_OP_SSLv3_PLUS | SSL_OP_NO_SSLv3)
-
-#ifdef SSL_OP_NO_TLSv1
-#define TLS_OP_TLSv1_1_PLUS (TLS_OP_TLSv1_PLUS | SSL_OP_NO_TLSv1)
-
-#ifdef SSL_OP_NO_TLSv1_1
-#define TLS_OP_TLSv1_2_PLUS (TLS_OP_TLSv1_1_PLUS | SSL_OP_NO_TLSv1_1)
-#endif /*SSL_OP_NO_TLSv1_1*/
-
-#ifdef SSL_OP_NO_TLSv1_2
-#define TLS_OP_TLSv1_3_PLUS (TLS_OP_TLSv1_2_PLUS | SSL_OP_NO_TLSv1_2)
-#endif /*SSL_OP_NO_TLSv1_2*/
-
-#endif /*SSL_OP_NO_TLSv1*/
 
 /**
  * Available TLS methods
@@ -60,12 +45,6 @@ enum tls_method
 	TLS_USE_SSLv23_cli,
 	TLS_USE_SSLv23_srv,
 	TLS_USE_SSLv23, /* any SSL/TLS version */
-	TLS_USE_SSLv2_cli,
-	TLS_USE_SSLv2_srv,
-	TLS_USE_SSLv2, /* only SSLv2 (deprecated) */
-	TLS_USE_SSLv3_cli,
-	TLS_USE_SSLv3_srv,
-	TLS_USE_SSLv3, /* only SSLv3 (insecure) */
 	TLS_USE_TLSv1_cli,
 	TLS_USE_TLSv1_srv,
 	TLS_USE_TLSv1, /* only TLSv1.0 */
@@ -142,8 +121,18 @@ typedef struct tls_domain
 	int server_name_mode;
 	str server_id;
 	int verify_client;
+	int verify_server_name;
 	struct tls_domain *next;
 } tls_domain_t;
+
+/* SSL_CTX per domain: one per process in mode 0, one in modes 1/2 (OpenSSL
+ * runs in PROC_TCP_MAIN) and in mode 0 with use_shared_context;
+ * TLS_CTX_IDX() is the slot of this process */
+extern int ksr_tls_shared_ctx;
+#define TLS_CTX_PER_PROC() (ksr_tcp_main_threads == 0 && !ksr_tls_shared_ctx)
+#define TLS_CTX_NO() (TLS_CTX_PER_PROC() ? get_max_procs() : 1)
+#define TLS_CTX_IDX() (TLS_CTX_PER_PROC() ? process_no : 0)
+#define DOM_CTX(d) ((d)->ctx[TLS_CTX_IDX()])
 
 
 /**
@@ -248,6 +237,5 @@ void tls_destroy_cfg(void);
  * @brief Check if a TLS configuration domain exists
  */
 int ksr_tls_domain_duplicated(tls_domains_cfg_t *cfg, tls_domain_t *d);
-int tls_engine_key_hook(SSL_CTX *jit_ctx);
 
 #endif /* _TLS_DOMAIN_H */

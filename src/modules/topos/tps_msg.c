@@ -32,7 +32,9 @@
 #include "../../core/mem/mem.h"
 #include "../../core/data_lump.h"
 #include "../../core/forward.h"
+#include "../../core/resolve.h"
 #include "../../core/trim.h"
+#include "../../core/strutils.h"
 #include "../../core/dset.h"
 #include "../../core/msg_translator.h"
 #include "../../core/parser/parse_rr.h"
@@ -56,12 +58,14 @@ extern int _tps_rr_update;
 extern int _tps_header_mode;
 extern unsigned int _tps_methods_update_time;
 extern int _tps_sn_refresh_topology;
+extern int _tps_dlg_mode;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
 
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
+str _tps_owner_hname = str_init("P-TPS-Owner");
 
 unsigned int _tps_methods_nocontact = METHOD_CANCEL | METHOD_BYE | METHOD_PRACK;
 unsigned int _tps_methods_noinitial = 0;
@@ -802,6 +806,43 @@ int tps_remove_name_headers(sip_msg_t *msg, str *hname)
 }
 
 /**
+ * @brief remove every topos-internal header in a SINGLE pass over the headers
+ * @return number of headers marked for removal (>=0), -1 on error
+ */
+int tps_remove_internal_headers(sip_msg_t *msg)
+{
+	str *names[4];
+	int nnames = 0;
+	hdr_field_t *hf;
+	struct lump *l;
+	int i;
+	int n = 0;
+
+	names[nnames++] = &_sr_hname_xuuid;
+	names[nnames++] = &_sr_hname_xbranch;
+	if(_tps_dlg_mode) {
+		names[nnames++] = &_tps_owner_hname;
+	}
+
+	for(hf = msg->headers; hf; hf = hf->next) {
+		for(i = 0; i < nnames; i++) {
+			if(hf->name.len == names[i]->len
+					&& cmp_hdrname_str(&hf->name, names[i]) == 0) {
+				l = del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
+				if(l == 0) {
+					LM_CRIT("unable to delete header [%.*s]\n", names[i]->len,
+							names[i]->s);
+					return -1;
+				}
+				n++;
+				break;
+			}
+		}
+	}
+	return n;
+}
+
+/**
  *
  */
 int tps_reappend_separate_header_values(
@@ -1034,6 +1075,37 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 }
 
 /**
+ * Find the owner node address from the stored s_rr.
+ * returns 0 on success and fills *out_puri
+ * returns -1 when there is no usable bare-IP s_rr
+ */
+static int tps_owner_uri_from_srr(tps_data_t *stsd, sip_uri_t *out_puri)
+{
+	rr_t *srr = NULL;
+	rr_t *entry = NULL;
+	int ret = -1;
+
+	if(stsd == NULL || out_puri == NULL || stsd->s_rr.len <= 0) {
+		return -1;
+	}
+	if(parse_rr_body(stsd->s_rr.s, stsd->s_rr.len, &srr) < 0 || srr == NULL) {
+		return -1;
+	}
+	for(entry = srr; entry != NULL; entry = entry->next) {
+		if(parse_uri(entry->nameaddr.uri.s, entry->nameaddr.uri.len, out_puri)
+						== 0
+				&& (str2ip(&out_puri->host) != NULL
+						|| str2ip6(&out_puri->host) != NULL)) {
+			/* bare IP host only; an FQDN names no specific owner */
+			ret = 0;
+			break;
+		}
+	}
+	free_rr(&srr);
+	return ret;
+}
+
+/**
  *
  */
 int tps_request_received(sip_msg_t *msg, int dialog)
@@ -1045,9 +1117,14 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
 	int use_branch = 0;
+	int dlg_found = 0;
 	unsigned int metid = 0;
 	uint32_t up_mode = 0;
 	rr_t *srr = NULL;
+	sip_uri_t opuri;
+	str oduri;
+	char odbuf[256];
+	int um_has_owner = 0;
 
 	LM_DBG("handling incoming request\n");
 
@@ -1079,9 +1156,24 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	tps_storage_lock_get(&lkey);
 
-	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
+	ret = tps_storage_load_dialog(msg, &mtsd, &stsd);
+	if(ret < 0) {
 		goto error;
 	}
+	dlg_found = (ret == 0) ? 1 : 0;
+
+	/* unmask-miss: capture the owner node from the dialog s_rr now */
+	if(_tps_dlg_mode && (stsd.a_contact.len <= 0 || stsd.b_contact.len <= 0)
+			&& tps_owner_uri_from_srr(&stsd, &opuri) == 0) {
+		oduri.s = odbuf;
+		oduri.len =
+				snprintf(odbuf, sizeof(odbuf), "sip:%.*s:%u", opuri.host.len,
+						opuri.host.s, opuri.port_no ? opuri.port_no : SIP_PORT);
+		if(oduri.len > 0 && oduri.len < (int)sizeof(odbuf)) {
+			um_has_owner = 1;
+		}
+	}
+
 	metid = get_cseq(msg)->method_id;
 	if((metid
 			   & (METHOD_BYE | METHOD_INFO | METHOD_PRACK | METHOD_UPDATE
@@ -1129,6 +1221,25 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		} else {
 			LM_DBG("r-uri updated to: [%.*s]\n", nuri.len, nuri.s);
 		}
+	} else if(_tps_dlg_mode && (mtsd.a_uuid.len > 0 || mtsd.b_uuid.len > 0)) {
+		/* unmask-miss: dialog loaded but the near contact is empty */
+		LM_WARN("unmask miss, near contact empty: call_id=%.*s method=%.*s "
+				"cseq=%.*s dir=%s use_branch=%d um_has_owner=%d "
+				"a_contact_len=%d b_contact_len=%d r-uri=%.*s left masked\n",
+				msg->callid->body.len, msg->callid->body.s,
+				get_cseq(msg)->method.len, get_cseq(msg)->method.s,
+				get_cseq(msg)->number.len, get_cseq(msg)->number.s,
+				(direction == TPS_DIR_UPSTREAM) ? "upstream" : "downstream",
+				use_branch, um_has_owner, stsd.a_contact.len,
+				stsd.b_contact.len, msg->first_line.u.request.uri.len,
+				msg->first_line.u.request.uri.s);
+
+		if(um_has_owner) {
+			tps_add_headers(msg, &_tps_owner_hname, &oduri, 0);
+		}
+
+		/* return here on purpose; keep the request masked and skip topos */
+		return 0;
 	}
 	if(tps_unmask_refer_to(msg, &stsd, direction) < 0) {
 		LM_ERR("failed to update Refer-To header\n");
@@ -1176,7 +1287,24 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		}
 	}
 	if(dialog != 0) {
-		tps_append_xuuid(msg, &stsd.a_uuid);
+		if(stsd.a_uuid.len > 0) {
+			tps_append_xuuid(msg, &stsd.a_uuid);
+		} else if(stsd.b_uuid.len > 0) {
+			/* stored record has no a-side uuid (e.g., dialog created without
+			 * a-side local contact) - link via the b-side uuid so outgoing
+			 * processing can still load the dialog record and detect the
+			 * direction; otherwise the no-x-uuid fallback in
+			 * tps_request_sent() assumes downstream and wrongly masks the
+			 * Call-ID of in-dialog ACKs relayed upstream */
+			tps_append_xuuid(msg, &stsd.b_uuid);
+		} else if(dlg_found && mtsd.a_uuid.len > 0) {
+			/* record found but carries no uuid values (e.g., branch record
+			 * loaded on the no-b-contact fallback path) - use the r-uri
+			 * token that keyed the dialog lookup; when no record was found,
+			 * append nothing so the outgoing side keeps the stateless
+			 * cover behavior for local ACK/CANCEL */
+			tps_append_xuuid(msg, &mtsd.a_uuid);
+		}
 		if(_tps_rr_update) {
 			if(tps_storage_update_dialog(
 					   msg, &mtsd, &stsd, TPS_DBU_RPLATTRS | TPS_DBU_BRR)
@@ -1357,7 +1485,10 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 				tps_remove_headers(msg, HDR_CONTACT_T);
 				tps_remove_headers(msg, HDR_VIA_T);
 				tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
-				/* ACK and CANCEL go downstream so Call-ID mask required */
+				/* locally generated (hop-by-hop) ACK and CANCEL are assumed
+				 * to go downstream so Call-ID mask is applied - heuristic,
+				 * known-wrong for local ACKs to negative replies of b-side
+				 * requests, where server transactions match by via branch */
 				tps_mask_callid(msg);
 			}
 			return 0;
@@ -1407,7 +1538,16 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	}
 
 	tps_remove_headers(msg, HDR_RECORDROUTE_T);
-	tps_remove_headers(msg, HDR_CONTACT_T);
+	/* keep the original Contact when there is no stored surrogate contact
+	 * to reinsert (e.g., record created without that leg's local contact) -
+	 * a request without any Contact is worse than an unmasked one; still
+	 * strip it for the methods that do not use Contact at all */
+	if((get_cseq(msg)->method_id & _tps_methods_nocontact)
+			|| ((direction == TPS_DIR_UPSTREAM) ? ptsd->as_contact.len
+												: ptsd->bs_contact.len)
+					   > 0) {
+		tps_remove_headers(msg, HDR_CONTACT_T);
+	}
 	tps_remove_headers(msg, HDR_VIA_T);
 
 	tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
@@ -1511,6 +1651,14 @@ int tps_response_sent(sip_msg_t *msg)
 	if(contact_keep == 0 && msg->first_line.u.reply.statuscode >= 400
 			&& msg->first_line.u.reply.statuscode < 500
 			&& msg->contact == NULL) {
+		contact_keep = 1;
+	}
+	if(contact_keep == 0
+			&& ((direction == TPS_DIR_DOWNSTREAM) ? stsd.as_contact.len
+												  : stsd.bs_contact.len)
+					   <= 0) {
+		/* no stored surrogate contact to reinsert (e.g., record created
+		 * without that leg's local contact) - keep the original one */
 		contact_keep = 1;
 	}
 	if(contact_keep == 0) {

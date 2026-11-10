@@ -55,12 +55,16 @@ extern struct tm_binds tmb; //Structure with pointers to tm funcs
 
 extern int use_preferred_scscf_uri;
 extern str preferred_scscf_uri;
+extern str ims_icscf_selected_scscf_avp;
 
 int i_hash_size;
 i_hash_slot *i_hash_table = 0;
 
 scscf_capabilities *SCSCF_Capabilities = 0;
 int SCSCF_Capabilities_cnt = 0;
+
+/* Forward declarations */
+static int create_selected_scscf_pv(str scscf_name);
 
 /**
  * Refreshes the capabilities list reading them from the db.
@@ -405,6 +409,9 @@ int I_scscf_select(struct sip_msg *msg, char *str1, char *str2)
 		return CSCF_RETURN_FALSE;
 	}
 
+	/* Store the Selected SCSCF in a PV, so that script can easily check it */
+	create_selected_scscf_pv(scscf_name);
+
 	if(msg->first_line.u.request.method.len == 8
 			&& strncasecmp(msg->first_line.u.request.method.s, "REGISTER", 8)
 					   == 0) {
@@ -684,4 +691,23 @@ void ims_icscf_timer_routine(unsigned int ticks, void *param)
 		}
 		i_unlock(i);
 	}
+}
+
+//we use pseudo variables to communicate back to config file the selected SCSCF
+static int create_selected_scscf_pv(str scscf_name)
+{
+	int_str avp_val, avp_name;
+	avp_name.s = ims_icscf_selected_scscf_avp;
+
+	// build avp spec for uaa_return_code
+	avp_val.s = scscf_name;
+
+	if(add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val) < 0) {
+		LM_ERR("couldnt create AVP\n");
+		return 0;
+	}
+	LM_DBG("created AVP successfully : [%.*s]\n",
+			STR_FMT(&ims_icscf_selected_scscf_avp));
+
+	return 1;
 }

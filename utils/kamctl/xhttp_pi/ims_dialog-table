@@ -37,9 +37,9 @@
 		<column><field>callee_route_set</field><type>DB1_STR</type></column>
 		<column><field>callee_sock</field><type>DB1_STR</type></column>
 	</db_table>
-	<!-- Declaration of dialog_vars table-->
-	<db_table id="dialog_vars">
-		<table_name>dialog_vars</table_name>
+	<!-- Declaration of ims_dialog_vars table-->
+	<db_table id="ims_dialog_vars">
+		<table_name>ims_dialog_vars</table_name>
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>hash_entry</field><type>DB1_INT</type></column>

@@ -48,6 +48,7 @@
 #include "cfg_core.h"
 #include "ppcfg.h"
 #include "sr_module.h"
+#include "coreparam.h"
 
 #ifdef USE_DNS_CACHE
 void dns_cache_debug(rpc_t *rpc, void *ctx);
@@ -1048,6 +1049,41 @@ static void core_ppdefines_full(rpc_t *rpc, void *c)
 	}
 }
 
+static const char *rpc_coreparam_setn_doc[] = {
+		"Set the value of a numeric core parameter kept in shared memory.", 0};
+
+static void rpc_coreparam_setn(rpc_t *rpc, void *c)
+{
+	char *pname;
+	long oval;
+	long nval;
+	void *h = NULL;
+	int ret;
+
+	if(rpc->scan(c, "sl", &pname, &nval) < 2) {
+		rpc->fault(c, 400, "Parameter Name And Value Expected");
+		return;
+	}
+
+	ret = ksr_coreparam_set_nval_shm(pname, nval, &oval);
+	if(ret == -1) {
+		rpc->fault(c, 404, "Core Parameter Not Found");
+		return;
+	}
+	if(ret == -2) {
+		rpc->fault(c, 488, "Not A Numeric Shm Core Parameter");
+		return;
+	}
+	if(ret < 0) {
+		rpc->fault(c, 500, "Core Parameter Not Allocated In Shm");
+		return;
+	}
+
+	rpc->add(c, "{", &h);
+	rpc->struct_add(h, "ssll", "param", pname, "shm", "yes", "ovalue", oval,
+			"value", nval);
+}
+
 /*
  * RPC Methods exported by core
  */
@@ -1088,6 +1124,7 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.ppdefines", core_ppdefines, core_ppdefines_doc, RPC_RET_ARRAY},
 	{"core.ppdefines_full", core_ppdefines_full, core_ppdefines_full_doc,
 				RPC_RET_ARRAY},
+	{"coreparam.setn", rpc_coreparam_setn, rpc_coreparam_setn_doc, 0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info", dns_cache_mem_info, dns_cache_mem_info_doc, 0},
 	{"dns.debug", dns_cache_debug, dns_cache_debug_doc, 0},

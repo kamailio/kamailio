@@ -264,6 +264,8 @@ str tm_event_callback = STR_NULL;
 
 str tm_evcb_local_ack_sent = STR_NULL;
 
+int _tm_debug_mode = 0;
+
 static int fixup_t_check_status(void **param, int param_no);
 
 /* clang-format off */
@@ -552,6 +554,8 @@ static param_export_t params[] = {
 	{"reply_408_reason", PARAM_STR, &_tm_reply_408_reason},
 	{"delayed_reply", PARAM_INT, &_tm_delayed_reply},
 	{"evlreq_mode", PARAM_INT, &_tm_evlreq_mode},
+	{"debug_mode", PARAM_INT, &_tm_debug_mode},
+	{"timer_mode", PARAM_INT, &tm_timer_mode},
 	{0, 0, 0}
 };
 
@@ -941,6 +945,10 @@ static int mod_init(void)
 #ifdef WITH_TM_CTX
 	tm_ctx_init();
 #endif
+	if(tm_timer_init() < 0) {
+		LM_ERR("failed to initialize timer mode\n");
+		return -1;
+	}
 	tm_init = 1;
 	return 0;
 }
@@ -956,10 +964,16 @@ static int child_init(int rank)
 			LM_ERR("Error while initializing tm statistics structures\n");
 			return -1;
 		}
-	} else if(child_init_callid(rank) < 0) {
-		/* don't init callid for PROC_INIT*/
-		LM_ERR("Error while initializing Call-ID generator\n");
-		return -2;
+	} else {
+		if(child_init_callid(rank) < 0) {
+			/* don't init callid for PROC_INIT*/
+			LM_ERR("Error while initializing Call-ID generator\n");
+			return -2;
+		}
+		if(rank == PROC_MAIN && tm_timer_start() < 0) {
+			LM_ERR("failed to start dedicated timer processes\n");
+			return -3;
+		}
 	}
 	return 0;
 }
@@ -2312,6 +2326,14 @@ T_SET_FLAG_GEN_FUNC(t_set_no_auto_ack, T_NO_AUTO_ACK)
 
 W_T_SET_FLAG_GEN_FUNC(t_set_no_auto_ack, T_NO_AUTO_ACK)
 
+/**
+ *
+ */
+static int ki_t_set_no_auto_ack(sip_msg_t *msg, int state)
+{
+	return t_set_no_auto_ack(msg, state);
+}
+
 /* FAILURE_ROUTE and BRANCH_FAILURE_ROUTE only,
  * returns true if the choosed "failure" branch failed because of a timeout,
  * -1 otherwise */
@@ -2425,7 +2447,7 @@ int t_is_expired(sip_msg_t *msg)
 			   " for which no T-state has been established\n");
 		ret = -1;
 	} else {
-		ret = (TICKS_GT(t->end_of_life, get_ticks_raw())) ? -1 : 1;
+		ret = (TICKS_GT(t->end_of_life, tm_get_ticks_raw())) ? -1 : 1;
 	}
 	return ret;
 }
@@ -3803,7 +3825,7 @@ static sr_kemi_t tm_kemi_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tm"), str_init("t_set_no_auto_ack"),
-		SR_KEMIP_INT, t_set_no_auto_ack,
+		SR_KEMIP_INT, ki_t_set_no_auto_ack,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

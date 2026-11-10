@@ -110,10 +110,10 @@ static int reg_lookup_filter_match(ucontact_t *ptr)
 			}
 			if(con->state != S_CONN_OK) {
 				LM_DBG("connection id %d not in state ok\n", ptr->tcpconn_id);
-				tcpconn_put(con);
+				tcpconn_chld_put(con);
 				return 0;
 			}
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 		}
 	}
 

@@ -7,8 +7,8 @@
 
 static void walk_json(srjson_doc_t *doc, srjson_t *item)
 {
-	int i;
 	int count;
+	srjson_t *child;
 
 	if(item == NULL) {
 		return;
@@ -25,9 +25,15 @@ static void walk_json(srjson_doc_t *doc, srjson_t *item)
 	}
 
 	count = srjson_GetArraySize(doc, item);
-	for(i = 0; i < count; i++) {
-		walk_json(doc, srjson_GetArrayItem(doc, item, i));
+	if(count > 0) {
+		(void)srjson_GetArrayItem(doc, item, 0);
+		(void)srjson_GetArrayItem(doc, item, count / 2);
+		(void)srjson_GetArrayItem(doc, item, count - 1);
 	}
+	(void)srjson_GetArrayItem(doc, item, count);
+
+	for(child = item->child; child != NULL; child = child->next)
+		walk_json(doc, child);
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)

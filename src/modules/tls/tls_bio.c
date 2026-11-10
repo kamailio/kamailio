@@ -63,55 +63,12 @@ static int tls_bio_mbuf_puts(BIO *b, const char *s);
 static long tls_bio_mbuf_ctrl(BIO *b, int cmd, long arg1, void *arg2);
 
 
-#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
-static BIO_METHOD tls_mbuf_method = {
-		BIO_TYPE_TLS_MBUF,	/* type */
-		"sr_tls_mbuf",		/* name */
-		tls_bio_mbuf_write, /* write function */
-		tls_bio_mbuf_read,	/* read function */
-		tls_bio_mbuf_puts,	/* puts function */
-		0,					/* gets function */
-		tls_bio_mbuf_ctrl,	/* ctrl function */
-		tls_bio_mbuf_new,	/* create(new) function */
-		tls_bio_mbuf_free,	/* destroy(free) function */
-		0					/* ctrl callback */
-};
-
-static void *CRYPTO_zalloc(size_t num, const char *file, int line)
-{
-	void *ret = CRYPTO_malloc(num, file, line);
-	if(ret != NULL)
-		memset(ret, 0, num);
-	return ret;
-}
-#define OPENSSL_zalloc(num) CRYPTO_zalloc(num, __FILE__, __LINE__)
-
-#if LIBRESSL_VERSION_NUMBER < 0x20700000L
-static void *BIO_get_data(BIO *b)
-{
-	return b->ptr;
-}
-static void BIO_set_data(BIO *b, void *ptr)
-{
-	b->ptr = ptr;
-}
-static void BIO_set_init(BIO *b, int init)
-{
-	b->init = init;
-}
-#endif
-
-#else
 static BIO_METHOD *tls_mbuf_method = NULL;
-#endif
 
 
 /** returns a custom tls_mbuf BIO. */
 BIO_METHOD *tls_BIO_mbuf(void)
 {
-#if OPENSSL_VERSION_NUMBER < 0x010100000L || defined(LIBRESSL_VERSION_NUMBER)
-	return &tls_mbuf_method;
-#else
 	if(tls_mbuf_method != NULL) {
 		return tls_mbuf_method;
 	}
@@ -129,7 +86,6 @@ BIO_METHOD *tls_BIO_mbuf(void)
 	BIO_meth_set_destroy(tls_mbuf_method, tls_bio_mbuf_free);
 	BIO_meth_set_callback_ctrl(tls_mbuf_method, NULL);
 	return tls_mbuf_method;
-#endif
 }
 
 

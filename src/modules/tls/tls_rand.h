@@ -22,8 +22,8 @@
 
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+#include "tls_openssl.h"
+#if OPENSSL_VERSION_NUMBER < 0x030000000L && !defined(KSR_TLS_LIBSSL_COMPAT)
 
 
 const RAND_METHOD *RAND_ksr_krand_method(void);
@@ -31,5 +31,5 @@ const RAND_METHOD *RAND_ksr_fastrand_method(void);
 const RAND_METHOD *RAND_ksr_cryptorand_method(void);
 const RAND_METHOD *RAND_ksr_kxlibssl_method(void);
 
-#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
+#endif /* OPENSSL_VERSION_NUMBER < 0x030000000L */
 #endif

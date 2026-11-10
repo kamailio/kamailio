@@ -85,6 +85,9 @@ static gen_lock_t *_jwks_cache_lock = NULL;
 static int _jwks_cache_ttl = 3600;
 static int _jwks_miss_window = 60;
 static int _jwks_max_misses = 5;
+static int _jwks_fetch_timeout = 10;
+static int _jwks_connect_timeout = 3;
+static int _jwks_retry_interval = 30;
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
@@ -104,6 +107,9 @@ static param_export_t params[] = {
 	{"jwks_cache_ttl", PARAM_INT, &_jwks_cache_ttl},
 	{"jwks_miss_window", PARAM_INT, &_jwks_miss_window},
 	{"jwks_max_misses", PARAM_INT, &_jwks_max_misses},
+	{"jwks_fetch_timeout", PARAM_INT, &_jwks_fetch_timeout},
+	{"jwks_connect_timeout", PARAM_INT, &_jwks_connect_timeout},
+	{"jwks_retry_interval", PARAM_INT, &_jwks_retry_interval},
 	{0, 0, 0}
 };
 
@@ -152,6 +158,19 @@ static void jwt_free_str(char *s)
  */
 static int mod_init(void)
 {
+	if(_jwks_fetch_timeout <= 0) {
+		LM_ERR("jwks_fetch_timeout must be greater than 0\n");
+		return -1;
+	}
+	if(_jwks_connect_timeout <= 0) {
+		LM_ERR("jwks_connect_timeout must be greater than 0\n");
+		return -1;
+	}
+	if(_jwks_retry_interval < 0) {
+		LM_ERR("jwks_retry_interval must not be negative\n");
+		return -1;
+	}
+
 	_jwks_cache = shm_malloc(sizeof(jwks_cache_entry_t *));
 	if(!_jwks_cache) {
 		LM_ERR("Failed to allocate shared JWKS cache head\n");
@@ -653,7 +672,8 @@ static int jwks_fetch_url(jwks_cache_entry_t *entry)
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, jwks_curl_write_cb);
 	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdrs);
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)_jwks_fetch_timeout);
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, (long)_jwks_connect_timeout);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
 	res = curl_easy_perform(curl);
@@ -675,8 +695,10 @@ static int jwks_fetch_url(jwks_cache_entry_t *entry)
 	if(hdrs.buf && hdrs.len > 0) {
 		char *p = strcasestr(hdrs.buf, "cache-control:");
 		if(p) {
+			/* look for max-age only in the Cache-Control line */
+			char *eol = strpbrk(p, "\r\n");
 			char *ma = strcasestr(p, "max-age=");
-			if(ma) {
+			if(ma && (eol == NULL || ma < eol)) {
 				int max_age = 0;
 				ma += 8;
 				while(*ma >= '0' && *ma <= '9') {
@@ -749,9 +771,22 @@ static jwk_set_t *jwt_load_keys(str *key_in)
 					key_in->s);
 		}
 		lock_release(entry->lock);
-		if(needs_fetch) {
-			if(jwks_fetch_url(entry) < 0)
+		if(needs_fetch && jwks_fetch_url(entry) < 0) {
+			int is_stale;
+			lock_get(entry->lock);
+			is_stale = (entry->json.s != NULL);
+			if(is_stale) {
+				/* delay the next fetch attempt to avoid blocking every request
+				 * while the JWKS server is unavailable */
+				entry->expires_at = time(NULL) + _jwks_retry_interval;
+				lock_release(entry->lock);
+				LM_WARN("JWKS fetch failed for %.*s - using cached keys, next "
+						"attempt in %d s\n",
+						key_in->len, key_in->s, _jwks_retry_interval);
+			} else {
+				lock_release(entry->lock);
 				return NULL;
+			}
 		}
 		lock_get(entry->lock);
 		if(entry->json.s)

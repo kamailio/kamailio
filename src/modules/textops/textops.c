@@ -4142,6 +4142,12 @@ static int has_body_helper(sip_msg_t *msg, int type)
 	if(type == 0)
 		return 1;
 
+	if((((unsigned int)type >> 16) == TYPE_UNKNOWN)
+			|| (((unsigned int)type & 0x00ff) == SUBTYPE_UNKNOWN)) {
+		LM_ERR("The searched content type is an unknown type.\n");
+		return -1;
+	}
+
 	/* the function search for and parses the Content-Type hdr */
 	mime = parse_content_type_hdr(msg);
 	if(mime < 0) {

@@ -176,6 +176,12 @@ typedef void (*km_log_f)(int, const char *, ...);
 extern km_log_f _km_log_func;
 
 void km_log_func_set(km_log_f f);
+/* Write one fully formatted stderr record per write(2) whenever possible. */
+void ksr_stderr_printf(const char *format, ...)
+#if defined(__GNUC__) || defined(__clang__)
+		__attribute__((format(printf, 1, 2)))
+#endif
+		;
 
 /** @brief maps log levels to their string name and corresponding syslog level */
 
@@ -274,42 +280,42 @@ void log_prefix_init(void);
 #endif
 
 #ifdef __SUNPRO_C
-#define LOG_FX(facility, level, lname, prefix, funcname, fmt, ...)         \
-	do {                                                                   \
-		if(DPRINT_NON_CRIT                                                 \
-				&& get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level)) { \
-			int __llevel;                                                  \
-			__llevel = ((level) < L_ALERT)                                 \
-							   ? L_ALERT                                   \
-							   : (((level) > L_DBG) ? L_DBG : level);      \
-			DPRINT_CRIT_ENTER;                                             \
-			if(unlikely(log_stderr)) {                                     \
-				if(unlikely(log_color))                                    \
-					dprint_color(__llevel);                                \
-				fprintf(stderr, "%2d(%d) %s: %.*s%s%s%s" fmt, process_no,  \
-						my_pid(),                                          \
-						(lname) ? (lname) : LOG_LEVEL2NAME(__llevel),      \
-						LOGV_PREFIX_LEN, LOGV_PREFIX_STR, (prefix),        \
-						LOGV_FUNCNAME_STR(funcname),                       \
-						LOGV_FUNCSUFFIX_STR(funcname), __VA_ARGS__);       \
-				if(unlikely(log_color))                                    \
-					dprint_color_reset();                                  \
-			} else {                                                       \
-				_km_log_func(                                              \
-						LOG2SYSLOG_LEVEL(__llevel)                         \
-								| (((facility) != DEFAULT_FACILITY)        \
-												? (facility)               \
-												: get_debug_facility(      \
-														  LOG_MNAME,       \
-														  LOG_MNAME_LEN)), \
-						"%s: %.*s%s%s%s" fmt,                              \
-						(lname) ? (lname) : LOG_LEVEL2NAME(__llevel),      \
-						LOGV_PREFIX_LEN, LOGV_PREFIX_STR, (prefix),        \
-						LOGV_FUNCNAME_STR(funcname),                       \
-						LOGV_FUNCSUFFIX_STR(funcname), __VA_ARGS__);       \
-			}                                                              \
-			DPRINT_CRIT_EXIT;                                              \
-		}                                                                  \
+#define LOG_FX(facility, level, lname, prefix, funcname, fmt, ...)          \
+	do {                                                                    \
+		if(DPRINT_NON_CRIT                                                  \
+				&& get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level)) {  \
+			int __llevel;                                                   \
+			__llevel = ((level) < L_ALERT)                                  \
+							   ? L_ALERT                                    \
+							   : (((level) > L_DBG) ? L_DBG : level);       \
+			DPRINT_CRIT_ENTER;                                              \
+			if(unlikely(log_stderr)) {                                      \
+				if(unlikely(log_color))                                     \
+					dprint_color(__llevel);                                 \
+				ksr_stderr_printf("%2d(%d) %s: %.*s%s%s%s" fmt, process_no, \
+						my_pid(),                                           \
+						(lname) ? (lname) : LOG_LEVEL2NAME(__llevel),       \
+						LOGV_PREFIX_LEN, LOGV_PREFIX_STR, (prefix),         \
+						LOGV_FUNCNAME_STR(funcname),                        \
+						LOGV_FUNCSUFFIX_STR(funcname), __VA_ARGS__);        \
+				if(unlikely(log_color))                                     \
+					dprint_color_reset();                                   \
+			} else {                                                        \
+				_km_log_func(                                               \
+						LOG2SYSLOG_LEVEL(__llevel)                          \
+								| (((facility) != DEFAULT_FACILITY)         \
+												? (facility)                \
+												: get_debug_facility(       \
+														  LOG_MNAME,        \
+														  LOG_MNAME_LEN)),  \
+						"%s: %.*s%s%s%s" fmt,                               \
+						(lname) ? (lname) : LOG_LEVEL2NAME(__llevel),       \
+						LOGV_PREFIX_LEN, LOGV_PREFIX_STR, (prefix),         \
+						LOGV_FUNCNAME_STR(funcname),                        \
+						LOGV_FUNCSUFFIX_STR(funcname), __VA_ARGS__);        \
+			}                                                               \
+			DPRINT_CRIT_EXIT;                                               \
+		}                                                                   \
 	} while(0)
 
 #define LOG_FL(facility, level, lname, prefix, ...) \
@@ -359,8 +365,8 @@ void log_prefix_init(void);
 				if(unlikely(log_stderr)) {                                     \
 					if(unlikely(log_color))                                    \
 						dprint_color(__llevel);                                \
-					fprintf(stderr, "%2d(%d) %s: %.*s%s%s%s" fmt, process_no,  \
-							my_pid(),                                          \
+					ksr_stderr_printf("%2d(%d) %s: %.*s%s%s%s" fmt,            \
+							process_no, my_pid(),                              \
 							(lname) ? (lname) : LOG_LEVEL2NAME(__llevel),      \
 							LOGV_PREFIX_LEN, LOGV_PREFIX_STR, (prefix),        \
 							LOGV_FUNCNAME_STR(funcname),                       \

@@ -1,0 +1,1 @@
+Digest username="bob", realm="b", nonce="n", uri="sip:b", response="x", opaque="op", stale=TRUE, algorithm=SHA-256, qop="auth-int", nc=2, cnonce="c"

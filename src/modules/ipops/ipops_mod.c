@@ -440,6 +440,7 @@ int _ip_is_in_subnet_v6(
 		struct in6_addr *ip, char *net, size_t netlen, int netmask)
 {
 	struct in6_addr net_addr;
+	struct in6_addr temp_ip;
 	char _net[INET6_ADDRSTRLEN];
 	uint8_t ipv6_mask[16];
 	int i;
@@ -459,11 +460,12 @@ int _ip_is_in_subnet_v6(
 		else
 			ipv6_mask[i] = 0x00;
 	}
+	memcpy(&temp_ip, ip, sizeof(struct in6_addr));
 	for(i = 0; i < 16; i++)
-		ip->s6_addr[i] &= ipv6_mask[i];
+		temp_ip.s6_addr[i] &= ipv6_mask[i];
 	for(i = 0; i < 16; i++)
 		net_addr.s6_addr[i] &= ipv6_mask[i];
-	if(memcmp(ip->s6_addr, net_addr.s6_addr, sizeof(net_addr.s6_addr)) == 0)
+	if(memcmp(temp_ip.s6_addr, net_addr.s6_addr, sizeof(net_addr.s6_addr)) == 0)
 		return 1;
 	return 0;
 }

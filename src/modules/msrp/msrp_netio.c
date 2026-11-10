@@ -37,13 +37,13 @@
 
 #define msrp_buffer_append(buf, val, len, csize, msize) \
 	do {                                                \
-		if(csize + len >= msize - 1) {                  \
+		if((csize) + (len) >= (msize) - 1) {            \
 			LM_ERR("result is too large\n");            \
 			goto error;                                 \
 		}                                               \
-		memcpy(buf, val, len);                          \
-		p += len;                                       \
-		csize += len;                                   \
+		memcpy(buf, val, (len));                        \
+		p += (len);                                     \
+		csize += (len);                                 \
 	} while(0)
 
 
@@ -150,7 +150,7 @@ int msrp_forward(msrp_frame_t *mf, str *tpath, str *fpath)
 		wsev.id = con->id;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return ret;
 	} else if(tcp_send(&env->dstinfo, 0, buf, len) < 0) {
 		LM_ERR("forwarding frame failed\n");
@@ -185,6 +185,7 @@ int msrp_relay(msrp_frame_t *mf)
 	str_array_t *sar;
 	char *p;
 	char *l;
+	int csize = 0;
 	int port;
 	sr_event_param_t evp = {0};
 	int ret;
@@ -211,17 +212,16 @@ int msrp_relay(msrp_frame_t *mf)
 
 	p = reqbuf;
 
-	memcpy(p, mf->buf.s, tpath->body.s - mf->buf.s);
-	p += tpath->body.s - mf->buf.s;
-
-	memcpy(p, l + 1, fpath->body.s - l - 1);
-	p += fpath->body.s - l - 1;
-
-	memcpy(p, tpath->body.s, l + 1 - tpath->body.s);
-	p += l + 1 - tpath->body.s;
-
-	memcpy(p, fpath->name.s + 11, mf->buf.s + mf->buf.len - fpath->name.s - 11);
-	p += mf->buf.s + mf->buf.len - fpath->name.s - 11;
+	msrp_buffer_append(p, mf->buf.s, tpath->body.s - mf->buf.s, csize,
+			MSRP_MAX_FRAME_SIZE);
+	msrp_buffer_append(
+			p, l + 1, fpath->body.s - l - 1, csize, MSRP_MAX_FRAME_SIZE);
+	msrp_buffer_append(p, tpath->body.s, l + 1 - tpath->body.s, csize,
+			MSRP_MAX_FRAME_SIZE);
+	/* the From-Path body starts after any whitespace following the colon */
+	msrp_buffer_append(p, fpath->body.s,
+			mf->buf.s + mf->buf.len - fpath->body.s, csize,
+			MSRP_MAX_FRAME_SIZE);
 
 	env = msrp_get_env();
 	if(env->envflags & MSRP_ENV_DSTINFO) {
@@ -272,21 +272,24 @@ done:
 			wsev.id = con->id;
 			evp.data = (void *)&wsev;
 			ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			return ret;
 		} else if(tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
 			LM_ERR("forwarding frame failed\n");
-			tcpconn_put(con);
+			tcpconn_chld_put(con);
 			return -1;
 		}
 
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 	} else if(tcp_send(dst, 0, reqbuf, p - reqbuf) < 0) {
 		LM_ERR("forwarding frame failed\n");
 		return -1;
 	}
 
 	return 0;
+
+error:
+	return -1;
 }
 
 /**
@@ -393,7 +396,7 @@ int msrp_reply(msrp_frame_t *mf, str *code, str *text, str *xhdrs)
 		wsev.id = con->id;
 		evp.data = (void *)&wsev;
 		ret = sr_event_exec(SREV_TCP_WS_FRAME_OUT, &evp);
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		return ret;
 	} else if(tcp_send(&env->srcinfo, 0, rplbuf, p - rplbuf) < 0) {
 		LM_ERR("sending reply failed\n");

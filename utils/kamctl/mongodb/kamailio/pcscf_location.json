@@ -1,6 +1,6 @@
 {
   "name": "pcscf_location",
-  "version": 7,
+  "version": 8,
   "columns": [
     "id": {
       "type": "int",
@@ -159,11 +159,6 @@
     },
     "t_security_type": {
       "type": "int",
-      "default": null,
-      "null": true
-    },
-    "t_protocol": {
-      "type": "string",
       "default": null,
       "null": true
     },

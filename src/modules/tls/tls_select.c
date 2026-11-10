@@ -52,6 +52,20 @@
 #include "tls_cfg.h"
 #include "tls_util.h"
 
+/* openssl 4: x509 name getters return const */
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+#define KSR_X509_CONST const
+#else
+#define KSR_X509_CONST
+#endif
+
+/* openssl 4.1: ASN1_STRING_get_length() replaces ASN1_STRING_length() */
+#if OPENSSL_VERSION_NUMBER >= 0x40100000L
+#define KSR_ASN1_STRING_LEN(s) ((int)ASN1_STRING_get_length(s))
+#else
+#define KSR_ASN1_STRING_LEN(s) ASN1_STRING_length(s)
+#endif
+
 enum
 {
 	CERT_LOCAL = 1,	 /* Select local certificate */
@@ -139,7 +153,7 @@ struct tcp_connection *get_cur_connection(struct sip_msg *msg)
 			cfg_get(tls, tls_cfg, con_lifetime));
 	if(c && c->type != PROTO_TLS && msg->rcv.proto != PROTO_WSS) {
 		ERR("Connection found but is not TLS\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return 0;
 	}
 	return c;
@@ -174,9 +188,11 @@ static int get_cert(
 	if(!extra)
 		goto err;
 	/* both branches return a new reference - caller must X509_free() it */
+	tls_ssl_cache_lock(extra);
 	*cert = my ? x509_DER_to_cert(extra->ssl_my_cert, extra->ssl_my_cert_len)
 			   : x509_DER_to_cert(
 						 extra->ssl_peer_cert, extra->ssl_peer_cert_len);
+	tls_ssl_cache_unlock(extra);
 	if(!*cert) {
 		if(my) {
 			ERR("Unable to retrieve my TLS certificate from SSL structure\n");
@@ -189,7 +205,7 @@ static int get_cert(
 	return 0;
 
 err:
-	tcpconn_put(*c);
+	tcpconn_chld_put(*c);
 	return -1;
 }
 
@@ -211,9 +227,11 @@ static int get_cipher(str *res, sip_msg_t *msg)
 	if(!extra)
 		goto err;
 
+	tls_ssl_cache_lock(extra);
 	cipher.s = extra->ssl_cipher_name;
 	cipher.len = cipher.s ? strlen(cipher.s) : 0;
 	if(cipher.len >= 1024) {
+		tls_ssl_cache_unlock(extra);
 		ERR("Cipher name too long\n");
 		goto err;
 	}
@@ -222,14 +240,15 @@ static int get_cipher(str *res, sip_msg_t *msg)
 	} else {
 		buf[0] = '\0';
 	}
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 	res->len = cipher.len;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -267,7 +286,9 @@ static int get_bits(str *res, long *i, sip_msg_t *msg)
 	if(!extra)
 		goto err;
 
+	tls_ssl_cache_lock(extra);
 	b = extra->ssl_cipher_bits;
+	tls_ssl_cache_unlock(extra);
 	bits.s = int2str(b, &bits.len);
 	if(bits.len >= 1024) {
 		ERR("Bits string too long\n");
@@ -278,12 +299,12 @@ static int get_bits(str *res, long *i, sip_msg_t *msg)
 	res->len = bits.len;
 	if(i)
 		*i = b;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -320,9 +341,11 @@ static int get_version(str *res, sip_msg_t *msg)
 	if(!extra)
 		goto err;
 
+	tls_ssl_cache_lock(extra);
 	version.s = extra->ssl_version;
 	version.len = version.s ? strlen(version.s) : 0;
 	if(version.len >= 1024) {
+		tls_ssl_cache_unlock(extra);
 		ERR("Version string too long\n");
 		goto err;
 	}
@@ -331,14 +354,15 @@ static int get_version(str *res, sip_msg_t *msg)
 	} else {
 		buf[0] = '\0';
 	}
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 	res->len = version.len;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -376,15 +400,17 @@ static int get_desc(str *res, sip_msg_t *msg)
 		goto err;
 
 	buf[0] = '\0';
+	tls_ssl_cache_lock(extra);
 	strcpy(buf, extra->ssl_cipher_desc);
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 	res->len = strlen(buf);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -417,7 +443,7 @@ static int get_cert_version(str *res, int local, sip_msg_t *msg)
 	memcpy(buf, version, res->len);
 	res->s = buf;
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 }
 
@@ -485,7 +511,11 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 		DBG("Verification of local certificates not supported\n");
 		goto error;
 	} else {
-		if(extra->ssl_peer_cert && extra->ssl_verify_result == err) {
+		int ok;
+		tls_ssl_cache_lock(extra);
+		ok = (extra->ssl_peer_cert && extra->ssl_verify_result == err);
+		tls_ssl_cache_unlock(extra);
+		if(ok) {
 			*res = succ;
 			if(ires)
 				*ires = 1;
@@ -496,12 +526,12 @@ static int check_cert(str *res, long *ires, int local, int err, sip_msg_t *msg)
 		}
 	}
 
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 error:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -624,13 +654,13 @@ static int get_validity(str *res, int local, int bound, sip_msg_t *msg)
 
 	BIO_free(mem);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 err:
 	if(mem)
 		BIO_free(mem);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -715,7 +745,7 @@ static int get_sn(str *res, int local, sip_msg_t *msg)
 	res->s = buf;
 
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 
 	BN_free(bn);
 	OPENSSL_free(sn);
@@ -727,7 +757,7 @@ error:
 	if(bn)
 		BN_free(bn);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -847,12 +877,12 @@ static int get_ssl_cert(str *res, int local, int urlencoded, sip_msg_t *msg)
 	}
 
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -915,8 +945,6 @@ static int pv_ssl_cert(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 }
 
 
-#if(OPENSSL_VERSION_NUMBER >= 0x10100001L)
-/* NB: SSL_get0_verified_chain() was introduced in OpenSSL 1.1.0 */
 static int get_verified_cert_chain(
 		STACK_OF(X509) * *chain, struct tcp_connection **c, struct sip_msg *msg)
 {
@@ -931,8 +959,10 @@ static int get_verified_cert_chain(
 	extra = get_extra(*c);
 	if(!extra)
 		goto err;
+	tls_ssl_cache_lock(extra);
 	*chain = x509_DER_to_stack((const unsigned char *)extra->ssl_cert_chain,
 			extra->ssl_cert_chain_len);
+	tls_ssl_cache_unlock(extra);
 	if(!*chain) {
 		ERR("Unable to retrieve peer TLS verified chain from SSL structure\n");
 		goto err;
@@ -940,7 +970,7 @@ static int get_verified_cert_chain(
 
 	return 0;
 err:
-	tcpconn_put(*c);
+	tcpconn_chld_put(*c);
 	return -1;
 }
 
@@ -979,15 +1009,14 @@ static int sel_ssl_verified_cert_chain(str *res, select_t *s, sip_msg_t *msg)
 
 	/* x509_DER_to_stack() returned an owned stack - free it */
 	sk_X509_pop_free(chain, X509_free);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	sk_X509_pop_free(chain, X509_free);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
-#endif /* (OPENSSL_VERSION_NUMBER >= 0x10100001L) */
 
 
 static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
@@ -995,9 +1024,9 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 	static char buf[1024];
 	X509 *cert;
 	struct tcp_connection *c;
-	X509_NAME *name;
-	X509_NAME_ENTRY *e;
-	ASN1_STRING *asn1;
+	KSR_X509_CONST X509_NAME *name;
+	KSR_X509_CONST X509_NAME_ENTRY *e;
+	KSR_X509_CONST ASN1_STRING *asn1;
 	int index, text_len;
 	char *elem;
 	unsigned char *text_s;
@@ -1022,7 +1051,7 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 		res->s = buf;
 		res->len = strlen(buf);
 		X509_free(cert);
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return 0;
 	}
 
@@ -1071,14 +1100,14 @@ static int get_comp(str *res, int local, int issuer, int nid, sip_msg_t *msg)
 
 	OPENSSL_free(text_s);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 err:
 	if(text_s)
 		OPENSSL_free(text_s);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -1223,7 +1252,7 @@ int pv_parse_alt_name(pv_spec_p sp, str *in)
 static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 {
 	static char buf[1024];
-	int n, found = 0;
+	int n, found = 0, set = 0;
 	STACK_OF(GENERAL_NAME) *names = 0;
 	GENERAL_NAME *nm;
 	X509 *cert;
@@ -1250,7 +1279,7 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 				case GEN_DNS:
 				case GEN_URI:
 					text.s = (char *)ASN1_STRING_get0_data(nm->d.ia5);
-					text.len = ASN1_STRING_length(nm->d.ia5);
+					text.len = KSR_ASN1_STRING_LEN(nm->d.ia5);
 					if(text.len >= 1024) {
 						ERR("Alternative subject text too long\n");
 						goto err;
@@ -1258,9 +1287,10 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 					memcpy(buf, text.s, text.len);
 					res->s = buf;
 					res->len = text.len;
+					set = 1;
 					break;
 				case GEN_IPADD:
-					ip.len = ASN1_STRING_length(nm->d.iPAddress);
+					ip.len = KSR_ASN1_STRING_LEN(nm->d.iPAddress);
 					if(ip.len != 4 && ip.len != 16) {
 						ERR("Invalid ip address length\n");
 						goto err;
@@ -1273,24 +1303,27 @@ static int get_alt(str *res, int local, int type, int idx, sip_msg_t *msg)
 					memcpy(buf, text.s, text.len);
 					res->s = buf;
 					res->len = text.len;
+					set = 1;
 					break;
 			}
+			break;
 		}
 		found++;
 	}
-	if(!found)
+	/* no entry of this type at the requested index */
+	if(!set)
 		goto err;
 
 	if(names)
 		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 err:
 	if(names)
 		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -1425,13 +1458,13 @@ static int get_alt_count(long *res, int local, int type, sip_msg_t *msg)
 	X509_free(cert);
 
 	*res = found;
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 err:
 	if(names)
 		sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return -1;
 }
 
@@ -1550,15 +1583,6 @@ static int sel_cert(str *res, select_t *s, struct sip_msg *msg)
 }
 
 
-#ifdef OPENSSL_NO_TLSEXT
-static int get_tlsext_sn(str *res, sip_msg_t *msg)
-{
-	ERR("TLS extension 'server name' is not available! "
-		"please install openssl with TLS extension support and recompile "
-		"the server\n");
-	return -1;
-}
-#else
 static int get_tlsext_sn(str *res, sip_msg_t *msg)
 {
 	static char buf[1024];
@@ -1577,12 +1601,14 @@ static int get_tlsext_sn(str *res, sip_msg_t *msg)
 
 	buf[0] = '\0';
 
+	tls_ssl_cache_lock(extra);
 	server_name.s = extra->ssl_servername;
 	if(server_name.s) {
 		server_name.len = strlen(server_name.s);
 		DBG("received server_name (TLS extension): '%.*s'\n",
 				STR_FMT(&server_name));
 	} else {
+		tls_ssl_cache_unlock(extra);
 		DBG("SSL_get_servername returned NULL\n");
 		goto error;
 	}
@@ -1600,17 +1626,17 @@ static int get_tlsext_sn(str *res, sip_msg_t *msg)
 		memcpy(buf, server_name.s, server_name.len);
 		res->len = server_name.len;
 	}
+	tls_ssl_cache_unlock(extra);
 	res->s = buf;
 
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return 0;
 
 error:
 	if(c)
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 	return -1;
 }
-#endif
 
 
 static int sel_tlsext_sn(str *res, select_t *s, sip_msg_t *msg)
@@ -1691,11 +1717,13 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	if(extra == NULL) {
 		goto error;
 	}
+	tls_ssl_cache_lock(extra);
 	cert = (param->pvn.u.isname.name.n < 5000)
 				   ? x509_DER_to_cert(
 							 extra->ssl_my_cert, extra->ssl_my_cert_len)
 				   : x509_DER_to_cert(
 							 extra->ssl_peer_cert, extra->ssl_peer_cert_len);
+	tls_ssl_cache_unlock(extra);
 	if(cert == NULL) {
 		if(param->pvn.u.isname.name.n < 5000) {
 			LM_ERR("failed to retrieve my TLS certificate from SSL "
@@ -1717,7 +1745,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 				goto error;
 			}
 			X509_free(cert);
-			tcpconn_put(c);
+			tcpconn_chld_put(c);
 			return pv_get_strzval(msg, param, res, sv.s);
 			break;
 
@@ -1730,7 +1758,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 				goto error;
 			}
 			X509_free(cert);
-			tcpconn_put(c);
+			tcpconn_chld_put(c);
 			return pv_get_strzval(msg, param, res, sv.s);
 			break;
 
@@ -1740,7 +1768,7 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 
 error:
 	X509_free(cert);
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 	return pv_get_null(msg, param, res);
 }
 
@@ -1797,10 +1825,8 @@ select_row_t tls_sel[] = {
 		{sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urlencoded_cert"),
 				sel_ssl_cert, DIVERSION | CERT_URLENCODED},
 
-#if(OPENSSL_VERSION_NUMBER >= 0x10100001L)
 		{sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("verified_cert_chain"),
 				sel_ssl_verified_cert_chain, CONSUME_NEXT_INT},
-#endif
 
 		{sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("sn"), sel_sn, 0},
 		{sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("serialNumber"), sel_sn, 0},

@@ -10,5 +10,5 @@
     <name>IMS DIALOG Module</name>
     <xi:include href="dialog_in.xml"/>
     <xi:include href="dialog_out.xml"/>
-    <xi:include href="dialog_vars.xml"/>
+    <xi:include href="ims_dialog_vars.xml"/>
 </database>

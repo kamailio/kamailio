@@ -121,6 +121,7 @@ int dlg_end_timeout = 300;
 int dlg_enable_dmq = 0;
 str dlg_dmq_peer_id = str_init("dialog");
 int dlg_dmq_ka_iflags_sync = 0;
+int dlg_dmq_timeout_iflags_sync = 0;
 int dlg_dmq_load_callbacks = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
@@ -393,6 +394,7 @@ static param_export_t mod_params[]={
 	{ "ka_failed_limit",       PARAM_INT, &dlg_ka_failed_limit      },
 	{ "enable_dmq",            PARAM_INT, &dlg_enable_dmq           },
 	{ "dmq_ka_iflags_sync",    PARAM_INT, &dlg_dmq_ka_iflags_sync   },
+	{ "dmq_timeout_iflags_sync", PARAM_INT, &dlg_dmq_timeout_iflags_sync },
 	{ "dmq_load_callbacks",    PARAM_INT, &dlg_dmq_load_callbacks },
 	{ "event_callback",        PARAM_STR, &dlg_event_callback       },
 	{ "early_timeout",         PARAM_INT, &dlg_early_timeout        },
@@ -2865,8 +2867,8 @@ static int ki_dlg_var_is_null(sip_msg_t *msg, str *name)
 /**
  *
  */
-static int ki_dlg_req_within4(struct sip_msg *msg, str *side, str *method,
-		str *content_type, str *content)
+static int ki_dlg_req_within5(struct sip_msg *msg, str *side, str *method,
+		str *headers, str *content_type, str *content)
 {
 	int n = 0;
 	if(side && side->len > 0) {
@@ -2880,7 +2882,33 @@ static int ki_dlg_req_within4(struct sip_msg *msg, str *side, str *method,
 	}
 
 	return ki_dlg_req_with_headers_and_content(
-			msg, n, method, NULL, content_type, content);
+			msg, n, method, headers, content_type, content);
+}
+
+/**
+ *
+ */
+static int ki_dlg_req_within4(struct sip_msg *msg, str *side, str *method,
+		str *content_type, str *content)
+{
+	return ki_dlg_req_within5(msg, side, method, NULL, content_type, content);
+}
+
+/**
+ *
+ */
+static int ki_dlg_req_within3(
+		struct sip_msg *msg, str *side, str *method, str *headers)
+{
+	return ki_dlg_req_within5(msg, side, method, headers, NULL, NULL);
+}
+
+/**
+ *
+ */
+static int ki_dlg_req_within2(struct sip_msg *msg, str *side, str *method)
+{
+	return ki_dlg_req_within5(msg, side, method, NULL, NULL, NULL);
 }
 
 /**
@@ -3073,10 +3101,25 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dialog"), str_init("dlg_req_within2"),
+		SR_KEMIP_INT, ki_dlg_req_within2,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_req_within3"),
+		SR_KEMIP_INT, ki_dlg_req_within3,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("dialog"), str_init("dlg_req_within4"),
 		SR_KEMIP_INT, ki_dlg_req_within4,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_req_within5"),
+		SR_KEMIP_INT, ki_dlg_req_within5,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

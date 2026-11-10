@@ -73,7 +73,7 @@
 #define VARS_HASH_ENTRY_COL "hash_entry"
 #define VARS_KEY_COL "dialog_key"
 #define VARS_VALUE_COL "dialog_value"
-#define DIALOG_VARS_TABLE_NAME "dialog_vars"
+#define DIALOG_VARS_TABLE_NAME "ims_dialog_vars"
 #define DLG_VARS_TABLE_VERSION 7
 #define DIALOG_VARS_TABLE_COL_NO 4
 

@@ -128,6 +128,11 @@ void wsconn_destroy(void);
 int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol);
 int wsconn_add_outgoing(struct receive_info *rcv, unsigned int sub_protocol,
 		str *handshake_key, str *host, int port, str *path, int proto);
+int wsconn_pending_add(struct ip_addr *ip, unsigned short port, int proto,
+		unsigned int sub_protocol, str *handshake_key, str *host,
+		int target_port, str *path, int target_proto);
+void wsconn_pending_rm(struct ip_addr *ip, unsigned short port, int proto);
+ws_connection_t *wsconn_pending_bind(struct receive_info *rcv);
 int wsconn_mark_open(ws_connection_t *wsc);
 int wsconn_rm(ws_connection_t *wsc, ws_conn_eventroute_t run_event_route);
 int wsconn_update(ws_connection_t *wsc);

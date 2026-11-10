@@ -31,6 +31,7 @@
 #include <stdint.h>
 
 #include "../globals.h"
+#include "parse_bytes.h"
 #include "parse_uri.h"
 #include <string.h>
 #include "../dprint.h"
@@ -469,11 +470,10 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 	/*look for sip:, sips:, tel: or urn:*/
 	if(len < 5)
 		goto error_too_short;
-	scheme = ((uint32_t)buf[0]) + (((uint32_t)buf[1]) << 8)
-			 + (((uint32_t)buf[2]) << 16) + (((uint32_t)buf[3]) << 24);
+	scheme = ksr_read_u32le(buf);
 	/* make it case insensitive by converting to lowercase
 	OR with difference between 'A' and 'a' is 32 (0x20) */
-	scheme |= 0x20202020;
+	scheme = ksr_ascii_lower_u32(scheme);
 	if(scheme == SIP_SCH) {
 		uri->type = SIP_URI_T;
 	} else if(scheme == SIPS_SCH) {

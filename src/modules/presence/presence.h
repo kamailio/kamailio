@@ -96,6 +96,8 @@ extern int pres_fetch_rows;
 extern int pres_waitn_time;
 extern int pres_notifier_poll_rate;
 extern int pres_notifier_processes;
+extern int pres_notifier_cluster_size;
+extern int pres_notifier_cluster_id;
 extern int pres_force_delete;
 extern int pres_startup_mode;
 extern str pres_xavp_cfg;

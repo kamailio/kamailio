@@ -550,6 +550,40 @@ modparam("rls", "server_address", "sip:rls@ip.address.ofyour.proxy:5060")
 		</example>
 	</section>
 
+	<section id="rls.p.contact_mode">
+		<title><varname>contact_mode</varname> (int)</title>
+		<para>
+			Control how the Contact of watcher dialogs is built: the Contact of
+			200 OK replies to watcher SUBSCRIBE requests and of the NOTIFY
+			requests in those dialogs. Backend SUBSCRIBE requests sent by RLS
+			always use <varname>server_address</varname>.
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>0</emphasis> - use <varname>server_address</varname>.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>1</emphasis> - build the Contact from the socket that
+				received the SUBSCRIBE, including its advertised address, as the
+				presence module does when its <varname>server_address</varname>
+				is not set. This allows <varname>server_address</varname> to be a
+				private address of the backend presence server while watchers get
+				a Contact they can reach.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rls", "contact_mode", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="rls.p.max_notify_body_length">
 		<title><varname>max_notify_body_length</varname> (int)</title>
 		<para>

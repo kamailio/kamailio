@@ -321,6 +321,14 @@ static inline int update_contacts(struct sip_msg *req, struct sip_msg *rpl,
 								LM_DBG("Error subscribing for contact\n");
 							}
 
+							// A REGISTER answered over the tunnel the last 401
+							// offered makes it the one the UE is registered
+							// over, and retires the one it replaces
+							if(ipsec_pcscf.ipsec_promote != NULL) {
+								ipsec_pcscf.ipsec_promote(
+										_d, pcontact, &req->rcv);
+							}
+
 							// After successful registration try to unregister all callbacks for pending contacts related to this contact.
 							ul.unreg_pending_contacts_cb(
 									_d, pcontact, PCSCF_CONTACT_EXPIRE);

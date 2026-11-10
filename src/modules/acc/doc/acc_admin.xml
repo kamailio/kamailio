@@ -899,6 +899,51 @@ modparam("acc", "db_version_check", 0)
 </programlisting>
             </example>
         </section>
+	<section id="acc.p.db_connect_mode">
+		<title><varname>db_connect_mode</varname> (integer)</title>
+		<para>
+		Control when the module connects to the database. Values:
+		</para>
+		<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>0</emphasis> - connect at start up or fail
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>1</emphasis> - connect at start up but continue even if
+			connecting to the database server fails, retrying on first use
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>2</emphasis> - do not connect until needed, so only the
+			processes that do accounting hold a connection (this limits the
+			amount of idle connections)
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		With <varname>db_version_check</varname> enabled, the schema check
+		still connects once at start up, in every mode; set it to 0 for
+		modes 1 and 2 to start while the database is unreachable. In modes 1
+		and 2 a missing connection is retried on each accounting event,
+		which blocks the process for the connect timeout while the database
+		is down.
+		</para>
+		<para>
+		Default value is <quote>0</quote>.
+		</para>
+		<example>
+		<title>db_connect_mode example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "db_connect_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
 	<section  id="acc.p.acc_method_column">
 		<title><varname>acc_method_column</varname> (string)</title>
 		<para>

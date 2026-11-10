@@ -36,7 +36,7 @@
 #include "../../core/ut.h"
 #include "../../core/hashes.h"
 #include "../../core/tcp_conn.h"
-#include "../../core/pass_fd.h"
+#include "../../core/tcp_conn_api.h"
 #include "usrloc_mod.h"
 #include "usrloc.h"
 #include "utime.h"
@@ -233,7 +233,7 @@ int is_tcp_alive(ucontact_t *c)
 	int rc = 0;
 
 	if((con = tcpconn_get(c->tcpconn_id, 0, 0, 0, 0))) {
-		tcpconn_put(con); /* refcnt-- */
+		tcpconn_chld_put(con); /* refcnt-- */
 		rc = 1;
 	}
 
@@ -248,25 +248,7 @@ int is_tcp_alive(ucontact_t *c)
  */
 static inline int close_connection(int conid)
 {
-	struct tcp_connection *con;
-	long msg[2];
-	int n;
-	if((con = tcpconn_get(conid, 0, 0, 0, 0))) {
-		msg[0] = (long)con;
-		msg[1] = CONN_EOF;
-
-		con->send_flags.f |= SND_F_CON_CLOSE;
-		con->flags |= F_CONN_FORCE_EOF;
-
-		n = send_all(unix_tcp_sock, msg, sizeof(msg));
-		if(unlikely(n <= 0)) {
-			LM_ERR("failed to send close request: %s (%d)\n", strerror(errno),
-					errno);
-			return 0;
-		}
-		return 1;
-	}
-	return 0;
+	return (tcpconn_ctrl(conid, TCPCONN_CTRL_CLOSE, 0) == 1) ? 1 : 0;
 }
 
 /*!
@@ -379,33 +361,32 @@ static inline void wb_timer(urecord_t *_r)
 	cstate_t old_state;
 	int op;
 	int res;
+	int rgone;
+	int cbtype;
 
 	ptr = _r->contacts;
 
 	while(ptr) {
+		rgone = 0;
 		if(ul_handle_lost_tcp && is_valid_tcpconn(ptr) && !is_tcp_alive(ptr)) {
 			LM_DBG("tcp connection has been lost, deleting contact %.*s\n",
 					ptr->c.len, ptr->c.s);
-			t = ptr;
-			ptr = ptr->next;
-			if(delete_ucontact(_r, t) < 0) {
-				LM_ERR("failed to delete contact with lost tcp connection\n");
-			}
-			continue;
-		}
-
-		if(!VALID_CONTACT(ptr, ul_act_time)) {
-			/* run callbacks for EXPIRE event */
-			if(exists_ulcb_type(UL_CONTACT_EXPIRE)) {
-				run_ul_callbacks(UL_CONTACT_EXPIRE, ptr);
-			}
-
+			rgone = 2;
+		} else if(!VALID_CONTACT(ptr, ul_act_time)) {
 			LM_DBG("Binding '%.*s','%.*s' has expired\n", ptr->aor->len,
 					ZSW(ptr->aor->s), ptr->c.len, ZSW(ptr->c.s));
 			update_stat(_r->slot->d->expires, 1);
-
 			if(ul_close_expired_tcp && is_valid_tcpconn(ptr)) {
 				close_connection(ptr->tcpconn_id);
+			}
+			rgone = 1;
+		}
+
+		if(rgone != 0) {
+			/* run callbacks for DELETE or EXPIRE event */
+			cbtype = (rgone == 2) ? UL_CONTACT_DELETE : UL_CONTACT_EXPIRE;
+			if(exists_ulcb_type(cbtype)) {
+				run_ul_callbacks(cbtype, ptr);
 			}
 
 			t = ptr;

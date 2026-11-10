@@ -816,26 +816,33 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 	enum action_type a_type;
 	char t[pvh_hdr_name_size];
 	str hname = {t, pvh_hdr_name_size - 1};
-	str fval;
+	str fval = STR_NULL;
 
 	p_no = param->pvn.u.isname.name.n;
-	if(p_no >= 1 && p_no <= 5)
-		pvh_str_copy(&hname, &pvh_hdr_from, pvh_hdr_name_size);
-	else if(p_no >= 6 && p_no <= 10)
-		pvh_str_copy(&hname, &pvh_hdr_to, pvh_hdr_name_size);
-
 	switch(p_no) {
 		case 1: // uri from
 		case 6: // uri to
 			a_type = SET_URI_T;
+			if(!val) {
+				LM_ERR("uri can't be unset\n");
+				goto err;
+			}
 			break;
 		case 2: // username from
 		case 7: // username to
 			a_type = SET_USER_T;
+			if(!val) {
+				LM_ERR("user can't be unset\n");
+				goto err;
+			}
 			break;
 		case 3: // domain from
 		case 8: // domain to
 			a_type = SET_HOST_T;
+			if(!val) {
+				LM_ERR("host can't be unset\n");
+				goto err;
+			}
 			break;
 		case 4: // displayname from
 		case 9: // displayname to
@@ -846,19 +853,25 @@ int pvh_set_uri(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 			goto err;
 	}
 
-	if(val->flags & (PV_TYPE_INT | PV_VAL_INT)) {
-		if(pv_get_sintval(msg, param, val, val->ri) < 0)
+	if(p_no >= 1 && p_no <= 5)
+		pvh_str_copy(&hname, &pvh_hdr_from, pvh_hdr_name_size);
+	else if(p_no >= 6 && p_no <= 10)
+		pvh_str_copy(&hname, &pvh_hdr_to, pvh_hdr_name_size);
+
+	if(val) {
+		if(val->flags & (PV_TYPE_INT | PV_VAL_INT)) {
+			if(pv_get_sintval(msg, param, val, val->ri) < 0)
+				goto err;
+		}
+
+		if(pv_parse_format(&val->rs, &pv_format) < 0) {
+			LM_ERR("cannot parse format: %.*s\n", val->rs.len, val->rs.s);
 			goto err;
-	}
-
-	if(pv_parse_format(&val->rs, &pv_format) < 0) {
-		LM_ERR("cannot parse format: %.*s\n", val->rs.len, val->rs.s);
-		goto err;
-	}
-
-	if(pv_printf_s(msg, pv_format, &fval) < 0) {
-		LM_ERR("cannot parse format: %.*s\n", val->rs.len, val->rs.s);
-		goto err;
+		}
+		if(pv_printf_s(msg, pv_format, &fval) < 0) {
+			LM_ERR("cannot parse format: %.*s\n", val->rs.len, val->rs.s);
+			goto err;
+		}
 	}
 
 	xval = pvh_xavi_get_value(msg, &_pvh_params.xavi_name, &hname, 0);
@@ -947,12 +960,14 @@ int pvh_merge_uri(struct sip_msg *msg, enum action_type type, str *cur,
 	}
 
 	if(type == SET_USERPHONE_T) {
-		if(pvh_str_append(merged, new, max_hdr) < 0) {
-			LM_ERR("new uri[%d] exceeds header_value_size\n", new->len);
-			goto err;
-		}
-		if(pvh_str_append(merged, &space, max_hdr) < 0) {
-			goto err;
+		if(new->len > 0) {
+			if(pvh_str_append(merged, new, max_hdr) < 0) {
+				LM_ERR("new value[%d] exceeds header_value_size\n", new->len);
+				goto err;
+			}
+			if(pvh_str_append(merged, &space, max_hdr) < 0) {
+				goto err;
+			}
 		}
 	} else if(tb.display.len > 0) {
 		if(pvh_str_append(merged, &tb.display, max_hdr) < 0) {

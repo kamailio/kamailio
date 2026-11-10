@@ -945,6 +945,7 @@ long rval_get_long(struct run_act_ctx *h, struct sip_msg *msg, long *i,
 	pv_value_t pval;
 	str tmp;
 	str *s;
+	unsigned int ui;
 	int r, ret;
 	int destroy_pval;
 
@@ -1063,9 +1064,10 @@ rv_str:
 		*i = 0;
 	else if(unlikely(str2slong(s, i) != 0)) {
 		/* dec to int failed, try hex to int */
-		if(!(s->len > 2 && s->s[0] == '0' && (s->s[1] == 'x' || s->s[1] == 'X')
-				   && (hexstr2int(s->s + 2, s->len - 2, (unsigned int *)i)
-						   == 0))) {
+		if(s->len > 2 && s->s[0] == '0' && (s->s[1] == 'x' || s->s[1] == 'X')
+				&& hexstr2int(s->s + 2, s->len - 2, &ui) == 0) {
+			*i = (long)ui;
+		} else {
 			/* error converting to int => non numeric => 0 */
 			*i = 0;
 #ifdef RV_STR2INT_VERBOSE_ERR
@@ -1416,6 +1418,10 @@ inline static int long_longop1(long *res, enum rval_expr_op op, long v)
 inline static int long_longop2(
 		long *res, enum rval_expr_op op, long v1, long v2)
 {
+	unsigned long u;
+	unsigned int shift;
+	unsigned int width;
+
 	switch(op) {
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
@@ -1432,11 +1438,19 @@ inline static int long_longop2(
 				LM_ERR("rv div by 0\n");
 				return -1;
 			}
+			if(unlikely(v1 == LONG_MIN && v2 == -1)) {
+				LM_ERR("rv div overflow\n");
+				return -1;
+			}
 			*res = v1 / v2;
 			break;
 		case RVE_MOD_OP:
 			if(unlikely(v2 == 0)) {
 				LM_ERR("rv mod by 0\n");
+				return -1;
+			}
+			if(unlikely(v1 == LONG_MIN && v2 == -1)) {
+				LM_ERR("rv mod overflow\n");
 				return -1;
 			}
 			*res = v1 % v2;
@@ -1451,10 +1465,26 @@ inline static int long_longop2(
 			*res = v1 ^ v2;
 			break;
 		case RVE_BLSHIFT_OP:
-			*res = v1 << v2;
+			width = sizeof(u) * CHAR_BIT;
+			if(unlikely(v2 < 0 || (unsigned long)v2 >= width)) {
+				LM_ERR("rv invalid left shift count %ld\n", v2);
+				return -1;
+			}
+			shift = (unsigned int)v2;
+			u = (unsigned long)v1 << shift;
+			memcpy(res, &u, sizeof(u));
 			break;
 		case RVE_BRSHIFT_OP:
-			*res = v1 >> v2;
+			width = sizeof(u) * CHAR_BIT;
+			if(unlikely(v2 < 0 || (unsigned long)v2 >= width)) {
+				LM_ERR("rv invalid right shift count %ld\n", v2);
+				return -1;
+			}
+			shift = (unsigned int)v2;
+			u = (unsigned long)v1 >> shift;
+			if(v1 < 0 && shift != 0)
+				u |= ~0UL << (width - shift);
+			memcpy(res, &u, sizeof(u));
 			break;
 		case RVE_LAND_OP:
 			*res = v1 && v2;

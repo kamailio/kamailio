@@ -37,6 +37,7 @@
 #define KSR_TLS_KEYLOG_MODE_MLOG (1 << 2)
 #define KSR_TLS_KEYLOG_MODE_FILE (1 << 3)
 #define KSR_TLS_KEYLOG_MODE_PEER (1 << 4)
+#define KSR_TLS_KEYLOG_MODE_TUPLE (1 << 5)
 #define KSR_TLS_KEYLOG_MODE_VFILTER (1 << 10)
 
 static inline int tls_err_ret(

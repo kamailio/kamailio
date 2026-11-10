@@ -37,6 +37,7 @@
 #include "../../core/str.h"
 #include "../../core/trim.h"
 #include "../../core/tcp_conn.h"
+#include "../../core/tcp_conn_api.h"
 #include "../../core/tcp_server.h"
 #include "../../core/counters.h"
 #include "../../core/strutils.h"
@@ -780,7 +781,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 			update_stat(ws_msrp_successful_handshakes, 1);
 	}
 
-	tcpconn_put(con);
+	tcpconn_chld_put(con);
 	return 1;
 error:
 	LM_WARN("failed to build websocket handshake response headers\n");
@@ -788,7 +789,7 @@ error:
 	goto end;
 end:
 	if(con)
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 	return 0;
 }
 
@@ -811,8 +812,12 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 	str host_hdr;
 	proxy_l_t *proxy = NULL;
 	dest_info_t dst;
+	dest_info_t wdst;
 	struct tcp_connection *con = NULL;
+	ws_connection_t *wsc;
 	receive_info_t rcv;
+	struct ip_addr dip;
+	unsigned short dport;
 	int req_len;
 	int ret = -1;
 	char hostbuf[512];
@@ -872,7 +877,7 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 			   "connection"
 			   " (id: %d)\n",
 				(cmode) ? "tls" : "tcp", con->id);
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 		con = NULL;
 		goto done;
 	}
@@ -921,39 +926,54 @@ int ws_connect(sip_msg_t *msg, str *host, int port, str *path,
 	req.s = reqbuf;
 	req.len = req_len;
 
+	/* the 101 may arrive before tcp_send() returns: record the handshake
+	 * first and have the new connection parse its first reply as one */
+	su2ip_addr(&dip, &dst.to);
+	dport = su_getport(&dst.to);
+	if(wsconn_pending_add(&dip, dport, dst.proto, sub_proto, &key, host, port,
+			   &lpath, (cmode) ? PROTO_WSS : PROTO_WS)
+			< 0) {
+		LM_ERR("failed to record the outbound websocket handshake\n");
+		goto done;
+	}
+	dst.send_flags.f |= SND_F_WS_HANDSHAKE;
+
 	if(tcp_send(&dst, 0, req.s, req.len) < 0) {
 		LM_ERR("sending outbound websocket handshake failed\n");
+		wsconn_pending_rm(&dip, dport, dst.proto);
 		goto done;
 	}
 
 	con = ws_find_tcp_connection(&dst);
 	if(con == NULL) {
+		/* an early 101 has upgraded the connection to ws/wss */
+		wdst = dst;
+		wdst.proto = (cmode) ? PROTO_WSS : PROTO_WS;
+		con = ws_find_tcp_connection(&wdst);
+	}
+	if(con == NULL) {
 		LM_ERR("cannot retrieve outbound websocket tcp connection after "
 			   "send\n");
+		wsconn_pending_rm(&dip, dport, dst.proto);
 		goto done;
 	}
 
-	con->req.flags |= F_TCP_REQ_WS_HANDSHAKE;
 	rcv = con->rcv;
 	rcv.proto_reserved1 = con->id;
-	if(wsconn_add_outgoing(&rcv, sub_proto, &key, host, port, &lpath,
-			   (cmode) ? PROTO_WSS : PROTO_WS)
-			< 0) {
+	wsc = wsconn_pending_bind(&rcv);
+	if(wsc == NULL) {
 		LM_ERR("failed to track outbound websocket connection\n");
-		con->req.flags &= ~F_TCP_REQ_WS_HANDSHAKE;
 		goto done;
 	}
+	wsconn_put(wsc);
 
 	ret = 1;
 
 done:
-	if(ret < 0 && con != NULL) {
-		con->send_flags.f |= SND_F_CON_CLOSE;
-		con->state = S_CONN_BAD;
-		con->timeout = get_ticks_raw();
-	}
+	if(ret < 0 && con != NULL)
+		tcpconn_ctrl(con->id, TCPCONN_CTRL_MARK_BAD);
 	if(con)
-		tcpconn_put(con);
+		tcpconn_chld_put(con);
 	if(proxy)
 		free_proxy(proxy);
 	return ret;
@@ -1144,6 +1164,7 @@ int ws_handle_handshake_response(sr_event_param_t *evp)
 {
 	tcp_event_info_t *tev;
 	ws_connection_t *wsc = NULL;
+	receive_info_t rcv;
 	str connection = STR_NULL;
 	str upgrade = STR_NULL;
 	str accept = STR_NULL;
@@ -1158,10 +1179,13 @@ int ws_handle_handshake_response(sr_event_param_t *evp)
 		return -1;
 
 	tev = (tcp_event_info_t *)evp->data;
-	if(tev->con == NULL)
+	if(tev->con == NULL || tev->rcv == NULL)
 		return -1;
 
-	wsc = wsconn_get(tev->con->id);
+	/* ws_connect() may still be on its way to binding the connection */
+	rcv = *tev->rcv;
+	rcv.proto_reserved1 = tev->con->id;
+	wsc = wsconn_pending_bind(&rcv);
 	if(wsc == NULL) {
 		LM_ERR("received websocket handshake response for unknown connection "
 			   "%d\n",

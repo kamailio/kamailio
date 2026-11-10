@@ -43,9 +43,8 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parser_f.h"
 #include "../../core/parser/sdp/sdp_helpr_funcs.h"
+#include "../../core/parser/parse_bytes.h"
 
-#define READ(val) \
-	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 #define advance(_ptr, _n, _str, _error)           \
 	do {                                          \
 		if((_ptr) + (_n) > (_str).s + (_str).len) \
@@ -111,15 +110,15 @@ int check_content_type(struct sip_msg *msg)
 	}
 	p = str_type.s;
 	advance(p, 4, str_type, error_1);
-	x = READ(p - 4);
+	x = ksr_read_u32le(p - 4);
 	if(!one_of_16(x, appl))
 		goto other;
 	advance(p, 4, str_type, error_1);
-	x = READ(p - 4);
+	x = ksr_read_u32le(p - 4);
 	if(!one_of_16(x, icat))
 		goto other;
 	advance(p, 3, str_type, error_1);
-	x = READ(p - 3) & 0x00ffffff;
+	x = ksr_read_u24le(p - 3);
 	if(!one_of_8(x, ion_))
 		goto other;
 
@@ -135,7 +134,7 @@ int check_content_type(struct sip_msg *msg)
 		advance(p, 1, str_type, error_1);
 
 	advance(p, 3, str_type, error_1);
-	x = READ(p - 3) & 0x00ffffff;
+	x = ksr_read_u24le(p - 3);
 	if(!one_of_8(x, sdp_))
 		goto other;
 

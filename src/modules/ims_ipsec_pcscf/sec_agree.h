@@ -34,4 +34,12 @@
  */
 security_t *cscf_get_security(struct sip_msg *msg);
 
+/**
+ * Free a security_t allocated by cscf_get_security(), or one a contact holds.
+ * Safe to call with NULL. Mirrors free_security() in
+ * ims_usrloc_pcscf/pcontact.c - keep the two in sync.
+ * @param params - the security_t to free (may be NULL)
+ */
+void free_security_t(security_t *params);
+
 #endif // SEC_AGREE_H

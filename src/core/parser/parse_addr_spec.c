@@ -87,7 +87,7 @@ enum
 
 static char *parse_to_param(char *const buffer, const char *const end,
 		struct to_body *const to_b, const int allow_comma_sep,
-		int *const returned_status)
+		int *const returned_status, int *parse_rc)
 {
 	struct to_param *param;
 	struct to_param *newparam;
@@ -305,6 +305,8 @@ static char *parse_to_param(char *const buffer, const char *const end,
 								sizeof(struct to_param));
 						if(!param) {
 							PKG_MEM_ERROR;
+							if(parse_rc)
+								*parse_rc = E_OUT_OF_MEM;
 							goto error;
 						}
 						memset(param, 0, sizeof(struct to_param));
@@ -591,8 +593,8 @@ error:
 }
 
 
-char *parse_addr_spec(char *const buffer, const char *const end,
-		struct to_body *const to_b, const int allow_comma_sep)
+char *parse_addr_spec_ex(char *const buffer, const char *const end,
+		struct to_body *const to_b, const int allow_comma_sep, int *parse_rc)
 {
 	int status;
 	int saved_status;
@@ -603,6 +605,8 @@ char *parse_addr_spec(char *const buffer, const char *const end,
 	memset(to_b, 0, sizeof(struct to_body));
 	to_b->error = PARSE_OK;
 	foo = 0;
+	if(parse_rc)
+		*parse_rc = E_UNSPEC;
 
 	for(tmp = buffer; tmp < end; tmp++) {
 		switch(*tmp) {
@@ -817,8 +821,8 @@ char *parse_addr_spec(char *const buffer, const char *const end,
 						to_b->uri.len = foo - to_b->uri.s;
 					case END:
 						to_b->body.len = tmp - to_b->body.s;
-						tmp = parse_to_param(
-								tmp, end, to_b, allow_comma_sep, &saved_status);
+						tmp = parse_to_param(tmp, end, to_b, allow_comma_sep,
+								&saved_status, parse_rc);
 						goto endofheader;
 					case F_CRLF:
 					case F_LF:
@@ -926,6 +930,8 @@ endofheader:
 	}
 	if(to_b->error == PARSE_ERROR) {
 		free_to_params(to_b);
+	} else if(parse_rc) {
+		*parse_rc = E_OK;
 	}
 	return tmp;
 
@@ -935,6 +941,11 @@ error:
 	return tmp;
 }
 
+char *parse_addr_spec(char *const buffer, const char *const end,
+		struct to_body *const to_b, const int allow_comma_sep)
+{
+	return parse_addr_spec_ex(buffer, end, to_b, allow_comma_sep, NULL);
+}
 
 void free_to_params(struct to_body *const tb)
 {

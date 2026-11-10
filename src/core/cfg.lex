@@ -182,6 +182,7 @@ EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
 LOCAL_RPORT		"local_rport"
 ADD_LOCAL_RPORT		"add_local_rport"
+VIA_CONID_MODE	"via_conid_mode"
 FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 UDP_MTU		"udp_mtu"
 UDP_MTU_TRY_PROTO	"udp_mtu_try_proto"
@@ -350,6 +351,7 @@ DNS_SLOW_QUERY_MS	dns_slow_query_ms
 DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
 DNS_USE_SEARCH	dns_use_search_list
+DNS_QUERY_ABSOLUTE	dns_query_absolute
 DNS_SEARCH_FMATCH	dns_search_full_match
 DNS_NAPTR_IGNORE_RFC	dns_naptr_ignore_rfc
 /* dns cache */
@@ -726,6 +728,8 @@ IMPORTFILE      "import_file"
 								return LOCAL_RPORT; }
 <INITIAL>{ADD_LOCAL_RPORT}	{ count(); yylval.strval=yytext;
 								return ADD_LOCAL_RPORT; }
+<INITIAL>{VIA_CONID_MODE}	{ count(); yylval.strval=yytext;
+								return VIA_CONID_MODE; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }
 <INITIAL>{UDP_MTU}	{ count(); yylval.strval=yytext; return UDP_MTU; }
@@ -843,6 +847,8 @@ IMPORTFILE      "import_file"
 								return DNS_SERVERS_NO; }
 <INITIAL>{DNS_USE_SEARCH}	{ count(); yylval.strval=yytext;
 								return DNS_USE_SEARCH; }
+<INITIAL>{DNS_QUERY_ABSOLUTE}	{ count(); yylval.strval=yytext;
+								return DNS_QUERY_ABSOLUTE; }
 <INITIAL>{DNS_SEARCH_FMATCH}	{ count(); yylval.strval=yytext;
 								return DNS_SEARCH_FMATCH; }
 <INITIAL>{DNS_NAPTR_IGNORE_RFC}	{ count(); yylval.strval=yytext;

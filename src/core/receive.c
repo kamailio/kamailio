@@ -55,6 +55,7 @@
 #include "tcp_options.h" /* for access to tcp_accept_aliases*/
 #include "cfg/cfg.h"
 #include "core_stats.h"
+#include "worker_stats.h"
 #include "kemi.h"
 
 #ifdef DEBUG_DMALLOC
@@ -335,6 +336,10 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		LM_ERR("message exceeding maximum size: %d\n", (int)BUF_SIZE);
 		return -1;
 	}
+
+	/* busy from here on - every later exit goes through end: or error00: */
+	KSR_POOL_MEMBER_ONCE(ksr_cnt_sip_children);
+	counter_inc(ksr_cnt_busy_children);
 
 	if(ksr_evrt_received_mode & KSR_EVRT_RECEIVED_MESSAGE) {
 		if(ksr_evrt_received(buf, &len, rcv_info, KSR_EVRT_RECEIVED_MESSAGE)
@@ -656,6 +661,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	}
 
 end:
+	counter_add(ksr_cnt_busy_children, -1);
 	ksr_msg_env_reset();
 	LM_DBG("cleaning up\n");
 	free_sip_msg(msg);
@@ -679,6 +685,7 @@ error02:
 	free_sip_msg(msg);
 	pkg_free(msg);
 error00:
+	counter_add(ksr_cnt_busy_children, -1);
 	ksr_msg_env_reset();
 	/* reset log prefix */
 	log_prefix_set(NULL);

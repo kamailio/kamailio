@@ -4,6 +4,10 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x1010100fL
+#error "OpenSSL 1.1.1 or newer is required"
+#endif
+
 #include "../../core/dprint.h"
 #include "../../core/cfg_parser.h"
 #include "../../core/ut.h"

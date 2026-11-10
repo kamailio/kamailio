@@ -24,27 +24,85 @@
 #include "str.h"
 #include "rand/ksrxrand.h"
 #include "mem/pkg.h"
+#include "mem/shm.h"
+#include "shm_init.h"
 #include "coreparam.h"
 
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam);
+int ksr_coreparam_store_nval_shm(str *pname, ksr_cpval_t *pval, void *eparam);
 int ksr_coreparam_store_sval_pkg(str *pname, ksr_cpval_t *pval, void *eparam);
 
 int ksr_iuid_cp(str *pname, ksr_cpval_t *pval, void *eparam);
 
 long ksr_timer_sanity_check = 0;
+long *ksr_dns_resolver_log = NULL;
 str _ksr_iuid = STR_NULL;
 
 /* clang-format off */
 static ksr_cpexport_t _ksr_cpexports[] = {
 	{ str_init("iuid"), KSR_CPTYPE_STR,
-		ksr_iuid_cp, NULL },
+		ksr_iuid_cp, NULL, { KSR_CPTYPE_NONE, { 0 } } },
 	{ str_init("random_engine"), KSR_CPTYPE_STR,
-		ksr_xrand_cp, NULL },
+		ksr_xrand_cp, NULL, { KSR_CPTYPE_NONE, { 0 } } },
+	{ str_init("dns_resolver_log"), KSR_CPTYPE_NUM | KSR_CPTYPE_SHM,
+		ksr_coreparam_store_nval_shm, &ksr_dns_resolver_log,
+		{ KSR_CPTYPE_NUM, { .nval = 3 } } },
 	{ str_init("timer_sanity_check"), KSR_CPTYPE_NUM,
-		ksr_coreparam_store_nval, &ksr_timer_sanity_check },
-	{ {0, 0}, 0, NULL, NULL }
+		ksr_coreparam_store_nval, &ksr_timer_sanity_check,
+		{ KSR_CPTYPE_NONE, { 0 } } },
+	{ {0, 0}, 0, NULL, NULL, { KSR_CPTYPE_NONE, { 0 } } }
 };
 /* clang-format on */
+
+/**
+ * set default values for core parameters not set in the configuration
+ */
+int ksr_coreparam_set_defaults(void)
+{
+	int i;
+	long **v;
+
+	for(i = 0; _ksr_cpexports[i].name.s != NULL; i++) {
+		if(_ksr_cpexports[i].dval.vtype == KSR_CPTYPE_NONE) {
+			continue;
+		}
+		if((_ksr_cpexports[i].ptype & (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM))
+						!= (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM)
+				|| _ksr_cpexports[i].dval.vtype != KSR_CPTYPE_NUM) {
+			LM_ERR("invalid default value for core parameter [%.*s]\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+		if(_ksr_cpexports[i].setf == NULL || _ksr_cpexports[i].ep == NULL) {
+			LM_ERR("invalid export for core parameter [%.*s]\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+		v = (long **)_ksr_cpexports[i].ep;
+		if(*v != NULL) {
+			if(!shm_address_in(*v)) {
+				LM_ERR("core parameter [%.*s] is not allocated in shm\n",
+						_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+				return -1;
+			}
+			continue;
+		}
+		if(_ksr_cpexports[i].setf(&_ksr_cpexports[i].name,
+				   &_ksr_cpexports[i].dval, _ksr_cpexports[i].ep)
+				< 0) {
+			LM_ERR("failed to set default for core parameter [%.*s]\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+		if(*v == NULL || !shm_address_in(*v)) {
+			LM_ERR("default for core parameter [%.*s] is not stored in shm\n",
+					_ksr_cpexports[i].name.len, _ksr_cpexports[i].name.s);
+			return -1;
+		}
+	}
+
+	return 0;
+}
 
 /**
  *
@@ -95,11 +153,83 @@ int ksr_coreparam_set_xval(char *name, ksr_cpval_t *xval)
 }
 
 /**
+ * set the value of a numeric core parameter stored in shm
+ * - return -1 if the parameter is not found
+ * - return -2 if the parameter is not a numeric shm parameter
+ * - return -3 if the parameter storage is not allocated in shm
+ */
+int ksr_coreparam_set_nval_shm(char *name, long nval, long *oval)
+{
+	int i;
+	str sname;
+	long **v;
+
+	sname.s = name;
+	sname.len = strlen(sname.s);
+
+	for(i = 0; _ksr_cpexports[i].name.s != NULL; i++) {
+		if((_ksr_cpexports[i].name.len == sname.len)
+				&& (strncmp(_ksr_cpexports[i].name.s, sname.s, sname.len)
+						== 0)) {
+			if((_ksr_cpexports[i].ptype & (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM))
+					!= (KSR_CPTYPE_NUM | KSR_CPTYPE_SHM)) {
+				LM_ERR("core parameter [%.*s] is not a numeric shm parameter\n",
+						sname.len, sname.s);
+				return -2;
+			}
+			v = (long **)_ksr_cpexports[i].ep;
+			if(v == NULL || *v == NULL || !shm_address_in(*v)) {
+				LM_ERR("core parameter [%.*s] is not allocated in shm\n",
+						sname.len, sname.s);
+				return -3;
+			}
+			if(oval != NULL) {
+				*oval = **v;
+			}
+			**v = nval;
+			return 0;
+		}
+	}
+	LM_ERR("core parameter [%.*s] not found\n", sname.len, sname.s);
+	return -1;
+}
+
+/**
  *
  */
 int ksr_coreparam_store_nval(str *pname, ksr_cpval_t *pval, void *eparam)
 {
 	*(long *)eparam = pval->v.nval;
+	return 0;
+}
+
+/**
+ * store the value in a long* variable allocated in shm
+ * - target long* has to be initially null or shm-allocated to cope properly
+ *   with setting the parameter many times
+ */
+int ksr_coreparam_store_nval_shm(str *pname, ksr_cpval_t *pval, void *eparam)
+{
+	long **v;
+
+	v = (long **)eparam;
+	if(v == NULL) {
+		LM_ERR("store parameter not provided\n");
+		return -1;
+	}
+	if(*v == NULL) {
+		if(!shm_initialized() && init_shm() < 0) {
+			LM_ERR("failed to initialize shared memory\n");
+			return -1;
+		}
+		*v = (long *)shm_malloc(sizeof(long));
+		if(*v == NULL) {
+			SHM_MEM_ERROR;
+			return -1;
+		}
+	}
+	**v = pval->v.nval;
+
 	return 0;
 }
 

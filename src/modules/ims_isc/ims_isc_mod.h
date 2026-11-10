@@ -69,6 +69,8 @@
 #define ISC_RETURN_RETARGET -2
 /** SER routing script return error */
 #define ISC_RETURN_ERROR -3
+/** session should be terminated */
+#define ISC_RETURN_TERMINATE -4
 
 /** Direction of the dialog */
 enum dialog_direction

@@ -120,33 +120,45 @@ Tyler Moore
               4.2. ds_select_domain(set, alg[, limit])
               4.3. ds_select(set, alg [, limit])
               4.4. ds_select_routes(rules, mode [, limit])
-              4.5. ds_next_dst()
-              4.6. ds_next_domain()
-              4.7. ds_set_dst()
-              4.8. ds_set_domain()
-              4.9. ds_mark_dst([state])
-              4.10. ds_mark_addr(state, setid, uri)
-              4.11. ds_list_exists(groupid)
-              4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.13. ds_is_active(groupid [, uri])
-              4.14. ds_load_update()
-              4.15. ds_load_unset([callid])
-              4.16. ds_reload()
-              4.17. ds_dsg_fetch(setid)
-              4.18. ds_dsg_fetch_uri(setid, uri)
-              4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+              4.5. ds_select_dns([limit])
+              4.6. ds_next_dst()
+              4.7. ds_next_domain()
+              4.8. ds_set_dst()
+              4.9. ds_set_domain()
+              4.10. ds_mark_dst([state])
+              4.11. ds_mark_addr(state, setid, uri)
+              4.12. ds_list_exists(groupid)
+              4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+              4.14. ds_is_active(groupid [, uri])
+              4.15. ds_load_update()
+              4.16. ds_load_unset([callid])
+              4.17. ds_reload()
+              4.18. ds_dsg_fetch(setid)
+              4.19. ds_dsg_fetch_uri(setid, uri)
+              4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
         5. RPC Commands
 
               5.1. dispatcher.set_state
               5.2. dispatcher.set_duid_state
               5.3. dispatcher.list
-              5.4. dispatcher.reload
-              5.5. dispatcher.ping_active
-              5.6. dispatcher.add
-              5.7. dispatcher.remove
-              5.8. dispatcher.hash
-              5.9. dispatcher.oclist
+              5.4. dispatcher.show
+              5.5. dispatcher.load_list
+              5.6. dispatcher.load_add
+              5.7. dispatcher.load_set
+              5.8. dispatcher.load_rm
+              5.9. dispatcher.reload
+              5.10. dispatcher.ping_active
+              5.11. dispatcher.add
+              5.12. dispatcher.update
+              5.13. dispatcher.remove
+              5.14. dispatcher.hash
+              5.15. dispatcher.oclist
+              5.16. dispatcher.pressure_dec
+              5.17. dispatcher.pressure_inc
+              5.18. dispatcher.pressure_set
+              5.19. dispatcher.weight_gset
+              5.20. dispatcher.rweight_gset
 
         6. Installation and Running
 
@@ -223,18 +235,19 @@ Tyler Moore
    1.55. ds_select_domain usage
    1.56. ds_select usage
    1.57. ds_select_routes usage
-   1.58. ds_mark_dst usage
-   1.59. ds_mark_addr usage
-   1.60. ds_list_exists usage
-   1.61. ds_is_from_list usage
-   1.62. ds_is_active usage
-   1.63. ds_load_unset usage
-   1.64. ds_reload usage
-   1.65. ds_dsg_fetch() usage
-   1.66. ds_dsg_fetch_uri() usage
-   1.67. ds_oc_set_attrs() usage
-   1.68. dispatcher list file
-   1.69. Kamailio config script - sample dispatcher usage
+   1.58. ds_select_dns usage
+   1.59. ds_mark_dst usage
+   1.60. ds_mark_addr usage
+   1.61. ds_list_exists usage
+   1.62. ds_is_from_list usage
+   1.63. ds_is_active usage
+   1.64. ds_load_unset usage
+   1.65. ds_reload usage
+   1.66. ds_dsg_fetch() usage
+   1.67. ds_dsg_fetch_uri() usage
+   1.68. ds_oc_set_attrs() usage
+   1.69. dispatcher list file
+   1.70. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -303,33 +316,45 @@ Chapter 1. Admin Guide
         4.2. ds_select_domain(set, alg[, limit])
         4.3. ds_select(set, alg [, limit])
         4.4. ds_select_routes(rules, mode [, limit])
-        4.5. ds_next_dst()
-        4.6. ds_next_domain()
-        4.7. ds_set_dst()
-        4.8. ds_set_domain()
-        4.9. ds_mark_dst([state])
-        4.10. ds_mark_addr(state, setid, uri)
-        4.11. ds_list_exists(groupid)
-        4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.13. ds_is_active(groupid [, uri])
-        4.14. ds_load_update()
-        4.15. ds_load_unset([callid])
-        4.16. ds_reload()
-        4.17. ds_dsg_fetch(setid)
-        4.18. ds_dsg_fetch_uri(setid, uri)
-        4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+        4.5. ds_select_dns([limit])
+        4.6. ds_next_dst()
+        4.7. ds_next_domain()
+        4.8. ds_set_dst()
+        4.9. ds_set_domain()
+        4.10. ds_mark_dst([state])
+        4.11. ds_mark_addr(state, setid, uri)
+        4.12. ds_list_exists(groupid)
+        4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+        4.14. ds_is_active(groupid [, uri])
+        4.15. ds_load_update()
+        4.16. ds_load_unset([callid])
+        4.17. ds_reload()
+        4.18. ds_dsg_fetch(setid)
+        4.19. ds_dsg_fetch_uri(setid, uri)
+        4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    5. RPC Commands
 
         5.1. dispatcher.set_state
         5.2. dispatcher.set_duid_state
         5.3. dispatcher.list
-        5.4. dispatcher.reload
-        5.5. dispatcher.ping_active
-        5.6. dispatcher.add
-        5.7. dispatcher.remove
-        5.8. dispatcher.hash
-        5.9. dispatcher.oclist
+        5.4. dispatcher.show
+        5.5. dispatcher.load_list
+        5.6. dispatcher.load_add
+        5.7. dispatcher.load_set
+        5.8. dispatcher.load_rm
+        5.9. dispatcher.reload
+        5.10. dispatcher.ping_active
+        5.11. dispatcher.add
+        5.12. dispatcher.update
+        5.13. dispatcher.remove
+        5.14. dispatcher.hash
+        5.15. dispatcher.oclist
+        5.16. dispatcher.pressure_dec
+        5.17. dispatcher.pressure_inc
+        5.18. dispatcher.pressure_set
+        5.19. dispatcher.weight_gset
+        5.20. dispatcher.rweight_gset
 
    6. Installation and Running
 
@@ -605,6 +630,9 @@ modparam("dispatcher", "xavp_dst", "_dsdst_")
      * grp - the set id (group id).
      * uri - the URI address.
      * sock - the socket pointer.
+     * sockmap_set - marks the effective per-destination socket map;
+       sockmap_udp, sockmap_tcp, sockmap_tls, and sockmap_sctp contain the
+       corresponding socket pointers, when present.
      * socket - the socket string - it is added only if xavp_dst_mode has
        bit 2 set (value 2).
      * sockname - the sockname string - it is added only if xavp_dst_mode
@@ -1225,21 +1253,22 @@ modparam("dispatcher", "ds_interval_mode", 7200)
    4.2. ds_select_domain(set, alg[, limit])
    4.3. ds_select(set, alg [, limit])
    4.4. ds_select_routes(rules, mode [, limit])
-   4.5. ds_next_dst()
-   4.6. ds_next_domain()
-   4.7. ds_set_dst()
-   4.8. ds_set_domain()
-   4.9. ds_mark_dst([state])
-   4.10. ds_mark_addr(state, setid, uri)
-   4.11. ds_list_exists(groupid)
-   4.12. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.13. ds_is_active(groupid [, uri])
-   4.14. ds_load_update()
-   4.15. ds_load_unset([callid])
-   4.16. ds_reload()
-   4.17. ds_dsg_fetch(setid)
-   4.18. ds_dsg_fetch_uri(setid, uri)
-   4.19. ds_oc_set_attrs(setid, uri, rval, tval, sval)
+   4.5. ds_select_dns([limit])
+   4.6. ds_next_dst()
+   4.7. ds_next_domain()
+   4.8. ds_set_dst()
+   4.9. ds_set_domain()
+   4.10. ds_mark_dst([state])
+   4.11. ds_mark_addr(state, setid, uri)
+   4.12. ds_list_exists(groupid)
+   4.13. ds_is_from_list([groupid [, mode [, uri] ] ])
+   4.14. ds_is_active(groupid [, uri])
+   4.15. ds_load_update()
+   4.16. ds_load_unset([callid])
+   4.17. ds_reload()
+   4.18. ds_dsg_fetch(setid)
+   4.19. ds_dsg_fetch_uri(setid, uri)
+   4.20. ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1388,6 +1417,18 @@ If gateways 1 and 2 become inactive:
 GATEWAY | PRIORITY | WEIGHT | LOAD DISTRIBUTION
    3    |    20    |   50   |   50%
    4    |    20    |   50   |   50%
+          + “16” - pressure based dispatching. Each destination's pressure
+            is initialized from its unsigned “pressure” attribute when the
+            dispatcher list is loaded or reloaded. When the attribute is
+            missing, pressure is initialized to 0. The active destination
+            with the lowest pressure is selected. If several destinations
+            have the same lowest pressure, they are selected in
+            round-robin order. Routing does not change the pressure value.
+            Failover destinations are ordered by increasing pressure, with
+            round-robin ordering among destinations having equal pressure.
+            Runtime updates preserve the current pressure; reload the
+            dispatcher list to initialize pressure again from the
+            configured attribute.
           + “X” - if the algorithm is not implemented, the first entry in
             set is chosen.
      * limit - the maximum number of items to be stored in XAVP list for
@@ -1549,35 +1590,64 @@ failure_route[REROUTE] {
 }
 ...
 
-4.5.  ds_next_dst()
+4.5.  ds_select_dns([limit])
+
+   Resolves the current next hop using the procedures from RFC 3263 and
+   stores the resulting target addresses in the XAVP configured by the
+   xavp_dst parameter. The destination URI is used as the next hop when it
+   is set; otherwise, the Request-URI is used. The lookup performs NAPTR,
+   SRV, and CNAME/A/AAAA queries as required by the URI and stores
+   concrete SIP URIs containing the resolved IP address, port, and
+   transport in DNS selection order.
+
+   The optional limit parameter is a positive integer or a variable
+   containing an integer. Resolution stops after this number of targets
+   has been stored. A missing or zero value means no limit.
+
+   The function returns true if at least one target was resolved and
+   stored. The generated XAVP records contain the “uri” field and can be
+   used by ds_next_dst() for serial failover when bit 2 of the flags
+   parameter is set.
+
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+
+   Example 1.58. ds_select_dns usage
+...
+if(ds_select_dns("8")) {
+        ds_next_dst();
+        t_relay();
+}
+...
+
+4.6.  ds_next_dst()
 
    Takes the next destination address from the corresponding XAVPs and
    sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.6.  ds_next_domain()
+4.7.  ds_next_domain()
 
    Takes the next destination address from the corresponding XAVPs and
    sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.7.  ds_set_dst()
+4.8.  ds_set_dst()
 
    Takes the current destination address from the corresponding XAVPs and
    sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.8.  ds_set_domain()
+4.9.  ds_set_domain()
 
    Takes the current destination address from the corresponding XAVPs and
    sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.9.  ds_mark_dst([state])
+4.10.  ds_mark_dst([state])
 
    Mark the last used address from destination set as inactive ("i"/"I"),
    active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
@@ -1604,7 +1674,7 @@ failure_route[REROUTE] {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.58. ds_mark_dst usage
+   Example 1.59. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1614,7 +1684,7 @@ failure_route[tryagain] {
 }
 ...
 
-4.10.  ds_mark_addr(state, setid, uri)
+4.11.  ds_mark_addr(state, setid, uri)
 
    Set the state to the target specified by setid and uri. The parameter
    state can have same value as for ds_mark_dst(). All parameters can
@@ -1622,12 +1692,12 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.59. ds_mark_addr usage
+   Example 1.60. ds_mark_addr usage
 ...
     ds_mark_addr("ip", "1", "sip:127.0.0.1:5080"); # set to inactive and probing
 ...
 
-4.11.  ds_list_exists(groupid)
+4.12.  ds_list_exists(groupid)
 
    Function alias: ds_list_exist(groupid)
 
@@ -1639,14 +1709,14 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.60. ds_list_exists usage
+   Example 1.61. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
 }
 ...
 
-4.12.  ds_is_from_list([groupid [, mode [, uri] ] ])
+4.13.  ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -1701,7 +1771,7 @@ Note
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.61. ds_is_from_list usage
+   Example 1.62. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1717,7 +1787,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.13.  ds_is_active(groupid [, uri])
+4.14.  ds_is_active(groupid [, uri])
 
    This function returns true, if there is an active URI in the
    destination group; otherwise false. If the uri parameter is provided,
@@ -1731,7 +1801,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.62. ds_is_active usage
+   Example 1.63. ds_is_active usage
 ...
 if(ds_is_active("10")) {
     ...
@@ -1741,7 +1811,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.14.  ds_load_update()
+4.15.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -1752,7 +1822,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.15.  ds_load_unset([callid])
+4.16.  ds_load_unset([callid])
 
    Remove the call load for the destination that routed the call.
 
@@ -1768,7 +1838,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, ONREPLY_ROUTE and EVENT_ROUTE.
 
-   Example 1.63. ds_load_unset usage
+   Example 1.64. ds_load_unset usage
 ...
 route {
     ...
@@ -1798,7 +1868,7 @@ event_route[dialog:failed] {
 }
 ...
 
-4.16.  ds_reload()
+4.17.  ds_reload()
 
    Reloads the groups and included destinations.
 
@@ -1808,12 +1878,12 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.64. ds_reload usage
+   Example 1.65. ds_reload usage
 ...
     ds_reload();
 ...
 
-4.17.  ds_dsg_fetch(setid)
+4.18.  ds_dsg_fetch(setid)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes.
@@ -1822,13 +1892,13 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.65. ds_dsg_fetch() usage
+   Example 1.66. ds_dsg_fetch() usage
 ...
     ds_dsg_fetch("1");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active)\n");
 ...
 
-4.18.  ds_dsg_fetch_uri(setid, uri)
+4.19.  ds_dsg_fetch_uri(setid, uri)
 
    Sets the destination group id to setid for fetching $dsg(key)
    attributes and the overload-control attributes to the corresponding uri
@@ -1839,13 +1909,13 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.66. ds_dsg_fetch_uri() usage
+   Example 1.67. ds_dsg_fetch_uri() usage
 ...
     ds_dsg_fetch_uri("1", "sip:127.0.0.1:5080");
     xinfo("set id: 1 - all: $dsg(count); active: $dsg(active); $dsg(ocrate)\n");
 ...
 
-4.19.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
+4.20.  ds_oc_set_attrs(setid, uri, rval, tval, sval)
 
    Sets the overload control rate, time interval limit and sequence number
    for the destination record (setid, uri) following RFC7339
@@ -1871,7 +1941,7 @@ event_route[dialog:failed] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.67. ds_oc_set_attrs() usage
+   Example 1.68. ds_oc_set_attrs() usage
 ...
     ds_oc_set_attrs("1", "sip:127.0.0.1:5080", "30", "180000", "1");
 ...
@@ -1881,12 +1951,23 @@ event_route[dialog:failed] {
    5.1. dispatcher.set_state
    5.2. dispatcher.set_duid_state
    5.3. dispatcher.list
-   5.4. dispatcher.reload
-   5.5. dispatcher.ping_active
-   5.6. dispatcher.add
-   5.7. dispatcher.remove
-   5.8. dispatcher.hash
-   5.9. dispatcher.oclist
+   5.4. dispatcher.show
+   5.5. dispatcher.load_list
+   5.6. dispatcher.load_add
+   5.7. dispatcher.load_set
+   5.8. dispatcher.load_rm
+   5.9. dispatcher.reload
+   5.10. dispatcher.ping_active
+   5.11. dispatcher.add
+   5.12. dispatcher.update
+   5.13. dispatcher.remove
+   5.14. dispatcher.hash
+   5.15. dispatcher.oclist
+   5.16. dispatcher.pressure_dec
+   5.17. dispatcher.pressure_inc
+   5.18. dispatcher.pressure_set
+   5.19. dispatcher.weight_gset
+   5.20. dispatcher.rweight_gset
 
 5.1.  dispatcher.set_state
 
@@ -1946,6 +2027,7 @@ DEST: {
         URI: sip:192.168.0.1:5060
         FLAGS: AP
         PRIORITY: 12
+        PRESSURE: 12
 }
 ...
 
@@ -1957,7 +2039,130 @@ DEST: {
    destination is assumed as active and it is not tested by SIP options.
    DX respectively is disabled destination that is not tested, etc.
 
-5.4.  dispatcher.reload
+5.4.  dispatcher.show
+
+   Lists destinations from one dispatcher group. When an address is
+   provided, only records whose full destination URI matches that address
+   are returned. The address comparison is case-insensitive. When the
+   address is omitted, all destinations in the group are returned.
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: optional destination URI
+
+   Examples:
+...
+# list all destinations in group 2
+kamcmd dispatcher.show 2
+
+# list the matching destination in group 2
+kamcmd dispatcher.show 2 sip:127.0.0.1:5080
+...
+
+5.5.  dispatcher.load_list
+
+   Lists all records in the internal call-load hash table used by
+   algorithm 10. The result is an array and is empty when the load hash
+   table has not been initialized or contains no records.
+
+   The returned fields are:
+     * SLOT: hash-table slot
+     * CELLID: full hash value
+     * GROUP: destination group id
+     * DUID: destination unique id
+     * CALLID: SIP Call-ID
+     * STATE: 0 for initial or 1 for confirmed
+     * EXPIRE: expiration as a Unix timestamp
+     * INITEXPIRE: initial-state expiration as a Unix timestamp
+
+   This command has no parameters.
+
+   Example:
+...
+kamcmd dispatcher.load_list
+...
+
+5.6.  dispatcher.load_add
+
+   Adds an item to the internal call-load hash table used by algorithm 10
+   and increments the tracked load of the matching destination. The group
+   and destination unique id must identify an existing destination, and
+   the Call-ID must not already exist in the table.
+
+   The optional expiration values are durations in seconds from the time
+   the item is added. When expire or initexpire is omitted or set to 0,
+   the value of ds_hash_expire or ds_hash_initexpire, respectively, is
+   used.
+
+   Parameters:
+     * _group_: destination group id
+     * _duid_: destination unique id
+     * _callid_: SIP Call-ID
+     * _state_: 0 for initial or 1 for confirmed
+     * _expire_: optional general expiration duration
+     * _initexpire_: optional initial-state expiration duration
+
+   Examples:
+...
+# use the module expiration parameters
+kamcmd dispatcher.load_add 2 gateway-a 7f3d2 0
+
+# expire after 3600 seconds, with a 60 second initial-state expiration
+kamcmd dispatcher.load_add 2 gateway-a 7f3d2 0 3600 60
+...
+
+5.7.  dispatcher.load_set
+
+   Updates selected fields of an existing entry in the internal call-load
+   hash table. The group id, destination unique id and Call-ID must all
+   match the entry. One, two or all three supported attributes can be
+   updated in one call, in any order. An attribute cannot be repeated.
+
+   The supported attributes are state, expire and initexpire. State must
+   be 0 (initial) or 1 (confirmed). Expiration values are durations in
+   seconds from the moment the command is executed. The corresponding
+   absolute Unix timestamps are stored in the hash-table entry and
+   displayed by dispatcher.load_list.
+
+   Parameters:
+     * _group_: destination group id
+     * _duid_: destination unique id
+     * _callid_: SIP Call-ID
+     * _attribute value_: one to three attribute/value pairs
+
+   Examples:
+...
+# update one field
+kamcmd dispatcher.load_set 2 gateway-a 7f3d2@example.net state 1
+
+# update two fields: expire in one hour and initial state in one minute
+kamcmd dispatcher.load_set 2 gateway-a 7f3d2@example.net expire 3600 initexpire
+60
+
+# update all fields
+kamcmd dispatcher.load_set 2 gateway-a 7f3d2@example.net state 0 expire 3600 ini
+texpire 60
+...
+
+5.8.  dispatcher.load_rm
+
+   Removes an entry from the internal call-load hash table used by
+   algorithm 10. The entry is removed only when its group id, destination
+   unique id and Call-ID all match the supplied parameters. When the
+   destination still exists, its tracked load is decremented as well.
+
+   Parameters:
+     * _group_: destination group id
+     * _duid_: destination unique id
+     * _callid_: SIP Call-ID
+
+   Example:
+...
+# prototype: kamcmd dispatcher.load_rm _group_ _duid_ _callid_
+kamcmd dispatcher.load_rm 2 gateway-a 7f3d2@example.net
+...
+
+5.9.  dispatcher.reload
 
    Reloads the groups and included destinations. The command is disabled
    for call load based dispatching (algorithm 10) since removal of
@@ -1970,7 +2175,7 @@ DEST: {
    Example
                 kamcmd dispatcher.reload
 
-5.5.  dispatcher.ping_active
+5.10.  dispatcher.ping_active
 
    Sets the global state for sending keepalive requests to destinations.
 
@@ -1991,7 +2196,7 @@ DEST: {
 kamctl rpc dispatcher.ping_active 0
 ...
 
-5.6.  dispatcher.add
+5.11.  dispatcher.add
 
    Add a destination address to the in-memory dispatcher list. Reloading
    the dispatcher will remove any destinations that are only added to the
@@ -2017,7 +2222,36 @@ kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:506
 0
 ...
 
-5.7.  dispatcher.remove
+5.12.  dispatcher.update
+
+   Replace a destination address in the in-memory dispatcher list. All
+   records matching the destination group and address are removed and the
+   new destination is added in one atomic update of the routing structure.
+   If no matching record exists, the destination is added.
+
+   Reloading the dispatcher will replace this change with the destinations
+   loaded from the configured file or database.
+
+   Name: dispatcher.update
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the _group_
+     * _flags_ (optional): as described in the list file format, default 0
+     * _priority_ (optional): as described in the list file format,
+       default 0
+     * _attrs_ (optional): as described in the list file format, default
+       ""
+
+   Example:
+...
+# prototype: kamcmd dispatcher.update _group_ _address_ _flags_ _priority_ _attr
+s_
+kamcmd dispatcher.update 3 sip:127.0.0.1:5075 8 10 duid=abc;socket=udp:127.0.0.1
+:5060
+...
+
+5.13.  dispatcher.remove
 
    Remove a destination address from the in-memory dispatcher list.
    Reloading the dispatcher from file or database will re-add destinations
@@ -2038,7 +2272,7 @@ kamcmd dispatcher.remove 2 sip:127.0.0.1:5080
 kamcmd dispatcher.remove 3 sip:127.0.0.1:5075;transport=udp
 ...
 
-5.8.  dispatcher.hash
+5.14.  dispatcher.hash
 
    Compute the hash id corresponding to the string parameter values.
 
@@ -2067,7 +2301,7 @@ kamctl rpc dispatcher.hash 0 alice server.com
 kamctl rpc dispatcher.hash 4 bob server.com
 ...
 
-5.9.  dispatcher.oclist
+5.15.  dispatcher.oclist
 
    List the overload control attributes for the records in a specific
    group.
@@ -2081,6 +2315,110 @@ kamctl rpc dispatcher.hash 4 bob server.com
 ...
 # prototype: kamcli dispatcher.oclist _group_
 kamcli dispatcher.oclist 1
+...
+
+5.16.  dispatcher.pressure_dec
+
+   Decrement by one the pressure associated with a destination address.
+   Pressure is unsigned and remains at zero when it is already zero. The
+   updated pressure is returned. When the new value matches the lowest
+   pressure in the group, algorithm 16 includes the destination in its
+   round-robin selection.
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the group
+
+   Example:
+...
+# prototype: kamcmd dispatcher.pressure_dec _group_ _address_
+kamcmd dispatcher.pressure_dec 2 sip:127.0.0.1:5080
+...
+
+5.17.  dispatcher.pressure_inc
+
+   Increment by one the pressure associated with a destination address.
+   Pressure remains at its maximum unsigned 32-bit value when it is
+   already at that limit. The updated pressure is returned. Algorithm 16
+   considers the new value during its next destination selection.
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the group
+
+   Example:
+...
+# prototype: kamcmd dispatcher.pressure_inc _group_ _address_
+kamcmd dispatcher.pressure_inc 2 sip:127.0.0.1:5080
+...
+
+5.18.  dispatcher.pressure_set
+
+   Set the unsigned 32-bit pressure associated with a destination address.
+   The updated pressure is returned. Algorithm 16 considers the new value
+   during its next destination selection.
+
+   Parameters:
+     * _group_: destination group id
+     * _address_: address of the destination in the group
+     * _pressure_: new unsigned pressure value
+
+   Example:
+...
+# prototype: kamcmd dispatcher.pressure_set _group_ _address_ _pressure_
+kamcmd dispatcher.pressure_set 2 sip:127.0.0.1:5080 10
+...
+
+5.19.  dispatcher.weight_gset
+
+   Set the weights for all destinations in a group without reloading the
+   dispatcher. Weights are mapped positionally to the current destination
+   indexes shown by dispatcher.list. The number of weights must exactly
+   match the number of destinations in the group, including a default
+   destination when configured. Each value must be between 0 and 100.
+
+   The update is atomic and immediately rebuilds the distributions used by
+   algorithms 9 and 15. Runtime weights are preserved by in-memory add and
+   remove operations; a full reload restores weights from the configured
+   file or database. The structured weight value in dispatcher.list
+   reflects the runtime value; the original attributes body text is not
+   rewritten.
+
+   Parameters:
+     * _group_: destination group id
+     * _weight0_ ... _weightN_: one weight for each destination index
+
+   Example:
+...
+# prototype: kamcmd dispatcher.weight_gset _group_ _weight0_ [_weight1_ ...]
+kamcmd dispatcher.weight_gset 2 50 30 20
+...
+
+5.20.  dispatcher.rweight_gset
+
+   Set the relative weights for all destinations in a group without
+   reloading the dispatcher. Relative weights are mapped positionally to
+   the current destination indexes shown by dispatcher.list. The number of
+   values must exactly match the number of destinations in the group,
+   including a default destination when configured. Each value must be
+   between 0 and 100.
+
+   The update is atomic and immediately rebuilds the distribution used by
+   algorithm 11. Runtime relative weights are preserved by in-memory add
+   and remove operations; a full reload restores relative weights from the
+   configured file or database. The structured relative weight value in
+   dispatcher.list reflects the runtime value; the original attributes
+   body text is not rewritten.
+
+   Parameters:
+     * _group_: destination group id
+     * _rweight0_ ... _rweightN_: one relative weight for each destination
+       index
+
+   Example:
+...
+# prototype: kamcmd dispatcher.rweight_gset _group_ _rweight0_ [_rweight1_ ...]
+kamcmd dispatcher.rweight_gset 2 50 30 20
 ...
 
 6. Installation and Running
@@ -2117,7 +2455,8 @@ kamcli dispatcher.oclist 1
             matched anymore with ds_is_from_list(...).
           + 32 (bit at index 5 - 1 <<5) - no ping to destination
      * priority: sets the priority in destination list (based on it is
-       done the initial ordering inside the set)
+       done the initial ordering inside the set: descending mode - first
+       record is the one with highest priority)
      * attributes: extra fields in form of name1=value1;...;nameN=valueN.
 
 6.1.1. Special Attributes
@@ -2146,6 +2485,10 @@ kamcli dispatcher.oclist 1
        relative weight distribution type - its rweight is set to 0. See
        also the description of the corresponding algorithm parameter for
        ds_select_dst().
+     * 'pressure' - sets the initial unsigned 32-bit pressure used by
+       algorithm 16. When this attribute is missing or invalid, the
+       initial pressure is 0. Runtime pressure updates do not rewrite the
+       attribute; reloading the dispatcher restores its configured value.
      * 'socket' - used to set the sending socket for the gateway,
        overwriting ds_default_socket parameter. It is used for sending the
        SIP traffic as well as OPTIONS pings/keepalives (if no specific
@@ -2155,6 +2498,18 @@ kamcli dispatcher.oclist 1
      * 'sockname' - used to set by name the sending socket for the
        gateway. It is used for sending the SIP traffic as well as OPTIONS
        keepalives and has priority over 'socket' attribute.
+     * 'sockmap' - sets local sending sockets by transport for dispatched
+       requests and OPTIONS keepalives. Its value is a slash-separated
+       list in the form
+       “udp:sockname-udp/tcp:sockname-tcp/tls:sockname-tls/sctp:sockname-s
+       ctp”, where each value is a configured socket name. TCP is used for
+       WS and TLS is used for WSS. The appropriate socket is selected
+       after DNS resolves the transport, including during DNS failover.
+       For a mapped transport, this attribute takes precedence over
+       'socket' and 'sockname'. For OPTIONS keepalives, a mapped transport
+       also takes precedence over 'ping_socket' and 'ds_ping_socket'.
+       Transports not present in the map retain the existing
+       socket-selection behavior.
      * 'ping_from' - used to set the From URI in OPTIONS keepalives. It
        overwrites the general ds_ping_from parameter.
      * 'ping_reply_codes' - accepted reply codes for the OPTIONS keepalive
@@ -2189,7 +2544,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.68. dispatcher list file
+   Example 1.69. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -2214,7 +2569,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.69. Kamailio config script - sample dispatcher usage
+   Example 1.70. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #

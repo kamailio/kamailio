@@ -67,12 +67,18 @@
 #define F_CONN_NOSEND 65536	  /* do not send data on this connection */
 #define F_CONN_NORECV (1 << 17) /* do not receive data on this connection */
 /* mode 2 (tcp reactor thread pool) flags */
-#define F_CONN_POOL_BUSY \
-	(1 << 18) /* owned by a pool job: shielded out of io_h + local timer.
-			   * Serializes read/write jobs per conn (one owner at a time). */
+#define F_CONN_POOL_RD \
+	(1 << 18) /* a pool read job owns this conn (set/cleared by io_wait) */
+#define F_CONN_POOL_WR \
+	(1 << 20) /* a pool write job owns this conn (set/cleared by io_wait) */
+/* owned by a pool job: shielded out of io_h + local timer */
+#define F_CONN_POOL_BUSY (F_CONN_POOL_RD | F_CONN_POOL_WR)
+#define tcpconn_pool_busy(c) ((c)->flags & F_CONN_POOL_BUSY)
 #define F_CONN_CLOSE_EV_SENT \
-	(1 << 19) /* tcpops close event already emitted for this conn: fire-once
-			   * guard so racing teardown paths cannot double-fire the route */
+	(1 << 19) /* all modes: close event emitted; the first teardown path
+			   * sets it, later paths skip the tcpops route */
+#define F_CONN_POOL_CLOSE \
+	(1 << 21) /* a pool job failed: close when its last job completes */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
@@ -162,7 +168,8 @@ typedef enum tcp_conn_states
 	S_CONN_INIT,   /* initial state (invalid) */
 	S_CONN_EOF,
 	S_CONN_ACCEPT,
-	S_CONN_CONNECT
+	S_CONN_CONNECT,
+	S_CONN_HAPROXY
 } tcp_conn_states_t;
 
 
@@ -203,7 +210,7 @@ typedef enum conn_cmds
 						 * tcp_connection*, tcp_main drops the dispatch refcnt */
 	,
 	CONN_SCRIPT_CLOSE /* mode 2: for worker to signal a connection close on error
-                           * when tcp_script_mode = 0 */
+					   * when tcp_script_mode = 0 */
 	,
 	CONN_TCPX_TASK_REQ /* mode 2: any process asks PROC_TCP_MAIN to run a
 						* tcpx_task_t on a pool thread (ksr_tcpx_task_send()'s
@@ -214,6 +221,14 @@ typedef enum conn_cmds
 						 * CONN_TCPX_TASK_REQ, sent back over the requesting
 						 * process's own unix_sock; response[0] is a
 						 * tcpx_task_result_t* */
+	,
+	CONN_FREE_REQ /* modes 1/2: a process other than tcp_main dropped the last
+				   * ref of a TLS/WSS connection; response[0] is the
+				   * tcp_connection*, tcp_main frees it (and its TLS state) */
+	,
+	CONN_CONNECT_DONE /* mode 2: PROC_TCP_MAIN answers a CONN_CONNECT_REQ over the
+					   * requester's unix_sock; response[0] is the request's
+					   * token, bit 0 set when the connect failed at once */
 } conn_cmds_t;
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, CONN_NEW*, CONN_QUEUED_WRITE only by writers */
@@ -375,6 +390,11 @@ typedef struct tcp_connection
 	 * list, guarded by write_lock; unused (NULL) in modes 0/1. */
 	struct tcp_wchunk *wsq_head;
 	struct tcp_wchunk *wsq_tail;
+	unsigned int wsq_len; /* bytes staged on wsq */
+	/* mode 2: pool thread index + 1 running this conn's read/write job, or 0;
+	 * written by that thread only, checked to catch a second owner */
+	int rd_owner;
+	int wr_owner;
 #endif
 } tcp_connection_t;
 
@@ -411,7 +431,11 @@ typedef struct tcp_connection
 #define TCP_COMP(c) TCP_RCV_COMP(c->rcv)
 
 
+/* take a ref; drop it with tcpconn_put() in tcp main, tcpconn_chld_put() in
+ * workers and modules */
 #define tcpconn_ref(c) atomic_inc(&((c)->refcnt))
+/* tcp main: a bare atomic decrement, true on the last ref; the caller then
+ * frees c (tcpconn_destroy()). Workers and modules: tcpconn_chld_put() */
 #define tcpconn_put(c) atomic_dec_and_test(&((c)->refcnt))
 
 
@@ -520,12 +544,14 @@ typedef struct ws_event_info
 	char *buf;
 	unsigned int len;
 	int id;
+	snd_flags_t send_flags; /* frame out: the sender's flags */
 } ws_event_info_t;
 
 tcp_connection_t *ksr_tcpcon_evcb_get(void);
 
 int is_tcp_main(void);
 
+/* modes 1/2: tcp main (any of its threads) uses c->s, a worker its c->fd */
 #define _tconfd(c) (is_tcp_main() ? (c)->s : (c)->fd)
 
 int ksr_tcp_parse_accept_protocols(char *protos);
@@ -538,15 +564,27 @@ int ksr_tcp_parse_accept_protocols(char *protos);
 /* Connection-lifecycle primitives shared with tcp_reactor.c (mode 2):
  * write-queueing, unhash/destroy, the close-event emitter. They stay defined
  * (and mostly used) in tcp_main.c since modes 0/1 need them too; declared
- * here so tcp_reactor.c can call them without duplicating them. None of these
- * touch io_h or the local timer - see the tcpmain_* wrappers below for that. */
+ * here for tcp_reactor.c to call. */
 int _wbufq_add(struct tcp_connection *c, const char *data, unsigned int size);
+int _wbufq_add_cap(struct tcp_connection *c, const char *data,
+		unsigned int size, int conn_cap);
 int wbufq_run(int fd, struct tcp_connection *c, int *empty);
+/* call from the tcp main io_wait thread: they touch tcp_main_ltimer and io_h;
+ * unhash with tcpconn_try_unhash() before tcpconn_put_destroy() */
+/* remove c from the hash and the local timer; 1 when this call unhashed c,
+ * the caller then drops the hash ref */
 int tcpconn_try_unhash(struct tcp_connection *tcpconn);
+/* close the fd and drop a ref; frees c on the last one (returns 1) */
 int tcpconn_put_destroy(struct tcp_connection *tcpconn);
+/* free c after its last ref: refcnt 0, unhashed, fd out of io_h */
 void tcpconn_destroy(struct tcp_connection *tcpconn);
+/* drop a ref outside tcp main (workers, modules); the last ref (returns 1)
+ * frees the conn, or hands a tls/wss conn to tcp main to free in modes 1/2 */
 int tcpconn_chld_put(struct tcp_connection *tcpconn);
 struct tcp_connection *tcpconn_add(struct tcp_connection *c);
+void tcpconn_set_proxied_addr(struct tcp_connection *c, struct ip_addr *src_ip,
+		unsigned short src_port, struct ip_addr *dst_ip,
+		unsigned short dst_port);
 int tcp_emit_closed_event(struct tcp_connection *con);
 void _tcpconn_free(struct tcp_connection *c);
 int tcp_safe_close(int s);

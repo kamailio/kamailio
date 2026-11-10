@@ -75,6 +75,7 @@ db_func_t rls_xcap_dbf;
 
 /** modules variables */
 str rls_server_address = {0, 0};
+int rls_contact_mode = 0;
 int rls_expires_offset = 0;
 int waitn_time = 5;
 int rls_notifier_poll_rate = 10;
@@ -227,6 +228,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"server_address", PARAM_STR, &rls_server_address},
+	{"contact_mode", PARAM_INT, &rls_contact_mode},
 	{"db_url", PARAM_STR, &db_url},
 	{"rlpres_db_url", PARAM_STR, &rlpres_db_url},
 	{"xcap_db_url", PARAM_STR, &xcap_db_url},
@@ -299,6 +301,11 @@ static int mod_init(void)
 
 	if(!rls_server_address.s || rls_server_address.len <= 0) {
 		LM_ERR("server_address parameter not set in configuration file\n");
+		return -1;
+	}
+
+	if(rls_contact_mode < 0 || rls_contact_mode > 1) {
+		LM_ERR("invalid contact_mode value: %d\n", rls_contact_mode);
 		return -1;
 	}
 

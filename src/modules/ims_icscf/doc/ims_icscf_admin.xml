@@ -289,6 +289,25 @@ modparam("ims_icscf", "preferred_scscf_uri", "sip:scscf.ims.smilecoms.com:6060")
       </example>
     </section>
 
+    <section>
+      <title><varname>selected_scscf_avp</varname> (string)</title>
+
+      <para>This is name of the AVP that will store the selected SCSCF after
+      I_scscf_select().</para>
+
+      <para><emphasis> Default value is 'i_selected_scscf'. </emphasis></para>
+
+      <example>
+        <title><varname>selected_scscf_avp</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_icscf","selected_scscf_avp", "icscf_selected_scscf")
+...
+        </programlisting>
+      </example>
+    </section>
 
   </section>
 

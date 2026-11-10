@@ -283,7 +283,7 @@ void tm_rpc_list(rpc_t *rpc, void *c)
 		clist_foreach(&_tm_table->entries[r], tcell, next_c)
 		{
 			snprintf(pbuf, 31, "%p", (void *)tcell);
-			rpc->struct_add(h, "sddSSSSSsdddd", "cell", pbuf, "tindex",
+			rpc->struct_add(h, "sddSSSSSsdddddddddd", "cell", pbuf, "tindex",
 					(unsigned)tcell->hash_index, "tlabel",
 					(unsigned)tcell->label, "method", &tcell->method, "from",
 					&tcell->from_hdr, "to", &tcell->to_hdr, "callid",
@@ -292,7 +292,12 @@ void tm_rpc_list(rpc_t *rpc, void *c)
 					"tflags", (unsigned)tcell->flags, "outgoings",
 					(unsigned)tcell->nr_of_outgoings, "ref_count",
 					(unsigned)atomic_get(&tcell->ref_count), "lifetime",
-					(unsigned)TICKS_TO_S(tcell->end_of_life));
+					(unsigned)TICKS_TO_S(tcell->end_of_life), "fr_timer",
+					(unsigned)TICKS_TO_MS(tcell->fr_timeout), "fr_inv_timer",
+					(unsigned)TICKS_TO_MS(tcell->fr_inv_timeout), "on_branch",
+					tcell->on_branch, "on_reply", tcell->on_reply, "on_failure",
+					tcell->on_failure, "on_branch_failure",
+					tcell->on_branch_failure);
 		}
 		unlock_hash(r);
 	}

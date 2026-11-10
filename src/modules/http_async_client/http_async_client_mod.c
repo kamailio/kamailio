@@ -82,6 +82,7 @@ char *tls_ca_path = NULL; // certificate authority dir path, defaults to NULL
 static char *memory_manager = "shm";
 extern int curl_memory_manager;
 unsigned int default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;
+unsigned int default_max_reply_size = 0;
 
 static int mod_init(void);
 static int child_init(int);
@@ -152,7 +153,8 @@ enum http_req_name_t
 	E_HRN_TCP_KA_IDLE,
 	E_HRN_TCP_KA_INTERVAL,
 	E_HRN_FOLLOW_REDIRECT,
-	E_HRN_HTTP_VERSION
+	E_HRN_HTTP_VERSION,
+	E_HRN_MAX_REPLY_SIZE
 };
 
 enum http_time_name_t
@@ -194,6 +196,7 @@ static param_export_t params[] = {
 	{"tcp_keepalive", PARAM_INT, &tcp_keepalive},
 	{"tcp_ka_idle", PARAM_INT, &tcp_ka_idle},
 	{"tcp_ka_interval", PARAM_INT, &tcp_ka_interval},
+	{"max_reply_size", PARAM_INT, &default_max_reply_size},
 	{0, 0, 0}
 };
 
@@ -797,6 +800,8 @@ static int ah_parse_req_name(pv_spec_p sp, str *in)
 		case 14:
 			if(strncmp(in->s, "tls_client_key", 14) == 0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CLIENT_KEY;
+			else if(strncmp(in->s, "max_reply_size", 14) == 0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_MAX_REPLY_SIZE;
 			else
 				goto error;
 			break;
@@ -1063,7 +1068,7 @@ static int ah_set_req(
 					return -1;
 				}
 				if(tval->ri < 0 || tval->ri > 2) {
-					LM_ERR("invalid value for $http_req(http_version): %d "
+					LM_ERR("invalid value for $http_req(http_version): %ld "
 						   "(0=default, 1=HTTP/2 upgrade, "
 						   "2=HTTP/2 prior knowledge)\n",
 							tval->ri);
@@ -1072,6 +1077,18 @@ static int ah_set_req(
 				ah_params.http_version = tval->ri;
 			} else {
 				ah_params.http_version = 0;
+			}
+			break;
+		case E_HRN_MAX_REPLY_SIZE:
+			if(tval) {
+				if(!(tval->flags & PV_VAL_INT)) {
+					LM_ERR("invalid value type for "
+						   "$http_req(max_reply_size)\n");
+					return -1;
+				}
+				ah_params.max_reply_size = (unsigned int)tval->ri;
+			} else {
+				ah_params.max_reply_size = default_max_reply_size;
 			}
 			break;
 	}

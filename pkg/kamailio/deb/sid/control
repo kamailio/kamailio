@@ -20,6 +20,7 @@ Build-Depends:
  libev-dev,
  libevent-dev,
  libexpat1-dev,
+ libgcrypt20-dev,
  libhiredis-dev (>= 0.10.0),
  libjansson-dev,
  libjson-c-dev,

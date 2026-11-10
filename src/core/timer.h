@@ -50,11 +50,13 @@
 #include "dprint.h"
 #include "timer_ticks.h"
 
+#include <signal.h>
+#include <sys/time.h>
+
 #ifdef USE_SLOW_TIMER
 #include <sys/types.h>
 
 typedef unsigned int slow_idx_t; /* type for the slow index */
-extern pid_t slow_timer_pid;
 #endif
 
 
@@ -72,6 +74,8 @@ typedef void(utimer_function)(unsigned int uticks, void *param);
 typedef void(utimer_function_w)(unsigned int uticks, int worker, void *param);
 
 struct timer_ln; /* forward decl */
+struct timer_head;
+struct timer_lists;
 /* new
  * params:
  *         - handle pointer to the corresponding struct timer_ln
@@ -122,18 +126,62 @@ struct timer_ln
 };
 
 
-void timer_main(void); /* timer main loop, never exists */
+/** State belonging to one fast/slow core timer instance.
+ *
+ * An instance must be initialized before the processes using it are forked.
+ * Since ITIMER_REAL and SIGALRM are process-wide, only one instance can be
+ * armed in a process at a time.
+ */
+typedef struct timer_ctx
+{
+	ticks_t *ticks;
+	ticks_t last_ticks;
+	ticks_t last_adj_check;
+	ticks_t prev_ticks;
+	struct timeval last_time;
+	struct timeval start_time;
+	volatile sig_atomic_t run_timer;
+	int timer_id;
+	void *timer_lock;
+	struct timer_ln *volatile *running_timer;
+	int in_timer;
+	struct timer_lists *timer_lst;
+#ifdef USE_SLOW_TIMER
+	void *slow_timer_lock;
+	struct timer_head *slow_timer_lists;
+	volatile unsigned short *t_idx;
+	volatile unsigned short *s_idx;
+	struct timer_ln *volatile *running_timer2;
+	sigset_t slow_timer_sset;
+	pid_t slow_timer_pid;
+	int in_slow_timer;
+#endif
+} ksr_timer_ctx_t;
+
+extern ksr_timer_ctx_t ksr_timer_ctx_core;
 
 
-int init_timer(void);
-int arm_timer(void);
-void destroy_timer(void);
+void timer_main_ctx(ksr_timer_ctx_t *td); /* timer main loop, never exits */
+
+int init_timer_ctx(ksr_timer_ctx_t *td);
+int arm_timer_ctx(ksr_timer_ctx_t *td);
+void destroy_timer_ctx(ksr_timer_ctx_t *td);
 
 #ifdef USE_SLOW_TIMER
-int arm_slow_timer(void);
-void slow_timer_main(void);
+int arm_slow_timer_ctx(ksr_timer_ctx_t *td);
+void slow_timer_main_ctx(ksr_timer_ctx_t *td);
 #endif
 
+
+#define timer_main() timer_main_ctx(&ksr_timer_ctx_core)
+#define init_timer() init_timer_ctx(&ksr_timer_ctx_core)
+#define arm_timer() arm_timer_ctx(&ksr_timer_ctx_core)
+#define destroy_timer() destroy_timer_ctx(&ksr_timer_ctx_core)
+
+#ifdef USE_SLOW_TIMER
+#define arm_slow_timer() arm_slow_timer_ctx(&ksr_timer_ctx_core)
+#define slow_timer_main() slow_timer_main_ctx(&ksr_timer_ctx_core)
+#endif
 
 struct timer_ln *timer_alloc(void);
 void timer_free(struct timer_ln *t);
@@ -160,26 +208,44 @@ void timer_free(struct timer_ln *t);
 	} while(0)
 
 #ifdef TIMER_DEBUG
-int timer_add_safe(struct timer_ln *tl, ticks_t delta, const char *,
+int timer_add_safe_ctx(ksr_timer_ctx_t *td, struct timer_ln *tl, ticks_t delta,
+		const char *, const char *, unsigned);
+int timer_del_safe_ctx(ksr_timer_ctx_t *td, struct timer_ln *tl, const char *,
 		const char *, unsigned);
-int timer_del_safe(struct timer_ln *tl, const char *, const char *, unsigned);
+#define timer_add_safe(tl, d, file, func, line) \
+	timer_add_safe_ctx(&ksr_timer_ctx_core, (tl), (d), (file), (func), (line))
+#define timer_del_safe(tl, file, func, line) \
+	timer_del_safe_ctx(&ksr_timer_ctx_core, (tl), (file), (func), (line))
+#define timer_add_ctx(td, tl, d) \
+	timer_add_safe_ctx((td), (tl), (d), __FILE__, __FUNCTION__, __LINE__)
+#define timer_del_ctx(td, tl) \
+	timer_del_safe_ctx((td), (tl), __FILE__, __FUNCTION__, __LINE__)
 #define timer_add(tl, d) \
-	timer_add_safe((tl), (d), __FILE__, __FUNCTION__, __LINE__)
-#define timer_del(tl) timer_del_safe((tl), __FILE__, __FUNCTION__, __LINE__)
+	timer_add_safe_ctx(  \
+			&ksr_timer_ctx_core, (tl), (d), __FILE__, __FUNCTION__, __LINE__)
+#define timer_del(tl)   \
+	timer_del_safe_ctx( \
+			&ksr_timer_ctx_core, (tl), __FILE__, __FUNCTION__, __LINE__)
 #else
-int timer_add_safe(struct timer_ln *tl, ticks_t delta);
-int timer_del_safe(struct timer_ln *tl);
-#define timer_add timer_add_safe
-#define timer_del timer_del_safe
+int timer_add_safe_ctx(ksr_timer_ctx_t *td, struct timer_ln *tl, ticks_t delta);
+int timer_del_safe_ctx(ksr_timer_ctx_t *td, struct timer_ln *tl);
+#define timer_add_safe(tl, d) timer_add_safe_ctx(&ksr_timer_ctx_core, (tl), (d))
+#define timer_del_safe(tl) timer_del_safe_ctx(&ksr_timer_ctx_core, (tl))
+#define timer_add_ctx(td, tl, d) timer_add_safe_ctx((td), (tl), (d))
+#define timer_del_ctx(td, tl) timer_del_safe_ctx((td), (tl))
+#define timer_add(tl, d) timer_add_safe_ctx(&ksr_timer_ctx_core, (tl), (d))
+#define timer_del(tl) timer_del_safe_ctx(&ksr_timer_ctx_core, (tl))
 #endif
 
-void timer_allow_del(void);
+void timer_allow_del_ctx(ksr_timer_ctx_t *td);
+#define timer_allow_del() timer_allow_del_ctx(&ksr_timer_ctx_core)
 
 /* old timer compatibility functions & structure */
 
 struct sr_timer
 {
 	struct timer_ln tl;
+	ksr_timer_ctx_t *timer_data;
 	int id;
 	timer_function *timer_f;
 	void *t_param;
@@ -188,8 +254,14 @@ struct sr_timer
 
 /*register a periodic timer;
  * ret: <0 on error*/
-int register_timer(timer_function f, void *param, unsigned int interval);
-ticks_t get_ticks(void);
-ticks_t get_ticks_raw(void);
+int register_timer_ctx(ksr_timer_ctx_t *td, timer_function f, void *param,
+		unsigned int interval);
+ticks_t get_ticks_ctx(ksr_timer_ctx_t *td);
+ticks_t get_ticks_raw_ctx(ksr_timer_ctx_t *td);
+
+#define register_timer(f, param, interval) \
+	register_timer_ctx(&ksr_timer_ctx_core, (f), (param), (interval))
+#define get_ticks() get_ticks_ctx(&ksr_timer_ctx_core)
+#define get_ticks_raw() get_ticks_raw_ctx(&ksr_timer_ctx_core)
 
 #endif

@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <pthread.h> /* pthread_atfork(): AWS-LC headers skip it */
+#include <openssl/crypto.h>
 #include "../../core/locking.h"
 #include "../../core/sr_module.h"
 #include "../../core/ip_addr.h"
@@ -111,7 +113,6 @@ static stat_export_t mod_stats[] = {
 /* clang-format on */
 #endif
 
-extern int ksr_tcp_main_threads;
 extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
 /*
@@ -141,6 +142,7 @@ static tls_domain_t mod_params = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 
@@ -171,6 +173,7 @@ tls_domain_t srv_defaults = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 /* clang-format on */
@@ -228,6 +231,7 @@ tls_domain_t cli_defaults = {
 	0,								 /* Server name (SNI) mode */
 	{0, 0},							 /* Server id */
 	TLS_VERIFY_CLIENT_OFF,			 /* Verify client */
+	0,								 /* Verify server name */
 	0								 /* next */
 };
 /* clang-format on */
@@ -242,12 +246,13 @@ gen_lock_t *tls_domains_cfg_lock = NULL;
 
 int sr_tls_renegotiation = 0;
 int ksr_tls_init_mode = 0;
+/* mode 0: one SSL_CTX per domain for all processes */
+int ksr_tls_shared_ctx = 0;
+/* mode 0: libcrypto sees per-process thread ids */
+static int tls_pthread_self_ns = 0;
 int ksr_tls_key_password_mode = 0;
 int *ksr_tls_keylog_mode = NULL;
-#ifdef KSR_SSL_COMMON
-/** SSL_CTX ex_data index for JIT engine key scratch; -1 until mod_init. */
-int ksr_tls_jit_key_ex_idx = -1;
-#endif /* KSR_SSL_COMMON */
+int ksr_tls_ssl_ex_idx = -1;
 str ksr_tls_keylog_file = STR_NULL;
 str ksr_tls_keylog_peer = STR_NULL;
 
@@ -293,8 +298,8 @@ static param_export_t params[] = {
 	{"provider_quirks_config", PARAM_STR,
 	 &tls_provider_config},
 	{"provider_quirks", PARAM_INT,
-			&tls_provider_quirks}, /* OpenSSL 3 provider that needs new
-									  OSSL_LIB_CTX in child */
+			&tls_provider_quirks}, /* deprecated, ignored: engine/provider
+									  keys need tcp_main_threads 1|2 */
 #endif								   /* KSR_SSL_PROVIDER */
 	{"tls_log", PARAM_INT, &default_tls_cfg.log},
 	{"tls_debug", PARAM_INT, &default_tls_cfg.debug},
@@ -314,14 +319,13 @@ static param_export_t params[] = {
 	{"ct_wq_max", PARAM_INT, &default_tls_cfg.ct_wq_max},
 	{"ct_wq_blk_size", PARAM_INT, &default_tls_cfg.ct_wq_blk_size},
 	{"tls_force_run", PARAM_INT, &default_tls_cfg.force_run},
-	{"low_mem_threshold1", PARAM_INT, &default_tls_cfg.low_mem_threshold1},
-	{"low_mem_threshold2", PARAM_INT, &default_tls_cfg.low_mem_threshold2},
 	{"renegotiation", PARAM_INT, &sr_tls_renegotiation},
 	{"xavp_cfg", PARAM_STR, &sr_tls_xavp_cfg},
 	{"event_callback", PARAM_STR, &sr_tls_event_callback},
 	{"rand_engine", PARAM_STR | PARAM_USE_FUNC,
 			(void *)ksr_rand_engine_param},
 	{"init_mode", PARAM_INT, &ksr_tls_init_mode},
+	{"use_shared_context", PARAM_INT, &ksr_tls_shared_ctx},
 	{"key_password_mode", PARAM_INT, &ksr_tls_key_password_mode},
 	{"keylog_mode", PARAM_INT | PARAM_USE_SHM, &ksr_tls_keylog_mode},
 	{"keylog_file", PARAM_STR, &ksr_tls_keylog_file},
@@ -364,6 +368,7 @@ static struct tls_hooks tls_h = {
 	tls_h_match_domain_f,
 	tls_h_match_connections_domain_f,
 	tls_run_event_routes,
+	tls_h_connect_info_f,
 };
 /* clang-format on */
 
@@ -391,32 +396,15 @@ static tls_domains_cfg_t* tls_use_modparams(void)
  */
 static void tls_atfork_prepare(void)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#ifndef KSR_TLS_LIBSSL_COMPAT
 	OPENSSL_thread_stop();
 #endif
 }
-
-/* In MP-mode, engine/provider keys are late bound in the worker:
- * keep track of the version of the tls config so workers can
- * refresh keys
- */
-
-int *tls_config_rev; /* incremented after tls.reload */
-int tls_child_rev =
-		-1; /* worker local - track whether keys need to be reloaded */
 
 static int mod_init(void)
 {
 	int method;
 	int verify_client;
-
-	tls_config_rev = shm_malloc(sizeof(int));
-	if(tls_config_rev == NULL) {
-		SHM_MEM_ERROR;
-		return -1;
-	}
-	*tls_config_rev =
-			0; /* the version is increased in RPC process on tls.reload */
 
 #ifdef STATISTICS
 	/* register statistics */
@@ -426,13 +414,46 @@ static int mod_init(void)
 	}
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MTEMP) {
 		LM_WARN("tls_threads_mode=1 is invalid on kamailio version >= 6; "
 				"forcing tls_threads_mode=2\n");
 		ksr_tls_threads_mode = KSR_TLS_THREADS_MFORK;
 	}
-#endif /*  OPENSSL_VERSION_NUMBER*/
+
+#if defined(KSR_TLS_LIBSSL_COMPAT)
+	/* libssl in one process: modes 1/2 */
+	if(ksr_tcp_main_threads == 0) {
+		LM_ERR("%s requires tcp_main_threads = 1 or 2\n",
+				KSR_TLS_LIBSSL_COMPAT_NAME);
+		return -1;
+	}
+#else
+	/* mode 0: an SSL* carries its creator's key into other processes;
+	 * per-process thread ids make RSA blinding take its lock there */
+	if(ksr_tcp_main_threads == 0) {
+		if(ksr_pthread_self_ns_enable((void *)CRYPTO_THREAD_get_current_id)
+				< 0) {
+			LM_WARN("per-process thread ids for libcrypto unavailable\n");
+		} else {
+			tls_pthread_self_ns = 1;
+		}
+	}
+#endif
+
+	if(ksr_tls_shared_ctx && ksr_tcp_main_threads != 0) {
+		LM_INFO("use_shared_context: tcp_main_threads=%d has one SSL_CTX "
+				"per domain\n",
+				ksr_tcp_main_threads);
+		ksr_tls_shared_ctx = 0;
+	} else if(ksr_tls_shared_ctx) {
+		if(!tls_pthread_self_ns) {
+			LM_ERR("use_shared_context: needs per-process thread ids for "
+				   "libcrypto\n");
+			return -1;
+		}
+		LM_INFO("use_shared_context: one SSL_CTX per domain for all "
+				"processes\n");
+	}
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L \
 		&& OPENSSL_VERSION_NUMBER < 0x30200000L
@@ -447,6 +468,12 @@ static int mod_init(void)
 		LM_WARN("tls support is disabled "
 				"(set enable_tls=1 in the config to enable it)\n");
 		return 0;
+	}
+	ksr_tls_ssl_ex_idx =
+			SSL_get_ex_new_index(0, "ksr_tls_extra_data", NULL, NULL, NULL);
+	if(ksr_tls_ssl_ex_idx < 0) {
+		LM_ERR("failed to get SSL ex_data index\n");
+		return -1;
 	}
 	if(fix_tls_cfg(&default_tls_cfg) < 0) {
 		LM_ERR("initial tls configuration fixup failed\n");
@@ -479,7 +506,7 @@ static int mod_init(void)
 	verify_client =
 			tls_parse_verify_client(&cfg_get(tls, tls_cfg, verify_client));
 	if(verify_client < 0) {
-		LM_ERR("Invalid tls_method parameter value\n");
+		LM_ERR("Invalid verify_client parameter value\n");
 		return -1;
 	}
 	mod_params.verify_client = verify_client;
@@ -554,7 +581,6 @@ static int mod_init(void)
 	if(sr_tls_event_callback.s == NULL || sr_tls_event_callback.len <= 0) {
 		tls_lookup_event_routes();
 	}
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
 	/*
 	 * register the need to be called post-fork of all children
 	 * with the special rank PROC_POSTCHILDINIT
@@ -562,7 +588,6 @@ static int mod_init(void)
 	if(ksr_tls_init_mode & TLS_MODE_FORK_PREPARE) {
 		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
-#endif
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MFORK
 			&& ksr_tcp_main_threads == 0) {
 		pthread_atfork(&tls_atfork_prepare, NULL, NULL);
@@ -577,17 +602,21 @@ static int mod_init(void)
 		goto error;
 	}
 
-#ifdef KSR_SSL_COMMON
-	/* Register SSL_CTX ex_data slot for JIT engine key loading (MP-mode).
-	 * Must be done before tls_fix_domains_cfg() creates any SSL_CTX. */
-	ksr_tls_jit_key_ex_idx =
-			SSL_CTX_get_ex_new_index(0, "ksr_jit_key", NULL, NULL, NULL);
-	if(ksr_tls_jit_key_ex_idx < 0) {
-		LM_ERR("failed to allocate SSL_CTX ex_data index for JIT key\n");
+#ifdef KSR_SSL_ENGINE
+	if(ksr_tcp_main_threads == 0
+			&& strncmp(tls_engine_settings.engine.s, "NONE", 4)) {
+		LM_ERR("engine '%.*s' requires tcp_main_threads = 1 or 2\n",
+				tls_engine_settings.engine.len, tls_engine_settings.engine.s);
 		goto error;
 	}
-	LM_DBG("SSL_CTX JIT key ex_data index = %d\n", ksr_tls_jit_key_ex_idx);
-#endif /* KSR_SSL_COMMON */
+#endif /* KSR_SSL_ENGINE */
+#ifdef KSR_SSL_PROVIDER
+	if(tls_provider_quirks || tls_provider_config.s) {
+		LM_WARN("provider_quirks and provider_quirks_config are deprecated and"
+				" ignored: engine/provider keys require tcp_main_threads = 1"
+				" or 2\n");
+	}
+#endif /* KSR_SSL_PROVIDER */
 
 	return 0;
 error:
@@ -608,54 +637,22 @@ int tls_fix_engine_keys(tls_domains_cfg_t *, tls_domain_t *, tls_domain_t *);
  * into the new SSL_CTX. Fixes a pre-existing bug where tls.reload silently
  * left the new ctx with no private key, breaking all subsequent TLS handshakes.
  *
- * Safe to call in:
- *   tcp_main_threads == 0: any rank (ctx lives in shm, engine per-process)
- *   tcp_main_threads  > 0: PROC_TCP_MAIN only (sole owner of SSL_CTX)
+ * Runs in PROC_TCP_MAIN: engine/provider keys need tcp_main_threads 1 or 2
  *
  * @return 0 on success, -1 on failure
  */
-#if OPENSSL_VERSION_NUMBER >= 0x30200000L
-void load_p11_via_nconf(const char *config_path);
-#endif /*  OPENSSL_VERSION_NUMBER */
-
 int tls_reload_engine_keys(void)
 {
 #ifdef KSR_SSL_ENGINE
 	if(!strncmp(tls_engine_settings.engine.s, "NONE", 4))
 		return 0;
 #endif /* KSR_SSL_ENGINE */
-
-#ifdef KSR_SSL_PROVIDER
-	if(tls_provider_quirks & 1) {
-#if OPENSSL_VERSION_NUMBER >= 0x30200000L
-		load_p11_via_nconf(tls_provider_config.s);
-#else
-		OSSL_LIB_CTX *new_ctx = OSSL_LIB_CTX_new();
-		if(CONF_modules_load_file_ex(
-				   new_ctx, CONF_get1_default_config_file(), NULL, 0L)
-				<= 0) {
-			LM_ERR("Failed to load provider config in child %d\n", process_no);
-		}
-		OSSL_LIB_CTX_set0_default(new_ctx);
-#endif
-	}
-#endif /* KSR_SSL_PROVIDER */
 	if(tls_engine_init() < 0)
 		return -1;
-	if(ksr_tcp_main_threads > 0) {
-		/* MT-mode: PROC_TCP_MAIN owns the single SSL_CTX — load now. */
-		if(tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults)
-				< 0)
-			return -1;
-		LM_INFO("HSM/engine keys reloaded\n");
-	} else {
-		/* MP-mode: tls_fix_domains_cfg() already stored key URIs in
-		 * each ctx[N] ex_data slot; workers JIT load at next SSL_new().
-		 * tls_engine_init() above keeps the calling process's ENGINE
-		 * handle current in case it re-enters this path. */
-		LM_DBG("MP-mode: engine key URIs staged in ctx ex_data;"
-			   " workers will JIT load at next SSL_new()\n");
-	}
+	/* PROC_TCP_MAIN owns the single SSL_CTX */
+	if(tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults) < 0)
+		return -1;
+	LM_INFO("HSM/engine keys reloaded\n");
 	return 0;
 }
 #endif /* KSR_SSL_COMMON */
@@ -669,6 +666,14 @@ int tls_reload_engine_keys(void)
  * operations—hence we create a separate SSL_CTX for each worker
  *
  * EC operations do not use pthread_self(), so could use shared SSL_CTX
+ *
+ * An SSL* keeps the key of the SSL_CTX it was created from (outbound: the
+ * sending worker; inbound: the first reader, or the SNI callback's process)
+ * when another process continues the handshake; mod_init() gives libcrypto
+ * per-process thread ids (ksr_pthread_self_ns_enable()), so RSA blinding
+ * takes its lock in the other processes
+ *
+ * use_shared_context=1: one SSL_CTX for all workers, on the same thread ids
  */
 static int mod_child_hook(int *rank, void *dummy)
 {
@@ -688,75 +693,6 @@ static int mod_child_hook(int *rank, void *dummy)
 	return 0;
 }
 
-#ifdef KSR_SSL_PROVIDER
-#if OPENSSL_VERSION_NUMBER >= 0x30200000L
-
-#include <openssl/conf.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
-
-void load_p11_via_nconf(const char *config_path)
-{
-	CONF *conf = NCONF_new(NULL);
-	STACK_OF(CONF_VALUE) * sec;
-	OSSL_PARAM params[16]; // Ensure this is large enough for your keys
-	int p_idx = 0;
-	char *q_sect = NULL;
-	char *q_prov = NULL;
-
-	// 1. Load the file into a private NCONF object
-	if(NCONF_load(conf, config_path, NULL) <= 0) {
-		// Handle error: File not found or syntax error
-		return;
-	}
-	q_sect = NCONF_get_string(conf, NULL, "quirks_sect"); // e.g., pkcs11_sect
-	q_prov = NCONF_get_string(conf, NULL, "quirks_provider"); // e.g., pkcs11
-
-	if(!q_sect || !q_prov) {
-		LM_ERR("quirks file %s missing quirks_sect or quirks_provider in "
-			   "[default]\n",
-				config_path);
-		goto cleanup;
-	}
-	// 2. Get the specific section [pkcs11_sect]
-	sec = NCONF_get_section(conf, q_sect);
-	if(!sec)
-		return;
-
-	// 3. Iterate pairs and build the OSSL_PARAM array
-	for(int i = 0; i < sk_CONF_VALUE_num(sec); i++) {
-		CONF_VALUE *v = sk_CONF_VALUE_value(sec, i);
-
-		// Map string values to OSSL_PARAMS
-		// Note: In a real app, ensure these strings persist until OSSL_PROVIDER_load
-		params[p_idx++] =
-				OSSL_PARAM_construct_utf8_string(v->name, v->value, 0);
-
-		if(p_idx >= 15)
-			break;
-	}
-	params[p_idx] = OSSL_PARAM_construct_end();
-
-	// 4. Load into a fresh Child Context
-	OSSL_LIB_CTX *child_ctx = OSSL_LIB_CTX_new();
-	OSSL_LIB_CTX_set0_default(child_ctx);
-	OSSL_PROVIDER_load(child_ctx, "default");
-
-	OSSL_PROVIDER *p11 = OSSL_PROVIDER_load_ex(child_ctx, q_prov, params);
-
-	if(p11) {
-		LM_INFO("%s: Successfully bootstrapped PKCS11 via NCONF abstraction\n",
-				config_path);
-	} else {
-		LM_ERR("failed to load provider %s from quirks file\n", q_prov);
-	}
-
-cleanup:
-	NCONF_free(
-			conf); // The params now live in the provider, we can free the parser
-}
-#endif
-#endif
 
 int tls_child_rank = 0;
 static int mod_child(int rank)
@@ -790,41 +726,14 @@ static int mod_child(int rank)
 		return 0;
 #endif /* KSR_SSL_ENGINE */
 
-	if((rank > 0 && ksr_tcp_main_threads == 0)
-			|| (rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0)) {
-#ifdef KSR_SSL_PROVIDER
-		if(tls_provider_quirks & 1) {
-#if OPENSSL_VERSION_NUMBER >= 0x30200000L
-			load_p11_via_nconf(tls_provider_config.s);
-#else
-			OSSL_LIB_CTX *new_ctx = OSSL_LIB_CTX_new();
-			if(CONF_modules_load_file_ex(
-					   new_ctx, CONF_get1_default_config_file(), NULL, 0L)
-					<= 0) {
-				LM_ERR("Failed to load provider config in child %d\n",
-						process_no);
-			}
-			OSSL_LIB_CTX_set0_default(new_ctx);
-#endif
-		}
-#endif /* KSR_SSL_PROVIDER */
+	if(rank == PROC_TCP_MAIN && ksr_tcp_main_threads > 0) {
 		if(tls_engine_init() < 0)
 			return -1;
-		if(ksr_tcp_main_threads > 0) {
-			/* MT-mode: PROC_TCP_MAIN owns the single SSL_CTX — load now. */
-			if(tls_fix_engine_keys(
-					   *tls_domains_cfg, &srv_defaults, &cli_defaults)
-					< 0)
-				return -1;
-			LM_INFO("OpenSSL loaded private keys in child: %d\n", rank);
-		} else {
-			/* MP-mode: key URIs already stored in each ctx[N] ex_data
-			 * slot by load_private_key() at tls_fix_domains_cfg() time.
-			 * Each worker loads its own key JIT at the first SSL_new(). */
-			LM_DBG("MP-mode: engine key loading deferred (JIT) for"
-				   " rank=%d\n",
-					rank);
-		}
+		/* PROC_TCP_MAIN owns the single SSL_CTX */
+		if(tls_fix_engine_keys(*tls_domains_cfg, &srv_defaults, &cli_defaults)
+				< 0)
+			return -1;
+		LM_INFO("OpenSSL loaded private keys in child: %d\n", rank);
 	}
 #endif /* KSR_SSL_COMMON */
 	return 0;
@@ -845,8 +754,7 @@ static void mod_destroy(void)
 
 int ksr_rand_engine_param(modparam_t type, void *val)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER < 0x030000000L && !defined(KSR_TLS_LIBSSL_COMPAT)
 	str *reng;
 
 	if(val == NULL) {
@@ -876,6 +784,7 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 	struct tcp_connection *c;
 	struct tls_extra_data *tls_c;
 	long ssl_verify;
+	int has_peer_cert;
 
 	LM_DBG("started...\n");
 	if(msg->rcv.proto != PROTO_TLS) {
@@ -894,37 +803,40 @@ static int ki_is_peer_verified(sip_msg_t *msg)
 
 	if(c->type != PROTO_TLS) {
 		LM_ERR("Connection found but is not TLS\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
 	if(!c->extra_data) {
 		LM_ERR("no extra_data specified in TLS/TCP connection found."
 			   " This should not happen... return -1\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
 	tls_c = (struct tls_extra_data *)c->extra_data;
 
+	tls_ssl_cache_lock(tls_c);
 	ssl_verify = tls_c->ssl_verify_result;
+	has_peer_cert = (tls_c->ssl_peer_cert != NULL);
+	tls_ssl_cache_unlock(tls_c);
 	if(ssl_verify != X509_V_OK) {
 		LM_WARN("verification of presented certificate failed... return -1\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
 	/* now, we have only valid peer certificates or peers without certificates.
 	 * Thus we have to check for the existence of a peer certificate
 	 */
-	if(!tls_c->ssl_peer_cert) {
+	if(!has_peer_cert) {
 		LM_INFO("tlsops:is_peer_verified: WARNING: peer did not present "
 				"a certificate. Thus it could not be verified... return -1\n");
-		tcpconn_put(c);
+		tcpconn_chld_put(c);
 		return -1;
 	}
 
-	tcpconn_put(c);
+	tcpconn_chld_put(c);
 
 	LM_DBG("tlsops:is_peer_verified: peer is successfully verified"
 		   "...done\n");
@@ -1005,10 +917,6 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 	if(!shm_initialized() && init_shm() < 0)
 		return -1;
 
-	if(ksr_tls_lock_init() < 0) {
-		return -1;
-	}
-
 	if(tls_pre_init() < 0)
 		return -1;
 
@@ -1018,8 +926,7 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
          * GH #3695: OpenSSL 1.1.1 historical note: it is no longer
          * needed to replace RAND with cryptorand
          */
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
-		&& OPENSSL_VERSION_NUMBER < 0x030000000L
+#if OPENSSL_VERSION_NUMBER < 0x030000000L && !defined(KSR_TLS_LIBSSL_COMPAT)
 	if(ksr_tls_threads_mode == KSR_TLS_THREADS_MNONE) {
 		LM_WARN("OpenSSL 1.1.1 setting cryptorand random engine\n");
 		RAND_set_rand_method(RAND_ksr_cryptorand_method());

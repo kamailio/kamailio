@@ -66,12 +66,13 @@ Victor Seva
               5.14. pubruri_callee_avp (str)
               5.15. pubruri_caller_dlg_var (str)
               5.16. pubruri_callee_dlg_var (str)
-              5.17. callee_trying (int)
-              5.18. caller_entity_when_publish_disabled (int)
-              5.19. callee_entity_when_publish_disabled (int)
-              5.20. publish_dialog_req_within (int)
-              5.21. local_identity_dlg_var (str)
-              5.22. attribute_display (int)
+              5.17. caller_trying (int)
+              5.18. callee_trying (int)
+              5.19. caller_entity_when_publish_disabled (int)
+              5.20. callee_entity_when_publish_disabled (int)
+              5.21. publish_dialog_req_within (int)
+              5.22. local_identity_dlg_var (str)
+              5.23. attribute_display (int)
 
         6. Functions
 
@@ -93,12 +94,13 @@ Victor Seva
    1.14. Set pubruri_callee_avp parameter
    1.15. Set pubruri_caller_avp parameter
    1.16. Set pubruri_callee_dlg_var parameter
-   1.17. Set callee_trying parameter
-   1.18. Set caller_entity_when_publish_disabled parameter
-   1.19. Set callee_entity_when_publish_disabled parameter
-   1.20. Set publish_dialog_req_within parameter
-   1.21. Set local_identity_dlg_var parameter
-   1.22. Set attribute_display parameter
+   1.17. Set caller_trying parameter
+   1.18. Set callee_trying parameter
+   1.19. Set caller_entity_when_publish_disabled parameter
+   1.20. Set callee_entity_when_publish_disabled parameter
+   1.21. Set publish_dialog_req_within parameter
+   1.22. Set local_identity_dlg_var parameter
+   1.23. Set attribute_display parameter
 
 Chapter 1. Admin Guide
 
@@ -130,12 +132,13 @@ Chapter 1. Admin Guide
         5.14. pubruri_callee_avp (str)
         5.15. pubruri_caller_dlg_var (str)
         5.16. pubruri_callee_dlg_var (str)
-        5.17. callee_trying (int)
-        5.18. caller_entity_when_publish_disabled (int)
-        5.19. callee_entity_when_publish_disabled (int)
-        5.20. publish_dialog_req_within (int)
-        5.21. local_identity_dlg_var (str)
-        5.22. attribute_display (int)
+        5.17. caller_trying (int)
+        5.18. callee_trying (int)
+        5.19. caller_entity_when_publish_disabled (int)
+        5.20. callee_entity_when_publish_disabled (int)
+        5.21. publish_dialog_req_within (int)
+        5.22. local_identity_dlg_var (str)
+        5.23. attribute_display (int)
 
    6. Functions
 
@@ -321,12 +324,13 @@ Chapter 1. Admin Guide
    5.14. pubruri_callee_avp (str)
    5.15. pubruri_caller_dlg_var (str)
    5.16. pubruri_callee_dlg_var (str)
-   5.17. callee_trying (int)
-   5.18. caller_entity_when_publish_disabled (int)
-   5.19. callee_entity_when_publish_disabled (int)
-   5.20. publish_dialog_req_within (int)
-   5.21. local_identity_dlg_var (str)
-   5.22. attribute_display (int)
+   5.17. caller_trying (int)
+   5.18. callee_trying (int)
+   5.19. caller_entity_when_publish_disabled (int)
+   5.20. callee_entity_when_publish_disabled (int)
+   5.21. publish_dialog_req_within (int)
+   5.22. local_identity_dlg_var (str)
+   5.23. attribute_display (int)
 
 5.1. use_uuid (int)
 
@@ -548,19 +552,34 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 ...
 
-5.17. callee_trying (int)
+5.17. caller_trying (int)
+
+   If this parameter is set, a "Trying" state is sent for the caller when
+   the dialog is created. If it is set to 0, the caller is published only
+   from the first provisional reply ("early" state, or "confirmed" if
+   caller_confirmed is set), so no state is published for calls rejected
+   or redirected before any provisional reply.
+
+   Default value is “1”.
+
+   Example 1.17. Set caller_trying parameter
+...
+modparam("pua_dialoginfo", "caller_trying", 0)
+...
+
+5.18. callee_trying (int)
 
    If this parameter is set, a "Trying" state will be sent for both the
    caller and callee, rather than just the caller.
 
    Default value is “0”.
 
-   Example 1.17. Set callee_trying parameter
+   Example 1.18. Set callee_trying parameter
 ...
 modparam("pua_dialoginfo", "callee_trying", 1)
 ...
 
-5.18. caller_entity_when_publish_disabled (int)
+5.19. caller_entity_when_publish_disabled (int)
 
    Must be a valid sip uri. If this parameter is set, this uri is used as
    caller entity in publish xml body if associated dialog has the flag
@@ -569,13 +588,13 @@ modparam("pua_dialoginfo", "callee_trying", 1)
 
    Default value is “NULL”.
 
-   Example 1.18. Set caller_entity_when_publish_disabled parameter
+   Example 1.19. Set caller_entity_when_publish_disabled parameter
 ...
 modparam("pua_dialoginfo", "caller_entity_when_publish_disabled", "sip:caller@pu
 blish.disabled.com")
 ...
 
-5.19. callee_entity_when_publish_disabled (int)
+5.20. callee_entity_when_publish_disabled (int)
 
    Must be a valid sip uri. If this parameter is set, this uri is used as
    callee entity in publish xml body if associated dialog has the flag
@@ -584,44 +603,44 @@ blish.disabled.com")
 
    Default value is “NULL”.
 
-   Example 1.19. Set callee_entity_when_publish_disabled parameter
+   Example 1.20. Set callee_entity_when_publish_disabled parameter
 ...
 modparam("pua_dialoginfo", "callee_entity_when_publish_disabled", "sip:callee@pu
 blish.disabled.com")
 ...
 
-5.20. publish_dialog_req_within (int)
+5.21. publish_dialog_req_within (int)
 
    If this parameter is set to 1, subsequents requests received in dialog
    generate corresponding publish request.
 
    Default value is “1”.
 
-   Example 1.20. Set publish_dialog_req_within parameter
+   Example 1.21. Set publish_dialog_req_within parameter
 ...
 modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
 ...
 
-5.21. local_identity_dlg_var (str)
+5.22. local_identity_dlg_var (str)
 
    PUBLISH-requests reporting dialog-information will use the value of the
    dialog variable if exists
 
    Default value is “NULL”.
 
-   Example 1.21. Set local_identity_dlg_var parameter
+   Example 1.22. Set local_identity_dlg_var parameter
 ...
 modparam("pua_dialoginfo", "local_identity_dlg_var", "local_identity")
 ...
 
-5.22. attribute_display (int)
+5.23. attribute_display (int)
 
    If set to 1, the display name attribute is added with user part of the
    URI for local and remote targets.
 
    Default value is “0”.
 
-   Example 1.22. Set attribute_display parameter
+   Example 1.23. Set attribute_display parameter
 ...
 modparam("pua_dialoginfo", "attribute_display", 1)
 ...

@@ -51,12 +51,16 @@
 
 typedef void (*contact_expired_t)(pcontact_t *c, int type, void *param);
 typedef int (*reconfig_tunnels_t)();
+struct receive_info;
+typedef int (*promote_tunnel_t)(
+		udomain_t *d, pcontact_t *c, struct receive_info *rcv);
 
 /*! ipsec pcscf API export structure */
 typedef struct ipsec_pcscf_api
 {
 	contact_expired_t ipsec_on_expire;
 	reconfig_tunnels_t ipsec_reconfig;
+	promote_tunnel_t ipsec_promote;
 } ipsec_pcscf_api_t;
 
 /*! ipsec pcscf API export bind function */
@@ -71,6 +75,7 @@ int ipsec_destroy(struct sip_msg *m, udomain_t *d, str *uri);
 int ipsec_cleanall();
 int ipsec_reconfig();
 void ipsec_on_expire(pcontact_t *c, int type, void *param);
+int ipsec_promote(udomain_t *d, pcontact_t *c, struct receive_info *rcv);
 int ipsec_destroy_by_contact(
 		udomain_t *_d, str *uri, str *received_host, int received_port);
 

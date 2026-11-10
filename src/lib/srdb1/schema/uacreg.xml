@@ -156,7 +156,7 @@
         <type>string</type>
         <size>&socket_len;</size>
         <default/>
-        <description>Used socket for sending out requests</description>
+        <description>Local socket for sending requests, either in proto:address:port form or as a transport-to-named-socket map (for example udp=private-udp;tcp=private-tcp)</description>
     </column>
 
     <index>

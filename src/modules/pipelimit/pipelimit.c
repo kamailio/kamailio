@@ -122,7 +122,7 @@ int pl_clean_unused = 0;
 
 /* === */
 
-static int pl_load_fetch = 1;
+static int pl_load_fetch = 0;
 
 /** module functions */
 static int mod_init(void);
@@ -640,16 +640,25 @@ static int pipe_push_direct(pl_pipe_t *pipe)
 			ret = (pipe->counter <= pipe->limit) ? 1 : -1;
 			break;
 		case PIPE_ALGO_RED:
-			if(pipe->load == 0)
+			if(pl_load_fetch & PL_LOAD_FETCH_CPU) {
+				LM_ERR("RED algorithm requires load_fetch bit 1 set\n");
+				return -1;
+			}
+			if(pipe->load == 0) {
 				ret = 1;
-			else
+			} else {
 				ret = (!(pipe->counter % pipe->load)) ? 1 : -1;
+			}
 			break;
 		case PIPE_ALGO_FEEDBACK:
 			hash_idx = ((unsigned int)pipe->counter) % 100;
 			ret = (hash[hash_idx] < *drop_rate) ? -1 : 1;
 			break;
 		case PIPE_ALGO_NETWORK:
+			if(pl_load_fetch & PL_LOAD_FETCH_NETWORK) {
+				LM_ERR("network algorithm requires load_fetch bit 2 set\n");
+				return -1;
+			}
 			ret = -1 * pipe->load;
 			break;
 		default:
@@ -823,13 +832,15 @@ static int w_pl_active(sip_msg_t *msg, char *p1, char *p2)
 
 static void pl_timer_refresh(void)
 {
-	if(pl_load_fetch != 0) {
+	if(pl_load_fetch & PL_LOAD_FETCH_CPU) {
 		switch(*load_source) {
 			case LOAD_SOURCE_CPU:
 				update_cpu_load();
 				break;
 		}
+	}
 
+	if(pl_load_fetch & PL_LOAD_FETCH_NETWORK) {
 		*network_load_value = get_total_bytes_waiting();
 	}
 

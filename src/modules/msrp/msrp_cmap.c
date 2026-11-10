@@ -41,7 +41,6 @@ static sruid_t _msrp_sruid;
 
 extern int msrp_auth_min_expires;
 extern int msrp_auth_max_expires;
-extern int msrp_tls_module_loaded;
 extern str msrp_use_path_addr;
 
 /**
@@ -200,8 +199,11 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	idx = msrp_get_slot(hid, _msrp_cmap_head->mapsize);
 
 	srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE, "msrp%s://%s:%d",
-			(msrp_tls_module_loaded) ? "s" : "",
-			ip_addr2a(&mf->tcpinfo->rcv->src_ip),
+			(mf->tcpinfo->rcv->proto == PROTO_TLS
+					|| mf->tcpinfo->rcv->proto == PROTO_WSS)
+					? "s"
+					: "",
+			ip_addr2strz(&mf->tcpinfo->rcv->src_ip),
 			(int)mf->tcpinfo->rcv->src_port);
 	if(srcaddr.len < 0 || srcaddr.len >= MSRP_SBUF_SIZE) {
 		LM_ERR("failure or address length too big (%d)\n", srcaddr.len);

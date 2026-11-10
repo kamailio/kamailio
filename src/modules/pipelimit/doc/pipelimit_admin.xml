@@ -56,13 +56,14 @@
 		<para>
 			The Random Early Detection Algorithm tries to circumvent the
 			synchronization problem imposed by the tail drop algorithm by measuring
-			the average load and adapting the drop rate dynamically. When running
+			the average CPU load and adapting the drop rate dynamically. When running
 			with the RED algorithm (enabled by default) Kamailio will return errors
 			to the Kamailio routing engine every n'th packet trying to evenly
 			spread the measured load of the last timer interval onto the current
 			interval. As a negative side effect Kamailio might drop messages
 			although the limit might not be reached within the interval. Decrease
-			the timer interval if you encounter this.
+			the timer interval if you encounter this. It requires load_fetch bit
+			1 set (value 1).
 		</para>
 		<para>
 			<emphasis>Network Algorithm (NETWORK)</emphasis>
@@ -72,7 +73,8 @@
 			The total amount of bytes waiting to be consumed on all the network
 			interfaces is retrieved once every timer_interval seconds. If the
 			returned amount exceeds the limit specified in the modparam, pl_check()
-			returns false (negative value).
+			returns false (negative value). It requires load_fetch bit
+			2 set (value 2).
 		</para>
 		<para>
 			<emphasis>Feedback Algorithm (FEEDBACK)</emphasis>
@@ -302,19 +304,21 @@ modparam("pipelimit", "timer_mode", 1)
 		<title><varname>load_fetch</varname> (integer)</title>
 		<para>
 		Control if the module should fetch the load for CPU and network traffic.
-		If set to 0, no load is fetched; if set to 1, the load is fetched every
-		timer interval.
+		If set to 0, no load is fetched; if bit 1 is set to 1 (value 1), the CPU
+		load is fetched every timer interval; if bit 2 is set to 1 (value 2),
+		the network load is fetched every timer interval. It can be set to value
+		3 to fetch both CPU and network loads.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1.
+			Default value is 0.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>load_fetch</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pipelimit", "load_fetch", 0)
+modparam("pipelimit", "load_fetch", 3)
 ...
 </programlisting>
 		</example>

@@ -408,6 +408,16 @@ static int mod_init(void)
 		LM_ERR("Error initialising spi generator. Error: %d\n", res);
 		return -1;
 	}
+	if(!spi_ports_apart(
+			   ipsec_server_port, ipsec_client_port, ipsec_max_connections)) {
+		LM_WARN("ipsec_client_port %d, ipsec_server_port %d and "
+				"ipsec_max_connections %d leave too few ports to set up the "
+				"tunnel a 401 offers beside the one the UE is registered "
+				"over: it replaces that one once the 401 is out. Raise "
+				"ipsec_max_connections to 3, or 4 if the two ports are the "
+				"same, or 2 with port ranges that do not overlap\n",
+				ipsec_client_port, ipsec_server_port, ipsec_max_connections);
+	}
 
 	if((ipsec_reconfig_flag = shm_malloc(sizeof(atomic_t))) == NULL) {
 		SHM_MEM_ERROR;

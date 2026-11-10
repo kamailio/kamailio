@@ -68,180 +68,6 @@ static int tls_mod_initialized = 0;
 
 sr_tls_methods_t sr_tls_methods[TLS_METHOD_MAX];
 
-#ifdef NO_TLS_MALLOC_DBG
-#undef TLS_MALLOC_DBG /* extra malloc debug info from openssl */
-#endif				  /* NO_TLS_MALLOC_DBG */
-
-/*
- * Wrappers around SER shared memory functions
- * (which can be macros)
- */
-#ifdef TLS_MALLOC_DBG
-#warning "tls module compiled with malloc debugging info (extra overhead)"
-#include <execinfo.h>
-
-/*
-#define RAND_NULL_MALLOC (1024)
-#define NULL_GRACE_PERIOD 10U
-*/
-
-
-inline static char *buf_append(char *buf, char *end, char *str, int str_len)
-{
-	if((buf + str_len) < end) {
-		memcpy(buf, str, str_len);
-		return buf + str_len;
-	}
-	return 0;
-}
-
-
-inline static int backtrace2str(char *buf, int size)
-{
-	void *bt[32];
-	int bt_size, i;
-	char **bt_strs;
-	char *p;
-	char *end;
-	char *next;
-	char *s;
-	char *e;
-
-	p = buf;
-	end = buf + size;
-	bt_size = backtrace(bt, sizeof(bt) / sizeof(bt[0]));
-	bt_strs = backtrace_symbols(bt, bt_size);
-	if(bt_strs) {
-		p = buf;
-		end = buf + size;
-		/*if (bt_size>16) bt_size=16;*/ /* go up only 12 entries */
-		for(i = 3; i < bt_size; i++) {
-			/* try to isolate only the function name*/
-			s = strchr(bt_strs[i], '(');
-			if(s && ((e = strchr(s, ')')) != 0)) {
-				s++;
-			} else if((s = strchr(bt_strs[i], '[')) != 0) {
-				e = s + strlen(s);
-			} else {
-				s = bt_strs[i];
-				e = s + strlen(s); /* add the whole string */
-			}
-			next = buf_append(p, end, s, (int)(long)(e - s));
-			if(next == 0)
-				break;
-			else
-				p = next;
-			if(p < end) {
-				*p = ':'; /* separator */
-				p++;
-			} else
-				break;
-		}
-		if(p == buf) {
-			*p = 0;
-			p++;
-		} else
-			*(p - 1) = 0;
-		free(bt_strs);
-	}
-	return (int)(long)(p - buf);
-}
-
-static void *ser_malloc(size_t size, const char *file, int line)
-{
-	void *p;
-	char bt_buf[1024];
-	int s;
-#ifdef RAND_NULL_MALLOC
-	static ticks_t st = 0;
-
-	/* start random null returns only after
-	 * NULL_GRACE_PERIOD from first call */
-	if(st == 0)
-		st = get_ticks();
-	if(((get_ticks() - st) < NULL_GRACE_PERIOD)
-			|| (random() % RAND_NULL_MALLOC)) {
-#endif
-		s = backtrace2str(bt_buf, sizeof(bt_buf));
-		/* ugly hack: keep the bt inside the alloc'ed fragment */
-		p = _shm_malloc(size + s, file, "via ser_malloc", line);
-		if(p == 0) {
-			LM_CRIT("tls - ser_malloc(%d)[%s:%d]==null, bt: %s\n", size, file,
-					line, bt_buf);
-		} else {
-			memcpy(p + size, bt_buf, s);
-			((struct qm_frag *)((char *)p - sizeof(struct qm_frag)))->func =
-					p + size;
-		}
-#ifdef RAND_NULL_MALLOC
-	} else {
-		p = 0;
-		backtrace2str(bt_buf, sizeof(bt_buf));
-		LM_CRIT("tls - random ser_malloc(%d)[%s:%d] returning null - bt: %s\n",
-				size, file, line, bt_buf);
-	}
-#endif
-	return p;
-}
-
-
-static void *ser_realloc(void *ptr, size_t size, const char *file, int line)
-{
-	void *p;
-	char bt_buf[1024];
-	int s;
-#ifdef RAND_NULL_MALLOC
-	static ticks_t st = 0;
-
-	/* start random null returns only after
-	 * NULL_GRACE_PERIOD from first call */
-	if(st == 0)
-		st = get_ticks();
-	if(((get_ticks() - st) < NULL_GRACE_PERIOD)
-			|| (random() % RAND_NULL_MALLOC)) {
-#endif
-		s = backtrace2str(bt_buf, sizeof(bt_buf));
-		p = _shm_realloc(ptr, size + s, file, "via ser_realloc", line);
-		if(p == 0) {
-			LM_CRIT("tls - ser_realloc(%p, %d)[%s:%d]==null, bt: %s\n", ptr,
-					size, file, line, bt_buf);
-		} else {
-			memcpy(p + size, bt_buf, s);
-			((struct qm_frag *)((char *)p - sizeof(struct qm_frag)))->func =
-					p + size;
-		}
-#ifdef RAND_NULL_MALLOC
-	} else {
-		p = 0;
-		backtrace2str(bt_buf, sizeof(bt_buf));
-		LM_CRIT("tls - random ser_realloc(%p, %d)[%s:%d]"
-				" returning null - bt: %s\n",
-				ptr, size, file, line, bt_buf);
-	}
-#endif
-	return p;
-}
-#else /*TLS_MALLOC_DBG */
-static void *ser_malloc(size_t size)
-{
-	return shm_malloc(size);
-}
-
-static void *ser_realloc(void *ptr, size_t size)
-{
-	return shm_realloc(ptr, size);
-}
-#endif
-
-
-static void ser_free(void *ptr)
-{
-	if(ptr) {
-		shm_free(ptr);
-	}
-}
-
-
 /*
  * Initialize TLS socket
  */
@@ -353,30 +179,14 @@ static int init_tls_compression(void)
  */
 int tls_pre_init(void)
 {
-	void *(*mf)(size_t, const char *, int) = NULL;
-	void *(*rf)(void *, size_t, const char *, int) = NULL;
-	void (*ff)(void *, const char *, int) = NULL;
-
 #ifdef KSR_LIBSSL_STATIC
 	LM_INFO("libssl linked mode: static\n");
 #endif
 
-	/*
-	 * this has to be called before any function calling CRYPTO_malloc,
-	 * CRYPTO_malloc will set allow_customize in openssl to 0
-	 */
-	// CRYPTO_get_mem_functions(&mf, &rf, &ff);
-	LM_DBG("initial memory functions - malloc: %p realloc: %p free: %p\n", mf,
-			rf, ff);
-	mf = NULL;
-	rf = NULL;
-	ff = NULL;
 	if(ksr_tcp_main_threads == 0) {
-		LM_ERR("tls_wolfssl requires tcp_main_threads = 1\n");
+		LM_ERR("tls_wolfssl requires tcp_main_threads = 1 or 2\n");
 		return -1;
 	}
-	LM_DBG("updated memory functions - malloc: %p realloc: %p free: %p\n",
-			ser_malloc, ser_realloc, ser_free);
 
 	init_tls_compression();
 	return 0;
@@ -447,13 +257,11 @@ int tls_check_sockets(tls_domains_cfg_t *cfg)
 void tls_h_mod_destroy_f(void)
 {
 	LM_DBG("tls module final tls destroy\n");
-	if(tls_mod_preinitialized > 0)
-		ERR_free_strings();
 	/* TODO: free all the ctx'es */
 	tls_destroy_cfg();
 	tls_ct_wq_destroy();
 	/* explicit execution of libssl cleanup to avoid being executed again
 	 * by atexit(), when shm is gone */
-	LM_DBG("executing openssl v1.1+ cleanup\n");
+	LM_DBG("executing wolfSSL cleanup\n");
 	wolfSSL_Cleanup();
 }

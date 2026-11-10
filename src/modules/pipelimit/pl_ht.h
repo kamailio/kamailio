@@ -92,6 +92,9 @@ enum
 	PIPE_ALGO_NETWORK
 };
 
+#define PL_LOAD_FETCH_CPU 1
+#define PL_LOAD_FETCH_NETWORK 2
+
 typedef struct str_map
 {
 	str str;

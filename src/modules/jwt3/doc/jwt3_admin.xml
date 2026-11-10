@@ -33,6 +33,11 @@
 		Cache-Control: max-age directive returned by the server.
 	</para>
 	<para>
+		If a refresh of an expired cache entry fails (for example because
+		the JWKS server is unavailable), the previously cached keys keep
+		being used and a new fetch is attempted after jwks_retry_interval seconds.
+	</para>
+	<para>
 		When a JWT contains a kid (Key ID) header that is not found in
 		the loaded JWKS, the module will attempt to re-fetch the JWKS
 		from the remote URL once and retry the lookup. If the kid is
@@ -172,6 +177,74 @@ modparam("jwt3", "jwks_miss_window", 120)
 		<programlisting format="linespecific">
 ...
 modparam("jwt3", "jwks_max_misses", 3)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jwt.p.jwks_fetch_timeout">
+		<title><varname>jwks_fetch_timeout</varname> (int)</title>
+		<para>
+			Maximum time in seconds allowed for the whole download of a remote
+			JWKS, including connection, redirects and transfer. The fetch is
+			blocking, so the SIP worker process handling the request waits
+			for up to this time.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10. Must be greater than 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_fetch_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_fetch_timeout", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jwt.p.jwks_connect_timeout">
+		<title><varname>jwks_connect_timeout</varname> (int)</title>
+		<para>
+			Maximum time in seconds allowed to establish the connection to
+			the remote JWKS server. It should not be greater than
+			jwks_fetch_timeout.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3. Must be greater than 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_connect_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_connect_timeout", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jwt.p.jwks_retry_interval">
+		<title><varname>jwks_retry_interval</varname> (int)</title>
+		<para>
+			Time in seconds to wait before trying again to refresh a remote
+			JWKS whose refresh has failed, while the previously cached keys
+			are still being used. It avoids blocking every request on a
+			fetch while the JWKS server is unavailable.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30. Must not be negative.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>jwks_retry_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jwt3", "jwks_retry_interval", 60)
 ...
 </programlisting>
 		</example>
