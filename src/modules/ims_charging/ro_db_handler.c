@@ -11,7 +11,6 @@ static db1_con_t *ro_db_handle = 0; /* database connection handle */
 static db_func_t ro_dbf;
 
 str ro_session_table_name = str_init(RO_SESSION_TABLE_NAME);
-str id_column = str_init(ID_COL);
 str h_entry_column = str_init(HASH_ENTRY_COL);
 str h_id_column = str_init(HASH_ID_COL);
 str session_id_column = str_init(SESSION_ID_COL);
@@ -39,8 +38,7 @@ str origin_host_column = str_init(ORIGIN_HOST_COL);
 
 typedef enum ro_session_field_idx
 {
-	ID_COL_IDX = 0,
-	HASH_ENTRY_COL_IDX,
+	HASH_ENTRY_COL_IDX = 0,
 	HASH_ID_COL_IDX,
 	SESSION_ID_COL_IDX,
 	DLG_HASH_ENTRY_COL_IDX,
@@ -160,12 +158,12 @@ static int use_ro_table(void)
 
 static int select_entire_ro_session_table(db1_res_t **res, int fetch_num_rows)
 {
-	db_key_t query_cols[RO_SESSION_TABLE_COL_NUM] = {&id_column,
-			&h_entry_column, &h_id_column, &session_id_column,
-			&dlg_h_entry_column, &dlg_h_id_column, &direction_column,
-			&asserted_column, &callee_column, &start_time_col,
-			&last_event_ts_column, &reserved_sec_column, &valid_for_column,
-			&state_column, &incoming_trunk_id_column, &outgoing_trunk_id_column,
+	db_key_t query_cols[RO_SESSION_TABLE_COL_NUM] = {&h_entry_column,
+			&h_id_column, &session_id_column, &dlg_h_entry_column,
+			&dlg_h_id_column, &direction_column, &asserted_column,
+			&callee_column, &start_time_col, &last_event_ts_column,
+			&reserved_sec_column, &valid_for_column, &state_column,
+			&incoming_trunk_id_column, &outgoing_trunk_id_column,
 			&rating_group_column, &service_identifier_column,
 			&auth_app_id_column, &auth_session_type_column, &pani_column,
 			&mac_column, &app_provided_party_column,
@@ -551,20 +549,17 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 			  && (ro_session->flags & RO_SESSION_FLAG_INSERTED) == 0) {
 
 		db_val_t values[RO_SESSION_TABLE_COL_NUM];
-		db_key_t insert_keys[RO_SESSION_TABLE_COL_NUM] = {&id_column,
-				&h_entry_column, &h_id_column, &session_id_column,
-				&dlg_h_entry_column, &dlg_h_id_column, &direction_column,
-				&asserted_column, &callee_column, &start_time_col,
-				&last_event_ts_column, &reserved_sec_column, &valid_for_column,
-				&state_column, &incoming_trunk_id_column,
-				&outgoing_trunk_id_column, &rating_group_column,
-				&service_identifier_column, &auth_app_id_column,
-				&auth_session_type_column, &pani_column, &mac_column,
-				&app_provided_party_column, &is_final_allocation_column,
-				&origin_host_column};
+		db_key_t insert_keys[RO_SESSION_TABLE_COL_NUM] = {&h_entry_column,
+				&h_id_column, &session_id_column, &dlg_h_entry_column,
+				&dlg_h_id_column, &direction_column, &asserted_column,
+				&callee_column, &start_time_col, &last_event_ts_column,
+				&reserved_sec_column, &valid_for_column, &state_column,
+				&incoming_trunk_id_column, &outgoing_trunk_id_column,
+				&rating_group_column, &service_identifier_column,
+				&auth_app_id_column, &auth_session_type_column, &pani_column,
+				&mac_column, &app_provided_party_column,
+				&is_final_allocation_column, &origin_host_column};
 
-		VAL_TYPE(GET_FIELD_IDX(values, ID_COL_IDX)) = DB1_INT;
-		VAL_NULL(GET_FIELD_IDX(values, ID_COL_IDX)) = 1;
 
 		db_set_int_val(values, HASH_ENTRY_COL_IDX, ro_session->h_entry);
 		db_set_int_val(values, HASH_ID_COL_IDX, ro_session->h_id);
