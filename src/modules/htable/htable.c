@@ -59,10 +59,40 @@ int ht_dmq_init_sync = 0;
 str ht_dmq_peer_id = str_init("htable");
 int ht_timer_procs = 0;
 static int ht_event_callback_mode = 0;
+static int ht_timer_registered = 0;
 
 str ht_event_callback = STR_NULL;
 
 static int htable_init_rpc(void);
+
+/**
+ * Register the auto-expire timer once tables requiring it are available.
+ * Tables can be added by another module after htable's mod_init callback.
+ */
+int ht_start_autoexpire_timer(void)
+{
+	if(ht_timer_registered || !ht_has_autoexpire())
+		return 0;
+
+	LM_DBG("starting auto-expire timer\n");
+	if(ht_timer_interval <= 0)
+		ht_timer_interval = 20;
+
+	if(ht_timer_procs <= 0) {
+		if(register_timer(ht_timer, 0, ht_timer_interval) < 0) {
+			LM_ERR("failed to register timer function\n");
+			return -1;
+		}
+	} else {
+		if(register_sync_timers(ht_timer_procs) < 0) {
+			LM_ERR("failed to register timer processes\n");
+			return -1;
+		}
+	}
+
+	ht_timer_registered = 1;
+	return 0;
+}
 
 /** module functions */
 static int ht_print(struct sip_msg *, char *, char *);
@@ -243,19 +273,8 @@ static int mod_init(void)
 	}
 	if(ht_file_load_tables() != 0)
 		return -1;
-	if(ht_has_autoexpire()) {
-		LM_DBG("starting auto-expire timer\n");
-		if(ht_timer_interval <= 0)
-			ht_timer_interval = 20;
-		if(ht_timer_procs <= 0) {
-			if(register_timer(ht_timer, 0, ht_timer_interval) < 0) {
-				LM_ERR("failed to register timer function\n");
-				return -1;
-			}
-		} else {
-			register_sync_timers(ht_timer_procs);
-		}
-	}
+	if(ht_start_autoexpire_timer() < 0)
+		return -1;
 
 	if(ht_enable_dmq > 0 && ht_dmq_initialize() != 0) {
 		LM_ERR("failed to initialize dmq integration\n");
@@ -282,7 +301,7 @@ static int child_init(int rank)
 	LM_DBG("rank is (%d)\n", rank);
 
 	if(rank == PROC_MAIN) {
-		if(ht_has_autoexpire() && ht_timer_procs > 0) {
+		if(ht_timer_registered && ht_timer_procs > 0) {
 			for(i = 0; i < ht_timer_procs; i++) {
 				if(fork_sync_timer(PROC_TIMER, "HTable Timer", 1 /*socks flag*/,
 						   ht_timer, (void *)(long)i, ht_timer_interval)

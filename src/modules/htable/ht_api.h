@@ -128,6 +128,7 @@ int ht_db_load_tables(void);
 int ht_db_sync_tables(void);
 
 int ht_has_autoexpire(void);
+int ht_start_autoexpire_timer(void);
 void ht_timer(unsigned int ticks, void *param);
 void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell);
 int ht_reload_table(ht_t *ht);

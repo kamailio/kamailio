@@ -202,6 +202,18 @@ int ht_api_count_cells_re(str *hname, str *sre, int mode)
 }
 
 /**
+ * Initialize tables added through the module API and start the auto-expire
+ * timer if one of them requires it.
+ */
+static int ht_api_init_tables(void)
+{
+	if(ht_init_tables() < 0)
+		return -1;
+
+	return ht_start_autoexpire_timer();
+}
+
+/**
  *
  */
 int bind_htable(htable_api_t *api)
@@ -212,7 +224,7 @@ int bind_htable(htable_api_t *api)
 	}
 
 	api->table_spec = ht_table_spec;
-	api->init_tables = ht_init_tables;
+	api->init_tables = ht_api_init_tables;
 	api->set = ht_api_set_cell;
 	api->get_clone = ht_api_get_cell_clone;
 	api->rm = ht_api_del_cell;
