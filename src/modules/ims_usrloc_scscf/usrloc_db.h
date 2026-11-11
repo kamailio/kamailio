@@ -19,6 +19,7 @@ extern db_func_t ul_dbf;
 #define FLAGS_COL "flags"
 #define CFLAGS_COL "cflags"
 #define USER_AGENT_COL "user_agent"
+#define PRIVATE_IDENTITY_COL "private_identity"
 #define RECEIVED_COL "received"
 #define PATH_COL "path"
 #define SOCK_COL "socket"

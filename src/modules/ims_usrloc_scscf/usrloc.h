@@ -375,6 +375,7 @@ typedef struct ucontact
 	unsigned int flags;		  /*!< Various flags (NAT, ping type, etc) */
 	unsigned int cflags;	  /*!< Custom contact flags (from script) */
 	str user_agent;			  /*!< User-Agent header field */
+	str private_identity;	  /*!< IMPI that registered the contact, if known */
 	struct socket_info *sock; /*!< received socket */
 	time_t last_modified;	  /*!< When the record was last modified */
 	unsigned int methods;	  /*!< Supported methods */
@@ -406,6 +407,7 @@ typedef struct ucontact_info
 	unsigned int flags;		  /*!< message flags */
 	unsigned int cflags;	  /*!< contact flags */
 	str *user_agent;		  /*!< user agent header */
+	str *private_identity;	  /*!< IMPI that registered the contact */
 	struct socket_info *sock; /*!< socket informations */
 
 	unsigned int methods; /*!< supported methods */
