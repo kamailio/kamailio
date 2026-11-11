@@ -8,7 +8,7 @@ db.getCollection("version").insert({ table_name: "aliases", table_version: Numbe
 db.getCollection("version").insert({ table_name: "carrier_name", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "carrierfailureroute", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "carrierroute", table_version: NumberInt(3) });
-db.getCollection("version").insert({ table_name: "contact", table_version: NumberInt(6) });
+db.getCollection("version").insert({ table_name: "contact", table_version: NumberInt(7) });
 db.getCollection("version").insert({ table_name: "cpl", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dbaliases", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dialog", table_version: NumberInt(7) });

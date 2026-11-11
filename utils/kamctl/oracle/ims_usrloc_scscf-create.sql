@@ -7,6 +7,7 @@ CREATE TABLE contact (
     user_agent VARCHAR2(255) DEFAULT NULL,
     expires DATE DEFAULT NULL,
     callid VARCHAR2(255) DEFAULT NULL,
+    private_identity VARCHAR2(255) DEFAULT NULL,
     CONSTRAINT contact_contact  UNIQUE (contact)
 );
 
@@ -18,7 +19,7 @@ END contact_tr;
 /
 BEGIN map2users('contact'); END;
 /
-INSERT INTO version (table_name, table_version) values ('contact','6');
+INSERT INTO version (table_name, table_version) values ('contact','7');
 
 CREATE TABLE impu (
     id NUMBER(10) PRIMARY KEY,

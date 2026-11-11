@@ -1,6 +1,6 @@
 {
   "name": "contact",
-  "version": 6,
+  "version": 7,
   "columns": [
     "id": {
       "type": "int",
@@ -38,6 +38,11 @@
       "null": true
     },
     "callid": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "private_identity": {
       "type": "string",
       "default": null,
       "null": true
