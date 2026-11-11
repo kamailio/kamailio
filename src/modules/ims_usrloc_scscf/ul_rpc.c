@@ -206,8 +206,9 @@ static void ul_rpc_show_impu(rpc_t *rpc, void *ctx)
 			unlock_udomain(domain, &impu);
 			return;
 		}
-		if(rpc->struct_add(cdh, "dS", "expires", contact->expires - time(NULL),
-				   "client", &contact->user_agent)
+		if(rpc->struct_add(cdh, "dSS", "expires", contact->expires - time(NULL),
+				   "client", &contact->user_agent, "impi",
+				   &contact->private_identity)
 				< 0) {
 			rpc->fault(ctx, 500, "Internal error adding impu contact data");
 			unlock_udomain(domain, &impu);
