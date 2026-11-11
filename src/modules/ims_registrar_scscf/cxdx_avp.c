@@ -1047,12 +1047,14 @@ int cxdx_get_charging_info(
 }
 
 int cxdx_get_scscf_restoration_info(
-		AAAMessage *msg, str *path, str *contact, str *call_id)
+		AAAMessage *msg, str *user_name, str *path, str *contact, str *call_id)
 {
 	AAA_AVP_LIST list, ri_list;
 	AAA_AVP *avp;
 	int ret = 0;
 
+	user_name->s = 0;
+	user_name->len = 0;
 	path->s = 0;
 	path->len = 0;
 	contact->s = 0;
@@ -1106,6 +1108,12 @@ int cxdx_get_scscf_restoration_info(
 		}
 	} else {
 		LM_WARN("Restoration-Info without Contact\n");
+	}
+
+	if(ret) {
+		avp = cdpb.AAAFindMatchingAVPList(list, 0, AVP_User_Name, 0, 0);
+		if(avp && avp->data.len)
+			*user_name = avp->data;
 	}
 
 	cdpb.AAAFreeAVPList(&ri_list);
