@@ -638,26 +638,16 @@ int cmp_uri_mode(struct sip_uri *uri1, struct sip_uri *uri2, int cmode)
 	/* if no params, we are done */
 	if(uri1->params.len == 0 && uri2->params.len == 0)
 		return 0;
-	if(uri1->params.len == 0) {
-		if(uri2->user_param.len != 0)
-			return 1;
-		if(uri2->ttl.len != 0)
-			return 1;
-		if(uri2->method.len != 0)
-			return 1;
-		if(uri2->maddr.len != 0)
-			return 1;
-	}
-	if(uri2->params.len == 0) {
-		if(uri1->user_param.len != 0)
-			return 1;
-		if(uri1->ttl.len != 0)
-			return 1;
-		if(uri1->method.len != 0)
-			return 1;
-		if(uri1->maddr.len != 0)
-			return 1;
-	}
+	/* user, ttl, method or maddr param present in only one URI - no match,
+	 * regardless of other params in the URIs (RFC3261, 19.1.4) */
+	if((uri1->user_param.len == 0) != (uri2->user_param.len == 0))
+		return 1;
+	if((uri1->ttl.len == 0) != (uri2->ttl.len == 0))
+		return 1;
+	if((uri1->method.len == 0) != (uri2->method.len == 0))
+		return 1;
+	if((uri1->maddr.len == 0) != (uri2->maddr.len == 0))
+		return 1;
 	return cmp_str_params(&uri1->params, &uri2->params);
 }
 
@@ -739,9 +729,8 @@ int cmp_aor(struct sip_uri *uri1, struct sip_uri *uri2)
 	if(cmp_str(&uri1->user, &uri2->user) != 0)
 		return 1;
 	if(cmp_str(&uri1->port, &uri2->port) != 0) {
-		if(uri1->port.len == 0 && uri2->port_no != 5060)
-			return 1;
-		if(uri2->port.len == 0 && uri1->port_no != 5060)
+		if(((uri1->port.len != 0) ? uri1->port_no : SIP_PORT)
+				!= ((uri2->port.len != 0) ? uri2->port_no : SIP_PORT))
 			return 1;
 	}
 	if(cmpi_str(&uri1->host, &uri2->host) != 0)
