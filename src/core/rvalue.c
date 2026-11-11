@@ -1393,6 +1393,10 @@ inline static int long_longop1(long *res, enum rval_expr_op op, long v)
 {
 	switch(op) {
 		case RVE_UMINUS_OP:
+			if(unlikely(v == LONG_MIN)) {
+				LM_ERR("rv unary minus overflow\n");
+				return -1;
+			}
 			*res = -v;
 			break;
 		case RVE_BOOL_OP:
@@ -1418,20 +1422,52 @@ inline static int long_longop1(long *res, enum rval_expr_op op, long v)
 inline static int long_longop2(
 		long *res, enum rval_expr_op op, long v1, long v2)
 {
+	unsigned long a;
+	unsigned long b;
+	unsigned long limit;
+	unsigned long product;
 	unsigned long u;
 	unsigned int shift;
 	unsigned int width;
+	int negative;
 
 	switch(op) {
 		case RVE_PLUS_OP:
 		case RVE_IPLUS_OP:
+			if(unlikely((v2 > 0 && v1 > LONG_MAX - v2)
+						|| (v2 < 0 && v1 < LONG_MIN - v2))) {
+				LM_ERR("rv add overflow\n");
+				return -1;
+			}
 			*res = v1 + v2;
 			break;
 		case RVE_MINUS_OP:
+			if(unlikely((v2 > 0 && v1 < LONG_MIN + v2)
+						|| (v2 < 0 && v1 > LONG_MAX + v2))) {
+				LM_ERR("rv subtract overflow\n");
+				return -1;
+			}
 			*res = v1 - v2;
 			break;
 		case RVE_MUL_OP:
-			*res = v1 * v2;
+			negative = (v1 < 0) != (v2 < 0);
+			a = v1 < 0 ? 0UL - (unsigned long)v1 : (unsigned long)v1;
+			b = v2 < 0 ? 0UL - (unsigned long)v2 : (unsigned long)v2;
+			limit = negative ? 0UL - (unsigned long)LONG_MIN
+							 : (unsigned long)LONG_MAX;
+			if(unlikely(b != 0 && a > limit / b)) {
+				LM_ERR("rv multiply overflow\n");
+				return -1;
+			}
+			product = a * b;
+			if(negative) {
+				if(product == 0UL - (unsigned long)LONG_MIN)
+					*res = LONG_MIN;
+				else
+					*res = -(long)product;
+			} else {
+				*res = (long)product;
+			}
 			break;
 		case RVE_DIV_OP:
 			if(unlikely(v2 == 0)) {
@@ -2391,7 +2427,10 @@ struct rvalue *rval_expr_eval(
 								rve->fpos.e_line, rve->fpos.e_col);
 						goto error;
 					}
-					long_longop2(&r, rve->op, i, j);
+					if(unlikely(long_longop2(&r, rve->op, i, j) < 0)) {
+						rval_cache_clean(&c1);
+						goto error;
+					}
 					if(rv_chg_in_place(rv1)) {
 						rv1->v.l = r;
 						ret = rv1;
