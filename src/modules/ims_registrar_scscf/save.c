@@ -47,6 +47,7 @@
 #include "../../core/socket_info.h"
 #include "../../core/parser/parse_allow.h"
 #include "../../core/parser/parse_methods.h"
+#include "../../core/parser/digest/digest.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_uri.h"
@@ -535,12 +536,181 @@ static int get_restored_ucontact(str *uri, str *path, struct ucontact **c)
 	return 1;
 }
 
+/*!
+ * The value of a +sip.instance parameter without the angle brackets around
+ * the URN (the parser has already dropped the quotes), so that the same
+ * instance compares equal whether it came from a REGISTER, the usrloc database
+ * or a restoration Contact.
+ */
+static inline str instance_urn(str instance)
+{
+	if(instance.len >= 2 && instance.s[0] == '<'
+			&& instance.s[instance.len - 1] == '>') {
+		instance.s++;
+		instance.len -= 2;
+	}
+	return instance;
+}
+
+/*!
+ * The +sip.instance and reg-id of a stored binding. reg-id is at least 1
+ * (RFC 5626 4.2), so 0 stands for "no reg-id".
+ */
+static void ucontact_instance(
+		ucontact_t *c, str *instance, unsigned int *reg_id)
+{
+	param_t *p;
+
+	instance->s = NULL;
+	instance->len = 0;
+	*reg_id = 0;
+	for(p = c->params; p; p = p->next) {
+		if(p->name.len == 13 && strncasecmp(p->name.s, "+sip.instance", 13) == 0
+				&& p->body.len > 0) {
+			*instance = instance_urn(p->body);
+		} else if(p->name.len == 6 && strncasecmp(p->name.s, "reg-id", 6) == 0
+				  && p->body.len > 0) {
+			if(str2int(&p->body, reg_id) < 0)
+				*reg_id = 0;
+		}
+	}
+}
+
+/*!
+ * Whether a Contact of the REGISTER of private user identity impi, being
+ * registered (not removed), replaces the stored binding c (TS 24.229
+ * 5.4.1.2.1). Only a binding registered by the same IMPI is replaced: another
+ * IMPI sharing the public user identity (TS 23.228 4.3.3.4) is another UE,
+ * and a binding whose IMPI is not known is left alone.
+ *  - with a reg-id, the multiple registrations mechanism is used and it
+ *    replaces the registration flow of the same +sip.instance and reg-id
+ *    (step 3, RFC 5626 6);
+ *  - without one, it replaces every other registration of the IMPI,
+ *    whatever its +sip.instance - or none (step 2).
+ * An emergency Contact only replaces an emergency binding and a normal one
+ * only a normal one: the emergency registration is a registration of its own
+ * (TS 24.229 5.4.1.2.1D NOTE 2: contacts related to emergency registration
+ * are not affected).
+ */
+static int contact_replaces(
+		contact_t *chi, int expires_hdr, str *impi, ucontact_t *c)
+{
+	int sos;
+	str instance, c_instance;
+	unsigned int reg_id, c_reg_id;
+
+	if(!impi || impi->len <= 0 || c->private_identity.len != impi->len
+			|| memcmp(c->private_identity.s, impi->s, impi->len) != 0)
+		return 0;
+	sos = cscf_get_sos_uri_param(chi->uri);
+	if(sos < 0)
+		return 0;
+	if(calc_contact_expires(chi, expires_hdr, sos) <= act_time)
+		return 0; /* this Contact is being removed, it replaces nothing */
+	if((cscf_get_sos_uri_param(c->c) > 0) != (sos > 0))
+		return 0;
+	if(!chi->reg_id)
+		return 1;
+
+	if(!chi->instance || chi->instance->body.len <= 0) {
+		LM_WARN("reg-id without +sip.instance in <%.*s> - not replacing any "
+				"binding\n",
+				STR_FMT(&chi->uri));
+		return 0;
+	}
+	if(str2int(&chi->reg_id->body, &reg_id) < 0) {
+		LM_WARN("invalid reg-id [%.*s] in <%.*s> - not replacing any "
+				"binding\n",
+				STR_FMT(&chi->reg_id->body), STR_FMT(&chi->uri));
+		return 0;
+	}
+	instance = instance_urn(chi->instance->body);
+	ucontact_instance(c, &c_instance, &c_reg_id);
+	return c_instance.len == instance.len
+		   && memcmp(c_instance.s, instance.s, instance.len) == 0
+		   && c_reg_id == reg_id;
+}
+
+/*!
+ * The Contact of the REGISTER that replaces c, or NULL.
+ */
+static contact_t *replacing_contact(
+		struct sip_msg *msg, int expires_hdr, str *impi, ucontact_t *c)
+{
+	struct hdr_field *h;
+	contact_t *chi;
+
+	for(h = msg->contact; h; h = h->next) {
+		if(h->type != HDR_CONTACT_T || !h->parsed)
+			continue;
+		for(chi = ((contact_body_t *)h->parsed)->contacts; chi;
+				chi = chi->next) {
+			if(contact_replaces(chi, expires_hdr, impi, c))
+				return chi;
+		}
+	}
+	return NULL;
+}
+
+/*!
+ * TS 24.229 5.4.1.2.1 steps 2 and 3: a successful registration of private user
+ * identity impi replaces the earlier bindings of the same UE (see
+ * contact_replaces()).
+ */
+static void replace_superseded_contacts(struct sip_msg *msg,
+		impurecord_t *impu_rec, int expires_hdr, str *impi, ucontact_t **saved,
+		int num_saved)
+{
+	impu_contact_t *impucontact, *next;
+	ucontact_t *c;
+	contact_t *by;
+	str dereg_contact;
+	int i, sl;
+
+	if(!impi || impi->len <= 0 || !saved)
+		return;
+
+	get_act_time();
+	for(impucontact = impu_rec->linked_contacts.head; impucontact;
+			impucontact = next) {
+		/* unlink_contact_from_impu() frees impucontact */
+		next = impucontact->next;
+		c = impucontact->contact;
+		if(!c)
+			break;
+		for(i = 0; i < num_saved && saved[i] != c; i++)
+			;
+		if(i < num_saved)
+			continue;
+		sl = c->sl;
+		ul.lock_contact_slot_i(sl);
+		if(VALID_CONTACT(c, act_time)
+				&& (by = replacing_contact(msg, expires_hdr, impi, c))
+						   != NULL) {
+			LM_INFO("<%.*s> replaces <%.*s> for <%.*s>%s\n", STR_FMT(&by->uri),
+					STR_FMT(&c->c), STR_FMT(&impu_rec->public_identity),
+					by->reg_id ? " (same +sip.instance and reg-id)" : "");
+			if(impu_rec->shead) {
+				/* new_notification() copies the URI: the body is rendered
+				 * later, in the notification worker, when the binding may be
+				 * gone */
+				dereg_contact = c->c;
+				notify_subscribers(impu_rec, c, &dereg_contact, 1,
+						IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT);
+			}
+			ul.unlink_contact_from_impu(impu_rec, c, 1, 1);
+		}
+		ul.unlock_contact_slot_i(sl);
+	}
+}
+
 /**
  * update the contacts for a public identity. Make sure you have the lock on the domain before calling this
  * returns 0 on success, -1 on failure
  */
 static inline int update_contacts_helper(struct sip_msg *msg,
-		impurecord_t *impu_rec, int assignment_type, int expires_hdr)
+		impurecord_t *impu_rec, int assignment_type, int expires_hdr,
+		str *private_identity)
 {
 	struct hdr_field *h;
 	contact_t *chi;		 //contact header information
@@ -549,6 +719,8 @@ static inline int update_contacts_helper(struct sip_msg *msg,
 	int sos = 0, expires;
 	struct ucontact *ucontact;
 	int result, sl;
+	ucontact_t **saved = NULL; /* bindings inserted or refreshed here */
+	int num_saved = 0, max_saved = 0;
 
 	LM_DBG("updating the contacts for IMPU <%.*s>\n",
 			impu_rec->public_identity.len, impu_rec->public_identity.s);
@@ -561,6 +733,21 @@ static inline int update_contacts_helper(struct sip_msg *msg,
 
 		case AVP_IMS_SAR_REGISTRATION:
 		case AVP_IMS_SAR_RE_REGISTRATION:
+			for(h = msg->contact; h; h = h->next) {
+				if(h->type == HDR_CONTACT_T && h->parsed) {
+					for(chi = ((contact_body_t *)h->parsed)->contacts; chi;
+							chi = chi->next)
+						max_saved++;
+				}
+			}
+			if(max_saved > 0) {
+				saved = (ucontact_t **)pkg_malloc(
+						max_saved * sizeof(ucontact_t *));
+				if(!saved)
+					LM_WARN("no more pkg memory - not replacing earlier "
+							"bindings of <%.*s>\n",
+							STR_FMT(&impu_rec->public_identity));
+			}
 			for(h = msg->contact; h; h = h->next) {
 				if(h->type == HDR_CONTACT_T && h->parsed) {
 
@@ -592,6 +779,7 @@ static inline int update_contacts_helper(struct sip_msg *msg,
 							LM_ERR("Failed to extract contact info\n");
 							goto error;
 						}
+						ci->private_identity = private_identity;
 
 						LM_DBG("adding/updating contact based on prior "
 							   "existence\n");
@@ -612,6 +800,8 @@ static inline int update_contacts_helper(struct sip_msg *msg,
 								//				ul.unlock_contact_slot(&chi->uri);
 								goto error;
 							}
+							if(saved && num_saved < max_saved)
+								saved[num_saved++] = ucontact;
 						} else {
 							LM_DBG("Contact already exists - updating - it's "
 								   "currently in state [%s]\n",
@@ -636,18 +826,26 @@ static inline int update_contacts_helper(struct sip_msg *msg,
 								goto error;
 							}
 							ul.unlock_contact_slot_i(sl);
+							if(saved && num_saved < max_saved)
+								saved[num_saved++] = ucontact;
 							ul.release_ucontact(ucontact);
 						}
 						//			ul.unlock_contact_slot(&chi->uri);
 					}
 				}
 			}
+			replace_superseded_contacts(msg, impu_rec, expires_hdr,
+					private_identity, saved, num_saved);
 			break;
 	}
 
+	if(saved)
+		pkg_free(saved);
 	return 0;
 
 error:
+	if(saved)
+		pkg_free(saved);
 	return -1;
 }
 
@@ -826,8 +1024,8 @@ void clean_watchers(udomain_t *_d, str *public_identity, contact_t *chi,
 }
 
 static int update_contacts_sar_registration(struct sip_msg *msg, udomain_t *_d,
-		str *public_identity, int assignment_type, ims_subscription **s,
-		str *ccf1, str *ccf2, str *ecf1, str *ecf2,
+		str *public_identity, str *private_identity, int assignment_type,
+		ims_subscription **s, str *ccf1, str *ccf2, str *ecf1, str *ecf2,
 		contact_for_header_t **contact_header, int expires_hdr)
 {
 	ims_service_profile *profile = NULL;
@@ -870,8 +1068,8 @@ static int update_contacts_sar_registration(struct sip_msg *msg, udomain_t *_d,
 			}
 			//here we can do something with impu_rec if we want but we must unlock when done
 			//lets update the contacts
-			if(update_contacts_helper(
-					   msg, impu_rec, assignment_type, expires_hdr)
+			if(update_contacts_helper(msg, impu_rec, assignment_type,
+					   expires_hdr, private_identity)
 					!= 0) {
 				LM_ERR("Failed trying to update contacts\n");
 				ul.unlock_udomain(_d, &pi->public_identity);
@@ -1129,9 +1327,10 @@ static int update_contacts_sar_user_deregistration(struct sip_msg *msg,
 }
 
 static int update_contacts_sar_re_registration(struct sip_msg *msg,
-		udomain_t *_d, str *public_identity, int assignment_type,
-		ims_subscription **s, str *ccf1, str *ccf2, str *ecf1, str *ecf2,
-		contact_for_header_t **contact_header, int expires_hdr)
+		udomain_t *_d, str *public_identity, str *private_identity,
+		int assignment_type, ims_subscription **s, str *ccf1, str *ccf2,
+		str *ecf1, str *ecf2, contact_for_header_t **contact_header,
+		int expires_hdr)
 {
 	int reg_state = IMS_USER_REGISTERED, i, j;
 	impurecord_t *impu_rec = NULL;
@@ -1153,7 +1352,8 @@ static int update_contacts_sar_re_registration(struct sip_msg *msg,
 		return -1;
 	}
 
-	if(update_contacts_helper(msg, impu_rec, assignment_type, expires_hdr)
+	if(update_contacts_helper(
+			   msg, impu_rec, assignment_type, expires_hdr, private_identity)
 			!= 0) { //update the contacts for the explicit IMPU
 		LM_ERR("Failed trying to update contacts for re-registration\n");
 		ul.unlock_udomain(_d, public_identity);
@@ -1217,8 +1417,8 @@ static int update_contacts_sar_re_registration(struct sip_msg *msg,
 			}
 
 			//update the contacts for the explicit IMPU
-			if(update_contacts_helper(
-					   msg, impu_rec, assignment_type, expires_hdr)
+			if(update_contacts_helper(msg, impu_rec, assignment_type,
+					   expires_hdr, private_identity)
 					!= 0) {
 				LM_ERR("Failed trying to update contacts for re-registration "
 					   "of implicit IMPU <%.*s>, continuing\n",
@@ -1326,6 +1526,7 @@ static int restore_ucontact(
 		ci.received = c->received->body;
 	ci.params = c->params;
 	ci.user_agent = &no_ua;
+	ci.private_identity = &ri->impi;
 	ci.sock = _m ? _m->rcv.bind_address : 0;
 	ci.path = &ri->path;
 
@@ -1443,9 +1644,9 @@ static int update_contacts_sar_script(struct sip_msg *msg, udomain_t *_d,
  */
 
 int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
-		int assignment_type, ims_subscription **s, str *ccf1, str *ccf2,
-		str *ecf1, str *ecf2, contact_for_header_t **contact_header,
-		restoration_info_t *ri)
+		str *private_identity, int assignment_type, ims_subscription **s,
+		str *ccf1, str *ccf2, str *ecf1, str *ecf2,
+		contact_for_header_t **contact_header, restoration_info_t *ri)
 {
 	int expires_hdr = -1; //by default registration doesn't expire
 	int ret = -1;
@@ -1458,13 +1659,13 @@ int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
 	switch(assignment_type) {
 		case AVP_IMS_SAR_REGISTRATION:
 			ret = update_contacts_sar_registration(msg, _d, public_identity,
-					assignment_type, s, ccf1, ccf2, ecf1, ecf2, contact_header,
-					expires_hdr);
+					private_identity, assignment_type, s, ccf1, ccf2, ecf1,
+					ecf2, contact_header, expires_hdr);
 			break;
 		case AVP_IMS_SAR_RE_REGISTRATION:
 			ret = update_contacts_sar_re_registration(msg, _d, public_identity,
-					assignment_type, s, ccf1, ccf2, ecf1, ecf2, contact_header,
-					expires_hdr);
+					private_identity, assignment_type, s, ccf1, ccf2, ecf1,
+					ecf2, contact_header, expires_hdr);
 			break;
 		case AVP_IMS_SAR_USER_DEREGISTRATION:
 			ret = update_contacts_sar_user_deregistration(msg, _d,
@@ -1659,6 +1860,27 @@ done:
  */
 //int save(struct sip_msg* msg, udomain_t* _d) {
 
+/*!
+ * Whether impi, as cscf_get_private_identity() returned it, is the username
+ * of the REGISTER's credentials. Without usable credentials that function
+ * falls back to the IMPU without its scheme, the same string for every UE
+ * sharing the IMPU, which then cannot tell their bindings apart: a contact is
+ * only stored with an IMPI the UE presented itself.
+ */
+static int impi_from_credentials(struct sip_msg *msg, str *impi)
+{
+	struct hdr_field *h;
+
+	for(h = msg->headers; h; h = h->next) {
+		if((h->type == HDR_AUTHORIZATION_T || h->type == HDR_PROXYAUTH_T)
+				&& h->parsed
+				&& ((auth_body_t *)h->parsed)->digest.username.whole.s
+						   == impi->s)
+			return 1;
+	}
+	return 0;
+}
+
 int save(struct sip_msg *msg, char *str1, char *route, int _cflags)
 {
 	int expires;
@@ -1667,6 +1889,7 @@ int save(struct sip_msg *msg, char *str1, char *route, int _cflags)
 	contact_t *c;
 	int st;
 	str public_identity, private_identity, realm = {0, 0};
+	str contact_impi = {0, 0};
 	int sar_assignment_type = AVP_IMS_SAR_NO_ASSIGNMENT;
 	str route_name;
 
@@ -1742,6 +1965,8 @@ int save(struct sip_msg *msg, char *str1, char *route, int _cflags)
 	private_identity = cscf_get_private_identity(msg, realm);
 	if(private_identity.len <= 0 || !private_identity.s) {
 		LM_ERR("cant get private identity\n");
+	} else if(impi_from_credentials(msg, &private_identity)) {
+		contact_impi = private_identity;
 	}
 
 	expires = cscf_get_max_expires(msg, 0); //check all contacts for max expires
@@ -1782,7 +2007,7 @@ int save(struct sip_msg *msg, char *str1, char *route, int _cflags)
 			//unregister the requested contacts, if none left at the end then send a SAR, otherwise return successfully
 			LM_DBG("need to unregister contacts\n");
 			//lets update the contacts - we need to know if all were deleted or not for the public identity
-			int res = update_contacts(msg, _d, &public_identity,
+			int res = update_contacts(msg, _d, &public_identity, &contact_impi,
 					sar_assignment_type, 0, 0, 0, 0, 0, &contact_header, 0);
 			if(res <= 0) {
 				LM_DBG("Error processing REGISTER for de-registration\n");
@@ -1858,6 +2083,16 @@ int save(struct sip_msg *msg, char *str1, char *route, int _cflags)
 	memset(saved_t->public_identity.s, 0, public_identity.len + 1);
 	memcpy(saved_t->public_identity.s, public_identity.s, public_identity.len);
 	saved_t->public_identity.len = public_identity.len;
+
+	if(contact_impi.len > 0
+			&& shm_str_dup(&saved_t->private_identity, &contact_impi) < 0) {
+		LM_ERR("no more memory trying to save transaction state : "
+			   "private identity\n");
+		free_saved_transaction_data(saved_t);
+		free_contact_buf(contact_header);
+		rerrno = R_SAR_FAILED;
+		goto error;
+	}
 
 	saved_t->contact_header = contact_header;
 

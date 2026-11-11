@@ -81,6 +81,18 @@
 //	return term_impu_registered(msg, (char*)d, NULL);
 //}
 //
+
+/*! the API keeps its signature: its callers do not register a Contact, so
+ * there is no private identity to store or to replace other bindings by */
+static int regapi_update_contacts(struct sip_msg *msg, udomain_t *_d,
+		str *public_identity, int assignment_type, ims_subscription **s,
+		str *ccf1, str *ccf2, str *ecf1, str *ecf2,
+		contact_for_header_t **contact_header, restoration_info_t *ri)
+{
+	return update_contacts(msg, _d, public_identity, 0, assignment_type, s,
+			ccf1, ccf2, ecf1, ecf2, contact_header, ri);
+}
+
 ///**
 // *
 // */
@@ -93,7 +105,7 @@ int bind_registrar(registrar_api_t *api)
 	//	api->save   = regapi_save;
 	//	api->lookup = regapi_lookup;
 	//	api->registered = regapi_registered;
-	api->update_contacts = update_contacts;
+	api->update_contacts = regapi_update_contacts;
 	api->parse_user_data = parse_user_data;
 	return 0;
 }

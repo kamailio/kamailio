@@ -102,6 +102,10 @@ void free_saved_transaction_data(saved_transaction_t *data)
 		shm_free(data->public_identity.s);
 		data->public_identity.len = 0;
 	}
+	if(data->private_identity.s) {
+		shm_free(data->private_identity.s);
+		data->private_identity.len = 0;
+	}
 	free_contact_buf(data->contact_header);
 	shm_free(data);
 }
@@ -117,7 +121,7 @@ void async_cdp_callback(
 
 	str xml_data = {0, 0}, ccf1 = {0, 0}, ccf2 = {0, 0}, ecf1 = {0, 0},
 		ecf2 = {0, 0};
-	restoration_info_t ri = {{0, 0}, {0, 0}, {0, 0}};
+	restoration_info_t ri = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
 	ims_subscription *s = 0;
 	rerrno = R_FINE;
 
@@ -215,7 +219,7 @@ void async_cdp_callback(
 		 * looking in a REGISTER's SAA. */
 		if(data->script_assignment)
 			cxdx_get_scscf_restoration_info(
-					saa, &ri.path, &ri.contact, &ri.callid);
+					saa, &ri.impi, &ri.path, &ri.contact, &ri.callid);
 
 		if(!rc && !experimental_rc) {
 			LM_ERR("bad SAA result code\n");
@@ -291,8 +295,8 @@ void async_cdp_callback(
 
 		//here we update the contacts and also build the new contact header for the 200 OK reply
 		if(update_contacts(req, data->domain, &data->public_identity,
-				   data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2,
-				   &data->contact_header, &ri)
+				   &data->private_identity, data->sar_assignment_type, &s,
+				   &ccf1, &ccf2, &ecf1, &ecf2, &data->contact_header, &ri)
 				<= 0) {
 			LM_ERR("Error processing REGISTER\n");
 			rerrno = R_SAR_FAILED;
