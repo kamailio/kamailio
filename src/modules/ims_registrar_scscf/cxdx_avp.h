@@ -203,9 +203,11 @@ int cxdx_add_scscf_restoration_info(
 
 /**
  * Returns the Path/Contact/Call-ID of the first Restoration-Info in the first
- * SCSCF-Restoration-Info AVP, if any. A Restoration-Info missing its Contact
- * or its Path counts as absent.
+ * SCSCF-Restoration-Info AVP, if any, and that AVP's User-Name. A
+ * Restoration-Info missing its Contact or its Path counts as absent.
  * @param msg - the Diameter message
+ * @param user_name - filled with the IMPI that registered the Contact, or
+ * {0,0} if absent
  * @param path - filled with the Path, or {0,0} if absent
  * @param contact - filled with the Contact, or {0,0} if absent
  * @param call_id - filled with the Call-ID, or {0,0} if absent (optional in
@@ -213,7 +215,7 @@ int cxdx_add_scscf_restoration_info(
  * @returns 1 if a usable Restoration-Info was present, 0 otherwise
  */
 int cxdx_get_scscf_restoration_info(
-		AAAMessage *msg, str *path, str *contact, str *call_id);
+		AAAMessage *msg, str *user_name, str *path, str *contact, str *call_id);
 
 /**
  * Creates and adds a Supported-Features AVP for Feature-List-ID 1, the Cx

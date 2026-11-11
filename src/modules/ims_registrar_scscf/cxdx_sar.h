@@ -65,6 +65,7 @@ typedef struct saved_transaction
 	int sar_assignment_type;
 	int script_assignment; //sent by assign_server() for a request other than REGISTER: nothing to reply to, no Contacts to store
 	str public_identity;
+	str private_identity; //IMPI of the REGISTER, stored with its contacts
 	udomain_t *domain;
 	contact_for_header_t *
 			contact_header; //used to send the 200 OK with contacts after async callback for dereg where we don't rebuild the contacts

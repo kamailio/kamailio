@@ -1945,8 +1945,12 @@ static void process_xml_for_explit_dereg_contact(
 	LM_DBG("Processing XML for explicit dereg contact address: <%.*s>\n",
 			explit_dereg_contact.len, explit_dereg_contact.s);
 
+	/* An explicit de-registration contact was removed - by the UE's
+	 * de-REGISTER, by the network (reg_rpc_dereg_impu()), or replaced by a
+	 * later registration - it did not run out: "unregistered" (RFC 3680),
+	 * one of the values TS 24.229 5.4.2.1.2 allows for a removed binding */
 	reginfo_printf(buf, contact_s_q.s, (void *)1, r_terminated.len,
-			r_terminated.s, r_expired.len, r_expired.s, 0, 0.0);
+			r_terminated.s, r_unregistered.len, r_unregistered.s, 0, 0.0);
 	reginfo_append(buf, &uri_s);
 
 	reginfo_append(buf, &explit_dereg_contact);
@@ -2038,6 +2042,27 @@ static void process_xml_for_contact(str *buf, ucontact_t *ptr)
  * @returns the str with the XML content
  * if it is a new subscription we do things like subscribe to updates on IMPU, etc
  */
+/*!
+ * Whether r holds a valid binding with contact address uri. Called with the
+ * domain locked for r.
+ */
+static int impu_has_valid_contact(impurecord_t *r, str *uri)
+{
+	impu_contact_t *impucontact;
+	ucontact_t *c;
+	int found = 0;
+
+	for(impucontact = r->linked_contacts.head; impucontact && !found;
+			impucontact = impucontact->next) {
+		c = impucontact->contact;
+		ul.lock_contact_slot_i(c->sl);
+		found = VALID_CONTACT(c, act_time) && c->c.len == uri->len
+				&& memcmp(c->c.s, uri->s, uri->len) == 0;
+		ul.unlock_contact_slot_i(c->sl);
+	}
+	return found;
+}
+
 str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 		str *explit_dereg_contact, str *watcher_contact,
 		int num_explit_dereg_contact, unsigned int reginfo_version)
@@ -2154,6 +2179,11 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 			LM_DBG("Scrolling through list of provided "
 				   "num_explit_dereg_contact: [%.*s]\n",
 					explit_dereg_contact[k].len, explit_dereg_contact[k].s);
+			/* a binding replaced by a registration is only unlinked from the
+			 * IMPUs that registration covers: one still bound to this IMPU is
+			 * listed below with its own state */
+			if(impu_has_valid_contact(r, &explit_dereg_contact[k]))
+				continue;
 			process_xml_for_explit_dereg_contact(&buf, explit_dereg_contact[k]);
 		}
 
