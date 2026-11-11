@@ -7,10 +7,11 @@ CREATE TABLE `contact` (
     `user_agent` VARCHAR(255) DEFAULT NULL,
     `expires` DATETIME DEFAULT NULL,
     `callid` VARCHAR(255) DEFAULT NULL,
+    `private_identity` VARCHAR(255) DEFAULT NULL,
     CONSTRAINT contact UNIQUE (`contact`)
 );
 
-INSERT INTO version (table_name, table_version) values ('contact','6');
+INSERT INTO version (table_name, table_version) values ('contact','7');
 
 CREATE TABLE `impu` (
     `id` INT(10) AUTO_INCREMENT PRIMARY KEY NOT NULL,

@@ -10,6 +10,7 @@
 		<column><field>user_agent</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_DATETIME</type></column>
 		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>private_identity</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of impu table-->
 	<db_table id="impu">
