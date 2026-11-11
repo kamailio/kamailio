@@ -1089,26 +1089,34 @@ static void tcp_reactor_connect_req_free(tcp_reactor_connect_req_t *creq)
 	shm_free(creq);
 }
 
-/* mode 2 [worker]: wait for tcp main's CONN_CONNECT_DONE that carries token;
- * a reply left over from an earlier timed out wait carries an older token
- * and is skipped.
+/* mode 2 [worker]: wait for tcp main's CONN_CONNECT_DONE that carries token.
+ *  - a reply left over from an earlier timed out wait carries an older token
+ *    and is skipped
+ *  - one deadline covers the whole wait: skipped replies and EINTR poll for
+ *    the time left
  * Returns -1 when the connect failed at once, else 0 (also when no reply
  * arrives within TCP_REACTOR_CONNECT_WAIT_MS: the request stays queued) */
 #define TCP_REACTOR_CONNECT_WAIT_MS 2000
 static int tcp_reactor_connect_wait(long token)
 {
 	struct pollfd pfd;
+	ticks_t end, now;
 	long resp[2];
 	int fd_unused = -1;
 	int n;
 
+	end = get_ticks_raw() + MS_TO_TICKS(TCP_REACTOR_CONNECT_WAIT_MS);
 	for(;;) {
-		pfd.fd = unix_tcp_sock;
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-		n = poll(&pfd, 1, TCP_REACTOR_CONNECT_WAIT_MS);
-		if(n < 0 && errno == EINTR)
-			continue;
+		now = get_ticks_raw();
+		n = 0;
+		if(TICKS_LT(now, end)) {
+			pfd.fd = unix_tcp_sock;
+			pfd.events = POLLIN;
+			pfd.revents = 0;
+			n = poll(&pfd, 1, TICKS_TO_MS(end - now));
+			if(n < 0 && errno == EINTR)
+				continue;
+		}
 		if(n <= 0) {
 			LM_WARN("no connect result from tcp main within %d ms\n",
 					TCP_REACTOR_CONNECT_WAIT_MS);
