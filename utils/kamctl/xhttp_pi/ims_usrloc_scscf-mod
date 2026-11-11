@@ -12,6 +12,7 @@
 				<col><field>user_agent</field></col>
 				<col><field>expires</field></col>
 				<col><field>callid</field></col>
+				<col><field>private_identity</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -25,6 +26,7 @@
 				<col><field>user_agent</field></col>
 				<col><field>expires</field></col>
 				<col><field>callid</field></col>
+				<col><field>private_identity</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -41,6 +43,7 @@
 				<col><field>user_agent</field></col>
 				<col><field>expires</field></col>
 				<col><field>callid</field></col>
+				<col><field>private_identity</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

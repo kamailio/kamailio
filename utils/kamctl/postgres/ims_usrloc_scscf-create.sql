@@ -7,10 +7,11 @@ CREATE TABLE contact (
     user_agent VARCHAR(255) DEFAULT NULL,
     expires TIMESTAMP WITHOUT TIME ZONE DEFAULT NULL,
     callid VARCHAR(255) DEFAULT NULL,
+    private_identity VARCHAR(255) DEFAULT NULL,
     CONSTRAINT contact_contact UNIQUE (contact)
 );
 
-INSERT INTO version (table_name, table_version) values ('contact','6');
+INSERT INTO version (table_name, table_version) values ('contact','7');
 
 CREATE TABLE impu (
     id SERIAL PRIMARY KEY NOT NULL,

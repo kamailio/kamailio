@@ -8,7 +8,7 @@ id(int,auto) table_name(string) table_version(int)
 0:carrier_name:1
 0:carrierfailureroute:2
 0:carrierroute:3
-0:contact:6
+0:contact:7
 0:cpl:1
 0:dbaliases:1
 0:dialog:7
