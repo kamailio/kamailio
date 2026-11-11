@@ -42,8 +42,9 @@
 #include "mem/mem.h"
 #include "globals.h"
 
-/* global buffer for ut.h int2str() */
-char ut_buf_int2str[INT2STR_MAX_LEN];
+/* buffer for ut.h int2str() and sint2str(); per thread: mode 2 pool threads
+ * convert concurrently */
+_Thread_local char ut_buf_int2str[INT2STR_MAX_LEN];
 
 
 /* converts a username into uid:gid,

@@ -268,7 +268,8 @@ int ip_addr2sbufz(struct ip_addr *ip, char *buff, int len)
  */
 char *ip_addr2a(struct ip_addr *ip)
 {
-	static char buff[IP_ADDR_MAX_STR_SIZE];
+	/* per thread: mode 2 pool threads convert concurrently */
+	static _Thread_local char buff[IP_ADDR_MAX_STR_SIZE];
 	int len;
 
 	len = ip_addr2sbuf(ip, buff, sizeof(buff) - 1);
@@ -282,7 +283,7 @@ char *ip_addr2a(struct ip_addr *ip)
 char *ip_addr2strz(struct ip_addr *ip)
 {
 
-	static char buff[IP_ADDR_MAX_STRZ_SIZE];
+	static _Thread_local char buff[IP_ADDR_MAX_STRZ_SIZE];
 	char *p;
 	int len;
 
@@ -301,8 +302,9 @@ char *ip_addr2strz(struct ip_addr *ip)
 }
 
 #define IP_ADDR_BUF_NR 8
-static char _ksr_addr2x_buff[IP_ADDR_BUF_NR][IP_ADDR_MAX_STRZ_SIZE];
-static int _ksr_addr2x_idx = 0;
+static _Thread_local char _ksr_addr2x_buff[IP_ADDR_BUF_NR]
+										  [IP_ADDR_MAX_STRZ_SIZE];
+static _Thread_local int _ksr_addr2x_idx = 0;
 
 /* fast ip_addr -> string converter;
  * it uses an internal buffer
@@ -352,8 +354,8 @@ char *ip_addr2xstrz(struct ip_addr *ip)
  */
 char *su2a(union sockaddr_union *su, int su_len)
 {
-	static char bufs[2][SU2A_MAX_STR_SIZE];
-	static int buf_idx = 0;
+	static _Thread_local char bufs[2][SU2A_MAX_STR_SIZE];
+	static _Thread_local int buf_idx = 0;
 	char *buf;
 	int offs;
 
@@ -389,7 +391,7 @@ char *su2a(union sockaddr_union *su, int su_len)
  */
 char *suip2a(union sockaddr_union *su, int su_len)
 {
-	static char buf[SUIP2A_MAX_STR_SIZE];
+	static _Thread_local char buf[SUIP2A_MAX_STR_SIZE];
 	int offs;
 
 	if(unlikely(su->s.sa_family == AF_INET6)) {

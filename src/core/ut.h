@@ -247,7 +247,7 @@ static inline int btostr(char *p, unsigned char val)
 static inline char *int2str_base_0pad(
 		unsigned int l, int *len, int base, int size)
 {
-	static char r[INT2STR_MAX_LEN];
+	static _Thread_local char r[INT2STR_MAX_LEN];
 	int i, j;
 
 	if(base < 2) {
@@ -321,7 +321,7 @@ static inline char *int2strbuf(unsigned long l, char *r, int r_size, int *len)
 	return &r[i + 1];
 }
 
-extern char ut_buf_int2str[INT2STR_MAX_LEN];
+extern _Thread_local char ut_buf_int2str[INT2STR_MAX_LEN];
 /** integer(long) to string conversion.
  * This version uses a static buffer (shared with sint2str()).
  * WARNING: other function calls might overwrite the static buffer, so
