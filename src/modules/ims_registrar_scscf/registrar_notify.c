@@ -1945,8 +1945,8 @@ static void process_xml_for_explit_dereg_contact(
 	LM_DBG("Processing XML for explicit dereg contact address: <%.*s>\n",
 			explit_dereg_contact.len, explit_dereg_contact.s);
 
-	reginfo_printf(buf, contact_s_q.s, (void *)1, r_terminated.len,
-			r_terminated.s, r_expired.len, r_expired.s, 0, 0.0);
+	reginfo_printf(buf, contact_s.s, (void *)1, r_terminated.len,
+			r_terminated.s, r_expired.len, r_expired.s, 0);
 	reginfo_append(buf, &uri_s);
 
 	reginfo_append(buf, &explit_dereg_contact);
