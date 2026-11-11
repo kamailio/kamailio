@@ -118,8 +118,11 @@ extern sr_shm_api_t _shm_root;
 		}                                                      \
 	} while(0)
 
-void *shm_core_get_pool(void);
-int shm_init_api(sr_shm_api_t *ap);
+void *shm_core_get_pool(unsigned int idx);
+unsigned long shm_core_get_pool_size(unsigned int idx);
+unsigned int shm_core_get_pool_count(void);
+int shm_core_get_pool_index(void *p);
+int shm_init_api(sr_shm_api_t *ap, unsigned int count);
 int shm_init_manager(char *name);
 void shm_destroy_manager(void);
 void shm_print_manager(void);
