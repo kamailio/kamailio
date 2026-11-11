@@ -903,6 +903,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	if(dlg) {
 		if(detect_spirals) {
 			if(spiral_detected == 1) {
+				dlg_release(dlg);
 				dlg_hash_release(&callid);
 				return 0;
 			}
@@ -923,8 +924,8 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 				dlg_hash_release(&callid);
 				return 0;
 			}
-			dlg_release(dlg);
 		}
+		dlg_release(dlg);
 	}
 	spiral_detected = 0;
 
