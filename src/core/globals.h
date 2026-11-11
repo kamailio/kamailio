@@ -165,6 +165,7 @@ extern int cfg_warnings;
 extern unsigned int msg_no;
 
 extern unsigned long shm_mem_size;
+extern unsigned int shm_mem_blocks;
 extern unsigned long pkg_mem_size;
 
 /* AVP configuration */
