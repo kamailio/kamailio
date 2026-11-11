@@ -351,6 +351,7 @@ static inline char *int2str(unsigned long l, int *len)
  */
 static inline char *sint2strbuf(long l, char *r, int r_size, int *len)
 {
+	unsigned long magnitude;
 	int sign;
 	char *p;
 	int p_len;
@@ -358,13 +359,19 @@ static inline char *sint2strbuf(long l, char *r, int r_size, int *len)
 	sign = 0;
 	if(l < 0) {
 		sign = 1;
-		l = -l;
+		magnitude = 0UL - (unsigned long)l;
+	} else {
+		magnitude = (unsigned long)l;
 	}
-	p = int2strbuf((unsigned long)l, r, r_size, &p_len);
-	if(sign && p_len < (r_size - 1)) {
+	p = int2strbuf(magnitude, r, r_size, &p_len);
+	if(unlikely(p == 0)) {
+		if(len)
+			*len = 0;
+		return 0;
+	}
+	if(sign) {
 		*(--p) = '-';
 		p_len++;
-		;
 	}
 	if(likely(len))
 		*len = p_len;
