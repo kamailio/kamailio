@@ -228,6 +228,7 @@ Options:\n\
     --log-engine=log engine name and data\n\
     -L path      Modules search path (default: " MODS_DIR ")\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
+    -z nr        Number of shared memory blocks (default: 1)\n\
     --modparam=modname:paramname:type:value set the module parameter\n\
                   type has to be 's' for string value and 'i' for int value, \n\
                   example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
@@ -539,6 +540,8 @@ int ksr_no_stdprint_logs = 0;
 
 /* shared memory (in MB) */
 unsigned long shm_mem_size = 0;
+/* number of shared memory blocks */
+unsigned int shm_mem_blocks = 1;
 /* private (pkg) memory (in MB) */
 unsigned long pkg_mem_size = 0;
 
@@ -2297,7 +2300,7 @@ int main(int argc, char **argv)
 	log_init();
 
 	/* command line options */
-	options = ":f:cm:M:dVIhEeb:B:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
+	options = ":f:cm:M:dVIhEeb:B:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:z:";
 	/* Handle special command line arguments, that must be treated before
 	 * initializing the various subsystem or before parsing other arguments:
 	 *  - get the startup debug and log_stderr values
@@ -2487,6 +2490,21 @@ int main(int argc, char **argv)
 				}
 				shm_mem_size = 1024UL * 1024 * l1;
 				LM_INFO("shared memory: %ld bytes\n", shm_mem_size);
+				break;
+			case 'z':
+				if(optarg == NULL) {
+					fprintf(stderr, "bad shared memory block count\n");
+					goto error;
+				}
+				l1 = strtol(optarg, &tmp, 10);
+				if((tmp == optarg) || (tmp && *tmp) || l1 < 1
+						|| (unsigned long)l1 > UINT_MAX) {
+					fprintf(stderr,
+							"invalid shared memory block count: -z %s\n",
+							optarg);
+					goto error;
+				}
+				shm_mem_blocks = (unsigned int)l1;
 				break;
 			case 'd':
 				/* ignore it, was parsed immediately after startup */
@@ -2816,6 +2834,7 @@ int main(int argc, char **argv)
 			case 'f':
 			case 'c':
 			case 'm':
+			case 'z':
 			case 'M':
 			case 'd':
 			case 'v':
