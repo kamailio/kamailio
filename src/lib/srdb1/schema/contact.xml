@@ -9,7 +9,7 @@
 
 <table id="contact" xmlns:db="http://docbook.org/ns/docbook">
     <name>contact</name>
-    <version>6</version>
+    <version>7</version>
     <type db="db_mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for storage engine for SCSCF contacts. More information at:
@@ -90,6 +90,15 @@
       <null/>
       <default><null/></default>
       <description>Call-ID</description>
+    </column>
+
+    <column id="private_identity">
+      <name>private_identity</name>
+      <type>string</type>
+      <size>&uri_len;</size>
+      <null/>
+      <default><null/></default>
+      <description>Private user identity (IMPI) that registered the contact</description>
     </column>
 
     <index>
