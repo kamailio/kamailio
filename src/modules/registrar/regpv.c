@@ -863,7 +863,7 @@ static void reg_ul_run_contact_event(
 
 	if(rtidx >= 0) {
 		run_top_route(event_rt.rlist[rtidx], emsg, 0);
-	} else if(cbname != NULL && evname != NULL) {
+	} else if(cbname != NULL && cbname->len > 0 && evname != NULL) {
 		keng = sr_kemi_eng_get();
 		if(keng != NULL) {
 			if(sr_kemi_route(keng, emsg, EVENT_ROUTE, cbname, evname) < 0) {
@@ -905,11 +905,16 @@ void reg_ul_saved_contact(ucontact_t *ptr, int type, void *param)
 {
 	str profile = str_init("saved");
 	int rtidx;
+	str evname_in = str_init("usrloc:contact-inserted");
+	str evname_up = str_init("usrloc:contact-updated");
+	str *evname = NULL;
 
 	if(type & UL_CONTACT_INSERT) {
 		rtidx = reg_insert_event_rt;
+		evname = &evname_in;
 	} else if(type & UL_CONTACT_UPDATE) {
 		rtidx = reg_update_event_rt;
+		evname = &evname_up;
 	} else {
 		return;
 	}
@@ -917,7 +922,7 @@ void reg_ul_saved_contact(ucontact_t *ptr, int type, void *param)
 	if(rtidx < 0)
 		return;
 
-	reg_ul_run_contact_event(ptr, &profile, rtidx, NULL, NULL);
+	reg_ul_run_contact_event(ptr, &profile, rtidx, &reg_event_callback, evname);
 }
 
 int ki_lookup_xavp(
