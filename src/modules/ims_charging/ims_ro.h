@@ -39,4 +39,6 @@ void init_app_provided_party(pv_spec_t *app_provided_party_avp_p);
 AAAMessage *ro_process_rar(AAAMessage *rtr);
 AAAMessage *ro_process_asr(AAAMessage *rtr);
 
+int ro_kill_call(struct ro_session *ro_session, str *hdrs);
+
 #endif /* CLIENT_RF_IMS_RO_H */
