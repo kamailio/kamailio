@@ -41,11 +41,11 @@ Frederic Gaisnon
               3.8. event_callback (str)
               3.9. event_mode (int)
               3.10. contact_host (str)
-              3.11. contact_mode (int)
-              3.12. cparam_name (int)
+              3.11. key_location (int)
+              3.12. cparam_name (str)
               3.13. xavu_cfg (str)
-              3.14. xavu_field_a_contact (str)
-              3.15. xavu_field_b_contact (str)
+              3.14. xavu_field_a_contact_user (str)
+              3.15. xavu_field_b_contact_user (str)
               3.16. xavu_field_a_contact_host (str)
               3.17. xavu_field_b_contact_host (str)
               3.18. xavu_field_contact_host (str)
@@ -70,6 +70,10 @@ Frederic Gaisnon
               5.3. event_route[topos:msg-incoming]
               5.4. event_route[topos:msg-receiving]
 
+   List of Tables
+
+   1.1. Migration of contact modes and key location
+
    List of Examples
 
    1.1. Set storage parameter
@@ -82,11 +86,11 @@ Frederic Gaisnon
    1.8. Set event_callback parameter
    1.9. Set event_mode parameter
    1.10. Set contact_host parameter
-   1.11. Set contact_mode parameter
+   1.11. Set key_location parameter
    1.12. Set cparam_name parameter
    1.13. Set xavu_cfg parameter
-   1.14. Set xavu_field_a_contact parameter
-   1.15. Set xavu_field_b_contact parameter
+   1.14. Set xavu_field_a_contact_user parameter
+   1.15. Set xavu_field_b_contact_user parameter
    1.16. Set xavu_field_a_contact_host parameter
    1.17. Set xavu_field_b_contact_host parameter
    1.18. Set xavu_field_contact_host parameter
@@ -127,11 +131,11 @@ Chapter 1. Admin Guide
         3.8. event_callback (str)
         3.9. event_mode (int)
         3.10. contact_host (str)
-        3.11. contact_mode (int)
-        3.12. cparam_name (int)
+        3.11. key_location (int)
+        3.12. cparam_name (str)
         3.13. xavu_cfg (str)
-        3.14. xavu_field_a_contact (str)
-        3.15. xavu_field_b_contact (str)
+        3.14. xavu_field_a_contact_user (str)
+        3.15. xavu_field_b_contact_user (str)
         3.16. xavu_field_a_contact_host (str)
         3.17. xavu_field_b_contact_host (str)
         3.18. xavu_field_contact_host (str)
@@ -214,11 +218,11 @@ Chapter 1. Admin Guide
    3.8. event_callback (str)
    3.9. event_mode (int)
    3.10. contact_host (str)
-   3.11. contact_mode (int)
-   3.12. cparam_name (int)
+   3.11. key_location (int)
+   3.12. cparam_name (str)
    3.13. xavu_cfg (str)
-   3.14. xavu_field_a_contact (str)
-   3.15. xavu_field_b_contact (str)
+   3.14. xavu_field_a_contact_user (str)
+   3.15. xavu_field_b_contact_user (str)
    3.16. xavu_field_a_contact_host (str)
    3.17. xavu_field_b_contact_host (str)
    3.18. xavu_field_contact_host (str)
@@ -376,11 +380,12 @@ modparam("topos", "event_mode", 2)
 3.10. contact_host (str)
 
    You may need to control the host part of the Contact header added by
-   topos. If the xavu_field_contact_host parameter is set, this value is
-   ignored. For example when using TLS with TOPOS the remote UAS must be
-   able to open a new TLS socket to the contact header. In this case, the
-   contact header must contain a domain name with a trusted CA signed
-   certitificate.
+   topos. A non-empty per-side or shared host XAVU takes precedence.
+   Accepts host[:port][;transport=protocol]. Omitted port and transport
+   inherit the original URI values; For IPv6, use hosts in brackets. For
+   example when using TLS with TOPOS the remote UAS must be able to open a
+   new TLS socket to the contact header. In this case, the contact header
+   must contain a domain name with a trusted CA signed certitificate.
 
    Default value is taken from the Record-Route URI.
 
@@ -389,50 +394,52 @@ modparam("topos", "event_mode", 2)
 modparam("topos", "contact_host", "proxy.domain.com")
 ...
 
-3.11. contact_mode (int)
+3.11. key_location (int)
 
-   Control the mode where the key to lookup the message data from the
-   database or redis server is stored. The default is to use the Contact
-   user (0), alternatively a Contact URI parameter can be used (1) with
-   values from the SIP message, or from AVP variables (2). Contact mode
-   (3) is similar to mode 2, but for the case when we want to alter the
-   domain part. Contact mode (4) is similar to mode 3, but expects only
-   host FQDN part and adds the port and transport by itself. This can be
-   useful for interoperating which gateways that need a certain user part
-   in the Contact URI.
+   Controls where the topology lookup key is stored in the generated
+   Contact URI: 0 uses the user part, 1 uses the URI parameter named by
+   cparam_name (default “tps”). For example,
+   <sip:atpsh-KEY@proxy.example.org> with value 0, or
+   <sip:alice@proxy.example.org;tps=atpsh-KEY> with value 1. Other values
+   are rejected during module initialization.
 
-   In mode (1) the a-side contact user is taken from the request URI and
-   the b-side contact user from the Contact header of the processed
-   initial SIP request.
+   With value 1, the default A-side contact user comes from the initial
+   Request-URI and the B-side user from the initial request Contact URI.
+   The host, port and transport default to the Record-Route-derived URI,
+   as with value 0. Host overrides work with either value. A always means
+   as_contact (upstream, key prefix a); B always means bs_contact
+   (downstream, key prefix b), for both user and host overrides.
 
-   If you use the mode (2), you need to configure the xavu_field_a_contact
-   and xavu_field_b_contact parameter. Furthermore you need to assign
-   values to them during the processing of the initial SIP request. In
-   this mode, xavu_field_a_contact is used for the downstream direction
-   and xavu_field_b_contact for the upstream direction.
+   Table 1.1. Migration of contact modes and key location
+   Migration of contact modes and key location
+   contact_mode key_location                       Notes
+   0            0            Use User part for key (default)
+   1            1            Use URI parameter for key
+   2            1            Use URI parameter for key
+   3            0            Use host overrides (port and transport inherited)
+   4            0            Use host overrides (port and transport inherited)
 
-   If you use the mode (3) or (4), you need to configure the
-   xavu_field_a_contact_host and xavu_field_b_contact_host parameter.
-   Furthermore you need to assign values to them during the processing of
-   the initial SIP request. Modes 2 and 3 cannot be used at the same time.
+   Old mode 0 becomes key_location=0; modes 1 and 2 become key_location=1.
+   Rename xavu_field_a_contact and xavu_field_b_contact to
+   xavu_field_a_contact_user and xavu_field_b_contact_user. Their side
+   selection now follows A/upstream and B/downstream; adjust field values
+   accordingly. Old modes 3 and 4 become key_location=0 with host
+   overrides. Unlike old mode 3, omitted port and transport now inherit
+   the original values from the SIP messages.
 
-   The name of the Contact URI parameter can be customized with the
-   cparam_name parameter.
+   Default value is 0.
 
-   Default value is 0 - use the Contact user
-
-   Example 1.11. Set contact_mode parameter
+   Example 1.11. Set key_location parameter
 ...
-modparam("topos", "contact_mode", 1)
+modparam("topos", "key_location", 1)
 ...
 
-3.12. cparam_name (int)
+3.12. cparam_name (str)
 
    Name of the Contact URI parameter to store the database or redis server
    key for message lookup.
 
-   This parameter is only used when the contact_mode parameter is set to 1
-   or 2.
+   This parameter is only used when key_location is set to 1.
 
    Default value is “tps”.
 
@@ -454,91 +461,114 @@ modparam("topos", "cparam_name", "xyz")
    Example 1.13. Set xavu_cfg parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_field_a_contact", "a_contact")
+modparam("topos", "key_location", 1)
+modparam("topos", "xavu_field_a_contact_user", "a_contact_user")
 ...
-    $xavu(_tps_=>a_contact) = "...";
+    $xavu(_tps_=>a_contact_user) = "...";
 ...
 
-3.14. xavu_field_a_contact (str)
+3.14. xavu_field_a_contact_user (str)
 
-   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
-   for the Contact Header user part in the downstream direction. This
-   parameter is only necessary in contact_mode (2).
+   Name of the field inside the root XAVU specified by xavu_cfg used to
+   override the A-side Contact URI user (upstream). Each side is
+   independently optional. Unconfigured, missing, null or empty values use
+   the default. The default user comes from the initial Request-URI.
+   Requires key_location=1; The value must contain only a URI user part;
+   malformed non-empty values cause contact construction to fail.
 
-   Default value is “NULL” (disabled).
+   Default value is NULL (disabled).
 
-   Example 1.14. Set xavu_field_a_contact parameter
+   Example 1.14. Set xavu_field_a_contact_user parameter
 ...
+modparam("topos", "key_location", 1)
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_field_a_contact", "a_contact")
+modparam("topos", "xavu_field_a_contact_user", "a_contact_user")
 ...
-    $xavu(_tps_=>a_contact) = "...";
+    $xavu(_tps_=>a_contact_user) = "alice";
 ...
 
-3.15. xavu_field_b_contact (str)
+3.15. xavu_field_b_contact_user (str)
 
-   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
-   for the Contact Header user part in the upstream direction. This
-   parameter is only necessary in contact_mode (2).
+   Name of the field inside the root XAVU specified by xavu_cfg used to
+   override the B-side Contact URI user (downstream). Each side is
+   independently optional. Unconfigured, missing, null or empty values use
+   the default. The default user comes from the initial request Contact
+   URI. Requires key_location=1; The value must contain only a URI user
+   part; malformed non-empty values cause contact construction to fail.
 
-   Default value is “NULL” (disabled).
+   Default value is NULL (disabled).
 
-   Example 1.15. Set xavu_field_b_contact parameter
+   Example 1.15. Set xavu_field_b_contact_user parameter
 ...
+modparam("topos", "key_location", 1)
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_field_b_contact", "b_contact")
+modparam("topos", "xavu_field_b_contact_user", "b_contact_user")
 ...
-    $xavu(_tps_=>b_contact) = "...";
-
+    $xavu(_tps_=>b_contact_user) = "alice";
 ...
 
 3.16. xavu_field_a_contact_host (str)
 
-   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
-   for the Contact Header host part in the upstream direction. This
-   parameter is only necessary in contact_mode (3).
+   Name of the field inside the root XAVU specified by xavu_cfg used to
+   override the A-side Contact URI host (upstream). Each side is
+   independently optional. Unconfigured, missing, null or empty values use
+   the default. Works with either key_location. Accepted syntax is
+   host[:port][;transport=protocol], without a scheme or user part. IPv6
+   hosts must be in brackets. A supplied port or transport replaces the
+   original component; omitted components inherit the original
+   Record-Route-derived URI values. The SIP/SIPS scheme is preserved.
+   Malformed non-empty values cause contact construction to fail. Host
+   fallback order is the per-side XAVU, the shared xavu_field_contact_host
+   XAVU, static contact_host module paramater, then the original URI.
 
-   Default value is “NULL” (disabled).
+   Default value is NULL (disabled).
 
    Example 1.16. Set xavu_field_a_contact_host parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "contact_mode", 3)
 modparam("topos", "xavu_field_a_contact_host", "a_contact_host")
-modparam("topos", "xavu_field_b_contact_host", "b_contact_host")
 ...
-    $xavu(_tps_=>a_contact_host) = "upstream.example.com";
-    $xavu(_tps_=>b_contact_host) = "downstream.example.com";
+    $xavu(_tps_=>a_contact_host) = "upstream.example.org:5080;transport=tcp";
+    # Or inherit both port and transport:
 ...
 
 3.17. xavu_field_b_contact_host (str)
 
-   Name of the field inside root XAVU specified by `xavu_cfg` to evaluate
-   for the Contact Header host part in the downstream direction. This
-   parameter is only necessary in contact_mode (3).
+   Name of the field inside the root XAVU specified by xavu_cfg used to
+   override the B-side Contact URI host (downstream). Each side is
+   independently optional. Unconfigured, missing, null or empty values use
+   the default. Works with either key_location. Accepted syntax is
+   host[:port][;transport=protocol], without a scheme or user part. IPv6
+   hosts must be in brackets. A supplied port or transport replaces the
+   original component; omitted components inherit the original
+   Record-Route-derived URI values. The SIP/SIPS scheme is preserved.
+   Malformed non-empty values cause contact construction to fail. Host
+   fallback order is the per-side XAVU, the shared xavu_field_contact_host
+   XAVU, static contact_host module paramater, then the original URI.
 
-   Default value is “NULL” (disabled).
+   Default value is NULL (disabled).
 
    Example 1.17. Set xavu_field_b_contact_host parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "contact_mode", 3)
-modparam("topos", "xavu_field_a_contact_host", "a_contact_host")
 modparam("topos", "xavu_field_b_contact_host", "b_contact_host")
 ...
-    $xavu(_tps_=>a_contact_host) = "upstream.example.com";
-    $xavu(_tps_=>b_contact_host) = "downstream.example.com";
+    $xavu(_tps_=>b_contact_host) = "downstream.example.org:5080;transport=tcp";
+    # Or inherit both port and transport:
 ...
 
 3.18. xavu_field_contact_host (str)
 
    Control from where to take the host part of the Contact header added by
    topos. This parameter allows to take the value from an XAVU during
-   run-time, it specifies the field inside XAVU "xavu_cfg". If this
-   parameter is set, the contact_host parameter is ignored. For example
-   when using TLS with TOPOS the remote UAS must be able to open a new TLS
-   socket to the contact header. In this case, the contact header must
-   contain a domain name with a trusted CA signed certitificate.
+   run-time, it specifies the field inside XAVU "xavu_cfg". A non-empty
+   per-side host XAVU takes precedence over this shared value. Missing,
+   null or empty values fall back to contact_host, then the original URI.
+   Accepts host[:port][;transport=protocol], with omitted port and
+   transport inherited from the original URI. For example when using TLS
+   with TOPOS the remote UAS must be able to open a new TLS socket to the
+   contact header. In this case, the contact header must contain a domain
+   name with a trusted CA signed certitificate.
 
    Default value is empty, not set.
 

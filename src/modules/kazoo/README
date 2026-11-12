@@ -724,7 +724,8 @@ event_route[kazoo:consumer-event]
      * type : str, required
      * queue : str, required
      * routing : str, required
-     * auto_delete : int, default 1
+     * exclusive : int, default 1
+     * auto_delete : int, default 0
      * durable : int, default 0
      * no_ack : int, default 1
      * wait_for_consumer_ack : int, default 0
@@ -738,8 +739,8 @@ event_route[kazoo:consumer-event]
 event_route[kazoo:mod-init]
 {
     $var(payload) = "{ 'exchange' : 'dialoginfo' , 'type' : 'direct', 'queue' :
-'BLF-QUEUE-MY_HOSTNAME', 'routing' : 'BLF-MY_HOSTNAME', 'auto_delete' : 0, 'dura
-ble' : 1, 'no_ack' : 0, 'wait_for_consumer_ack' : 1 }";
+'BLF-QUEUE-MY_HOSTNAME', 'routing' : 'BLF-MY_HOSTNAME', 'exclusive' : 0, 'durabl
+e' : 1, 'no_ack' : 0, 'wait_for_consumer_ack' : 1 }";
     kazoo_subscribe("$var(payload)");
 }
 

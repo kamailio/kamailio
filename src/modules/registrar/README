@@ -101,6 +101,8 @@ Bogdan-Andre Iancu
         5. Event Routes
 
               5.1. event_route[usrloc:contact-expired]
+              5.2. event_route[usrloc:contact-inserted]
+              5.3. event_route[usrloc:contact-updated]
 
         6. Statistics
 
@@ -165,7 +167,9 @@ Bogdan-Andre Iancu
    1.45. reg_send_reply usage
    1.46. reg_from_user usage
    1.47. event_route[usrloc:contact-expired] usage
-   1.48. $ulc(name) usage
+   1.48. event_route[usrloc:contact-inserted] usage
+   1.49. event_route[usrloc:contact-updated] usage
+   1.50. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -237,6 +241,8 @@ Chapter 1. Admin Guide
    5. Event Routes
 
         5.1. event_route[usrloc:contact-expired]
+        5.2. event_route[usrloc:contact-inserted]
+        5.3. event_route[usrloc:contact-updated]
 
    6. Statistics
 
@@ -1332,6 +1338,8 @@ if(reg_from_user("location", "sip:alice@server.com", "0")) {
 5. Event Routes
 
    5.1. event_route[usrloc:contact-expired]
+   5.2. event_route[usrloc:contact-inserted]
+   5.3. event_route[usrloc:contact-updated]
 
 5.1. event_route[usrloc:contact-expired]
 
@@ -1342,6 +1350,46 @@ if(reg_from_user("location", "sip:alice@server.com", "0")) {
 ...
 event_route[usrloc:contact-expired] {
     xlog("expired contact for $ulc(exp=>aor)\n");
+}
+...
+
+5.2. event_route[usrloc:contact-inserted]
+
+   Executed when a new contact has been inserted in the location table,
+   typically on the initial REGISTER of a device. The variable
+   $ulc(saved=>...) is filled with the attributes of the new contact.
+
+   The event is triggered by the usrloc module for every inserted contact,
+   no matter if the insert is done by save(), by RPC commands (e.g.,
+   ul.add) or by replication (e.g., dmq_usrloc). When it is triggered by
+   save(), the event route is executed in the context of the SIP message
+   being processed, therefore its headers, pseudo-variables, AVPs and
+   XAVPs are available; otherwise a faked SIP message is used.
+
+   Note that the event route is executed while the location record is
+   locked: it must not call functions that access the same location table
+   (e.g., save(), lookup(), registered(), ...) and it should not send SIP
+   replies, those are handled by save().
+
+   Example 1.48. event_route[usrloc:contact-inserted] usage
+...
+event_route[usrloc:contact-inserted] {
+    xlog("new contact $ulc(saved=>addr) for $ulc(saved=>aor) from $si:$sp\n");
+}
+...
+
+5.3. event_route[usrloc:contact-updated]
+
+   Executed when an existing contact has been updated in the location
+   table, typically on a REGISTER refresh of a device. The variable
+   $ulc(saved=>...) is filled with the attributes of the updated contact.
+   The notes for event_route[usrloc:contact-inserted] apply here as well.
+
+   Example 1.49. event_route[usrloc:contact-updated] usage
+...
+event_route[usrloc:contact-updated] {
+    xlog("contact $ulc(saved=>addr) refreshed for $ulc(saved=>aor), expires at $
+ulc(saved=>expires)\n");
 }
 ...
 
@@ -1412,7 +1460,7 @@ event_route[usrloc:contact-expired] {
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.48. $ulc(name) usage
+   Example 1.50. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {

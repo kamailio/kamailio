@@ -241,7 +241,7 @@ Chapter 1. Admin Guide
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * libxml,
-     * openssl.
+     * openssl (1.1.1 or newer).
 
 4. Parameters
 
@@ -331,18 +331,12 @@ modparam("cdp", "enable_tls", 1)
 4.7. tls_method (string)
 
    Sets the TLS protocol method. Possible values are:
-     * TLSv1.3+ - TLSv1.3 or newer connections are accepted (available
-       starting with openssl/libssl v1.1.1)
-     * TLSv1.3 - only TLSv1.3 connections are accepted (available starting
-       with openssl/libssl v1.1.1)
+     * TLSv1.3+ - TLSv1.3 or newer connections are accepted
+     * TLSv1.3 - only TLSv1.3 connections are accepted
      * TLSv1.2+ - TLSv1.2 or newer (TLSv1.3, ...) connections are accepted
-       (available starting with openssl/libssl v1.1.1)
-     * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
-       with openssl/libssl v1.0.1e)
+     * TLSv1.2 - only TLSv1.2 connections are accepted
      * TLSv1.1+ - TLSv1.1 or newer (TLSv1.2, ...) connections are accepted
-       (available starting with openssl/libssl v1.0.1)
-     * TLSv1.1 - only TLSv1.1 connections are accepted (available starting
-       with openssl/libssl v1.0.1)
+     * TLSv1.1 - only TLSv1.1 connections are accepted
      * TLSv1+ - TLSv1.0 or newer (TLSv1.1, TLSv1.2, ...) connections are
        accepted.
      * TLSv1 - only TLSv1 (TLSv1.0) connections are accepted. This is the

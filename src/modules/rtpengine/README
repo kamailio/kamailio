@@ -165,27 +165,28 @@ Joey Golan
               6.6. rtpengine_destroy([flags][,via-branch])
               6.7. rtpengine_query([flags][,via-branch])
               6.8. rtpengine_query_v(fmt, var)
-              6.9. rtpengine_connect([flags][,via-branch])
-              6.10. rtpengine_manage([flags][,via-branch])
-              6.11.
+              6.9. rtpengine_xquery_v(flags, fmt, var)
+              6.10. rtpengine_connect([flags][,via-branch])
+              6.11. rtpengine_manage([flags][,via-branch])
+              6.12.
                       rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,st
                       ream_xavp[,via-branch])
 
-              6.12. rtpengine_subscribe_answer([flags][,via-branch])
-              6.13. rtpengine_unsubscribe([flags][,via-branch])
-              6.14. start_recording([flags])
-              6.15. stop_recording([flags])
-              6.16. block_dtmf([flags])
-              6.17. unblock_dtmf([flags])
-              6.18. block_media([flags])
-              6.19. unblock_media([flags])
-              6.20. silence_media([flags])
-              6.21. unsilence_media([flags])
-              6.22. start_forwarding([flags])
-              6.23. stop_forwarding([flags])
-              6.24. play_media([flags])
-              6.25. stop_media([flags])
-              6.26. play_dtmf([flags])
+              6.13. rtpengine_subscribe_answer([flags][,via-branch])
+              6.14. rtpengine_unsubscribe([flags][,via-branch])
+              6.15. start_recording([flags])
+              6.16. stop_recording([flags])
+              6.17. block_dtmf([flags])
+              6.18. unblock_dtmf([flags])
+              6.19. block_media([flags])
+              6.20. unblock_media([flags])
+              6.21. silence_media([flags])
+              6.22. unsilence_media([flags])
+              6.23. start_forwarding([flags])
+              6.24. stop_forwarding([flags])
+              6.25. play_media([flags])
+              6.26. stop_media([flags])
+              6.27. play_dtmf([flags])
 
         7. Exported Pseudo Variables
 
@@ -309,30 +310,31 @@ Joey Golan
    1.99. rtpengine_destroy usage
    1.100. rtpengine_query usage
    1.101. rtpengine_query_v usage
-   1.102. rtpengine_connect usage
-   1.103. rtpengine_manage usage
-   1.104. rtpengine_subscribe_request usage
-   1.105. rtpengine_subscribe_answer usage
-   1.106. rtpengine_unsubscribe usage
-   1.107. start_recording usage
-   1.108. stop_recording usage
-   1.109. block_dtmf usage
-   1.110. unblock_dtmf usage
-   1.111. block_media usage
-   1.112. unblock_media usage
-   1.113. silence_media usage
-   1.114. unsilence_media usage
-   1.115. start_forwarding usage
-   1.116. stop_forwarding usage
-   1.117. play_media usage
-   1.118. stop_media usage
-   1.119. play_dtmf usage
-   1.120. $rtpestat Usage
-   1.121. rtpengine.reload usage
-   1.122. rtpengine.enable usage
-   1.123. rtpengine.show usage
-   1.124. rtpengine.ping usage
-   1.125. rtpengine.get_hash_total usage
+   1.102. rtpengine_xquery_v usage
+   1.103. rtpengine_connect usage
+   1.104. rtpengine_manage usage
+   1.105. rtpengine_subscribe_request usage
+   1.106. rtpengine_subscribe_answer usage
+   1.107. rtpengine_unsubscribe usage
+   1.108. start_recording usage
+   1.109. stop_recording usage
+   1.110. block_dtmf usage
+   1.111. unblock_dtmf usage
+   1.112. block_media usage
+   1.113. unblock_media usage
+   1.114. silence_media usage
+   1.115. unsilence_media usage
+   1.116. start_forwarding usage
+   1.117. stop_forwarding usage
+   1.118. play_media usage
+   1.119. stop_media usage
+   1.120. play_dtmf usage
+   1.121. $rtpestat Usage
+   1.122. rtpengine.reload usage
+   1.123. rtpengine.enable usage
+   1.124. rtpengine.show usage
+   1.125. rtpengine.ping usage
+   1.126. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -456,27 +458,28 @@ Chapter 1. Admin Guide
         6.6. rtpengine_destroy([flags][,via-branch])
         6.7. rtpengine_query([flags][,via-branch])
         6.8. rtpengine_query_v(fmt, var)
-        6.9. rtpengine_connect([flags][,via-branch])
-        6.10. rtpengine_manage([flags][,via-branch])
-        6.11.
+        6.9. rtpengine_xquery_v(flags, fmt, var)
+        6.10. rtpengine_connect([flags][,via-branch])
+        6.11. rtpengine_manage([flags][,via-branch])
+        6.12.
                 rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_x
                 avp[,via-branch])
 
-        6.12. rtpengine_subscribe_answer([flags][,via-branch])
-        6.13. rtpengine_unsubscribe([flags][,via-branch])
-        6.14. start_recording([flags])
-        6.15. stop_recording([flags])
-        6.16. block_dtmf([flags])
-        6.17. unblock_dtmf([flags])
-        6.18. block_media([flags])
-        6.19. unblock_media([flags])
-        6.20. silence_media([flags])
-        6.21. unsilence_media([flags])
-        6.22. start_forwarding([flags])
-        6.23. stop_forwarding([flags])
-        6.24. play_media([flags])
-        6.25. stop_media([flags])
-        6.26. play_dtmf([flags])
+        6.13. rtpengine_subscribe_answer([flags][,via-branch])
+        6.14. rtpengine_unsubscribe([flags][,via-branch])
+        6.15. start_recording([flags])
+        6.16. stop_recording([flags])
+        6.17. block_dtmf([flags])
+        6.18. unblock_dtmf([flags])
+        6.19. block_media([flags])
+        6.20. unblock_media([flags])
+        6.21. silence_media([flags])
+        6.22. unsilence_media([flags])
+        6.23. start_forwarding([flags])
+        6.24. stop_forwarding([flags])
+        6.25. play_media([flags])
+        6.26. stop_media([flags])
+        6.27. play_dtmf([flags])
 
    7. Exported Pseudo Variables
 
@@ -2241,6 +2244,8 @@ modparam("rtpengine", "wsapi", "lwsc")
    Example 1.87. Set dtmf_events_sock parameter
 ...
 modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
+# or, for IPv6
+modparam("rtpengine", "dtmf_events_sock", "[::1]:2223")
 ...
 
 5.87. ping_mode (integer)
@@ -2320,27 +2325,28 @@ modparam("rtpengine", "dmq_peer_id", "rtpengine_6.1.1")
    6.6. rtpengine_destroy([flags][,via-branch])
    6.7. rtpengine_query([flags][,via-branch])
    6.8. rtpengine_query_v(fmt, var)
-   6.9. rtpengine_connect([flags][,via-branch])
-   6.10. rtpengine_manage([flags][,via-branch])
-   6.11.
+   6.9. rtpengine_xquery_v(flags, fmt, var)
+   6.10. rtpengine_connect([flags][,via-branch])
+   6.11. rtpengine_manage([flags][,via-branch])
+   6.12.
           rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[,
           via-branch])
 
-   6.12. rtpengine_subscribe_answer([flags][,via-branch])
-   6.13. rtpengine_unsubscribe([flags][,via-branch])
-   6.14. start_recording([flags])
-   6.15. stop_recording([flags])
-   6.16. block_dtmf([flags])
-   6.17. unblock_dtmf([flags])
-   6.18. block_media([flags])
-   6.19. unblock_media([flags])
-   6.20. silence_media([flags])
-   6.21. unsilence_media([flags])
-   6.22. start_forwarding([flags])
-   6.23. stop_forwarding([flags])
-   6.24. play_media([flags])
-   6.25. stop_media([flags])
-   6.26. play_dtmf([flags])
+   6.13. rtpengine_subscribe_answer([flags][,via-branch])
+   6.14. rtpengine_unsubscribe([flags][,via-branch])
+   6.15. start_recording([flags])
+   6.16. stop_recording([flags])
+   6.17. block_dtmf([flags])
+   6.18. unblock_dtmf([flags])
+   6.19. block_media([flags])
+   6.20. unblock_media([flags])
+   6.21. silence_media([flags])
+   6.22. unsilence_media([flags])
+   6.23. start_forwarding([flags])
+   6.24. stop_forwarding([flags])
+   6.25. play_media([flags])
+   6.26. stop_media([flags])
+   6.27. play_dtmf([flags])
 
 6.1.  set_rtpengine_set(setid[, setid])
 
@@ -2842,7 +2848,31 @@ if(rtpengine_query_v("j", "$var(rdata)")) {
 }
 ...
 
-6.9.  rtpengine_connect([flags][,via-branch])
+6.9.  rtpengine_xquery_v(flags, fmt, var)
+
+   Queries the RTP proxy about the current status and statistics of a
+   running call using the supplied flags, converts the response to JSON
+   according to fmt and sets the variable var with the result.
+
+   The flags parameter has the same meaning as for “rtpengine_query”. It
+   can be used to override the call identifiers, for example with
+   “call-id=...”, “from-tag=...”, or “to-tag=...”.
+
+   The fmt parameter can be 'j' for compacted JSON and 'jp' for
+   pretty-formatted JSON.
+
+   The var parameter has to be the name of a writable variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.102. rtpengine_xquery_v usage
+...
+if(rtpengine_xquery_v("call-id=$var(callid)", "j", "$var(rdata)")) {
+    xinfo("rtpengine query response: $var(rdata)\n");
+}
+...
+
+6.10.  rtpengine_connect([flags][,via-branch])
 
    Connects the media of two call parties directly without the need for a
    full offer/answer exchange. The media will be connected in the same way
@@ -2857,7 +2887,7 @@ if(rtpengine_query_v("j", "$var(rdata)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.102. rtpengine_connect usage
+   Example 1.103. rtpengine_connect usage
 ...
 # Connect two parties from the same call (using tags from current SIP message)
 rtpengine_connect();
@@ -2867,7 +2897,7 @@ rtpengine_connect("call-id=abc123def456@192.168.1.100 from-tag=a1b2c3d4 to-tag=e
 5f6g7h8 to-call-id=xyz789ghi012@192.168.1.200");
 ...
 
-6.10.  rtpengine_manage([flags][,via-branch])
+6.11.  rtpengine_manage([flags][,via-branch])
 
    Manage the RTPEngine session - it combines the functionality of
    rtpengine_offer(), rtpengine_answer() and rtpengine_delete(), detecting
@@ -2898,12 +2928,12 @@ rtpengine_connect("call-id=abc123def456@192.168.1.100 from-tag=a1b2c3d4 to-tag=e
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.103. rtpengine_manage usage
+   Example 1.104. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
 
-6.11.
+6.12.
 rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch]
 )
 
@@ -2986,7 +3016,7 @@ rtpengine_subscribe_request(flags,sdp_avp,to_tag_avp,stream_xavp[,via-branch]
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.104. rtpengine_subscribe_request usage
+   Example 1.105. rtpengine_subscribe_request usage
 request_route {
 ...
     if (is_method("INVITE")) {
@@ -3057,7 +3087,7 @@ ec_to_tag) call-id="$avp(orig_callid)");
 }
 ...
 
-6.12.  rtpengine_subscribe_answer([flags][,via-branch])
+6.13.  rtpengine_subscribe_answer([flags][,via-branch])
 
    Sends the SDP answer from the recording server to the rtpengine
 
@@ -3076,11 +3106,11 @@ ec_to_tag) call-id="$avp(orig_callid)");
           + from-tag=... - value of the from tag of the original call.
           + call-id=... - value of the call id of the original call.
 
-   Example 1.105. rtpengine_subscribe_answer usage
+   Example 1.106. rtpengine_subscribe_answer usage
 
    See rtpengine_subscribe_request() function example above for example.
 
-6.13.  rtpengine_unsubscribe([flags][,via-branch])
+6.14.  rtpengine_unsubscribe([flags][,via-branch])
 
    Sends the SDP answer from the recording server to the rtpengine
 
@@ -3099,7 +3129,7 @@ ec_to_tag) call-id="$avp(orig_callid)");
           + from-tag=... - value of the from tag of the original call.
           + call-id=... - value of the call id of the original call.
 
-   Example 1.106. rtpengine_unsubscribe usage
+   Example 1.107. rtpengine_unsubscribe usage
 
 event_route [dialog:end] {
     # call over, stop recording
@@ -3116,7 +3146,7 @@ g) call-id="$avp(orig_callid)");
 }
 ...
 
-6.14.  start_recording([flags])
+6.15.  start_recording([flags])
 
    This function will send a signal to the RTP relay to record the RTP
    stream flowing through it. See also the option “record-call=on” for
@@ -3130,12 +3160,12 @@ g) call-id="$avp(orig_callid)");
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.107. start_recording usage
+   Example 1.108. start_recording usage
 ...
 start_recording();
 ...
 
-6.15.  stop_recording([flags])
+6.16.  stop_recording([flags])
 
    This function will send a signal to the RTP relay to stop recording the
    RTP stream flowing through it. See also the option “record-call=off”
@@ -3149,12 +3179,12 @@ start_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.108. stop_recording usage
+   Example 1.109. stop_recording usage
 ...
 stop_recording();
 ...
 
-6.16.  block_dtmf([flags])
+6.17.  block_dtmf([flags])
 
    This function will instruct the RTP proxy to start blocking DTMF event
    packets (RFC 4733). DTMF events will still be processed by the RTP
@@ -3173,14 +3203,14 @@ stop_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.109. block_dtmf usage
+   Example 1.110. block_dtmf usage
 ...
 block_dtmf();
 block_dtmf("directional");
 block_dtmf("address=192.168.42.42");
 ...
 
-6.17.  unblock_dtmf([flags])
+6.18.  unblock_dtmf([flags])
 
    Reverses the effects of a previously issued block_dtmf call. See above
    for a description of which flags can be used.
@@ -3189,13 +3219,13 @@ block_dtmf("address=192.168.42.42");
    unblocking DTMF events for the entire call (i.e. no flags given) will
    not remove these blocks. The flag “all” can be used to achieve this.
 
-   Example 1.110. unblock_dtmf usage
+   Example 1.111. unblock_dtmf usage
 ...
 unblock_dtmf();
 unblock_dtmf("all");
 ...
 
-6.18.  block_media([flags])
+6.19.  block_media([flags])
 
    Analogous to “block_dtmf”, but blocks media RTP packets instead of DTMF
    events. When media is blocked, DTMF events still pass through the RTP
@@ -3203,27 +3233,27 @@ unblock_dtmf("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.111. block_media usage
+   Example 1.112. block_media usage
 ...
 block_media();
 block_media("directional");
 block_media("address=192.168.42.42");
 ...
 
-6.19.  unblock_media([flags])
+6.20.  unblock_media([flags])
 
    Analogous to “unblock_dtmf”, but applies to media RTP packets instead
    of DTMF events.
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.112. unblock_media usage
+   Example 1.113. unblock_media usage
 ...
 unblock_media();
 unblock_media("all");
 ...
 
-6.20.  silence_media([flags])
+6.21.  silence_media([flags])
 
    Identical to “block_media” except that media RTP packets are not simply
    blocked, but instead have their audio payload replaced by silence
@@ -3232,27 +3262,27 @@ unblock_media("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.113. silence_media usage
+   Example 1.114. silence_media usage
 ...
 silence_media();
 silence_media("directional");
 silence_media("address=192.168.42.42");
 ...
 
-6.21.  unsilence_media([flags])
+6.22.  unsilence_media([flags])
 
    Identical to “unblock_media” except that it's the counterpart to
    “silence_media”.
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.114. unsilence_media usage
+   Example 1.115. unsilence_media usage
 ...
 unsilence_media();
 unsilence_media("all");
 ...
 
-6.22.  start_forwarding([flags])
+6.23.  start_forwarding([flags])
 
    Controls the PCM forwarding feature of the recording daemon. Unlike the
    recording feature, PCM forwarding can be done directionally for
@@ -3261,27 +3291,27 @@ unsilence_media("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.115. start_forwarding usage
+   Example 1.116. start_forwarding usage
 ...
 start_forwarding();
 start_forwarding("directional");
 start_forwarding("address=192.168.42.42");
 ...
 
-6.23.  stop_forwarding([flags])
+6.24.  stop_forwarding([flags])
 
    Analogous to “unblock_dtmf”, but controls the PCM forwarding feature
    instead of DTMF blocking.
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.116. stop_forwarding usage
+   Example 1.117. stop_forwarding usage
 ...
 stop_forwarding();
 stop_forwarding("all");
 ...
 
-6.24.  play_media([flags])
+6.25.  play_media([flags])
 
    Instructs rtpengine to play a prerecorded announcement to the selected
    call participant, either from a local file or from a file stored in a
@@ -3294,25 +3324,25 @@ stop_forwarding("all");
    the duration of the media being played, expressed in milliseconds. If
    the length of the media could not be determined, it's set to -1.
 
-   Example 1.117. play_media usage
+   Example 1.118. play_media usage
 ...
 play_media("file=/use/share/media/hello.wav");
 play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
 ...
 
-6.25.  stop_media([flags])
+6.26.  stop_media([flags])
 
    Stops the playback of media previously started by “play_media”. Media
    playback is automatically stopped when the end of the media file is
    reached, so this function is only useful to prematurely stop playback.
 
-   Example 1.118. stop_media usage
+   Example 1.119. stop_media usage
 ...
 stop_media();
 stop_media("from-tag=5yqaeriguhxcikxj");
 ...
 
-6.26.  play_dtmf([flags])
+6.27.  play_dtmf([flags])
 
    Injects a DTMF event into the media stream. Depending on which codecs
    were negotiated, this either injects an RFC 2833/4733 DTMF event, or an
@@ -3337,7 +3367,7 @@ stop_media("from-tag=5yqaeriguhxcikxj");
    alternative pause length can be given through the “pause” option,
    between 100 and 5000 ms.
 
-   Example 1.119. play_dtmf usage
+   Example 1.120. play_dtmf usage
 ...
 play_dtmf("from-tag=5yqaeriguhxcikxj code=#");
 play_dtmf("code=1 volume=5 duration=300 pause=150");
@@ -3355,7 +3385,7 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.120. $rtpestat Usage
+   Example 1.121. $rtpestat Usage
 ...
 append_hf("X-RTP-Statistics: $rtpestat\r\n");
 ...
@@ -3387,7 +3417,7 @@ ts, 0 errors
 
    The execution of this command is limited to 10 seconds intervals.
 
-   Example 1.121.  rtpengine.reload usage
+   Example 1.122.  rtpengine.reload usage
 ...
 $ kamctl rpc rtpengine.reload
 ...
@@ -3418,7 +3448,7 @@ $ kamctl rpc rtpengine.reload
    NOTE: If you specify an IPv6 RTP, the proxy url must be prefixed with
    :: to escape the :: from the IPv6 address. See the example below.
 
-   Example 1.122.  rtpengine.enable usage
+   Example 1.123.  rtpengine.enable usage
 ...
 $ kamctl rpc rtpengine.enable udp:192.168.2.133:8081 0
 $ kamctl rpc rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -3441,7 +3471,7 @@ $ kamctl rpc rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.123.  rtpengine.show usage
+   Example 1.124.  rtpengine.show usage
 ...
 $ kamctl rpc rtpengine.show udp:192.168.2.133:8081
 $ kamctl rpc rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -3461,7 +3491,7 @@ $ kamctl rpc rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.124.  rtpengine.ping usage
+   Example 1.125.  rtpengine.ping usage
 ...
 $ kamctl rpc rtpengine.ping udp:192.168.2.133:8081
 $ kamctl rpc rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -3473,7 +3503,7 @@ $ kamctl rpc rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.125.  rtpengine.get_hash_total usage
+   Example 1.126.  rtpengine.get_hash_total usage
 ...
 $ kamctl rpc rtpengine.get_hash_total
 ...

@@ -505,7 +505,7 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 
    The following libraries must be installed before running Kamailio with
    this module loaded:
-     * OpenSSL.
+     * OpenSSL (1.1.1 or newer).
 
 3. Functions
 

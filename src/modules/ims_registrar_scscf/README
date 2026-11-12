@@ -60,14 +60,15 @@ Richard Good
               4.6. assign_server(async_reply_route, domain, direction,
                       assignment_type)
 
-              4.7. impu_registered(domain)
-              4.8. term_impu_registered(domain)
-              4.9. reg_fetch_contacts(domain, uri, profile)
-              4.10. reg_free_contacts(profile)
-              4.11. can_subscribe_to_reg(domain)
-              4.12. subscribe_to_reg(domain)
-              4.13. can_publish_reg(domain)
-              4.14. publish_reg(domain)
+              4.7. orig_impu_has_contact(domain)
+              4.8. impu_registered(domain)
+              4.9. term_impu_registered(domain)
+              4.10. reg_fetch_contacts(domain, uri, profile)
+              4.11. reg_free_contacts(profile)
+              4.12. can_subscribe_to_reg(domain)
+              4.13. subscribe_to_reg(domain)
+              4.14. can_publish_reg(domain)
+              4.15. publish_reg(domain)
 
         5. RPC Commands
 
@@ -110,14 +111,16 @@ Richard Good
    1.25. lookup usage
    1.26. unregister usage
    1.27. assign_server usage
-   1.28. impu_registered usage
-   1.29. term_impu_registered usage
-   1.30. reg_fetch_contacts usage
-   1.31. reg_free_contacts usage
-   1.32. can_subscribe_to_reg usage
-   1.33. subscribe_to_reg usage
-   1.34. can_publish_reg usage
-   1.35. publish_reg usage
+   1.28. Originating admission after trusted-peer validation
+   1.29. KEMI Lua admission after trusted-peer validation
+   1.30. impu_registered usage
+   1.31. term_impu_registered usage
+   1.32. reg_fetch_contacts usage
+   1.33. reg_free_contacts usage
+   1.34. can_subscribe_to_reg usage
+   1.35. subscribe_to_reg usage
+   1.36. can_publish_reg usage
+   1.37. publish_reg usage
 
 Chapter 1. Admin Guide
 
@@ -164,14 +167,15 @@ Chapter 1. Admin Guide
         4.6. assign_server(async_reply_route, domain, direction,
                 assignment_type)
 
-        4.7. impu_registered(domain)
-        4.8. term_impu_registered(domain)
-        4.9. reg_fetch_contacts(domain, uri, profile)
-        4.10. reg_free_contacts(profile)
-        4.11. can_subscribe_to_reg(domain)
-        4.12. subscribe_to_reg(domain)
-        4.13. can_publish_reg(domain)
-        4.14. publish_reg(domain)
+        4.7. orig_impu_has_contact(domain)
+        4.8. impu_registered(domain)
+        4.9. term_impu_registered(domain)
+        4.10. reg_fetch_contacts(domain, uri, profile)
+        4.11. reg_free_contacts(profile)
+        4.12. can_subscribe_to_reg(domain)
+        4.13. subscribe_to_reg(domain)
+        4.14. can_publish_reg(domain)
+        4.15. publish_reg(domain)
 
    5. RPC Commands
 
@@ -188,6 +192,32 @@ Chapter 1. Admin Guide
    This module contains REGISTER processing logic for the S-CSCF. The
    'storage engine' of this module is provided by the ims_usrloc_scscf
    module:
+
+   The module handles HSS-initiated Cx Push-Profile-Requests (PPR)
+   carrying User-Data for existing public identities. Profile replacement
+   preserves registration and contact state. Identity-set changes,
+   wildcard identities, charging-information updates and
+   authentication-data updates are not supported by this receiver and are
+   rejected.
+
+   Cx Registration-Termination-Requests (RTR) invalidate registration and
+   contact state and remove cached profile and charging information.
+   Registration-event notifications include the removed contact URI.
+   Shared contacts belonging to identities outside the requested scope and
+   emergency contacts are protected by rejecting unsupported termination
+   scopes.
+
+   These Cx cache operations require the ims_usrloc_scscf module's db_mode
+   to be 0. Persistent database backends are not updated by these
+   operations. To reject ordinary originating calls after deregistration,
+   use orig_impu_has_contact() after verifying the trusted access peer in
+   the routing script.
+
+   Registration-event SUBSCRIBE responses advertise the configured S-CSCF
+   URI as Contact. P-CSCFs using PUA for reginfo must disable remote
+   Contact matching, since the watched IMPU and the notifier Contact are
+   different URIs:
+modparam("pua", "check_remote_contact", 0)
 
 2. Dependencies
 
@@ -573,14 +603,15 @@ modparam("ims_registrar_scscf", "scscf_restoration_info_enabled", 1)
    4.6. assign_server(async_reply_route, domain, direction,
           assignment_type)
 
-   4.7. impu_registered(domain)
-   4.8. term_impu_registered(domain)
-   4.9. reg_fetch_contacts(domain, uri, profile)
-   4.10. reg_free_contacts(profile)
-   4.11. can_subscribe_to_reg(domain)
-   4.12. subscribe_to_reg(domain)
-   4.13. can_publish_reg(domain)
-   4.14. publish_reg(domain)
+   4.7. orig_impu_has_contact(domain)
+   4.8. impu_registered(domain)
+   4.9. term_impu_registered(domain)
+   4.10. reg_fetch_contacts(domain, uri, profile)
+   4.11. reg_free_contacts(profile)
+   4.12. can_subscribe_to_reg(domain)
+   4.13. subscribe_to_reg(domain)
+   4.14. can_publish_reg(domain)
+   4.15. publish_reg(domain)
 
 4.1. save(async_reply_route, domain, mode, flags)
 
@@ -740,7 +771,33 @@ route[ORIG_SAA] {
 }
 ...
 
-4.7. impu_registered(domain)
+4.7. orig_impu_has_contact(domain)
+
+   Checks the originating identity in P-Asserted-Identity. Returns 1 only
+   if an unbarred IMPU has a stored profile, registered state and a valid
+   linked contact. Returns -1 otherwise. Use only after verifying that the
+   request comes from a trusted P-CSCF. It does not rewrite the
+   Request-URI or check the To identity.
+
+   The KEMI export is ims_registrar_scscf.orig_impu_has_contact(domain).
+   The domain must already be registered with ims_usrloc_scscf. Native
+   configuration functions that use the domain, such as save(), register
+   it during configuration fixup. The KEMI export returns the same integer
+   result as the native function.
+
+   Example 1.28. Originating admission after trusted-peer validation
+if (!orig_impu_has_contact("location")) {
+    send_reply("403", "Originating registration required");
+    exit;
+}
+
+   Example 1.29. KEMI Lua admission after trusted-peer validation
+if KSR.ims_registrar_scscf.orig_impu_has_contact("location") < 0 then
+    KSR.sl.send_reply(403, "Originating registration required")
+    KSR.x.exit()
+end
+
+4.8. impu_registered(domain)
 
    This function checks if the IMPU in the To header is registered in
    usrloc.
@@ -754,7 +811,7 @@ route[ORIG_SAA] {
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.28. impu_registered usage
+   Example 1.30. impu_registered usage
 ...
 impu_registered("location");
 switch ($retcode) {
@@ -766,7 +823,7 @@ switch ($retcode) {
 };
 ...
 
-4.8. term_impu_registered(domain)
+4.9. term_impu_registered(domain)
 
    This function checks if the IMPU in the Request-URI is registered in
    usrloc.
@@ -780,7 +837,7 @@ switch ($retcode) {
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.29. term_impu_registered usage
+   Example 1.31. term_impu_registered usage
 ...
 term_impu_registered("location");
 switch ($retcode) {
@@ -792,7 +849,7 @@ switch ($retcode) {
 };
 ...
 
-4.9. reg_fetch_contacts(domain, uri, profile)
+4.10. reg_fetch_contacts(domain, uri, profile)
 
    The function fetches the contacts for 'uri' from table 'domain' to
    pseudo-variable $ulc(profile) [ulc = ims scscf ulc].
@@ -808,13 +865,13 @@ switch ($retcode) {
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.30. reg_fetch_contacts usage
+   Example 1.32. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 ...
 
-4.10. reg_free_contacts(profile)
+4.11. reg_free_contacts(profile)
 
    The function frees the contacts from pseudo-variable $ulc(profile).
    Should be called to release the content of a profile. Anyhow, fetching
@@ -827,12 +884,12 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.31. reg_free_contacts usage
+   Example 1.33. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
 
-4.11. can_subscribe_to_reg(domain)
+4.12. can_subscribe_to_reg(domain)
 
    This function checks to see that a SUBSCRIBE request is authorised to
    subscribe to the particular identity. Only 3 entities can subscribe:
@@ -845,14 +902,14 @@ reg_free_contacts("callee");
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.32. can_subscribe_to_reg usage
+   Example 1.34. can_subscribe_to_reg usage
 ...
 if (can_subscribe_to_reg("location")){
      $var(ret)= subscribe_to_reg("location");
 }
 ...
 
-4.12. subscribe_to_reg(domain)
+4.13. subscribe_to_reg(domain)
 
    Save the subscription to the REG event for the UAC or the appropriate
    P-CSCF (in the path to the UAC).
@@ -862,14 +919,14 @@ if (can_subscribe_to_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.33. subscribe_to_reg usage
+   Example 1.35. subscribe_to_reg usage
 ...
 if (can_subscribe_to_reg("location")){
      $var(ret)= subscribe_to_reg("location");
 }
 ...
 
-4.13. can_publish_reg(domain)
+4.14. can_publish_reg(domain)
 
    This function checks to see that a PUBLISH request is authorised to
    publish for a particular identity. Only 3 entities can publish:
@@ -882,14 +939,14 @@ if (can_subscribe_to_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.34. can_publish_reg usage
+   Example 1.36. can_publish_reg usage
 ...
 if (can_publish_reg("location")){
     $var(ret)= publish_reg("location");
 }
 ...
 
-4.14. publish_reg(domain)
+4.15. publish_reg(domain)
 
    Save the publish to the REG event for the UAC or the appropriate P-CSCF
    (in the path to the UAC).
@@ -899,7 +956,7 @@ if (can_publish_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.35. publish_reg usage
+   Example 1.37. publish_reg usage
 ...
 if (can_publish_reg("location")){
     $var(ret)= publish_reg("location");

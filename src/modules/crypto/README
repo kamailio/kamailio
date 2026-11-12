@@ -124,7 +124,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libcrypto - part of OpenSSL project
+     * libcrypto - part of OpenSSL project (1.1.1 or newer)
 
 3. Parameters
 

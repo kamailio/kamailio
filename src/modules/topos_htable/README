@@ -76,12 +76,18 @@ Chapter 1. Admin Guide
 
    Definition of dialog htable, with all parameters.
 
-   Default value is “topos_dialog=>size=4;autoexpire=7200;dmqreplicate=1”.
+   Default value is
+   “topos_dialog=>size=4;autoexpire=7200;updateexpire=0;dmqreplicate=1”.
+
+   The “updateexpire=0” setting preserves the explicit dialog lifetime
+   assigned by the topos module when the stored dialog data is updated.
+   Custom table definitions should keep this setting unless resetting the
+   expiry on every update is intended.
 
    Example 1.1. Set topos_htable_dialog parameter
 ...
 modparam("topos_htable", "topos_htable_dialog", "my_dialogs=>size=4;autoexpire=7
-200;dmqreplicate=1")
+200;updateexpire=0;dmqreplicate=1")
 ...
 
 3.2. topos_htable_transaction (string)

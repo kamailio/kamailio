@@ -129,6 +129,16 @@ Chapter 1. Admin Guide
 [Service]
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
 
+   Supported algorithms (3GPP TS 33.203), as alg/ealg pairs from the
+   Security-Client header:
+     * hmac-md5-96 or hmac-sha-1-96 with aes-cbc, des-ede3-cbc or null.
+     * null with aes-gcm (RFC 4106, kernel algorithm rfc4106(gcm(aes))).
+     * aes-gmac with null (RFC 4543, kernel algorithm rfc4543(gcm(aes))).
+
+   For aes-gcm and aes-gmac the 128 bit key is CK, respectively IK, and
+   the salt is derived from CK and IK as specified in TS 33.203 Annex I.
+   The kernel must provide the gcm crypto module.
+
 2. Dependencies
 
    2.1. Kamailio Modules
@@ -371,11 +381,25 @@ ipsec_create("location", "1");
             found.
        This is an optional parameter, default value - 0.
 
+   The function can also be used in event_route[tm:local-request], for
+   requests Kamailio generates itself, such as the BYE sent by
+   dlg_terminate() of ims_dialog. Such a request leaves from the socket
+   its dialog was set up on, which for a call from the UE is the protected
+   server port of the P-CSCF, outside the security associations. There the
+   function acts only on a request that leaves from an IPSec socket, finds
+   the tunnel by the next hop (as with flag 0x04), and changes only the
+   send socket: tm does not take a new destination from the local-request
+   route. Other requests are left unchanged and the function returns -1.
+
    Example 1.15. ipsec_forward
 ...
 ipsec_forward("location");
 # or
 ipsec_forward("location", "1");
+...
+event_route[tm:local-request] {
+    ipsec_forward("location", "897");
+}
 ...
 
 4.3. ipsec_destroy(domain [, aor])

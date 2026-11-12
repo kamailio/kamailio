@@ -35,6 +35,7 @@ Daniel-Constantin Mierla
               3.4. jwks_max_misses (int)
               3.5. jwks_fetch_timeout (int)
               3.6. jwks_connect_timeout (int)
+              3.7. jwks_retry_interval (int)
 
         4. Functions
 
@@ -54,10 +55,11 @@ Daniel-Constantin Mierla
    1.4. Set jwks_max_misses parameter
    1.5. Set jwks_fetch_timeout parameter
    1.6. Set jwks_connect_timeout parameter
-   1.7. jwt3_generate usage
-   1.8. jwt3_verify usage
-   1.9. jwt3_verify_key usage
-   1.10. $jwt3(name) usage
+   1.7. Set jwks_retry_interval parameter
+   1.8. jwt3_generate usage
+   1.9. jwt3_verify usage
+   1.10. jwt3_verify_key usage
+   1.11. $jwt3(name) usage
 
 Chapter 1. Admin Guide
 
@@ -77,6 +79,7 @@ Chapter 1. Admin Guide
         3.4. jwks_max_misses (int)
         3.5. jwks_fetch_timeout (int)
         3.6. jwks_connect_timeout (int)
+        3.7. jwks_retry_interval (int)
 
    4. Functions
 
@@ -102,6 +105,10 @@ Chapter 1. Admin Guide
    provided, the JWKS is fetched and cached in shared memory. The cache
    TTL is controlled by the jwks_cache_ttl parameter or, when available,
    by the Cache-Control: max-age directive returned by the server.
+
+   If a refresh of an expired cache entry fails (for example because the
+   JWKS server is unavailable), the previously cached keys keep being used
+   and a new fetch is attempted after jwks_retry_interval seconds.
 
    When a JWT contains a kid (Key ID) header that is not found in the
    loaded JWKS, the module will attempt to re-fetch the JWKS from the
@@ -136,6 +143,7 @@ Chapter 1. Admin Guide
    3.4. jwks_max_misses (int)
    3.5. jwks_fetch_timeout (int)
    3.6. jwks_connect_timeout (int)
+   3.7. jwks_retry_interval (int)
 
 3.1. leeway_sec (int)
 
@@ -222,6 +230,20 @@ modparam("jwt3", "jwks_fetch_timeout", 5)
 modparam("jwt3", "jwks_connect_timeout", 2)
 ...
 
+3.7. jwks_retry_interval (int)
+
+   Time in seconds to wait before trying again to refresh a remote JWKS
+   whose refresh has failed, while the previously cached keys are still
+   being used. It avoids blocking every request on a fetch while the JWKS
+   server is unavailable.
+
+   Default value is 30. Must not be negative.
+
+   Example 1.7. Set jwks_retry_interval parameter
+...
+modparam("jwt3", "jwks_retry_interval", 60)
+...
+
 4. Functions
 
    4.1. jwt3_generate(prvkey, alg, claims[, headers])
@@ -255,7 +277,7 @@ modparam("jwt3", "jwks_connect_timeout", 2)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. jwt3_generate usage
+   Example 1.8. jwt3_generate usage
 ...
   jwt3_generate("/path/to/prvkey.json", "ES256",
         "caller='$fU';callee='$tU';callid='$ci';index=100");
@@ -282,7 +304,7 @@ modparam("jwt3", "jwks_connect_timeout", 2)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. jwt3_verify usage
+   Example 1.9. jwt3_verify usage
 ...
   if(!jwt3_verify("/path/to/pubkey.json", "ES256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
@@ -310,7 +332,7 @@ modparam("jwt3", "jwks_connect_timeout", 2)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. jwt3_verify_key usage
+   Example 1.10. jwt3_verify_key usage
 ...
   if(!jwt3_verify_key("...", "RS256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
@@ -338,7 +360,7 @@ modparam("jwt3", "jwks_connect_timeout", 2)
      * val - the value of JWT after a successful jwt3_generate().
      * status - the status of verification after a failed jwt3_verify().
 
-   Example 1.10. $jwt3(name) usage
+   Example 1.11. $jwt3(name) usage
 ...
   jwt3_generate("/path/to/prvkey.pem", "RS256",
         "caller='$fU';callee='$tU';callid='$ci';index=100");

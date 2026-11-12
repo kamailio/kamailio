@@ -97,6 +97,7 @@ Chapter 1. Admin Guide
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * libnghttp2 - libnghttpd library (v1.43.0+)
+     * libssl - OpenSSL library (1.1.1 or newer)
 
 3. Parameters
 
