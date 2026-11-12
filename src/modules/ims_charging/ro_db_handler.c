@@ -535,10 +535,9 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 		db_key_t match_keys[3] = {
 				&h_entry_column, &h_id_column, &session_id_column};
 
-		db_set_int_val(values, HASH_ENTRY_COL_IDX - 1, ro_session->h_entry);
-		db_set_int_val(values, HASH_ID_COL_IDX - 1, ro_session->h_id);
-		db_set_str_val(
-				values, SESSION_ID_COL_IDX - 1, &ro_session->ro_session_id);
+		db_set_int_val(values, HASH_ENTRY_COL_IDX, ro_session->h_entry);
+		db_set_int_val(values, HASH_ID_COL_IDX, ro_session->h_id);
+		db_set_str_val(values, SESSION_ID_COL_IDX, &ro_session->ro_session_id);
 
 		if(ro_dbf.delete(ro_db_handle, match_keys, 0, values, 3) < 0) {
 			LM_ERR("failed to delete ro session database information... "
@@ -611,8 +610,8 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 	} else if((ro_session->flags & RO_SESSION_FLAG_CHANGED) != 0
 			  && (ro_session->flags & RO_SESSION_FLAG_INSERTED) != 0) {
 
-		db_val_t values[RO_SESSION_TABLE_COL_NUM - 1];
-		db_key_t update_keys[RO_SESSION_TABLE_COL_NUM - 1] = {&h_entry_column,
+		db_val_t values[RO_SESSION_TABLE_COL_NUM];
+		db_key_t update_keys[RO_SESSION_TABLE_COL_NUM] = {&h_entry_column,
 				&h_id_column, &session_id_column, &dlg_h_entry_column,
 				&dlg_h_id_column, &direction_column, &asserted_column,
 				&callee_column, &start_time_col, &last_event_ts_column,
@@ -623,45 +622,41 @@ int update_ro_dbinfo_unsafe(struct ro_session *ro_session)
 				&mac_column, &app_provided_party_column,
 				&is_final_allocation_column, &origin_host_column};
 
-		db_set_int_val(values, HASH_ENTRY_COL_IDX - 1, ro_session->h_entry);
-		db_set_int_val(values, HASH_ID_COL_IDX - 1, ro_session->h_id);
+		db_set_int_val(values, HASH_ENTRY_COL_IDX, ro_session->h_entry);
+		db_set_int_val(values, HASH_ID_COL_IDX, ro_session->h_id);
+		db_set_str_val(values, SESSION_ID_COL_IDX, &ro_session->ro_session_id);
+		db_set_int_val(values, DLG_HASH_ENTRY_COL_IDX, ro_session->dlg_h_entry);
+		db_set_int_val(values, DLG_HASH_ID_COL_IDX, ro_session->dlg_h_id);
+		db_set_int_val(values, DIRECTION_COL_IDX, ro_session->direction);
 		db_set_str_val(
-				values, SESSION_ID_COL_IDX - 1, &ro_session->ro_session_id);
-		db_set_int_val(
-				values, DLG_HASH_ENTRY_COL_IDX - 1, ro_session->dlg_h_entry);
-		db_set_int_val(values, DLG_HASH_ID_COL_IDX - 1, ro_session->dlg_h_id);
-		db_set_int_val(values, DIRECTION_COL_IDX - 1, ro_session->direction);
-		db_set_str_val(values, ASSERTED_ID_COL_IDX - 1,
-				&ro_session->asserted_identity);
-		db_set_str_val(values, CALLEE_COL_IDX - 1,
-				&ro_session->called_asserted_identity);
-		db_set_datetime_val(values, START_TIME_COL_IDX - 1,
-				ro_session->start_time / 1000000);
-		db_set_datetime_val(values, LAST_EVENT_TS_COL_IDX - 1,
+				values, ASSERTED_ID_COL_IDX, &ro_session->asserted_identity);
+		db_set_str_val(
+				values, CALLEE_COL_IDX, &ro_session->called_asserted_identity);
+		db_set_datetime_val(
+				values, START_TIME_COL_IDX, ro_session->start_time / 1000000);
+		db_set_datetime_val(values, LAST_EVENT_TS_COL_IDX,
 				ro_session->last_event_timestamp / 1000000);
 		db_set_int_val(
-				values, RESERVED_SECS_COL_IDX - 1, ro_session->reserved_secs);
-		db_set_int_val(values, VALID_FOR_COL_IDX - 1, ro_session->valid_for);
-		db_set_int_val(values, STATE_COL_IDX - 1, ro_session->active);
-		db_set_str_val(values, INCOMING_TRUNK_ID_COL_IDX - 1,
+				values, RESERVED_SECS_COL_IDX, ro_session->reserved_secs);
+		db_set_int_val(values, VALID_FOR_COL_IDX, ro_session->valid_for);
+		db_set_int_val(values, STATE_COL_IDX, ro_session->active);
+		db_set_str_val(values, INCOMING_TRUNK_ID_COL_IDX,
 				&ro_session->incoming_trunk_id);
-		db_set_str_val(values, OUTGOING_TRUNK_ID_COL_IDX - 1,
+		db_set_str_val(values, OUTGOING_TRUNK_ID_COL_IDX,
 				&ro_session->outgoing_trunk_id);
-		db_set_int_val(
-				values, RATING_GROUP_COL_IDX - 1, ro_session->rating_group);
-		db_set_int_val(values, SERVICE_IDENTIFIER_COL_IDX - 1,
+		db_set_int_val(values, RATING_GROUP_COL_IDX, ro_session->rating_group);
+		db_set_int_val(values, SERVICE_IDENTIFIER_COL_IDX,
 				ro_session->service_identifier);
-		db_set_int_val(values, AUTH_APP_ID_COL_IDX - 1, ro_session->auth_appid);
-		db_set_int_val(values, AUTH_SESSION_TYPE_COL_IDX - 1,
+		db_set_int_val(values, AUTH_APP_ID_COL_IDX, ro_session->auth_appid);
+		db_set_int_val(values, AUTH_SESSION_TYPE_COL_IDX,
 				ro_session->auth_session_type);
-		db_set_str_val(values, PANI_COL_IDX - 1, &ro_session->pani);
-		db_set_str_val(values, MAC_COL_IDX - 1, &ro_session->mac);
-		db_set_str_val(values, APP_PROVIDED_PARTY_COL_IDX - 1,
+		db_set_str_val(values, PANI_COL_IDX, &ro_session->pani);
+		db_set_str_val(values, MAC_COL_IDX, &ro_session->mac);
+		db_set_str_val(values, APP_PROVIDED_PARTY_COL_IDX,
 				&ro_session->app_provided_party);
-		db_set_int_val(values, IS_FINAL_ALLOCATION_COL_IDX - 1,
+		db_set_int_val(values, IS_FINAL_ALLOCATION_COL_IDX,
 				ro_session->is_final_allocation);
-		db_set_str_val(
-				values, ORIGIN_HOST_COL_IDX - 1, &ro_session->origin_host);
+		db_set_str_val(values, ORIGIN_HOST_COL_IDX, &ro_session->origin_host);
 
 		LM_DBG("Updating ro_session in database\n");
 		if((ro_dbf.update(ro_db_handle, update_keys /*match*/, 0 /*match*/,
