@@ -1996,6 +1996,23 @@ end:
 }
 
 /*!
+ * \brief Terminate the dialog of a Ro session and count it as killed
+ * \param ro_session Ro session whose dialog is terminated
+ * \param hdrs extra headers for the BYE, may be NULL
+ * \return 0 on success, -1 if the dialog could not be terminated
+ */
+int ro_kill_call(struct ro_session *ro_session, str *hdrs)
+{
+	if(dlgb.lookup_terminate_dlg(
+			   ro_session->dlg_h_entry, ro_session->dlg_h_id, hdrs)
+			< 0)
+		return -1;
+
+	counter_inc(ims_charging_cnts_h.killed_calls);
+	return 0;
+}
+
+/*!
  * \brief Process session-abort request
  * \param request Diameter request
  * \return diameter response
@@ -2019,9 +2036,7 @@ AAAMessage *ro_process_asr(AAAMessage *request)
 			goto end;
 		}
 
-		if(dlgb.lookup_terminate_dlg(
-				   ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL)
-				< 0) {
+		if(ro_kill_call(ro_session, NULL) < 0) {
 			result_code = DIAMETER_UNABLE_TO_COMPLY;
 		}
 

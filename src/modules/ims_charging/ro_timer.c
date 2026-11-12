@@ -387,8 +387,7 @@ void resume_ro_session_ontimeout(
 			//unref_ro_session_unsafe(i_req->ro_session, 1, ro_session_entry);
 			ro_session_unlock(ro_session_table, ro_session_entry);
 
-			dlgb.lookup_terminate_dlg(i_req->ro_session->dlg_h_entry,
-					i_req->ro_session->dlg_h_id, NULL);
+			ro_kill_call(i_req->ro_session, NULL);
 			call_terminated = 1;
 		} else {
 			LM_DBG("No more credit for user - letting call run out of money in "
@@ -548,9 +547,6 @@ void ro_session_ontimeout(struct ro_tl *tl)
 					   "session.\n");
 	}
 
-	counter_inc(ims_charging_cnts_h.killed_calls);
-
-	dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id,
-			&default_out_of_credit_hdrs);
+	ro_kill_call(ro_session, &default_out_of_credit_hdrs);
 	return;
 }
