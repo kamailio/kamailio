@@ -44,9 +44,9 @@ static void corex_rpc_shm_info(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return;
 	}
-	if(rpc->struct_add(th, "sj", "name",
+	if(rpc->struct_add(th, "sjj", "name",
 			   (_shm_root.mname) ? _shm_root.mname : "unknown", "size",
-			   shm_mem_size)
+			   shm_mem_size, "blocks", shm_mem_blocks)
 			< 0) {
 		rpc->fault(ctx, 500, "Internal error adding fields");
 		return;
