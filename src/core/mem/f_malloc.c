@@ -1225,290 +1225,49 @@ int fm_malloc_init_pkg_manager(void)
 	return pkg_init_api(&ma);
 }
 
-
-/* SHM - shared memory API*/
-static void *_fm_shm_pool = 0;
-static struct fm_block *_fm_shm_block = 0;
-static gen_lock_t *_fm_shm_lock = 0;
-
-#define fm_shm_lock() lock_get(_fm_shm_lock)
-#define fm_shm_unlock() lock_release(_fm_shm_lock)
-
-/**
- *
- */
-void fm_shm_glock(void *qmp)
-{
-	lock_get(_fm_shm_lock);
-}
-
-/**
- *
- */
-void fm_shm_gunlock(void *qmp)
-{
-	lock_release(_fm_shm_lock);
-}
-
-/**
- *
- */
-void fm_shm_lock_destroy(void)
-{
-	if(_fm_shm_lock) {
-		DBG("destroying the shared memory lock\n");
-		lock_destroy(_fm_shm_lock); /* we don't need to dealloc it*/
-	}
-}
-
-/**
- * init the core lock
- */
-int fm_shm_lock_init(void)
-{
-	if(_fm_shm_lock) {
-		LM_DBG("shared memory lock initialized\n");
-		return 0;
-	}
-
-#ifdef DBG_F_MALLOC
-	_fm_shm_lock = fm_malloc(_fm_shm_block, sizeof(gen_lock_t), _SRC_LOC_,
-			_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_);
-#else
-	_fm_shm_lock = fm_malloc(_fm_shm_block, sizeof(gen_lock_t));
-#endif
-
-	if(_fm_shm_lock == 0) {
-		LOG(L_CRIT, "could not allocate lock\n");
-		return -1;
-	}
-	if(lock_init(_fm_shm_lock) == 0) {
-		LOG(L_CRIT, "could not initialize lock\n");
-		return -1;
-	}
-	return 0;
-}
-
-/*SHM wrappers to sync the access to memory block*/
-#ifdef DBG_F_MALLOC
-void *fm_shm_malloc(void *qmp, size_t size, const char *file, const char *func,
-		unsigned int line, const char *mname)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_malloc(qmp, size, file, func, line, mname);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_mallocxz(void *qmp, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_mallocxz(qmp, size, file, func, line, mname);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_mallocxn(void *qmp, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_mallocxn(qmp, size, file, func, line, mname);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_realloc(void *qmp, void *p, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_realloc(qmp, p, size, file, func, line, mname);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_reallocxf(void *qmp, void *p, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_reallocxf(qmp, p, size, file, func, line, mname);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_resize(void *qmp, void *p, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	fm_shm_lock();
-	if(p)
-		fm_free(qmp, p, file, func, line, mname);
-	r = fm_malloc(qmp, size, file, func, line, mname);
-	fm_shm_unlock();
-	return r;
-}
-void fm_shm_free(void *qmp, void *p, const char *file, const char *func,
-		unsigned int line, const char *mname)
-{
-	fm_shm_lock();
-	fm_free(qmp, p, file, func, line, mname);
-	fm_shm_unlock();
-}
-#else
-void *fm_shm_malloc(void *qmp, size_t size)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_malloc(qmp, size);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_mallocxz(void *qmp, size_t size)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_mallocxz(qmp, size);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_mallocxn(void *qmp, size_t size)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_mallocxn(qmp, size);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_realloc(void *qmp, void *p, size_t size)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_realloc(qmp, p, size);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_reallocxf(void *qmp, void *p, size_t size)
-{
-	void *r;
-	fm_shm_lock();
-	r = fm_reallocxf(qmp, p, size);
-	fm_shm_unlock();
-	return r;
-}
-void *fm_shm_resize(void *qmp, void *p, size_t size)
-{
-	void *r;
-	fm_shm_lock();
-	if(p)
-		fm_free(qmp, p);
-	r = fm_malloc(qmp, size);
-	fm_shm_unlock();
-	return r;
-}
-void fm_shm_free(void *qmp, void *p)
-{
-	fm_shm_lock();
-	fm_free(qmp, p);
-	fm_shm_unlock();
-}
-#endif
-void fm_shm_status(void *qmp)
-{
-	fm_shm_lock();
-	fm_status(qmp);
-	fm_shm_unlock();
-}
-void fm_shm_info(void *qmp, struct mem_info *info)
-{
-	fm_shm_lock();
-	fm_info(qmp, info);
-	fm_shm_unlock();
-}
-unsigned long fm_shm_available(void *qmp)
-{
-	unsigned long r;
-	fm_shm_lock();
-	r = fm_available(qmp);
-	fm_shm_unlock();
-	return r;
-}
-void fm_shm_sums(void *qmp)
-{
-	fm_shm_lock();
-	fm_sums(qmp);
-	fm_shm_unlock();
-}
-void fm_shm_mod_get_stats(void *qmp, void **qm_rootp)
-{
-	fm_shm_lock();
-	fm_mod_get_stats(qmp, qm_rootp);
-	fm_shm_unlock();
-}
-void fm_shm_mod_free_stats(void *qm_rootp)
-{
-	fm_mod_free_stats(qm_rootp);
-}
-
-
-/**
- * \brief Destroy memory pool
- */
-void fm_malloc_destroy_shm_manager(void)
-{
-	fm_shm_lock_destroy();
-	/*shm pool from core - nothing to do*/
-	_fm_shm_pool = 0;
-	_fm_shm_block = 0;
-}
-
 /**
  * \brief Init memory pool
  */
 int fm_malloc_init_shm_manager(void)
 {
-	sr_shm_api_t ma;
-	_fm_shm_pool = shm_core_get_pool();
-	if(_fm_shm_pool)
-		_fm_shm_block =
-				fm_malloc_init(_fm_shm_pool, shm_mem_size, MEM_TYPE_SHM);
-	if(_fm_shm_block == 0) {
-		LM_CRIT("could not initialize fm shm memory pool\n");
-		fprintf(stderr, "Too much fm shm memory demanded: %ld bytes\n",
-				shm_mem_size);
+	unsigned int i;
+	unsigned int count = shm_core_get_pool_count();
+	sr_shm_api_t *ma = calloc(count, sizeof(*ma));
+	if(ma == NULL)
 		return -1;
+	for(i = 0; i < count; i++) {
+		ma[i].mem_pool = shm_core_get_pool(i);
+		if(ma[i].mem_pool)
+			ma[i].mem_block = fm_malloc_init(
+					ma[i].mem_pool, shm_core_get_pool_size(i), MEM_TYPE_SHM);
+		if(ma[i].mem_block == NULL) {
+			LM_CRIT("could not initialize fm shm memory block %u\n", i);
+			free(ma);
+			return -1;
+		}
+		ma[i].mname = _fm_mem_name;
+		ma[i].xmalloc = fm_malloc;
+		ma[i].xmallocxz = fm_mallocxz;
+		ma[i].xmallocxn = fm_mallocxn;
+		ma[i].xmalloc_unsafe = fm_malloc;
+		ma[i].xfree = fm_free;
+		ma[i].xfree_unsafe = fm_free;
+		ma[i].xrealloc = fm_realloc;
+		ma[i].xreallocxf = fm_reallocxf;
+		ma[i].xstatus = fm_status;
+		ma[i].xinfo = fm_info;
+		ma[i].xavailable = fm_available;
+		ma[i].xsums = fm_sums;
+		ma[i].xmodstats = fm_mod_get_stats;
+		ma[i].xfmodstats = fm_mod_free_stats;
 	}
 
-	memset(&ma, 0, sizeof(sr_shm_api_t));
-	ma.mname = _fm_mem_name;
-	ma.mem_pool = _fm_shm_pool;
-	ma.mem_block = _fm_shm_block;
-	ma.xmalloc = fm_shm_malloc;
-	ma.xmallocxz = fm_shm_mallocxz;
-	ma.xmallocxn = fm_shm_mallocxn;
-	ma.xmalloc_unsafe = fm_malloc;
-	ma.xfree = fm_shm_free;
-	ma.xfree_unsafe = fm_free;
-	ma.xrealloc = fm_shm_realloc;
-	ma.xreallocxf = fm_shm_reallocxf;
-	ma.xresize = fm_shm_resize;
-	ma.xstatus = fm_shm_status;
-	ma.xinfo = fm_shm_info;
-	ma.xavailable = fm_shm_available;
-	ma.xsums = fm_shm_sums;
-	ma.xdestroy = fm_malloc_destroy_shm_manager;
-	ma.xmodstats = fm_shm_mod_get_stats;
-	ma.xfmodstats = fm_shm_mod_free_stats;
-	ma.xglock = fm_shm_glock;
-	ma.xgunlock = fm_shm_gunlock;
-
-	if(shm_init_api(&ma) < 0) {
+	if(shm_init_api(ma, count) < 0) {
 		LM_ERR("cannot initialize the core shm api\n");
+		free(ma);
 		return -1;
 	}
-	if(fm_shm_lock_init() < 0) {
-		LM_ERR("cannot initialize the core shm lock\n");
-		return -1;
-	}
+	free(ma);
 	return 0;
 }
 
