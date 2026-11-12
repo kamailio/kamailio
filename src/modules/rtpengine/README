@@ -2208,6 +2208,8 @@ modparam("rtpengine", "wsapi", "lwsc")
    Example 1.86. Set dtmf_events_sock parameter
 ...
 modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
+# or, for IPv6
+modparam("rtpengine", "dtmf_events_sock", "[::1]:2223")
 ...
 
 5.86. ping_mode (integer)
