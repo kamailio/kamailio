@@ -133,7 +133,8 @@ int process_contact(
 	if(parse_uri(contact_uri.s, contact_uri.len, &uri) != 0) {
 		LM_ERR("Unable to parse contact in SIP notify [%.*s]\n",
 				contact_uri.len, contact_uri.s);
-		return RESULT_ERROR;
+		ret = RESULT_ERROR;
+		goto done;
 	}
 	/*check for alias - NAT */
 	rest = uri.sip_params.s;
@@ -160,14 +161,16 @@ int process_contact(
 		port = memchr(val, 126 /* ~ */, val_len);
 		if(port == NULL) {
 			LM_ERR("no '~' in alias param value\n");
-			return RESULT_ERROR;
+			ret = RESULT_ERROR;
+			goto done;
 		}
 		port++;
 		//            received_port = atoi(port);
 		trans = memchr(port, 126 /* ~ */, val_len - (port - val));
 		if(trans == NULL) {
 			LM_ERR("no second '~' in alias param value\n");
-			return RESULT_ERROR;
+			ret = RESULT_ERROR;
+			goto done;
 		}
 
 		received_port_len = trans - port;
