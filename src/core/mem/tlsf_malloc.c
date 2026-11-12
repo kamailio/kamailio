@@ -1501,295 +1501,49 @@ int tlsf_malloc_init_pkg_manager(void)
 	return pkg_init_api(&ma);
 }
 
-/* SHM - shared memory API*/
-static void *_tlsf_shm_pool = 0;
-static tlsf_t _tlsf_shm_block = 0;
-static gen_lock_t *_tlsf_shm_lock = 0;
-
-#define tlsf_shm_lock() lock_get(_tlsf_shm_lock)
-#define tlsf_shm_unlock() lock_release(_tlsf_shm_lock)
-
-/**
- *
- */
-void tlsf_shm_glock(void *qmp)
-{
-	lock_get(_tlsf_shm_lock);
-}
-
-/**
- *
- */
-void tlsf_shm_gunlock(void *qmp)
-{
-	lock_release(_tlsf_shm_lock);
-}
-
-/**
- *
- */
-void tlsf_shm_lock_destroy(void)
-{
-	if(_tlsf_shm_lock) {
-		DBG("destroying the shared memory lock\n");
-		lock_destroy(_tlsf_shm_lock); /* we don't need to dealloc it*/
-	}
-}
-
-/**
- * init the core lock
- */
-int tlsf_shm_lock_init(void)
-{
-	if(_tlsf_shm_lock) {
-		LM_DBG("shared memory lock initialized\n");
-		return 0;
-	}
-
-#ifdef DBG_TLSF_MALLOC
-	_tlsf_shm_lock = tlsf_malloc(_tlsf_shm_block, sizeof(gen_lock_t), _SRC_LOC_,
-			_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_);
-#else
-	_tlsf_shm_lock = tlsf_malloc(_tlsf_shm_block, sizeof(gen_lock_t));
-#endif
-
-	if(_tlsf_shm_lock == 0) {
-		LOG(L_CRIT, "could not allocate lock\n");
-		return -1;
-	}
-	if(lock_init(_tlsf_shm_lock) == 0) {
-		LOG(L_CRIT, "could not initialize lock\n");
-		return -1;
-	}
-	return 0;
-}
-
-/*SHM wrappers to sync the access to memory block*/
-#ifdef DBG_TLSF_MALLOC
-void *tlsf_shm_malloc(void *tlsfmp, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_malloc(tlsfmp, size, file, func, line, mname);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_mallocxz(void *tlsfmp, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_mallocxz(tlsfmp, size, file, func, line, mname);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_mallocxn(void *tlsfmp, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_mallocxn(tlsfmp, size, file, func, line, mname);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_realloc(void *tlsfmp, void *p, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_realloc(tlsfmp, p, size, file, func, line, mname);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_reallocxf(void *tlsfmp, void *p, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_reallocxf(tlsfmp, p, size, file, func, line, mname);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_resize(void *tlsfmp, void *p, size_t size, const char *file,
-		const char *func, unsigned int line, const char *mname)
-{
-	void *r;
-	tlsf_shm_lock();
-	if(p)
-		tlsf_free(tlsfmp, p, file, func, line, mname);
-	r = tlsf_malloc(tlsfmp, size, file, func, line, mname);
-	tlsf_shm_unlock();
-	return r;
-}
-void tlsf_shm_free(void *tlsfmp, void *p, const char *file, const char *func,
-		unsigned int line, const char *mname)
-{
-	tlsf_shm_lock();
-	tlsf_free(tlsfmp, p, file, func, line, mname);
-	tlsf_shm_unlock();
-}
-#else
-void *tlsf_shm_malloc(void *tlsfmp, size_t size)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_malloc(tlsfmp, size);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_mallocxz(void *tlsfmp, size_t size)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_mallocxz(tlsfmp, size);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_mallocxn(void *tlsfmp, size_t size)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_mallocxn(tlsfmp, size);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_realloc(void *tlsfmp, void *p, size_t size)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_realloc(tlsfmp, p, size);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_reallocxf(void *tlsfmp, void *p, size_t size)
-{
-	void *r;
-	tlsf_shm_lock();
-	r = tlsf_reallocxf(tlsfmp, p, size);
-	tlsf_shm_unlock();
-	return r;
-}
-void *tlsf_shm_resize(void *tlsfmp, void *p, size_t size)
-{
-	void *r;
-	tlsf_shm_lock();
-	if(p)
-		tlsf_free(tlsfmp, p);
-	r = tlsf_malloc(tlsfmp, size);
-	tlsf_shm_unlock();
-	return r;
-}
-void tlsf_shm_free(void *tlsfmp, void *p)
-{
-	tlsf_shm_lock();
-	tlsf_free(tlsfmp, p);
-	tlsf_shm_unlock();
-}
-#endif
-void tlsf_shm_status(void *tlsfmp)
-{
-	tlsf_shm_lock();
-	tlsf_status(tlsfmp);
-	tlsf_shm_unlock();
-}
-void tlsf_shm_info(void *tlsfmp, struct mem_info *info)
-{
-	tlsf_shm_lock();
-	tlsf_meminfo(tlsfmp, info);
-	tlsf_shm_unlock();
-}
-unsigned long tlsf_shm_available(void *tlsfmp)
-{
-	unsigned long r;
-	tlsf_shm_lock();
-	r = tlsf_available(tlsfmp);
-	tlsf_shm_unlock();
-	return r;
-}
-void tlsf_shm_sums(void *tlsfmp)
-{
-	tlsf_shm_lock();
-	tlsf_sums(tlsfmp);
-	tlsf_shm_unlock();
-}
-void tlsf_shm_mod_get_stats(void *qmp, void **qm_rootp)
-{
-	tlsf_shm_lock();
-	tlsf_mod_get_stats(qmp, qm_rootp);
-	tlsf_shm_unlock();
-}
-void tlsf_shm_mod_free_stats(void *qm_rootp)
-{
-	tlsf_mod_free_stats(qm_rootp);
-}
-
-
-/**
- * \brief Destroy memory pool
- */
-void tlsf_malloc_destroy_shm_manager(void)
-{
-	tlsf_shm_lock_destroy();
-	/*shm pool from core - nothing to do*/
-	_tlsf_shm_pool = 0;
-	_tlsf_shm_block = 0;
-}
-
 /**
  * \brief Init memory pool
  */
 int tlsf_malloc_init_shm_manager(void)
 {
-	sr_shm_api_t ma;
-	_tlsf_shm_pool = shm_core_get_pool();
-	if(_tlsf_shm_pool) {
-		_tlsf_shm_block = tlsf_create_with_pool(_tlsf_shm_pool, shm_mem_size);
-		if(!_tlsf_shm_block) {
-			LM_CRIT("could not create tlsf shm memory pool\n");
-			fprintf(stderr,
-					"could not create tlsf shm memory pool: %ld bytes\n",
-					shm_mem_size);
+	unsigned int i;
+	unsigned int count = shm_core_get_pool_count();
+	sr_shm_api_t *ma = calloc(count, sizeof(*ma));
+	if(ma == NULL)
+		return -1;
+	for(i = 0; i < count; i++) {
+		ma[i].mem_pool = shm_core_get_pool(i);
+		if(ma[i].mem_pool)
+			ma[i].mem_block = tlsf_create_with_pool(
+					ma[i].mem_pool, shm_core_get_pool_size(i));
+		if(ma[i].mem_block == NULL) {
+			LM_CRIT("could not initialize tlsf shm memory block %u\n", i);
+			free(ma);
 			return -1;
 		}
-	} else {
-		LOG(L_CRIT, "could not initialize tlsf shm memory pool\n");
-		fprintf(stderr, "Too much tlsf shm memory demanded: %ld bytes\n",
-				shm_mem_size);
-		return -1;
+		ma[i].mname = _tlsf_mem_name;
+		ma[i].xmalloc = tlsf_malloc;
+		ma[i].xmallocxz = tlsf_mallocxz;
+		ma[i].xmallocxn = tlsf_mallocxn;
+		ma[i].xmalloc_unsafe = tlsf_malloc;
+		ma[i].xfree = tlsf_free;
+		ma[i].xfree_unsafe = tlsf_free;
+		ma[i].xrealloc = tlsf_realloc;
+		ma[i].xreallocxf = tlsf_reallocxf;
+		ma[i].xstatus = tlsf_status;
+		ma[i].xinfo = tlsf_meminfo;
+		ma[i].xavailable = tlsf_available;
+		ma[i].xsums = tlsf_sums;
+		ma[i].xmodstats = tlsf_mod_get_stats;
+		ma[i].xfmodstats = tlsf_mod_free_stats;
 	}
 
-	memset(&ma, 0, sizeof(sr_shm_api_t));
-	ma.mname = _tlsf_mem_name;
-	ma.mem_pool = _tlsf_shm_pool;
-	ma.mem_block = _tlsf_shm_block;
-	ma.xmalloc = tlsf_shm_malloc;
-	ma.xmallocxz = tlsf_shm_mallocxz;
-	ma.xmallocxn = tlsf_shm_mallocxn;
-	ma.xmalloc_unsafe = tlsf_malloc;
-	ma.xfree = tlsf_shm_free;
-	ma.xfree_unsafe = tlsf_free;
-	ma.xrealloc = tlsf_shm_realloc;
-	ma.xreallocxf = tlsf_shm_reallocxf;
-	ma.xresize = tlsf_shm_resize;
-	ma.xstatus = tlsf_shm_status;
-	ma.xinfo = tlsf_shm_info;
-	ma.xavailable = tlsf_shm_available;
-	ma.xsums = tlsf_shm_sums;
-	ma.xdestroy = tlsf_malloc_destroy_shm_manager;
-	ma.xmodstats = tlsf_shm_mod_get_stats;
-	ma.xfmodstats = tlsf_shm_mod_free_stats;
-	ma.xglock = tlsf_shm_glock;
-	ma.xgunlock = tlsf_shm_gunlock;
-
-	if(shm_init_api(&ma) < 0) {
+	if(shm_init_api(ma, count) < 0) {
 		LM_ERR("cannot initialize the core shm api\n");
+		free(ma);
 		return -1;
 	}
-	if(tlsf_shm_lock_init() < 0) {
-		LM_ERR("cannot initialize the core shm lock\n");
-		return -1;
-	}
+	free(ma);
 	return 0;
 }
 
