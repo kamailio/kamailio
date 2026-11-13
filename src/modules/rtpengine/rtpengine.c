@@ -5758,7 +5758,8 @@ static int rtpengine_subscribe_request_wrap(
 	str *viabranch = NULL;
 	bencode_buffer_t bencbuf;
 	bencode_item_t *dict;
-	str ret_body, to_tag = {"", 0};
+	str ret_body = {NULL, 0}, to_tag = {"", 0};
+	int ret = -1;
 
 	pv_spec_t *pvs = NULL;
 	pv_value_t dst_val;
@@ -5780,7 +5781,7 @@ static int rtpengine_subscribe_request_wrap(
 	// Extract SDP body from the RTPEngine response
 	if(!bencode_dictionary_get_str_dup(dict, "sdp", &ret_body)) {
 		LM_ERR("failed to extract sdp body from proxy reply\n");
-		return -1;
+		goto done;
 	}
 
 	if(sdp_spv != NULL && sdp_spv->s != NULL && sdp_spv->len > 0) {
@@ -5789,7 +5790,7 @@ static int rtpengine_subscribe_request_wrap(
 		dst_val.rs.len = ret_body.len;
 		if(pv_set_spec_value(msg, pvs, 0, &dst_val) != 0) {
 			LM_ERR("failed to set sdp AVP\n");
-			return -1;
+			goto done;
 		}
 		LM_DBG("Set sdp %.*s AVP to %.*s\n", sdp_spv->len, sdp_spv->s,
 				ret_body.len, ret_body.s);
@@ -5798,7 +5799,7 @@ static int rtpengine_subscribe_request_wrap(
 	// Extract and allocate a new to-tag from the RTPEngine response
 	if(!bencode_dictionary_get_str(dict, "to-tag", &to_tag)) {
 		LM_ERR("failed to extract to-tag from proxy reply\n");
-		return -1;
+		goto done;
 	}
 	if(to_tag_spv != NULL && to_tag_spv->s != NULL && to_tag_spv->len > 0) {
 		pvs = pv_cache_get(to_tag_spv);
@@ -5806,7 +5807,7 @@ static int rtpengine_subscribe_request_wrap(
 		dst_val.rs.len = to_tag.len;
 		if(pv_set_spec_value(msg, pvs, 0, &dst_val) != 0) {
 			LM_ERR("failed to set to_tag AVP\n");
-			return -1;
+			goto done;
 		}
 		LM_DBG("Set to_tag %.*s AVP to %.*s\n", to_tag_spv->len, to_tag_spv->s,
 				to_tag.len, to_tag.s);
@@ -5817,9 +5818,15 @@ static int rtpengine_subscribe_request_wrap(
 				stream_xavp, bencode_dictionary_get(dict, "tag-medias"));
 	}
 
+	ret = 1;
+
+done:
+	// the sdp copy is pkg memory owned here: pv_set_spec_value() copies it
+	if(ret_body.s)
+		pkg_free(ret_body.s);
 	// Free the bencode buffer
 	bencode_buffer_free(bencode_item_buffer(dict));
-	return 1;
+	return ret;
 }
 
 
