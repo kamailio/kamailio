@@ -45,6 +45,7 @@
 #include "../../core/parser/parse_via.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_refer_to.h"
+#include "../../core/utils/sruid.h"
 #include "tps_sn.h"
 
 
@@ -54,6 +55,7 @@
 extern int _tps_param_mask_callid;
 extern int _tps_key_location;
 extern str _tps_cparam_name;
+extern sruid_t _tps_sruid;
 extern int _tps_rr_update;
 extern int _tps_header_mode;
 extern unsigned int _tps_methods_update_time;
@@ -522,13 +524,11 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int key_location)
 		tuuid = msg->parsed_uri.user;
 	}
 
-	if(memcmp(tuuid.s, "atpsh-", 6) == 0) {
+	if((tuuid.s[0] == 'a' || tuuid.s[0] == 'b') && tuuid.s[5] == '-'
+			&& memcmp(tuuid.s + 1, _tps_sruid.buf, 4) == 0) {
 		ptsd->a_uuid = tuuid;
-		return 0;
-	}
-	if(memcmp(tuuid.s, "btpsh-", 6) == 0) {
-		ptsd->a_uuid = tuuid;
-		ptsd->b_uuid = tuuid;
+		if(tuuid.s[0] == 'b')
+			ptsd->b_uuid = tuuid;
 		return 0;
 	}
 
