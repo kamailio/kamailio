@@ -153,6 +153,8 @@ int load_tm(struct tm_binds *tmb)
 	tmb->get_on_branch = get_on_branch;
 	tmb->get_on_reply = get_on_reply;
 	tmb->get_on_branch_failure = get_on_branch_failure;
+	tmb->t_reply_lock = tm_reply_mutex_lock;
+	tmb->t_reply_unlock = tm_reply_mutex_unlock;
 	return 1;
 }
 
