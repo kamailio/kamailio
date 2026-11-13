@@ -68,7 +68,10 @@ Chapter 1. Admin Guide
 3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * none.
+     * json - its API is used to parse the JSON payload.
+     * presence - its API is used to store presentity updates. The
+       presence module must be configured with a database, or for
+       memory-only operation with “publ_cache=2” and “subs_db_mode=0”.
 
 3.2. External Libraries or Applications
 
