@@ -178,8 +178,13 @@ int pua_json_publish_presence_to_presentity(struct json_object *json_obj)
 	presence_body.s = body;
 	presence_body.len = len;
 
-	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from,
-			&presence_body, expires, 1, 1);
+	if(pua_json_update_presentity(&event, &from_realm, &from_user, &callid,
+			   &from, &presence_body, expires, 1, 1)
+			< 0) {
+		LM_ERR("failed to update presence presentity\n");
+		ret = -1;
+		goto error;
+	}
 
 error:
 
@@ -249,8 +254,13 @@ int pua_json_publish_mwi_to_presentity(struct json_object *json_obj)
 	mwi_body.s = body;
 	mwi_body.len = len;
 
-	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from,
-			&mwi_body, expires, 1, 1);
+	if(pua_json_update_presentity(&event, &from_realm, &from_user, &callid,
+			   &from, &mwi_body, expires, 1, 1)
+			< 0) {
+		LM_ERR("failed to update message-summary presentity\n");
+		ret = -1;
+		goto error;
+	}
 
 error:
 
@@ -446,8 +456,13 @@ int pua_json_publish_dialoginfo_to_presentity(struct json_object *json_obj)
 	dialoginfo_body.s = body;
 	dialoginfo_body.len = len;
 
-	pua_json_update_presentity(&event, &pres_realm, &pres_user, &raw_callid,
-			&sender, &dialoginfo_body, expires, 1, 1);
+	if(pua_json_update_presentity(&event, &pres_realm, &pres_user, &raw_callid,
+			   &sender, &dialoginfo_body, expires, 1, 1)
+			< 0) {
+		LM_ERR("failed to update dialog presentity\n");
+		ret = -1;
+		goto error;
+	}
 
 error:
 
@@ -519,8 +534,13 @@ int pua_json_publish_as_feature_to_presentity(struct json_object *json_obj)
 	as_feature_body.s = body;
 	as_feature_body.len = len;
 
-	pua_json_update_presentity(&event, &from_realm, &from_user, &callid, &from,
-			&as_feature_body, expires, 1, 1);
+	if(pua_json_update_presentity(&event, &from_realm, &from_user, &callid,
+			   &from, &as_feature_body, expires, 1, 1)
+			< 0) {
+		LM_ERR("failed to update as-feature-event presentity\n");
+		ret = -1;
+		goto error;
+	}
 
 error:
 
