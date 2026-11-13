@@ -1093,7 +1093,11 @@ route[CHARGING_CCR_REPLY]
     <section>
       <title>Killed calls (killed_calls)</title>
 
-      <para>Number of calls that were killed due to lack of credit.</para>
+      <para>Number of calls that were killed by the module: due to lack
+      of credit, because a CCR-Update timed out or failed and the
+      reservation was used up, or because the charging server sent an
+      Abort-Session-Request. A call is counted only if its dialog was
+      actually terminated, so a call is not counted twice.</para>
     </section>
   </section>
 </chapter>
