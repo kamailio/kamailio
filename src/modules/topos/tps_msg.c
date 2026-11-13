@@ -1111,12 +1111,14 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 {
 	tps_data_t mtsd;
 	tps_data_t stsd;
+	tps_data_t btsd;
 	str lkey;
 	str nuri;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
 	int use_branch = 0;
 	int dlg_found = 0;
+	int subscribe_notify = 0;
 	unsigned int metid = 0;
 	uint32_t up_mode = 0;
 	rr_t *srr = NULL;
@@ -1134,6 +1136,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
+	memset(&btsd, 0, sizeof(tps_data_t));
 
 	tps_unmask_callid(msg);
 
@@ -1174,11 +1177,16 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	}
 
 	metid = get_cseq(msg)->method_id;
+	subscribe_notify = ((metid & METHOD_NOTIFY) && stsd.s_method.len == 9
+						&& strncasecmp(stsd.s_method.s, "SUBSCRIBE", 9) == 0);
 	if((metid
 			   & (METHOD_BYE | METHOD_INFO | METHOD_PRACK | METHOD_UPDATE
 					   | METHOD_NOTIFY))
-			&& stsd.b_contact.len <= 0) {
-		/* no B-side contact, look for INVITE transaction record */
+			&& !subscribe_notify && stsd.b_contact.len <= 0) {
+		/* No B-side contact in an INVITE dialog: use its initial branch.
+		 * A NOTIFY in a SUBSCRIBE dialog can arrive before the 200 response
+		 * updates the B-side contact; its dialog A-side contact is already
+		 * usable and must not be replaced with transaction data. */
 		if(metid & (METHOD_BYE | METHOD_UPDATE | METHOD_NOTIFY)) {
 			/* detect direction - via from-tag */
 			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
@@ -1189,11 +1197,16 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			goto error;
 		}
 		mtsd.direction = direction;
-		memset(&stsd, 0, sizeof(tps_data_t));
-		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1) < 0) {
+		ret = tps_storage_load_branch(msg, &mtsd, &btsd, 1);
+		if(ret < 0) {
 			goto error;
 		}
-		use_branch = 1;
+		if(ret == 0) {
+			stsd = btsd;
+			use_branch = 1;
+		} else {
+			LM_DBG("initial branch record not found - using dialog record\n");
+		}
 	} else {
 		/* detect direction - via from-tag */
 		if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
