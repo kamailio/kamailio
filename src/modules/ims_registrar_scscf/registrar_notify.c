@@ -364,9 +364,13 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 			   "URI from req URI\n");
 		presentity_uri = cscf_get_public_identity_from_requri(msg);
 	} else {
-		presentity_uri =
-				ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
-		if(presentity_uri.len == 0) {
+		res = ul.get_presentity_from_subscriber_dialog(
+				&callid, &ttag, &ftag, &presentity_uri);
+		if(res < 0) {
+			LM_ERR("Unable to copy presentity uri of subscriber dialog\n");
+			goto error;
+		}
+		if(res == 0) {
 			LM_ERR("Unable to get presentity uri from subscriber dialog with "
 				   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
 					callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
@@ -1103,7 +1107,8 @@ done:
  * @param msg - the SIP SUBSCRIBE message
  * @param str1 - not used
  * @param str2 - not used
- * @returns #CSCF_RETURN_TRUE if allowed, #CSCF_RETURN_FALSE if not, #CSCF_RETURN_ERROR on error
+ * @returns #CSCF_RETURN_TRUE if allowed, #CSCF_RETURN_FALSE if not, #CSCF_RETURN_ERROR on error,
+ * #CSCF_RETURN_SUBSCRIPTION_GONE if 481 was sent for a SUBSCRIBE within a dialog
  */
 int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 {
@@ -1201,13 +1206,23 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 			   "subscriber dialog\n");
 		//get the presentity uri from To Header
 		//cscf_get_to_uri(msg, &presentity_uri);
-		presentity_uri =
-				ul.get_presentity_from_subscriber_dialog(&callid, &ttag, &ftag);
-		if(presentity_uri.len == 0) {
-			LM_ERR("Unable to get presentity uri from subscriber dialog with "
-				   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
-					callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
+		res = ul.get_presentity_from_subscriber_dialog(
+				&callid, &ttag, &ftag, &presentity_uri);
+		if(res < 0) {
+			LM_ERR("Unable to copy presentity uri of subscriber dialog\n");
 			ret = CSCF_RETURN_FALSE;
+			goto doneorerror;
+		}
+		if(res == 0) {
+			LM_INFO("No subscription for dialog with callid <%.*s>, ttag "
+					"<%.*s> and ftag <%.*s> - replying 481\n",
+					callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
+			if(subscribe_reply(msg, 481, MSG_REG_SUBSCRIBE_GONE, 0, 0) < 0) {
+				LM_ERR("Unable to reply 481 to SUBSCRIBE\n");
+				ret = CSCF_RETURN_FALSE;
+			} else {
+				ret = CSCF_RETURN_SUBSCRIPTION_GONE;
+			}
 			goto doneorerror;
 		}
 		event_type = IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE;
@@ -2425,9 +2440,9 @@ int drop_subscription(struct sip_msg *msg, str *watcher_contact)
 		goto error;
 	}
 	// ftag and totag are swapped, since NOTIFY goes in the other direction
-	presentity_uri =
-			ul.get_presentity_from_subscriber_dialog(&callid, &ftag, &ttag);
-	if(presentity_uri.len == 0) {
+	if(ul.get_presentity_from_subscriber_dialog(
+			   &callid, &ftag, &ttag, &presentity_uri)
+			<= 0) {
 		LM_ERR("Unable to get presentity uri from subscriber dialog with "
 			   "callid <%.*s>, ttag <%.*s> and ftag <%.*s>\n",
 				callid.len, callid.s, ttag.len, ttag.s, ftag.len, ftag.s);
