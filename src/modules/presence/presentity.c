@@ -2587,6 +2587,20 @@ int _api_update_presentity(str *event, str *realm, str *user, str *etag,
 	pres_ev_t *ev = NULL;
 	char *sphere = NULL;
 
+	if(publ_cache_mode == PS_PCACHE_RECORD) {
+		if(ps_ptable_get() == NULL) {
+			LM_ERR("presentity record cache is not initialized\n");
+			return -1;
+		}
+	} else if(pa_db == NULL || pa_dbf.use_table == NULL) {
+		LM_ERR("presentity database is not initialized\n");
+		return -1;
+	}
+	if(new_t && pres_sruid.out == NULL) {
+		LM_ERR("presentity record uid generator is not initialized\n");
+		return -1;
+	}
+
 	ev = contains_event(event, NULL);
 	if(ev == NULL) {
 		LM_ERR("wrong event parameter\n");
