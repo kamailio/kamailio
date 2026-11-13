@@ -45,7 +45,17 @@
 				<itemizedlist>
 					<listitem>
 						<para>
-							<emphasis>none</emphasis>.
+							<emphasis>json</emphasis> - its API is used to parse the
+							JSON payload.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>presence</emphasis> - its API is used to store
+							presentity updates. The presence module must be configured
+							with a database, or for memory-only operation with
+							<quote>publ_cache=2</quote> and
+							<quote>subs_db_mode=0</quote>.
 						</para>
 					</listitem>
 				</itemizedlist>
@@ -102,4 +112,3 @@ event_route[xhttp:request] {
 
 
 </chapter>
-
