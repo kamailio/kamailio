@@ -5758,7 +5758,7 @@ static int rtpengine_subscribe_request_wrap(
 	str *viabranch = NULL;
 	bencode_buffer_t bencbuf;
 	bencode_item_t *dict;
-	str ret_body = {NULL, 0}, to_tag = {"", 0};
+	str ret_body, to_tag = {"", 0};
 	int ret = -1;
 
 	pv_spec_t *pvs = NULL;
@@ -5779,7 +5779,7 @@ static int rtpengine_subscribe_request_wrap(
 		return -1;
 
 	// Extract SDP body from the RTPEngine response
-	if(!bencode_dictionary_get_str_dup(dict, "sdp", &ret_body)) {
+	if(!bencode_dictionary_get_str(dict, "sdp", &ret_body)) {
 		LM_ERR("failed to extract sdp body from proxy reply\n");
 		goto done;
 	}
@@ -5821,9 +5821,6 @@ static int rtpengine_subscribe_request_wrap(
 	ret = 1;
 
 done:
-	// the sdp copy is pkg memory owned here: pv_set_spec_value() copies it
-	if(ret_body.s)
-		pkg_free(ret_body.s);
 	// Free the bencode buffer
 	bencode_buffer_free(bencode_item_buffer(dict));
 	return ret;
