@@ -1093,12 +1093,12 @@ int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)
 		}
 
 		contact = ((contact_body_t *)_m->contact->parsed)->contacts;
-		if(!contact) {
+		if(!contact && !st) {
 			LM_ERR("empty Contact:\n");
 			goto error;
 		}
 
-		if((use_ob == 0) && (reg_regid_mode == REG_REGID_OUTBOUND)) {
+		if(contact && (use_ob == 0) && (reg_regid_mode == REG_REGID_OUTBOUND)) {
 			if((get_supported(_m) & F_OPTION_TAG_OUTBOUND) && contact->reg_id) {
 				LM_WARN("Outbound used by UAC but not supported by edge "
 						"proxy\n");

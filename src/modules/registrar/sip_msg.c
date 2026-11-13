@@ -36,6 +36,7 @@
 #include "../../core/ut.h"
 #include "../../core/qvalue.h"
 #include "../../core/rand/kam_rand.h"
+#include "../../core/trim.h"
 #include "registrar.h" /* Module parameters */
 #include "regtime.h"   /* act_time */
 #include "rerrno.h"
@@ -158,6 +159,7 @@ int check_contacts(struct sip_msg *_m, int *_s)
 {
 	struct hdr_field *p;
 	contact_t *c;
+	str body;
 
 	*_s = 0;
 	/* Message without contacts is OK */
@@ -166,6 +168,13 @@ int check_contacts(struct sip_msg *_m, int *_s)
 
 	if(((contact_body_t *)_m->contact->parsed)->star == 1) {
 		/* The first Contact HF is star */
+		body = _m->contact->body;
+		trim(&body);
+		if(body.len != 1 || body.s[0] != '*') {
+			LM_WARN("star contact cannot be mixed with other contacts\n");
+			rerrno = R_STAR_CONT;
+			return 1;
+		}
 		/* Expires must be zero */
 		if(get_expires_hf(_m) != 0) {
 			LM_WARN("expires must be 0 for star contact\n");
