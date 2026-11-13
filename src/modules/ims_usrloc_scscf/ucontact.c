@@ -163,6 +163,10 @@ ucontact_t *new_ucontact(
 		if(shm_str_dup(&c->user_agent, _ci->user_agent) < 0)
 			goto error;
 	}
+	if(_ci->private_identity && _ci->private_identity->len > 0) {
+		if(shm_str_dup(&c->private_identity, _ci->private_identity) < 0)
+			goto error;
+	}
 	if(_aor && _aor->len > 0) {
 		if(shm_str_dup(&c->aor, _aor) < 0)
 			goto error;
@@ -202,6 +206,8 @@ error:
 		shm_free(c->received.s);
 	if(c->user_agent.s)
 		shm_free(c->user_agent.s);
+	if(c->private_identity.s)
+		shm_free(c->private_identity.s);
 	if(c->callid.s)
 		shm_free(c->callid.s);
 	if(c->c.s)
@@ -233,6 +239,8 @@ void free_ucontact(ucontact_t *_c)
 		shm_free(_c->received.s);
 	if(_c->user_agent.s)
 		shm_free(_c->user_agent.s);
+	if(_c->private_identity.s)
+		shm_free(_c->private_identity.s);
 	if(_c->callid.s)
 		shm_free(_c->callid.s);
 	if(_c->c.s)
@@ -316,6 +324,8 @@ void print_ucontact(FILE *_f, ucontact_t *_c)
 	fprintf(_f, "\t\tCSeq      : %d\n", _c->cseq);
 	fprintf(_f, "\t\tUser-Agent: '%.*s'\n", _c->user_agent.len,
 			ZSW(_c->user_agent.s));
+	fprintf(_f, "\t\tIMPI      : '%.*s'\n", _c->private_identity.len,
+			ZSW(_c->private_identity.s));
 	fprintf(_f, "\t\treceived  : '%.*s'\n", _c->received.len,
 			ZSW(_c->received.s));
 	fprintf(_f, "\t\tPath      : '%.*s'\n", _c->path.len, ZSW(_c->path.s));
@@ -365,6 +375,11 @@ int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci)
      * per ucontact (set at insert time)  -bogdan */
 
 	update_str(&_c->user_agent, _ci->user_agent);
+
+	/* a caller that does not know the IMPI leaves the stored one */
+	if(_ci->private_identity && _ci->private_identity->len > 0) {
+		update_str(&_c->private_identity, _ci->private_identity);
+	}
 
 	if(_ci->received.s && _ci->received.len) {
 		update_str(&_c->received, &_ci->received);

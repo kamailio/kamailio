@@ -505,6 +505,7 @@
 		<column><field>user_agent</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_DATETIME</type></column>
 		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>private_identity</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of impu table-->
 	<db_table id="impu">
@@ -3143,6 +3144,7 @@
 				<col><field>user_agent</field></col>
 				<col><field>expires</field></col>
 				<col><field>callid</field></col>
+				<col><field>private_identity</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3156,6 +3158,7 @@
 				<col><field>user_agent</field></col>
 				<col><field>expires</field></col>
 				<col><field>callid</field></col>
+				<col><field>private_identity</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3172,6 +3175,7 @@
 				<col><field>user_agent</field></col>
 				<col><field>expires</field></col>
 				<col><field>callid</field></col>
+				<col><field>private_identity</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

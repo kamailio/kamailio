@@ -57,9 +57,12 @@
 
 /*! TS 23.380 4.6.2 restoration information the HSS handed back in an SAA:
  * the backed-up Contact (header field value, parameters included), its Path
- * and, if the HSS kept it, the REGISTER's Call-ID */
+ * and, if the HSS kept it, the REGISTER's Call-ID; impi is the private
+ * identity that registered the Contact (the User-Name of
+ * SCSCF-Restoration-Info), which need not be the one of the user profile */
 typedef struct restoration_info
 {
+	str impi;
 	str path;
 	str contact;
 	str callid;
@@ -78,8 +81,8 @@ int save(struct sip_msg *msg, char *str1, char *route, int _cflags);
 int unregister(struct sip_msg *_m, char *_d, char *_uri);
 
 int update_contacts(struct sip_msg *msg, udomain_t *_d, str *public_identity,
-		int assignment_type, ims_subscription **s, str *ccf1, str *ccf2,
-		str *ecf1, str *ecf2, contact_for_header_t **contact_header,
-		restoration_info_t *ri);
+		str *private_identity, int assignment_type, ims_subscription **s,
+		str *ccf1, str *ccf2, str *ecf1, str *ecf2,
+		contact_for_header_t **contact_header, restoration_info_t *ri);
 
 #endif /* SAVE_H */

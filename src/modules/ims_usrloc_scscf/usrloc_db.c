@@ -42,6 +42,8 @@ str cflags_col =
 		str_init(CFLAGS_COL); /*!< Name of column containing contact flags */
 str user_agent_col = str_init(
 		USER_AGENT_COL); /*!< Name of column containing user agent string */
+str private_identity_col = str_init(
+		PRIVATE_IDENTITY_COL); /*!< Name of column containing the IMPI */
 str received_col = str_init(
 		RECEIVED_COL); /*!< Name of column containing transport info of REGISTER */
 str path_col =
@@ -331,8 +333,8 @@ int db_insert_ucontact(impurecord_t *_r, ucontact_t *_c)
 	param_buf.len = 0;
 	char *format_name_and_body, *format_name_no_body;
 
-	db_key_t key[7];
-	db_val_t val[7];
+	db_key_t key[8];
+	db_val_t val[8];
 
 	LM_DBG("DB: inserting ucontact [%.*s]\n", _c->c.len, _c->c.s);
 
@@ -375,6 +377,7 @@ int db_insert_ucontact(impurecord_t *_r, ucontact_t *_c)
 	key[4] = &received_col;
 	key[5] = &expires_col;
 	key[6] = &callid_col;
+	key[7] = &private_identity_col;
 
 	val[0].type = DB1_STR;
 	val[0].nul = 0;
@@ -408,12 +411,20 @@ int db_insert_ucontact(impurecord_t *_r, ucontact_t *_c)
 	val[6].nul = 0;
 	val[6].val.str_val = _c->callid;
 
+	val[7].type = DB1_STR;
+	if(_c->private_identity.len > 0) {
+		val[7].nul = 0;
+		val[7].val.str_val = _c->private_identity;
+	} else {
+		val[7].nul = 1;
+	}
+
 	if(ul_dbf.use_table(ul_dbh, &contact_table) != 0) {
 		LM_ERR("Unable to use table [%.*s]\n", contact_table.len,
 				contact_table.s);
 		return -1;
 	}
-	if(ul_dbf.insert_update(ul_dbh, key, val, 7) != 0) {
+	if(ul_dbf.insert_update(ul_dbh, key, val, 8) != 0) {
 		LM_ERR("Failed to insert/update contact record for [%.*s]\n", _c->c.len,
 				_c->c.s);
 		return -1;
@@ -603,7 +614,7 @@ int int_to_str_len(int i)
 
 static inline int dbrow2contact(db_val_t *val, ucontact_info_t *ci)
 {
-	static str path, user_agent, callid, params;
+	static str path, user_agent, callid, params, private_identity;
 	param_hooks_t hooks;
 
 	// Set ci to 0:
@@ -649,6 +660,13 @@ static inline int dbrow2contact(db_val_t *val, ucontact_info_t *ci)
 		callid.len = strlen(callid.s);
 	}
 	ci->callid = &callid;
+
+	/* IMPI - NULL in a row written before the column existed */
+	if(!VAL_NULL(val + 7)) {
+		private_identity.s = (char *)VAL_STRING(val + 7);
+		private_identity.len = strlen(private_identity.s);
+		ci->private_identity = &private_identity;
+	}
 
 	return 0;
 }
@@ -821,7 +839,8 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 
 	char *p_contact = "SELECT "
 					  "c.contact,c.params,c.path,c.user_agent,c.received,c."
-					  "expires,c.callid FROM impu_contact m LEFT JOIN contact "
+					  "expires,c.callid,c.private_identity FROM impu_contact m "
+					  "LEFT JOIN contact "
 					  "c ON c.id=m.contact_id WHERE m.impu_id=";
 
 	char *p_subscriber =
