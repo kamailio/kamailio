@@ -854,12 +854,40 @@ reg_uac_t *reg_ht_get_byuuid(str *uuid)
 }
 
 /**
+ * match a record on the hash of the username, the username and, if set,
+ * the domain
+ */
+static int reg_match_user(
+		reg_uac_t *r, unsigned int hash, str *user, str *domain)
+{
+	if((r->h_user != hash) || (r->l_username.len != user->len)
+			|| (strncmp(r->l_username.s, user->s, user->len) != 0)) {
+		return 0;
+	}
+	if(domain != NULL && domain->s != NULL) {
+		if((r->l_domain.len != domain->len)
+				|| (strncmp(r->l_domain.s, domain->s, domain->len) != 0)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/**
+ * Return the record matching the username (and domain), with the lock of
+ * its uuid slot held - same lock as the one held by reg_ht_get_byuuid().
  *
+ * A record is linked in two slots (by uuid and by username) and has a single
+ * 'lock' field used by the callers to release it. The record must be always
+ * returned with the same lock held, otherwise two concurrent lookups of the
+ * same record by different keys overwrite each other's 'lock' value, both
+ * release the same slot and the other one stays locked forever.
  */
 reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 {
 	unsigned int hash;
 	unsigned int slot;
+	unsigned int uslot;
 	reg_item_t *it = NULL;
 
 	if(_reg_htable == NULL) {
@@ -872,23 +900,36 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 	lock_get(&_reg_htable->entries[slot].lock);
 	it = _reg_htable->entries[slot].byuser;
 	while(it) {
-		if((it->r->h_user == hash) && (it->r->l_username.len == user->len)
-				&& (strncmp(it->r->l_username.s, user->s, user->len) == 0)) {
-			if(domain != NULL && domain->s != NULL) {
-				if((it->r->l_domain.len == domain->len)
-						&& (strncmp(it->r->l_domain.s, domain->s, domain->len)
-								== 0)) {
-					it->r->lock = &_reg_htable->entries[slot].lock;
-					return it->r;
-				}
-			} else {
-				it->r->lock = &_reg_htable->entries[slot].lock;
-				return it->r;
-			}
+		if(reg_match_user(it->r, hash, user, domain)) {
+			break;
 		}
 		it = it->next;
 	}
+	if(it == NULL) {
+		lock_release(&_reg_htable->entries[slot].lock);
+		return NULL;
+	}
+	uslot = reg_get_entry(it->r->h_uuid, _reg_htable->htsize);
+	if(uslot == slot) {
+		it->r->lock = &_reg_htable->entries[slot].lock;
+		return it->r;
+	}
+
+	/* switch to the lock of the uuid slot - the two locks are not held at
+	 * the same time (reg_ht_rm() takes them in uuid, username order), so
+	 * the record has to be searched again in the uuid slot, it could have
+	 * been removed in between */
 	lock_release(&_reg_htable->entries[slot].lock);
+	lock_get(&_reg_htable->entries[uslot].lock);
+	it = _reg_htable->entries[uslot].byuuid;
+	while(it) {
+		if(reg_match_user(it->r, hash, user, domain)) {
+			it->r->lock = &_reg_htable->entries[uslot].lock;
+			return it->r;
+		}
+		it = it->next;
+	}
+	lock_release(&_reg_htable->entries[uslot].lock);
 	return NULL;
 }
 
