@@ -44,6 +44,22 @@ AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
     <para>For aes-gcm and aes-gmac the 128 bit key is CK, respectively IK, and
     the salt is derived from CK and IK as specified in TS 33.203 Annex I.
     The kernel must provide the gcm crypto module.</para>
+
+    <para>When ims_usrloc_pcscf writes its contacts through to the database
+    and preloads them (db_mode 1), the IPSec tunnels survive a P-CSCF restart
+    along with the registrations: the SAs and policies are not flushed at
+    startup and shutdown, a tunnel still installed in the network namespace is
+    taken over as it is, one that is missing - all of them after a restart
+    into a new namespace - is installed again from the contact's security
+    parameters, their SPI pairs are marked used, and SAs and policies no
+    preloaded contact accounts for are removed. The UEs keep their
+    registrations and tunnels across the restart. This needs the same
+    ipsec_listen_addr as before the restart: the UE's SAs are bound to it.
+    The restore runs in the first SIP worker, and the others are only started
+    once it is done: unless the configuration sets wait_worker1_mode, the
+    module enables it, with a wait_worker1_time of at least 60 seconds.
+    With any other db_mode the SAs and policies are flushed at startup and
+    shutdown.</para>
   </section>
 
   <section>

@@ -54,7 +54,7 @@
 /*
  * Module parameters
  */
-#define UL_TABLE_VERSION 1004
+#define UL_TABLE_VERSION 9
 
 extern int timer_interval;
 extern int desc_time_order;
@@ -62,5 +62,6 @@ extern int cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
 extern int db_mode;
+extern str db_url;
 
 #endif /* UL_MOD_H */

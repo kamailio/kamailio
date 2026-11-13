@@ -65,6 +65,7 @@ void free_ppublic(ppublic_t *_p);
 int new_pcontact(struct udomain *_d, str *_contact, struct pcontact_info *_ci,
 		struct pcontact **_c);
 void free_pcontact(pcontact_t *_c);
+void free_security(security_t *_p);
 void print_pcontact(FILE *_f, pcontact_t *_r);
 ppublic_t *mem_insert_ppublic(
 		pcontact_t *_r /*, str* _c, ucontact_info_t* _ci*/);

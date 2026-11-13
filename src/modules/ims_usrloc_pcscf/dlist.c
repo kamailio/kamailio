@@ -58,6 +58,7 @@
 #include "udomain.h" /* new_udomain, free_udomain */
 #include "usrloc.h"
 #include "utime.h"
+#include "usrloc_db.h"
 #include "ims_usrloc_pcscf_mod.h"
 #include "pcontact.h"
 
@@ -215,6 +216,34 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 	return get_all_mem_ucontacts(buf, len, flags, part_idx, part_max);
 }
 
+/*!
+ * \brief Call f on every in-memory contact of every domain
+ *
+ * f runs with the contact's slot locked, so it must not lock the domain or
+ * insert or delete contacts.
+ * \param f function called for each contact
+ * \param param passed to f untouched
+ * \return number of contacts visited
+ */
+int walk_pcontacts(pcontact_walk_f f, void *param)
+{
+	dlist_t *p;
+	pcontact_t *c;
+	int i, n = 0;
+
+	for(p = root; p != NULL; p = p->next) {
+		for(i = 0; i < p->d->size; i++) {
+			lock_ulslot(p->d, i);
+			for(c = p->d->table[i].first; c != NULL; c = c->next) {
+				f(p->d, c, param);
+				n++;
+			}
+			unlock_ulslot(p->d, i);
+		}
+	}
+	return n;
+}
+
 static inline int new_dlist(str *_n, dlist_t **_d)
 {
 	dlist_t *ptr;
@@ -271,7 +300,9 @@ int get_udomain(const char *_n, udomain_t **_d)
 int register_udomain(const char *_n, udomain_t **_d)
 {
 	dlist_t *d;
+	db1_con_t *con;
 	str s;
+	int ret;
 
 	s.s = (char *)_n;
 	s.len = strlen(_n);
@@ -279,6 +310,22 @@ int register_udomain(const char *_n, udomain_t **_d)
 	if(find_dlist(&s, &d) == 0) {
 		*_d = d->d;
 		return 0;
+	}
+
+	/* the domain's table has to have the columns this version reads and
+	 * writes: say so here rather than fail every query on them later */
+	if(db_mode != NO_DB) {
+		con = ul_dbf.init(&db_url);
+		if(!con) {
+			LM_ERR("failed to open database connection\n");
+			return -1;
+		}
+		ret = db_check_table_version(&ul_dbf, con, &s, UL_TABLE_VERSION);
+		ul_dbf.close(con);
+		if(ret < 0) {
+			DB_TABLE_VERSION_ERROR(s);
+			return -1;
+		}
 	}
 
 	if(new_dlist(&s, &d) < 0) {

@@ -27,6 +27,7 @@
 #include "../../core/atomic_ops.h"
 #include "../../core/sr_module.h"
 #include "../../core/mod_fix.h"
+#include "../../core/globals.h"
 #include "../../modules/tm/tm_load.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
@@ -363,6 +364,18 @@ static int ipsec_add_listen_ifaces()
 }
 
 /*! \brief
+ * Whether the tunnels are kept across a restart rather than flushed.
+ */
+static int ipsec_keep_tunnels(void)
+{
+	return ul.db_mode == WRITE_THROUGH;
+}
+
+/* the least wait_worker1_time (us) the restore is given, unless
+ * wait_worker1_mode was set in the config already */
+#define IPSEC_RESTORE_WAIT_TIME 60000000
+
+/*! \brief
  * Initialize parent
  */
 static int mod_init(void)
@@ -396,7 +409,9 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(ipsec_cleanall() != 0) {
+	// When usrloc preloads its contacts what is installed belongs to them, and
+	// ipsec_restore_tunnels() sorts it out once they are in memory
+	if(!ipsec_keep_tunnels() && ipsec_cleanall() != 0) {
 		LM_ERR("Error ipsec tunnels during for module initialisation\n");
 		return -1;
 	}
@@ -424,6 +439,20 @@ static int mod_init(void)
 		return -1;
 	}
 	atomic_set(ipsec_reconfig_flag, 0);
+
+	// The tunnels are restored in the first SIP worker (see child_init()).
+	// The others must not create tunnels or hand out SPI pairs until it is
+	// done, or it could flush their tunnels or find the pairs it reserves
+	// taken: have the core fork them only then.
+	if(ipsec_keep_tunnels() && ksr_wait_worker1_mode == 0) {
+		ksr_wait_worker1_mode = 1;
+		if(ksr_wait_worker1_time < IPSEC_RESTORE_WAIT_TIME) {
+			ksr_wait_worker1_time = IPSEC_RESTORE_WAIT_TIME;
+		}
+		LM_INFO("wait_worker1_mode enabled for the IPSec tunnel restore, "
+				"wait_worker1_time %d us\n",
+				ksr_wait_worker1_time);
+	}
 	ipsec_init_flag = 1;
 
 	return 0;
@@ -431,7 +460,7 @@ static int mod_init(void)
 
 static void mod_destroy(void)
 {
-	if(ipsec_cleanall() != 0) {
+	if(!ipsec_keep_tunnels() && ipsec_cleanall() != 0) {
 		LM_ERR("Error ipsec tunnels during for module cleanup\n");
 	}
 
@@ -446,6 +475,11 @@ static void mod_destroy(void)
 
 static int child_init(int rank)
 {
+	if(rank == PROC_SIPINIT && ipsec_keep_tunnels()
+			&& ipsec_restore_tunnels() != 0) {
+		LM_ERR("failed to restore IPSec tunnels\n");
+		return -1;
+	}
 	return 0;
 }
 
