@@ -318,20 +318,25 @@ void shm_core_destroy(void)
 /**
  *
  */
-static unsigned int shm_best_block(void)
+/* Return the most available block with its lock held. */
+static int shm_lock_best_block(size_t size)
 {
 	unsigned int i;
-	unsigned int best = 0;
+	int best = -1;
 	unsigned long available;
 	unsigned long best_available = 0;
 
 	for(i = 0; i < _shm_blocks_count; i++) {
 		lock_get(_shm_blocks[i].lock);
 		available = _shm_blocks[i].api.xavailable(_shm_blocks[i].api.mem_block);
-		lock_release(_shm_blocks[i].lock);
-		if(i == 0 || available > best_available) {
-			best = i;
+		if(available >= size && (best < 0 || available > best_available)) {
+			if(best >= 0) {
+				lock_release(_shm_blocks[best].lock);
+			}
+			best = (int)i;
 			best_available = available;
+		} else {
+			lock_release(_shm_blocks[i].lock);
 		}
 	}
 	return best;
@@ -347,64 +352,110 @@ static int shm_pointer_block(void *p)
 	return idx;
 }
 
+enum
+{
+	SHM_ALLOC_NORMAL,
+	SHM_ALLOC_ZERO,
+	SHM_ALLOC_NUL,
+	SHM_ALLOC_UNSAFE
+};
+
 #ifdef DBG_SR_MEMORY
+
+static void *shm_api_alloc_block(unsigned int i, int type, size_t size,
+		const char *file, const char *func, unsigned int line,
+		const char *mname)
+{
+	switch(type) {
+		case SHM_ALLOC_ZERO:
+			return _shm_blocks[i].api.xmallocxz(_shm_blocks[i].api.mem_block,
+					size, file, func, line, mname);
+		case SHM_ALLOC_NUL:
+			return _shm_blocks[i].api.xmallocxn(_shm_blocks[i].api.mem_block,
+					size, file, func, line, mname);
+		case SHM_ALLOC_UNSAFE:
+			return _shm_blocks[i].api.xmalloc_unsafe(
+					_shm_blocks[i].api.mem_block, size, file, func, line,
+					mname);
+		default:
+			return _shm_blocks[i].api.xmalloc(_shm_blocks[i].api.mem_block,
+					size, file, func, line, mname);
+	}
+}
+
+static void *shm_api_alloc(int type, size_t size, const char *file,
+		const char *func, unsigned int line, const char *mname)
+{
+	unsigned int j;
+	int i;
+	void *r;
+
+	i = shm_lock_best_block(size);
+	if(i < 0) {
+		return NULL;
+	}
+	r = shm_api_alloc_block(i, type, size, file, func, line, mname);
+	lock_release(_shm_blocks[i].lock);
+	if(r != NULL) {
+		return r;
+	}
+
+	/* Total free space can be sufficient while fragmentation prevents the
+	 * preferred block from satisfying the allocation. Try the other blocks. */
+	for(j = 0; j < _shm_blocks_count; j++) {
+		if(j == (unsigned int)i) {
+			continue;
+		}
+		lock_get(_shm_blocks[j].lock);
+		if(_shm_blocks[j].api.xavailable(_shm_blocks[j].api.mem_block)
+				>= size) {
+			r = shm_api_alloc_block(j, type, size, file, func, line, mname);
+		}
+		lock_release(_shm_blocks[j].lock);
+		if(r != NULL) {
+			return r;
+		}
+	}
+	return NULL;
+}
+
 static void *shm_api_malloc(void *mbp, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
-	unsigned int i = shm_best_block();
-	void *r;
-	lock_get(_shm_blocks[i].lock);
-	r = _shm_blocks[i].api.xmalloc(
-			_shm_blocks[i].api.mem_block, size, file, func, line, mname);
-	lock_release(_shm_blocks[i].lock);
-	return r;
+	return shm_api_alloc(SHM_ALLOC_NORMAL, size, file, func, line, mname);
 }
 
 static void *shm_api_mallocxz(void *mbp, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
-	unsigned int i = shm_best_block();
-	void *r;
-	lock_get(_shm_blocks[i].lock);
-	r = _shm_blocks[i].api.xmallocxz(
-			_shm_blocks[i].api.mem_block, size, file, func, line, mname);
-	lock_release(_shm_blocks[i].lock);
-	return r;
+	return shm_api_alloc(SHM_ALLOC_ZERO, size, file, func, line, mname);
 }
 
 static void *shm_api_mallocxn(void *mbp, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
-	unsigned int i = shm_best_block();
-	void *r;
-	lock_get(_shm_blocks[i].lock);
-	r = _shm_blocks[i].api.xmallocxn(
-			_shm_blocks[i].api.mem_block, size, file, func, line, mname);
-	lock_release(_shm_blocks[i].lock);
-	return r;
+	return shm_api_alloc(SHM_ALLOC_NUL, size, file, func, line, mname);
 }
 
 static void *shm_api_malloc_unsafe(void *mbp, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
-	unsigned int i = (_shm_blocks_count == 1) ? 0 : shm_best_block();
-	void *r;
-	if(_shm_blocks_count > 1) {
-		lock_get(_shm_blocks[i].lock);
+	if(_shm_blocks_count == 1) {
+		return _shm_blocks[0].api.xmalloc_unsafe(
+				_shm_blocks[0].api.mem_block, size, file, func, line, mname);
 	}
-	r = _shm_blocks[i].api.xmalloc_unsafe(
-			_shm_blocks[i].api.mem_block, size, file, func, line, mname);
-	if(_shm_blocks_count > 1) {
-		lock_release(_shm_blocks[i].lock);
-	}
-	return r;
+	return shm_api_alloc(SHM_ALLOC_UNSAFE, size, file, func, line, mname);
 }
 
 static void *shm_api_realloc(void *mbp, void *p, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
-	int i = p ? shm_pointer_block(p) : (int)shm_best_block();
+	int i;
 	void *r;
+	if(p == NULL) {
+		return shm_api_alloc(SHM_ALLOC_NORMAL, size, file, func, line, mname);
+	}
+	i = shm_pointer_block(p);
 	if(i < 0) {
 		return NULL;
 	}
@@ -419,8 +470,12 @@ static void *shm_api_reallocxf(void *mbp, void *p, size_t size,
 		const char *file, const char *func, unsigned int line,
 		const char *mname)
 {
-	int i = p ? shm_pointer_block(p) : (int)shm_best_block();
+	int i;
 	void *r;
+	if(p == NULL) {
+		return shm_api_alloc(SHM_ALLOC_NORMAL, size, file, func, line, mname);
+	}
+	i = shm_pointer_block(p);
 	if(i < 0) {
 		return NULL;
 	}
@@ -434,8 +489,12 @@ static void *shm_api_reallocxf(void *mbp, void *p, size_t size,
 static void *shm_api_resize(void *mbp, void *p, size_t size, const char *file,
 		const char *func, unsigned int line, const char *mname)
 {
-	int i = p ? shm_pointer_block(p) : (int)shm_best_block();
+	int i;
 	void *r;
+	if(p == NULL) {
+		return shm_api_alloc(SHM_ALLOC_NORMAL, size, file, func, line, mname);
+	}
+	i = shm_pointer_block(p);
 	if(i < 0) {
 		return NULL;
 	}
@@ -488,55 +547,90 @@ static void shm_api_free_unsafe(void *mbp, void *p, const char *file,
 	}
 }
 #else
+static void *shm_api_alloc_block(unsigned int i, int type, size_t size)
+{
+	switch(type) {
+		case SHM_ALLOC_ZERO:
+			return _shm_blocks[i].api.xmallocxz(
+					_shm_blocks[i].api.mem_block, size);
+		case SHM_ALLOC_NUL:
+			return _shm_blocks[i].api.xmallocxn(
+					_shm_blocks[i].api.mem_block, size);
+		case SHM_ALLOC_UNSAFE:
+			return _shm_blocks[i].api.xmalloc_unsafe(
+					_shm_blocks[i].api.mem_block, size);
+		default:
+			return _shm_blocks[i].api.xmalloc(
+					_shm_blocks[i].api.mem_block, size);
+	}
+}
+
+static void *shm_api_alloc(int type, size_t size)
+{
+	unsigned int j;
+	int i;
+	void *r;
+
+	i = shm_lock_best_block(size);
+	if(i < 0) {
+		return NULL;
+	}
+	r = shm_api_alloc_block(i, type, size);
+	lock_release(_shm_blocks[i].lock);
+	if(r != NULL) {
+		return r;
+	}
+
+	for(j = 0; j < _shm_blocks_count; j++) {
+		if(j == (unsigned int)i) {
+			continue;
+		}
+		lock_get(_shm_blocks[j].lock);
+		if(_shm_blocks[j].api.xavailable(_shm_blocks[j].api.mem_block)
+				>= size) {
+			r = shm_api_alloc_block(j, type, size);
+		}
+		lock_release(_shm_blocks[j].lock);
+		if(r != NULL) {
+			return r;
+		}
+	}
+	return NULL;
+}
+
 static void *shm_api_malloc(void *mbp, size_t size)
 {
-	unsigned int i = shm_best_block();
-	void *r;
-	lock_get(_shm_blocks[i].lock);
-	r = _shm_blocks[i].api.xmalloc(_shm_blocks[i].api.mem_block, size);
-	lock_release(_shm_blocks[i].lock);
-	return r;
+	return shm_api_alloc(SHM_ALLOC_NORMAL, size);
 }
 
 static void *shm_api_mallocxz(void *mbp, size_t size)
 {
-	unsigned int i = shm_best_block();
-	void *r;
-	lock_get(_shm_blocks[i].lock);
-	r = _shm_blocks[i].api.xmallocxz(_shm_blocks[i].api.mem_block, size);
-	lock_release(_shm_blocks[i].lock);
-	return r;
+	return shm_api_alloc(SHM_ALLOC_ZERO, size);
 }
 
 static void *shm_api_mallocxn(void *mbp, size_t size)
 {
-	unsigned int i = shm_best_block();
-	void *r;
-	lock_get(_shm_blocks[i].lock);
-	r = _shm_blocks[i].api.xmallocxn(_shm_blocks[i].api.mem_block, size);
-	lock_release(_shm_blocks[i].lock);
-	return r;
+	return shm_api_alloc(SHM_ALLOC_NUL, size);
 }
 
 static void *shm_api_malloc_unsafe(void *mbp, size_t size)
 {
-	unsigned int i = (_shm_blocks_count == 1) ? 0 : shm_best_block();
-	void *r;
-	if(_shm_blocks_count > 1) {
-		lock_get(_shm_blocks[i].lock);
+	if(_shm_blocks_count == 1) {
+		return _shm_blocks[0].api.xmalloc_unsafe(
+				_shm_blocks[0].api.mem_block, size);
 	}
-	r = _shm_blocks[i].api.xmalloc_unsafe(_shm_blocks[i].api.mem_block, size);
-	if(_shm_blocks_count > 1) {
-		lock_release(_shm_blocks[i].lock);
-	}
-	return r;
+	return shm_api_alloc(SHM_ALLOC_UNSAFE, size);
 }
 
 #define SHM_REALLOC_WRAPPER(name, field)                                     \
 	static void *name(void *mbp, void *p, size_t size)                       \
 	{                                                                        \
-		int i = p ? shm_pointer_block(p) : (int)shm_best_block();            \
+		int i;                                                               \
 		void *r;                                                             \
+		if(p == NULL) {                                                      \
+			return shm_api_alloc(SHM_ALLOC_NORMAL, size);                    \
+		}                                                                    \
+		i = shm_pointer_block(p);                                            \
 		if(i < 0) {                                                          \
 			return NULL;                                                     \
 		}                                                                    \
@@ -550,8 +644,12 @@ SHM_REALLOC_WRAPPER(shm_api_reallocxf, xreallocxf)
 
 static void *shm_api_resize(void *mbp, void *p, size_t size)
 {
-	int i = p ? shm_pointer_block(p) : (int)shm_best_block();
+	int i;
 	void *r;
+	if(p == NULL) {
+		return shm_api_alloc(SHM_ALLOC_NORMAL, size);
+	}
+	i = shm_pointer_block(p);
 	if(i < 0) {
 		return NULL;
 	}
