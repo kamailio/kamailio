@@ -262,9 +262,9 @@ done:
 	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
 	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
-error:
 	create_uaa_return_code(result);
 
+error:
 	if(t)
 		tmb.unref_cell(t);
 	//free memory
