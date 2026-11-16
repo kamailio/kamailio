@@ -25,14 +25,14 @@
 
 #include "spi_gen.h"
 #include "spi_list.h"
-#include <pthread.h>
 #include "../../core/mem/shm_mem.h"
+#include "../../core/locking.h"
 
 #define MAX_HASH_SPI 10000
 
 typedef struct spi_generator
 {
-	pthread_mutex_t spis_mut;
+	gen_lock_t spis_lock;
 	spi_list_t used_spis[MAX_HASH_SPI];
 	spi_list_t free_spi;
 	uint32_t spi_val;
@@ -103,14 +103,13 @@ int init_spi_gen(uint32_t spi_start_val, uint32_t spi_range,
 		return 4;
 	}
 
-	if(pthread_mutex_init(&spi_data->spis_mut, NULL)) {
+	if(lock_init(&spi_data->spis_lock) == NULL) {
 		shm_free(spi_data);
+		spi_data = NULL;
 		return 5;
 	}
 
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
-		return 6;
-	}
+	lock_get(&spi_data->spis_lock);
 
 	for(j = 0; j < MAX_HASH_SPI; j++) {
 		spi_data->used_spis[j] = create_list();
@@ -124,10 +123,11 @@ int init_spi_gen(uint32_t spi_start_val, uint32_t spi_range,
 	spi_data->cport_next = spi_data->sport_next = 0;
 
 	if(init_free_spi() != 0) {
+		lock_release(&spi_data->spis_lock);
 		return 7;
 	}
 
-	pthread_mutex_unlock(&spi_data->spis_mut);
+	lock_release(&spi_data->spis_lock);
 
 	return 0;
 }
@@ -195,15 +195,12 @@ uint32_t acquire_spi(uint32_t *spi_cid, uint32_t *spi_sid, uint16_t *cport,
 		return 0;
 	}
 
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
-		LM_ERR("spi_data failed to lock\n");
-		return 0;
-	}
+	lock_get(&spi_data->spis_lock);
 
 	if(!spi_data->free_spi.head) {
 		LM_ERR("spi_data:%p spi_data->free_spi.head %p\n", spi_data,
 				spi_data->free_spi.head);
-		pthread_mutex_unlock(&spi_data->spis_mut);
+		lock_release(&spi_data->spis_lock);
 		return 0;
 	}
 
@@ -219,7 +216,7 @@ uint32_t acquire_spi(uint32_t *spi_cid, uint32_t *spi_sid, uint16_t *cport,
 	spi_remove_head(&spi_data->free_spi);
 	spi_add(&spi_data->used_spis[*spi_cid % MAX_HASH_SPI], *spi_cid, *spi_sid,
 			*cport, *sport);
-	pthread_mutex_unlock(&spi_data->spis_mut);
+	lock_release(&spi_data->spis_lock);
 
 	LM_DBG("spi acquired spi_cid:%u spi_sid:%u sport:%u cport:%u \n", *spi_cid,
 			*spi_sid, *sport, *cport);
@@ -237,9 +234,7 @@ int release_spi(
 		return 1;
 	}
 
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
-		return 1;
-	}
+	lock_get(&spi_data->spis_lock);
 
 	// if we successfully remove from used spi we will insert into free spi
 	if(spi_remove(&spi_data->used_spis[spi_cid % MAX_HASH_SPI], spi_cid,
@@ -247,7 +242,7 @@ int release_spi(
 		spi_add(&spi_data->free_spi, spi_cid, spi_sid, cport, sport);
 	}
 
-	pthread_mutex_unlock(&spi_data->spis_mut);
+	lock_release(&spi_data->spis_lock);
 
 	return 0;
 }
@@ -265,9 +260,7 @@ int reserve_spi(
 		return -1;
 	}
 
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
-		return -1;
-	}
+	lock_get(&spi_data->spis_lock);
 
 	// spi_remove() is 1 when it removed the pair, and 0 or -1 when it is not
 	// in the list
@@ -280,7 +273,7 @@ int reserve_spi(
 		ret = 1;
 	}
 
-	pthread_mutex_unlock(&spi_data->spis_mut);
+	lock_release(&spi_data->spis_lock);
 
 	LM_DBG("spi %s spi_cid:%u spi_sid:%u cport:%u sport:%u\n",
 			ret == 0   ? "reserved"
@@ -299,9 +292,7 @@ int spi_set_owner(uint32_t spi_cid, uint32_t spi_sid, uint16_t owner)
 		return 1;
 	}
 
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
-		return 1;
-	}
+	lock_get(&spi_data->spis_lock);
 
 	n = spi_find(
 			&spi_data->used_spis[spi_cid % MAX_HASH_SPI], spi_cid, spi_sid);
@@ -309,7 +300,7 @@ int spi_set_owner(uint32_t spi_cid, uint32_t spi_sid, uint16_t owner)
 		n->owner = owner;
 	}
 
-	pthread_mutex_unlock(&spi_data->spis_mut);
+	lock_release(&spi_data->spis_lock);
 
 	return n ? 0 : 1;
 }
@@ -323,9 +314,7 @@ uint16_t spi_get_owner(uint32_t spi_cid, uint32_t spi_sid)
 		return 0;
 	}
 
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
-		return 0;
-	}
+	lock_get(&spi_data->spis_lock);
 
 	n = spi_find(
 			&spi_data->used_spis[spi_cid % MAX_HASH_SPI], spi_cid, spi_sid);
@@ -333,7 +322,7 @@ uint16_t spi_get_owner(uint32_t spi_cid, uint32_t spi_sid)
 		owner = n->owner;
 	}
 
-	pthread_mutex_unlock(&spi_data->spis_mut);
+	lock_release(&spi_data->spis_lock);
 
 	return owner;
 }
@@ -346,9 +335,7 @@ int clean_spi_list()
 		return 1;
 	}
 
-	if(pthread_mutex_lock(&spi_data->spis_mut) != 0) {
-		return 1;
-	}
+	lock_get(&spi_data->spis_lock);
 
 	for(j = 0; j < MAX_HASH_SPI; j++) {
 		destroy_list(&spi_data->used_spis[j]);
@@ -360,7 +347,7 @@ int clean_spi_list()
 
 	spi_data->spi_val = spi_data->min_spi;
 
-	pthread_mutex_unlock(&spi_data->spis_mut);
+	lock_release(&spi_data->spis_lock);
 
 	return 0;
 }
@@ -373,7 +360,8 @@ int destroy_spi_gen()
 
 	clean_spi_list();
 
-	int ret = pthread_mutex_destroy(&spi_data->spis_mut);
+	lock_destroy(&spi_data->spis_lock);
 	shm_free(spi_data);
-	return ret;
+	spi_data = NULL;
+	return 0;
 }
