@@ -54,7 +54,7 @@ static str _dlg_cseq_diff_var_name = str_init("cseq_diff");
 /**
  *
  */
-static int dlg_cseq_prepare_msg(sip_msg_t *msg)
+static int dlg_cseq_prepare_msg(sip_msg_t *msg, int require_via2)
 {
 	LM_DBG("prepare msg for cseq update operations\n");
 
@@ -79,7 +79,7 @@ static int dlg_cseq_prepare_msg(sip_msg_t *msg)
 		return 2;
 	}
 
-	if(msg->first_line.type == SIP_REPLY) {
+	if(require_via2 && msg->first_line.type == SIP_REPLY) {
 		/* reply to local transaction -- nothing to do */
 		if(parse_headers(msg, HDR_VIA2_F, 0) == -1 || (msg->via2 == 0)
 				|| (msg->via2->error != PARSE_OK)) {
@@ -111,14 +111,14 @@ static int dlg_cseq_prepare_msg(sip_msg_t *msg)
 /**
  *
  */
-static int dlg_cseq_prepare_new_msg(sip_msg_t *msg)
+static int dlg_cseq_prepare_new_msg(sip_msg_t *msg, int require_via2)
 {
 	LM_DBG("prepare new msg for cseq update operations\n");
 	if(parse_msg(msg->buf, msg->len, msg) != 0) {
 		LM_DBG("outbuf buffer parsing failed!\n");
 		return 1;
 	}
-	return dlg_cseq_prepare_msg(msg);
+	return dlg_cseq_prepare_msg(msg, require_via2);
 }
 
 /**
@@ -133,7 +133,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 	str nval;
 	sr_cfgenv_t *cenv = NULL;
 
-	if(dlg_cseq_prepare_msg(msg) != 0) {
+	if(dlg_cseq_prepare_msg(msg, 1) != 0) {
 		return -1;
 	}
 	if(msg->first_line.type == SIP_REPLY) {
@@ -205,7 +205,7 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg, unsigned int direction)
 	str nval;
 	sr_cfgenv_t *cenv = NULL;
 
-	if(dlg_cseq_prepare_msg(msg) != 0) {
+	if(dlg_cseq_prepare_msg(msg, 1) != 0) {
 		goto error;
 	}
 	if(msg->first_line.type == SIP_REPLY) {
@@ -272,7 +272,7 @@ int dlg_cseq_msg_received(sr_event_param_t *evp)
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	if(dlg_cseq_prepare_new_msg(&msg) != 0) {
+	if(dlg_cseq_prepare_new_msg(&msg, 0) != 0) {
 		goto done;
 	}
 
@@ -362,7 +362,7 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 	msg.len = obuf->len;
 	cenv = sr_cfgenv_get();
 
-	if(dlg_cseq_prepare_new_msg(&msg) != 0) {
+	if(dlg_cseq_prepare_new_msg(&msg, 1) != 0) {
 		goto done;
 	}
 
