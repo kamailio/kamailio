@@ -159,7 +159,7 @@ static int uac_cseq_apply_edits(
 	return 0;
 }
 
-static int uac_cseq_prepare_msg(sip_msg_t *msg)
+static int uac_cseq_prepare_msg(sip_msg_t *msg, int require_via2)
 {
 	if(msg->first_line.type == SIP_REQUEST) {
 		if(!IS_SIP(msg))
@@ -174,7 +174,7 @@ static int uac_cseq_prepare_msg(sip_msg_t *msg)
 			   && (parse_headers(msg, HDR_CSEQ_F, 0) < 0 || msg->cseq == NULL))
 			|| msg->cseq->parsed == NULL)
 		return 2;
-	if(msg->first_line.type == SIP_REPLY
+	if(require_via2 && msg->first_line.type == SIP_REPLY
 			&& (parse_headers(msg, HDR_VIA2_F, 0) < 0 || msg->via2 == NULL
 					|| msg->via2->error != PARSE_OK)
 			&& get_cseq(msg)->method_id != METHOD_CANCEL)
@@ -185,11 +185,11 @@ static int uac_cseq_prepare_msg(sip_msg_t *msg)
 	return 0;
 }
 
-static int uac_cseq_prepare_new_msg(sip_msg_t *msg)
+static int uac_cseq_prepare_new_msg(sip_msg_t *msg, int require_via2)
 {
 	if(parse_msg(msg->buf, msg->len, msg) != 0)
 		return 1;
-	return uac_cseq_prepare_msg(msg);
+	return uac_cseq_prepare_msg(msg, require_via2);
 }
 
 static int uac_cseq_add_helper(sip_msg_t *msg, char *name, unsigned int diff)
@@ -218,7 +218,7 @@ int uac_cseq_update(sip_msg_t *msg)
 	unsigned int diff;
 	int upstream;
 
-	if(uac_cseq_prepare_msg(msg) != 0 || msg->first_line.type != SIP_REQUEST)
+	if(uac_cseq_prepare_msg(msg, 1) != 0 || msg->first_line.type != SIP_REQUEST)
 		return -1;
 	if(uac_htable_cseq_update(msg, &diff, &upstream) < 0)
 		return -1;
@@ -239,7 +239,7 @@ int uac_cseq_refresh(sip_msg_t *msg)
 	int upstream;
 	int ret;
 
-	if(uac_cseq_prepare_msg(msg) != 0 || msg->first_line.type != SIP_REQUEST)
+	if(uac_cseq_prepare_msg(msg, 1) != 0 || msg->first_line.type != SIP_REQUEST)
 		return -1;
 	ret = uac_htable_cseq_get(msg, 1, &diff, &upstream);
 	if(ret > 0 || upstream || diff == 0)
@@ -263,8 +263,8 @@ static int uac_cseq_msg_received(sr_event_param_t *evp)
 	memset(&msg, 0, sizeof(msg));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
-	if(uac_cseq_prepare_new_msg(&msg) != 0 || msg.first_line.type == SIP_REQUEST
-			|| msg.h_via1 == NULL)
+	if(uac_cseq_prepare_new_msg(&msg, 0) != 0
+			|| msg.first_line.type == SIP_REQUEST || msg.h_via1 == NULL)
 		goto done;
 	via = (struct via_body *)msg.h_via1->parsed;
 	if(via == NULL || via->branch == NULL || via->branch->value.len <= 0)
@@ -332,8 +332,9 @@ static int uac_cseq_msg_sent(sr_event_param_t *evp)
 	memset(&msg, 0, sizeof(msg));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
-	if(uac_cseq_prepare_new_msg(&msg) != 0 || msg.first_line.type != SIP_REQUEST
-			|| !IS_SIP(&msg) || msg.h_via1 == NULL)
+	if(uac_cseq_prepare_new_msg(&msg, 1) != 0
+			|| msg.first_line.type != SIP_REQUEST || !IS_SIP(&msg)
+			|| msg.h_via1 == NULL)
 		goto done;
 	via = (struct via_body *)msg.h_via1->parsed;
 	if(via == NULL || via->branch == NULL || via->branch->value.len <= 0)
