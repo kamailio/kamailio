@@ -26,6 +26,7 @@
 #include "../../core/action.h"
 #include "../../core/socket_info.h"
 #include "../../core/trim.h"
+#include "../../core/ut.h"
 #include "../../core/pvapi.h"
 
 #include "corex_var.h"
@@ -142,6 +143,10 @@ int pv_parse_lsock_expr(str *in, pv_lsock_expr_t *lexpr)
 	}
 	lexpr->val.s = p0 + 1;
 	lexpr->val.len = p1 - lexpr->val.s;
+	if(lexpr->match.s[0] == 'i' && str2sint(&lexpr->val, &lexpr->valno) < 0) {
+		LM_ERR("invalid socket index: %.*s\n", lexpr->val.len, lexpr->val.s);
+		return -1;
+	}
 	lexpr->field.s = p1 + 1;
 	lexpr->field.len = in->s + in->len - lexpr->field.s;
 	if(lexpr->field.len < 1
