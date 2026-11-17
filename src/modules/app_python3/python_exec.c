@@ -71,7 +71,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	PyObject *pmsg;
 	int rval = -1;
 	sip_msg_t *bmsg;
-	PyGILState_STATE gstate;
+	PyGILState_STATE gstate = PyGILState_UNLOCKED;
 	int locked = 0;
 	bool acquired_var = false;
 

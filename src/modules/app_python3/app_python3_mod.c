@@ -266,7 +266,7 @@ static int apy_mod_init(PyObject *pModule)
 	 * pModule: managed by caller, no need to Py_DECREF
 	 */
 	PyObject *pFunc, *pArgs, *pHandler;
-	PyGILState_STATE gstate;
+	PyGILState_STATE gstate = PyGILState_UNLOCKED;
 	int rval = -1;
 
 	if(_ksr_apy3_threads_mode != 1) {
@@ -360,7 +360,7 @@ static PyObject *_sr_apy_module;
 int apy_reload_script(void)
 {
 	int rval = -1;
-	PyGILState_STATE gstate;
+	PyGILState_STATE gstate = PyGILState_UNLOCKED;
         bool acquired_var = false;
 
 	if(_ksr_apy3_threads_mode != 1) {
@@ -408,7 +408,7 @@ err:
 static int apy_load_script(void)
 {
 	PyObject *sys_path, *pDir, *pModule;
-	PyGILState_STATE gstate;
+	PyGILState_STATE gstate = PyGILState_UNLOCKED;
 	int rc, rval = -1;
         bool acquired_var = true; /* threads_mode = 1, force release of GIL */
 
@@ -514,7 +514,7 @@ static int apy_init_script(int rank)
 #else
 	char *classname;
 #endif
-	PyGILState_STATE gstate;
+	PyGILState_STATE gstate = PyGILState_UNLOCKED;
 
 	if(_ksr_apy3_threads_mode != 1) {
 		gstate = PyGILState_Ensure();
