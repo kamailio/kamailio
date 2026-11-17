@@ -72,5 +72,6 @@ static sr_kemi_t sr_kemi_ims_registrar_scscf_exports[] = {
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	return sr_kemi_modules_add(sr_kemi_ims_registrar_scscf_exports);
+	sr_kemi_modules_add(sr_kemi_ims_registrar_scscf_exports);
+	return 0;
 }
