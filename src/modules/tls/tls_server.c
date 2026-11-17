@@ -361,7 +361,11 @@ static int tls_set_verify_server_name(SSL *ssl, tls_domain_t *dom, str *sname)
 	memcpy(name, vname->s, vname->len);
 	name[vname->len] = '\0';
 	SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+#if OPENSSL_VERSION_NUMBER >= 0x40000000L
+	if(!SSL_set1_dnsname(ssl, name)) {
+#else
 	if(!SSL_set1_host(ssl, name)) {
+#endif
 		LM_ERR("%s: failed to set the server name to verify: %s\n",
 				tls_domain_str(dom), name);
 		return -1;
