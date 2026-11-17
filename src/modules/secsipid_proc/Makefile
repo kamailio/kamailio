@@ -10,9 +10,18 @@ NAME=secsipid_proc.so
 ifeq ($(CROSS_COMPILE),)
 	BUILDER = $(shell which pkg-config)
 ifneq ($(BUILDER),)
+	PKGLIBSECSIPID = $(shell $(BUILDER) --exists secsipid-2 > /dev/null 2>&1 ; echo $$? )
+ifneq ($(PKGLIBSECSIPID),0)
 	PKGLIBSECSIPID = $(shell $(BUILDER) --exists secsipid-1 > /dev/null 2>&1 ; echo $$? )
 ifneq ($(PKGLIBSECSIPID),0)
 	BUILDER =
+else
+	DEFS+= $(shell pkg-config --cflags secsipid-1)
+	LIBS = $(shell pkg-config --libs secsipid-1) -lpthread
+endif
+else
+	DEFS+= $(shell pkg-config --cflags secsipid-2)
+	LIBS = $(shell pkg-config --libs secsipid-2) -lpthread
 endif
 endif
 endif
@@ -20,9 +29,6 @@ endif
 ifeq ($(BUILDER),)
 	DEFS +=-I$(LOCALBASE)/include -I$(SYSBASE)/include
 	LIBS +=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -lsecsipid -lpthread
-else
-	DEFS+= $(shell pkg-config --cflags secsipid-1)
-	LIBS = $(shell pkg-config --libs secsipid-1) -lpthread
 endif
 
 ifeq ($(OS), darwin)
