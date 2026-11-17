@@ -863,6 +863,12 @@ static int pv_get_th(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* masked call-id */
+			/* release the buffer returned by the previous evaluation of $th(ecallid) */
+			if(_th_masked_callid.s != NULL) {
+				pkg_free(_th_masked_callid.s);
+				_th_masked_callid.s = NULL;
+				_th_masked_callid.len = 0;
+			}
 			if(th_mask_callid_str(&msg->callid->body, &_th_masked_callid) < 0) {
 				LM_ERR("cannot encode Call-Id\n");
 				return pv_get_null(msg, param, res);
