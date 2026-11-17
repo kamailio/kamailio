@@ -127,7 +127,7 @@ int pv_parse_lsock_expr(str *in, pv_lsock_expr_t *lexpr)
 			}
 		}
 	}
-	if(p0 == NULL || p1 == NULL || p1 >= in->s + in->len - 2) {
+	if(p0 == NULL || p1 == NULL || p1 >= in->s + in->len - 1) {
 		LM_ERR("invalid expression format: %.*s\n", in->len, in->s);
 		return -1;
 	}
