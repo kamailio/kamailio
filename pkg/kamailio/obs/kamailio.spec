@@ -1931,6 +1931,7 @@ rm -rf %{buildroot}
 %{_datadir}/kamailio/mongodb/kamailio/impu_contact.json
 %{_datadir}/kamailio/mongodb/kamailio/impu.json
 %{_datadir}/kamailio/mongodb/kamailio/impu_subscriber.json
+%{_datadir}/kamailio/mongodb/kamailio/ims_dialog_vars.json
 %{_datadir}/kamailio/mongodb/kamailio/lcr_gw.json
 %{_datadir}/kamailio/mongodb/kamailio/lcr_rule.json
 %{_datadir}/kamailio/mongodb/kamailio/lcr_rule_target.json
