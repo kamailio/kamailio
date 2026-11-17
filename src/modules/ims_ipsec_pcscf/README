@@ -139,6 +139,22 @@ AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
    the salt is derived from CK and IK as specified in TS 33.203 Annex I.
    The kernel must provide the gcm crypto module.
 
+   When ims_usrloc_pcscf writes its contacts through to the database and
+   preloads them (db_mode 1), the IPSec tunnels survive a P-CSCF restart
+   along with the registrations: the SAs and policies are not flushed at
+   startup and shutdown, a tunnel still installed in the network namespace
+   is taken over as it is, one that is missing - all of them after a
+   restart into a new namespace - is installed again from the contact's
+   security parameters, their SPI pairs are marked used, and SAs and
+   policies no preloaded contact accounts for are removed. The UEs keep
+   their registrations and tunnels across the restart. This needs the same
+   ipsec_listen_addr as before the restart: the UE's SAs are bound to it.
+   The restore runs in the first SIP worker, and the others must only be
+   started once it is done: the module refuses to start unless the core
+   parameter wait_worker1_mode is set to 1 and wait_worker1_time is at
+   least 60000000 (60 seconds, in microseconds). With any other db_mode
+   the SAs and policies are flushed at startup and shutdown.
+
 2. Dependencies
 
    2.1. Kamailio Modules
