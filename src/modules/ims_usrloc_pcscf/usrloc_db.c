@@ -62,6 +62,99 @@ str t_start_time_col = str_init(T_START_TIME_COL);
 t_reusable_buffer service_route_buffer = {0, 0, 0};
 t_reusable_buffer impu_buffer = {0, 0, 0};
 
+/* the columns of the active and the temp security set
+ *
+ * No protocol column: "protocol" is not part of the security set but the
+ * contact's own transport, written by db_insert_pcontact() and read back
+ * by preload_udomain(). The tunnel is always esp (TS 33.203 Annex H), so
+ * neither security set stores its protocol. */
+#define SECURITY_COLS 15
+static const db_key_t security_keys[SECURITY_COLS] = {&security_type_col,
+		&mode_col, &ck_col, &ik_col, &ealg_col, &ialg_col, &port_pc_col,
+		&port_ps_col, &port_uc_col, &port_us_col, &spi_pc_col, &spi_ps_col,
+		&spi_uc_col, &spi_us_col, &start_time_col};
+static const db_key_t t_security_keys[SECURITY_COLS] = {&t_security_type_col,
+		&t_mode_col, &t_ck_col, &t_ik_col, &t_ealg_col, &t_ialg_col,
+		&t_port_pc_col, &t_port_ps_col, &t_port_uc_col, &t_port_us_col,
+		&t_spi_pc_col, &t_spi_ps_col, &t_spi_uc_col, &t_spi_us_col,
+		&t_start_time_col};
+
+/* fills the values of the security set _s of type _t, NULL if _s is NULL */
+static int security2dbvals(security_type _t, security_t *_s, db_val_t *values)
+{
+	ipsec_t *ipsec = _s ? _s->data.ipsec : 0;
+	str s_empty = {0, 0};
+	int i = 0;
+
+	if(_t != SECURITY_IPSEC) {
+		LM_WARN("not yet implemented or unknown security type\n");
+		return -1;
+	}
+
+	VAL_TYPE(values) = DB1_INT;
+	VAL_NULL(values) = 0;
+	VAL_INT(values) = _s ? _s->type : 0;
+
+	VAL_TYPE(values + ++i) = DB1_STR;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_STR(values + i) = ipsec ? ipsec->mod : s_empty;
+
+	VAL_TYPE(values + ++i) = DB1_STR;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_STR(values + i) = ipsec ? ipsec->ck : s_empty;
+
+	VAL_TYPE(values + ++i) = DB1_STR;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_STR(values + i) = ipsec ? ipsec->ik : s_empty;
+
+	VAL_TYPE(values + ++i) = DB1_STR;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_STR(values + i) = ipsec ? ipsec->r_ealg : s_empty;
+
+	VAL_TYPE(values + ++i) = DB1_STR;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_STR(values + i) = ipsec ? ipsec->r_alg : s_empty;
+
+	VAL_TYPE(values + ++i) = DB1_INT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_INT(values + i) = ipsec ? ipsec->port_pc : 0;
+
+	VAL_TYPE(values + ++i) = DB1_INT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_INT(values + i) = ipsec ? ipsec->port_ps : 0;
+
+	VAL_TYPE(values + ++i) = DB1_INT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_INT(values + i) = ipsec ? ipsec->port_uc : 0;
+
+	VAL_TYPE(values + ++i) = DB1_INT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_INT(values + i) = ipsec ? ipsec->port_us : 0;
+
+	VAL_TYPE(values + ++i) = DB1_BIGINT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_BIGINT(values + i) = ipsec ? ipsec->spi_pc : 0;
+
+	VAL_TYPE(values + ++i) = DB1_BIGINT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_BIGINT(values + i) = ipsec ? ipsec->spi_ps : 0;
+
+	VAL_TYPE(values + ++i) = DB1_BIGINT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_BIGINT(values + i) = ipsec ? ipsec->spi_uc : 0;
+
+	VAL_TYPE(values + ++i) = DB1_BIGINT;
+	VAL_NULL(values + i) = ipsec ? 0 : 1;
+	VAL_BIGINT(values + i) = ipsec ? ipsec->spi_us : 0;
+
+	// NULL for a tunnel not installed (yet)
+	VAL_TYPE(values + ++i) = DB1_BIGINT;
+	VAL_NULL(values + i) = (ipsec && ipsec->start_time) ? 0 : 1;
+	VAL_BIGINT(values + i) = ipsec ? ipsec->start_time : 0;
+
+	return 0;
+}
+
 int connect_db(const str *db_url)
 {
 	if(ul_dbh) { /* we've obviously already connected... */
@@ -256,17 +349,22 @@ int db_delete_pcontact(pcontact_t *_c)
 	return 0;
 }
 
-int db_insert_pcontact(struct pcontact *_c)
+/* inserts the contact with its security sets _temp and _sec (IPsec only); with
+ * insert_update() an existing row is updated, keeping the columns of a set
+ * not given */
+static int db_insert_pcontact_security(
+		struct pcontact *_c, security_t *_temp, security_t *_sec)
 {
 	str empty_str = str_init("");
 	str impus, service_routes;
 
-	db_key_t keys[16] = {&domain_col, &aor_col, &received_col,
-			&received_port_col, &received_proto_col, &path_col, &rinstance_col,
-			&rx_session_id_col, &reg_state_col, &expires_col,
+	db_key_t keys[16 + 2 * SECURITY_COLS] = {&domain_col, &aor_col,
+			&received_col, &received_port_col, &received_proto_col, &path_col,
+			&rinstance_col, &rx_session_id_col, &reg_state_col, &expires_col,
 			&service_routes_col, &socket_col, &public_ids_col, &host_col,
 			&port_col, &protocol_col};
-	db_val_t values[16];
+	db_val_t values[16 + 2 * SECURITY_COLS];
+	int n = 16;
 
 	VAL_TYPE(GET_FIELD_IDX(values, LP_DOMAIN_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_AOR_IDX)) = DB1_STR;
@@ -357,16 +455,91 @@ int db_insert_pcontact(struct pcontact *_c)
 		return -1;
 	}
 
+	if(_temp && _temp->type == SECURITY_IPSEC) {
+		if(security2dbvals(_temp->type, _temp, values + n) != 0) {
+			return -1;
+		}
+		memcpy(keys + n, t_security_keys, sizeof(t_security_keys));
+		n += SECURITY_COLS;
+	}
+	if(_sec && _sec->type == SECURITY_IPSEC) {
+		if(security2dbvals(_sec->type, _sec, values + n) != 0) {
+			return -1;
+		}
+		memcpy(keys + n, security_keys, sizeof(security_keys));
+		n += SECURITY_COLS;
+	}
+
 	if(ul_dbf.insert_update) {
-		if(ul_dbf.insert_update(ul_dbh, keys, values, 16) < 0) {
+		if(ul_dbf.insert_update(ul_dbh, keys, values, n) < 0) {
 			LM_ERR("inserting with update contact in db failed: aor[%.*s], "
 				   "received port %u\n",
 					_c->aor.len, _c->aor.s, _c->received_port);
 			return -1;
 		}
-	} else if(ul_dbf.insert(ul_dbh, keys, values, 16) < 0) {
+	} else if(ul_dbf.insert(ul_dbh, keys, values, n) < 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
+	}
+
+	return 0;
+}
+
+int db_insert_pcontact(struct pcontact *_c)
+{
+	return db_insert_pcontact_security(_c, _c->security_temp, _c->security);
+}
+
+/* writes the security set _s of type _t (temp: the t_* columns) to the
+ * contact's row, inserted if no row was affected */
+static int db_update_security(
+		struct pcontact *_c, security_type _t, security_t *_s, int temp)
+{
+	db_val_t match_values[2];
+	db_key_t match_keys[2] = {&aor_col, &received_port_col};
+	db_op_t op[2];
+	db_val_t values[SECURITY_COLS];
+
+	LM_DBG("updating %ssecurity for pcontact: aor[%.*s], received port %u\n",
+			temp ? "temp " : "", _c->aor.len, _c->aor.s, _c->received_port);
+
+	VAL_TYPE(match_values) = DB1_STR;
+	VAL_NULL(match_values) = 0;
+	VAL_STR(match_values) = _c->aor;
+
+	VAL_TYPE(match_values + 1) = DB1_INT;
+	VAL_NULL(match_values + 1) = 0;
+	VAL_INT(match_values + 1) = _c->received_port;
+
+	op[0] = OP_EQ;
+	op[1] = OP_EQ;
+
+	if(use_location_pcscf_table(_c->domain) < 0) {
+		LM_ERR("Error trying to use table %.*s\n", _c->domain->len,
+				_c->domain->s);
+		return -1;
+	}
+
+	if(security2dbvals(_t, _s, values) != 0) {
+		return -1;
+	}
+
+	if(ul_dbf.update(ul_dbh, match_keys, op, match_values,
+			   temp ? t_security_keys : security_keys, values, 2, SECURITY_COLS)
+			!= 0) {
+		LM_ERR("could not update database info\n");
+		return -1;
+	}
+
+	if(ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
+		LM_DBG("no existing rows for an update... doing insert\n");
+		/* _s is stored in memory only after this call */
+		if(db_insert_pcontact_security(
+				   _c, temp ? _s : _c->security_temp, temp ? _c->security : _s)
+				!= 0) {
+			LM_ERR("Failed to insert a pcontact on update\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -375,250 +548,13 @@ int db_insert_pcontact(struct pcontact *_c)
 int db_update_pcontact_security_temp(
 		struct pcontact *_c, security_type _t, security_t *_s)
 {
-	db_val_t match_values[2];
-	db_key_t match_keys[2] = {&aor_col, &received_port_col};
-	db_op_t op[2];
-
-	db_key_t update_keys[15] = {&t_security_type_col, &t_mode_col, &t_ck_col,
-			&t_ik_col, &t_ealg_col, &t_ialg_col, &t_port_pc_col, &t_port_ps_col,
-			&t_port_uc_col, &t_port_us_col, &t_spi_pc_col, &t_spi_ps_col,
-			&t_spi_uc_col, &t_spi_us_col, &t_start_time_col};
-	db_val_t values[15];
-
-	LM_CRIT("updating temp security for pcontact: aor[%.*s], received port "
-			"%u\n",
-			_c->aor.len, _c->aor.s, _c->received_port);
-
-	VAL_TYPE(match_values) = DB1_STR;
-	VAL_NULL(match_values) = 0;
-	VAL_STR(match_values) = _c->aor;
-
-	VAL_TYPE(match_values + 1) = DB1_INT;
-	VAL_NULL(match_values + 1) = 0;
-	VAL_INT(match_values + 1) = _c->received_port;
-
-	op[0] = OP_EQ;
-	op[1] = OP_EQ;
-
-	if(use_location_pcscf_table(_c->domain) < 0) {
-		LM_ERR("Error trying to use table %.*s\n", _c->domain->len,
-				_c->domain->s);
-		return -1;
-	}
-
-	VAL_TYPE(values) = DB1_INT;
-	VAL_TIME(values) = _s ? _s->type : 0;
-	VAL_NULL(values) = 0;
-
-	switch(_t) {
-		case SECURITY_IPSEC: {
-			ipsec_t *ipsec = _s ? _s->data.ipsec : 0;
-			str s_empty = {0, 0};
-			int i = 1;
-			VAL_TYPE(values + i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->mod : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->ck : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->ik : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->r_ealg : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->r_alg : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_pc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_ps : 0;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_uc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_us : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_pc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_ps : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_uc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_us : 0;
-
-			// NULL for a tunnel not installed (yet)
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = (ipsec && ipsec->start_time) ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->start_time : 0;
-
-			if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
-					   values, 2, 15))
-					!= 0) {
-				LM_ERR("could not update database info\n");
-				return -1;
-			}
-
-			if(ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
-				LM_CRIT("no existing rows for an update... doing insert\n");
-				if(db_insert_pcontact(_c) != 0) {
-					LM_ERR("Failed to insert a pcontact on update\n");
-				}
-			}
-			break;
-		}
-		default:
-			LM_WARN("not yet implemented or unknown security type\n");
-			return -1;
-	}
-
-	return 0;
+	return db_update_security(_c, _t, _s, 1);
 }
 
 int db_update_pcontact_security(
 		struct pcontact *_c, security_type _t, security_t *_s)
 {
-	db_val_t match_values[2];
-	db_key_t match_keys[2] = {&aor_col, &received_port_col};
-	db_op_t op[2];
-
-	// No protocol column: "protocol" is not part of the security set but the
-	// contact's own transport, written by db_insert_pcontact() and read back
-	// by preload_udomain(). The tunnel is always esp (TS 33.203 Annex H), so
-	// neither security set stores its protocol.
-	db_key_t update_keys[15] = {&security_type_col, &mode_col, &ck_col, &ik_col,
-			&ealg_col, &ialg_col, &port_pc_col, &port_ps_col, &port_uc_col,
-			&port_us_col, &spi_pc_col, &spi_ps_col, &spi_uc_col, &spi_us_col,
-			&start_time_col};
-	db_val_t values[15];
-
-	LM_DBG("updating security for pcontact: aor[%.*s], received port %u\n",
-			_c->aor.len, _c->aor.s, _c->received_port);
-
-	VAL_TYPE(match_values) = DB1_STR;
-	VAL_NULL(match_values) = 0;
-	VAL_STR(match_values) = _c->aor;
-
-	VAL_TYPE(match_values + 1) = DB1_INT;
-	VAL_NULL(match_values + 1) = 0;
-	VAL_INT(match_values + 1) = _c->received_port;
-
-	op[0] = OP_EQ;
-	op[1] = OP_EQ;
-
-	if(use_location_pcscf_table(_c->domain) < 0) {
-		LM_ERR("Error trying to use table %.*s\n", _c->domain->len,
-				_c->domain->s);
-		return -1;
-	}
-
-	VAL_TYPE(values) = DB1_INT;
-	VAL_TIME(values) = _s ? _s->type : 0;
-	VAL_NULL(values) = 0;
-
-	switch(_t) {
-		case SECURITY_IPSEC: {
-			ipsec_t *ipsec = _s ? _s->data.ipsec : 0;
-			int i = 1;
-			str s_empty = {0, 0};
-			VAL_TYPE(values + i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->mod : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->ck : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->ik : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->r_ealg : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_STR;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_STR(values + i) = ipsec ? ipsec->r_alg : s_empty;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_pc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_ps : 0;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_uc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_INT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_INT(values + i) = ipsec ? ipsec->port_us : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_pc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_ps : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_uc : 0;
-
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = ipsec ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->spi_us : 0;
-
-			// NULL for a tunnel not installed (yet)
-			VAL_TYPE(values + ++i) = DB1_BIGINT;
-			VAL_NULL(values + i) = (ipsec && ipsec->start_time) ? 0 : 1;
-			VAL_BIGINT(values + i) = ipsec ? ipsec->start_time : 0;
-
-			if((ul_dbf.update(ul_dbh, match_keys, op, match_values, update_keys,
-					   values, 2, 15))
-					!= 0) {
-				LM_ERR("could not update database info\n");
-				return -1;
-			}
-
-			if(ul_dbf.affected_rows && ul_dbf.affected_rows(ul_dbh) == 0) {
-				LM_DBG("no existing rows for an update... doing insert\n");
-				if(db_insert_pcontact(_c) != 0) {
-					LM_ERR("Failed to insert a pcontact on update\n");
-				}
-			}
-			break;
-		}
-		default:
-			LM_WARN("not yet implemented or unknown security type\n");
-			return -1;
-	}
-
-	return 0;
+	return db_update_security(_c, _t, _s, 0);
 }
 
 /* take a contact structure and a pointer to some memory and returns a list of public identities in the format
