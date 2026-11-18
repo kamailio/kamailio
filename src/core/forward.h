@@ -77,9 +77,12 @@ inline static struct socket_info *get_send_socket(
 }
 
 
-#define GET_URI_PORT(uri)            \
-	((uri)->port_no ? (uri)->port_no \
-					: (((uri)->proto == PROTO_TLS) ? SIPS_PORT : SIP_PORT))
+#define GET_URI_PORT(uri)                                    \
+	((uri)->port_no ? (uri)->port_no                         \
+					: (((uri)->type == SIPS_URI_T            \
+							   || (uri)->proto == PROTO_TLS) \
+									  ? SIPS_PORT            \
+									  : SIP_PORT))
 
 struct socket_info *get_out_socket(union sockaddr_union *to, int proto);
 typedef int (*check_self_f)(

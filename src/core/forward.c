@@ -478,20 +478,13 @@ int check_self_port(unsigned short port, unsigned short proto)
 int check_self_iuser(sip_uri_t *puri, str *iuser)
 {
 	int ret;
-	int default_port = SIP_PORT;
 
 	if(puri->host.len == 0) {
 		/* catch uri without host (e.g., tel uri) */
 		return 0;
 	}
 
-	/* use the default port selected by the URI scheme and transport */
-	if(puri->type == SIPS_URI_T || puri->proto == PROTO_TLS) {
-		default_port = SIPS_PORT;
-	}
-
-	ret = check_self(&puri->host, puri->port_no ? puri->port_no : default_port,
-			0); /* match all protos*/
+	ret = check_self(&puri->host, GET_URI_PORT(puri), 0); /* match all protos*/
 	if(ret < 0) {
 		return 0;
 	}
