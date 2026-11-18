@@ -45,10 +45,9 @@ CREATE TABLE `pcscf_location` (
     `t_spi_ps` INT(11) UNSIGNED DEFAULT NULL,
     `t_spi_uc` INT(11) UNSIGNED DEFAULT NULL,
     `t_spi_us` INT(11) UNSIGNED DEFAULT NULL,
-    `t_start_time` INT(10) UNSIGNED DEFAULT NULL
+    `t_start_time` INT(10) UNSIGNED DEFAULT NULL,
+    CONSTRAINT aor_port_idx UNIQUE (`aor`, `received_port`)
 );
 
-CREATE INDEX aor_idx ON pcscf_location (`aor`);
-
-INSERT INTO version (table_name, table_version) values ('pcscf_location','9');
+INSERT INTO version (table_name, table_version) values ('pcscf_location','10');
 
