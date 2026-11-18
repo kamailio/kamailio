@@ -391,6 +391,33 @@ AAAMessage *AAACreateResponse(AAAMessage *request)
 	return msg;
 }
 
+/**
+ * Create a Diameter answer to a given request, carrying a Result-Code AVP.
+ * A protocol error (3xxx) also sets the E bit (RFC 6733 7.2).
+ * @param request - the request that this answer is for
+ * @param result_code - the Result-Code of the answer
+ * @returns the AAAMessage* or NULL on error
+ */
+AAAMessage *cdp_create_answer(AAAMessage *request, unsigned int result_code)
+{
+	AAAMessage *ans;
+	char x[4];
+
+	ans = AAACreateResponse(request);
+	if(!ans)
+		return 0;
+	if(result_code >= 3000 && result_code < 4000)
+		ans->flags |= 0x20;
+	set_4bytes(x, result_code);
+	if(AAACreateAndAddAVPToMessage(
+			   ans, AVP_Result_Code, AAA_AVP_FLAG_MANDATORY, 0, x, 4)
+			!= AAA_ERR_SUCCESS) {
+		AAAFreeMessage(&ans);
+		return 0;
+	}
+	return ans;
+}
+
 
 /**
  *  Frees an AVP List and all the members

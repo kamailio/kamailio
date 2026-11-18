@@ -275,6 +275,7 @@ typedef struct _message_t
 	AAA_AVP_LIST avpList;	 /**< list of AVPs in the message */
 	str buf;				 /**< Diameter network representation */
 	void *in_peer;			 /**< Peer that this message was received from */
+	int answered;			 /**< request already answered by cdp itself */
 } AAAMessage;
 
 
