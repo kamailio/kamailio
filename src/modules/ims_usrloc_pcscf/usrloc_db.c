@@ -357,7 +357,14 @@ int db_insert_pcontact(struct pcontact *_c)
 		return -1;
 	}
 
-	if(ul_dbf.insert(ul_dbh, keys, values, 16) < 0) {
+	if(ul_dbf.insert_update) {
+		if(ul_dbf.insert_update(ul_dbh, keys, values, 16) < 0) {
+			LM_ERR("inserting with update contact in db failed: aor[%.*s], "
+				   "received port %u\n",
+					_c->aor.len, _c->aor.s, _c->received_port);
+			return -1;
+		}
+	} else if(ul_dbf.insert(ul_dbh, keys, values, 16) < 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}

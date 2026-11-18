@@ -54,7 +54,7 @@
 /*
  * Module parameters
  */
-#define UL_TABLE_VERSION 9
+#define UL_TABLE_VERSION 10
 
 extern int timer_interval;
 extern int desc_time_order;
