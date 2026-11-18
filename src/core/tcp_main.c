@@ -1649,23 +1649,27 @@ struct tcp_connection *_tcpconn_find(int id, struct ip_addr *ip, int port,
 
 /* fallback matcher for cases where the generic wildcard-local alias
  * could not be installed due to alias collisions; it scans existing
- * connections for the same peer tuple regardless of local binding
+ * connections for the same peer tuple regardless of local port, but
+ * still honoring the local ip address when a specific one is requested
  * params:
  *   ip - peer ip address to match (must not be NULL)
  *   port - peer port to match (host byte order)
+ *   l_ip - local ip address to match, NULL or 0 filled address for any
  *   proto - protocol to match, PROTO_NONE for any protocol
  * return:
  *   matching tcp connection pointer if found, NULL otherwise
  */
 static struct tcp_connection *_tcpconn_find_any_local(
-		struct ip_addr *ip, int port, sip_protos_t proto)
+		struct ip_addr *ip, int port, struct ip_addr *l_ip, sip_protos_t proto)
 {
 	struct tcp_connection *c;
 	int i;
+	int is_local_ip_any;
 
 	if(ip == NULL) {
 		return NULL;
 	}
+	is_local_ip_any = (l_ip == NULL) || ip_addr_any(l_ip);
 
 	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
 		for(c = tcpconn_id_hash[i]; c; c = c->id_next) {
@@ -1676,6 +1680,10 @@ static struct tcp_connection *_tcpconn_find_any_local(
 				continue;
 			}
 			if(!ip_addr_cmp(ip, &c->rcv.src_ip)) {
+				continue;
+			}
+			if(!is_local_ip_any && !ip_addr_cmp(l_ip, &c->rcv.dst_ip)
+					&& !ip_addr_cmp(l_ip, &c->cinfo.dst_ip)) {
 				continue;
 			}
 			if(proto != PROTO_NONE && c->rcv.proto != proto) {
@@ -1751,7 +1759,7 @@ struct tcp_connection *tcpconn_lookup(int id, struct ip_addr *ip, int port,
 	}
 	if(unlikely(c == NULL) && likely(id == 0 && ip != NULL)
 			&& likely(local_port == 0)) {
-		c = _tcpconn_find_any_local(ip, port, proto);
+		c = _tcpconn_find_any_local(ip, port, &local_ip, proto);
 	}
 	if(likely(c)) {
 		atomic_inc(&c->refcnt);
