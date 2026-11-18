@@ -652,6 +652,7 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 	unsigned int slot;
 	unsigned int uslot;
 	reg_item_t *it = NULL;
+	unsigned int retried = 0;
 
 	if(_reg_htable == NULL) {
 		LM_ERR("reg hash table not initialized\n");
@@ -660,6 +661,8 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 
 	hash = reg_compute_hash(user);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
+
+retry:
 	lock_get(&_reg_htable->entries[slot].lock);
 	it = _reg_htable->entries[slot].byuser;
 	while(it) {
@@ -693,6 +696,13 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 		it = it->next;
 	}
 	lock_release(&_reg_htable->entries[uslot].lock);
+
+	/* try one more time in case the selected record was removed
+	 * during the lock handoff */
+	if(retried == 0) {
+		retried = 1;
+		goto retry;
+	}
 	return NULL;
 }
 
