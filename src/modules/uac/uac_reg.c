@@ -522,6 +522,7 @@ int reg_ht_add(reg_uac_t *reg)
 int reg_ht_rm(reg_uac_t *reg)
 {
 	unsigned int slot1, slot2;
+	unsigned int flags;
 	reg_item_t *it = NULL;
 	reg_item_t *prev = NULL;
 	int found = 0;
@@ -530,6 +531,7 @@ int reg_ht_rm(reg_uac_t *reg)
 		LM_ERR("bad parameter\n");
 		return -1;
 	}
+	flags = reg->flags;
 
 	/* by uuid */
 	slot1 = reg_get_entry(reg->h_uuid, _reg_htable->htsize);
@@ -578,9 +580,9 @@ int reg_ht_rm(reg_uac_t *reg)
 
 	if(found) {
 		counter_add(regtotal, -1);
-		if(reg->flags & UAC_REG_ONLINE)
+		if(flags & UAC_REG_ONLINE)
 			counter_add(regactive, -1);
-		if(reg->flags & UAC_REG_DISABLED)
+		if(flags & UAC_REG_DISABLED)
 			counter_add(regdisabled, -1);
 	}
 	return 0;
