@@ -449,10 +449,15 @@ int insert_pcontact(struct udomain *_d, str *_contact,
 		run_ul_create_callbacks(*_c);
 	}
 
-	if(((db_mode == WRITE_THROUGH) || (db_mode == DB_ONLY))
-			&& db_insert_pcontact(*_c) != 0) {
-		LM_ERR("error inserting contact into db");
-		goto error;
+	if((db_mode == WRITE_THROUGH) || (db_mode == DB_ONLY)) {
+		if(db_delete_pcontact(*_c) != 0) {
+			LM_ERR("error deleting old rows of contact from db\n");
+			goto error;
+		}
+		if(db_insert_pcontact(*_c) != 0) {
+			LM_ERR("error inserting contact into db\n");
+			goto error;
+		}
 	}
 
 	return 0;
