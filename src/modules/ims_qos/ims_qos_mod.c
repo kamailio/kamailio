@@ -69,6 +69,7 @@
 #include "rx_asr.h"
 #include "rx_str.h"
 #include "rx_aar.h"
+#include "rx_rar.h"
 #include "ims_qos_mod.h"
 #include "../../core/parser/sdp/sdp.h"
 #include "../../core/kemi.h"
@@ -149,6 +150,8 @@ int terminate_dialog_on_rx_failure =
 		1; //this specifies whether a dialog is torn down when a media rx session fails - in some cases you might not want the dialog torn down
 int delete_contact_on_rx_failure =
 		1; //If this is set we delete the contact if the associated signalling bearer is removed
+int bearer_release_wait =
+		5; //seconds to wait, after a RAR reporting lost media bearers, for SIP to remove that media before releasing the session
 int _ims_qos_suspend_transaction =
 		1; //If this is set we suspend the transaction and continue later
 
@@ -251,6 +254,7 @@ static param_export_t params[] = {
 	{"confirmed_qosrelease_headers", PARAM_STR, &confirmed_qosrelease_headers},
 	{"terminate_dialog_on_rx_failure", PARAM_INT, &terminate_dialog_on_rx_failure},
 	{"delete_contact_on_rx_failure", PARAM_INT, &delete_contact_on_rx_failure},
+	{"bearer_release_wait", PARAM_INT, &bearer_release_wait},
 	{"regex_sdp_ip_prefix_to_maintain_in_fd", PARAM_STR, &regex_sdp_ip_prefix_to_maintain_in_fd},
 	{"include_rtcp_fd", PARAM_INT, &include_rtcp_fd},
 	{"suspend_transaction", PARAM_INT, &_ims_qos_suspend_transaction},
@@ -336,6 +340,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(rx_rar_init() != 0) {
+		LM_ERR("unable to initialise RAR processing\n");
+		return -1;
+	}
+
 	if(ims_qos_init_counters() != 0) {
 		LM_ERR("Failed to register counters for ims_qos module\n");
 		return -1;
@@ -383,6 +392,7 @@ static int mod_child_init(int rank)
 
 static void mod_destroy(void)
 {
+	rx_rar_destroy();
 	if(identifier_size > 0 && identifier.s) {
 		pkg_free(identifier.s);
 	}
@@ -449,8 +459,7 @@ AAAMessage *callback_cdp_request(AAAMessage *request, void *param)
 					case IMS_RAR:
 						LM_INFO("Rx request handler():- Received an IMS_RAR "
 								"\n");
-						/* TODO: Add support for Re-Auth Requests */
-						return 0;
+						return rx_process_rar(request);
 						break;
 					case IMS_ASR:
 						LM_INFO("Rx request handler(): - Received an IMS_ASR "
