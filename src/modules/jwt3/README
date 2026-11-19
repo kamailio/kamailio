@@ -12,6 +12,10 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Federico Cabiddu
+
+   <federico.cabiddu@gmail.com>
+
    Copyright © 2021 asipto.com
 
    Copyright © 2026 Wolfgang Kampichler, Frequentis AG
@@ -46,6 +50,13 @@ Daniel-Constantin Mierla
         5. Variables
 
               5.1. $jwt3(key)
+
+        6. RPC Commands
+
+              6.1. jwt3.jwks_list
+              6.2. jwt3.jwks_reload [url]
+              6.3. jwt3.jwks_flush [url]
+              6.4. jwt3.jwks_get url
 
    List of Examples
 
@@ -90,6 +101,13 @@ Chapter 1. Admin Guide
    5. Variables
 
         5.1. $jwt3(key)
+
+   6. RPC Commands
+
+        6.1. jwt3.jwks_list
+        6.2. jwt3.jwks_reload [url]
+        6.3. jwt3.jwks_flush [url]
+        6.4. jwt3.jwks_get url
 
 1. Overview
 
@@ -365,4 +383,43 @@ modparam("jwt3", "jwks_retry_interval", 60)
   jwt3_generate("/path/to/prvkey.pem", "RS256",
         "caller='$fU';callee='$tU';callid='$ci';index=100");
   xinfo("jwt is: $jwt3(val)");
+...
+
+6. RPC Commands
+
+   6.1. jwt3.jwks_list
+   6.2. jwt3.jwks_reload [url]
+   6.3. jwt3.jwks_flush [url]
+   6.4. jwt3.jwks_get url
+
+6.1. jwt3.jwks_list
+
+   List the cached remote JWKS entries: url, whether content is cached,
+   size, seconds to expiry and miss counter.
+...
+kamcmd jwt3.jwks_list
+...
+
+6.2. jwt3.jwks_reload [url]
+
+   Fetch immediately the JWKS from the given http(s) URL (adding it to the
+   cache if needed). Without parameter, all cached entries are refreshed.
+...
+kamcmd jwt3.jwks_reload https://example.com/.well-known/jwks.json
+...
+
+6.3. jwt3.jwks_flush [url]
+
+   Invalidate the cached JWKS for the given URL, or for all entries if no
+   parameter is given. The keys are fetched again on next use.
+...
+kamcmd jwt3.jwks_flush
+...
+
+6.4. jwt3.jwks_get url
+
+   Print the JWKS content currently cached for the given URL, without
+   fetching it. Useful for debugging.
+...
+kamcmd jwt3.jwks_get https://example.com/.well-known/jwks.json
 ...
