@@ -56,6 +56,10 @@ jobs:
         - ${{ github.workspace }}:/code
 
     steps:
+      - name: Fix Git safe directory
+        run: |
+          git config --global --add safe.directory /code
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
