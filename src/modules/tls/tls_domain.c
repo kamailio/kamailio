@@ -895,7 +895,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 			(new_domain->type & TLS_DOMAIN_DEF) ? " (default)" : "");
 	SSL_set_SSL_CTX(ssl, DOM_CTX(new_domain));
 	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
-	   set the proper verify options. Thus this will be done manually! */
+	   not set the proper verify options. Thus this will be done manually! */
 
 	SSL_set_options(ssl, SSL_CTX_get_options(SSL_get_SSL_CTX(ssl)));
 	if((SSL_get_verify_mode(ssl) == SSL_VERIFY_NONE)
@@ -909,6 +909,8 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 		 */
 		SSL_set_verify(ssl, SSL_CTX_get_verify_mode(SSL_get_SSL_CTX(ssl)),
 				SSL_CTX_get_verify_callback(SSL_get_SSL_CTX(ssl)));
+		SSL_set_verify_depth(
+				ssl, SSL_CTX_get_verify_depth(SSL_get_SSL_CTX(ssl)));
 	}
 
 	return SSL_TLSEXT_ERR_OK;

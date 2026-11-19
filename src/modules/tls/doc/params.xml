@@ -1094,6 +1094,11 @@ modparam("tls", "use_shared_context", 1)
 		the domain given in server_name.
 	</para>
 	<para>
+		A server profile matched by server_name is selected after the TLS
+		version is negotiated, so the tls_method of the default server
+		profile for the socket applies to the connection.
+	</para>
+	<para>
 		The value for server_id can be any string, being used to match TLS
 		client config profile, overriding the match on ip:port and
 		server_name. This is the recommended way for selecting a specific
