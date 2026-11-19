@@ -86,6 +86,15 @@ loadmodule "tls_wolfssl.so"
 	The wolfSSL TLS module is intended to be compiled with a
 	recent version of wolfSSL - 5.8.4+ is recommended.
 			</para>
+			<para>
+	tls_method sets the TLS versions as in the tls module, with TLSv1.2 as
+	the minimum when the method sets none. TLSv1.0 and TLSv1.1 need a
+	wolfSSL build with them enabled: a minimum below the lowest version of
+	the build is raised to it, and a method limited to versions outside
+	the build fails at startup. A server profile matched by server_name is
+	selected after the TLS version is negotiated, so the tls_method of the
+	default server profile for the socket applies.
+			</para>
 			<para>For reference the ideal build flags are:
 
                         <programlisting>

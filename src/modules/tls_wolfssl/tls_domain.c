@@ -865,7 +865,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 	wolfSSL_set_SSL_CTX(ssl, new_domain->ctx[0]);
 	tls_pkcs11_open_token(ssl);
 	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
-	   set the proper verify options. Thus this will be done manually! */
+	   not set the proper verify options. Thus this will be done manually! */
 
 	wolfSSL_set_options(ssl, wolfSSL_CTX_get_options(wolfSSL_get_SSL_CTX(ssl)));
 	if((wolfSSL_get_verify_mode(ssl) == WOLFSSL_VERIFY_NONE)
@@ -880,6 +880,8 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 		wolfSSL_set_verify(ssl,
 				wolfSSL_CTX_get_verify_mode(wolfSSL_get_SSL_CTX(ssl)),
 				wolfSSL_CTX_get_verify_callback(wolfSSL_get_SSL_CTX(ssl)));
+		wolfSSL_set_verify_depth(
+				ssl, wolfSSL_CTX_get_verify_depth(wolfSSL_get_SSL_CTX(ssl)));
 	}
 
 	LM_DBG("tls_server_name_cb return SSL_TLSEXT_ERR_OK");
@@ -941,7 +943,25 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 					ERR_reason_error_string(e));
 			return -1;
 		}
-		wolfSSL_CTX_set_min_proto_version(d->ctx[0], TLS1_2_VERSION);
+		/* tls_method minimum, else TLSv1.2; wolfSSL raises a minimum
+		 * outside its build to its lowest version */
+		if(wolfSSL_CTX_set_min_proto_version(d->ctx[0],
+				   sr_tls_methods[d->method - 1].TLSMethodMin
+						   ? sr_tls_methods[d->method - 1].TLSMethodMin
+						   : TLS1_2_VERSION)
+				!= WOLFSSL_SUCCESS) {
+			ERR("%s: Cannot set the minimum TLS version for tls_method %d\n",
+					tls_domain_str(d), d->method);
+			return -1;
+		}
+		if(sr_tls_methods[d->method - 1].TLSMethodMax
+				&& wolfSSL_CTX_set_max_proto_version(d->ctx[0],
+						   sr_tls_methods[d->method - 1].TLSMethodMax)
+						   != WOLFSSL_SUCCESS) {
+			ERR("%s: TLS version of tls_method %d not available in wolfSSL\n",
+					tls_domain_str(d), d->method);
+			return -1;
+		}
 
 		/*
 		* check server domains for server_name extension and register
