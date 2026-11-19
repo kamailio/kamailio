@@ -470,4 +470,57 @@ modparam("jwt3", "jwks_retry_interval", 60)
 	</section>
 	</section>
 
+	<section>
+	<title>RPC Commands</title>
+	<section id="jwt.rpc.jwks_list">
+		<title><function moreinfo="none">jwt3.jwks_list</function></title>
+		<para>
+		List the cached remote JWKS entries: url, whether content is cached,
+		size, seconds to expiry and miss counter.
+		</para>
+		<programlisting format="linespecific">
+...
+kamcmd jwt3.jwks_list
+...
+</programlisting>
+	</section>
+	<section id="jwt.rpc.jwks_reload">
+		<title><function moreinfo="none">jwt3.jwks_reload [url]</function></title>
+		<para>
+		Fetch immediately the JWKS from the given http(s) URL (adding it to
+		the cache if needed). Without parameter, all cached entries are
+		refreshed.
+		</para>
+		<programlisting format="linespecific">
+...
+kamcmd jwt3.jwks_reload https://example.com/.well-known/jwks.json
+...
+</programlisting>
+	</section>
+	<section id="jwt.rpc.jwks_flush">
+		<title><function moreinfo="none">jwt3.jwks_flush [url]</function></title>
+		<para>
+		Invalidate the cached JWKS for the given URL, or for all entries if
+		no parameter is given. The keys are fetched again on next use.
+		</para>
+		<programlisting format="linespecific">
+...
+kamcmd jwt3.jwks_flush
+...
+</programlisting>
+	</section>
+	<section id="jwt.rpc.jwks_get">
+		<title><function moreinfo="none">jwt3.jwks_get url</function></title>
+		<para>
+		Print the JWKS content currently cached for the given URL, without
+		fetching it. Useful for debugging.
+		</para>
+		<programlisting format="linespecific">
+...
+kamcmd jwt3.jwks_get https://example.com/.well-known/jwks.json
+...
+</programlisting>
+	</section>
+	</section>
+
 </chapter>
