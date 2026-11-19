@@ -1329,6 +1329,10 @@ modparam("tls", "use_shared_context", 1)
    2, match only the subdomains. If set to 0 (or anything else), match
    only the domain given in server_name.
 
+   A server profile matched by server_name is selected after the TLS
+   version is negotiated, so the tls_method of the default server profile
+   for the socket applies to the connection.
+
    The value for server_id can be any string, being used to match TLS
    client config profile, overriding the match on ip:port and server_name.
    This is the recommended way for selecting a specific TLS client config
