@@ -142,6 +142,8 @@ struct tm_binds
 	t_get_on_branch_route_f get_on_branch;
 	t_get_on_route_f get_on_reply;
 	t_get_on_route_f get_on_branch_failure;
+	treply_mutex_f t_reply_lock;
+	treply_mutex_f t_reply_unlock;
 };
 
 typedef struct tm_binds tm_api_t;
