@@ -646,13 +646,7 @@ int nats_cleanup_init_servers()
 int nats_cleanup_connection(nats_connection_ptr c)
 {
 	int s;
-	if(c->conn != NULL) {
-		natsConnection_Close(c->conn);
-		natsConnection_Destroy(c->conn);
-	}
-	if(c->opts != NULL) {
-		natsOptions_Destroy(c->opts);
-	}
+	/* The worker owns the connection and options. Free the shared data. */
 	for(s = 0; s < NATS_MAX_SERVERS; s++) {
 		if(c->servers[s]) {
 			shm_free(c->servers[s]);
@@ -667,17 +661,11 @@ int nats_destroy_workers()
 	int i;
 	nats_consumer_worker_t *worker;
 	nats_pub_worker_t *pub_worker;
+	/* Worker subscriptions and libuv handles are private to each worker. */
 	if(nats_workers != NULL) {
 		for(i = 0; i < _nats_proc_count; i++) {
 			worker = &nats_workers[i];
 			if(worker != NULL) {
-				if(worker->subscription != NULL) {
-					natsSubscription_Unsubscribe(worker->subscription);
-					natsSubscription_Destroy(worker->subscription);
-				}
-				if(worker->uvLoop != NULL) {
-					uv_loop_close(worker->uvLoop);
-				}
 				if(worker->subject != NULL) {
 					shm_free(worker->subject);
 				}
@@ -709,9 +697,6 @@ int nats_destroy_workers()
 					if(nats_cleanup_connection(pub_worker->nc) < 0) {
 						LM_ERR("could not cleanup worker connection\n");
 					}
-				}
-				if(uv_is_active((uv_handle_t *)&pub_worker->poll)) {
-					uv_poll_stop(&pub_worker->poll);
 				}
 			}
 		}
