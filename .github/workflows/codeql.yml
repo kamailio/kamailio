@@ -61,7 +61,6 @@ jobs:
 
       - name: List of modules
         id: set_values
-        working-directory: ${GITHUB_WORKSPACE}
         run: |
           val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
           echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
@@ -69,9 +68,8 @@ jobs:
 
       - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
-        working-directory: ${GITHUB_WORKSPACE}
         run: |
-          cmake -B ${GITHUB_WORKSPACE}/build -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang
+          cmake -B ./build -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -86,9 +84,8 @@ jobs:
 
       - name: Cmake Build
         if: ${{ matrix.language == 'cpp' }}
-        working-directory: ${GITHUB_WORKSPACE}
         run: |
-          cmake --build ${GITHUB_WORKSPACE}/build -j${{ steps.set_values.outputs.nproc }}
+          cmake --build ./build -j${{ steps.set_values.outputs.nproc }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
