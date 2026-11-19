@@ -855,16 +855,134 @@ static int tls_ssl_ctx_set_read_ahead(SSL_CTX *ctx, long val, void *unused)
 
 
 /**
+ * @brief switch a server connection to the SSL_CTX of a TLS domain
+ *
+ * SSL_set_SSL_CTX sets the certificate parameters; re-apply what SSL_new
+ * copied from the initial domain: options, verify settings and, before the
+ * version negotiation (ClientHello callback), the tls_method versions
+ * @param ssl server connection
+ * @param ctx SSL_CTX of the selected domain
+ * @param versions 1: apply the protocol version range of ctx
+ */
+static void tls_switch_server_ctx(SSL *ssl, SSL_CTX *ctx, int versions)
+{
+	if(SSL_get_SSL_CTX(ssl) == ctx)
+		return;
+	SSL_set_SSL_CTX(ssl, ctx);
+
+	SSL_clear_options(ssl, SSL_get_options(ssl) & ~SSL_CTX_get_options(ctx));
+	SSL_set_options(ssl, SSL_CTX_get_options(ctx));
+	if((SSL_get_verify_mode(ssl) == SSL_VERIFY_NONE)
+			|| (SSL_num_renegotiations(ssl) == 0)) {
+		/*
+		 * Only initialize the verification settings from the ctx
+		 * if they are not yet set, or if we're called when a new
+		 * SSL connection is set up (num_renegotiations == 0).
+		 * Otherwise, we would possibly reset a per-directory
+		 * configuration which was put into effect by ssl_hook_access.
+		 */
+		SSL_set_verify(ssl, SSL_CTX_get_verify_mode(ctx),
+				SSL_CTX_get_verify_callback(ctx));
+		SSL_set_verify_depth(ssl, SSL_CTX_get_verify_depth(ctx));
+	}
+	if(versions) {
+		SSL_set_min_proto_version(ssl, SSL_CTX_get_min_proto_version(ctx));
+		SSL_set_max_proto_version(ssl, SSL_CTX_get_max_proto_version(ctx));
+	}
+}
+
+/**
+ * @brief select the TLS server domain for a server_name and switch to it
+ * @return the selected domain (the default server domain when none matches)
+ */
+static tls_domain_t *tls_server_name_select(
+		SSL *ssl, tls_domain_t *orig_domain, str *server_name, int versions)
+{
+	tls_domain_t *new_domain;
+
+	new_domain = tls_lookup_cfg(*tls_domains_cfg, TLS_DOMAIN_SRV,
+			&orig_domain->ip, orig_domain->port, server_name, 0);
+	if(new_domain == NULL) {
+		LM_DBG("TLS domain for socket [%s:%d] and server_name='%.*s' "
+			   "not found\n",
+				ip_addr2a(&orig_domain->ip), orig_domain->port,
+				server_name->len, server_name->s);
+		return NULL;
+	}
+
+	LM_DBG("TLS cfg domain selected for received server name [%.*s]:"
+		   " socket [%s:%d] server name='%s' -"
+		   " switching SSL CTX to %p dom %p%s%s\n",
+			server_name->len, server_name->s, ip_addr2a(&new_domain->ip),
+			new_domain->port, ZSW(new_domain->server_name.s),
+			DOM_CTX(new_domain), new_domain,
+			(new_domain->type & TLS_DOMAIN_DEF) ? " (default)" : "",
+			versions ? " (client hello)" : "");
+	tls_switch_server_ctx(ssl, DOM_CTX(new_domain), versions);
+	return new_domain;
+}
+
+#ifdef SSL_CLIENT_HELLO_SUCCESS
+/**
+ * @brief ClientHello callback function
+ *
+ * select the TLS domain for the server_name before the TLS version is
+ * negotiated, so the tls_method of the domain applies too (the nginx and
+ * haproxy way)
+ */
+static int tls_client_hello_cb(SSL *ssl, int *al, void *arg)
+{
+	const unsigned char *p;
+	size_t len;
+	str server_name;
+
+	if(!SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_server_name, &p, &len)) {
+		return SSL_CLIENT_HELLO_SUCCESS;
+	}
+	/* server_name_list (rfc 6066): list length, name type, name length,
+	 * name; libssl validates the extension later, take a well formed
+	 * host_name here and leave the rest to it */
+	if(len < 5 || (size_t)((p[0] << 8) + p[1] + 2) != len
+			|| p[2] != TLSEXT_NAMETYPE_host_name
+			|| (size_t)((p[3] << 8) + p[4] + 5) != len
+			|| len - 5 > TLSEXT_MAXLEN_host_name
+			|| memchr(p + 5, '\0', len - 5) != NULL) {
+		LM_DBG("malformed server_name extension: left to libssl\n");
+		return SSL_CLIENT_HELLO_SUCCESS;
+	}
+	server_name.s = (char *)p + 5;
+	server_name.len = (int)(len - 5);
+	LM_DBG("received server_name (ClientHello): '%.*s'\n", server_name.len,
+			server_name.s);
+
+	tls_server_name_select(ssl, (tls_domain_t *)arg, &server_name, 1);
+	return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+/**
+ * @brief SNI callback function
+ *
+ * acknowledge the server_name, so libssl confirms it to the client and keeps
+ * it in the session; the ClientHello callback selected the domain */
+static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
+{
+	return SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)
+				   ? SSL_TLSEXT_ERR_OK
+				   : SSL_TLSEXT_ERR_NOACK;
+}
+
+#else  /* SSL_CLIENT_HELLO_SUCCESS */
+
+/**
  * @brief SNI callback function
  *
  * callback on server_name -> trigger context switch if a TLS domain
- * for the server_name is found (checks socket too) */
+ * for the server_name is found (checks socket too); used with TLS libraries
+ * without the ClientHello callback, after the version negotiation */
 static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 {
-	tls_domain_t *orig_domain, *new_domain;
 	str server_name;
 
-	orig_domain = (tls_domain_t *)private;
 	server_name.s = (char *)SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if(server_name.s) {
 		LM_DBG("received server_name (TLS extension): '%s'\n", server_name.s);
@@ -875,46 +993,16 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 	}
 
 	server_name.len = strlen(server_name.s);
-
-	new_domain = tls_lookup_cfg(*tls_domains_cfg, TLS_DOMAIN_SRV,
-			&orig_domain->ip, orig_domain->port, &server_name, 0);
-	if(new_domain == NULL) {
-		LM_DBG("TLS domain for socket [%s:%d] and server_name='%s' "
-			   "not found\n",
-				ip_addr2a(&orig_domain->ip), orig_domain->port, server_name.s);
+	if(tls_server_name_select(ssl, (tls_domain_t *)private, &server_name, 0)
+			== NULL) {
 		/* we do not perform SSL_CTX switching, thus the default server domain
 		   for this socket (or the default server domain) will be used. */
 		return SSL_TLSEXT_ERR_ALERT_WARNING;
 	}
 
-	LM_DBG("TLS cfg domain selected for received server name [%s]:"
-		   " socket [%s:%d] server name='%s' -"
-		   " switching SSL CTX to %p dom %p%s\n",
-			server_name.s, ip_addr2a(&new_domain->ip), new_domain->port,
-			ZSW(new_domain->server_name.s), DOM_CTX(new_domain), new_domain,
-			(new_domain->type & TLS_DOMAIN_DEF) ? " (default)" : "");
-	SSL_set_SSL_CTX(ssl, DOM_CTX(new_domain));
-	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
-	   not set the proper verify options. Thus this will be done manually! */
-
-	SSL_set_options(ssl, SSL_CTX_get_options(SSL_get_SSL_CTX(ssl)));
-	if((SSL_get_verify_mode(ssl) == SSL_VERIFY_NONE)
-			|| (SSL_num_renegotiations(ssl) == 0)) {
-		/*
-		 * Only initialize the verification settings from the ctx
-		 * if they are not yet set, or if we're called when a new
-		 * SSL connection is set up (num_renegotiations == 0).
-		 * Otherwise, we would possibly reset a per-directory
-		 * configuration which was put into effect by ssl_hook_access.
-		 */
-		SSL_set_verify(ssl, SSL_CTX_get_verify_mode(SSL_get_SSL_CTX(ssl)),
-				SSL_CTX_get_verify_callback(SSL_get_SSL_CTX(ssl)));
-		SSL_set_verify_depth(
-				ssl, SSL_CTX_get_verify_depth(SSL_get_SSL_CTX(ssl)));
-	}
-
 	return SSL_TLSEXT_ERR_OK;
 }
+#endif /* SSL_CLIENT_HELLO_SUCCESS */
 
 /**
  * write a comment line with the connection and handshake parameters before
@@ -1116,6 +1204,9 @@ static int ksr_tls_fix_domain(tls_domain_t *d, tls_domain_t *def)
 						(d->server_name.s) ? d->server_name.s : "<default>", i);
 				return -1;
 			}
+#ifdef SSL_CLIENT_HELLO_SUCCESS
+			SSL_CTX_set_client_hello_cb(d->ctx[i], tls_client_hello_cb, d);
+#endif
 		}
 	}
 

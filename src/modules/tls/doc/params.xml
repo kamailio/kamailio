@@ -1094,9 +1094,15 @@ modparam("tls", "use_shared_context", 1)
 		the domain given in server_name.
 	</para>
 	<para>
-		A server profile matched by server_name is selected after the TLS
-		version is negotiated, so the tls_method of the default server
-		profile for the socket applies to the connection.
+		A server profile matched by server_name is selected from the
+		ClientHello, before the TLS version is negotiated, so its tls_method,
+		cipher_list and verification attributes apply to the connection.
+		This needs the ClientHello callback of OpenSSL 1.1.1 or newer, or
+		AWS-LC; with AWS-LC before 5.14, the cipher_list of the default server
+		profile for the socket applies. With a TLS library without the
+		ClientHello callback, the server profile is selected after the
+		version negotiation and the tls_method of the default server profile
+		for the socket applies.
 	</para>
 	<para>
 		The value for server_id can be any string, being used to match TLS
