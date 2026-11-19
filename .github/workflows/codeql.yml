@@ -62,6 +62,7 @@ jobs:
       - name: List of modules
         id: set_values
         run: |
+          /usr/bin/git config --global --add safe.directory /__w/kamailio/kamailio
           val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
           echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
           echo "nproc=$(nproc)" >> "$GITHUB_OUTPUT"
