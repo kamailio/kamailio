@@ -37,6 +37,7 @@
 #include <jwt.h>
 
 #include "../../core/sr_module.h"
+#include "../../core/rpc.h"
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/lvalue.h"
@@ -89,6 +90,30 @@ static int _jwks_fetch_timeout = 10;
 static int _jwks_connect_timeout = 3;
 static int _jwks_retry_interval = 30;
 
+static void jwt3_rpc_jwks_list(rpc_t *rpc, void *ctx);
+static void jwt3_rpc_jwks_reload(rpc_t *rpc, void *ctx);
+static void jwt3_rpc_jwks_flush(rpc_t *rpc, void *ctx);
+static void jwt3_rpc_jwks_get(rpc_t *rpc, void *ctx);
+
+static const char *jwt3_rpc_jwks_list_doc[2] = {
+		"List the cached remote JWKS entries", 0};
+static const char *jwt3_rpc_jwks_reload_doc[2] = {
+		"Fetch now the JWKS from URL (optional, default all cached ones)", 0};
+static const char *jwt3_rpc_jwks_flush_doc[2] = {
+		"Invalidate the cached JWKS for URL (optional, default all)", 0};
+
+static const char *jwt3_rpc_jwks_get_doc[2] = {
+		"Get the cached JWKS content for URL", 0};
+
+static rpc_export_t jwt3_rpc_cmds[] = {
+		{"jwt3.jwks_list", jwt3_rpc_jwks_list, jwt3_rpc_jwks_list_doc,
+				RET_ARRAY},
+		{"jwt3.jwks_reload", jwt3_rpc_jwks_reload, jwt3_rpc_jwks_reload_doc, 0},
+		{"jwt3.jwks_flush", jwt3_rpc_jwks_flush, jwt3_rpc_jwks_flush_doc, 0},
+		{"jwt3.jwks_get", jwt3_rpc_jwks_get, jwt3_rpc_jwks_get_doc, 0},
+		{0, 0, 0, 0}};
+
+
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"jwt3_generate", (cmd_function)w_jwt_generate_4, 4, fixup_spve_all, fixup_free_spve_all,
@@ -126,7 +151,7 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,			 /* cmd (cfg function) exports */
 	params,			 /* param exports */
-	0,				 /* RPC method exports */
+	jwt3_rpc_cmds,	 /* RPC method exports */
 	mod_pvs,		 /* pseudo-variables exports */
 	0,				 /* response handling function */
 	mod_init,		 /* module init function */
@@ -820,6 +845,159 @@ static jwk_set_t *jwt_load_keys(str *key_in)
 
 	return jwks;
 }
+
+static int jwt3_rpc_is_url(str *u)
+{
+	return (u->len > 8 && strncmp(u->s, "https://", 8) == 0)
+		   || (u->len > 7 && strncmp(u->s, "http://", 7) == 0);
+}
+
+/**
+ * @brief RPC: list cached remote JWKS entries
+ */
+static void jwt3_rpc_jwks_list(rpc_t *rpc, void *ctx)
+{
+	jwks_cache_entry_t *e;
+	void *th;
+	time_t now = time(NULL);
+
+	lock_get(_jwks_cache_lock);
+	for(e = *_jwks_cache; e; e = e->next) {
+		if(rpc->add(ctx, "{", &th) < 0) {
+			break;
+		}
+		lock_get(e->lock);
+		rpc->struct_add(th, "Sdddd", "url", &e->url, "cached",
+				e->json.s ? 1 : 0, "size", e->json.len, "expires_in",
+				(e->json.s && e->expires_at > now) ? (int)(e->expires_at - now)
+												   : 0,
+				"misses", e->miss_count);
+		lock_release(e->lock);
+	}
+	lock_release(_jwks_cache_lock);
+}
+
+/**
+ * @brief RPC: fetch now the JWKS for one URL or for all cached entries
+ */
+static void jwt3_rpc_jwks_reload(rpc_t *rpc, void *ctx)
+{
+	jwks_cache_entry_t *e;
+	str url = STR_NULL;
+	int n = 0;
+
+	if(rpc->scan(ctx, "*S", &url) == 1) {
+		if(!jwt3_rpc_is_url(&url)) {
+			rpc->fault(ctx, 400, "Invalid URL");
+			return;
+		}
+		e = jwks_cache_find_or_create(url.s, url.len);
+		if(!e) {
+			rpc->fault(ctx, 500, "Failed to get cache entry");
+			return;
+		}
+		if(jwks_fetch_url(e) < 0) {
+			rpc->fault(ctx, 500, "Fetch failed");
+			return;
+		}
+		return;
+	}
+
+	/* entries are only added at head and never freed, safe to walk unlocked
+	 * and avoid holding the list lock during network fetches */
+	for(e = *_jwks_cache; e; e = e->next) {
+		if(jwks_fetch_url(e) == 0)
+			n++;
+		else
+			LM_WARN("reload failed for %.*s\n", e->url.len, e->url.s);
+	}
+	rpc->rpl_printf(ctx, "Reloaded %d", n);
+}
+
+/**
+ * @brief RPC: invalidate cached JWKS; entries are kept as other processes
+ * may hold references to them, content is refetched on next use
+ */
+static void jwt3_rpc_jwks_flush(rpc_t *rpc, void *ctx)
+{
+	jwks_cache_entry_t *e;
+	str url = STR_NULL;
+	int has_url, n = 0;
+
+	has_url = (rpc->scan(ctx, "*S", &url) == 1);
+
+	lock_get(_jwks_cache_lock);
+	for(e = *_jwks_cache; e; e = e->next) {
+		if(has_url
+				&& !(e->url.len == url.len
+						&& strncmp(e->url.s, url.s, url.len) == 0))
+			continue;
+		lock_get(e->lock);
+		if(e->json.s) {
+			shm_free(e->json.s);
+			e->json.s = NULL;
+			e->json.len = 0;
+		}
+		e->expires_at = 0;
+		e->miss_count = 0;
+		e->miss_window_start = 0;
+		lock_release(e->lock);
+		n++;
+	}
+	lock_release(_jwks_cache_lock);
+
+	if(has_url && n == 0) {
+		rpc->fault(ctx, 404, "URL not found");
+		return;
+	}
+	rpc->rpl_printf(ctx, "Flushed %d", n);
+}
+
+/**
+ * @brief RPC: print the cached JWKS content for a URL, without fetching it
+ */
+static void jwt3_rpc_jwks_get(rpc_t *rpc, void *ctx)
+{
+	jwks_cache_entry_t *e;
+	str url = STR_NULL;
+	str json = STR_NULL;
+
+	if(rpc->scan(ctx, "S", &url) != 1) {
+		rpc->fault(ctx, 400, "Missing URL");
+		return;
+	}
+
+	/* entries are never freed while the module runs, safe to use after
+	 * releasing the list lock */
+	lock_get(_jwks_cache_lock);
+	for(e = *_jwks_cache; e; e = e->next) {
+		if(e->url.len == url.len && strncmp(e->url.s, url.s, url.len) == 0)
+			break;
+	}
+	lock_release(_jwks_cache_lock);
+	if(!e) {
+		rpc->fault(ctx, 404, "URL not found");
+		return;
+	}
+
+	lock_get(e->lock);
+	if(e->json.s) {
+		json.s = pkg_malloc(e->json.len);
+		if(json.s) {
+			memcpy(json.s, e->json.s, e->json.len);
+			json.len = e->json.len;
+		}
+	}
+	lock_release(e->lock);
+
+	if(json.s == NULL) {
+		rpc->fault(ctx, 404, "No cached content");
+		return;
+	}
+	rpc->add(ctx, "S", &json);
+	pkg_free(json.s);
+}
+
 
 /**
  *
