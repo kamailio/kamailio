@@ -9,9 +9,9 @@ Overview
 ========
 
 kamcmd is a unix tool for interfacing with Kamailio using exported RPCs.
-It uses binrpc (a proprietary protocol, designed for minimal packet size and
-fast parsing) over a variety of transports (unix stream sockets, unix datagram
- sockets, udp or tcp).
+It uses binrpc by default (a proprietary protocol, designed for minimal packet
+size and fast parsing) over a variety of transports (unix stream sockets, unix
+datagram sockets, udp or tcp). It can also use JSON-RPC with the -j option.
 For more details on binrpc see the ctl module documentation
 (modules/ctl/README).
 
@@ -19,7 +19,8 @@ kamcmd can work in command line mode (the RPC or command name is just another
 command line parameter) or in interactive mode. The interactive mode supports
 history and tab-completion (if kamcmd was compiled with libreadline support).
 
-On Kamailio side the ctl module must be loaded.
+On Kamailio side the ctl module must be loaded for binrpc. The jsonrpcs module
+must be loaded and configured for JSON-RPC.
 
 Usage
 =====
@@ -35,7 +36,11 @@ Options:
     -f format   print the result using format. Format is a string containing
                 %v at the places where values read from the reply should be
                 substituted. To print '%v', escape it using '%': %%v.
-    -v          Verbose 
+    -b          use binrpc protocol (default)
+    -j          use JSON-RPC protocol
+    -t timeout  timeout in seconds to wait for a JSON-RPC response
+    -z size     size in kilobytes for the JSON-RPC response buffer
+    -v          Verbose
     -V          Version number
     -h          Help message
 address:
@@ -48,7 +53,7 @@ address:
 cmd:
     method  [arg1 [arg2...]]
 arg:
-     string or number; to force a number to be interpreted as string 
+     string or number; to force a number to be interpreted as string
      prefix it by "s:", e.g. s:1
 
 If no address is specified (no -s), kamcmd will use  by default
@@ -91,7 +96,7 @@ One can see all the built-in commands using: kamcmd help|grep builtin: .
 Getting help on a command
 =========================
 
-To get the help message associated with a command use 
+To get the help message associated with a command use
 kamcmd help <command_name>.
 Example:
 $ kamcmd help ps
@@ -171,7 +176,10 @@ Interactive Mode
 ================
 
 To enter the interactive mode start kamcmd without specifying a command name
- on the command line.
+on the command line. Use "kamcmd -j" for JSON-RPC interactive mode. JSON-RPC
+command names are retrieved with system.listMethods and completed in the same
+way as binrpc command names. Configuration-variable and counter argument
+completion remains specific to binrpc mode.
 If kamcmd was compiled with libreadline support (automatically if
 libreadline dev files are installed), the interactive mode will have tab
 completion and history support.
@@ -185,7 +193,7 @@ This is free software with ABSOLUTELY NO WARRANTY.
 For details type `warranty'.
 kamcmd> core.s<tab>
 core.sctp_info     core.sctp_options  core.shmmem
-kamcmd> help core.shmmem 
+kamcmd> help core.shmmem
 Returns shared memory info.
 kamcmd> core.shmmem
 {
@@ -202,10 +210,13 @@ kamcmd> quit
 Related Stuff
 =============
 
-* ctl module: required, implements binrpc on Kamailio side, without it kamcmd doesn't work.
+* ctl module: required for binrpc; it implements binrpc on Kamailio side.
 
 See modules/ctl/README
  [http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=modules_s/ctl/README].
+
+* jsonrpcs module: required for JSON-RPC mode. Its datagram or TCP transport
+  must be enabled and match the address passed with -s.
 
 * cfg_rpc module: allows setting or reading configuration parameters on-the-fly.
 	For example one could change the tcp connection lifetime to 180s using:
