@@ -31,6 +31,9 @@ target_sources(
                   ${CMAKE_CURRENT_SOURCE_DIR}/parse_listen_id.c
 )
 target_link_libraries(${NAME} PRIVATE common_utils)
+if(UNIX AND NOT APPLE)
+  target_link_libraries(${NAME} PRIVATE m)
+endif()
 
 target_compile_definitions(
   ${NAME} PRIVATE NAME="${NAME}" SRNAME="${MAIN_NAME}" VERSION="${KAMCMD_RELEASE}"
