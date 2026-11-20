@@ -1,6 +1,6 @@
 {
   "name": "pcscf_location",
-  "version": 9,
+  "version": 10,
   "columns": [
     "id": {
       "type": "int",
