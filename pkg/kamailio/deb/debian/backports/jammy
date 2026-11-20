@@ -29,6 +29,8 @@ sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += auth_blockchain' ${DIST}/ru
 # latest higher lua version available
 sed -i -e 's/liblua5.5-dev/liblua5.4-dev/g' ${DIST}/control
 
+sed -i -e 's/pkgconf/pkg-config/g' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

@@ -59,7 +59,7 @@ Build-Depends:
  libxml2-dev,
  lynx,
  openssl,
- pkg-config,
+ pkgconf,
  python,
  python-dev,
  python3,
