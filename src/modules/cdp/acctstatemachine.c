@@ -54,7 +54,8 @@ void update_gsu_response_timers(cdp_cc_acc_session_t *session, AAAMessage *msg)
 				while(z) {
 					switch(z->code) {
 						case AVP_CC_Time:
-							session->reserved_units = get_4bytes(z->data.s);
+							if(z->data.len >= 4)
+								session->reserved_units = get_4bytes(z->data.s);
 							break;
 						default:
 							LM_DBG("ignoring AVP in GSU group with code:[%d]\n",
@@ -64,8 +65,9 @@ void update_gsu_response_timers(cdp_cc_acc_session_t *session, AAAMessage *msg)
 				}
 				break;
 			case AVP_Validity_Time:
-				session->reserved_units_validity_time =
-						get_4bytes(mscc_avp->data.s);
+				if(mscc_avp->data.len >= 4)
+					session->reserved_units_validity_time =
+							get_4bytes(mscc_avp->data.s);
 				break;
 			case AVP_Final_Unit_Indication:
 				y = AAAUngroupAVPS(mscc_avp->data);
@@ -73,7 +75,8 @@ void update_gsu_response_timers(cdp_cc_acc_session_t *session, AAAMessage *msg)
 				while(z) {
 					switch(z->code) {
 						case AVP_Final_Unit_Action:
-							session->fua = get_4bytes(z->data.s);
+							if(z->data.len >= 4)
+								session->fua = get_4bytes(z->data.s);
 							break;
 						default:
 							LM_DBG("ignoring AVP in FUI group with code:[%d]\n",

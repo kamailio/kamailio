@@ -291,13 +291,13 @@ peer *get_routing_peer(cdp_session_t *cdp_session, AAAMessage *m)
 		group = AAAUngroupAVPS(avp->data);
 		avp_vendor =
 				AAAFindMatchingAVPList(group, group.head, AVP_Vendor_Id, 0, 0);
-		if(avp_vendor) {
+		if(avp_vendor && avp_vendor->data.len >= 4) {
 			vendor_id = get_4bytes(avp_vendor->data.s);
 		}
 		// 2.1. Authorization Application-Id
 		avp2 = AAAFindMatchingAVPList(
 				group, group.head, AVP_Auth_Application_Id, 0, 0);
-		if(avp2) {
+		if(avp2 && avp2->data.len >= 4) {
 			app_id = get_4bytes(avp2->data.s);
 			p = get_routing_peer_by_app_id(
 					cdp_session, destination_realm, app_id, vendor_id);
@@ -309,7 +309,7 @@ peer *get_routing_peer(cdp_session_t *cdp_session, AAAMessage *m)
 		// 2.2. Accounting Application-Id
 		avp2 = AAAFindMatchingAVPList(
 				group, group.head, AVP_Acct_Application_Id, 0, 0);
-		if(avp2) {
+		if(avp2 && avp2->data.len >= 4) {
 			app_id = get_4bytes(avp2->data.s);
 			p = get_routing_peer_by_app_id(
 					cdp_session, destination_realm, app_id, vendor_id);
@@ -323,13 +323,13 @@ peer *get_routing_peer(cdp_session_t *cdp_session, AAAMessage *m)
 
 	// 3. Try with Vendor-Id (opt) and Auth/Acct Application-Id at top level
 	avp_vendor = AAAFindMatchingAVP(m, 0, AVP_Vendor_Id, 0, AAA_FORWARD_SEARCH);
-	if(avp_vendor) {
+	if(avp_vendor && avp_vendor->data.len >= 4) {
 		vendor_id = get_4bytes(avp_vendor->data.s);
 	}
 	// 3.1. Authorization Application-Id
 	avp = AAAFindMatchingAVP(
 			m, 0, AVP_Auth_Application_Id, 0, AAA_FORWARD_SEARCH);
-	if(avp) {
+	if(avp && avp->data.len >= 4) {
 		app_id = get_4bytes(avp->data.s);
 		p = get_routing_peer_by_app_id(
 				cdp_session, destination_realm, app_id, vendor_id);
@@ -339,7 +339,7 @@ peer *get_routing_peer(cdp_session_t *cdp_session, AAAMessage *m)
 	// 3.2. Accounting Application-Id
 	avp = AAAFindMatchingAVP(
 			m, 0, AVP_Acct_Application_Id, 0, AAA_FORWARD_SEARCH);
-	if(avp) {
+	if(avp && avp->data.len >= 4) {
 		app_id = get_4bytes(avp->data.s);
 		p = get_routing_peer_by_app_id(
 				cdp_session, destination_realm, app_id, vendor_id);
