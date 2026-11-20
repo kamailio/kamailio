@@ -158,7 +158,7 @@ extern "C"
 		int len;
 		struct xode_spool_node *last;
 		struct xode_spool_node *first;
-	} * xode_spool;
+	} *xode_spool;
 
 	xode_spool xode_spool_new(void); /* create a string pool on a new pool */
 	xode_spool xode_spool_newfrompool(
@@ -221,7 +221,7 @@ extern "C"
 	xode xode_insert_tagnode(xode parent, xode node);
 	void xode_insert_node(xode parent, xode node);
 	xode xode_from_str(char *str, int len);
-	xode xode_from_strx(char *str, int len, int *err, int *pos);
+	xode xode_from_strx(char *str, int len, int *err, int64_t *pos);
 	xode xode_from_file(char *file);
 	xode xode_dup(xode x); /* duplicate x */
 	xode xode_dup_frompool(xode_pool p, xode x);
@@ -301,7 +301,7 @@ extern "C"
 		void *arg;
 		int status;
 		int depth;
-	} * xode_stream, _xode_stream;
+	} *xode_stream, _xode_stream;
 
 	xode_stream xode_stream_new(xode_pool p, xode_stream_onNode f,
 			void *arg); /* create a new xstream */
