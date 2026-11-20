@@ -59,6 +59,8 @@
 #include "../../src/modules/ctl/ctl_defaults.h" /* default socket & port */
 #include "../../src/modules/ctl/binrpc.h"
 #include "../../src/modules/ctl/binrpc.c" /* ugly hack */
+#include "../../src/core/utils/srjson.h"
+#include "../../src/core/utils/srjson.c" /* standalone utility build */
 
 
 #ifndef NAME
@@ -125,6 +127,7 @@ Examples:\n\
     " NAME " ps  # uses default ctl socket \n\
     " NAME "     # enters interactive mode on the default socket \n\
     " NAME " -s tcp:localhost # interactive mode, default port \n\
+    " NAME " -j  # enters jsonrpc interactive mode on the default socket\n\
     " NAME
 		" -s unixd:/run/kamailio/kamailio_rpc.sock -j core.psx # jsonrpc mode\n\
 ";
@@ -141,7 +144,10 @@ int _kamcmd_rpc_type = KAMCMD_BINRPC;
 int _kamcmd_read_timeout = 2;
 struct binrpc_val *rpc_array;
 int rpc_no = 0;
+char **rpc_methods;
+int rpc_methods_no = 0;
 unsigned int _kamcmd_jsonrpc_size = 16 * 1024;
+struct id_list *_kamcmd_sock_id;
 
 #ifdef USE_CFG_VARS
 
@@ -240,6 +246,8 @@ static int kamcmd_help(int s, struct binrpc_cmd *cmd);
 static int kamcmd_ver(int s, struct binrpc_cmd *cmd);
 static int kamcmd_quit(int s, struct binrpc_cmd *cmd);
 static int kamcmd_warranty(int s, struct binrpc_cmd *cmd);
+static int run_json_cmd(int s, struct binrpc_cmd *cmd);
+static int get_jsonrpc_list(int s);
 
 
 /* clang-format off */
@@ -516,7 +524,7 @@ error:
 int connect_tcpudp_socket(char *address, int port, int type)
 {
 	struct addrinfo hints;
-	struct addrinfo *res;
+	struct addrinfo *res = NULL;
 	struct addrinfo *ai;
 	char service[16];
 	int sock;
@@ -533,7 +541,6 @@ int connect_tcpudp_socket(char *address, int port, int type)
 		goto error;
 	}
 
-	res = NULL;
 	ret = getaddrinfo(address, service, &hints, &res);
 	if(ret != 0 || res == NULL) {
 		fprintf(stderr, "ERROR: could not resolve %s\n", address);
@@ -563,6 +570,27 @@ error:
 	if(sock != -1)
 		close(sock);
 	return -1;
+}
+
+
+static int connect_rpc_socket(struct id_list *sock_id)
+{
+	if(sock_id == NULL)
+		return -1;
+
+	switch(sock_id->proto) {
+		case UDP_SOCK:
+		case TCP_SOCK:
+			return connect_tcpudp_socket(sock_id->name, sock_id->port,
+					(sock_id->proto == UDP_SOCK) ? SOCK_DGRAM : SOCK_STREAM);
+		case UNIXS_SOCK:
+		case UNIXD_SOCK:
+			return connect_unix_sock(sock_id->name,
+					(sock_id->proto == UNIXD_SOCK) ? SOCK_DGRAM : SOCK_STREAM);
+		default:
+			fprintf(stderr, "ERROR: unsupported socket type\n");
+			return -1;
+	}
 }
 
 
@@ -1083,7 +1111,10 @@ inline static int run_cmd(int s, struct binrpc_cmd *cmd, char *format)
 
 	fix_cmd(cmd, &fmt);
 	if(!(ret = run_builtins(s, cmd))) {
-		ret = run_binrpc_cmd(s, cmd, fmt);
+		if(_kamcmd_rpc_type == KAMCMD_JSONRPC)
+			ret = run_json_cmd(s, cmd);
+		else
+			ret = run_binrpc_cmd(s, cmd, fmt);
 	}
 	return (ret > 0) ? 0 : ret;
 }
@@ -1114,6 +1145,47 @@ static void free_rpc_array(struct binrpc_val *a, int size)
 		}
 	}
 	free(a);
+}
+
+
+static void free_rpc_methods(void)
+{
+	int r;
+
+	for(r = 0; r < rpc_methods_no; r++)
+		free(rpc_methods[r]);
+	free(rpc_methods);
+	rpc_methods = NULL;
+	rpc_methods_no = 0;
+}
+
+
+static int rpc_methods_from_binrpc(void)
+{
+	int r;
+	int n;
+
+	free_rpc_methods();
+	for(r = 0, n = 0; r < rpc_no; r++) {
+		if(rpc_array[r].type == BINRPC_T_STR)
+			n++;
+	}
+	if(n == 0)
+		return 0;
+	rpc_methods = calloc(n, sizeof(char *));
+	if(rpc_methods == NULL)
+		return -1;
+	for(r = 0; r < rpc_no; r++) {
+		if(rpc_array[r].type != BINRPC_T_STR)
+			continue;
+		rpc_methods[rpc_methods_no] = strdup(rpc_array[r].u.strval.s);
+		if(rpc_methods[rpc_methods_no] == NULL) {
+			free_rpc_methods();
+			return -1;
+		}
+		rpc_methods_no++;
+	}
+	return 0;
 }
 
 
@@ -1209,6 +1281,9 @@ static int get_kamcmd_list(int s)
 	struct binrpc_parse_ctx in_pkt;
 	int ret;
 
+	if(_kamcmd_rpc_type == KAMCMD_JSONRPC)
+		return get_jsonrpc_list(s);
+
 	cmd.method = "system.listMethods";
 	cmd.argc = 0;
 
@@ -1238,6 +1313,8 @@ static int get_kamcmd_list(int s)
 						&rpc_no, &in_pkt, msg_body, in_pkt.tlen))
 					== 0)
 				goto error;
+			if(rpc_methods_from_binrpc() < 0)
+				goto error;
 			break;
 		default:
 			fprintf(stderr, "ERROR: not a reply\n");
@@ -1263,10 +1340,9 @@ static int is_rpc_cmd(char *cmd)
 	int cmd_len;
 
 	cmd_len = strlen(cmd);
-	for(r = 0; r < rpc_no; r++) {
-		if((rpc_array[r].type == BINRPC_T_STR)
-				&& (rpc_array[r].u.strval.len == cmd_len)
-				&& (strncmp(cmd, rpc_array[r].u.strval.s, cmd_len) == 0))
+	for(r = 0; r < rpc_methods_no; r++) {
+		if((strlen(rpc_methods[r]) == cmd_len)
+				&& (strncmp(cmd, rpc_methods[r], cmd_len) == 0))
 			return 1;
 	}
 	return 0;
@@ -1646,21 +1722,21 @@ static int kamcmd_help(int s, struct binrpc_cmd *cmd)
 			}
 		}
 		cmd->method = "system.methodHelp";
-		if(run_binrpc_cmd(s, cmd, 0) < 0) {
+		if(_kamcmd_rpc_type == KAMCMD_JSONRPC) {
+			if(run_json_cmd(s, cmd) < 0)
+				printf("error: no such command %s\n", cmd->argv[0].u.strval.s);
+		} else if(run_binrpc_cmd(s, cmd, 0) < 0) {
 			printf("error: no such command %s\n", cmd->argv[0].u.strval.s);
 		}
 		return 0;
 	}
 
-	if(rpc_no == 0) {
+	if(rpc_methods_no == 0) {
 		if(get_kamcmd_list(s) < 0)
 			goto error;
 	}
-	for(r = 0; r < rpc_no; r++) {
-		if(rpc_array[r].type == BINRPC_T_STR) {
-			printf("%s\n", rpc_array[r].u.strval.s);
-		}
-	}
+	for(r = 0; r < rpc_methods_no; r++)
+		printf("%s\n", rpc_methods[r]);
 	for(r = 0; cmd_aliases[r].name; r++) {
 		printf("alias: %s\n", cmd_aliases[r].name);
 	}
@@ -1706,7 +1782,7 @@ static int kamcmd_warranty(int s, struct binrpc_cmd *cmd)
 static char *kamcmd_generator(const char *text, int state)
 {
 	static int idx;
-	static int list; /* aliases, builtins, rpc_array */
+	static int list; /* aliases, builtins, rpc_methods */
 	static int len;
 	char *name;
 #ifdef USE_CFG_VARS
@@ -1745,16 +1821,11 @@ static char *kamcmd_generator(const char *text, int state)
 					list++;
 					idx = 0;
 					/* no break */
-				case 2: /* rpc_array */
-					while(idx < rpc_no) {
-						if(rpc_array[idx].type == BINRPC_T_STR) {
-							name = rpc_array[idx].u.strval.s;
-							idx++;
-							if(strncmp(name, text, len) == 0)
-								return strdup(name);
-						} else {
-							idx++;
-						}
+				case 2: /* rpc_methods */
+					while(idx < rpc_methods_no) {
+						name = rpc_methods[idx++];
+						if(strncmp(name, text, len) == 0)
+							return strdup(name);
 					}
 			}
 			break;
@@ -2125,8 +2196,24 @@ static int kamcmd_append_strz(str *obuf, str *pbuf, char *val)
 	return 0;
 }
 
-/* runs json command */
-static int run_json_cmd(int s, struct binrpc_cmd *cmd)
+static int json_response_complete(char *buf)
+{
+	srjson_doc_t jdoc;
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = srjson_Parse(&jdoc, buf);
+	if(jdoc.root == NULL) {
+		srjson_DestroyDoc(&jdoc);
+		return 0;
+	}
+	srjson_DestroyDoc(&jdoc);
+	return 1;
+}
+
+
+/* sends a json command and returns a malloc allocated response */
+static int execute_json_cmd(
+		int s, struct binrpc_cmd *cmd, char **response, int *response_len)
 {
 	char jcbuf[KAMCMD_JSONCMDBUF_SIZE];
 	char *jrbuf = NULL;
@@ -2138,8 +2225,16 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 	int i;
 	int emode;
 	int ret = 0;
+	int json_s;
+	int own_socket;
+	int is_dgram;
+	int waits;
+	int used;
+	int written;
 	fd_set fds;
 
+	*response = NULL;
+	*response_len = 0;
 	jcbuf[0] = '\0';
 	jcmd.s = jcbuf;
 	jcmd.len = 0;
@@ -2187,7 +2282,7 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 							&cmd->argv[i].u.strval, &sval, &emode);
 					if(sval.s == NULL) {
 						fprintf(stderr, "failed to escape string parameter\n");
-						return -1;
+						goto error;
 					}
 					len = snprintf(pbuf.s, pbuf.len, "%s\"%.*s\"",
 							(i == 0) ? "" : ", ", sval.len, sval.s);
@@ -2218,63 +2313,175 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 	jcmd.s[jcmd.len] = '\0';
 	pbuf.s += len;
 	pbuf.len -= len;
-	// ret = run_binrpc_cmd(s, cmd, fmt);
-
 	if(verbose > 0) {
 		fprintf(stderr, "command is [%.*s]/%d\n", jcmd.len, jcmd.s, jcmd.len);
 	}
 
-	tv.tv_sec = 5;
-	tv.tv_usec = 0;
-	setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof tv);
-	len = write(s, jcmd.s, jcmd.len);
-	if(len <= 0) {
-		fprintf(stderr, "error sending the command (%d/%s)\n", errno,
-				strerror(errno));
-		goto error;
+	json_s = s;
+	own_socket = 0;
+	is_dgram = _kamcmd_sock_id != NULL
+			   && (_kamcmd_sock_id->proto == UDP_SOCK
+					   || _kamcmd_sock_id->proto == UNIXD_SOCK);
+	if(!is_dgram) {
+		json_s = connect_rpc_socket(_kamcmd_sock_id);
+		if(json_s < 0)
+			goto error;
+		own_socket = 1;
 	}
 
-	i = _kamcmd_read_timeout;
-	tv.tv_sec = 1;
+	tv.tv_sec = 5;
 	tv.tv_usec = 0;
+	setsockopt(json_s, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof tv);
+	for(written = 0; written < jcmd.len; written += len) {
+		len = write(json_s, jcmd.s + written, jcmd.len - written);
+		if(len <= 0) {
+			fprintf(stderr, "error sending the command (%d/%s)\n", errno,
+					strerror(errno));
+			goto error_socket;
+		}
+	}
+
+	waits = (_kamcmd_read_timeout > 0) ? _kamcmd_read_timeout : 1;
+	used = 0;
 	do {
-		i--;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
 		FD_ZERO(&fds);
-		FD_SET(s, &fds);
-		ret = select(s + 1, &fds, NULL, NULL, &tv);
+		FD_SET(json_s, &fds);
+		ret = select(json_s + 1, &fds, NULL, NULL, &tv);
 		if(ret < 0) {
+			if(errno == EINTR)
+				continue;
 			fprintf(stderr, "select error (%d/%s)\n", errno, strerror(errno));
-			goto error;
+			goto error_socket;
 		} else if(ret == 0) {
-			/* timeout */
-			if(i <= 0) {
-				break;
-			}
+			if(--waits <= 0)
+				goto error_timeout;
 			continue;
 		}
-		len = read(s, jrbuf, _kamcmd_jsonrpc_size - 1);
+		len = read(json_s, jrbuf + used, _kamcmd_jsonrpc_size - used - 1);
 		if(len < 0) {
 			if(errno == EINTR) {
 				continue;
 			}
 			fprintf(stderr, "error reading the response (%d/%s) %d\n", errno,
 					strerror(errno), ETIMEDOUT);
-			goto error;
+			goto error_socket;
 		}
-		jrbuf[len] = 0x00;
-		printf("%s", jrbuf);
-		if(i <= 0 || len < _kamcmd_jsonrpc_size / 2) {
-			/* expect it is finished */
+		if(len == 0) {
+			fprintf(stderr, "jsonrpc connection closed without a response\n");
+			goto error_socket;
+		}
+		used += len;
+		jrbuf[used] = '\0';
+		if(is_dgram || json_response_complete(jrbuf))
 			break;
+		if(used >= (int)_kamcmd_jsonrpc_size - 1) {
+			fprintf(stderr, "jsonrpc response exceeds the configured buffer\n");
+			goto error_socket;
 		}
 	} while(1);
-	printf("\n");
+	if(own_socket)
+		close(json_s);
+	*response = jrbuf;
+	*response_len = used;
+	return 0;
+
+error_timeout:
+	fprintf(stderr, "timeout waiting for jsonrpc response\n");
+error_socket:
+	if(own_socket)
+		close(json_s);
+error:
+	if(jrbuf != NULL)
+		free(jrbuf);
+	return -1;
+}
+
+
+/* runs json command */
+static int run_json_cmd(int s, struct binrpc_cmd *cmd)
+{
+	char *response;
+	int response_len;
+
+	if(execute_json_cmd(s, cmd, &response, &response_len) < 0)
+		return -1;
+	fwrite(response, 1, response_len, stdout);
+	putchar('\n');
+	free(response);
+	return 0;
+}
+
+
+static int get_jsonrpc_list(int s)
+{
+	struct binrpc_cmd cmd;
+	char *response;
+	int response_len;
+	int count;
+	int i;
+	srjson_doc_t jdoc;
+	srjson_t *result;
+	srjson_t *item;
+	srjson_t *error;
+
+	cmd.method = "system.listMethods";
+	cmd.argc = 0;
+	if(execute_json_cmd(s, &cmd, &response, &response_len) < 0)
+		return -1;
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = srjson_Parse(&jdoc, response);
+	if(jdoc.root == NULL || (jdoc.root->type & 255) != srjson_Object) {
+		fprintf(stderr, "invalid jsonrpc response to system.listMethods\n");
+		goto error;
+	}
+	error = srjson_GetObjectItem(&jdoc, jdoc.root, "error");
+	if(error != NULL && (error->type & 255) != srjson_NULL) {
+		fprintf(stderr, "jsonrpc system.listMethods returned an error\n");
+		goto error;
+	}
+	result = srjson_GetObjectItem(&jdoc, jdoc.root, "result");
+	if(result == NULL || (result->type & 255) != srjson_Array) {
+		fprintf(stderr, "jsonrpc system.listMethods result is not an array\n");
+		goto error;
+	}
+
+	count = 0;
+	for(item = result->child; item != NULL; item = item->next) {
+		if((item->type & 255) != srjson_String || item->valuestring == NULL) {
+			fprintf(stderr,
+					"jsonrpc system.listMethods contains a non-string value\n");
+			goto error;
+		}
+		count++;
+	}
+	free_rpc_methods();
+	if(count > 0) {
+		rpc_methods = calloc(count, sizeof(char *));
+		if(rpc_methods == NULL)
+			goto error;
+	}
+	for(item = result->child, i = 0; item != NULL; item = item->next) {
+		if((item->type & 255) != srjson_String || item->valuestring == NULL)
+			continue;
+		rpc_methods[i] = strdup(item->valuestring);
+		if(rpc_methods[i] == NULL) {
+			rpc_methods_no = i;
+			free_rpc_methods();
+			goto error;
+		}
+		i++;
+	}
+	rpc_methods_no = count;
+	srjson_DestroyDoc(&jdoc);
+	free(response);
 	return 0;
 
 error:
-	if(jrbuf != NULL) {
-		free(jrbuf);
-	}
+	srjson_DestroyDoc(&jdoc);
+	free(response);
 	return -1;
 }
 
@@ -2306,6 +2513,8 @@ int main(int argc, char **argv)
 	format = 0;
 	line = 0;
 	s = -1;
+	sock_id = 0;
+	_kamcmd_sock_id = NULL;
 	sock_name = 0;
 	sock_type = UNIXS_SOCK;
 	opterr = 0;
@@ -2399,68 +2608,38 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
-	switch(sock_id->proto) {
-		case UDP_SOCK:
-		case TCP_SOCK:
-			if(sock_id->port == 0) {
-				sock_id->port = DEFAULT_CTL_PORT;
-				/*
-				fprintf(stderr, "ERROR: no port specified: %s:<port>\n",
-								sock_name);
-				goto error;
-				*/
-			}
-			if((s = connect_tcpudp_socket(sock_id->name, sock_id->port,
-						(sock_id->proto == UDP_SOCK) ? SOCK_DGRAM
-													 : SOCK_STREAM))
-					< 0) {
-				goto error;
-			}
-			break;
-		case UNIXS_SOCK:
-		case UNIXD_SOCK:
-			if((s = connect_unix_sock(sock_id->name,
-						(sock_id->proto == UNIXD_SOCK) ? SOCK_DGRAM
-													   : SOCK_STREAM))
-					< 0)
-				goto error;
-			break;
-		case UNKNOWN_SOCK:
-			fprintf(stderr, "ERROR: Bad socket type for %s\n", sock_name);
+	if((sock_id->proto == UDP_SOCK || sock_id->proto == TCP_SOCK)
+			&& sock_id->port == 0)
+		sock_id->port = DEFAULT_CTL_PORT;
+	if(sock_id->proto == UNKNOWN_SOCK) {
+		fprintf(stderr, "ERROR: Bad socket type for %s\n", sock_name);
+		goto error;
+	}
+	_kamcmd_sock_id = sock_id;
+	if(!(_kamcmd_rpc_type == KAMCMD_JSONRPC
+			   && (sock_id->proto == TCP_SOCK
+					   || sock_id->proto == UNIXS_SOCK))) {
+		s = connect_rpc_socket(sock_id);
+		if(s < 0)
 			goto error;
 	}
-	free(sock_id->buf); /* not needed anymore */
-	free(sock_id);		/* not needed anymore */
-	sock_id = 0;
 
-	if(optind >= argc) {
-		/*fprintf(stderr, "ERROR: no command specified\n");
-			goto error; */
-		if(_kamcmd_rpc_type == KAMCMD_JSONRPC) {
-			fprintf(stderr, "jsonrpc does not work in interactive mode\n");
-			goto error;
-		}
-	} else {
+	if(optind < argc) {
 		if(parse_cmd(&cmd, &argv[optind], argc - optind) < 0)
 			goto error;
-		if(_kamcmd_rpc_type == KAMCMD_JSONRPC) {
-			if(run_json_cmd(s, &cmd) < 0) {
-				goto error;
-			}
-		} else {
-			if(run_cmd(s, &cmd, format) < 0) {
-				goto error;
-			}
-		}
+		if(run_cmd(s, &cmd, format) < 0)
+			goto error;
 		goto end;
 	}
 	/* interactive mode */
 	if(get_kamcmd_list(s) == 0) {
 #ifdef USE_CFG_VARS
-		get_cfgvars_list(s);
+		if(_kamcmd_rpc_type == KAMCMD_BINRPC)
+			get_cfgvars_list(s);
 #endif /* USE_CFG_VARS */
 #ifdef USE_COUNTERS
-		get_counters_list(s);
+		if(_kamcmd_rpc_type == KAMCMD_BINRPC)
+			get_counters_list(s);
 #endif /* USE_COUNTERS */
 	}
 	/* banners */
@@ -2512,6 +2691,7 @@ end:
 		free(line);
 	if(format)
 		free(format);
+	free_rpc_methods();
 	if(rpc_array)
 		free_rpc_array(rpc_array, rpc_no);
 #ifdef USE_CFG_VARS
@@ -2532,6 +2712,12 @@ end:
 		cnt_grps_no = 0;
 	}
 #endif /* USE_COUNTERS */
+	if(s >= 0)
+		close(s);
+	if(sock_id) {
+		free(sock_id->buf);
+		free(sock_id);
+	}
 	cleanup();
 	exit(0);
 error:
@@ -2539,6 +2725,7 @@ error:
 		free(line);
 	if(format)
 		free(format);
+	free_rpc_methods();
 	if(rpc_array)
 		free_rpc_array(rpc_array, rpc_no);
 #ifdef USE_CFG_VARS
@@ -2559,6 +2746,12 @@ error:
 		cnt_grps_no = 0;
 	}
 #endif /* USE_COUNTERS */
+	if(s >= 0)
+		close(s);
+	if(sock_id) {
+		free(sock_id->buf);
+		free(sock_id);
+	}
 	cleanup();
 	exit(-1);
 }
