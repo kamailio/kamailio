@@ -4,7 +4,11 @@ add_library(${module_name} SHARED ${MODULE_SOURCES})
 
 find_package(SQLite3 REQUIRED)
 
-target_link_libraries(${module_name} PRIVATE SQLite::SQLite3)
+if(TARGET SQLite3::SQLite3)
+  target_link_libraries(${module_name} PRIVATE SQLite3::SQLite3)
+else()
+  target_link_libraries(${module_name} PRIVATE SQLite::SQLite3)
+endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/db_files.cmake)
 add_kamctl_db_files(${group_name} kamctl.sqlite)
