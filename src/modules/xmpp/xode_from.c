@@ -108,7 +108,7 @@ xode xode_from_str(char *str, int len)
 	return node; /* return the xmlnode x points to */
 }
 
-xode xode_from_strx(char *str, int len, int *err, int *pos)
+xode xode_from_strx(char *str, int len, int *err, int64_t *pos)
 {
 	XML_Parser p;
 	xode *x, node; /* pointer to an xmlnode */
@@ -130,7 +130,7 @@ xode xode_from_strx(char *str, int len, int *err, int *pos)
 	if(err != NULL)
 		*err = XML_GetErrorCode(p);
 	if(pos != NULL)
-		*pos = XML_GetCurrentByteIndex(p);
+		*pos = XML_GetCurrentByteIndex64(p);
 	node = *x;
 	free(x);
 	XML_ParserFree(p);
