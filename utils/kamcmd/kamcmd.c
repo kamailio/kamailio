@@ -43,7 +43,7 @@
 #include <time.h> /* time */
 #include <sys/time.h>
 
-#define KAMCMD_JSONRPC_SOCKET "unixd:" RUN_DIR SRNAME "_rpc.sock"
+#define KAMCMD_JSONRPC_SOCKET "unixd:" RUN_DIR "/" SRNAME "_rpc.sock"
 
 #ifdef USE_READLINE
 #include <readline/readline.h>
