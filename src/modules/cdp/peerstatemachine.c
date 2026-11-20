@@ -1356,6 +1356,7 @@ void Rcv_Process(peer *p, AAAMessage *msg)
 	if(!msg) {
 		return;
 	}
+	msg->in_peer = p;
 
 	if(msg->sessionId)
 		session = cdp_get_session(msg->sessionId->data);
@@ -1416,11 +1417,6 @@ void Rcv_Process(peer *p, AAAMessage *msg)
 				AAASessionsUnlock(session->hash);
 				session = 0;
 				break;
-		}
-	} else {
-		if(msg->sessionId) {
-			if(msg->commandCode == IMS_ASR)
-				auth_client_statefull_sm_process(0, AUTH_EV_RECV_ASR, msg);
 		}
 	}
 	if(!nput && !put_task(p, msg)) {

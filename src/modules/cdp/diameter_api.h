@@ -62,6 +62,8 @@ typedef AAAMessage *(*AAACreateRequest_f)(AAAApplicationId app_id,
 AAAMessage *AAACreateResponse(AAAMessage *request);
 typedef AAAMessage *(*AAACreateResponse_f)(AAAMessage *request);
 
+AAAMessage *cdp_create_answer(AAAMessage *request, unsigned int result_code);
+
 
 AAAMessage *AAANewMessage(AAACommandCode commandCode, AAAApplicationId appId,
 		AAASession *session, AAAMessage *request);
