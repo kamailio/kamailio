@@ -46,8 +46,9 @@ endif #ifneq (,$(MAKECMDGOALS))
 
 # erase common DEFS (not needed)
 C_DEFS:=
+kamcmd_run_dir=$(patsubst %/,%,$(run_target))
 DEFS:= -DNAME='"$(NAME)"' -DSRNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -D__OS_$(OS) \
-		-DRUN_DIR='"$(run_target)"' \
+		-DRUN_DIR='"$(kamcmd_run_dir)"' \
 		$(filter -D%HAVE -DARCH% -DOS% -D__CPU% -D__OS%, $(DEFS))
 
 # use proper libs (we can't rely on LIBS value since we might be called
