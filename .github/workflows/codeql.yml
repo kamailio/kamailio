@@ -75,12 +75,16 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          source-root: .
           queries: +security-and-quality
 
       - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
         run: |
-          cmake -B ./build -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang
+          cmake -B ./build \
+            -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
@@ -95,3 +99,5 @@ jobs:
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
+        env:
+          CODEQL_ACTION_EXTRA_OPTIONS: '{"database": {"create": ["--source-root", "."]}}'
