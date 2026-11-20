@@ -170,7 +170,7 @@ modparam("msrp", "timer_interval", 90)
 		<title>Set <varname>auth_min_expires</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("msrp", "auth_min_expiresl", 90)
+modparam("msrp", "auth_min_expires", 90)
 ...
 </programlisting>
 		</example>
@@ -189,7 +189,7 @@ modparam("msrp", "auth_min_expiresl", 90)
 		<title>Set <varname>auth_max_expires</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("msrp", "auth_max_expiresl", 1800)
+modparam("msrp", "auth_max_expires", 1800)
 ...
 </programlisting>
 		</example>
@@ -757,7 +757,7 @@ event_route[msrp:frame-in] {
 				msrp_reply("423", "Interval Out-of-Bounds",
 					"Min-Expires: MSRP_MIN_EXPIRES\r\n");
 				exit;
-			} else {
+			} else if ($var(expires) > MSRP_MAX_EXPIRES) {
 				msrp_reply("423", "Interval Out-of-Bounds",
 					"Max-Expires: MSRP_MAX_EXPIRES\r\n");
 				exit;
