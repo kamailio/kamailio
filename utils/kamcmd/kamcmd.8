@@ -1,14 +1,20 @@
 .\" $Id$
-.TH kamcmd 8 23.10.2012 Kamailio "kamailio" 
+.TH kamcmd 8 23.10.2012 Kamailio "kamailio"
 .\" Process with
-.\" groff -man -Tascii kamcmd.8 
+.\" groff -man -Tascii kamcmd.8
 .\"
 .SH NAME
 kamcmd \- kamailio command line tool
 .SH SYNOPSIS
 .B kamcmd
 [
-.B \-h
+.B options
+]
+[
+.B command
+[
+.B arguments
+]
 ]
 
 .SH DESCRIPTION
@@ -21,6 +27,22 @@ It can be used to manage users, domains, aliases and other server options.
 .TP 12
 .B \-h
 display a short usage description, including all available options.
+.TP
+.BI \-s " address"
+use the specified Unix or IP socket.
+.TP
+.B \-b
+use the binrpc protocol (the default).
+.TP
+.B \-j
+use the JSON-RPC protocol. With no command, enter interactive mode and load
+RPC command names for readline completion using system.listMethods.
+.TP
+.BI \-t " timeout"
+set the JSON-RPC response timeout in seconds.
+.TP
+.BI \-z " size"
+set the JSON-RPC response buffer size in kilobytes.
 
 .SH NOTE
 .B kamcmd
@@ -32,7 +54,7 @@ with
 
 .SH AUTHORS
 
-see 
+see
 .B /usr/share/doc/kamailio/AUTHORS
 
 .SH SEE ALSO
