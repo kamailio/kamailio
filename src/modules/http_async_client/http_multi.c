@@ -510,7 +510,7 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 	/* set up the generic multi interface options we want */
 	curl_multi_setopt(g->multi, CURLMOPT_SOCKETFUNCTION, sock_cb);
 	curl_multi_setopt(g->multi, CURLMOPT_SOCKETDATA, g);
-	curl_multi_setopt(g->multi, CURLMOPT_TIMERFUNCTION, multi_timer_cb);
+	curl_multi_setopt(g->multi, CURLMOPT_TIMERFUNCTION, (long)multi_timer_cb);
 	curl_multi_setopt(g->multi, CURLMOPT_TIMERDATA, g);
 	curl_multi_setopt(g->multi, CURLMOPT_PIPELINING, CURLPIPE_NOTHING);
 
@@ -594,8 +594,8 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb,
 	curl_easy_setopt(
 			cell->easy, CURLOPT_SSL_VERIFYPEER, cell->params.tls_verify_peer);
 	curl_easy_setopt(cell->easy, CURLOPT_SSL_VERIFYHOST,
-			cell->params.tls_verify_host ? 2 : 0);
-	curl_easy_setopt(cell->easy, CURLOPT_SSLVERSION, tls_version);
+			cell->params.tls_verify_host ? 2L : 0L);
+	curl_easy_setopt(cell->easy, CURLOPT_SSLVERSION, (long)tls_version);
 
 	if(cell->params.tls_client_cert) {
 		curl_easy_setopt(
@@ -611,7 +611,7 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb,
 		curl_easy_setopt(cell->easy, CURLOPT_CAPATH, cell->params.tls_ca_path);
 	}
 
-	curl_easy_setopt(cell->easy, CURLOPT_HEADER, 1);
+	curl_easy_setopt(cell->easy, CURLOPT_HEADER, 1L);
 	if(cell->params.headers) {
 		curl_easy_setopt(cell->easy, CURLOPT_HTTPHEADER, cell->params.headers);
 	}
@@ -645,7 +645,8 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb,
 
 	if(cell->params.username) {
 		curl_easy_setopt(cell->easy, CURLOPT_USERNAME, cell->params.username);
-		curl_easy_setopt(cell->easy, CURLOPT_HTTPAUTH, cell->params.authmethod);
+		curl_easy_setopt(
+				cell->easy, CURLOPT_HTTPAUTH, (long)cell->params.authmethod);
 
 		LM_DBG("set username to %s [authmethod %u]\n", cell->params.username,
 				cell->params.authmethod);
@@ -681,8 +682,7 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb,
 	}
 
 	if(cell->params.http_version == 1) {
-		curl_easy_setopt(
-				cell->easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2);
+		curl_easy_setopt(cell->easy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2);
 		LM_DBG("CURLOPT_HTTP_VERSION set to CURL_HTTP_VERSION_2\n");
 	} else if(cell->params.http_version == 2) {
 		curl_easy_setopt(cell->easy, CURLOPT_HTTP_VERSION,
@@ -755,8 +755,8 @@ void check_multi_info(struct http_m_global *g)
 							easy);
 					reply_error(cell);
 				} else {
-					if(curl_easy_getinfo(cell->easy, CURLINFO_TOTAL_TIME,
-							   &tmp_time)
+					if(curl_easy_getinfo(
+							   cell->easy, CURLINFO_TOTAL_TIME, &tmp_time)
 							== CURLE_OK)
 						cell->reply->time.total =
 								(uint32_t)(tmp_time * 1000000);
@@ -780,8 +780,8 @@ void check_multi_info(struct http_m_global *g)
 							== CURLE_OK)
 						cell->reply->time.appconnect =
 								(uint32_t)(tmp_time * 1000000);
-					if(curl_easy_getinfo(cell->easy,
-							   CURLINFO_PRETRANSFER_TIME, &tmp_time)
+					if(curl_easy_getinfo(
+							   cell->easy, CURLINFO_PRETRANSFER_TIME, &tmp_time)
 							== CURLE_OK)
 						cell->reply->time.pretransfer =
 								(uint32_t)(tmp_time * 1000000);
