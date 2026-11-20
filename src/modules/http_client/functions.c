@@ -264,7 +264,7 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	res = curl_easy_setopt(curl, CURLOPT_URL, _url);
 
 	if(params->httpversion != 0) {
-		curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, params->httpversion);
+		curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, (long)params->httpversion);
 	}
 
 	/* Limit to HTTP and HTTPS protocols */
@@ -327,7 +327,8 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 
 	if(params->username) {
 		res |= curl_easy_setopt(curl, CURLOPT_USERNAME, params->username);
-		res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, params->authmethod);
+		res |= curl_easy_setopt(
+				curl, CURLOPT_HTTPAUTH, (long)params->authmethod);
 	}
 	if(params->secret) {
 		res |= curl_easy_setopt(curl, CURLOPT_PASSWORD, params->secret);
@@ -365,14 +366,14 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 
 	if(params->http_proxy_port > 0) {
 		res |= curl_easy_setopt(
-				curl, CURLOPT_PROXYPORT, params->http_proxy_port);
+				curl, CURLOPT_PROXYPORT, (long)params->http_proxy_port);
 	}
 
 
 	res |= curl_easy_setopt(
 			curl, CURLOPT_SSL_VERIFYPEER, (long)params->verify_peer);
 	res |= curl_easy_setopt(
-			curl, CURLOPT_SSL_VERIFYHOST, (long)params->verify_host ? 2 : 0);
+			curl, CURLOPT_SSL_VERIFYHOST, params->verify_host ? 2L : 0L);
 
 	res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
 
