@@ -42,10 +42,13 @@ jobs:
         include:
           - language: javascript
             build-mode: none
+            submodules: false
           - language: python
             build-mode: none
+            submodules: false
           - language: cpp
             build-mode: manual
+            submodules: recursive
 
     container:
       image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-trixie
@@ -57,7 +60,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          submodules: recursive
+          submodules: ${{ matrix.submodules }}
 
       - name: List of modules
         id: set_values
