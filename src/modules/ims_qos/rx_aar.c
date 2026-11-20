@@ -60,6 +60,7 @@
 #include "rx_authdata.h"
 
 #include "rx_aar.h"
+#include "rx_rar.h"
 #include "rx_avp.h"
 
 #include "../../lib/ims/ims_getters.h"
@@ -166,6 +167,19 @@ void async_aar_callback(
 		LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len,
 				aaa->sessionId->data.s);
 
+		/* an initial AAA takes the session lock below anyway */
+		if(data->aar_update && data->kept_media_known) {
+			auth = cdpb.AAAGetAuthSession(aaa->sessionId->data);
+			if(auth) {
+				if(auth->u.auth.generic_data)
+					rx_media_kept(
+							(rx_authsessiondata_t *)auth->u.auth.generic_data,
+							data->kept_media);
+				cdpb.AAASessionsUnlock(auth->hash);
+				auth = 0;
+			}
+		}
+
 		if(!data->aar_update) {
 			LM_DBG("This is an AAA response to an initial AAR");
 			//need to set Rx auth data to say this session has been successfully opened
@@ -188,6 +202,8 @@ void async_aar_callback(
 				goto error;
 			}
 			p_session_data->session_has_been_opened = 1;
+			if(data->kept_media_known)
+				rx_media_kept(p_session_data, data->kept_media);
 			counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
 			counter_inc(ims_qos_cnts_h.media_rx_sessions);
 
@@ -518,7 +534,8 @@ int add_media_components_using_current_flow_description(
  * Helper function for adding media component AVPs for each SDP stream.
  */
 int add_media_components(AAAMessage *aar, struct sip_msg *req,
-		struct sip_msg *rpl, enum dialog_direction direction, AAASession *auth)
+		struct sip_msg *rpl, enum dialog_direction direction, AAASession *auth,
+		saved_transaction_t *t_data)
 {
 	int sdp_session_num;
 	int sdp_stream_num;
@@ -548,6 +565,19 @@ int add_media_components(AAAMessage *aar, struct sip_msg *req,
 		LM_ERR("Unable to parse res SDP\n");
 		goto error;
 	}
+
+	/* the media this offer/answer keeps, whatever becomes of their flows */
+	t_data->kept_media = 0;
+	for(sdp_stream_num = 0; sdp_stream_num < 32; sdp_stream_num++) {
+		req_sdp_stream = get_sdp_stream(req, 0, sdp_stream_num);
+		rpl_sdp_stream = get_sdp_stream(rpl, 0, sdp_stream_num);
+		if(!req_sdp_stream || !rpl_sdp_stream)
+			break;
+		if(atoi(req_sdp_stream->port.s) != 0
+				&& atoi(rpl_sdp_stream->port.s) != 0)
+			t_data->kept_media |= 1u << sdp_stream_num;
+	}
+	t_data->kept_media_known = 1;
 
 	sdp_session_num = 0;
 
@@ -1018,7 +1048,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res, AAASession *auth,
 		add_media_components_using_current_flow_description(
 				aar, p_session_data);
 	} else {
-		add_media_components(aar, req, res, dlg_direction, auth);
+		add_media_components(aar, req, res, dlg_direction, auth, saved_t_data);
 	}
 
 	LM_DBG("Adding framed ip address [%.*s]\n", ip.len, ip.s);

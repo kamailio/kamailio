@@ -366,6 +366,31 @@ modparam("ims_qos", "delete_contact_on_rx_failure", 0)
     </section>
 
     <section>
+      <title><varname>bearer_release_wait</varname> integer</title>
+
+      <para>Seconds to wait, after a RAR from the PCRF reports the loss or
+release of the bearer of some media of a session, for a SIP request that
+removes that media. When none arrives, or does not remove all of it, the Rx
+session is terminated and, if terminate_dialog_on_rx_failure is set, the
+dialog is released (TS 24.229 5.2.8.1). A RAR reporting the recovery of the
+bearer cancels the release. A loss of the signalling bearer terminates the
+signalling Rx session without waiting.</para>
+
+      <para><emphasis> Default value is 5</emphasis></para>
+
+      <example>
+        <title><varname>bearer_release_wait</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "bearer_release_wait", 10)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
       <title><varname>include_rtcp_fd</varname> integer</title>
 
       <para>If set then a flow description is added for media flows - next available odd port

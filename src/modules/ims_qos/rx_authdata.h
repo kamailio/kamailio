@@ -52,6 +52,8 @@
 #ifndef RX_AUTH_DATA_H
 #define RX_AUTH_DATA_H
 
+#include <time.h>
+
 #include "../../modules/ims_dialog/dlg_load.h"
 
 extern struct tm_binds tmb;
@@ -103,6 +105,13 @@ typedef struct rx_authsessiondata
 	str domain; //the domain the registration aor belongs to (for registration)
 	str registration_aor; //the aor if this rx session is a subscription to signalling status
 	int must_terminate_dialog; //0 means when this session terminates it must not terminate the relevant dialog, 1 means it must terminate the dialog
+	/* media components (bit Media-Component-Number - 1) of the last SDP
+	 * the PCRF accepted */
+	unsigned int kept_media;
+	/* media components (bit Media-Component-Number - 1) the PCRF reported
+	 * without bearer */
+	unsigned int released_media;
+	time_t release_deadline; /* when released_media still there end the session */
 	flow_description_t *first_current_flow_description;
 	flow_description_t *first_new_flow_description;
 } rx_authsessiondata_t;

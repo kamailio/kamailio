@@ -79,6 +79,10 @@ typedef struct saved_transaction
 	// Flag indicating whether this is a session refresh without any changes to SDP.
 	// A value of 1 means it is a session refresh.
 	unsigned int session_refresh;
+	// Media components (bit Media-Component-Number - 1) the SDP of this AAR keeps,
+	// set when kept_media_known is 1; applied once the PCRF accepts the AAR.
+	unsigned int kept_media;
+	unsigned int kept_media_known;
 	struct dlg_cell *dlg;
 } saved_transaction_t;
 
