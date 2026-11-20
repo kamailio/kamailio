@@ -321,6 +321,20 @@ int check_ruri_scheme(sip_msg_t *msg)
 		}                                                                     \
 	} while(0)
 
+#define SANITY_HDR_EMPTYCHECK(_hf, _hdr_name)          \
+	do {                                               \
+		str _body = STR_NULL;                          \
+		if((_hf) != NULL) {                            \
+			_body = (_hf)->body;                       \
+			trim(&_body);                              \
+		}                                              \
+		if(_body.len < 1) {                            \
+			LM_DBG("empty %s header\n", _hdr_name);    \
+			sanity_check_status = SANITY_CHECK_FAILED; \
+			goto done;                                 \
+		}                                              \
+	} while(0)
+
 /* check for the presence of the minimal required headers */
 int check_required_headers(sip_msg_t *msg)
 {
@@ -341,15 +355,23 @@ int check_required_headers(sip_msg_t *msg)
 		return SANITY_CHECK_FAILED;
 	}
 
+	SANITY_HDR_EMPTYCHECK(msg->callid, "Call-ID");
+	SANITY_HDR_EMPTYCHECK(msg->cseq, "CSeq");
+	SANITY_HDR_EMPTYCHECK(msg->from, "From");
+	SANITY_HDR_EMPTYCHECK(msg->to, "To");
+	SANITY_HDR_EMPTYCHECK(msg->h_via1, "Via");
+
 	if(parse_headers(msg, HDR_EOH_F, 0) != 0) {
 		LM_ERR("failed to parse headers\n");
 		sanity_check_status = SANITY_CHECK_FAILED;
+		goto done;
 	}
 
 	if(msg->errored_hdrs
 			& (HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F)) {
 		LM_ERR("errored headers found\n");
 		sanity_check_status = SANITY_CHECK_FAILED;
+		goto done;
 	}
 
 	for(hf = msg->headers; hf; hf = hf->next) {
@@ -360,6 +382,7 @@ int check_required_headers(sip_msg_t *msg)
 		SANITY_HDR_DUPCHECK(hf, hdr_flags, HDR_CSEQ_T, HDR_CSEQ_F, "CSeq");
 	}
 
+done:
 	if(sanity_check_status == SANITY_CHECK_FAILED
 			&& sanity_reply(msg, 400, "Bad Headers") < 0) {
 		LM_WARN("failed to send 400 reply\n");
