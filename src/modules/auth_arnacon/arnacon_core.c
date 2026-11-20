@@ -280,8 +280,8 @@ static int arnacon_is_name_wrapper_contract(
 
 	curl_easy_setopt(curl, CURLOPT_URL, rpc_url);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
-	curl_easy_setopt(
-			curl, CURLOPT_WRITEFUNCTION, arnacon_response_write_callback);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+			(curl_write_callback)arnacon_response_write_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 
