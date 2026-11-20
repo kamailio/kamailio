@@ -83,6 +83,8 @@ ifneq (,$(findstring cygwin, $(OS)))
 	LIBS:= -lresolv
 endif
 
+LIBS += -lm
+
 # detect libreadline
 ifneq ($(BUILDER),)
 	DEFS += $(shell $(BUILDER) --cflags readline)
