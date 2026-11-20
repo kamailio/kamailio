@@ -32,13 +32,15 @@ int get_result_code(AAAMessage *msg)
 	for(avp = msg->avpList.tail; avp; avp = avp->prev) {
 
 		if(avp->code == AVP_Result_Code) {
-			rc = get_4bytes(avp->data.s);
+			if(avp->data.len >= 4)
+				rc = get_4bytes(avp->data.s);
 			goto finish;
 		} else if(avp->code == AVP_Experimental_Result) {
 			list = AAAUngroupAVPS(avp->data);
 			for(avp2 = list.head; avp2; avp2 = avp2->next) {
 				if(avp2->code == AVP_IMS_Experimental_Result_Code) {
-					rc = get_4bytes(avp2->data.s);
+					if(avp2->data.len >= 4)
+						rc = get_4bytes(avp2->data.s);
 					AAAFreeAVPList(&list);
 					goto finish;
 				}
