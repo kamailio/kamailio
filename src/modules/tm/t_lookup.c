@@ -1167,8 +1167,11 @@ int t_reply_search(struct sip_msg *p_msg, struct cell **r_cell, int *r_branch)
 	struct entry *hash_bucket;
 	int hashl, branchl;
 	int scan_space;
+	int cc_match;
 	str cseq_method;
 	str req_method;
+	str reply_callid;
+	str reply_cseq;
 
 	char *loopi;
 	int loopl;
@@ -1243,6 +1246,13 @@ int t_reply_search(struct sip_msg *p_msg, struct cell **r_cell, int *r_branch)
 
 	/* search the hash table list at entry 'hash_index'; lock the entry first */
 	cseq_method = get_cseq(p_msg)->method;
+	cc_match = cfg_get(tm, tm_cfg, callid_cseq_matching);
+	if(cc_match) {
+		reply_callid = p_msg->callid->body;
+		trim(&reply_callid);
+		reply_cseq = get_cseq(p_msg)->number;
+		trim(&reply_cseq);
+	}
 	is_cancel = cseq_method.len == CANCEL_LEN
 				&& memcmp(cseq_method.s, CANCEL, CANCEL_LEN) == 0;
 	LOCK_HASH(hash_index);
@@ -1252,26 +1262,22 @@ int t_reply_search(struct sip_msg *p_msg, struct cell **r_cell, int *r_branch)
 	{
 		prefetch_loc_r(p_cell->next_c, 1);
 
-		if(cfg_get(tm, tm_cfg, callid_cseq_matching)) {
-			if(memcmp(p_cell->callid_hdr.s + strlen("Call-ID: "),
-					   p_msg->callid->body.s, p_msg->callid->body.len)
-					!= 0) {
+		if(cc_match) {
+			if(!STR_EQ(p_cell->callid_val, reply_callid)) {
 				LM_ERR("t_reply_matching: failed callid matching (instead of "
 					   "md5): %d p_cell=%.*s p_msg=%.*s",
 						p_msg->first_line.u.reply.statuscode,
-						p_cell->callid_hdr.len, p_cell->callid_hdr.s,
-						p_msg->callid->body.len, p_msg->callid->body.s);
+						p_cell->callid_val.len, p_cell->callid_val.s,
+						reply_callid.len, reply_callid.s);
 				continue;
 			}
 
-			if(memcmp(p_cell->cseq_hdr_n.s + strlen("CSeq: "),
-					   get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len)
-					!= 0) {
+			if(!STR_EQ(p_cell->cseq_num, reply_cseq)) {
 				LM_ERR("t_reply_matching: failed cseq matching (instead of "
 					   "md5): %d p_cell=%.*s p_msg=%.*s",
 						p_msg->first_line.u.reply.statuscode,
-						p_cell->cseq_hdr_n.len, p_cell->cseq_hdr_n.s,
-						get_cseq(p_msg)->number.len, get_cseq(p_msg)->number.s);
+						p_cell->cseq_num.len, p_cell->cseq_num.s,
+						reply_cseq.len, reply_cseq.s);
 				continue;
 			}
 		} else {
@@ -1355,8 +1361,11 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 	struct entry *hash_bucket;
 	int hashl, branchl;
 	int scan_space;
+	int cc_match;
 	str cseq_method;
 	str req_method;
+	str reply_callid;
+	str reply_cseq;
 
 	char *loopi;
 	int loopl;
@@ -1430,6 +1439,13 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 
 	/* search the hash table list at entry 'hash_index'; lock the entry first */
 	cseq_method = get_cseq(p_msg)->method;
+	cc_match = cfg_get(tm, tm_cfg, callid_cseq_matching);
+	if(cc_match) {
+		reply_callid = p_msg->callid->body;
+		trim(&reply_callid);
+		reply_cseq = get_cseq(p_msg)->number;
+		trim(&reply_cseq);
+	}
 	is_cancel = cseq_method.len == CANCEL_LEN
 				&& memcmp(cseq_method.s, CANCEL, CANCEL_LEN) == 0;
 	LOCK_HASH(hash_index);
@@ -1439,26 +1455,22 @@ int t_reply_matching(struct sip_msg *p_msg, int *p_branch)
 	{
 		prefetch_loc_r(p_cell->next_c, 1);
 
-		if(cfg_get(tm, tm_cfg, callid_cseq_matching)) {
-			if(memcmp(p_cell->callid_hdr.s + strlen("Call-ID: "),
-					   p_msg->callid->body.s, p_msg->callid->body.len)
-					!= 0) {
+		if(cc_match) {
+			if(!STR_EQ(p_cell->callid_val, reply_callid)) {
 				LM_ERR("t_reply_matching: failed callid matching (instead of "
 					   "md5): %d p_cell=%.*s p_msg=%.*s",
 						p_msg->first_line.u.reply.statuscode,
-						p_cell->callid_hdr.len, p_cell->callid_hdr.s,
-						p_msg->callid->body.len, p_msg->callid->body.s);
+						p_cell->callid_val.len, p_cell->callid_val.s,
+						reply_callid.len, reply_callid.s);
 				continue;
 			}
 
-			if(memcmp(p_cell->cseq_hdr_n.s + strlen("CSeq: "),
-					   get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len)
-					!= 0) {
+			if(!STR_EQ(p_cell->cseq_num, reply_cseq)) {
 				LM_ERR("t_reply_matching: failed cseq matching (instead of "
 					   "md5): %d p_cell=%.*s p_msg=%.*s",
 						p_msg->first_line.u.reply.statuscode,
-						p_cell->cseq_hdr_n.len, p_cell->cseq_hdr_n.s,
-						get_cseq(p_msg)->number.len, get_cseq(p_msg)->number.s);
+						p_cell->cseq_num.len, p_cell->cseq_num.s,
+						reply_cseq.len, reply_cseq.s);
 				continue;
 			}
 		} else {
