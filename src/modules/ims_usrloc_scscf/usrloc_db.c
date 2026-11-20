@@ -608,6 +608,10 @@ static inline int dbrow2contact(db_val_t *val, ucontact_info_t *ci)
 
 	// Set ci to 0:
 	memset(ci, 0, sizeof(ucontact_info_t));
+	memset(&path, 0, sizeof(str));
+	memset(&user_agent, 0, sizeof(str));
+	memset(&callid, 0, sizeof(str));
+	memset(&params, 0, sizeof(str));
 
 	/* params */
 	if(!VAL_NULL(val + 1)) {
@@ -658,6 +662,16 @@ static inline int dbrow2subscriber(
 {
 	static str presentity_uri, watcher_uri, watcher_contact, call_id, from_tag,
 			to_tag, record_route, sockinfo_str;
+
+	memset(subscriber_data, 0, sizeof(subscriber_data_t));
+	memset(&presentity_uri, 0, sizeof(str));
+	memset(&watcher_uri, 0, sizeof(str));
+	memset(&watcher_contact, 0, sizeof(str));
+	memset(&call_id, 0, sizeof(str));
+	memset(&from_tag, 0, sizeof(str));
+	memset(&to_tag, 0, sizeof(str));
+	memset(&record_route, 0, sizeof(str));
+	memset(&sockinfo_str, 0, sizeof(str));
 
 	/*presentity uri*/
 	if(!VAL_NULL(val)) {
@@ -876,6 +890,11 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 		LM_DBG("loading S-CSCF usrloc records - cycle [%d]\n", n);
 		for(i = 0; i < RES_ROW_N(rs); i++) {
 			impu_id = -1;
+			barring = 0;
+			reg_state = 0;
+			ccf1.s = ecf1.s = ccf2.s = ecf2.s = 0;
+			ccf1.len = ecf1.len = ccf2.len = ecf2.len = 0;
+			subscription = 0;
 
 			row = RES_ROWS(rs) + i;
 			LM_DBG("Fetching IMPU row %d\n", i + 1);
@@ -901,7 +920,7 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 			}
 			LM_DBG("CCF1 from DB is [%.*s]\n", ccf1.len, ccf1.s);
 			if(!VAL_NULL(vals + 4)) {
-				ecf1.s = (char *)VAL_STRING(vals + 3);
+				ecf1.s = (char *)VAL_STRING(vals + 4);
 				ecf1.len = strlen(ecf1.s);
 			}
 			LM_DBG("ECF1 from DB is [%.*s]\n", ecf1.len, ecf1.s);
@@ -924,6 +943,12 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 				x.max = 0;
 				subscription = bin_decode_ims_subscription(&x);
 				bin_free(&x);
+			}
+			if(!subscription) {
+				LM_ERR("IMPU [%.*s] has no valid IMS subscription data in DB - "
+					   "not loading it\n",
+						impu.len, impu.s);
+				continue;
 			}
 			if(!VAL_NULL(vals + 8)) {
 				impu_id = VAL_INT(vals + 8);
@@ -1025,6 +1050,8 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 						for(j = 0; j < RES_ROW_N(contact_rs); j++) {
 							contact_row = RES_ROWS(contact_rs) + j;
 							contact_vals = ROW_VALUES(contact_row);
+							contact.s = 0;
+							contact.len = 0;
 
 							if(!VAL_NULL(contact_vals)) {
 								contact.s = (char *)VAL_STRING(contact_vals);
@@ -1129,6 +1156,8 @@ int preload_udomain(db1_con_t *_c, udomain_t *_d)
 				for(j = 0; j < RES_ROW_N(subscriber_rs); j++) {
 					subscriber_row = RES_ROWS(subscriber_rs) + j;
 					subscriber_vals = ROW_VALUES(subscriber_row);
+					presentity_uri.s = 0;
+					presentity_uri.len = 0;
 
 					/*presentity uri*/
 					if(!VAL_NULL(subscriber_vals)) {
