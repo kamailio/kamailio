@@ -74,7 +74,7 @@ int get_auth_session_state(AAAMessage *msg)
 	if(!msg)
 		goto error;
 	AAA_AVP *rc = AAAFindMatchingAVP(msg, 0, AVP_Auth_Session_State, 0, 0);
-	if(!rc)
+	if(!rc || rc->data.len < 4)
 		goto error;
 	return get_4bytes(rc->data.s);
 

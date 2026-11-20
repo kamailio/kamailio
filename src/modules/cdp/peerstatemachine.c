@@ -807,35 +807,46 @@ void save_peer_applications(peer *p, AAAMessage *msg)
 
 		switch(avp->code) {
 			case AVP_Auth_Application_Id:
-				id = get_4bytes(avp->data.s);
-				add_peer_application(p, id, 0, DP_AUTHORIZATION);
-				avp_vendor = AAAFindMatchingAVP(
-						msg, 0, AVP_Supported_Vendor_Id, 0, 0);
-				while(avp_vendor) {
-					vendor = get_4bytes(avp_vendor->data.s);
-					LM_DBG("Found Supported Vendor for Application %i: %i\n",
-							DP_AUTHORIZATION, vendor);
-					add_peer_application(p, id, vendor, DP_AUTHORIZATION);
-					if(!avp_vendor->next)
-						break;
-					avp_vendor = AAAFindMatchingAVP(msg, avp_vendor->next,
-							AVP_Supported_Vendor_Id, 0, AAA_FORWARD_SEARCH);
+				if(avp->data.len >= 4) {
+					id = get_4bytes(avp->data.s);
+					add_peer_application(p, id, 0, DP_AUTHORIZATION);
+					avp_vendor = AAAFindMatchingAVP(
+							msg, 0, AVP_Supported_Vendor_Id, 0, 0);
+					while(avp_vendor) {
+						if(avp_vendor->data.len >= 4) {
+							vendor = get_4bytes(avp_vendor->data.s);
+							LM_DBG("Found Supported Vendor for Application %i: "
+								   "%i\n",
+									DP_AUTHORIZATION, vendor);
+							add_peer_application(
+									p, id, vendor, DP_AUTHORIZATION);
+						}
+						if(!avp_vendor->next)
+							break;
+						avp_vendor = AAAFindMatchingAVP(msg, avp_vendor->next,
+								AVP_Supported_Vendor_Id, 0, AAA_FORWARD_SEARCH);
+					}
 				}
 				break;
 			case AVP_Acct_Application_Id:
-				id = get_4bytes(avp->data.s);
-				add_peer_application(p, id, 0, DP_ACCOUNTING);
-				avp_vendor = AAAFindMatchingAVP(
-						msg, 0, AVP_Supported_Vendor_Id, 0, 0);
-				while(avp_vendor) {
-					vendor = get_4bytes(avp_vendor->data.s);
-					LM_DBG("Found Supported Vendor for Application %i: %i\n",
-							DP_ACCOUNTING, vendor);
-					add_peer_application(p, id, vendor, DP_ACCOUNTING);
-					if(!avp_vendor->next)
-						break;
-					avp_vendor = AAAFindMatchingAVP(msg, avp_vendor->next,
-							AVP_Supported_Vendor_Id, 0, AAA_FORWARD_SEARCH);
+				if(avp->data.len >= 4) {
+					id = get_4bytes(avp->data.s);
+					add_peer_application(p, id, 0, DP_ACCOUNTING);
+					avp_vendor = AAAFindMatchingAVP(
+							msg, 0, AVP_Supported_Vendor_Id, 0, 0);
+					while(avp_vendor) {
+						if(avp_vendor->data.len >= 4) {
+							vendor = get_4bytes(avp_vendor->data.s);
+							LM_DBG("Found Supported Vendor for Application %i: "
+								   "%i\n",
+									DP_ACCOUNTING, vendor);
+							add_peer_application(p, id, vendor, DP_ACCOUNTING);
+						}
+						if(!avp_vendor->next)
+							break;
+						avp_vendor = AAAFindMatchingAVP(msg, avp_vendor->next,
+								AVP_Supported_Vendor_Id, 0, AAA_FORWARD_SEARCH);
+					}
 				}
 				break;
 			case AVP_Vendor_Specific_Application_Id:
@@ -844,14 +855,16 @@ void save_peer_applications(peer *p, AAAMessage *msg)
 						group, group.head, AVP_Vendor_Id, 0, 0);
 				avp2 = AAAFindMatchingAVPList(group, group.head,
 						AVP_Auth_Application_Id, 0, AAA_FORWARD_SEARCH);
-				if(avp_vendor && avp2) {
+				if(avp_vendor && avp_vendor->data.len >= 4 && avp2
+						&& avp2->data.len >= 4) {
 					vendor = get_4bytes(avp_vendor->data.s);
 					id = get_4bytes(avp2->data.s);
 					add_peer_application(p, id, vendor, DP_AUTHORIZATION);
 				}
 				avp2 = AAAFindMatchingAVPList(group, group.head,
 						AVP_Acct_Application_Id, 0, AAA_FORWARD_SEARCH);
-				if(avp_vendor && avp2) {
+				if(avp_vendor && avp_vendor->data.len >= 4 && avp2
+						&& avp2->data.len >= 4) {
 					vendor = get_4bytes(avp_vendor->data.s);
 					id = get_4bytes(avp2->data.s);
 					add_peer_application(p, id, vendor, DP_ACCOUNTING);
@@ -1067,20 +1080,26 @@ int Process_CER(peer *p, AAAMessage *cer)
 	for(avp = cer->avpList.head; avp; avp = avp->next) {
 		switch(avp->code) {
 			case AVP_Auth_Application_Id:
-				id = get_4bytes(avp->data.s);
-				for(i = 0; i < config->applications_cnt; i++)
-					if(id == config->applications[i].id
-							&& config->applications[i].vendor == 0
-							&& config->applications[i].type == DP_AUTHORIZATION)
-						common_app++;
+				if(avp->data.len >= 4) {
+					id = get_4bytes(avp->data.s);
+					for(i = 0; i < config->applications_cnt; i++)
+						if(id == config->applications[i].id
+								&& config->applications[i].vendor == 0
+								&& config->applications[i].type
+										   == DP_AUTHORIZATION)
+							common_app++;
+				}
 				break;
 			case AVP_Acct_Application_Id:
-				id = get_4bytes(avp->data.s);
-				for(i = 0; i < config->applications_cnt; i++)
-					if(id == config->applications[i].id
-							&& config->applications[i].vendor == 0
-							&& config->applications[i].type == DP_ACCOUNTING)
-						common_app++;
+				if(avp->data.len >= 4) {
+					id = get_4bytes(avp->data.s);
+					for(i = 0; i < config->applications_cnt; i++)
+						if(id == config->applications[i].id
+								&& config->applications[i].vendor == 0
+								&& config->applications[i].type
+										   == DP_ACCOUNTING)
+							common_app++;
+				}
 				break;
 			case AVP_Vendor_Specific_Application_Id:
 				group = AAAUngroupAVPS(avp->data);
@@ -1088,7 +1107,8 @@ int Process_CER(peer *p, AAAMessage *cer)
 						group, group.head, AVP_Vendor_Id, 0, 0);
 				avp2 = AAAFindMatchingAVPList(
 						group, group.head, AVP_Auth_Application_Id, 0, 0);
-				if(avp_vendor && avp2) {
+				if(avp_vendor && avp_vendor->data.len >= 4 && avp2
+						&& avp2->data.len >= 4) {
 					vendor = get_4bytes(avp_vendor->data.s);
 					id = get_4bytes(avp2->data.s);
 					for(i = 0; i < config->applications_cnt; i++)
@@ -1100,7 +1120,8 @@ int Process_CER(peer *p, AAAMessage *cer)
 				}
 				avp2 = AAAFindMatchingAVPList(
 						group, group.head, AVP_Acct_Application_Id, 0, 0);
-				if(avp_vendor && avp2) {
+				if(avp_vendor && avp_vendor->data.len >= 4 && avp2
+						&& avp2->data.len >= 4) {
 					vendor = get_4bytes(avp_vendor->data.s);
 					id = get_4bytes(avp2->data.s);
 					for(i = 0; i < config->applications_cnt; i++)
@@ -1243,7 +1264,7 @@ int Elect(peer *p, AAAMessage *cer)
 void Snd_Message(peer *p, AAAMessage *msg)
 {
 	AAASession *session = 0;
-	int rcode;
+	int rcode = 0;
 	int send_message_before_session_sm = 0;
 	LM_DBG("called to peer [%.*s] for %s with code %d \n", p->fqdn.len,
 			p->fqdn.s, is_req(msg) ? "request" : "response", msg->commandCode);
@@ -1279,7 +1300,8 @@ void Snd_Message(peer *p, AAAMessage *msg)
 									session, AUTH_EV_SEND_ASA_UNSUCCESS, msg);
 							session = 0;
 						} else {
-							rcode = get_4bytes(msg->res_code->data.s);
+							if(msg->res_code->data.len >= 4)
+								rcode = get_4bytes(msg->res_code->data.s);
 							if(rcode >= 2000 && rcode < 3000) {
 								peer_send_msg(p, msg);
 								send_message_before_session_sm = 1;
