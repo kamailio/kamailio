@@ -592,6 +592,8 @@ static int msrp_frame_received(sr_event_param_t *evp)
 	mf.tcpinfo = tev;
 	if(msrp_parse_frame(&mf) < 0) {
 		LM_ERR("error parsing msrp frame\n");
+		/* free the headers parsed before the error */
+		msrp_destroy_frame(&mf);
 		return -1;
 	}
 	msrp_reset_env();
