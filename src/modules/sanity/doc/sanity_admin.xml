@@ -43,8 +43,9 @@
 		</listitem>
 		<listitem>
 			<para>
-			required headers - (4 [0x04 / 2^2]) -checks if the minimum set of required headers
-			To, From, CSeq, Call-ID and Via is present in the request.
+			required headers - (4 [0x04 / 2^2]) - checks if the minimum set of required headers
+			To, From, CSeq, Call-ID and Via are present and have values containing
+			non-whitespace characters.
 			</para>
 		</listitem>
 		<listitem>
