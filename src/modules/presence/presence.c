@@ -157,10 +157,12 @@ int pres_min_expires_action = 1;
 uint32_t pres_max_expires = 3600;
 int shtable_size = 9;
 shtable_t subs_htable = NULL;
+stat_var *pres_subs_stat = 0;
 int pres_subs_dbmode = WRITE_BACK;
 int pres_sphere_enable = 0;
 int pres_timeout_rm_subs = 1;
 int pres_refresh_record_route = 0;
+int pres_subs_iterative_search = 1;
 int pres_send_fast_notify = 1;
 int publ_cache_mode = PS_PCACHE_HYBRID;
 int pres_waitn_time = 5;
@@ -191,6 +193,7 @@ int *pres_notifier_id = NULL;
 
 int phtable_size = 9;
 phtable_t *pres_htable = NULL;
+stat_var *pres_presentity_stat = 0;
 
 sruid_t pres_sruid;
 
@@ -244,6 +247,7 @@ static param_export_t params[]={
 	{ "subs_htable_size",       PARAM_INT, &shtable_size},
 	{ "pres_htable_size",       PARAM_INT, &phtable_size},
 	{ "subs_db_mode",           PARAM_INT, &pres_subs_dbmode},
+	{ "subs_iterative_search",  PARAM_INT, &pres_subs_iterative_search},
 	{ "publ_cache",             PARAM_INT, &publ_cache_mode},
 	{ "enable_sphere_check",    PARAM_INT, &pres_sphere_enable},
 	{ "timeout_rm_subs",        PARAM_INT, &pres_timeout_rm_subs},
@@ -283,6 +287,14 @@ static pv_export_t pres_mod_pvs[] = {
 	{ {"notify_reply", (sizeof("notify_reply")-1)}, PVT_OTHER,
 		pv_get_notify_reply, 0, pv_parse_notify_reply_var_name, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+/* clang-format on */
+
+/* clang-format off */
+static stat_export_t pres_mod_stats[] = {
+	{"subscriptions", STAT_NO_RESET, &pres_subs_stat},
+	{"presentities",  STAT_NO_RESET, &pres_presentity_stat},
+	{0, 0, 0}
 };
 /* clang-format on */
 
@@ -380,6 +392,11 @@ static int mod_init(void)
 	/* load all TM stuff */
 	if(load_tm_api(&_pres_tmb) == -1) {
 		LM_ERR("Can't load tm functions. Module TM not loaded?\n");
+		return -1;
+	}
+
+	if(register_module_stats("presence", pres_mod_stats) != 0) {
+		LM_ERR("failed to register statistics\n");
 		return -1;
 	}
 
@@ -1478,6 +1495,7 @@ static int update_pw_dialogs(
 			(*subs_array) = cs;
 			if(subs->status == TERMINATED_STATUS) {
 				ps->next = s->next;
+				update_stat(pres_subs_stat, -1);
 				shm_free(s->contact.s);
 				shm_free(s->record_route.s);
 				shm_free(s);
