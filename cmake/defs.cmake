@@ -126,6 +126,7 @@ option(Q_MALLOC "Use q_malloc" ON)
 # Same goes for fmalloc and tlsf malloc
 # cmake_dependent_option(DBG_QM_MALLOC "Enable debugging info for q_malloc" OFF "Q_MALLOC" OFF)
 option(TLSF_MALLOC "Use tlsf_malloc" ON)
+option(HG_MALLOC "Use hg_malloc" ON)
 
 option(USE_DNS_FAILOVER "Use DNS failover" ON)
 option(USE_DST_BLOCKLIST "Use destination blacklist" ON)
@@ -216,6 +217,10 @@ endif()
 
 if(TLSF_MALLOC)
   target_compile_definitions(common INTERFACE TLSF_MALLOC)
+endif()
+
+if(HG_MALLOC)
+  target_compile_definitions(common INTERFACE HG_MALLOC)
 endif()
 
 if(MEMDBG)

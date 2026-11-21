@@ -167,6 +167,11 @@ void tcp_reactor_pkg_lock_install(void)
 			   "not needed\n");
 		return;
 	}
+	/* hg pkg manager: per-thread caches, locks internally */
+	if(_pkg_root.mname != NULL && strcmp(_pkg_root.mname, "hg_malloc") == 0) {
+		LM_DBG("pkg manager is hg; reactor pkg lock not needed\n");
+		return;
+	}
 	_ksr_pkg_orig_xmalloc = _pkg_root.xmalloc;
 	_ksr_pkg_orig_xmallocxz = _pkg_root.xmallocxz;
 	_ksr_pkg_orig_xmallocxn = _pkg_root.xmallocxn;
