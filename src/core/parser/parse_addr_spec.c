@@ -902,6 +902,12 @@ char *parse_addr_spec(char *const buffer, const char *const end,
 		case END:
 			saved_status = status;
 			foo = tmp;
+			break;
+		case S_URI_ENCLOSED:
+		case URI_ENCLOSED:
+		case E_URI_ENCLOSED:
+			saved_status = status;
+			break;
 	}
 
 endofheader:
