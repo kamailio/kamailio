@@ -267,7 +267,6 @@ static int tps_contact_uri(
 	char *host_start;
 	char *p;
 	size_t needed;
-	int i;
 	int len;
 
 	if(user->len <= 0 && host->len <= 0)

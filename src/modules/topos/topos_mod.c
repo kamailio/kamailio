@@ -129,6 +129,7 @@ static str _tps_eventrt_receiving_name = str_init("topos:msg-receiving");
 str _tps_contact_host = str_init("");
 int _tps_key_location = TPS_KEY_LOCATION_USER;
 str _tps_cparam_name = str_init("tps");
+str _tps_uuid_prefix = str_init("tpsh");
 
 str _tps_xavu_cfg = STR_NULL;
 str _tps_xavu_field_acontact_user = STR_NULL;
@@ -184,6 +185,7 @@ static param_export_t params[] = {
 	{"contact_host", PARAM_STR, &_tps_contact_host},
 	{"key_location", PARAM_INT, &_tps_key_location},
 	{"cparam_name", PARAM_STR, &_tps_cparam_name},
+	{"uuid_prefix", PARAM_STR, &_tps_uuid_prefix},
 	{"xavu_cfg", PARAM_STR, &_tps_xavu_cfg},
 	{"xavu_field_a_contact_user", PARAM_STR, &_tps_xavu_field_acontact_user},
 	{"xavu_field_b_contact_user", PARAM_STR, &_tps_xavu_field_bcontact_user},
@@ -361,7 +363,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC) < 0)
+	if(sruid_init(&_tps_sruid, '-', _tps_uuid_prefix.s, SRUID_INC) < 0)
 		return -1;
 
 	if(_tps_param_mask_callid == 1) {
@@ -398,7 +400,7 @@ dberror:
  */
 static int child_init(int rank)
 {
-	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC) < 0)
+	if(sruid_init(&_tps_sruid, '-', _tps_uuid_prefix.s, SRUID_INC) < 0)
 		return -1;
 
 	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
