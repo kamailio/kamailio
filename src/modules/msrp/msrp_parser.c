@@ -781,7 +781,7 @@ int msrp_frame_get_expires(msrp_frame_t *mf, int *expires)
 
 	if(msrp_parse_hdr_expires(mf) < 0)
 		return -1;
-	hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_AUTH);
+	hdr = msrp_get_hdr_by_id(mf, MSRP_HDR_EXPIRES);
 	if(hdr == NULL)
 		return -1;
 	*expires = (int)(long)hdr->parsed.data;
