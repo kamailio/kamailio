@@ -219,6 +219,10 @@ int extract_body(struct sip_msg *msg, str *body)
 			break; /* No parts left */
 		p2 = find_next_sdp_line_delimiter(
 				p1, body->s + body->len, mpdel, body->s + body->len);
+		if(p2 - p1 < mpdel.len + 2) {
+			LM_ERR("invalid multipart delimiter spacing\n");
+			return -1;
+		}
 		/* p2 is text limit for application parsing */
 		rest = eat_line(p1 + mpdel.len + 2, p2 - p1 - mpdel.len - 2);
 		if(rest > p2) {
