@@ -115,9 +115,9 @@ Chapter 1. Admin Guide
        the request URI is supported, currently only 2.0.
      * ruri scheme - (2 [0x02 / 2^1]) - checks if the URI scheme of the
        request URI is supported (sip[s]|tel[s]) by Kamailio
-     * required headers - (4 [0x04 / 2^2]) -checks if the minimum set of
-       required headers To, From, CSeq, Call-ID and Via is present in the
-       request.
+     * required headers - (4 [0x04 / 2^2]) - checks if the minimum set of
+       required headers To, From, CSeq, Call-ID and Via are present and
+       have values containing non-whitespace characters.
      * via sip version - (8 [0x08 / 2^3]) - disabled.
      * via protocol - (16 [0x10 / 2^4]) - disabled.
      * Cseq method - (32 [0x20 / 2^5]) - checks if the method from the
