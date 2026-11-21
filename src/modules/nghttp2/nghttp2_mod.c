@@ -302,6 +302,16 @@ static int ksr_nghttp2_send_reply(sip_msg_t *msg, str *rcode, str *sbody)
 	int pipefd[2];
 	char *p;
 
+	if(_ksr_nghttp2_ctx.session == NULL
+			|| _ksr_nghttp2_ctx.stream_data == NULL) {
+		LM_ERR("no http2 request in this context\n");
+		return -1;
+	}
+	if(_ksr_nghttp2_ctx.replied) {
+		LM_ERR("the request has already been replied to\n");
+		return -1;
+	}
+
 	p = strndup(rcode->s, rcode->len);
 	if(p == NULL) {
 		SYS_MEM_ERROR;
