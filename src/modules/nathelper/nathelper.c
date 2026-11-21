@@ -1171,7 +1171,7 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	char buf[MAX_URI_SIZE], *val, *sep, *at, *next, *cur_uri, *rest, *port,
 			*trans, *start;
 	unsigned int len, rest_len, val_len, alias_len, proto_type, cur_uri_len,
-			ip_len, ip_port_len, port_len, i;
+			ip_len, ip_port_len, port_len, start_len, i;
 	int is_ipv6 = 0;
 
 	if(msg->first_line.u.request.uri.len > MAX_URI_SIZE - 1
@@ -1194,6 +1194,7 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	while(rest_len > _ksr_contact_alias.len) {
 		if(strncmp(rest, _ksr_contact_alias.s, _ksr_contact_alias.len) == 0) {
 			start = rest;
+			start_len = rest_len;
 			if(mode == 0) {
 				/* use first alias parameter */
 				break;
@@ -1214,6 +1215,7 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 		return 2;
 	}
 	rest = start;
+	rest_len = start_len;
 
 	/* set dst uri based on alias param value */
 	val = rest + _ksr_contact_alias.len;
