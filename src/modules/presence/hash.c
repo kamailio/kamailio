@@ -1200,6 +1200,7 @@ int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 	ps_presentity_t ptc;
 	ps_presentity_t ptv;
 	ps_presentity_t *ptn = NULL;
+	ps_presentity_t *ptnx = NULL;
 	uint32_t idx = 0;
 
 	/* copy struct to fill in missing fields */
@@ -1249,9 +1250,20 @@ int ps_ptable_update(ps_presentity_t *ptm, ps_presentity_t *pt)
 		lock_release(&_ps_ptable->slots[idx].lock);
 		return 0; /* affected items */
 	}
-	ps_presentity_free(ptn, 0);
 
-	ptn = ps_presentity_new(&ptv, 0);
+	/* A body-less PUBLISH refresh (SIP-If-Match, Content-Length 0) keeps the
+	 * stored body (the body is not updated when the new one is empty);
+	 * rebuilding from ptv would blank it and ps_cache_get_p_notify_body()
+	 * would then fail the whole dialog-info aggregate. The new record is
+	 * built before the old one is freed so ptv.body can point into the old
+	 * record -- ps_presentity_new() copies every field into one shm block. */
+	if((ptv.body.s == NULL || ptv.body.len == 0) && ptn->body.s != NULL) {
+		ptv.body = ptn->body;
+	}
+
+	ptnx = ps_presentity_new(&ptv, 0);
+	ps_presentity_free(ptn, 0);
+	ptn = ptnx;
 	if(ptn == NULL) {
 		lock_release(&_ps_ptable->slots[idx].lock);
 		return -1;
