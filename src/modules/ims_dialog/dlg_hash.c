@@ -729,6 +729,29 @@ void dlg_remove_dlg_out(struct dlg_cell_out *dlg_out_do_not_remove,
 }
 
 /*!
+ * \brief Whether a CSeq number is higher than the stored one
+ *
+ * A value of the same length has to replace the stored one as well (1 -> 2),
+ * otherwise a request generated for the dialog reuses a CSeq the peer has
+ * already seen. The numbers are compared by value, the CSeq grammar
+ * (1*DIGIT) allows leading zeros.
+ * \param stored CSeq kept for the leg
+ * \param cseq CSeq of the request being processed
+ * \return 1 if cseq is higher or the stored value is not a number, 0 otherwise
+ */
+static inline int dlg_cseq_is_newer(str *stored, str *cseq)
+{
+	unsigned int old_seq = 0;
+	unsigned int new_seq = 0;
+
+	if(str2int(cseq, &new_seq) < 0)
+		return 0;
+	if(str2int(stored, &old_seq) < 0)
+		return 1;
+	return new_seq > old_seq;
+}
+
+/*!
  * \brief Update or set the CSEQ for an existing dialog
  * \param dlg dialog
  * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
@@ -759,12 +782,14 @@ int dlg_update_cseq(
 				if(leg == DLG_CALLER_LEG) {
 					//update caller cseq
 					if(dlg_out->caller_cseq.s) {
-						if(dlg_out->caller_cseq.len < cseq->len) {
-							shm_free(dlg_out->caller_cseq.s);
-							dlg_out->caller_cseq.s =
-									(char *)shm_malloc(cseq->len);
-							if(dlg_out->caller_cseq.s == NULL)
-								goto error;
+						if(dlg_cseq_is_newer(&dlg_out->caller_cseq, cseq)) {
+							if(dlg_out->caller_cseq.len < cseq->len) {
+								shm_free(dlg_out->caller_cseq.s);
+								dlg_out->caller_cseq.s =
+										(char *)shm_malloc(cseq->len);
+								if(dlg_out->caller_cseq.s == NULL)
+									goto error;
+							}
 							dlg_out->caller_cseq.len = cseq->len;
 							memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);
 						}
@@ -780,13 +805,14 @@ int dlg_update_cseq(
 				} else if(leg == DLG_CALLEE_LEG) {
 					//update callee cseq
 					if(dlg_out->callee_cseq.s) {
-						if(dlg_out->callee_cseq.len < cseq->len) {
-							shm_free(dlg_out->callee_cseq.s);
-							dlg_out->callee_cseq.s =
-									(char *)shm_malloc(cseq->len);
-							if(dlg_out->callee_cseq.s == NULL)
-								goto error;
-
+						if(dlg_cseq_is_newer(&dlg_out->callee_cseq, cseq)) {
+							if(dlg_out->callee_cseq.len < cseq->len) {
+								shm_free(dlg_out->callee_cseq.s);
+								dlg_out->callee_cseq.s =
+										(char *)shm_malloc(cseq->len);
+								if(dlg_out->callee_cseq.s == NULL)
+									goto error;
+							}
 							dlg_out->callee_cseq.len = cseq->len;
 							memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
 						}
