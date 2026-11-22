@@ -63,6 +63,35 @@ struct retr_buf;
 struct ua_client;
 struct async_state;
 
+typedef struct uac_contact_map
+{
+	str udp;
+	str tcp;
+	str tls;
+	str sctp;
+} uac_contact_map_t;
+
+static inline str *uac_contact_map_get(
+		uac_contact_map_t *cmap, unsigned short proto)
+{
+	if(cmap == NULL)
+		return NULL;
+	switch(proto) {
+		case PROTO_UDP:
+			return &cmap->udp;
+		case PROTO_TCP:
+		case PROTO_WS:
+			return &cmap->tcp;
+		case PROTO_TLS:
+		case PROTO_WSS:
+			return &cmap->tls;
+		case PROTO_SCTP:
+			return &cmap->sctp;
+		default:
+			return NULL;
+	}
+}
+
 #include "../../core/mem/shm_mem.h"
 #include "lock.h"
 #include "sip_msg.h"
@@ -398,6 +427,8 @@ typedef struct cell
 	struct ua_server uas;
 	/* UA Clients */
 	struct ua_client *uac;
+	/* optional Contact values selected by outgoing transport for local UACs */
+	uac_contact_map_t *contact_map;
 
 	/* store transaction state to be used for async transactions */
 	struct async_state async_backup;
