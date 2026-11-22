@@ -317,7 +317,7 @@ void ul_publish(ucontact_t *c, int type, void *param)
 	publ->extra_headers = NULL;
 	print_publ(publ);
 	if((error = _pu_pua.send_publish(publ)) < 0) {
-		LM_ERR("failed sending publish for ul event %d\n", type);
+		LM_DBG("failed sending publish for ul event %d\n", type);
 		if((type & UL_CONTACT_UPDATE) && error == ERR_PUBLISH_NO_BODY) {
 			/* This error can occur if Kamailio was restarted/stopped and for any reason couldn't store a pua
 			 * entry in 'pua' DB table. It can also occur if 'pua' table is cleaned externally while Kamailio
@@ -328,8 +328,8 @@ void ul_publish(ucontact_t *c, int type, void *param)
 			 * This code solves this problem by invoking an INSERT action if an UPDATE action failed due to the
 			 * above error. It will however generate a new presentity entry in the presence server (until the
 			 * previous one expires), but this is a minor issue. */
-			LM_ERR("UPDATE action generated a PUBLISH without body -> invoking "
-				   "INSERT action\n");
+			LM_INFO("UPDATE action generated a PUBLISH without body -> "
+					"invoking INSERT action\n");
 			ul_publish(c, UL_CONTACT_INSERT, param);
 			goto error;
 		}
