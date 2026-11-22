@@ -90,8 +90,14 @@ dlg_t *build_dlg_t(struct dlg_cell *cell, int dir)
 	}
 	memset(td, 0, sizeof(dlg_t));
 
+	/* RFC 3261 12.2.1.1: a request within the dialog is numbered in the
+	 * sequence of the side it is sent for, which is the other side than the
+	 * one it goes to. The peer rejects a CSeq lower than one it has already
+	 * received in that sequence (12.2.2), so take the last value seen from
+	 * that side, not the one of the dialog creating request. */
 	if(dir == DLG_CALLER_LEG) {
-		cseq = cell->first_req_cseq;
+		cseq = dlg_out->callee_cseq.len > 0 ? dlg_out->callee_cseq
+											: cell->first_req_cseq;
 		route_set = cell->caller_route_set;
 		contact = cell->caller_contact;
 		td->rem_uri = cell->from_uri;
@@ -100,7 +106,8 @@ dlg_t *build_dlg_t(struct dlg_cell *cell, int dir)
 		td->id.loc_tag = dlg_out->to_tag;
 		td->send_sock = cell->caller_bind_addr;
 	} else {
-		cseq = dlg_out->callee_cseq;
+		cseq = dlg_out->caller_cseq.len > 0 ? dlg_out->caller_cseq
+											: dlg_out->callee_cseq;
 		route_set = dlg_out->callee_route_set;
 		contact = dlg_out->callee_contact;
 		td->rem_uri = dlg_out->to_uri;
@@ -118,6 +125,8 @@ dlg_t *build_dlg_t(struct dlg_cell *cell, int dir)
 	/*we don not increase here the cseq as this will be done by TM*/
 	td->loc_seq.value = loc_seq;
 	td->loc_seq.is_set = 1;
+	LM_DBG("request to %s continues after cseq %u\n",
+			(dir == DLG_CALLER_LEG) ? "caller" : "callee", loc_seq);
 
 	/*route set*/
 	if(route_set.s && route_set.len) {
