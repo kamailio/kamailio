@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "../../core/sr_module.h"
+#include "../../core/mod_fix.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/strutils.h"
@@ -102,7 +103,7 @@ static cmd_export_t cmds[] = {
 	{"secf_check_contact_hdr", (cmd_function)w_check_contact_hdr, 0, 0, 0, ANY_ROUTE},
 	{"secf_check_ip", (cmd_function)w_check_ip, 0, 0, 0, ANY_ROUTE},
 	{"secf_check_country", (cmd_function)w_check_country, 1, 0, 0, ANY_ROUTE},
-	{"secf_check_dst", (cmd_function)w_check_dst, 1, 0, 0, ANY_ROUTE},
+	{"secf_check_dst", (cmd_function)w_check_dst, 1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"secf_check_sqli_all", (cmd_function)w_check_sqli_all, 0, 0, 0, ANY_ROUTE},
 	{"secf_check_sqli_hdr", (cmd_function)w_check_sqli_hdr, 1, 0, 0, ANY_ROUTE},
 	{"secf_check_username_from_hdr",(cmd_function)w_check_username_from_hdr,0, 0, 0, ANY_ROUTE},
@@ -397,8 +398,10 @@ static int ki_check_dst(struct sip_msg *msg, str *val)
 static int w_check_dst(struct sip_msg *msg, char *val)
 {
 	str dst;
-	dst.s = val;
-	dst.len = strlen(val);
+	if(fixup_get_svalue(msg, (gparam_t *)val, &dst) != 0) {
+		LM_ERR("cannot get the destination value\n");
+		return -1;
+	}
 	return ki_check_dst(msg, &dst);
 }
 
