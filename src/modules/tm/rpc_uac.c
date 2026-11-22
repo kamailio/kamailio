@@ -919,6 +919,13 @@ static void rpc_t_uac(
 		rpc->fault(c, 400, "too few parameters (%d/5)", ret ? ret : -ret);
 		return;
 	}
+	if(ret == 5 || ret == -5) {
+		/* the optional body parameter is missing: the scan filled it with
+		 * its placeholder text, an absent body must stay empty so that
+		 * the request goes out with no body (Content-Length: 0) */
+		tattrs.body.s = "";
+		tattrs.body.len = 0;
+	}
 	tattrs.reply_wait = reply_wait;
 	tattrs.cbflags = cbflags;
 	tattrs.rpflags = rpflags;
@@ -1043,6 +1050,13 @@ void rpc_t_uac_attrs(rpc_t *rpc, void *c)
 	if(ret < 6 && !(-ret == 6)) {
 		rpc->fault(c, 400, "too few parameters (%d/5)", ret ? ret : -ret);
 		return;
+	}
+	if(ret == 6 || ret == -6) {
+		/* the optional body parameter is missing: the scan filled it with
+		 * its placeholder text, an absent body must stay empty so that
+		 * the request goes out with no body (Content-Length: 0) */
+		tattrs.body.s = "";
+		tattrs.body.len = 0;
 	}
 	if(sattrs.len > 0) {
 		if(sattrs.s[sattrs.len - 1] == ';') {
