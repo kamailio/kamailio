@@ -360,6 +360,7 @@ int ps_db_delete_presentity_if_dialog_id_exists(
 	int db_is_dialog = 0;
 	str tmp_db_body, tmp_db_etag;
 	int i = 0;
+	int found = 0;
 	presentity_t old_presentity;
 
 	if(presentity->event->evp->type != EVENT_DIALOG) {
@@ -435,12 +436,7 @@ int ps_db_delete_presentity_if_dialog_id_exists(
 					LM_ERR("failed to delete presentity\n");
 				}
 
-				pa_dbf.free_result(pa_db, result);
-				result = NULL;
-				free(db_dialog_id);
-				db_dialog_id = NULL;
-
-				return 1;
+				found = 1;
 			}
 
 			free(db_dialog_id);
@@ -450,7 +446,7 @@ int ps_db_delete_presentity_if_dialog_id_exists(
 
 	pa_dbf.free_result(pa_db, result);
 	result = NULL;
-	return 0;
+	return found;
 }
 
 int ps_cache_delete_presentity_if_dialog_id_exists(
