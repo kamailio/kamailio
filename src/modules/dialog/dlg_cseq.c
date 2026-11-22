@@ -53,6 +53,64 @@ extern struct tm_binds d_tmb;
 
 static str _dlg_cseq_diff_var_name = str_init("cseq_diff");
 
+/* number of requests the module has sent itself to a side of the dialog,
+ * used where the cseq diff is not tracked */
+static str _dlg_cseq_lreq_var_name[2] = {
+		str_init("cseq_lreq_caller"), str_init("cseq_lreq_callee")};
+
+/* set when the callbacks rewriting the CSeq of forwarded requests are on */
+static int _dlg_cseq_tracking = 0;
+
+/* an ACK carries the CSeq of its INVITE and has to get the diff the INVITE
+ * got, also when the diff has been increased in between: for an ACK with a
+ * CSeq up to the first value, the second one is the diff to use */
+static str _dlg_cseq_ack_cseq_var_name = str_init("cseq_diff_ack_cseq");
+static str _dlg_cseq_ack_diff_var_name = str_init("cseq_diff_ack");
+
+/**
+ * Remember the diff used for the INVITE with the given CSeq
+ */
+static void dlg_cseq_ack_set(
+		dlg_cell_t *dlg, unsigned int cseq, unsigned int diff)
+{
+	dlg_entry_t *d_entry;
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+	dlg_lock(d_table, d_entry);
+	if(set_dlg_variable_uintval(dlg, &_dlg_cseq_ack_cseq_var_name, cseq) < 0
+			|| set_dlg_variable_uintval(dlg, &_dlg_cseq_ack_diff_var_name, diff)
+					   < 0) {
+		LM_ERR("failed to set the dlg cseq diff vars for ACK\n");
+	} else {
+		LM_DBG("ACK with cseq up to %u to get the diff %u\n", cseq, diff);
+	}
+	dlg_unlock(d_table, d_entry);
+}
+
+/**
+ * Replace the diff with the one used for the INVITE the ACK belongs to
+ */
+static void dlg_cseq_ack_get(
+		dlg_cell_t *dlg, unsigned int cseq, unsigned int *diff)
+{
+	dlg_entry_t *d_entry;
+	unsigned int acseq = 0;
+	unsigned int adiff = 0;
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+	dlg_lock(d_table, d_entry);
+	if(get_dlg_variable_uintval(dlg, &_dlg_cseq_ack_cseq_var_name, &acseq) == 0
+			&& cseq <= acseq
+			&& get_dlg_variable_uintval(
+					   dlg, &_dlg_cseq_ack_diff_var_name, &adiff)
+					   == 0) {
+		LM_DBG("ACK with cseq %u: diff %u of its INVITE instead of %u\n", cseq,
+				adiff, *diff);
+		*diff = adiff;
+	}
+	dlg_unlock(d_table, d_entry);
+}
+
 typedef struct dlg_cseq_edit
 {
 	char *start;
@@ -363,6 +421,9 @@ int dlg_cseq_update(sip_msg_t *msg)
 		goto done;
 	}
 	str2int(&get_cseq(msg)->number, &ninc);
+	if(msg->first_line.u.request.method_value == METHOD_INVITE) {
+		dlg_cseq_ack_set(dlg, ninc, vinc);
+	}
 	vinc += ninc;
 	nval.s = int2str(vinc, &nval.len);
 	trim(&nval);
@@ -418,12 +479,18 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg, unsigned int direction)
 		goto done;
 	}
 
+	str2int(&get_cseq(msg)->number, &ninc);
+	if(msg->first_line.u.request.method_value == METHOD_ACK) {
+		dlg_cseq_ack_get(dlg, ninc, &vinc);
+	} else if(msg->first_line.u.request.method_value == METHOD_INVITE) {
+		dlg_cseq_ack_set(dlg, ninc, vinc);
+	}
+
 	if(vinc == 0) {
 		LM_DBG("nothing to increment\n");
 		goto done;
 	}
 
-	str2int(&get_cseq(msg)->number, &ninc);
 	vinc += ninc;
 	nval.s = int2str(vinc, &nval.len);
 	trim(&nval);
@@ -440,6 +507,77 @@ done:
 
 error:
 	return -1;
+}
+
+/**
+ * Number a request the module sends itself inside the dialog.
+ *
+ * td->loc_seq holds the last CSeq received from the side the request stands
+ * for (RFC 3261 12.2.1.1). That value does not include what the module has
+ * already sent in the same sequence, so two requests in a row got the same
+ * CSeq and the second one was rejected (12.2.2).
+ *
+ * To the callee with track_cseq_updates on: the request takes the next
+ * number after the tracked diff and the diff is increased, so the requests
+ * the caller sends afterwards are shifted behind it like after uac_auth().
+ * An ACK that is still to come for an INVITE forwarded before is not.
+ * Otherwise the requests sent to that side are only counted, to keep the
+ * numbers of consecutive requests different.
+ */
+int dlg_cseq_local_request(dlg_cell_t *dlg, int side, dlg_t *td)
+{
+	dlg_entry_t *d_entry;
+	str *vname;
+	unsigned int vinc = 0;
+	unsigned int acseq = 0;
+	int ret = -1;
+
+	if(dlg == NULL || td == NULL
+			|| (side != DLG_CALLER_LEG && side != DLG_CALLEE_LEG)) {
+		return -1;
+	}
+
+	if(side == DLG_CALLEE_LEG && _dlg_cseq_tracking) {
+		vname = &_dlg_cseq_diff_var_name;
+	} else {
+		vname = &_dlg_cseq_lreq_var_name[side];
+	}
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+	dlg_lock(d_table, d_entry);
+
+	if(get_dlg_variable_uintval(dlg, vname, &vinc) < 0) {
+		vinc = 0;
+	}
+	/* RFC 3261 8.1.1.5: the sequence number is below 2**31 */
+	if(vinc >= INT_MAX || td->loc_seq.value >= INT_MAX - vinc) {
+		LM_ERR("cseq out of range (%u + %u)\n", td->loc_seq.value, vinc);
+		goto done;
+	}
+	if(vname == &_dlg_cseq_diff_var_name
+			&& get_dlg_variable_uintval(
+					   dlg, &_dlg_cseq_ack_cseq_var_name, &acseq)
+					   < 0) {
+		/* the ACK of an INVITE forwarded before keeps the diff of now */
+		dlg_cseq_ack_set(dlg, td->loc_seq.value, vinc);
+	}
+	td->loc_seq.value += vinc;
+
+	if(set_dlg_variable_uintval(dlg, vname, vinc + 1) < 0) {
+		LM_ERR("failed to set the dlg var %.*s\n", vname->len, vname->s);
+		goto done;
+	}
+	if(vname == &_dlg_cseq_diff_var_name) {
+		dlg->iflags |= DLG_IFLAG_CSEQ_DIFF;
+	}
+	LM_DBG("local request to %s: cseq base %u (%.*s=%u)\n",
+			(side == DLG_CALLER_LEG) ? "caller" : "callee", td->loc_seq.value,
+			vname->len, vname->s, vinc + 1);
+	ret = 0;
+
+done:
+	dlg_unlock(d_table, d_entry);
+	return ret;
 }
 
 /**
@@ -722,6 +860,7 @@ done:
  */
 int dlg_register_cseq_callbacks(void)
 {
+	_dlg_cseq_tracking = 1;
 	sr_event_register_cb(SREV_NET_DATA_IN, dlg_cseq_msg_received);
 	sr_event_register_cb(SREV_NET_DATA_OUT, dlg_cseq_msg_sent);
 	return 0;

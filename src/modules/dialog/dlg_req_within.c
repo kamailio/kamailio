@@ -48,6 +48,7 @@
 #include "dlg_handlers.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
+#include "dlg_cseq.h"
 
 
 #define MAX_FWD_HDR "Max-Forwards: " MAX_FWD CRLF
@@ -694,6 +695,11 @@ int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side,
 		/*verify direction*/
 		if((dialog_info = build_dlg_t(dlg, side)) == 0) {
 			LM_ERR("failed to create dlg_t\n");
+			goto err;
+		}
+		/* continue after the requests already sent to this side */
+		if(dlg_cseq_local_request(dlg, side, dialog_info) < 0) {
+			LM_ERR("failed to set the cseq\n");
 			goto err;
 		}
 	}
