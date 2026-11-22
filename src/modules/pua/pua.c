@@ -627,13 +627,57 @@ static void hashT_clean(unsigned int ticks, void *param)
 		p = HashT->p_records[i].entity->next;
 		while(p) {
 			print_ua_pres(p);
+			/* skip publications waiting for a reply: not-yet-confirmed ones
+			 * (inserted at send time, no etag yet) and confirmed ones with a
+			 * PUBLISH in flight - a sweeper refresh would put a second
+			 * PUBLISH in flight for one record */
+			if(p->waiting_reply) {
+				p = p->next;
+				continue;
+			}
 			if(p->expires - update_period < now) {
 				if((p->desired_expires > p->expires + min_expires)
 						|| (p->desired_expires == 0)) {
-					if(update_pua(p) < 0) {
+					int uret = update_pua(p);
+					publ_t *pending = NULL;
+					str puri = {0, 0};
+
+					if(uret < 0)
 						LM_ERR("while updating record\n");
+					if(!p->waiting_reply && p->pending_publ) {
+						/* the send failed or was dropped inside update_pua
+						 * and waiting_reply was cleared: a queued PUBLISH
+						 * would wait parked for a reply that never comes -
+						 * detach it and send it once the slot lock is
+						 * dropped, as the reply path does */
+						pending = p->pending_publ;
+						p->pending_publ = NULL;
+						puri.s = (char *)pkg_malloc(
+								p->pres_uri->len * sizeof(char));
+						if(puri.s == NULL) {
+							PKG_MEM_ERROR;
+							p->pending_publ = pending;
+							pending = NULL;
+						} else {
+							memcpy(puri.s, p->pres_uri->s, p->pres_uri->len);
+							puri.len = p->pres_uri->len;
+						}
+					}
+					if(uret < 0 || pending) {
+						/* the slot lock must not be held across the drain
+						 * (send_publish takes it); after the unlock p may be
+						 * gone, so a failed update ends the sweep as before
+						 * and a dropped one rescans the slot from the head */
 						lock_release(&HashT->p_records[i].lock);
-						return;
+						if(pending) {
+							send_detached_pending_publ(&puri, pending);
+							pkg_free(puri.s);
+						}
+						if(uret < 0)
+							return;
+						lock_get(&HashT->p_records[i].lock);
+						p = HashT->p_records[i].entity->next;
+						continue;
 					}
 					p = p->next;
 					continue;
@@ -689,6 +733,8 @@ int update_pua(ua_pres_t *p)
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, 0, TMCB_LOCAL_COMPLETED,
 				publ_cback_func, (void *)cb_param);
+		if(dbmode != PUA_DB_ONLY)
+			p->waiting_reply = 1;
 		result = tmb.t_request(&uac_r, p->pres_uri, /* Request-URI */
 				p->pres_uri,						/* To */
 				p->pres_uri,						/* From */
@@ -696,11 +742,15 @@ int update_pua(ua_pres_t *p)
 		);
 		if(result < 0) {
 			LM_ERR("in t_request function\n");
+			if(dbmode != PUA_DB_ONLY)
+				p->waiting_reply = 0;
 			shm_free(cb_param);
 			ret_code = -1;
 			goto done;
 		}
 		if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+			if(dbmode != PUA_DB_ONLY)
+				p->waiting_reply = 0;
 			shm_free(cb_param);
 			ret_code = 0;
 			goto done;

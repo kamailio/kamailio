@@ -174,6 +174,197 @@ static int find_and_update_record(
 	}
 }
 
+/* insert the hash record at send time (not on the 2xx) with the waiting
+ * flag set, so that a second PUBLISH for the same publication is queued
+ * until the reply brings the etag back */
+static ua_pres_t *new_publ_record(publ_info_t *publ, str *tuple_id)
+{
+	ua_pres_t *presentity = NULL;
+	int size;
+
+	size = sizeof(ua_pres_t) + sizeof(str)
+		   + (publ->pres_uri->len + publ->id.len
+					 + ((tuple_id) ? tuple_id->len : 0))
+					 * sizeof(char);
+	if(publ->extra_headers && publ->extra_headers->s)
+		size += sizeof(str) + publ->extra_headers->len * sizeof(char);
+
+	presentity = (ua_pres_t *)shm_malloc(size);
+	if(presentity == NULL) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+	memset(presentity, 0, size);
+
+	size = sizeof(ua_pres_t);
+	presentity->pres_uri = (str *)((char *)presentity + size);
+	size += sizeof(str);
+	presentity->pres_uri->s = (char *)presentity + size;
+	memcpy(presentity->pres_uri->s, publ->pres_uri->s, publ->pres_uri->len);
+	presentity->pres_uri->len = publ->pres_uri->len;
+	size += publ->pres_uri->len;
+
+	if(publ->id.s && publ->id.len) {
+		presentity->id.s = (char *)presentity + size;
+		memcpy(presentity->id.s, publ->id.s, publ->id.len);
+		presentity->id.len = publ->id.len;
+		size += publ->id.len;
+	}
+
+	if(tuple_id && tuple_id->s && tuple_id->len) {
+		presentity->tuple_id.s = (char *)presentity + size;
+		memcpy(presentity->tuple_id.s, tuple_id->s, tuple_id->len);
+		presentity->tuple_id.len = tuple_id->len;
+		size += tuple_id->len;
+	}
+
+	if(publ->extra_headers && publ->extra_headers->s
+			&& publ->extra_headers->len) {
+		presentity->extra_headers = (str *)((char *)presentity + size);
+		size += sizeof(str);
+		presentity->extra_headers->s = (char *)presentity + size;
+		memcpy(presentity->extra_headers->s, publ->extra_headers->s,
+				publ->extra_headers->len);
+		presentity->extra_headers->len = publ->extra_headers->len;
+		size += publ->extra_headers->len;
+	}
+
+	if(publ->expires < 0)
+		presentity->desired_expires = 0;
+	else
+		presentity->desired_expires = publ->expires + (int)time(NULL);
+	presentity->flag = publ->source_flag;
+	presentity->event = publ->event;
+	presentity->cb_param = publ->cb_param;
+	presentity->waiting_reply = 1;
+
+	return presentity;
+}
+
+/* copy a PUBLISH into a shm pending record */
+static publ_t *build_pending_publ(publ_info_t *publ)
+{
+	publ_t *p = NULL;
+	int size;
+
+	size = sizeof(publ_t) + ((publ->body) ? publ->body->len : 0)
+		   + publ->content_type.len + publ->id.len
+		   + ((publ->extra_headers) ? publ->extra_headers->len : 0)
+		   + ((publ->outbound_proxy) ? publ->outbound_proxy->len : 0);
+	p = (publ_t *)shm_malloc(size);
+	if(p == NULL) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+	memset(p, 0, size);
+	size = sizeof(publ_t);
+
+	if(publ->body && publ->body->s) {
+		p->body.s = (char *)p + size;
+		memcpy(p->body.s, publ->body->s, publ->body->len);
+		p->body.len = publ->body->len;
+		size += publ->body->len;
+	}
+	if(publ->content_type.s) {
+		p->content_type.s = (char *)p + size;
+		memcpy(p->content_type.s, publ->content_type.s, publ->content_type.len);
+		p->content_type.len = publ->content_type.len;
+		size += publ->content_type.len;
+	}
+	if(publ->extra_headers && publ->extra_headers->s) {
+		p->extra_headers.s = (char *)p + size;
+		memcpy(p->extra_headers.s, publ->extra_headers->s,
+				publ->extra_headers->len);
+		p->extra_headers.len = publ->extra_headers->len;
+		size += publ->extra_headers->len;
+	}
+	if(publ->id.s && publ->id.len) {
+		p->id.s = (char *)p + size;
+		memcpy(p->id.s, publ->id.s, publ->id.len);
+		p->id.len = publ->id.len;
+		size += publ->id.len;
+	}
+	if(publ->outbound_proxy && publ->outbound_proxy->s) {
+		p->outbound_proxy.s = (char *)p + size;
+		memcpy(p->outbound_proxy.s, publ->outbound_proxy->s,
+				publ->outbound_proxy->len);
+		p->outbound_proxy.len = publ->outbound_proxy->len;
+		size += publ->outbound_proxy->len;
+	}
+	p->expires = publ->expires;
+	p->event = publ->event;
+	p->source_flag = publ->source_flag;
+	p->cb_param = publ->cb_param;
+
+	return p;
+}
+
+/* send a queued PUBLISH once the reply for the previous one arrived:
+ * if the record is still there it now carries the etag, so this goes out
+ * as a refresh with that etag; if the record was dropped (failure reply)
+ * it goes out as a new publication */
+static void drain_pending_publ(ua_pres_t *hentity, publ_t *pending)
+{
+	publ_info_t publ;
+
+	if(pending == NULL)
+		return;
+
+	memset(&publ, 0, sizeof(publ_info_t));
+	publ.pres_uri = hentity->pres_uri;
+	if(pending->body.s)
+		publ.body = &pending->body;
+	publ.content_type = pending->content_type;
+	publ.id = pending->id;
+	if(pending->extra_headers.s)
+		publ.extra_headers = &pending->extra_headers;
+	if(pending->outbound_proxy.s)
+		publ.outbound_proxy = &pending->outbound_proxy;
+	publ.expires = pending->expires;
+	publ.event = pending->event;
+	publ.source_flag = pending->source_flag;
+	publ.cb_param = pending->cb_param;
+
+	if(send_publish(&publ) < 0)
+		LM_ERR("failed to send the queued PUBLISH\n");
+	shm_free(pending);
+}
+
+/* send a queued PUBLISH detached by a caller that holds the hash slot
+ * lock itself and so cannot use release_pending_publ (hashT_clean in
+ * pua.c, after a sweeper refresh failed inside update_pua): the caller
+ * must have dropped the slot lock - the send takes it itself */
+void send_detached_pending_publ(str *pres_uri, publ_t *pending)
+{
+	ua_pres_t hentity;
+
+	memset(&hentity, 0, sizeof(ua_pres_t));
+	hentity.pres_uri = pres_uri;
+	drain_pending_publ(&hentity, pending);
+}
+
+/* detach the queued PUBLISH from the hash record and clear the waiting
+ * flag; the record itself is left in place unless drop_record is set */
+static publ_t *release_pending_publ(
+		ua_pres_t *hentity, unsigned int hash_code, int drop_record)
+{
+	ua_pres_t *presentity = NULL;
+	publ_t *pending = NULL;
+
+	lock_get(&HashT->p_records[hash_code].lock);
+	presentity = search_htable(hentity, hash_code);
+	if(presentity) {
+		presentity->waiting_reply = 0;
+		pending = presentity->pending_publ;
+		presentity->pending_publ = NULL;
+		if(drop_record)
+			delete_htable(presentity, hash_code);
+	}
+	lock_release(&HashT->p_records[hash_code].lock);
+
+	return pending;
+}
+
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 {
 	struct hdr_field *hdr = NULL;
@@ -181,11 +372,12 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	ua_pres_t *presentity = NULL;
 	ua_pres_t *db_presentity = NULL;
 	ua_pres_t *hentity = NULL;
+	publ_t *pending = NULL;
 	int found = 0;
 	int size = 0;
 	unsigned int lexpire = 0;
 	str etag;
-	unsigned int hash_code;
+	unsigned int hash_code = 0;
 	db1_res_t *res = NULL;
 	ua_pres_t dbpres;
 	str pres_uri = {0, 0}, watcher_uri = {0, 0}, extra_headers = {0, 0};
@@ -208,6 +400,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 	hentity = (ua_pres_t *)(*ps->param);
+	hash_code = core_hash(hentity->pres_uri, NULL, HASH_SIZE);
 
 	msg = ps->rpl;
 	if(msg == NULL) {
@@ -218,13 +411,39 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	if(msg == FAKED_REPLY) {
 		LM_DBG("FAKED_REPLY\n");
+		if(dbmode != PUA_DB_ONLY) {
+			if(hentity->etag.len == 0) {
+				/* the transaction failed locally on a no-etag record:
+				 * drop it (keeping a no-etag record would make
+				 * hashT_clean send a bogus empty-etag refresh every
+				 * update_period) and send any queued PUBLISH as a new
+				 * publication */
+				pending = release_pending_publ(hentity, hash_code, 1);
+				if(pending)
+					drain_pending_publ(hentity, pending);
+				pending = NULL;
+			} else {
+				/* a confirmed record's refresh failed locally: keep the
+				 * record so its etag survives (dropping it would make the
+				 * next PUBLISH an INSERT_TYPE that re-creates the orphan
+				 * row), clear the waiting flag and send any queued PUBLISH */
+				pending = release_pending_publ(hentity, hash_code, 0);
+				if(pending)
+					drain_pending_publ(hentity, pending);
+				pending = NULL;
+			}
+		}
 		goto done;
 	}
 
-	hash_code = core_hash(hentity->pres_uri, NULL, HASH_SIZE);
-
 	if(ps->code >= 300) {
-		find_and_delete_record(hentity, hash_code);
+		if(dbmode != PUA_DB_ONLY) {
+			/* drop the record; any queued PUBLISH is sent below as a new
+			 * publication */
+			pending = release_pending_publ(hentity, hash_code, 1);
+		} else {
+			find_and_delete_record(hentity, hash_code);
+		}
 
 		if(ps->code == 412 && hentity->body && hentity->flag != RPC_PUBLISH
 				&& hentity->flag != RPC_ASYN_PUBLISH) {
@@ -265,6 +484,12 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				goto error;
 			}
 		}
+		if(pending) {
+			/* the record was dropped above: the queued PUBLISH goes out as
+			 * a new publication (or queues behind the 412 retry just sent) */
+			drain_pending_publ(hentity, pending);
+			pending = NULL;
+		}
 		goto done;
 	} /* code >= 300 */
 
@@ -303,12 +528,46 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			hentity->pres_uri->len, hentity->pres_uri->s);
 
 	if(lexpire == 0) {
-		find_and_delete_record(hentity, hash_code);
+		if(dbmode != PUA_DB_ONLY) {
+			/* the publication is terminated: delete the record, but send
+			 * a queued PUBLISH as a new publication instead of freeing it */
+			pending = release_pending_publ(hentity, hash_code, 1);
+			if(pending) {
+				drain_pending_publ(hentity, pending);
+				pending = NULL;
+			}
+		} else {
+			find_and_delete_record(hentity, hash_code);
+		}
 		goto done;
 	}
 
-	if(hentity->etag.s) {
-		if(pua_dbf.affected_rows != NULL || dbmode != PUA_DB_ONLY) {
+	if(dbmode != PUA_DB_ONLY) {
+		/* the record was inserted at send time: store the etag in it,
+		 * clear the waiting flag and send any queued PUBLISH as a refresh
+		 * with that etag */
+		ua_pres_t *hp = NULL;
+
+		lock_get(&HashT->p_records[hash_code].lock);
+		hp = search_htable(hentity, hash_code);
+		if(hp) {
+			update_htable(hp, hentity->desired_expires, lexpire, &etag,
+					hash_code, NULL);
+			hp->waiting_reply = 0;
+			pending = hp->pending_publ;
+			hp->pending_publ = NULL;
+		}
+		lock_release(&HashT->p_records[hash_code].lock);
+		if(hp) {
+			if(pending) {
+				drain_pending_publ(hentity, pending);
+				pending = NULL;
+			}
+			goto done;
+		}
+		/* the record vanished meanwhile - fall through to the insert below */
+	} else if(hentity->etag.s) {
+		if(pua_dbf.affected_rows != NULL) {
 			if(find_and_update_record(hentity, hash_code, lexpire, &etag) > 0)
 				goto done;
 		} else if((db_presentity = get_record_puadb(hentity->pres_uri,
@@ -411,6 +670,22 @@ done:
 	return;
 
 error:
+	if(hentity && dbmode != PUA_DB_ONLY) {
+		/* the reply could not be processed: drop the record (keeping a
+		 * no-etag record would make hashT_clean send a bogus empty-etag
+		 * refresh every update_period) and send a queued PUBLISH as a new
+		 * publication */
+		publ_t *dropped_pending = release_pending_publ(hentity, hash_code, 1);
+
+		if(dropped_pending)
+			drain_pending_publ(hentity, dropped_pending);
+	}
+	if(pending) {
+		/* detached above but not sent yet (a failed 412 retry): send it
+		 * as a new publication */
+		drain_pending_publ(hentity, pending);
+		pending = NULL;
+	}
 	if(ps->param && *ps->param) {
 		shm_free(*ps->param);
 		*ps->param = NULL;
@@ -448,6 +723,10 @@ int send_publish(publ_info_t *publ)
 	ua_pres_t dbpres;
 	str pres_uri = {0, 0}, watcher_uri = {0, 0}, extra_headers = {0, 0};
 	int ret = -1;
+	int found_rec = 0;
+	int marked_rec = 0;	  /* this call set waiting_reply on the record */
+	int inserted_rec = 0; /* this call inserted the record */
+	ua_pres_t pres_key;	  /* hash search key for this publication */
 
 	LM_DBG("pres_uri=%.*s\n", publ->pres_uri->len, publ->pres_uri->s);
 
@@ -473,19 +752,17 @@ int send_publish(publ_info_t *publ)
 		presentity = get_record_puadb(
 				publ->pres_uri, publ->id, publ->etag, &dbpres, &res);
 	} else {
-		ua_pres_t pres;
-
-		memset(&pres, 0, sizeof(ua_pres_t));
-		pres.pres_uri = publ->pres_uri;
-		pres.flag = publ->source_flag;
-		pres.id = publ->id;
-		pres.event = publ->event;
+		memset(&pres_key, 0, sizeof(ua_pres_t));
+		pres_key.pres_uri = publ->pres_uri;
+		pres_key.flag = publ->source_flag;
+		pres_key.id = publ->id;
+		pres_key.event = publ->event;
 		if(publ->etag)
-			pres.etag = *publ->etag;
+			pres_key.etag = *publ->etag;
 
 		hash_code = core_hash(publ->pres_uri, NULL, HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
-		presentity = search_htable(&pres, hash_code);
+		presentity = search_htable(&pres_key, hash_code);
 	}
 
 	if(publ->etag && presentity == NULL) {
@@ -494,6 +771,7 @@ int send_publish(publ_info_t *publ)
 		ret = 418;
 		goto error;
 	}
+	found_rec = (presentity != NULL) ? 1 : 0;
 
 	if(publ->flag & INSERT_TYPE) {
 		LM_DBG("Insert flag set\n");
@@ -516,22 +794,52 @@ int send_publish(publ_info_t *publ)
 			goto done;
 		}
 		if(publ->body == NULL) {
-			LM_ERR("New PUBLISH and no body found- invalid request\n");
+			LM_DBG("New PUBLISH and no body found- invalid request\n");
 			ret = ERR_PUBLISH_NO_BODY;
 			goto error;
 		}
 	} else {
 		LM_DBG("record found\n");
-		publ->flag = UPDATE_TYPE;
-		etag.s = (char *)pkg_malloc(presentity->etag.len * sizeof(char));
-		if(etag.s == NULL) {
-			PKG_MEM_ERROR;
-			if(dbmode != PUA_DB_ONLY)
+
+		if(dbmode != PUA_DB_ONLY && presentity->waiting_reply) {
+			/* a PUBLISH for this publication still waits for its reply:
+			 * queue this one in the record, replacing any previously
+			 * queued one (the latest body wins) */
+			publ_t *pending = build_pending_publ(publ);
+
+			if(pending == NULL) {
+				LM_ERR("failed to create the pending publ record\n");
 				lock_release(&HashT->p_records[hash_code].lock);
-			goto error;
+				goto error;
+			}
+			if(presentity->pending_publ)
+				shm_free(presentity->pending_publ);
+			presentity->pending_publ = pending;
+			lock_release(&HashT->p_records[hash_code].lock);
+			goto done;
 		}
-		memcpy(etag.s, presentity->etag.s, presentity->etag.len);
-		etag.len = presentity->etag.len;
+		if(dbmode != PUA_DB_ONLY) {
+			/* mark the record as waiting for the reply */
+			presentity->waiting_reply = 1;
+			marked_rec = 1;
+		}
+
+		publ->flag = UPDATE_TYPE;
+		if(presentity->etag.len > 0 || dbmode == PUA_DB_ONLY) {
+			etag.s = (char *)pkg_malloc(presentity->etag.len * sizeof(char));
+			if(etag.s == NULL) {
+				PKG_MEM_ERROR;
+				if(dbmode != PUA_DB_ONLY)
+					lock_release(&HashT->p_records[hash_code].lock);
+				goto error;
+			}
+			memcpy(etag.s, presentity->etag.s, presentity->etag.len);
+			etag.len = presentity->etag.len;
+		} else {
+			/* the record was inserted at send time and is not confirmed
+			 * yet (no etag): send the PUBLISH as a new publication */
+			publ->flag = INSERT_TYPE;
+		}
 
 		if(presentity->tuple_id.s && presentity->tuple_id.len) {
 			/* get tuple_id*/
@@ -585,6 +893,57 @@ int send_publish(publ_info_t *publ)
 	if(tuple_id)
 		LM_DBG("tuple_id= %.*s\n", tuple_id->len, tuple_id->s);
 
+	/* insert the record at send time with the waiting flag set, so that a
+	 * second PUBLISH for the same publication is queued until the reply
+	 * brings the etag back */
+	if(!found_rec && (publ->flag & INSERT_TYPE) && dbmode != PUA_DB_ONLY) {
+		ua_pres_t *newp = NULL;
+
+		lock_get(&HashT->p_records[hash_code].lock);
+		/* the slot lock was dropped at the insert: label, so a record may
+		 * have appeared meanwhile: queue onto it instead of inserting a
+		 * second record - both replies would match the newer record and
+		 * the older one would wait on a reply that never clears its flag */
+		presentity = search_htable(&pres_key, hash_code);
+		if(presentity) {
+			if(presentity->waiting_reply) {
+				publ_t *pending = build_pending_publ(publ);
+
+				if(pending == NULL) {
+					LM_ERR("failed to create the pending publ record\n");
+					lock_release(&HashT->p_records[hash_code].lock);
+					goto error;
+				}
+				if(presentity->pending_publ)
+					shm_free(presentity->pending_publ);
+				presentity->pending_publ = pending;
+				lock_release(&HashT->p_records[hash_code].lock);
+				goto done;
+			}
+			/* the record was inserted AND confirmed (etag set) inside the
+			 * window between the first search and this re-search: queueing
+			 * onto a non-waiting record would park the PUBLISH with nothing
+			 * to drain it - mark it waiting and send this PUBLISH. The body
+			 * was already built as an INSERT (version 0, fresh tuple id), so
+			 * it cannot ride as a refresh on the record's etag: send it as a
+			 * new publication, mirroring the no-etag downgrade above */
+			presentity->waiting_reply = 1;
+			marked_rec = 1;
+			publ->flag = INSERT_TYPE;
+			lock_release(&HashT->p_records[hash_code].lock);
+			goto send_publish;
+		}
+		newp = new_publ_record(publ, tuple_id);
+		if(newp == NULL) {
+			LM_ERR("failed to create the publish record\n");
+			lock_release(&HashT->p_records[hash_code].lock);
+			goto error;
+		}
+		insert_htable(newp, hash_code);
+		inserted_rec = 1;
+		lock_release(&HashT->p_records[hash_code].lock);
+	}
+
 send_publish:
 
 	/* construct the callback parameter */
@@ -629,6 +988,21 @@ send_publish:
 	}
 	if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
 		shm_free(cb_param);
+		cb_param = NULL;
+		if(dbmode != PUA_DB_ONLY && (marked_rec || inserted_rec)) {
+			/* the request was dropped before sending, so the reply
+			 * callback will not run: undo the waiting mark the same way
+			 * as on a send failure (see error: below) */
+			ua_pres_t hentity;
+			publ_t *pending =
+					release_pending_publ(&pres_key, hash_code, inserted_rec);
+
+			if(pending) {
+				memset(&hentity, 0, sizeof(ua_pres_t));
+				hentity.pres_uri = publ->pres_uri;
+				drain_pending_publ(&hentity, pending);
+			}
+		}
 	}
 
 done:
@@ -645,6 +1019,22 @@ done:
 error:
 	if(cb_param)
 		shm_free(cb_param);
+
+	if(dbmode != PUA_DB_ONLY && (marked_rec || inserted_rec)) {
+		/* the PUBLISH this call was sending will never get its reply
+		 * processed: clear the waiting flag (deleting the record if this
+		 * call inserted it) and send any queued PUBLISH, so that nothing
+		 * stays queued behind a dead send */
+		ua_pres_t hentity;
+		publ_t *pending =
+				release_pending_publ(&pres_key, hash_code, inserted_rec);
+
+		if(pending) {
+			memset(&hentity, 0, sizeof(ua_pres_t));
+			hentity.pres_uri = publ->pres_uri;
+			drain_pending_publ(&hentity, pending);
+		}
+	}
 
 	if(dbmode == PUA_DB_ONLY && pua_dbf.abort_transaction) {
 		if(pua_dbf.abort_transaction(pua_db) < 0)

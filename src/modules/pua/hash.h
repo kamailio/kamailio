@@ -71,6 +71,21 @@
 
 #define MAX_FORWARD 70
 
+/* a PUBLISH queued while the previous one for the same publication waits
+ * for its reply */
+typedef struct publ
+{
+	str body;
+	str content_type;
+	str extra_headers;
+	str id;
+	str outbound_proxy;
+	int expires;
+	int event;
+	int source_flag;
+	void *cb_param;
+} publ_t;
+
 typedef struct ua_pres
 {
 
@@ -90,8 +105,10 @@ typedef struct ua_pres
 	/* publish */
 	str etag;
 	str tuple_id;
-	str *body;		  /* croc-not stored in db_only mode */
-	str content_type; /* croc-not stored in db_only mode */
+	int waiting_reply;	  /* a PUBLISH for this record waits for its reply */
+	publ_t *pending_publ; /* queued PUBLISH, replaced by newer ones */
+	str *body;			  /* croc-not stored in db_only mode */
+	str content_type;	  /* croc-not stored in db_only mode */
 
 	/* subscribe */
 	str *watcher_uri;

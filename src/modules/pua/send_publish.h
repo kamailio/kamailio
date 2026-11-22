@@ -56,6 +56,7 @@ typedef int (*send_publish_t)(publ_info_t *publ);
 int send_publish(publ_info_t *publ);
 
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps);
+void send_detached_pending_publ(str *pres_uri, publ_t *pending);
 str *publ_build_hdr(int expires, pua_event_t *event, str *content_type,
 		str *etag, str *extra_headers, int is_body);
 ua_pres_t *publish_cbparam(
