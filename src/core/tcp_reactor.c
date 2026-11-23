@@ -1536,6 +1536,31 @@ static void tcp_reactor_unwatch_busy(struct tcp_connection *tcpconn, int fd_i)
 	tcpconn->flags &= ~(F_CONN_READ_W | F_CONN_WRITE_W);
 }
 
+/* mode 2 [io_wait]: POLLERR on a write-watched conn that is being closed: the
+ * mode 0 accounting (handle_tcpconn_ev() in tcp_main.c)
+ *  - S_CONN_CONNECT: a connect the peer refused or reset after EINPROGRESS:
+ *    connect-error event, connect_failed stat, BLST_ERR_CONNECT
+ *  - else: con_reset stat, BLST_ERR_SEND
+ *  - the blocklist calls check use_dst_blocklist and the ignore masks */
+static void tcp_reactor_report_wr_err(struct tcp_connection *c)
+{
+	if(unlikely(c->state == S_CONN_CONNECT)) {
+#ifdef USE_DST_BLOCKLIST
+		(void)dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto, &c->rcv.src_su,
+				&c->send_flags, 0);
+#endif /* USE_DST_BLOCKLIST */
+		TCP_EV_CONNECT_ERR(
+				0, TCP_LADDR(c), TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+		TCP_STATS_CONNECT_FAILED();
+	} else {
+#ifdef USE_DST_BLOCKLIST
+		(void)dst_blocklist_su(
+				BLST_ERR_SEND, c->rcv.proto, &c->rcv.src_su, &c->send_flags, 0);
+#endif /* USE_DST_BLOCKLIST */
+		TCP_STATS_CON_RESET();
+	}
+}
+
 /* mode 2 [io_wait]: POLLOUT or an error on a write-watched conn: flush wbuf_q,
  * then drop the write watch once it is empty. -1: close the conn */
 static int tcp_reactor_flush_wbuf(
@@ -1602,8 +1627,11 @@ int tcp_reactor_handle_tcpconn_ev(
 	}
 	/* write-watched, wsq empty: flush wbuf_q (wire bytes) here on io_wait */
 	if((ev & (POLLOUT | POLLERR | POLLHUP)) && (tcpconn->flags & F_CONN_WRITE_W)
-			&& tcp_reactor_flush_wbuf(tcpconn, ev, fd_i) < 0)
+			&& tcp_reactor_flush_wbuf(tcpconn, ev, fd_i) < 0) {
+		if(ev & POLLERR)
+			tcp_reactor_report_wr_err(tcpconn);
 		goto reactor_close;
+	}
 
 	if(ev & (POLLIN | POLLERR | POLLHUP)) {
 		/* read on a pool thread, all four transports:
