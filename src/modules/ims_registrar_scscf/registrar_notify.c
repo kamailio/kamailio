@@ -2947,9 +2947,9 @@ dlg_t *build_dlg_t_from_notification(reg_notification *n)
 			pkg_free(tmp);
 			goto error;
 		}
-		pkg_free(tmp);
 		td->send_sock = grep_sock_info(
 				&host, (unsigned short)port, (unsigned short)proto);
+		pkg_free(tmp);
 	}
 
 	return td;
