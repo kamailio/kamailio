@@ -36,6 +36,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+/* INADDR_LOOPBACK is not required by POSIX and can be hidden by defined macros
+ * (e.g., _POSIX_C_SOURCE=1 on Darwin) */
+#ifndef INADDR_LOOPBACK
+#define INADDR_LOOPBACK 0x7f000001U
+#endif
+
 #include "str.h"
 #include "compiler_opt.h"
 #include "ut.h"
