@@ -175,6 +175,8 @@ void free_cell_helper(
 		shm_free_unsafe(dead_cell->uas.response.buffer);
 	if(unlikely(dead_cell->uas.cancel_reas))
 		shm_free_unsafe(dead_cell->uas.cancel_reas);
+	if(dead_cell->contact_map)
+		shm_free_unsafe(dead_cell->contact_map);
 
 	/* callbacks */
 	for(cbs = (struct tm_callback *)dead_cell->tmcb_hl.first; cbs;) {
