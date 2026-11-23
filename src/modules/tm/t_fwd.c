@@ -583,6 +583,20 @@ static int prepare_new_uac(struct cell *t, struct sip_msg *i_req, int branch,
 		ret = E_OUT_OF_MEM;
 		goto error01;
 	}
+	{
+		str *contact = uac_contact_map_get(t->contact_map, dst->proto);
+		int contact_len = (int)len;
+		if(contact != NULL && contact->s != NULL && contact->len > 0
+				&& tm_uac_replace_contact(&shbuf, &contact_len, contact) < 0) {
+			LM_ERR("failed to select Contact for DNS fallback transport %s\n",
+					proto2a(dst->proto));
+			shm_free(shbuf);
+			shbuf = NULL;
+			ret = E_OUT_OF_MEM;
+			goto error01;
+		}
+		len = (unsigned int)contact_len;
+	}
 #ifdef DBG_MSG_QA
 	if(shbuf[len - 1] == 0) {
 		LM_ERR("sanity check failed\n");
@@ -1002,6 +1016,20 @@ static int add_uac_from_buf(struct cell *t, struct sip_msg *request, str *uri,
 		}
 		ret = ser_error = E_OUT_OF_MEM;
 		goto error;
+	}
+	{
+		str *contact = uac_contact_map_get(
+				t->contact_map, t->uac[branch].request.dst.proto);
+		int contact_len = (int)len;
+		if(contact != NULL && contact->s != NULL && contact->len > 0
+				&& tm_uac_replace_contact(&shbuf, &contact_len, contact) < 0) {
+			LM_ERR("failed to select Contact for DNS fallback transport %s\n",
+					proto2a(t->uac[branch].request.dst.proto));
+			shm_free(shbuf);
+			ret = ser_error = E_OUT_OF_MEM;
+			goto error;
+		}
+		len = (unsigned int)contact_len;
 	}
 
 	/* things went well, move ahead and install new buffer! */

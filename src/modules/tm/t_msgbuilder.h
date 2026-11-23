@@ -68,6 +68,8 @@ char *build_dlg_ack(struct sip_msg *rpl, struct cell *Trans,
 char *build_uac_req(str *method, str *headers, str *body, dlg_t *dialog,
 		int branch, struct cell *t, int *len, struct dest_info *dst);
 
+int tm_uac_replace_contact(char **buf, int *len, str *contact);
+
 
 int t_calc_branch(struct cell *t, int b, char *branch, int *branch_len);
 

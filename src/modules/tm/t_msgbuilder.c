@@ -1838,6 +1838,62 @@ error:
 	return 0;
 }
 
+/* Replace the single Contact header generated for a local UAC request.
+ * The replacement buffer remains in shared memory, like build_uac_req() and
+ * the DNS-failover request builders. */
+int tm_uac_replace_contact(char **buf, int *len, str *contact)
+{
+	char *p;
+	char *end;
+	char *line_end;
+	char *new_buf;
+	int old_line_len;
+	int new_line_len;
+	int new_len;
+	static const str hname = str_init("Contact: ");
+
+	if(buf == NULL || *buf == NULL || len == NULL || *len <= 0
+			|| contact == NULL || contact->s == NULL || contact->len <= 0)
+		return -1;
+
+	p = lw_next_line(*buf, *buf + *len);
+	end = *buf + *len;
+	while(p && p < end && *p != '\r' && *p != '\n') {
+		line_end = lw_next_line(p, end);
+		if(line_end == NULL)
+			return -1;
+		if((line_end - p >= hname.len
+				   && strncasecmp(p, hname.s, hname.len) == 0)
+				|| (line_end - p >= 2 && (p[0] == 'm' || p[0] == 'M')
+						&& p[1] == ':')) {
+			old_line_len = (int)(line_end - p);
+			new_line_len = hname.len + contact->len + CRLF_LEN;
+			new_len = *len - old_line_len + new_line_len;
+			new_buf = shm_malloc(new_len + 1);
+			if(new_buf == NULL) {
+				SHM_MEM_ERROR;
+				return -1;
+			}
+			memcpy(new_buf, *buf, p - *buf);
+			memcpy(new_buf + (p - *buf), hname.s, hname.len);
+			memcpy(new_buf + (p - *buf) + hname.len, contact->s, contact->len);
+			memcpy(new_buf + (p - *buf) + hname.len + contact->len, CRLF,
+					CRLF_LEN);
+			memcpy(new_buf + (p - *buf) + new_line_len, line_end,
+					end - line_end);
+			new_buf[new_len] = '\0';
+			shm_free(*buf);
+			*buf = new_buf;
+			*len = new_len;
+			return 0;
+		}
+		p = line_end;
+	}
+
+	LM_ERR("Contact header not found in local UAC request\n");
+	return -1;
+}
+
 int t_via_local_branch_val(sip_msg_t *msg, char *sval, char *md5b)
 {
 	int i = 0;
