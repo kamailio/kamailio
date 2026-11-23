@@ -74,6 +74,7 @@ typedef struct
 	int index;			   /**< index of the matching IFC */
 	int include_register_request;  /**< additional flag from the HSS */
 	int include_register_response; /**< additional flag from the HSS */
+	str register_to; /**< pkg-owned To identity for a third-party REGISTER */
 } isc_match;
 
 
@@ -83,10 +84,12 @@ typedef struct
  * @param direction - direction of the session
  * @param skip - how many IFCs to skip because already matched
  * @param msg - the SIP initial request to check on
+ * @param register_to - original To identity for third-party registration, or NULL
  * @return - TRUE if found, FALSE if none found, end of search space
  */
 isc_match *isc_checker_find(str uri, char direction, int skip,
-		struct sip_msg *msg, int registered, udomain_t *d);
+		struct sip_msg *msg, int registered, udomain_t *d,
+		const str *register_to);
 
 void isc_free_match(isc_match *m);
 int isc_is_registered(str *uri, udomain_t *d);

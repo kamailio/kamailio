@@ -46,6 +46,7 @@
  */
 
 #include "checker.h"
+#include "../../core/ut.h"
 
 /**
  *	Check if a Service Point Trigger for Header matches the SDP body
@@ -451,15 +452,40 @@ static inline isc_match *isc_new_match(ims_filter_criteria *fc, int index)
 }
 
 /**
+ * Keep the original To URI if the matched profile permits it. Otherwise
+ * return its first non-barred IMPU, or an empty str if none is available.
+ * The returned URI is borrowed. Copy it before releasing the usrloc lock.
+ */
+static str isc_register_identity(const ims_service_profile *sp, const str *to)
+{
+	str fallback = STR_NULL;
+	const ims_public_identity *id;
+	int i;
+
+	for(i = 0; i < sp->public_identities_cnt; i++) {
+		id = &sp->public_identities[i];
+		if(id->barring || !id->public_identity.len)
+			continue;
+		if(to->len && str_strcasecmp(&id->public_identity, to) == 0)
+			return *to;
+		if(!fallback.len)
+			fallback = id->public_identity;
+	}
+	return fallback;
+}
+
+/**
  * Find the next match and fill up the ifc_match structure with the position of the match
  * @param uri - URI of the user for which to apply the IFC
  * @param direction - direction of the session
  * @param skip - how many IFCs to skip because already matched
  * @param msg - the SIP initial request to check on
+ * @param register_to - original To identity for third-party registration, or NULL
  * @return - TRUE if found, FALSE if none found, end of search space
  */
 isc_match *isc_checker_find(str uri, char direction, int skip,
-		struct sip_msg *msg, int registered, udomain_t *d)
+		struct sip_msg *msg, int registered, udomain_t *d,
+		const str *register_to)
 {
 	int expires;
 	char registration_type;
@@ -581,6 +607,17 @@ isc_match *isc_checker_find(str uri, char direction, int skip,
 
 				if(isc_check_filter_criteria(
 						   fc, msg, direction, registration_type)) {
+					str to = STR_NULL;
+
+					if(register_to) {
+						to = isc_register_identity(sp, register_to);
+						if(!to.len) {
+							LM_WARN("no non-barred IMPU in matched service "
+									"profile\n");
+							cnt++;
+							continue;
+						}
+					}
 					LM_DBG("MATCH -> %.*s (%.*s) handling %d \n",
 							fc->application_server.server_name.len,
 							fc->application_server.server_name.s,
@@ -588,6 +625,10 @@ isc_match *isc_checker_find(str uri, char direction, int skip,
 							fc->application_server.service_info.s,
 							fc->application_server.default_handling);
 					r = isc_new_match(fc, cnt);
+					if(r && to.len && pkg_str_dup(&r->register_to, &to) < 0) {
+						isc_free_match(r);
+						r = NULL;
+					}
 
 					//need to free the record somewhere
 					//isc_ulb.release_urecord(p);
@@ -623,6 +664,8 @@ void isc_free_match(isc_match *m)
 			pkg_free(m->server_name.s);
 		if(m->service_info.s)
 			pkg_free(m->service_info.s);
+		if(m->register_to.s)
+			pkg_free(m->register_to.s);
 		pkg_free(m);
 	}
 	LM_DBG("match position freed\n");
