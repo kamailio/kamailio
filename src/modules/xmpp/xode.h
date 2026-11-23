@@ -82,6 +82,14 @@ extern "C"
 #endif
 #endif
 
+#if XML_MAJOR_VERSION >= 2 && XML_MINOR_VERSION >= 9
+#define GetCurrentByteIndex_Compat(parser) XML_GetCurrentByteIndex64(parser)
+	typedef XML_Index CompatXMLIndexType;
+#else
+#define GetCurrentByteIndex_Compat(parser) XML_GetCurrentByteIndex(parser)
+typedef long CompatXMLIndexType;
+#endif
+
 	/* --------------------------------------------------------- */
 	/*                                                           */
 	/* Pool-based memory management routines                     */
@@ -221,7 +229,7 @@ extern "C"
 	xode xode_insert_tagnode(xode parent, xode node);
 	void xode_insert_node(xode parent, xode node);
 	xode xode_from_str(char *str, int len);
-	xode xode_from_strx(char *str, int len, int *err, int64_t *pos);
+	xode xode_from_strx(char *str, int len, int *err, CompatXMLIndexType *pos);
 	xode xode_from_file(char *file);
 	xode xode_dup(xode x); /* duplicate x */
 	xode xode_dup_frompool(xode_pool p, xode x);
