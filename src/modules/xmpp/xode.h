@@ -84,10 +84,10 @@ extern "C"
 
 #if XML_MAJOR_VERSION >= 2 && XML_MINOR_VERSION >= 9
 #define GetCurrentByteIndex_Compat(parser) XML_GetCurrentByteIndex64(parser)
-	typedef XML_Index CompatXMLIndexType;
+	typedef int64_t CompatXMLIndexType;
 #else
 #define GetCurrentByteIndex_Compat(parser) XML_GetCurrentByteIndex(parser)
-typedef long CompatXMLIndexType;
+typedef XML_Index CompatXMLIndexType;
 #endif
 
 	/* --------------------------------------------------------- */
