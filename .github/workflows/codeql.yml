@@ -93,7 +93,7 @@ jobs:
       - name: Cmake Build
         if: ${{ matrix.language == 'cpp' }}
         run: |
-          cmake --build ${{ github.workspace }}/build -j${{ steps.set_values.outputs.nproc }}
+          cmake --build /__w/kamailio/kamailio/build -j${{ steps.set_values.outputs.nproc }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
