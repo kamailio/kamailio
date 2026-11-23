@@ -133,8 +133,8 @@ int lookup(struct sip_msg *_m, udomain_t *_d, char *ue_type_c)
 	res = ul.get_impurecord(_d, &aor, &r);
 	if(res != 0) {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		pkg_free(aor.s);
 		ul.unlock_udomain(_d, &aor);
+		pkg_free(aor.s);
 		return -1;
 	}
 	ret = -1;
@@ -240,8 +240,8 @@ int lookup(struct sip_msg *_m, udomain_t *_d, char *ue_type_c)
 	}
 
 done:
-	pkg_free(aor.s);
 	ul.unlock_udomain(_d, &aor);
+	pkg_free(aor.s);
 	return ret;
 }
 
