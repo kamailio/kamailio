@@ -1159,7 +1159,6 @@ void next_state_dlg(struct dlg_cell *dlg, int event, int *old_state,
 
 	struct dlg_entry_out *d_entry_out = &(dlg->dlg_entry_out);
 	struct dlg_cell_out *dlg_out;
-	dlg_out = d_entry_out->first;
 	int found = -1;
 	int delete = 1;
 
@@ -1227,12 +1226,15 @@ void next_state_dlg(struct dlg_cell *dlg, int event, int *old_state,
 				case DLG_STATE_CONFIRMED:
 					if(to_tag) {
 						//compare the to_tag passed parameter to the dlg_out to_tag entry of the dlg parameter  (There should be only 1 dlg_out entry)
-
-						if(dlg_out->to_tag.len == to_tag->len
-								&& memcmp(dlg_out->to_tag.s, to_tag->s,
-										   dlg_out->to_tag.len)
-										   == 0) {
+						lock_get(dlg->dlg_out_entries_lock);
+						dlg_out = d_entry_out->first;
+						if(dlg_out == NULL
+								|| (dlg_out->to_tag.len == to_tag->len
+										&& memcmp(dlg_out->to_tag.s, to_tag->s,
+												   dlg_out->to_tag.len)
+												   == 0)) {
 							//this parameter matches the existing dlg_out and is therefore a retransmission, so break
+							lock_release(dlg->dlg_out_entries_lock);
 							break;
 						} else {
 
@@ -1256,6 +1258,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event, int *old_state,
 										dlg_out->to_tag.len, dlg_out->to_tag.s);
 								dlg_out = dlg_out->next;
 							}
+							lock_release(dlg->dlg_out_entries_lock);
 
 							//The parameter does not match so this is a concurrently confirmed call
 							//dlg->state = DLG_STATE_CONCURRENTLY_CONFIRMED;
@@ -1266,6 +1269,8 @@ void next_state_dlg(struct dlg_cell *dlg, int event, int *old_state,
 					//check the to_tag passed parameter exists
 					if(to_tag) {
 						//compare the to_tag passed parameter to all the dlg_out to_tag entry of the dlg parameter  (There could be multiple)
+						lock_get(dlg->dlg_out_entries_lock);
+						dlg_out = d_entry_out->first;
 						while(dlg_out) {
 							if(dlg_out->to_tag.len == to_tag->len
 									&& memcmp(dlg_out->to_tag.s, to_tag->s,
@@ -1276,6 +1281,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event, int *old_state,
 							}
 							dlg_out = dlg_out->next;
 						}
+						lock_release(dlg->dlg_out_entries_lock);
 						if(found == -1) {
 							//The parameter does not match so this is another concurrently confirmed call (we would have breaked by now if it matched)
 							dlg->state = DLG_STATE_CONCURRENTLY_CONFIRMED;

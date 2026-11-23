@@ -174,15 +174,11 @@ void bye_reply_cb(struct cell *t, int type, struct tmcb_params *ps)
 	struct dlg_entry_out *dlg_entry_out = &dlg->dlg_entry_out;
 	lock_get(dlg->dlg_out_entries_lock);
 	dlg_out = dlg_entry_out->first; //TODO check for concurrent call
-	if(!dlg_out) {
-		lock_release(dlg->dlg_out_entries_lock);
-		return;
-	}
-
-	next_state_dlg(
-			dlg, event, &old_state, &new_state, &unref, &dlg_out->to_tag);
-
 	lock_release(dlg->dlg_out_entries_lock);
+	if(!dlg_out)
+		return;
+
+	next_state_dlg(dlg, event, &old_state, &new_state, &unref, NULL);
 
 	if(new_state == DLG_STATE_DELETED && old_state != DLG_STATE_DELETED) {
 
