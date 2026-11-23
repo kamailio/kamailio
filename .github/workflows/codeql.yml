@@ -65,7 +65,7 @@ jobs:
       - name: List of modules
         id: set_values
         run: |
-          /usr/bin/git config --global --add safe.directory /__w/kamailio/kamailio
+          /usr/bin/git config --global --add safe.directory ${GITHUB_WORKSPACE}
           val=$(find pkg/kamailio/deb/trixie/ -type f -name '*.cmake-components' -exec cat {} \; | grep -v kamailio-core | xargs)
           echo "kam_grps=$val" >> "$GITHUB_OUTPUT"
           echo "nproc=$(nproc)" >> "$GITHUB_OUTPUT"
@@ -75,13 +75,13 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-          source-root: ${{ github.workspace }}
+          source-root: ${GITHUB_WORKSPACE}
           queries: +security-and-quality
 
       - name: Configure cmake
         if: ${{ matrix.language == 'cpp' }}
         run: |
-          cmake -S ${{ github.workspace }} -B ${{ github.workspace }}/build \
+          cmake -S ${GITHUB_WORKSPACE} -B ${GITHUB_WORKSPACE}/build \
             -DMODULE_GROUP_NAME="${{ steps.set_values.outputs.kam_grps }}" \
             -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
