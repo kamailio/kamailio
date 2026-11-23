@@ -53,6 +53,7 @@
 #include "tcp_server.h"
 #include "tcp_reactor.h"
 #include "mem/shm_mem.h"
+#include "mem/pkg.h"
 #include "receive.h"
 #include "timer.h"
 #include "local_timer.h"
@@ -2294,6 +2295,37 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln *tl, void *data)
 	return 0;
 }
 
+/* mode 2 worker: receive a SIP message from its shm task buffer. With
+ * tcp_clone_rcvbuf set, receive it from a private pkg copy of BUF_SIZE+1 bytes:
+ * in-place rewriters grow msg->buf up to BUF_SIZE, the shm copy is exact-size.
+ * The copy is kept per worker, like receive_tcp_msg() does in mode 0: a worker
+ * handles one message at a time, and the buffer is only resized. */
+static int tcp_reactor_receive_sip(tcp_reactor_task_t *task)
+{
+	static char *buf = NULL;
+	static unsigned int bsize = 0;
+	unsigned int blen;
+
+	if(likely(tcp_get_clone_rcvbuf() == 0))
+		return receive_msg(task->msg_buf, task->msg_len, &task->rcv);
+
+	/* min buffer size is BUF_SIZE; grow when too small, shrink when far too big */
+	blen = (task->msg_len < BUF_SIZE) ? BUF_SIZE : task->msg_len;
+	if(buf == NULL || bsize < blen || blen < bsize / 2) {
+		if(buf != NULL)
+			pkg_free(buf);
+		buf = pkg_malloc(blen + 1);
+		bsize = 0;
+		if(unlikely(buf == NULL)) {
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		bsize = blen;
+	}
+	memcpy(buf, task->msg_buf, task->msg_len);
+	buf[task->msg_len] = '\0';
+	return receive_msg(buf, task->msg_len, &task->rcv);
+}
 
 /* handle io routine, based on the fd_map type
  * (it will be called from io_wait_loop* )
@@ -2497,8 +2529,7 @@ inline static int handle_io(struct fd_map *fm, short events, int idx)
 							task->msg_buf, task->msg_len, &task->rcv, NULL);
 #endif
 				else {
-					rmret = receive_msg(
-							task->msg_buf, task->msg_len, &task->rcv);
+					rmret = tcp_reactor_receive_sip(task);
 					/* SIP honours tcp_script_mode: CONTINUE masks a negative
 					 * script result so the connection stays up - same as
 					 * receive_tcp_msg() in modes 0/1. */
