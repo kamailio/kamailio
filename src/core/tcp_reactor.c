@@ -107,6 +107,7 @@
 
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/ioctl.h> /* FIONREAD - input left after a write error */
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
@@ -1561,6 +1562,25 @@ static void tcp_reactor_report_wr_err(struct tcp_connection *c)
 	}
 }
 
+/* mode 2 [io_wait]: the send side of c failed, but the peer may have sent
+ * bytes before closing; they wait unread in the receive buffer
+ * (mode 0: the FIONREAD check in handle_tcpconn_ev())
+ *  - POLLIN on a read-watched c with bytes queued: set F_CONN_FORCE_EOF and
+ *    F_CONN_WR_ERROR, return 1; the caller starts the read job, which delivers
+ *    the bytes and closes c at EOF
+ *  - else return 0: the caller closes c now */
+static int tcp_reactor_rescue_input(struct tcp_connection *c, short ev)
+{
+	int bytes = 0;
+
+	if(!(c->flags & F_CONN_READ_W) || !(ev & POLLIN))
+		return 0;
+	if(ioctl(c->s, FIONREAD, &bytes) < 0 || bytes <= 0)
+		return 0;
+	c->flags |= F_CONN_FORCE_EOF | F_CONN_WR_ERROR;
+	return 1;
+}
+
 /* mode 2 [io_wait]: POLLOUT or an error on a write-watched conn: flush wbuf_q,
  * then drop the write watch once it is empty. -1: close the conn */
 static int tcp_reactor_flush_wbuf(
@@ -1628,9 +1648,13 @@ int tcp_reactor_handle_tcpconn_ev(
 	/* write-watched, wsq empty: flush wbuf_q (wire bytes) here on io_wait */
 	if((ev & (POLLOUT | POLLERR | POLLHUP)) && (tcpconn->flags & F_CONN_WRITE_W)
 			&& tcp_reactor_flush_wbuf(tcpconn, ev, fd_i) < 0) {
-		if(ev & POLLERR)
-			tcp_reactor_report_wr_err(tcpconn);
-		goto reactor_close;
+		/* bytes from the peer still unread: the read job below delivers
+		 * them, then hits EOF and closes c */
+		if(!tcp_reactor_rescue_input(tcpconn, ev)) {
+			if(ev & POLLERR)
+				tcp_reactor_report_wr_err(tcpconn);
+			goto reactor_close;
+		}
 	}
 
 	if(ev & (POLLIN | POLLERR | POLLHUP)) {
