@@ -4986,13 +4986,21 @@ inline static int handle_tcpconn_ev(
 								| F_CONN_WANTS_WR);
 			if(unlikely(ev & POLLERR)) {
 				if(unlikely(tcpconn->state == S_CONN_CONNECT)) {
+					int soerr = 0;
+					socklen_t soerr_len = sizeof(soerr);
+
 					tcp_log_action(tcpconn, "destroy",
 							"pending outbound connect got POLLERR");
+					/* the connect result is in SO_ERROR */
+					if(getsockopt(tcpconn->s, SOL_SOCKET, SO_ERROR, &soerr,
+							   &soerr_len)
+							< 0)
+						soerr = 0;
 #ifdef USE_DST_BLOCKLIST
 					(void)dst_blocklist_su(BLST_ERR_CONNECT, tcpconn->rcv.proto,
 							&tcpconn->rcv.src_su, &tcpconn->send_flags, 0);
 #endif /* USE_DST_BLOCKLIST */
-					TCP_EV_CONNECT_ERR(0, TCP_LADDR(tcpconn),
+					TCP_EV_CONNECT_ERR(soerr, TCP_LADDR(tcpconn),
 							TCP_LPORT(tcpconn), TCP_PSU(tcpconn),
 							TCP_PROTO(tcpconn));
 					TCP_STATS_CONNECT_FAILED();

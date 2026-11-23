@@ -1546,12 +1546,18 @@ static void tcp_reactor_unwatch_busy(struct tcp_connection *tcpconn, int fd_i)
 static void tcp_reactor_report_wr_err(struct tcp_connection *c)
 {
 	if(unlikely(c->state == S_CONN_CONNECT)) {
+		int soerr = 0;
+		socklen_t soerr_len = sizeof(soerr);
+
+		/* the connect result is in SO_ERROR */
+		if(getsockopt(c->s, SOL_SOCKET, SO_ERROR, &soerr, &soerr_len) < 0)
+			soerr = 0;
 #ifdef USE_DST_BLOCKLIST
 		(void)dst_blocklist_su(BLST_ERR_CONNECT, c->rcv.proto, &c->rcv.src_su,
 				&c->send_flags, 0);
 #endif /* USE_DST_BLOCKLIST */
 		TCP_EV_CONNECT_ERR(
-				0, TCP_LADDR(c), TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
+				soerr, TCP_LADDR(c), TCP_LPORT(c), TCP_PSU(c), TCP_PROTO(c));
 		TCP_STATS_CONNECT_FAILED();
 	} else {
 #ifdef USE_DST_BLOCKLIST
