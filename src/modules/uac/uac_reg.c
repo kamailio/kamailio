@@ -72,6 +72,8 @@ static gen_lock_t *_reg_htable_gc_lock = NULL;
 
 static int uac_reg_parse_socket(reg_uac_t *reg);
 static void uac_reg_set_send_socket(uac_req_t *uac_r, reg_uac_t *reg);
+static int uac_reg_build_contact_map(
+		reg_uac_t *reg, char bufs[4][MAX_URI_SIZE], uac_contact_map_t *cmap);
 
 int _uac_reg_use_domain = 0;
 int reg_timer_interval = 90;
@@ -827,6 +829,88 @@ static int uac_reg_build_contact_uri(
 	return 0;
 }
 
+static int uac_reg_contact_for_socket(reg_uac_t *reg, struct socket_info *si,
+		str *proto, char *buf, int size, str *out)
+{
+	str *addr;
+	str *port;
+	str *user;
+	int ipv6_brackets;
+	int len;
+
+	if(si_get_signaling_data(si, &addr, &port) < 0 || addr == NULL
+			|| addr->s == NULL || addr->len <= 0 || port == NULL
+			|| port->s == NULL || port->len <= 0) {
+		LM_ERR("cannot get signaling address for %.*s socket in registration "
+			   "[%.*s]\n",
+				proto->len, proto->s, reg->l_uuid.len, reg->l_uuid.s);
+		return -1;
+	}
+	user = (reg->contact_user.s != NULL && reg->contact_user.len > 0)
+				   ? &reg->contact_user
+				   : &reg->l_uuid;
+	ipv6_brackets =
+			((si->useinfo.name.len > 0) ? si->useinfo.af : si->address.af)
+					== AF_INET6
+			&& !(addr->len >= 2 && addr->s[0] == '['
+					&& addr->s[addr->len - 1] == ']');
+
+	if(reg->contact_user.s != NULL && reg->contact_user.len > 0) {
+		len = snprintf(buf, size,
+				ipv6_brackets
+						? "<sip:%.*s@[%.*s]:%.*s;transport=%.*s;line=%.*s>"
+						: "<sip:%.*s@%.*s:%.*s;transport=%.*s;line=%.*s>",
+				user->len, user->s, addr->len, addr->s, port->len, port->s,
+				proto->len, proto->s, reg->l_uuid.len, reg->l_uuid.s);
+	} else {
+		len = snprintf(buf, size,
+				ipv6_brackets ? "<sip:%.*s@[%.*s]:%.*s;transport=%.*s>"
+							  : "<sip:%.*s@%.*s:%.*s;transport=%.*s>",
+				user->len, user->s, addr->len, addr->s, port->len, port->s,
+				proto->len, proto->s);
+	}
+	if(len <= 0 || len >= size) {
+		LM_ERR("Contact URI buffer too small for %.*s socket in registration "
+			   "[%.*s]\n",
+				proto->len, proto->s, reg->l_uuid.len, reg->l_uuid.s);
+		return -1;
+	}
+	out->s = buf;
+	out->len = len;
+	return 0;
+}
+
+static int uac_reg_build_contact_map(
+		reg_uac_t *reg, char bufs[4][MAX_URI_SIZE], uac_contact_map_t *cmap)
+{
+	static str protos[4] = {str_init("udp"), str_init("tcp"), str_init("tls"),
+			str_init("sctp")};
+	str *contacts[4];
+	struct socket_info *sockets[4];
+	int i;
+
+	memset(cmap, 0, sizeof(*cmap));
+	contacts[0] = &cmap->udp;
+	contacts[1] = &cmap->tcp;
+	contacts[2] = &cmap->tls;
+	contacts[3] = &cmap->sctp;
+	sockets[0] = reg->sockmap.udp;
+	sockets[1] = reg->sockmap.tcp;
+	sockets[2] = reg->sockmap.tls;
+	sockets[3] = reg->sockmap.sctp;
+	for(i = 0; i < 4; i++) {
+		if(sockets[i] != NULL
+				&& uac_reg_contact_for_socket(reg, sockets[i], &protos[i],
+						   bufs[i], MAX_URI_SIZE, contacts[i])
+						   < 0) {
+			LM_ERR("failed to build %.*s Contact for registration [%.*s]\n",
+					protos[i].len, protos[i].s, reg->l_uuid.len, reg->l_uuid.s);
+			return -1;
+		}
+	}
+	return 0;
+}
+
 
 reg_uac_t *reg_ht_get_byuuid(str *uuid)
 {
@@ -1047,6 +1131,8 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	dlg_t tmdlg;
 	str contact_uri;
 	char contact_buf[MAX_URI_SIZE];
+	uac_contact_map_t contact_map;
+	char contact_map_bufs[4][MAX_URI_SIZE];
 	str reply_line_param = STR_NULL;
 	int ct_rc;
 
@@ -1177,6 +1263,11 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 			LM_ERR("failed to build contact uri\n");
 			goto error;
 		}
+		if(ri->usesockmap
+				&& uac_reg_build_contact_map(ri, contact_map_bufs, &contact_map)
+						   < 0) {
+			goto error;
+		}
 
 		do_uac_auth(&method, &s_ruri, &cred, &auth, response);
 		if(response[0] == '\0') {
@@ -1216,6 +1307,8 @@ void uac_reg_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 		uac_r.cb = uac_reg_tm_callback;
 		/* Callback parameter */
 		uac_r.cbp = (void *)uuid;
+		if(ri->usesockmap)
+			uac_r.contact_map = &contact_map;
 
 		uac_reg_set_send_socket(&uac_r, ri);
 
@@ -1295,6 +1388,8 @@ int uac_reg_send(reg_uac_t *reg, time_t tn)
 	dlg_t tmdlg;
 	str contact_uri;
 	char contact_buf[MAX_URI_SIZE];
+	uac_contact_map_t contact_map;
+	char contact_map_bufs[4][MAX_URI_SIZE];
 
 	uuid = (char *)shm_malloc(reg->l_uuid.len + 1);
 	if(uuid == NULL) {
@@ -1330,6 +1425,16 @@ int uac_reg_send(reg_uac_t *reg, time_t tn)
 		counter_inc(regactive);
 		return -1;
 	}
+	if(reg->usesockmap
+			&& uac_reg_build_contact_map(reg, contact_map_bufs, &contact_map)
+					   < 0) {
+		shm_free(uuid);
+		reg->flags &= ~(UAC_REG_ONGOING | UAC_REG_ONLINE);
+		reg->flags |= UAC_REG_DISABLED;
+		counter_inc(regdisabled);
+		counter_inc(regactive);
+		return -1;
+	}
 
 	snprintf(b_hdrs, MAX_UACH_SIZE,
 			"Contact: %.*s\r\n"
@@ -1346,6 +1451,8 @@ int uac_reg_send(reg_uac_t *reg, time_t tn)
 	uac_r.cb = uac_reg_tm_callback;
 	/* Callback parameter */
 	uac_r.cbp = (void *)uuid;
+	if(reg->usesockmap)
+		uac_r.contact_map = &contact_map;
 
 	uac_reg_set_send_socket(&uac_r, reg);
 
