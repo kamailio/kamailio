@@ -36,6 +36,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+/* INADDR_LOOPBACK is not required by POSIX and can be hidden by defined macros
+ * (e.g., _POSIX_C_SOURCE=1 on Darwin) */
+#ifndef INADDR_LOOPBACK
+#define INADDR_LOOPBACK 0x7f000001U
+#endif
+
 #include "str.h"
 #include "compiler_opt.h"
 #include "ut.h"
@@ -168,7 +175,7 @@ typedef struct socket_info
 	int workers_tcpidx; /* index of workers in tcp children array */
 	int *rx_socks; /* udp_rx_mode: the per-worker sockets, [0] is 'socket' */
 	int rx_nsocks;
-	str sockname;		/* socket name given in config listen value */
+	str sockname; /* socket name given in config listen value */
 	struct advertise_info useinfo; /* details to be used in SIP msg */
 	action_group_t agroup;		   /* action group attributes */
 	struct vrf_info vrfinfo;	   /* vrf details */
