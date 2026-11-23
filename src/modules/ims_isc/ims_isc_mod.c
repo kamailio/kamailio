@@ -322,7 +322,7 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 		int index = old_mark.skip;
 		for(k = 0; k < t->nr_of_outgoings; k++) {
 			m = isc_checker_find(
-					s, new_mark.direction, index, msg, regstate, d);
+					s, new_mark.direction, index, msg, regstate, d, NULL);
 			if(m) {
 				/* resume after this trigger: isc_checker_find() returns the
 				 * first matching trigger at or after index, so keeping
@@ -382,10 +382,10 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 					&& memcmp(old_mark.aor.s, s.s, s.len) != 0) {
 				LM_DBG("This is a new call....... trigger accordingly\n");
 				m = isc_checker_find(
-						s, old_mark.direction, 0, msg, regstate, d);
+						s, old_mark.direction, 0, msg, regstate, d, NULL);
 			} else {
-				m = isc_checker_find(
-						s, old_mark.direction, old_mark.skip, msg, regstate, d);
+				m = isc_checker_find(s, old_mark.direction, old_mark.skip, msg,
+						regstate, d, NULL);
 			}
 			if(m) {
 				new_mark.direction = IFC_ORIGINATING_SESSION;
@@ -424,11 +424,11 @@ int isc_match_filter(struct sip_msg *msg, char *str1, udomain_t *d)
 					&& memcmp(old_mark.aor.s, s.s, s.len) != 0) {
 				LM_DBG("This is a new call....... trigger accordingly\n");
 				m = isc_checker_find(
-						s, new_mark.direction, 0, msg, regstate, d);
+						s, new_mark.direction, 0, msg, regstate, d, NULL);
 			} else {
 				LM_DBG("Resuming triggering\n");
-				m = isc_checker_find(
-						s, new_mark.direction, old_mark.skip, msg, regstate, d);
+				m = isc_checker_find(s, new_mark.direction, old_mark.skip, msg,
+						regstate, d, NULL);
 			}
 			if(m) {
 				new_mark.skip = m->index + 1;
@@ -505,15 +505,17 @@ int isc_match_filter_reg(struct sip_msg *msg, char *str1, udomain_t *d)
 			clean_impu_str(&s);
 			LM_DBG("Orig User after clean: <%.*s> [%d]\n", s.len, s.s, k);
 
+			str to = cscf_get_public_identity(msg);
+
 			m = isc_checker_find(
-					s, old_mark.direction, old_mark.skip, msg, k, d);
+					s, old_mark.direction, old_mark.skip, msg, k, d, &to);
 			while(m) {
 				LM_DBG("REGISTER match found in filter criteria\n");
 				ret = isc_third_party_reg(msg, m, &old_mark, d);
 				old_mark.skip = m->index + 1;
 				isc_free_match(m);
 				m = isc_checker_find(
-						s, old_mark.direction, old_mark.skip, msg, k, d);
+						s, old_mark.direction, old_mark.skip, msg, k, d, &to);
 			}
 
 			if(ret == ISC_RETURN_FALSE)

@@ -236,7 +236,6 @@ int isc_third_party_reg(
 	str path, path_received;
 	int expires = 0;
 	str req_uri = {0, 0};
-	str to = {0, 0};
 	str pvni = {0, 0};
 	str pani = {0, 0};
 	str cv = {0, 0};
@@ -251,9 +250,6 @@ int isc_third_party_reg(
 	/* Set Request Uri to IFC matching server name */
 	req_uri.len = m->server_name.len;
 	req_uri.s = m->server_name.s;
-
-	/* Get To header*/
-	to = cscf_get_public_identity(msg);
 
 	if(cscf_get_originating_user(msg, &s)) {
 
@@ -299,7 +295,7 @@ no_pai:
 		memset(&r, 0, sizeof(r_third_party_registration));
 
 		r.req_uri = req_uri;
-		r.to = to;
+		r.to = m->register_to;
 		r.from = isc_my_uri_sip;
 		r.pvni = pvni;
 		r.pani = pani;
