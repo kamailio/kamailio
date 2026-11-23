@@ -1837,6 +1837,8 @@ event_route[uac:reply] {
 			<emphasis>contact_addr</emphasis> - contact address to be used for this record
 			instead of reg_contact_addr module parameter, e.g.:, 192.168.0.125:5060. It can
 			be set to '' (empty string) to skip setting it and then reg_contact_addr modparam is used.
+			When the socket field is a transport-specific map, a mapped transport uses the
+			corresponding socket's signaling address and port instead.
 			</para></listitem>
 		</itemizedlist>
 		<itemizedlist>
@@ -1857,6 +1859,10 @@ event_route[uac:reply] {
 			<quote>udp=private-udp;tcp=private-tcp;tls=private-tls;sctp=private-sctp</quote>.
 			The corresponding mapped socket is selected after DNS NAPTR/SRV resolution
 			and on each DNS failover attempt. TCP also covers WS, and TLS also covers WSS.
+			For registrations using a socket map, the Contact URI address, port and
+			transport are taken from the corresponding mapped socket for the initial
+			request and every DNS failover attempt. A socket's advertised address and
+			port are used when configured; otherwise its listen address and port are used.
 			An invalid map, duplicate transport, unknown socket name, or socket whose
 			protocol does not match the map entry causes the registration record to be
 			rejected (or skipped while loading records from the database).
