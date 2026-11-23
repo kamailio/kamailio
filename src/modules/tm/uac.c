@@ -73,6 +73,49 @@ int goto_on_local_req = -1; /* default disabled */
 static char from_tag[FROM_TAG_LEN + 1];
 
 extern str tm_event_callback;
+
+static int clone_uac_contact_map(
+		struct cell *cell, const uac_contact_map_t *src)
+{
+	str *dstv[4];
+	const str *srcv[4];
+	char *p;
+	int i;
+	int len = 0;
+
+	if(src == NULL)
+		return 0;
+	srcv[0] = &src->udp;
+	srcv[1] = &src->tcp;
+	srcv[2] = &src->tls;
+	srcv[3] = &src->sctp;
+	for(i = 0; i < 4; i++) {
+		if(srcv[i]->s != NULL && srcv[i]->len > 0)
+			len += srcv[i]->len;
+	}
+	if(len == 0)
+		return 0;
+	cell->contact_map = shm_malloc(sizeof(uac_contact_map_t) + len);
+	if(cell->contact_map == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(cell->contact_map, 0, sizeof(uac_contact_map_t));
+	dstv[0] = &cell->contact_map->udp;
+	dstv[1] = &cell->contact_map->tcp;
+	dstv[2] = &cell->contact_map->tls;
+	dstv[3] = &cell->contact_map->sctp;
+	p = (char *)(cell->contact_map + 1);
+	for(i = 0; i < 4; i++) {
+		if(srcv[i]->s != NULL && srcv[i]->len > 0) {
+			dstv[i]->s = p;
+			dstv[i]->len = srcv[i]->len;
+			memcpy(p, srcv[i]->s, srcv[i]->len);
+			p += srcv[i]->len;
+		}
+	}
+	return 0;
+}
 extern str tm_evcb_local_ack_sent;
 /*
  * Initialize UAC
@@ -520,6 +563,11 @@ static inline int t_uac_prepare(
 		LM_ERR("short of cell shmem\n");
 		goto error3;
 	}
+	if(clone_uac_contact_map(new_cell, uac_r->contact_map) < 0) {
+		ret = E_OUT_OF_MEM;
+		free_cell(new_cell);
+		goto error3;
+	}
 
 	LM_DBG("next_hop=<%.*s>\n", uac_r->dialog->hooks.next_hop->len,
 			uac_r->dialog->hooks.next_hop->s);
@@ -612,6 +660,16 @@ static inline int t_uac_prepare(
 		LM_ERR("Error while building message\n");
 		ret = E_OUT_OF_MEM;
 		goto error1;
+	}
+	{
+		str *contact = uac_contact_map_get(new_cell->contact_map, dst.proto);
+		if(contact != NULL && contact->s != NULL && contact->len > 0
+				&& tm_uac_replace_contact(&buf, &buf_len, contact) < 0) {
+			LM_ERR("failed to select Contact for transport %s\n",
+					proto2a(dst.proto));
+			shm_free(buf);
+			goto error1;
+		}
 	}
 
 #ifdef WITH_EVENT_LOCAL_REQUEST

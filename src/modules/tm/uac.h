@@ -50,6 +50,7 @@ typedef struct uac_req
 	str *ssock;
 	str *ssockname;
 	send_socket_map_t *ssockmap; /* optional forced socket map by transport */
+	uac_contact_map_t *contact_map; /* optional Contact value by transport */
 	dlg_t *dialog;
 	unsigned int cb_flags;
 	transaction_cb *cb;
