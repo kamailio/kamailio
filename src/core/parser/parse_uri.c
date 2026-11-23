@@ -92,7 +92,7 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		PT_S,
 		PT_P,
 		PT_O,
-		PT_R2,
+		PT_R2_,
 		PT_T2,
 		PT_eq,
 		/* ttl */
@@ -772,8 +772,8 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 				param_switch(PT_N, 's', 'S', PT_S);
 				param_switch(PT_S, 'p', 'P', PT_P);
 				param_switch(PT_P, 'o', 'O', PT_O);
-				param_switch(PT_O, 'r', 'R', PT_R2);
-				param_switch(PT_R2, 't', 'T', PT_T2);
+				param_switch(PT_O, 'r', 'R', PT_R2_);
+				param_switch(PT_R2_, 't', 'T', PT_T2);
 				param_switch1(PT_T2, '=', PT_eq);
 			/* value parsing */
 			case PT_eq:
@@ -1141,7 +1141,7 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		case PT_S:
 		case PT_P:
 		case PT_O:
-		case PT_R2:
+		case PT_R2_:
 		case PT_T2:
 		case PT_eq:	  /* ignore empty transport params */
 		case PTTL_T2: /* ttl */
