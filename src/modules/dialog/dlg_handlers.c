@@ -285,7 +285,8 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg, struct cell *t,
 	if((keep_proxy_rr & 2) > 0 && leg == DLG_CALLEE_LEG && msg->record_route
 			&& own_rr > 0) {
 		/* skip_recs contains the number of RR's for the callee */
-		skip_recs -= own_rr;
+		if((keep_proxy_rr & 1) > 0)
+			skip_recs -= own_rr;
 		/* Add local RR's to caller's routeset */
 		if(print_rr_body(msg->record_route, &rr_set, DLG_CALLER_LEG, &skip_recs)
 				!= 0) {
