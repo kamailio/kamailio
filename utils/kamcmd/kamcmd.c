@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <time.h> /* time */
 #include <sys/time.h>
+#include <limits.h>
 
 #define KAMCMD_JSONRPC_SOCKET "unixd:" RUN_DIR "/" SRNAME "_rpc.sock"
 
@@ -75,6 +76,7 @@
 #define MAX_REPLY_SIZE 128 * 1024
 #define MAX_BODY_SIZE 128 * 1024
 #define MAX_BINRPC_ARGS 256
+#define KAMCMD_JSONRPC_DEFAULT_SIZE 16 * 1024
 
 
 #ifndef UNIX_PATH_MAX
@@ -146,7 +148,7 @@ struct binrpc_val *rpc_array;
 int rpc_no = 0;
 char **rpc_methods;
 int rpc_methods_no = 0;
-unsigned int _kamcmd_jsonrpc_size = 16 * 1024;
+unsigned int _kamcmd_jsonrpc_size = KAMCMD_JSONRPC_DEFAULT_SIZE;
 struct id_list *_kamcmd_sock_id;
 
 #ifdef USE_CFG_VARS
@@ -2559,6 +2561,40 @@ static void cleanup()
 }
 
 
+static int set_jsonrpc_buffer_size(char *value)
+{
+	char *end;
+	unsigned long size_kb;
+
+	if(value == NULL || *value == '\0' || *value == '-')
+		goto invalid;
+	errno = 0;
+	size_kb = strtoul(value, &end, 10);
+	if(errno == ERANGE || end == value || *end != '\0')
+		goto invalid;
+	if(size_kb == 0) {
+		_kamcmd_jsonrpc_size = KAMCMD_JSONRPC_DEFAULT_SIZE;
+		return 0;
+	}
+	if(size_kb > (unsigned long)INT_MAX / 1024) {
+		fprintf(stderr,
+				"ERROR: jsonrpc response buffer size is too large "
+				"(maximum %d kilobytes)\n",
+				INT_MAX / 1024);
+		return -1;
+	}
+	_kamcmd_jsonrpc_size = (unsigned int)(size_kb * 1024);
+	return 0;
+
+invalid:
+	fprintf(stderr,
+			"ERROR: invalid jsonrpc response buffer size '%s' "
+			"(expected kilobytes as a non-negative integer)\n",
+			(value != NULL) ? value : "");
+	return -1;
+}
+
+
 int main(int argc, char **argv)
 {
 	int c;
@@ -2617,12 +2653,8 @@ int main(int argc, char **argv)
 				}
 				break;
 			case 'z':
-				_kamcmd_jsonrpc_size = (unsigned int)atol(optarg);
-				if(_kamcmd_jsonrpc_size == 0) {
-					_kamcmd_jsonrpc_size = 16 * 1024;
-				} else {
-					_kamcmd_jsonrpc_size *= 1024;
-				}
+				if(set_jsonrpc_buffer_size(optarg) < 0)
+					goto error;
 				break;
 			case 'v':
 				verbose++;
