@@ -1240,7 +1240,7 @@ static struct binrpc_val *parse_reply_body(int *records,
 			if((a[rec].name.s = malloc(val.name.len + 1)) == 0)
 				goto error_mem;
 			memcpy(a[rec].name.s, val.name.s, val.name.len);
-			a[rec].name.s[val.name.len + 1] = 0; /* 0-term */
+			a[rec].name.s[val.name.len] = 0; /* 0-term */
 		}
 		if(val.u.strval.s) {
 			if(val.type == BINRPC_T_STR) {
