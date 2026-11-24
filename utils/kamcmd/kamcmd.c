@@ -2218,6 +2218,8 @@ static int execute_json_cmd(
 	char jcbuf[KAMCMD_JSONCMDBUF_SIZE];
 	char *jrbuf = NULL;
 	struct timeval tv;
+	struct msghdr msg;
+	struct iovec iov;
 	str jcmd;
 	str pbuf;
 	str sval;
@@ -2359,7 +2361,16 @@ static int execute_json_cmd(
 				goto error_timeout;
 			continue;
 		}
-		len = read(json_s, jrbuf + used, _kamcmd_jsonrpc_size - used - 1);
+		if(is_dgram) {
+			memset(&msg, 0, sizeof(msg));
+			iov.iov_base = jrbuf + used;
+			iov.iov_len = _kamcmd_jsonrpc_size - used - 1;
+			msg.msg_iov = &iov;
+			msg.msg_iovlen = 1;
+			len = recvmsg(json_s, &msg, 0);
+		} else {
+			len = read(json_s, jrbuf + used, _kamcmd_jsonrpc_size - used - 1);
+		}
 		if(len < 0) {
 			if(errno == EINTR) {
 				continue;
@@ -2370,6 +2381,13 @@ static int execute_json_cmd(
 		}
 		if(len == 0) {
 			fprintf(stderr, "jsonrpc connection closed without a response\n");
+			goto error_socket;
+		}
+		if(is_dgram && (msg.msg_flags & MSG_TRUNC)) {
+			fprintf(stderr,
+					"jsonrpc datagram response exceeds the configured buffer "
+					"(%u bytes)\n",
+					_kamcmd_jsonrpc_size);
 			goto error_socket;
 		}
 		used += len;
