@@ -2211,6 +2211,27 @@ static int json_response_complete(char *buf)
 }
 
 
+/* return 1 for a matching id, 0 for a different/missing id, -1 for bad json */
+static int json_response_id_matches(char *buf, int request_id)
+{
+	srjson_doc_t jdoc;
+	srjson_t *jid;
+	int ret;
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = srjson_Parse(&jdoc, buf);
+	if(jdoc.root == NULL || (jdoc.root->type & 255) != srjson_Object) {
+		srjson_DestroyDoc(&jdoc);
+		return -1;
+	}
+	jid = srjson_GetObjectItem(&jdoc, jdoc.root, "id");
+	ret = jid != NULL && (jid->type & 255) == srjson_Number
+		  && jid->valuedouble == (double)request_id;
+	srjson_DestroyDoc(&jdoc);
+	return ret;
+}
+
+
 /* sends a json command and returns a malloc allocated response */
 static int execute_json_cmd(
 		int s, struct binrpc_cmd *cmd, char **response, int *response_len)
@@ -2233,6 +2254,8 @@ static int execute_json_cmd(
 	int waits;
 	int used;
 	int written;
+	int request_id;
+	int id_matches;
 	fd_set fds;
 
 	*response = NULL;
@@ -2306,7 +2329,8 @@ static int execute_json_cmd(
 		}
 	}
 
-	len = snprintf(pbuf.s, pbuf.len, "\"id\": %d }", (rand() % 4000000) + 1);
+	request_id = (rand() % 4000000) + 1;
+	len = snprintf(pbuf.s, pbuf.len, "\"id\": %d }", request_id);
 	if(len < 0 || len >= pbuf.len) {
 		fprintf(stderr, "command is too long\n");
 		goto error;
@@ -2392,8 +2416,28 @@ static int execute_json_cmd(
 		}
 		used += len;
 		jrbuf[used] = '\0';
-		if(is_dgram || json_response_complete(jrbuf))
+		if(is_dgram) {
+			id_matches = json_response_id_matches(jrbuf, request_id);
+			if(id_matches < 0) {
+				fprintf(stderr, "invalid jsonrpc datagram response\n");
+				goto error_socket;
+			}
+			if(id_matches == 0) {
+				if(verbose > 0)
+					fprintf(stderr,
+							"ignoring jsonrpc response with a mismatched id\n");
+				used = 0;
+				continue;
+			}
 			break;
+		}
+		if(json_response_complete(jrbuf)) {
+			if(json_response_id_matches(jrbuf, request_id) != 1) {
+				fprintf(stderr, "jsonrpc response id does not match request\n");
+				goto error_socket;
+			}
+			break;
+		}
 		if(used >= (int)_kamcmd_jsonrpc_size - 1) {
 			fprintf(stderr, "jsonrpc response exceeds the configured buffer\n");
 			goto error_socket;
