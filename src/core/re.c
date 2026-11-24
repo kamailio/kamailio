@@ -89,6 +89,10 @@ int parse_repl(struct replace_with *rw, char **begin, char *end,
 	escape = 0;
 	for(; p < end; p++) {
 		if(escape) {
+			if(token_nb >= MAX_REPLACE_WITH) {
+				LM_ERR("too many tokens in the replace part %s\n", *begin);
+				goto error;
+			}
 			escape = 0;
 			switch(*p) {
 				/* special char escapes */
@@ -159,14 +163,13 @@ int parse_repl(struct replace_with *rw, char **begin, char *end,
 			}
 
 			token_nb++;
-
-			if(token_nb >= MAX_REPLACE_WITH) {
-				LM_ERR("too many escapes in the replace part %s\n", *begin);
-				goto error;
-			}
 		} else if(*p == '\\') {
 			escape = 1;
 		} else if(*p == PV_MARKER) {
+			if(token_nb >= MAX_REPLACE_WITH) {
+				LM_ERR("too many tokens in the replace part %s\n", *begin);
+				goto error;
+			}
 			s.s = p;
 			s.len = end - s.s;
 			p0 = pv_parse_spec(&s, &rw[token_nb].u.spec);
