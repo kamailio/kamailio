@@ -814,11 +814,8 @@ int tcp_read_headers(
 				break;
 
 			case H_STARTWS:
-				switch(*p) {
-					content_len_beg_case;
-					crlf_default_skip_case;
-				}
-				p++;
+				/* folded line: continuation of the previous header */
+				r->state = H_SKIP;
 				break;
 			case H_SKIP_EMPTY:
 				switch(*p) {
@@ -977,7 +974,16 @@ int tcp_read_headers(
 				change_state_case(H_CONT_LEN4, 'E', 'e', H_CONT_LEN5);
 				change_state_case(H_CONT_LEN5, 'N', 'n', H_CONT_LEN6);
 				change_state_case(H_CONT_LEN6, 'T', 't', H_CONT_LEN7);
-				change_state_case(H_CONT_LEN7, '-', '_', H_CONT_LEN8);
+				case H_CONT_LEN7:
+					/* content-length: dash form, as the parser */
+					switch(*p) {
+						case '-':
+							r->state = H_CONT_LEN8;
+							break;
+						crlf_default_skip_case;
+					}
+					p++;
+					break;
 				change_state_case(H_CONT_LEN8, 'L', 'l', H_CONT_LEN9);
 				change_state_case(H_CONT_LEN9, 'E', 'e', H_CONT_LEN10);
 				change_state_case(H_CONT_LEN10, 'N', 'n', H_CONT_LEN11);
@@ -1016,9 +1022,14 @@ int tcp_read_headers(
 						r->state = H_CONT_LEN_BODY_PARSE;
 						r->content_len = (*p - '0');
 						break;
-						/* note: review case of content-length
-						 * on different lines */
-						crlf_default_skip_case;
+					default:
+						/* empty or non-digit value: framing error */
+						LM_ERR("bad Content-Length header value, unexpected "
+							   "char %c in state %d\n",
+								*p, r->state);
+						r->content_len = 0;
+						r->error = TCP_REQ_BAD_LEN;
+						r->state = H_SKIP;
 				}
 				p++;
 				break;
@@ -1074,10 +1085,13 @@ int tcp_read_headers(
 						r->flags |= F_TCP_REQ_HAS_CLEN;
 						break;
 					default:
+						/* non-digit in the value: framing error */
 						LM_ERR("bad Content-Length header value, unexpected "
 							   "char %c in state %d\n",
 								*p, r->state);
-						r->state = H_SKIP; /* try to find another?*/
+						r->content_len = 0;
+						r->error = TCP_REQ_BAD_LEN;
+						r->state = H_SKIP;
 				}
 				p++;
 				break;
