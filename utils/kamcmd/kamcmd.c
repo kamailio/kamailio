@@ -2234,6 +2234,28 @@ static int json_response_id_matches(char *buf, int request_id)
 }
 
 
+/* return 1 with time remaining, 0 at the deadline, -1 on clock error */
+static int jsonrpc_deadline_remaining(
+		const struct timeval *deadline, struct timeval *remaining)
+{
+	struct timeval now;
+
+	if(gettimeofday(&now, NULL) < 0)
+		return -1;
+	if(now.tv_sec > deadline->tv_sec
+			|| (now.tv_sec == deadline->tv_sec
+					&& now.tv_usec >= deadline->tv_usec))
+		return 0;
+	remaining->tv_sec = deadline->tv_sec - now.tv_sec;
+	remaining->tv_usec = deadline->tv_usec - now.tv_usec;
+	if(remaining->tv_usec < 0) {
+		remaining->tv_sec--;
+		remaining->tv_usec += 1000000;
+	}
+	return 1;
+}
+
+
 /* sends a json command and returns a malloc allocated response */
 static int execute_json_cmd(
 		int s, struct binrpc_cmd *cmd, char **response, int *response_len)
@@ -2241,6 +2263,7 @@ static int execute_json_cmd(
 	char jcbuf[KAMCMD_JSONCMDBUF_SIZE];
 	char *jrbuf = NULL;
 	struct timeval tv;
+	struct timeval deadline;
 	struct msghdr msg;
 	struct iovec iov;
 	str jcmd;
@@ -2253,7 +2276,6 @@ static int execute_json_cmd(
 	int json_s;
 	int own_socket;
 	int is_dgram;
-	int waits;
 	int used;
 	int written;
 	int request_id;
@@ -2369,11 +2391,21 @@ static int execute_json_cmd(
 		}
 	}
 
-	waits = (_kamcmd_read_timeout > 0) ? _kamcmd_read_timeout : 1;
+	if(gettimeofday(&deadline, NULL) < 0) {
+		fprintf(stderr, "gettimeofday error (%d/%s)\n", errno, strerror(errno));
+		goto error_socket;
+	}
+	deadline.tv_sec += (_kamcmd_read_timeout > 0) ? _kamcmd_read_timeout : 1;
 	used = 0;
 	do {
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+		ret = jsonrpc_deadline_remaining(&deadline, &tv);
+		if(ret < 0) {
+			fprintf(stderr, "gettimeofday error (%d/%s)\n", errno,
+					strerror(errno));
+			goto error_socket;
+		}
+		if(ret == 0)
+			goto error_timeout;
 		FD_ZERO(&fds);
 		FD_SET(json_s, &fds);
 		ret = select(json_s + 1, &fds, NULL, NULL, &tv);
@@ -2383,9 +2415,7 @@ static int execute_json_cmd(
 			fprintf(stderr, "select error (%d/%s)\n", errno, strerror(errno));
 			goto error_socket;
 		} else if(ret == 0) {
-			if(--waits <= 0)
-				goto error_timeout;
-			continue;
+			goto error_timeout;
 		}
 		if(is_dgram) {
 			memset(&msg, 0, sizeof(msg));
