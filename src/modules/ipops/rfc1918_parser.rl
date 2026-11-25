@@ -30,7 +30,6 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
 {
   int cs = 0;
   const char *p, *pe;
-  const char *ts = NULL, *te = NULL;
   unsigned int is_ip_rfc1918 = 0;
 
   p = str;
