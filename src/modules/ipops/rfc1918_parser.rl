@@ -39,7 +39,7 @@ unsigned int rfc1918_parser_execute(const char *str, size_t len)
   %% write init;
   %% write exec;
 
-  if (is_ip_rfc1918 && (size_t)(te - ts) == len && strcmp(p, pe) == 0) {
+  if (is_ip_rfc1918 && p == pe) {
     return 1;
   } else {
     return 0;
