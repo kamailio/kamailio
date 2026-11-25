@@ -110,6 +110,7 @@ Options:\n\
                 substituted. To print '%v', escape it using '%': %%v.\n\
     -b          use binrpc protocol\n\
     -j          use jsonrpc protocol\n\
+    -p          pretty-print jsonrpc responses\n\
     -t timeout  timeout in seconds to wait for jsonrpc response\n\
     -z size     size in kilobytes for jsonrpc response buffer\n\
     -v          Verbose       \n\
@@ -149,6 +150,7 @@ int rpc_no = 0;
 char **rpc_methods;
 int rpc_methods_no = 0;
 unsigned int _kamcmd_jsonrpc_size = KAMCMD_JSONRPC_DEFAULT_SIZE;
+int _kamcmd_jsonrpc_pretty = 0;
 struct id_list *_kamcmd_sock_id;
 
 #ifdef USE_CFG_VARS
@@ -2493,18 +2495,57 @@ error:
 }
 
 
+static int print_json_pretty(char *json)
+{
+	char *pretty;
+	size_t pretty_len;
+	int ret;
+	srjson_doc_t jdoc;
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = srjson_Parse(&jdoc, json);
+	if(jdoc.root == NULL) {
+		fprintf(stderr,
+				"failed to parse jsonrpc response for pretty printing\n");
+		srjson_DestroyDoc(&jdoc);
+		return -1;
+	}
+	pretty = srjson_Print(&jdoc, jdoc.root);
+	if(pretty == NULL) {
+		fprintf(stderr, "failed to pretty-print jsonrpc response\n");
+		srjson_DestroyDoc(&jdoc);
+		return -1;
+	}
+	pretty_len = strlen(pretty);
+	fwrite(pretty, 1, pretty_len, stdout);
+	if(pretty_len == 0 || pretty[pretty_len - 1] != '\n')
+		putchar('\n');
+	ret = ferror(stdout) ? -1 : 0;
+	jdoc.free_fn(pretty);
+	srjson_DestroyDoc(&jdoc);
+	return ret;
+}
+
+
 /* runs json command */
 static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 {
 	char *response;
 	int response_len;
+	int ret;
 
 	if(execute_json_cmd(s, cmd, &response, &response_len) < 0)
 		return -1;
-	fwrite(response, 1, response_len, stdout);
-	putchar('\n');
+	if(!_kamcmd_jsonrpc_pretty) {
+		fwrite(response, 1, response_len, stdout);
+		putchar('\n');
+		free(response);
+		return 0;
+	}
+
+	ret = print_json_pretty(response);
 	free(response);
-	return 0;
+	return ret;
 }
 
 
@@ -2646,7 +2687,7 @@ int main(int argc, char **argv)
 	sock_name = 0;
 	sock_type = UNIXS_SOCK;
 	opterr = 0;
-	while((c = getopt(argc, argv, "UVhbjs:D:R:vf:t:z:")) != -1) {
+	while((c = getopt(argc, argv, "UVhbjps:D:R:vf:t:z:")) != -1) {
 		switch(c) {
 			case 'V':
 				printf("version: %s\n", version);
@@ -2675,6 +2716,9 @@ int main(int argc, char **argv)
 				break;
 			case 'j':
 				_kamcmd_rpc_type = KAMCMD_JSONRPC;
+				break;
+			case 'p':
+				_kamcmd_jsonrpc_pretty = 1;
 				break;
 			case 't':
 				_kamcmd_read_timeout = (int)atol(optarg);
