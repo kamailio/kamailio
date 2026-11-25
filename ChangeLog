@@ -1,3 +1,1642 @@
+===================== 2026-11-25 Version 6.1.6 Released =====================
+
+===================== Changes Since Version 6.1.5 ===========================
+
+commit 0772275c251351af6d1e6d60fd84b4a9efb5e5d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 09:05:28 2026 +0100
+
+    src: version set to 6.1.6
+
+commit 9fb94f567cdffe9c4461c2e29991a274c3c1db25
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 09:01:11 2026 +0100
+
+    pkg/kamailio: version set to 6.1.6 for rpms and alpine [skip ci]
+
+commit 834bfdf34c1564b869394ec1426934d3df35b2cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 08:56:16 2026 +0100
+
+    pkg/kamailio/deb: version set 6.1.6 [skip ci]
+
+commit 0bd91d1a3f123433412d63e8abecda24224f1163
+Author: Daniel Brune <daniel.brune.so@outlook.com>
+Date:   Fri Nov 20 13:26:25 2026 +0000
+
+    nghttp2: reject a second or out-of-context reply
+    
+    nghttp2_reply() uses the request context that the nghttp2 process sets
+    up before it runs event_route[nghttp2:request]. The function is also
+    exported to REQUEST_ROUTE and to KEMI, and nothing checks that a request
+    is being handled or that it has not been answered yet:
+    
+    - called outside of the event route, for example from request_route or
+      from an rtimer route, the context of that process is empty and the
+      stream data pointer is NULL, so the process crashes.
+    - a second call in the same request submits another response on the
+      same stream. It goes out as another HEADERS frame with :status after
+      the final response headers, which makes the response malformed
+      (RFC 9113, section 8.1): the client resets the stream and the body
+      of the first response is lost. The nghttp2 documentation of
+      nghttp2_submit_response() calls a second response on the same stream
+      a programming error.
+    
+    Return an error in both cases before the reply code is stored.
+    
+    (cherry picked from commit a081e8795ec54161279bf003167a7a423d1edc4c)
+
+commit ca3e6f6cdc75e286fd5463b736831eb7c6b81f50
+Author: Alexey Volokitin <alexey.v@didww.com>
+Date:   Wed Nov 18 10:53:09 2026 +0200
+
+    core: tcp - honor local ip in fallback connection search
+    
+    (cherry picked from commit 55e0d23a9c3259e01b5969c9c89ce34ed1a53799)
+
+commit 015a31e10c27d887f2a30aec417a39ac19b1db9a
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Nov 23 09:28:41 2026 +0100
+
+    dialog: keep_proxy_rr - do not skip own rr twice when computing the caller route set
+    
+    (cherry picked from commit bcfbd534f7f185762cd9b7c072ace1d38acef577)
+
+commit 7f2421f0e8feb6ebfc4cf35e544b918fcfe20876
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Nov 24 21:57:37 2026 +0800
+
+    core: re - improve replacement tokens handling
+    
+    (cherry picked from commit fabdd050812e4791f0b509f7cfd01649167d0b3f)
+
+commit 8d834b90963e200a70877e07d809037ca9312e73
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Nov 24 10:32:48 2026 +0800
+
+    core: improve content-length handling
+    
+    (cherry picked from commit 753db2ad8c10ad70318648532186dab0ecfb0db6)
+
+commit 713c684e5646a79021708ec44ddd5b47e965aacb
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 14:02:19 2026 +0100
+
+    cdp: check len before get_4bytes()
+    
+    fix #5159
+    
+    (cherry picked from commit dc36d393eef698a95f1d2f65dd65c5b196fd7d52)
+
+commit 0fa8d06fb87499fce144977762f5c4b1413caa28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 15:47:34 2026 +0100
+
+    core: ip addr - define INADDR_LOOPBACK to cope with Flex 2.7 that defines _POSIX_C_SOURCE=1
+    
+    - backport of e1c322cbf6866e7a0937d0645d5aecc8bf0a760d
+
+commit 32924aa166e48aba17752ee3dc3225efba43e0ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 20 13:52:42 2026 +0100
+
+    sanity: empty checks for mandatory headers
+    
+    (cherry picked from commit 8518a082841fa2a227170253836f60a488d49d9c)
+
+commit 7ae0f48a7942def71cc3965905a8e37120a7113a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Nov 23 12:03:17 2026 +0100
+
+    core: parse_uri don't use PT_R2 that is already defined at some architectures
+    
+    > /usr/include/asm/sigcontext.h
+    
+    (cherry picked from commit 9f99681716bbba048adb2edb32e7dfeee1b4bb8e)
+
+commit b6999572a914669c9e8228ef5cdd64d1f84c279c
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Nov 23 09:45:06 2026 +0100
+
+    xmpp: use proper type at CompatXMLIndexType
+    
+    follow-up 555dc840bcbec9a1546a7937ad57e38e161e5622
+    
+    fixes #5170
+    
+    (cherry picked from commit 5514cf804d1db846b706ec12eb3d50a55f21786a)
+
+commit 39e081d50d026a3e28f646a9573fabf3f1e8e74a
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Mon Nov 23 09:33:46 2026 +0100
+
+    xmpp: fix build for older expat version
+    
+    follow-up 8078d683c6fd7a0be21c60c15778e0b4d6e1050a
+    fixes #5170
+    
+    (cherry picked from commit 555dc840bcbec9a1546a7937ad57e38e161e5622)
+
+commit a0193c286e6a97ce27ed173898b384dcc42c7409
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 21 11:07:15 2026 +0100
+
+    lrkproxy: handle invalid multipart delimiter spacing
+    
+    (cherry picked from commit 6c7c52092773e7f94ba80b0337061989d5141700)
+
+commit 56ad0f35db880ed0e16cad80b3a3f9a3e582662d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 21 11:06:57 2026 +0100
+
+    rtpproxy: handle invalid multipart delimiter spacing
+    
+    (cherry picked from commit fd7503b151b035e63cf23b255b753d9a1939663d)
+
+commit 2ce0bf7ec7deb3b78f959f1fca6eb199bb25cb7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 21 11:06:41 2026 +0100
+
+    rtpengine: handle invalid multipart delimiter spacing
+    
+    (cherry picked from commit fc083c755508e919c6de8dd1558e455a545d8da2)
+
+commit 6dd4ab4061f6c18981c331a6dec8069c33e3f410
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 21 11:06:08 2026 +0100
+
+    nathelper: handle invalid multipart delimiter spacing
+    
+    (cherry picked from commit 0bde1186a3c65f2bc589cd44d371c19c9da2e3a7)
+
+commit 6fc6521a2d966a895a8b630d9dee8f9bf71c45b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 21 10:43:44 2026 +0100
+
+    core: parse addr spec - save status for enclosed uri states
+    
+    (cherry picked from commit d79053a62fa56cef76e38ac652a2036ca2b2765a)
+
+commit 88cb488c4ae33c872644a71f2d976da57f7dabfa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 21 10:24:54 2026 +0100
+
+    nathelper: keep lenght along with start position for handle_ruri_alias() with non-default mode
+    
+    (cherry picked from commit 46a9da1e86a2f3346396c95e9383e66b50d0235b)
+
+commit 1b90502a6bf8712db99f7fa6c5e9665c62b744a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Nov 21 10:15:43 2026 +0100
+
+    core: parser - check if header is set for get_content_length() macro
+    
+    (cherry picked from commit afb39b79eb67c7900ee21fb584845d0a430d882b)
+
+commit 2e6e7dfbdf51dae98128ab89620e31ce07406c8a
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 13:33:22 2026 +0100
+
+    outbound: fix docs generation error
+    
+    > [ 41%] Generating html documentation for outbound
+    > cd /code/src/modules/outbound/doc && /usr/bin/cmake -E env XML_CATALOG_FILES=/code/doc/docbook/catalog.xml /usr/bin/xsltproc --novalid --xinclude --stringparam base.dir /code/obj-x86_64-linux-gnu/doc/docbook --stringparam root.filename outbound --stringparam html.stylesheet /css/sr-doc.css --stringparam html.ext .html /code/doc/docbook/html.xsl outbound.xml
+    > error : Unknown IO error
+    > Warning: outbound.xml:10: warning: failed to load external entity "http://www.docbook.org/xml/4.4/xinclude.mod"
+    > %xinclude;
+    >           ^
+    > Writing /code/obj-x86_64-linux-gnu/doc/docbook/outbound.html for book
+    
+    (cherry picked from commit 36afbb8adcbefcc75d5cf9bb85c675d236769566)
+
+commit c342047fb26ce31a155bcd7615ba3afdd902733d
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 13:22:16 2026 +0100
+
+    auth_arnacon: fix builds warnings 'curl_easy_setopt expects a curl_write_callback argument'
+    
+    On sid builds:
+    
+    > Warning: /code/src/modules/auth_arnacon/arnacon_core.c:283:9: warning: call to '_curl_easy_setopt_err_write_callback' declared with attribute warning: curl_easy_setopt expects a curl_write_callback argument [-Wattribute-warning]
+    >   283 |         curl_easy_setopt(
+    >       |         ^~~~~~~~~~~~~~~~
+    
+    (cherry picked from commit afcc07c6d14a62af335525b8f926a1849761a784)
+
+commit 57496416e132d1332adc93c3fa6f56ac7335c12c
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 12:07:02 2026 +0100
+
+    http_client: fix builds warnings 'curl_easy_setopt expects a long argument'
+    
+    On sid builds:
+    
+    > Warning: /code/src/modules/http_client/functions.c:267:3: warning: call to 'Wcurl_easy_setopt_err_long' declared with 'warning' attribute: curl_easy_setopt expects a long argument [-Wattribute-warning]
+    >  267 |                 curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, params->httpversion);
+    >      |                 ^
+    > /usr/include/x86_64-linux-gnu/curl/typecheck-gcc.h:50:13: note: expanded from macro 'curl_easy_setopt'
+    >   50 |             Wcurl_easy_setopt_err_long();                               \
+    >      |             ^
+    > Warning: /code/src/modules/http_client/functions.c:330:10: warning: call to 'Wcurl_easy_setopt_err_long' declared with 'warning' attribute: curl_easy_setopt expects a long argument [-Wattribute-warning]
+    >  330 |                 res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, params->authmethod);
+    >      |                        ^
+    > /usr/include/x86_64-linux-gnu/curl/typecheck-gcc.h:50:13: note: expanded from macro 'curl_easy_setopt'
+    >   50 |             Wcurl_easy_setopt_err_long();                               \
+    >      |             ^
+    > Warning: /code/src/modules/http_client/functions.c:367:10: warning: call to 'Wcurl_easy_setopt_err_long' declared with 'warning' attribute: curl_easy_setopt expects a long argument [-Wattribute-warning]
+    >  367 |                 res |= curl_easy_setopt(
+    >      |                        ^
+    > /usr/include/x86_64-linux-gnu/curl/typecheck-gcc.h:50:13: note: expanded from macro 'curl_easy_setopt'
+    >   50 |             Wcurl_easy_setopt_err_long();                               \
+    >      |             ^
+    > Warning: /code/src/modules/http_client/functions.c:374:9: warning: call to 'Wcurl_easy_setopt_err_long' declared with 'warning' attribute: curl_easy_setopt expects a long argument [-Wattribute-warning]
+    >  374 |         res |= curl_easy_setopt(
+    >      |                ^
+    > /usr/include/x86_64-linux-gnu/curl/typecheck-gcc.h:50:13: note: expanded from macro 'curl_easy_setopt'
+    >   50 |             Wcurl_easy_setopt_err_long();                               \
+    >      |             ^
+    > 4 warnings generated.
+    
+    (cherry picked from commit 027907bae22891dc8dac76e9e82696d5a1cdfd25)
+
+commit ea0db7a8eb008c6e25f22ff74d0ea2687f1ccefd
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 11:44:29 2026 +0100
+
+    xmpp: fix build deprecation warning
+    
+    function seems not to be used
+    
+    > CMakeFiles/xmpp.dir/xode_from.c.o -c /code/src/modules/xmpp/xode_from.c
+    > Warning: /code/src/modules/xmpp/xode_from.c:133:10: warning: 'XML_GetCurrentByteIndex' is deprecated: please use XML_GetCurrentByteIndex64 instead [-Wdeprecated-declarations]
+    >  133 |                 *pos = XML_GetCurrentByteIndex(p);
+    >      |                        ^
+    > /usr/include/expat.h:970:1: note: 'XML_GetCurrentByteIndex' has been explicitly marked deprecated here
+    >  970 | XML_ATTR_DEPRECATED("please use XML_GetCurrentByteIndex64 instead")
+    >      | ^
+    > /usr/include/expat_external.h:133:22: note: expanded from macro 'XML_ATTR_DEPRECATED'
+    >  133 |       __attribute__((__deprecated__(message)))
+    >      |                      ^
+    > 1 warning generated.
+    
+    (cherry picked from commit 8078d683c6fd7a0be21c60c15778e0b4d6e1050a)
+
+commit 4ca5e137f6a07c1741372e8114ba741ca3ef07d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 20 11:33:08 2026 +0100
+
+    tm: use STR_EQ macro for matching fields when callid_cseq_matching=1
+    
+    (cherry picked from commit 380bd01d4aadadbc5d8de50c5d4b3fe99b8c1404)
+
+commit 655be3b40724ef88e0c8644e539c140c86714945
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 11:31:57 2026 +0100
+
+    db_sqlite: [cmake] remove link warning
+    
+    On Debian sid builds:
+    
+    > CMake Warning (author) at src/modules/db_sqlite/CMakeLists.txt:7 (target_link_libraries):
+    >  The library that is being linked to, SQLite::SQLite3, is marked as being
+    >  deprecated by the owner.  The message provided by the developer is:
+    >
+    >  The target name SQLite::SQLite3 is deprecated.  Please use SQLite3::SQLite3
+    >  instead.
+    
+    (cherry picked from commit 940b868bbfafed33f604b01059fb585b716925af)
+
+commit ddc67213fd352e6acb9f17ec65ca73c062c60385
+Author: Giovanni Maruzzelli <331862+gmaruzz@users.noreply.github.com>
+Date:   Sun Nov 22 12:41:17 2026 +0100
+
+    secfilter: secf_check_dst() evaluates its parameter
+    
+    The config function took its argument as a plain string, so
+    secf_check_dst("$rd") compared the literal text against the blacklist
+    instead of the evaluated pseudo-variable. Register the parameter with
+    fixup_spve_null and resolve it per call with fixup_get_svalue(), as the
+    other secfilter checks with a parameter already do.
+    
+    (cherry picked from commit cb41dd9c1f2b816c1a1e9cb14b6be53f41cf2972)
+
+commit 76cbd0aa781ac4999822409d949f5072474a7477
+Author: Lyubomir Yatanski <lyubomir.yatanski@flolive.net>
+Date:   Mon Nov 23 11:10:17 2026 +0000
+
+    ims_registrar_scscf: fix use-after-free in lookup() and NOTIFY
+    
+    (cherry picked from commit cb91942b89180e0f105890a57fb46040e564f03a)
+
+commit eb84c73af62ef842ac2851006bc25359e3078708
+Author: MrBrownieCGN <daniel.brune.so@outlook.com>
+Date:   Sat Nov 14 17:01:25 2026 +0000
+
+    ims_usrloc_scscf: fix preload of bad impu rows
+    
+    - preload_udomain() set the per-row values only for columns that are not
+      NULL, so a NULL column kept the value of the previous row: barring,
+      reg_state and the charging function addresses, and the subscription
+      if ims_subscription_data was NULL
+    - the same holds for the rows read through the LEFT JOINs: the contact
+      and the logged presentity URI in preload_udomain(), the static strings
+      of dbrow2contact() (path, user agent, call-id, params) and of
+      dbrow2subscriber(), and the integer fields of the subscriber data; the
+      kept values may point into an already freed result set
+    - bin_decode_ims_subscription() returns NULL for data it cannot decode;
+      the result was passed to get_subscription() without a check
+    - effect at startup with preload: a row with undecodable subscription
+      data, or a NULL one in the first row, crashed the S-CSCF; a NULL one
+      in a later row loaded the IMPU under the subscription (private
+      identity, service profiles) of the previous row
+    - ecf1 was read from the ccf1 column
+    - reset the per-row values for each row, read ecf1 from its own column
+      and skip a row without a valid subscription with an error log
+    
+    (cherry picked from commit 521d7349d78d3d1027e67856b59ba91cf927c227)
+
+commit a164285517cf16531bcbc267c5f075467ce38884
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Sun Nov 15 21:40:20 2026 +0200
+
+    ims_dialog: release dlg_out_entries_lock in bye_reply_cb() on no dlg_out
+    
+    - bye_reply_cb() returned with dlg_out_entries_lock held when the dialog
+      had no out entries, so later users of that lock blocked
+    
+    (cherry picked from commit 11849cce00bb987e7da95ea6da1a6064b1d94520)
+
+commit a8d3aefa1e1b7b069849dd4af8859f530445fed5
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sat Nov 21 02:16:13 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 7f1266ca3333b46a4a6d83d9baa2f58b2ed3ae9e
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sat Nov 21 08:56:24 2026 +0800
+
+    msrp: fix pkg leak on unparsable frames and the AUTH expires check
+    
+    - fixed: headers leaked on frames that fail parsing
+    - fixed: msrp_cmap_save() read expires from the wrong header
+    - docs: fixed the expires modparam names and the AUTH expires check in the examples
+    
+    (cherry picked from commit 8b15d56c5113ced6f35c7870fe638334bf56a172)
+    (cherry picked from commit bd09ba9c6483a1c69442af66cc70e568ca978b7e)
+    (cherry picked from commit 5a35ecbfe799a22cffa55768a6aa7ba91709a383)
+
+commit 8c690f1212641d91223ea08abd0c5b596e75d64e
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 11:12:47 2026 +0100
+
+    kazoo: [cmake] fix rabbitmq version detection
+    
+    > [  9%] Building C object src/modules/kazoo/CMakeFiles/kazoo.dir/kz_trans.c.o
+    > In file included from /workspaces/kamailio/src/modules/kazoo/kz_amqp.c:41:
+    > /usr/include/amqp.h:10:5: warning: "amqp.h is deprecated, use rabbitmq-c/amqp.h instead." [-W#warnings]
+    >    10 | #   warning "amqp.h is deprecated, use rabbitmq-c/amqp.h instead."
+    >       |     ^
+    > In file included from /workspaces/kamailio/src/modules/kazoo/kz_hash.c:31:
+    > In file included from /workspaces/kamailio/src/modules/kazoo/kz_hash.h:35:
+    > In file included from /workspaces/kamailio/src/modules/kazoo/kz_amqp.h:41:
+    
+    (cherry picked from commit cbdef1a3afabbf8a0303a0c74dd60ad300f4a22b)
+
+commit a8d85bdd6fa7e7571adbd1f802c165a2722129d2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 20 10:24:14 2026 +0100
+
+    sanity: additional check for via1 in check_via1_header()
+    
+    - backport of 334bf5a61f18113ea12d5d9efae122d1947eb0a1
+
+commit 11f265c4c3ff35c5406d67d6c219c68fd7fd426e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 20 10:18:12 2026 +0100
+
+    websocket: fix use after free in wsconn_close_now()
+    
+    - backport of d4fb3178c08c08d9c3cb417aa57c8914245cbfe6
+
+commit f450f71010566abbc45e315c279aa62c8694df2d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 24 07:55:51 2026 +0200
+
+    siprepo: test if async group exists
+    
+    (cherry picked from commit 989ec9382808709248fe861d888aa3234dc47a20)
+
+commit 95f1fa653ecdc0b49a9d1b547764488f7bd7a63e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Oct 24 19:00:51 2026 +0200
+
+    siprepo: jump to error if parsing fails
+    
+    (cherry picked from commit 1ccfe0485291f229a634174155c1a864ca57e88c)
+
+commit 134544ad17f5dae1db641bbf5c6c9d7ff83033aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 26 06:43:39 2026 +0100
+
+    siprepo: range checks for mod params
+    
+    (cherry picked from commit 2b10dcb6ac9ea0db2bcc7d4c0cb39700c4edb53e)
+
+commit bbfd507594a58c28f68fa40ec18c85d1f3eec43a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 23 09:40:47 2026 +0200
+
+    siprepo: checks and initialization for reconstructed message buffer
+    
+    (cherry picked from commit 362c31435126d1c2c7b23b4d466a2a9b981998a4)
+
+commit 82c8d5e0ad9d32201d3fad5093eaa83f74ddd2c9
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Tue Oct 27 18:51:00 2026 +0200
+
+    sctp: check SEND_FAILED notification length before retry
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01VcBU5HFRmTxkECqEDyFiaB
+    (cherry picked from commit f8027b642c7425b29b29a1f6cade4c755bab65a0)
+
+commit f48ab43823f939e908103fde352e1a320c82b5e8
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Tue Oct 27 18:51:00 2026 +0200
+
+    sctp: fix build with NO_SCTP_CONN_REUSE and PR_POLICY
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01VcBU5HFRmTxkECqEDyFiaB
+    (cherry picked from commit 9ebc1d8d91185c5352cd4e636a4163652b3582d7)
+
+commit 00a85a9f8ba938b84d03fd59db0808f7f719b528
+Author: AaronActu <23706031+AaronActu@users.noreply.github.com>
+Date:   Fri Nov 13 16:35:20 2026 +0100
+
+    rtpengine: use the sdp of the reply without copying it
+    
+    * rtpengine: free sdp copy in subscribe request function
+    
+    - rtpengine_subscribe_request_wrap() duplicated the "sdp" value of the
+      rtpengine reply with bencode_dictionary_get_str_dup() (pkg memory) and
+      never released it, leaking one SDP per SIPREC subscribe request
+    - the value is copied when it is set to the sdp variable, so it can be
+      freed before returning
+    - error returns release the bencode buffer as well
+    
+    * rtpengine: use the sdp of the reply without copying it
+    
+    - the "sdp" value is only used while the bencode buffer is alive, and
+      pv_set_spec_value() copies it, so bencode_dictionary_get_str() is
+      enough and no pkg copy has to be freed
+    
+    (cherry picked from commit 89be3f7b6235733bdd377df272e8a15719e45e3a)
+
+commit 88cba6e997f00dccfe9d9a2398c26f7b80513cb6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 13 06:33:17 2026 +0100
+
+    presence: checks for api_update_presentity()
+    
+    - GH #5037
+    
+    (cherry picked from commit 8d5e3f9518c2e5a3e3944054ef4f62fd0a45e457)
+
+commit 34c8b7e0899521f9cd3b2abec22f536861d89b6c
+Author: Dragos Oancea <4988814+dragos-oancea@users.noreply.github.com>
+Date:   Mon Nov 2 23:17:06 2026 +0200
+
+    pua_json: escape XML fields in published events
+    
+    Escape XML attribute and text content derived from JSON before
+    building presence, dialog-info, and as-feature event payloads.
+    Reject invalid XML control characters and truncated output.
+    
+    Fixes #5038.
+    
+    (cherry picked from commit 1560dc8c7d3c064b9b7a326049c41babe943271a)
+
+commit 45b8124112003f0e22a0caeda50d7d493d712e26
+Author: NUCLEAR-WAR <abdo838@hotmail.com>
+Date:   Sat Oct 10 21:30:40 2026 +0200
+
+    pua: stop retrying failed unsubscriptions
+    
+    - do not recreate subscriptions whose desired expiry has passed
+    - handle cancellation responses received in the same second as the request
+    - preserve retries for wanted finite and indefinite subscription states
+    
+    (cherry picked from commit 1c0aae2a1799dedec56f682218ef688c7c9d4dcd)
+
+commit fa130b83290f5d7d2386d0052c58ea2d514764fe
+Author: Rizwan Alam <riscogian@gmail.com>
+Date:   Fri Oct 30 19:15:43 2026 +0530
+
+    nghttp2: do not send the default 204 after the script replied
+    
+    on_request_recv() always submitted a 204 after event_route[nghttp2:request].
+    When the route had replied with a body, the stream was still sending
+    that response, so the 204 went out as a second HEADERS frame and clients
+    reset the stream with PROTOCOL_ERROR (curl: "Stream error in the HTTP/2
+    framing layer"); replies without a body only escaped because their stream
+    was already closed. The default 204 is now sent only if the route did not
+    reply.
+    
+    (cherry picked from commit 2397e1eeb013ec3ad989481b47a9ac37aab09252)
+
+commit c14457d7ed47459d12d5d673c4162849e94d8501
+Author: andreinknv <261684394+andreinknv@users.noreply.github.com>
+Date:   Fri Oct 30 19:09:09 2026 -0400
+
+    rls: use query_lock only when db_mode starts a transaction
+    
+    - send_full_notify(), timer_send_update_notifies() and
+      timer_send_full_state_notifies() picked query_lock whenever the DB
+      driver has it, but start a transaction only with db_mode=2
+    - db_postgres refuses query_lock outside a transaction, so with the
+      default db_mode=0 the full-state NOTIFY and the update NOTIFYs were
+      never sent
+    - use query_lock only after the transaction is started, plain query
+      otherwise
+    
+    (cherry picked from commit c1be8708dcb69f92e26a4d34b99bcaf8187214f8)
+
+commit d49a7444ddc2edcf9ed27a4926f06bdb451d1437
+Author: andreinknv <261684394+andreinknv@users.noreply.github.com>
+Date:   Fri Oct 30 20:11:31 2026 -0400
+
+    presence: use query_lock only inside a transaction
+    
+    - process_dialogs() ran the Step 1 query with query_lock, which
+      db_postgres refuses outside a transaction, so the notifier failed on
+      every run and sent no NOTIFY
+    - run Step 1 with plain query, so idle runs still open no transaction
+      (#3183)
+    - when Step 1 found rows and the driver has query_lock, repeat the
+      query with query_lock inside the transaction before marking the rows
+    - end the transaction when the locked re-select finds no rows (another
+      server sharing the database took them)
+    - get_database_info() used query_lock for in-dialog SUBSCRIBE also with
+      send_fast_notify=1, when handle_subscribe() starts no transaction, so
+      refreshes and unsubscribes got 500 (#2739)
+    - use query_lock there only when handle_subscribe() starts the
+      transaction
+    
+    (cherry picked from commit c2191f0365f44fb520721a97d4a6060d11652d74)
+
+commit 0ddce75ddb96a03ca786e86d0d984099e875d4c5
+Author: Idan Freiberg <idan.f@wonderful.ai>
+Date:   Thu Oct 29 14:52:29 2026 +0200
+
+    tls: fix tls.reload failing after a failed reload
+    
+    - _ksr_tls_domain keeps the last parsed domain after tls_load_config()
+      returns, and the next load validates it as the previous domain before
+      parsing its first section
+    - the domain can belong to a configuration that was freed meanwhile
+      (failed load, fixup or socket check during tls.reload), so the next
+      load read freed memory and could fail with a false duplicate profile
+      error for every later reload
+    - reset the pointer at the start and at the end of each load
+    
+    (cherry picked from commit c17fac7f057a5489b336a4292bc3e006e113cdc8)
+
+commit 72b8c07caf86d54026e3391bfaecc765a0171ddf
+Author: Emmanuel Schmidbauer <eschmidbauer@gmail.com>
+Date:   Tue Nov 3 11:14:21 2026 -0500
+
+    nats: init libnats in worker processes after fork to fix per-message memory leak
+    
+    (cherry picked from commit b9bf2c4ea2a036e77beca560d622a15effa8e369)
+
+commit 34b5c36c0dfd98d6ad587721674807d74d9397f9
+Author: Torrey Searle <torrey.searle@nuso.cloud>
+Date:   Tue Nov 17 08:10:33 2026 +0100
+
+    topoh: fix pkg memory leak in $th(ecallid)
+    
+    pv_get_th() encodes the Call-ID with th_mask_callid_str(), which allocates
+    the result in pkg memory, and keeps it in the static _th_masked_callid.
+    
+    The buffer from a previous invocation must be freed before creating a new
+    one to prevent a leak in pkg memory.
+    
+    (cherry picked from commit bcbbf51d2ed9223ec3aec91623e842d780aa7596)
+
+commit a233f5e0442195ef373a5db39b2797c52dcecf10
+Author: Darwvin <darwvin@hotmail.com>
+Date:   Fri Oct 16 10:06:43 2026 +0200
+
+    dmq: free SHM callback state for dropped local requests
+    
+    - GH #5006
+    
+    (cherry picked from commit a360f1f0b9e4494ab4a8900df7d5701dea207a32)
+
+commit 293197524a1219ccf9aa1e1035695d9eb7a43ad3
+Author: zsolt-kiss-kontron <zsolt.kiss@kontron.com>
+Date:   Mon Oct 19 13:36:29 2026 +0200
+
+    textops: has_body_helper parameter check extension
+    
+    -  return -1 if has_body is called in the config script with an unkown type
+    
+    (cherry picked from commit 3889fd2c7c23a4695caacc548836a7b805beba7a)
+
+commit a9a756b34bec9c27f42ee03f253070eee6d92289
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Nov 17 16:38:40 2026 +0800
+
+    corex: accept a one-letter field in $lsock(match/value/field)
+    
+    - $lsock(n/udp0/l) failed with invalid expression format; a longer field (listen) worked
+    
+    (cherry picked from commit 5d62566e1b9a722e0182f1301ee91f36026255b4)
+
+commit a1081ed463b5167bc6316faabe95975c3289973f
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Nov 17 16:53:53 2026 +0800
+
+    corex: parse the socket index for $lsock(i/index/field)
+    
+    - the index was never read, so any i/<n> returned the first socket
+    
+    (cherry picked from commit 1c78e54dbe56ecc300bb6a75a390e9e26034e3e3)
+
+commit d8576220a01f01ad050fce2f672063416c3661a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 16 12:44:42 2026 +0100
+
+    dialog: cseq updates for replies with a single via
+    
+    - GH #4837
+    
+    (cherry picked from commit 2b18e606e29450cb9d4babbde99c9def92a50cde)
+
+commit 6585f98719dae7735fedffe8217079800fc54b37
+Author: Stefan Mititelu <stefan.mititelu@net2phone.com>
+Date:   Tue Oct 27 18:06:14 2026 +0200
+
+    dialog: fix dmq replicated dialogs keepalives
+    
+    - set the callee leg tag from the ACK when it confirms a dmq copy
+    - on dmq state updates, a leg with a local socket keeps its data
+      and takes only the cseq
+    
+    (cherry picked from commit 5209db421ff009c2e623dca83accf58d5acd237b)
+
+commit c327c5bbd63efd54219dfd64c874ca3e235a81ca
+Author: Torrey Searle <torrey.searle@nuso.cloud>
+Date:   Fri Oct 16 08:25:03 2026 +0200
+
+    dialog: make dlg_req_within() to the callee in early state work
+    
+    build_dlg_t_early() is only used to send a request to the callee while the
+    dialog is not confirmed (e.g. a PRACK for a reliable provisional response),
+    but it was not usable for that:
+    
+    - Route set: it builds the route set from the Record-Route headers of the
+      reply, skipping the records of the dialog's own proxy.  When our own record
+      is the only one (the callee echoes it back, as it should) nothing is left
+      and parse_rr_body() failed on the empty string ("failed to parse route
+      set").  An empty route set is valid: the request is sent to the remote
+      target (the Contact of the reply).  Only parse the route set when there is
+      one.
+    
+    - Orientation: the party URIs and tags were the caller-direction ones, so the
+      request went out with From = callee and To = caller.  A request to the
+      callee has the orientation of the initial INVITE (From = caller, To =
+      callee), which is what build_dlg_t() sets up for the callee leg.
+    
+    - Callee tag: when called from the reply route of the dialog's first reply
+      the dialog has not recorded the callee tag yet; take it from the To header
+      of that reply.
+    
+    (cherry picked from commit aec13ca5b56a2d620e52378e7840719c08d4aa0e)
+
+commit f507d44e8a42e32dfd67a7edadb12196cd8c9b76
+Author: Dan Quinney <dan.quinney@dial9.co.uk>
+Date:   Fri Nov 13 21:11:03 2026 +0000
+
+    registrar: handle wildcard REGISTER in outbound mode
+    
+    - with outbound_mode enabled and a second Via, save() stopped with
+      "empty Contact" for Contact: * because the parser sets no contacts
+      for a star, and replied 200 OK without removing the bindings
+    - skip the reg-id check for a star Contact and let star() remove
+      the bindings
+    - check_contacts() replies 400 (R_STAR_CONT) when the star Contact
+      body has anything besides "*", so "*, <uri>" is not handled as a
+      wildcard
+    
+    (cherry picked from commit 3838b2a1dc8abe7d25eeb295a20f6c6b4696af3a)
+
+commit 100dbc4c2644bd38442b6f8c2454d122e16331b9
+Author: andreinknv <261684394+andreinknv@users.noreply.github.com>
+Date:   Fri Oct 9 08:05:34 2026 -0400
+
+    registrar: fix counting bindings for max_contacts
+    
+    - test_max_contacts() packs and matches each Contact like
+      update_contacts() does, with its own +sip.instance and reg-id,
+      instead of using the values of the first Contact for all of them
+    - a stored binding changes the count only for the first Contact that
+      matches it, so removing the same binding twice frees one slot
+    - refreshing an expired binding that is still in memory takes a slot,
+      removing it frees none
+    - after a Contact with +sip.instance, one matching an already matched
+      binding or one not found after a new one, update_contacts() can
+      stop, skip Contacts or match other bindings, so later removals free
+      no slot and a skipped Contact with non-zero expires counts as new
+    - a Contact that update_contacts() would reject is rejected before any
+      binding is changed
+    - pack_ci() resets reg-id for each Contact, so a Contact without reg-id
+      does not get the one of the previous Contact
+    - GH #4991
+    
+    (cherry picked from commit 40cb972b9236c11572abde2dc6f1da6d3af8985a)
+
+commit 2efb069aa1207dea02969f892d637209129dd161
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 27 14:48:11 2026 +0100
+
+    tm: convert timeout values to ticks for rpc tm.uac_attrs
+    
+    (cherry picked from commit b02450af6069408dbb99925b5156db10b73df9a7)
+
+commit 3988983768f31167c025aeb83a19550f5300f663
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 28 07:09:36 2026 +0100
+
+    tm: try next dns on initial send fail for local requests
+    
+    (cherry picked from commit ceeadf64e379e6fd8473c1f45a9d63fa5eafb44a)
+
+commit 9bd125f8dc69a297f6686fd2f53c70c419e17d56
+Author: andreinknv <261684394+andreinknv@users.noreply.github.com>
+Date:   Thu Oct 15 06:45:32 2026 -0400
+
+    tm: mark unreplied branches as canceled under reply lock
+    
+    - when a 2xx completes a forked INVITE transaction, the branches without
+      any reply yet can be canceled only after their first provisional reply
+      (RFC 3261, section 9.1); they were marked as canceled by cancel_uacs()
+      after REPLY_LOCK was released, so a first provisional reply processed
+      in between was dropped, or skipped by reply matching once the
+      transaction was on wait, and the branch was never canceled
+    - mark them as canceled while REPLY_LOCK is still held, so their first
+      provisional reply sends the deferred CANCEL
+    - the deferred CANCEL uses the same reason text as cancel_uacs(), e.g.,
+      Reason: SIP;cause=200;text="Call completed elsewhere"
+    
+    (cherry picked from commit 7c7070b4848f5725477f6e1fc35bc5c99c33575e)
+
+commit 5dca921f6f68c288dd165e7575d66b756361f4f9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 08:39:13 2026 +0100
+
+    uac: copy flags to use after destroying the item
+    
+    (cherry picked from commit 50076b78c52a9644e104d761ca570feaaa578de9)
+
+commit 656a2c31fbf57c46e571213dcd10684eb4229dae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 08:28:58 2026 +0100
+
+    uac: retry once in case the record changed during the lock handoff
+    
+    (cherry picked from commit 1254bbf5ea9ddf8452ed3a967c9d4c9b5bd5e02a)
+
+commit f2b30448ffbb9f25f5a880e6f5448cc959dd6666
+Author: Thomas <1258170+ThomasSevestre@users.noreply.github.com>
+Date:   Fri Nov 13 14:11:19 2026 +0100
+
+    uac: fix reg hash table slot lock leak
+    
+    - a record is linked in two slots (by l_uuid and by l_username) and has
+      a single 'lock' field used by the callers to release it
+    - reg_ht_get_byuuid() and reg_ht_get_byuser() each stored the lock of
+      their own slot in it, so two concurrent lookups of the same record by
+      different keys overwrote each other's value, both released the same
+      slot and the other one stayed locked forever, blocking the
+      registration timer and every tm callback hashing to that slot
+    - reg_ht_get_byuser() now returns the record with the lock of its uuid
+      slot held, same as reg_ht_get_byuuid()
+    
+    (cherry picked from commit 53c4fb0cfdae0d4886aed72cecd851e7f9fe2283)
+
+commit 9a161a6bd5f482268da112bc42b1f580433ed7dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 18:57:41 2026 +0100
+
+    core: take schema and transport in consideration for GET_URI_PORT()
+    
+    - use the macro to get the default port
+    
+    (cherry picked from commit 16d0c93f59331fd1b907869ef933f5212aa2061f)
+
+commit 5990903e961155026bb92e82c7f382d1897039af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 10:15:02 2026 +0100
+
+    core: take transport in consideration for default port in check_self_iuser()
+    
+    (cherry picked from commit ecaf7ca9805b271079e9c896c748c85b6b12b8f8)
+
+commit 901e4535a2240e59756144b64abd63765891eb7d
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Wed Nov 4 11:48:41 2026 +0000
+
+    core: Fix sips matching for check_self_iuser
+    
+    - sips uris where matched againt 5060, failing to rewrite the RURI
+    
+    (cherry picked from commit 943665676cb5028dac665c607370af116797ab94)
+
+commit 5c3be6c3f16d6706e38c5a80c8fdaff26dabae9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 11 09:38:43 2026 +0100
+
+    core: limit checks for long_longop*()
+    
+    (cherry picked from commit e9ba8a79531f7f32789f652172763b5e12a76ea7)
+
+commit 5dbc521eeaa9b8c406639870bb3f606a74829cca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 11 09:25:16 2026 +0100
+
+    core: ut - internal use of unsigned for sint2strbuf()
+    
+    (cherry picked from commit 0e51c33d5e3ff2bbb52032dd0f762e53d8ccbc47)
+
+commit a9954194c6ddbba88a9cb9790622cfa39660f2a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 10:01:13 2026 +0100
+
+    core: rvalue.c - limit checks for bitwise operations
+    
+    (cherry picked from commit 5501134a8f698861b5e4e6c2c2b63878e2caacf2)
+
+commit f7226294e1d648167454cd051835153407eff7a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 09:29:57 2026 +0100
+
+    core: use unsigned for hex conversion in rval_get_long()
+    
+    (cherry picked from commit 57e869a4f4dd76c5e4f39ee220f931f2863172ef)
+
+commit aee39ccca512e99c1a7ec2d5ee00f9ff66d71eb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 08:58:08 2026 +0100
+
+    core: use unsigned for hexstr2int()
+    
+    (cherry picked from commit 992dd45dd7d30a99a7a2215a88af745365790d03)
+
+commit 9c348fb9a8bd1c6c96ec149852a366b6dc00f821
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 08:46:58 2026 +0100
+
+    core: check limits for divide and modulo
+    
+    (cherry picked from commit 72c11f48d31ffc3367ff743b127ee750df1d157f)
+
+commit 921c6c7c439013cd22c907db3dd9f59b66bd7ea2
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Tue Oct 27 19:44:27 2026 +0200
+
+    tls: return null for out of range SAN index
+    
+    (cherry picked from commit 60e9be6a242c4ada16eaa1df3ea37da9bb394617)
+
+commit 39566d85d513d1eb39a595b56cef9db477a99e63
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Mon Nov 2 15:46:44 2026 +0800
+
+    sst: fix reading past the Session-Expires refresher param
+    
+    - a refresher param at the end of the header read up to 4 bytes past it
+    
+    (cherry picked from commit 4eace760df57208ffb11b135348b426a3182e200)
+
+commit cb2c315b614c67ff28cdc659ec07640ee176bad3
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Tue Oct 27 21:10:13 2026 +0200
+
+    core: sdp: copy bandwidth attributes when cloning streams.
+    
+    (cherry picked from commit a29af5d17dfdf895eead16e07b9214b4d114b63c)
+
+commit ab50ab0f7b316f0da2655068ca211aba888ce61d
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Wed Nov 11 22:01:51 2026 +0200
+
+    core: strutils - fix port and param matching in cmp_aor()/cmp_uri()
+    
+    - cmp_aor(): when both URIs had a port with different text, the port
+      values were only checked if one of them was missing, so sip:a@h:5060
+      matched sip:a@h:5070; compare the port numbers, using 5060 for a
+      missing port
+    - cmp_uri(): RFC3261, 19.1.4 - a user, ttl or method param in only one
+      URI never matches, nor does an maddr param in only one URI; this was
+      enforced only when the other URI had no params at all, so
+      sip:a@h;ttl=1;lr matched sip:a@h;lr
+    
+    (cherry picked from commit 2796edf912729088d318d0fb2da0bc208cdd485c)
+
+commit 4bf5bca03689c6c8fe0f490232988ed35a1682d9
+Author: Alejandro Pacheco <alepacheco99@gmail.com>
+Date:   Wed Oct 21 05:54:03 2026 +0200
+
+    pv: exact result size checks and s.fmtlines line breaks
+    
+    - s.prefixes: the size check max * (max / 2 + 1|3) counted the prefix
+      chars as max * (max - 1) / 2 for an odd max and max * max / 2 for an
+      even one, while the loop writes max * (max + 1) / 2 of them, so a max
+      of 361 (359 for s.prefixes.quoted) passed the check and the result
+      was written past the end of the transformation buffer; the int
+      product also overflowed for a max of 65536 or more. Check the exact
+      size, computed in 64 bits
+    - s.fmtlines, s.fmtlinet: a line break was added before each char at
+      index 1 to n - 1 ((i / n) == 0) instead of after every n chars
+      ((i % n) == 0), and the size check, which counted len / n breaks, did
+      not match what was written. Count the (len - 1) / n breaks of 2 + m
+      chars and the terminating zero, in 64 bits as m can be up to INT_MAX
+    - s.fmtlines, s.fmtlinet: drop the copy of the value into the result
+      buffer when m >= len, as the value was then formatted in place and
+      each line break overwrote chars not read yet
+    - s.numeric: keep room for the terminating zero (a value of 65536
+      digits wrote it one byte past the end of the buffer)
+    
+    (cherry picked from commit 1458d627d444afe255da4d7d89c77d0d0ca3a214)
+
+commit fe0dcef8bdbeb1e7ee2909373328c6f510b98668
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 01:42:52 2026 +0100
+
+    pkg/kamailio/deb: refresh [skip ci]
+
+commit 04f41e54c44c2143bbde4f7d504ab62dd22f1eb7
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Fri Nov 20 01:36:42 2026 +0100
+
+    pkg/kamailio/deb: pkg-config => pkgconf [skip ci]
+    
+    > W: kamailio source: build-depends-on-obsolete-package Build-Depends: pkg-config => pkgconf
+    
+    (cherry picked from commit 4bd16e2f2a3a46b4b1b70d0f4dcb2d1fd318ad18)
+
+commit 58a4d76402957d794487c1570a2d92ace2701cff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 17 09:07:06 2026 +0100
+
+    secsipid_proc: CMakeLists.txt - check also for secsipid-2
+    
+    (cherry picked from commit 323430e7116749f1bfb83e45802afa7ad3c567cf)
+
+commit 44a2a735696ca9e84bba160275e5a05240257a88
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 17 09:01:48 2026 +0100
+
+    secsipid_proc: Makefile - check also for lib secsipid-2
+    
+    (cherry picked from commit 0ebeef0e96156133a3fec75a3ff9dfa1719a0228)
+
+commit 95ce1dd0e7a4e25a10bf68e821c62528bd00b75b
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Fri Nov 13 22:12:45 2026 +0200
+
+    ims_registrar_scscf: unlock udomain on missing contact at SAR registration
+    
+    - update_contacts_sar_registration() called lock_udomain() instead of
+      unlock_udomain() when a contact was not found, re-locking the slot it
+      already held, so the process blocked on itself
+    
+    (cherry picked from commit a9fd16ccb4e94c2a542198d61c52b4b87e21f169)
+
+commit a44cc7622f119572b2ec12f3b13a8f4d1fec270a
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Nov 12 13:43:51 2026 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 219e81227e3a0f3b2f9c1af6878b2880625a3c58
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 11 13:44:41 2026 +0100
+
+    dialog: release dialog reference counter after search
+    
+    - GH #5099
+    
+    (cherry picked from commit 5d0b550a69d40f81b64d179e5df9eaaf2e0cc7ef)
+
+commit 715382db41051c0a52c8e92ba1f655bf36efa739
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Mon Nov 2 20:45:12 2026 +0200
+
+    tm: avoid releasing transactions on retransmission
+    
+    Prevent t_unref() from releasing an existing transaction when processing a SIP request retransmission (REQ_EXIST).
+    
+    (cherry picked from commit 5284ddf4624868090a7558cb3f19b497308269bf)
+
+commit 2e9090b3cf62d38b261b64527c21869edb36dff1
+Author: AlexisHadj <ah@gilawa.com>
+Date:   Mon Nov 9 14:14:18 2026 +0000
+
+    sipt: Improve isup parser against special boundary cases when updating
+    
+    (cherry picked from commit a2d238f13c46582cdab9414e0ae7b8fd8408678c)
+
+commit 01533dc3480f6ea7111678f9d29b5db6cc4bc4a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 3 11:18:26 2026 +0100
+
+    pv: allow index 0 for before/after transformations
+    
+    - s.before, s.rbefore, s.after, s.rafter
+    - GH #5073
+    
+    (cherry picked from commit 928dd1378cd657041b2e411242ea802846cabd3f)
+
+commit 0f7c02944c851343e91bb3424637ce6d57f7801e
+Author: MrBrownieCGN <daniel.brune.so@outlook.com>
+Date:   Wed Nov 4 08:50:23 2026 +0000
+
+    ims_usrloc_scscf: free dialog table after domains
+    
+    destroy() freed sub_dialog_table first and then called
+    synchronize_all_udomains() and free_all_udomains(). Both still use the
+    table: process_impurecord() looks up the dialog of every valid reg
+    subscriber and free_subscriber() removes it, so both worked on freed
+    shared memory. On shutdown this logged "free_subscriber(): record not
+    found in hash table" once per reg subscriber, and with a db_mode that
+    synchronizes on shutdown also "Subscription has no dialog record in
+    hash table".
+    
+    Destroy the table after the domains are freed and reset the pointer.
+    
+    (cherry picked from commit 30d206be7ea43682ea89a2029a0beb2160e488f5)
+
+commit e40f680490978dddd345628dc8b419a15075ce52
+Author: MrBrownieCGN <daniel.brune.so@outlook.com>
+Date:   Fri Nov 6 21:45:53 2026 +0000
+
+    ims_usrloc_scscf: release locks on error paths
+    
+    get_presentity_from_subscriber_dialog() returned without releasing the
+    sub_dialog_table bucket lock when shm_malloc() failed for the copy of
+    the presentity URI. The next SUBSCRIBE within a dialog hashed to the
+    same bucket, every insert, update or delete of a subscription dialog
+    there (pres_insert_shtable(), pres_update_shtable(),
+    pres_delete_shtable() in subscribe.c), and the registrar timer, which
+    takes the same bucket lock for each valid subscription it checks
+    (process_impurecord() in impurecord.c), then waited for the lock
+    forever; with the timer blocked, no contact expired any more.
+    
+    get_impus_from_subscription_as_string() takes the lock of the IMS
+    subscription and returned without releasing it when the allocation of
+    the IMPU list failed and on the buffer overflow check. Every later user
+    of that lock then waited for it forever, among others REGISTER
+    processing in save.c, can_subscribe_to_reg(), can_publish_reg() and
+    the PUBLISH body processing, and the reg event NOTIFY creation in
+    ims_registrar_scscf.
+    
+    Both locks are now released on these paths as on the others. The
+    callers get the same results as before.
+    
+    (cherry picked from commit cdf411efc8d94461e2c0ada18179df403a2b8dfa)
+
+commit b7791ef27afc5d9a70d4e4d72d0cc81598bd09fe
+Author: AlexisHadj <ah@gilawa.com>
+Date:   Fri Nov 6 10:03:23 2026 +0000
+
+    sipt:Improve isup parser against special boundary cases
+    
+    (cherry picked from commit 4d0b716e3384da280c13edd2a48779b5ee8ce138)
+
+commit bf42c8bb3e1cc8e1fd9eb16fae54e5a9db297cd3
+Author: Tristan Madani <tristan@talencesecurity.com>
+Date:   Mon Nov 9 13:42:21 2026 +0100
+
+    auth_diameter: fix unsigned integer underflow in AVP parsing
+    
+    AAATranslateMessage() computes avp_data_len = avp_len - AVP_HDR_SIZE()
+    without checking that avp_len is large enough, causing an unsigned
+    underflow when avp_len < AVP_HDR_SIZE(avp_flags). On 32-bit systems,
+    the subsequent bounds check is bypassed via pointer arithmetic wrapping.
+    
+    Add the same validation that the CDP module already has at
+    diameter_msg.c:567.
+    
+    (cherry picked from commit cb4a430eb18a5546dfa08b3de9bc5d06e083eab8)
+
+commit d38f6fcc14cc0df15705a4b21b278cc1aa329cfa
+Author: Tristan Madani <tristan@talencesecurity.com>
+Date:   Mon Nov 9 13:42:36 2026 +0100
+
+    acc_diameter: fix unsigned integer underflow in AVP parsing
+    
+    AAATranslateMessage() computes avp_data_len = avp_len - AVP_HDR_SIZE()
+    without checking that avp_len is large enough, causing an unsigned
+    underflow when avp_len < AVP_HDR_SIZE(avp_flags). On 32-bit systems,
+    the subsequent bounds check is bypassed via pointer arithmetic wrapping.
+    
+    Add the same validation that the CDP module already has at
+    diameter_msg.c:567.
+    
+    (cherry picked from commit 8a4553b3d479c9846fbda7029b44a9d2be4dc1b4)
+
+commit 3b2baef0a5dd98893d9b97c5d4866f06851d1ff9
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Nov 9 09:40:21 2026 +0000
+
+    Revert "utils/kamctl: re-create dialog tables after version change"
+    
+    This reverts commit a911024481b0a0291f8d06bcfd36a18e74a75c21.
+
+commit da5fc775850c54a421d52fa92b8d3050d5a3947b
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Nov 9 09:40:17 2026 +0000
+
+    Revert "lib/srdb1: fix version for dialog table (GH #5122)"
+    
+    This reverts commit 6fc79b7c38c77b345bb1b2af02c063c19a37e687.
+
+commit a911024481b0a0291f8d06bcfd36a18e74a75c21
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Nov 9 09:28:51 2026 +0000
+
+    utils/kamctl: re-create dialog tables after version change
+
+commit 6fc79b7c38c77b345bb1b2af02c063c19a37e687
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Nov 9 09:04:55 2026 +0000
+
+    lib/srdb1: fix version for dialog table (GH #5122)
+    
+    (cherry picked from commit b97730f1eff33ce2c4ca93c0edc1846c7b0a1c4d)
+
+commit 7031224e495d73e64b77785d5ea434497bedf023
+Author: Ciprian Arsenie <arsenieciprian@gmail.com>
+Date:   Wed Nov 4 15:05:15 2026 +0200
+
+    smsops: fix UCS-2 payload length check and UDH septet rounding
+    
+    - the TP-UD length of non-GSM-7 payloads was compared with 70, but the
+      value is in octets (70 UCS-2 characters = 140 octets), so any UCS-2
+      message longer than 35 characters and every concatenated UCS-2 part
+      failed to decode with "Length of TP-User-Data payload exceeds maximum
+      length!"; compare with 140 octets
+    - round the UDH length up to whole septets only when it is not already
+      septet-aligned; a 6-octet UDH (56 bits, 16-bit concatenation
+      reference) was counted as 9 septets instead of 8 and the last
+      character of each part was lost
+    
+    GH #5097
+    
+    (cherry picked from commit fc923987e11aa78355121898916e64a35ac36344)
+
+commit d41e4aa6501e12f54575b8c1d97fb60a63365268
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Sat Nov 7 13:12:34 2026 +0100
+
+    pkg/kamailio/deb: refresh
+
+commit 97bf959e18d3516e30ef3d03a03858aa68df78df
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Sat Nov 7 12:42:10 2026 +0100
+
+    pkg/kamailio/deb: add gcrypt module to kamailio-extra-modules [skip ci]
+    
+    (cherry picked from commit fecec712012d37d1e63fde3688f49d7a74616e3f)
+
+commit 7fa958236bddcfa9f7b261797fc57e6a9346a907
+Author: t <t@t>
+Date:   Tue Oct 27 09:32:48 2026 +0000
+
+    cdp: fix peer socket race
+    
+    (cherry picked from commit 7cfedf9223124da1b807fed8e10ee840d088e9f0)
+
+commit 2035c1586c956cee382591ffe4a80ae27dc5daf7
+Author: AlexisHadj <ah@gilawa.com>
+Date:   Fri Oct 30 09:42:30 2026 +0000
+
+    lcr: Dynamic length and memory allocation for lcr gateway structure
+    
+    (cherry picked from commit 294f25a0f9d78d38765a9782bf410604ab6b393b)
+
+commit 50a644e7643b07e7634e08fc6866492025bac771
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Wed Nov 4 01:03:51 2026 +0200
+
+    rtpengine: fix IPv6 address parsing for dtmf_events_sock
+    
+    Split the port on the last ':' and strip brackets from [addr]:port.
+    
+    (cherry picked from commit aa5325c50bcef547d7be8c80007f7c1c6555de94)
+
+commit 75bbce678aa7b9a787570db3cdb6e522627e12ec
+Author: Marco Sinibaldi <marco.sinibaldi@athonet.com>
+Date:   Tue Nov 3 17:59:51 2026 +0100
+
+    ims_icscf: fix return codes for UAR
+    
+    (cherry picked from commit 5ed23f5a6728b721ef0c63dec882f7c31b240779)
+
+commit 7c6f741bb219a77c9b553e76ff3b451ce9162fc8
+Author: Marco Sinibaldi <marco.sinibaldi@athonet.com>
+Date:   Tue Nov 3 17:57:24 2026 +0100
+
+    ims_icscf: fix return codes for LIR
+    
+    (cherry picked from commit 67e6ce5bd902f7e9c1151e2ac627c563106fc899)
+
+commit 56973283f09dd39ee86dd01699dad5884319b677
+Author: Federico Favaro <federico.favaro@athonet.com>
+Date:   Tue Nov 3 16:47:17 2026 +0100
+
+    ims_icscf: fix UAR return codes
+    
+    (cherry picked from commit b2578a30e8ac791b06947ca48ee087f8387ef03b)
+
+commit fd936111291449cfb391c5f54c6b6f00253c0eb5
+Author: Federico Favaro <federico.favaro@athonet.com>
+Date:   Tue Nov 3 16:45:12 2026 +0100
+
+    ims_icscf: fix LIR return codes
+    
+    (cherry picked from commit 3a9f7e232cf2eca33b80358bcf64df55a01407dc)
+
+commit 6ce28096d2ed04648374b99e4cac971c4f7a413c
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Wed Oct 28 11:13:17 2026 +0200
+
+    userblocklist: fix race and leaks in add_source()
+    
+    - take the lock before walking the sources list, so the duplicate-table
+      check cannot race with a concurrent insertion (strcmp will SEGFAULT on
+      src->table being NULL)
+    
+    (cherry picked from commit 7a7f6f1498b48657e9d6da690b0d698aa8a7c83a)
+
+commit cdb61a4592c21a599306feb7597c4ca26f9124a5
+Author: Xenofon Karamanos <xk@gilawa.com>
+Date:   Thu Apr 2 12:18:05 2026 +0000
+
+    cmake: Use lower case OS definition
+    
+    compatibility with makefile usage
+    
+    (cherry picked from commit c5fd2d706495e3c819d71fed6db3ce25e40df610)
+
+commit 202e32b590a98efa88796e1954c60146e57f4435
+Author: Marco Sinibaldi <marco.sinibaldi@athonet.com>
+Date:   Fri Oct 30 11:02:53 2026 +0100
+
+    ims_isc: Avoid mem leak at isc_from_as, add some debug
+    
+    (cherry picked from commit cec27ff4caf5f09e719e808e0684e80ef055a34d)
+
+commit 7ef87d54e217571a335fc021b65e4436c6b8e7c2
+Author: Marco Sinibaldi <marco.sinibaldi@athonet.com>
+Date:   Mon Oct 26 17:35:36 2026 +0100
+
+    ims_isc: return error if relay to AS fails
+    
+    (cherry picked from commit dc1554cf35f010cf798dbcf79cb7600203aa37c1)
+
+commit 011d86124a9423d10b7372a030fcdfa080efed2e
+Author: Federico Favaro <federico.favaro@athonet.com>
+Date:   Mon Oct 26 15:13:27 2026 +0100
+
+    ims_isc: Give back a standard error AS link fails
+    
+    (cherry picked from commit ae8641ed595981800ce128676da4c253be5a873d)
+
+commit 4a5339f437cc3cc3237099432dad0353b8c17aa6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 27 08:05:02 2026 +0100
+
+    nathelper: use converted parm values to build result in add_contact_alias_3()
+    
+    (cherry picked from commit 51cfcba3b1281cf6d0f75de8ace32815e595fb8d)
+
+commit f96a1e557e4b31b44db6a827197131a7ed217762
+Author: Dragos Oancea <dragos.oancea.3.141592@gmail.com>
+Date:   Tue Oct 27 19:37:19 2026 +0200
+
+    core: mem/tlsf - unsigned bitmap shifts
+    
+    - 1 << 31 and ~0 << n on int are undefined
+    
+    core: mem/tlsf - bound lookup of large sizes
+    
+    - shift round-up mask as size_t
+    - skip search when rounding goes past the last first-level list
+    
+    core: mem/tlsf - realloc fails for too large size
+    
+    - it shrank the block to 0 and returned the old pointer
+    
+    (cherry picked from commit de4bac622368809d97ef76239ef7d2f119a18873)
+
+commit 0615c0764ff2ac31c2a660fa6067a57ba54224a6
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Thu Oct 29 07:53:36 2026 +0800
+
+    tls: fix double memory per idle connection
+    
+    - tls_cfg.c - include the OpenSSL header for version detection
+    - with the ssl_release_buffers default: memory usage is ~33KB
+      (vs ~74KB) per idle TLS1.3 connection
+    - Addresses #5064
+    
+    (cherry picked from commit b8d67963cb424cfe6f3cf4af5052e21a53f2fa96)
+
+commit 15d35a71a93c766e8e1a0fa6a8a4eebcfb6e2a0b
+Author: AlexisHadj <ah@gilawa.com>
+Date:   Tue Oct 27 09:21:35 2026 +0000
+
+    ipops: Improved handling of ip v6
+    
+    (cherry picked from commit 0fbac5eb55e8b02496680751e751e08e9c5e4062)
+
+commit 369d3eb37f88ae00f0a7da75b4c83628eed86fd0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 27 07:27:36 2026 +0100
+
+    websocket: restructured building http headers to check printing result
+    
+    - backport of f3ac83ea4ff3a62a62f08203071af3ffa55c24b0
+
+commit 56d967fe59eb4d2603d9dacb18dd02d6b6146a98
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 23 07:49:39 2026 +0200
+
+    sanity: free reply data lump on check_proxy_require()
+    
+    - core api duplicates data
+    - follow up on 0bfdf5f75
+    
+    (cherry picked from commit 504540dc97b4e7a9dbf0fa02f37f06bdbe2d7f14)
+
+commit 5316e51aad64073e711c78bd0573723cf1d99b78
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Oct 23 15:05:45 2026 +0000
+
+    ipops: fix warnings about unused variables
+    
+    (cherry picked from commit 9738c70014f53a2c2d75174e2402052e83881b9f)
+
+commit 51fffc1298cb6606e206cafbfe49acd1649f5f82
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Oct 23 15:04:04 2026 +0000
+
+    ipops: improve RFC1918 parsing (GH #5045)
+    
+    (cherry picked from commit 8404aa3ae5090661ac008944b012137273d1237f)
+
+commit 7a3bf95ada42d86f09ce5b7ad8c0e59e5739af2b
+Author: MrBrownieCGN <daniel.brune.so@outlook.com>
+Date:   Wed Oct 21 00:55:22 2026 +0200
+
+    ims_isc: skip each failed trigger once when several AS branches failed
+    
+    After a failure to contact an application server, isc_match_filter() in
+    the failure route walks the failed branches of the transaction to find the
+    trigger to continue after. isc_checker_find() returns the first matching
+    filter criterion at or after the given index, but the loop kept
+    index = m->index, so every step found the same trigger again and the skip
+    always pointed behind the first matching one.
+    
+    With two or more consecutive iFCs with default handling SESSION_CONTINUED
+    towards an AS that does not answer, the request was sent to the second AS
+    again for every further failure until tm ran out of branches.
+    
+    The search now resumes after each found trigger and the skip is set
+    behind the last one.
+    
+    (cherry picked from commit f3a425142d54dc6e66d62afdac15df01a1fba92e)
+
+commit f0d2484e31adbfb86c765830eeec0bb385203d00
+Author: Alejandro Pacheco <alepacheco99@gmail.com>
+Date:   Wed Oct 21 05:49:48 2026 +0200
+
+    msrp: fix From-Path copy in msrp_relay() and use append macro
+    
+    - copy the From-Path value from the parsed header body instead of a
+      fixed offset after the header name, which did not account for the
+      whitespace trimmed after the colon
+    - the relayed frame is built with size-checked appends, like
+      msrp_forward() and msrp_reply()
+    
+    (cherry picked from commit 689608426479c5d6454180137ce9845d1d485bbb)
+
+commit 7bfd1266cecb332fce9ce534a7b55c0deb2be537
+Author: Anton Yabchinskiy <arn@bestmx.net>
+Date:   Thu Oct 22 14:06:34 2026 +0200
+
+    http_async_client: fix reply clearing after shm_free()
+    
+    (cherry picked from commit bb8bf37369da081083198eb97afdeb07cba5fdee)
+
+commit b89cf755f496ecc7329431722afb0023316a61a2
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue Oct 20 07:18:32 2026 +0200
+
+    tm: skip replied or released transactions in t_unref() orphan check
+    
+    (cherry picked from commit ba3c315ec801b51697572dba8e48f0be6d7e479b)
+
+commit 112a9a31499dce012a0fd01ad5dcd17da5a71874
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 22 21:44:50 2026 +0200
+
+    siprepo: copy message type to check it later
+    
+    (cherry picked from commit 3de8392d56d021dad40efbb6ab4c14212742446a)
+
+commit 4db1565bde50f6cc09533b8d20327a84cf3f2cef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 22 21:36:40 2026 +0200
+
+    siprepo: keep the next item before unlinking current one on expires check
+    
+    (cherry picked from commit e5ab3d7400f753b9fcbd60a6fbf1105c4e63b697)
+
+commit e9920edad57c6b1c47c716e44ee19d96dba5a0a6
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Thu Oct 22 00:14:17 2026 +0200
+
+    pv_headers: fix unset display name var $x_tn $x_fn
+    
+    * fail early on unsupported unset operations
+    
+    fixes #5033
+    
+    (cherry picked from commit ba2de7895c2ce96a66e3dea96047dd783f113601)
+
+commit 65e659918a41ae49e3ff10cff2c5242891b64f07
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 21 10:01:16 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8fb51bff6147f1be4099c62cde2d80ed9b9faebf
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Oct 21 07:51:01 2026 +0000
+
+    Revert "tls: MP-mode - simplify thread-local clean-up"
+    
+    This reverts commit cd2efd8f166cae7b0b55d2dcd6e2a5d2bd811f2c.
+
+commit a5cb94341ab324a1d57535c67cf435507954585d
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Oct 21 07:50:52 2026 +0000
+
+    Revert "core: per-process pthread_self() for libcrypto"
+    
+    This reverts commit 47008126955587c7c248bae704df9c24a40792f0.
+
+commit ea869b910b592930eb36d4aeb4d549ead98b9d32
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Oct 21 07:50:42 2026 +0000
+
+    Revert "tls: new option for shared SSL_CTX"
+    
+    This reverts commit 72581a15944b17783841a9b43387e9af2e2d6601.
+
+commit 99295d501f70f5063808dca18519a7aeb85fe495
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Oct 21 07:46:15 2026 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 72581a15944b17783841a9b43387e9af2e2d6601
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Wed Oct 21 11:52:40 2026 +0800
+
+    tls: new option for shared SSL_CTX
+    
+    - use_shared_context = 0|1
+      0: SSL_CTX is replicated per worker per domain
+      1: a single shared SSL_CTX is used per domain
+    
+    Addresses #5031
+    
+    Cherry-picked from commit a697e97ef1426c814d365ba7ff0296c07fd3464c
+    Cherry-picked from commit 95b2b21712ee1334bff5b82f8e44ffddfa8d76ff
+
+commit 47008126955587c7c248bae704df9c24a40792f0
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Tue Oct 20 19:51:31 2026 +0800
+
+    core: per-process pthread_self() for libcrypto
+    
+    - hook infrastructure to support single SSL_CTX per domain
+    - pthread_self - when called from libcrypto - needs to report
+      a different thread id when called from within the workers
+    
+    Cherry-picked from commit 566e7d47378dae5f8d1d11dca645e25cbf3cebc0
+
+commit cd2efd8f166cae7b0b55d2dcd6e2a5d2bd811f2c
+Author: S-P Chan <shihping.chan@gmail.com>
+Date:   Sun Apr 5 09:00:51 2026 +0800
+
+    tls: MP-mode - simplify thread-local clean-up
+    
+    - replaces the PTHREAD_ATFORK_CHILD handler with a PTHREAD_ATFORK_PREPARE
+      handler using OPENSSL_thread_stop()
+    
+    - this uses OpenSSL's own thread-local book-keeping and removes the fragile
+      pthread key accounting/clean-up heuristic
+    
+    - should work equally well on musl / glibc
+    
+    Credit to GH @NormB for this simplification.
+    
+    Cherry-picked from commit 396989e5f90206cecaadb46b3b0eebd6b5142fe3
+
+commit 689cf49c21cb589789284eb34b6c462f1d00ebec
+Author: Victor Seva <vseva@sipwork.pro>
+Date:   Wed Oct 7 10:37:12 2026 +0200
+
+    rtpengine: fix received-from at parse_flags
+    
+    getaddrinfo() needs a NULL terminated string
+    
+    fixes #4983
+    
+    (cherry picked from commit c1a29f31d8dc5dc41b02c96c4fd5930c7131ff99)
+
+commit d9ead2c02a844a746c6f6005740afba216d0001e
+Author: Viktor Litvinov <viktor.litvinov@net2phone.com>
+Date:   Thu Aug 27 12:06:55 2026 +0200
+
+    rtpengine: zero pointer crash in rtpengine_dmq
+    
+    (cherry picked from commit 86dcc8c88cdbc5a0b75a5eccac4b8478ca71513d)
+
+commit 8e0ceac13be07a654d5198a63d06cdf7ac4146ac
+Author: Alejandro Pacheco <alepacheco99@gmail.com>
+Date:   Wed Oct 14 00:10:23 2026 +0200
+
+    sipcapture: check HEPv3 chunk sizes and presence by type
+    
+    - hepv3_chunk_ok() only required the 6-byte generic header, but the
+      generic chunks are then read as the structure of their type, so a
+      short ip, port, time or capture id chunk at the end of a packet was
+      read past the received data (up to 16 bytes for an ipv6 address);
+      require each type's structure size
+    - the element count accepted packets with any 9 chunks, leaving ip
+      proto, proto type, ports or the address chunks of the announced ip
+      family unset, and those pointers were then dereferenced; check that
+      every chunk the receive path reads is present
+    
+    (cherry picked from commit bb4e34cf96cc19b6654d58f37a18197316ea2466)
+
+commit c636b297a8418dee06808e1fae0d04177ce10741
+Author: Alejandro Pacheco <alepacheco99@gmail.com>
+Date:   Tue Oct 13 22:48:59 2026 +0200
+
+    smsops: check remaining body length while decoding RP-DATA
+    
+    - decode_3gpp_sms() walked the message body with an offset and never
+      compared it with the body length, so a short or truncated RP-DATA/TPDU
+      made it read past the end of the body (originator/destination, TP-DA,
+      TP-OA, PID/DCS, validity period, SCTS, UDH and user data)
+    - check the remaining length before every field is read, treat the
+      length octets as unsigned and require length 3 for the concatenated
+      SM 8-bit reference IE
+    - bound gsm_to_ascii() by the octets left in the body and mask the last
+      septet so it always indexes inside the 7-bit table
+    
+    (cherry picked from commit 6f2eff2d13344926a6b1629b97ecbad55e3cade9)
+
+commit 5e4f9dc043164475f725ac547aefe6345ea1b03f
+Author: Alejandro Pacheco <alepacheco99@gmail.com>
+Date:   Tue Oct 13 23:26:11 2026 +0200
+
+    ss7ops: check M2UA/M2PA/ISUP lengths before using them
+    
+    The M2UA and M2PA message length was only checked against the received
+    size, so a length below the 8-byte header made data_len -= 8 wrap and the
+    MTP/ISUP parsers ran with a length far beyond the payload. An M2UA IE
+    length below its 4-byte header wrapped the returned length the same way,
+    and a zero IE length never advanced the loop. In ISUP, a variable
+    parameter pointer equal to the remaining bytes made the parser read the
+    length octet one byte past the message.
+    
+    Require each length to cover its own header and to fit in the bytes
+    left before it is subtracted or dereferenced.
+    
+    (cherry picked from commit 332a6ec01b60146969754b541825654a8558f407)
+
+
 ===================== 2026-10-15 Version 6.1.5 Released =====================
 
 ===================== Changes Since Version 6.1.4 ===========================
