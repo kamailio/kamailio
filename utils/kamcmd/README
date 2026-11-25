@@ -38,6 +38,7 @@ Options:
                 substituted. To print '%v', escape it using '%': %%v.
     -b          use binrpc protocol (default)
     -j          use JSON-RPC protocol
+    -p          pretty-print JSON-RPC responses
     -t timeout  timeout in seconds to wait for a JSON-RPC response
     -z size     size in kilobytes for the JSON-RPC response buffer
     -v          Verbose
