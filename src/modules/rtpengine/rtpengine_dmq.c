@@ -305,7 +305,7 @@ int rtpengine_dmq_replicate_action(rtpengine_dmq_action_t action, str callid,
 				rtpp_node->rn_url.s, rtpp_node->rn_url.len);
 
 		setid = get_rtpp_set_id_by_node(rtpp_node);
-		if(setid)
+		if(setid != -1)
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "setid", setid);
 	}
 
