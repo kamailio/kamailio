@@ -1218,7 +1218,7 @@ int get_rtpp_set_id_by_node(struct rtpp_node *node)
 {
 	struct rtpp_set *rtpp_list;
 	struct rtpp_node *crt_rtpp;
-	unsigned int res = 0;
+	int res = -1;
 
 	lock_get(rtpp_set_list->rset_head_lock);
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
