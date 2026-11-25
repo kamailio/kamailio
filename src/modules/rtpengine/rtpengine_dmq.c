@@ -245,7 +245,7 @@ int rtpengine_dmq_replicate_action(rtpengine_dmq_action_t action, str callid,
 		str viabranch, struct rtpp_node *rtpp_node, dmq_node_t *node)
 {
 	srjson_doc_t jdoc;
-	unsigned int setid = -1;
+	int setid = -1;
 
 	LM_DBG("replicating action to dmq peers...\n");
 
