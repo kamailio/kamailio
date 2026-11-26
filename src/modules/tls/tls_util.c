@@ -178,7 +178,9 @@ int ksr_tls_keylog_vfilter_match(const char *line)
 	int i;
 
 	for(i = 0; ksr_tls_keylog_vfilters[i] != NULL; i++) {
-		if(strcasecmp(ksr_tls_keylog_vfilters[i], line) == 0) {
+		if(strncasecmp(ksr_tls_keylog_vfilters[i], line,
+				   strlen(ksr_tls_keylog_vfilters[i]))
+				== 0) {
 			return 1;
 		}
 	}
