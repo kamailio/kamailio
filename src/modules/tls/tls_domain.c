@@ -1005,13 +1005,14 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 #endif /* SSL_CLIENT_HELLO_SUCCESS */
 
 /**
- * write a comment line with the connection and handshake parameters before
- * a key line (keylog_mode value 32: 1 << 5, KSR_TLS_KEYLOG_MODE_TUPLE), so
- * a capture that missed the hellos can match the keys to a flow and derive
- * the record keys (tls 1.2: server random + cipher suite, tls 1.3: cipher
- * suite)
+ * build the comment line with the connection and handshake parameters that
+ * goes before a key line (keylog_mode value 32: 1 << 5,
+ * KSR_TLS_KEYLOG_MODE_TUPLE), so a capture that missed the hellos can match
+ * the keys to a flow and derive the record keys (tls 1.2: server random +
+ * cipher suite, tls 1.3: cipher suite)
+ * - return the length of the line, 0 if not built
  */
-static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
+static int ksr_tls_keylog_tuple(const SSL *ssl, char *buf, size_t size)
 {
 	struct tls_extra_data *data;
 	struct tcp_connection *c;
@@ -1022,7 +1023,6 @@ static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
 	char dst_ip[IP_ADDR_MAX_STR_SIZE + 2];
 	char sr_hex[SSL3_RANDOM_SIZE * 2 + 1];
 	unsigned char sr[SSL3_RANDOM_SIZE];
-	char buf[512];
 	unsigned int dst_port;
 	size_t sr_len;
 	size_t i;
@@ -1031,13 +1031,13 @@ static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
 
 	data = (struct tls_extra_data *)SSL_get_app_data(ssl);
 	if(data == NULL || data->tcp_conn == NULL) {
-		return;
+		return 0;
 	}
 	c = data->tcp_conn;
 	/* own buffers (ip_addr2a() uses one static buffer); ipv6 as [addr] */
 	if(ip_addr2sbufz(&c->rcv.src_ip, src_ip, sizeof(src_ip)) <= 0
 			|| ip_addr2sbufz(&c->rcv.dst_ip, dst_ip, sizeof(dst_ip)) <= 0) {
-		return;
+		return 0;
 	}
 
 	dst_port = c->rcv.dst_port;
@@ -1064,23 +1064,23 @@ static void ksr_tls_keylog_emit_tuple(const SSL *ssl)
 	sr_hex[sr_len * 2] = '\0';
 	cipher = SSL_get_current_cipher(ssl);
 
-	n = snprintf(buf, sizeof(buf),
-			"# TUPLE src=%s:%u dst=%s:%u sr=%s cs=%04x v=%04x", src_ip,
-			(unsigned)c->rcv.src_port, dst_ip, dst_port, sr_hex,
+	n = snprintf(buf, size, "# TUPLE src=%s:%u dst=%s:%u sr=%s cs=%04x v=%04x",
+			src_ip, (unsigned)c->rcv.src_port, dst_ip, dst_port, sr_hex,
 			cipher ? (unsigned)(SSL_CIPHER_get_id(cipher) & 0xFFFF) : 0,
 			(unsigned)SSL_version(ssl));
-	if(n <= 0 || (size_t)n >= sizeof(buf)) {
-		return;
+	if(n <= 0 || (size_t)n >= size) {
+		return 0;
 	}
-	if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
-		LM_NOTICE("tlskeylog: %s\n", buf);
-	}
-	ksr_tls_keylog_file_write(ssl, buf);
-	ksr_tls_keylog_peer_send(ssl, buf);
+	return n;
 }
 
 static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 {
+	char buf[1024];
+	const char *out = line;
+	size_t len;
+	int n;
+
 	if(ksr_tls_keylog_mode == NULL) {
 		return;
 	}
@@ -1098,13 +1098,29 @@ static void ksr_tls_keylog_callback(const SSL *ssl, const char *line)
 		}
 	}
 	if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_TUPLE) {
-		ksr_tls_keylog_emit_tuple(ssl);
+		n = ksr_tls_keylog_tuple(ssl, buf, sizeof(buf));
+		if(n > 0) {
+			if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
+				LM_NOTICE("tlskeylog: %s\n", buf);
+			}
+			len = strlen(line);
+			if((size_t)n + 1 + len < sizeof(buf)) {
+				/* tuple and key line in one file write and one datagram,
+				 * other processes cannot get in between */
+				buf[n] = '\n';
+				memcpy(buf + n + 1, line, len + 1);
+				out = buf;
+			} else {
+				ksr_tls_keylog_file_write(ssl, buf);
+				ksr_tls_keylog_peer_send(ssl, buf);
+			}
+		}
 	}
 	if(*ksr_tls_keylog_mode & KSR_TLS_KEYLOG_MODE_MLOG) {
 		LM_NOTICE("tlskeylog: %s\n", line);
 	}
-	ksr_tls_keylog_file_write(ssl, line);
-	ksr_tls_keylog_peer_send(ssl, line);
+	ksr_tls_keylog_file_write(ssl, out);
+	ksr_tls_keylog_peer_send(ssl, out);
 }
 
 /**
