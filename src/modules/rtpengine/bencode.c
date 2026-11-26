@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-
+#include <errno.h>
 
 /* set to 0 for alloc debugging, e.g. through valgrind */
 #define BENCODE_MIN_BUFFER_PIECE_LEN 512
@@ -626,26 +626,27 @@ static bencode_item_t *__bencode_decode_string(
 	char *convend;
 	const char *orig = s;
 	bencode_item_t *ret;
+	//empty buffer
+	if(s >= end)
+		return NULL;
 
 	if(*s == '0') {
 		sl = 0;
 		s++;
 		goto colon;
 	}
-
+	errno = 0;
 	sl = strtoul(s, &convend, 10);
-	if(convend == s)
+	if(errno == ERANGE || convend == s)
 		return NULL;
 	s += (convend - s);
 
 colon:
-	if(s >= end)
-		return NULL;
-	if(*s != ':')
+	if(s >= end || *s != ':')
 		return NULL;
 	s++;
 
-	if(s + sl > end)
+	if(sl > (unsigned long int)(end - s))
 		return NULL;
 
 	ret = __bencode_item_alloc(buf, 0);
