@@ -86,6 +86,13 @@
 #define KAMCMD_BINRPC 0
 #define KAMCMD_JSONRPC 1
 
+enum kamcmd_jsonrpc_output
+{
+	KAMCMD_JSONRPC_OUTPUT_RAW,
+	KAMCMD_JSONRPC_OUTPUT_PRETTY,
+	KAMCMD_JSONRPC_OUTPUT_YAML
+};
+
 static char version[] = NAME " " VERSION;
 #ifdef VERSION_NODATE
 static char compiled[] = "";
@@ -111,6 +118,7 @@ Options:\n\
     -b          use binrpc protocol\n\
     -j          use jsonrpc protocol\n\
     -p          pretty-print jsonrpc responses\n\
+    -y          print jsonrpc responses in YAML-style form\n\
     -t timeout  timeout in seconds to wait for jsonrpc response\n\
     -z size     size in kilobytes for jsonrpc response buffer\n\
     -v          Verbose       \n\
@@ -150,7 +158,7 @@ int rpc_no = 0;
 char **rpc_methods;
 int rpc_methods_no = 0;
 unsigned int _kamcmd_jsonrpc_size = KAMCMD_JSONRPC_DEFAULT_SIZE;
-int _kamcmd_jsonrpc_pretty = 0;
+enum kamcmd_jsonrpc_output _kamcmd_jsonrpc_output = KAMCMD_JSONRPC_OUTPUT_RAW;
 struct id_list *_kamcmd_sock_id;
 
 #ifdef USE_CFG_VARS
@@ -2527,6 +2535,166 @@ static int print_json_pretty(char *json)
 }
 
 
+static void print_yaml_indent(int depth)
+{
+	int i;
+
+	for(i = 0; i < depth; i++)
+		putchar(' ');
+}
+
+
+static int yaml_key_is_safe(const char *key)
+{
+	const unsigned char *p;
+
+	if(key == NULL || *key == '\0'
+			|| (!isalpha((unsigned char)*key) && *key != '_'))
+		return 0;
+	if(strcmp(key, "null") == 0 || strcmp(key, "true") == 0
+			|| strcmp(key, "false") == 0)
+		return 0;
+	for(p = (const unsigned char *)key + 1; *p; p++) {
+		if(!isalnum(*p) && *p != '_' && *p != '-' && *p != '.')
+			return 0;
+	}
+	return 1;
+}
+
+
+static int print_yaml_key(srjson_doc_t *jdoc, const char *key)
+{
+	srjson_t *jkey;
+	char *text;
+
+	if(yaml_key_is_safe(key)) {
+		fputs(key, stdout);
+		return ferror(stdout) ? -1 : 0;
+	}
+	jkey = srjson_CreateString(jdoc, (key != NULL) ? key : "");
+	if(jkey == NULL)
+		return -1;
+	text = srjson_PrintUnformatted(jdoc, jkey);
+	if(text == NULL) {
+		srjson_Delete(jdoc, jkey);
+		return -1;
+	}
+	fputs(text, stdout);
+	jdoc->free_fn(text);
+	srjson_Delete(jdoc, jkey);
+	return ferror(stdout) ? -1 : 0;
+}
+
+
+static int yaml_container_has_items(srjson_t *item)
+{
+	int type;
+
+	type = item->type & 255;
+	return (type == srjson_Object || type == srjson_Array)
+		   && item->child != NULL;
+}
+
+
+static int print_yaml_inline(srjson_doc_t *jdoc, srjson_t *item)
+{
+	char *text;
+
+	if((item->type & 255) == srjson_Object && item->child == NULL) {
+		fputs("{}", stdout);
+		return ferror(stdout) ? -1 : 0;
+	}
+	if((item->type & 255) == srjson_Array && item->child == NULL) {
+		fputs("[]", stdout);
+		return ferror(stdout) ? -1 : 0;
+	}
+	text = srjson_PrintUnformatted(jdoc, item);
+	if(text == NULL)
+		return -1;
+	fputs(text, stdout);
+	jdoc->free_fn(text);
+	return ferror(stdout) ? -1 : 0;
+}
+
+
+static int print_yaml_node(srjson_doc_t *jdoc, srjson_t *item, int depth)
+{
+	srjson_t *child;
+	int type;
+
+	type = item->type & 255;
+	if(type == srjson_Object) {
+		if(item->child == NULL) {
+			print_yaml_indent(depth);
+			fputs("{}\n", stdout);
+			return ferror(stdout) ? -1 : 0;
+		}
+		for(child = item->child; child != NULL; child = child->next) {
+			print_yaml_indent(depth);
+			if(print_yaml_key(jdoc, child->string) < 0)
+				return -1;
+			putchar(':');
+			if(yaml_container_has_items(child)) {
+				putchar('\n');
+				if(print_yaml_node(jdoc, child, depth + 2) < 0)
+					return -1;
+			} else {
+				putchar(' ');
+				if(print_yaml_inline(jdoc, child) < 0)
+					return -1;
+				putchar('\n');
+			}
+		}
+		return ferror(stdout) ? -1 : 0;
+	}
+	if(type == srjson_Array) {
+		if(item->child == NULL) {
+			print_yaml_indent(depth);
+			fputs("[]\n", stdout);
+			return ferror(stdout) ? -1 : 0;
+		}
+		for(child = item->child; child != NULL; child = child->next) {
+			print_yaml_indent(depth);
+			putchar('-');
+			if(yaml_container_has_items(child)) {
+				putchar('\n');
+				if(print_yaml_node(jdoc, child, depth + 2) < 0)
+					return -1;
+			} else {
+				putchar(' ');
+				if(print_yaml_inline(jdoc, child) < 0)
+					return -1;
+				putchar('\n');
+			}
+		}
+		return ferror(stdout) ? -1 : 0;
+	}
+	print_yaml_indent(depth);
+	if(print_yaml_inline(jdoc, item) < 0)
+		return -1;
+	putchar('\n');
+	return ferror(stdout) ? -1 : 0;
+}
+
+
+static int print_json_yaml(char *json)
+{
+	int ret;
+	srjson_doc_t jdoc;
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = srjson_Parse(&jdoc, json);
+	if(jdoc.root == NULL) {
+		fprintf(stderr, "failed to parse jsonrpc response for YAML output\n");
+		srjson_DestroyDoc(&jdoc);
+		return -1;
+	}
+	ret = print_yaml_node(&jdoc, jdoc.root, 0);
+	srjson_DestroyDoc(&jdoc);
+	return ret;
+}
+
+
 /* runs json command */
 static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 {
@@ -2536,14 +2704,17 @@ static int run_json_cmd(int s, struct binrpc_cmd *cmd)
 
 	if(execute_json_cmd(s, cmd, &response, &response_len) < 0)
 		return -1;
-	if(!_kamcmd_jsonrpc_pretty) {
+	if(_kamcmd_jsonrpc_output == KAMCMD_JSONRPC_OUTPUT_RAW) {
 		fwrite(response, 1, response_len, stdout);
 		putchar('\n');
 		free(response);
 		return 0;
 	}
 
-	ret = print_json_pretty(response);
+	if(_kamcmd_jsonrpc_output == KAMCMD_JSONRPC_OUTPUT_PRETTY)
+		ret = print_json_pretty(response);
+	else
+		ret = print_json_yaml(response);
 	free(response);
 	return ret;
 }
@@ -2687,7 +2858,7 @@ int main(int argc, char **argv)
 	sock_name = 0;
 	sock_type = UNIXS_SOCK;
 	opterr = 0;
-	while((c = getopt(argc, argv, "UVhbjps:D:R:vf:t:z:")) != -1) {
+	while((c = getopt(argc, argv, "UVhbjpys:D:R:vf:t:z:")) != -1) {
 		switch(c) {
 			case 'V':
 				printf("version: %s\n", version);
@@ -2718,7 +2889,10 @@ int main(int argc, char **argv)
 				_kamcmd_rpc_type = KAMCMD_JSONRPC;
 				break;
 			case 'p':
-				_kamcmd_jsonrpc_pretty = 1;
+				_kamcmd_jsonrpc_output = KAMCMD_JSONRPC_OUTPUT_PRETTY;
+				break;
+			case 'y':
+				_kamcmd_jsonrpc_output = KAMCMD_JSONRPC_OUTPUT_YAML;
 				break;
 			case 't':
 				_kamcmd_read_timeout = (int)atol(optarg);
