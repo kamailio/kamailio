@@ -39,6 +39,7 @@ Options:
     -b          use binrpc protocol (default)
     -j          use JSON-RPC protocol
     -p          pretty-print JSON-RPC responses
+    -y          print JSON-RPC responses in YAML-style form
     -t timeout  timeout in seconds to wait for a JSON-RPC response
     -z size     size in kilobytes for the JSON-RPC response buffer
     -v          Verbose
