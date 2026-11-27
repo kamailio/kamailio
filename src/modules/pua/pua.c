@@ -234,6 +234,10 @@ static int mod_init(void)
 		LM_ERR("callbacks initialization failed\n");
 		return -1;
 	}
+	if(pua_subscribe_init() < 0) {
+		LM_ERR("subscription cancellation initialization failed\n");
+		return -1;
+	}
 	pua_evlist = init_pua_evlist();
 	if(pua_evlist == 0) {
 		LM_ERR("when initializing pua_evlist\n");
@@ -304,6 +308,7 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
+	pua_subscribe_destroy();
 	/* if dbmode is PUA_DB_ONLY, then HashT will be NULL
 	 * so db_update and destroy_htable won't get called */
 	if(pua_db && HashT)
