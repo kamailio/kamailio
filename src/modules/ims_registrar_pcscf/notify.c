@@ -72,6 +72,7 @@
 #define EVENT_REFRESHED 4
 #define EVENT_EXPIRED 5
 #define EVENT_DEACTIVATED 6
+#define EVENT_REJECTED 7
 
 #define RESULT_ERROR -1
 #define RESULT_CONTACTS_FOUND 1
@@ -298,6 +299,10 @@ int reginfo_parse_event(char *s)
 				return EVENT_CREATED;
 			if(strncmp(s, "expired", 7) == 0)
 				return EVENT_EXPIRED;
+			break;
+		case 8:
+			if(strncmp(s, "rejected", 8) == 0)
+				return EVENT_REJECTED;
 			break;
 		case 9:
 			if(strncmp(s, "refreshed", 9) == 0)
