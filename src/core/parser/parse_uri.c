@@ -85,16 +85,16 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		URI_HEADERS,
 		/* param states */
 		/* transport */
-		PT_T,
-		PT_R,
-		PT_A,
-		PT_N,
-		PT_S,
-		PT_P,
-		PT_O,
-		PT_R2_,
-		PT_T2,
-		PT_eq,
+		PTRAN_T,
+		PTRAN_R,
+		PTRAN_A,
+		PTRAN_N,
+		PTRAN_S,
+		PTRAN_P,
+		PTRAN_O,
+		PTRAN_R2,
+		PTRAN_T2,
+		PTRAN_eq,
 		/* ttl */
 		PTTL_T2,
 		PTTL_L,
@@ -719,7 +719,7 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 					case 't':
 					case 'T':
 						b = p;
-						state = PT_T;
+						state = PTRAN_T;
 						break;
 					case 'u':
 					case 'U':
@@ -766,17 +766,17 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 				break;
 				/* ugly but fast param names parsing */
 				/*transport */
-				param_switch_big(PT_T, 'r', 'R', 't', 'T', PT_R, PTTL_T2);
-				param_switch(PT_R, 'a', 'A', PT_A);
-				param_switch(PT_A, 'n', 'N', PT_N);
-				param_switch(PT_N, 's', 'S', PT_S);
-				param_switch(PT_S, 'p', 'P', PT_P);
-				param_switch(PT_P, 'o', 'O', PT_O);
-				param_switch(PT_O, 'r', 'R', PT_R2_);
-				param_switch(PT_R2_, 't', 'T', PT_T2);
-				param_switch1(PT_T2, '=', PT_eq);
+				param_switch_big(PTRAN_T, 'r', 'R', 't', 'T', PTRAN_R, PTTL_T2);
+				param_switch(PTRAN_R, 'a', 'A', PTRAN_A);
+				param_switch(PTRAN_A, 'n', 'N', PTRAN_N);
+				param_switch(PTRAN_N, 's', 'S', PTRAN_S);
+				param_switch(PTRAN_S, 'p', 'P', PTRAN_P);
+				param_switch(PTRAN_P, 'o', 'O', PTRAN_O);
+				param_switch(PTRAN_O, 'r', 'R', PTRAN_R2);
+				param_switch(PTRAN_R2, 't', 'T', PTRAN_T2);
+				param_switch1(PTRAN_T2, '=', PTRAN_eq);
 			/* value parsing */
-			case PT_eq:
+			case PTRAN_eq:
 				param = &uri->transport;
 				param_val = &uri->transport_val;
 				switch(*p) {
@@ -1134,17 +1134,17 @@ int parse_uri(char *buf, int len, struct sip_uri *uri)
 		case URI_PARAM:
 		case URI_PARAM_P:
 		/* intermediate param states */
-		case PT_T: /* transport */
-		case PT_R:
-		case PT_A:
-		case PT_N:
-		case PT_S:
-		case PT_P:
-		case PT_O:
-		case PT_R2_:
-		case PT_T2:
-		case PT_eq:	  /* ignore empty transport params */
-		case PTTL_T2: /* ttl */
+		case PTRAN_T: /* transport */
+		case PTRAN_R:
+		case PTRAN_A:
+		case PTRAN_N:
+		case PTRAN_S:
+		case PTRAN_P:
+		case PTRAN_O:
+		case PTRAN_R2:
+		case PTRAN_T2:
+		case PTRAN_eq: /* ignore empty transport params */
+		case PTTL_T2:  /* ttl */
 		case PTTL_L:
 		case PTTL_eq:
 		case PU_U: /* user */
