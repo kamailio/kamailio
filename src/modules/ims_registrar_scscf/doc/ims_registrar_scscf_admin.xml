@@ -17,16 +17,41 @@
     module:</para>
 
     <para>The module handles HSS-initiated Cx Push-Profile-Requests (PPR)
-    carrying User-Data for existing public identities. Profile replacement
-    preserves registration and contact state. Identity-set changes, wildcard
-    identities, charging-information updates and authentication-data updates
-    are not supported by this receiver and are rejected.</para>
+    carrying User-Data, charging information, SIP Digest password updates,
+    or a combination of these. Profile replacement preserves existing
+    registrations and contacts. Added public identities inherit the implicit
+    set's registration state and contacts; omitted identities lose their cached
+    profile and bindings. A registered set's default identity cannot be changed
+    by PPR, and removing the entire set requires RTR. Charging-only updates do
+    not require User-Data.</para>
 
-    <para>Cx Registration-Termination-Requests (RTR) invalidate registration
-    and contact state and remove cached profile and charging information.
-    Registration-event notifications include the removed contact URI. Shared
-    contacts belonging to identities outside the requested scope and emergency
-    contacts are protected by rejecting unsupported termination scopes.</para>
+    <para>SIP Digest password updates require ims_auth to be loaded, with
+    <parameter>av_check_only_impu</parameter> set to 0. SIP Digest using MD5
+    and the auth quality of protection is supported; AKA vector updates and
+    other digest algorithms are rejected. Wildcard profiles are not supported.
+    WebRTC authorization is not advertised; optional WebRTC data is ignored
+    according to the Diameter AVP rules. Requests that cannot be applied
+    leave existing user information unchanged.</para>
+
+    <para>Cx Registration-Termination-Requests (RTR) support public-identity,
+    IMPI-only and Associated-Identities scopes. A public identity selects its
+    complete implicit registration set. Contact ownership preserves bindings
+    registered by an untargeted private identity. A surviving private identity
+    is retained for later server assignments. Shared legacy contacts whose
+    IMPI ownership is ambiguous are rejected. Cached profiles and charging
+    information are removed when no registration remains. The
+    NEW_SERVER_ASSIGNED reason requires a public identity.</para>
+
+    <para>PERMANENT_TERMINATION and REMOVE_S-CSCF preserve emergency
+    registrations and report their private/public identity pairs in RTA.
+    Complete termination returns 2001; partial termination due to protected
+    emergency identities returns 2002; protection of every targeted identity
+    returns 5012. Normal bindings on an emergency-registered identity are still
+    removed. SERVER_CHANGE and reference-location changes request
+    re-registration using the deactivated registration event. Other network
+    terminations use rejected; ordinary explicit removal keeps unregistered.
+    Successful reg-event unsubscription queues a final terminated NOTIFY before
+    deleting the subscription.</para>
 
     <para>These Cx cache operations require the ims_usrloc_scscf module's
     <parameter>db_mode</parameter> to be 0. Persistent database backends are
@@ -41,6 +66,9 @@
     <programlisting format="linespecific">
 modparam("pua", "check_remote_contact", 0)
     </programlisting>
+    <para>Notification workers use dialog-based queues. Notifications for the
+    same subscription dialog are dispatched by one worker in CSeq and reginfo
+    version order; unrelated dialogs can be processed concurrently.</para>
   </section>
 
   <section>

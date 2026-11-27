@@ -58,6 +58,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/dprint.h" /* TIME_T_FMT */
 #include <stdarg.h>
+#include <errno.h>
 #include <libxml/parser.h>
 
 #include "../../lib/ims/useful_defs.h"
@@ -79,6 +80,7 @@ extern struct tm_binds tmb;
 
 extern int notification_list_size_threshold;
 extern int max_notification_list_size;
+extern int notification_processes;
 
 extern int subscription_default_expires;
 extern int subscription_min_expires;
@@ -116,6 +118,13 @@ static inline int randomize_expires(int expires, int range)
 
 int notify_init()
 {
+	int i;
+	gen_sem_t *empty;
+
+	if(notification_processes < 1) {
+		LM_ERR("notification_processes must be at least one\n");
+		return 0;
+	}
 	notification_list = shm_malloc(sizeof(reg_notification_list));
 	if(!notification_list) {
 		LM_ERR("No more SHM mem\n");
@@ -125,18 +134,44 @@ int notify_init()
 	notification_list->lock = lock_alloc();
 	if(!notification_list->lock) {
 		LM_ERR("failed to create cdp event list lock\n");
+		shm_free(notification_list);
+		notification_list = NULL;
 		return 0;
 	}
 	if(lock_init(notification_list->lock) == 0) {
 		lock_dealloc(notification_list->lock);
 		notification_list->lock = 0;
 		LM_ERR("failed to initialize cdp event list lock\n");
+		shm_free(notification_list);
+		notification_list = NULL;
 		return 0;
 	}
-	notification_list->size = 0;
-	sem_new(notification_list->empty,
-			0); //pre-locked - as we assume list is empty at start
+	notification_list->queues =
+			shm_malloc(sizeof(reg_notification_queue) * notification_processes);
+	if(!notification_list->queues) {
+		LM_ERR("No more SHM mem for notification queues\n");
+		goto error;
+	}
+	memset(notification_list->queues, 0,
+			sizeof(reg_notification_queue) * notification_processes);
+	for(i = 0; i < notification_processes; i++) {
+		empty = shm_malloc(sizeof(*empty));
+		if(!empty) {
+			LM_ERR("No more SHM mem for notification semaphore\n");
+			goto error;
+		}
+		if(sem_init(empty, 1, 0) < 0) {
+			LM_ERR("Could not initialize notification semaphore: %s\n",
+					strerror(errno));
+			shm_free(empty);
+			goto error;
+		}
+		notification_list->queues[i].empty = empty;
+	}
 	return 1;
+error:
+	notify_destroy();
+	return 0;
 }
 
 /**
@@ -145,16 +180,28 @@ int notify_init()
 void notify_destroy()
 {
 	reg_notification *n, *nn;
+	int i;
+	reg_notification_queue *queue;
+
+	if(!notification_list)
+		return;
 	lock_get(notification_list->lock);
-	n = notification_list->head;
-	while(n) {
-		nn = n->next;
-		free_notification(n);
-		n = nn;
+	if(notification_list->queues) {
+		for(i = 0; i < notification_processes; i++) {
+			queue = &notification_list->queues[i];
+			for(n = queue->head; n; n = nn) {
+				nn = n->next;
+				free_notification(n);
+			}
+			sem_free(queue->empty);
+		}
+		shm_free(notification_list->queues);
 	}
+	lock_release(notification_list->lock);
 	lock_destroy(notification_list->lock);
 	lock_dealloc(notification_list->lock);
 	shm_free(notification_list);
+	notification_list = NULL;
 }
 
 int can_publish_reg(struct sip_msg *msg, char *_t, char *str2)
@@ -1436,6 +1483,31 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2)
 		} else {
 			LM_DBG("subscription s exists\n");
 			LM_DBG("deleting subscriber from usrloc\n");
+			/* RFC 6665 4.1.2.3: queue the final NOTIFY while the dialog
+			 * and route set still exist. Only this subscriber is notified. */
+			reg_notification *final_notify;
+			str *final_impus = &presentity_uri;
+			str *no_contacts = NULL;
+			str content_type = str_init("application/reginfo+xml");
+			str final_state = str_init("terminated;reason=timeout");
+			int final_cseq = reg_subscriber->local_cseq + 1;
+			int final_version = reg_subscriber->version + 1;
+			ul.update_subscriber(presentity_impurecord, &reg_subscriber, NULL,
+					&final_cseq, &final_version);
+			final_notify = new_notification(final_state, content_type,
+					&final_impus, 1, reg_subscriber, &no_contacts, 0);
+			if(!final_notify) {
+				LM_ERR("Could not queue final reg-event NOTIFY for "
+					   "unsubscribe\n");
+				ul.unlock_udomain(domain, &presentity_uri);
+				subscribe_reply(msg, 500, "Notification failure", &expires,
+						&scscf_name_str);
+				ret = CSCF_RETURN_ERROR;
+				goto doneorerror;
+			}
+			final_notify->_d = (udomain_t *)_t;
+			final_notify->event_type = IMS_REGISTRAR_UNSUBSCRIBE;
+			add_notification(final_notify);
 			ul.external_delete_subscriber(reg_subscriber, (udomain_t *)_t,
 					0 /*domain is already locked*/);
 			ul.unlock_udomain(domain, &presentity_uri);
@@ -1818,6 +1890,7 @@ void create_notifications(udomain_t *_t, impurecord_t *r_passed,
 					num_explit_dereg_contact);
 			if(n) {
 				n->_d = _t;
+				n->event_type = event_type;
 				LM_DBG("Notification exists - about to add it\n");
 				add_notification(n);
 			} else {
@@ -1954,18 +2027,22 @@ static void reginfo_printf(str *buf, const char *fmt, ...)
 }
 
 static void process_xml_for_explit_dereg_contact(
-		str *buf, str explit_dereg_contact)
+		str *buf, str explit_dereg_contact, int event_type)
 {
 
 	LM_DBG("Processing XML for explicit dereg contact address: <%.*s>\n",
 			explit_dereg_contact.len, explit_dereg_contact.s);
 
-	/* An explicit de-registration contact was removed - by the UE's
-	 * de-REGISTER, by the network (reg_rpc_dereg_impu()), or replaced by a
-	 * later registration - it did not run out: "unregistered" (RFC 3680),
-	 * one of the values TS 24.229 5.4.2.1.2 allows for a removed binding */
+	/* Explicit removal is not expiry (RFC 3680). Preserve the triggering
+	 * network event across the asynchronous queue: SERVER_CHANGE asks the
+	 * UE to register again; permanent termination does not. Ordinary UE
+	 * removal/replacement keeps the existing "unregistered" event. */
+	str event = event_type == IMS_REGISTRAR_CONTACT_DEACTIVATED ? r_deactivated
+				: event_type == IMS_REGISTRAR_CONTACT_DEREGISTERED
+						? (str)str_init("rejected")
+						: r_unregistered;
 	reginfo_printf(buf, contact_s.s, (void *)1, r_terminated.len,
-			r_terminated.s, r_unregistered.len, r_unregistered.s, 0);
+			r_terminated.s, event.len, event.s, 0);
 	reginfo_append(buf, &uri_s);
 
 	reginfo_append(buf, &explit_dereg_contact);
@@ -2078,9 +2155,10 @@ static int impu_has_valid_contact(impurecord_t *r, str *uri)
 	return found;
 }
 
-str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
-		str *explit_dereg_contact, str *watcher_contact,
-		int num_explit_dereg_contact, unsigned int reginfo_version)
+static str generate_reginfo_full_event(udomain_t *_t, str *impu_list,
+		int num_impus, str *explit_dereg_contact, str *watcher_contact,
+		int num_explit_dereg_contact, unsigned int reginfo_version,
+		int event_type)
 {
 	str x = {0, 0};
 	str buf;
@@ -2199,7 +2277,8 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 			 * listed below with its own state */
 			if(impu_has_valid_contact(r, &explit_dereg_contact[k]))
 				continue;
-			process_xml_for_explit_dereg_contact(&buf, explit_dereg_contact[k]);
+			process_xml_for_explit_dereg_contact(
+					&buf, explit_dereg_contact[k], event_type);
 		}
 
 		impucontact = r->linked_contacts.head;
@@ -2267,6 +2346,16 @@ str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
 
 	return x;
 }
+
+str generate_reginfo_full(udomain_t *_t, str *impu_list, int num_impus,
+		str *explit_dereg_contact, str *watcher_contact,
+		int num_explit_dereg_contact, unsigned int reginfo_version)
+{
+	return generate_reginfo_full_event(_t, impu_list, num_impus,
+			explit_dereg_contact, watcher_contact, num_explit_dereg_contact,
+			reginfo_version, IMS_REGISTRAR_NONE);
+}
+
 
 /**
  * Creates the partial reginfo XML.
@@ -2604,9 +2693,9 @@ void send_notification(reg_notification *n)
 			domain->name->len, domain->name->s);
 
 
-	content = generate_reginfo_full(domain, n->impus, n->num_impus,
+	content = generate_reginfo_full_event(domain, n->impus, n->num_impus,
 			n->explit_dereg_contact, &n->watcher_contact,
-			n->num_explit_dereg_contact, n->reginfo_s_version);
+			n->num_explit_dereg_contact, n->reginfo_s_version, n->event_type);
 
 	if(content.len <= 0) {
 		LM_ERR("no reg-info content to send\n");
@@ -2868,6 +2957,8 @@ reg_notification *new_notification(str subscription_state, str content_type,
  */
 void add_notification(reg_notification *n)
 {
+	reg_notification_queue *queue;
+	unsigned int worker;
 
 	LM_DBG("Adding notification\n");
 	if(!n) {
@@ -2877,23 +2968,34 @@ void add_notification(reg_notification *n)
 		LM_DBG("Notification exists\n");
 	}
 
+	LM_DBG("Adding to notification list\n");
+	lock_get(notification_list->lock);
 	if(max_notification_list_size > 0
 			&& ((notification_list->size + 1) > max_notification_list_size)) {
 		LM_WARN("Dropping notification, list too big [%d]\n",
 				notification_list->size);
+		lock_release(notification_list->lock);
+		free_notification(n);
 		return;
 	}
 
-	LM_DBG("Adding to notification list\n");
-	lock_get(notification_list->lock);
+	/* RFC 3261 12.2.1.1 requires increasing in-dialog request CSeqs;
+	 * RFC 3680 5.1 also orders reginfo versions. A worker per dialog hash
+	 * serializes dispatch; unrelated dialogs can use other workers. */
+	worker = core_hash(&n->call_id, &n->from_tag, 0) % notification_processes;
+	queue = &notification_list->queues[worker];
 	n->next = 0;
-	n->prev = notification_list->tail;
-	if(notification_list->tail)
-		notification_list->tail->next = n;
-	notification_list->tail = n;
-	if(!notification_list->head)
-		notification_list->head = n;
+	n->prev = queue->tail;
+	if(queue->tail)
+		queue->tail->next = n;
+	queue->tail = n;
+	if(!queue->head)
+		queue->head = n;
 	notification_list->size++;
+	LM_DBG("Queued reg-event NOTIFY: worker=%u cseq=%u queued=%d "
+		   "dialog=[%.*s]\n",
+			worker, n->local_cseq, notification_list->size, n->call_id.len,
+			n->call_id.s);
 	if(notification_list_size_threshold > 0
 			&& notification_list->size > notification_list_size_threshold) {
 		LM_WARN("notification_list is size [%d] and has exceed "
@@ -2901,32 +3003,45 @@ void add_notification(reg_notification *n)
 				notification_list->size, notification_list_size_threshold);
 	}
 
-	sem_release(notification_list->empty);
+	sem_release(queue->empty);
 	lock_release(notification_list->lock);
 }
 
 /**
  * Pop a notification to the list of notifications from the top
  */
-reg_notification *get_notification()
+reg_notification *get_notification(int worker)
 {
 	reg_notification *n;
+	int ret;
+	reg_notification_queue *queue = &notification_list->queues[worker];
 
+	/* Consume exactly one semaphore token per queued notification. */
+	do {
+		ret = sem_get(queue->empty);
+	} while(ret < 0 && errno == EINTR);
+	if(ret < 0) {
+		LM_ERR("Could not wait for notification: %s\n", strerror(errno));
+		return NULL;
+	}
 	lock_get(notification_list->lock);
-	while(notification_list->head == 0) {
+	n = queue->head;
+	if(!n) {
 		lock_release(notification_list->lock);
-		sem_get(notification_list->empty);
-		lock_get(notification_list->lock);
+		LM_ERR("Notification semaphore has no queued notification\n");
+		return NULL;
 	}
-
-	n = notification_list->head;
-	notification_list->head = n->next;
-
-	if(n == notification_list->tail) { //list now empty
-		notification_list->tail = 0;
-	}
-	n->next = 0; //make sure whoever gets this can't access our list
+	queue->head = n->next;
+	if(queue->head)
+		queue->head->prev = NULL;
+	else
+		queue->tail = NULL;
+	n->next = n->prev = NULL;
 	notification_list->size--;
+	LM_DBG("Dequeued reg-event NOTIFY: worker=%d cseq=%u queued=%d "
+		   "dialog=[%.*s]\n",
+			worker, n->local_cseq, notification_list->size, n->call_id.len,
+			n->call_id.s);
 	lock_release(notification_list->lock);
 
 	return n;
@@ -2935,7 +3050,7 @@ reg_notification *get_notification()
 /**
  * This is the main event process for notifications to be sent
  */
-void notification_event_process()
+void notification_event_process(int worker)
 {
 
 	reg_notification *n = 0;
@@ -2943,7 +3058,9 @@ void notification_event_process()
 	LM_DBG("Running notification_event_process\n");
 
 	for(;;) {
-		n = get_notification();
+		n = get_notification(worker);
+		if(!n)
+			continue;
 		LM_DBG("About to send notification\n");
 		send_notification(n);
 		LM_DBG("About to free notification\n");

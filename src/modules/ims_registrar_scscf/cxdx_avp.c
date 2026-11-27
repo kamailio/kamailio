@@ -46,6 +46,7 @@
  */
 
 
+#include "../ims_usrloc_scscf/usrloc.h"
 #include "../cdp/cdp_load.h"
 #include "../../modules/tm/tm_load.h"
 #include "cxdx_avp.h"
@@ -174,35 +175,38 @@ int cxdx_add_destination_realm(AAAMessage *msg, str data)
 int cxdx_add_vendor_specific_appid(AAAMessage *msg, unsigned int vendor_id,
 		unsigned int auth_id, unsigned int acct_id)
 {
-	AAA_AVP_LIST list;
+	AAA_AVP_LIST list = {0, 0};
 	str group;
 	char x[4];
-
-	list.head = 0;
-	list.tail = 0;
-
+	int result;
 	set_4bytes(x, vendor_id);
-	cxdx_add_avp_list(&list, x, 4, AVP_Vendor_Id, AAA_AVP_FLAG_MANDATORY, 0,
-			AVP_DUPLICATE_DATA, __FUNCTION__);
-
+	if(!cxdx_add_avp_list(&list, x, 4, AVP_Vendor_Id, AAA_AVP_FLAG_MANDATORY, 0,
+			   AVP_DUPLICATE_DATA, __FUNCTION__))
+		goto error;
 	if(auth_id) {
 		set_4bytes(x, auth_id);
-		cxdx_add_avp_list(&list, x, 4, AVP_Auth_Application_Id,
-				AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+		if(!cxdx_add_avp_list(&list, x, 4, AVP_Auth_Application_Id,
+				   AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__))
+			goto error;
 	}
 	if(acct_id) {
 		set_4bytes(x, acct_id);
-		cxdx_add_avp_list(&list, x, 4, AVP_Acct_Application_Id,
-				AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+		if(!cxdx_add_avp_list(&list, x, 4, AVP_Acct_Application_Id,
+				   AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__))
+			goto error;
 	}
-
 	group = cdpb.AAAGroupAVPS(list);
-
 	cdpb.AAAFreeAVPList(&list);
-
-	return cxdx_add_avp(msg, group.s, group.len,
+	if(!group.s)
+		return 0;
+	result = cxdx_add_avp(msg, group.s, group.len,
 			AVP_Vendor_Specific_Application_Id, AAA_AVP_FLAG_MANDATORY, 0,
-			AVP_FREE_DATA, __FUNCTION__);
+			AVP_DUPLICATE_DATA, __FUNCTION__);
+	shm_free(group.s);
+	return result;
+error:
+	cdpb.AAAFreeAVPList(&list);
+	return 0;
 }
 
 /**
@@ -1212,18 +1216,85 @@ int cxdx_add_experimental_result(AAAMessage *msg, unsigned int code)
 			AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
 
-int cxdx_add_failed_avp(AAAMessage *msg, int code, int vendor, str value)
+int cxdx_add_failed_avp(
+		AAAMessage *msg, int code, int vendor, str value, int flags)
+{
+	/* RFC 6733 7.5 permits an empty value for a missing AVP. CDP's
+	 * AAACreateAVP rejects empty payloads, so encode the encapsulated AVP
+	 * directly; the outer Failed-AVP still has a nonempty grouped payload. */
+	int header = vendor ? 12 : 8;
+	int len = header + value.len;
+	int padded = (len + 3) & ~3;
+	char *data = pkg_malloc(padded);
+	int result;
+	if(!data)
+		return 0;
+	memset(data, 0, padded);
+	set_4bytes(data, code);
+	data[4] = flags | (vendor ? AAA_AVP_FLAG_VENDOR_SPECIFIC : 0);
+	set_3bytes(data + 5, len);
+	if(vendor)
+		set_4bytes(data + 8, vendor);
+	if(value.len)
+		memcpy(data + header, value.s, value.len);
+	result = cxdx_add_avp(msg, data, padded, AVP_Failed_AVP,
+			AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+	pkg_free(data);
+	return result;
+}
+
+int cxdx_add_associated_identities(AAAMessage *msg, str *ids, int count)
 {
 	AAA_AVP_LIST list = {0, 0};
 	str group;
-	if(!cxdx_add_avp_list(&list, value.s, value.len, code,
-			   AAA_AVP_FLAG_MANDATORY, vendor, AVP_DUPLICATE_DATA,
-			   __FUNCTION__))
-		return 0;
+	int i, result;
+	for(i = 0; i < count; i++)
+		if(!cxdx_add_avp_list(&list, ids[i].s, ids[i].len, AVP_User_Name,
+				   AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA,
+				   __FUNCTION__)) {
+			cdpb.AAAFreeAVPList(&list);
+			return 0;
+		}
 	group = cdpb.AAAGroupAVPS(list);
 	cdpb.AAAFreeAVPList(&list);
 	if(!group.s)
 		return 0;
-	return cxdx_add_avp(msg, group.s, group.len, AVP_Failed_AVP,
-			AAA_AVP_FLAG_MANDATORY, 0, AVP_FREE_DATA, __FUNCTION__);
+	result =
+			cxdx_add_avp(msg, group.s, group.len, AVP_IMS_Associated_Identities,
+					0, IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA, __FUNCTION__);
+	shm_free(group.s);
+	return result;
+}
+
+int cxdx_add_emergency_identities(
+		AAAMessage *msg, cx_emergency_identity_t *pairs, int count)
+{
+	AAA_AVP_LIST list;
+	str group;
+	int i, result;
+	for(i = 0; i < count; i++) {
+		list = (AAA_AVP_LIST){0, 0};
+		if(!cxdx_add_avp_list(&list, pairs[i].private_identity.s,
+				   pairs[i].private_identity.len, AVP_User_Name,
+				   AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__)
+				|| !cxdx_add_avp_list(&list, pairs[i].public_identity.s,
+						pairs[i].public_identity.len, AVP_IMS_Public_Identity,
+						AAA_AVP_FLAG_MANDATORY, IMS_vendor_id_3GPP,
+						AVP_DUPLICATE_DATA, __FUNCTION__)) {
+			cdpb.AAAFreeAVPList(&list);
+			return 0;
+		}
+		group = cdpb.AAAGroupAVPS(list);
+		cdpb.AAAFreeAVPList(&list);
+		if(!group.s)
+			return 0;
+		/* TS 29.229 6.3.57: Identity-with-Emergency-Registration, code 651. */
+		result = cxdx_add_avp(msg, group.s, group.len,
+				AVP_IMS_Identity_with_Emergency_Registration, 0,
+				IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA, __FUNCTION__);
+		shm_free(group.s);
+		if(!result)
+			return 0;
+	}
+	return 1;
 }
