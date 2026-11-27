@@ -339,7 +339,10 @@
     </section>
     <section id="ims_usrloc_scscf.p.unreg_validity">
       <title>unreg_validity (int)</title>
-      <para>Default validity time in seconds for unregister assignment to SCSCF </para>
+      <para>Validity time in seconds for an unregistered assignment to the
+      S-CSCF. A cached unregistered profile without contacts or subscribers
+      is retained until this time expires. An explicit RTR invalidation
+      removes the profile independently of this lifetime.</para>
       <para><emphasis> Default value is 1800 </emphasis></para>
       <example>
         <title>Set <varname>unreg_validity</varname> parameter</title>

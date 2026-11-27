@@ -125,6 +125,7 @@ int bind_usrloc(usrloc_api_t *api)
 
 	api->register_ulcb = register_ulcb;
 	api->cx_replace_profile = cx_replace_profile;
+	api->cx_update_profile = cx_update_profile;
 	api->cx_deregister = cx_deregister;
 
 	//api->update_user_profile = update_user_profile;
