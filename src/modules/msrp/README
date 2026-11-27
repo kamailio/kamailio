@@ -227,7 +227,7 @@ modparam("msrp", "timer_interval", 90)
 
    Example 1.4. Set auth_min_expires parameter
 ...
-modparam("msrp", "auth_min_expiresl", 90)
+modparam("msrp", "auth_min_expires", 90)
 ...
 
 3.5. auth_max_expires (int)
@@ -238,7 +238,7 @@ modparam("msrp", "auth_min_expiresl", 90)
 
    Example 1.5. Set auth_max_expires parameter
 ...
-modparam("msrp", "auth_max_expiresl", 1800)
+modparam("msrp", "auth_max_expires", 1800)
 ...
 
 3.6. use_path_addr (str)
@@ -667,7 +667,7 @@ event_route[msrp:frame-in] {
                                 msrp_reply("423", "Interval Out-of-Bounds",
                                         "Min-Expires: MSRP_MIN_EXPIRES\r\n");
                                 exit;
-                        } else {
+                        } else if ($var(expires) > MSRP_MAX_EXPIRES) {
                                 msrp_reply("423", "Interval Out-of-Bounds",
                                         "Max-Expires: MSRP_MAX_EXPIRES\r\n");
                                 exit;
