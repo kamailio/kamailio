@@ -560,6 +560,26 @@ modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 		</example>
 		</section>
 
+		<section id="pua_dialoginfo.p.pubpadi_dlg_var">
+		<title><varname>pubpadi_dlg_var</varname> (str)</title>
+		<para>
+			The name of the dialog variable where to store the dialog id (padi) sent
+			in the notifications. Dialogs loaded after &kamailio; start, via DB or DMQ,
+			keep the same id. If not set, loaded dialogs get a new id.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>pubpadi_dlg_var</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "pubpadi_dlg_var", "pubpadi")
+...
+</programlisting>
+		</example>
+		</section>
+
 		<section id="pua_dialoginfo.p.caller_trying">
 		<title><varname>caller_trying</varname> (int)</title>
 		<para>
