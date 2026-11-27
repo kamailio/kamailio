@@ -50,6 +50,122 @@
 
 extern db_locking_t db_table_lock;
 
+typedef struct pua_pending_unsubscribe
+{
+	str call_id, from_tag, to_tag;
+	struct pua_pending_unsubscribe *next;
+} pua_pending_unsubscribe_t;
+
+static struct
+{
+	gen_lock_t lock;
+	pua_pending_unsubscribe_t *head;
+} *pending_unsubscribes;
+
+int pua_subscribe_init(void)
+{
+	pending_unsubscribes = shm_malloc(sizeof(*pending_unsubscribes));
+	if(!pending_unsubscribes) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(pending_unsubscribes, 0, sizeof(*pending_unsubscribes));
+	if(!lock_init(&pending_unsubscribes->lock)) {
+		LM_ERR("Cannot initialize the pending unsubscribe reservation lock\n");
+		shm_free(pending_unsubscribes);
+		pending_unsubscribes = NULL;
+		return -1;
+	}
+	return 0;
+}
+
+void pua_subscribe_destroy(void)
+{
+	pua_pending_unsubscribe_t *entry, *next;
+
+	if(!pending_unsubscribes)
+		return;
+	for(entry = pending_unsubscribes->head; entry; entry = next) {
+		next = entry->next;
+		shm_free(entry);
+	}
+	lock_destroy(&pending_unsubscribes->lock);
+	shm_free(pending_unsubscribes);
+	pending_unsubscribes = NULL;
+}
+
+/* Keep the dialog available to final NOTIFY processing in both DB modes.
+ * Only the callback owns the reservation; it is never written to the DB.
+ * This local guard prevents concurrent senders from generating duplicate
+ * in-dialog requests; RFC 3261 12.2.1.1 defines the CSeq requirements. */
+static int reserve_unsubscribe(ua_pres_t *dialog, void **reservation)
+{
+	pua_pending_unsubscribe_t *entry;
+	char *p;
+
+	lock_get(&pending_unsubscribes->lock);
+	for(entry = pending_unsubscribes->head; entry; entry = entry->next) {
+		if(str_strcmp(&entry->call_id, &dialog->call_id) == 0
+				&& str_strcmp(&entry->from_tag, &dialog->from_tag) == 0
+				&& str_strcmp(&entry->to_tag, &dialog->to_tag) == 0) {
+			LM_DBG("Unsubscribe reservation already held: dialog=[%.*s] "
+				   "from_tag=[%.*s] to_tag=[%.*s]\n",
+					dialog->call_id.len, dialog->call_id.s,
+					dialog->from_tag.len, dialog->from_tag.s,
+					dialog->to_tag.len, dialog->to_tag.s);
+			lock_release(&pending_unsubscribes->lock);
+			return 0;
+		}
+	}
+	entry = shm_malloc(sizeof(*entry) + dialog->call_id.len
+					   + dialog->from_tag.len + dialog->to_tag.len);
+	if(!entry) {
+		lock_release(&pending_unsubscribes->lock);
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	p = (char *)(entry + 1);
+	entry->call_id = (str){p, dialog->call_id.len};
+	memcpy(p, dialog->call_id.s, dialog->call_id.len);
+	p += dialog->call_id.len;
+	entry->from_tag = (str){p, dialog->from_tag.len};
+	memcpy(p, dialog->from_tag.s, dialog->from_tag.len);
+	p += dialog->from_tag.len;
+	entry->to_tag = (str){p, dialog->to_tag.len};
+	memcpy(p, dialog->to_tag.s, dialog->to_tag.len);
+	entry->next = pending_unsubscribes->head;
+	pending_unsubscribes->head = entry;
+	LM_DBG("Reserved unsubscribe: dialog=[%.*s] from_tag=[%.*s] "
+		   "to_tag=[%.*s]\n",
+			dialog->call_id.len, dialog->call_id.s, dialog->from_tag.len,
+			dialog->from_tag.s, dialog->to_tag.len, dialog->to_tag.s);
+	*reservation = entry;
+	lock_release(&pending_unsubscribes->lock);
+	return 1;
+}
+
+static void release_unsubscribe(void *reservation)
+{
+	pua_pending_unsubscribe_t **entry;
+
+	if(!reservation || !pending_unsubscribes)
+		return;
+	lock_get(&pending_unsubscribes->lock);
+	for(entry = &pending_unsubscribes->head; *entry; entry = &(*entry)->next) {
+		if(*entry == reservation) {
+			LM_DBG("Released unsubscribe reservation: dialog=[%.*s] "
+				   "from_tag=[%.*s] to_tag=[%.*s]\n",
+					(*entry)->call_id.len, (*entry)->call_id.s,
+					(*entry)->from_tag.len, (*entry)->from_tag.s,
+					(*entry)->to_tag.len, (*entry)->to_tag.s);
+			*entry = (*entry)->next;
+			shm_free(reservation);
+			break;
+		}
+	}
+	lock_release(&pending_unsubscribes->lock);
+}
+
 void print_subs(subs_info_t *subs)
 {
 	LM_DBG("pres_uri= %.*s - len: %d\n", subs->pres_uri->len, subs->pres_uri->s,
@@ -281,6 +397,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		LM_ERR("null callback parameter\n");
 		return;
 	}
+	hentity = (ua_pres_t *)(*ps->param);
 
 	if(dbmode == PUA_DB_ONLY && pua_dbf.start_transaction) {
 		if(pua_dbf.start_transaction(pua_db, db_table_lock) < 0) {
@@ -290,7 +407,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	}
 
 	LM_DBG("completed with status %d\n", ps->code);
-	hentity = (ua_pres_t *)(*ps->param);
 	hash_code = core_hash(hentity->pres_uri, hentity->watcher_uri, HASH_SIZE);
 	flag = hentity->flag;
 	if(hentity->flag & XMPP_INITIAL_SUBS)
@@ -452,7 +568,15 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		subs.watcher_uri = hentity->watcher_uri;
 		subs.contact = &hentity->contact;
 
-		if(hentity->remote_contact.s)
+		/* RFC 6665 3.1.2 and 4.1.2.2: after losing a reg-event dialog,
+		 * the initial request must identify the original resource. The old
+		 * notifier Contact is only the target for the lost dialog. Keep
+		 * the configured outbound proxy for routing the new request. */
+		if(ps->code == 481 && (hentity->event & REGINFO_EVENT)) {
+			LM_INFO("Reginfo subscription dialog lost (481); recreating for "
+					"[%.*s]\n",
+					subs.pres_uri->len, subs.pres_uri->s);
+		} else if(hentity->remote_contact.s)
 			subs.remote_target = &hentity->remote_contact;
 
 		if(hentity->desired_expires == 0)
@@ -684,6 +808,7 @@ error:
 end:
 
 	if(hentity) {
+		release_unsubscribe(hentity->pending_unsubscribe);
 		shm_free(hentity);
 		hentity = NULL;
 	}
@@ -1115,6 +1240,21 @@ int send_subscribe(subs_info_t *subs)
 				lock_release(&HashT->p_records[hash_code].lock);
 			goto error;
 		}
+		if(subs->expires == 0) {
+			result = reserve_unsubscribe(
+					presentity, &hentity->pending_unsubscribe);
+			if(result <= 0) {
+				if(dbmode != PUA_DB_ONLY)
+					lock_release(&HashT->p_records[hash_code].lock);
+				shm_free(hentity);
+				hentity = NULL;
+				if(result < 0)
+					goto error;
+				LM_DBG("Unsubscribe already pending for this dialog - "
+					   "skipping\n");
+				goto done;
+			}
+		}
 		if(dbmode != PUA_DB_ONLY)
 			lock_release(&HashT->p_records[hash_code].lock);
 
@@ -1124,10 +1264,17 @@ int send_subscribe(subs_info_t *subs)
 				subs_cback_func, (void *)hentity);
 		result = tmb.t_request_within(&uac_r);
 		if(result < 0) {
+			release_unsubscribe(hentity->pending_unsubscribe);
 			shm_free(hentity);
 			hentity = NULL;
 			LM_ERR("while sending request with t_request\n");
 			goto error;
+		}
+		if(uac_r.cb_flags & TMCB_LOCAL_REQUEST_DROP) {
+			release_unsubscribe(hentity->pending_unsubscribe);
+			shm_free(hentity);
+			hentity = NULL;
+			goto done;
 		}
 	}
 

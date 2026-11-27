@@ -41,6 +41,20 @@
 		only mode where the presentity list is stored purely in a database, allowing
 		both scalability and resilience.
 	</para>
+	<para>
+		Repeated cancellation requests for the same subscription dialog are
+		coalesced while an unsubscribe transaction is pending in this instance.
+		The dialog remains available for final NOTIFY processing until the
+		transaction completes. This applies to both storage modes and does not
+		change refreshes of wanted subscriptions.
+	</para>
+	<para>
+		If a registration-event subscription refresh receives a 481 response,
+		a still-wanted subscription is recreated for its original presentity
+		URI, retaining the configured outbound proxy. The notifier Contact
+		from the lost dialog is not reused as the new request's resource URI.
+		Cancelled or expired subscriptions are not recreated.
+	</para>
 	</section>
 		<section>
 	<title>Dependencies</title>
