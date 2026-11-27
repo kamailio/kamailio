@@ -1239,6 +1239,131 @@ int proxy_authenticate(struct sip_msg *msg, char *_realm, char *str2)
 	return w_ims_authenticate(msg, _realm, 1);
 }
 
+/* PPR password changes are prepared without replacing any live vector.
+ * Holding all auth slots also covers multiple cached IMPUs for one IMPI. */
+typedef struct ims_digest_update
+{
+	auth_userdata *user;
+	auth_vector *vector;
+	struct ims_digest_update *next;
+} ims_digest_update_t;
+
+typedef struct ims_digest_transaction
+{
+	int locked;
+	ims_digest_update_t *updates;
+} ims_digest_transaction_t;
+
+void ims_auth_finish_digest_update(void *state, int commit)
+{
+	ims_digest_transaction_t *transaction = state;
+	ims_digest_update_t *update, *next;
+	int i;
+	if(!transaction)
+		return;
+	LM_DBG("Cx PPR SIP Digest update: %s prepared vectors\n",
+			commit ? "committing" : "discarding");
+	for(update = transaction->updates; update; update = next) {
+		next = update->next;
+		if(commit) {
+			drop_auth_vectors_for_userdata(update->user);
+			update->vector->prev = NULL;
+			update->vector->next = update->user->head;
+			if(update->user->head)
+				update->user->head->prev = update->vector;
+			else
+				update->user->tail = update->vector;
+			update->user->head = update->vector;
+		} else {
+			free_auth_vector(update->vector);
+		}
+		pkg_free(update);
+	}
+	for(i = transaction->locked - 1; i >= 0; i--)
+		auth_data_unlock(i);
+	pkg_free(transaction);
+}
+
+int ims_auth_prepare_digest_update(str *private_id, str *ha1, void **state)
+{
+	ims_digest_transaction_t *transaction;
+	ims_digest_update_t *update;
+	auth_userdata *user;
+	int i;
+	str scheme = str_init("SIP Digest"), empty = {0, 0};
+	*state = NULL;
+	/* TS 29.228 6.5.2.4 applies password changes to the private identity.
+	 * The all-bucket reservation and deferred commit are local concurrency
+	 * mechanisms so a rejected PPR leaves existing vectors usable. */
+	if(!auth_data || act_auth_data_hash_size <= 0 || av_check_only_impu
+			|| !private_id || !private_id->len || !ha1 || ha1->len != 32) {
+		LM_WARN("Cx PPR SIP Digest update rejected: cache_ready=%d "
+				"impu_only=%d private_id_present=%d ha1_length_valid=%d\n",
+				auth_data && act_auth_data_hash_size > 0, av_check_only_impu,
+				private_id && private_id->len, ha1 && ha1->len == 32);
+		return -1;
+	}
+	for(i = 0; i < ha1->len; i++)
+		if(!((ha1->s[i] >= '0' && ha1->s[i] <= '9')
+				   || (ha1->s[i] >= 'a' && ha1->s[i] <= 'f')
+				   || (ha1->s[i] >= 'A' && ha1->s[i] <= 'F'))) {
+			LM_WARN("Cx PPR SIP Digest update rejected: HA1 is not "
+					"hexadecimal\n");
+			return -1;
+		}
+	transaction = pkg_malloc(sizeof(*transaction));
+	if(!transaction) {
+		LM_ERR("Cx PPR SIP Digest update: cannot allocate transaction\n");
+		return -2;
+	}
+	memset(transaction, 0, sizeof(*transaction));
+	for(i = 0; i < act_auth_data_hash_size; i++) {
+		if(lock_try(auth_data[i].lock) != 0) {
+			LM_DBG("Cx PPR authentication cache busy; vectors not changed\n");
+			goto error;
+		}
+		transaction->locked++;
+	}
+	for(i = 0; i < act_auth_data_hash_size; i++) {
+		for(user = auth_data[i].head; user; user = user->next) {
+			if(user->private_identity.len != private_id->len
+					|| memcmp(user->private_identity.s, private_id->s,
+							private_id->len))
+				continue;
+			update = pkg_malloc(sizeof(*update));
+			if(!update) {
+				LM_ERR("Cx PPR SIP Digest update: cannot allocate update "
+					   "entry\n");
+				goto error;
+			}
+			update->user = user;
+			update->vector =
+					new_auth_vector(1, scheme, empty, *ha1, empty, empty);
+			if(!update->vector || update->vector->authorization.len != 32
+					|| !update->vector->authorization.s
+					|| update->vector->authenticate.len != 2 * NONCE_LEN
+					|| !update->vector->authenticate.s) {
+				LM_ERR("Cx PPR SIP Digest update: cannot prepare replacement "
+					   "authentication vector\n");
+				if(update->vector)
+					free_auth_vector(update->vector);
+				pkg_free(update);
+				goto error;
+			}
+			update->next = transaction->updates;
+			transaction->updates = update;
+		}
+	}
+	*state = transaction;
+	LM_DBG("Cx PPR SIP Digest update prepared for private identity [%.*s]\n",
+			private_id->len, private_id->s);
+	return 0;
+error:
+	ims_auth_finish_digest_update(transaction, 0);
+	return -2;
+}
+
+
 /**
  * @brief bind functions to IMS AUTH API structure
  */
@@ -1249,6 +1374,8 @@ int bind_ims_auth(ims_auth_api_t *api)
 		return -1;
 	}
 	api->digest_authenticate = digest_authenticate;
+	api->prepare_digest_update = ims_auth_prepare_digest_update;
+	api->finish_digest_update = ims_auth_finish_digest_update;
 
 	return 0;
 }
