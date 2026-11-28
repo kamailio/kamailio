@@ -267,9 +267,9 @@ Options:\n\
     --version    Long option for `-v`\n\
     -V           Alternative for `-v`\n\
     -x name      Specify internal manager for shared memory (shm)\n\
-                  - can be: fm, qm or tlsf\n\
+                  - can be: fm, qm, tlsf or hg\n\
     -X name      Specify internal manager for private memory (pkg)\n\
-                  - can be: fm, qm, tlsf or sm\n\
+                  - can be: fm, qm, tlsf, hg or sm\n\
                   - if omitted, the one for shm is used\n\
     -Y dir       Runtime dir path\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n"

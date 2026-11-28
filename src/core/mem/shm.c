@@ -878,6 +878,12 @@ int shm_init_api(sr_shm_api_t *ap, unsigned int count)
 	if(ap == NULL || count == 0) {
 		return -1;
 	}
+	/* a manager that locks internally keeps its own entry points: the
+	 * per-call block lock would serialize every allocation again */
+	if(count == 1 && ap[0].xlocked) {
+		_shm_root = ap[0];
+		return 0;
+	}
 	_shm_blocks = calloc(count, sizeof(*_shm_blocks));
 	if(_shm_blocks == NULL) {
 		return -1;
@@ -946,6 +952,11 @@ int shm_init_manager(char *name)
 	} else if(strcmp(name, "tlsf") == 0 || strcmp(name, "tlsf_malloc") == 0) {
 		/*tlsf malloc*/
 		return tlsf_malloc_init_shm_manager();
+#ifdef HG_MALLOC
+	} else if(strcmp(name, "hg") == 0 || strcmp(name, "hg_malloc") == 0) {
+		/*size classes with per-thread caches*/
+		return hg_malloc_init_shm_manager();
+#endif
 	} else if(strcmp(name, "sm") == 0) {
 		/*system malloc - process private, cannot back shared memory*/
 		LM_ERR("sm (system malloc) is only for pkg, not for shm\n");
