@@ -33,6 +33,10 @@ sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += python' ${DIST}/rules
 sed -i -e '/libjwt-dev/d' -e 's/, JWT (JSON Web Token)//' ${DIST}/control
 sed -i -e '/^EXTRA_GROUPS += jwt$/d' ${DIST}/rules
 
+# disable tlsa for arm64
+sed -i -e 's/# tlsa/ifneq ($(DEB_HOST_ARCH),arm64)/' ${DIST}/rules
+sed -i -e 's/# end tlsa/endif/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

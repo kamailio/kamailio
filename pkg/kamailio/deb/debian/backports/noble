@@ -35,6 +35,10 @@ sed -i -e '/lsb-base/d' ${DIST}/control
 # libncurses
 sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
 
+# disable tlsa for arm64
+sed -i -e 's/# tlsa/ifneq ($(DEB_HOST_ARCH),arm64)/' ${DIST}/rules
+sed -i -e 's/# end tlsa/endif/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

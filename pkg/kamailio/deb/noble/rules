@@ -19,10 +19,11 @@ endif
 
 export RADCLI=1
 export WOLFSSL_INTERNAL=no
-# tlsa
+ifneq ($(DEB_HOST_ARCH),arm64)
 export KTLS_INCLUDE_TLSA=yes
 export LIBSSL_STATIC_SRCLIB=yes
 export LIBSSL_STATIC_SRCPATH=/usr/$(LIBDIR)
+endif
 
 # Modules not in the "main" kamailio package:
 EXCLUDED_MODULES =
