@@ -1574,7 +1574,10 @@ activate = 1
 			keys (TLS 1.2: server random and cipher suite, TLS 1.3: cipher suite).
 			It provides necessary data only: recovery is still a non-trivial step
 			and requires the external tool to perform a search for epoch and
-			sequence number.
+			sequence number. The comment line and its key line are written to
+			the file together and sent to the udp peer in the same datagram,
+			separated by a newline, so that they stay paired when several
+			processes log keys at the same time.
 			</para>
 		</listitem>
 		<listitem>
@@ -1626,6 +1629,11 @@ modparam("tls", "keylog_file", "/tmp/kamailio-tls-keylog.txt")
 		Address of the peer where to send the keys log. It has to be in the
 		format "proto:ip:port". Only "udp" protocol (proto) is supported.
 		The value 16 (bit 5) has to be set to keylog_mode parameter.
+	</para>
+	<para>
+		Each key line is sent in its own datagram. If the value 32 (bit 6)
+		is set to keylog_mode parameter, the datagram has two lines separated
+		by a newline: the "# TUPLE" comment line followed by its key line.
 	</para>
 	<para>
 		The default value: NULL.
