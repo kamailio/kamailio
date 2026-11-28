@@ -55,6 +55,8 @@ typedef struct subs_info
 
 typedef int (*send_subscribe_t)(subs_info_t *subs);
 int send_subscribe(subs_info_t *subs);
+int pua_subscribe_init(void);
+void pua_subscribe_destroy(void);
 void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps);
 str *subs_build_hdr(
 		str *watcher_uri, int expires, int event, str *extra_headers);
