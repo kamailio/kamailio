@@ -37,8 +37,12 @@ static void reg_rpc_dereg_impu(rpc_t *rpc, void *ctx)
 	int res;
 	udomain_t *domain;
 	struct impurecord *impu_rec;
+	struct impurecord *set_rec;
 	impu_contact_t *impucontact;
 	str dereg_contact;
+	ims_subscription *subscription;
+	ims_public_identity *pi;
+	int i, j;
 
 	if(rpc->scan(ctx, "S", &impu) < 1) {
 		rpc->fault(ctx, 400, "required IMPU argument");
@@ -60,6 +64,45 @@ static void reg_rpc_dereg_impu(rpc_t *rpc, void *ctx)
 				impu.s);
 		ul.unlock_udomain(domain, &impu);
 		return;
+	}
+
+	LM_INFO("de-registration of <%.*s> by RPC command - removing its "
+			"contacts, the de-registration is network initiated\n",
+			impu.len, impu.s);
+	/* removed by the operator, not by expiry: mark the IMPU and, before
+	 * the contacts go, the other IMPUs of its implicit set - the SAR is
+	 * sent for the anchor of the set, which may be another IMPU */
+	impu_rec->nw_dereg_admin = 1;
+	subscription = impu_rec->s;
+	if(subscription) {
+		ul.lock_subscription(subscription);
+		subscription->ref_count++;
+		ul.unlock_subscription(subscription);
+		ul.unlock_udomain(domain, &impu);
+
+		for(i = 0; i < subscription->service_profiles_cnt; i++) {
+			for(j = 0;
+					j < subscription->service_profiles[i].public_identities_cnt;
+					j++) {
+				pi = &(subscription->service_profiles[i].public_identities[j]);
+				ul.lock_udomain(domain, &pi->public_identity);
+				if(ul.get_impurecord(domain, &pi->public_identity, &set_rec)
+						== 0)
+					set_rec->nw_dereg_admin = 1;
+				ul.unlock_udomain(domain, &pi->public_identity);
+			}
+		}
+		ul.lock_subscription(subscription);
+		subscription->ref_count--;
+		ul.unlock_subscription(subscription);
+
+		ul.lock_udomain(domain, &impu);
+		res = ul.get_impurecord(domain, &impu, &impu_rec);
+		if(res != 0) {
+			LM_ERR("'%.*s' is gone from usrloc meanwhile\n", impu.len, impu.s);
+			ul.unlock_udomain(domain, &impu);
+			return;
+		}
 	}
 
 	impucontact = impu_rec->linked_contacts.head;

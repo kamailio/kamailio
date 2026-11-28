@@ -628,7 +628,69 @@ int process_contact(ims_subscription *subscription, udomain_t *_d, int expires,
 	str callid = {0, 0};
 	str path = {0, 0};
 	impurecord_t *implicit_impurecord = 0;
+	impu_contact_t *impucontact = 0;
+	str *linked = 0;
+	str stored_contact = {0, 0};
 	get_act_time();
+
+	/* The report names the contact by the URI the UE registered, the
+	 * binding may be stored as that URI plus the
+	 * ";alias=" parameter added by the P-CSCF, and get_ucontact() compares
+	 * complete strings. Find the stored form among the contacts of this
+	 * subscription and go on with it. */
+	if(ul.get_ucontact(&contact_uri, &callid, &path, 0 /*cseq*/, &ucontact)
+			== 0) {
+		ul.release_ucontact(ucontact);
+	} else {
+		for(i = 0; i < subscription->service_profiles_cnt && !stored_contact.s;
+				i++) {
+			for(j = 0;
+					j < subscription->service_profiles[i].public_identities_cnt
+					&& !stored_contact.s;
+					j++) {
+				pi = &(subscription->service_profiles[i].public_identities[j]);
+				ul.lock_udomain(_d, &pi->public_identity);
+				if(ul.get_impurecord(
+						   _d, &pi->public_identity, &implicit_impurecord)
+						== 0) {
+					impucontact = implicit_impurecord->linked_contacts.head;
+					while(impucontact) {
+						linked = &impucontact->contact->c;
+						if(linked->len > contact_uri.len + 7
+								&& memcmp(linked->s, contact_uri.s,
+										   contact_uri.len)
+										   == 0
+								&& strncasecmp(linked->s + contact_uri.len,
+										   ";alias=", 7)
+										   == 0) {
+							stored_contact.s = pkg_malloc(linked->len);
+							if(stored_contact.s) {
+								memcpy(stored_contact.s, linked->s,
+										linked->len);
+								stored_contact.len = linked->len;
+							} else {
+								LM_ERR("no pkg memory for the stored "
+									   "contact\n");
+							}
+							break;
+						}
+						impucontact = impucontact->next;
+					}
+				}
+				ul.unlock_udomain(_d, &pi->public_identity);
+			}
+		}
+		if(stored_contact.s) {
+			LM_DBG("reported contact <%.*s> is stored as <%.*s>\n",
+					contact_uri.len, contact_uri.s, stored_contact.len,
+					stored_contact.s);
+			contact_uri = stored_contact;
+		} else {
+			LM_INFO("reg event report: contact <%.*s> is not known here, "
+					"with or without alias - nothing to remove\n",
+					contact_uri.len, contact_uri.s);
+		}
+	}
 
 	//first get the subscription
 	//then go through each implicit public identity (exclude the explicit identity)
@@ -671,6 +733,14 @@ int process_contact(ims_subscription *subscription, udomain_t *_d, int expires,
 								contact_uri.len, contact_uri.s);
 						ul.lock_contact_slot(&contact_uri);
 						ucontact->state = CONTACT_DELETE_PENDING;
+						/* removed on a report, not by expiry */
+						implicit_impurecord->nw_dereg_admin = 1;
+						LM_INFO("reg event report: contact <%.*s> of <%.*s> "
+								"is terminated - removing it, the "
+								"de-registration is network initiated\n",
+								contact_uri.len, contact_uri.s,
+								implicit_impurecord->public_identity.len,
+								implicit_impurecord->public_identity.s);
 						if(implicit_impurecord->shead) {
 							//send NOTIFY to all subscribers of this IMPU.
 							notify_subscribers(implicit_impurecord, ucontact, 0,
@@ -754,6 +824,8 @@ int process_contact(ims_subscription *subscription, udomain_t *_d, int expires,
 
 	//done:
 	//    ul.unlock_udomain(_d, &presentity_impurecord->public_identity);
+	if(stored_contact.s)
+		pkg_free(stored_contact.s);
 	return ret;
 }
 
@@ -1094,7 +1166,17 @@ done:
 		expires = subscription_default_expires;
 
 	if(ret == CSCF_RETURN_TRUE) {
-		LM_DBG("Sending 200 OK to publishing user\n");
+		/* RFC 3903 section 6: the 2xx carries the entity-tag of the
+		 * published state */
+		char etag_buf[48];
+		str etag_hdr;
+		etag_hdr.s = etag_buf;
+		etag_hdr.len =
+				snprintf(etag_buf, sizeof(etag_buf), "SIP-ETag: %x.%x\r\n",
+						(unsigned int)time(NULL), (unsigned int)kam_rand());
+		cscf_add_header_rpl(msg, &etag_hdr);
+		LM_DBG("Sending 200 OK to publishing user, %.*s\n", etag_hdr.len - 2,
+				etag_hdr.s);
 		subscribe_reply(
 				msg, 200, MSG_REG_PUBLISH_OK, &expires, &scscf_name_str);
 	}

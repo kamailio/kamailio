@@ -99,6 +99,8 @@ char *scscf_user_data_dtd = 0; /* Path to "CxDataType.dtd" */
 char *scscf_user_data_xsd =
 		0; /* Path to "CxDataType_Rel6.xsd" or "CxDataType_Rel7.xsd" */
 int scscf_support_wildcardPSI = 0;
+int sar_on_unreg_expiry =
+		0; /**< send SAR when the profile of an unregistered identity is dropped */
 int store_data_on_dereg =
 		0; /**< should we store SAR data on de-registration  */
 unsigned int send_vs_callid_avp =
@@ -325,6 +327,7 @@ static param_export_t params[] = {
 	{"support_wildcardPSI", PARAM_INT, &scscf_support_wildcardPSI},
 	{"scscf_name", PARAM_STR, &scscf_name_str}, //TODO: need to set this to default
 	{"store_profile_dereg", PARAM_INT, &store_data_on_dereg},
+	{"sar_on_unreg_expiry", PARAM_INT, &sar_on_unreg_expiry},
 	{"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
 	{"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
 	{"subscription_default_expires", PARAM_INT, &subscription_default_expires},
