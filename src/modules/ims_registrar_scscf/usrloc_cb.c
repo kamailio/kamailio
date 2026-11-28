@@ -83,6 +83,10 @@ void ul_impu_inserted(impurecord_t *r, ucontact_t *c, int type, void *param)
 
 void ul_impu_removed(impurecord_t *r, ucontact_t *c, int type, void *param)
 {
+	/* A selective RTR can retain contacts of a different IMPI while the
+	 * immutable service profile still names the removed private identity. */
+	str private_identity = c && c->private_identity.len ? c->private_identity
+														: r->private_identity;
 	int assignment_type = AVP_IMS_SAR_USER_DEREGISTRATION;
 	int data_available = AVP_IMS_SAR_USER_DATA_NOT_AVAILABLE;
 
@@ -91,12 +95,13 @@ void ul_impu_removed(impurecord_t *r, ucontact_t *c, int type, void *param)
 	LM_DBG("Received notification of UL IMPU removed for IMPU <%.*s>\n",
 			r->public_identity.len, r->public_identity.s);
 
-	if(r->reg_state != IMPU_NOT_REGISTERED && r->send_sar_on_delete) {
+	if(r->reg_state != IMPU_NOT_REGISTERED && r->send_sar_on_delete && r->s
+			&& private_identity.len) {
 		LM_DBG("Sending SAR to DeRegister [%.*s] (pvt: <%.*s>)\n",
 				r->public_identity.len, r->public_identity.s,
-				r->s->private_identity.len, r->s->private_identity.s);
+				private_identity.len, private_identity.s);
 		LM_DBG("Sending SAR\n");
-		cxdx_send_sar(NULL, r->public_identity, r->s->private_identity,
+		cxdx_send_sar(NULL, r->public_identity, private_identity,
 				scscf_name_str, assignment_type, data_available, 0);
 	}
 }

@@ -608,7 +608,7 @@ static int child_init(int rank)
 			if(pid == 0) {
 				if(cfg_child_init())
 					return 0;
-				notification_event_process();
+				notification_event_process(k);
 				LM_CRIT("init_notification_worker():: worker_process finished "
 						"without exit!\n");
 				exit(-1);

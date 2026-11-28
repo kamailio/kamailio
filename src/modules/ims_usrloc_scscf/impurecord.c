@@ -100,6 +100,7 @@ int new_impurecord(str *_dom, str *public_identity, str *private_identity,
 		int reg_state, int barring, ims_subscription **s, str *ccf1, str *ccf2,
 		str *ecf1, str *ecf2, impurecord_t **_r)
 {
+	int result = -2;
 	*_r = (impurecord_t *)shm_malloc(sizeof(impurecord_t));
 	if(*_r == 0) {
 		LM_ERR("no more shared memory\n");
@@ -112,7 +113,6 @@ int new_impurecord(str *_dom, str *public_identity, str *private_identity,
 			(struct ulcb_head_list *)shm_malloc(sizeof(struct ulcb_head_list));
 	if((*_r)->cbs == 0) {
 		LM_CRIT("no more shared mem\n");
-		shm_free(*_r);
 		goto error;
 	}
 	(*_r)->cbs->first = 0;
@@ -122,7 +122,6 @@ int new_impurecord(str *_dom, str *public_identity, str *private_identity,
 	(*_r)->public_identity.s = (char *)shm_malloc(public_identity->len);
 	if((*_r)->public_identity.s == 0) {
 		LM_ERR("no more shared memory\n");
-		shm_free(*_r);
 		goto error;
 	}
 	memcpy((*_r)->public_identity.s, public_identity->s, public_identity->len);
@@ -131,7 +130,6 @@ int new_impurecord(str *_dom, str *public_identity, str *private_identity,
 	(*_r)->private_identity.s = (char *)shm_malloc(private_identity->len);
 	if((*_r)->private_identity.s == 0) {
 		LM_ERR("no more shared memory\n");
-		shm_free(*_r);
 		goto error;
 	}
 	memcpy((*_r)->private_identity.s, private_identity->s,
@@ -164,12 +162,28 @@ int new_impurecord(str *_dom, str *public_identity, str *private_identity,
 
 out_of_memory:
 	LM_ERR("no more shared memory\n");
-	*_r = 0;
-	return -3;
+	result = -3;
 error:
 	LM_ERR("Failed to create new impurecord...\n");
+	/* Failure branches leave the zero-initialized record alive for this
+	 * common cleanup. Freeing it before jumping here would free it twice. */
+	if((*_r)->ccf1.s)
+		shm_free((*_r)->ccf1.s);
+	if((*_r)->ccf2.s)
+		shm_free((*_r)->ccf2.s);
+	if((*_r)->ecf1.s)
+		shm_free((*_r)->ecf1.s);
+	if((*_r)->ecf2.s)
+		shm_free((*_r)->ecf2.s);
+	if((*_r)->public_identity.s)
+		shm_free((*_r)->public_identity.s);
+	if((*_r)->private_identity.s)
+		shm_free((*_r)->private_identity.s);
+	if((*_r)->cbs)
+		shm_free((*_r)->cbs);
+	shm_free(*_r);
 	*_r = 0;
-	return -2;
+	return result;
 }
 
 /*!
@@ -531,6 +545,17 @@ static inline void process_impurecord(impurecord_t *_r)
 	if(!flag)
 		LM_DBG("no contacts\n");
 
+	/* An unregistered assignment can have a cached profile without any
+	 * contacts or subscribers. RTR invalidates it by changing the state. */
+	if(mustdeleteimpu && _r->reg_state == IMPU_UNREGISTERED && _r->s
+			&& _r->expires > act_time) {
+		LM_DBG("Retaining unregistered profile for [%.*s] until %" TIME_T_FMT
+			   "\n",
+				_r->public_identity.len, _r->public_identity.s,
+				TIME_T_CAST(_r->expires));
+		mustdeleteimpu = 0;
+	}
+
 	if(mustdeleteimpu) {
 		if(!dbwork) {
 			start_dbtransaction();
@@ -543,9 +568,10 @@ static inline void process_impurecord(impurecord_t *_r)
 			LM_DBG("This impu is not to be deleted but has no contacts - "
 				   "changing state to IMPU_UNREGISTERED\n");
 			//run callback  here UL_IMPU_UNREG_NC for UL_IMPU_UNREG_NC
-			if(_r->reg_state != IMPU_UNREGISTERED
-					&& exists_ulcb_type(_r->cbs, UL_IMPU_UNREG_NC)) {
-				run_ul_callbacks(_r->cbs, UL_IMPU_UNREG_NC, _r, 0);
+			if(_r->reg_state != IMPU_UNREGISTERED) {
+				_r->expires = act_time + unreg_validity;
+				if(exists_ulcb_type(_r->cbs, UL_IMPU_UNREG_NC))
+					run_ul_callbacks(_r->cbs, UL_IMPU_UNREG_NC, _r, 0);
 			}
 			_r->reg_state = IMPU_UNREGISTERED;
 		}
@@ -1212,6 +1238,19 @@ int update_impurecord(struct udomain *_d, str *public_identity,
 	//if we get here, we have a record to update
 	LM_DBG("updating IMPU record with public identity for <%.*s>\n",
 			impu_str->len, impu_str->s);
+	/* Keep record-level ownership consistent with the installed SAA profile.
+	 * Cx termination may later select another surviving private identity. */
+	if(subs_ptr
+			&& ((*_r)->private_identity.len != subs_ptr->private_identity.len
+					|| memcmp((*_r)->private_identity.s,
+							subs_ptr->private_identity.s,
+							subs_ptr->private_identity.len))) {
+		str replacement = {0, 0};
+		if(shm_str_dup(&replacement, &subs_ptr->private_identity) < 0)
+			goto error;
+		shm_free((*_r)->private_identity.s);
+		(*_r)->private_identity = replacement;
+	}
 	(*_r)->reg_state = reg_state;
 	if(reg_state == IMPU_UNREGISTERED) {
 		//update unreg expiry so the unreg record is not stored 'forever'
@@ -1324,6 +1363,10 @@ int remove_impucontact_from_list(
 	if(contact == impu->linked_contacts.head->contact) {
 		LM_DBG("deleting head\n");
 		impu->linked_contacts.head = impu->linked_contacts.head->next;
+		if(impu->linked_contacts.head)
+			impu->linked_contacts.head->prev = 0;
+		else
+			impu->linked_contacts.tail = 0;
 	} else if(contact == impu->linked_contacts.tail->contact) {
 		LM_DBG("deleting tail\n");
 		impu->linked_contacts.tail = impu->linked_contacts.tail->prev;

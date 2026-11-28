@@ -545,8 +545,40 @@ typedef int (*update_impurecord_t)(struct udomain *_d, str *public_identity,
 typedef void (*lock_contact_slot_t)(str *contact_uri);
 typedef int (*cx_replace_profile_t)(struct udomain *, ims_subscription *);
 typedef void (*cx_notify_contact_f)(impurecord_t *, ucontact_t *, int);
-typedef int (*cx_deregister_t)(
-		struct udomain *, str *, str *, int, int, cx_notify_contact_f);
+/* Local bound for Cx cache work arrays and the shared result structures.
+ * This is an implementation limit, not a 3GPP identity-count restriction. */
+#define CX_MAX_PUBLIC_IDS 256
+enum cx_profile_notification
+{
+	CX_PROFILE_IDENTITY_REMOVED = 4,
+	CX_PROFILE_CHANGED = 5
+};
+
+typedef struct cx_charging
+{
+	str ccf1, ccf2, ecf1, ecf2;
+} cx_charging_t;
+
+typedef struct cx_emergency_identity
+{
+	str private_identity;
+	str public_identity;
+} cx_emergency_identity_t;
+
+typedef struct cx_dereg_result
+{
+	/* Associated identities borrow request strings. Emergency pairs are
+	 * copied to pkg memory while the cache is locked; the caller frees them. */
+	int associated_count;
+	str associated[CX_MAX_PUBLIC_IDS];
+	int emergency_count;
+	cx_emergency_identity_t emergency[CX_MAX_PUBLIC_IDS];
+} cx_dereg_result_t;
+
+typedef int (*cx_update_profile_t)(struct udomain *, str *, ims_subscription *,
+		cx_charging_t *, cx_notify_contact_f);
+typedef int (*cx_deregister_t)(struct udomain *, str *, int, str *, int, int,
+		unsigned int, cx_notify_contact_f, cx_dereg_result_t *);
 
 typedef void (*unlock_contact_slot_t)(str *contact_uri);
 
@@ -674,6 +706,7 @@ typedef struct usrloc_api
 
 	/* Append-only Cx API: rebuild all IMS consumers together. */
 	cx_replace_profile_t cx_replace_profile;
+	cx_update_profile_t cx_update_profile;
 	cx_deregister_t cx_deregister;
 } usrloc_api_t;
 

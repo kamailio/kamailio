@@ -48,6 +48,8 @@
 #ifndef IS_CSCF_CXDX_AVP_H
 #define IS_CSCF_CXDX_AVP_H
 
+#include "../ims_usrloc_scscf/usrloc.h"
+
 extern struct cdp_binds
 		cdpb; /**< Structure with pointers to cdp funcs 		*/
 extern struct tm_binds tmb;
@@ -327,7 +329,8 @@ str cxdx_get_user_name(AAAMessage *msg);
  */
 int cxdx_add_result_code(AAAMessage *msg, unsigned int data);
 int cxdx_add_experimental_result(AAAMessage *msg, unsigned int code);
-int cxdx_add_failed_avp(AAAMessage *msg, int code, int vendor, str value);
+int cxdx_add_failed_avp(
+		AAAMessage *msg, int code, int vendor, str value, int flags);
 
 /**
  * Transactional SIP response - tries to create a transaction if none found.
@@ -338,5 +341,9 @@ int cxdx_add_failed_avp(AAAMessage *msg, int code, int vendor, str value);
  */
 int cscf_reply_transactional(struct sip_msg *msg, int code, char *text);
 
+
+int cxdx_add_associated_identities(AAAMessage *msg, str *ids, int count);
+int cxdx_add_emergency_identities(
+		AAAMessage *msg, cx_emergency_identity_t *pairs, int count);
 
 #endif /* IS_CSCF_CXDX_AVP_H */

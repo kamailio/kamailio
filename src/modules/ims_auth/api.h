@@ -74,6 +74,10 @@ typedef int (*digest_authenticate_f)(
 typedef struct ims_auth_api
 {
 	digest_authenticate_f digest_authenticate;
+	/* Prepare holds the authentication cache locks without changing vectors.
+	 * Finish commits the prepared password update or discards it. */
+	int (*prepare_digest_update)(str *private_id, str *ha1, void **state);
+	void (*finish_digest_update)(void *state, int commit);
 } ims_auth_api_t;
 
 typedef int (*bind_ims_auth_f)(ims_auth_api_t *api);

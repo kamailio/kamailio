@@ -83,19 +83,25 @@ typedef struct _reg_notification
 
 	str *explit_dereg_contact;
 	int num_explit_dereg_contact;
+	int event_type; /* Event copied for asynchronous reginfo construction. */
 
 	struct _reg_notification *next; /**< next notification in the list	*/
 	struct _reg_notification *prev; /**< previous notification in the list	*/
 } reg_notification;
 
 
-/** Notification List Structure */
 typedef struct
 {
-	gen_lock_t *lock;		/**< lock for notifications ops		*/
 	reg_notification *head; /**< first notification in the list	*/
 	reg_notification *tail; /**< last notification in the list	*/
 	gen_sem_t *empty;
+} reg_notification_queue;
+
+/** Notification queues, with one consumer per dialog hash. */
+typedef struct
+{
+	gen_lock_t *lock; /**< lock for notifications ops		*/
+	reg_notification_queue *queues;
 	int size;
 } reg_notification_list;
 
@@ -161,7 +167,7 @@ void create_notifications(udomain_t *_t, impurecord_t *r_passed,
 		str *contact_uri, str *impus, int num_impus, int event_type,
 		str *explit_dereg_contact, int num_explit_dereg_contact);
 
-void notification_event_process();
+void notification_event_process(int worker);
 
 void free_notification(reg_notification *n);
 

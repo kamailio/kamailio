@@ -166,6 +166,9 @@ enum
 	AVP_IMS_Associated_Registered_Identities = 647,
 	AVP_IMS_Multiple_Registration_Indication = 648,
 	AVP_IMS_Restoration_Info = 649,
+	AVP_IMS_Identity_with_Emergency_Registration = 651,
+	AVP_IMS_Allowed_WAF_WWSF_Identities = 656,
+	AVP_IMS_RTR_Flags = 659,
 
 	/** 700 to 799 reserved for TS29.329											*/
 	AVP_IMS_User_Identity = 700,
