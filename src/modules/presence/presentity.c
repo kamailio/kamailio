@@ -388,6 +388,15 @@ int ps_db_delete_presentity_if_dialog_id_exists(
 	query_vals[n_query_cols].val.str_val = presentity->event->name;
 	n_query_cols++;
 
+	if(pres_dialog_id_column.len > 0) {
+		query_cols[n_query_cols] = &pres_dialog_id_column;
+		query_ops[n_query_cols] = OP_EQ;
+		query_vals[n_query_cols].type = DB1_STRING;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.string_val = dialog_id;
+		n_query_cols++;
+	}
+
 	result_cols[rez_body_col = n_result_cols++] = &str_body_col;
 	result_cols[rez_etag_col = n_result_cols++] = &str_etag_col;
 
@@ -422,7 +431,14 @@ int ps_db_delete_presentity_if_dialog_id_exists(
 		tmp_db_etag.s = (char *)row_vals[rez_etag_col].val.string_val;
 		tmp_db_etag.len = strlen(tmp_db_etag.s);
 
-		if(check_if_dialog(tmp_db_body, &db_is_dialog, &db_dialog_id) == 0) {
+		if(pres_dialog_id_column.len > 0) {
+			/* the query matched the dialog id column: no body parse */
+			db_dialog_id = strdup(dialog_id);
+		} else if(check_if_dialog(tmp_db_body, &db_is_dialog, &db_dialog_id)
+				  != 0) {
+			continue;
+		}
+		{
 			// If ID from DB matches the one we supplied
 			if(db_dialog_id && !strcmp(db_dialog_id, dialog_id)) {
 				old_presentity.domain = presentity->domain;
@@ -658,9 +674,9 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		str *body, int new_t, int *sent_reply, char *sphere, str *etag_override,
 		str *ruid, int replace, int skip_notify)
 {
-	db_key_t query_cols[14], rquery_cols[2], update_keys[9], result_cols[7];
-	db_op_t query_ops[14], rquery_ops[2];
-	db_val_t query_vals[14], rquery_vals[2], update_vals[9];
+	db_key_t query_cols[15], rquery_cols[2], update_keys[9], result_cols[7];
+	db_op_t query_ops[15], rquery_ops[2];
+	db_val_t query_vals[15], rquery_vals[2], update_vals[9];
 	db1_res_t *result = NULL;
 	int n_query_cols = 0;
 	int n_rquery_cols = 0;
@@ -831,15 +847,28 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 						goto error;
 					}
 
-					free(dialog_id);
-					dialog_id = NULL;
+					if(pres_dialog_id_column.len > 0) {
+						query_cols[n_query_cols] = &pres_dialog_id_column;
+						query_vals[n_query_cols].type = DB1_STRING;
+						query_vals[n_query_cols].nul = 0;
+						query_vals[n_query_cols].val.string_val = dialog_id;
+						n_query_cols++;
+					}
 				}
 			}
 			LM_DBG("inserting %d cols into table\n", n_query_cols);
 
 			if(pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
 				LM_ERR("inserting new record in database\n");
+				if(dialog_id) {
+					free(dialog_id);
+					dialog_id = NULL;
+				}
 				goto error;
+			}
+			if(dialog_id) {
+				free(dialog_id);
+				dialog_id = NULL;
 			}
 		} else {
 			/* A hard-state PUBLISH */

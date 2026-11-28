@@ -106,6 +106,7 @@ extern int pres_startup_mode;
 extern str pres_xavp_cfg;
 extern int pres_retrieve_order;
 extern str pres_retrieve_order_by;
+extern str pres_dialog_id_column;
 extern int pres_enable_dmq;
 extern int pres_enable_pres_dmq;
 extern int pres_enable_pres_sync_dmq;

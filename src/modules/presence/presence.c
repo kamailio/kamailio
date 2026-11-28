@@ -175,6 +175,10 @@ int pres_startup_mode = 1;
 str pres_xavp_cfg = {0};
 int pres_retrieve_order = 0;
 str pres_retrieve_order_by = str_init("priority");
+/* optional indexed column holding the dialog id of a dialog presentity;
+ * when set, the dialog-id duplicate check queries it instead of XML-parsing
+ * every stored body of the presentity */
+str pres_dialog_id_column = STR_NULL;
 int pres_enable_dmq = 0;
 str pres_dmq_peer_id = str_init("presence");
 int pres_enable_pres_dmq = 1;
@@ -261,6 +265,7 @@ static param_export_t params[]={
 	{ "xavp_cfg",               PARAM_STR, &pres_xavp_cfg},
 	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
 	{ "retrieve_order_by",      PARAM_STR, &pres_retrieve_order_by},
+	{ "dialog_id_column",       PARAM_STR, &pres_dialog_id_column},
 	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
 	{ "cseq_offset",            PARAM_INT, &pres_cseq_offset},
 	{ "enable_dmq",             PARAM_INT, &pres_enable_dmq},

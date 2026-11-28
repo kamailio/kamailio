@@ -963,6 +963,41 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
 	    </example>
 	</section>
 
+	<section id="presence.p.dialog_id_column">
+	    <title><varname>dialog_id_column</varname> (str)</title>
+	    <para>
+		Name of an optional column of the presentity table in which the
+		dialog id of a dialog presentity row is stored. When set, the
+		dialog-id duplicate check of a dialog PUBLISH selects by this
+		column instead of XML-parsing every stored body of the
+		presentity, and the dialog id of a new row is written to it.
+	    </para>
+	    <para>
+		The column must exist in the presentity table and should be
+		indexed, for example:
+		<programlisting format="linespecific">
+...
+ALTER TABLE presentity ADD COLUMN dialog_id varchar(127);
+CREATE INDEX presentity_dialog_id_idx ON presentity (dialog_id);
+...
+</programlisting>
+	    </para>
+	    <para>
+		<emphasis>
+			Default value is empty (not set): the duplicate check
+			XML-parses the stored bodies as before.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>dialog_id_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "dialog_id_column", "dialog_id")
+...
+</programlisting>
+	    </example>
+	</section>
+
 <section id="presence.p.sip_uri_match">
     <title><varname>sip_uri_match</varname> (int)</title>
     <para>
