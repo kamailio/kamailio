@@ -90,6 +90,7 @@ sruid_t _puadi_sruid;
 static char *DLG_VAR_SEP = ",";
 static str caller_dlg_var = {0, 0};						 /* pubruri_caller */
 static str callee_dlg_var = {0, 0};						 /* pubruri_callee */
+static str padi_dlg_var = {0, 0};						 /* pubpadi */
 static str caller_entity_when_publish_disabled = {0, 0}; /* pubruri_caller */
 static str callee_entity_when_publish_disabled = {0, 0}; /* pubruri_callee */
 static str local_identity_dlg_var = STR_NULL;
@@ -143,6 +144,7 @@ static param_export_t params[] = {
 	{"pubruri_callee_avp", PARAM_STRING, &pubruri_callee_avp},
 	{"pubruri_caller_dlg_var", PARAM_STR, &caller_dlg_var},
 	{"pubruri_callee_dlg_var", PARAM_STR, &callee_dlg_var},
+	{"pubpadi_dlg_var", PARAM_STR, &padi_dlg_var},
 	{"local_identity_dlg_var", PARAM_STR, &local_identity_dlg_var},
 	{"caller_trying", PARAM_INT, &caller_trying},
 	{"callee_trying", PARAM_INT, &callee_trying},
@@ -683,8 +685,7 @@ static int get_dlg_var(struct dlg_cell *dlg, str *key, struct str_list **lst)
 	struct str_list *it, *prev;
 	char *sep, *ini, *end;
 
-	if(dlg_api.get_dlg_varval(dlg, &caller_dlg_var, &dval) != 0
-			|| dval.s == NULL)
+	if(dlg_api.get_dlg_varval(dlg, key, &dval) != 0 || dval.s == NULL)
 		return 0;
 
 	if(*lst) {
@@ -733,26 +734,36 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 {
 	struct dlginfo_cell *dlginfo;
 	int len;
+	str uuid = STR_NULL;
 
-	// generate new random uuid
-	if(use_uuid) {
-		_puadi_sruid.uid.len = SRUID_SIZE;
-		if(sruid_uuid_generate(_puadi_sruid.uid.s, &_puadi_sruid.uid.len) < 0) {
-			LM_ERR("uuid not generated\n");
-			return NULL;
-		}
-	} else {
-		if(sruid_next_safe(&_puadi_sruid) < 0) {
-			return NULL;
-		}
+	/* load the padi of a dialog created on another node */
+	if(type != DLGCB_CREATED && padi_dlg_var.len > 0) {
+		dlg_api.get_dlg_varval(dlg, &padi_dlg_var, &uuid);
 	}
-	LM_DBG("uuid generated: '%.*s'\n", _puadi_sruid.uid.len,
-			_puadi_sruid.uid.s);
+
+	if(uuid.len <= 0) {
+		// generate new random uuid
+		if(use_uuid) {
+			_puadi_sruid.uid.len = SRUID_SIZE;
+			if(sruid_uuid_generate(_puadi_sruid.uid.s, &_puadi_sruid.uid.len)
+					< 0) {
+				LM_ERR("uuid not generated\n");
+				return NULL;
+			}
+		} else {
+			if(sruid_next_safe(&_puadi_sruid) < 0) {
+				return NULL;
+			}
+		}
+		LM_DBG("uuid generated: '%.*s'\n", _puadi_sruid.uid.len,
+				_puadi_sruid.uid.s);
+		uuid = _puadi_sruid.uid;
+	}
 
 	/* create dlginfo structure to store important data inside the module*/
 	len = sizeof(struct dlginfo_cell) + dlg->from_uri.len + dlg->to_uri.len
 		  + dlg->callid.len + dlg->tag[0].len + dlg->req_uri.len
-		  + dlg->contact[0].len + _puadi_sruid.uid.len;
+		  + dlg->contact[0].len + uuid.len;
 
 	dlginfo = (struct dlginfo_cell *)shm_malloc(len);
 	if(dlginfo == 0) {
@@ -784,7 +795,7 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 	dlginfo->from_contact.s = dlginfo->req_uri.s + dlginfo->req_uri.len;
 	dlginfo->from_contact.len = dlg->contact[0].len;
 	dlginfo->uuid.s = dlginfo->from_contact.s + dlginfo->from_contact.len;
-	dlginfo->uuid.len = _puadi_sruid.uid.len;
+	dlginfo->uuid.len = uuid.len;
 
 	memcpy(dlginfo->from_uri.s, dlg->from_uri.s, dlg->from_uri.len);
 	memcpy(dlginfo->to_uri.s, dlg->to_uri.s, dlg->to_uri.len);
@@ -792,7 +803,12 @@ struct dlginfo_cell *get_dialog_data(struct dlg_cell *dlg, int type,
 	memcpy(dlginfo->from_tag.s, dlg->tag[0].s, dlg->tag[0].len);
 	memcpy(dlginfo->req_uri.s, dlg->req_uri.s, dlg->req_uri.len);
 	memcpy(dlginfo->from_contact.s, dlg->contact[0].s, dlg->contact[0].len);
-	memcpy(dlginfo->uuid.s, _puadi_sruid.uid.s, _puadi_sruid.uid.len);
+	memcpy(dlginfo->uuid.s, uuid.s, uuid.len);
+
+	/* store the padi created by this node */
+	if(type == DLGCB_CREATED && padi_dlg_var.len > 0) {
+		dlg_api.set_dlg_var(dlg, &padi_dlg_var, &dlginfo->uuid);
+	}
 
 	if(use_pubruri_avps) {
 		if(type == DLGCB_CREATED) {
