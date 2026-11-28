@@ -341,6 +341,10 @@
       <title>unreg_validity (int)</title>
       <para>Default validity time in seconds for unregister assignment to SCSCF </para>
       <para><emphasis> Default value is 1800 </emphasis></para>
+      <para>When the time is over and the record has no contacts and no
+      subscriptions, the UL_IMPU_UNREG_EXPIRED callbacks are run and the
+      record is deleted. The S-CSCF registrar can use the callback to have
+      the HSS clear the S-CSCF name (its sar_on_unreg_expiry parameter).</para>
       <example>
         <title>Set <varname>unreg_validity</varname> parameter</title>
         <programlisting format="linespecific">

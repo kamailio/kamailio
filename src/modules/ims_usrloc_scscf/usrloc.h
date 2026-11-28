@@ -494,6 +494,7 @@ typedef struct impurecord
 			*stail; /**< list of subscribers attached			*/
 	time_t expires; /*!< timer when this IMPU expires - currently only used for unreg IMPU */
 	int send_sar_on_delete; /* used to distinguish between explicit contact removal and contact expiry - SAR only sent on contact expiry*/
+	int nw_dereg_admin; /*!< last contact was removed by the network and not by expiry - selects the Server-Assignment-Type of the SAR */
 
 	struct hslot
 			*slot; /*!< Collision slot in the hash table array we belong to */
