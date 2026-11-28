@@ -165,6 +165,8 @@ AAA_AVP *AAACreateAVP(AAA_AVPCode code, AAA_AVPFlag flags, AAAVendorId vendorId,
 	return avp;
 error:
 	LM_ERR("no more free memory!\n");
+	if(avp)
+		shm_free(avp);
 	return 0;
 }
 
