@@ -48,12 +48,57 @@
 #include "receiver.h"
 #include "peerstatemachine.h"
 #include "cdp_stats.h"
+#include "config.h"
+#include "diameter_ims.h"
 
 extern unsigned int *latency_threshold_p; /**<max delay for Diameter call */
 extern struct cdp_counters_h cdp_cnts_h;
+extern dp_config *config;
 
 handler_list *handlers = 0; /**< list of handlers */
 gen_lock_t *handlers_lock;	/**< lock for list of handlers */
+
+/**
+ * Builds the answer for a request that no handler answered, so the peer is
+ * not left to retransmit and time out (RFC 6733 6.2). A base protocol
+ * command that reaches here is one cdp does not support, 3001
+ * DIAMETER_COMMAND_UNSUPPORTED; an application we did not advertise gets 3007
+ * DIAMETER_APPLICATION_UNSUPPORTED; both are protocol errors and set the E
+ * bit (7.2). An ASR for a session cdp does not know, that no application
+ * claimed either, gets 5002 DIAMETER_UNKNOWN_SESSION_ID. Otherwise the
+ * handler failed or does not support the command: 5012
+ * DIAMETER_UNABLE_TO_COMPLY.
+ * @param req - the request
+ * @returns the answer or NULL on error
+ */
+static AAAMessage *handle_unanswered_request(AAAMessage *req)
+{
+	cdp_session_t *s;
+	int i, rc;
+
+	if(req->applicationId == 0) {
+		rc = AAA_COMMAND_UNSUPPORTED;
+	} else {
+		rc = AAA_APPLICATION_UNSUPPORTED;
+		for(i = 0; i < config->applications_cnt; i++)
+			if(config->applications[i].id == req->applicationId) {
+				rc = AAA_UNABLE_TO_COMPLY;
+				break;
+			}
+	}
+	if(rc == AAA_UNABLE_TO_COMPLY && req->commandCode == IMS_ASR
+			&& req->sessionId) {
+		s = cdp_get_session(req->sessionId->data);
+		if(s)
+			AAASessionsUnlock(s->hash);
+		else
+			rc = AAA_UNKNOWN_SESSION_ID;
+	}
+	LM_WARN("No handler answered request %d for app %d, answering %d\n",
+			req->commandCode, req->applicationId, rc);
+
+	return cdp_create_answer(req, rc);
+}
 
 /**
  * This callback is added as an internal message listener and used to process
@@ -73,6 +118,7 @@ int api_callback(peer *p, AAAMessage *msg, void *ptr)
 	handler x;
 	enum handler_types type;
 	AAAMessage *rsp;
+	int answered = msg->answered;
 	if(is_req(msg))
 		type = REQUEST_HANDLER;
 	else
@@ -85,9 +131,15 @@ int api_callback(peer *p, AAAMessage *msg, void *ptr)
 			if(h->type == REQUEST_HANDLER) {
 				lock_release(handlers_lock);
 				rsp = (x.handler.requestHandler)(msg, h->param);
-				if(rsp) {
+				if(rsp && answered) {
+					LM_DBG("request %d already answered, dropping the "
+						   "handler's answer\n",
+							msg->commandCode);
+					AAAFreeMessage(&rsp);
+				} else if(rsp) {
 					//peer_send_msg(p,rsp);
 					sm_process(p, Send_Message, rsp, 0, 0);
+					answered = 1;
 				}
 				lock_get(handlers_lock);
 			} else {
@@ -98,6 +150,23 @@ int api_callback(peer *p, AAAMessage *msg, void *ptr)
 		}
 	}
 	lock_release(handlers_lock);
+
+	if(is_req(msg) && !answered) {
+		rsp = handle_unanswered_request(msg);
+		if(rsp) {
+			/* sent directly: unlike a handler's answer, cdp's own must not
+			 * drive the session state machine (a failed answer would clean
+			 * up the session) */
+			lock_get(p->lock);
+			if((p->state != I_Open && p->state != R_Open)
+					|| !peer_send_msg(p, rsp)) {
+				LM_ERR("error sending the answer to peer %.*s\n", p->fqdn.len,
+						p->fqdn.s);
+				AAAFreeMessage(&rsp);
+			}
+			lock_release(p->lock);
+		}
+	}
 
 	if(!is_req(msg)) {
 		/* take care of transactional callback if any */

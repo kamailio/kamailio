@@ -275,13 +275,7 @@ int auth_client_statefull_sm_process(
 	int rv = 0; //return value
 
 	if(!s) {
-		switch(event) {
-			case AUTH_EV_RECV_ASR:
-				Send_ASA(0, msg);
-				break;
-			default:
-				LM_ERR("Received invalid event %d with no session!\n", event);
-		}
+		LM_ERR("Received invalid event %d with no session!\n", event);
 		return rv;
 	}
 	x = &(s->u.auth);
@@ -796,54 +790,30 @@ error:
 	return 0;
 }
 
+/**
+ * Answers an ASR for a known session with success. Like any answer it
+ * carries the request's Application-Id and goes back to the peer the request
+ * came from (RFC 6733 6.2): an ASA has no Destination-Host nor
+ * Auth-Application-Id AVP to route it by. An ASR for an unknown session is
+ * left to the applications, as they may still know it (see api_callback()).
+ * @param s - the session
+ * @param msg - the ASR, marked as answered
+ */
 void Send_ASA(cdp_session_t *s, AAAMessage *msg)
 {
 	AAAMessage *asa;
-	char x[4];
-	AAA_AVP *avp;
+	peer *p = msg->in_peer;
+
 	LM_INFO("sending ASA\n");
-	if(!s) {
-		//send an ASA for UNKNOWN_SESSION_ID - use AAASendMessage()
-		// msg is the ASR received
-		asa = AAANewMessage(IMS_ASA, 0, 0, msg);
-		if(!asa)
-			return;
-
-		set_4bytes(x, AAA_SUCCESS);
-		AAACreateAndAddAVPToMessage(
-				asa, AVP_Result_Code, AAA_AVP_FLAG_MANDATORY, 0, x, 4);
-
-		AAASendMessage(asa, 0, 0);
-	} else {
-		// send... many cases... maybe not needed.
-		// for now we do the same
-		asa = AAANewMessage(IMS_ASA, 0, 0, msg);
-		if(!asa)
-			return;
-
-		set_4bytes(x, AAA_SUCCESS);
-		AAACreateAndAddAVPToMessage(
-				asa, AVP_Result_Code, AAA_AVP_FLAG_MANDATORY, 0, x, 4);
-
-		avp = AAAFindMatchingAVP(msg, 0, AVP_Origin_Host, 0, 0);
-		if(avp) {
-			// This is because AAASendMessage is not going to find a route to the
-			// the PCRF because TS 29.214 says no Destination-Host and no Auth-Application-Id
-			// in the ASA
-			LM_INFO("sending ASA to peer %.*s\n", avp->data.len, avp->data.s);
-			peer *p = get_peer_by_fqdn(&avp->data);
-			if(!p) {
-				LM_ERR("Peer not found\n");
-			} else if(!peer_send_msg(p, asa)) {
-				if(asa)
-					AAAFreeMessage(&asa); //needed in frequency
-			} else {
-				LM_INFO("success sending ASA\n");
-			}
-		} else if(!AAASendMessage(asa, 0, 0)) {
-			LM_ERR("error sending ASA\n");
-		}
+	asa = cdp_create_answer(msg, AAA_SUCCESS);
+	if(!asa)
+		return;
+	if(!peer_send_msg(p, asa)) {
+		LM_ERR("error sending ASA to peer %.*s\n", p->fqdn.len, p->fqdn.s);
+		AAAFreeMessage(&asa);
+		return;
 	}
+	msg->answered = 1;
 }
 
 int add_vendor_specific_application_id_group(
