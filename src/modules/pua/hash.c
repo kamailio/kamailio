@@ -187,7 +187,8 @@ void update_htable(ua_pres_t *p, time_t desired_expires, int expires, str *etag,
 	}
 
 	if(etag) {
-		shm_free(p->etag.s);
+		if(p->etag.s)
+			shm_free(p->etag.s);
 		p->etag.s = (char *)shm_malloc(etag->len);
 		if(p->etag.s == NULL) {
 			SHM_MEM_ERROR;
@@ -270,6 +271,8 @@ void delete_htable(ua_pres_t *presentity, unsigned int hash_code)
 		shm_free(presentity->etag.s);
 	else if(presentity->remote_contact.s)
 		shm_free(presentity->remote_contact.s);
+	if(presentity->pending_publ)
+		shm_free(presentity->pending_publ);
 
 	shm_free(presentity);
 	presentity = NULL;
@@ -295,6 +298,8 @@ void destroy_htable(void)
 				shm_free(q->etag.s);
 			else if(q->remote_contact.s)
 				shm_free(q->remote_contact.s);
+			if(q->pending_publ)
+				shm_free(q->pending_publ);
 
 			shm_free(q);
 			q = NULL;
