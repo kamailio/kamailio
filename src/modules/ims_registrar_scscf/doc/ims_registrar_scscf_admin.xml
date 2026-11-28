@@ -360,6 +360,29 @@ modparam("pua", "check_remote_contact", 0)
     </section>
 
     <section>
+      <title>sar_on_unreg_expiry (int)</title>
+
+      <para>When the S-CSCF drops the profile it stored for an unregistered
+      identity (after an UNREGISTERED_USER server assignment, see
+      <varname>unreg_validity</varname> of ims_usrloc_scscf), send a SAR
+      with Server-Assignment-Type ADMINISTRATIVE_DEREGISTRATION, so that the
+      HSS moves the identity to Not Registered and clears the S-CSCF name
+      (3GPP TS 29.228 6.1.2.1). With 0 the profile is dropped without a SAR
+      and the HSS keeps the S-CSCF name assigned to the unregistered
+      identity.</para>
+
+      <para><emphasis> Default value 0.</emphasis></para>
+
+      <example>
+        <title>Set <varname>sar_on_unreg_expiry</varname>parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "sar_on_unreg_expiry", 1)
+...</programlisting>
+      </example>
+    </section>
+
+    <section>
       <title>cxdx_dest_realm (string)</title>
 
       <para>Destination realm to be used in Diameter messages</para>

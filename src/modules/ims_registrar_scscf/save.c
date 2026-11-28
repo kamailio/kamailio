@@ -1591,6 +1591,8 @@ static int update_contacts_sar_script(struct sip_msg *msg, udomain_t *_d,
 	ims_public_identity *pi = NULL;
 	int restore = ri && ri->contact.len && ri->path.len;
 	int reg_state;
+	int first_unbarred_impu = 1;
+	int is_primary_impu = 0;
 
 	LM_DBG("updating contacts for %s%s\n",
 			assignment_type == AVP_IMS_SAR_NO_ASSIGNMENT ? "NO_ASSIGNMENT"
@@ -1608,9 +1610,19 @@ static int update_contacts_sar_script(struct sip_msg *msg, udomain_t *_d,
 				reg_state = impu_rec->reg_state;
 			else
 				reg_state = IMPU_UNREGISTERED;
+			/* as on registration: the first unbarred identity is the
+			 * anchor of the set, the one the SAR is sent for when the
+			 * record ends (only used when the record is created here) */
+			if(first_unbarred_impu && !pi->barring) {
+				is_primary_impu = 1;
+				first_unbarred_impu = 0;
+			} else {
+				is_primary_impu = 0;
+			}
 			if(ul.update_impurecord(_d, &pi->public_identity, impu_rec,
 					   reg_state, -1 /*do not change send sar on delete */,
-					   pi->barring, 0, s, ccf1, ccf2, ecf1, ecf2, &impu_rec)
+					   pi->barring, is_primary_impu, s, ccf1, ccf2, ecf1, ecf2,
+					   &impu_rec)
 					!= 0) {
 				LM_ERR("Unable to update impurecord for <%.*s>\n",
 						STR_FMT(&pi->public_identity));
